@@ -254,6 +254,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
+import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
@@ -334,7 +335,24 @@ function toolResultReportsFailure(out: any): boolean {
   if (!out || typeof out !== "object") return false;
   if (out.success === false || out.ok === false) return true;
   if (out.success === true || out.ok === true) return false;
+  // E4-S3: the closed read envelope. Only `available` finished a read; describeStep withdraws
+  // `needs_input` / `refused` (nothing was read) and words `unavailable` as the failure it is.
+  const envelope = readEnvelopeStatus(out);
+  if (envelope) return envelope !== "available";
   return typeof out.error === "string" && out.error.trim() !== "";
+}
+/**
+ * E4-S3 — the closed envelope the admitted conversational reads answer with (read_business_metric,
+ * get_business_snapshot, read_client_engagement_status, read_business_time_zone):
+ * `{ status: available | needs_input | refused | unavailable, message, ... }` and NO `success` / `ok`.
+ * Strict, so no other result shape changes meaning: a `success`/`ok` flag, a missing `message`, or any
+ * other status is not an envelope. Producers are untouched; this only reads them.
+ */
+function readEnvelopeStatus(out: any): "available" | "needs_input" | "refused" | "unavailable" | null {
+  if (!out || typeof out !== "object" || Array.isArray(out)) return null;
+  if ("success" in out || "ok" in out || typeof out.message !== "string") return null;
+  const s = out.status;
+  return s === "available" || s === "needs_input" || s === "refused" || s === "unavailable" ? s : null;
 }
 function describeStep(
   tc: any,
@@ -366,6 +384,11 @@ function describeStep(
   // not run. Rendering it would show a client an owner's action, and for some tools the model's own
   // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
   if (out?.forbidden_seat === true) return null;
+  // E4-S3 — a read that is waiting on the owner's answer (which client? a usable search?) or that was
+  // refused read nothing and finished nothing: like a proposal waiting on the owner, it is not a step.
+  // PAIGE's reply asks the question or gives the refusal. `unavailable` stays, worded as the failure.
+  const readEnvelope = readEnvelopeStatus(out);
+  if (readEnvelope === "needs_input" || readEnvelope === "refused") return null;
   // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
   if (out?.error === "internal_text_in_draft") return null;
   // C4a — the approval resume's two refusals are not steps either. A re-emit of an act the approval
@@ -611,8 +634,10 @@ function describeStep(
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
     case "get_business_snapshot": return { label: failed ? "Couldn't take stock of your business" : "Taking stock of your business", group: "shared" };
-    case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checking where that client stands", group: "shared" };
-    case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checking your business time zone", group: "shared" };
+    // E4-S3: a finished read says it finished. (The START keeps its present-tense label, step-start.ts.)
+    // read_business_metric's wording is Exp02's and is deliberately not set here (no Exp02 sign-off).
+    case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checked where that client stands", group: "shared" };
+    case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
 }
@@ -1484,6 +1509,10 @@ serve(async (req) => {
     const approvalRefusals = new Map<string, ApprovalRefusalReason>();
     const approvalTokenTool = new Map<string, string>();
     const toolResultContent = new Map<string, string>();
+    // E4-S3 — the record links an ADMITTED read returned, held beside (never inside) its tool result so
+    // they never enter model context. Keyed by the call OBJECT, as `finishedSteps` is: a provider may
+    // omit `tc.id`. Read once per round, only for a read whose result is `available`.
+    const readRecordLinkSource = new Map<object, ReadRecordLink[]>();
     // Before anything in this request can use an approval: one used before this moment was used by
     // an earlier request, and whatever that was may have done the work.
     const approvalRequestStartedAt = new Date().toISOString();
@@ -16282,14 +16311,39 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // E4-S2 — last in the chain so no reviewed incumbent dispatch gains a dominating condition. Same finished-round, scope, cancellation and read-only Harness gates as every tool
           // above. The caller-JWT client is mandatory: find_clients_for_status,
           // read_client_engagement_status and read_business_time_zone re-prove the active workspace and
-          // the owner/admin seat in their own bodies and each write one capability receipt. The tenant
-          // comes from the server-resolved persona, never from the model. Neither tool writes.
-          const engagementScope = { tenantId: callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null };
+          // the owner/admin seat in their own bodies. The tenant comes from the server-resolved persona,
+          // never from the model. Neither tool writes business state.
+          // E4-S3 — in this order: dispatch; strip the record links out of the model's content (they are
+          // shown to the owner, never read by the model); record PAIGE's read at the executor, exactly
+          // once, only for an `available` answer and only when the SQL read did not already write its own
+          // receipt (`serverRecorded`, true until the readers stop receipting) — keyed on THIS read, so a
+          // name search's own receipt never stands in for the status read's; then push the content.
+          const engagementTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const engagementReads: Array<{ key: string; serverRecorded: boolean }> = [];
+          const engagementScope = { tenantId: engagementTenant, onRead: (key: string, serverRecorded: boolean) => { engagementReads.push({ key, serverRecorded }); } };
           const engagementArgs = JSON.parse(tc.function.arguments || "{}");
           const result = tc.function.name === "read_client_engagement_status"
             ? await dispatchClientStandingChat(engagementScope, supabaseClient, engagementArgs)
             : await dispatchBusinessTimeZoneChat(engagementScope, supabaseClient, engagementArgs);
-          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+          const { record_links: engagementLinks, ...engagementForModel } = result;
+          if (result.status === "available" && engagementLinks?.length) readRecordLinkSource.set(tc, engagementLinks);
+          if (result.status === "available" && engagementTenant
+            && engagementReads.some((r) => r.key === tc.function.name)
+            && !engagementReads.some((r) => r.key === tc.function.name && r.serverRecorded)) {
+            try {
+              await recordCapabilityRun(supabase, {
+                tenantId: engagementTenant,
+                actorId: user.id,
+                capabilityKey: tc.function.name,
+                outcome: "capability_succeeded",
+                runId: await stableRunId([tc.function.name, engagementTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: { channel: "paige_chat", tool: tc.function.name },
+              });
+            } catch (e) {
+              console.error("[paige] read capability run not recorded:", (e as Error)?.message);
+            }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(engagementForModel) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -16729,6 +16783,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
+      // E4-S3 — the records this turn's available reads drew on, as REFERENCES (destination, a client's
+      // id and name). Streamed once as a paige_record_links frame and persisted as such; the address is
+      // rebuilt from the current account when the chat renders. A read is not an effect, so this never
+      // joins the no-effects guards below.
+      const readLinkTrace: ReadRecordLink[] = [];
       // R2b — the inline research card's payload. Captured from the deep_research tool
       // result in the stream scan below; streamed to the client as a paige_research frame
       // (attached to the SAME assistant turn — one Paige turn, ruling §7) and persisted in
@@ -16739,9 +16798,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const interactiveEffects: NonNullable<ReturnType<typeof interactiveEffect>>[] = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
+      // E4-S3: read links persist as REFERENCES only (destination, a client id, its name) — never a
+      // path, URL, readback or record_locator; the address is rebuilt from the current account.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length)
           ? {
               approval_queued: queuedApprovals,
               ...(interactiveEffects.length ? { interactive: { request_intent_id: payloadRequestIntentId,
@@ -16759,6 +16820,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ...(researchTrace.length ? { paige_research: researchTrace.map((r) => ({
                 run_id: r.run_id, question: r.question, saved: r.saved === true,
               })) } : {}),
+              ...(readLinkTrace.length ? { paige_record_links: readRecordLinks(readLinkTrace) } : {}),
             }
           : null,
       });
@@ -17429,6 +17491,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });
                   }
+                  // E4-S3 — an available admitted read's record links (held beside its result, never in it).
+                  if (CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc.function?.name ?? "")) && parsed?.status === "available") {
+                    const links = readRecordLinkSource.get(tc);
+                    if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
+                  }
                 } catch { /* keep ok */ }
                 // BEFORE the cosmetic-trace drop below. `describeStep` returning null means the
                 // step should not RENDER; it says nothing about whether a write happened, and a
@@ -17868,6 +17935,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
+          // E4-S3 — one frame of read references per turn, through emitContent so a protected turn holds
+          // (and a withheld one drops) it like every other card.
+          if (readLinkTrace.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_record_links: readRecordLinks(readLinkTrace) })}\n\n`));
           // R2b — the inline research card's live payload (attached to the same assistant
           // turn, ruling §7; reloaded turns rehydrate from the run reference instead).
           for (const r of researchTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_research: r })}\n\n`));
@@ -18136,6 +18206,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // alone, leaves the suite green; both together do not.
             discardContent();
             pendingTenantKbTelemetry = null;
+            // E4-S3: a withheld answer keeps no read links either (they were dropped with the held frames).
+            readLinkTrace.length = 0;
             finalAssistantText = withheld;
             emitTurnTerminal(controller, "withheld");
             try {
@@ -18181,6 +18253,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            if (e instanceof InteractiveSuperseded || interactive?.superseded) {
              turnTracker.interrupted();
              discardContent();
+             // E4-S3: the read links went with the discarded frames, so the saved turn keeps none.
+             readLinkTrace.length = 0;
              const interruptedText = "Response interrupted by your newer instruction. Completed work remains saved.";
              await persistAssistantTurn(interruptedText, withTurnRecord(interruptedText, assistantTurnMetadata()));
              emitTurnTerminal(controller, "interrupted");
@@ -18196,6 +18270,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
              // the signed-output wrapper cannot mint a success receipt.
              console.error("[paige] Live answer interrupted");
              discardContent();
+             // E4-S3: a read is not an effect. Its links went with the discarded frames, so an
+             // interrupted read-only turn saves no links-only row (the caller got answer_interrupted).
+             readLinkTrace.length = 0;
              const interruptedMeta = assistantTurnMetadata();
              if (!turnCarriesProtectedContent() && payloadThreadId && (finalAssistantText.trim() || interruptedMeta.bundleRef)
                && await revalidateTenantKnowledgeScope()) {

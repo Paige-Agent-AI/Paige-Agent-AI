@@ -18,6 +18,7 @@ let routeIntent = 'answer';
 let modelStopReason = 'end_turn';
 let modelReply = 'Answered in words.';
 let readToolUse = null; // E4-S2: an ADMITTED read the model calls on its first round, e.g. { name, input }
+const modelBodies = []; // E4-S3: every model request body, so a later round's tool_result content can be read
 globalThis.fetch = async (url, opts) => {
   if (!String(url).includes('api.anthropic.com')) return new Response('{}', { status: 503 });
   const body = JSON.parse(opts.body);
@@ -25,6 +26,7 @@ globalThis.fetch = async (url, opts) => {
     return Response.json({ content: [{ type: 'text', text: JSON.stringify({ intent: routeIntent, research: 'none', difficulty: 'routine', image: 'none', needs_workspace_data: routeIntent === 'act', confidence: .9 }) }], usage: { input_tokens: 1, output_tokens: 1 } });
   }
   modelCalls++;
+  modelBodies.push(body);
   if (modelCalls === 1) offeredToolCount = Array.isArray(body.tools) ? body.tools.length : 0;
   if (danglingStream) {
     // A provider connection that dies mid-answer: bytes arrived, the turn never finished.
@@ -338,6 +340,134 @@ const refusedReadWire = await refusedRead.text();
 assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1);
 assert.ok(!refusedReadWire.includes(modelReply), 'an ungrounded reply after a refused read is not kept');
 assert.ok(refusedReadWire.includes('Actions are unavailable in this conversation'));
+// The refused read wrote no PAIGE receipt and no links.
+assert.equal(rec.rpc.filter(c => c.name === 'record_capability_run').length, 0, 'a refused read records nothing');
+assert.ok(!refusedReadWire.includes('paige_record_links'), 'a refused read links to nothing');
+
+// E4-S3 — "See it, then verify it". The step line tells the truth about a read, an available read links
+// to the records it drew on (references only, never into the model), and PAIGE's read is recorded once
+// at the executor when the SQL read did not already write its own receipt.
+const steps = (wire) => wire.split('\n').filter((l) => l.startsWith('data: ') && l.includes('"paige_step"'))
+  .map((l) => { try { return JSON.parse(l.slice(6)).paige_step; } catch { return null; } }).filter(Boolean);
+const frames = (wire, key) => wire.split('\n').filter((l) => l.startsWith('data: ') && l.includes(`"${key}"`))
+  .map((l) => JSON.parse(l.slice(6))[key]);
+const settledRef = () => rec.rpc.find(c => c.name === 'paige_chat_interactive_settle')?.args.p_bundle_ref ?? {};
+const toolResultText = () => JSON.stringify(modelBodies.slice(1).map((b) => b.messages));
+const CLIENT_ID = 'e4000000-0000-4000-8000-0000000c0001';
+const { readFileSync } = await import('node:fs');
+const clientSource = JSON.parse(readFileSync(new URL('../src/__tests__/fixtures/exp04-client-status-source.json', import.meta.url), 'utf8'));
+const sourceWithoutReceipt = { ...clientSource }; delete sourceWithoutReceipt.receipt_id;
+const clientRpcs = (read) => ({ rpcs: { ...zoneRpcs.rpcs,
+  find_clients_for_status: { data: { matches: [{ id: CLIENT_ID, name: 'Test Consulting Client', status: 'active', exact: true }], more: false }, error: null },
+  read_client_engagement_status: read } });
+routeIntent = 'answer'; modelReply = 'Test Consulting Client is signed and one payment is overdue.';
+
+// (a) A no-match client search asks which client: no finished-check row, live or persisted; no links; no receipt.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_client_engagement_status', input: { client: 'Nobody' } };
+rec = scenario({ rpcs: { ...zoneRpcs.rpcs, find_clients_for_status: { data: { matches: [], more: false }, error: null } } });
+const noMatchWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'Where does Nobody stand?' }] }, id(50)))).text();
+assert.equal(rec.rpc.filter(c => c.name === 'find_clients_for_status').length, 1, 'the search ran');
+assert.equal(steps(noMatchWire).filter((st) => st.status === 'done').length, 0, `a no-match search is not a finished check\n${JSON.stringify(steps(noMatchWire))}`);
+assert.ok(!(settledRef().turn_trace ?? []).some((t) => /client stands/.test(t.label)), 'a no-match search persists no check row');
+assert.equal(frames(noMatchWire, 'paige_record_links').length, 0, 'nothing was read, so nothing links');
+assert.equal(settledRef().paige_record_links, undefined);
+assert.equal(rec.rpc.filter(c => c.name === 'record_capability_run').length, 0, 'a search that read no client records nothing');
+
+// (b) An unavailable time-zone read is an error row that persists with the failure wording.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_business_time_zone', input: {} };
+rec = scenario({ rpcs: { ...zoneRpcs.rpcs, read_business_time_zone: { data: null, error: { code: 'XX000', message: 'x' } } } });
+const downWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'What is my business time zone?' }] }, id(51)))).text();
+assert.ok(steps(downWire).some((st) => st.status === 'error' && st.label === "Couldn't check your business time zone"), 'an unavailable read closes as an error');
+assert.ok((settledRef().turn_trace ?? []).some((t) => t.status === 'error' && t.label === "Couldn't check your business time zone"), 'and persists as one');
+assert.equal(rec.rpc.filter(c => c.name === 'record_capability_run').length, 0, 'an unavailable read records nothing');
+
+// (c) An available client read: one finished row, ONE links frame (references only), persisted the same,
+//     never in the model's content; PAIGE's receipt written once by the executor (the SQL wrote none).
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_client_engagement_status', input: { client: 'Test Consulting Client' } };
+rec = scenario(clientRpcs({ data: sourceWithoutReceipt, error: null }));
+const standWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'Where does Test Consulting Client stand?' }] }, id(52)))).text();
+assert.ok(standWire.includes(modelReply), 'the grounded answer streams');
+assert.ok(steps(standWire).some((st) => st.status === 'done' && st.label === 'Checked where that client stands'), 'a finished read says so');
+const linkFrames = frames(standWire, 'paige_record_links');
+assert.equal(linkFrames.length, 1, 'exactly one links frame per turn');
+assert.deepEqual(linkFrames[0][0], { destination: 'contacts', record_id: CLIENT_ID, subject: 'Test Consulting Client' });
+assert.ok(linkFrames[0].some((l) => l.destination === 'sales_invoices'), 'the invoices the answer drew on are linked');
+assert.deepEqual(settledRef().paige_record_links, linkFrames[0], 'the reload shows the same links');
+assert.ok(!/\/solo\/|https?:\/\/|record_locator|readback/.test(JSON.stringify(settledRef().paige_record_links)), 'references only, never an address');
+assert.ok(!toolResultText().includes('record_links'), "the links never enter the model's context");
+assert.ok(toolResultText().includes('CLIENT:'), "the model still reads the projection");
+const standReceipts = rec.rpc.filter(c => c.name === 'record_capability_run');
+assert.equal(standReceipts.length, 1, 'PAIGE records the answered read exactly once');
+assert.equal(standReceipts[0].client, 'service', 'recorded server-side with the service role, never from the JWT');
+assert.equal(standReceipts[0].args._capability_key, 'read_client_engagement_status');
+assert.equal(standReceipts[0].args._actor_id, actor);
+assert.equal(standReceipts[0].args._tenant_id, tenant);
+assert.equal(standReceipts[0].args._outcome, 'capability_succeeded');
+assert.equal(standReceipts[0].args._detail?.channel, 'paige_chat');
+
+// (d) While the SQL read still writes its own receipt (today), the executor does not write a second one.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0;
+rec = scenario(clientRpcs({ data: clientSource, error: null }));
+await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'Where does Test Consulting Client stand?' }] }, id(53)))).text();
+assert.equal(rec.rpc.filter(c => c.name === 'record_capability_run').length, 0, 'no double receipt while the SQL reader still records');
+
+// (d2) The suppression is keyed on THIS read: a name search that wrote its own receipt does not stand in
+//      for the status read. find_clients_for_status server-recorded, read_client_engagement_status not →
+//      exactly one executor receipt, for the status read.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0;
+rec = scenario({ rpcs: { ...clientRpcs({ data: sourceWithoutReceipt, error: null }).rpcs,
+  find_clients_for_status: { data: { matches: [{ id: CLIENT_ID, name: 'Test Consulting Client', status: 'active', exact: true }], more: false, receipt_id: 'e4000000-0000-4000-8000-0000000f0001' }, error: null } } });
+await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'Where does Test Consulting Client stand?' }] }, id(56)))).text();
+assert.equal(rec.rpc.filter(c => c.name === 'find_clients_for_status').length, 1, 'the name search ran');
+const keyedReceipts = rec.rpc.filter(c => c.name === 'record_capability_run');
+assert.equal(keyedReceipts.length, 1, "a search's own receipt does not suppress the status read's receipt");
+assert.equal(keyedReceipts[0].args._capability_key, 'read_client_engagement_status');
+
+// (e) An available time-zone read links to the setting and records PAIGE's read.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_business_time_zone', input: {} };
+rec = scenario(zoneRpcs);
+const tzWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'What is my business time zone?' }] }, id(54)))).text();
+assert.deepEqual(frames(tzWire, 'paige_record_links'), [[{ destination: 'business_time_zone', record_id: null }]]);
+assert.ok(steps(tzWire).some((st) => st.status === 'done' && st.label === 'Checked your business time zone'));
+const tzReceipts = rec.rpc.filter(c => c.name === 'record_capability_run');
+assert.equal(tzReceipts.length, 1);
+assert.equal(tzReceipts[0].args._capability_key, 'read_business_time_zone');
+
+// (f) Tier (critique A1). A child typed account_type='sub_account' resolves to the 'tenant' tier
+//     (get_actor_access) and IS offered these reads — that is scenario (e): the server sends tier-neutral
+//     references and the CLIENT resolver fails closed for a sub-account (client list only; see
+//     src/lib/links/workspaceLinks.test.ts). A legacy standalone-typed child resolves to 'subaccount' and
+//     is not offered them at all: nothing is read, linked or recorded.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_business_time_zone', input: {} };
+rec = scenario({ rpcs: { ...zoneRpcs.rpcs, get_actor_access: { data: { tier: 'subaccount' }, error: null } } });
+const subWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'What is my business time zone?' }] }, id(55)))).text();
+assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 0, 'a subaccount-tier caller is not offered the read');
+assert.equal(frames(subWire, 'paige_record_links').length, 0);
+assert.equal(rec.rpc.filter(c => c.name === 'record_capability_run').length, 0);
+// (g) Superseded (critique review, ANT-147 alpha fix): an available read whose turn is then superseded by a
+//     newer instruction. The read's links frame is discarded with the held frames, so the saved
+//     "interrupted" turn must not carry read links that never reached the screen.
+receipts.length = 0; modelCalls = 0; modelBodies.length = 0; readToolUse = { name: 'read_business_time_zone', input: {} };
+{
+  let latest = id(60); let held = null; const newer = id(61);
+  rec = scenario({ rpcs: { ...zoneRpcs.rpcs,
+    paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+    paige_chat_interactive_executor_v2: (a) => {
+      if (a.p_operation === 'acquire') held = a.p_intent;
+      if (a.p_operation === 'release' && held === a.p_intent) held = null;
+      return { data: { latest, executor: held, acquired: held === a.p_intent, terminal: receipts.length > 0, stopped: false }, error: null };
+    },
+    // A newer instruction arrives while the read runs: the next check finds this intent superseded.
+    read_business_time_zone: () => { latest = newer; return zoneRpcs.rpcs.read_business_time_zone; },
+  } });
+  const supWire = await (await capturedHandler()(req({ messages: [{ role: 'user', content: 'What is my business time zone?' }] }, id(60)))).text();
+  assert.equal(rec.rpc.filter(c => c.name === 'read_business_time_zone').length, 1, `the read ran before the supersession\n${supWire.slice(0, 600)}`);
+  const supSettles = rec.rpc.filter(c => c.name === 'paige_chat_interactive_settle');
+  assert.equal(supSettles.length, 1, 'the superseded turn settles once');
+  assert.equal(supSettles[0].args.p_bundle_ref?.turn_state?.state, 'INTERRUPTED');
+  assert.equal(frames(supWire, 'paige_record_links').length, 0, 'no links frame reached the screen');
+  assert.equal(supSettles[0].args.p_bundle_ref?.paige_record_links, undefined, 'a superseded turn saves no read links');
+}
 readToolUse = null;
 
 routeIntent = 'answer'; modelReply = 'Answered in words.'; receipts.length = 0; modelCalls = 0;

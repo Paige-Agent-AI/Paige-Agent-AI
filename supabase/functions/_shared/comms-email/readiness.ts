@@ -23,18 +23,45 @@ export interface EmailSenderFacts {
   fromAddress: string | null;
   credentialReferencePresent: boolean;
   smtpConfigured?: boolean;
+  /**
+   * PAIGE Email (SendGrid) only: the From's domain belongs to THIS business and carries SendGrid
+   * verification facts (tenant_email_domains.sendgrid_status='verified' + domain id + time), the same
+   * rule prepare_comms_email_send enforces (_comms_email_sendgrid_sender_verified). An active connector
+   * row is never this proof: a workspace admin can write a connector, not a verification.
+   */
+  sendgridSenderVerified?: boolean;
 }
-export interface EmailProviderEnvironment { resendConfigured: boolean; googleConfigured: boolean }
-export type EmailSenderSetupReason = "TENANT_EMAIL_SENDER_MISSING" | "EMAIL_PROVIDER_NOT_CONFIGURED" | "EMAIL_RECONNECT_REQUIRED";
+/**
+ * `sendgridConfigured` is the PRESENCE (never the value) of the platform's restricted SendGrid Mail
+ * Send credential. A caller that does not state it (invoice delivery today) does not recognise a
+ * SendGrid sender at all: for it, SendGrid stays an unsupported provider, exactly as before.
+ */
+export interface EmailProviderEnvironment { resendConfigured: boolean; googleConfigured: boolean; sendgridConfigured?: boolean }
+export type EmailSenderSetupReason = "TENANT_EMAIL_SENDER_MISSING" | "SENDER_VERIFICATION_MISSING" | "EMAIL_PROVIDER_NOT_CONFIGURED" | "EMAIL_RECONNECT_REQUIRED";
 
-/** null = the sender is usable; otherwise the setup step that is missing. */
+const BASE_EMAIL_PROVIDERS = ["resend", "gmail", "smtp"];
+/** The providers a caller recognises: SendGrid only when the caller states the SendGrid credential fact. */
+export const emailProvidersFor = (env: Pick<EmailProviderEnvironment, "sendgridConfigured">): string[] =>
+  typeof env.sendgridConfigured === "boolean" ? [...BASE_EMAIL_PROVIDERS, "sendgrid"] : BASE_EMAIL_PROVIDERS;
+
+/**
+ * null = the sender is usable; otherwise the setup step that is missing. For PAIGE Email (SendGrid)
+ * the four states are, in order: no usable connection (TENANT_EMAIL_SENDER_MISSING) → the sending
+ * domain is not verified for this business (SENDER_VERIFICATION_MISSING) → the platform's authorized
+ * sending credential is not configured (EMAIL_PROVIDER_NOT_CONFIGURED) → ready (null).
+ */
 export function emailSenderReadiness(
   s: EmailSenderFacts | null | undefined,
   env: EmailProviderEnvironment,
 ): null | { state: "needs_setup"; reason: EmailSenderSetupReason } {
   const needs = (reason: EmailSenderSetupReason) => ({ state: "needs_setup" as const, reason });
-  if (!s || !s.tenantMatches || !s.active || !s.fromAddress || !EMAIL_ADDRESS.test(s.fromAddress) || !["resend", "gmail", "smtp"].includes(s.provider)) {
+  if (!s || !s.tenantMatches || !s.active || !s.fromAddress || !EMAIL_ADDRESS.test(s.fromAddress) || !emailProvidersFor(env).includes(s.provider)) {
     return needs("TENANT_EMAIL_SENDER_MISSING");
+  }
+  if (s.provider === "sendgrid") {
+    if (s.sendgridSenderVerified !== true) return needs("SENDER_VERIFICATION_MISSING");
+    if (env.sendgridConfigured !== true) return needs("EMAIL_PROVIDER_NOT_CONFIGURED");
+    return null;
   }
   if (s.provider === "resend" && !env.resendConfigured) return needs("EMAIL_PROVIDER_NOT_CONFIGURED");
   if (s.provider === "gmail" && (!env.googleConfigured || !s.credentialReferencePresent)) return needs("EMAIL_RECONNECT_REQUIRED");
@@ -122,6 +149,7 @@ const contactName = (row: ObjectValue): string => {
 export async function resolveCommsEmailParties(
   admin: CommsEmailAdmin,
   input: { tenantId: string; contactId: string; connectorId: string | null },
+  providers: readonly string[] = BASE_EMAIL_PROVIDERS,
 ): Promise<CommsEmailParties> {
   const contact = await admin.from("clients").select(`id,tenant_id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", input.contactId).eq("tenant_id", input.tenantId).maybeSingle();
@@ -144,7 +172,7 @@ export async function resolveCommsEmailParties(
     .eq("tenant_id", input.tenantId).eq("channel_type", "email").eq("active", true).eq("status", "active");
   if (listed.error || !Array.isArray(listed.data)) throw new Error("sender_read_failed");
   const senders = (listed.data as unknown[]).map(object)
-    .filter((c) => c.tenant_id === input.tenantId && typeof c.id === "string" && ["resend", "gmail", "smtp"].includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
+    .filter((c) => c.tenant_id === input.tenantId && typeof c.id === "string" && providers.includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
     .map((c) => ({ connector_id: (c.id as string).toLowerCase(), from_address: normalizeCommsEmailAddress(c.from_address)! }))
     .sort((a, b) => a.from_address.localeCompare(b.from_address) || a.connector_id.localeCompare(b.connector_id));
   if (!senders.length) return { kind: "sender_missing", contactName: name, recipient };
@@ -163,12 +191,33 @@ export async function readEmailSenderFacts(admin: CommsEmailAdmin, tenantId: str
   if (error) throw new Error("setup_read_failed");
   if (!data) return null;
   const c = object(data), config = object(c.config);
-  return {
+  const facts: EmailSenderFacts = {
     tenantMatches: c.tenant_id === tenantId, active: c.active === true && c.status === "active", provider: String(c.provider ?? ""),
     fromAddress: typeof c.from_address === "string" ? c.from_address : null,
     credentialReferencePresent: typeof c.credentials_vault_ref === "string" && !!c.credentials_vault_ref,
     smtpConfigured: typeof config.host === "string" && Number.isInteger(config.port),
   };
+  if (facts.provider === "sendgrid") facts.sendgridSenderVerified = await readSendgridSenderVerified(admin, tenantId, facts.fromAddress);
+  return facts;
+}
+
+/**
+ * Whether THIS business verified the From's domain for PAIGE Email (SendGrid). Mirrors
+ * _comms_email_sendgrid_sender_verified (the database re-checks it at prepare and at send). Reads
+ * only the verification facts, filtered to the server-derived tenant and the exact domain. Fails
+ * closed: a malformed From or a missing row is "not verified"; a read failure throws.
+ */
+export async function readSendgridSenderVerified(admin: CommsEmailAdmin, tenantId: string, fromAddress: string | null): Promise<boolean> {
+  const address = normalizeCommsEmailAddress(fromAddress);
+  const parts = address?.split("@") ?? [];
+  if (!address || parts.length !== 2 || !parts[1]) return false;
+  const { data, error } = await admin.from("tenant_email_domains").select("tenant_id,domain,sendgrid_status,sendgrid_domain_id,sendgrid_verified_at")
+    .eq("tenant_id", tenantId).eq("domain", parts[1]).maybeSingle();
+  if (error) throw new Error("sender_verification_read_failed");
+  const d = object(data);
+  return d.tenant_id === tenantId && typeof d.domain === "string" && d.domain.trim().toLowerCase() === parts[1]
+    && d.sendgrid_status === "verified" && typeof d.sendgrid_verified_at === "string" && !!d.sendgrid_verified_at
+    && typeof d.sendgrid_domain_id === "string" && !!d.sendgrid_domain_id.trim();
 }
 
 /** The recipient-specific pre-send check (_shared/pre-send-pipeline.ts `runPreSend`), injected. */
@@ -184,7 +233,9 @@ export async function readCommsEmailReadiness(
   env: (key: string) => string | undefined,
   preSendCheck: CommsEmailPreSendCheck,
 ): Promise<CommsEmailReadiness> {
-  const facts = { recipient: input.recipient, sender: null as EmailSenderFacts | null, resendConfigured: !!env("RESEND_API_KEY"), googleConfigured: !!env("GOOGLE_OAUTH_CLIENT_ID") && !!env("GOOGLE_OAUTH_CLIENT_SECRET") };
+  // Presence checks only: no credential value is read into a fact, logged or returned.
+  const facts = { recipient: input.recipient, sender: null as EmailSenderFacts | null, resendConfigured: !!env("RESEND_API_KEY"), googleConfigured: !!env("GOOGLE_OAUTH_CLIENT_ID") && !!env("GOOGLE_OAUTH_CLIENT_SECRET"),
+    sendgridConfigured: !!env("SENDGRID_MAIL_SEND_API_KEY") };
   try {
     if (input.connectorId) facts.sender = await readEmailSenderFacts(admin, input.tenantId, input.connectorId);
     const setup = commsEmailReadiness(facts);

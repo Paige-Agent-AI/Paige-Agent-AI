@@ -31,6 +31,22 @@
 // here so nothing silently claims complaint handling.
 // 202-vs-delivered honesty: a receipt here is a PROVIDER-REPORTED outcome; the
 // send path's 202 never meant recipient delivery — only a 'delivered' event does.
+//
+// GOVERNED MESSAGE (Experience 03, migration 20271031000200): the same RPC now also
+// moves the governed email the event is about — only when it CORRELATES (sg_message_id
+// prefix = the stored provider id of a provider-accepted SendGrid binding, and ALL THREE
+// custom_args claims send-message sets — paige_tenant_id / paige_operation_id /
+// paige_message_id — match; an absent claim is a non-match). A send whose outcome the
+// door could not read (no stored id) is settled only when all three claims AND the
+// event's recipient match it exactly. An event for a send that is still being handed
+// over comes back 'pending', which this door answers 503 so SendGrid redelivers it
+// (bounded in SQL). A claim that does not match changes nothing and is journalled
+// 'uncorrelated'. This door only
+// READS what the event says and passes it through; every decision (mapping, ordering,
+// never-backwards, idempotency) is made once, in SQL. A bounce's `type` ('bounce' |
+// 'blocked') is passed so a blocked bounce is recorded as blocked, not as a generic
+// bounce; the provider's reason (`reason`, or a deferral's `response`) is passed
+// capped, and the database strips addresses from it before keeping it.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifySendgridEvent } from "../_shared/webhookSig.ts";
 
@@ -48,6 +64,24 @@ const STATUS_MAP: Record<string, string> = {
   dropped: "dropped",
 };
 const MAX_BATCH = 1000;
+const MAX_REASON = 1000;
+
+/** A custom_args claim as the event carried it: absent -> null; present -> its text, so a
+ *  malformed value reaches the database as a claim that fails correlation (never silently dropped). */
+export function claimOf(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  const text = typeof value === "string" ? value.trim() : JSON.stringify(value) ?? "";
+  return text.slice(0, 200);
+}
+
+/** What the event says about WHY, for the outcomes that carry a reason. */
+export function receiptDetail(kind: string, evt: Record<string, unknown>): { bounceType: string | null; reason: string | null } {
+  const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.slice(0, MAX_REASON) : null);
+  if (kind === "bounce") return { bounceType: text(evt.type)?.slice(0, 32) ?? null, reason: text(evt.reason) };
+  if (kind === "dropped") return { bounceType: null, reason: text(evt.reason) };
+  if (kind === "deferred") return { bounceType: null, reason: text(evt.response) ?? text(evt.reason) };
+  return { bounceType: null, reason: null };
+}
 
 async function readBody(req: Request): Promise<string> {
   const reader = req.body?.getReader();
@@ -142,8 +176,12 @@ Deno.serve(async (req) => {
     }
     const receiptId = `sg:${sgEventId}`;
     try {
+      const detail = receiptDetail(kind, evt);
       const { data, error } = await admin.rpc("ingest_sendgrid_receipt", {
         _receipt_id: receiptId, _message_id: sgMessageId, _status: status, _email: email, _event_at: timestamp,
+        _tenant_id: claimOf(evt.paige_tenant_id), _operation_id: claimOf(evt.paige_operation_id),
+        _paige_message_id: claimOf(evt.paige_message_id),
+        _bounce_type: detail.bounceType, _reason: detail.reason,
       });
       if (error) {
         // NOT persisted: retriable failure for the whole batch.

@@ -18,7 +18,8 @@ import { TableCell, TableRow } from "@/components/ui/table";
 
 interface LogRow {
   id: string;
-  user_id: string;
+  // NULL on a row keyed to a business contact rather than a portal login (Experience 03 history rows).
+  user_id: string | null;
   channel: string;
   message_type: string;
   status: string;
@@ -217,7 +218,7 @@ const CommunicationsAdmin = () => {
                 </TableCell>
                 <TableCell className="capitalize">{row.channel}</TableCell>
                 <TableCell>{row.message_type}</TableCell>
-                <TableCell className="font-mono text-xs">{row.user_id.slice(0, 8)}…</TableCell>
+                <TableCell className="font-mono text-xs">{row.user_id ? `${row.user_id.slice(0, 8)}…` : "—"}</TableCell>
                 <TableCell>
                   <StatePill state={isFailedStatus(row.status) ? "error" : "success"}>
                     {row.status}
@@ -250,8 +251,12 @@ const CommunicationsAdmin = () => {
                       <StatePill state="error">{row.status}</StatePill>
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold capitalize">{row.channel}</span> · {row.message_type} · user{" "}
-                      <span className="font-mono text-xs">{row.user_id.slice(0, 8)}…</span>
+                      <span className="font-semibold capitalize">{row.channel}</span> · {row.message_type}
+                      {row.user_id && (
+                        <>
+                          {" "}· user <span className="font-mono text-xs">{row.user_id.slice(0, 8)}…</span>
+                        </>
+                      )}
                     </div>
                     {row.error_message && (
                       <div className="rounded-md bg-destructive/10 p-2 text-xs text-destructive">

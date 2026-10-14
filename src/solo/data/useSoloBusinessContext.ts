@@ -394,10 +394,11 @@ export function useSoloBusinessContext() {
             error:
               "The account changed before this save response returned. Its result was not shown here.",
           };
-        // Only a PostgreSQL failure establishes a rolled-back transaction.
+        // Connection loss or completion-unknown SQLSTATEs do not establish rollback.
         // Lost transport, HTTP/proxy errors or an unreadable success payload do not.
         const code = String(objectOf(caught).code ?? "");
-        if (!/^(?:[0-9]{2}|0[A-Z]|2[BDF]|3[BDF]|F0|HV|P0|XX)[0-9A-Z]{3}$/.test(code)) {
+        if (code.startsWith("08") || code === "40003" ||
+            !/^(?:[0-9]{2}|0[A-Z]|2[BDF]|3[BDF]|F0|HV|P0|XX)[0-9A-Z]{3}$/.test(code)) {
           unknownSaveTenant.current = tenantAtStart;
           setUnknownTenant(tenantAtStart);
           return { ok: false, kind: "unknown", error: UNKNOWN_SAVE };

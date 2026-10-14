@@ -61,6 +61,17 @@ const loaded = (tenantId = "tenant-a", accessScope = "owner_full") => ({
 });
 
 describe("Solo business context data boundary", () => {
+  it.each(["08007", "40003", "08006"])("holds uncertain PostgreSQL outcome %s until authoritative getter without another write", async code => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({data:null,error:{code,message:"private connection details"}}).mockResolvedValueOnce(loaded());
+    const root=createRoot(document.createElement("div"));await act(async()=>root.render(<Probe />));
+    await act(async()=>{expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"});});
+    expect(latest.saveOutcomeUnknown).toBe(true);
+    await act(async()=>{expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"});});
+    expect(state.rpc.mock.calls.filter(([name])=>name==="save_solo_business_context")).toHaveLength(1);
+    await act(async()=>{expect(await latest.reconcileSave()).toMatchObject({ok:true,kind:"reconciled"});});
+    expect(latest.saveOutcomeUnknown).toBe(false);await act(async()=>root.unmount());
+  });
+
   it("keeps a proxy ERROR outcome unknown after a failed read without another write", async () => {
     state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({ data: null, error: {code:"ERROR",message:"conflict private proxy detail"} }).mockResolvedValueOnce({data:null,error:{code:"42501",message:"private denied detail"}});
     const root = createRoot(document.createElement("div"));

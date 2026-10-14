@@ -319,6 +319,7 @@ export function SoloPaigeWorkspace({
   const wasChatBusy = useRef(false);
   const observedThread = useRef<string | null>(null);
   const requestedInterview = interviewThreadFromSearch(location.search);
+  const [resumeAttempt, setResumeAttempt] = useState(0);
   const resumeScope = `${activeTenantId}:${requestedInterview}`;
   const liveResumeScope = useRef(resumeScope); liveResumeScope.current = resumeScope;
   const [verifiedResume, setVerifiedResume] = useState<{ scope: string; state: "ready" | "failed" } | null>(null);
@@ -345,6 +346,12 @@ export function SoloPaigeWorkspace({
   useEffect(() => {
     if (!activeTenantId || !requestedInterview || clientScope || planScope || presenceScope) return;
     let current = true;
+    const deadline = setTimeout(() => {
+      if (current && liveResumeScope.current === resumeScope) {
+        current = false;
+        setVerifiedResume({ scope: resumeScope, state: "failed" });
+      }
+    }, 30000);
     setVerifiedResume(null);
     setInterviewOpen(false);
     void (async () => {
@@ -353,6 +360,7 @@ export function SoloPaigeWorkspace({
         // Before selecting any transcript, use the incumbent caller-JWT check:
         // current Owner, active membership and the exact private coach thread.
         const checkpoint = await rpc("get_solo_business_interview_checkpoint", { _thread_id: requestedInterview });
+        if (!current || liveResumeScope.current !== resumeScope) return;
         if (checkpoint.error || (checkpoint.data !== null && !cleanInterviewCheckpoint(checkpoint.data, activeTenantId, requestedInterview))) throw new Error("unavailable");
         const context = await rpc("get_solo_business_context");
         const row = context.data as { tenantId?: string; accessScope?: string } | null;
@@ -362,10 +370,17 @@ export function SoloPaigeWorkspace({
         setInterviewOpen(true);
       } catch {
         if (current && liveResumeScope.current === resumeScope) setVerifiedResume({ scope: resumeScope, state: "failed" });
+      } finally {
+        clearTimeout(deadline);
       }
     })();
-    return () => { current = false; };
-  }, [activeTenantId, requestedInterview, resumeScope, clientScope, planScope, presenceScope]);
+    return () => { current = false; clearTimeout(deadline); };
+  }, [activeTenantId, requestedInterview, resumeScope, resumeAttempt, clientScope, planScope, presenceScope]);
+  const leaveReturnVerification = () => {
+    const search = new URLSearchParams(location.search);
+    search.delete("interviewThread");
+    navigate(`${location.pathname}${search.size ? `?${search}` : ""}`, { replace: true });
+  };
   const interviewFocused = interviewOpen && !clientScope && !planScope && !presenceScope;
   const resumeEligible = Boolean(requestedInterview) && !clientScope && !planScope && !presenceScope;
   const resumePending = resumeEligible && verifiedResume?.scope !== resumeScope;
@@ -416,7 +431,7 @@ export function SoloPaigeWorkspace({
         })}
       </div>
       <section id="spw-panel-chat" role="tabpanel" aria-labelledby="spw-tab-chat" hidden={tab !== "chat"} className="spw-panel spw-chat-panel">
-        {resumePending ? <div className="spw-state" role="status">Opening the owned interview…</div> : <PaigeAIChat
+        {resumePending ? <div className="spw-state"><p role="status">Opening the owned interview…</p><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div> : <PaigeAIChat
           hideHeader
           fill
           enableHistory
@@ -452,7 +467,7 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && interviewFocused && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <p role="alert">That interview could not be verified for this workspace. Choose a conversation from history.</p>}<div className="spw-chat-head"><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
+          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && interviewFocused && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className="spw-chat-head"><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
         />}
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>

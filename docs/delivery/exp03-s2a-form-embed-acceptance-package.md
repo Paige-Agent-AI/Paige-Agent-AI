@@ -12,12 +12,17 @@ UI evidence: `docs/evidence/ui-delivery/exp03-s2a-form-embed.md` · Install guid
 ## Identity — the designated account (ANT-52; do not create others)
 
 - **The account:** Antonio Cook's existing SOLO customer account, designated by the owner as the official test account
-  (ANT-52). PC-1 is retired and is not used.
-  - Its identifiers stay in ANT-52. Below, `:acct_user` and `:acct_workspace` stand for them.
+  (owner directive of 2026-10-12, recorded in ANT-21). ANT-21 holds the account register; ANT-52 holds this package's
+  execution results. PC-1 is retired and is not used.
+  - The run uses **only the standalone business the account owns**. The same sign-in is also an admin of a different,
+    real business; that business is never selected. The runner confirms the owned business is the active workspace
+    before step 1 and records its id against the ANT-21 register entry. Below, `:acct_user` and `:acct_workspace`
+    stand for them.
   - No other account, member or workspace is created for this package.
-- **Credentials:** the owner's ordinary sign-in, installed privately for the runner as environment variables
-  (`LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD`) or handed over as a signed-in session (`storageState`). Never printed,
-  logged or screenshotted.
+- **Credentials:** the account signs in with Google only (it has no password), so the runner gets an owner-performed
+  ordinary Google sign-in or a signed-in session handed over privately (`storageState`). Never printed, logged or
+  screenshotted. *(Corrected 2026-10-13: an earlier version named `LIVE_DRIVE_EMAIL` / `LIVE_DRIVE_PASSWORD`, which
+  this account cannot use.)*
 - **This is the owner's real business account.** The run adds only labelled synthetic records (one form, one campaign
   brief if none suitable exists, one test submission and its contact and deal). It changes none of the owner's
   existing forms, pipelines, processes, memberships, subscriptions or provider connections. If a step would need such
@@ -30,10 +35,10 @@ live process) could send a real email or text. The run must not cause a real cus
 
 | # | Check (read-only) | Pass when |
 |---|---|---|
-| P1 | The synthetic form's **Settings › notify** | Off, or only the owner's own address (owner's choice; record which) |
+| P1 | The synthetic form's **Settings › notify** | **Off.** The owned business has a live sending connection, so any notify address would send a real email. *(Corrected 2026-10-13 from "Off, or only the owner's own address".)* |
 | P2 | Stage automations on the pipeline the form or campaign files into | None that sends to the lead. If one exists, **do not change it**: use a pipeline without one, or stop and report D as UNAVAILABLE |
 | P3 | Processes scoped to the form or `form.submitted` | None live. Never switch one on |
-| P4 | The test lead's address | `qa-s2a-1@tests.invalid` and no phone number, so even a missed sender has nowhere to deliver |
+| P4 | The test lead's address | `qa-s2a-1@tests.invalid` and no phone number. This is a backstop, not the no-send control: P1–P3 are the control |
 
 ## Already proven without a sign-in (do not re-run as acceptance; cite)
 
@@ -49,6 +54,8 @@ None of these is authenticated runtime. That is what this package is for.
 
 ## Runner runbook — fixtures (owner signed in, Solo)
 
+0. **Pipeline:** the owned business has no pipeline. If the form or campaign needs one, create one labelled
+   `QA S2a synthetic pipeline` with no stage automations, and record its id.
 1. **Campaign:** Marketing › Campaigns. Reuse a campaign brief labelled synthetic if one exists; otherwise **Create
    campaign brief** named `QA S2a synthetic`. Record its reference (`short_ref`) as `:qa_ref`.
 2. **Form:** Marketing → Vibe Studio → "A short lead form named QA S2a synthetic lead form asking for name and email"
@@ -114,4 +121,4 @@ live edge and `Cross-Origin-Embedder-Policy: require-corp`.
 ## Clean-up
 
 Unpublish the synthetic form (D1). The form, the submission, its contact and deal, and the campaign brief stay in the
-account labelled synthetic unless the owner rules otherwise; their ids are recorded in ANT-52.
+account labelled synthetic unless the owner rules otherwise; their ids are recorded in ANT-52 against the ANT-21 register entry.

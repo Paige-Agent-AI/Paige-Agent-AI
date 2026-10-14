@@ -45,8 +45,8 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
   const recordState = context.reconciling ? "reconciling" : context.saveOutcomeUnknown ? "unknown" :
     context.saving ? "saving" : context.loading ? "reading" : context.error || !ready ? "unavailable" : "ready";
   useEffect(() => {
-    onProfileStatus?.({ tenantId: context.resolvedTenantId, state: recordState, confirmedCount: ready ? confirmedCount : 0 });
-  }, [onProfileStatus, context.resolvedTenantId, recordState, confirmedCount, ready]);
+    onProfileStatus?.({ tenantId: activeTenantId, state: recordState, confirmedCount: ready ? confirmedCount : 0 });
+  }, [onProfileStatus, activeTenantId, recordState, confirmedCount, ready]);
 
   useEffect(() => { liveScope.current = scope; progressGeneration.current++; returnFocusField.current = null; setDraft(null); setMessage(null); setError(null); setPaused(false); setNextField(undefined); setCheckpointBusy(false); return () => { liveScope.current = ""; progressGeneration.current++; }; }, [scope]);
   useEffect(() => {

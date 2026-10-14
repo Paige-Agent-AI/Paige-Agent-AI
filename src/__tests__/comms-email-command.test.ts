@@ -11,7 +11,8 @@ import { decideDeclaredCapability } from "../../supabase/functions/_shared/capab
 import { confirmFingerprint } from "../../supabase/functions/_shared/confirm-fingerprint";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../../supabase/functions/_shared/paige-spine/domains/comms";
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../../supabase/functions/_shared/comms-email/contract";
-import { resolveCommsEmailParties, commsEmailReadinessOutcome, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
+import { resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
+import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "../../supabase/functions/comms-email-command/lead-reply-approval";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 
@@ -184,7 +185,8 @@ function setup(options: Setup = {}) {
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     confirmFingerprint, decideDeclaredCapability, COMMS_EMAIL_SEND_CAPABILITY,
     COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest,
-    resolveCommsEmailParties, commsEmailReadinessOutcome, runPreSend: async () => { throw new Error("readiness is substituted in this suite"); },
+    resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor,
+    verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, runPreSend: async () => { throw new Error("readiness is substituted in this suite"); },
     readCommsEmailReadiness: async (_admin: unknown, input: Row) => { calls.push({ name: "readiness", args: input }); return readiness; },
     executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult,
   };

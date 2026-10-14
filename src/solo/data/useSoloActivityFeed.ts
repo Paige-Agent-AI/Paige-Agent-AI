@@ -66,6 +66,12 @@ export interface SoloActivityItem {
   /** True when Paige performed it; false when a person did. LIVE from actor_type. */
   byPaige: boolean;
   /**
+   * E4-S3 — true only when the record NAMES a person (`actor_type` 'owner_staff': an owner or staff
+   * member's own act, e.g. saving the business time zone). Not the inverse of `byPaige`: an unknown
+   * actor is neither, and stays unattributed rather than credited to anyone.
+   */
+  byPerson: boolean;
+  /**
    * WHICH specialist acted, by its tenant-safe name, or null.
    *
    * `byPaige` above answers "was this Paige or a person"; this answers "which of her team". Null is
@@ -175,6 +181,7 @@ export function toActivityItem(raw: unknown): SoloActivityItem | null {
     // Anything that is not explicitly Paige is reported as a person. The safe direction:
     // over-crediting Paige for a person's work is the misattribution that matters here.
     byPaige: r.actor_type === "paige_agent",
+    byPerson: r.actor_type === "owner_staff",
     // This coercion is a WHITELIST — it builds a new object rather than spreading — so a column the
     // resolver starts returning is dropped here until it is named. That is how the first version of
     // this change shipped attribution the RPC returned and no Solo surface could render.

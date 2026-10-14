@@ -338,3 +338,83 @@ describe('registration', () => {
     }
   });
 });
+
+// Experience 04 E4-S3 — "See it, then verify it". An answered read carries REFERENCES to the records
+// it drew on (never an address); the executor records PAIGE's read, so the dispatcher reports which
+// governed read ran and whether the database already recorded it.
+describe('E4-S3: record links ride only an available read, and never reach the model as an address', () => {
+  it('an available client read carries the client and the record families it read', async () => {
+    const { caller } = fakeCaller({ find_clients_for_status: { data: one() }, read_client_engagement_status: { data: base() } });
+    const r = await dispatchClientStandingChat({ tenantId: TENANT }, caller, { client: 'Test Consulting Client' });
+    expect(r.status).toBe('available');
+    expect(r.record_links?.[0]).toEqual({ destination: 'contacts', record_id: CLIENT, subject: 'Test Consulting Client' });
+    expect(r.record_links?.map((l) => l.destination)).toEqual(expect.arrayContaining(['sales_agreements', 'sales_invoices', 'operations_work']));
+    for (const text of [r.message, r.projection ?? '']) expect(text).not.toMatch(/\/solo\/|https?:\/\//);
+    expect(r.message).toMatch(/never write web addresses/);
+  });
+
+  it('a several-match, no-match, refused, unavailable or malformed read carries none', async () => {
+    const several = fakeCaller({ find_clients_for_status: { data: { matches: [
+      { id: CLIENT, name: 'A', status: null, exact: false }, { id: 'e4000000-0000-4000-8000-0000000c0002', name: 'B', status: null, exact: false }], more: false } } });
+    const none = fakeCaller({ find_clients_for_status: { data: { matches: [], more: false } } });
+    const refused = fakeCaller({ find_clients_for_status: { error: { code: '42501' } } });
+    const down = fakeCaller({ read_client_engagement_status: { error: { code: 'XX000' } } });
+    const broken = fakeCaller({ read_client_engagement_status: { data: { invoices: 'nope' } } });
+    for (const [caller, input] of [[several.caller, { client: 'Te' }], [none.caller, { client: 'Nobody' }], [refused.caller, { client: 'Test' }],
+      [down.caller, { client_id: CLIENT }], [broken.caller, { client_id: CLIENT }]] as const) {
+      const r = await dispatchClientStandingChat({ tenantId: TENANT }, caller, input);
+      expect(r.status).not.toBe('available');
+      expect(r.record_links).toBeUndefined();
+    }
+  });
+
+  it('an available time-zone read links to the setting; a refused one does not', async () => {
+    const ok = await dispatchBusinessTimeZoneChat({ tenantId: TENANT }, fakeCaller({ read_business_time_zone: { data: { state: 'missing', zone: null, can_set: true } } }).caller, {});
+    expect(ok.record_links).toEqual([{ destination: 'business_time_zone', record_id: null }]);
+    const no = await dispatchBusinessTimeZoneChat({ tenantId: TENANT }, fakeCaller({ read_business_time_zone: { error: { code: '42501' } } }).caller, {});
+    expect(no.record_links).toBeUndefined();
+  });
+});
+
+describe('E4-S3: the dispatcher reports each governed read that ran (for the executor receipt)', () => {
+  const spy = () => { const reads: Array<[string, boolean]> = []; return { reads, onRead: (k: string, s: boolean) => { reads.push([k, s]); } }; };
+
+  it('a time-zone read reports itself once, not server-recorded when the read returns no receipt', async () => {
+    const { reads, onRead } = spy();
+    await dispatchBusinessTimeZoneChat({ tenantId: TENANT, onRead }, fakeCaller({ read_business_time_zone: { data: { state: 'missing', zone: null, can_set: true } } }).caller, {});
+    expect(reads).toEqual([['read_business_time_zone', false]]);
+  });
+
+  it('a read that still returns its own receipt id is reported as server-recorded (deploy-order detection)', async () => {
+    const { reads, onRead } = spy();
+    await dispatchBusinessTimeZoneChat({ tenantId: TENANT, onRead }, fakeCaller({ read_business_time_zone: { data: { state: 'missing', zone: null, can_set: true, receipt_id: 'e486ff15-2713-4b83-a2d1-6d5d028f4251' } } }).caller, {});
+    expect(reads).toEqual([['read_business_time_zone', true]]);
+    const client = spy();
+    await dispatchClientStandingChat({ tenantId: TENANT, onRead: client.onRead }, fakeCaller({ find_clients_for_status: { data: { ...one(), receipt_id: 'r1' } }, read_client_engagement_status: { data: base() } }).caller, { client: 'Test Consulting Client' });
+    expect(client.reads).toEqual([['find_clients_for_status', true], ['read_client_engagement_status', true]]);
+  });
+
+  it('a name search then a read reports both, in order; a several-match search reports only the search', async () => {
+    const both = spy();
+    const noReceipt = { ...base() } as Record<string, unknown>; delete noReceipt.receipt_id;
+    await dispatchClientStandingChat({ tenantId: TENANT, onRead: both.onRead }, fakeCaller({ find_clients_for_status: { data: one() }, read_client_engagement_status: { data: noReceipt } }).caller, { client: 'Test Consulting Client' });
+    expect(both.reads).toEqual([['find_clients_for_status', false], ['read_client_engagement_status', false]]);
+    const several = spy();
+    await dispatchClientStandingChat({ tenantId: TENANT, onRead: several.onRead }, fakeCaller({ find_clients_for_status: { data: { matches: [
+      { id: CLIENT, name: 'A', status: null, exact: false }, { id: 'e4000000-0000-4000-8000-0000000c0002', name: 'B', status: null, exact: false }], more: false } } }).caller, { client: 'Te' });
+    expect(several.reads).toEqual([['find_clients_for_status', false]]);
+  });
+
+  it('a refused or failed read reports nothing', async () => {
+    const r = spy();
+    await dispatchClientStandingChat({ tenantId: TENANT, onRead: r.onRead }, fakeCaller({ read_client_engagement_status: { error: { code: '42501' } } }).caller, { client_id: CLIENT });
+    await dispatchBusinessTimeZoneChat({ tenantId: TENANT, onRead: r.onRead }, fakeCaller({ read_business_time_zone: { error: { code: '42501' } } }).caller, {});
+    expect(r.reads).toEqual([]);
+  });
+
+  it('a client read whose source no longer carries receipt_id still composes (the SQL readers stop receipting in PR beta)', async () => {
+    const noReceipt = { ...base() } as Record<string, unknown>; delete noReceipt.receipt_id;
+    const r = await dispatchClientStandingChat({ tenantId: TENANT }, fakeCaller({ read_client_engagement_status: { data: noReceipt } }).caller, { client_id: CLIENT });
+    expect(r.status).toBe('available');
+  });
+});

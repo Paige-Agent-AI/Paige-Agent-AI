@@ -2,6 +2,10 @@
 
 Date: 2026-10-13 · Journey Lead: Experience 03 · Owner decision: Gmail and iCloud Mail are public-launch targets; businesses keep the address they already use. Policy preserved: PAIGE-managed tenant email = SendGrid · customer Gmail = Gmail OAuth · customer iCloud Mail = provider-supported IMAP/SMTP · Platform Operator system mail = Resend.
 
+> **SUPERSEDED BY OWNER DIRECTIVE 2026-10-14**: "Platform Operator system mail = Resend" above is kept as written. All PAIGE email — Platform Operator,
+> platform transactional and tenant — moves to SendGrid, and Resend is being retired. Customer Gmail (OAuth) and iCloud
+> Mail stay optional customer mailboxes, unchanged. The cutover plan is the addendum at the end of this file.
+
 **Status: GROUNDED PLAN, NOT BUILT.** Read-only grounding (four investigators plus an adversarial checker, production SELECT only, no provider calls, no secrets read). Evidence classes: code reading, production read, official provider documentation. Nothing here is authenticated runtime proof.
 
 Full investigator reports are not committed. This file is the reviewed synthesis. Rows marked UNVERIFIED stay unverified until the named proof runs.
@@ -449,3 +453,364 @@ on top of the same door.
 **Real external effects:** a one-click POST or a mailto unsubscribe is a real effect on a third party. QA runs it only
 against team-owned test mailboxes and a team-controlled test list endpoint. No customer mailbox, and no real sender,
 until authorized.
+
+---
+
+# Addendum 2026-10-14 — SendGrid-only cutover plan (owner directive 2026-10-14)
+
+**Owner directive (2026-10-14).** All PAIGE email moves to SendGrid, and Resend is retired. This supersedes the
+2026-10-13 policy in this file's header ("Platform Operator system mail = Resend"); that line is kept and marked
+(§58). The owner named two SendGrid credentials: PAIGE-SENDGRID-MAIL-EXECUTOR (sending) and
+PAIGE-SENDGRID-PLATFORM-ADMIN (configuration). Customer Gmail and iCloud Mail stay optional customer mailboxes, as
+planned above.
+
+**Status: GROUNDED PLAN. Only P0 (this docs record) is done.** Grounded read-only at main
+`6428c2ba61959ef302cf69e0dbd64a878ddbb35f` against production project `xygzykjyynhzqytbqnzu`: no edits, sends,
+deploys, provider changes or secret values read. Four read-only investigations (code, production, credentials, and
+the #2126 governed door) were synthesised and then checked by an independent reviewer; their reports are not
+committed. Evidence labels below: "code read", "production read" (SELECT only), "credential read" (code plus the
+deployed function list) and "#2126 review". Section numbers refer to this addendum. Nothing here is authenticated
+runtime proof.
+
+Spot-checked directly at that commit:
+- `send-message/index.ts:1345-1356` contains the comment "Platform default stays Resend" and
+  `throw new Error("RESEND_API_KEY missing")`.
+- `handle-sendgrid-webhook/index.ts:27-31` acknowledges `unsubscribe` events but does not record them, and names
+  suppression as a deferred decision.
+- `send-transactional-email/index.ts:265` checks `suppressed_emails`.
+- Every document still stating the 2026-10-13 policy was found by search (Section 9).
+
+**Headline:**
+- **Production email runs on Resend only.** 8 `channel_connectors`, all `provider='resend'` (6 active, 2 disabled;
+  re-read 2026-10-14); 0 SendGrid connectors, 0 SendGrid domains and 0 receipts from either provider.
+- **SendGrid exists as code but is inert.** It is wired only for tenant mail, through the governed door from #2126.
+- **No SendGrid route exists for operator or platform mail.**
+- **Auth email appears to run on a third provider, Lovable** (inference; see Section 1).
+- **Volume is tiny,** so a cutover is low-risk. In 90 days there were 22 outbound email `messages` rows (latest
+  2026-10-06), and `email_send_log` holds 36 rows ever (latest 2026-09-12).
+
+## 1. Current provider architecture (verified)
+
+| Email category | Provider today | Path | Live? | Evidence |
+|---|---|---|---|---|
+| Tenant one-to-one email (governed door) | Resend; SendGrid only if a `provider='sendgrid'` connector exists, and none does | `comms-email-command` → `prepare_comms_email_send` → `send-message` | Live: v15 / v95. In 90 days, 19 outbound sent through resend connectors and 3 with no connector | `send-message/index.ts:406-449` (Resend arm), `:1351-1354` ("Platform default stays Resend"), `:348-404` (SendGrid arm); production read query |
+| Tenant scheduled sends and campaigns | Resend (via `send-message`) | `comms-scheduled-drain` and `email-campaign-worker` crons (every minute) → `send-message`; `_email_resolve_sender` returns `'managed','provider','resend'` | Live. Only 1 campaign row exists, a `draft` | Cron jobids 8 and 31; code read |
+| Automatic "PAIGE Email" sender for every business | Resend | Triggers `trg_tenants_paige_managed_email_connector` and `trg_provision_email_connector` → `provision_paige_managed_email_connector` / `provision_email_connector_on_verify` insert `provider='resend'` | Live: 6 active + 2 disabled rows, all from `mail.paigeagent.ai` | code read; production read |
+| Booking confirm / reschedule / cancel / reminders | Resend, called directly | `public-booking:656-731`, `booking-manage:101-160`, `process-booking-notifications:17-92` (cron every 5 min) | Live | code read; cron jobid 1 |
+| Plan reminders | Resend, called directly | `plan-reminder-cron/index.ts:20-52` (cron every minute) | Live | cron jobid 3 |
+| Client portal and team invites | Resend, called directly | `send-portal-invite/index.ts:17-222` | Live, v1649 | code read |
+| Paige skill "draft and email document" | Resend, called directly after approval | `skill-runner/index.ts:486-496` | Live, v138 | code read |
+| Paige MCP email tools | Resend, called directly (bypasses the door) | `paige-mcp/index.ts` `send_transactional_email` (:2505-2597), `send_composed_email`, `bulk_send_template_email` (up to 100), `send_btf_template_email` | Deployed v700 | code read |
+| Invoice delivery | Resend / Gmail / SMTP; SendGrid is not recognised | `prepare_sales_invoice_*` functions with `provider IN ('resend','gmail','smtp')`; `readiness-reader.ts:15` | Live | code read; #2126 review |
+| Platform transactional hub (30+ templates; operator and business sender in one function) | Resend | `send-transactional-email/index.ts:274-336, 688-775` | Deployed v1653. Last `email_send_log` row 2026-09-12 | code read; production read |
+| Platform signup welcome, billing receipt, support, operator team invite | Resend (direct API or SDK) | `tenant-signup:33-113`, `send-payment-confirmation-email` (`npm:resend`), `send-support-request` (`esm.sh/resend`), `send-platform-invite:73-80` | Live or deployed | code read |
+| Platform Operator corporate email | **No mailbox and no connector exist.** The operator workspace `d1f0a7e2-…` has 0 connectors, 0 `messages` and 0 `email_send_log` rows | n/a | n/a | production read |
+| Supabase Auth email (signup, reset) | Lovable (`sendLovableEmail`, `LOVABLE_API_KEY`), through `auth-email-hook` → `enqueue_email`. **The `auth_emails` pgmq queue does not exist.** | `auth-email-hook/index.ts:3,255`; `process-email-queue/index.ts:1,139` (no cron) | Inferred, see note | production read; #2126 review |
+| Inbound email into the unified inbox | Resend (Svix-signed relay) | `handle-resend-webhook` relays `email.received` → `handle-inbound-email` | Deployed. 5 inbound in 90 days: 3 through Resend connectors (latest 2026-09-11) and 2 with no connector (latest 2026-07-29) | code read |
+| Delivery receipts | Resend receiver + reconcile cron (jobid 19); SendGrid receiver built | `handle-resend-webhook`, `reconcile_resend_receipts()`; `handle-sendgrid-webhook` → `ingest_sendgrid_receipt` | Both receipt tables have **0 rows** | production read |
+| Sending-domain setup | Resend Domains API | `manage-tenant-domain/index.ts:22-209` | Deployed v37. The only domain row is `status=failed` | code read; production read |
+| Customer Gmail / iCloud mailboxes | Gmail OAuth; SMTP (iCloud uses SMTP) | `gmail-oauth-*`, `smtp-connect`, `gmail-mailbox-sync` (cron jobid 37) | Code is deployed. **0 Gmail or SMTP connectors and 0 `mailbox_sync_state` rows** | production read |
+
+The auth-email row is an inference. It holds only if `auth-email-hook` is the active Send Email hook, which still needs the dashboard check (Section 3).
+
+## 2. Resend dependency inventory
+
+The classes mean:
+- **REUSE:** provider-neutral, keep as is.
+- **REPAIR:** keep, but route through the governed SendGrid path.
+- **REPLACE:** needs a SendGrid equivalent that does not exist yet.
+- **REMOVE:** delete.
+
+Tiers are op (operator/platform) and ten (tenant). Paths are under `supabase/functions/` unless they start with `src/`, `docs/` or `scripts/`.
+
+| # | Dependency | Path / object | Live? | Tier | Class | Rationale |
+|---|---|---|---|---|---|---|
+| 1 | Generic Resend provider, and `buildProvider`'s default to Resend | `_shared/email/providers.ts:59-94, 114-144` | Bundled; `.send()` is never called in production | both | REMOVE | Dead adapter. Its only caller is `branding.ts`, which uses only the branding output (#2126 review). |
+| 2 | Branding / From-address resolver | `_shared/email/branding.ts:128,166` | Live | both | REUSE | Provider-neutral. Drop the `provider` field. |
+| 3 | `send-message`: Resend arm, key check, fallback sender, `pipe_used='resend'` | `send-message/index.ts:406-449, 1352-1354, 1378, 686/1206/1248/1548` | Live v95 | both | REPAIR | Becomes the one door. Its default must be the governed SendGrid transport, with no Resend fallback. |
+| 4 | Channel-adapter contract comments | `_shared/channel-adapters.ts:153-188` | Live | both | REUSE | Only the comments name Resend. |
+| 5 | Door readiness list `BASE_EMAIL_PROVIDERS=["resend","gmail","smtp"]` | `_shared/comms-email/readiness.ts:39,42,66,237` | Live | ten | REPAIR | Drop `resend` and always include `sendgrid`. |
+| 6 | Reconcile only handles Resend | `_shared/comms-email/adapter.ts:168-179`; DB function `_comms_email_reconcilable` | Live | ten | REPAIR | Needs a SendGrid reconcile path. Whether SendGrid honours `X-Idempotency-Key` is UNVERIFIED (row 3 in Section 3). |
+| 7 | Invoice delivery readiness and binding | `sales-invoice-delivery/readiness*.ts`; 4 `prepare/read/list_sales_invoice_*` DB functions | Live | ten | REPAIR | Requires a migration. |
+| 8 | Door preparation allows `resend` | DB function `prepare_comms_email_send` | Live | ten | REPAIR | Remove `resend` after cutover. |
+| 9 | Managed "PAIGE Email" provisioning (6 functions, 2 triggers, plus UI caller `src/solo/data/useSoloBusinessContext.ts:398`) | DB | Live, 8 rows | ten | REPLACE | Must create governed SendGrid connectors. Blocked by the shared-domain decision (Section 8). |
+| 10 | Campaign sender resolution and metering hardcode `resend` | DB `_email_resolve_sender`, `email_campaign_dispatch_record` | Live | ten | REPAIR | Meter by the resolved provider. |
+| 11 | Resend receipt pipeline | `handle-resend-webhook/*`; DB `ingest/process/reconcile_resend_receipts`; cron jobid 19; table `resend_receipt_processing` (0 rows); `admin_app_settings` `resend_webhook_secret(s)`; `_shared/webhookSig.ts:57`; `config.toml:213-217`; `paige-spine-contract.yml:90-106,533-534`; `scripts/proof/resend-receipt-*` | Deployed v1042; 0 calls in 24h | both | REMOVE | Superseded by `handle-sendgrid-webhook` and `ingest_sendgrid_receipt`. |
+| 12 | Inbound email | `handle-inbound-email/index.ts` (Svix, `RESEND_WEBHOOK_SECRET`) | Deployed v103 | ten | REPLACE | No SendGrid Inbound Parse handler exists. A search for `inbound.parse`/`inbound_parse` found 0 files (code read). |
+| 13 | Domain setup through the Resend Domains API; column `tenant_email_domains.resend_domain_id`; UI `EmailDomainsPanel.tsx:38`, `useSoloComms.ts:66,249,293,439`, `EmailIntegrationConfig.tsx:7`; MCP `list_email_domains` | `manage-tenant-domain/index.ts:22-209` | Deployed v37 | ten (and op via MCP) | REPLACE | Needs SendGrid domain authentication under the admin credential. No code calls `/v3/whitelabel` today (credential read). |
+| 14 | Resend admin probe (returns the webhook secret) | `resend-admin-probe/index.ts:29-167` | Deployed v21; `verify_jwt false` | op | REMOVE | `comms-sendgrid-scopes` and `comms-sendgrid-webhook-admin` already cover this. |
+| 15 | Hand-set flag `paige_config.resend_domain_verified=false`, toggled in `src/pages/admin/PlatformSettings.tsx:254-329` | DB + UI | Live | op | REMOVE | Replace with a derived SendGrid readiness read. |
+| 16 | Transactional hub | `send-transactional-email/index.ts:274-336, 688-775` | v1653 | both | REPAIR | Split into a platform-scope route and a tenant-scope route, both on SendGrid. |
+| 17 | `RESEND_API_KEY` presence checks gating agreements | `agreement-send/index.ts:96`; `_shared/agreements/notify.ts:28` | Live | ten | REPAIR | Readiness comes from the door, not from an env var being present. |
+| 18 | Signup welcome | `tenant-signup/index.ts:33-113` | v1647 | op | REPAIR | Move to the platform route. |
+| 19 | Billing receipt | `send-payment-confirmation-email` (`npm:resend`), called from `stripe-webhook:1347` | v68 | op | REPAIR | Fold into the transactional hub. |
+| 20 | Support email | `send-support-request` (`esm.sh/resend`) | v59 | op | REPAIR | Move to the platform route. |
+| 21 | Operator team invite | `send-platform-invite/index.ts:14,73-80` | v70 | op | REPAIR | Move to the platform route. |
+| 22 | Duplicate welcome sender | `send-welcome-email` | v68, no code caller | op | REMOVE | Duplicates the hub's templates. Repoint the skill text in migration `20260831000000`. |
+| 23 | One-off welcome backfill | `backfill-welcome` | Deployed, no caller | op | REMOVE | One-time job. |
+| 24 | Funding report sent from `onboarding@resend.dev` | `send-funding-report/index.ts:3,25,116` | v56 | ten (opt-in) | REMOVE, or REPAIR if the funding preset needs it | `resend.dev` is Resend's test sender. Owner call, see Section 8 item 9. |
+| 25 | Booking emails | `public-booking`, `booking-manage`, `process-booking-notifications`, `_shared/bookingNotify.ts:7` | Live | ten | REPAIR | Route through the door with tenant scope. |
+| 26 | Portal invite | `send-portal-invite` | Live | ten | REPAIR | Same as #25. |
+| 27 | Plan reminders | `plan-reminder-cron` | Live | ten | REPAIR | Same as #25. |
+| 28 | Skill-runner's own transport | `skill-runner/index.ts:486-496` | Live | ten | REPAIR | Call the door instead. |
+| 29 | MCP send tools | `paige-mcp/index.ts:3-37, ~1590-1680, 2505-2597, 3511-3581, 4483-4540` | v700 | both | REPAIR, or REMOVE as ungoverned bypasses | `capability-policy.ts:800-830` marks them `external_send`, `paigeHome:false`. |
+| 30 | Vocabulary and enums naming `resend` | `skill-forge/index.ts:77`; `paige-spine/domains/integrations_surface.ts:39`; `paige-bridge/index.ts:82`; DB constraint `paige_message_audit.pipe_used` | Live | both | REPAIR | Add `sendgrid` or make provider-neutral. The constraint change needs a migration. |
+| 31 | Business-facing "connect Resend" MCP card | `src/solo/settings-integrations-gateway.tsx:103` | In the bundle | ten | REMOVE | Resend is not in the final architecture. |
+| 32 | Operator copy "Resend … live" | `src/operator/surfaces/IntegrationsSurface.tsx:70` | In the bundle | op | REPAIR | Correct the copy. |
+| 33 | Tests asserting `api.resend.com` | `booking-provider-boundary.test.mjs:35`, `comms-email-provider-boundary.test.mjs`, `comms-email/*.test.ts`, `lead-reply.test.ts`, `src/solo/resend-receipt-handler.test.ts` | CI | n/a | REPAIR | Re-anchor them to SendGrid. They will fail on cutover by design. |
+| 34 | Provider-floor CI guard | `scripts/ci/comms-provider-boundary-wiring.mjs:4` | CI | n/a | REUSE | Provider-neutral guard; update its sender list. |
+| 35 | Policy documents | Section 9 | n/a | n/a | REPAIR | Mark SUPERSEDED in place (§58). |
+| 36 | Lovable auth-email pipeline (not Resend, but a third provider) | `auth-email-hook`, `process-email-queue`, pgmq `transactional_emails` (3 role-invitation messages stuck since 2026-07-10) | Unscheduled | both | REPLACE (owner decision) | Breaks the "one architecture" rule. Detail in Section 3. |
+
+**Env names (names only):**
+- `RESEND_API_KEY` is read in 19 function directories plus `_shared` (code read).
+- `RESEND_WEBHOOK_SECRET` is read by 2 functions.
+- `vault.secrets` has no names matching resend or sendgrid (code and production reads).
+
+## 3. SendGrid credentials: what each one does and can do
+
+**Code-level responsibilities (VERIFIED from code; credential read; `edge-live..origin/main` was empty for `supabase/functions`, so deployed code matched main):**
+
+| Code env name | Role in code | Readers | SendGrid endpoint called |
+|---|---|---|---|
+| `SENDGRID_MAIL_SEND_API_KEY` | Sending ("Mail Send executor") | `send-message:1355`; `comms-sendgrid-scopes:32`; presence checks only in `comms-email-command:149`, `readiness.ts:238`, `lead-reply.ts:301` | `POST /v3/mail/send` (`send-message:361`); `GET /v3/scopes` (`comms-sendgrid-scopes:37`) |
+| `SENDGRID_WEBHOOK_ADMIN_API_KEY` | Scoped webhook administration | `comms-sendgrid-webhook-admin/index.ts:37` only. CI allows it in that one file only (`forbid-sendgrid-admin-key-refs.mjs:15-17`) | Only `GET/POST/PATCH /v3/user/webhooks/event/settings` and `GET …/settings/signed`, enforced by `assertEndpoint` (`sendgrid-webhook-admin.ts:20-26`) |
+| `SENDGRID_PLATFORM_ADMIN_API_KEY` | Full-access admin (per the docs) | **None.** CI forbids it everywhere (`forbid-sendgrid-admin-key-refs.mjs:10`) | None |
+| `SENDGRID_WEBHOOK_PUBLIC_KEY` | Signature-verification public key, not an API credential | `handle-sendgrid-webhook/index.ts:110` | None (inbound ES256 verification) |
+
+**Mapping to the owner's two credentials:**
+- **PAIGE-SENDGRID-MAIL-EXECUTOR → `SENDGRID_MAIL_SEND_API_KEY`.** This is a candidate only. Code comments call that slot the "Mail Send executor".
+- **PAIGE-SENDGRID-PLATFORM-ADMIN → ambiguous.** It may be `SENDGRID_PLATFORM_ADMIN_API_KEY`, which nothing reads and CI forbids. Or it may correspond to the narrower `SENDGRID_WEBHOOK_ADMIN_API_KEY`.
+- The code has **three** credential slots where the owner's model has **two**.
+- `PAIGE[-_]SENDGRID` has **0 hits** in the repo.
+
+**Scope check.** `comms-sendgrid-scopes`:
+- runs only for super_admin, through `is_platform_owner` → `is_super_admin`;
+- reads only the executor key;
+- returns `scopes`, `can_send_mail` and `non_sending_scopes`;
+- **does not persist the result and blocks nothing;**
+- has no caller.
+
+`docs/brain/config-registry.md:544` says it "records the key's scopes". That is wrong (credential read).
+
+**CI admin-key guard.** It matches substrings in `.ts` files only. Edge secrets are project-wide, so the guard is a source-code rule, not runtime isolation (`paige-mail-sendgrid-integration.md:22-23`).
+
+| Fact | Status | Operator step to verify |
+|---|---|---|
+| Executor key is installed and its scopes | **UNVERIFIED.** No scope check has been recorded; 0 SendGrid-function requests in the 24h ending 2026-10-13T11:40Z; earlier logs are past retention (credential read) | As super_admin, `GET https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/comms-sendgrid-scopes`, then save the JSON to an evidence file. Or open the SendGrid console → Settings → API Keys → the key's access details. |
+| Webhook-admin key is installed | **UNVERIFIED** | As super_admin, `GET …/functions/v1/comms-sendgrid-webhook-admin?action=inspect`. A 503 `…_NOT_CONFIGURED` means it is absent. This proves the key can read settings, not its full scope list. |
+| Platform-admin key: existence and scopes | **UNVERIFIED.** No code can check it, and rotation is owed (`paige-mail-sendgrid-integration.md:27-29,96`) | SendGrid console only. |
+| Which owner-named key sits under which env name | **UNVERIFIED** | Compare `supabase secrets list --project-ref xygzykjyynhzqytbqnzu` (names and digests only) with the key names in the SendGrid console. |
+| `SENDGRID_WEBHOOK_PUBLIC_KEY` is set | **UNVERIFIED** | Send a SendGrid console test event and confirm a row appears in `sendgrid_receipt_processing`. |
+| SendGrid honours `X-Idempotency-Key` on `/v3/mail/send` | **UNVERIFIED** | Check SendGrid documentation or support. Until then, treat retries as possibly duplicating a send. |
+| Platform domain authentication (DKIM/SPF/link branding) | **UNVERIFIED.** Nothing is recorded; `sg-mail.paigeagent.ai` appears only as a test fixture | SendGrid console → Settings → Sender Authentication, or a DNS lookup of the `s1._domainkey` / `s2._domainkey` / `em####` CNAMEs. |
+| `RESEND_API_KEY` is set in production | **UNVERIFIED** | `supabase secrets list` (names only). |
+| Supabase Auth custom SMTP and Send Email hook | **UNVERIFIED** | Dashboard → Authentication → SMTP Settings and → Hooks. Or Management API `GET /v1/projects/xygzykjyynhzqytbqnzu/config/auth`, reading `smtp_host`, `hook_send_email_enabled` and `hook_send_email_uri`. |
+
+**Production bindings.** Function version and `verify_jwt` are VERIFIED from the deployed function list (credential read). The "Credential it reads" column is read from the code, not observed in production; whether each secret is installed stays UNVERIFIED:
+
+| Function | Version | verify_jwt | Credential it reads |
+|---|---|---|---|
+| `send-message` | v95 | false | executor (connector-selected arm) |
+| `comms-email-command` | v15 | true | executor (presence check) |
+| `growth-process-submission` | v78 | false | executor (presence check) |
+| `comms-sendgrid-scopes` | v115 | true | executor |
+| `comms-sendgrid-webhook-admin` | v91 | true | webhook-admin |
+| `handle-sendgrid-webhook` | v112 | false | public key |
+
+Nothing binds `SENDGRID_PLATFORM_ADMIN_API_KEY`.
+
+## 4. Target architecture: SendGrid only
+
+1. **One SendGrid transport.**
+   - Extract `send-message:348-403` into one shared module (proposed name `_shared/email/sendgrid-mail-send.ts`).
+   - It accepts only a prepared binding that has been re-read from the database. It never accepts config or a key from the caller.
+   - It is the **only** reader of the executor credential.
+   - A new CI guard forbids `api.sendgrid.com/v3/mail/send` and the executor env name anywhere else, mirroring the admin-key guard.
+   - There is **no Resend arm and no default fallback.** An unknown or missing provider fails closed with a named error.
+2. **One governed door, with two sender scopes on the binding (`sender_scope: tenant | platform`).**
+   - **Tenant scope** keeps the existing chain: `comms-email-command` → `prepare_comms_email_send` (tenant, seat, client recipient, verified-domain sender) → `send-message` → `finalize_comms_email_send`. The managed "PAIGE Email" becomes a SendGrid connector.
+   - **Platform scope** gets a service-only entry: a sibling `prepare_platform_email_send` plus a platform route, either a refactored `send-transactional-email` or a new `platform-email-command`.
+     - It takes a template id, recipient, reference id and idempotency key.
+     - It runs the existing `send-authority.ts` and suppression checks.
+     - It writes the same canonical message and binding shape, carrying the same Spine, Trust and Rail evidence.
+     - Platform senders live in a registry only the service role can write, managed under super_admin authority (§53), and pinned to operator-owned domains that SendGrid has verified.
+     - A platform sender can never be chosen from tenant data. A tenant can never send from a platform domain unless the owner explicitly rules otherwise (Section 8).
+   - **Operator corporate email** uses the platform scope, with the §200 operator workspace `d1f0a7e2-…` as the canonical-record owner.
+3. **Executor credential separate from the admin credential.**
+   - The executor (PAIGE-SENDGRID-MAIL-EXECUTOR) does sending only. Its scopes are checked, the result is persisted as an evidence row, and sending is blocked when `mail.send` is missing or admin scopes are present.
+   - The admin credential (PAIGE-SENDGRID-PLATFORM-ADMIN) does configuration only: domain authentication, Event Webhook setup, Inbound Parse setup and suppression-group setup.
+   - The admin credential is read in **exactly one** operator-only, super_admin-gated function whose endpoint allowlist follows the `assertEndpoint` pattern. It is never a sending key.
+   - This needs an owner ruling to amend the CI guard (Section 8, item 1).
+4. **Receipts and webhooks.**
+   - There is one signed SendGrid Event Webhook (ES256, `SENDGRID_WEBHOOK_PUBLIC_KEY`).
+   - It correlates on the `custom_args` `paige_tenant_id`, `paige_operation_id` and `paige_message_id`, and adds `paige_scope`.
+   - It feeds `ingest_sendgrid_receipt`.
+   - A SendGrid reconcile cron replaces jobid 19.
+   - `_comms_email_reconcilable` becomes SendGrid-aware.
+5. **Suppression and unsubscribe.**
+   - `unsubscribe`, `group_unsubscribe`, `spamreport` and hard `bounce` events must write the canonical suppression stores: `paige_suppressions` for tenant and campaign mail, `suppressed_emails` for platform mail.
+   - Today these events are acknowledged but not recorded (`handle-sendgrid-webhook/index.ts:27-31`). Both send paths already read suppression before sending (`send-message:1250,1434`; `send-transactional-email:265`).
+   - Unsubscribe links keep using `email_unsubscribe_tokens`, which has 12 rows.
+   - Using SendGrid suppression groups (ASM) is optional and is configured through the admin credential.
+6. **Inbound.** Either SendGrid Inbound Parse feeding `handle-inbound-email`, rewritten from Svix to SendGrid verification, or an owner decision that inbound comes only through Gmail/iCloud mailbox sync.
+7. **Gmail and iCloud** stay optional customer mailboxes (Gmail OAuth; iCloud over SMTP/IMAP). They are tenant-scoped connectors through the same door with `mailbox_class` ownership (G1), and they are never the platform path.
+8. **Auth email** goes through SendGrid via Supabase Auth's Send Email hook calling the platform route, so it gets the same canonical record, suppression check and receipts as every other send. A Supabase custom SMTP relay is **not** the target: it would put a sending key in dashboard settings and bypass the governed door. If the owner ever wants it as a stopgap, it is an explicit exception using its own mail-send-only key, never the executor key. The Lovable pipeline (`auth-email-hook`'s Lovable path, `process-email-queue`, `handle-email-suppression`, `preview-transactional-email`) is then retired (Section 8, item 4).
+9. **No Resend anywhere:** no code, no env reads, no connectors, no cron, no webhook secrets, no UI card.
+
+## 5. Gaps that block a safe migration (most serious first)
+
+1. **No platform or operator SendGrid route.** The door requires a tenant, a seat and a client recipient (`prepare_comms_email_send:205,232-235`), so all platform mail would break if Resend were removed today (#2126 review).
+2. **Managed tenant sender cannot move to SendGrid as it stands.**
+   - The 6 active businesses all send from the shared `mail.paigeagent.ai`.
+   - The SendGrid door requires a per-business verified domain that exactly matches the From address, and allows only one claim per domain (`20271031000250:144-146`).
+   - Removing Resend without a decision gives each of them `no_email_sender` (#2126 review).
+3. **No code verifies a domain with SendGrid.** Nothing calls `/v3/whitelabel`. SendGrid domain facts can be written by the service role only, and no code writes them. A per-business DNS ownership proof is still owed (`20271031000250:35-36`).
+4. **Credential model is unresolved.** There are three code slots against two owner credentials. No name mapping exists, and the scope check neither persists its result nor gates sending.
+5. **Suppression is not handled for SendGrid events.** Unsubscribe and complaint events are dropped. Turning on SendGrid sending without this sends to people who opted out (legal risk).
+6. **Auth email runs on a third provider and may be broken today.** There is no `auth_emails` queue, no cron for `process-email-queue`, and 3 role-invitations have been stuck since 2026-07-10. The auth config is UNVERIFIED.
+7. **About 20 direct-to-Resend send sites bypass the door** (Section 2 rows 16-29). Each one is a §37 producer inventory item.
+8. **No SendGrid inbound path.**
+9. **Receipt and reconcile parity.** There is no SendGrid reconcile cron, and idempotency is UNVERIFIED.
+10. **Live sending has never been proven.** There are 0 SendGrid sends or receipts in production, so no authenticated runtime evidence exists for any SendGrid path.
+11. **Cron noise (side finding).** About 6,000 401s/day on each of 3 email crons, from `pg_net/0.20.4` callers at other IPs. The likely cause is branch or preview projects calling the production URL, but this is UNVERIFIED. Verify by running `select jobname, command from cron.job` on each branch or project. Resolve it before soak measurements so logs are readable.
+
+## 6. Implementation PRs in dependency order
+
+Every PR follows the same process:
+- Flow-by-Flow pre-edit packet.
+- Failing-first tests, plus reinstating the defect to show each test bites (§71.4).
+- A measured baseline from a `git worktree` of the base commit.
+- An independent §39 review of the pushed diff (including the §58 and §66 items).
+- CI on the exact head SHA.
+- §32 persisted-apply proof for migrations (`schema_migrations` row present and object exists).
+- §37 producer and consumer inventory for every contract change.
+- §51 per-tier check.
+- Updates in the same commit to the master doc §4/§5/§10, `docs/brain/config-registry.md`, `decision-log.md`, the tier matrix and the integration registry.
+
+"Protected end-to-end" means an authenticated live drive on a scoped test tenant through `scripts/live-drive/live-drive.mjs`, or reporting it as **UNVERIFIED** with the reason.
+
+| # | PR | Scope | Files / migrations | Tests / proofs | Owner gate |
+|---|---|---|---|---|---|
+| P0 | Mark the old policy superseded (docs only) | Mark every record in Section 9 "SUPERSEDED BY OWNER DIRECTIVE 2026-10-14"; log in master §10; correct `config-registry.md:544` ("records" → "returns") and the "allowlist intentionally empty" lines; set registry `sendgrid.tier_eligibility.platform` to eligible, still `PROOF_OWED` | Docs and registry JSON only | Grep proves no unmarked policy line remains | None (docs) |
+| P1 | Align the credential model | Code env names reflect the owner's two credentials; persist the executor scope check as an evidence row, and gate sending on it; amend the CI guard to the two-key model (admin key allowed in one operator-only admin function) | `comms-sendgrid-scopes`, `scripts/ci/forbid-sendgrid-admin-key-refs.mjs`, a new evidence table migration, `config-registry.md` | Guard fixtures for both outcomes; scope-gate unit tests; operator runs the scope check and the result is saved | **Owner:** name mapping, 2 vs 3 keys, CI-guard amendment, installing secrets (Section 8, items 1-2) |
+| P2 | One SendGrid transport and sender scopes (backend) | Shared transport module; `sender_scope` on the binding; platform sender registry (writes by service role only, super_admin managed); `prepare_platform_email_send`; CI guard limiting `/v3/mail/send` to one module | `_shared/email/sendgrid-mail-send.ts`, `send-message`, migrations (new table, new function, `pipe_used` constraint plus `sendgrid`) | SET ROLE proofs: tenant cannot write platform senders; DEFINER bodies enforce scope (§59); transport rejects unbound calls | Backend change named here: new table, function and constraint |
+| P3 | SendGrid domain authentication | Operator-only admin function (admin credential): create, validate and read domain authentication; writes `sendgrid_domain_id/status/verified_at` through the service role; DNS ownership proof; rewrite `manage-tenant-domain` (Resend Domains → SendGrid); repoint UI hooks (`useSoloComms`, `EmailDomainsPanel`, `EmailIntegrationConfig`) and MCP `list_email_domains` | Edge functions, UI, endpoint allowlist | Endpoint-allowlist tests; authenticated drive of the domain flow on a test tenant; platform-domain authentication evidence | **Owner:** platform and tenant sending domains (Section 8, item 3); DNS changes |
+| P4 | Receipts, webhooks, suppression | Install the Event Webhook through the admin function; map unsubscribe, spamreport and bounce into `paige_suppressions` / `suppressed_emails`; add a SendGrid reconcile cron; make `_comms_email_reconcilable` SendGrid-aware | `handle-sendgrid-webhook`, migrations, cron | Signed-event fixtures; suppression readback; console test event lands a `sendgrid_receipt_processing` row | Must land **before** any live tenant send |
+| P5 | Operator and platform transactional route | Platform scope through P2; refactor `send-transactional-email` to platform scope (its tenant-sender branch moves to the door); fold in `tenant-signup`, `send-payment-confirmation-email`, `send-support-request`, `send-platform-invite`; `agreement-send` / `notify.ts` readiness comes from the door | Those functions, templates, `send-authority.ts` | §37 inventory of every caller in code read; send-authority tests; one authenticated platform send to an operator-owned inbox | **Owner:** live-send authorization; operator From addresses |
+| P6 | Tenant managed sender and readiness | Rewrite provisioning (6 functions, 2 triggers) to create SendGrid connectors per the domain decision; readiness lists (`readiness.ts`, invoice readiness and 4 DB functions, `prepare_comms_email_send`, `_email_resolve_sender`, `email_campaign_dispatch_record`); migrate the 6 active tenants | Migrations, `_shared/comms-email/*`, `sales-invoice-delivery/*` | Per-tenant migration proof; `no_email_sender` / `SENDER_VERIFICATION_MISSING` states shown honestly; §51 checks for solo, sub-account and agency | **Owner:** shared vs per-business domain (Section 8, item 3) |
+| P7 | Tenant direct senders onto the door | `public-booking`, `booking-manage`, `process-booking-notifications`, `send-portal-invite`, `plan-reminder-cron`, `skill-runner`, `comms-scheduled-drain` / `email-campaign-worker` (already through `send-message`); `paige-mcp` send tools routed or retired | Those functions; `capability-policy.ts` | §37 producer and consumer inventory across 8 caller classes; cron-path tests | None beyond P5/P6 |
+| P8 | Auth email and queue | Supabase Auth's Send Email hook → the P5 platform route (no SMTP relay); retire the Lovable pipeline: `auth-email-hook`'s Lovable path, `process-email-queue`, `handle-email-suppression` (a live writer of `suppressed_emails` and `email_send_log` — its suppression duty moves to P4 first), `preview-transactional-email`; decide the 3 stuck pgmq messages | `auth-email-hook`, `process-email-queue`, dashboard configuration | Sign-up and reset drive on a test account; the auth config read pasted as evidence | **Owner:** dashboard change; whether to retire Lovable; the 3 stuck invites (Section 8, items 4, 8) |
+| P9 | Inbound | SendGrid Inbound Parse → `handle-inbound-email` (SendGrid verification), or a decision to drop inbound | Edge function, admin-function endpoint, MX DNS | Signed inbound fixture; one live inbound | **Owner:** inbound decision and MX change (Section 8, item 5) |
+| P10 | Remove Resend (after soak, Section 7) | Delete the rows marked REMOVE in Section 2 (#1, 11, 14, 15, 22, 23, plus #24 if decided); remove the Resend arms from `send-message` and `readiness.ts`; UI card (#31); copy (#32); re-anchor tests (#33); drop cron 19, the `admin_app_settings` Resend rows and the `resend_domain_id` column; mark the 8 Resend connectors retired | Code, migrations, `config.toml`, `paige-spine-contract.yml`, `scripts/proof/resend-*` | Repo grep for `api\.resend\.com|RESEND_API_KEY|npm:resend|esm\.sh/resend|svix` returns 0 outside history and docs; full suite against a measured baseline | **Owner:** destructive data removal (connector rows, column, settings), revoking the Resend key, Resend DNS removal (Section 8, item 7) |
+| P11 | Final docs and registry | Resend registry entry → retired; SendGrid status as earned; master §4/§5/§10; brain; tier matrix | Docs | Section 7 checklist attached | None |
+
+**How the S3 UI and G1 branches fit:**
+- **S3 UI** (local branch `exp03-s3-ui-r5`, head `bf551740812f88727bf717fbe50e7d95a4d8becf`, not on main):
+  - Rebase onto P2 and P6.
+  - Replace the seeded `provider='resend'` fixture and the "PAIGE Email / Resend shared_support" migration comment with SendGrid.
+  - Show `no_email_sender`, `SENDER_VERIFICATION_MISSING` and `EMAIL_PROVIDER_NOT_CONFIGURED` honestly.
+- **G1** (local branch `exp03-email-g1-r11`; at grounding it was `bf551740812f88727bf717fbe50e7d95a4d8becf` plus 70 uncommitted files, and when this addendum was written its head was `4bc7620325877fbbe57295b221459a73169d7d13`, stacked on the S3 UI head; not on main):
+  - Keep the `mailbox_class` / `mailbox_owner_user_id` ownership work and Gmail/SMTP as optional personal mailboxes.
+  - Do **not** extend the `resend` entry in the provider list.
+  - Rebase onto P6 and re-run the SendGrid door, receipt and sender-integrity SQL tests.
+- Both branches are blocked from adding any Resend functionality. The P10 grep guard can be introduced early as a ratchet so the count of Resend references never rises.
+
+## 7. Production verification and rollback, per cutover step
+
+**Rollback principle.** From P2 the shared transport is SendGrid-only. The Resend arm left in `send-message` survives only as the time-limited rollback described here and is deleted in P10. Until P10, the Resend code stays in the tree but unused, so a rollback is a revert commit or switching a connector's provider back, with a **dated expiry of at most 14 days**, logged in master §10. After P10, rollback means reverting the PR. There is never a runtime fallback to Resend.
+
+| Step | Cutover criteria (all must hold) | Verify in production | Rollback trigger → action |
+|---|---|---|---|
+| P1 credentials | Scope check returns `can_send_mail=true` and no admin scopes; result persisted | Evidence row exists; secret names listed (digests only) | Wrong scopes → do not proceed. Rotate the key in the SendGrid console (owner). |
+| P3 domains | Platform domain shows verified in SendGrid; at least one test-tenant domain verified with the facts written | `select sendgrid_status, sendgrid_verified_at is not null from tenant_email_domains`; DNS CNAMEs resolve | Verification fails → leave the domain unverified (the door fails closed); nothing is sent. |
+| P4 receipts | Console test event produces a row; an unsubscribe fixture produces a suppression row | `select count(*) from sendgrid_receipt_processing`; suppression readback | No rows → hold P5-P7. |
+| P5 platform route | One authorized operator send arrives at an operator-owned inbox; a `delivered` receipt is correlated; canonical record and Rail entry present | Edge log 200 on the route; receipt row; message row | Failure, bounce, or no receipt within 1h → revert P5 (Resend code still present), record in §10. |
+| P6/P7 tenant | Test tenant sends through the door end to end; the 6 tenants show either a SendGrid sender or an honest needs-setup state; booking, portal-invite and reminder crons return 200 with SendGrid receipts | Per-tenant connector query; `messages` with `pipe_used='sendgrid'`; cron logs | Receipt error rate above 5%, or any send that skips suppression → flip the affected connectors back for ≤14 days, revert. |
+| P8 auth | Sign-up and reset emails arrive on a test account | Auth logs show the email event; Management API config read | Not arriving → revert the dashboard setting to its previous value. |
+| P9 inbound | One inbound test message lands in the unified inbox | `messages` inbound row with provider `sendgrid` | Revert MX (owner). |
+| Soak | 14 days (N=14 is proposed; the owner sets N) with zero Resend traffic | See checklist | Any Resend hit → find the producer and fix it before P10. |
+
+**Final checklist before Resend is declared retired:**
+- [ ] Edge logs: 0 calls to `handle-resend-webhook`, `resend-admin-probe` or `handle-inbound-email` with a Svix signature, over N days.
+- [ ] 0 `messages` / `paige_message_audit` rows with `pipe_used='resend'`, or connector provider `resend`, created in the last N days.
+- [ ] `select count(*) from channel_connectors where provider='resend' and active` returns 0. All 8 rows are migrated or retired by an owner-approved action.
+- [ ] `cron.job` has no `reconcile_resend_receipts`; a SendGrid reconcile job is present and running.
+- [ ] Repo grep for `api\.resend\.com|RESEND_API_KEY|RESEND_WEBHOOK_SECRET|npm:resend|esm\.sh/resend|resend\.dev` returns 0 outside docs history; CI guard green.
+- [ ] Deployed function list has no `resend-admin-probe`, `handle-resend-webhook`, `send-welcome-email` or `backfill-welcome`; `/edge-drift` reports zero.
+- [ ] `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` are absent from `supabase secrets list` (names only; values never read). `admin_app_settings` Resend rows are gone.
+- [ ] Resend console: API key revoked, webhooks removed, domains removed. Resend DNS records removed (owner).
+- [ ] `tenant_email_domains.resend_domain_id` is dropped (§32 persisted proof); `paige_config.resend_domain_verified` is gone.
+- [ ] Supabase Auth email goes through SendGrid (config read pasted); Lovable email path retired.
+- [ ] Registry: Resend `RETIRED`; SendGrid status earned with authenticated evidence; master §4/§10 and brain updated in the same PR.
+
+## 8. Decisions only the owner can make
+
+1. **Credential model.**
+   - Confirm whether PAIGE-SENDGRID-MAIL-EXECUTOR and PAIGE-SENDGRID-PLATFORM-ADMIN are the SendGrid console key names, and under which Edge secret names they are installed.
+   - Decide whether to drop the third slot (`SENDGRID_WEBHOOK_ADMIN_API_KEY`) or keep it as a narrower admin key.
+   - Authorize amending the CI guard so the admin credential is readable in one operator-only admin function.
+2. **Installing and rotating secrets.** Requires credential authority. Platform-admin key rotation is already owed.
+3. **Sender domains and addresses.**
+   - The operator and platform domain (for example `paigeagent.ai` vs a subdomain such as `sg-mail.paigeagent.ai`) and the From addresses (`hello@`, `billing@`, `support@`, `team@`, `calendar@`, `notifications@`).
+   - For tenant "PAIGE Email": per-business subdomains, or a sanctioned platform-shared tenant sender scope that relaxes today's one-domain-per-business rule.
+   - DNS changes.
+4. **Auth email.** Point the Supabase Send Email hook at the platform route, and retire the Lovable email pipeline. (A custom-SMTP relay would be an exception to the one-door rule and would need its own mail-send-only key.)
+5. **Inbound email.** SendGrid Inbound Parse (MX change), or Gmail/iCloud mailboxes only.
+6. **Live-send authorization and timing.** The first real SendGrid sends (external sends, spending money), the cutover window, and the soak length N.
+7. **Destructive retirement actions.** Deleting or retiring the 8 Resend connector rows, dropping `resend_domain_id`, deleting the Resend webhook-secret settings, revoking the Resend key, removing Resend DNS records.
+8. **The 3 stuck role-invitation messages** (pgmq `transactional_emails`, 2026-07-10). Resend them through the new route, or discard them.
+9. **`send-funding-report`.** It sends from `onboarding@resend.dev` under the §2 opt-in funding rules: retire it, or repair it onto the door for the funding preset.
+
+## 9. Documentation to mark "SUPERSEDED BY OWNER DIRECTIVE 2026-10-14"
+
+**Status: applied in cutover P0 (docs only, 2026-10-14)** for every doc record below and the correction-5 records at the
+end of this addendum. Code comments, the migration and visible copy are NOT edited in P0 (no code changes); they are
+recorded in master §10 and fixed in the PRs named. Line numbers are as of main
+`6428c2ba61959ef302cf69e0dbd64a878ddbb35f`, before P0 shifted them.
+
+Mark each line dated and keep the original text (§58/§11):
+
+- `docs/brain/config-registry.md:537`: "tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email". Also correct `:544` ("records the key's scopes" → returns them) and the surrounding block `:534-553`.
+- `docs/brain/decision-log.md:14`: "Owner policy (2026-10-13): … Resend is the Platform Operator's own email." Keep the entry and add the 2026-10-14 entry beneath it.
+- `docs/integration-registry/README.md:258`: Resend row, "Platform Operator email under the 2026-10-13 owner policy …". Also `:259`, the SendGrid row ("tenant PAIGE Email (owner policy 2026-10-13)").
+- `docs/integration-registry/integration-capability-registry.json:1441` (Resend `business_reason`) and `:1530` (SendGrid `business_reason`: "Resend stays the Platform Operator's own email"). Also SendGrid `tier_eligibility.platform: "ineligible"` (within `:1527-1575`).
+- `docs/integration-registry/expense-and-operations-report.md:59`: "Resend | Platform Operator email (owner policy 2026-10-13)".
+- `docs/delivery/paige-mail-sendgrid-integration.md:151`: "Resend is the Platform Operator's own email". Also correct `:16,25` ("allowlist intentionally empty"), which is out of date since S7.4 (`:166-170`).
+- `docs/delivery/exp03-launch-email-providers-plan.md:3`: "Platform Operator system mail = Resend".
+- `docs/architecture/CANONICAL-SYSTEM-ARCHITECTURE-2026-08-08.md:290`: the 2026-10-13 correction note "Resend is the Platform Operator's own email".
+- `docs/PAIGE-MASTER-PROJECT-REFERENCE.md`:
+  - `:1029`: the "allowlist intentionally empty" / `buildProvider` beside Resend entry (the `SendGridProvider` it describes was later removed in #2126).
+  - `:4427`: "The 2026-10-13 SendGrid policy is applied at the governed door".
+  - Add a new §10 correction entry recording the reversal.
+- `docs/delivery/paige-mail-domain-transport-study.md:65,128`: "Resend is the transport implementation" and "Resend domain provisioning — platform-operator action".
+- Code comments that state the policy are not docs, but should be corrected in P2/P6 and marked superseded:
+  - `supabase/functions/send-message/index.ts:1351-1354` ("Platform default stays Resend").
+  - `supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql:4-5` ("Resend stays the Platform Operator's own comms"). Migrations are immutable, so record the supersession in the master §10 entry rather than editing the file.
+- `src/operator/surfaces/IntegrationsSurface.tsx:70` (visible copy, "Resend … The platform email adapter"). Fix in P10/P11.
+
+Searches behind this list (§71): `Resend stays`, `Platform default stays Resend`, `Platform Operator.{0,40}Resend`, `Resend (is|stays|=)`, `system mail = Resend`, `owner policy 2026-10-13`. They ran over `*.md`, `*.json`, `*.ts` and `*.sql` at main `6428c2ba61959ef302cf69e0dbd64a878ddbb35f`. `docs/brain/decision-log.md` matched as a binary file and was read with `grep -a`.
+
+---
+
+## 10. Corrections applied after independent review
+
+An independent reviewer (not the author of this plan) found the core accurate and asked for these corrections. All are applied above or listed here.
+
+1. **Auth email** targets the Send Email hook → platform route, not an SMTP relay (Section 4 item 8, P8, Section 8 item 4).
+2. **Live producers missed by the first inventory.** Each sends through `send-transactional-email`, which uses Resend, and each joins the P5 producer inventory:
+   - cron jobid 25 `solo-beta-welcome-drain` (every 5 min) → `solo-beta-welcome-drainer` v14; its DB function `solo_beta_claim_welcome_delivery` carries a Resend idempotency assumption in its body (fix in P5);
+   - cron jobid 15 `security-canary-probe` (hourly, v1232), operator alert email (`security-canary-probe/index.ts:184`);
+   - `growth-process-submission` v78 form-submission alert (`index.ts:667-671`; its own comment at `:613` says the template is not registered);
+   - `stripe-webhook`, `send-notification` v1665, `notify-team-event` v1642, `notify-approval-event`, `send-admin-invitation` v71, `agency-invite-member` v60, `send-beta-launch-email` v1624, `send-broker-team-invite`, `broker-admin-action`, `broker-auto-approve`, `admin-account-actions`, `invite-affiliate`, `affiliate-application-confirm`, `handle-inbound-webhook`, `refresh-fundability-scores-biannual`, `solo-beta-stripe-webhook`, `src/lib/affiliates/applications.ts`;
+   - `affiliate-monthly-statement-cron` calls the hub in code but is not deployed;
+   - `send-message` callers that default to Resend: `execute-approval`, `paige-ai-chat`, `sales-invoice-command`.
+3. **Lovable pipeline** also includes `handle-email-suppression` v1629 (live suppression writer) and `preview-transactional-email` v1629 (P8).
+4. **Database objects that check `provider='resend'`:** `check_solo_setup_managed_email` and `operator_preview_account_deletion` change in P6/P10, or Systems Check and the deletion preview go wrong after cutover.
+5. **Copy and docs:** public landing copy `src/components/landing/IntegrationsSection.tsx:32` ("Twilio & Resend"); comments `src/solo/settings.tsx:1062`, `useSoloComms.ts:66,293`; `docs/delivery/paige-mail-multitenant-deliverability-gap.md:11` and `docs/brain/decision-log.md:9` join the Section 9 list.
+6. **`RESEND_WEBHOOK_SECRET`** is named by 3 functions, not 2. `resend-admin-probe` (gated by the service-role key or the Vault cron token) returns webhook `secret_values` and `signing_secret` in its response (`:82-83`, `:127`). It is REMOVE, and should go early in P10 or sooner.
+7. **Inbound** count corrected to 5 (Section 1).
+8. **Section 3** credential column labelled as read from code.
+9. **P2/P10:** the Resend arm survives only as the ≤14-day rollback and is deleted in P10.
+
+Still UNVERIFIED (unchanged): which owner-named key is installed under which env name and with what scopes; whether `SENDGRID_WEBHOOK_PUBLIC_KEY` and `RESEND_API_KEY` are set; whether SendGrid honours `X-Idempotency-Key`; platform DKIM; the Supabase Auth SMTP/hook configuration.

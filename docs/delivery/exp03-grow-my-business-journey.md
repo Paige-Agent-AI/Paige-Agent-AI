@@ -411,6 +411,31 @@ AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 Closed in round 4: a SendGrid-only business now gets a draft, and enterprise forms can be opted in.
 - **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.
 
+
+### 12a. Provider correction — SendGrid-only (owner directive 2026-10-14)
+
+The 2026-10-13 policy this section was built under ("a business's PAIGE Email sends through SendGrid; Resend is the
+Platform Operator's own email") is **SUPERSEDED BY OWNER DIRECTIVE 2026-10-14**: all PAIGE email — Platform Operator,
+platform transactional and tenant — moves to SendGrid, and Resend is being retired. Production still sends on Resend
+only (8 Resend connectors, 0 SendGrid, re-read 2026-10-14). The cutover is P0–P11 in
+`exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan"); the gap is master §5.
+
+How this journey's open branches fit (both are local and unmerged):
+- **S3 UI** (`exp03-s3-ui-r5`, head `bf551740812f88727bf717fbe50e7d95a4d8becf`) adds no Resend functionality. It
+  rebases onto cutover P2 and P6, replaces its seeded `provider='resend'` fixture and its "PAIGE Email / Resend
+  shared_support" migration comment with SendGrid, and shows `no_email_sender`, `SENDER_VERIFICATION_MISSING` and
+  `EMAIL_PROVIDER_NOT_CONFIGURED` honestly.
+- **G1** (`exp03-email-g1-r11`, head `4bc7620325877fbbe57295b221459a73169d7d13`, stacked on S3 UI) adds no Resend
+  functionality. It keeps the `mailbox_class` / `mailbox_owner_user_id` ownership work and Gmail/SMTP as optional
+  personal mailboxes, does not extend the `resend` entry in the door's provider list, and rebases onto P6.
+- Until P10, a ratchet that stops the count of Resend references from rising may be introduced early so neither
+  branch (nor any other) grows Resend.
+
+The S3 backend flow above is unchanged by the directive: it already sends a lead reply only through the governed door,
+and SendGrid counts only while the business's domain is verified. What changes is that the door will also lose its
+`resend` arm (P6/P10); the plan is that a business with no verified SendGrid sender then sees an honest needs-setup state rather than
+fall back to Resend.
+
 ---
 
 ## Customer Experience Integration Matrix (Engineering 2.0 standard, 2026-10-13)

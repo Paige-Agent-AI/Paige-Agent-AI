@@ -1033,7 +1033,7 @@ Authenticated runtime: UNVERIFIED, owed to the QA coordinator on the designated 
 **2026-10-11 INT-280 / ANT-48 AI-3A — immutable regression-case contract — PR [#1979](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1979), reviewed head `c32be466c1271029035897d00e339d06ed9e9a41`, main `7c979f45fdd25c70691b338597354da0979a7900`.** Internal production source foundation; no customer version or announcement. Four-file contract in existing Evals pins public source, fixture, evaluator and case versions/hashes, reuses existing scorer/four-verdict semantics, rejects arbitrary customer payloads and keeps unsupported historical tasks unlinked. Parsing is not publication authority. Initial review/correction findings and ES2020 compiler failure remain historical; the owner's one additional repair-review exception was completed, with final non-author current-head compatibility review [6114147480](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1979#issuecomment-6114147480) COMPLETE/PASS. All nine applicable exact-head Actions jobs and both Vercel statuses PASS; Supabase Preview SKIPPED/NOT_APPLICABLE, not PASS. Production Vercel `dpl_F4zWvTe2q157BNNgxsHWuS8JmLRA` READY at the exact merge; both public domains served build `7c979f45fdd25c70691b338597354da0979a7900-mv4d7tf8` at 2026-10-11 22:00:48.869 UTC. Migration NOT_APPLICABLE. Edge workflow [38178535514](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38178535514) SUCCESS with deploy skipped because the new shared contract has no production importer; Edge effect NOT_APPLICABLE. Evidence: [contract](delivery/int280-regression-corpus-contract.md), [release readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1979#issuecomment-6114302174), ANT-48 and original INT-280 Drive records. This release alone does not establish a protected executable corpus or an approved production Inspector. Authenticated acceptance UNVERIFIED under OWNER_LOGIN_HOLD; Intelligence Chat/Live UNAVAILABLE. No provider/customer effects, training or AI-4+ claim. Recovery is a reviewed source revert/forward repair preserving immutable evidence. This sole mechanical post-release identity record is not logged recursively.
 
 **2026-10-11 — Finance company-bound QuickBooks consent successor — PR [#1967](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1967) → main `a094a618b2a36127260b0c7488a6e813bee9da3a`; reviewed head `ea32e1bffb49fd76723141b7bb0a7bb00a9fc743`.** Internal source foundation. Completed independent non-author Gemini review and green exact-head CI, including rebuilt Supabase preview. Normal production migration workflow [38174947753](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38174947753) SUCCESS. Read-only production metadata confirms forward migration `20271020000300`, OAuth-attempt table with RLS enabled, authenticated begin RPC and service-role-only consume RPC. Preserves historical #1950 review corrections; no token activation, customer ingestion, financial effect or authenticated owner test. Full provider behavior, native company ownership validation, integration adoption and authenticated acceptance remain PROOF OWED. Approved Finance UI and protected Chat unchanged.
-**2026-10-11 ANT-43/S7 slice 1 — bounded SendGrid send adapter behind the canonical door — PR #1995 → main `bcaaebd1633411b337da35402c14f5c80e9c50a0` (reviewed head `58ca169d3`; production diff reviewed across three rounds with the final SHIP mathematically verifying the C0b digest re-pin). Internal provider-integration slice; Edge only (no migration); no customer announcement/version; activates nothing (platform default remains Resend).**
+**2026-10-11 ANT-43/S7 slice 1 — bounded SendGrid send adapter behind the canonical door — PR #1995 → main `bcaaebd1633411b337da35402c14f5c80e9c50a0` (reviewed head `58ca169d3`; production diff reviewed across three rounds with the final SHIP mathematically verifying the C0b digest re-pin). Internal provider-integration slice; Edge only (no migration); no customer announcement/version; activates nothing (platform default remains Resend).** *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: "platform default remains Resend" is kept as the 2026-10-11 record; all PAIGE email moves to SendGrid and Resend is being retired — §10 2026-10-14. The "empty allowlist" below was also out of date from S7.4 (2026-10-12): the CI guard allows exactly `comms-sendgrid-webhook-admin` → `SENDGRID_WEBHOOK_ADMIN_API_KEY`.)*
 - `SendGridProvider implements EmailProvider` (Mail Send v3; 202-Accepted contract with `X-Message-Id` as the durable id; missing executor key degrades to `UnimplementedProvider`) + `buildProvider` case beside Resend. *(Removed in Experience 03 S3 round 5, not merged when recorded: the adapter had no caller and read the platform key on a tenant-controlled `email_provider`; `buildProvider` now refuses `sendgrid` — §5.)* `send-message` gains a sendgrid dispatch arm selected ONLY by `connectorRow.provider === 'sendgrid'` via the pre-existing `ctx.provider` field (`channel-adapters.ts` byte-identical to main); key is always the restricted executor secret `SENDGRID_MAIL_SEND_API_KEY` (never the admin key); attachments forward with the sibling-arm contract; the arm sits strictly inside the capability/approval/provider-boundary gates — provider selection cannot bypass tenant authorization, Marketplace eligibility, content policy, approval, or quotas. Canonical ES256 `verifySendgridEvent` (SPKI PEM, DER→P-1363, hardened parser) lands in `_shared/webhookSig.ts` ready for the receipt door. `comms-sendgrid-scopes` is the operator-gated, non-sending entitlement check (`/v3/scopes`, executor key only, scopes-only response). CI now forbids `SENDGRID_PLATFORM_ADMIN_API_KEY` references in ALL function code (empty allowlist) and runs the signature + provider suites.
 - Proof: 8 new synthetic/mocked tests (provider 3: v3 shape, 202→id, truthful non-202, unknown-provider failsafe; ES256 2 suites/6 assertions incl. tampered body, wrong key, malformed DER — file totals 15); CI admin-key guard green. Review: round 1 FINDINGS (P1 ci.yml structure break — fixed with the block restored and the signature suite wired into CI; P2 attachment drop — fixed) → round 2 SHIP → round 3 root-caused the `contract` failure to the C0b incumbent digest pins (`send-message` + `channel-adapters`), resolved by reverting channel-adapters and re-pinning only send-message's canonical digest (`071351fd…`), verified mathematically by the reviewer; all check runs SUCCESS at the exact head including Supabase Preview.
 - Deploy: edge run `38172048116` SUCCESS at the merge; deploy log readback confirms `✓ deployed comms-sendgrid-scopes` and `✓ deployed send-message`. NO migration (none in slice). Honest boundary: executor-key entitlement UNVERIFIED until `comms-sendgrid-scopes` is invoked by the operator; the receipt door (next sub-slice) needs the owner's SendGrid Event Webhook configuration; admin-key rotation owed; no tenant sendgrid routing wired, no sends, `sg-mail.paigeagent.ai` unused. Evidence: `docs/delivery/paige-mail-sendgrid-integration.md`.
@@ -4413,6 +4413,46 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### SendGrid-only cutover (P0–P11) — owner directive 2026-10-14; production still sends on Resend only — GAP
+
+**Directive.** All PAIGE email — Platform Operator, platform transactional, booking/portal/reminder and tenant PAIGE
+Email — moves to SendGrid, and Resend is retired. The owner named two credentials: PAIGE-SENDGRID-MAIL-EXECUTOR
+(sending only) and PAIGE-SENDGRID-PLATFORM-ADMIN (configuration only). The 2026-10-13 "Resend is the Platform
+Operator's own email" policy is superseded (§10, 2026-10-14). Full plan, inventory, rollback and owner decisions:
+`docs/delivery/exp03-launch-email-providers-plan.md`, addendum "SendGrid-only cutover plan (owner directive 2026-10-14)".
+
+**Production today (read-only, 2026-10-14):** 8 `channel_connectors`, all `provider='resend'` (6 active, 2 disabled);
+0 SendGrid connectors, 0 SendGrid domains, 0 receipt rows from either provider. About 20 send sites call Resend
+directly. Volume is small: 22 outbound email `messages` rows in 90 days (latest 2026-10-06); `email_send_log` 36 rows
+ever (latest 2026-09-12).
+
+**Gaps that block a safe cutover, most serious first:**
+1. No platform or operator SendGrid route. The governed door needs a tenant, a seat and a client recipient, so removing
+   Resend today would break all platform mail.
+2. The managed tenant sender cannot move as it stands: the 6 active businesses send from the shared `mail.paigeagent.ai`,
+   while the SendGrid door needs a per-business verified domain matching the From address (one claim per domain).
+3. No code verifies a domain with SendGrid (nothing calls `/v3/whitelabel`); a per-business DNS ownership proof is owed.
+4. Credential model unresolved: three code slots against the owner's two; the scope check neither persists nor gates.
+5. SendGrid unsubscribe/complaint/bounce events are acknowledged but not written to the suppression stores.
+6. Auth email appears to run on a third provider (Lovable) and may be broken (no `auth_emails` queue, no drain cron,
+   3 role-invitation messages stuck since 2026-07-10). Configuration UNVERIFIED.
+7. ~20 direct-to-Resend send sites bypass the door; each is a §37 producer-inventory item.
+8. No SendGrid inbound path. 9. No SendGrid reconcile cron; idempotency on `/v3/mail/send` UNVERIFIED.
+10. No SendGrid send has ever run in production — no authenticated runtime evidence for any SendGrid path.
+
+**Sequence:** P0 docs (this record) → P1 credential model → P2 one SendGrid transport + sender scopes → P3 domain
+authentication → P4 receipts, webhooks, suppression (before any live tenant send) → P5 operator/platform route → P6
+tenant managed sender + readiness → P7 tenant direct senders onto the door → P8 auth email → P9 inbound → P10 remove
+Resend after a soak → P11 final docs and registry. Owner gates are named per PR in the plan.
+
+**Branches in flight:** the local S3 UI branch (`exp03-s3-ui-r5`, head `bf551740812f88727bf717fbe50e7d95a4d8becf`)
+and the local G1 branch (`exp03-email-g1-r11`, head `4bc7620325877fbbe57295b221459a73169d7d13`, stacked on it) add no
+Resend functionality and must not; they rebase onto P2/P6.
+
+**UNVERIFIED:** which owner-named key is installed under which edge secret name and with what scopes; whether
+`SENDGRID_WEBHOOK_PUBLIC_KEY` and `RESEND_API_KEY` are set; whether SendGrid honours `X-Idempotency-Key`; platform
+DKIM/SPF; the Supabase Auth SMTP/hook configuration.
+
 ### Experience 03 S3 "PAIGE works your leads" — backend built, three gaps before a business can use it (2026-10-13; updated for review round 4)
 
 Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-grow-my-business-journey.md`](delivery/exp03-grow-my-business-journey.md) §12.
@@ -4432,7 +4472,7 @@ Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-gr
    6. Make sure `comms_provider_execution_allowed` admits the business and actor.
    7. Enable the SendGrid Event Webhook and set `SENDGRID_WEBHOOK_PUBLIC_KEY`.
    8. The owner signs off on the first live test send (test identity, consent, provider policy).
-   - **Policy reach.** The 2026-10-13 SendGrid policy is applied at the governed door, and `send-message` now refuses any SendGrid send that is not the door's. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13).
+   - **Policy reach.** *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: the 2026-10-13 policy this bullet measures is replaced by SendGrid-only for all PAIGE email; the reach of the new directive is the §5 entry "SendGrid-only cutover (P0–P11)". Bullet kept as written.)* The 2026-10-13 SendGrid policy is applied at the governed door, and `send-message` now refuses any SendGrid send that is not the door's. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13).
    - **Sign-off owed:** the 15-minute (`dispatching`) and 24-hour (`prepared`) windows for early SendGrid events are builder choices.
 2. **`client.followup` — owner decision owed.** `client.followup` is decline-only at both layers: `execute-approval` refuses it with 409 `decline_only`, and the database guard now refuses `approved`/`sent` for every send kind other than `owner.lead_followup` before reading any proof, so it can no longer be completed by citing an unrelated accepted email. Production on 2026-10-13: 125 pending approvals, plus the 6 falsely marked approved/done (§10). Approving one never sent anything. The owner decides between:
    - a governed review-and-send path for this kind (new work: a record path like `lead_reply_record_send`, and widening the guard to that kind); or
@@ -6181,6 +6221,28 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 
 ## 10. §13 corrections log
 
+- **2026-10-14 · OWNER DIRECTIVE: SENDGRID-ONLY EMAIL — THE 2026-10-13 "RESEND IS THE PLATFORM OPERATOR'S OWN EMAIL" POLICY IS REVERSED.**
+  - **What was recorded.** On 2026-10-13 the decision log, the config registry, the integration registry (README, JSON,
+    expense report), this reference (§4.0 S3 entry, §5 "Policy reach"), the canonical architecture's email correction
+    note and several delivery docs recorded an owner policy: a business's PAIGE Email sends through SendGrid, and Resend
+    stays the Platform Operator's own email. The 2026-09-11 "Email dedicated to Resend" ruling and the 2026-10-04 E1
+    "managed Resend" ruling were still standing beside it.
+  - **What changed.** On 2026-10-14 the owner directed that all PAIGE email moves to SendGrid and Resend is retired.
+    A policy recorded one day was reversed the next; the dated records are kept and marked "SUPERSEDED BY OWNER
+    DIRECTIVE 2026-10-14" in place (§58), not deleted.
+  - **What is NOT true yet (§13).** Nothing moved: production still sends only on Resend (8 resend connectors, 0
+    SendGrid, 0 receipts, 2026-10-14). The SendGrid registry entry's platform tier is now `eligible` by directive but its
+    status stays `PROOF_OWED`; Resend stays `PARTIAL` (being retired, not retired — the registry vocabulary has no
+    retired word yet).
+  - **Two corrections found while marking.** `docs/brain/config-registry.md` said `comms-sendgrid-scopes` "records" the
+    key's scopes; it returns them and persists nothing. Several records said the SendGrid admin-key CI allowlist is
+    "intentionally empty"; since S7.4 (2026-10-12) it allows exactly one (file, key) pair.
+  - **Code comments and an immutable migration that state the old policy** (`send-message/index.ts:1351-1354` "Platform
+    default stays Resend"; migration `20271031000100_paige_email_sendgrid_governed_door.sql:4-5` "Resend stays the
+    Platform Operator's own comms") are recorded here as superseded. The comment is corrected in cutover P2/P6; the
+    migration is not edited.
+  - **Where it lives now:** §5 "SendGrid-only cutover (P0–P11)"; plan addendum in
+    `docs/delivery/exp03-launch-email-providers-plan.md`; `docs/brain/decision-log.md` (2026-10-14).
 - **2026-10-13 · EXPERIENCE 03 S3 GROUNDING: APPROVING A `client.followup` NEVER SENT ANYTHING, AND SIX WERE MARKED APPROVED AND DONE.**
   - **What happened.** Before S3, `execute-approval` routed approvals by category. A `client.followup` category matched neither its email branch nor its SMS branch, so it fell to the generic acknowledge branch. That branch:
     - marked the approval `approved` with `metadata.executed=false` ("acknowledged — no automated executor for this category yet");

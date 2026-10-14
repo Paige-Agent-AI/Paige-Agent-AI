@@ -534,16 +534,27 @@ Values intentionally omitted.
 - **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
   `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
   `PLATFORM_SUPPORT_EMAIL`.
-- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
+  *(2026-10-14: `RESEND_API_KEY` and `RESEND_WEBHOOK_SECRET` are on the retirement list under the owner's
+  SendGrid-only directive; both are still read by deployed code (19 function directories plus `_shared`, and 3
+  functions respectively) until cutover PRs P5–P10 land. Whether either is set on production is UNVERIFIED. Plan:
+  `docs/delivery/exp03-launch-email-providers-plan.md`, addendum "SendGrid-only cutover plan".)*
+- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).**
+  **SUPERSEDED BY OWNER DIRECTIVE 2026-10-14** (the heading above is kept as written, §58): SendGrid is the one
+  email provider for all PAIGE email (Platform Operator, platform transactional and tenant), and Resend is being
+  retired. Resend is no longer the Platform Operator's email. See `decision-log.md` (2026-10-14) and the cutover plan
+  in `docs/delivery/exp03-launch-email-providers-plan.md`. The owner named two SendGrid credentials,
+  PAIGE-SENDGRID-MAIL-EXECUTOR (sending) and PAIGE-SENDGRID-PLATFORM-ADMIN (configuration); which edge secret name
+  each is installed under is UNVERIFIED, and the code has three slots (below) against the owner's two (cutover P1).
+  Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
     - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
     - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation; anything else is refused before any provider call (`paige_email_requires_governed_send`);
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
     - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
     - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
-    - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
+    - `comms-sendgrid-scopes/index.ts`: ~~records the key's scopes~~ *(corrected 2026-10-14: it RETURNS the key's scopes — `scopes`, `can_send_mail`, `non_sending_scopes` — to a super_admin caller; it persists nothing, gates no send, and has no caller. Persisting the result and gating sending on it is cutover P1)*, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name.
-  - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
+  - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed). *(2026-10-14: the CI guard's allowlist is NOT empty — since S7.4 it allows exactly one (file, key) pair, `comms-sendgrid-webhook-admin/index.ts` → `SENDGRID_WEBHOOK_ADMIN_API_KEY`; the full-access key is forbidden everywhere. The guard matches substrings in `.ts` files only, so it is a source rule, not runtime isolation. Amending it to the owner's two-credential model needs an owner ruling — cutover P1.)*
   - **Database facts, not secrets (`20271031000100`):**
     - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);
     - a `channel_connectors` row with `provider='sendgrid'`, which only the service role or a non-JWT database session may create or change (`guard_channel_connector_sendgrid_writer`, `20271031000250`); anyone signed in may only switch one off;

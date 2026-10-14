@@ -6,6 +6,19 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A provider policy copied into a dozen records in one day had to be swept the next (2026-10-14, SendGrid-only directive)
+
+**Symptom.** The 2026-10-13 policy "a business's PAIGE Email is SendGrid; Resend is the Platform Operator's own email" was restated, in slightly different words each time, in the decision log, the config registry, the integration registry (README, JSON and expense report), the master reference (two places), the canonical architecture note, four delivery docs, a code comment and a migration header. The owner reversed it on 2026-10-14 (SendGrid-only). Finding every copy took a multi-spelling search (`Resend stays`, `Platform default stays Resend`, `Platform Operator.{0,40}Resend`, `Resend (is|stays|=)`, `system mail = Resend`, `owner policy 2026-10-13`), and two older rulings it had never replaced (2026-09-11 "Email dedicated to Resend", 2026-10-04 "managed Resend") turned up only in that sweep.
+
+**Root cause.** Each record restated the policy instead of pointing at one dated entry, so a reversal is a search problem, and a search only finds the spellings someone thinks of. Restating also drifted facts: one copy said `comms-sendgrid-scopes` "records" scopes (it returns them), and three said the admin-key CI allowlist was "intentionally empty" a day after it gained an entry.
+
+**Rule.**
+- State a provider or ownership policy once, in the decision log, with its date; elsewhere write "per <date> policy (decision log)" plus only the fact that record needs.
+- When a policy reverses, mark every copy "SUPERSEDED BY <directive date>" in place (§58), add the new entry, and report the exact search terms and remaining hits — and look for older rulings the earlier policy left standing.
+- A migration header cannot be edited; record its supersession in master §10.
+
+---
+
 ### "Approved" was a category string match, and no test asserted a send happened (2026-10-13, Experience 03 S3)
 
 **Symptom.** On production, six `client.followup` approvals read `approved` and their actions read `done`, between 2026-09-15 and 2026-10-07. Nothing was sent for any of them. Each row's own metadata said so (`executed:false`, "acknowledged — no automated executor for this category yet"), and nothing read that field.

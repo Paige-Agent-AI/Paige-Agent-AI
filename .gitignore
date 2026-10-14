@@ -55,6 +55,7 @@ scripts/live-drive/harness/**/vite.config.ts.timestamp-*.mjs
 # Not deliverables: the harness's real outputs are its assertions and its labelled frames,
 # and its frames already land in scripts/live-drive/artifacts/ above.
 scripts/live-drive/harness/tmp/
+scripts/live-drive/harness/mount/.weekly-responsibility-cache/
 
 # Transient probe scripts written into the drive folder by review agents and
 # ad-hoc diagnosis. Scratch by convention — never a deliverable, and a blanket

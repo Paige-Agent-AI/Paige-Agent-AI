@@ -32,7 +32,7 @@ export function workspaceLinkTier(
   return null;
 }
 
-/** The frozen words. A list is named as a list; only an exact client link names the client. */
+/** The frozen list labels. Exact record labels are applied only after route resolution. */
 export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = Object.freeze({
   contacts: "Open Clients",
   sales_agreements: "Open terms & agreements",
@@ -47,17 +47,29 @@ export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" |
 export function workspaceLinkTarget(link: ReadRecordLink, tenant: WorkspaceLinkTenant | null | undefined): WorkspaceLinkTarget | null {
   const tier = workspaceLinkTier(tenant);
   if (!tier || !tenant) return null;
+  return routeLinkTarget(link, tier, tenant.account_number ?? null);
+}
+
+/**
+ * The same answer, for a surface that is ALREADY mounted inside one tier's route tree (the Solo Sales
+ * workspace, the Solo client record): the tier is the tree the page lives in and the account is the
+ * route's own `:account` segment, so the link can never point at a different account than the one on
+ * screen. Same route map, same frozen labels, same fail-closed rules (E4-S3 PR beta).
+ */
+export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, account: string | number | null | undefined): WorkspaceLinkTarget | null {
   const resolved = resolveCanonicalRecordLink({
     actor: "account",
     tier,
-    account: tenant.account_number ?? null,
+    account: account ?? null,
     destination: link.destination,
     recordId: link.record_id,
   });
   if (!resolved) return null;
-  const label = link.destination === "contacts" && resolved.status === "exact"
+  const label = resolved.status === "exact" && link.destination === "contacts"
     ? (link.subject ? `Open ${link.subject}` : "Open client record")
-    : DESTINATION_LABEL[link.destination];
+    : resolved.status === "exact" && link.destination === "sales_invoices"
+      ? "Open invoice"
+      : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

@@ -10,11 +10,11 @@ INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefi
 ('e0921000-0000-0000-0000-000000000002','e09-profile-b','E09 Profile B','active','standalone','E09PB',9400912,'{}');
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,entity_name,status,onboarding_stage,source,current_notes) VALUES
 ('e0931000-0000-0000-0000-000000000001','e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001',
- 'e0911000-0000-0000-0000-000000000002','Synthetic','Client A','Company A','active','intake','invitation','PRIVATE CRM NOTE A'),
+ 'e0911000-0000-0000-0000-000000000002','Synthetic','Client A','Company A','active','invited','invitation','PRIVATE CRM NOTE A'),
 ('e0931000-0000-0000-0000-000000000002','e0921000-0000-0000-0000-000000000002','e0911000-0000-0000-0000-000000000002',
- 'e0911000-0000-0000-0000-000000000001','Foreign','Client B','Company B','active','intake','signup','PRIVATE CRM NOTE B'),
+ 'e0911000-0000-0000-0000-000000000001','Foreign','Client B','Company B','active','invited','signup','PRIVATE CRM NOTE B'),
 ('e0931000-0000-0000-0000-000000000003','e0921000-0000-0000-0000-000000000001',NULL,
- 'e0911000-0000-0000-0000-000000000002','Synthetic','Survivor','Company A','active','intake','invitation',NULL);
+ 'e0911000-0000-0000-0000-000000000002','Synthetic','Survivor','Company A','active','invited','invitation',NULL);
 SELECT public._attach_client_address('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','email','e09-primary@tests.invalid');
 SELECT public._attach_client_address('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','phone','+12025550109');
 

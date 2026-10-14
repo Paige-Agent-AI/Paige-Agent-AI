@@ -30,6 +30,13 @@ export type CanonicalDestination =
   | "calendar"
   | "contacts"
   | "pipeline"
+  | "executive"
+  | "finance"
+  | "sales_pipeline"
+  | "systems_check"
+  | "business_game_plan"
+  | "trust_compass"
+  | "mind"
   | "marketplace"
   | "marketplace_submissions"
   // Experience 04 E4-S3: where a read PAIGE answered from can be checked. Solo only — the other
@@ -64,10 +71,15 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     marketplace_submissions: "/operator/marketplace/submissions",
   },
   solo: {
-    // Business Game Plan is the default Command Center landing (owner-approved 2026-09-05),
-    // so the canonical "home" an external emitter links to opens it. Systems Check stays a
-    // valid deep link; bare /command-center also redirects here.
-    home: "/solo/{account}/command-center/business-game-plan",
+    // E2-6 owner direction: Executive is the landing; the four incumbent surfaces remain deep links.
+    home: "/solo/{account}/command-center/executive",
+    executive: "/solo/{account}/command-center/executive",
+    finance: "/solo/{account}/finance",
+    sales_pipeline: "/solo/{account}/sales/opportunities?view=board",
+    systems_check: "/solo/{account}/command-center/systems-check",
+    business_game_plan: "/solo/{account}/command-center/business-game-plan",
+    trust_compass: "/solo/{account}/command-center/trust-compass",
+    mind: "/solo/{account}/command-center/mind",
     billing: "/solo/{account}/settings/billing",
     security: "/solo/{account}/settings/security-data",
     settings: "/solo/{account}/settings/setup",

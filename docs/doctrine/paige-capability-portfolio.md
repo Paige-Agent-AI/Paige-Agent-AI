@@ -131,6 +131,7 @@ sales.department = PROOF_OWED
 ads.department = PROOF_OWED
 finance.department = PROOF_OWED
 paige.workspace = PARTIAL
+command-center.executive = PARTIAL
 command-center.business-game-plan = PARTIAL
 command-center.systems-check = UNAVAILABLE
 command-center.mind = UNAVAILABLE

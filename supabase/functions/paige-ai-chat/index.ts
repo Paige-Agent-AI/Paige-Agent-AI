@@ -11653,7 +11653,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 { caller: supabaseClient },
                 JSON.parse(tc.function.arguments))
             : { status: "refused" as const, message: "This business review capability is available only in the authorized Solo workspace lens. No values were read." };
-          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+          // E2-6 uses E4's existing frame/persistence path. References never enter model context.
+          const { record_links: snapshotLinks, ...snapshotForModel } = result;
+          if (result.status === "available" && snapshotLinks?.length) readRecordLinkSource.set(tc, snapshotLinks);
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(snapshotForModel) });
         } else if (tc.function.name === "update_client_data") {
           try {
             // §9 — same class as the credit-sync and summary-memory findings: falling back to

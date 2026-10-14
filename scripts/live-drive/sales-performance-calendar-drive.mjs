@@ -92,7 +92,11 @@ try {
       const fold = page.locator('.tcs-paige-backdrop');
       if (await openerCovered(page)) { await fold.click(); await fold.waitFor({ state: 'hidden' }); }
       await page.getByRole('button', { name: 'Inspect overdue balance', exact: true }).click();
-      const text = await page.getByRole('dialog').innerText();
+      const drawer = page.getByRole('dialog'); await drawer.waitFor();
+      await page.waitForTimeout(450);
+      const box = await drawer.boundingBox();
+      assert(box && box.x >= -1 && box.x + box.width <= 901, `Unavailable drawer clips horizontally: ${JSON.stringify(box)}`);
+      const text = await drawer.innerText();
       assert(text.includes(calendar === 'missing' ? 'Business time zone is not set.' : 'Business time zone needs correction.'));
       assert(text.includes('Not available')); assert(!text.includes('$0.00'));
       await page.screenshot({ path: path.join(output, `${calendar}-drawer.png`) });

@@ -263,6 +263,6 @@
     "src/solo/sales/performance/sales-performance.css": "47d13bf7b781281b07502a7ea8131eca3e25b7e6e0c1edc1b9e313c1f7a785c4",
     "src/components/tenant-shell/TenantCommandCenterShell.tsx": "df519455a31426531d0a34748fb2a2a81d4a445a03095158c2705109b59f588e",
     "scripts/live-drive/harness/sales-mount/performance.tsx": "62f774651c5a9100e7fd43018fec428f371e83bd39001526a97c8ee0595f1d8b",
-    "scripts/live-drive/sales-performance-calendar-drive.mjs": "d6e24b0b1be63e5e9b4c95df4a458318664f656f67b3cbfe111cb04b934fb4a2"
+    "scripts/live-drive/sales-performance-calendar-drive.mjs": "776c75c493cd44e7c7a9331cbe34d9fe2aae49b9908c9612320d6c0b251af2b8"
   }
 }

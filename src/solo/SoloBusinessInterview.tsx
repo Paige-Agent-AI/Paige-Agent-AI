@@ -25,10 +25,16 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
   const { activeTenantId, activeTenant } = useTenantContext();
   const navigate = useNavigate();
   const panel = useRef<HTMLElement | null>(null);
+  const unknownNotice = useRef<HTMLDivElement | null>(null);
   const scope = `${activeTenantId}:${threadId}`;
   const liveScope = useRef(scope); liveScope.current = scope;
   const progressGeneration = useRef(0);
   const returnFocusField = useRef<InterviewField | null>(null);
+  const [focusEpoch, setFocusEpoch] = useState(0);
+  function restoreFocusTo(field: InterviewField) {
+    returnFocusField.current = field;
+    setFocusEpoch(epoch => epoch + 1);
+  }
   const [draft, setDraft] = useState<{ brief: SoloSetupBrief; revision: number | null; field: InterviewField; fields: InterviewField[]; proposalId: string | null } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,12 +61,13 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
     const capturedScope = scope;
     const frame = requestAnimationFrame(() => {
       if (liveScope.current !== capturedScope) return;
-      const target = draft ? panel.current?.querySelector<HTMLTextAreaElement>("textarea")
+      const target = context.saveOutcomeUnknown ? unknownNotice.current : draft
+        ? panel.current?.querySelector<HTMLTextAreaElement>("textarea")
         : panel.current?.querySelector<HTMLButtonElement>(`[data-interview-field="${field}"]`);
-      if (target && !target.disabled) { target.focus(); returnFocusField.current = null; }
+      if (target && !target.matches(":disabled")) { target.focus(); returnFocusField.current = null; }
     });
     return () => cancelAnimationFrame(frame);
-  }, [locked, ready, draft, scope, error]);
+  }, [locked, ready, draft, scope, error, context.saveOutcomeUnknown, focusEpoch]);
   useEffect(() => { if (refreshEpoch > 0) void refreshRef.current(); }, [refreshEpoch]);
   useEffect(() => {
     if (!activeTenantId || !threadId) return;
@@ -112,10 +119,10 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
       primaryBusinessEmail: context.primaryBusinessEmail, knowledgeSources: context.knowledgeSources,
       paigeProfile: context.paigeProfile, voiceExamples: context.voiceExamples, proposalId: draft.proposalId });
     if (liveScope.current !== capturedScope) return;
-    if (result.ok === false) { returnFocusField.current = draft.field; setError(result.kind === "unknown" ? null : result.error); return; }
+    if (result.ok === false) { restoreFocusTo(draft.field); setError(result.kind === "unknown" ? null : result.error); return; }
     const following = nextField === undefined ? nextInterviewField(result.readback.brief) : nextField && draft.fields.includes(nextField) ? nextInterviewField(result.readback.brief, nextField) : nextField;
     const reviewedField = draft.field;
-    returnFocusField.current = reviewedField;
+    restoreFocusTo(reviewedField);
     setDraft(null); setNextField(following); setPaused(false); setError(null);
     setMessage("Saved to Setup and read back from the server. You can correct any detail below, then continue in the same conversation.");
     if (threadId) {
@@ -135,7 +142,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
     if (!result.ok) { setError(result.error); return; }
     setError(null);
     if (reviewed) {
-      returnFocusField.current = reviewed.field;
+      restoreFocusTo(reviewed.field);
       const matches = reviewed.fields.every(field =>
         reviewed.brief[field].trim() === result.readback.brief[field].trim() &&
         result.readback.brief.provenance[field]?.source === "owner_confirmed" &&
@@ -169,7 +176,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
     {context.loading && <p role="status">Loading your Setup records…</p>}
     {(context.error || error) && <p role="alert" className="sbi-error">{context.error || error}</p>}
     {message && <p role="status" className="sbi-status">{message}</p>}
-    {context.saveOutcomeUnknown && <div className="sbi-error" role="alert"><p>We couldn't verify whether Setup was saved. Check the stored version before saving again.</p><button type="button" disabled={locked} onClick={() => void checkStored()}>{context.reconciling ? "Checking saved Setup…" : "Check saved Setup"}</button></div>}
+    {context.saveOutcomeUnknown && <div ref={unknownNotice} tabIndex={-1} className="sbi-error" role="alert"><p>We couldn't verify whether Setup was saved. Check the stored version before saving again.</p><button type="button" disabled={locked} onClick={() => void checkStored()}>{context.reconciling ? "Checking saved Setup…" : "Check saved Setup"}</button></div>}
     {!context.loading && !ready && !context.error && <p>Only the business owner can review and save this interview profile.</p>}
     {ready && <>
       {(!onboarding || profileOpen || !!draft) && <p className="sbi-note">Use Chat for this interview. Review suggestions when available, or enter a detail yourself. Never share passwords or connection secrets in chat.</p>}
@@ -177,7 +184,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
         {!draft ? (!onboarding || profileOpen) && <dl className="sbi-facts">{INTERVIEW_FIELDS.map(([field, label]) => <div key={field}><dt>{label}<small>{setupSourceLabel(context.brief.provenance[field]?.source)}</small></dt><dd>{context.brief[field] || "Not yet recorded"}</dd><button data-interview-field={field} type="button" disabled={locked || context.saveOutcomeUnknown} onClick={() => edit(field)} aria-label={`${context.brief[field] ? "Correct" : "Add"} ${label}`}>{context.brief[field] ? "Correct" : "Add"}</button></div>)}</dl> : <form onSubmit={event => { event.preventDefault(); void save(); }}>
         <h3>{draft.proposalId ? "Review PAIGE’s suggestion" : "Review this detail"}</h3>
         {INTERVIEW_FIELDS.filter(([field]) => draft.fields.includes(field)).map(([field, label], index) => <label key={field}>{label}<textarea autoFocus={index === 0} maxLength={4000} value={draft.brief[field]} disabled={locked} onChange={event => { const value = event.target.value; setDraft(current => current ? { ...current, brief: { ...current.brief, [field]: value } } : null); }} /></label>)}
-        <p>{draft.fields.some(field => context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim()) ? "This review replaces changed connection-sourced details with your confirmed values." : "Your review saves only through the existing Setup controls."}</p><div className="sbi-actions"><button type="submit" disabled={locked || context.saveOutcomeUnknown}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { returnFocusField.current = draft.field; setDraft(null); }}>Cancel</button></div>
+        <p>{draft.fields.some(field => context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim()) ? "This review replaces changed connection-sourced details with your confirmed values." : "Your review saves only through the existing Setup controls."}</p><div className="sbi-actions"><button type="submit" disabled={locked || context.saveOutcomeUnknown}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { restoreFocusTo(draft.field); setDraft(null); }}>Cancel</button></div>
       </form>}
       {(!onboarding || profileOpen || !!draft || !!threadId) && <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>}
       {!threadId && (!onboarding || profileOpen) && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}

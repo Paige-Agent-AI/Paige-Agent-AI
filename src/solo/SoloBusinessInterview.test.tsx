@@ -23,6 +23,36 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 describe("owner interview review over canonical Setup", () => {
+  it("focuses the recovery notice after an uncertain save without retrying writes", async () => {
+    const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+    const flush = async () => act(async () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(callback => callback(0)); });
+    state.reconcile.mockReset(); state.context.reconcileSave = state.reconcile;
+    state.save.mockImplementation(async () => { state.context.saveOutcomeUnknown = true; return { ok: false, kind: "unknown", error: "Unknown save" }; });
+    await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await input("Design consultancy");
+    await click(button("Confirm and save to Setup")); await render(); await flush();
+    const notice = button("Check saved Setup").closest('[role="alert"]');
+    expect(document.activeElement).toBe(notice);
+    expect((host.querySelector("textarea") as HTMLTextAreaElement).value).toBe("Design consultancy");
+    expect((button("Confirm and save to Setup") as HTMLButtonElement).disabled).toBe(true);
+    expect(state.save).toHaveBeenCalledTimes(1); expect(state.reconcile).not.toHaveBeenCalled();
+    expect(state.rpc.mock.calls.filter(([name]) => name.startsWith("save_"))).toHaveLength(0);
+  });
+  it("cancels queued recovery focus when the owner changes workspace", async () => {
+    const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+    state.save.mockImplementation(async () => { state.context.saveOutcomeUnknown = true; return { ok: false, kind: "unknown", error: "Unknown save" }; });
+    await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await click(button("Confirm and save to Setup")); await render();
+    const oldNotice = button("Check saved Setup").closest('[role="alert"]');
+    state.tenant = "tenant-b"; state.context.resolvedTenantId = "tenant-b"; state.context.saveOutcomeUnknown = false;
+    await render("thread-b");
+    await act(async () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(callback => callback(0)); });
+    expect(document.activeElement).not.toBe(oldNotice); expect(host.querySelector("textarea")).toBeNull();
+    expect(button("Check saved Setup")).toBeUndefined(); expect(state.save).toHaveBeenCalledTimes(1);
+    expect(state.rpc.mock.calls.filter(([name]) => name.startsWith("save_"))).toHaveLength(0);
+  });
   it("restores correction focus only after a delayed checkpoint releases the controls", async () => {
     const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; });

@@ -775,6 +775,16 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-14 — Experience 04 E4-S3 "See it, then verify it": released (PR alpha #2129 → `50c32a605`, PR beta #2136 → `d5a8e6e76`).** Production readback is complete for both: `edge-live` and `db-live` are at `d5a8e6e7`, migrations `20271031004000` and `20271031005000` are in `schema_migrations`, the three Exp04 readers write no receipt, and the Vercel production deployment for `d5a8e6e76` is READY. Delivered to customers:
+- PAIGE's client-standing answer links to the records it read.
+- A refused or unavailable read never shows as a completed check.
+- The owner's own time-zone save is attributed to the owner.
+- Looking at a page writes nothing to the Rail.
+- Collections judges Overdue on the business's calendar day, or says "On hold".
+- The Solo client record opens with "Where {client} stands".
+
+INT-346 stays off. Authenticated runtime acceptance is owed to the QA lane (issue #2119). Detail: §5 Experience 04 and journey §16.
+
 **2026-10-13 — Experience 03 S3 "PAIGE works your leads": backend only (branch `claude/stoic-archimedes-pv4r8u`; NOT merged or live when this was written; updated for review round 4).** Merging ships the code and four migrations: `20271031000000`, `20271031000100`, `20271031000200` and `20271031000250`. None is persisted on production until `deploy-migrations` reads it back. No screen ships: the reply screen waits for the owner to approve the design. No live SendGrid send can happen until the operator steps in §5 are done. Internal; no customer version.
 
 **What ships on merge (code-verified on the branch):**
@@ -4476,12 +4486,13 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
   - **Dormant executor receipt:** PAIGE records an answered read once, server-side, only when that same read's SQL did not already write a receipt. It stays dormant until PR beta's migration stops the SQL readers receipting.
   - **Owner attribution:** migration `20271031004000` makes the owner's own time-zone save read as the owner's ("Business time zone changed", `owner_staff`). The Solo Rail labels a recorded person "Person".
   - **Owed:** authenticated runtime proof (journey §15.5 steps 1, 3, 4 and 6, plus one sub-account walk), the full-schema SQL run in CI, and the non-author C0b re-pin review.
-- **E4-S3 PR beta — display reads write nothing; Collections and the client record on the business calendar (on branch on top of merged alpha, ships on merge; not live; 2026-10-14 — journey §16.4):** closes the remaining "Wrong attribution", "Two overdue answers" (for Collections) and "No standing on the client record" lines above. Nothing is activated.
+- **E4-S3 PR beta — display reads write nothing; Collections and the client record on the business calendar (merged as #2136 → main `d5a8e6e76` and deployed: remote `edge-live` and `db-live` both at `d5a8e6e7`, Vercel production READY, migration read back 2026-10-14; authenticated runtime still owed — journey §16.4):** closes the remaining "Wrong attribution", "Two overdue answers" (for Collections) and "No standing on the client record" lines above. Nothing is activated.
   - **No receipt for looking:** migration `20271031005000` makes the three SQL reads (`read_business_time_zone`, `find_clients_for_status`, `read_client_engagement_status`) pure reads — same signatures, checks, grants and answers, no receipt, no `receipt_id`. A Setup load, a Collections visit or a client-record open writes nothing to the Rail; PAIGE's answered chat question writes one line ("Checked where a client stands" / "Checked your business time zone", by PAIGE) through alpha's executor. Alpha's `paige-ai-chat` is already live, so that gate is met. The frontend can go live before the migration applies; any page visit in that window writes an old-style receipt, which the post-merge readback counts (journey §16.4).
   - **Collections:** "Past due" is now **"Overdue"** (wording change, §58), judged on the business's own calendar day (the composer's `localDateInZone`) over the server's owed flag; without a zone it reads **"On hold"**, never 0, with the note said once and one path to the setting; an invoice without the owed flag makes Outstanding, Overdue and Upcoming "On hold" too. The coverage line names the calendar in words ("Central Time (Chicago) · today Oct 13, 2026") and counts older legacy-status invoices it does not judge.
   - **Client record:** "Where {client} stands" is the first section of the Solo client record — agreement and signing, money kept apart by evidence, payment requests, delivery and PAIGE's own next-step sentences, with links through the shared route map (one link per row, a recorded deviation from chat's rule). Without the zone it says "On hold" (missing and unrecognised zones are told apart) and prints no timestamp as a business date. Declared for Solo, Sub-account and Enterprise (`client_standing`); mounted on Solo only (§60 gap recorded).
   - **Still partial:** the Sales overdue metric (C2) and PAIGE's business snapshot judge overdue on UTC until the Sales-lane PR lands. Follow-ups recorded in journey §16.4: PAIGE's held sentence does not tell a missing zone from an unrecognised one; `StatePill`'s light-theme success/warning ink is below AA in the primitive (local stopgap here); the global `[data-pg] a` rule spends gold on resting links.
-  - **Owed:** authenticated runtime proof on the Solo QA account plus one sub-account walk, the full-schema SQL run in CI, and the post-merge §32 readback of `20271031005000`.
+  - **Production readback (2026-10-14, read-only):** `schema_migrations` contains `20271031005000` (now the latest version); the three readers' definitions contain no `record_capability_run`, remain SECURITY DEFINER, and are executable by `authenticated` and not `anon`; the display wrapper carries the new wording and is not executable by `authenticated`. The deploy window was **not hit**: 0 receipt rows for those keys since the merge (04:33:57Z) outside `channel = 'paige_chat'`; all-time there is still exactly the 1 historical `read_business_time_zone` row. The full-schema SQL ran green in CI `database-contract` on the PR's final head `ba062bce`, whose tree is identical to the merged commit.
+  - **Owed:** authenticated runtime proof on the Solo QA account plus one sub-account walk (issue #2119).
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 

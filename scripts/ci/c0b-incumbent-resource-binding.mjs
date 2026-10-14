@@ -492,7 +492,8 @@ const SOURCES = {
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "cb4236ff9fec37be4043a7b2fa6a91e68b63c1c049f351f3d7f7ed51b8366c11",
-  "supabase/functions/_shared/canonical-app-url.ts": "d69489d15bb235aed1793461b38a22c6b1212a9ce3227f4e0ecb348ca2c32ba6",
+  // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
+  "supabase/functions/_shared/canonical-app-url.ts": "68872b4bbe9b846150405a04def428b331fc26d763672cabfec9c1bfb24dd15b",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",

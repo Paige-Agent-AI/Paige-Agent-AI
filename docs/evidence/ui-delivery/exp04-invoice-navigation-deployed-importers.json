@@ -1,0 +1,223 @@
+{
+  "capturedAt": "2026-10-14T14:28:01.017Z",
+  "project": "xygzykjyynhzqytbqnzu",
+  "sourceBase": "6428c2ba61959ef302cf69e0dbd64a878ddbb35f",
+  "method": "Current-source import graph joined to live inventory and individually retrieved deployed package membership. LF and trailing capture whitespace normalization only.",
+  "boundary": "16 current discovered active packages inspected; not an exhaustive audit of old generations or all historical import graphs. This is pre-push source/impact evidence, not deployed candidate or authenticated behavior.",
+  "packages": [
+    {
+      "slug": "accept-invite",
+      "version": 70,
+      "ezbr_sha256": "4309dfdb430640dc23da521dbca5fdb0dd944ab7f2d03d5f4d432490c368f84c",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "crm-command",
+      "version": 100,
+      "ezbr_sha256": "b0c68deb9b6e7154fee0d1acbc89c2c557bdda82276776e49bc07e8e1ce56103",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "marketplace-checkout-session",
+      "version": 64,
+      "ezbr_sha256": "08cef0cbee3d6f70052c5e2d2fd118ae2fa667f80c025167628b4d8e8988076c",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "mcp-oauth-callback",
+      "version": 18,
+      "ezbr_sha256": "dfe080d825b682f1e14176e255c593bea867a3cf6648e5edf52f9813b9cfaf23",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "notify-approval-event",
+      "version": 22,
+      "ezbr_sha256": "90f04acef6a1530a29f895742f0aa403085f64e8993f28babb425c988358ca51",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "notify-team-event",
+      "version": 1643,
+      "ezbr_sha256": "26d92cdd939682717e5fe0ba18380c412050553f7a6d7b3d29dea9b73e98247d",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "paige-mcp",
+      "version": 700,
+      "ezbr_sha256": "08e49e1ab90d884199c2678ba019b78b8c53faf094088c2a3b7085c2d12ce99c",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "platform-billing-connect",
+      "version": 22,
+      "ezbr_sha256": "83c95b79303a840bc9f5be0a67c0cd0378bfa9ba8db4f5963d68eb9f0eca6498",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "platform-billing-portal",
+      "version": 31,
+      "ezbr_sha256": "d2070b13df848b3e4ef1d0394fe86782c22d6f049109fdfc76e25c7e82e0fa2c",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "platform-subscription-checkout",
+      "version": 73,
+      "ezbr_sha256": "755374496d9a8cf99a56923354ea2cd1826bef3ab1fa5e9fee957b70957b45b5",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "sales-invoice-command",
+      "version": 69,
+      "ezbr_sha256": "2b9647f23a4e77dfedec794b08afc2cb6431cc4d6c33c9b292f9494122abd24a",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "sales-invoice-delivery",
+      "version": 28,
+      "ezbr_sha256": "d4752f080df7d2288abe47186eda1ac075bd1ee9c3daffe809f0af8bdba1c5a7",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "send-message",
+      "version": 95,
+      "ezbr_sha256": "2ac4aaff251ac39002793528b6eeb5498e189a6e07918158a6c18c0ce5ae29ec",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "solo-beta-billing-portal",
+      "version": 18,
+      "ezbr_sha256": "24b0c1ff4ce7588258b464a4c4e361d1409505b20eaafcfd3440bb65d2bd2350",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "zoom-oauth-callback",
+      "version": 91,
+      "ezbr_sha256": "6fca58810e7fc6053f963191e13032d38d705e34ef1800703845f739bfbeb9fa",
+      "files": [
+        {
+          "name": "functions/_shared/canonical-app-url.ts",
+          "sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "baseline_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+          "matchesSourceBase": true
+        }
+      ]
+    },
+    {
+      "slug": "paige-ai-chat",
+      "version": 403,
+      "ezbr_sha256": "470ac09f9bf7398aa87aa08dfcb2df7aba9e5fdc239802d2799e297061904b11",
+      "files": [
+        {
+          "name": "functions/_shared/client-engagement/labels.ts",
+          "sha256": "a7c6af13325bc8694245fcb56364b9bd3422896e0a76051fff48742d220c00d0",
+          "baseline_sha256": "a7c6af13325bc8694245fcb56364b9bd3422896e0a76051fff48742d220c00d0",
+          "matchesSourceBase": true
+        },
+        {
+          "name": "functions/_shared/paige-turn/record-links.ts",
+          "sha256": "1fc88260bc7c83fd70c2849f6ffa80a708a91cf81cdb97df66b3674f442b999e",
+          "baseline_sha256": "1fc88260bc7c83fd70c2849f6ffa80a708a91cf81cdb97df66b3674f442b999e",
+          "matchesSourceBase": true
+        }
+      ]
+    }
+  ]
+}

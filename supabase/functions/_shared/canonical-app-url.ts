@@ -155,7 +155,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal" },
+  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice" },
   sub_account: {},
   agency: {},
 };

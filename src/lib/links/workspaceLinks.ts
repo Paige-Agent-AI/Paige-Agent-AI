@@ -40,6 +40,13 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   sales_collections: "Open collections",
   operations_work: "Open delivery work",
   business_time_zone: "Open business time zone setting",
+  executive: "Open Executive",
+  finance: "Open Finance",
+  sales_pipeline: "Open Sales pipeline",
+  systems_check: "Open Systems Check",
+  business_game_plan: "Open Business Game Plan",
+  trust_compass: "Open Trust Compass",
+  mind: "Open Mind",
 });
 
 export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" | "surface_only" };

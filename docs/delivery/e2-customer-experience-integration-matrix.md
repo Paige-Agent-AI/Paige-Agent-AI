@@ -7,10 +7,25 @@ with missing work classified REUSE / EXTEND / REPAIR / NEW. The acceptance quest
 customer ask PAIGE to accomplish something, see the actual change in the correct part of the
 platform, understand its status, and return later to verify the result?*
 
-**SHELL:** SOLO. **State as of:** 2026-10-13, main `c4a68eb38` (E2-1 #2075, E2-2 #2082,
-E2-3a #2092, E2-3b #2110 all merged and deployed; repeat authenticated QA requested on #2102).
+**SHELL:** SOLO. **State as of:** 2026-10-14. The continuation is grounded against main
+`6428c2ba6` and preserves zCod's open E2-6 PR [#2128](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/2128)
+at `99df65a3444f4526f34e417c07df4d3879ab0498`. E2-6a's caller-JWT UI transport
+[#2123](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/2123) is already shipped.
+The integrated continuation is **PARTIAL**; its authenticated customer acceptance is
+**UNVERIFIED**, and final owner product review is **PENDING**. The
+[continuation contract](e2-6-continuation-contract.md) records the routing and proof boundaries;
+ANT-138 and ANT-147 are the existing coordination threads. Codex is the temporary sole E2
+implementation lead; zCod does not independently modify E2-6 during this handoff.
 
-## Outcome A — the conversational COO briefing (LIVE, read-only)
+**Preserved authenticated baseline:** the 2026-10-13 ordinary SOLO COO briefing repeat
+returned **9 PASS / 0 FAIL** under
+[#2102](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/2102), as recorded in the
+ANT-138 handoff and continuation contract. The earlier **7 PASS / 2 FAIL** drive remains
+historical evidence in the [acceptance protocol](e2-3-authenticated-first-briefing-acceptance.md).
+Neither result substitutes for the supplemental E2-6 integrated drive below. E2-1 #2075,
+E2-2 #2082, E2-3a #2092 and E2-3b #2110 remain shipped historical foundations.
+
+## Outcome A — the conversational COO briefing (historical authenticated baseline, read-only)
 
 *"How's my business doing, what needs attention, and what should we work on today?"*
 
@@ -27,11 +42,11 @@ E2-3a #2092, E2-3b #2110 all merged and deployed; repeat authenticated QA reques
 
 | Gap | Class | Plan |
 |---|---|---|
-| No owner-facing briefing surface beyond the chat transcript | **NEW** (roadmap slice E2-6, Impeccable-gated): a COO view grounded in the SAME canonical records — it must read through the fabric/issuer, never a second data path |
-| Cannot navigate from a briefing figure to the departmental record/view it came from (a pipeline number → Sales; a Systems Check risk → Systems Check; a client count → Clients) | **EXTEND** (with E2-6): links/anchors from briefing lines to the existing departmental views — reuse the views, do not duplicate them |
+| Owner-facing evidence beyond the chat transcript needs integrated acceptance | **NEW presentation / REUSE data:** E2-6 Executive calls shipped `paige-business-review` → the SAME composer/issuer. Candidate source binding exists; hosted and authenticated integrated proof remains owed |
+| Navigation from a briefing to the owning departmental records needs integrated acceptance | **EXTEND:** candidate reuses E4 `paige_record_links`, the one canonical route map and current-account resolver; no URL is stored in a turn. Departmental and persisted-reference proof remains owed |
 | The briefing names risks; the owner cannot yet act on them from chat (actions refused during INT-346) | **REUSE (already built, gated):** the governed action machinery — Spine executors, `paige_pending_confirmations` approval cards, Rail receipts, PlanInMotion — exists and activates with INT-346; no new machinery is needed or being built |
 
-## Outcome B — the action request during DRAINING (LIVE, refusal-by-design)
+## Outcome B — the action request during DRAINING (historical authenticated refusal-by-design)
 
 | Link | Current truth |
 |---|---|
@@ -48,6 +63,37 @@ visible in the existing approval-card machinery and departmental views — **REU
 processing → completed/failed from canonical records; Experience 02 wires into them, builds
 nothing parallel).
 
+## Outcome C — the integrated Executive Command Center (PARTIAL; authenticated proof UNVERIFIED)
+
+*"Explain how the company is doing, show me the actual evidence, and take me to the records and
+recorded work that matter."*
+
+| Link | Candidate source binding and proof boundary |
+|---|---|
+| **Conversation** | `ExecutiveOverview` hands the chosen-period briefing or sourced priority question to the existing PAIGE composer, clears previous surface selection and opens the same Chat fold. The owner sends it. Talk live remains the existing Chat/Live surface; presence reflects the actual UI read state and proves no provider audio |
+| **Spine capability** | Existing `business.operating_snapshot` → `get_business_snapshot` → `dispatchBusinessSnapshotChat` → `composeBusinessReview`. Read/read_only, approval none, workspace-admin seat; no new capability or effect admission |
+| **Canonical business records** | `useBusinessReview` invokes `paige-business-review` with the same reporting clock and period vocabulary as Chat. The caller JWT, composer and INT-340 issuer/resolver re-prove scope. Sales receipts/receivables and pipeline, Operations risks and Clients retain their owning adapters; no direct departmental table read or local metric math is added |
+| **Visual Command Center** | `ExecutiveOverview` presents each requested domain, coverage, actual currency/window, source/freshness, act-before-watch priorities, canonical Strategic Plays, prepared work and recorded activity. `useBusinessGamePlanMissions`, `useSoloPendingActions` and `useSoloActivityFeed` remain their owning read contracts. Numeric goal metrics and missing producers are unavailable, not fabricated |
+| **Departmental navigation** | E4 `record-links.ts` carries at most six sanitized semantic references. `canonical-app-url.ts` and `workspaceLinks.ts` resolve them for the current SOLO account; the destination re-authorizes its records. Links reach Executive, Finance, Sales pipeline/collections, Clients and Systems Check. The page also reaches Operations work, Business Game Plan, Trust Compass and Mind. Navigation grants no action permission |
+| **Truthful status** | Loading, refused/unavailable, failed/retry, partial, zero and no-result states stay distinct. Exact filed-work count is independent of its ten-row bounded read/three-row preview; prepared is never completed. Human activity stays Person. Displayed review dates use the returned reporting zone; due-date judgement uses the separately configured business calendar or is held |
+| **Persisted evidence / receipt** | The existing Chat settlement persists canonical turn rows and `bundle_ref.paige_record_links`; references contain no cached account URL and do not enter model context. Recorded activity consumes the existing resolver. Viewing, refreshing or navigating creates no business action or ACT receipt. Supplemental turn-row/link/reload/later-session and existing-receipt readback is still owed |
+
+**Remaining integration work, preserving existing owners:**
+
+| Work | Class | Acceptance owed |
+|---|---|---|
+| Canonical business review and shared Chat/Live | **REUSE** | Show the same scoped source semantics in Chat and Executive; preserve the dated 9/9 baseline |
+| Executive evidence, priorities and strategy composition | **NEW presentation / EXTEND** | Complete rendered/interactive responsive checks and ordinary authorized customer review against actual evidence |
+| Default/legacy entry, omitted requested domains, timezone labels, capped queue count and tab reachability | **REPAIR** | Regress bare/legacy routes, all requested domain states, actual-zone dates, full queue count and phone/keyboard navigation |
+| Chat-to-record navigation and persisted references | **EXTEND** | Confirm current-account links, destination reads, reload and later-session recovery through E4's existing contracts |
+| Strategy, Systems Check, Trust Compass, Mind, held work and activity | **REUSE / EXTEND presentation** | Verify canonical lifecycle and actor labels; retain the existing editing, authority, knowledge and receipt boundaries |
+| Consequential approval/execution | **REUSE, restricted** | Preserve INT-346; no activation or success claim. Existing approved-action/readback/receipt flow remains the only future execution path |
+| Numeric goals/KPIs and unimplemented domain producers | **UNAVAILABLE** | Name the missing owning contract; no E2-private schema, metrics store or provider inference |
+
+The binding home is `command-center.executive = PARTIAL` in the existing
+[Surface Binding Ledger](../binding-ledger/surface-binding-ledger.json). The four existing
+Command Center rows retain their own states; adding navigation does not promote them.
+
 ## Cross-experience shared components (no duplication)
 
 - The Solo Chat transcript + step-chip machinery, the approval cards, and every departmental
@@ -61,6 +107,10 @@ nothing parallel).
 ## QA integration (appended, not replacing)
 
 The authenticated acceptance protocol (`docs/delivery/e2-3-authenticated-first-briefing-acceptance.md`)
-gains the matrix-validation legs recorded in its "Customer-visible validation" section —
-persist/reload verification of the briefing, visible-state checks, and the navigation
-expectation recorded as the known E2-6 gap. Prior tests are unchanged.
+retains every historical test and its nine-point criteria. E2-6 appends, rather than replaces,
+Chat → same Fabric evidence → Executive → owning department → truthful state → persisted
+reference/readback checks. Use only the owner-authorized existing ordinary SOLO customer account;
+isolated synthetic state/role/scope walkthroughs do not establish authenticated customer proof.
+Exact-head independent review/CI, deployment identity/readback, authenticated behavior and owner
+acceptance are separate evidence legs. No candidate result is marked PASS here before its own
+evidence exists.

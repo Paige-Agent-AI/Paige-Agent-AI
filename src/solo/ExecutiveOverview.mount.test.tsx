@@ -1,152 +1,141 @@
 // @vitest-environment jsdom
-// E2-6 — the Executive Overview: mount contract. The seam (useBusinessReview) and the action
-// bus (useSoloPendingActions) are stubbed at their module boundaries; every rendered state,
-// link and truthful distinction is asserted against real fixture data shaped like the
-// composer's snapshot (the shape useBusinessReview declares).
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TEST_BUSINESS_REVIEW as SNAPSHOT } from "@/test/fixtures/business-review";
+import { ExecutiveOverview } from "./ExecutiveOverview";
 
-vi.mock("./data/useBusinessReview", () => ({ useBusinessReview: vi.fn() }));
-vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: vi.fn() }));
-
-const reviewMock = vi.mocked(await import("./data/useBusinessReview")).useBusinessReview;
-const pendingMock = vi.mocked(await import("./data/useSoloPendingActions")).useSoloPendingActions;
-
-const SNAPSHOT_READY = {
-  period: { label: "last 7 days", start: "2026-10-06T04:00:00.000Z", end: "2026-10-13T04:00:00.000Z", timezone: "America/New_York" },
-  composed_at: "2026-10-13T14:00:00.000Z",
-  requested: ["payments", "sales_pipeline", "operations", "clients", "campaigns"],
-  domains: {
-    payments: { status: "available", data: { domain: "payments", as_of: "2026-10-13T14:00:00.000Z", coverage: "complete", headline: [
-      { key: "payments.cash_recorded_received_usd", label: "Cash recorded as received", value: 125000, unit: "currency_minor", currency: "USD", basis: "in_period", window_note: "counted up to just now; the period ends later" },
-    ], risks: [{ kind: "receivables", summary: "USD 300.00 is overdue right now", severity: "act" }], changes: [] } },
-    sales_pipeline: { status: "available", data: { domain: "sales_pipeline", as_of: "2026-10-13T14:00:00.000Z", coverage: "complete", headline: [
-      { key: "sales.pipeline.open_value_usd", label: "Open pipeline value", value: 420000, unit: "currency_minor", currency: "USD", basis: "right_now" },
-    ], risks: [{ kind: "pipeline", summary: "2 open opportunities older than 30 days", severity: "watch" }], changes: [{ summary: "Opportunities created up 2 versus the previous 7 days." }] } },
-    operations: { status: "available", data: { domain: "operations", as_of: "2026-10-13T14:00:00.000Z", coverage: "partial", coverage_note: "Two figures could not be read; shown figures are complete.", headline: [
-      { key: "operations.unresolved_findings_current", label: "Unresolved findings", value: 4, unit: "count", basis: "right_now" },
-    ], risks: [], changes: [] } },
-    clients: { status: "available", data: { domain: "clients", as_of: "2026-10-13T14:00:00.000Z", coverage: "complete", headline: [
-      { key: "business.active_clients_current", label: "Active clients", value: 0, unit: "count", basis: "right_now" },
-    ], risks: [], changes: [] } },
-    campaigns: { status: "unavailable", reason: "not_connected" },
-  },
-  degradation: [],
-};
-
-let host: HTMLDivElement | null = null;
+const mocks = vi.hoisted(() => ({ review: vi.fn(), pending: vi.fn(), activity: vi.fn(), missions: vi.fn(), calendar: vi.fn(), prefill: vi.fn() }));
+vi.mock("./data/useBusinessReview", () => ({ useBusinessReview: mocks.review }));
+vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: mocks.pending }));
+vi.mock("./data/useSoloActivityFeed", () => ({ useSoloActivityFeed: mocks.activity, elapsedLabel: () => "just now" }));
+vi.mock("./data/useBusinessGamePlanMissions", () => ({ useBusinessGamePlanMissions: mocks.missions }));
+vi.mock("./data/useBusinessTimeZone", async (original) => ({ ...await original<typeof import("./data/useBusinessTimeZone")>(), useBusinessCalendarDay: mocks.calendar }));
+vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: mocks.prefill }));
+vi.mock("@/components/paige/live/PaigePresence", () => ({ PaigePresence: ({ state }: { state: string }) => <div data-presence-state={state} /> }));
+(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | null = null;
+let host: HTMLDivElement;
 
-beforeEach(() => { vi.clearAllMocks(); });
-afterEach(() => { act(() => { root?.unmount(); }); host?.remove(); host = null; root = null; });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.review.mockReturnValue({ state: "ready", snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+  mocks.pending.mockReturnValue({ items: [], total: 0, loading: false, error: null, refresh: vi.fn() });
+  mocks.activity.mockReturnValue({ items: [], status: "ready", refresh: vi.fn() });
+  mocks.missions.mockReturnValue({ items: [], status: "ready", refresh: vi.fn() });
+  mocks.calendar.mockReturnValue({ day: { kind: "withheld", reason: "missing", canSet: true }, refresh: vi.fn() });
+  host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
+});
+afterEach(() => { act(() => root?.unmount()); host.remove(); root = null; });
+async function mount(openPaige?: () => void, accountEpoch: string | null = "test-tenant-1") {
+  await act(async () => root!.render(<MemoryRouter><ExecutiveOverview account="1234567" accountEpoch={accountEpoch} openPaige={openPaige} /></MemoryRouter>));
+  return host;
+}
+const text = () => host.textContent ?? "";
+const button = (name: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.includes(name))!;
+const link = (path: string) => host.querySelector("a[href='" + path + "']");
 
-const mount = async (element: React.ReactElement) => {
-  host = document.createElement("div");
-  document.body.appendChild(host);
-  root = createRoot(host);
-  await act(async () => { root!.render(element); await Promise.resolve(); });
-  return host!;
-};
-const text = (node: HTMLElement) => node.textContent ?? "";
-const findLink = (node: HTMLElement, hrefEnd: string) => [...node.querySelectorAll("a")].find((a) => (a.getAttribute("href") ?? "").endsWith(hrefEnd));
-
-describe("ExecutiveOverview — the four movements", () => {
-  it("renders the briefing invitation as a working control that opens PAIGE", async () => {
-    reviewMock.mockReturnValue({ state: "loading" });
-    pendingMock.mockReturnValue({ items: [], loading: true, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const openPaige = vi.fn();
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" openPaige={openPaige} />);
-    const button = [...node.querySelectorAll("button")].find((b) => text(b).includes("How's my business doing"));
-    expect(button).toBeDefined();
-    act(() => { button!.click(); });
-    expect(openPaige).toHaveBeenCalledTimes(1);
+describe("Executive — integrated customer flow", () => {
+  it("prefills the one existing Chat and opens it without sending a model request", async () => {
+    const open = vi.fn(); await mount(open);
+    act(() => button("How's my business doing?").click());
+    expect(open).toHaveBeenCalledOnce();
+    expect(mocks.prefill).toHaveBeenCalledWith(expect.stringContaining("Last 7 days"));
+    expect(text()).toContain("Choose Talk live there");
   });
-
-  it("loading is a truthful status, not a skeleton of guessed numbers", async () => {
-    reviewMock.mockReturnValue({ state: "loading" });
-    pendingMock.mockReturnValue({ items: [], loading: true, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    expect(text(node)).toContain("Reading your business review");
-    expect(text(node)).not.toContain("USD");
+  it("makes the invitation disabled when the existing conversation cannot be opened", async () => {
+    await mount(); expect(button("How's my business doing?").disabled).toBe(true);
   });
-
-  it("failed is an honest error, never stale figures", async () => {
-    reviewMock.mockReturnValue({ state: "failed", message: "Your business review could not be read right now. Nothing was changed." });
-    pendingMock.mockReturnValue({ items: [], loading: false, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    expect(text(node)).toContain("could not be read right now");
-    expect(text(node)).not.toContain("USD 1,250");
+  it("runs no company hooks until the workspace is resolved", async () => {
+    await mount(undefined, null);
+    expect(text()).toContain("Resolving this workspace");
+    expect(mocks.review).not.toHaveBeenCalled();
+    expect(mocks.activity).not.toHaveBeenCalled();
   });
-
-  it("renders the composer's own figures with window notes, and a REAL ZERO stays distinct from not-available", async () => {
-    reviewMock.mockReturnValue({ state: "ready", snapshot: SNAPSHOT_READY as never });
-    pendingMock.mockReturnValue({ items: [], loading: false, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    expect(text(node)).toContain("USD 1,250.00");
-    expect(text(node)).toContain("counted up to just now; the period ends later");
-    expect(text(node)).toContain("Active clients");
-    expect(text(node)).toContain("Overdue");
-    // a real zero renders as 0 — the unavailable campaign area says not connected, never 0
-    expect(text(node)).toContain("Not connected");
-    expect(text(node)).not.toMatch(/Campaigns[^]*\b0\b/);
+  it("announces loading without painting old figures or risk claims", async () => {
+    mocks.review.mockReturnValue({ state: "loading", refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Reading your business review");
+    expect(text()).not.toContain("USD 1,250");
+    expect(host.querySelector("[data-presence-state='working']")).not.toBeNull();
   });
-
-  it("risks render act-first with the needs-attention marker", async () => {
-    reviewMock.mockReturnValue({ state: "ready", snapshot: SNAPSHOT_READY as never });
-    pendingMock.mockReturnValue({ items: [], loading: false, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    const actIdx = text(node).indexOf("is overdue right now");
-    const watchIdx = text(node).indexOf("older than 30 days");
-    expect(actIdx).toBeGreaterThan(-1);
-    expect(watchIdx).toBeGreaterThan(actIdx);
-    expect(text(node)).toContain("needs attention");
+  it("offers retry after a failed read and never shows stale business figures", async () => {
+    const refresh = vi.fn(); mocks.review.mockReturnValue({ state: "failed", message: "The review could not be verified.", refresh }); await mount();
+    expect(host.querySelector("[role='alert']")).not.toBeNull();
+    expect(text()).not.toContain("USD 1,250");
+    act(() => button("Try again").click()); expect(refresh).toHaveBeenCalledOnce();
   });
-
-  it("navigates from each intelligence section to its departmental destination", async () => {
-    reviewMock.mockReturnValue({ state: "ready", snapshot: SNAPSHOT_READY as never });
-    pendingMock.mockReturnValue({ items: [], loading: false, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    expect(findLink(node, "/solo/acct-7/finance")).toBeDefined();
-    expect(findLink(node, "/solo/acct-7/sales")).toBeDefined();
-    expect(findLink(node, "/solo/acct-7/command-center/systems-check")).toBeDefined();
-    expect(findLink(node, "/solo/acct-7/clients")).toBeDefined();
-    expect(findLink(node, "/solo/acct-7/command-center/business-game-plan")).toBeDefined();
+  it("renders canonical figures, exact Sales window notes, real zero and unavailable separately", async () => {
+    await mount();
+    expect(text()).toContain("USD 1,250.00");
+    expect(text()).toContain("Last completed UTC day: October 12");
+    const clients = host.querySelector("[aria-labelledby='exec-domain-clients']")!;
+    expect(clients.textContent).toContain("Active clients"); expect(clients.textContent).toContain("0");
+    const gaps = host.querySelector(".exec-gaps")!;
+    expect(gaps.textContent).toContain("Marketing campaigns"); expect(gaps.textContent).toContain("Not connected");
+    expect(gaps.textContent).not.toMatch(/\b0\b/);
   });
-
-  it("the activity desk reads the real action bus and routes to the ONE approval home (no second inbox)", async () => {
-    reviewMock.mockReturnValue({ state: "loading" });
-    pendingMock.mockReturnValue({
-      items: [
-        { id: "a1", title: "Follow-up to the proposal for the Cohen engagement", summary: null, draftContent: null, rationale: null, department: "Sales", updatedAt: "2026-10-13T00:00:00Z" },
-        { id: "a2", title: "Renewal nudge for the Halstead retainer", summary: null, draftContent: null, rationale: null, department: "Clients", updatedAt: "2026-10-13T00:00:00Z" },
-      ] as never,
-      loading: false, error: null, refresh: () => {},
-    });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const openPaige = vi.fn();
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" openPaige={openPaige} />);
-    expect(text(node)).toContain("2 waiting on you");
-    expect(text(node)).toContain("Follow-up to the proposal");
-    const review = [...node.querySelectorAll("button")].find((b) => text(b).includes("Review with Paige"));
-    expect(review).toBeDefined();
-    act(() => { review!.click(); });
-    expect(openPaige).toHaveBeenCalledTimes(1);
-    expect(text(node)).toContain("not a second inbox");
+  it("names returned unavailable and missing requested domain results", async () => {
+    const snapshot = structuredClone(SNAPSHOT); snapshot.requested.push("game_plan");
+    mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Marketing campaigns"); expect(text()).toContain("Game Plan performance");
+    expect(text()).toContain("missing result");
   });
-
-  it("an empty action bus renders the honest empty state, not a fabricated queue", async () => {
-    reviewMock.mockReturnValue({ state: "loading" });
-    pendingMock.mockReturnValue({ items: [], loading: false, error: null, refresh: () => {} });
-    const { ExecutiveOverview } = await import("./ExecutiveOverview");
-    const node = await mount(<ExecutiveOverview account="acct-7" accountEpoch="t-1" />);
-    expect(text(node)).toContain("Nothing is held for your approval");
-    expect(text(node)).toContain("currently empty");
+  it("ranks act risks before watch across the company and labels the recommendation", async () => {
+    await mount();
+    const list = host.querySelector(".exec-priority-list")!;
+    expect(list.textContent!.indexOf("2 blocking operating findings")).toBeLessThan(list.textContent!.indexOf("USD 300.00"));
+    expect(list.textContent).toContain("Recommended");
+  });
+  it("links to the actual canonical sources and preserves the four command surfaces", async () => {
+    await mount();
+    for (const path of ["/finance", "/sales/opportunities?view=board", "/sales/payments?view=collections", "/clients/people", "/operations/work",
+      "/command-center/systems-check", "/command-center/business-game-plan", "/command-center/trust-compass", "/command-center/mind"]) {
+      expect(link("/solo/1234567" + path), path).not.toBeNull();
+    }
+  });
+  it("does not mint an account path while account resolution is unavailable", async () => {
+    await act(async () => root!.render(<MemoryRouter><ExecutiveOverview account={null} accountEpoch="test-tenant-1" /></MemoryRouter>));
+    expect(host.querySelectorAll("a")).toHaveLength(0);
+  });
+  it("shows exact pending count beyond a ten-row preview without claiming execution", async () => {
+    mocks.pending.mockReturnValue({ items: Array.from({ length: 10 }, (_, i) => ({ id: "a" + i, title: "Prepared work " + i, department: "Sales" })), total: 37, loading: false, error: null, refresh: vi.fn() });
+    const open = vi.fn(); await mount(open);
+    expect(text()).toContain("37 prepared items"); expect(text()).toContain("Previewing 3 of 37");
+    expect(text()).toContain("Prepared is not completed");
+    act(() => button("Review with PAIGE").click()); expect(open).toHaveBeenCalledOnce();
+  });
+  it("labels the preview as bounded if an exact pending count was not supplied", async () => {
+    mocks.pending.mockReturnValue({ items: [{ id: "a", title: "Prepared work", department: "Sales" }], total: null, loading: false, error: null, refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Showing up to 1 prepared items");
+  });
+  it("distinguishes pending-read failure from an empty queue", async () => {
+    mocks.pending.mockReturnValue({ items: [], total: null, loading: false, error: "denied", refresh: vi.fn() }); await mount();
+    expect(text()).toContain("This is not an empty queue"); expect(text()).not.toContain("No filed confirm-lane");
+  });
+  it("attributes a recorded human act to Person and unknown actors to neither person nor PAIGE", async () => {
+    mocks.activity.mockReturnValue({ status: "ready", items: [{ id: "1", title: "Business zone saved", byPaige: false, byPerson: true, actorAgent: null, occurredAt: "2026-10-13T14:00:00Z" }, { id: "2", title: "Legacy event", byPaige: false, byPerson: false, actorAgent: null, occurredAt: "2026-10-13T14:00:00Z" }], refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Person · Recorded"); expect(text()).toContain("Unattributed · Recorded");
+  });
+  it("keeps unavailable activity distinct from no recorded events", async () => {
+    mocks.activity.mockReturnValue({ status: "forbidden", items: [], refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Activity is not authorized"); expect(text()).not.toContain("No recent activity returned");
+  });
+  it("renders canonical mission state and holds due judgement with no saved business zone", async () => {
+    mocks.missions.mockReturnValue({ status: "ready", items: [{ id: "m1", state: "active", stageLabel: "Active", title: "A strategic play", desired_outcome: "A recorded outcome", deadline_on: "2026-10-12", next_action: "Review scope" }], refresh: vi.fn() }); await mount();
+    expect(text()).toContain("A recorded outcome"); expect(text()).toContain("On hold until the business time zone is set");
+    expect(text()).not.toContain("Past due date");
+  });
+  it("shows a passed due date only against the configured business calendar day", async () => {
+    mocks.calendar.mockReturnValue({ day: { kind: "configured", date: "2026-10-13", zone: "America/New_York" }, refresh: vi.fn() });
+    mocks.missions.mockReturnValue({ status: "ready", items: [{ id: "m1", state: "active", stageLabel: "Active", title: "A strategic play", desired_outcome: "Recorded outcome", deadline_on: "2026-10-12" }], refresh: vi.fn() }); await mount();
+    expect(text()).toContain("Past due date");
+  });
+  it("refreshes all existing source hooks and changes the requested period", async () => {
+    await mount(); act(() => button("Refresh evidence").click());
+    expect(mocks.review.mock.results[0].value.refresh).toHaveBeenCalledOnce();
+    const select = host.querySelector("select")!;
+    act(() => { select.value = "last_30_days"; select.dispatchEvent(new Event("change", { bubbles: true })); });
+    expect(mocks.review).toHaveBeenLastCalledWith("test-tenant-1", "last_30_days");
   });
 });

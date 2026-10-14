@@ -1,240 +1,166 @@
-/**
- * ExecutiveOverview — the owner's front office (E2-6, owner-authorized 2026-10-13: "an AI
- * Executive Command Center", not "another collection of disconnected widgets").
- *
- * WHAT THIS SURFACE IS. The Command Center's landing: where the owner sees their whole
- * company through PAIGE's intelligence and moves to act. Four movements, one screen:
- *   1. BUSINESS INTELLIGENCE — the live domains' figures, risks and not-available reasons,
- *      read fresh from the one business review (useBusinessReview → the paige-business-review
- *      seam → the fabric composer → the INT-340 issuer on the caller's own session). Not a
- *      dashboard of guesses: every number carries the composer's own window note, and a real
- *      zero stays visibly different from not-available.
- *   2. PAIGE'S EXECUTIVE BRIEFING — the conversational entry. One working line: the owner's
- *      own mission question, which opens PAIGE. No fake preview text.
- *   3. PAIGE ACTIVITY & DECISIONS — the real filed actions waiting on a person
- *      (useSoloPendingActions → paige_actions, the one action bus), routed to the ONE
- *      approval home (PAIGE chat) per the Trust Compass ruling — never a second inbox.
- *   4. STRATEGY — the Game Plan and Systems Check stay one click away, connected, not
- *      demoted: real in-app routes to the existing tabs.
- *
- * DESIGN: Operate mode on the app's Obsidian/Minimal tokens (--pg-*). Definition rows over
- * icon-card scaffolds; severity carries meaning through the existing ok/warn/bad trio;
- * every interactive element is a real control with a visible focus state; reduced motion is
- * honored by not animating content in; one column that works from 320px up.
- */
-import React from "react";
-import { ArrowRight, MessageSquareText, ShieldCheck } from "lucide-react";
-import { useBusinessReview, type BusinessReviewSnapshot, type ReviewDomain } from "./data/useBusinessReview";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, MessageSquareText, RefreshCw } from "lucide-react";
+import { PaigePresence } from "@/components/paige/live/PaigePresence";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
+import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige-turn/record-links";
+import type { SnapshotPeriodKey } from "../../supabase/functions/_shared/paige-context/snapshot";
+import { useBusinessReview, type ReviewDomain } from "./data/useBusinessReview";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
+import { useSoloActivityFeed, elapsedLabel } from "./data/useSoloActivityFeed";
+import { useBusinessGamePlanMissions } from "./data/useBusinessGamePlanMissions";
+import { businessCalendarHeldNote, businessDateLabel, useBusinessCalendarDay } from "./data/useBusinessTimeZone";
+import { clearPaigeSurfaceScope } from "./paigeClientScope";
+import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
+import { executiveAreas, executivePriorities, formatReviewInstant, formatReviewMetric, reviewGapNote } from "./executive-review";
+import "./executive-overview.css";
 
-const fmtValue = (m: { value: number | null; unit: string; currency?: string }): string => {
-  if (m.value === null) return "—";
-  if (m.unit === "currency_minor" && m.currency) {
-    const major = m.value / 100;
-    return `${m.currency} ${major.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (m.unit === "percent") return `${m.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
-  return m.value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-};
-
-/** Live domains in the owner's reading order, with their departmental destination. */
-const DOMAIN_ORDER: { key: string; label: string; to: (account: string) => string; destLabel: string }[] = [
-  { key: "payments", label: "Payments & collections", to: (a) => `/solo/${a}/finance`, destLabel: "Open Finance" },
-  { key: "sales_pipeline", label: "Sales pipeline", to: (a) => `/solo/${a}/sales`, destLabel: "Open Sales" },
-  { key: "operations", label: "Operations & Systems Check", to: (a) => `/solo/${a}/command-center/systems-check`, destLabel: "Open Systems Check" },
-  { key: "clients", label: "Clients", to: (a) => `/solo/${a}/clients`, destLabel: "Open Clients" },
+const BRIEFING = "How's my business doing, what needs attention, and what should we work on today?";
+const PERIODS: Array<{ key: SnapshotPeriodKey; label: string }> = [
+  { key: "last_7_days", label: "Last 7 days" }, { key: "last_30_days", label: "Last 30 days" },
+  { key: "current_quarter", label: "This quarter" },
 ];
 
-const COVERAGE_LABEL: Record<string, string> = { complete: "Complete read", partial: "Partial read" };
-const SEVERITY_RANK: Record<string, number> = { act: 0, watch: 1, info: 2 };
-const SEVERITY_COLOR: Record<string, string> = { act: "var(--bad)", watch: "var(--warn)", info: "var(--pg-muted)" };
+function Destination({ destination, account, children }: { destination: ReadLinkDestination; account?: string | null; children?: React.ReactNode }) {
+  const target = routeLinkTarget({ destination, record_id: null }, "solo", account);
+  return target ? <Link className="exec-link" to={target.to}>{children ?? target.label}<ArrowRight size={14} aria-hidden="true" /></Link>
+    : <span className="exec-unresolved">{children ?? "Destination resolves with this workspace"}</span>;
+}
 
-const Pill = ({ tone, children }: { tone: "ok" | "warn" | "bad" | "mute"; children: React.ReactNode }) => (
-  <span style={{
-    fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase",
-    padding: "2px 8px", borderRadius: 999,
-    color: tone === "ok" ? "var(--ok)" : tone === "warn" ? "var(--warn)" : tone === "bad" ? "var(--bad)" : "var(--pg-muted)",
-    background: tone === "ok" ? "var(--ok-tint)" : tone === "warn" ? "var(--warn-tint)" : tone === "bad" ? "var(--bad-tint)" : "var(--surface-sunk)",
-  }}>{children}</span>
-);
-
-const DomainSection = ({ domain, label, dest }: { domain: ReviewDomain; label: string; dest: { href: string; label: string } | null }) => {
-  const risks = [...domain.risks].sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9));
-  return (
-    <section aria-labelledby={`exec-domain-${domain.domain}`} style={{ display: "flex", flexDirection: "column", gap: 10, padding: "18px 0", borderBottom: "1px solid var(--pg-line-soft)" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-        <h3 id={`exec-domain-${domain.domain}`} style={{ fontSize: 13, fontWeight: 750, color: "var(--pg-ink)", margin: 0 }}>{label}</h3>
-        {domain.coverage === "partial" ? <Pill tone="warn">Partial</Pill> : <Pill tone="ok">Current</Pill>}
-        {dest && (
-          <a href={dest.href} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 650, color: "var(--pg-gold)", textDecoration: "none" }}>
-            {dest.label}<ArrowRight size={12} aria-hidden="true" />
-          </a>
-        )}
-      </div>
-      {domain.coverage_note ? <p style={{ margin: 0, fontSize: 11, color: "var(--pg-muted)" }}>{domain.coverage_note}</p> : null}
-      <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-        {domain.headline.map((m) => (
-          <div key={m.key} style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "baseline" }}>
-            <dt style={{ fontSize: 12, color: "var(--pg-ink-2)", minWidth: 0, flex: "1 1 160px" }}>{m.label}</dt>
-            <dd style={{ margin: 0, fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "var(--pg-ink)" }}>
-              {fmtValue(m)}
-              {m.window_note ? <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 500, color: "var(--pg-muted)" }}>{m.window_note}</span> : null}
-            </dd>
-          </div>
-        ))}
-        {domain.headline.length === 0 && domain.coverage !== "none" ? (
-          <div><dd style={{ margin: 0, fontSize: 12, color: "var(--pg-muted)" }}>No headline figures recorded for this period — a complete read with nothing in the books.</dd></div>
-        ) : null}
+function DomainEvidence({ domain, timezone }: { domain: ReviewDomain; timezone: string }) {
+  return <>
+    {domain.coverage_note && <p className="exec-note">{domain.coverage_note}</p>}
+    <dl className="exec-figures">
+      {domain.headline.map((metric) => <div key={metric.key}>
+        <dt>{metric.label}<small>{metric.basis === "point_in_time" ? "As of the source read" : metric.basis === "all_time" ? "All time" : "In this period"}</small></dt>
+        <dd>{formatReviewMetric(metric)}{metric.window_note && <small>{metric.window_note}</small>}</dd>
+      </div>)}
+    </dl>
+    {!domain.headline.length && <p className="exec-note">This source returned no headline figures. No value is inferred.</p>}
+    {domain.changes.map((change, i) => <p className="exec-change" key={i}>{change.summary}</p>)}
+    <details className="exec-provenance">
+      <summary>Source &amp; freshness</summary>
+      <dl>
+        <div><dt>Owning source</dt><dd>{domain.owner.replace(/_/g, " ")}</dd></div>
+        <div><dt>Read at</dt><dd>{formatReviewInstant(domain.as_of, timezone, true)} · {timezone}</dd></div>
+        <div><dt>Coverage</dt><dd>{domain.coverage === "full" ? "Full source coverage" : "Partial source coverage"}</dd></div>
+        <div><dt>Freshness</dt><dd>{domain.freshness === "live_read" ? "Re-read from the records" : "Recorded snapshot"}</dd></div>
       </dl>
-      {risks.length > 0 ? (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-          {risks.map((r, i) => (
-            <li key={`${r.kind}-${i}`} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 12, color: "var(--pg-ink-2)" }}>
-              <span aria-hidden="true" style={{ flex: "0 0 auto", width: 7, height: 7, borderRadius: 999, background: SEVERITY_COLOR[r.severity] ?? "var(--pg-muted)", alignSelf: "center" }} />
-              <span>{r.summary}{r.severity === "act" ? <strong style={{ color: "var(--pg-ink)", marginLeft: 6, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>needs attention</strong> : null}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {domain.changes.map((c, i) => (
-        <p key={i} style={{ margin: 0, fontSize: 11, color: "var(--pg-muted)" }}>{c.summary}</p>
-      ))}
-    </section>
-  );
+      {domain.domain === "payments" && <p>These are recorded receipts and receivables in Sales. They do not establish a connected bank balance or profit.</p>}
+    </details>
+  </>;
+}
+
+type ExecutiveProps = {
+  account?: string | null; accountEpoch?: string | null; accountName?: string | null; openPaige?: () => void;
 };
 
-const ExecutiveOverview = ({ account, accountEpoch, openPaige }: { account?: string | null; accountEpoch?: string | null; openPaige?: () => void }) => {
-  const review = useBusinessReview(accountEpoch ?? null);
-  const pendingRead = useSoloPendingActions(accountEpoch ?? null);
-  const pending = { ...pendingRead, count: pendingRead.items.length };
-  const acc = account ?? "account";
+export function ExecutiveOverview(props: ExecutiveProps) {
+  if (!props.accountEpoch) return <div className="executive-root"><p className="exec-read-state" role="status">Resolving this workspace…</p></div>;
+  return <ResolvedExecutiveOverview {...props} key={props.accountEpoch} />;
+}
 
-  return (
-    <div style={{ minHeight: "100%", overflowY: "auto", background: "var(--pg-canvas)" }}>
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "clamp(16px, 3vw, 32px) clamp(14px, 3vw, 28px) 48px", display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* PAIGE'S EXECUTIVE BRIEFING — the conversational entry, one honest line. */}
-        <section aria-label="PAIGE's executive briefing" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 14, border: "1px solid var(--pg-line)", background: "var(--pg-spine)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <MessageSquareText size={15} color="var(--pg-gold)" aria-hidden="true" />
-            <h2 style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "var(--pg-ink)" }}>PAIGE's executive briefing</h2>
-          </div>
-          <p style={{ margin: 0, fontSize: 12, color: "var(--pg-ink-2)", lineHeight: 1.55 }}>
-            Ask in your own words — the briefing below is the same review PAIGE reads when you ask her how the business is doing.
-          </p>
-          <button
-            type="button"
-            onClick={openPaige}
-            style={{
-              alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7,
-              padding: "9px 14px", borderRadius: 10, border: "1px solid var(--pg-line-authority)",
-              background: "transparent", color: "var(--pg-ink)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-            }}
-          >
-            “How's my business doing, what needs attention, and what should we work on today?”
-          </button>
+function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPaige }: ExecutiveProps) {
+  const [period, setPeriod] = useState<SnapshotPeriodKey>("last_7_days");
+  const review = useBusinessReview(accountEpoch ?? null, period);
+  const pending = useSoloPendingActions(accountEpoch ?? null);
+  const activity = useSoloActivityFeed(accountEpoch ?? null);
+  const missions = useBusinessGamePlanMissions(accountEpoch ?? null);
+  const calendar = useBusinessCalendarDay(accountEpoch ?? null);
+  const snapshot = review.state === "ready" ? review.snapshot : null;
+  const areas = snapshot ? executiveAreas(snapshot) : [];
+  const priorities = snapshot ? executivePriorities(snapshot) : [];
+  const readable = areas.filter((area) => area.entry.status === "available" && area.entry.data);
+  const gaps = areas.filter((area) => area.entry.status !== "available" || !area.entry.data);
+  const total = pending.total ?? null;
+  const ask = (prompt = BRIEFING + " Use the " + (PERIODS.find((p) => p.key === period)?.label ?? "Last 7 days") + " reporting period.") => {
+    if (!openPaige) return;
+    clearPaigeSurfaceScope();
+    clearPaigePublicPresenceScope();
+    handOffPaigePrompt(prompt);
+    openPaige();
+  };
+  const refresh = () => { review.refresh(); pending.refresh(); activity.refresh(); void missions.refresh(); void calendar.refresh(); };
+  const plays = missions.items.filter((play) => play.state !== "stopped").slice(0, 3);
+
+  return <div className="executive-root" aria-label="Executive Command Center">
+    <div className="executive-content">
+      <header className="exec-header">
+        <div><h1>{accountName ? accountName + " · Executive" : "Executive"}</h1><p>Your business, in view. Your next move, in context.</p></div>
+        <button type="button" className="exec-button" onClick={refresh} disabled={review.state === "loading"}><RefreshCw size={15} aria-hidden="true" />Refresh evidence</button>
+      </header>
+
+      <section className="exec-briefing" aria-labelledby="exec-briefing-title">
+        <div className="exec-presence"><PaigePresence state={review.state === "loading" && accountEpoch ? "working" : "held"} visible={review.state === "loading" && !!accountEpoch} /></div>
+        <div className="exec-briefing-copy">
+          <h2 id="exec-briefing-title">See the company. Talk through the next move.</h2>
+          <p>PAIGE explains the same business records you can inspect below.</p>
+          <button type="button" className="exec-button exec-primary" onClick={() => ask()} disabled={!openPaige}><MessageSquareText size={16} aria-hidden="true" /><span className="exec-button-label">How's my business doing?</span><ArrowRight size={15} aria-hidden="true" /></button>
+          <small>Opens your existing Chat. Choose Talk live there to speak with PAIGE. The question is yours to send.</small>
+        </div>
+      </section>
+
+      <div className="exec-layout">
+        <section className="exec-intelligence" aria-labelledby="exec-intelligence-title">
+          <div className="exec-section-head"><h2 id="exec-intelligence-title">Business intelligence</h2><label className="exec-period">Review period<select value={period} onChange={(event) => setPeriod(event.target.value as SnapshotPeriodKey)}>{PERIODS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label></div>
+          {snapshot && <p className="exec-period-note">{snapshot.period.label} · {formatReviewInstant(snapshot.period.start, snapshot.period.timezone)} – {formatReviewInstant(snapshot.period.end, snapshot.period.timezone)} · Reporting zone: {snapshot.period.timezone}<br />Read {formatReviewInstant(snapshot.composed_at, snapshot.period.timezone, true)}. Source windows below may be narrower.</p>}
+          {review.state === "loading" && <p className="exec-read-state" role="status">{accountEpoch ? "Reading your business review…" : "Resolving this workspace…"}</p>}
+          {review.state === "failed" && <div className="exec-read-state" role="alert"><p>{review.message}</p><button className="exec-button" type="button" onClick={review.refresh}>Try again</button></div>}
+          {snapshot && <>
+            {!readable.length && <p className="exec-read-state">No business figures could be read. The source gaps are listed below; they are not zero results.</p>}
+            {readable.map((area) => <section key={area.key} className="exec-domain" aria-labelledby={"exec-domain-" + area.key}>
+              <div className="exec-section-head"><h3 id={"exec-domain-" + area.key}>{area.label}</h3><span className={"exec-state " + (area.entry.data!.coverage === "partial" ? "is-held" : "")}>{area.entry.data!.coverage === "partial" ? "Partial" : "Source read"}</span></div>
+              <DomainEvidence domain={area.entry.data!} timezone={snapshot.period.timezone} />
+              <div className="exec-domain-links">{area.destination && <Destination destination={area.destination} account={account} />}{area.key === "payments" && <Destination destination="sales_collections" account={account} />}{area.key === "operations" && <Destination destination="operations_work" account={account} />}</div>
+            </section>)}
+            {gaps.length > 0 && <section className="exec-gaps" aria-labelledby="exec-gaps-title"><h3 id="exec-gaps-title">What this review cannot measure</h3><ul>{gaps.map((area) => <li key={area.key}><strong>{area.label}</strong><span>{area.entry.status === "degraded" ? "Read incomplete. " : ""}{reviewGapNote(area.entry.reason)}</span></li>)}</ul></section>}
+            <p className="exec-note">Ad and social performance, numeric targets and unlisted sources are not included in this review. No results are inferred from their absence.</p>
+          </>}
         </section>
 
-        {/* BUSINESS INTELLIGENCE — fresh from the one review; truthful states only. */}
-        <section aria-label="Business intelligence" style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 8, paddingBottom: 4 }}>
-            <h2 style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "var(--pg-ink)" }}>Business intelligence</h2>
-            {review.state === "ready" ? (
-              <span style={{ fontSize: 10.5, color: "var(--pg-muted)" }}>
-                {review.snapshot.period.label} · {new Date(review.snapshot.period.start).toLocaleDateString()} – {new Date(review.snapshot.period.end).toLocaleDateString()} · {review.snapshot.period.timezone} · read {new Date(review.snapshot.composed_at).toLocaleTimeString()}
-              </span>
-            ) : null}
-          </div>
+        <aside className="exec-support">
+          <section className="exec-priorities" aria-labelledby="exec-priorities-title">
+            <h2 id="exec-priorities-title">What needs your attention</h2>
+            {!snapshot ? <p className="exec-note">Priorities appear after the business evidence can be read.</p> : priorities.length ? <ol className="exec-priority-list">{priorities.slice(0, 3).map((priority, i) => <li key={priority.area.key + "-" + priority.kind + "-" + i}>
+              <h3>{priority.summary}</h3><span className={"exec-state " + (priority.severity === "act" ? "is-attention" : "is-held")}>{priority.severity === "act" ? "Needs attention" : "Watch"} · {priority.area.label}</span>
+              <p><span className="exec-recommendation">Recommended</span> {priority.area.recommendation}</p>
+              {priority.area.destination && <Destination destination={priority.area.destination} account={account} />}
+              <button type="button" className="exec-text-button" disabled={!openPaige} onClick={() => ask("Help me understand this " + priority.area.label + " finding and recommend a next step: " + priority.summary + ". Re-read the current business evidence; do not take an action.")}>Discuss with PAIGE</button>
+            </li>)}</ol> : <p className="exec-note">{readable.length ? "No act or watch risk was reported by the sources that could be read." : "Risks cannot be ranked without readable evidence."} Unreadable sources remain unknown.</p>}
+            {priorities.length > 3 && <p className="exec-note">Showing the first 3 of {priorities.length} reported act/watch risks. Open Systems Check and the departmental views for the full evidence.</p>}
+          </section>
 
-          {review.state === "loading" ? (
-            <div role="status" aria-live="polite" style={{ padding: "22px 0", fontSize: 12, color: "var(--pg-muted)" }}>
-              Reading your business review…
-            </div>
-          ) : review.state === "failed" ? (
-            <div role="alert" style={{ padding: "22px 0", fontSize: 12, color: "var(--bad)" }}>{review.message}</div>
-          ) : (
-            <>
-              {DOMAIN_ORDER.map(({ key, label, to, destLabel }) => {
-                const entry = review.snapshot.domains[key];
-                if (!entry) return null;
-                if (entry.status === "unavailable" || entry.status === "degraded" || !entry.data) {
-                  return (
-                    <section key={key} aria-labelledby={`exec-domain-${key}`} style={{ padding: "18px 0", borderBottom: "1px solid var(--pg-line-soft)" }}>
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                        <h3 id={`exec-domain-${key}`} style={{ fontSize: 13, fontWeight: 750, color: "var(--pg-ink)", margin: 0 }}>{label}</h3>
-                        <Pill tone={entry.status === "degraded" ? "warn" : "mute"}>{entry.status === "degraded" ? "Degraded" : "Not available"}</Pill>
-                      </div>
-                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--pg-muted)" }}>
-                        {entry.reason === "not_connected" ? "Not connected yet — nothing is invented here." : entry.reason ? `This area could not be read (${entry.reason.replace(/_/g, " ")}). No figures are shown rather than guessed.` : "This area could not be read right now."}
-                      </p>
-                    </section>
-                  );
-                }
-                return <DomainSection key={key} domain={entry.data} label={label} dest={{ href: to(acc), label: destLabel }} />;
-              })}
-              {/* Requested-but-silent domains are still named — never skipped. */}
-              {review.snapshot.requested
-                .filter((d) => !DOMAIN_ORDER.some(({ key }) => key === d) && !review.snapshot.domains[d])
-                .length > 0 ? (
-                <p style={{ margin: 0, padding: "14px 0", fontSize: 11, color: "var(--pg-muted)" }}>
-                  {review.snapshot.requested.filter((d) => !DOMAIN_ORDER.some(({ key }) => key === d) && !review.snapshot.domains[d]).join(", ")} — not available yet.
-                </p>
-              ) : null}
-            </>
-          )}
-        </section>
+          <section className="exec-strategy" aria-labelledby="exec-strategy-title">
+            <div className="exec-section-head"><h2 id="exec-strategy-title">Your direction &amp; strategic plays</h2></div>
+            {missions.status === "loading" ? <p className="exec-note" role="status">Reading your recorded strategy…</p> : missions.status !== "ready" ? <div role="status"><p className="exec-note">{missions.status === "forbidden" ? "Strategic plays are not available to this role." : "Strategic plays could not be read."}</p><button type="button" className="exec-text-button" onClick={() => void missions.refresh()}>Try again</button></div> : !plays.length ? <p className="exec-note">No strategic plays recorded. Set the direction in Business Game Plan, or shape the next move with PAIGE.</p> : <ul className="exec-play-list">{plays.map((play) => <li key={play.id}><h3>{play.title}</h3><span className="exec-state">{play.stageLabel}</span><p>{play.desired_outcome}</p>{play.deadline_on && <small>Due {businessDateLabel(play.deadline_on)}{play.state === "active" && (calendar.day.kind === "configured" ? play.deadline_on < calendar.day.date ? " · Past due date" : "" : " · " + businessCalendarHeldNote(calendar.day.reason, "record"))}</small>}{play.next_action && <p>Recorded next step: {play.next_action}</p>}</li>)}</ul>}
+            <Destination destination="business_game_plan" account={account} />
+          </section>
 
-        {/* PAIGE ACTIVITY & DECISIONS — the real action bus, routed to the one approval home. */}
-        <section aria-label="PAIGE activity and decisions" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 14, border: "1px solid var(--pg-line)", background: "var(--pg-spine)" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-            <ShieldCheck size={15} color="var(--pg-gold)" aria-hidden="true" />
-            <h2 style={{ margin: 0, fontSize: 13, fontWeight: 800, color: "var(--pg-ink)" }}>PAIGE activity &amp; decisions</h2>
-            {pending.loading ? <Pill tone="mute">Reading…</Pill> : pending.error ? <Pill tone="warn">Read failed</Pill> : pending.count > 0 ? <Pill tone="warn">{pending.count} waiting on you</Pill> : <Pill tone="ok">Nothing waiting</Pill>}
-          </div>
-          {pending.error ? (
-            <p style={{ margin: 0, fontSize: 11.5, color: "var(--pg-muted)" }}>Paige's held work could not be read right now. Nothing changed.</p>
-          ) : !pending.loading && pending.count === 0 ? (
-            <p style={{ margin: 0, fontSize: 12, color: "var(--pg-ink-2)" }}>Nothing is held for your approval. When Paige drafts work that needs your yes, it waits here.</p>
-          ) : (
-            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 7 }}>
-              {(pending.items ?? []).slice(0, 5).map((item) => (
-                <li key={item.id} style={{ fontSize: 12, color: "var(--pg-ink-2)" }}>
-                  <span style={{ color: "var(--pg-gold)", fontWeight: 650, marginRight: 6 }}>{item.department}</span>
-                  {item.title}
-                </li>
-              ))}
-              {pending.count > 5 ? <li style={{ fontSize: 11, color: "var(--pg-muted)" }}>+ {pending.count - 5} more</li> : null}
-            </ul>
-          )}
-          {pending.count > 0 ? (
-            <button
-              type="button"
-              onClick={openPaige}
-              style={{
-                alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "8px 13px", borderRadius: 10, border: "1px solid var(--pg-line-authority)",
-                background: "transparent", color: "var(--pg-ink)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-              }}
-            >
-              Review with Paige<ArrowRight size={12} aria-hidden="true" />
-            </button>
-          ) : null}
-          <p style={{ margin: 0, fontSize: 10.5, color: "var(--pg-muted)" }}>
-            Approvals live in one place — Paige's chat confirm card. This list is the same record ({pending.count > 0 ? `${pending.count} filed` : "currently empty"}), not a second inbox.
-          </p>
-        </section>
+          <section className="exec-decisions" aria-labelledby="exec-decisions-title">
+            <h2 id="exec-decisions-title">Prepared work &amp; decisions</h2>
+            {pending.loading ? <p className="exec-note" role="status">Reading held work…</p> : pending.error ? <div role="status"><p className="exec-note">Held work could not be read. This is not an empty queue.</p><button type="button" className="exec-text-button" onClick={pending.refresh}>Try again</button></div> : !pending.items.length && (total === null || total === 0) ? <p className="exec-note">No filed confirm-lane work was returned. Nothing is being claimed as executed.</p> : <>
+              <p className="exec-queue-count">{total === null ? "Showing up to " + pending.items.length + " prepared items" : total + " prepared item" + (total === 1 ? "" : "s")} awaiting review</p>
+              <ul className="exec-work-list">{pending.items.slice(0, 3).map((item) => <li key={item.id}><strong>{item.title}</strong><small>{item.department} · Prepared</small></li>)}</ul>
+              {total !== null && total > 3 && <p className="exec-note">Previewing {Math.min(pending.items.length, 3)} of {total} filed items.</p>}
+              <button type="button" className="exec-button" disabled={!openPaige} onClick={() => ask("Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything.")}>Review with PAIGE<ArrowRight size={14} aria-hidden="true" /></button>
+            </>}
+            <p className="exec-note">Prepared is not completed. Any available approval uses the existing PAIGE confirmation card and its current permissions.</p>
+          </section>
 
-        {/* STRATEGY — the connected planning surfaces, one click. */}
-        <nav aria-label="Strategy" style={{ display: "flex", flexWrap: "wrap", gap: 10, padding: "4px 0" }}>
-          <a href={`/solo/${acc}/command-center/business-game-plan`} style={{ flex: "1 1 200px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--pg-line)", textDecoration: "none", color: "var(--pg-ink)", fontSize: 12, fontWeight: 650 }}>
-            Business Game Plan<ArrowRight size={13} color="var(--pg-gold)" aria-hidden="true" />
-          </a>
-          <a href={`/solo/${acc}/command-center/systems-check`} style={{ flex: "1 1 200px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", borderRadius: 12, border: "1px solid var(--pg-line)", textDecoration: "none", color: "var(--pg-ink)", fontSize: 12, fontWeight: 650 }}>
-            Systems Check<ArrowRight size={13} color="var(--pg-gold)" aria-hidden="true" />
-          </a>
-        </nav>
+          <section className="exec-recorded" aria-labelledby="exec-recorded-title">
+            <h2 id="exec-recorded-title">Recorded activity</h2>
+            {activity.status === "loading" ? <p className="exec-note" role="status">Reading recorded activity…</p> : activity.status !== "ready" ? <div role="status"><p className="exec-note">{activity.status === "forbidden" ? "Activity is not authorized for this role." : "Recorded activity could not be read."}</p><button type="button" className="exec-text-button" onClick={activity.refresh}>Try again</button></div> : !activity.items.length ? <p className="exec-note">No recent activity returned by the recorded feed.</p> : <ul className="exec-work-list">{activity.items.slice(0, 4).map((item) => <li key={item.id}><strong>{item.title}</strong><small>{item.byPaige ? item.actorAgent ?? "PAIGE" : item.byPerson ? "Person" : "Unattributed"} · Recorded {elapsedLabel(item.occurredAt)}</small>{item.summary && <p>{item.summary}</p>}</li>)}</ul>}
+            <p className="exec-note">Existing receipts and recorded events only. Viewing this page records no business action.</p>
+          </section>
+
+          <nav className="exec-context-links" aria-label="Governance and business context">
+            <Destination destination="systems_check" account={account} />
+            <Destination destination="trust_compass" account={account} />
+            <Destination destination="mind" account={account} />
+          </nav>
+        </aside>
       </div>
     </div>
-  );
-};
-
-export { ExecutiveOverview };
+  </div>;
+}

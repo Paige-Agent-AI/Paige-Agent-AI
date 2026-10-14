@@ -12,7 +12,7 @@ import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 describe("canonical externally emitted app destinations", () => {
   it.each([
     ["operator", "operator", null, "home", "/operator/fleet/systems-check"],
-    ["account", "solo", "1971670", "home", "/solo/1971670/command-center/business-game-plan"],
+    ["account", "solo", "1971670", "home", "/solo/1971670/command-center/executive"],
     ["account", "sub_account", "1971671", "home", "/business/1971671/command-center/overview"],
     ["account", "agency", "1971672", "home", "/agency/1971672/command-center/overview"],
   ] as const)("maps %s/%s to its mounted home", (actor, tier, account, destination, expected) => {

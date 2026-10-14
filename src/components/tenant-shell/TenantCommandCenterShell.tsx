@@ -20,6 +20,7 @@ import {
 import { DialPadTrigger } from "@/components/admin/voice/DialPadTrigger";
 import { useAgentPresence } from "@/components/ui/paige";
 import { holdsSettingsScrollFocus } from "./settings-scroll-contract";
+import { holdsTenantContentFocus } from "./tenant-content-focus";
 import { CommandGlyph, CommandMark } from "@/operator/shell/CommandMark";
 import {
   resolveTenantShellDestination,
@@ -255,7 +256,7 @@ export function TenantCommandCenterShell({
       // A destination that has deliberately taken focus for its own scroll owner
       // keeps it. See `settings-scroll-contract.ts` for why this is a shared
       // predicate rather than a class-name comparison, and why it uses `closest`.
-      if (holdsSettingsScrollFocus(document.activeElement)) return;
+      if (holdsSettingsScrollFocus(document.activeElement) || holdsTenantContentFocus(document.activeElement)) return;
       document.querySelector<HTMLElement>("[data-tenant-paige-command]")?.focus({ preventScroll: true });
     };
     const frame = window.requestAnimationFrame(restore);

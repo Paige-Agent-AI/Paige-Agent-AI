@@ -53,15 +53,14 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
   const [routeAnnouncement, setRouteAnnouncement] = React.useState("");
 
   // Bare `/command-center` and the legacy `/command-center/overview` both open the new default
-  // landing, Business Game Plan. `replace` so Back does not trap the owner in a redirect loop
-  // (the regex intentionally does NOT match `/command-center/business-game-plan`, so no loop).
+  // landing, Executive. Replace keeps the historical address out of the Back stack.
   useEffect(() => {
     if (!/\/command-center(?:\/overview)?\/?$/.test(location.pathname)) return;
     const pathname = location.pathname.replace(
       /\/command-center(?:\/overview)?\/?$/,
-      "/command-center/business-game-plan",
+      "/command-center/executive",
     );
-    setRouteAnnouncement("Command Center opened Business Game Plan.");
+    setRouteAnnouncement("Command Center opened Executive.");
     navigate(`${pathname}${location.search}${location.hash}`, { replace: true });
   }, [location.hash, location.pathname, location.search, navigate]);
 
@@ -113,7 +112,7 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
         aria-label="Command Center sections"
         role="tablist"
         style={{
-          display: "flex", alignItems: "stretch", minHeight: 43,
+          display: "flex", alignItems: "stretch", minHeight: 44, overflowX: "auto", minWidth: 0,
           padding: "0 clamp(14px, 2.2vw, 30px)", gap: 5, flex: "0 0 auto",
           background: "var(--pg-spine)",
           borderBottom: "1px solid var(--pg-line)",
@@ -130,7 +129,7 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
               onClick={() => selectTab(key)} onKeyDown={(event) => onTabKeyDown(event, index)}
               style={{
                 position: "relative", display: "inline-flex", alignItems: "center", gap: 7,
-                border: 0, padding: "0 11px", background: "transparent",
+                border: 0, padding: "0 11px", background: "transparent", flex: "0 0 auto", minHeight: 44, whiteSpace: "nowrap",
                 color: active ? "var(--pg-ink)" : "var(--pg-muted)",
                 fontSize: 11, fontWeight: active ? 800 : 650, cursor: "pointer",
               }}
@@ -146,7 +145,7 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
       <div style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
         {effectiveTab === "exec" ? (
           <div role="tabpanel" id="command-panel-exec" aria-labelledby="command-tab-exec" style={{ height: "100%", overflow: "hidden" }}>
-            <ExecutiveOverview key={activeTenantId ?? "unresolved"} account={account} accountEpoch={activeTenantId} openPaige={openPaige} />
+            <ExecutiveOverview key={activeTenantId ?? "unresolved"} account={account} accountEpoch={activeTenantId} accountName={accountContext?.accountName} openPaige={openPaige} />
           </div>
         ) : effectiveTab === "plan" ? (
           <div role="tabpanel" id="command-panel-plan" aria-labelledby="command-tab-plan" style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>

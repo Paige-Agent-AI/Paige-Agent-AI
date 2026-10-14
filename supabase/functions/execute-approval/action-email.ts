@@ -79,6 +79,38 @@ export function heldPayload(reason: HoldReason, retryAfter: string | null, chann
   return { ok: false, executed: false, held: true, outcome: "held", hold_reason: reason, retry_after: retryAfter, channel, error: HOLD_MESSAGE[reason], approval_id: approvalId, ...extra };
 }
 
+/* ───────────────────────── the held draft: ONE message, ONE approval path (#2150) ───────────────────────── */
+
+/**
+ * When the hours begin between the pre-send check and send-message, send-message queues a row and the
+ * door cancels it through cancel_scheduled_message, which returns it to an unsent draft that Conversations
+ * shows with its own "Approve & send". That draft and this approval are the SAME message. So the door
+ * names the draft on the approval (metadata.held_draft_message_id) and the next Approve sends THAT row
+ * (send-message's message_id path patches it to sent; a row already sent is deduped, never re-sent). If the
+ * draft already left from Conversations, the approval settles on it and nothing is sent again.
+ */
+export const HELD_DRAFT_KEY = "held_draft_message_id";
+
+/** Message statuses that mean the draft has already gone out (messages_status_check, production 2026-10-14). */
+export const ALREADY_SENT_STATUSES: ReadonlySet<string> = new Set(["sent", "delivered", "read"]);
+
+/*
+ * Person-readable outcomes are answered 200 + ok:false (like the HELD answer): every caller reads the body
+ * of a 2xx through supabase.functions.invoke, but a non-2xx arrives as FunctionsHttpError whose message is
+ * the generic "Edge Function returned a non-2xx status code" — the explanation would never reach the person.
+ */
+export const DECIDED_MID_SEND_HELD =
+  "Not sent: this was decided while it was being sent. Nothing went out; the copy is an unsent draft in Conversations.";
+export const DECIDED_MID_SEND_QUEUED =
+  "Heads up: this was decided while it was being sent, but a copy had already been scheduled and couldn't be called back. It goes out when the hold ends; you'll find it in Conversations.";
+export const QUEUED_UNCANCELLABLE =
+  "Already scheduled: this message goes out when the hold ends. It can't be approved again, so a second copy can't be sent.";
+export const SCHEDULED_FROM_CONVERSATIONS =
+  "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
+export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
+export const HELD_DRAFT_UNCONFIRMED =
+  "Not sent: this message's draft changed while it was being sent and its state couldn't be confirmed. Nothing was sent again. Check Conversations before approving it again.";
+
 /* ───────────────────────── the outbound-message refusal ───────────────────────── */
 
 interface Res { data: unknown; error: unknown }

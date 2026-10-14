@@ -10,7 +10,11 @@
 //     sent, the approval pending and unclaimed; a copy send-message queues anyway is cancelled, and one
 //     that cannot be cancelled keeps the claim (no second copy) with its link write checked. The cancel runs
 //     on the caller's own login (the service-role client is refused by the RPC, as on production), and the
-//     link is written only onto a row that is still pending.
+//     link is written only onto a row that is still pending — a write that matched no row is never reported
+//     as recorded (#2150 P2a);
+//   • a cancelled copy (an unsent draft Conversations can send) and its approval stay ONE message (#2150 P2b):
+//     the draft's id is recorded on the approval, the next Approve sends that same row, and a draft already
+//     sent or scheduled from Conversations is never sent again.
 // Nothing here reaches a network or a database.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -365,12 +369,16 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     const r = await approve();
     expect(r.status).toBe(202);
     expect(db.tables.paige_pending_approvals[1].metadata).toEqual({ untouched: true });
-    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "queued", message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
+    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "queued", link_recorded: true, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
     const row = db.tables.paige_pending_approvals[0];
     expect(row.claimed_at).not.toBeNull();
     expect((row.metadata as Row).send_queued).toMatchObject({ outcome: "queued_quiet_hours", message_id: "m1", cancel_failed: true });
     fetchCalls = [];
-    expect((await approve()).body).toMatchObject({ already: "in_progress" });
+    // A second press is not a success (#2150): it says the copy is scheduled and cannot be approved again,
+    // so no caller flashes "approved" and drops the row while nothing was approved.
+    const again = await approve();
+    expect(again.body).toMatchObject({ ok: false, already: "in_progress", queued: true, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
+    expect(String(again.body.error)).toContain("can't be approved again");
     expect(fetchCalls).toEqual([]);
   });
 
@@ -379,12 +387,18 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
     onSend = () => { db.tables.paige_pending_approvals[0].status = "declined"; };   // a decline lands mid-send
     await load(db);
-    await approve();
+    const r = await approve();
     const link = db.writes.find((w) => w.table === "paige_pending_approvals" && "metadata" in w.values);
     expect(link?.filters).toContainEqual(["eq", "status", "pending"]);
     const row = db.tables.paige_pending_approvals[0];
     expect(row.status).toBe("declined");
     expect((row.metadata as Row).send_queued).toBeUndefined();   // the decided row is not rewritten
+    // #2150 P2a: the write matched ZERO rows (PostgREST reports no error for that). The answer must not
+    // claim the link was recorded: it says the copy could not be called back and names it.
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, link_recorded: false, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z", approval_id: A });
+    expect(String(r.body.error)).toContain("decided while it was being sent");
+    expect(String(r.body.error)).toContain("couldn't be called back");
   });
 
   it("if recording that link fails, it fails CLOSED: 500 with the message id, never a success", async () => {
@@ -396,5 +410,128 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     const r = await approve();
     expect(r.status).toBe(500);
     expect(r.body).toMatchObject({ ok: false, executed: false, error: "queued_link_not_recorded", message_id: "m1", approval_id: A });
+  });
+});
+
+// #2150 P2b — the cancelled copy is an unsent draft that Conversations shows with its own "Approve & send".
+// It and the approval are ONE message with ONE approval path: the draft's id is recorded on the approval, the
+// next Approve sends THAT row, and a draft that already went out from Conversations is never sent again.
+describe("execute-approval: a held copy returned to a draft stays ONE message (#2150)", () => {
+  const emailDraft = { channel: "email", subject: "S", body: "B" };
+  const pending = (extra: Row = {}) => approval({ category: "followup", type: "cs_draft", metadata: {}, draft_content: emailDraft, ...extra });
+  const queuedAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
+  const msg = (extra: Row = {}): Row => ({ id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null, ...extra });
+
+  it("the draft's id is recorded on the approval, in the same checked write that releases the claim, onto a row still pending", async () => {
+    sendAnswer = queuedAnswer;
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { keep: 1 } })], clients: [contact], messages: [] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, held: true, returned_to_draft_message_id: "m1" });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row).toMatchObject({ status: "pending", claimed_at: null });
+    expect(row.metadata).toEqual({ keep: 1, held_draft_message_id: "m1" });
+    const link = db.writes.find((w) => w.table === "paige_pending_approvals" && "metadata" in w.values);
+    expect(link?.values).toMatchObject({ claimed_at: null });
+    expect(link?.filters).toContainEqual(["eq", "status", "pending"]);
+  });
+
+  it("declined while send-message ran (the cancel succeeded): nothing went out, the draft is not linked, and the answer says so", async () => {
+    sendAnswer = queuedAnswer;
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] });
+    onSend = () => { db.tables.paige_pending_approvals[0].status = "declined"; };
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, held: false, link_recorded: false, returned_to_draft_message_id: "m1", approval_id: A });
+    expect(String(r.body.error)).toContain("decided while it was being sent");
+    expect((db.tables.paige_pending_approvals[0].metadata as Row).held_draft_message_id).toBeUndefined();
+  });
+
+  it("the next Approve sends THAT draft (same message id), never a second message", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [msg()] });
+    await load(db);
+    const r = await approve();
+    expect(r).toEqual({ status: 200, body: { ok: true, executed: true, channel: "email", approval_id: A, audit_id: "aud-1" } });
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", approval_id: A, to: "dana@x.test", body: "B" });
+  });
+
+  it("a draft that already went out from Conversations: nothing is sent again, and the approval settles on that message", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ status: "sent", sent_at: "2026-10-14T13:00:00Z" })] });
+    await load(db);
+    const r = await approve();
+    expect(fetchCalls).toEqual([]);                                           // no second send
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: true, executed: false, already: "sent", sent_from: "conversations", message_id: "m1", approval_id: A });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row).toMatchObject({ status: "approved", reviewed_by_user_id: USER, sent_at: "2026-10-14T13:00:00Z" });
+    expect((row.metadata as Row).held_draft_outcome).toMatchObject({ state: "sent_from_conversations", message_id: "m1" });
+  });
+
+  it("sent from Conversations between the read and the send: send-message dedupes, and the approval settles — never reported as sent by this approval", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [msg()] });
+    onSend = () => { Object.assign(db.tables.messages[0], { status: "sent", sent_at: "2026-10-14T13:00:00Z" }); };
+    sendAnswer = { status: 200, body: { status: "sent", message_id: "m1", deduped: true } };
+    await load(db);
+    const r = await approve();
+    expect(fetchCalls).toHaveLength(1);
+    expect(r.body).toMatchObject({ ok: true, executed: false, already: "sent", sent_from: "conversations", message_id: "m1" });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "approved" });
+  });
+
+  it("a dedupe of a row SCHEDULED from Conversations is not reported as sent: nothing sent again, the person told where it is", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [msg()] });
+    onSend = () => { Object.assign(db.tables.messages[0], { status: "queued", scheduled_for: "2026-10-15T14:00:00Z" }); };
+    sendAnswer = { status: 200, body: { status: "sent", message_id: "m1", deduped: true } };
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "scheduled_elsewhere", message_id: "m1", scheduled_for: "2026-10-15T14:00:00Z" });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
+  it("a draft already scheduled from Conversations: send-message is never called and the claim is released", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ status: "queued", scheduled_for: "2026-10-15T14:00:00Z" })] });
+    await load(db);
+    const r = await approve();
+    expect(fetchCalls).toEqual([]);
+    expect(r.body).toMatchObject({ ok: false, queued: true, outcome: "scheduled_elsewhere", message_id: "m1" });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
+  it("the whole story: held mid-send → draft linked → sent from Conversations → Approve sends nothing the second time", async () => {
+    sendAnswer = queuedAnswer;
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [msg({ status: "queued", scheduled_for: "2026-10-14T12:00:00Z" })] });
+    await load(db);
+    expect((await approve()).body).toMatchObject({ held: true, returned_to_draft_message_id: "m1" });
+    expect(fetchCalls).toHaveLength(1);
+    // The cancel returned it to a draft; the person then sends that draft from Conversations.
+    Object.assign(db.tables.messages[0], { status: "sent", scheduled_for: null, sent_at: "2026-10-14T13:00:00Z" });
+    fetchCalls = [];
+    sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-2" } };   // a second send WOULD succeed
+    const r = await approve();
+    expect(fetchCalls).toEqual([]);
+    expect(r.body).toMatchObject({ ok: true, executed: false, already: "sent", message_id: "m1" });
+    expect(db.tables.paige_pending_approvals[0].status).toBe("approved");
+  });
+
+  it("a held draft that no longer exists is not this message any more: one fresh send, no message id", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [] });
+    await load(db);
+    expect((await approve()).body).toMatchObject({ ok: true, executed: true });
+    expect(fetchCalls).toHaveLength(1);
+    expect(fetchCalls[0].body.message_id).toBeUndefined();
+  });
+
+  it("a held draft that cannot be read fails closed: nothing sent, claim released", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [msg()] }, ["messages"]);
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(503);
+    expect(r.body).toMatchObject({ ok: false, error: "held_draft_read_failed" });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0].claimed_at).toBeNull();
   });
 });

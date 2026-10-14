@@ -7,5 +7,25 @@
   "sourcePRFrozen": "2758b37fd59978df3c0a2a0b8446eaab5d9c85fc",
   "originalPreviewVersion": "20271026000000",
   "receipt": "NONE",
-  "conditions": "Existing authorized administrator/trusted runner only, updated exact-source manifest review before any metadata mutation; original export and unchanged functions; supported repair only; no SQL reexecution or production history change."
+  "conditions": "Existing authorized administrator/trusted runner only, updated exact-source manifest review before any metadata mutation; original export and unchanged functions; supported repair only; no SQL reexecution or production history change.",
+  "latestPreparation": {
+    "date": "2026-10-14",
+    "status": "LOCAL_ONLY_NOT_REVIEWED_OR_RELEASED",
+    "main": "2ec68dfddedbc3483c878668cd260df17975715e",
+    "formerPendingVersion": "20271101100000",
+    "pendingVersion": "20271101120000",
+    "verifiedProductionFrontier": "20271101110001",
+    "sqlSHA256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
+    "localProof": {
+      "cases": 45,
+      "pass": 45,
+      "clusterStopped": true,
+      "evidence": "sql-proof-20271101120000.json"
+    },
+    "existingPreviewOperation": "NOT_EXECUTED;RENEWAL_PATCH_PREPARED_ONLY",
+    "publicReviewedHead": "a55700cde2edf3d4ae77307a06d430c9df58aa9a",
+    "priorHeadReview": "NOT_APPLICABLE_TO_SUCCESSOR",
+    "authenticatedAcceptance": "NOT_RUN",
+    "newRegistration": "SEPARATE_ACCEPTANCE_OWED"
+  }
 }

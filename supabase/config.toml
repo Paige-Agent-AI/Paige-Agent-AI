@@ -241,6 +241,8 @@ project_id = "xygzykjyynhzqytbqnzu"
     verify_jwt = false
   [functions.paige-web-search]
     verify_jwt = false
+  [functions.paige-business-review]
+    verify_jwt = true
   [functions.paige-write-back]
     verify_jwt = true
   [functions.personal-build-suggestions]

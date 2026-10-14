@@ -24,7 +24,7 @@ function ScopedEntry({ hideEmpty }: { hideEmpty: boolean }) {
   // First-run onboarding owns its conversation; no weekly prompt without a verified existing responsibility.
   if (hideEmpty && (!snapshot || snapshot.checks.length === 0)) return null;
   return <div className="e5-weekly-chat-entry">
-    <button ref={opener} type="button" className="e5-weekly-open" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden />Weekly responsibility</button>
+    <button ref={opener} type="button" className="e5-weekly-open" aria-label="Weekly responsibility" title="Weekly responsibility" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden /><span className="e5-weekly-open-label">Weekly responsibility</span></button>
     <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} pathname={location.pathname} onReturnFocus={() => opener.current?.focus()} />
   </div>;
 }

@@ -281,7 +281,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           if(replacement){event.preventDefault();replacement.focus();}
         }
       }}>
-        <SheetHeader><SheetTitle>{selectedItem?.title ?? selectedPlan?.title ?? selectedCrm?.title ?? (linkedInspection
+        <SheetHeader><SheetTitle className={linkedInspection ? "pr-8 break-words" : undefined}>{selectedItem?.title ?? selectedPlan?.title ?? selectedCrm?.title ?? (linkedInspection
           ? weeklySource.phase === "reading" ? "Reading current work" : "This work is unavailable"
           : inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
           <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? selectedCrm?.description ?? "Details from your current workspace."}</SheetDescription></SheetHeader>

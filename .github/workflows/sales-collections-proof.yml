@@ -14,6 +14,7 @@ on:
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
+      - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -29,6 +30,7 @@ on:
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
+      - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -101,4 +103,15 @@ jobs:
         with:
           name: sales-performance-mutation-proof
           path: work/sales-performance-mutations.json
+          if-no-files-found: error
+      - name: Composed overdue evidence issuance, old-reference refusal and revalidation
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/int2086-shared-compatibility-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data > work/int2086-shared-compatibility-proof.json
+      - name: Preserve composed overdue compatibility proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: int2086-shared-compatibility-proof
+          path: work/int2086-shared-compatibility-proof.json
           if-no-files-found: error

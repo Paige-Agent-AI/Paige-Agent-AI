@@ -3711,6 +3711,28 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
       && !terminalStates(liveCut.bodyText || liveCut.partialText || "").includes("FINAL"),
     JSON.stringify({ status: liveCut.status, rpc: liveCut.rec.rpc.map((c) => c.name), turns: turnFrames(liveCut.bodyText || liveCut.partialText || ""), calls: streamedCalls(liveCut).length }));
 
+  // 26.10 E4-S3 — a Live turn that ran an admitted read and was then interrupted before any answer. The
+  // read's links went with the discarded frames, so the thread keeps no links-only assistant row (the
+  // caller got answer_interrupted, never "See it in your workspace" with no answer above it).
+  // Two guards hold this today: an admitted read's result is evidence, so the turn is protected and the
+  // Live-interrupted path saves nothing; and that path also clears the read links before it builds the
+  // turn's metadata. This pins the outcome; removing only the clear leaves it green (measured), so the
+  // clear is the second guard, for the day a read stops protecting its turn. The clear itself is pinned
+  // by src/__tests__/n5-client-prompt-denylist.test.ts on the real Live catch block.
+  const zoneRead = { current_user_tenant_id: { data: CALLER_TENANT, error: null }, is_tenant_admin_as: { data: true, error: null },
+    agency_can_manage_child: { data: false, error: null },
+    read_business_time_zone: { data: { state: "missing", zone: null, set_at: null, local_date: null, can_set: true }, error: null } };
+  const zoneTurn = { spokenText: "What is my business time zone?", readTool: { name: "read_business_time_zone", args: {} }, rpcExtras: zoneRead };
+  const readClosing = streamedCalls(await liveDrive(zoneTurn)).length;
+  const readCut = await liveDrive({ ...zoneTurn, failStreamCalls: [readClosing] });
+  const readCutWire = readCut.bodyText || readCut.partialText || "";
+  const readCutSaved = readCut.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  assert("26.10 an interrupted Live read turn saves no links-only assistant row",
+    readCut.status === 200 && readCut.rec.rpc.some((c) => c.name === "read_business_time_zone") && readCutWire.includes("paige_live_error")
+      && !readCutSaved.some((c) => JSON.stringify(c.args?.p_bundle_ref ?? null).includes("paige_record_links")),
+    JSON.stringify({ status: readCut.status, read: readCut.rec.rpc.some((c) => c.name === "read_business_time_zone"),
+      saved: readCutSaved.map((c) => ({ content: c.args?.p_content, ref: c.args?.p_bundle_ref })), closing: readClosing, calls: streamedCalls(readCut).length }));
+
   for (const [name, options, reachesAuthority] of [
     ["false authorization", { authority: { data: false, error: null } }, true],
     ["missing authorization", { authority: { data: null, error: null } }, true],

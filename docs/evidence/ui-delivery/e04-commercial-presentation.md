@@ -9,17 +9,17 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: prepare exact readable commercial terms f
 VISUAL_DIRECTION: PASS: incumbent PDF renderer and established signing presentation retained.
 AUTOMATED_EVIDENCE: PASS: native PG16 31 checks and two migration applications; Deno 10 tests with 16 steps; Vitest reader 15 tests.
 STATIC_EVIDENCE: PASS: actual canonical source versions, service-only freeze, actor floor, immutable body/document/payload, once-only audit and explicit finite principal obligations.
-RENDERED_EVIDENCE: PARTIAL: real PDF rendered by the incumbent renderer in Deno; no browser or customer visual acceptance.
-BEHAVIORAL_EVIDENCE: PARTIAL: isolated database and source tests only; producer is not connected to the live execution path.
+RENDERED_EVIDENCE: UNVERIFIED: real PDF rendered by the incumbent renderer in Deno; no browser or customer visual acceptance.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: isolated database and source tests only; producer is not connected to the live execution path.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no hosted ordinary owner, staff or linked external client was driven.
 KEYBOARD_FOCUS: UNVERIFIED: no browser interaction in this contract slice.
 ZOOM_REFLOW: UNVERIFIED: no changed page or browser proof in this slice.
 REDUCED_MOTION: UNVERIFIED: no changed motion or browser proof in this slice.
-STATE_COVERAGE: PARTIAL: source drift, invalid/extra fields, dated-row changes, duplicate obligations, role/tenant refusal, replay and immutability covered; real upload/signing/effectuation remain owed.
+STATE_COVERAGE: UNVERIFIED: source drift, invalid/extra fields, dated-row changes, duplicate obligations, role/tenant refusal, replay and immutability covered locally; real upload/signing/effectuation remain owed.
 TRUTHFUL_STATE_LABELS: PASS: prepared/frozen is not approved, signed, paid, effective or delivered.
 SOLO_UI: NO: existing Sales destination is unchanged; these helpers have no new mounted surface.
 UNVERIFIED: approval consumption, both signing paths, effective terms, hosted storage, settlement and O1–O12 customer acceptance.
-INTERNAL_BUILD_IDENTITY: implementation=8ae013af0daf04775bcc1a90e36c66c41a7da39c; deployment=UNVERIFIED; environment=isolated native PG16 and local source runners; migration=20271101163000 unapplied to production; edge=NOT_APPLICABLE dormant contract; evidence=this record
+INTERNAL_BUILD_IDENTITY: implementation=8ae013af0daf04775bcc1a90e36c66c41a7da39c; deployment=UNVERIFIED; environment=local development native PG16 and source runners; migrations=PROOF_OWED(20271101163000 production persistence); edge=NOT_APPLICABLE; evidence=this record
 RELEASE_CHANNEL: development: no production activation or release claim.
 RELEASE_CLASSIFICATION: internal-only: incomplete source/presentation/freeze dependency for O1–O3.
 CUSTOMER_RELEASE_IDENTITY: none: full E04 outcome is incomplete.

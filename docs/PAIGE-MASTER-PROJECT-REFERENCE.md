@@ -4446,6 +4446,11 @@ Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-gr
    - the contact and deal readers (`ContactDetail.tsx`, `DealDrawer.tsx`, `ClientJourney.tsx`) to also read `communication_log` by `contact_id` (the history rows carry `user_id = NULL`);
    - plain wording in `_shared/comms-email/chat.ts` for `SENDER_VERIFICATION_MISSING` and the `LEAD_REPLY_APPROVAL_*` codes (now including `SEND_IN_PROGRESS`, `ALREADY_SENT` and `MISMATCH`);
    - mapping `COMMS_EMAIL_SENDER_UNVERIFIED` in `adapter.ts`.
+4. **Issue #2133 — one spelling of a sending domain (2026-10-14; branch `exp03-fx-2133-domain-normalization`, NOT merged, nothing live).** Readiness (`_shared/comms-email/readiness.ts` `readSendgridSenderVerified`, L214–215) looks the domain row up by exact equality; `_comms_email_sendgrid_sender_verified` compares `lower(btrim(domain))`. A row stored as `Example.com` or ` example.com ` was a verified sender to the database and `SENDER_VERIFICATION_MISSING` to readiness.
+   - Fix on the branch, database side only (readiness.ts and every C0b-pinned source unchanged): migration `20271101042133` adds `trg_domain_normalize` (BEFORE INSERT OR UPDATE OF domain → `lower(btrim(domain))`), makes the SendGrid facts guard treat a case/space-only edit as the same domain, and backfills — refusing, never merging, on a same-business collision or a connector on the old spelling.
+   - Behaviour change: one business can no longer hold two rows that differ only by case/spaces (23505).
+   - Production (read 2026-10-14, SELECT only): 1 row; 0 would change; 0 collisions; 0 SendGrid facts. Unreachable today: it bites only once a SendGrid domain is verified.
+   - Proof: `supabase/tests/tenant_email_domain_normalization.sql` (26 ok on the branch; 12 FAIL on `origin/main` without the migration), wired in `paige-spine-contract.yml`. Persisted-on-production readback is owed after merge (§32).
 
    Found while building (not this slice's code): `src/solo/useConversations.ts` selects `messages.metadata`, but production's column is `meta`.
 

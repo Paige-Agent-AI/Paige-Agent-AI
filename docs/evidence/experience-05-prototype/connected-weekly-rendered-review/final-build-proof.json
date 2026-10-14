@@ -1,9 +1,9 @@
 {
   "status": "PASS",
   "scope": "Isolated dev-only actual-source build. Hashes bracket compilation; no production build/config/mount or authenticated acceptance.",
-  "baseCommit": "52de6467ff8da6df740f20302580d618b5cb2182",
-  "startedAt": "2026-10-14T02:35:54.793Z",
-  "finishedAt": "2026-10-14T02:36:40.118Z",
+  "baseCommit": "22376f01aaf9ea52e363c830bd42d75e856f24dd",
+  "startedAt": "2026-10-14T02:58:46.538Z",
+  "finishedAt": "2026-10-14T02:59:39.372Z",
   "exitCode": 0,
   "sourceBytesStable": true,
   "sourceHashesBefore": {
@@ -20,7 +20,13 @@
     "src/lib/routing/tierBranches.ts": "065452EAC40124B086E35F403073A1A089AECAE86AABDF77D628168DAD44BA46",
     "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts": "30DB8790DCD3A26B7CC13D26295EE70538D95FE97D06D2309FBC71F8B4FED56E",
     "src/components/tenant-calendar/SoloCalendarWorkspace.tsx": "51E2FA7B234A54B8087EF80EF333F0980BCD2DC25D43436007B7F42D8EC5492D",
-    "src/components/dashboard/PaigeAIChat.tsx": "0E5ABE676781739CEA50D3CBA9CB40BDCCB2A7425567945D5E434D22E2B7500B",
+    "src/components/dashboard/PaigeAIChat.tsx": "6C1020D6E81D35AA2A3E5C58037B8B1D9F5D3BCF9D8B4B91BA6AF19B44265F0E",
+    "src/components/chat/CheckLinks.tsx": "EE9149270246B42DC725E9946F5B4714B64BA28F868FD8AF9C309F546DDC5B15",
+    "src/components/chat/PaigeRecordLinks.tsx": "43A92F89A51C591068C5B5176D9C0318997EB6E903F6366D97F6BBFE919F3CAF",
+    "src/lib/links/workspaceLinks.ts": "AE9689CA21346CD4A134188F83E229F267682DD1F57A87214A57F986F558CEFD",
+    "supabase/functions/_shared/paige-turn/record-links.ts": "1FC88260BC7C83FD70C2849F6FFA80A708A91CF81CDB97DF66B3674F442B999E",
+    "supabase/functions/_shared/canonical-app-url.ts": "E10939D8ECC3C99510C8CF531C74986BE63EB890AD8ED84DC9443EAD2C5F4464",
+    "src/lib/tier/tierFeatures.ts": "8908AD2FC6E222C524B1E666E37218AC9C408F44BB9AC103650EEC54A7114582",
     "src/components/tenant-shell/tenant-command-center-shell.css": "E9756F8CFC04A330748711D798AFEDA35CB8F02BD133914DFEE9A5FE4B0BF355",
     "src/index.css": "F410966E5D565745EFFF907262D232925F6132D4A71A414CA8146DB131FBDDCC",
     "src/solo/SoloPaigeWorkspace.tsx": "5CEE4E8E91BF94668BCC364172244C9FBD210D085BCA83AF7DF15A8B7D34CA38",
@@ -55,7 +61,13 @@
     "src/lib/routing/tierBranches.ts": "065452EAC40124B086E35F403073A1A089AECAE86AABDF77D628168DAD44BA46",
     "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts": "30DB8790DCD3A26B7CC13D26295EE70538D95FE97D06D2309FBC71F8B4FED56E",
     "src/components/tenant-calendar/SoloCalendarWorkspace.tsx": "51E2FA7B234A54B8087EF80EF333F0980BCD2DC25D43436007B7F42D8EC5492D",
-    "src/components/dashboard/PaigeAIChat.tsx": "0E5ABE676781739CEA50D3CBA9CB40BDCCB2A7425567945D5E434D22E2B7500B",
+    "src/components/dashboard/PaigeAIChat.tsx": "6C1020D6E81D35AA2A3E5C58037B8B1D9F5D3BCF9D8B4B91BA6AF19B44265F0E",
+    "src/components/chat/CheckLinks.tsx": "EE9149270246B42DC725E9946F5B4714B64BA28F868FD8AF9C309F546DDC5B15",
+    "src/components/chat/PaigeRecordLinks.tsx": "43A92F89A51C591068C5B5176D9C0318997EB6E903F6366D97F6BBFE919F3CAF",
+    "src/lib/links/workspaceLinks.ts": "AE9689CA21346CD4A134188F83E229F267682DD1F57A87214A57F986F558CEFD",
+    "supabase/functions/_shared/paige-turn/record-links.ts": "1FC88260BC7C83FD70C2849F6FFA80A708A91CF81CDB97DF66B3674F442B999E",
+    "supabase/functions/_shared/canonical-app-url.ts": "E10939D8ECC3C99510C8CF531C74986BE63EB890AD8ED84DC9443EAD2C5F4464",
+    "src/lib/tier/tierFeatures.ts": "8908AD2FC6E222C524B1E666E37218AC9C408F44BB9AC103650EEC54A7114582",
     "src/components/tenant-shell/tenant-command-center-shell.css": "E9756F8CFC04A330748711D798AFEDA35CB8F02BD133914DFEE9A5FE4B0BF355",
     "src/index.css": "F410966E5D565745EFFF907262D232925F6132D4A71A414CA8146DB131FBDDCC",
     "src/solo/SoloPaigeWorkspace.tsx": "5CEE4E8E91BF94668BCC364172244C9FBD210D085BCA83AF7DF15A8B7D34CA38",
@@ -76,5 +88,5 @@
     "scripts/live-drive/harness/mount/weekly-responsibility.config.mjs": "ADB9899E6C7B41AAC3E4A81ACD469198E2C0ACE21941BEB68AC0DF0A344BAF13",
     "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2": "4C8B93F431D462C696E12B9D6A033FEB3394D36E66E781357C496B95D8A75E05"
   },
-  "log": "vite v5.4.21 building for production...\ntransforming...\n✓ 3966 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/weekly-responsibility.html                    0.64 kB │ gzip:   0.41 kB\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/assets/style-BPzhifTr.css                   390.39 kB │ gzip:  65.64 kB\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/assets/weekly-responsibility-DyFrIJRj.js  2,375.25 kB │ gzip: 672.71 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n✓ built in 44.21s\n"
+  "log": "vite v5.4.21 building for production...\ntransforming...\n✓ 3972 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/weekly-responsibility.html                    0.64 kB │ gzip:   0.40 kB\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/assets/style-DSUCX3R3.css                   390.49 kB │ gzip:  65.66 kB\n../../../../../../outputs/connected-weekly-rendered-review/native-bundle/assets/weekly-responsibility-AyEkSyt5.js  2,382.55 kB │ gzip: 674.49 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n✓ built in 51.05s\n"
 }

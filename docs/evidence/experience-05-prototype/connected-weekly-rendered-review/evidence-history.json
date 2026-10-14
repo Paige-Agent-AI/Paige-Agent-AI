@@ -11459,6 +11459,19 @@
         "repair": "Assertion narrowed to visible first summary. Native HTML/source bytes unchanged. Complete rerun output separately preserved.",
         "scope": "Synthetic only; no full PASS or authenticated acceptance inferred from this partial attempt."
       }
+    },
+    {
+      "name": "D423 complete supporting native proof before composed E4 main refresh",
+      "rawEvidencePath": "historical-d423/status.json",
+      "rawEvidenceSHA256": "6B1B25FA1DE79EA1C5258D596B7E1070830DE7DC70A171A148BEF09A00AC753F",
+      "evidence": {
+        "artifactSHA256": "D42391441837EDA337A6BCFE200087516B5A09F5D4A6E51CA401B3DEE030B6C1",
+        "baseCommit": "52de6467ff8da6df740f20302580d618b5cb2182",
+        "status": "HISTORICAL SUPPORTING PASS / SUPERSEDED COMPOSITION",
+        "scope": "570/570 native synthetic checks;148 raw PNGs. Still supports unchanged E5-owned fixes. Does not attest composed source after E4 main reconciliation. Original proof/captures remain untouched under confirmed-native-complete.",
+        "proofSHA256": "CF4224BA170595A33BD0C7E946ABE02A78C25AF61A2E3DA191E7789DF889846E",
+        "manifestSHA256": "CF16632BC68E2CC39B39EDFD6C681F1E365CB4BA4063CA92B1E46F472E66F3A3"
+      }
     }
   ]
 }

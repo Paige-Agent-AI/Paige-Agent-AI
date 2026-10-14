@@ -9,7 +9,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: SOLO owner reviews and observes a weekly 
 VISUAL_DIRECTION: PASS: Existing Obsidian/Mineral world, SOLO tokens, native conversation header, Calendar rail/view-options and existing Operations inspector; pinned development surface brief.
 AUTOMATED_EVIDENCE: PASS: Independent bounded working-checkout rerun246/246 assertions across19 unique files. Includes persona suppression/no-call/pending-read rejection, Chat focus return, actual Calendar single-modal lifetime and existing versioned Operations recovery. Earlier240/21 distinct-case claim was incorrect: overlapping safeguards and stale group counts. The current rerun crossed the5808→e570 visual-repair commit and is not an exact5808/final-head CI attestation.
 STATIC_EVIDENCE: UNVERIFIED: Product52de6467 production build and scoped ESLint/diff/evidence guards pass; predecessor5808 types baseline10/current10. The final PR identity has not yet been tested by CI.
-RENDERED_EVIDENCE: PASS: Frozen actual native artifactD42391441837EDA337A6BCFE200087516B5A09F5D4A6E51CA401B3DEE030B6C1;148 PNGs,33 stable source/asset hashes, desktop/mobile and connected native states. Accessible gallery and original/publication manifests are under ../experience-05-prototype/connected-weekly-rendered-review/. Explicitly synthetic; full authenticated shell/adapter not driven.
+RENDERED_EVIDENCE: PASS: Frozen actual native artifact40D39A4DDC50B071A4CBF2E28A88EA34C93CCC2E141A57DFFB8C7CD1B550037F;148 PNGs,39 stable source/asset hashes, desktop/mobile and connected native states. Accessible gallery and original/publication manifests are under ../experience-05-prototype/connected-weekly-rendered-review/. Render-source22376f01 reconciles main50c32a60/E4 Chat imports. Explicitly synthetic; full authenticated shell/adapter not driven.
 BEHAVIORAL_EVIDENCE: PASS: Final same-byte native drive570/570; local proposal/change/discard/unsent prefill, canonical-shaped Calendar/result/manual readback, typed Work inspection, receipts, unavailable future controls, modal exits and persona suppression. No external requests/runtime errors/effects. Authenticated acceptance NOT_RUN.
 ACCESSIBILITY: UNVERIFIED: Bounded Chromium labels/keyboard/focus/reflow and measured input6/6, primary4/4, header4/4, source-title clearance pass; native screen-reader/high-contrast/touch/overall conformance not driven. Fresh finish verdict scores all3 listed material fixes resolved, disposition ship only at that scored scope.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Official-account E5-CV1–9 remain NOT_RUN; no protected fixture or recurring execution was authorized or performed.
@@ -28,7 +28,7 @@ ACCEPTANCE_CRITERIA: Current owner scope only; exact local schedule review; same
 MOTION_PURPOSE: NONE: no new activity motion. Existing Sheet presentation only; reduced-motion verification still owed.
 PROTECTED_SEAMS: Affected and tested: actor/tenant/role/epoch read privacy, source point read/membership, local review vs authorization, real next vs intended time, result/receipt truth, typed address navigation, versioned editor recovery, dirty/uncertain retention, Calendar data/realtime/fit and shared Chat focus/composer composition. Unaffected: model offer/dispatch/confirmation issuance, INT-346 admission, Live/media/provider execution, auth enrollment/credentials, tenant/RLS/grants, native event claims/scheduler/cron, act execution/reconciliation, receipt writer, Mind/Memory eligibility, financial/send/publish tools.
 
-INTERNAL_BUILD_IDENTITY: sha=52de6467ff8da6df740f20302580d618b5cb2182; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing delivery packet and immutableD423 native-component capture packet
+INTERNAL_BUILD_IDENTITY: sha=22376f01aaf9ea52e363c830bd42d75e856f24dd; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing delivery packet and immutable40D39A4D native-component capture packet; identity_scope=render-source before evidence-only packaging
 RELEASE_CHANNEL: development: source candidate and synthetic local render only; no production release is inferred
 RELEASE_CLASSIFICATION: internal-only: gated owner inspection/review preparation; complete weekly customer outcome remains unverified
 CUSTOMER_RELEASE_IDENTITY: none: no earned customer release or announcement
@@ -36,14 +36,14 @@ RELEASE_NOTE_REQUIRED: no: internal guarded integration, no customer publication
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source/presentation integration; UNAVAILABLE: weekly conversational actions and notification delivery; PROOF OWED: authenticated weekly outcome
 RELEASE_RECOVERY: position=ordinary source revert before release; reference=existing E5 delivery report; keep recurring trigger OFF and preserve canonical receipts/unknown reconciliation
 
-SOLO_1536X770_PAIGE_CLOSED: PASS: D423 gallerygeometry1536 both themes; synthetic local fixture
-SOLO_1536X770_PAIGE_OPEN: PASS: D423 gallerygeometry1536 both themes; synthetic local fixture
-SOLO_1366X768_PAIGE_CLOSED: PASS: D423 gallerygeometry1366 both themes; synthetic local fixture
-SOLO_1366X768_PAIGE_OPEN: PASS: D423 gallerygeometry1366 both themes; synthetic local fixture
-SOLO_1024X768_PAIGE_CLOSED: PASS: D423 gallerygeometry1024 both themes; synthetic local fixture
-SOLO_1024X768_PAIGE_OPEN: PASS: D423 gallerygeometry1024 both themes; synthetic local fixture
-SOLO_900X1000_PAIGE_CLOSED: PASS: D423 gallerygeometry900 both themes; synthetic local fixture
-SOLO_900X1000_PAIGE_OPEN: PASS: D423 gallerygeometry900 both themes; synthetic local fixture
+SOLO_1536X770_PAIGE_CLOSED: PASS: 40D39A4D gallerygeometry1536 both themes; synthetic local fixture
+SOLO_1536X770_PAIGE_OPEN: PASS: 40D39A4D gallerygeometry1536 both themes; synthetic local fixture
+SOLO_1366X768_PAIGE_CLOSED: PASS: 40D39A4D gallerygeometry1366 both themes; synthetic local fixture
+SOLO_1366X768_PAIGE_OPEN: PASS: 40D39A4D gallerygeometry1366 both themes; synthetic local fixture
+SOLO_1024X768_PAIGE_CLOSED: PASS: 40D39A4D gallerygeometry1024 both themes; synthetic local fixture
+SOLO_1024X768_PAIGE_OPEN: PASS: 40D39A4D gallerygeometry1024 both themes; synthetic local fixture
+SOLO_900X1000_PAIGE_CLOSED: PASS: 40D39A4D gallerygeometry900 both themes; synthetic local fixture
+SOLO_900X1000_PAIGE_OPEN: PASS: 40D39A4D gallerygeometry900 both themes; synthetic local fixture
 
 ## Scope and collisions
 

@@ -1,24 +1,28 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from "react";
-import { Activity, BrainCircuit, ShieldCheck, Target } from "lucide-react";
+import { Activity, BrainCircuit, Gauge, ShieldCheck, Target } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { SoloMindWorkspace } from "./SoloMindWorkspace";
+import { ExecutiveOverview } from "./ExecutiveOverview";
 import { SoloSystemsCheckWorkspace } from "./SoloSystemsCheckWorkspace";
 import { SoloGamePlanWorkspace } from "./SoloGamePlanWorkspace";
 import { TrustCompass } from "./compass";
 
-// Business Game Plan → Systems Check → Trust Compass → Mind (owner-ruled 2026-09-05). All four are
-// real surfaces now: Business Game Plan is the default landing, and Trust Compass is the third tab.
-// Each key MUST match its registry subtab key ("plan"/"sys"/"compass"/"mind") — a source-parsing
-// contract test asserts the TABS set and order against the registry.
+// Executive → Business Game Plan → Systems Check → Trust Compass → Mind. The four 2026-09-05
+// surfaces are preserved in their owner-ruled order; E2-6 (2026-10-13, ANT-138 redesign
+// authorization) lands Executive FIRST as the Command Center's default — the owner's front
+// office (business intelligence + PAIGE's briefing + activity/decisions + strategy links),
+// with the planning surfaces one click away, connected, not demoted. Each key MUST match its
+// registry subtab key ("exec"/"plan"/"sys"/"compass"/"mind").
 const TABS = [
-  ["plan", "Business Game Plan", Target],
-  ["sys", "Systems Check", Activity],
-  ["compass", "Trust Compass", ShieldCheck],
-  ["mind", "Mind", BrainCircuit],
+  ["exec", "Executive", Gauge],
+  ["plan", "Business Game Plan", Activity],
+  ["sys", "Systems Check", ShieldCheck],
+  ["compass", "Trust Compass", BrainCircuit],
+  ["mind", "Mind", Target],
 ];
 
 // `workspaceId` reaches the Systems Check workspace so its Rail panel can notice a switch.
@@ -28,7 +32,7 @@ const TABS = [
 const CommandCenter = ({ accountContext, openPaige, workspaceId }) => <SoloSystemsCheckWorkspace accountContext={accountContext} openPaige={openPaige} workspaceId={workspaceId} />;
 
 const CommandHub = ({ account, accountContext, openPaige }: { account?: string | null; accountContext?: { accountName?: string | null; accountType?: string | null } | null; openPaige?: () => void } = {}) => {
-  const [tab, setTab] = useSubtabRoute("solo", "command-center", "plan");
+  const [tab, setTab] = useSubtabRoute("solo", "command-center", "exec");
   const { activeTenantId, activeUserId } = useTenantContext();
   // §60 Solo-only gate for the Trust Compass sub-tab (owner ruling 2026-09-06 —
   // "no subaccount delivery without explicit release"). The Command Center shell is
@@ -140,7 +144,11 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
       </nav>
       <span aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{routeAnnouncement}</span>
       <div style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
-        {effectiveTab === "plan" ? (
+        {effectiveTab === "exec" ? (
+          <div role="tabpanel" id="command-panel-exec" aria-labelledby="command-tab-exec" style={{ height: "100%", overflow: "hidden" }}>
+            <ExecutiveOverview key={activeTenantId ?? "unresolved"} account={account} accountEpoch={activeTenantId} openPaige={openPaige} />
+          </div>
+        ) : effectiveTab === "plan" ? (
           <div role="tabpanel" id="command-panel-plan" aria-labelledby="command-tab-plan" style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>
             <SoloGamePlanWorkspace key={activeTenantId ?? "unresolved"} accountContext={accountContext} openPaige={openPaige} workspaceId={activeTenantId} />
           </div>

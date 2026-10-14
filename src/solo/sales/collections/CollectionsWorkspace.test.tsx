@@ -6,14 +6,15 @@ import type {CollectionInvoice,CollectionReceipt} from './api';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const fixture=vi.hoisted(()=>({tenant:'11111111-1111-4111-8111-111111111111',agreement:'88888888-8888-4888-8888-888888888888',invoices:[] as CollectionInvoice[],receipts:[] as CollectionReceipt[]}));
 vi.mock('next-themes',()=>({useTheme:()=>({resolvedTheme:'light'})}));
-vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn()}}));
+// E4-S3: the register judges Overdue on the business calendar, read through read_business_time_zone.
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn(async(name:string)=>name==='read_business_time_zone'?{data:{state:'configured',zone:'America/New_York',set_at:null,local_date:null,can_set:true},error:null}:{data:null,error:null})}}));
 vi.mock('../../useSoloCommercialTerms',()=>({useSoloCommercialTerms:()=>({phase:'ready',tenantId:fixture.tenant,canManage:true})}));
 vi.mock('./useCollections',()=>({useCollections:()=>({state:'ready',invoices:fixture.invoices,receipts:fixture.receipts,agreements:[{id:fixture.agreement,client_name:'Example client',title:'Exact saved plan',collection_terms:{kind:'installment'},collection_terms_version:1,terms_current:true}],error:'',retry:vi.fn(),more:vi.fn(),loadingMore:false,invoiceHasMore:false,receiptHasMore:false,agreementHasMore:false})}));
 vi.mock('./CollectionPlanBuilder',()=>({CollectionPlanBuilder:({onDirty,initialAgreementId}:{onDirty(d:boolean):void;initialAgreementId?:string})=><div data-agreement={initialAgreementId}><button onClick={()=>onDirty(true)}>Edit plan fixture</button></div>}));
 let host:HTMLDivElement,root:Root;
 beforeEach(()=>{fixture.invoices=[];fixture.receipts=[];host=document.createElement('div');document.body.append(host);root=createRoot(host)});
 afterEach(()=>{act(()=>root.unmount());host.remove()});
-const render=async()=>act(async()=>root.render(<CollectionsWorkspace tenantId={fixture.tenant}/>));
+const render=async()=>{await act(async()=>root.render(<CollectionsWorkspace tenantId={fixture.tenant}/>));await act(async()=>{await Promise.resolve()})};
 const click=async(text:string)=>act(async()=>{[...document.querySelectorAll('button')].find(b=>b.textContent===text)!.click()});
 it('identifies provider evidence in the primary Receipts register',async()=>{
  fixture.receipts=[{id:'44444444-4444-4444-8444-444444444444',tenant_id:fixture.tenant,invoice_id:'22222222-2222-4222-8222-222222222222',client_id:'33333333-3333-4333-8333-333333333333',client_name:'Example provider client',invoice_number:'INV-1',source_invoice_number:null,kind:'receipt',amount_cents:5000,currency:'usd',method:'stripe',provider:'stripe',received_at:'2026-01-01T12:00:00Z',created_at:'2026-01-01T12:00:00Z',reference:null,notes:null,reason:null,actor_user_id:'66666666-6666-4666-8666-666666666666',reverses_payment_id:null,provenance:'provider_verified'}];
@@ -22,11 +23,11 @@ it('identifies provider evidence in the primary Receipts register',async()=>{
  expect(host.textContent).not.toContain('Human recorded');
 });
 it('shows conserved mixed payments in the detail and excludes satisfied obligations from due counts',async()=>{
- fixture.invoices=[{id:'22222222-2222-4222-8222-222222222222',tenant_id:fixture.tenant,client_id:'33333333-3333-4333-8333-333333333333',client_name:'Example balance client',invoice_number:'INV-1',source_invoice_number:'SOURCE-1',status:'recorded',version:1,amount_cents:10000,currency:'usd',due_date:'2026-01-01',created_at:'2026-01-01T12:00:00Z',manual_recorded_cents:2500,provider_verified_cents:7500,allocated_cents:10000,remaining_cents:0,receipt_count:2,record_kind:'imported',provenance:'owner_imported_unverified'}];
+ fixture.invoices=[{id:'22222222-2222-4222-8222-222222222222',tenant_id:fixture.tenant,client_id:'33333333-3333-4333-8333-333333333333',client_name:'Example balance client',invoice_number:'INV-1',source_invoice_number:'SOURCE-1',status:'recorded',version:1,amount_cents:10000,currency:'usd',due_date:'2026-01-01',created_at:'2026-01-01T12:00:00Z',manual_recorded_cents:2500,provider_verified_cents:7500,allocated_cents:10000,remaining_cents:0,receipt_count:2,record_kind:'imported',provenance:'owner_imported_unverified',collection_required:false}];
  await render();
  const facts=[...host.querySelectorAll('.sc-facts article')];
  expect(facts.find(x=>x.textContent?.startsWith('Outstanding'))?.textContent).toContain('$0.00');
- expect(facts.find(x=>x.textContent?.startsWith('Past due'))?.querySelector('strong')?.textContent).toBe('0');
+ expect(facts.find(x=>x.textContent?.startsWith('Overdue'))?.querySelector('strong')?.textContent).toBe('0');
  await click('Open');
  expect(document.body.textContent).toContain('Manually recorded: $25.00');
  expect(document.body.textContent).toContain('Provider confirmed: $75.00');

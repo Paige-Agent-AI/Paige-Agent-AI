@@ -1,0 +1,19 @@
+/* DEV ONLY layout adapter. Incumbent shell classes and responsive geometry remain source-owned. */
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:100 900;font-display:swap;src:url('/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2') format('woff2')}
+@font-face{font-family:'Schibsted Grotesk';font-style:italic;font-weight:100 900;font-display:swap;src:url('/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2') format('woff2')}
+html,body,#root{margin:0;width:100%;height:100%;overflow:hidden}
+.weekly-harness-root{height:100dvh;display:flex;flex-direction:column;min-width:0;background:var(--pg-canvas);color:var(--pg-ink);font-family:var(--pg-font-ui)}
+.weekly-synthetic-label{flex:none;padding:7px 12px;font-size:11px;line-height:1.5;text-align:center;background:var(--pg-spine);border-bottom:1px solid var(--pg-line);color:var(--pg-ink)}
+.weekly-review-controls{flex:none;max-height:140px;overflow:auto;background:var(--pg-nav);padding:4px 12px;font-size:12px}
+.weekly-review-controls summary{cursor:pointer;min-height:24px}
+.weekly-review-controls label{display:inline-flex;gap:7px;align-items:center;margin:6px 12px 6px 0}.weekly-review-controls select,.weekly-review-controls button{background:var(--pg-canvas);color:var(--pg-ink);border:1px solid var(--pg-line-strong);padding:6px;border-radius:5px}
+.weekly-review-shell[data-tenant-shell]{flex:1;height:auto;min-height:0}
+.weekly-native-panel{max-width:850px;padding:28px 32px;margin:0 auto}
+.weekly-calendar-host{height:100%;min-height:0;display:flex;flex-direction:column}.weekly-calendar-host>.trc-canonical-mount{flex:1;min-height:0}
+.weekly-calendar-entry-placement{padding:0 20px;flex:none;max-height:190px;overflow:auto;border-bottom:1px solid var(--pg-line)}
+.weekly-calendar-entry-placement .e5-weekly-calendar-entry{border-top:0}
+.weekly-chat-host{height:100%;min-height:0;padding:10px;background:var(--pg-workspace)}
+.weekly-chat-header{display:flex;gap:10px;align-items:center;padding:12px;flex-wrap:wrap;border-bottom:1px solid var(--pg-line)}.weekly-chat-header h2{font-size:15px;font-weight:600}
+.tcs-paige[data-solo-paige=true]{z-index:8;min-height:0}.tcs-paige-backdrop{display:none}
+.weekly-review-shell .tcs-main:has(>.weekly-native-panel){overflow:auto}
+@media(max-width:760px){.weekly-native-panel{padding:20px 14px}.weekly-calendar-entry-placement{padding:0 12px}.weekly-chat-host{padding:6px}.weekly-chat-header{padding:10px 7px}.weekly-chat-header h2{font-size:13px}.weekly-review-controls label{display:flex}.weekly-synthetic-label{font-size:10px}}

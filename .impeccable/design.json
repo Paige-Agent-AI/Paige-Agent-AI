@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T02:42:41.545Z",
+  "title": "Design System: Paige SOLO — sampled workspace system",
+  "extensions": {
+    "colorMeta": {
+      "obsidian-canvas": {
+        "role": "neutral",
+        "displayName": "obsidian canvas",
+        "tonalRamp": [
+          "oklch(15.00% 0.01273 300.27)",
+          "oklch(26.43% 0.01273 300.27)",
+          "oklch(37.86% 0.01273 300.27)",
+          "oklch(49.29% 0.01273 300.27)",
+          "oklch(60.71% 0.01273 300.27)",
+          "oklch(72.14% 0.01273 300.27)",
+          "oklch(83.57% 0.01273 300.27)",
+          "oklch(95.00% 0.01273 300.27)"
+        ]
+      },
+      "obsidian-workspace": {
+        "role": "neutral",
+        "displayName": "obsidian workspace",
+        "tonalRamp": [
+          "oklch(15.00% 0.01462 304.52)",
+          "oklch(26.43% 0.01462 304.52)",
+          "oklch(37.86% 0.01462 304.52)",
+          "oklch(49.29% 0.01462 304.52)",
+          "oklch(60.71% 0.01462 304.52)",
+          "oklch(72.14% 0.01462 304.52)",
+          "oklch(83.57% 0.01462 304.52)",
+          "oklch(95.00% 0.01462 304.52)"
+        ]
+      },
+      "obsidian-surface": {
+        "role": "neutral",
+        "displayName": "obsidian surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.01624 302.10)",
+          "oklch(26.43% 0.01624 302.10)",
+          "oklch(37.86% 0.01624 302.10)",
+          "oklch(49.29% 0.01624 302.10)",
+          "oklch(60.71% 0.01624 302.10)",
+          "oklch(72.14% 0.01624 302.10)",
+          "oklch(83.57% 0.01624 302.10)",
+          "oklch(95.00% 0.01624 302.10)"
+        ]
+      },
+      "obsidian-raised": {
+        "role": "neutral",
+        "displayName": "obsidian raised",
+        "tonalRamp": [
+          "oklch(15.00% 0.01967 303.16)",
+          "oklch(26.43% 0.01967 303.16)",
+          "oklch(37.86% 0.01967 303.16)",
+          "oklch(49.29% 0.01967 303.16)",
+          "oklch(60.71% 0.01967 303.16)",
+          "oklch(72.14% 0.01967 303.16)",
+          "oklch(83.57% 0.01967 303.16)",
+          "oklch(95.00% 0.01967 303.16)"
+        ]
+      },
+      "obsidian-ink": {
+        "role": "neutral",
+        "displayName": "obsidian ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.01146 84.58)",
+          "oklch(26.43% 0.01146 84.58)",
+          "oklch(37.86% 0.01146 84.58)",
+          "oklch(49.29% 0.01146 84.58)",
+          "oklch(60.71% 0.01146 84.58)",
+          "oklch(72.14% 0.01146 84.58)",
+          "oklch(83.57% 0.01146 84.58)",
+          "oklch(95.00% 0.01146 84.58)"
+        ]
+      },
+      "obsidian-muted": {
+        "role": "neutral",
+        "displayName": "obsidian muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.01455 78.24)",
+          "oklch(26.43% 0.01455 78.24)",
+          "oklch(37.86% 0.01455 78.24)",
+          "oklch(49.29% 0.01455 78.24)",
+          "oklch(60.71% 0.01455 78.24)",
+          "oklch(72.14% 0.01455 78.24)",
+          "oklch(83.57% 0.01455 78.24)",
+          "oklch(95.00% 0.01455 78.24)"
+        ]
+      },
+      "obsidian-violet": {
+        "role": "secondary",
+        "displayName": "obsidian violet",
+        "tonalRamp": [
+          "oklch(15.00% 0.12059 290.61)",
+          "oklch(26.43% 0.12059 290.61)",
+          "oklch(37.86% 0.12059 290.61)",
+          "oklch(49.29% 0.12059 290.61)",
+          "oklch(60.71% 0.12059 290.61)",
+          "oklch(72.14% 0.12059 290.61)",
+          "oklch(83.57% 0.12059 290.61)",
+          "oklch(95.00% 0.12059 290.61)"
+        ]
+      },
+      "obsidian-gold-core": {
+        "role": "primary",
+        "displayName": "obsidian gold core",
+        "tonalRamp": [
+          "oklch(15.00% 0.04596 86.46)",
+          "oklch(26.43% 0.04596 86.46)",
+          "oklch(37.86% 0.04596 86.46)",
+          "oklch(49.29% 0.04596 86.46)",
+          "oklch(60.71% 0.04596 86.46)",
+          "oklch(72.14% 0.04596 86.46)",
+          "oklch(83.57% 0.04596 86.46)",
+          "oklch(95.00% 0.04596 86.46)"
+        ]
+      },
+      "obsidian-gold": {
+        "role": "primary",
+        "displayName": "obsidian gold",
+        "tonalRamp": [
+          "oklch(15.00% 0.06102 84.96)",
+          "oklch(26.43% 0.06102 84.96)",
+          "oklch(37.86% 0.06102 84.96)",
+          "oklch(49.29% 0.06102 84.96)",
+          "oklch(60.71% 0.06102 84.96)",
+          "oklch(72.14% 0.06102 84.96)",
+          "oklch(83.57% 0.06102 84.96)",
+          "oklch(95.00% 0.06102 84.96)"
+        ]
+      },
+      "mineral-canvas": {
+        "role": "neutral",
+        "displayName": "mineral canvas",
+        "tonalRamp": [
+          "oklch(15.00% 0.00571 84.57)",
+          "oklch(26.43% 0.00571 84.57)",
+          "oklch(37.86% 0.00571 84.57)",
+          "oklch(49.29% 0.00571 84.57)",
+          "oklch(60.71% 0.00571 84.57)",
+          "oklch(72.14% 0.00571 84.57)",
+          "oklch(83.57% 0.00571 84.57)",
+          "oklch(95.00% 0.00571 84.57)"
+        ]
+      },
+      "mineral-workspace": {
+        "role": "neutral",
+        "displayName": "mineral workspace",
+        "tonalRamp": [
+          "oklch(15.00% 0.00859 84.57)",
+          "oklch(26.43% 0.00859 84.57)",
+          "oklch(37.86% 0.00859 84.57)",
+          "oklch(49.29% 0.00859 84.57)",
+          "oklch(60.71% 0.00859 84.57)",
+          "oklch(72.14% 0.00859 84.57)",
+          "oklch(83.57% 0.00859 84.57)",
+          "oklch(95.00% 0.00859 84.57)"
+        ]
+      },
+      "mineral-surface": {
+        "role": "neutral",
+        "displayName": "mineral surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.00860 84.57)",
+          "oklch(26.43% 0.00860 84.57)",
+          "oklch(37.86% 0.00860 84.57)",
+          "oklch(49.29% 0.00860 84.57)",
+          "oklch(60.71% 0.00860 84.57)",
+          "oklch(72.14% 0.00860 84.57)",
+          "oklch(83.57% 0.00860 84.57)",
+          "oklch(95.00% 0.00860 84.57)"
+        ]
+      },
+      "mineral-raised": {
+        "role": "neutral",
+        "displayName": "mineral raised",
+        "tonalRamp": [
+          "oklch(15.00% 0.00693 88.64)",
+          "oklch(26.43% 0.00693 88.64)",
+          "oklch(37.86% 0.00693 88.64)",
+          "oklch(49.29% 0.00693 88.64)",
+          "oklch(60.71% 0.00693 88.64)",
+          "oklch(72.14% 0.00693 88.64)",
+          "oklch(83.57% 0.00693 88.64)",
+          "oklch(95.00% 0.00693 88.64)"
+        ]
+      },
+      "mineral-ink": {
+        "role": "neutral",
+        "displayName": "mineral ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00985 303.76)",
+          "oklch(26.43% 0.00985 303.76)",
+          "oklch(37.86% 0.00985 303.76)",
+          "oklch(49.29% 0.00985 303.76)",
+          "oklch(60.71% 0.00985 303.76)",
+          "oklch(72.14% 0.00985 303.76)",
+          "oklch(83.57% 0.00985 303.76)",
+          "oklch(95.00% 0.00985 303.76)"
+        ]
+      },
+      "mineral-muted": {
+        "role": "neutral",
+        "displayName": "mineral muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.01727 312.10)",
+          "oklch(26.43% 0.01727 312.10)",
+          "oklch(37.86% 0.01727 312.10)",
+          "oklch(49.29% 0.01727 312.10)",
+          "oklch(60.71% 0.01727 312.10)",
+          "oklch(72.14% 0.01727 312.10)",
+          "oklch(83.57% 0.01727 312.10)",
+          "oklch(95.00% 0.01727 312.10)"
+        ]
+      },
+      "mineral-violet": {
+        "role": "secondary",
+        "displayName": "mineral violet",
+        "tonalRamp": [
+          "oklch(15.00% 0.09411 291.05)",
+          "oklch(26.43% 0.09411 291.05)",
+          "oklch(37.86% 0.09411 291.05)",
+          "oklch(49.29% 0.09411 291.05)",
+          "oklch(60.71% 0.09411 291.05)",
+          "oklch(72.14% 0.09411 291.05)",
+          "oklch(83.57% 0.09411 291.05)",
+          "oklch(95.00% 0.09411 291.05)"
+        ]
+      },
+      "mineral-gold-core": {
+        "role": "primary",
+        "displayName": "mineral gold core",
+        "tonalRamp": [
+          "oklch(15.00% 0.05723 72.56)",
+          "oklch(26.43% 0.05723 72.56)",
+          "oklch(37.86% 0.05723 72.56)",
+          "oklch(49.29% 0.05723 72.56)",
+          "oklch(60.71% 0.05723 72.56)",
+          "oklch(72.14% 0.05723 72.56)",
+          "oklch(83.57% 0.05723 72.56)",
+          "oklch(95.00% 0.05723 72.56)"
+        ]
+      },
+      "mineral-gold": {
+        "role": "primary",
+        "displayName": "mineral gold",
+        "tonalRamp": [
+          "oklch(15.00% 0.06448 76.00)",
+          "oklch(26.43% 0.06448 76.00)",
+          "oklch(37.86% 0.06448 76.00)",
+          "oklch(49.29% 0.06448 76.00)",
+          "oklch(60.71% 0.06448 76.00)",
+          "oklch(72.14% 0.06448 76.00)",
+          "oklch(83.57% 0.06448 76.00)",
+          "oklch(95.00% 0.06448 76.00)"
+        ]
+      },
+      "obsidian-line": {
+        "displayName": "obsidian line",
+        "tonalRamp": [
+          "oklch(15% 0.02128 85.94 / .195)",
+          "oklch(26.43% 0.02128 85.94 / .195)",
+          "oklch(37.86% 0.02128 85.94 / .195)",
+          "oklch(49.29% 0.02128 85.94 / .195)",
+          "oklch(60.71% 0.02128 85.94 / .195)",
+          "oklch(72.14% 0.02128 85.94 / .195)",
+          "oklch(83.57% 0.02128 85.94 / .195)",
+          "oklch(95% 0.02128 85.94 / .195)"
+        ],
+        "role": "neutral"
+      },
+      "mineral-line": {
+        "displayName": "mineral line",
+        "tonalRamp": [
+          "oklch(15% 0.01928 307.72 / .185)",
+          "oklch(26.43% 0.01928 307.72 / .185)",
+          "oklch(37.86% 0.01928 307.72 / .185)",
+          "oklch(49.29% 0.01928 307.72 / .185)",
+          "oklch(60.71% 0.01928 307.72 / .185)",
+          "oklch(72.14% 0.01928 307.72 / .185)",
+          "oklch(83.57% 0.01928 307.72 / .185)",
+          "oklch(95% 0.01928 307.72 / .185)"
+        ],
+        "role": "neutral"
+      }
+    },
+    "typographyMeta": {
+      "weekly-heading": {
+        "displayName": "Weekly heading",
+        "purpose": "Scoped weekly inspection heading; does not replace shared title."
+      }
+    },
+    "shadows": [
+      {
+        "name": "obsidian-e1",
+        "value": "inset 0 1px rgba(255,255,255,.025)",
+        "purpose": "Existing low elevation."
+      },
+      {
+        "name": "mineral-e1",
+        "value": "inset 0 1px rgba(255,255,255,.7)",
+        "purpose": "Existing low elevation."
+      },
+      {
+        "name": "shared-sheet-shadow",
+        "value": "0 8px 16px hsl(255 40% 12% / 0.08), 0 2px 6px hsl(255 40% 12% / 0.06)",
+        "purpose": "Shared Sheet shadow-lg inherited by weekly sheet."
+      }
+    ],
+    "motion": [
+      {
+        "name": "calendar-control-transition",
+        "value": "background 140ms ease, border-color 140ms ease, color 140ms ease",
+        "purpose": "Existing native Calendar control states."
+      },
+      {
+        "name": "pg-reduced-motion",
+        "value": "animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important",
+        "purpose": "Existing theme-root reduced motion guard."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "weekly-facts-stack",
+        "value": "480px"
+      },
+      {
+        "name": "operations-compact",
+        "value": "600px"
+      },
+      {
+        "name": "shared-sheet-padding",
+        "value": "640px"
+      },
+      {
+        "name": "weekly-chat-container",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Weekly primary button",
+      "kind": "button",
+      "refersTo": "weekly-primary-obsidian",
+      "description": "Inverse ink/canvas proposal action; theme variables remain live.",
+      "html": "<button class=\"ds-primary\">Review proposal</button>",
+      "css": ".ds-primary{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);border:1px solid var(--pg-line,rgba(244,237,222,.195));border-radius:8px;padding:8px 12px;background:transparent;min-height:40px;cursor:pointer;background:var(--pg-ink,#f6f2ea);color:var(--pg-canvas,#100e14);border-color:transparent}.ds-primary:hover{opacity:.85;background:var(--pg-ink,#f6f2ea);color:var(--pg-canvas,#100e14)}.ds-primary:focus-visible{outline:2px solid var(--pg-ink,#f6f2ea);outline-offset:3px;}.ds-primary:disabled{opacity:.6;cursor:not-allowed}"
+    },
+    {
+      "name": "Weekly secondary button",
+      "kind": "button",
+      "description": "Quiet line-edged secondary action.",
+      "html": "<button class=\"ds-secondary\">Discard proposal</button>",
+      "css": ".ds-secondary{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);border:1px solid var(--pg-line,rgba(244,237,222,.195));border-radius:8px;padding:8px 12px;background:transparent;min-height:40px;cursor:pointer;}.ds-secondary:hover{background:var(--pg-raised,#211d27)}.ds-secondary:focus-visible{outline:2px solid var(--pg-ink,#f6f2ea);outline-offset:3px;}.ds-secondary:disabled{opacity:.6;cursor:not-allowed}"
+    },
+    {
+      "name": "Weekly field",
+      "kind": "input",
+      "refersTo": "weekly-field-obsidian",
+      "description": "Native proposal field with readable control boundary.",
+      "html": "<label class=\"ds-field-label\">Time zone<input class=\"ds-field\" value=\"America/New_York\"></label>",
+      "css": ".ds-field-label{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);display:grid;gap:6px;font-weight:550}.ds-field{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid var(--pg-muted,#aca69d);border-radius:6px;background:var(--pg-canvas,#100e14);color-scheme:inherit}.ds-field:focus-visible{outline:2px solid var(--pg-ink,#f6f2ea);outline-offset:3px;}"
+    },
+    {
+      "name": "Weekly state",
+      "kind": "chip",
+      "description": "Plain text state label with a quiet edge; no invented color semantics.",
+      "html": "<span class=\"ds-state\">Awaiting attention</span>",
+      "css": ".ds-state{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);font-size:12px;padding:3px 8px;border:1px solid var(--pg-line,rgba(244,237,222,.195));border-radius:5px;flex-shrink:0}"
+    },
+    {
+      "name": "Weekly notice",
+      "kind": "card",
+      "description": "Raised contextual notice within the open inspection panel.",
+      "html": "<p class=\"ds-notice\">Execution is held. The requested time is not a promise of a run.</p>",
+      "css": ".ds-notice{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);padding:12px;background:var(--pg-raised,#211d27);border-radius:8px;margin:8px 0;max-width:70ch}"
+    },
+    {
+      "name": "Weekly responsibility row",
+      "kind": "custom",
+      "description": "Open article with a divider, not an elevated card.",
+      "html": "<article class=\"ds-row\"><h3>Weekly commitment check</h3><p>Review the week. Keep the original work in Operations.</p></article>",
+      "css": ".ds-row{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);padding:24px 0;border-top:1px solid var(--pg-line,rgba(244,237,222,.195))}.ds-row h3{font-size:16px;font-weight:600;margin:0 0 8px}.ds-row p{margin:8px 0;max-width:70ch}"
+    },
+    {
+      "name": "Weekly records navigation",
+      "kind": "nav",
+      "description": "Existing source destinations with underlined links.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Weekly responsibility records\"><a href=\"#calendar\">Clients → Calendar</a><a href=\"#operations\">Operations → Work</a></nav>",
+      "css": ".ds-nav{font-family:var(--pg-font-ui,\"Schibsted Grotesk\",sans-serif);font-size:14px;line-height:1.55;color:var(--pg-ink,#f6f2ea);display:flex;flex-wrap:wrap;gap:10px;padding-top:24px;border-top:1px solid var(--pg-line,rgba(244,237,222,.195));margin-top:24px}.ds-nav a{color:var(--pg-gold-core,#fff0cf);text-decoration:underline;text-underline-offset:3px}.ds-nav a:hover{color:var(--pg-gold,#ead5aa)}.ds-nav a:focus-visible{outline:2px solid var(--pg-ink,#f6f2ea);outline-offset:3px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The existing SOLO workspace",
+    "overview": "This is an extraction of the incumbent Obsidian and Mineral workspace, not a new visual identity. Its boundary is the sampled native Chat, Calendar, Operations and weekly responsibility UI. It supplies no design authority for unseen product areas, the public site, Studio or other shells.\n\nSchibsted Grotesk, warm ink, quiet tonal layers and compact controls keep the working surface readable. The weekly extension fits this language with plain divided rows, a familiar right sheet and explicit status text. The existing direction contract supplies the identity; no new metaphor or branding has been chosen.",
+    "keyCharacteristics": [
+      "Two separately authored themes, selected through the existing theme root.",
+      "Tonal workspace depth and restrained seams.",
+      "Compact working controls with visible keyboard focus.",
+      "Original work stays in its existing native surface."
+    ],
+    "rules": [
+      {
+        "name": "The Theme Root Rule",
+        "body": "Resolve component color through the existing `--pg-*` theme root; preserve each theme's authored roles.",
+        "section": "colors"
+      },
+      {
+        "name": "The Prose Figures Rule",
+        "body": "Keep tabular numerals on figures rather than prose; the global stylesheet explicitly records why full-width punctuation must not spread into sentences.",
+        "section": "typography"
+      },
+      {
+        "name": "The Existing Depth Rule",
+        "body": "Select the incumbent layer or elevation needed by the component; do not invent a new palette to distinguish a native sheet or menu.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do inherit the existing theme, face and layer vocabulary.",
+      "Do preserve readable state words, wrapping identifiers and explicit scroll ownership.",
+      "Do preserve the native library icons and visible focus treatment.",
+      "Do keep local weekly sizes and shapes scoped to that component family."
+    ],
+    "donts": [
+      "Don't apply this sampled record as authority for unseen product areas.",
+      "Don't turn an inspection or proposal control into a gold completion signal merely for decoration.",
+      "Don't promote pre-existing contrast, focus or typography drift into a reusable rule."
+    ]
+  }
+}

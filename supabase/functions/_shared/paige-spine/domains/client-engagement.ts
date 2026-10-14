@@ -13,7 +13,8 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 //     caller may change it. It can also check a zone PAIGE resolved from the owner's words, so she
 //     can ask the owner to confirm the exact IANA name before they save it.
 //
-// READ-ONLY. Neither capability writes. The zone is saved only by the owner through Setup, which
+// READ-ONLY. Neither capability writes business state, and neither SQL read writes a receipt (E4-S3 PR
+// beta): PAIGE's chat answer is recorded once by the paige-ai-chat executor. The zone is saved only by the owner through Setup, which
 // calls public.set_business_time_zone (owner-only, E4-S1b). PAIGE never claims to have saved it.
 // Under INT-346's staged rollout both tools are admitted to conversational turns by the E4-S2
 // determination (docs/delivery/e2-1-readonly-admission-determination.md), recorded with its review.
@@ -67,9 +68,9 @@ export const CLIENT_ENGAGEMENT_STATUS = {
   key: "client.engagement_status", domain: "client", owner: "sales", humanSurface: surface, readiness: "none",
   action: { classification: "read", executor: "public.read_client_engagement_status", chatTool: "read_client_engagement_status", seatAuthority: "workspace-admin",
     riskPolicyKey: "read_only", approvalAuthority: "none",
-    idempotency: "Read-only on the caller's own session. The lookup and the read each re-check the active workspace and the owner/admin seat, and each writes one capability receipt. Only the bounded projection reaches the model." },
+    idempotency: "Read-only on the caller's own session. The lookup and the read each re-check the active workspace and the owner/admin seat and write nothing. PAIGE's answered chat question records one capability receipt, at the executor (service role, once per tool call); the client record and other display reads record none. Only the bounded projection reaches the model." },
   outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.read_client_engagement_status",
-    railVisibility: "Capability receipts only (record_capability_run). A read is not a business action or settlement receipt." },
+    railVisibility: "One capability receipt per answered chat question (\"Checked where a client stands\", credited to PAIGE). A read is not a business action or settlement receipt." },
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 
@@ -77,9 +78,9 @@ export const BUSINESS_TIME_ZONE = {
   key: "business.time_zone", domain: "business", owner: "business", humanSurface: surface, readiness: "none",
   action: { classification: "read", executor: "public.read_business_time_zone", chatTool: "read_business_time_zone", seatAuthority: "workspace-admin",
     riskPolicyKey: "read_only", approvalAuthority: "none",
-    idempotency: "Read-only on the caller's own session; one capability receipt per read. A proposed zone is only checked, never saved: the owner saves in Setup through public.set_business_time_zone." },
+    idempotency: "Read-only on the caller's own session; the read itself writes nothing. PAIGE's answered chat question records one capability receipt, at the executor (service role, once per tool call); Setup and Collections record none. A proposed zone is only checked, never saved: the owner saves in Setup through public.set_business_time_zone." },
   outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.read_business_time_zone",
-    railVisibility: "Capability receipts only (record_capability_run). A read is not a business action." },
+    railVisibility: "One capability receipt per answered chat question (\"Checked your business time zone\", credited to PAIGE). A read is not a business action." },
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 

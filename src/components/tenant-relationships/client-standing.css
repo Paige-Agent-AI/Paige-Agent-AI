@@ -1,0 +1,91 @@
+/* Experience 04 E4-S3 PR beta — "Where {client} stands" on the Solo client record.
+   Operate mode, the record's own pg-token world: a ledger of four rows (state · fact · where to act),
+   no hero figure, no card grid, no eyebrow, no gold (nothing here is an act), no coloured stripe.
+   Links and focus are the indigo violet (--pg-violet): navigation, not an act, so not the app's default
+   gold link ink. Every animation sits behind prefers-reduced-motion: no-preference. */
+.trc-standing { container-type: inline-size; }
+.trc-standing-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 13px 14px; border-bottom: 1px solid var(--pg-line-soft); }
+.trc-standing-head h3 { margin: 0; min-width: 0; overflow-wrap: anywhere; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
+.trc-standing-meta { display: flex; align-items: center; gap: 10px; color: var(--pg-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.trc-standing-rows { margin: 0; padding: 0; list-style: none; }
+/* The ledger: state | the fact (its name, then what is true) | where to act. The name is its own cell and
+   comes first in the DOM, so a narrow pane can set it on one line with its state (below) — never a pill
+   stacked above the name as a kicker. */
+.trc-standing-row { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) auto; grid-template-areas: "state label actions" "state body actions"; align-items: start; gap: 4px 14px; padding: 14px; }
+.trc-standing-row + .trc-standing-row { border-top: 1px solid var(--pg-line-soft); }
+.trc-standing-label { grid-area: label; min-width: 0; color: var(--pg-ink); font: 600 15px/1.3 var(--pg-font-ui, inherit); letter-spacing: -0.005em; }
+.trc-standing-state { grid-area: state; padding-top: 1px; }
+.trc-standing-row > .trc-standing-actions { grid-area: actions; }
+.trc-standing-nowrap { white-space: nowrap; }
+.trc-standing-body { grid-area: body; display: grid; min-width: 0; gap: 3px; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; }
+.trc-standing-body > span { overflow-wrap: anywhere; }
+.trc-standing-quiet-line { color: var(--pg-muted); }
+
+.trc-standing-money { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; margin: 6px 0 4px; }
+.trc-standing-money > div { display: grid; align-content: start; gap: 2px; min-width: 0; }
+/* A held Overdue takes the full width: its sentence and its link each get one line. */
+.trc-standing-money > .trc-standing-money-wide { grid-column: 1 / -1; }
+.trc-standing-money dt { color: var(--pg-muted); font-size: 11.5px; }
+.trc-standing-money dd { display: grid; gap: 2px; margin: 0; color: var(--pg-ink); font: 600 14px/1.3 var(--pg-font-ui, inherit); font-variant-numeric: tabular-nums; }
+.trc-standing-money dd.trc-standing-held { color: var(--pg-ink-2); font-size: 13px; font-weight: 500; }
+.trc-standing-money dd.trc-standing-held .trc-standing-link { justify-self: start; }
+.trc-standing-money dd small { color: var(--pg-muted); font-size: 11.5px; font-weight: 400; }
+.trc-standing-requests { color: var(--pg-muted); }
+.trc-standing-test { margin-top: 6px; padding-top: 8px; border-top: 1px dashed var(--pg-line); color: var(--pg-muted); }
+
+.trc-standing-next { display: grid; gap: 6px; margin: 2px 0 4px; padding: 0; list-style: none; }
+.trc-standing-next li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.trc-standing-next li > span { min-width: 0; flex: 1 1 16rem; color: var(--pg-ink-2); }
+
+.trc-standing-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+/* Inline text, so the arrow flows with the last word (kept together by -tail) instead of detaching to the
+   far edge when the label wraps. 7px + 18px + 7px keeps the 32px target (44px on touch, below). */
+.trc-standing .trc-standing-link { display: inline-block; padding: 7px 2px; border-radius: 6px; color: var(--pg-violet); font-size: 12.5px; font-weight: 600; line-height: 18px; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--pg-violet) 40%, transparent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.trc-standing-link-tail { white-space: nowrap; }
+.trc-standing-link svg { display: inline-block; width: 13px; height: 13px; margin-left: 5px; vertical-align: -2px; }
+.trc-standing .trc-standing-link:hover { text-decoration-color: currentColor; }
+.trc-standing-quiet { display: inline-flex; width: max-content; white-space: nowrap; min-height: 32px; align-items: center; gap: 6px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-surface); font-size: 12px; font-weight: 600; cursor: pointer; }
+.trc-standing-meta .trc-standing-quiet { margin-top: 0; }
+.trc-standing-quiet svg { width: 13px; height: 13px; }
+.trc-standing-quiet:hover:not(:disabled) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.trc-standing-quiet:disabled, .trc-standing-quiet[aria-disabled="true"] { opacity: .55; cursor: progress; }
+.trc-standing .trc-standing-link:focus-visible, .trc-standing-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+.trc-standing-empty, .trc-standing-state-line { display: grid; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-standing-empty p, .trc-standing-state-line p { margin: 0; max-width: 62ch; }
+.trc-standing-empty strong { color: var(--pg-ink); font-size: 13.5px; }
+.trc-standing-empty .trc-standing-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 4px; }
+.trc-standing-empty .trc-standing-quiet { margin-top: 0; }
+.trc-standing-source { margin: 0; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); font-size: 11.5px; line-height: 1.45; }
+
+.trc-standing-skeleton i, .trc-standing-skeleton b { display: block; height: 12px; border-radius: 6px; background: var(--pg-line-soft); }
+.trc-standing-skeleton i { width: 6rem; height: 18px; border-radius: var(--pg-r-pill); }
+.trc-standing-skeleton b:last-child { width: 4.5rem; }
+
+@container (max-width: 560px) {
+  /* The record pane at 1366–1536 (≈425–455px): name left, state right, as the record's own section
+     headers do; the facts and the links run full width beneath. */
+  .trc-standing-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label state" "body body" "actions actions"; align-items: center; gap: 6px 12px; }
+  .trc-standing-state { padding-top: 0; justify-self: end; }
+  .trc-standing-body, .trc-standing-actions { align-self: start; }
+  .trc-standing-actions { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 16px; }
+  .trc-standing-skeleton b:last-child { display: none; }
+}
+@container (max-width: 330px) { .trc-standing-money { grid-template-columns: minmax(0, 1fr); } }
+@media (pointer: coarse), (max-width: 620px) {
+  .trc-standing .trc-standing-link { padding-block: 13px; }
+  .trc-standing-quiet { min-height: 44px; }
+}
+/* While re-reading, the last answer stays at full ink (AA); the meta line announces "Checking again…" (role=status). */
+@media (prefers-reduced-motion: no-preference) {
+  .trc-standing-content > * { animation: trc-standing-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-standing-skeleton i, .trc-standing-skeleton b { animation: trc-standing-pulse 1.4s ease-in-out infinite; }
+}
+@keyframes trc-standing-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes trc-standing-pulse { 50% { opacity: .55; } }
+/* AA on the paper theme. The shared pill's success and warning words measure 4.36:1 and 4.18:1 at 10px on
+   the record's raised surface (standing-drive.mjs); the ink is deepened toward --pg-ink HERE, for this
+   section only, rather than retinting the primitive under its other users without their screenshots. */
+[data-pg="light"] .trc-standing-state[data-state="success"] > span { color: color-mix(in srgb, hsl(var(--success)) 78%, var(--pg-ink)); }
+[data-pg="light"] .trc-standing-state[data-state="warning"] > span { color: color-mix(in srgb, hsl(var(--warning)) 72%, var(--pg-ink)); }

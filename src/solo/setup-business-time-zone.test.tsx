@@ -10,7 +10,8 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...args: un
 const theme = { resolved: "dark" as string | undefined };
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: theme.resolved }) }));
 
-import { BusinessTimeZoneSetting, placeName, zoneMatch } from "./setup-business-time-zone";
+import { BusinessTimeZoneSetting, zoneMatch } from "./setup-business-time-zone";
+import { placeName } from "./data/useBusinessTimeZone";
 
 const TENANT = "tenant-a";
 const zoneRow = (over: Record<string, unknown> = {}) => ({ state: "missing", zone: null, set_at: null, local_date: null, can_set: true, ...over });

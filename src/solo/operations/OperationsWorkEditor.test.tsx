@@ -102,3 +102,50 @@ it("refuses to call a mismatched priority readback a successful save", async () 
   expect(container.textContent).not.toContain("Saved and confirmed");
   expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
 });
+
+it("registers a synchronous guard for dirty, saving and uncertain work and clears it on unmount", async () => {
+  let guard: (() => string | null) | null = null;
+  const register = vi.fn((next: (() => string | null) | null) => { guard = next; });
+  await act(async () => root.render(<OperationsWorkEditor item={item} actorId="assignee" tenantId="tenant-a" members={[]}
+    refresh={vi.fn()} sourceError={false} onNavigationGuardChange={register} />));
+  expect(guard?.()).toBeNull(); await status("done");
+  expect(guard?.()).toContain("unsaved");
+  let resolve: (value: { kind: "uncertain"; message: string }) => void = () => {};
+  mock.submit.mockImplementation(() => new Promise(done => { resolve = done; }));
+  await save(); expect(guard?.()).toContain("checking");
+  await act(async () => resolve({ kind: "uncertain", message: "Result uncertain" }));
+  expect(guard?.()).toContain("unconfirmed");
+  await act(async () => root.render(<div />)); expect(guard).toBeNull();
+});
+it("allows an explicit draft discard without a write and keeps cancelled records inspect-only", async () => {
+  await render(); await status("done");
+  const discard = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(button => button.textContent === "Discard unsaved changes");
+  expect(discard).toBeTruthy(); await act(async () => discard?.click());
+  expect(container.querySelector("select")?.value).toBe("open"); expect(mock.submit).not.toHaveBeenCalled();
+  await render({ ...item, status: "cancelled" });
+  expect(container.querySelector("form")).toBeNull(); expect(container.textContent).toContain("inspect");
+});
+
+it("retains a linked dirty draft across route unmount without borrowing a newer source version", async () => {
+  const original = { ...item, id: "linked-dirty-retention", updated_at: "2026-10-10T12:00:00.123456Z" };
+  const mount = async (value = original) => act(async () => root.render(<OperationsWorkEditor item={value} actorId="assignee"
+    tenantId="tenant-a" members={[]} refresh={vi.fn()} sourceError={false} retainDraftOnLeave />));
+  await mount(); await status("done"); await act(async () => root.render(<div />));
+  await mount({ ...original, status: "in_progress", updated_at: "2026-10-10T12:01:00.123456Z" });
+  expect(container.querySelector("select")?.value).toBe("done");
+  mock.submit.mockResolvedValue({ kind: "refused", message: "Stale edit refused" }); await save();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { status: "done" });
+});
+it("retains interrupted submission as unknown and does not replay it when the linked editor returns", async () => {
+  const original = { ...item, id: "linked-uncertain-retention" };
+  const refresh = vi.fn(); let resolve: (value: { kind: "acknowledged" }) => void = () => {};
+  const mount = async (retainDraftOnLeave = true) => act(async () => root.render(<OperationsWorkEditor item={original} actorId="assignee"
+    tenantId="tenant-a" members={[]} refresh={refresh} sourceError={false} retainDraftOnLeave={retainDraftOnLeave} />));
+  mock.submit.mockImplementation(() => new Promise(done => { resolve = done; }));
+  await mount(); await status("done"); await save(); await act(async () => root.render(<div />));
+  await mount(false); await act(async () => resolve({ kind: "acknowledged" }));
+  expect(mock.submit).toHaveBeenCalledOnce(); expect(refresh).not.toHaveBeenCalled();
+  expect(container.textContent).toContain("earlier change is unconfirmed");
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.textContent).toContain("Refresh and review"); expect(container.textContent).not.toContain("Saved and confirmed");
+});

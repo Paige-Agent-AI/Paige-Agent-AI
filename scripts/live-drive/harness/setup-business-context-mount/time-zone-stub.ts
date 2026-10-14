@@ -19,14 +19,15 @@ const localDate = (z: string) => new Intl.DateTimeFormat("en-CA", { timeZone: z,
 const ok = (data: unknown) => Promise.resolve({ data, error: null });
 const refuse = (code: string) => Promise.resolve({ data: null, error: { code, message: "harness refusal" } });
 
+// E4-S3 PR beta: the zone read is a pure read and returns no receipt id (the save keeps its own).
 function readZone() {
   if (mode() === "readerror") return refuse("57014");
   if (mode() === "refused") return refuse("42501");
   const z = zone();
   const can_set = mode() !== "admin";
-  if (!z) return ok({ state: "missing", zone: null, set_at: null, local_date: null, can_set, receipt_id: "harness" });
-  if (z === "America/Nowhere") return ok({ state: "invalid", zone: null, set_at: "2026-10-12T20:00:00Z", local_date: null, can_set, receipt_id: "harness" });
-  return ok({ state: "configured", zone: z, set_at: "2026-10-12T20:00:00Z", local_date: localDate(z), can_set, receipt_id: "harness" });
+  if (!z) return ok({ state: "missing", zone: null, set_at: null, local_date: null, can_set });
+  if (z === "America/Nowhere") return ok({ state: "invalid", zone: null, set_at: "2026-10-12T20:00:00Z", local_date: null, can_set });
+  return ok({ state: "configured", zone: z, set_at: "2026-10-12T20:00:00Z", local_date: localDate(z), can_set });
 }
 
 export const supabase = {

@@ -34,6 +34,8 @@ import {
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { PeopleContactEditor } from "./PeopleContactEditor";
 import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
+import { ClientStanding } from "./ClientStanding";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -99,6 +101,10 @@ export function TenantRelationshipsClientsWorkspace({
   const soloClientRoute = /^\/solo\/([^/]+)\/clients(?:\/|$)/.exec(location.pathname);
   const { activeTenantId, activeTenant, accountContextLoading, refresh } = useTenantContext();
   const variant = relationshipWorkspaceVariant(activeTenant?.account_type, activeTenant?.parent_tenant_id);
+  // Experience 04 E4-S3: where each client stands, on the rich Solo client record only. Declared per
+  // §60 (`client_standing`); the route's own account builds its links (same tree, same account).
+  const { has: hasTierFeature } = useTierFeatures();
+  const standing = routeTier === "solo" && hasTierFeature("client_standing") ? { account: soloClientRoute?.[1] ?? null } : null;
   const tabs = workspaceTabs(variant);
   const [routeTab, setRouteTab] = useSubtabRoute(routeTier, "clients", "people");
   const activeTab = tabs.some(({ id }) => id === routeTab) ? routeTab as WorkspaceTab : null;
@@ -236,6 +242,7 @@ export function TenantRelationshipsClientsWorkspace({
                 deepLinkedContactId={deepLinkedContactId}
                 onSelectContact={selectSoloContact}
                 onClearContact={clearSoloContact}
+                standing={standing}
               />
             : <PeopleView key={activeTenantId} variant={variant} data={data} openPaige={openPaige} selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         )}
@@ -305,6 +312,7 @@ function SoloPeopleView({
   deepLinkedContactId,
   onSelectContact,
   onClearContact,
+  standing,
 }: {
   activeTenantId: string;
   data: ReturnType<typeof useTenantRelationshipsData>;
@@ -313,6 +321,7 @@ function SoloPeopleView({
   deepLinkedContactId: string | null;
   onSelectContact: (id: string) => void;
   onClearContact: () => void;
+  standing: { account: string | null } | null;
 }) {
   const [search, setSearch] = useState("");
   const [editorContact, setEditorContact] = useState<ReturnType<typeof useTenantRelationshipsData>["people"][number] | null>(null);
@@ -573,6 +582,7 @@ function SoloPeopleView({
               onBack={returnToList}
               openPaige={openPaige}
               onEdit={openEditContact}
+              standing={standing}
             />
           ) : (
             <div className="trc-record-empty">
@@ -595,12 +605,14 @@ function ClientRecord({
   onBack,
   openPaige,
   onEdit,
+  standing,
 }: {
   person: ReturnType<typeof useTenantRelationshipsData>["people"][number];
   backRef: (node: HTMLButtonElement | null) => void;
   onBack: () => void;
   openPaige: () => void;
   onEdit: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  standing: { account: string | null } | null;
 }) {
   const isBusiness = person.recordType === "business";
   return (
@@ -625,6 +637,7 @@ function ClientRecord({
       </header>
 
       <div className="trc-record-body">
+        {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">

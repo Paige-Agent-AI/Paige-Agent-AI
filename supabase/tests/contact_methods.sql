@@ -231,9 +231,12 @@ SELECT is((SELECT array_agg(kind || ':' || value ORDER BY kind) FROM public.clie
 -- contact rather than given a duplicate.
 --
 -- E09 binds the exact CRM contact and preserves the real staff workspace guard.
--- A client may use a secondary contact address without becoming a business seat.
+-- This existing address-recognition proof uses a recipient with existing staff
+-- standing; pure external entry stays denied until client-safe projections ship.
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at) VALUES
   ('c3000000-0000-4000-8000-0000000000c1', 'authenticated', 'authenticated', 'ADA@a.tests.invalid', now());
+INSERT INTO public.tenant_members (tenant_id,user_id,role,status,is_owner,joined_at) VALUES
+  ('c3000000-0000-4000-8000-00000000000a','c3000000-0000-4000-8000-0000000000c1','member','active',false,now());
 INSERT INTO public.tenant_invite_tokens (tenant_id, token, kind, created_by, email, contact_id) VALUES
   ('c3000000-0000-4000-8000-00000000000a', 'cm-consumer-invite-token', 'consumer', 'c3000000-0000-4000-8000-0000000000a1', 'ada@a.tests.invalid', 'c3000000-0000-4000-8000-000000000ca1');
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000c1","role":"authenticated"}', true);

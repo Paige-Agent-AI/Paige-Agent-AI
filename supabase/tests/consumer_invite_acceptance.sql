@@ -50,6 +50,10 @@ BEGIN
  VALUES(_client,CASE WHEN _options?'foreign' THEN _b ELSE _a END,_owner,'Synthetic','Client',CASE WHEN _options?'archived' THEN 'archived' ELSE 'active' END);
  PERFORM public._attach_client_address(CASE WHEN _options?'foreign' THEN _b ELSE _a END,_client,'email',_email);
  IF _options?'occupied' THEN UPDATE public.clients SET linked_user_id=_owner WHERE id=_client; END IF;
+ IF _options?'staff' THEN
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at)
+  VALUES(_a,_actor,'member','active',false,now());
+ END IF;
  INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,last_used_at,revoked_at,contact_id,email)
  VALUES(_inv,_a,_token,'consumer','member',_owner,now()+CASE WHEN _options?'expired' THEN interval '-1 day' ELSE interval '1 day' END,NULL,
  CASE WHEN _options?'used' THEN 1 ELSE 0 END,CASE WHEN _options?'last_used' THEN now() ELSE NULL END,
@@ -58,8 +62,8 @@ BEGIN
  RETURN QUERY SELECT * FROM pg_temp.e09_call(_token,CASE WHEN _options?'anonymous' THEN NULL ELSE _actor END,_allow,_name);
  IF _allow THEN
   RETURN NEXT is((SELECT linked_user_id FROM public.clients WHERE id=_client),_actor,_name||': exact CRM contact linked');
-  RETURN NEXT is((SELECT count(*) FROM public.tenant_members WHERE user_id=_actor),0::bigint,_name||': no business seat');
-  RETURN NEXT ok(NOT EXISTS(SELECT 1 FROM public.profiles WHERE user_id=_actor AND active_tenant_id=_a),_name||': no staff workspace selection');
+  RETURN NEXT is((SELECT count(*) FROM public.tenant_members WHERE user_id=_actor),1::bigint,_name||': no additional business seat');
+  RETURN NEXT is((SELECT role::text FROM public.tenant_members WHERE user_id=_actor AND tenant_id=_a),'member',_name||': existing role preserved');
   RETURN NEXT is((SELECT uses FROM public.tenant_invite_tokens WHERE id=_inv),1,_name||': single token consumption');
   RETURN NEXT is((SELECT count(*) FROM public.audit_logs WHERE entity_id=_inv AND user_id=_actor AND action='consumer_invite_accepted'
    AND data->>'tenant_id'=_a::text AND data->>'client_id'=_client::text),1::bigint,_name||': attributable acceptance receipt');
@@ -68,7 +72,8 @@ BEGIN
 END;
 $$;
 
-SELECT * FROM pg_temp.e09_case('verified external client','{}',true);
+SELECT * FROM pg_temp.e09_case('verified recipient with existing staff standing','{"staff":true}',true);
+SELECT * FROM pg_temp.e09_case('pure external join remains blocked before safe read projections exist');
 SELECT * FROM pg_temp.e09_case('wrong recipient despite spoofed JWT email','{"wrong":true}');
 SELECT * FROM pg_temp.e09_case('unconfirmed recipient','{"unconfirmed":true}');
 SELECT * FROM pg_temp.e09_case('anonymous','{"anonymous":true}');

@@ -57,12 +57,6 @@ DECLARE
           'actor_user_id', _uid, 'via', 'accept_tenant_invite'));
 
 $consumer$;
-  _pointer_old text := '  UPDATE public.profiles SET active_tenant_id = _tok.tenant_id WHERE user_id = _uid;';
-  _pointer_new text := $pointer$  -- External clients are not business seats. Preserve the staff scope guard
-  -- and leave their existing business workspace selection unchanged.
-  IF _tok.kind <> 'consumer' THEN
-    UPDATE public.profiles SET active_tenant_id = _tok.tenant_id WHERE user_id = _uid;
-  END IF;$pointer$;
 BEGIN
   IF pg_catalog.strpos(_def, 'E09_CONSUMER_INVITE_INTEGRITY_V1') > 0 THEN
     RETURN;
@@ -75,12 +69,12 @@ BEGIN
   _old := pg_catalog.substr(_def, _start, _end - _start);
   -- Preserve concurrent Identity work instead of replacing an unfamiliar body.
   -- Hash is the consumer fragment from current main + applied contact-method adaptation.
-  IF pg_catalog.md5(_old) <> '186bd8a592cf0e1c02a95c5a185b7d61'
-     OR pg_catalog.strpos(_def, _pointer_old) = 0 THEN
+  IF pg_catalog.md5(_old) <> '186bd8a592cf0e1c02a95c5a185b7d61' THEN
     RAISE EXCEPTION 'E09 acceptance source changed; independent source reconciliation required';
   END IF;
   _def := pg_catalog.replace(_def, _old, _consumer);
-  _def := pg_catalog.replace(_def, _pointer_old, _pointer_new);
+  -- Preserve the existing final workspace write/guard. Pure external-client entry
+  -- remains blocked until the customer-safe database/MCP/context projection slice.
   EXECUTE _def;
 END;
 $e09_consumer_invite$;

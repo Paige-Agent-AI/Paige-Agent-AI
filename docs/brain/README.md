@@ -1,5 +1,8 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+**2026-10-14 Operations usable-UI audit / staff Work adoption candidate, NOT RELEASED:** Existing Operations connects eligible client-linked Planning details to released preparation/submission and internal review/revision/release, with nomination-only scope and original-intent guards. All six tabs mount; client host #2156 remains unmerged, and SOP execution, confirmed availability, dependency/evidence and governed PAIGE completion remain incomplete. Full Operations PARTIAL; authenticated customer/client acceptance UNVERIFIED. Current main baseline is `5c90859ac1d4fe560200069c5a783e90fb21be19`; this candidate adds no SQL, provider or Chat activation. See the Operations Work adoption evidence and original Operations packet.
+
+
 **2026-10-14 Sales overdue calendar candidate (#2086), not released:** Sales producer and Performance consumer are composed with Analytics-owned issuer/resolver compatibility. Only overdue advances to1.1.0, using the canonical business calendar: due today excluded, missing/invalid calendar null/UNAVAILABLE. Other ten versions remain1.0.0. Local175 native PostgreSQL checks use synthetic auth stand-ins;88 consumer tests and19 browser fixture cases passed. Final review, exact-head CI, migration/runtime readback and ordinary customer acceptance remain owed. [Sales evidence](../evidence/ui-delivery/int2086-sales-performance-calendar.md), [shared compatibility](../evidence/ui-delivery/int2086-shared-overdue-compatibility.md). C1 signed economics, Chat execution and Stripe TEST acceptance are not established here.
 
 **What this is.** A durable, verified index of Paige Agent AI's doctrine + platform state, so a

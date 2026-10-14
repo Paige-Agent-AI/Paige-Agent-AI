@@ -1,0 +1,225 @@
+{
+  "boundary": "Actual Solo shell and mounted Operations with synthetic RPCs in isolated signed-out native Chrome 200/400 percent browser zoom. No real customer account/persistence/provider/INT346 proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 182
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 202
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 182
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 202
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 144
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 144
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 144
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "height": 144
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    }
+  ],
+  "errors": [],
+  "productCommit": "d537ed907e8e97cef7d93bbd02f79fc973377eda",
+  "candidateBase": "5c90859ac1d4fe560200069c5a783e90fb21be19",
+  "evidenceMetadataNote": "Original underlying UI baseline was 1203b58; documentation-only main 5c90859 was preserved before the frozen product commit. No executed action or result was changed."
+}

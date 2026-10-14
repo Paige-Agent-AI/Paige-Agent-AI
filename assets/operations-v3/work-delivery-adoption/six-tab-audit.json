@@ -1,0 +1,205 @@
+{
+  "base": "5c90859ac1d4fe560200069c5a783e90fb21be19",
+  "candidate": "local Work adoption, unmerged",
+  "boundary": "Actual incumbent Solo shell and Operations components, explicit synthetic source ports, isolated signed-out Chrome. Source reachability and rendered usability audit; no customer runtime or persisted writes.",
+  "results": [
+    {
+      "theme": "dark",
+      "tab": "Overview",
+      "controls": [
+        "Inspect work",
+        "Sample client onboarding",
+        "Discovery completeOct 6 \u00c2\u00b7 Completed",
+        "Approve scope decisionsOct 8 \u00c2\u00b7 Blocked",
+        "Approve scope decisions",
+        "Sample research engagement",
+        "Research approvedOct 7 \u00c2\u00b7 Completed",
+        "Prepare review packageOct 22 \u00c2\u00b7 Ready",
+        "Prepare review package",
+        "Sample leadership workshop",
+        "Prepare stakeholder review",
+        "Complete delivery rehearsal",
+        "Review implementation draft",
+        "Prepare review package",
+        "Draft workshop agenda"
+      ],
+      "noPageOverflow": true,
+      "heading": "Keep the promises moving"
+    },
+    {
+      "theme": "dark",
+      "tab": "Work",
+      "controls": [
+        "Board",
+        "List",
+        "Timeline",
+        "normal priority \u00c2\u00b7 taskComplete delivery rehearsalSample client onboardingAPAnother PersonOct 15",
+        "normal priority \u00c2\u00b7 milestonePrepare review packageSample research engagementSample PersonOct 22",
+        "normal priority \u00c2\u00b7 taskConfirm workshop responsibilities and participant availabilitySample leadership workshopUnassignedNo due date",
+        "normal priority \u00c2\u00b7 taskDraft workshop agendaSample leadership workshopAPAnother PersonOct 26",
+        "normal priority \u00c2\u00b7 taskPrepare stakeholder reviewSample client onboardingSample PersonOverdue \u00c2\u00b7 Oct 13",
+        "normal priority \u00c2\u00b7 taskReview implementation draftSample research engagementSample PersonOct 19",
+        "normal priority \u00c2\u00b7 milestoneApprove scope decisionsSample client onboardingSample PersonOverdue \u00c2\u00b7 Oct 8"
+      ],
+      "noPageOverflow": true,
+      "heading": "Move the work forward"
+    },
+    {
+      "theme": "dark",
+      "tab": "Projects",
+      "controls": [
+        "Sample client onboarding",
+        "Discovery completeOct 6 \u00c2\u00b7 Completed",
+        "Approve scope decisionsOct 8 \u00c2\u00b7 Blocked",
+        "Inspect project",
+        "Sample research engagement",
+        "Research approvedOct 7 \u00c2\u00b7 Completed",
+        "Prepare review packageOct 22 \u00c2\u00b7 Ready",
+        "Sample leadership workshop"
+      ],
+      "noPageOverflow": true,
+      "heading": "Every project, a clear next step"
+    },
+    {
+      "theme": "dark",
+      "tab": "Delivery",
+      "controls": [
+        " Refresh",
+        "Synthetic service clientSynthetic client launchactive",
+        "Inspect agreement ",
+        "Prepare signed copy",
+        "Discuss with PAIGE "
+      ],
+      "noPageOverflow": true,
+      "heading": "Keep the promise."
+    },
+    {
+      "theme": "dark",
+      "tab": "Playbooks",
+      "controls": [],
+      "noPageOverflow": true,
+      "heading": "Make good work repeatable"
+    },
+    {
+      "theme": "dark",
+      "tab": "Capacity",
+      "controls": [
+        "Prepare stakeholder reviewIn progress",
+        "Approve scope decisionsBlocked",
+        "Review implementation draftIn progress",
+        "Prepare review packageReady",
+        "Complete delivery rehearsalReady",
+        "Draft workshop agendaReady",
+        "Confirm workshop responsibilities and participant availabilityUnassigned"
+      ],
+      "noPageOverflow": true,
+      "heading": "The people behind the progress"
+    },
+    {
+      "theme": "dark",
+      "tab": "Work detail",
+      "missingDelivery": false
+    },
+    {
+      "theme": "light",
+      "tab": "Overview",
+      "controls": [
+        "Inspect work",
+        "Sample client onboarding",
+        "Discovery completeOct 6 \u00c2\u00b7 Completed",
+        "Approve scope decisionsOct 8 \u00c2\u00b7 Blocked",
+        "Approve scope decisions",
+        "Sample research engagement",
+        "Research approvedOct 7 \u00c2\u00b7 Completed",
+        "Prepare review packageOct 22 \u00c2\u00b7 Ready",
+        "Prepare review package",
+        "Sample leadership workshop",
+        "Prepare stakeholder review",
+        "Complete delivery rehearsal",
+        "Review implementation draft",
+        "Prepare review package",
+        "Draft workshop agenda"
+      ],
+      "noPageOverflow": true,
+      "heading": "Keep the promises moving"
+    },
+    {
+      "theme": "light",
+      "tab": "Work",
+      "controls": [
+        "Board",
+        "List",
+        "Timeline",
+        "normal priority \u00c2\u00b7 taskComplete delivery rehearsalSample client onboardingAPAnother PersonOct 15",
+        "normal priority \u00c2\u00b7 milestonePrepare review packageSample research engagementSample PersonOct 22",
+        "normal priority \u00c2\u00b7 taskConfirm workshop responsibilities and participant availabilitySample leadership workshopUnassignedNo due date",
+        "normal priority \u00c2\u00b7 taskDraft workshop agendaSample leadership workshopAPAnother PersonOct 26",
+        "normal priority \u00c2\u00b7 taskPrepare stakeholder reviewSample client onboardingSample PersonOverdue \u00c2\u00b7 Oct 13",
+        "normal priority \u00c2\u00b7 taskReview implementation draftSample research engagementSample PersonOct 19",
+        "normal priority \u00c2\u00b7 milestoneApprove scope decisionsSample client onboardingSample PersonOverdue \u00c2\u00b7 Oct 8"
+      ],
+      "noPageOverflow": true,
+      "heading": "Move the work forward"
+    },
+    {
+      "theme": "light",
+      "tab": "Projects",
+      "controls": [
+        "Sample client onboarding",
+        "Discovery completeOct 6 \u00c2\u00b7 Completed",
+        "Approve scope decisionsOct 8 \u00c2\u00b7 Blocked",
+        "Inspect project",
+        "Sample research engagement",
+        "Research approvedOct 7 \u00c2\u00b7 Completed",
+        "Prepare review packageOct 22 \u00c2\u00b7 Ready",
+        "Sample leadership workshop"
+      ],
+      "noPageOverflow": true,
+      "heading": "Every project, a clear next step"
+    },
+    {
+      "theme": "light",
+      "tab": "Delivery",
+      "controls": [
+        " Refresh",
+        "Synthetic service clientSynthetic client launchactive",
+        "Inspect agreement ",
+        "Prepare signed copy",
+        "Discuss with PAIGE "
+      ],
+      "noPageOverflow": true,
+      "heading": "Keep the promise."
+    },
+    {
+      "theme": "light",
+      "tab": "Playbooks",
+      "controls": [],
+      "noPageOverflow": true,
+      "heading": "Make good work repeatable"
+    },
+    {
+      "theme": "light",
+      "tab": "Capacity",
+      "controls": [
+        "Prepare stakeholder reviewIn progress",
+        "Approve scope decisionsBlocked",
+        "Review implementation draftIn progress",
+        "Prepare review packageReady",
+        "Complete delivery rehearsalReady",
+        "Draft workshop agendaReady",
+        "Confirm workshop responsibilities and participant availabilityUnassigned"
+      ],
+      "noPageOverflow": true,
+      "heading": "The people behind the progress"
+    },
+    {
+      "theme": "light",
+      "tab": "Work detail",
+      "missingDelivery": false
+    }
+  ],
+  "errors": [],
+  "productCommit": "d537ed907e8e97cef7d93bbd02f79fc973377eda",
+  "candidateBase": "5c90859ac1d4fe560200069c5a783e90fb21be19",
+  "evidenceMetadataNote": "Original underlying UI baseline was 1203b58; documentation-only main 5c90859 was preserved before the frozen product commit. No executed action or result was changed."
+}

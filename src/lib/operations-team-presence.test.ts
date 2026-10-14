@@ -3,7 +3,7 @@ import {readOperationsTeamPresence,type OperationsPresenceCaller} from './operat
 const scope={actorId:'test-person-a',tenantId:'test-tenant-a'};
 const members=[{user_id:'test-person-a',status:'active'},{user_id:'test-person-b',status:'active'}];
 const row={user_id:'test-person-a',tenant_id:scope.tenantId,effective_status:'busy',last_seen:'2026-10-14T10:00:00Z',full_name:'Synthetic person',avatar_url:'private-image',override_reason:'Private status reason'};
-function fixture(rows:unknown=[row]){return {auth:{getSession:vi.fn().mockResolvedValue({data:{session:{user:{id:scope.actorId}}},error:null})},rpc:vi.fn().mockResolvedValue({data:rows,error:null})} satisfies OperationsPresenceCaller;}
+function fixture(rows:unknown=[row]){return {auth:{getSession:vi.fn().mockResolvedValue({data:{session:{user:{id:scope.actorId}}},error:null})},rpc:vi.fn(async(name:string,_args:Record<string,unknown>)=>({data:name==='current_user_tenant_id'?scope.tenantId:rows,error:null}))} satisfies OperationsPresenceCaller;}
 it('reads the existing explicit-tenant Team seam and never infers working hours',async()=>{
  const caller=fixture();const result=await readOperationsTeamPresence(caller,scope,members,()=>true);
  expect(caller.rpc).toHaveBeenCalledWith('presence_list_effective',{p_tenant_id:scope.tenantId,p_window_seconds:75,p_override_ttl_seconds:43200});
@@ -34,12 +34,22 @@ it('pins original actor and tenant arguments across awaited caller work',async()
   requested.tenantId='test-tenant-changed';return {data:{session:{user:{id:scope.actorId}}},error:null};
  });
  const result=await readOperationsTeamPresence(caller,requested,members,()=>true);
- expect(caller.rpc.mock.calls[0][1]).toMatchObject({p_tenant_id:scope.tenantId});expect(result.kind).toBe('ready');
+ expect(caller.rpc.mock.calls.find(c=>c[0]==='presence_list_effective')?.[1]).toMatchObject({p_tenant_id:scope.tenantId});expect(result.kind).toBe('ready');
  if(result.kind==='ready')expect(result.tenantId).toBe(scope.tenantId);
 });
 it('an async retirement cannot return named source data even if a tuple later repeats',async()=>{
- let current=true;const caller=fixture();caller.rpc.mockImplementation(async()=>{current=false;return {data:[row],error:null};});
+ let current=true;const caller=fixture();caller.rpc.mockImplementation(async(name:string)=>{if(name==='current_user_tenant_id')return {data:scope.tenantId,error:null};current=false;return {data:[row],error:null};});
  expect(await readOperationsTeamPresence(caller,scope,members,()=>current)).toEqual({kind:'scope_changed'});
+});
+it.each(['test-tenant-foreign',null])('does not fabricate scoped-ready empty presence when canonical tenant is %s',async actual=>{
+ const caller=fixture([]);caller.rpc.mockImplementation(async(name:string)=>({data:name==='current_user_tenant_id'?actual:[],error:null}));
+ expect(await readOperationsTeamPresence(caller,scope,members,()=>true)).toEqual({kind:'scope_changed'});
+ expect(caller.rpc.mock.calls.some(c=>c[0]==='presence_list_effective')).toBe(false);
+});
+it('rejects a canonical tenant change after the real presence read even with the same actor',async()=>{
+ const caller=fixture([]);let scopes=0;
+ caller.rpc.mockImplementation(async(name:string)=>({data:name==='current_user_tenant_id'?(++scopes===1?scope.tenantId:'test-tenant-other'):[],error:null}));
+ expect(await readOperationsTeamPresence(caller,scope,members,()=>true)).toEqual({kind:'scope_changed'});
 });
 it('refuses source errors or a throwing fence without leaking a raw failure',async()=>{
  const caller=fixture();caller.rpc.mockRejectedValue(new Error('PRIVATE_FAILURE'));

@@ -2,7 +2,7 @@ export type OperationsPresenceStatus='online'|'busy'|'away'|'offline'|'unknown';
 export type OperationsPresenceScope={actorId:string;tenantId:string};
 export interface OperationsPresenceCaller {
  auth:{getSession:()=>PromiseLike<{data:{session:{user:{id:string}}|null};error:unknown}>};
- rpc:(name:'presence_list_effective',args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>;
+ rpc:(name:'presence_list_effective'|'current_user_tenant_id',args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>;
 }
 export type OperationsPresenceResult=
  |{kind:'ready';actorId:string;tenantId:string;source:'presence_list_effective';availableMinutes:null;omittedCount:number;people:Array<{userId:string;status:OperationsPresenceStatus;lastSeen:string|null}>}
@@ -24,8 +24,16 @@ export async function readOperationsTeamPresence(caller:OperationsPresenceCaller
  try{
   const before=await caller.auth.getSession();
   if(!current()||before.error||before.data.session?.user.id!==actorId)return {kind:'scope_changed'};
+  const resolved=await caller.rpc('current_user_tenant_id',{});
+  if(!current())return {kind:'scope_changed'};
+  if(resolved.error)return {kind:'unavailable'};
+  if(resolved.data!==tenantId)return {kind:'scope_changed'};
   const response=await caller.rpc('presence_list_effective',{p_tenant_id:tenantId,p_window_seconds:75,p_override_ttl_seconds:43200});
   if(!current())return {kind:'scope_changed'};
+  const resolvedAfter=await caller.rpc('current_user_tenant_id',{});
+  if(!current())return {kind:'scope_changed'};
+  if(resolvedAfter.error)return {kind:'unavailable'};
+  if(resolvedAfter.data!==tenantId)return {kind:'scope_changed'};
   const after=await caller.auth.getSession();
   if(!current()||after.error||after.data.session?.user.id!==actorId)return {kind:'scope_changed'};
   if(response.error||!Array.isArray(response.data))return {kind:'unavailable'};

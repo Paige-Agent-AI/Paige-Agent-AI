@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: no layout edit.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
 STATE_COVERAGE: PASS: source-verified, unavailable, refused, conflict, unverified and changed-scope outcomes; unreadable current fence conceals source before/after attempted change.
 TRUTHFUL_STATE_LABELS: PASS: planning_record_only is not client acceptance, Rail receipt, deduplication or governed conversational completion.
-SOLO_UI: NO: pure unregistered adapter consumes eligible canonical Solo RPCs; no shell/account fork.
+SOLO_UI: YES: this backend-only record is composed into #2128's SOLO release; the adapter remains unregistered and mounts no interface or shell/account fork.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: backend-only source preparation; no consumer or native capture in this record.
 UNVERIFIED: native shared-caller JWT/RLS port construction, real Core decision/proposal provenance, operation identity/replay containment and same PAIGE Chat/Live adoption remain owed. Existing native writer authority must be freshly verified by required CI; no new migration or PostgreSQL behavior created.
 
 OWNER_INTENT: Implement approved Operations end to end through one canonical PAIGE; this bounded source seam precedes shared runtime adoption.

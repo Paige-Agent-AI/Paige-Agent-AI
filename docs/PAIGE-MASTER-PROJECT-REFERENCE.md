@@ -4357,6 +4357,14 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 - Production has zero commercial terms, signings, plans or provider-settled payments, so none of this has run for a real business. Authenticated acceptance waits on PC-1 (#1832).
 - Not definitive yet: overdue status. Due, upcoming and overdue are classified in the business owner's configured time zone (E4-S1b; owner ruling 2026-10-12). That zone lives in `tenant_business_time_zones`, set only by the active owner through `set_business_time_zone`. No workspace had set one at release (0 rows on 2026-10-13), so the read withholds those judgements and asks for configuration. E4-S2 (shipped 2026-10-13, PR #2106) adds the owner's setter in Setup › Business profile › Business time zone (confirm, save, read back) and lets PAIGE read and check the zone in chat; PAIGE cannot save it while INT-346 is staged. The live Collections workspace and the Sales overdue metric still use the UTC date (#2086, Sales).
 - Not automatic: contacting a customer. Automated reminders require the recipient's **verified** zone and location (`clients.timezone_verified`: 0 of 16 in production) and a verified jurisdiction. That field does not exist, so all automated contact is blocked today. The shared pre-send gate still falls back to the business zone or New York for SMS quiet hours (#2083, Communications).
+- **Customer-visible integration (Engineering 2.0 matrix, 2026-10-13 — journey §15):** live end to end today are F2b (client signing), F8c (the owner sets the business time zone in Setup) and F8d (PAIGE checks the zone in chat). The F8 chat read itself (F8a, "where does this client stand") works but is PARTIAL:
+  - **No link out:** the chat answer is prose with no link to the client or any record. The shared `record_locator` covers CRM only.
+  - **Refusals look completed:** a refused read is persisted in the step line as "done".
+  - **Wrong attribution:** every Setup page load writes a receipt the Rail credits to PAIGE.
+  - **Two overdue answers:** Collections "Past due" judges the browser UTC date.
+  - **No standing on the client record:** the Engagement panel is unmounted.
+
+  F1–F5 run only in the departmental UIs, wherever a UI path exists, because chat actions are dark while INT-346 is off. F2c (terms become effective: the writer exists but is unwired) blocks F4a, the delivery handoff. F4c, F5b/c, F6 and F7 have no customer path.
 
 ### PAIGE Operating Fabric — Phase 0 map + snapshot contract; F1 seam in code, nothing wired to a turn yet (2026-10-06)
 

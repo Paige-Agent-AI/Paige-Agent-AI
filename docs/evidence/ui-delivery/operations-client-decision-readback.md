@@ -10,12 +10,12 @@ VISUAL_DIRECTION: PASS: unchanged approved Obsidian/Mineral component and typogr
 AUTOMATED_EVIDENCE: PASS:103 focused helper/component/staff/source tests,29 native rollback client-role assertions; initial8 helper FAIL/24PASS and native awaiting-evidence FAIL reproduced.
 STATIC_EVIDENCE: PASS: touched-source ESLint and exact projection inspection; new reader retains original joins/predicates/ACL. Completed actual app typecheck FAIL(exit2):10 existing outside-change diagnostics/0 affected files; required CI ratchet still owed. Root files-empty project tsc was not app proof.
 RENDERED_EVIDENCE: UNVERIFIED: no visible code changed or new browser capture; historical component captures are supporting only, not fresh proof.
-BEHAVIORAL_EVIDENCE: PASS: actual React confirmation/readback/cancel-focus and unknown no-replay tests plus native scoped revision/acceptance persistence; synthetic isolated evidence only.
+BEHAVIORAL_EVIDENCE: PASS: src/solo/operations/OperationsClientArtifactReview.test.tsx and supabase/tests/operations_delivery_client_review.sql prove actual React confirmation/readback/cancel-focus and uncertain-write no-replay tests plus native scoped revision/acceptance persistence; synthetic isolated evidence only.
 AUTHENTICATED_RUNTIME: UNVERIFIED: legitimate customer/client drive queued in #1832/ANT7/ANT86 under single ANT21; no customer account access.
 KEYBOARD_FOCUS: UNVERIFIED: existing cancel-to-invoker unit test passes; complete native portal keyboard drive remains owed.
 ZOOM_REFLOW: UNVERIFIED: no layout changes; actual mounted portal/native zoom remains owed.
 REDUCED_MOTION: UNVERIFIED: no new motion/style; complete mounted flow remains owed.
-STATE_COVERAGE: PASS: awaiting legacy read, explicit versioned acceptance/revision, foreign/revoked identities, stale/version/note/actor/time mismatch, missing evidence, unknown no-replay.
+STATE_COVERAGE: PASS: src/lib/operations-client-review.test.ts proves awaiting legacy read, explicit versioned acceptance/revision, foreign/revoked identities, stale/version/note/actor/time mismatch, missing decision facts, uncertain-write no-replay.
 TRUTHFUL_STATE_LABELS: PASS: missing or mismatched decision evidence yields unavailable/unverified, never executed/accepted from state alone.
 SOLO_UI: YES: existing Operations domain helper, unmounted client review consumer; shared shell/portal untouched.
 UNVERIFIED: New full-schema CI, final non-author review, migration release/deployment/catalog and mounted/authenticated client acceptance; full Operations remains PARTIAL.
@@ -25,12 +25,12 @@ MUST_PRESERVE: Current linked identity/nonstaff/standalone/tenant/item/client/ap
 ACCEPTANCE_CRITERIA: Exact client decision includes own actor/time/note; helper acknowledgement and independent readback match raw version/time and immutable source. Real client flow still owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Existing client reader ACL/body and exact artifact; Planning/Sales/Team/Studio/client identity untouched. Held WorkRouteEditor, #2067, Spine/Chat executors untouched.
-INTERNAL_BUILD_IDENTITY: 4b5ba8e4e4e4ad7a00a3823b5ebe4df8fcd4800c supporting immutable product-source head; deployment=NOT_DEPLOYED; environment=local; migrations=UNAPPLIED(20271031005010); edge=NOT_APPLICABLE; evidence=this record and existing client review packet.
+INTERNAL_BUILD_IDENTITY: 4b5ba8e4e4e4ad7a00a3823b5ebe4df8fcd4800c supporting immutable product-source head; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271031005010 normal protected production migration release); edge=NOT_APPLICABLE; evidence=this record and existing client review packet.
 RELEASE_CHANNEL: development: isolated local source/rollback tests only.
-RELEASE_CLASSIFICATION: internal-only source evidence extension, no customer outcome announcement.
+RELEASE_CLASSIFICATION: internal-only: source evidence extension, no customer outcome announcement.
 CUSTOMER_RELEASE_IDENTITY: none: mounted authenticated Delivery acceptance is not proved.
 RELEASE_NOTE_REQUIRED: no: internal development/source contract, no customer-visible release claim.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for real client acceptance, source persistence at production and governed COO; full Operations PARTIAL.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: real client acceptance, source persistence at production and governed COO; full Operations PARTIAL.
 RELEASE_RECOVERY: position=additive forward reader correction/readback; reference=docs/delivery/operations-client-review-packet.md; applied history never rewritten.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full canonical portal/PAIGE flow unmounted; no authenticated runtime executed.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: full canonical portal/PAIGE flow unmounted; no authenticated runtime executed.

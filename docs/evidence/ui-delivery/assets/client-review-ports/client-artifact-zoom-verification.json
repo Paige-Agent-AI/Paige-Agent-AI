@@ -1,0 +1,214 @@
+{
+  "boundary": "Native signed-out Chrome200/400%, isolated unmounted component with synthetic ports; no portal shell, customer acceptance, provider or INT-346 effects.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "decision": "accepted",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 174.5,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 182
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "decision": "revision",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 174.5,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 239.6953125
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "decision": "accepted",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 174.5,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 182
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "decision": "revision",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 174.5,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": false,
+        "scrollTop": 0,
+        "height": 239.6953125
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "decision": "accepted",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 86.25,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 34,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "decision": "revision",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 86.25,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 142.75,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "decision": "accepted",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 86.25,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 34,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "decision": "revision",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "artifact": {
+        "contained": true,
+        "scrollTop": 86.25,
+        "scrollable": true
+      },
+      "confirmation": {
+        "contained": true,
+        "scrollable": true,
+        "scrollTop": 142.75,
+        "height": 144
+      },
+      "keyboard": true,
+      "cancellation": true,
+      "focusRestored": true,
+      "noDecision": true,
+      "reducedMotion": true
+    }
+  ],
+  "errors": []
+}

@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { interviewReturnPath } from "./solo-interview-navigation";
 import {
   BookOpen,
   CheckCircle2,
@@ -638,7 +639,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
     text: string;
   } | null>(null);
   const [recovery, setRecovery] = useState<
-    "failed" | "conflict" | "stale" | null
+    "failed" | "conflict" | "stale" | "unknown" | null
   >(null);
   const [knowledgeEditor, setKnowledgeEditor] = useState<number | null>(null);
   const [emailEditor, setEmailEditor] = useState(false);
@@ -1097,7 +1098,10 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
           <strong>Setup could not load safely.</strong>
           {data.error}
         </span>
-        <button className="setup-button" onClick={data.refresh}>
+        <button className="setup-button" onClick={() => {
+          if (data.saveOutcomeUnknown) void data.reconcileSave();
+          else void data.refresh();
+        }}>
           Retry
         </button>
       </div>
@@ -1125,8 +1129,8 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         className="setup-brief"
         onInput={reconcileMountedDraft}
         onClickCapture={reconcileMountedDraft}
-        disabled={data.saving}
-        aria-busy={data.saving}
+        disabled={data.saving || data.reconciling}
+        aria-busy={data.saving || data.reconciling}
         style={{ border: 0, padding: "0 0 32px", margin: 0, minWidth: 0 }}
       >
         {!data.canEdit && (
@@ -1170,7 +1174,15 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   setEditing(false);
                   setRecovery(null);
                   setNotice(null);
-                  data.refresh();
+                  if (data.saveOutcomeUnknown) {
+                    const checked = await data.reconcileSave();
+                    setNotice({ tone: checked.ok ? "ok" : "bad", text: checked.ok
+                      ? "Stored Setup checked. Review these current values before making another change."
+                      : checked.error });
+                    if (!checked.ok) setRecovery("unknown");
+                  } else {
+                    void data.refresh();
+                  }
                 }}
               >
                 Load stored version
@@ -1178,6 +1190,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
             )}
           </div>
         )}
+        {interviewReturnPath(account, location.search) && data.canEdit && data.accessScope === "owner_full" && <Link className="setup-button" to={interviewReturnPath(account, location.search)!}>Return to interview</Link>}
         {data.pendingProposal && !proposalId && owner && (
           <aside className="setup-proposal">
             <div>
@@ -1333,7 +1346,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
               )}
               <button
                 className="setup-button setup-button--primary"
-                disabled={!data.canEdit || data.saving}
+                disabled={!data.canEdit || data.saving || data.saveOutcomeUnknown || data.reconciling}
                 onClick={editing ? () => void save() : () => void beginEdit()}
               >
                 {data.saving

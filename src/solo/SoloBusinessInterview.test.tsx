@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
-const state = vi.hoisted(() => ({ context: {} as Record<string, unknown>, rpc: vi.fn(), save: vi.fn(), refresh: vi.fn(), tenant: "tenant-a" }));
+const state = vi.hoisted(() => ({ context: {} as Record<string, unknown>, rpc: vi.fn(), save: vi.fn(), reconcile: vi.fn(), refresh: vi.fn(), tenant: "tenant-a" }));
 vi.mock("./data/useSoloBusinessContext", () => ({ useSoloBusinessContext: () => state.context }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: state.tenant, activeTenant: { account_number: "test-tenant-a" } }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: state.rpc } }));
@@ -74,6 +74,28 @@ describe("owner interview review over canonical Setup", () => {
     state.save.mockResolvedValue({ ok: false, kind: "conflict", error: "Reload before retrying." });
     await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await click(button("Confirm and save to Setup"));
     expect(host.textContent).toContain("Reload before retrying."); expect(host.textContent).not.toContain("Saved to Setup"); expect(state.rpc.mock.calls.filter(([name]) => name.startsWith("save_"))).toHaveLength(0);
+  });
+  it("retains an uncertain edit, checks the canonical record, and never retries the save", async () => {
+    state.context.reconcileSave = state.reconcile;
+    state.save.mockImplementation(async () => {
+      state.context.saveOutcomeUnknown = true;
+      return { ok: false, kind: "unknown", error: "Unknown save" };
+    });
+    await render(); await click(host.querySelector('[aria-label="Correct Industry"]')!); await input("Design consultancy");
+    await click(button("Confirm and save to Setup")); await render();
+    expect((host.querySelector("textarea") as HTMLTextAreaElement).value).toBe("Design consultancy");
+    expect((button("Confirm and save to Setup") as HTMLButtonElement).disabled).toBe(true);
+    expect(host.textContent).not.toContain("Saved to Setup");
+    state.reconcile.mockImplementation(async () => {
+      state.context.saveOutcomeUnknown = false;
+      const brief = cleanSoloSetupBrief({ industry: "Design consultancy", provenance: { industry: { source: "owner_confirmed", confidence: "confirmed" } } });
+      state.context.brief = brief;
+      return { ok: true, kind: "reconciled", readback: { tenantId: "tenant-a", brief, contextRevision: 8 } };
+    });
+    await click(button("Check saved Setup")); await render();
+    expect(host.textContent).toContain("on file in Setup");
+    expect(state.save).toHaveBeenCalledTimes(1);
+    expect(state.rpc.mock.calls.filter(([name]) => name.startsWith("save_"))).toHaveLength(0);
   });
   it("retains successful Setup evidence when checkpoint recording fails", async () => {
     state.save.mockResolvedValue({ ok: true, kind: "saved", readback: { tenantId: "tenant-a", brief: state.context.brief, contextRevision: 8 } });

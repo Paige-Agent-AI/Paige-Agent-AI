@@ -1,0 +1,23 @@
+.sos{display:grid;grid-template-columns:minmax(110px,156px) minmax(0,1fr);align-items:center;gap:clamp(16px,3cqw,32px);position:relative;isolation:isolate;padding:18px 24px;flex:none;border-bottom:1px solid hsl(var(--border));color:hsl(var(--foreground));background:hsl(var(--background))}
+.sos-presence{position:relative;min-width:0;aspect-ratio:1;max-height:156px;filter:drop-shadow(0 12px 26px hsl(var(--primary)/.12))}
+.sos-presence:before{content:"";position:absolute;inset:10%;border:1px solid hsl(var(--primary)/.2);border-radius:50%;pointer-events:none}
+.sos-presence .paige-presence,.sos-presence .paige-presence-3d{height:100%;width:100%;min-height:0}
+.sos-mark{position:absolute;inset:40%;pointer-events:none;opacity:.8}
+.sos-mark svg{width:100%;height:100%}
+.sos-introduction{min-width:0}.sos-introduction h1{font-size:clamp(24px,3cqw,36px);font-weight:500;letter-spacing:-.025em;line-height:1.12;margin:0 0 10px}
+.sos-introduction>p{font-size:16px;line-height:1.5;color:hsl(var(--muted-foreground));margin:0;max-width:40ch}
+.sos-state{display:flex;align-items:center;gap:9px;margin-top:17px;font-size:14px;line-height:1.4;overflow-wrap:anywhere;color:hsl(var(--foreground))}
+.sos-state>span{width:7px;height:7px;border-radius:50%;background:hsl(var(--primary));flex:none}
+.sos-introduction .sos-progress{font-size:13px;margin-top:8px}
+.spw-root:has(.sos){container-type:inline-size}
+
+.sbi--onboarding .sbi-note{margin-block:8px}
+@container(max-width:600px){.sos{grid-template-columns:112px minmax(0,1fr);gap:14px;padding:14px 16px}.sos-introduction h1{font-size:25px}.sos-introduction>p{font-size:14px}.sos-state{margin-top:12px}.sos-introduction .sos-progress{font-size:12px}}
+@container(max-width:360px){.sos{grid-template-columns:78px minmax(0,1fr);padding:12px;gap:12px}.sos-introduction h1{font-size:22px}.sos-introduction>p{font-size:14px}.sos-state{font-size:13px;margin-top:10px}}
+@media(prefers-reduced-motion:reduce){.sos-presence{filter:none}.sos *{scroll-behavior:auto}}
+
+.spw-onboarding-header{flex:none;max-height:50%;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.spw-onboarding-header .sbi--onboarding{max-height:none;overflow:visible}
+
+.sbi-head-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.sbi--onboarding .sbi-head{flex-wrap:wrap}

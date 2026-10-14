@@ -9,8 +9,9 @@ export default defineConfig({ root: import.meta.dirname, publicDir: path.join(re
     { find: "./data/useSoloBusinessContext", replacement: path.join(import.meta.dirname, "interview.fixture.ts") },
     { find: "@/hooks/useTenantContext", replacement: path.join(import.meta.dirname, "interview.fixture.ts") },
     { find: "@/integrations/supabase/client", replacement: path.join(import.meta.dirname, "interview.fixture.ts") },
+    ...["@/hooks/useScopedUserId", "@/hooks/usePaigeThreads", "@/hooks/useChatDocumentUpload", "@/lib/playbook"].map(find=>({find,replacement:path.join(import.meta.dirname,"interview.fixture.ts")})),
     { find: "@", replacement: path.join(repo, "src") },
   ] },
   define: { "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("http://harness.invalid"), "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify("synthetic-not-a-key") },
-  server: { host: "127.0.0.1", port: 5204, strictPort: true },
+  server: { host: "127.0.0.1", port: 5208, strictPort: true },
 });

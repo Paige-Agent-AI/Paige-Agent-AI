@@ -1,0 +1,11 @@
+{
+  "scope": "LOCAL_PREPARATION_NOT_APPLIED",
+  "formerVersion": "20271030100000",
+  "pendingVersion": "20271101100000",
+  "verifiedProductionFrontier": "20271031004000",
+  "sqlSHA256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
+  "sourcePRFrozen": "2758b37fd59978df3c0a2a0b8446eaab5d9c85fc",
+  "originalPreviewVersion": "20271026000000",
+  "receipt": "NONE",
+  "conditions": "Existing authorized administrator/trusted runner only, updated exact-source manifest review before any metadata mutation; original export and unchanged functions; supported repair only; no SQL reexecution or production history change."
+}

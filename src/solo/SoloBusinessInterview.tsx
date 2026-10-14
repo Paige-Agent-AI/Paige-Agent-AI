@@ -6,6 +6,8 @@ import { useSoloBusinessContext } from "./data/useSoloBusinessContext";
 import { applySetupProposal, prepareOwnerConfirmedBrief, setupSourceLabel, validateSoloSetupBrief, type SoloSetupBrief } from "./settings-setup-contract";
 import { INTERVIEW_FIELDS, cleanInterviewCheckpoint, isOperationalProposal, nextInterviewField, type InterviewField } from "./solo-business-interview-contract";
 import "./solo-business-interview.css";
+import { interviewSetupPath } from "./solo-interview-navigation";
+import type { OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 async function checkpointRpc(name: string, args: Record<string, unknown>) {
   try {
@@ -15,8 +17,9 @@ async function checkpointRpc(name: string, args: Record<string, unknown>) {
   } catch { return { data: null, error: true }; }
 }
 
-export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }: {
+export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, onboarding = false, onProfileStatus }: {
   threadId: string | null; busy: boolean; refreshEpoch: number; onPause: () => void;
+  onboarding?: boolean; onProfileStatus?: (status: OnboardingProfileStatus) => void;
 }) {
   const context = useSoloBusinessContext();
   const { activeTenantId, activeTenant } = useTenantContext();
@@ -32,10 +35,18 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
   const [checkpointBusy, setCheckpointBusy] = useState(false);
   const [nextField, setNextField] = useState<InterviewField | null | undefined>(undefined);
   const [paused, setPaused] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(!onboarding);
   const ready = !context.loading && !context.error && context.resolvedTenantId === activeTenantId && context.accessScope === "owner_full" && Number.isSafeInteger(context.contextRevision);
-  const locked = busy || context.saving || checkpointBusy;
-  const setup = () => { if (activeTenant?.account_number) navigate(`/solo/${activeTenant.account_number}/settings/setup/business-profile`); };
+  const locked = busy || context.saving || checkpointBusy || context.reconciling;
+  const setup = () => { if (activeTenant?.account_number) navigate(interviewSetupPath(activeTenant.account_number, threadId)); };
   const refreshRef = useRef(context.refresh); refreshRef.current = context.refresh;
+  const confirmedCount = INTERVIEW_FIELDS.filter(([field]) => context.brief[field]?.trim() &&
+    context.brief.provenance[field]?.source === "owner_confirmed" && context.brief.provenance[field]?.confidence === "confirmed").length;
+  const recordState = context.reconciling ? "reconciling" : context.saveOutcomeUnknown ? "unknown" :
+    context.saving ? "saving" : context.loading ? "reading" : context.error || !ready ? "unavailable" : "ready";
+  useEffect(() => {
+    onProfileStatus?.({ tenantId: context.resolvedTenantId, state: recordState, confirmedCount: ready ? confirmedCount : 0 });
+  }, [onProfileStatus, context.resolvedTenantId, recordState, confirmedCount, ready]);
 
   useEffect(() => { liveScope.current = scope; progressGeneration.current++; returnFocusField.current = null; setDraft(null); setMessage(null); setError(null); setPaused(false); setNextField(undefined); setCheckpointBusy(false); return () => { liveScope.current = ""; progressGeneration.current++; }; }, [scope]);
   useEffect(() => {
@@ -87,7 +98,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
     setMessage(null); setError(null);
   }
   async function save() {
-    if (!draft || !ready || locked) return;
+    if (!draft || !ready || locked || context.saveOutcomeUnknown) return;
     if (draft.revision !== context.contextRevision || draft.brief.updatedAt !== context.brief.updatedAt) {
       setError("Setup changed while you were reviewing. Cancel this edit and reload before saving."); return;
     }
@@ -101,7 +112,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
       primaryBusinessEmail: context.primaryBusinessEmail, knowledgeSources: context.knowledgeSources,
       paigeProfile: context.paigeProfile, voiceExamples: context.voiceExamples, proposalId: draft.proposalId });
     if (liveScope.current !== capturedScope) return;
-    if (result.ok === false) { returnFocusField.current = draft.field; setError(result.error); return; }
+    if (result.ok === false) { returnFocusField.current = draft.field; setError(result.kind === "unknown" ? null : result.error); return; }
     const following = nextField === undefined ? nextInterviewField(result.readback.brief) : nextField && draft.fields.includes(nextField) ? nextInterviewField(result.readback.brief, nextField) : nextField;
     const reviewedField = draft.field;
     returnFocusField.current = reviewedField;
@@ -114,6 +125,31 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
       setCheckpointBusy(false);
       if (!recorded) setError("Setup was saved. Interview progress was not recorded; reopen this conversation and reload Setup before continuing.");
     }
+  }
+  async function checkStored() {
+    if (locked) return;
+    const capturedScope = scope;
+    const reviewed = draft;
+    const result = await context.reconcileSave();
+    if (liveScope.current !== capturedScope) return;
+    if (!result.ok) { setError(result.error); return; }
+    setError(null);
+    if (reviewed) {
+      returnFocusField.current = reviewed.field;
+      const matches = reviewed.fields.every(field =>
+        reviewed.brief[field].trim() === result.readback.brief[field].trim() &&
+        result.readback.brief.provenance[field]?.source === "owner_confirmed" &&
+        result.readback.brief.provenance[field]?.confidence === "confirmed");
+      if (matches) {
+        setDraft(null);
+        setMessage("Your reviewed details are on file in Setup. Readback verified; you can continue the interview.");
+        return;
+      }
+      const current = { ...result.readback.brief, provenance: { ...result.readback.brief.provenance } };
+      for (const field of reviewed.fields) current[field] = reviewed.brief[field];
+      setDraft({ ...reviewed, brief: current, revision: result.readback.contextRevision });
+    }
+    setMessage("Stored Setup checked. Review your edit against the current profile before saving again.");
   }
   async function move(phase: "active" | "paused", field: InterviewField | null) {
     if (!ready || locked || !threadId) return;
@@ -128,22 +164,23 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause }:
   }
   const proposal = context.pendingProposal;
   const pending = nextField === undefined ? nextInterviewField(context.brief) : nextField;
-  return <aside ref={panel} className="sbi" aria-label="Business interview profile">
-    <div className="sbi-head"><div><strong>Your business profile</strong><span>Review a detail before saving it to Setup.</span></div><button type="button" onClick={setup}>Open Setup</button></div>
+  return <aside ref={panel} className={`sbi${onboarding ? " sbi--onboarding" : ""}`} aria-label="Business interview profile">
+    <div className="sbi-head"><div><strong>Your business profile</strong><span>Review a detail before saving it to Setup.</span></div><div className="sbi-head-actions">{onboarding && !draft && <button type="button" aria-expanded={profileOpen} onClick={() => setProfileOpen(open => !open)}>{profileOpen ? "Hide profile details" : "Review business profile"}</button>}<button type="button" onClick={setup}>Open Setup</button></div></div>
     {context.loading && <p role="status">Loading your Setup records…</p>}
     {(context.error || error) && <p role="alert" className="sbi-error">{context.error || error}</p>}
     {message && <p role="status" className="sbi-status">{message}</p>}
+    {context.saveOutcomeUnknown && <div className="sbi-error" role="alert"><p>We couldn't verify whether Setup was saved. Check the stored version before saving again.</p><button type="button" disabled={locked} onClick={() => void checkStored()}>{context.reconciling ? "Checking saved Setup…" : "Check saved Setup"}</button></div>}
     {!context.loading && !ready && !context.error && <p>Only the business owner can review and save this interview profile.</p>}
     {ready && <>
-      <p className="sbi-note">Use Chat for this interview. Review suggestions when available, or enter a detail yourself. Never share passwords or connection secrets in chat.</p>
+      {(!onboarding || profileOpen || !!draft) && <p className="sbi-note">Use Chat for this interview. Review suggestions when available, or enter a detail yourself. Never share passwords or connection secrets in chat.</p>}
       {proposal && <div className="sbi-proposal"><strong>A suggestion is ready for review</strong><p>{isOperationalProposal(proposal) ? proposal.reason : "This suggestion includes details that need the complete Setup review."}</p><button disabled={locked} type="button" onClick={isOperationalProposal(proposal) ? reviewProposal : setup}>{isOperationalProposal(proposal) ? "Review suggestion" : "Review in Setup"}</button></div>}
-      {!draft ? <dl className="sbi-facts">{INTERVIEW_FIELDS.map(([field, label]) => <div key={field}><dt>{label}<small>{setupSourceLabel(context.brief.provenance[field]?.source)}</small></dt><dd>{context.brief[field] || "Not yet recorded"}</dd><button data-interview-field={field} type="button" disabled={locked} onClick={() => edit(field)} aria-label={`${context.brief[field] ? "Correct" : "Add"} ${label}`}>{context.brief[field] ? "Correct" : "Add"}</button></div>)}</dl> : <form onSubmit={event => { event.preventDefault(); void save(); }}>
+        {!draft ? (!onboarding || profileOpen) && <dl className="sbi-facts">{INTERVIEW_FIELDS.map(([field, label]) => <div key={field}><dt>{label}<small>{setupSourceLabel(context.brief.provenance[field]?.source)}</small></dt><dd>{context.brief[field] || "Not yet recorded"}</dd><button data-interview-field={field} type="button" disabled={locked || context.saveOutcomeUnknown} onClick={() => edit(field)} aria-label={`${context.brief[field] ? "Correct" : "Add"} ${label}`}>{context.brief[field] ? "Correct" : "Add"}</button></div>)}</dl> : <form onSubmit={event => { event.preventDefault(); void save(); }}>
         <h3>{draft.proposalId ? "Review PAIGE’s suggestion" : "Review this detail"}</h3>
         {INTERVIEW_FIELDS.filter(([field]) => draft.fields.includes(field)).map(([field, label], index) => <label key={field}>{label}<textarea autoFocus={index === 0} maxLength={4000} value={draft.brief[field]} disabled={locked} onChange={event => { const value = event.target.value; setDraft(current => current ? { ...current, brief: { ...current.brief, [field]: value } } : null); }} /></label>)}
-        <p>{draft.fields.some(field => context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim()) ? "This review replaces changed connection-sourced details with your confirmed values." : "Your review saves only through the existing Setup controls."}</p><div className="sbi-actions"><button type="submit" disabled={locked}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { returnFocusField.current = draft.field; setDraft(null); }}>Cancel</button></div>
+        <p>{draft.fields.some(field => context.brief.provenance[field]?.source === "connection_sourced" && draft.brief[field].trim() !== context.brief[field].trim()) ? "This review replaces changed connection-sourced details with your confirmed values." : "Your review saves only through the existing Setup controls."}</p><div className="sbi-actions"><button type="submit" disabled={locked || context.saveOutcomeUnknown}>{context.saving ? "Saving…" : "Confirm and save to Setup"}</button><button type="button" disabled={locked} onClick={() => { returnFocusField.current = draft.field; setDraft(null); }}>Cancel</button></div>
       </form>}
-      <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>
-      {!threadId && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}
+      {(!onboarding || profileOpen || !!draft || !!threadId) && <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>}
+      {!threadId && (!onboarding || profileOpen) && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}
     </>}
   </aside>;
 }

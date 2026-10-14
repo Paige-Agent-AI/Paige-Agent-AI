@@ -27,7 +27,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: same boundary as above.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: same boundary as above.
 UNVERIFIED: RENDERED_EVIDENCE, AUTHENTICATED_RUNTIME and the eight viewport captures — the signed-in render needs the QA agent's authorized session on the owner-designated account; the seam is deployed and CI-verified and the mount contract pins rendering against the composer's real shape. Reason: this environment cannot run the signed-in app.
 
-INTERNAL_BUILD_IDENTITY: 40aa5edd4f7e792d2912c3163918dd8459475f07 deployment=PR-head-exact-CI-run environment=development migrations=NOT_APPLICABLE edge=APPLIED(paige-business-review@38486002120) evidence=this record plus PR thread.
+INTERNAL_BUILD_IDENTITY: 40aa5edd4f7e792d2912c3163918dd8459475f07 deployment=PR-head-exact-CI; environment=development; migrations=NOT_APPLICABLE; edge=APPLIED(paige-business-review@38486002120); evidence=this record plus the PR thread.
 RELEASE_CHANNEL: development: internal lane; no customer surface announced.
 RELEASE_CLASSIFICATION: internal-only: the Executive landing ships behind the authenticated Solo workspace with no customer release identity.
 CUSTOMER_RELEASE_IDENTITY: none: internal-only development release.

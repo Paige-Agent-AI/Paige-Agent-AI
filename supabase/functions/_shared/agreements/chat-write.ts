@@ -219,6 +219,9 @@ export async function draftAgreement(input: {
   if (error) {
     // The server's own words go where an operator reads them and the model does not.
     console.error("[agreement_draft] save refused", { code: error.code, message: error.message });
+    // PostgREST also RESOLVES fetch/abort faults as errors without a SQLSTATE. A gateway error
+    // likewise does not prove the transaction rolled back; only a server SQL refusal does.
+    if (!/^[0-9A-Z]{5}$/.test(error.code ?? "")) return fail("no_readback");
     return fail(classify(error));
   }
 

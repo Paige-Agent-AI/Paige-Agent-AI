@@ -85,6 +85,12 @@ test('write transport uncertainty requires inspection instead of a blind duplica
   const p=port();p.caller.rpc=()=>Promise.reject(new Error('fixture dropped response'));
   const r=await draftAgreement(input(p));assert.equal(r.success,false);assert.equal(r.reason,'no_readback');assert.doesNotMatch(r.message,/try again|nothing was written/i);
 });
+test('resolved transport and gateway errors also keep write outcome unconfirmed',async()=>{
+  for(const code of ['',undefined,'PGRST003']){
+    const p=port();p.caller.rpc=()=>Promise.resolve({data:null,error:{code,message:'fixture gateway lost response'}});
+    const r=await draftAgreement(input(p));assert.equal(r.success,false);assert.equal(r.reason,'no_readback');assert.doesNotMatch(r.message,/try again|nothing was written/i);
+  }
+});
 test('foreign or non-draft write readback cannot become success',async()=>{
   for(const data of [{id:offer,status:'draft'},{id:agreement,status:'completed'},{id:'invalid',status:'draft'}]){
     const p=port();p.caller.rpc=()=>Promise.resolve({data,error:null});

@@ -31,6 +31,15 @@ export interface GovernedSendFields {
   sales_invoice_state?: string | null;
 }
 
+/** Durable native-email receipt wording, from the same bounded canonical projection.
+ * An inbox read marker is not recipient delivery evidence. Only delivered says Delivered. */
+export function governedEmailReceiptLabel(m: Pick<MessageRow, "direction" | "status"> & GovernedSendFields): "Accepted" | "Delivered" | null {
+  if (m.direction !== "outbound" || !m.comms_email_operation || m.comms_email_state !== "provider_accepted") return null;
+  if (m.status === "delivered") return "Delivered";
+  if (m.status === "sent" || m.status === "read") return "Accepted";
+  return null;
+}
+
 /** What the inbox says about a governed send that has no settled message status yet. */
 export type GovernedSendView =
   /** Handed to the email service (or about to be) within the last couple of minutes. */

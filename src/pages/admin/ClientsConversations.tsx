@@ -45,7 +45,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, governedEmailReceiptLabel, isApprovableDraft } from "./conversations/governedSend";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
@@ -133,6 +133,8 @@ function messageStatusPill(m: MessageRow) {
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
   if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
+  const receipt = governedEmailReceiptLabel(m);
+  if (receipt) return <StatePill state="success">{receipt}</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read")
     return <StatePill state="success">Sent</StatePill>;
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;

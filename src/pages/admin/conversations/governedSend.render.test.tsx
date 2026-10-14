@@ -169,6 +169,19 @@ describe.each([
     expect(host.textContent).not.toContain("Draft ready");
   });
 
+  it.each([
+    ["sent", "Accepted"], ["read", "Accepted"], ["delivered", "Delivered"], ["failed", "Failed"],
+  ])("a canonical provider receipt stays truthful after reopening: %s reads %s", async (status, label) => {
+    db.messages = [message({ status, comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: "provider_accepted" })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    const pane = host;
+    expect(pane.textContent).toContain("Notes from Tuesday's planning call");
+    expect(pane.textContent).toContain(label);
+    if (status !== "delivered") expect(pane.textContent).not.toContain("Delivered");
+    expect(buttons(pane as HTMLElement)).not.toContain("Approve & send");
+  });
+
   it.each(["prepared", "dispatching"])("a send in flight (%s) reads Sending… with no controls", async (state) => {
     db.messages = [message({ comms_email_operation: "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d", comms_email_state: state })];
     db.threads = [thread];

@@ -155,7 +155,7 @@ Contract changes, in order:
 
 ## 7. First bounded PRs, ordered around S3
 
-S3 currently owns `readiness.ts`, `comms-email-command`, `execute-approval/*` and the `prepare_comms_email_send` replacement. Nothing below touches those until S3 merges. *(S3's backend merged 2026-10-14 as #2126 → `f2e2a0af6`; G1 is rebased onto it.)*
+S3 currently owns `readiness.ts`, `comms-email-command`, `execute-approval/*` and the `prepare_comms_email_send` replacement. Nothing below touches those until S3 merges. *(S3's backend merged 2026-10-14 as #2126 → `f2e2a0af6`.)*
 
 | # | Title | Files | What it proves | Size | Depends on |
 |---|---|---|---|---|---|

@@ -42,3 +42,13 @@ Baseline FAIL: valid readable twelve-column priced agreement exposed current ter
 ## Review and limitations
 
 Initial independent NON-AUTHOR review COMPLETE / SHIP at 7be1154a78b6f4cf24d15684ee4fdd06d337fc1f, with independent 24 native checks and no material findings. Current-main composition and identical migration rename require affected final confirmation. Hosted CI runs the same native proof through the existing Sales Collections PostgreSQL service. First postgres-authority job 116033235661 failed before checkout at the pinned public registry download limit; no source test ran in that job and no gate is waived. New exact-head CI required. No deployment, customer signature or provider action performed. Header correction does not complete signed commercial effectiveness.
+
+## E04 preview history recovery — October 14 continuation
+
+The earlier custody block is superseded for this narrow operation. E04 directly used the existing official Supabase connector under ANT-18 disposition `55a8b9fe-fa4f-4d65-b305-1363be028aaa`; no retired executor was assigned. Branch metadata independently confirmed the existing nonpersistent, nondefault, data-free #2158 Preview (`sales/signed-commercial-context`, ref `gyhubvuhzpgksegrzhib`). No production mutation or customer query occurred.
+
+Before repair, its installed `peek_agreement_signing(text)` body SHA256 `b2dee27dad13c9b5a820e376fe8a0e203e9c64f4acb8decd82d6d64b03f50960` matched the newline-normalized canonical153000 function body. Exact twelve-column result, argument, VOLATILE/SECURITY DEFINER/search path and ACL were verified. Original120000 history held three statements, SHA256 `4f298cdfcbeeb9a79e88764e0b6c71fc12ddb6286fb68818944884c15109b2cd`.
+
+The guarded history-only insert first established153000 by copying that exact existing receipt, committed, and returned both equal records. The first old-identity retirement request returned an expired-request error; readback proved both records remained. One bounded retry retired only120000, conditional on the matching new receipt and unchanged function/ACL. Final readback retains only153000 with the same three-statement hash and unchanged installed function/ACL. No schema SQL was replayed, no reset/recreation or broad history cleanup occurred. The new163000 presentation migration was still absent at this readback; it was not falsely marked applied.
+
+Canonical Supabase Preview must now rerun and turn green, followed by another migration readback. This recovery alone does not establish deployment or acceptance. Current broader E04 source composition has additional product code; the prior evidence-only review allowance does not approve that code. Its applicable independent non-author review remains owed.

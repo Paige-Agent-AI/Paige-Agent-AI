@@ -95,8 +95,10 @@ describe("resolveCanonicalRecordLink", () => {
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
   ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // A record id on a surface with no focus parameter adds nothing.
-    expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual({ path, status: "surface_only" });
+    // The invoice destination supports exact focus; other department destinations remain lists.
+    expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
+      ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : { path, status: "surface_only" });
   });
 
   it("never puts anything but a UUID into a focus parameter", () => {

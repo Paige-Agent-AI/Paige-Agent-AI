@@ -75,10 +75,17 @@ export const ATTENTION_DESTINATION: Record<Attention, ReadLinkDestination | null
  * then each record family the read actually returned something for, then the business time zone
  * setting while due dates are on hold. The address is built from the current account on the client.
  */
+/** Only a complete single managed invoice is unambiguous enough for an exact record link.
+ * Legacy/imported records retain the register destination; no different record is substituted. */
+export function standingInvoiceLink(s: ClientEngagementStatus): ReadRecordLink {
+  const only = !s.truncated.invoices && s.invoices.length === 1 ? s.invoices[0] : null;
+  return { destination: 'sales_invoices', record_id: only && ['draft', 'issued', 'void'].includes(only.status) ? only.id : null };
+}
+
 export function standingRecordLinks(s: ClientEngagementStatus): ReadRecordLink[] {
   const links: ReadRecordLink[] = [{ destination: 'contacts', record_id: s.client.id, ...(s.client.name ? { subject: s.client.name } : {}) }];
   if (s.terms || s.agreement.state !== 'none') links.push({ destination: 'sales_agreements', record_id: null });
-  if (s.invoices.length || s.truncated.invoices) links.push({ destination: 'sales_invoices', record_id: null });
+  if (s.invoices.length || s.truncated.invoices) links.push(standingInvoiceLink(s));
   if (s.terms?.schedule.length) links.push({ destination: 'sales_collections', record_id: null });
   if (s.work.state !== 'none' && s.work.total > 0) links.push({ destination: 'operations_work', record_id: null });
   if (s.time_zone.state !== 'configured') links.push({ destination: 'business_time_zone', record_id: null });

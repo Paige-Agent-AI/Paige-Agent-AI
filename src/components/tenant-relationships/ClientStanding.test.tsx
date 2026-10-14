@@ -81,6 +81,12 @@ describe("ClientStanding", () => {
     expect(links).toContainEqual(["Open collections", "/solo/42/sales/payments?view=collections"]);
     expect(links).toContainEqual(["Open delivery work", "/solo/42/operations/work"]);
   });
+  it("opens the one complete managed invoice using the same reference as PAIGE", async () => {
+    const single = { ...source.invoices[0], status: 'issued' };
+    rpc.mockResolvedValue(reply({ invoices: [single], invoices_has_more: false })); await render();
+    expect(hrefs()).toContainEqual(["Open invoice", `/solo/42/sales/payments?view=invoices&invoice=${single.id}`]);
+    expect(hrefs()).not.toContainEqual(["Open invoices", "/solo/42/sales/payments?view=invoices"]);
+  });
   it("delivery says how far along it is and what is next", async () => {
     rpc.mockResolvedValue(reply()); await render();
     const delivery = row("Delivery")!;

@@ -134,7 +134,7 @@ decimal variance without floating-point loss. Missing actuals stay unavailable, 
 has unknown attainment/no trustworthy variance, and today's snapshot cannot prove a past target.
 The saved IANA period calendar is explicit; overdue retains the issuer's business calendar.
 
-Local proof: 60 focused tests including the existing Mission adapter; 39 rollback-only SQL
+Local proof: 79 focused tests including the existing Mission adapter and Spine registry; 39 rollback-only SQL
 assertions against the real incumbent issuer/resolver and target migration; actual concurrent
 duplicate creation produces one target/receipt and a replay, competing revisions one commit and
 one CAS refusal. Identity/relation scaffolding is synthetic, not full Supabase/Auth acceptance.

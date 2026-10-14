@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: adds an unmounted canonical domain foundation; no cust
 FLOW_PROTOTYPE: NOT_REQUIRED: no mounted interaction changes; the required target editor/recovery prototype belongs to the next consumer slice before production UI.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: existing Solo owner defines measurable targets on Strategic Plays; this foundation supplies shared persistence and exact verification.
 VISUAL_DIRECTION: NOT_APPLICABLE: approved immersive Command Center and existing Game Plan remain unchanged; consumer UI is still owed.
-AUTOMATED_EVIDENCE: PASS: 60 focused contract/adapter tests, 39 real-RPC SQL assertions with rollback, true concurrent replay/CAS proof; existing Spine CI extended rather than replaced.
-STATIC_EVIDENCE: UNVERIFIED: final candidate lint/type/CI checks will be recorded at the immutable head before release.
+AUTOMATED_EVIDENCE: PASS: 79 focused contract/adapter/Spine tests, 39 real-RPC SQL assertions with rollback, true concurrent replay/CAS proof; existing Spine CI extended rather than replaced.
+STATIC_EVIDENCE: PASS: ESLint, type ratchet baseline10/current10, definer signature/ACL, migration-version, Rail grants, write-target and UI-evidence guard; final exact-head hosted CI remains owed. Initial hosted Spine symbol discovery refused CREATE FUNCTION; candidate follows its existing CREATE OR REPLACE convention with unchanged bodies and no guard waiver.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no new rendered customer interface; existing #2128 pixel/authentication holds are not cleared by these checks.
 BEHAVIORAL_EVIDENCE: PASS: local actual issuer/resolver and target RPC create/revise/pause/resume/retire/history/receipt/replay/CAS/refusal; source proof only.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no target migration deployed and no customer target written; authorized Antonio SOLO acceptance remains owed.

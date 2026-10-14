@@ -41,7 +41,7 @@ ALTER TABLE public.business_mission_mutation_receipts DROP CONSTRAINT business_m
 ALTER TABLE public.business_mission_mutation_receipts ADD CONSTRAINT business_mission_mutation_receipts_operation_check
   CHECK (operation IN ('create','revise','transition','target_create','target_revise','target_transition'));
 
-CREATE FUNCTION public._business_mission_target_definition_valid(p_definition jsonb)
+CREATE OR REPLACE FUNCTION public._business_mission_target_definition_valid(p_definition jsonb)
 RETURNS boolean LANGUAGE plpgsql STABLE SET search_path='' AS $$
 DECLARE m jsonb; p jsonb; desired text; upper_value text; start_at timestamptz; end_at timestamptz;
 BEGIN
@@ -94,7 +94,7 @@ EXCEPTION WHEN OTHERS THEN RETURN false;
 END $$;
 REVOKE ALL ON FUNCTION public._business_mission_target_definition_valid(jsonb) FROM PUBLIC,anon,authenticated,service_role;
 
-CREATE FUNCTION public.get_business_mission_target(p_target_id uuid)
+CREATE OR REPLACE FUNCTION public.get_business_mission_target(p_target_id uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; answer jsonb;
 BEGIN
@@ -109,7 +109,7 @@ BEGIN
   RETURN answer;
 END $$;
 
-CREATE FUNCTION public.list_business_mission_targets(p_mission_id uuid,p_limit integer DEFAULT 100,p_offset integer DEFAULT 0)
+CREATE OR REPLACE FUNCTION public.list_business_mission_targets(p_mission_id uuid,p_limit integer DEFAULT 100,p_offset integer DEFAULT 0)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; items jsonb; total_count bigint;
 BEGIN
@@ -125,7 +125,7 @@ BEGIN
   RETURN jsonb_build_object('resolved_tenant_id',t,'targets',items,'total_count',total_count,'has_more',p_offset+jsonb_array_length(items)<total_count);
 END $$;
 
-CREATE FUNCTION public.get_business_mission_target_revision(p_target_id uuid,p_revision integer)
+CREATE OR REPLACE FUNCTION public.get_business_mission_target_revision(p_target_id uuid,p_revision integer)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; answer jsonb;
 BEGIN
@@ -139,7 +139,7 @@ BEGIN
   RETURN answer;
 END $$;
 
-CREATE FUNCTION public.list_business_mission_target_versions(p_target_id uuid,p_limit integer DEFAULT 100,p_offset integer DEFAULT 0)
+CREATE OR REPLACE FUNCTION public.list_business_mission_target_versions(p_target_id uuid,p_limit integer DEFAULT 100,p_offset integer DEFAULT 0)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; items jsonb; total_count bigint;
 BEGIN
@@ -157,7 +157,7 @@ BEGIN
     'has_more',p_offset+jsonb_array_length(items)<total_count);
 END $$;
 
-CREATE FUNCTION public.save_business_mission_target(p_request_key uuid,p_mission_id uuid,p_expected_mission_revision integer,
+CREATE OR REPLACE FUNCTION public.save_business_mission_target(p_request_key uuid,p_mission_id uuid,p_expected_mission_revision integer,
   p_target_id uuid,p_expected_target_revision integer,p_definition jsonb,p_metric_evidence_ref text,p_reason text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; m public.business_missions%rowtype; x public.business_mission_targets%rowtype;
@@ -225,7 +225,7 @@ BEGIN
   RETURN answer;
 END $$;
 
-CREATE FUNCTION public.transition_business_mission_target(p_request_key uuid,p_mission_id uuid,p_expected_mission_revision integer,
+CREATE OR REPLACE FUNCTION public.transition_business_mission_target(p_request_key uuid,p_mission_id uuid,p_expected_mission_revision integer,
   p_target_id uuid,p_expected_target_revision integer,p_to_state text,p_reason text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; m public.business_missions%rowtype; x public.business_mission_targets%rowtype;
@@ -275,7 +275,7 @@ END $$;
 
 -- A narrow current-caller projection of the EXISTING receipt. The bearer metric
 -- evidence reference is never stored or returned here; no second receipt stream.
-CREATE FUNCTION public.get_business_mission_target_receipt(p_request_key uuid)
+CREATE OR REPLACE FUNCTION public.get_business_mission_target_receipt(p_request_key uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid; t uuid; answer jsonb;
 BEGIN

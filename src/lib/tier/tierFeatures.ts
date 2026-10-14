@@ -96,6 +96,24 @@ export type Feature =
   // `agreement-send` refuses with a sentence the operator can act on before it gets that far. The
   // declaration stays because it is how a surface asks the question; the database is what answers it.
   | "agreement_signing"
+  // Client standing (Experience 04 E4-S3) — where ONE of your own clients stands: agreement and
+  // signing, money kept apart by evidence, payment requests, delivery work and next steps, on that
+  // client's record. §61 EXCEPTION, the same shape as `agreement_signing` / `customer_portal_invite`
+  // for the same reason: it reads a direct client book, which a pure Agency (it manages sub-accounts)
+  // and God (the platform operator) do not have.
+  //
+  // DECLARED, NOT MOUNTED everywhere (§60 honesty clause, critique D4). Only the Solo client record
+  // mounts it today. A sub-account has no rich client record yet (its People view is the legacy table),
+  // and enterprise renders the "relationships" variant, so for those two this is a declaration with no
+  // surface — a recorded §60 parity gap, not a capability. The chat read IS reachable from a
+  // `sub_account`-typed child (get_actor_access resolves it to 'tenant'), which is the same gap seen
+  // from the other side.
+  //
+  // WHERE THIS IS ENFORCED. Not here. public.read_client_engagement_status refuses in its own body any
+  // caller who is not the owner or an admin of the active workspace (_sales_invoice_actor) and any
+  // client outside it; it has no account_type gate. This declaration only decides where the section
+  // renders; it grants nothing.
+  | "client_standing"
   // Trust Compass — the Solo Command Center's governed per-capability autonomy control
   // (its 3rd sub-tab). SOLO ONLY for now: sub-account release is DEFERRED pending an
   // explicit owner release (owner ruling 2026-09-06 under the Second Brain delivery
@@ -125,6 +143,20 @@ export type Feature =
   // and the subject's own acceptance both still apply, and the provider gate is unresolved, so
   // this ships with the scope at 'off' and refuses everyone until that one value changes.
   | "live_conversation"
+  // Lead reply drafts (Experience 03 · S3 "PAIGE works your leads") — when a form the business
+  // opted in brings in a lead, PAIGE drafts a personal reply for the owner to review and send.
+  // §61 DEFAULT, no exception: God · Solo · Sub-account YES; Enterprise YES (the hybrid tier, via the
+  // Solo union); a pure Agency NO at its own operator surface (it manages sub-accounts rather than a
+  // lead book — its §61 "resell" right is the separate Marketplace mechanism, never a bit here).
+  //
+  // WHERE THIS IS ENFORCED (§60's honesty clause — name the layer, do not imply one). NOT here.
+  // The server answers: growth-process-submission/lead-reply.ts LEAD_REPLY_ACCOUNT_TYPES
+  // ('standalone', 'sub_account', 'enterprise') decides whether a lead is drafted at all, and the
+  // per-form opt-in (growth_forms.lead_reply_enabled, set only through growth_form_set_intake) must
+  // also be on. tierFeatures.test.ts pins the server list to this declaration. God is the platform
+  // operator, not a tenants row, so the server list has no God entry; God carries the flag here for
+  // §35 dogfooding of the surface.
+  | "lead_reply"
   // Parent-tier only.
   | "subaccount_management"
   // Operator only.
@@ -242,9 +274,11 @@ const SOLO_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   ...CREATION_SURFACES, // solo runs its own campaigns/Studio
   "customer_portal_invite", // solo owns its own client book → can invite clients
   "agreement_signing", // and can send that client an agreement to sign
+  "client_standing", // and see where each of those clients stands (mounted on the Solo client record)
   "skills", // §61 self-use — solo runs the skills engine on its own book
   "trust_compass", // Solo governs its own per-capability autonomy (Command Center 3rd sub-tab)
   "live_conversation", // Solo can speak with Paige in real time on its own workspace (server-enforced)
+  "lead_reply", // §61 default — PAIGE drafts a reply to each new lead on an opted-in form
 ]);
 
 const SUB_ACCOUNT_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
@@ -253,7 +287,9 @@ const SUB_ACCOUNT_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   ...CREATION_SURFACES, // a sub-account runs its own campaigns/Studio
   "customer_portal_invite", // a sub-account runs its OWN client book → can invite
   "agreement_signing", // same book, same capability as Solo
+  "client_standing", // declared, NOT mounted: no rich sub-account client record yet (§60 parity gap)
   "skills", // §61 self-use — a sub-account runs the skills engine on its own book
+  "lead_reply", // §61 default — same lead book as Solo
   // NO "trust_compass" — sub-account release DEFERRED pending explicit owner release
   // (owner ruling 2026-09-06). The Command Center shell is universal, but this sub-tab
   // is gated OFF sub-accounts for now.
@@ -292,6 +328,7 @@ const GOD_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   "fleet_console",
   "platform_alerting", // operator-scope alert rules over platform signals (§61 exception, God-only)
   "skills", // §61/§35 — God dogfoods the skills engine (source of truth §57)
+  "lead_reply", // §61 default (God YES) — §35 dogfooding; the server list has no God row (not a tenant)
   // NOTE: NO tenant CRM cluster (people/pipeline/conversations) and NO
   // customer_portal_invite — God is the platform operator, not a tenant with a
   // client book. Creation surfaces ARE carried for operator dogfooding (§35).

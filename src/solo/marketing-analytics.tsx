@@ -44,7 +44,7 @@ type Token = DonutSlice["colorToken"];
 const SERIES: Token[] = ["--chart-1", "--chart-2", "--chart-3", "--chart-4"];
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
-const ROUTE_WORDS = { pipeline: "Routed to a pipeline", default: "Default pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
+const ROUTE_WORDS = { pipeline: "Routed to a pipeline", campaign: "Campaign pipeline", default: "Default pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
 const plural = (count: number, noun: string) => `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`;
 const n = (count: number) => count.toLocaleString();
 
@@ -76,7 +76,9 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
   // Not while this page load knows the default-pipeline functions are undeployed (the funnel below asks).
   const intakeMissing = useAdsIntakeCapability(false) === "missing";
   const defaultTarget = React.useMemo(() => (intakeMissing ? null : defaultPipelineTarget(pipelineWorkspace)), [intakeMissing, pipelineWorkspace]);
-  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days, defaultReady: defaultTarget !== null }), [submissions, briefs, forms, current.days, defaultTarget]);
+  // A campaign's pipeline takes a form's leads through the same intake function, so it is gated the same way.
+  const routedForms = React.useMemo(() => (intakeMissing ? forms.map((form) => (form.campaignRoute ? { ...form, campaignRoute: null } : form)) : forms), [intakeMissing, forms]);
+  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms: routedForms, days: current.days, defaultReady: defaultTarget !== null }), [submissions, briefs, routedForms, current.days, defaultTarget]);
   // The headline figures, the funnel and the source mix are counted on the server over every lead in the
   // range (owners and admins); anyone else, or a read that fails, keeps the counts from the records read
   // here. The trend, the outcome ring, the heatmap and the capture points always draw from the records.
@@ -322,7 +324,7 @@ function Capture({ model, floor, onOpenForm, studioLauncher, defaultLabel }: { m
       {model.leads > 0 && <div className="mva-body mva-body-tight"><RingWithKeys slices={slices} total={floor(model.leads)} caption="Leads" label="Leads by form" active={active} setActive={setActive} floor={floor} whole={model.leads} onPick={(key) => { if (key !== "rest") onOpenForm(key); }}/></div>}
       <ul className="mva-cap-list">{model.capture.map((form) => <li key={form.id}>
         <button type="button" className="mva-cap-row" onClick={() => onOpenForm(form.id)}>
-          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" || form.route === "default" ? undefined : "is-warn"}>{form.route === "default" && defaultLabel ? defaultLabel : ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
+          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" || form.route === "campaign" || form.route === "default" ? undefined : "is-warn"}>{form.route === "campaign" && form.routeLabel ? form.routeLabel : form.route === "default" && defaultLabel ? defaultLabel : ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
           <b>{floor(form.count)}</b>
         </button>
       </li>)}

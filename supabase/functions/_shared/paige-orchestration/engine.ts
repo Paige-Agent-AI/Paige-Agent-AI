@@ -43,7 +43,7 @@ import {
   type EventFacts,
 } from "./decide.ts";
 import { actReceiptRunSeed, FINAL_OUTCOME_SET } from "./outcomes.ts";
-import { claimActDispatch } from "./dispatch-claim.ts";
+import { ambiguousFromThrow, dispatchUnderClaim } from "./dispatch-claim.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { emitAutomationRail } from "../railAutomation.ts";
 import { resolveNativeCapabilityStatus } from "../paige-capability-status/gatherer.ts";
@@ -185,15 +185,29 @@ async function resolveAuthorizingPerson(
 /** Load an automation's acts. DISTINGUISHES an infra error (retry) from a genuinely empty act list — a
  *  swallowed read error must never look like "no acts" and let the event complete silently (§13/§32). */
 type LoadActsResult = { ok: true; acts: ActRow[] } | { ok: false; error: string };
-async function loadActs(db: EngineDb, automationId: string): Promise<LoadActsResult> {
+async function loadActs(db: EngineDb, automationId: string, recovery?: RecoveryScope): Promise<LoadActsResult> {
   const { data, error } = await db
     .from("paige_automation_acts")
-    .select("id, position, action_kind, tool_key, config")
+    .select(recovery ? "id, position, action_kind, tool_key, config, created_at" : "id, position, action_kind, tool_key, config")
     .eq("automation_id", automationId)
     .order("position", { ascending: true });
   if (error) return { ok: false, error: error.message ?? String(error) };
   if (!Array.isArray(data)) return { ok: false, error: "paige_automation_acts returned a non-array" };
-  return { ok: true, acts: data as ActRow[] };
+  if (!recovery) return { ok: true, acts: data as ActRow[] };
+  // A recovery drain governs an act only if it existed when the event happened, or it was already governed for this
+  // event (it has a ledger row — e.g. added after the event but before the first drain, which then stranded it).
+  const { data: led, error: ledErr } = await db
+    .from("paige_act_executions")
+    .select("act_id")
+    .eq("event_id", recovery.eventId)
+    .eq("automation_id", automationId);
+  if (ledErr) return { ok: false, error: ledErr.message ?? String(ledErr) };
+  if (!Array.isArray(led)) return { ok: false, error: "paige_act_executions returned a non-array" };
+  const governed = new Set(led.map((r: { act_id?: unknown }) => String(r.act_id)));
+  const cutoff = Date.parse(recovery.actsCreatedAtOrBefore);
+  const kept = (data as Array<ActRow & { created_at?: string }>).filter((a) =>
+    governed.has(a.id) || (Number.isFinite(cutoff) && Date.parse(a.created_at ?? "") <= cutoff));
+  return { ok: true, acts: kept.map(({ created_at: _c, ...a }) => a as ActRow) };
 }
 
 /** Outcomes that are FINAL for the drainer. DERIVED from the one canonical home (outcomes.ts `FINAL_OUTCOMES`,
@@ -356,8 +370,14 @@ export type EngineResult = {
 
 /** Orchestrate all acts for a claimed event across its live subscribers, writing the exact per-act
  *  outcome to paige_act_executions (fire-once). Returns a summary for the drainer's response. */
+/** Slice 2b recovery: set by the drainer when the reconciler re-opened a finished event. The engine then governs only
+ *  acts that existed when the event happened (`actsCreatedAtOrBefore`) or already have a ledger row for it, so an act
+ *  added since never runs for the old event, while a stranded act is always recoverable. */
+type RecoveryScope = { eventId: string; actsCreatedAtOrBefore: string };
+export type RunEventActsOptions = { actsCreatedAtOrBefore?: string };
+
 export async function runEventActs(
-  db: EngineDb, event: ClaimedEvent, subscribers: AutomationRow[],
+  db: EngineDb, event: ClaimedEvent, subscribers: AutomationRow[], opts: RunEventActsOptions = {},
 ): Promise<EngineResult> {
   const facts: EventFacts = {
     event_key: event.event_key,
@@ -377,7 +397,9 @@ export async function runEventActs(
 
   for (const automation of subscribers) {
     // Load acts. An INFRA error is a RETRYABLE subscriber — never a false "no acts" that completes silently.
-    const actsRes = await loadActs(db, automation.id);
+    const actsRes = await loadActs(db, automation.id, opts.actsCreatedAtOrBefore
+      ? { eventId: event.event_id, actsCreatedAtOrBefore: opts.actsCreatedAtOrBefore }
+      : undefined);
     if (!actsRes.ok) { subscriber_retry.push(automation.id); continue; }
     const acts = actsRes.acts;
     if (acts.length === 0) continue;   // genuinely no acts to govern — nothing to record
@@ -525,9 +547,10 @@ export async function runEventActs(
       await recordCapabilityRun(db, {
         tenantId: event.tenant_id, actorId: plan.personUserId, capabilityKey: plan.capabilityKey,
         outcome: "capability_succeeded", runId,
-        detail: { correlation_ref: rec.correlation_ref, event_id: rec.event_id, act_id: rec.act_id, contact_id: event.subject_id, ...detail },
+        detail: { correlation_ref: rec.correlation_ref, event_id: rec.event_id, act_id: rec.act_id,
+          ...(event.subject_table === "clients" ? { contact_id: event.subject_id } : { process_id: event.subject_id }), ...detail },
       });
-      if (!wasNoop) {
+      if (!wasNoop && event.subject_table === "clients") {
         await emitAutomationRail(db, {
           tenantId: event.tenant_id, contactId: event.subject_id, workflowName: plan.automationName,
           phase: "completed", refTable: "paige_act_executions", refId: w.id,
@@ -537,8 +560,6 @@ export async function runEventActs(
     return true;
   };
 
-  const ambiguousResult = (e: unknown, reason: string): DispatchResult =>
-    ({ outcome: "ambiguous", providerRef: null, error: e instanceof Error ? e.message : String(e), detail: { reason } });
 
   for (const rec of records) {
     if (rec.adapter_kind !== "native") continue;
@@ -547,6 +568,7 @@ export async function runEventActs(
     const nativeInput = {
       tenantId: event.tenant_id, actionKind: rec.capability_key ?? "", args: plan?.args ?? {},
       correlationRef: rec.correlation_ref, db, subjectTable: event.subject_table, subjectId: event.subject_id,
+      eventId: rec.event_id, actId: rec.act_id,
     };
 
     const cur = await readActOutcome(db, rec.event_id, rec.act_id);
@@ -558,19 +580,24 @@ export async function runEventActs(
       const rb = adapter?.readback;
       if (typeof rb !== "function") { rec.outcome = cur.outcome as ActOutcome; continue; } // can't reconcile; leave advanceable
       let recon: DispatchResult;
-      try { recon = await rb(null, nativeInput); } catch (e) { recon = ambiguousResult(e, "readback_threw"); }
+      try { recon = await rb(null, nativeInput); } catch (e) { recon = ambiguousFromThrow(e, "readback_threw"); }
       if (recon.outcome === "executed") { await advanceNative(rec, plan, recon); continue; }   // our write landed
       if (cur.outcome === "ambiguous") { rec.outcome = "ambiguous"; continue; }                // owner: never blind re-dispatch
+      // A failed read is not evidence of absence. The weekly internal observer can
+      // resume an accepted occurrence only after canonical readback proves no commit
+      // and no live claim; a lost/uncertain response is never blindly replayed.
+      if (rec.capability_key === "planning.weekly_commitment_check" && recon.detail?.proven_absent !== true) {
+        rec.outcome = cur.outcome as ActOutcome; continue;
+      }
       // an `accepted`/`retrying` row whose correlation shows NO landed transition → it never dispatched.
       if (plan && typeof plan.adapter.dispatch === "function") {
         // At most once (Slice 2b): only the caller holding the dispatch claim fires. A live claim held by
-        // another runner means a dispatch may be in flight — leave the row for a later drain/sweep.
-        const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
-        if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
-        if (!claim.claimed) { rec.outcome = cur.outcome as ActOutcome; continue; }
-        let dr: DispatchResult;
-        try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
-        await advanceNative(rec, plan, dr); continue;
+        // another runner — or a lost one this adapter may not take over — leaves the row for a later
+        // drain or the reconciler's recovery pass.
+        const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
+        if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
+        if (d.kind === "held" || d.kind === "not_dispatchable") { rec.outcome = cur.outcome as ActOutcome; continue; }
+        await advanceNative(rec, plan, d.result); continue;
       }
       rec.outcome = cur.outcome as ActOutcome; continue; // no plan this drain → leave for a later drain/sweep
     }
@@ -582,12 +609,10 @@ export async function runEventActs(
       // The ledger returns what actually persisted: a concurrent runner may already have advanced this act.
       if (rec.outcome !== "accepted_for_execution") continue;
       // At most once (Slice 2b): of concurrent runners that both read ABSENT, only the claim holder fires.
-      const claim = await claimActDispatch(db, rec.event_id, rec.act_id);
-      if (!claim.ok) { persist_failures.push(rec.act_id); continue; }
-      if (!claim.claimed) continue; // another runner holds the dispatch; the row stays reconcilable
-      let dr: DispatchResult;
-      try { dr = await plan.adapter.dispatch(nativeInput); } catch (e) { dr = ambiguousResult(e, "adapter_threw"); }
-      await advanceNative(rec, plan, dr); continue;
+      const d = await dispatchUnderClaim(db, rec.event_id, rec.act_id, plan.adapter, nativeInput);
+      if (d.kind === "claim_error") { persist_failures.push(rec.act_id); continue; }
+      if (d.kind === "held" || d.kind === "not_dispatchable") continue; // another runner holds it; stays reconcilable
+      await advanceNative(rec, plan, d.result); continue;
     }
     // a native record with a NON-execute decision (condition/held/approval/refused) — record it now.
     const w = await persistNative(rec, rec.outcome, { error: rec.error });

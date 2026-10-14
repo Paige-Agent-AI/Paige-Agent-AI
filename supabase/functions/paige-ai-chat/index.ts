@@ -7,6 +7,8 @@ import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
+import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
+import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
 import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
@@ -251,6 +253,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
+import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
 import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
@@ -292,9 +295,23 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // INT-346 conversational mode: appended to the system blocks only on turns admitted while the
 // interactive rollout is staged. It must stay short (prompt rules are regex-pinned elsewhere in
 // this file's suites) and truthful: what is off, what she still does, and the one hard line.
+// E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
+// narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you have NO tools, actions, approvals or external effects — none can be requested or run, and none have run. Read and discuss everything you are given (the thread, workspace context, knowledge) and answer fully in words.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
+// E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
+// conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
+// Both are caller-JWT reads over the INT-340 issuer, whose own body re-proves workspace and the
+// owner/admin seat on every read; neither claims an executor, seeks an approval, or settles
+// anything beyond the existing conversational FINAL receipt. Everything else stays withheld at the
+// offer and refused per-call. Widen this set only by an owner-recorded policy change.
+// E4-S2 (2026-10-13, Experience 04 owner continuation; determination recorded in
+// docs/delivery/e2-1-readonly-admission-determination.md with its independent security review):
+// read_client_engagement_status and read_business_time_zone, both caller-JWT reads whose SQL bodies re-prove the
+// active workspace and the owner/admin seat. Neither writes; the business time zone is saved only by
+// the owner in Setup (set_business_time_zone).
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -317,7 +334,24 @@ function toolResultReportsFailure(out: any): boolean {
   if (!out || typeof out !== "object") return false;
   if (out.success === false || out.ok === false) return true;
   if (out.success === true || out.ok === true) return false;
+  // E4-S3: the closed read envelope. Only `available` finished a read; describeStep withdraws
+  // `needs_input` / `refused` (nothing was read) and words `unavailable` as the failure it is.
+  const envelope = readEnvelopeStatus(out);
+  if (envelope) return envelope !== "available";
   return typeof out.error === "string" && out.error.trim() !== "";
+}
+/**
+ * E4-S3 — the closed envelope the admitted conversational reads answer with (read_business_metric,
+ * get_business_snapshot, read_client_engagement_status, read_business_time_zone):
+ * `{ status: available | needs_input | refused | unavailable, message, ... }` and NO `success` / `ok`.
+ * Strict, so no other result shape changes meaning: a `success`/`ok` flag, a missing `message`, or any
+ * other status is not an envelope. Producers are untouched; this only reads them.
+ */
+function readEnvelopeStatus(out: any): "available" | "needs_input" | "refused" | "unavailable" | null {
+  if (!out || typeof out !== "object" || Array.isArray(out)) return null;
+  if ("success" in out || "ok" in out || typeof out.message !== "string") return null;
+  const s = out.status;
+  return s === "available" || s === "needs_input" || s === "refused" || s === "unavailable" ? s : null;
 }
 function describeStep(
   tc: any,
@@ -349,6 +383,11 @@ function describeStep(
   // not run. Rendering it would show a client an owner's action, and for some tools the model's own
   // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
   if (out?.forbidden_seat === true) return null;
+  // E4-S3 — a read that is waiting on the owner's answer (which client? a usable search?) or that was
+  // refused read nothing and finished nothing: like a proposal waiting on the owner, it is not a step.
+  // PAIGE's reply asks the question or gives the refusal. `unavailable` stays, worded as the failure.
+  const readEnvelope = readEnvelopeStatus(out);
+  if (readEnvelope === "needs_input" || readEnvelope === "refused") return null;
   // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
   if (out?.error === "internal_text_in_draft") return null;
   // C4a — the approval resume's two refusals are not steps either. A re-emit of an act the approval
@@ -593,7 +632,11 @@ function describeStep(
     }
     case "list_subagents": return { label: "Finding the right specialist", group: "shared" };
     // Research (shared)
-    case "get_business_snapshot": return { label: "Taking stock of your business", group: "shared" };
+    case "get_business_snapshot": return { label: failed ? "Couldn't take stock of your business" : "Taking stock of your business", group: "shared" };
+    // E4-S3: a finished read says it finished. (The START keeps its present-tense label, step-start.ts.)
+    // read_business_metric's wording is Exp02's and is deliberately not set here (no Exp02 sign-off).
+    case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checked where that client stands", group: "shared" };
+    case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
 }
@@ -1465,6 +1508,10 @@ serve(async (req) => {
     const approvalRefusals = new Map<string, ApprovalRefusalReason>();
     const approvalTokenTool = new Map<string, string>();
     const toolResultContent = new Map<string, string>();
+    // E4-S3 — the record links an ADMITTED read returned, held beside (never inside) its tool result so
+    // they never enter model context. Keyed by the call OBJECT, as `finishedSteps` is: a provider may
+    // omit `tc.id`. Read once per round, only for a read whose result is `available`.
+    const readRecordLinkSource = new Map<object, ReadRecordLink[]>();
     // Before anything in this request can use an approval: one used before this moment was used by
     // an earlier request, and whatever that was may have done the work.
     const approvalRequestStartedAt = new Date().toISOString();
@@ -5995,7 +6042,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     if (payloadThreadId) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
-      if (!interactive && !answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
+      // DRAINING begin_v2 already appended the canonical intent-bound user row.
+      // Its effectful controller is null by design, not an invitation to append twice.
+      if (!interactive && !interactiveConversational && !answerBinding && typeof latestUserText === "string" && latestUserText.trim()) {
         try {
           await supabaseClient.rpc("paige_chat_turn_append", {
             p_thread_id: payloadThreadId, p_role: "user", p_content: latestUserText,
@@ -8170,6 +8219,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
     // Canonical actor-tier resolver, not a client-selected lens. Operator/Agency stay separate.
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
+    // E2-1 business snapshot: same Solo-workspace lens as the metric read. Under INT-346's staged
+    // rollout a conversational turn is offered ZERO tools, so this stays dark until the read-only
+    // admission class admits it.
+    if (callerTier === "tenant") toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS);
+    // E4-S2 client standing + business time zone: same Solo-workspace lens; caller-JWT reads only.
+    if (callerTier === "tenant") toolDefs.push(...CLIENT_ENGAGEMENT_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -9332,16 +9387,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     }
 
     // INT-346 conversational mode: a turn admitted while the interactive rollout is staged runs
-    // with ZERO tool exposure — the model is offered nothing, and dispatch refuses anything a
-    // provider emits anyway (see the per-call guard in executeToolCalls). Nothing downstream
-    // (capability projection, manifest, exposure, escalation) can widen an empty list, so a
-    // degraded turn is non-effectful by construction, not by prompt.
+    // with ONLY the ANT-23-approved read-only lookups offered — every other tool is withheld here,
+    // and dispatch refuses anything else a provider emits anyway (see the per-call guard in
+    // executeToolCalls). Nothing downstream (capability projection, manifest, exposure,
+    // escalation) can widen the list, so a degraded turn stays non-effectful by construction, not
+    // by prompt. (E2-2, 2026-10-12: the #1899 zero-tool contract narrows to exactly
+    // CONVERSATIONAL_ADMITTED_READ_TOOLS under the owner's recorded ANT-23 delegation.)
     if (interactiveConversational) {
-      const withheldCount = toolDefs.length;
-      toolDefs.splice(0, withheldCount);
-      console.log(`[paige] conversational mode: ${withheldCount} tools withheld (interactive rollout staged, not active)`);
+      const before = toolDefs.length;
+      for (let i = toolDefs.length - 1; i >= 0; i--) {
+        const fn = (toolDefs[i] as { function?: { name?: string } })?.function;
+        if (fn?.name && CONVERSATIONAL_ADMITTED_READ_TOOLS.has(fn.name)) continue;
+        toolDefs.splice(i, 1);
+      }
+      const withheldCount = before - toolDefs.length;
+      console.log(`[paige] conversational mode: ${withheldCount} tools withheld, ${toolDefs.length} read-only admitted (interactive rollout staged, not active)`);
     }
-
     // Advertise the confirm flag on every mutating tool so the model knows the
     // second (confirm:true) step exists. Read-only tools are untouched.
     for (const def of toolDefs) {
@@ -10216,6 +10277,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // own message_stop, and ends a stream that broke with the same clean [DONE] — so a missing
         // finish_reason is the only sign a round was cut off. Read by the turn record, nothing else.
         let finished = false;
+        let normalAnswerStop = false;
+        let nativeAnswerEnd: "complete" | "limited" | "refused" | "incomplete" | null = null;
         // INT-334 (the R7 invariant) — every `data:` payload in order, [DONE] included, for the shared
         // finished-round gate (_shared/paige-turn/round.ts). A round's tool calls run only when it
         // ended in a normal tool-use stop and every call is whole; a cut-off, refused or token-limited
@@ -10250,6 +10313,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             if (parsed.choices?.[0]?.finish_reason === "tool_calls") hasToolCall = true;
             if (parsed.choices?.[0]?.finish_reason) finished = true;
+            if (parsed.choices?.[0]?.finish_reason === "stop") {
+              // OpenAI's stop is normal completion. Anthropic supplies a bounded
+              // enum because its legacy stop also represents refusal/token limits.
+              const provenance = parsed.choices[0].paige_answer_end;
+              normalAnswerStop = provenance === undefined || provenance === "complete";
+              if (provenance !== undefined) nativeAnswerEnd = ["complete", "limited", "refused"].includes(provenance) ? provenance : "incomplete";
+            }
           } catch { /* skip */ }
         };
         while (true) {
@@ -10265,8 +10335,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         sseBuf += fullDecoder.decode(); // flush any trailing multi-byte char
         if (sseBuf) handleLine(sseBuf); // final line without a trailing newline
-        const runnable = executableToolCalls(readModelRound(payloads)).length > 0;
-        return { content, toolCalls, allChunks, hasToolCall, finished, runnable };
+        const modelRound = readModelRound(payloads);
+        const runnable = executableToolCalls(modelRound).length > 0;
+        return { content, toolCalls, allChunks, hasToolCall, finished, runnable,
+          completedAnswer: normalAnswerStop && modelRound.end === "end_turn",
+          answerEnd: modelRound.end === "max_tokens" ? "limited" as const : modelRound.end === "refusal" ? "refused" as const
+            : modelRound.end !== "end_turn" ? "incomplete" as const : nativeAnswerEnd ?? "complete" as const };
       };
 
       // executeToolCalls dispatches one round's tool calls. Every tc that clears
@@ -10388,12 +10462,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
         // INT-346 conversational mode — the dispatch-side refusal. A degraded turn offers the
-        // model no tools, so a call here means a provider emitted one anyway; it is refused
-        // BEFORE any executor, provider or store is touched, and the refusal is what the model
-        // reads. This is the second, independent enforcement behind the empty offer list.
-        if (interactiveConversational) {
+        // model only the ANT-23-admitted read-only lookups, so any other call here means a
+        // provider emitted one anyway; it is refused BEFORE any executor, provider or store is
+        // touched, and the refusal is what the model reads. This is the second, independent
+        // enforcement behind the narrowed offer list (E2-2). An admitted read falls through to
+        // the same finished-round, scope, cancellation and seat gates as every other turn.
+        if (interactiveConversational && !CONVERSATIONAL_ADMITTED_READ_TOOLS.has(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
-            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. No tool can be run here." }) });
+            code: "CONVERSATIONAL_MODE", error: "This conversation is running without actions while a platform update finishes. That tool can't run here. Answer the owner in words: say plainly that actions are off in this conversation right now, then give the answer, plan or wording in words." }) });
           continue;
         }
         // Actual dispatch boundary: the account may change after the model round was
@@ -11563,6 +11639,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ? await readBusinessMetric(supabaseClient, { tenantId: personaCtx?.tenant_id ?? null }, JSON.parse(tc.function.arguments))
             : { status: "refused", message: "This measurement capability is available only in the authorized Solo workspace lens. No values were read." };
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ status: result.status, message: result.message, context: metricReadContext(result) }) });
+        } else if (tc.function.name === "get_business_snapshot") {
+          // E2-1 business snapshot — same finished-round, scope, cancellation and read-only Harness
+          // gates as every tool above, and the caller-JWT client is mandatory for the same reason:
+          // the composer reads every domain through the INT-340 issuer, which re-proves workspace,
+          // membership and the owner/admin seat in its own body. The corridor executes calls one at
+          // a time, so this read is sequential with any read_business_metric call in the same turn,
+          // as the issuer's evidence-reference revocation requires. No Rail receipt is written
+          // (no recorder is registered). Only the bounded projection reaches the model.
+          const result = callerTier === "tenant"
+            ? await dispatchBusinessSnapshotChat(
+                { who: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null, role: null, accountShape: null }, timezone: userTimezone ?? "UTC" },
+                { caller: supabaseClient },
+                JSON.parse(tc.function.arguments))
+            : { status: "refused" as const, message: "This business review capability is available only in the authorized Solo workspace lens. No values were read." };
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else if (tc.function.name === "update_client_data") {
           try {
             // §9 — same class as the credit-sync and summary-memory findings: falling back to
@@ -16208,6 +16299,43 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch (e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "plan_error", note: "It did NOT happen — do not claim success." }) });
           }
+        } else if (tc.function.name === "read_client_engagement_status" || tc.function.name === "read_business_time_zone") {
+          // E4-S2 — last in the chain so no reviewed incumbent dispatch gains a dominating condition. Same finished-round, scope, cancellation and read-only Harness gates as every tool
+          // above. The caller-JWT client is mandatory: find_clients_for_status,
+          // read_client_engagement_status and read_business_time_zone re-prove the active workspace and
+          // the owner/admin seat in their own bodies. The tenant comes from the server-resolved persona,
+          // never from the model. Neither tool writes business state.
+          // E4-S3 — in this order: dispatch; strip the record links out of the model's content (they are
+          // shown to the owner, never read by the model); record PAIGE's read at the executor, exactly
+          // once, only for an `available` answer and only when the SQL read did not already write its own
+          // receipt (`serverRecorded`, true until the readers stop receipting) — keyed on THIS read, so a
+          // name search's own receipt never stands in for the status read's; then push the content.
+          const engagementTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const engagementReads: Array<{ key: string; serverRecorded: boolean }> = [];
+          const engagementScope = { tenantId: engagementTenant, onRead: (key: string, serverRecorded: boolean) => { engagementReads.push({ key, serverRecorded }); } };
+          const engagementArgs = JSON.parse(tc.function.arguments || "{}");
+          const result = tc.function.name === "read_client_engagement_status"
+            ? await dispatchClientStandingChat(engagementScope, supabaseClient, engagementArgs)
+            : await dispatchBusinessTimeZoneChat(engagementScope, supabaseClient, engagementArgs);
+          const { record_links: engagementLinks, ...engagementForModel } = result;
+          if (result.status === "available" && engagementLinks?.length) readRecordLinkSource.set(tc, engagementLinks);
+          if (result.status === "available" && engagementTenant
+            && engagementReads.some((r) => r.key === tc.function.name)
+            && !engagementReads.some((r) => r.key === tc.function.name && r.serverRecorded)) {
+            try {
+              await recordCapabilityRun(supabase, {
+                tenantId: engagementTenant,
+                actorId: user.id,
+                capabilityKey: tc.function.name,
+                outcome: "capability_succeeded",
+                runId: await stableRunId([tc.function.name, engagementTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: { channel: "paige_chat", tool: tc.function.name },
+              });
+            } catch (e) {
+              console.error("[paige] read capability run not recorded:", (e as Error)?.message);
+            }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(engagementForModel) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -16647,6 +16775,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
+      // E4-S3 — the records this turn's available reads drew on, as REFERENCES (destination, a client's
+      // id and name). Streamed once as a paige_record_links frame and persisted as such; the address is
+      // rebuilt from the current account when the chat renders. A read is not an effect, so this never
+      // joins the no-effects guards below.
+      const readLinkTrace: ReadRecordLink[] = [];
       // R2b — the inline research card's payload. Captured from the deep_research tool
       // result in the stream scan below; streamed to the client as a paige_research frame
       // (attached to the SAME assistant turn — one Paige turn, ruling §7) and persisted in
@@ -16657,9 +16790,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const interactiveEffects: NonNullable<ReturnType<typeof interactiveEffect>>[] = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
+      // E4-S3: read links persist as REFERENCES only (destination, a client id, its name) — never a
+      // path, URL, readback or record_locator; the address is rebuilt from the current account.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length || interactiveEffects.length || readLinkTrace.length)
           ? {
               approval_queued: queuedApprovals,
               ...(interactiveEffects.length ? { interactive: { request_intent_id: payloadRequestIntentId,
@@ -16677,6 +16812,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ...(researchTrace.length ? { paige_research: researchTrace.map((r) => ({
                 run_id: r.run_id, question: r.question, saved: r.saved === true,
               })) } : {}),
+              ...(readLinkTrace.length ? { paige_record_links: readRecordLinks(readLinkTrace) } : {}),
             }
           : null,
       });
@@ -16757,6 +16893,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // run, a filed approval (review round 12). Any of these, a classifier write or a question card = the step ran.
       const STEP_CAPABLE_TOOLS = new Set(["growth_page_generate", "growth_funnel_generate", "deep_research", "draft_marketing_content", "propose_action", "ask_choices"]);
       let writeAttempts = 0;
+      // E4-S2 — admitted conversational reads that returned data this turn, judged by each read's own result (a
+      // refused, unparseable, needs-input or failed read does not count). A grounded read answer is kept even when the
+      // request was worded like an action ("get me Acme's payment status"), but always with the actions-unavailable line.
+      let admittedReadsGrounded = 0;
+      const groundedReadResult = (content: string | undefined): boolean => {
+        let v: any;
+        try { v = JSON.parse(content ?? ""); } catch { return false; }
+        return !!v && typeof v === "object" && !Array.isArray(v) && v.success !== false && !v.error && v.forbidden_seat !== true
+          && v.refused_before_run !== true && v.status === "available"; // every admitted read reports available | needs_input | refused | unavailable
+      };
       // A write by the classifier (or a question card): what "the step was done" means. Kept separate from the
       // broad count above, which only decides whether the server may say nothing was saved (review round 11).
       let classifierWrites = 0;
@@ -16800,6 +16946,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // paige-turn — whether the round `finalChunks` replays was FINISHED by the provider (consumeRound's
       // `finished`). Updated every round, so it describes the last one, which is the one replayed.
       let lastRoundFinished = true;
+      let lastRoundCompletedAnswer = false;
+      let lastRoundAnswerEnd: "complete" | "limited" | "refused" | "incomplete" = "incomplete";
       // INT-334 (R7) — set when a round showed tool calls but never finished choosing them: none ran, the
       // server's own sentence is the answer, and no post-loop branch re-calls the model or rewrites it.
       let unfinishedRound = false;
@@ -17131,10 +17279,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const resumedRound = resumeRound;
             resumeRound = null;
             if (!resumedRound) turnTracker.roundStarted();
-            const { content, toolCalls, allChunks, hasToolCall, finished, runnable } = resumedRound
-              ? { ...resumedRound, runnable: true } // a server-built resume round: the stored, approved act
+            const { content, toolCalls, allChunks, hasToolCall, finished, runnable, completedAnswer, answerEnd } = resumedRound
+              ? { ...resumedRound, runnable: true, completedAnswer: false, answerEnd: "incomplete" as const } // a server-built resume round: the stored, approved act
               : await consumeRound(currentResponse!);
             lastRoundFinished = finished;
+            lastRoundCompletedAnswer = completedAnswer;
+            lastRoundAnswerEnd = answerEnd;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
             // proposed from tenant Knowledge.
@@ -17277,6 +17427,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             totalToolCalls += sumToolCost(executed);
             writeAttempts += executed.filter((tc: any) => { const n = String(tc?.function?.name ?? ""); return MUTATING_TOOLS.has(n) || !(PLAIN_READ_TOOL.test(n) || NAMED_READ_TOOLS.has(n)); }).length;
+            admittedReadsGrounded += executed.filter((tc: any) => CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc?.function?.name ?? ""))
+              && groundedReadResult(toolResultContent.get(tc?.id))).length;
             // A step-capable tool is the step only when it succeeded and, on an accepted act, is what was offered.
             classifierWrites += executed.filter((tc: any) => {
               const n = String(tc?.function?.name ?? "");
@@ -17331,6 +17483,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });
                   }
+                  // E4-S3 — an available admitted read's record links (held beside its result, never in it).
+                  if (CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc.function?.name ?? "")) && parsed?.status === "available") {
+                    const links = readRecordLinkSource.get(tc);
+                    if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
+                  }
                 } catch { /* keep ok */ }
                 // BEFORE the cosmetic-trace drop below. `describeStep` returning null means the
                 // step should not RENDER; it says nothing about whether a write happened, and a
@@ -17378,6 +17535,57 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // conversation, the provider is re-called through the existing gateway, and the SAME
           // for loop re-enters with the new response (via the while wrapper). A hard budget
           // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
+          // #2102: known action unavailability is an admission outcome, not unresolved
+          // work to force through C1. Only a finished conversational action request with
+          // no business write/card/result can use this answer; interrupted/failed rounds
+          // and active effectful turns retain their existing truthful terminal behavior.
+          // The classifier is advisory: neither a known prose edit nor an explicit
+          // platform step changes kind just because that label is wrong.
+          // Use the existing step-kind contract for the fallback as well: composing
+          // prose may quote an action without requesting a platform action. This only
+          // governs the no-effects reply; it never grants a capability or authority.
+          const latestRequest = [...aiMessages].reverse().find((m: any) => m?.role === "user")?.content;
+          const requestedKind = typeof latestRequest === "string"
+            ? offerKind(`Would you like me to ${latestRequest.trim().replace(/^please\s+/i, "")}`) : "unknown";
+          const conversationalAct = requestedKind === "act"
+            || (turnRoute.intent === "act" && requestedKind !== "prose");
+          if (interactiveConversational && (turnRoute.intent === "act" || isActionIntent || requestedKind === "act") && !lastRoundCompletedAnswer
+              && !liveRuntimeScope && !forcedTermination && !studioSessionId) {
+            if (lastRoundAnswerEnd === "limited") turnTracker.budgetStop();
+            // REFUSED's v1 UI copy names the sole client-scope refusal. A native
+            // provider refusal cannot finish this normal answer, but is not that
+            // client-access cause: retain its actual prose/provenance and the
+            // existing non-success interrupted state rather than misnaming it.
+            else turnTracker.interrupted();
+          }
+          const conversationalActUnmet = interactiveConversational && conversationalAct
+            && acceptedKind !== "prose" && finalChunks && lastRoundCompletedAnswer && !unfinishedRound && !liveRuntimeScope
+            && !forcedTermination && !tenantKnowledgeScopeInvalidated && !studioSessionId
+            && writeAttempts === 0 && classifierWrites === 0 && queuedApprovals.length === 0
+            && confirmTrace.length === 0 && crmResultTrace.length === 0;
+          // E4-S2 — an answer grounded in an admitted read is kept, and the actions-unavailable line is ALWAYS added
+          // beneath it: a mixed request ("get Acme's status and send a reminder") still learns nothing was sent, and a
+          // completion claim the phrase check misses ("Task created for Friday.") is contradicted, not left standing. A
+          // reply the check does recognise as claiming completion is replaced outright, exactly as without a read.
+          const groundedReadAnswerStands = conversationalActUnmet && admittedReadsGrounded > 0
+            && !(typeof finalAssistantText === "string" && saysItWasDone(finalAssistantText));
+          const conversationalActionUnavailable = conversationalActUnmet && !groundedReadAnswerStands;
+          if (groundedReadAnswerStands) {
+            finalAssistantText = `${String(finalAssistantText ?? "").trim()}\n\nActions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run.`;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
+          if (conversationalActionUnavailable) {
+            finalAssistantText = "Actions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run. I can help you plan the next step.";
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
           // INT-332 — AN UNBACKED CLAIM IS NEVER A TERMINAL ANSWER. Prose that says an approval card is
           // coming, ready or waiting when no card was created in this turn (and none is standing from the
           // previous one), or that decides approval itself ("approvals are off", "I can run it directly"),
@@ -17419,7 +17627,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           }
-          if (!claimContinued && finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+          if (!interactiveConversational && !claimContinued && finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < continuationLimitFor() && !studioSessionId) {
             const acceptedTurn = heldAccept;
             const proseTerminal = typeof finalAssistantText === "string"
@@ -17480,7 +17688,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (stillClaimed) {
               // Claims only what the server knows: nothing about earlier cards, and never hides work this
               // turn did (its steps and any card stay on the wire above the sentence).
-              const truthful = claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted });
+              // E4-S2 — when this replaces a kept read answer, the no-action line it carried is kept too.
+              const truthful = `${claimFallback(stillClaimed, { didWork: totalToolCalls > 0 || cardMinted })}${groundedReadAnswerStands
+                ? "\n\nActions are unavailable in this conversation, so I can’t create tasks, change records or send anything. No business action was run." : ""}`;
               finalAssistantText = truthful;
               if (continuationsUsed >= MAX_CONTINUATIONS && !cardMinted && totalToolCalls === 0) turnTracker.budgetStop();
               finalChunks = [
@@ -17515,7 +17725,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId && typeof finalAssistantText === "string" && finalAssistantText.trim()) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${heldNote}`;
-            if (!continuationFailed) turnTracker.budgetStop();
+            if (!continuationFailed && !interactiveConversational) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
@@ -17527,9 +17737,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
               && !studioSessionId) {
-            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            // E2-3b (QA #2102 point 8): on a conversational turn the truthful cause of an unrun
+            // action is the action restriction itself, not a limit or a missing capability — the
+            // generic exhaustion copy (and the LIMIT_REACHED budgetStop that renders "Reached the
+            // limit for one answer") misdescribes it. The server authors the same refusal the
+            // prompt block instructs, records a completed answer (no budgetStop), and the turn
+            // persists normally.
+            const exhausted = interactiveConversational
+              ? "I can't create, change, send, schedule or delete anything in this conversation right now while a platform update finishes — nothing was run, created or sent. I can still look things up and answer in words: tell me what the task is for and I'll give you the wording, plan or next step in words."
+              : "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
-            turnTracker.budgetStop();
+            if (!interactiveConversational) turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
@@ -17537,9 +17755,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             lastRoundFinished = true;
           }
           // INT-332 — an accepted PROSE offer is not held, but a reply that reads as if it did something while no
-          // tool ran gets the server's line beneath it. Only a line is added: the answer itself always stands.
+          // tool ran gets the server's line beneath it. #2102 also retains this truthful backstop for finished
+          // no-effects conversational answers, including unknown request kinds and quoted draft prose.
+          // Only a line is added: the answer itself always stands.
           if (finalChunks && !unfinishedRound && !liveRuntimeScope && !forcedTermination && !claimAnswered && !studioSessionId
-              && acceptedKind === "prose" && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
+              && (acceptedKind === "prose" || (interactiveConversational && lastRoundCompletedAnswer))
+              && writeAttempts === 0 && queuedApprovals.length === 0 && confirmTrace.length === 0
               && typeof finalAssistantText === "string" && finalAssistantText.trim() && saysItWasDone(finalAssistantText)) {
             finalAssistantText = `${finalAssistantText.trim()}\n\n${NOTHING_RAN_NOTE}`;
             finalChunks = [
@@ -17706,6 +17927,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
+          // E4-S3 — one frame of read references per turn, through emitContent so a protected turn holds
+          // (and a withheld one drops) it like every other card.
+          if (readLinkTrace.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_record_links: readRecordLinks(readLinkTrace) })}\n\n`));
           // R2b — the inline research card's live payload (attached to the same assistant
           // turn, ruling §7; reloaded turns rehydrate from the run reference instead).
           for (const r of researchTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_research: r })}\n\n`));
@@ -17974,6 +18198,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // alone, leaves the suite green; both together do not.
             discardContent();
             pendingTenantKbTelemetry = null;
+            // E4-S3: a withheld answer keeps no read links either (they were dropped with the held frames).
+            readLinkTrace.length = 0;
             finalAssistantText = withheld;
             emitTurnTerminal(controller, "withheld");
             try {
@@ -18019,6 +18245,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            if (e instanceof InteractiveSuperseded || interactive?.superseded) {
              turnTracker.interrupted();
              discardContent();
+             // E4-S3: the read links went with the discarded frames, so the saved turn keeps none.
+             readLinkTrace.length = 0;
              const interruptedText = "Response interrupted by your newer instruction. Completed work remains saved.";
              await persistAssistantTurn(interruptedText, withTurnRecord(interruptedText, assistantTurnMetadata()));
              emitTurnTerminal(controller, "interrupted");
@@ -18034,6 +18262,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
              // the signed-output wrapper cannot mint a success receipt.
              console.error("[paige] Live answer interrupted");
              discardContent();
+             // E4-S3: a read is not an effect. Its links went with the discarded frames, so an
+             // interrupted read-only turn saves no links-only row (the caller got answer_interrupted).
+             readLinkTrace.length = 0;
              const interruptedMeta = assistantTurnMetadata();
              if (!turnCarriesProtectedContent() && payloadThreadId && (finalAssistantText.trim() || interruptedMeta.bundleRef)
                && await revalidateTenantKnowledgeScope()) {

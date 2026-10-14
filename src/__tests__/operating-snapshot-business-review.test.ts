@@ -17,6 +17,7 @@ import {
   pushSalesHeadline,
   SALES_WINDOW_CLOCK_MARGIN_MS,
   salesMetricWindow,
+  salesReportingPeriod,
   type SalesMetric,
 } from '../../supabase/functions/_shared/paige-context/adapters/sales-metric.ts';
 import {
@@ -27,6 +28,7 @@ import {
   type SnapshotPeriod,
 } from '../../supabase/functions/_shared/paige-context/snapshot.ts';
 import type { ContextIdentity, ContextSourceResult } from '../../supabase/functions/_shared/paige-context/mod.ts';
+import { currentMetricVersion, type MetricBusinessTimeZone } from '../../supabase/functions/_shared/analytics-metrics/metric-contract.ts';
 
 // ── fixtures ─────────────────────────────────────────────────────────────────────────────────────────
 
@@ -58,8 +60,10 @@ type Values =
   | { kind: 'currency_totals'; by_currency: { currency: string; amount_minor: string; record_count: number }[]; breakdown: [] };
 
 /** What the fake issuer answers for one read. `error` = the RPC's Postgres error code. */
-type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string };
-type IssueArgs = { p_metric_key: string; p_range_key: string; p_range_start: string; p_range_end: string };
+type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string; metricVersion?: string; calendar?: MetricBusinessTimeZone | null; payloadOverride?: Record<string, unknown> };
+type IssueArgs = { p_metric_key: string; p_metric_version: string; p_range_key: string; p_range_start: string; p_range_end: string };
+// Fixed synthetic server evidence, paired with NOW; never a browser-derived business day.
+const BUSINESS_CALENDAR: MetricBusinessTimeZone = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-12' };
 
 function money(...rows: [string, string][]): Values {
   return { kind: 'currency_totals', by_currency: rows.map(([currency, amount_minor]) => ({ currency, amount_minor, record_count: 1 })), breakdown: [] };
@@ -110,23 +114,29 @@ function fakeCaller(opts: {
         if (s.error) return { data: null, error: { code: s.error } };
         const truth = s.truth ?? 'LIVE';
         const values = truth === 'UNAVAILABLE' ? null : s.values ?? defaultScript(a).values;
+        const overdue = a.p_metric_key === 'sales.receivables.overdue_current';
+        const calendar = s.calendar === undefined ? BUSINESS_CALENDAR : s.calendar;
+        const calendarReason = overdue && calendar && calendar.state !== 'configured' ? `business_time_zone_${calendar.state}` : undefined;
         refs += 1;
         const ref = 'aneb_v1_' + refs.toString(16).padStart(64, '0');
         const result = {
-          metric_key: a.p_metric_key, metric_version: '1.0.0', owner_department: 'sales', label: 'Sales figure',
+          metric_key: a.p_metric_key, metric_version: s.metricVersion ?? a.p_metric_version, owner_department: 'sales', label: 'Sales figure',
           definition: 'Canonical Sales measurement.', formula: 'SUM by currency',
-          range: { key: a.p_range_key, start: a.p_range_start, end: a.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: 'event_timestamp_cohort' },
-          dimensions: {}, values, unit: values?.kind === 'count' ? 'count' : 'currency_minor', source_refs: ['public.paige_invoices'],
+          range: { key: a.p_range_key, start: a.p_range_start, end: a.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: overdue ? 'current_snapshot' : 'event_timestamp_cohort' },
+          dimensions: {}, values, unit: values?.kind === 'count' ? 'count' : 'currency_minor', source_refs: overdue ? ['public.paige_invoices', 'public.tenant_business_time_zones'] : ['public.paige_invoices'],
+          ...(overdue && calendar !== null ? { business_time_zone: calendar } : {}),
           as_of: NOW.toISOString(), freshness: { queried_at: NOW.toISOString(), source_updated_through: null },
           coverage: truth === 'LIVE'
             ? { state: 'complete', candidate_count: 1, contributing_count: 1, excluded_count: 0 }
             : truth === 'PARTIAL'
             ? { state: 'partial', candidate_count: 2, contributing_count: 1, excluded_count: 1 }
-            : { state: 'unavailable', candidate_count: 1, contributing_count: 0, excluded_count: 1 },
-          exclusions: truth === 'LIVE' ? [] : [{ reason: 'invalid_currency', count: 1 }],
+            : { state: 'unavailable', candidate_count: 1, contributing_count: 0, excluded_count: 1, ...(calendarReason ? { reason: calendarReason } : {}) },
+          exclusions: truth === 'LIVE' ? [] : [{ reason: calendarReason ?? 'invalid_currency', count: 1 }],
           truth_state: truth, caveats: [], source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: TENANT,
           account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: ref, reference_expires_at: new Date(NOW_MS + 900_000).toISOString(),
         };
+        // Intentional malformed producer payloads stay independent of the valid factory.
+        Object.assign(result, s.payloadOverride);
         store.set(ref, result);
         return { data: structuredClone(result), error: null };
       }
@@ -191,7 +201,11 @@ describe('salesMetricWindow', () => {
     const w = salesMetricWindow(period(), NOW);
     expect(SALES_WINDOW_CLOCK_MARGIN_MS).toBeGreaterThan(0);
     expect(w?.range_end).toBe(JUST_BEFORE_NOW);
-    expect(w?.window_note).toBeUndefined();
+    // E2-3b (QA #2102 point 5, review round): the default rolling window resolves end = now
+    // exactly, its end is pulled back to the clock margin, and the producer counts raw
+    // timestamps to the second — so the truthful note is the to-just-now one (the note fires
+    // whenever the end was pulled back: endMs < periodEndMs covers end > now AND end == now).
+    expect(w?.window_note).toBe("counted up to just now; the period ends later");
     // a window that already ended is left exactly as it is
     const prior = salesMetricWindow(previousPeriod(period()), NOW);
     expect(prior?.range_end).toBe(period().start);
@@ -207,7 +221,127 @@ describe('salesMetricWindow', () => {
 
 // ── payments adapter ─────────────────────────────────────────────────────────────────────────────────
 
+describe('Sales completed-day reporting cutoff', () => {
+  it('excludes current-day timestamps and discloses the actual cutoff without moving current snapshots', async () => {
+    const dates = ['2026-10-11T23:50:00Z', '2026-10-12T11:55:00Z'].map(Date.parse);
+    const f = fakeCaller({ script: (a) => a.p_metric_key === 'sales.opportunities.created'
+      ? { values: count(dates.filter(t => t >= Date.parse(a.p_range_start) && t < Date.parse(a.p_range_end)).length) }
+      : defaultScript(a) });
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    const created = s.headline.find(m => m.key === 'sales_pipeline.opportunities_created');
+    expect(created?.value).toBe(1);
+    expect(created?.window_note).toMatch(/last completed UTC day/);
+    expect(created?.window_note).toContain('2026-10-12T00:00:00.000Z');
+    const reads = f.issued();
+    expect(reads[0].p_range_start).toBe('2026-10-05T00:00:00.000Z');
+    expect(reads[0].p_range_end).toBe('2026-10-12T00:00:00.000Z');
+    expect(reads[2].p_range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+    expect(s.headline.find(m => m.key === 'sales_pipeline.opportunities_open')?.basis).toBe('point_in_time');
+  });
+
+  it('compares adjacent equal-length completed-day cohorts for receipts and leaves balances current', async () => {
+    const f = fakeCaller();
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    const [current, prior, balance] = f.issued();
+    expect(current.p_range_end).toBe('2026-10-12T00:00:00.000Z');
+    expect(prior.p_range_end).toBe(current.p_range_start);
+    expect(Date.parse(current.p_range_end) - Date.parse(current.p_range_start))
+      .toBe(Date.parse(prior.p_range_end) - Date.parse(prior.p_range_start));
+    expect(balance.p_range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+    expect(s.headline.find(m => m.key.startsWith('payments.cash_recorded_received'))?.window_note).toMatch(/last completed UTC day/);
+  });
+
+  it('discloses the completed-day subset of an explicit historical midday interval', async () => {
+    const requested = period('custom', { customStart: '2026-09-01T12:00:00Z', customEnd: '2026-09-03T12:00:00Z' });
+    const f = fakeCaller();
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx(requested)));
+    expect(f.issued()[0].p_range_start).toBe('2026-09-02T00:00:00.000Z');
+    expect(f.issued()[0].p_range_end).toBe('2026-09-03T00:00:00.000Z');
+    const note = s.headline.find(m => m.key === 'sales_pipeline.opportunities_created')?.window_note;
+    expect(note).toContain(requested.start);
+    expect(note).toContain(requested.end);
+    expect(note).toMatch(/partial UTC days.*excluded/i);
+    expect(s.coverage).toBe('partial');
+    expect(s.coverage_note).toMatch(/partial UTC days.*excluded/i);
+    expect(validateDomainSnapshot(s, { domain: 'sales_pipeline', period: requested, notAfter: NOW }).ok).toBe(true);
+    expect(f.issued()[1].p_range_end).toBe(f.issued()[0].p_range_start);
+  });
+
+  it('reports a period with no completed day as unavailable, keeps current figures and preserves neutral windows', async () => {
+    const requested = period('today');
+    const f = fakeCaller();
+    const s = data(await createSalesPipelineSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx(requested)));
+    expect(f.issued().map(a => a.p_metric_key)).toEqual(['sales.opportunities.open_current', 'sales.pipeline.open_value']);
+    expect(s.headline.some(m => m.key === 'sales_pipeline.opportunities_created')).toBe(false);
+    expect(s.coverage).toBe('partial');
+    expect(s.coverage_note).toMatch(/new opportunities.*could not|could not.*new opportunities/i);
+    // The neutral Clients/Operations helper must continue to use its requested timestamp window.
+    expect(salesMetricWindow(period(), NOW)?.range_end).toBe(new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString());
+  });
+
+  it('holds the completed-day read at clock-margin midnight and releases the exact next cutoff afterward', () => {
+    expect(salesReportingPeriod(period(), new Date('2026-10-13T00:00:01Z'))).toBeNull();
+    const next = salesReportingPeriod(period(), new Date('2026-10-13T00:00:03Z'));
+    expect(next?.period.start).toBe('2026-10-06T00:00:00.000Z');
+    expect(next?.period.end).toBe('2026-10-13T00:00:00.000Z');
+    expect(next?.windowNote).toMatch(/last completed UTC day 2026-10-12/);
+    expect(next?.windowNote.length).toBeLessThanOrEqual(300);
+  });
+});
+
 describe('payments adapter', () => {
+  it('uses overdue 1.1.0 and keeps every other requested Sales definition at 1.0.0', async () => {
+    const f = fakeCaller();
+    await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx());
+    for (const request of f.issued()) {
+      expect(request.p_metric_version).toBe(currentMetricVersion(request.p_metric_key));
+      expect(request.p_metric_version).toBe(request.p_metric_key === 'sales.receivables.overdue_current' ? '1.1.0' : '1.0.0');
+    }
+  });
+
+  it.each([
+    ['old metric identity', { metricVersion: '1.0.0' }],
+    ['absent calendar evidence', { calendar: null }],
+    ['wrong server business day', { calendar: { ...BUSINESS_CALENDAR, as_of_date: '2026-10-11' } }],
+  ] satisfies [string, Partial<Script>][] )('refuses %s without promoting overdue figures or risks', async (_name, patch) => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { values: money(['usd', '50000']), ...patch } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+    expect(f.issued().find(row => row.p_metric_key === 'sales.receivables.overdue_current')?.p_metric_version).toBe('1.1.0');
+  });
+
+  it.each(['missing', 'invalid'] as const)('keeps %s business-calendar evidence unavailable rather than a zero balance', async state => {
+    const calendar: MetricBusinessTimeZone = { state, zone: null, as_of_date: null, set_at: state === 'missing' ? null : BUSINESS_CALENDAR.set_at };
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { truth: 'UNAVAILABLE', values: null, calendar } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses extra calendar fields instead of repairing the producer payload', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: { ...BUSINESS_CALENDAR, invented: true } } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses a calendar attached to a non-overdue metric without inventing recorded cash', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.cash.recorded_received'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: BUSINESS_CALENDAR } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.cash_recorded_received'))).toBe(false);
+    expect(s.changes).toHaveLength(0);
+    expect(f.issued().filter(row => row.p_metric_key === 'sales.cash.recorded_received').every(row => row.p_metric_version === '1.0.0')).toBe(true);
+  });
+
   it('keeps every currency separate, upper-cases codes, and never sums them', async () => {
     const f = fakeCaller({ script: (a) => a.p_metric_key === 'sales.cash.recorded_received' && !isPrevious(a)
       ? { values: money(['eur', '5000'], ['usd', '125000']) }
@@ -231,8 +365,8 @@ describe('payments adapter', () => {
       'sales.cash.recorded_received', 'sales.cash.recorded_received',
       'sales.receivables.outstanding_current', 'sales.receivables.overdue_current',
     ]);
-    // the second read is the previous window, ending where the period starts
-    expect(f.issued()[1].p_range_end).toBe(period().start);
+    // Sales comparisons end at the effective completed-day reporting start.
+    expect(f.issued()[1].p_range_end).toBe(f.issued()[0].p_range_start);
   });
 
   it.each([1, 2, 3])('stops before the next read when aborted after read %i', async (k) => {
@@ -556,15 +690,17 @@ describe('composeBusinessReview', () => {
     expect(r.projection).not.toContain('USD 999.00');
   }, 3000);
 
-  it('an end after now is read up to just before now, with the note carried on the in-period figure', async () => {
+  it('discloses the Sales completed-day cutoff while other reads retain their requested current window', async () => {
     const f = fakeCaller();
     const r = await review(f, { timezone: 'UTC', period: 'custom', customStart: '2026-10-10T00:00:00Z', customEnd: '2026-10-12T12:00:30Z' });
     if (!('snapshot' in r)) throw new Error(r.reason);
     const current = f.issued().filter((a) => a.p_range_start === '2026-10-10T00:00:00.000Z');
     expect(current.length).toBeGreaterThan(0);
-    expect(current.every((a) => a.p_range_end === new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString())).toBe(true);
+    const salesActivity = current.filter(a => ['sales.opportunities.created', 'sales.cash.recorded_received'].includes(a.p_metric_key));
+    expect(salesActivity.every(a => a.p_range_end === '2026-10-12T00:00:00.000Z')).toBe(true);
+    expect(current.filter(a => !salesActivity.includes(a)).every(a => a.p_range_end === new Date(NOW_MS - SALES_WINDOW_CLOCK_MARGIN_MS).toISOString())).toBe(true);
     const created = data(r.snapshot.domains.sales_pipeline).headline.find((m) => m.key === 'sales_pipeline.opportunities_created');
-    expect(created?.window_note).toMatch(/up to just now/);
+    expect(created?.window_note).toMatch(/last completed UTC day 2026-10-11/);
   });
 
   it('no workspace: every domain says so, and nothing is called', async () => {

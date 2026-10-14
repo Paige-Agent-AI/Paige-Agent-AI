@@ -56,7 +56,8 @@ Services the platform itself pays for and relies on today (`cost_responsibility 
 | Provider | What it does | Pricing model | Cost driver | Real-money track? | Status | Official source (checked-as-of) |
 |---|---|---|---|---|---|---|
 | **Twilio** | Telephony/SMS/A2P (platform holds master acct + subaccounts) | metered_usage | messages · minutes · numbers | **Yes** (M1 real-money; volume via M1-b) | PARTIAL | twilio.com/pricing (unverified) |
-| **Resend** | Platform/tenant email delivery | metered_usage | messages | No (operating cost; M1-b volume caps) | PARTIAL | resend.com/pricing (unverified) |
+| **Resend** | Platform Operator email (owner policy 2026-10-13); existing tenant connectors kept | metered_usage | messages | No (operating cost; M1-b volume caps) | PARTIAL | resend.com/pricing (unverified) |
+| **SendGrid (PAIGE Email)** | A business's one-to-one email through the governed door (owner policy 2026-10-13); platform holds the account | metered_usage | messages | No (operating cost; lead-reply caps + per-send approval) | PROOF_OWED | sendgrid.com/en-us/pricing (unverified) |
 | **PostHog** | Operator product analytics | free_quota | events · storage | No | PARTIAL | posthog.com/pricing (unverified) |
 | **Platform Marketplace** | Capability Store (paid installs on a Paige-held rail) | per_action | transactions | **Yes** (M1 real-money; §38-clean own rail) | LIVE | stripe.com/pricing (unverified) |
 | **Paige MCP door** | Governed inbound MCP chokepoint (platform compute) | free_quota (internal) | api_calls | No | LIVE | internal — no vendor |

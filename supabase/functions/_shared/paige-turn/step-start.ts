@@ -114,6 +114,10 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   calendar_book_meeting: "Booking the meeting",
   // Research and the specialist team
   web_search: "Searching the web",
+  // Business operating snapshot (shared read; E2-1 wired the dispatch)
+  get_business_snapshot: "Taking stock of your business",
+  read_client_engagement_status: "Checking where that client stands",
+  read_business_time_zone: "Checking your business time zone",
   deep_research: "Researching the live web",
   list_subagents: "Finding the right specialist",
 });
@@ -136,8 +140,6 @@ export const STEP_NO_START: Readonly<Record<string, string>> = Object.freeze({
   social_post: "always refused at dispatch",
   social_analytics: "always refused at dispatch",
   social_accounts: "always refused at dispatch",
-  // Labelled, but no dispatch branch handles it: it would answer "Unknown tool".
-  get_business_snapshot: "no dispatch",
   // THE DOORS decide remotely — authority, approval and execution in one call — so nothing can be
   // announced before their answer. They never reach the START point anyway (each `continue`s ahead
   // of dispatch); they are listed so the parity is explicit.

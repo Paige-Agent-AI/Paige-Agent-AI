@@ -31,7 +31,14 @@ export type CanonicalDestination =
   | "contacts"
   | "pipeline"
   | "marketplace"
-  | "marketplace_submissions";
+  | "marketplace_submissions"
+  // Experience 04 E4-S3: where a read PAIGE answered from can be checked. Solo only — the other
+  // trees mount no such surface, so these resolve to null there and fail closed.
+  | "sales_agreements"
+  | "sales_invoices"
+  | "sales_collections"
+  | "operations_work"
+  | "business_time_zone";
 
 export interface CanonicalAppRouteInput {
   actor: CanonicalActor;
@@ -71,6 +78,11 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     contacts: "/solo/{account}/clients/people",
     pipeline: "/solo/{account}/growth/pipeline",
     marketplace: "/solo/{account}/marketplace/browse",
+    sales_agreements: "/solo/{account}/sales/agreements",
+    sales_invoices: "/solo/{account}/sales/payments?view=invoices",
+    sales_collections: "/solo/{account}/sales/payments?view=collections",
+    operations_work: "/solo/{account}/operations/work",
+    business_time_zone: "/solo/{account}/settings/setup/business-profile#business-time-zone",
   },
   sub_account: {
     home: "/business/{account}/command-center/overview",
@@ -127,4 +139,46 @@ export function resolveCanonicalAppPath(input: CanonicalAppRouteInput): string |
 export function canonicalAppUrl(input: CanonicalAppRouteInput): string | null {
   const path = resolveCanonicalAppPath(input);
   return path ? `${PAIGE_APP_ORIGIN}${path}` : null;
+}
+
+/**
+ * A link to a record, from a REFERENCE (a destination and an optional record id).
+ *
+ * `exact` when the mounted surface reads a focus parameter for that record and the id is a UUID;
+ * `surface_only` when the link opens the surface (a list) the record lives on; null where nothing is
+ * mounted. The same `exact | surface_only` vocabulary as crm-command's `record_locator`. The focus
+ * parameter is inserted BEFORE any `#fragment`, joined with `&` when the path already has a query.
+ * The address is never authority: the surface re-reads the record under its own session and RLS.
+ */
+export type CanonicalRecordLink = { path: string; status: "exact" | "surface_only" };
+
+/** The focus parameters the mounted surfaces already read (UUIDs only). */
+const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
+  operator: {},
+  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice" },
+  sub_account: {},
+  agency: {},
+};
+
+const RECORD_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The focus inserter: the query goes BEFORE any `#fragment`, joined with `&` when one exists.
+ *  Exported so its two branches are tested directly (no mounted destination has both today). */
+export function withQuery(path: string, key: string, value: string): string {
+  const hash = path.indexOf("#");
+  const base = hash < 0 ? path : path.slice(0, hash);
+  const fragment = hash < 0 ? "" : path.slice(hash);
+  return `${base}${base.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}${fragment}`;
+}
+
+export function resolveCanonicalRecordLink(
+  input: CanonicalAppRouteInput & { recordId?: string | null },
+): CanonicalRecordLink | null {
+  const path = resolveCanonicalAppPath(input);
+  if (!path) return null;
+  const tier = mountedTier(input.tier);
+  const focus = tier ? RECORD_FOCUS[tier][input.destination] : undefined;
+  const id = typeof input.recordId === "string" ? input.recordId.trim() : "";
+  if (focus && RECORD_UUID.test(id)) return { path: withQuery(path, focus, id), status: "exact" };
+  return { path, status: "surface_only" };
 }

@@ -57,7 +57,35 @@ const askScript = (options: typeof ASK_OPTIONS | [], prompt: string): Chunk[] =>
 const NORMAL_BODY = "\n\nThree clients haven't heard from you in over two weeks:\n\n- **Priya Natarajan** — 19 days. Her last touch was the session recap on Sept 16.\n- **The Kestrel Group** — 16 days, and they're mid-onboarding.\n- **Lumen Freight** — 15 days, though Maya's week-7 session is Thursday.\n\nPriya is the one I'd move on first, so I added a follow-up for Fri 10:00.";
 const FP = "fp_7c1harness";
 
+// E4-S3 — "See it, then verify it": an answered client-standing read, its finished step, and the
+// references the server sends (the chat builds the addresses from the current account).
+const STANDING_CLIENT = "e4000000-0000-4000-8000-0000000c0001";
+const STANDING_BODY = "\n\n**The Kestrel Group** signed on Oct 2 and is one payment behind.\n\n- **Agreed:** USD 3,500 — USD 500 down, then 10 × USD 300 a month.\n- **Paid:** USD 500, recorded by you by hand (not provider-verified).\n- **Overdue:** USD 300, the Nov 1 installment.\n- **Delivery:** 3 of 8 onboarding steps done; the kickoff workshop is overdue.\n\nNext: send a friendly note about the Nov 1 installment, and book the kickoff.";
 const scripts: Record<string, Chunk[]> = {
+  standing: [
+    turn("started", "WORKING", "pending"),
+    say("Let me check where The Kestrel Group stands.", 200),
+    f({ paige_step: { id: "a:1:0", seq: 1, round: 1, kind: "action", label: "Checking where that client stands", group: "shared", status: "running" } }, 200),
+    f({ paige_step: { id: "a:1:0", seq: 1, round: 1, kind: "action", label: "Checked where that client stands", group: "shared", status: "done" } }, 700),
+    turn("completed", "FINAL", "action"),
+    say(STANDING_BODY, 200),
+    f({ paige_record_links: [
+      { destination: "contacts", record_id: STANDING_CLIENT, subject: "The Kestrel Group" },
+      { destination: "sales_agreements", record_id: null },
+      { destination: "sales_invoices", record_id: null },
+      { destination: "sales_collections", record_id: null },
+      { destination: "operations_work", record_id: null },
+    ] }),
+    DONE,
+  ],
+  "standing-nomatch": [
+    turn("started", "WORKING", "pending"),
+    f({ paige_step: { id: "a:1:0", seq: 1, round: 1, kind: "action", label: "Checking where that client stands", group: "shared", status: "running" } }, 200),
+    f({ paige_step: { id: "a:1:0", seq: 1, round: 1, kind: "action", label: "Checking where that client stands", group: "shared", status: "withdrawn" } }, 700),
+    turn("completed", "FINAL", "answer"),
+    say("I couldn't find a client called **Northwind** in this business. Which client do you mean — can you give me their full name or email?", 200),
+    DONE,
+  ],
   fast: [turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer", 900), say("Try this: **“Your next 90 days with Reyes & Co. — let's lock them in.”**\n\nWant a softer version too?"), DONE],
   normal: [
     turn("started", "WORKING", "pending"),

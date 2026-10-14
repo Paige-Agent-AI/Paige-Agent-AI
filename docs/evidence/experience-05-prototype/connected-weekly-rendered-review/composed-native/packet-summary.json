@@ -1,0 +1,22 @@
+{
+  "artifactSHA256": "40D39A4DDC50B071A4CBF2E28A88EA34C93CCC2E141A57DFFB8C7CD1B550037F",
+  "baseCommit": "22376f01aaf9ea52e363c830bd42d75e856f24dd",
+  "buildStatus": "PASS",
+  "sourceFiles": 39,
+  "browserProof": {
+    "checks": 570,
+    "passed": 570,
+    "failed": [],
+    "captures": 146
+  },
+  "inputContrast": {
+    "checks": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "captureCount": 148,
+  "manifestIntegrity": "PASS",
+  "authenticatedAcceptance": "UNVERIFIED",
+  "ownerApproval": "UNVERIFIED",
+  "finishReview": "PENDING_PARENT_REVIEW"
+}

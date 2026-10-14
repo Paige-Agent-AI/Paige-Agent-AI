@@ -1,0 +1,10 @@
+{
+  "Status": 200,
+  "Bytes": 48554,
+  "HeaderHash": [
+    "9E97EE2F0F7FF4891BB6F9325F36EE6D9EE870F1892B94B1957CCD29C085429C"
+  ],
+  "BodyHash": "9E97EE2F0F7FF4891BB6F9325F36EE6D9EE870F1892B94B1957CCD29C085429C",
+  "Url": "http://127.0.0.1:8765/weekly-commitment-check",
+  "Mode": "Read-only host loopback, GET/HEAD only"
+}

@@ -31,7 +31,11 @@ export const supabase = {
 export function useTenantContext() {
   return useMemo(() => ({
     activeTenantId: "harness-tenant",
-    activeTenant: { id: "harness-tenant", name: "Brightwater Advisory", account_number: "3855", account_type: "solo" },
+    // E4-S3: a real Solo workspace is a top-level `standalone` tenant; `?tier=sub` renders a sub-account
+    // (a parented child) so the read links' fail-closed resolution can be seen too.
+    activeTenant: new URLSearchParams(window.location.search).get("tier") === "sub"
+      ? { id: "harness-tenant", name: "Brightwater Advisory", account_number: "3856", account_type: "sub_account", parent_tenant_id: "harness-agency" }
+      : { id: "harness-tenant", name: "Brightwater Advisory", account_number: "3855", account_type: "standalone", parent_tenant_id: null },
     tenants: [],
     isLoading: false,
   }), []);

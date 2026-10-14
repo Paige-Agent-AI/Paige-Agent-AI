@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isMissingFunction } from "./ads-model";
 
 export type CampaignRecord = {
   id: string;
@@ -38,8 +39,40 @@ export type CampaignArtifact = {
   intakePipelineId?: string | null;
   /** The form emails each submission to an address (growth_forms.notify_email). */
   intakeAlert?: boolean;
+  /** Where this form's leads go when it has no route of its own and is attached to exactly one campaign whose
+   *  pipeline can take them (get_form_campaign_routes, Experience 03 S1b). Its own route still comes first. */
+  campaignRoute?: CampaignRoute | null;
   intakeStageId?: string | null;
 };
+
+/** A form's campaign pipeline, as the server's one rule (_growth_form_campaign_route) resolves it. */
+export type CampaignRoute = {
+  briefId: string;
+  briefName: string;
+  pipelineId: string;
+  pipelineName: string;
+  stageId: string;
+  stageLabel: string;
+};
+
+/** Reads get_form_campaign_routes; a malformed row is dropped rather than drawn as a destination. */
+export function readCampaignRoutes(data: unknown): Map<string, CampaignRoute> {
+  const routes = (data && typeof data === "object" ? (data as { routes?: unknown }).routes : null);
+  const text = (value: unknown) => (typeof value === "string" && value.trim() ? value : null);
+  const out = new Map<string, CampaignRoute>();
+  for (const raw of Array.isArray(routes) ? routes : []) {
+    const row = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const formId = text(row.form_id), briefId = text(row.brief_id), pipelineId = text(row.pipeline_id), stageId = text(row.stage_id);
+    if (!formId || !briefId || !pipelineId || !stageId) continue;
+    out.set(formId, {
+      briefId, pipelineId, stageId,
+      briefName: text(row.brief_name) ?? "Untitled campaign",
+      pipelineName: text(row.pipeline_name) ?? "Untitled pipeline",
+      stageLabel: text(row.stage_label) ?? "its first open stage",
+    });
+  }
+  return out;
+}
 
 /**
  * A form is routed when either path sends its leads somewhere: an automation row, or its own intake
@@ -682,6 +715,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
           submissionResponse,
           routingResponse,
           pipelineResponse,
+          campaignRouteResponse,
         ] = await Promise.all([
           pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_pages")
@@ -714,7 +748,15 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
             "get_pipeline_workspace" as never,
             { _tenant_id: activeTenantId } as never,
           ),
+          pipelineOnly ? Promise.resolve({ data: null, error: null }) : supabase.rpc(
+            "get_form_campaign_routes" as never,
+            { _tenant_id: activeTenantId } as never,
+          ),
         ]);
+        // Before its migration is applied the read does not exist (isMissingFunction: PGRST202, 42883), and neither does campaign
+        // routing on the server, so "no campaign routes" is then the truth. Any other failure fails the read.
+        const campaignRouteError = campaignRouteResponse.error && !isMissingFunction(campaignRouteResponse.error)
+          ? campaignRouteResponse.error : null;
         const firstError = [
           pageResponse.error,
           funnelResponse.error,
@@ -722,6 +764,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
           submissionResponse.error,
           routingResponse.error,
           pipelineResponse.error,
+          campaignRouteError,
         ].find(Boolean);
         if (firstError) throw firstError;
         if (!current) return;
@@ -754,6 +797,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
           },
           {},
         );
+        const campaignRoutes = readCampaignRoutes(campaignRouteError ? null : campaignRouteResponse.data);
         const routingPayload = (routingResponse.data ??
           {}) as unknown as RoutingEvidencePayload;
         const automations = routingPayload.routes ?? [];
@@ -954,6 +998,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
               intakePipelineId: row.auto_create_deal && row.pipeline_id ? row.pipeline_id : null,
               intakeStageId: row.auto_create_deal && row.pipeline_id ? row.stage_id : null,
               intakeAlert: Boolean(row.notify_email?.trim()),
+              campaignRoute: campaignRoutes.get(row.id) ?? null,
             })),
         ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         // Unpublished work, from the rows already read above. Archived work is neither live nor

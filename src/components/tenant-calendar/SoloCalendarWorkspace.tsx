@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2, SlidersHorizontal,
   TriangleAlert, X,
@@ -214,9 +214,11 @@ export interface SoloCalendarWorkspaceProps {
   activeTenantId: string;
   connectionsHref: string;
   openPaige?: () => void;
+  /** Owner-scoped visibility supplied by the canonical tenant adapter; never a booking producer. */
+  weeklyResponsibility?: (controls: { closeViewOptions: () => void; returnFocus: () => void }) => ReactNode;
 }
 
-export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPaige }: SoloCalendarWorkspaceProps) {
+export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPaige, weeklyResponsibility }: SoloCalendarWorkspaceProps) {
   const [view, setView] = useState<ViewMode>("week");
   const [cursor, setCursor] = useState(() => new Date());
   const [colorBy, setColorBy] = useState<"calendar" | "host">("calendar");
@@ -354,6 +356,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
   // exists in only one of those places is a hidden control, not a responsive one.
   const railBody = (
     <>
+      {weeklyResponsibility?.({ closeViewOptions: () => setOptionsOpen(false), returnFocus: () => boardRef.current?.focus() })}
             <RailGroup title="Calendars">
               {cal.calendarsError && (
                 <p className="sc-note">This account&rsquo;s calendars could not be loaded, so colour coding falls back to one tint.</p>

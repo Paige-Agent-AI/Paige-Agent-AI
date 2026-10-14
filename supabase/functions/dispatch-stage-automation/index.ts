@@ -10,10 +10,16 @@
 //   nurture       → marketing consent
 //
 // If consent required but missing, event status = 'skipped_no_consent' — never silent.
+//
+// Callers: only the on_deal_stage_change trigger, with the service-role key (#2087). Any other bearer is
+// refused before the body is read: the body names the tenant, the contact and the webhook to call.
+// Marketing consent is the business's own ledger (paige_consent_events via _shared/tenant-consent.ts):
+// default-deny, and a ledger that cannot be read holds the event rather than sending.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { emitAutomationRail } from "../_shared/railAutomation.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
+import { tenantConsent } from "../_shared/tenant-consent.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,10 +55,16 @@ const INTENT_TO_CONSENT: Record<Rule["compose_intent"], "transactional" | "marke
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!serviceKey || bearer !== serviceKey) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
 
   let body: Payload;
   try {
@@ -72,31 +84,33 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // Consent gate (contact optional — only enforce when contact resolves to a real recipient)
-    if (body.contact_id) {
-      const { data: client } = await supabase
-        .from("clients")
-        .select(`linked_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
-        .eq("id", body.contact_id)
-        .maybeSingle();
-
-      // Consent is checked against the contact's PRIMARY email — the address a send goes to.
-      const email = clientAddresses(client)?.email?.toLowerCase().trim();
-      if (email) {
-        const consentKind = INTENT_TO_CONSENT[body.rule.compose_intent];
-        const rpc =
-          consentKind === "marketing"
-            ? "has_email_marketing_consent"
-            : null; // transactional is universally allowed by relationship
-        if (rpc) {
-          const { data: hasConsent } = await supabase.rpc(rpc, { _email: email });
-          if (hasConsent === false) {
-            await mark("skipped_no_consent", { error: `${consentKind} consent missing` });
-            return new Response(JSON.stringify({ status: "skipped_no_consent" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
+    // Consent gate. Transactional follow-ups ride the existing relationship. Marketing needs the business's
+    // own recorded consent for this contact: no contact, no address, nothing on record, a revocation, or a
+    // ledger that cannot be read all skip the send (never a silent pass).
+    const consentKind = INTENT_TO_CONSENT[body.rule.compose_intent];
+    if (consentKind === "marketing") {
+      let email: string | null = null;
+      if (body.contact_id) {
+        const { data: client, error: clientErr } = await supabase
+          .from("clients")
+          .select(`tenant_id, linked_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
+          .eq("id", body.contact_id)
+          .maybeSingle();
+        // The contact must belong to the business the event names.
+        if (!clientErr && client && client.tenant_id === body.tenant_id) {
+          // Consent is checked against the contact's PRIMARY email — the address a send goes to.
+          email = clientAddresses(client)?.email?.toLowerCase().trim() || null;
         }
+      }
+      const consent = email
+        ? await tenantConsent(supabase, { tenantId: body.tenant_id, channel: "email", contactId: body.contact_id, address: email })
+        : "none";
+      if (consent !== "granted") {
+        const reason = consent === "unknown" ? "marketing consent could not be checked" : "marketing consent missing";
+        await mark("skipped_no_consent", { error: reason });
+        return new Response(JSON.stringify({ status: "skipped_no_consent" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 

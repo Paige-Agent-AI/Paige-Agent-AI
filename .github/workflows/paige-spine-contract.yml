@@ -98,6 +98,9 @@ on:
       - "supabase/tests/public_visits.sql"
       - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
       - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
+      # INT-179 Slice 2b milestone 2 — crash recovery for a dispatcher that dies after claiming.
+      - "supabase/tests/paige_dispatch_crash_recovery.sql"
+      - "supabase/migrations/20271025000100_paige_dispatch_crash_recovery.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
@@ -117,6 +120,27 @@ on:
       - "scripts/ci/reproduce-production-grants.*"
       - "scripts/ci/grant-ordering-proof.sh"
       - "scripts/proof/mcp-gateway-tools-action.mjs"
+      # Experience 04 E4-S1 — where this client stands (source read + composer parity).
+      - "supabase/tests/exp04_client_engagement_status.sql"
+      - "scripts/proof/exp04-client-status-parity.mjs"
+      - "supabase/functions/_shared/client-engagement/**"
+      # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
+      # contract it pins (the drafter, the filer; the approve door is listed above).
+      - "supabase/tests/exp03_lead_reply_draft.sql"
+      - "supabase/migrations/20271031000000_exp03_lead_reply_once_per_submission.sql"
+      - "supabase/functions/paige-action-worker/**"
+      - "supabase/functions/growth-process-submission/**"
+      # Experience 03 S3 — the PAIGE Email (SendGrid) governed door, its receipts/history and sender
+      # integrity: the three rollback proofs and the migrations they pin.
+      - "supabase/tests/paige_email_sendgrid_door.sql"
+      - "supabase/tests/paige_email_sendgrid_receipts.sql"
+      - "supabase/tests/paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql"
+      - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
+      - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/functions/comms-email-command/**"
+      - "supabase/functions/send-message/**"
+      - "supabase/functions/handle-sendgrid-webhook/**"
 
 permissions:
   contents: read
@@ -233,6 +257,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/public_visits.sql
 
+      - name: Experience 03 — a lead carries its campaign; the campaign reads its leads (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_lead_attribution.sql
+
+      - name: Experience 03 S1b — an unrouted form files its leads into its campaign's pipeline (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_pipeline_routing.sql
+
+      - name: Security #2087/#2090 — consent cannot be forged from a browser; stored form and booking links are web addresses (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/security_consent_and_form_links.sql
+
       # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
       # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
       # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.
@@ -312,6 +348,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_review.sql
 
+      - name: Operations client released-work discovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_discovery.sql
+
       - name: Operations native competing client decisions
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-client-decision-concurrency.mjs
@@ -326,6 +366,49 @@ jobs:
       - name: Operations native concurrent engagement handoff
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-handoff-concurrency.mjs
+
+      # Experience 04 E4-S1: one client's terms, signing, invoice balances by evidence class,
+      # open payment requests and delivery work — owner/admin only, foreign scope refused — then the
+      # shared composer over that exact read, asserted against the hand-worked fixture ledger.
+      - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_client_engagement_status.sql
+      - uses: actions/setup-node@v4
+        if: ${{ !cancelled() }}
+        with:
+          node-version: 24
+      - name: Experience 04 client status composer parity over the real read
+        if: ${{ !cancelled() }}
+        run: node --experimental-strip-types scripts/proof/exp04-client-status-parity.mjs postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+      # Experience 03 S3 "PAIGE works your leads": one reply draft per submission; the per-form
+      # opt-in set only through growth_form_set_intake (both signatures); no outbound-message approval
+      # (a reply, or a legacy client.followup) marked approved/sent without a provider-accepted governed
+      # send of the same business and person; lead_reply_record_send scope and every send state —
+      # driven through the governed email door's real prepare/claim/finalize.
+      - name: Experience 03 lead reply draft, opt-in and governed-send guard (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp03_lead_reply_draft.sql
+
+      # Experience 03 S3 — PAIGE Email (SendGrid). The migrations 20271031000000 → 000100 → 000200 →
+      # 000250 are already applied in filename order by the "apply the change under review" step
+      # (`supabase migration up --include-all`); each proof also re-applies the migration it pins
+      # inside its own BEGIN..ROLLBACK (\ir), which proves that migration is idempotent. Each proof
+      # ends by RAISING when any assertion failed, so ON_ERROR_STOP turns a FAIL into a red step.
+      # Door: SendGrid verification facts are service-only, a SendGrid sender is admitted only with
+      # its own business's verified domain, an 'unknown' outcome is never re-dispatched, and one live
+      # send per drafted reply.
+      - name: Experience 03 PAIGE Email governed door (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_door.sql
+      # Receipts: acceptance is never delivery, receipts land once, one connected history.
+      - name: Experience 03 PAIGE Email receipts and history (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_receipts.sql
+      # Sender integrity: the rollback proof for 20271031000250 (the PAIGE Email sender a send is bound to).
+      - name: Experience 03 PAIGE Email sender integrity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_sender_integrity.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -447,6 +530,10 @@ jobs:
       # goes to exactly one claimant (never on a held, settled or ambiguous act; stale claims re-takeable above a
       # floor; service role only). The eight-session race on real rows runs in the Layer C proof below (case F).
       - run: supabase test db supabase/tests/paige_act_dispatch_claim.sql
+      # Slice 2b milestone 2: a dispatcher that dies after claiming is recovered (automatic acts re-driven, bounded;
+      # approved acts handed back to the approver; unprovable outcomes recorded ambiguous, never replayed). The real-
+      # drainer crash cases run in the Layer C proof below (cases G and H).
+      - run: supabase test db supabase/tests/paige_dispatch_crash_recovery.sql
       - run: supabase test db supabase/tests/resend_receipt_reliability.sql
       - run: node scripts/proof/resend-receipt-concurrency.mjs
         env:

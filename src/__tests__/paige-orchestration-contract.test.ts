@@ -32,9 +32,10 @@ import { ACT_OUTCOME_SET } from "../../supabase/functions/_shared/paige-orchestr
 // deliberately NOT equal to the dotted action_kind: the standard dotted-kind ↔ underscore-tool seam).
 const REGISTERED: ReadonlyArray<{
   kind: string; own: string; foreign: string; effect: "read" | "mutate"; capId: string;
+  lostClaimRecovery: "readback_proves_absence" | "outcome_unknown";
 }> = [
-  { kind: "native", own: "crm.advance_journey_stage", foreign: "n8n_run_workflow", effect: "mutate", capId: "crm_advance_journey_stage" },
-  { kind: "n8n", own: "n8n_run_workflow", foreign: "crm.advance_journey_stage", effect: "mutate", capId: "n8n_run_workflow" },
+  { kind: "native", own: "crm.advance_journey_stage", foreign: "n8n_run_workflow", effect: "mutate", capId: "crm_advance_journey_stage", lostClaimRecovery: "readback_proves_absence" },
+  { kind: "n8n", own: "n8n_run_workflow", foreign: "crm.advance_journey_stage", effect: "mutate", capId: "n8n_run_workflow", lostClaimRecovery: "outcome_unknown" },
 ];
 
 describe.each(REGISTERED)("ActionAdapter contract conformance — the $kind adapter", (row) => {
@@ -58,6 +59,10 @@ describe.each(REGISTERED)("ActionAdapter contract conformance — the $kind adap
 
   it("resolveCapability DISOWNS a foreign action_kind (never claims a kind it does not own) → null", () => {
     expect(getAdapter(row.kind)!.resolveCapability(row.foreign)).toBeNull();
+  });
+
+  it("declares what a lost dispatch claim means (Slice 2b): only an authoritative readback may re-take one", () => {
+    expect(getAdapter(row.kind)!.lostClaimRecovery).toBe(row.lostClaimRecovery);
   });
 
   it("declares dispatch + readback (the async two-phase contract every registered adapter implements)", () => {

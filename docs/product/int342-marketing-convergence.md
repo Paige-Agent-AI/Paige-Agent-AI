@@ -289,6 +289,10 @@ L = LIVE · P = PARTIAL · U = UNAVAILABLE. A dash means the column doesn't appl
 - **Social execute and measure:** a proven provider, a posting Spine key, a receipt, readback and a metric.
 - **Attribution:** a campaign key on assets, contacts and deals; `form.submitted`, `page.viewed` and
   `email.opened/clicked/replied` event producers; and a marketing metric producer.
+  *Corrected 2026-10-12 (Experience 03 S1, #2068, once released): each new lead (form submission) carries
+  the campaign it came from (`campaign_brief_id`, `campaign_attribution`), and its contact and opportunity are
+  reached through the lead. Contacts and deals themselves still carry no campaign; leads saved before the
+  release are not evaluated.*
 - **Campaign management:** a campaign ↔ asset link and a roll-up metric.
 - **Lead routing:** a `form.submitted` §67 trigger and Rail kind.
 - **Learning:** every marketing capability has `mindBinding: UNAVAILABLE`.
@@ -296,6 +300,8 @@ L = LIVE · P = PARTIAL · U = UNAVAILABLE. A dash means the column doesn't appl
 **What the COO can answer today, from evidence:**
 - **Which campaigns are active?** None: 1 draft brief and 1 draft email.
 - **Which leads came from which campaign?** Cannot answer (no link, 0 submissions).
+  *Corrected 2026-10-12: answerable for leads captured after #2068 is released, through
+  `get_campaign_brief_leads`; production still holds 0 submissions.*
 - **Which channel produces qualified leads?** Cannot answer.
 - **What is our CPL?** Cannot answer (no spend).
 - **Which page converts best?** Cannot answer (no visits).
@@ -619,3 +625,122 @@ Each phase sets direction only. None authorizes provider activation, extra engin
   cells above describe those existing contracts, not authenticated proof of this route.
 - Provider read, attribution, approvals, execution, Chat/Live ads capabilities: **UNAVAILABLE or GATED**.
 - **The department is NOT end-to-end operational.**
+
+## N. Marketing Capability Integration & Proof Matrix
+
+Coordinator command 2026-10-12, items 2–3 ("Complete the Marketing Capability Integration & Proof Matrix,
+distinguishing source shipped, production verified, authenticated tested and owner accepted"; "identify remaining
+genuine feature gaps"). This is Marketing's own matrix; the Ads matrix is §M3 and stays with the Ads department.
+
+**Grounding:** main at the 7a merge (`be8d9278`), 2026-10-12. Production facts are read-only queries (Supabase project
+`xygzykjyynhzqytbqnzu`) run at each slice's release and again for this section.
+
+**The four columns:**
+- **Source shipped:** merged to `main` (PR → merge commit).
+- **Production verified:** the migration is recorded on production and the objects it creates were read back, the
+  edge function deployed (the `edge-live` tag at the merge), or the Vercel production deployment READY with the new
+  strings in the served bundle. Done by the engineering agent; not re-probed independently unless noted.
+- **Authenticated tested:** a real signed-in Solo user drove it on production (§32.c). **No row has this yet**:
+  the canonical QA account (PC-1 QA Shared Synthetic, ANT-21) has no runner credential installed. The packet is
+  `docs/delivery/marketing-s3-6-acceptance-package.md`.
+- **Owner accepted:** the owner accepted the working capability. **No row has this yet.** Where the owner approved a
+  *design* (prototype) before it was built, that is said separately, because it is not acceptance of the capability.
+
+### N1. Capabilities
+
+| Capability | Source shipped | Production verified | Authenticated tested | Owner accepted |
+|---|---|---|---|---|
+| Marketing Overview, Analytics and Content tabs (INT-342 S1a, S1d, S1e) | #1900, #1913, #1931 | Vercel READY (S1a `dpl_D5qp…`, S1d `dpl_GhiL…`, S1e `dpl_F9RE…`) | UNVERIFIED | Designs approved 2026-10-10; capability not yet accepted |
+| Analytics owns its figures; Ads moved out (MBC 1) | #1952 → `bb0e98f` | Vercel READY `dpl_5fpJ…` | UNVERIFIED | — |
+| Marketing metric producer on the INT-340 seam (MBC 2a) | #1953 → `64a646f` | `20270602000503` recorded; functions and dispatcher branch read back; no grants | UNVERIFIED | — |
+| Analytics server figures (MBC 2b) | #1957 → `893c6e2` | Vercel READY `dpl_m26e…` | UNVERIFIED | — |
+| Overview server figures and processing health (MBC 2c) | #1966 → `7231c3a` | deployed with 4a | UNVERIFIED | — |
+| What a campaign uses: pages, forms, funnels, emails, content (MBC 3) | #1963 → `8d64128` | `20271020000010` recorded; table, functions, trigger, retirement disposition read back | UNVERIFIED | — |
+| `form.submitted` on the native event bus (MBC 4a) | #1966 → `7231c3a` | `20271020000030` recorded | UNVERIFIED (ANT-87 asks for: a process matches once; a paused account is refused) | — |
+| Marketing Action contract: a step is the bus's own `paige_actions` row (MBC 5) | #2018 → `d0aaeac` | `20271021200000` recorded; table, guard, indexes, functions, kind, disposition read back | UNVERIFIED | — |
+| Process scope; a recorded-only step can never read as an accepted result (MBC 6a) | #2038 → `a60d1ffb` | `20271022100000` recorded; four functions, trigger enabled, `campaign_brief_ids` in the payload, NOT_PROVEN refusal, `finish_counts` read, 0 automations affected | UNVERIFIED | — |
+| Campaign dossier: Steps and results (MBC 6b) | #2045 → `0c1cbb91` | Vercel `dpl_8KwK…` READY on paigeagent.ai; the served bundle carries the new strings | UNVERIFIED | — |
+| PAIGE tools for steps and process scope, Chat and Live (MBC 6c) | #2050 → `16fb9adf` | `20271023100000` recorded; read wrappers authenticated-only; four Autonomy rows, ask first; activity wording; `paige-ai-chat` deployed (`edge-live` = merge) | **UNAVAILABLE on typed Solo chat** while INT-346 is DRAINING (production `paige_chat_interactive_protocol` = version 2, `active: false`, 2026-10-12): every typed turn runs with no tools. Live: UNVERIFIED | — |
+| A lead carries the campaign it came from; a campaign reads its leads (Experience 03 S1, `docs/delivery/exp03-grow-my-business-journey.md`) | #2068 | owed at release (`deploy-migrations`, migration `20271025100000`, then read back) | UNVERIFIED (PC-1 blocked, ANT-21) | — |
+| Public visit evidence (MBC 7a) | #2064 → `be8d9278` | see N4 | UNVERIFIED (a signed-out visit is part of the packet) | — |
+| Email: campaigns, dashboard and editor, chat tools, series (E1, E2, E2b, E3) | #1700, #1704, #1725, #1731 | recorded and read back at release | UNVERIFIED | — |
+
+### N2. One-PAIGE layers (Marketing)
+
+| Layer | What Marketing uses | Status | Gap |
+|---|---|---|---|
+| Source records | `campaign_briefs`, `campaign_brief_asset_links`, `campaign_brief_actions`, `growth_*`, `growth_public_visits`, email tables | LIVE | — |
+| Spine | Domain `marketing_actions` (6c): reads are member seat, writes workspace admin; `campaign.*` brief keys | LIVE in source | Registration was written by Marketing in 6c; P-ANT-5 names Platform Reach as the exclusive shared-registry writer. Raised with Platform Reach (N3, item 6) |
+| Harness | The one chat runtime (`paige-ai-chat`); Live is the same runtime | PARTIAL | Typed Solo turns carry no tools while INT-346 is DRAINING (Conversational Loop owner; admission is owner-reserved) |
+| Orchestration | The action bus: `file_action`, `marketing.campaign_action` (record-only, needs approval) | PARTIAL | Nothing in the product prepares a planned step for approval (N3, item 5) |
+| Trust | `action-risk.ts` (plan, record, judge ordinary; process scope high); four Autonomy rows, ask first | LIVE | — |
+| Rail and receipts | `recordCapabilityRun`: one receipt per change, keyed to the change | LIVE | — |
+| Metrics and evidence | INT-340 producer: leads, sources, campaigns, opportunities, live and unrouted forms, failed submissions, email | LIVE | Visits, visit conversion and funnel step-through: 7a records the evidence; the figures are 7b (needs INT-340's dispatcher allowlist, Linear ANT-23) |
+| Mind / Memory / Knowledge | none | UNAVAILABLE | No eligibility decision for campaign results as Mind facts; owner-confirmed only if ever |
+| PAIGE Chat | Six 6c tools; brief tools; email series tools | PARTIAL | Unreachable on typed Solo turns (Harness row) |
+| PAIGE Live | The same tools through the same runtime | PARTIAL | The relay never executes a spoken approval, so in Live a write can be proposed; its confirmation is the card, never a spoken yes |
+| Provider adapters | Email delivery (managed route) | LIVE for email | No ad, social or analytics provider here (Ads department) |
+
+### N3. Genuine feature gaps (filed in Marketing's lane; nothing widened, nothing activated)
+
+1. **Link an existing action to a campaign.** The writer accepts `link_action` (slice 5) but no screen or chat tool
+   sends it. Adding it is a writer-backed screen control and a chat tool; no permission change.
+2. **Change a step's dependency.** The writer sets one only when a step is planned or linked (`dependsOnActionId`);
+   there is no command to change it later, though the integrity trigger already validates an update. Needs a `set_dependency` command
+   in the writer, then a control.
+3. **A member's view of a step.** Members already see each step's aim and its result and judgement (once
+   finished), but not its title, summary, approval id or error: `get_campaign_brief_actions` withholds those four
+   from anyone who is not a workspace admin, on purpose. Showing titles to members is a read-policy decision for the
+   owner; it is **not** being widened.
+4. **A governed process activation screen.** A process can be switched on only by a direct table update today; chat
+   refuses (`automation_set_state` is owner-only and unadvertised) and no screen does it. The scope guard already
+   refuses an unscoped form process on every path. The screen needs an owner-approved design (§00) and an audited
+   seam; nothing is activated until then.
+5. **Moving a planned step to approval.** A planned step (`filed`) reaches approval only when the bus prepares it
+   (`advance_action` to `drafted`). The action worker never drafts this record-only kind, and the chat tool
+   `action_advance` is for the platform team. So in the product a Solo owner can plan a step but cannot bring it to
+   approval or completion. Needs a governed "prepare for approval" path for record-only campaign steps.
+   **The shipped copy promises it anyway**, so today it says something untrue:
+   - the plan form: "A planned step waits for your approval." (`src/solo/campaign-actions.tsx`);
+   - the empty state: "Plan the first one; it waits for your approval.";
+   - the remove warning for a planned step: "will still come to you for approval" (`useCampaignActions.ts`);
+   - PAIGE's plan receipt: "It comes to you for approval once it is prepared" (migration `20271023100000`);
+   - PAIGE's approval card for planning a step: "comes to you for approval once it is prepared"
+     (`supabase/functions/paige-ai-chat/index.ts`);
+   - the plan tool's description and result, which PAIGE repeats: "comes to the owner for approval once it is
+     prepared" (`_shared/paige-spine/registry.ts`, `_shared/campaign-steps-chat.ts`);
+   - the action kind's description: "Once prepared it goes to the owner for approval" (migration
+     `20271021200000`).
+   This is the first Marketing fix after this matrix: either build the prepare-for-approval path or make the copy
+   say what happens now. The QA run records the sentences as a finding (packet A4), never as a pass.
+6. **Shared registration and admission.**
+   - 6c's Spine and chat-tool registration were written in Marketing's lane. P-ANT-5 names Platform Reach (INT-179)
+     as the shared registry's exclusive writer, so this is raised with Platform Reach for review rather than left
+     silent.
+   - Typed-chat admission is the Conversational Loop owner's (INT-346), and owner-reserved.
+
+### N4. MBC 7a at release
+
+- **Source:** PR [#2064](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2064) → `be8d9278`. All 12 checks
+  green on the final head `6eb90726`, `database-contract` (which runs `supabase/tests/public_visits.sql`) included.
+- **Production verified** (read-only, 2026-10-12):
+  - `deploy-migrations` and `deploy-edge-functions` succeeded. `db-live` and `edge-live` both point at `be8d9278`,
+    so neither migrations nor functions are ahead of production. `growth-public-visit` and `growth-public-submit`
+    were deployed.
+  - `20271024100000_int298_public_visits` is recorded in `schema_migrations`.
+  - `growth_public_visits`: row security on, one policy (`growth_public_visits_tenant_read`), the six check
+    constraints, 0 rows. `anon` has no SELECT; `authenticated` has SELECT, no INSERT.
+  - `growth_form_submissions.visit_id` exists (uuid).
+  - `growth_public_visit_record` and `growth_public_visit_for_submission`: SECURITY DEFINER with an empty
+    `search_path`. Only `service_role` can execute them.
+  - `growth_funnel_session_upsert`: `anon` and `authenticated` can no longer execute it; `service_role` can.
+  - `operator_retirement_disposition('growth_public_visits')` = `delete`.
+  - As `anon`, in a rolled-back transaction: reading the table, calling the writer and calling the funnel-session
+    writer each fail with `42501`.
+  - The deployed function, asked anonymously with requests that are refused before the rate limiter or any write:
+    Do Not Track → `200 {recorded:false, reason:"privacy_signal"}`; Global Privacy Control → the same; a foreign
+    origin → `403 origin_not_allowed`; a headless user agent → `200 {recorded:false, reason:"automated_agent"}`.
+- **Not verified:** a real visit recorded from a real published page, and a submission linked to it. Production
+  has 1 published page, 4 active forms, no active funnel and 0 submissions, but every one belongs to a real
+  business, and a visit would write into that business's records. So the first recorded visit is left to the
+  signed-out half of the acceptance run (packet run D), on the canonical QA account's own form.

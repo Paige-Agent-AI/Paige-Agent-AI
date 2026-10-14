@@ -5,6 +5,7 @@
 // (the ungated userContext injected "❌ NO CREDIT REPORT UPLOADED YET…" into every
 // tenant's prompt) — that failure is the point.
 import { describe, expect, it } from "vitest";
+import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import {
   buildFundingProgramVocab,
   buildLaneGuardSection,
@@ -168,7 +169,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // paige-turn — and it closes the turn frame as INTERRUPTED (emitTurnTerminal) and records the turn at the
     // persist call (withTurnRecord). Both are driven through the real reducer, so the persisted record
     // is the one production writes.
-    const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console", "emitTurnTerminal", "withTurnRecord",
+    // E4-S3 — `readLinkTrace` is the turn's read references; the Live-interrupted path clears it before
+    // building the metadata (its frames were discarded), so no links-only row is saved.
+    const readLinkTrace: unknown[] = [];
+    const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console", "emitTurnTerminal", "withTurnRecord", "readLinkTrace",
       js(`return (async()=>{const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),controller={enqueue(){}},discardContent=()=>{},emitApprovalOutcome=async()=>{};try{throw Error('fixture')}catch(e)${caught.block.getText(source)}})();`));
     const turnOf = () => {
       const tracker = createTurnTracker(NO_TOOLS);
@@ -180,14 +184,17 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
       };
     };
     const turn = turnOf();
-    await run(text, () => meta, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} }, turn.emitTurnTerminal, turn.withTurnRecord);
+    readLinkTrace.push({ destination: "business_time_zone", record_id: null });
+    let linksAtMetadata = -1;
+    await run(text, () => { linksAtMetadata = readLinkTrace.length; return meta; }, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} }, turn.emitTurnTerminal, turn.withTurnRecord, readLinkTrace);
+    expect(linksAtMetadata).toBe(0); // cleared BEFORE the metadata is built
     // The same cards, now beside the turn record — which says the turn was interrupted.
     expect(persisted).toEqual([{ content: text, metadata: { ...meta, bundleRef: { ...meta.bundleRef, turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } } } }]);
     expect(turn.outcomes).toEqual(["interrupted"]);
     for (const [protectedTurn, validScope] of [[true, true], [false, false]]) {
       persisted.length = 0;
       const again = turnOf();
-      await run(text, () => meta, async (content: string) => persisted.push(content), () => protectedTurn, async () => validScope, { error() {} }, again.emitTurnTerminal, again.withTurnRecord);
+      await run(text, () => meta, async (content: string) => persisted.push(content), () => protectedTurn, async () => validScope, { error() {} }, again.emitTurnTerminal, again.withTurnRecord, []);
       expect(persisted).toEqual([]);
     }
   });
@@ -208,10 +215,17 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // R2b: assistantTurnMetadata's bundleRef now also spreads the run REFERENCE from
     // researchTrace (the crmResultTrace pattern) — the harness supplies the new seam
     // variable like every other one; an empty array must project to no research key.
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", js(`return ${initializer("assistantTurnMetadata")};`));
+    // E4-S3: the read-link trace is one more seam variable (empty here, so it projects to no key) and
+    // its sanitiser `readRecordLinks` is the shared one the handler imports.
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], []);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
+    // E4-S3: a turn whose only card is a read link still persists, as references only — never an address.
+    const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
+    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks);
+    expect(linksOnly()).toEqual({ surfaces: [], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [],
+      paige_record_links: [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null }] } });
     // The success persist goes through this same projection, with the turn record added at the call site.
     expect(code).toContain("persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()))");
   });
@@ -229,7 +243,7 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // frame the Live client settles on (paige_approval_outcome, _shared/approval-outcome.ts).
     const outcomeReports: string[] = [];
     const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata", "emitApprovalOutcome", "emitTurnTerminal", "emitTurnTerminalBeforeAnswer", "withTurnRecord", "turnTracker",
-      js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder();try{${body}}catch(e)${caught.block.getText(source)}})();`));
+      js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),readLinkTrace=[];try{${body}}catch(e)${caught.block.getText(source)}})();`));
     // paige-turn — the production terminal seam (exactly-once guard included), over a real reducer.
     const seam = terminalSeam(protectedTurn);
     const settled = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } },

@@ -1,6 +1,6 @@
 import { defineCapability, objectInputSchema, ownerGrantablePermission } from '../capability-kit/mod.ts';
 import type { SpineCapability } from '../paige-spine/contracts.ts';
-import { parseMetricResult, type MetricResult } from './metric-contract.ts';
+import { currentMetricVersion, parseMetricResult, type MetricResult } from './metric-contract.ts';
 import { contextAvailable, contextDegraded, contextUnavailable, type ContextSourceResult } from '../paige-context/mod.ts';
 
 // The deployed issuer owns this vocabulary and every definition/calculation. No raw-table fallback.
@@ -65,6 +65,13 @@ export function metricReadContext(result: MetricReadOutcome): ContextSourceResul
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const stamp = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 
+/** Exclusive end of the last completed UTC day. Shared by canonical Sales reporting callers. */
+export function completedUtcDayBoundary(at: Date): Date {
+  const boundary = new Date(at.getTime());
+  boundary.setUTCHours(0, 0, 0, 0);
+  return boundary;
+}
+
 function request(input: unknown, now: number) {
   if (!object(input) || Object.keys(input).some(k => !['metric_key', 'period', 'range_key', 'range_start', 'range_end', 'evidence_ref'].includes(k))
     || !BUSINESS_METRIC_KEYS.includes(input.metric_key as typeof BUSINESS_METRIC_KEYS[number])) return null;
@@ -79,7 +86,7 @@ function request(input: unknown, now: number) {
   } else {
     if (input.range_key !== undefined || input.range_start !== undefined || input.range_end !== undefined) return null;
     // Date-cohort Sales producers operate on completed UTC days. State snapshots still say current_snapshot.
-    if (String(input.metric_key).startsWith('sales.')) end.setUTCHours(0, 0, 0, 0);
+    if (String(input.metric_key).startsWith('sales.')) end = completedUtcDayBoundary(end);
     start = new Date(end);
     if (period === 'this_month' || period === 'last_month') {
       start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
@@ -88,7 +95,7 @@ function request(input: unknown, now: number) {
     else { const days = period === 'last_7_days' ? 7 : period === 'last_90_days' ? 90 : 30; key = days === 7 ? 'week' : days === 90 ? 'quarter' : 'month'; start.setUTCDate(start.getUTCDate() - days); }
   }
   if (start.getTime() >= end.getTime() || end.getTime() > now || end.getTime() - start.getTime() > 366 * 10 * 86400000) return null;
-  return { metricKey: String(input.metric_key), metricVersion: '1.0.0', rangeKey: key, rangeStart: start.toISOString(), rangeEnd: end.toISOString(), dimensions: {}, evidenceRef: ref as string | undefined };
+  return { metricKey: String(input.metric_key), metricVersion: currentMetricVersion(String(input.metric_key)), rangeKey: key, rangeStart: start.toISOString(), rangeEnd: end.toISOString(), dimensions: {}, evidenceRef: ref as string | undefined };
 }
 
 /** Closed projection: no actor/tenant identifiers, extra producer fields, or unvalidated nested payload. */
@@ -102,8 +109,10 @@ function project(m: MetricResult): Projection {
   else if (v?.kind === 'diagnostic_events') values = { kind: v.kind, items: v.items.map(({ source, at, status, severity, retry_count, completed_at, check_key }) => ({ source, at, status, severity, retry_count, completed_at, check_key })) };
   else if (v?.kind === 'currency_totals') values = { kind: v.kind, by_currency: v.by_currency.map(({ currency, amount_minor, record_count }) => ({ currency, amount_minor, record_count })), breakdown: v.breakdown.map(({ currency, source, amount_minor, record_count }) => ({ currency, source, amount_minor, record_count })) };
   return { metric_key: m.metric_key, metric_version: m.metric_version, owner_department: m.owner_department, label: m.label, definition: m.definition, formula: m.formula,
+    ...(m.business_time_zone ? { business_time_zone: { state: m.business_time_zone.state, zone: m.business_time_zone.zone, set_at: m.business_time_zone.set_at, as_of_date: m.business_time_zone.as_of_date } } : {}),
     range: { key: m.range.key, start: m.range.start, end: m.range.end, bounds: m.range.bounds, timezone: m.range.timezone, semantics: m.range.semantics }, dimensions: {}, values, unit: m.unit,
-    source_refs: [...m.source_refs], as_of: m.as_of, freshness: { queried_at: m.freshness.queried_at, source_updated_through: m.freshness.source_updated_through }, coverage: { state: m.coverage.state, candidate_count: m.coverage.candidate_count, contributing_count: m.coverage.contributing_count, excluded_count: m.coverage.excluded_count },
+    source_refs: [...m.source_refs], as_of: m.as_of, freshness: { queried_at: m.freshness.queried_at, source_updated_through: m.freshness.source_updated_through }, coverage: { state: m.coverage.state, candidate_count: m.coverage.candidate_count, contributing_count: m.coverage.contributing_count, excluded_count: m.coverage.excluded_count,
+      ...(m.metric_key === 'sales.receivables.overdue_current' && m.business_time_zone?.state !== 'configured' ? { reason: m.coverage.reason } : {}) },
     exclusions: m.exclusions.map(({ reason, count }) => ({ reason, count })), truth_state: m.truth_state, caveats: [...m.caveats], source_revision_ref: m.source_revision_ref, evidence_ref: m.evidence_ref, reference_expires_at: m.reference_expires_at };
 }
 

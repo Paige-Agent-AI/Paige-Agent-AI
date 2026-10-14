@@ -469,7 +469,7 @@ const setTool=React.useCallback((t,m)=>gov.setToolMode(t,m),[gov]);
 const goPaige=React.useCallback(()=>{if(typeof openPaige==='function')openPaige();else toastMsg('Open Paige from the sidebar to make this decision.');},[openPaige,toastMsg]);
 
 const live=React.useMemo(()=>activity.items.map(a=>({
- id:a.id,t:a.title,dept:departmentLabel(a.departmentSlug),by:a.byPaige?'Paige':a.actorAgent?a.actorAgent:'Unattributed',w:elapsedLabel(a.occurredAt)})),[activity.items]);
+ id:a.id,t:a.title,dept:departmentLabel(a.departmentSlug),by:a.byPaige?'Paige':a.actorAgent?a.actorAgent:a.byPerson?'Person':'Unattributed',w:elapsedLabel(a.occurredAt)})),[activity.items]);
 const liveState=activity.loading?'loading':activity.error?'error':live.length?'ok':'empty';
 
 if(full)return <Wrap><PageHead eyebrow="Platform · Trust Compass" title={depts.find(d=>d.id===full)?.n||"Department"} sub="Every action type routed here, and the lane the platform default puts it in."/>
@@ -497,15 +497,15 @@ return <div className="fade-in pg" style={{width:'100%',maxWidth:1440,margin:'0 
    <div className="sub" style={{maxWidth:'56ch',lineHeight:1.5}}>{gov.error?'The permissions read failed, so nothing is shown — not a record of an empty or open workspace.':'Nothing is set up here yet.'} If this persists it is a read/permissions issue, not a setup step.</div>
    <button className="btn btn-s" style={{marginTop:4}} onClick={gov.refresh}>Try again</button></div></div>
  :<>
-  {gov.ceilingLimiting&&<div className="card" role="note" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center',borderLeft:'3px solid var(--violet)'}}>
+  {gov.ceilingLimiting&&<div className="card" role="note" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center'}}>
    <Ic.shield size={15} style={{color:'var(--violet)',flex:'none'}}/><span className="sub" style={{fontSize:12}}>Platform policy is currently limiting some unattended actions further, on top of your settings.</span></div>}
-  {gov.ceilingUnconfirmed&&<div className="card" role="status" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center',borderLeft:'3px solid var(--warn)'}}>
+  {gov.ceilingUnconfirmed&&<div className="card" role="status" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center'}}>
    <Ic.shield size={15} style={{color:'var(--warn)',flex:'none'}}/><span className="sub" style={{fontSize:12}}>Platform limits couldn’t be confirmed just now, so what’s shown may be more permissive than policy actually allows. Your own settings are unaffected.</span></div>}
   {!gov.canWrite&&(gov.authorityUnconfirmed
-   ? <div className="card" role="status" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center',borderLeft:'3px solid var(--warn)'}}>
+   ? <div className="card" role="status" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center'}}>
       <Ic.shield size={15} style={{color:'var(--warn)',flex:'none'}}/><span className="sub" style={{fontSize:12}}>We couldn’t confirm your access just now, so editing is disabled — this is not a record that you lack it.</span>
       <button className="btn btn-s" style={{marginLeft:'auto',flex:'none'}} onClick={gov.refresh}>Try again</button></div>
-   : <div className="card" role="note" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center',borderLeft:'3px solid var(--ink-3)'}}>
+   : <div className="card" role="note" style={{padding:'11px 15px',display:'flex',gap:9,alignItems:'center'}}>
       <Ic.shield size={15} style={{color:'var(--ink-3)',flex:'none'}}/><span className="sub" style={{fontSize:12}}>You have read-only access here. A workspace admin can change what Paige may do on her own.</span></div>)}
   <div className="tc2-instrument" style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr)',gap:16,alignItems:'start'}}>
    <div style={{display:'grid',gap:14}}>{left.map(d=><KnobCard key={d.key} domain={d} open={open===d.key} onToggle={()=>setOpen(open===d.key?null:d.key)} onSetDomain={setDomain} onSetTool={setTool} onError={onError} readOnly={!gov.canWrite} side="lft"/>)}</div>
@@ -530,7 +530,7 @@ return <div className="fade-in pg" style={{width:'100%',maxWidth:1440,margin:'0 
   {!pending.loading&&!pending.error&&pending.items.length===0&&<div className="sub" style={{padding:'8px 20px 14px'}}>When Paige prepares work she is not allowed to run alone, it appears here — and you decide it in the Paige chat.</div>}
  </div>
 
- {/* Recorded work — real Rail (get_solo_rail_activity), honest 4-state, unknown actor → Unattributed. */}
+ {/* Recorded work — real Rail (get_solo_rail_activity), honest 4-state; a recorded person (owner_staff) → Person (E4-S3), unknown actor → Unattributed. */}
  <div className="card">
   <div className="hd"><div><h3>What's been recorded</h3><div className="sub">Work that has actually happened and been logged.</div></div>
    <span className={'pill '+(liveState==='ok'?'pill-ok':'pill-n')}>{liveState==='ok'?<><span className="dot"/>Recorded</>:liveState==='loading'?'Loading':liveState==='error'?'Unavailable':'Nothing yet'}</span></div>

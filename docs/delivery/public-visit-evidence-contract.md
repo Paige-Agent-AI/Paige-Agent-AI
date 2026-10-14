@@ -142,7 +142,11 @@ No figure is shown yet.
   signed-in owner counted, and recording setting the active visit by itself.
 - `GrowthFormRenderer.test.tsx` asserts the standalone form page records exactly one form visit and sends the answers
   once.
-- **Not verified here:**
-  - a real browser visiting a real published page on production, which is owed to the signed-out half of the ANT-87
-    acceptance run;
-  - the deployed function's answer to a real `DNT` / `Sec-GPC` request.
+- **Production (2026-10-12, after the merge `be8d9278`):** the migration is recorded and its objects, grants and
+  retirement disposition read back as designed (matrix §N4 in `docs/product/int342-marketing-convergence.md`).
+  Asked anonymously, the deployed function answered Do Not Track and Global Privacy Control with
+  `200 {recorded:false, reason:"privacy_signal"}`, a headless user agent with `automated_agent`, and a foreign
+  origin with `403`, all before the rate limiter or any write.
+- **Not verified here:** a real browser visiting a real published page on production, and a submission linked to
+  that visit. Owed to the signed-out half of the ANT-87 acceptance run
+  (`docs/delivery/marketing-s3-6-acceptance-package.md`, run D).

@@ -171,6 +171,51 @@ function isoDate(p: { year: number; month: number; day: number }): string {
   return `${String(p.year).padStart(4, "0")}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
+/**
+ * The calendar date (YYYY-MM-DD) an instant falls on in an IANA zone, or null for an unknown zone or a
+ * non-finite instant. Never falls back to UTC or to the process's own zone: the caller decides what an
+ * unknown zone means. Shares this module's zone validation so there is one IANA check, not two.
+ */
+export function localDateInZone(instantMs: number, timezone: string): string | null {
+  if (!Number.isFinite(instantMs)) return null;
+  const fmt = zoneFormatter(timezone);
+  return fmt ? isoDate(localParts(instantMs, fmt)) : null;
+}
+
+/** Minutes past local midnight (0–1439) at an instant in an IANA zone, or null for an unknown zone. */
+export function localMinutesInZone(instantMs: number, timezone: string): number | null {
+  if (!Number.isFinite(instantMs)) return null;
+  const fmt = zoneFormatter(timezone);
+  if (!fmt) return null;
+  const p = localParts(instantMs, fmt);
+  return p.hour * 60 + p.minute;
+}
+
+/** The UTC instant a local wall-clock time occurs on a local date (offset re-checked once, DST-safe). */
+function localWallUtc(year: number, month: number, day: number, minutes: number, fmt: Intl.DateTimeFormat): number {
+  const naive = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60);
+  const first = naive - zoneOffsetMs(naive, fmt);
+  const second = naive - zoneOffsetMs(first, fmt);
+  const exact = [second, first].filter((ms) => {
+    const p = localParts(ms, fmt);
+    return p.year === year && p.month === month && p.day === day && p.hour * 60 + p.minute === minutes;
+  });
+  // A wall time inside a spring-forward gap does not exist; the later candidate is just after the gap.
+  return exact.length > 0 ? Math.min(...exact) : Math.max(first, second);
+}
+
+/** The next instant strictly after `instantMs` at which the local clock in the zone reads `minutes`. */
+export function nextLocalTimeInZone(instantMs: number, timezone: string, minutes: number): number | null {
+  if (!Number.isFinite(instantMs) || !Number.isInteger(minutes) || minutes < 0 || minutes >= 1440) return null;
+  const fmt = zoneFormatter(timezone);
+  if (!fmt) return null;
+  const p = localParts(instantMs, fmt);
+  const today = localWallUtc(p.year, p.month, p.day, minutes, fmt);
+  if (today > instantMs) return today;
+  const next = new Date(Date.UTC(p.year, p.month - 1, p.day + 1));
+  return localWallUtc(next.getUTCFullYear(), next.getUTCMonth() + 1, next.getUTCDate(), minutes, fmt);
+}
+
 const ISO_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ISO_INSTANT =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(?:Z|[+-](\d{2}):(\d{2}))$/;

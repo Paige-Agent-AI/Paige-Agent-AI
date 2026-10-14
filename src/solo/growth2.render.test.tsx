@@ -125,6 +125,17 @@ vi.mock("./useCampaignActions", async (importOriginal) => ({
   }),
 }));
 
+// A campaign's leads read through a governed RPC; their contract is proven by
+// supabase/tests/campaign_lead_attribution.sql and useCampaignLeads.test.tsx. Here the dossier has none.
+vi.mock("./useCampaignLeads", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./useCampaignLeads")>()),
+  useCampaignLeads: () => ({
+    phase: "ready", canManage: harness.assets.canManage !== false,
+    counts: { leads: 0, opportunities: 0, won: 0, lost: 0, waiting: 0, failed: 0 },
+    leads: [], uncredited: 0, captureForms: [], truncated: false, retry: () => {},
+  }),
+}));
+
 // Content reads its library through Supabase; its own proof is marketing-content.render.test.tsx. Here it
 // shows only what the hub hands it, so the address wiring (?kind=, ?piece=) can be driven.
 vi.mock("./marketing-content", () => ({
@@ -898,6 +909,22 @@ describe("Solo Marketing department views", () => {
     expect(dialog?.textContent).toContain("New campaign brief");
   });
 
+  it("the Source filter keeps a bare brief under No live source: credited leads are not a source a brief is backed by", () => {
+    useWorkspace();
+    harness.briefs = [brief("b1", "Bare draft"), brief("b2", "Offer-backed brief", { offerId: "o-1", offerName: "Advisory retainer" })];
+    renderAt("/solo/42/growth/campaigns");
+    const select = document.querySelector<HTMLSelectElement>('select[aria-label="Filter by source state"]')!;
+    const choose = (value: string) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(select, value);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const names = () => [...document.querySelectorAll(".pf-row")].map((row) => (row.textContent ?? "").includes("Bare draft") ? "Bare draft" : (row.textContent ?? "").includes("Offer-backed brief") ? "Offer-backed brief" : "?");
+    choose("unavail");
+    expect(names()).toEqual(["Bare draft"]);
+    choose("live");
+    expect(names()).toEqual(["Offer-backed brief"]);
+  });
+
   it("a campaign's dossier shows what it uses, in Reach and Land, and an admin attaches and removes pieces", async () => {
     useWorkspace();
     harness.briefs = [brief("b1", "Spring advisory intake", { lifecycleStatus: "active" })];
@@ -913,6 +940,9 @@ describe("Solo Marketing department views", () => {
         { kind: "form", id: "f-1", name: "Discovery call request", status: "active", channel: null },
         { kind: "content", id: "c-1", name: "Spring ad", status: "draft", channel: "ad_copy" },
       ] };
+    // Experience 03 S1b: a form's campaign link decides where its leads go, so changing one re-reads Marketing.
+    const reread = vi.fn();
+    harness.state = { ...harness.state, retry: reread };
     renderAt("/solo/42/growth/campaigns");
     act(() => button("Open dossier")!.click());
     const dialog = () => document.querySelector('[role="dialog"]')!;
@@ -929,12 +959,17 @@ describe("Solo Marketing department views", () => {
     expect([...lane("Land").querySelectorAll(".cc-choices button")].map((choice) => choice.textContent)).toEqual(["PageSpring landingPublished"]);
     await act(async () => { (lane("Land").querySelector(".cc-choices button") as HTMLButtonElement).click(); });
     expect(harness.assetWrites).toEqual([["attach", "b1", "page", "p-1"]]);
+    expect(reread).not.toHaveBeenCalled(); // a page never decides where leads go
     expect(document.querySelector(".campaign-toast")?.textContent).toContain("Attached to the campaign. Nothing is sent or published.");
     await act(async () => { (lane("Reach").querySelector("button[aria-label='Remove Spring announcement from this campaign']") as HTMLButtonElement).click(); });
     expect(harness.assetWrites.at(-1)).toEqual(["detach", "b1", "email_campaign", "e-1"]);
     // Focus doesn't fall out of the dossier when the removed row's button goes: it returns to the lane's Add.
     await act(async () => { await new Promise((resolve) => requestAnimationFrame(() => resolve(null))); });
     expect(document.activeElement).toBe(lane("Reach").querySelector(".cc-add"));
+    // Removing the form does: Overview, Analytics and the form panel must stop naming this campaign's pipeline.
+    await act(async () => { (lane("Land").querySelector("button[aria-label='Remove Discovery call request from this campaign']") as HTMLButtonElement).click(); });
+    expect(harness.assetWrites.at(-1)).toEqual(["detach", "b1", "form", "f-1"]);
+    expect(reread).toHaveBeenCalledTimes(1);
   });
 
   it("a member reads what a campaign uses without the names they can't see, and can't change it", () => {
@@ -1385,6 +1420,47 @@ describe("Solo Marketing department views", () => {
     expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Not routed: no pipeline, no alert. Your default pipeline in Sales has no open stage to take them.");
     act(() => root.unmount()); host.remove();
     useWorkspace({ pipelineWorkspace: defaultWorkspace({ archivedAt: daysAgo(2) }) });
+    renderAt("/solo/42/growth/analytics");
+    expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
+  });
+
+  // Experience 03 S1b (20271026100000): a form with no route of its own that is attached to one campaign whose
+  // pipeline can take a lead files its leads there. Marketing names that destination everywhere it names a route.
+  const campaignRoute = { briefId: "b-1", briefName: "Spring consults", pipelineId: "p-camp", pipelineName: "Consults", stageId: "st-disc", stageLabel: "Discovery" };
+
+  it("a form attached to one campaign with a pipeline reads as landing in the campaign's pipeline, everywhere Marketing names its route", () => {
+    // No default pipeline at all: the campaign's pipeline alone routes the form.
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("1 of 1Forms that route leadsEvery live form routes its leads");
+    expect(button("Route it")).toBeUndefined();
+    const capture = host.querySelector("#mov-capture")?.textContent ?? "";
+    expect(capture).toContain("Campaign: Consults → Discovery");
+    expect(capture).not.toMatch(/Not routed|\(default\)/);
+    act(() => (host.querySelector(".mov-cp") as HTMLButtonElement).click());
+    const dialog = host.querySelector('[role="dialog"]')?.textContent ?? "";
+    expect(dialog).toContain("Campaign: Consults → Discovery. With no route of its own, this form files its leads in the pipeline of its campaign, Spring consults. Set a route below to send them to a specific pipeline instead.");
+    act(() => root.unmount()); host.remove();
+    // Its own route still comes first, and a default pipeline does not override the campaign.
+    useWorkspace({ pipelineWorkspace: defaultWorkspace(), artifacts: [{ ...form, id: "f-camp", name: "Campaign form", campaignRoute }, { ...form, id: "f-own", name: "Own route", intakePipelineId: "pipeline-1", campaignRoute }, { ...form, id: "f-none", name: "No route" }] });
+    renderAt("/solo/42/growth/analytics");
+    const routes = Object.fromEntries([...host.querySelectorAll(".mva-cap-row")].map((row) => [row.querySelector(".mva-row-t")!.firstChild!.textContent, row.querySelector("small")!]));
+    expect(routes["Campaign form"].textContent).toBe("Campaign: Consults → Discovery");
+    expect(routes["Campaign form"].className).not.toContain("is-warn");
+    expect(routes["Own route"].textContent).toBe("Routed to a pipeline");
+    expect(routes["No route"].textContent).toBe("Client work (default) → New enquiry");
+  });
+
+  it("once the page knows the intake functions are not deployed, no form is said to land in its campaign's pipeline either", () => {
+    harness.intake = "missing";
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
+    renderAt("/solo/42/growth/overview");
+    expect(chain()[2]).toBe("0 of 1Forms that route leadsThe chain breaks hereRoute it");
+    expect(host.querySelector("#mov-capture")?.textContent).not.toContain("Campaign: ");
+    act(() => button("Route it")!.click());
+    expect(host.querySelector('[role="dialog"]')?.textContent).not.toContain("Campaign: ");
+    act(() => root.unmount()); host.remove();
+    useWorkspace({ artifacts: [{ ...form, campaignRoute }] });
     renderAt("/solo/42/growth/analytics");
     expect(host.querySelector(".mva-cap-row small")?.textContent).toBe("Not routed");
   });

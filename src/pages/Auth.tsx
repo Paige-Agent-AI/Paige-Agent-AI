@@ -31,6 +31,7 @@ import {
   signupPhoneCountryOptions,
   type SignupPhoneCountry,
 } from "@/lib/auth/signupMobile";
+import { fetchOperatorStanding, isOperator as holdsOperatorTier } from "@/lib/auth/operatorStanding";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -182,10 +183,11 @@ const Auth = () => {
     // after Platform is deliberately selected.
     const accountChoiceContext = Promise.all([
       supabase.from("tenant_members").select("tenant_id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "active"),
-      supabase.rpc("is_platform_admin"),
+      fetchOperatorStanding(),
     ]);
-    const [initialMemberships, initialStaff] = await accountChoiceContext;
-    if (initialMemberships.error || initialStaff.error) {
+    const [initialMemberships, initialStanding] = await accountChoiceContext;
+    // A null standing is a failed read, never "not an operator".
+    if (initialMemberships.error || initialStanding === null) {
       // Keep the authenticated person on this exact continuation. Moving to the
       // chooser would discard an in-memory signup plan and cannot retry invite,
       // role, or client resolution.
@@ -193,7 +195,7 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
-    if (!initialStaff.error && Boolean(initialStaff.data)) {
+    if (holdsOperatorTier(initialStanding)) {
       signupPlanIntentRef.current = null;
       clearPlanIntent();
       navigate(operatorChooserTarget(window.location.search), { replace: true });

@@ -93,13 +93,23 @@ function mockTables(
   });
 }
 
+/** The caller's operator tier, as the one server answer (`operator_standing()`) reports it. */
+let tier: string | null = null;
 /** What `agency_switch_context()` hands back. */
-function mockCtx(ctx: Record<string, unknown> | null) {
+let ctx: Record<string, unknown> | null = null;
+/** Answer the two RPCs the resolver makes. */
+function answerRpcs() {
   rpc.mockImplementation((name: string) =>
-    name === "agency_switch_context"
-      ? Promise.resolve({ data: ctx, error: null })
-      : Promise.resolve({ data: null, error: null }),
+    name === "operator_standing"
+      ? Promise.resolve({ data: [{ tier, active_tenant_id: null }], error: null })
+      : name === "agency_switch_context"
+        ? Promise.resolve({ data: ctx, error: null })
+        : Promise.resolve({ data: null, error: null }),
   );
+}
+function mockCtx(next: Record<string, unknown> | null) {
+  ctx = next;
+  answerRpcs();
 }
 
 const AGENCY_ID = "2de8ca80-0000-4000-8000-000000000000";
@@ -113,6 +123,9 @@ const MANAGER = {
 beforeEach(() => {
   rpc.mockReset();
   from.mockReset();
+  tier = null;
+  ctx = null;
+  answerRpcs();
   mockTables();
 });
 
@@ -204,7 +217,11 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
   });
 
   it("falls through to /admin when the RPC throws", async () => {
-    rpc.mockImplementation(() => Promise.reject(new Error("boom")));
+    rpc.mockImplementation((name: string) =>
+      name === "operator_standing"
+        ? Promise.resolve({ data: [{ tier: null, active_tenant_id: null }], error: null })
+        : Promise.reject(new Error("boom")),
+    );
     expect(await resolveLandingRoute("u1")).toBe("/choose-account");
   });
 
@@ -225,11 +242,13 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
   // that an operator reaches the chooser and no context is silently selected.
   it("pauses a platform_admin at the chooser, not a tenant surface", async () => {
     mockTables({ roles: ["platform_admin"] });
+    tier = "platform_admin";
     await expect(resolveLandingRoute("u-operator")).resolves.toBe("/choose-account");
   });
 
   it("also pauses a super_admin at the chooser", async () => {
     mockTables({ roles: ["super_admin"] });
+    tier = "super_admin";
     await expect(resolveLandingRoute("u-god")).resolves.toBe("/choose-account");
   });
 
@@ -237,7 +256,17 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
   // a tenant role: the Platform and tenant contexts are different §9 audiences.
   it("requires the chooser when a platform_admin also carries a tenant role", async () => {
     mockTables({ roles: ["admin", "platform_admin"] });
+    tier = "platform_admin";
     await expect(resolveLandingRoute("u-both")).resolves.toBe("/choose-account");
+  });
+
+  it("fails closed to a retryable auth door when operator standing cannot be read", async () => {
+    rpc.mockImplementation((name: string) =>
+      name === "operator_standing"
+        ? Promise.resolve({ data: null, error: { message: "network" } })
+        : Promise.resolve({ data: null, error: null }),
+    );
+    await expect(resolveLandingRoute("u-standing-unknown")).resolves.toBe("/auth?mode=login&route=retry");
   });
 
   it("fails closed to a retryable auth door when role authority cannot be read", async () => {

@@ -27,6 +27,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { isSoloBetaPlan } from "@/lib/auth/soloBetaAcquisition";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
+import { fetchOperatorStanding, isOperator } from "@/lib/auth/operatorStanding";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -74,8 +75,9 @@ export default function Onboarding() {
       // brand-new owner would be shunted into /app and never reach the
       // provisioner (and loop against RequireCompleteSignup). A genuine invited
       // client's row has source <> 'signup'.
-      const [{ data: staff }, { data: owned }, { data: member }, { data: clientRows }, agencyRes] = await Promise.all([
-        supabase.rpc("is_platform_admin"),
+      const [standing, { data: owned }, { data: member }, { data: clientRows }, agencyRes] = await Promise.all([
+        // The one server answer to operator standing. A failed read (null) is not "operator".
+        fetchOperatorStanding(),
         supabase.from("tenants").select("id").eq("owner_user_id", uid).limit(1).maybeSingle(),
         supabase.from("tenant_members").select("tenant_id").eq("user_id", uid).limit(1).maybeSingle(),
         supabase.from("clients").select("id, source").eq("linked_user_id", uid).limit(10),
@@ -90,7 +92,7 @@ export default function Onboarding() {
           .maybeSingle(),
       ]);
       if (!mounted) return;
-      if (staff || owned?.id || member?.tenant_id) {
+      if (isOperator(standing) || owned?.id || member?.tenant_id) {
         window.location.assign(await resolveLandingRoute(uid));
         return;
       }

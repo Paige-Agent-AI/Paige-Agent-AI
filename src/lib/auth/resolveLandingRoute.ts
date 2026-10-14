@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
+import { fetchOperatorStanding, isOperator } from "@/lib/auth/operatorStanding";
 
 // Pre-portal onboarding is now just two gates: welcome + agreement.
 // Anything beyond signing_agreement lands the client directly in /workspace,
@@ -190,7 +191,7 @@ export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
 export async function resolveLandingRoute(userId: string): Promise<string> {
   try {
-    const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
+    const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes, standing] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase
         .from("clients")
@@ -209,6 +210,8 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
         .eq("status", "active")
         .limit(1)
         .maybeSingle(),
+      // The one server answer to operator standing. null = the read failed.
+      fetchOperatorStanding(),
     ]);
 
     // Role authority is required to decide whether Platform must be offered.
@@ -227,22 +230,12 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     // also own/admin an agency tenant. The chooser is the only place where Platform
     // or a directly authorized Paige workspace can be selected deliberately.
     //
-    // BOTH OPERATOR TIERS, NOT JUST GOD (§53). `platform_admin` is the delegated
-    // operator tier and is admitted by `RequireOperator` exactly as `super_admin` is
-    // — the guard's predicate is `is_platform_admin()`, which means EITHER role. The
-    // two tiers differ in AUTHORITY (a platform_admin cannot grant roles or pass the
-    // integrity gates frozen on `is_platform_owner()`); they do not differ in where
-    // they must choose. Testing only `super_admin` here sent a platform_admin — who by
-    // design holds no tenant membership, owns no tenant and has no client row — all
-    // the way through to the "no role, no tenant, hasn't paid" fallback and out to
-    // `/pricing`, on their own platform.
-    //
-    // `OperatorLogin` already worked around this at ITS door, and its comment named
-    // the cause in as many words: "`resolveLandingRoute` — which has no
-    // platform_admin branch at all". Fixing the symptom at one entrance left every
-    // other entrance broken — the ordinary `/auth` sign-in and the landing header
-    // both route through here. The root cause is closed at the resolver instead.
-    if (roles.includes("super_admin") || roles.includes("platform_admin")) {
+    // WHO IS AN OPERATOR is the one server answer (`operator_standing()`), read through the
+    // one client home — every tier, not a list of role words. Testing a list here once sent a
+    // platform_admin, who by design holds no tenant membership, all the way to `/pricing` on
+    // their own platform. A failed read is a retry, never "not an operator".
+    if (standing === null) return LANDING_ROUTE_RETRY;
+    if (isOperator(standing)) {
       return "/choose-account";
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);

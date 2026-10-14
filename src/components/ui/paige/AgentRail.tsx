@@ -270,7 +270,7 @@ function ExpandedPanel({
             icon={MessagesSquare}
             title="Your Paige team is on call"
             description={
-              accountType === "super_admin"
+              accountType === "platform_operator"
                 ? "Ask about the fleet, or press ⌘K from anywhere to start."
                 : "Ask her anything — she'll pull in the right teammate. Press ⌘K from anywhere."
             }

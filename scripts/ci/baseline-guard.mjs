@@ -2,9 +2,10 @@
 /**
  * baseline-guard — every ratchet baseline may only SHRINK.
  *
- * Two baselines are guarded, and they have different shapes:
+ * Three baselines are guarded, and they have different shapes:
  *   scripts/ci/tsc-baseline.txt    `<count>\t<signature>` per line — a multiset, checked per entry
  *   scripts/ci/alias-baseline.txt  a single integer — the operator console's shadcn bridge
+ *   scripts/ci/operator-role-literal-baseline.json  per-file counts — operator role words in client code
  *
  * A ratchet whose baseline can be edited upward is not a ratchet: the author whitelists the
  * regression in the same PR that causes it. The alias baseline was added 2026-08-23 and its
@@ -106,6 +107,30 @@ if (aliasBaseText !== null && existsSync(ALIAS_PATH)) {
     process.exit(1);
   }
   console.log(`baseline-guard: ${ALIAS_REL} ${before} → ${after} (ok).`);
+}
+
+/**
+ * The operator role-literal baseline — per file, so each entry is compared on its own: a PR may
+ * lower a file's count or drop the file, never raise a count or add a file.
+ */
+const ROLE_REL = "scripts/ci/operator-role-literal-baseline.json";
+const ROLE_PATH = join(HERE, "operator-role-literal-baseline.json");
+let roleBaseText = null;
+try {
+  roleBaseText = execSync(`git show ${BASE}:${ROLE_REL}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+} catch {
+  console.log(`baseline-guard: ${ROLE_REL} does not exist at base ${BASE.slice(0, 12)} — this PR introduces it, skipping.`);
+}
+if (roleBaseText !== null && existsSync(ROLE_PATH)) {
+  const before = JSON.parse(roleBaseText).files ?? {};
+  const after = JSON.parse(readFileSync(ROLE_PATH, "utf8")).files ?? {};
+  const grew = Object.entries(after).filter(([file, n]) => n > (before[file] ?? 0));
+  if (grew.length) {
+    console.error(`❌ baseline-guard: ${ROLE_REL} GREW for ${grew.map(([f]) => f).join(", ")}.`);
+    console.error("   Operator standing is read from src/lib/auth/operatorStanding.ts, never from a list of role words.");
+    process.exit(1);
+  }
+  console.log(`baseline-guard: ${ROLE_REL} did not grow (ok).`);
 }
 
 console.log(`✅ baseline-guard: tsc baseline did not grow (base ${base.size} sigs → head ${head.size} sigs).`);

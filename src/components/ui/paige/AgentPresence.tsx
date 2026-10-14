@@ -15,7 +15,7 @@ import { resolveAgentPersona, type AgentAccountType, type AgentPersona } from ".
  * ACCOUNT-TYPE derivation is PRESENTATION-ONLY (§9): it never authorizes anything —
  * the real tenant/operator boundary is server-side (RLS + PlatformStaffOnly). It only
  * picks which chrome/identity the rail shows:
- *   • God / platform tier (no active tenant) → super_admin → "Paige Operator"
+ *   • Platform operator, either tier, with no active tenant → platform_operator → "Paige Operator"
  *   • active tenant is a top-level agency/enterprise → agency (scope-switcher slot)
  *   • active tenant has a parent → sub_account (identical rail to solo, spec §5a)
  *   • otherwise → solo
@@ -57,7 +57,7 @@ function deriveAccountType(args: {
   const { isPlatformStaff, activeTenantId, activeTenant } = args;
   // God/platform tier: platform staff operating with NO tenant selected (mirrors
   // AdminLayout's `godMode`). Presentation-only — server-side gates are authoritative.
-  if (isPlatformStaff && activeTenantId === null) return "super_admin";
+  if (isPlatformStaff && activeTenantId === null) return "platform_operator";
   if (activeTenant) {
     // §51 invariant: a child (parent_tenant_id set) is NEVER an agency. Check parent first.
     if (activeTenant.parent_tenant_id) return "sub_account";

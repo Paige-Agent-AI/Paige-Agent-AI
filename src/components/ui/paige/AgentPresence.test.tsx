@@ -64,7 +64,7 @@ beforeAll(() => {
   }
 });
 
-const ACCOUNT_TYPES: AgentAccountType[] = ["solo", "sub_account", "agency", "super_admin"];
+const ACCOUNT_TYPES: AgentAccountType[] = ["solo", "sub_account", "agency", "platform_operator"];
 
 // Render the rail in its EXPANDED panel state so identity/operator-chip/body
 // assertions can read the expanded content. `hasChatBody` engages the onboarding
@@ -90,7 +90,7 @@ describe("resolveAgentPersona seam", () => {
   });
 
   it("gives Super Admin the distinct 'Paige Operator' identity (spec §5a)", () => {
-    const p = resolveAgentPersona("super_admin");
+    const p = resolveAgentPersona("platform_operator");
     expect(p.label).toBe("Paige Operator");
     expect(p.operator).toBe(true);
     expect(p.vp).toBeUndefined();
@@ -125,7 +125,7 @@ describe("<AgentRail> renders across the four account-type surfaces (§32.b)", (
   });
 
   it("shows the distinct 'Paige Operator' identity + operator chip for Super Admin (spec §5a)", () => {
-    const out = railHtml("super_admin");
+    const out = railHtml("platform_operator");
     expect(out).toContain("Paige Operator");
     expect(out).toContain("Fleet-wide operations");
     expect(out).toContain(">Operator<");

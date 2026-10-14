@@ -12,7 +12,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * `/operator` address sent it to `/app`. The account could not reach the console it is
  * authorised for, and clicking Platform on the chooser appeared to do nothing.
  */
-const h = vi.hoisted(() => ({ roles: [] as string[] }));
+const h = vi.hoisted(() => ({
+  roles: [] as string[],
+  /** The server's operator answer for this caller; `undefined` = the read fails. */
+  tier: null as string | null | undefined,
+}));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -20,6 +24,13 @@ vi.mock("@/integrations/supabase/client", () => ({
       getUser: async () => ({ data: { user: { id: "user-1" } } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     },
+    // The one server answer to operator standing. The guard names no operator role itself.
+    rpc: async (name: string) =>
+      name !== "operator_standing"
+        ? { data: null, error: { message: `unexpected rpc ${name}` } }
+        : h.tier === undefined
+          ? { data: null, error: { message: "network" } }
+          : { data: [{ tier: h.tier, active_tenant_id: null }], error: null },
     from: () => ({
       select: () => ({
         eq: async () => ({ data: h.roles.map((role) => ({ role })), error: null }),
@@ -43,6 +54,7 @@ describe("ClientOnlyRouteGuard", () => {
 
   beforeEach(() => {
     h.roles = [];
+    h.tier = null;
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -73,11 +85,13 @@ describe("ClientOnlyRouteGuard", () => {
 
   it("keeps a platform_admin-only account on the operator console", async () => {
     h.roles = ["platform_admin"];
+    h.tier = "platform_admin";
     expect(await landOn("/operator/fleet/directory")).toBe("/operator/fleet/directory");
   });
 
   it("keeps a super_admin account on the operator console", async () => {
     h.roles = ["super_admin"];
+    h.tier = "super_admin";
     expect(await landOn("/operator/fleet/directory")).toBe("/operator/fleet/directory");
   });
 
@@ -89,5 +103,13 @@ describe("ClientOnlyRouteGuard", () => {
   it("still sends an account with no role away from the operator console", async () => {
     h.roles = [];
     expect(await landOn("/operator/fleet/directory")).toBe("/app");
+  });
+
+  it("does not send anyone away when their operator standing could not be read", async () => {
+    // "Could not verify" is not "you are a client". Before this, a failed read was classed as
+    // a client and bounced the person, operator or not.
+    h.roles = [];
+    h.tier = undefined;
+    expect(await landOn("/operator/fleet/directory")).toBe("/operator/fleet/directory");
   });
 });

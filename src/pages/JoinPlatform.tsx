@@ -5,7 +5,7 @@
  *    invited email, then accept_platform_invite() grants the scoped Platform
  *    Admin role and then requires deliberate account choice.
  *  - Without a token: the returning-staff sign-in — authenticate, verify
- *    is_platform_admin, then route to the shared chooser (non-staff bounced).
+ *    the caller's operator standing, then route to the shared chooser (non-staff bounced).
  * Route: /join-platform.
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
@@ -21,6 +21,7 @@ import { PLATFORM } from "@/lib/platform/identity";
 import { LANDING_ROUTE_RETRY, resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { operatorChooserTarget } from "@/lib/auth/operatorTarget";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { fetchOperatorStanding, isOperator as holdsOperatorTier } from "@/lib/auth/operatorStanding";
 
 export default function JoinPlatform() {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export default function JoinPlatform() {
       // No token — returning staff. Unknown authority is not a denial and cannot
       // bypass deliberate account choice.
       const isStaff = await Promise.race<boolean | null>([
-        supabase.rpc("is_platform_admin").then(({ data, error }) => error ? null : data === true),
+        fetchOperatorStanding().then((s) => (s ? holdsOperatorTier(s) : null)),
         new Promise<null>((r) => setTimeout(() => r(null), 4000)),
       ]);
       if (isStaff === null) {

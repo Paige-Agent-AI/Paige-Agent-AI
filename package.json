@@ -50,6 +50,8 @@
     "lint:pack-lineage": "node scripts/ci/pack-lineage.mjs",
     "pack:keys": "node scripts/pack/key-xref.mjs",
     "lint:shadow-vars": "node scripts/ci/shadow-var-lint.mjs",
+    "lint:operator-roles": "node scripts/ci/operator-role-literal-lint.mjs",
+    "lint:operator-roles:test": "node scripts/ci/operator-role-literal-lint.mjs --self-test",
     "lint:tool-catalogue": "node scripts/ci/tool-catalogue-lint.mjs",
     "lint:crm-patch-fields": "node scripts/ci/crm-patch-field-gen.mjs",
     "lint:crm-patch-fields:test": "node scripts/ci/crm-patch-field-gen.mjs --self-test",

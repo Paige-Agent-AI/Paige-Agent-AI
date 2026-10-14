@@ -352,7 +352,7 @@ export function FleetDirectoryView({
 }
 
 /**
- * `isPlatformOwner` is the shell's one server answer (`useIsPlatformOwner`, re-asked on sign-in
+ * `isPlatformOwner` is the shell's one server answer (`useOperatorStanding`, re-asked on sign-in
  * changes) — passed through rather than asked a second time here (§18).
  */
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {

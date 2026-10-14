@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERNAL_REVENUE_CLASS, netFleetCount } from "@/operator/data/useFleet";
+import { fetchOperatorStanding, isOwnerTier } from "@/lib/auth/operatorStanding";
 
 /**
  * The live signal the operator console's CHROME reads — the rail badges, the rail footer, the
@@ -43,8 +44,8 @@ import { INTERNAL_REVENUE_CLASS, netFleetCount } from "@/operator/data/useFleet"
  *     tenant column, the operator IS the desk), and read ONLY when this session holds
  *     `super_admin`. See the §9/§53 note below — this gate is load-bearing, not a formality.
  *     Open = anything not `resolved`/`closed`, the same predicate `SupportAdmin` uses.
- *   • `roleLabel` — REAL, from `user_roles` for THIS session's own uid ("Users can view own
- *     roles" is a self-read policy, so it works for every operator tier).
+ *   • `roleLabel` — REAL, the operator tier from the one server answer (`operator_standing()`,
+ *     through src/lib/auth/operatorStanding.ts). This file names no operator role.
  *   • `provisioning` badge — ABSENT ON PURPOSE. `tenant_provisioning` still exists, but its only
  *     writers (the new-tenant trigger, the queue drain, `run_starter_provisioning`) were all
  *     dropped by `20260915000000_remove_starter_auto_provisioner.sql` when the owner ruled that
@@ -152,7 +153,7 @@ export function useOperatorChrome(enabled: boolean = true): OperatorChrome {
         setFullName(full || null);
         setEmail(typeof auth?.user?.email === "string" ? auth.user.email : null);
 
-        const [tenantsRes, subsRes, classRes, internalRes, internalSubsRes, snapRes, rolesRes] =
+        const [tenantsRes, subsRes, classRes, internalRes, internalSubsRes, snapRes, standing] =
           await Promise.all([
             // Exact counts, no rows over the wire, immune to the project's max-rows cap.
             supabase.from("tenants").select("id", { count: "exact", head: true }),
@@ -191,7 +192,7 @@ export function useOperatorChrome(enabled: boolean = true): OperatorChrome {
             // yet, hence the cast, matching `useSystemsCheck`'s convention.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (supabase as any).rpc("systems_check_snapshot", { p_scope: "operator" }),
-            uid ? supabase.from("user_roles").select("role").eq("user_id", uid) : Promise.resolve(null),
+            uid ? fetchOperatorStanding() : Promise.resolve(null),
           ]);
 
         if (!alive) return;
@@ -227,12 +228,8 @@ export function useOperatorChrome(enabled: boolean = true): OperatorChrome {
         // ── Role word ─────────────────────────────────────────────────────────────────────
         // Operator tiers only (§53). A session holding neither is not an operator, and printing
         // its tenant-level role in the platform footer would misdescribe who is standing there.
-        const roleRows = (rolesRes?.error ? null : rolesRes?.data) ?? null;
-        const roles = new Set((roleRows ?? []).map((r) => String(r.role)));
-        const isOwnerTier = roles.has("super_admin");
-        setRoleLabel(
-          isOwnerTier ? "super_admin" : roles.has("platform_admin") ? "platform_admin" : null,
-        );
+        const ownerTier = isOwnerTier(standing);
+        setRoleLabel(standing?.tier ?? null);
 
         // ── Systems Check → the fleet badge + the header pill ─────────────────────────────
         const snap = (snapRes?.error ? null : snapRes?.data) as
@@ -275,7 +272,7 @@ export function useOperatorChrome(enabled: boolean = true): OperatorChrome {
         // super_admin ONLY. A platform_admin's read of this table returns their own filed
         // tickets via the "Users view own tickets" policy, not the desk — see the §9/§53 note
         // at the top. Absent beats a real count of the wrong rows.
-        if (isOwnerTier) {
+        if (ownerTier) {
           const openFilter = "(resolved,closed)";
           const [openRes, urgentRes] = await Promise.all([
             supabase

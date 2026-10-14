@@ -409,7 +409,7 @@ AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 - ~~**Before merge:** the door proof's fixtures share one SendGrid domain id, which `000250`'s unique index refuses when CI applies it first (master §5, item 0).~~ *Closed before merge (round 5 distinct fixture ids; passed in CI order on the merged head).*
 
 Closed in round 4: a SendGrid-only business now gets a draft, and enterprise forms can be opted in.
-- **Post-merge findings #2132 and #2133.** Open; each is fixed in its own reviewed PR, not yet merged (master §4.0).
+- **Post-merge findings #2132 and #2133.** #2132 remains held in unmerged PR #2150. #2133 was closed by PR #2151, merged as `a3d5b2e3187790269b6407dde0fab4c8ed0891db`; production records migration `20271101142133` and its normalization trigger/function. Authenticated application-write acceptance remains PROOF OWED. Preserve the dated pre-release observations in master §4.0.
 - **The full rollout plan.** Gmail and iCloud Mail are planned separately in `exp03-launch-email-providers-plan.md`.
 
 ---

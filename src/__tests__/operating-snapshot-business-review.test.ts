@@ -28,6 +28,7 @@ import {
   type SnapshotPeriod,
 } from '../../supabase/functions/_shared/paige-context/snapshot.ts';
 import type { ContextIdentity, ContextSourceResult } from '../../supabase/functions/_shared/paige-context/mod.ts';
+import { currentMetricVersion, type MetricBusinessTimeZone } from '../../supabase/functions/_shared/analytics-metrics/metric-contract.ts';
 
 // ── fixtures ─────────────────────────────────────────────────────────────────────────────────────────
 
@@ -59,8 +60,10 @@ type Values =
   | { kind: 'currency_totals'; by_currency: { currency: string; amount_minor: string; record_count: number }[]; breakdown: [] };
 
 /** What the fake issuer answers for one read. `error` = the RPC's Postgres error code. */
-type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string };
-type IssueArgs = { p_metric_key: string; p_range_key: string; p_range_start: string; p_range_end: string };
+type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string; metricVersion?: string; calendar?: MetricBusinessTimeZone | null; payloadOverride?: Record<string, unknown> };
+type IssueArgs = { p_metric_key: string; p_metric_version: string; p_range_key: string; p_range_start: string; p_range_end: string };
+// Fixed synthetic server evidence, paired with NOW; never a browser-derived business day.
+const BUSINESS_CALENDAR: MetricBusinessTimeZone = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-12' };
 
 function money(...rows: [string, string][]): Values {
   return { kind: 'currency_totals', by_currency: rows.map(([currency, amount_minor]) => ({ currency, amount_minor, record_count: 1 })), breakdown: [] };
@@ -111,23 +114,29 @@ function fakeCaller(opts: {
         if (s.error) return { data: null, error: { code: s.error } };
         const truth = s.truth ?? 'LIVE';
         const values = truth === 'UNAVAILABLE' ? null : s.values ?? defaultScript(a).values;
+        const overdue = a.p_metric_key === 'sales.receivables.overdue_current';
+        const calendar = s.calendar === undefined ? BUSINESS_CALENDAR : s.calendar;
+        const calendarReason = overdue && calendar && calendar.state !== 'configured' ? `business_time_zone_${calendar.state}` : undefined;
         refs += 1;
         const ref = 'aneb_v1_' + refs.toString(16).padStart(64, '0');
         const result = {
-          metric_key: a.p_metric_key, metric_version: '1.0.0', owner_department: 'sales', label: 'Sales figure',
+          metric_key: a.p_metric_key, metric_version: s.metricVersion ?? a.p_metric_version, owner_department: 'sales', label: 'Sales figure',
           definition: 'Canonical Sales measurement.', formula: 'SUM by currency',
-          range: { key: a.p_range_key, start: a.p_range_start, end: a.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: 'event_timestamp_cohort' },
-          dimensions: {}, values, unit: values?.kind === 'count' ? 'count' : 'currency_minor', source_refs: ['public.paige_invoices'],
+          range: { key: a.p_range_key, start: a.p_range_start, end: a.p_range_end, bounds: '[start,end)', timezone: 'UTC', semantics: overdue ? 'current_snapshot' : 'event_timestamp_cohort' },
+          dimensions: {}, values, unit: values?.kind === 'count' ? 'count' : 'currency_minor', source_refs: overdue ? ['public.paige_invoices', 'public.tenant_business_time_zones'] : ['public.paige_invoices'],
+          ...(overdue && calendar !== null ? { business_time_zone: calendar } : {}),
           as_of: NOW.toISOString(), freshness: { queried_at: NOW.toISOString(), source_updated_through: null },
           coverage: truth === 'LIVE'
             ? { state: 'complete', candidate_count: 1, contributing_count: 1, excluded_count: 0 }
             : truth === 'PARTIAL'
             ? { state: 'partial', candidate_count: 2, contributing_count: 1, excluded_count: 1 }
-            : { state: 'unavailable', candidate_count: 1, contributing_count: 0, excluded_count: 1 },
-          exclusions: truth === 'LIVE' ? [] : [{ reason: 'invalid_currency', count: 1 }],
+            : { state: 'unavailable', candidate_count: 1, contributing_count: 0, excluded_count: 1, ...(calendarReason ? { reason: calendarReason } : {}) },
+          exclusions: truth === 'LIVE' ? [] : [{ reason: calendarReason ?? 'invalid_currency', count: 1 }],
           truth_state: truth, caveats: [], source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: TENANT,
           account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: ref, reference_expires_at: new Date(NOW_MS + 900_000).toISOString(),
         };
+        // Intentional malformed producer payloads stay independent of the valid factory.
+        Object.assign(result, s.payloadOverride);
         store.set(ref, result);
         return { data: structuredClone(result), error: null };
       }
@@ -281,6 +290,58 @@ describe('Sales completed-day reporting cutoff', () => {
 });
 
 describe('payments adapter', () => {
+  it('uses overdue 1.1.0 and keeps every other requested Sales definition at 1.0.0', async () => {
+    const f = fakeCaller();
+    await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx());
+    for (const request of f.issued()) {
+      expect(request.p_metric_version).toBe(currentMetricVersion(request.p_metric_key));
+      expect(request.p_metric_version).toBe(request.p_metric_key === 'sales.receivables.overdue_current' ? '1.1.0' : '1.0.0');
+    }
+  });
+
+  it.each([
+    ['old metric identity', { metricVersion: '1.0.0' }],
+    ['absent calendar evidence', { calendar: null }],
+    ['wrong server business day', { calendar: { ...BUSINESS_CALENDAR, as_of_date: '2026-10-11' } }],
+  ] satisfies [string, Partial<Script>][] )('refuses %s without promoting overdue figures or risks', async (_name, patch) => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { values: money(['usd', '50000']), ...patch } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+    expect(f.issued().find(row => row.p_metric_key === 'sales.receivables.overdue_current')?.p_metric_version).toBe('1.1.0');
+  });
+
+  it.each(['missing', 'invalid'] as const)('keeps %s business-calendar evidence unavailable rather than a zero balance', async state => {
+    const calendar: MetricBusinessTimeZone = { state, zone: null, as_of_date: null, set_at: state === 'missing' ? null : BUSINESS_CALENDAR.set_at };
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { truth: 'UNAVAILABLE', values: null, calendar } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses extra calendar fields instead of repairing the producer payload', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: { ...BUSINESS_CALENDAR, invented: true } } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses a calendar attached to a non-overdue metric without inventing recorded cash', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.cash.recorded_received'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: BUSINESS_CALENDAR } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.cash_recorded_received'))).toBe(false);
+    expect(s.changes).toHaveLength(0);
+    expect(f.issued().filter(row => row.p_metric_key === 'sales.cash.recorded_received').every(row => row.p_metric_version === '1.0.0')).toBe(true);
+  });
+
   it('keeps every currency separate, upper-cases codes, and never sums them', async () => {
     const f = fakeCaller({ script: (a) => a.p_metric_key === 'sales.cash.recorded_received' && !isPrevious(a)
       ? { values: money(['eur', '5000'], ['usd', '125000']) }

@@ -19857,6 +19857,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      client_portal_relationship_id: {
+        Args: { p_tenant_id?: string | null }
+        Returns: string | null
+      }
+      client_portal_self_profile: {
+        Args: { p_tenant_id?: string | null }
+        Returns: Json
+      }
       client_custom_fields_upsert: {
         Args: { p_client_id: string; p_tenant_id: string; p_values: Json }
         Returns: {

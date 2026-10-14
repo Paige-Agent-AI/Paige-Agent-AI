@@ -101,7 +101,13 @@ supersedes any interpretation of this document as an E2-6-only completion contra
 Outcomes A–C above retain their historical evidence and bounded release meaning.
 An unavailable, gated or unbuilt requirement remains required; it does not become optional.
 E02 owns end-to-end delivery and integration. Existing technical owners retain their
-source leases. The detailed customer-outcome audit is ANT-138 comment
+active source leases. The owner subsequently clarified that older platform agents
+are retired and this existing E02 lead must implement missing E02 outputs directly;
+retired-agent availability is not a prerequisite or a staffing request. Current
+Experience source collisions and canonical system contracts remain protected.
+The owner also approved mission-linked F7 numeric targets and one bounded #2128
+successor review; neither approves provider, consequential Chat or privileged QA
+activation. The detailed customer-outcome audit is ANT-138 comment
 `a3287d4b-b2a9-428b-811f-b31d280ce582`; ANT-147 and ANT-52 remain the integration
 and acceptance homes. This expands the existing matrix, not a replacement registry.
 

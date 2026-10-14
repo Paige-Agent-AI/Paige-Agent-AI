@@ -4,14 +4,14 @@ import type { ContextIdentity } from "../../../supabase/functions/_shared/paige-
 
 export type WeeklyOwnerRead = { status: "ready"; snapshot: WeeklyCommitmentSnapshot }
   | { status: "loading" | "unavailable" | "refused" };
-export type WeeklyBrowserScope = { actorId: string; tenantId: string; epoch: number };
+export type WeeklyBrowserScope = { actorId: string; tenantId: string; epoch: number; actAsClientId?: string | null };
 type Caller = {
   auth: { getSession(): PromiseLike<{ data: { session: { user: { id: string } } | null }; error: unknown }> };
   rpc(name: string, args?: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }>;
 };
 /** Browser inspection, never model admission. Identity is re-proven, not inferred from a route/role label. */
 export async function readWeeklyOwner(scope: WeeklyBrowserScope, caller: Caller, current: () => WeeklyBrowserScope | null): Promise<WeeklyOwnerRead> {
-  const matches = () => { const now = current(); return now?.actorId === scope.actorId && now.tenantId === scope.tenantId && now.epoch === scope.epoch; };
+  const matches = () => { const now = current(); return (scope.actAsClientId ?? null) === null && (now?.actAsClientId ?? null) === null && now?.actorId === scope.actorId && now.tenantId === scope.tenantId && now.epoch === scope.epoch; };
   const refused: WeeklyOwnerRead = { status: "refused" };
   let timer: ReturnType<typeof setTimeout> | undefined;
   const inspect = async (): Promise<WeeklyOwnerRead> => {

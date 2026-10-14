@@ -32,7 +32,7 @@
 .e5-weekly-fields { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
 .e5-weekly-fields label:last-child { grid-column:1/-1; }
 .e5-weekly-fields label { display:grid; gap:6px; font-weight:550; }
-.e5-weekly-fields :is(input,select) { width:100%; min-width:0; min-height:44px; padding:8px; border:1px solid var(--pg-line,hsl(var(--border))); border-radius:6px; background:var(--pg-canvas,hsl(var(--background))); color:inherit; font:inherit; color-scheme:inherit; }
+.e5-weekly-fields :is(input,select) { width:100%; min-width:0; min-height:44px; padding:8px; border:1px solid var(--pg-muted,hsl(var(--foreground))); border-radius:6px; background:var(--pg-canvas,hsl(var(--background))); color:inherit; font:inherit; color-scheme:inherit; }
 .e5-weekly-sheet { width:min(100%,600px); max-width:600px!important; overflow-y:auto; background:var(--pg-canvas,hsl(var(--background))); color:var(--pg-ink,hsl(var(--foreground))); }
 .e5-weekly-sheet > header { margin-bottom:24px; }
 .e5-weekly-chat-entry { margin-left:auto; }

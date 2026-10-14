@@ -1,31 +1,31 @@
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
-import { useTenantContext } from "@/hooks/useTenantContext";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
-import { useWeeklyResponsibility } from "./useWeeklyResponsibility";
+import { useWeeklyOwnerAudience, useWeeklyResponsibility } from "./useWeeklyResponsibility";
 import { WeeklyResponsibilityPanel } from "./WeeklyResponsibilityPanel";
 import { WEEKDAYS, weeklyInstantLabel, weeklyStateLabel } from "./weekly-responsibility";
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
 
 /** Additive browser inspection. No conversational tool, confirmation or process writer. */
 export function WeeklyResponsibilityEntry({ hideEmpty = false }: { hideEmpty?: boolean }) {
-  const context = useTenantContext();
-  if (!context.activeUserId || !context.activeTenantId || context.loading || context.accountContextStatus !== "ready" || context.isPlatformStaff || !context.soloShellEnabled) return null;
-  return <ScopedEntry key={`${context.activeUserId}:${context.activeTenantId}`} hideEmpty={hideEmpty} />;
+  const audience = useWeeklyOwnerAudience();
+  if (!audience.eligible) return null;
+  return <ScopedEntry key={audience.key} hideEmpty={hideEmpty} />;
 }
 function ScopedEntry({ hideEmpty }: { hideEmpty: boolean }) {
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState("dark");
+  const opener = useRef<HTMLButtonElement | null>(null);
   const location = useLocation();
   const { read, refresh } = useWeeklyResponsibility(open || hideEmpty);
   const snapshot = read.status === "ready" ? read.snapshot : null;
   // First-run onboarding owns its conversation; no weekly prompt without a verified existing responsibility.
   if (hideEmpty && (!snapshot || snapshot.checks.length === 0)) return null;
   return <div className="e5-weekly-chat-entry">
-    <button type="button" className="e5-weekly-open" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden />Weekly responsibility</button>
-    <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} pathname={location.pathname} />
+    <button ref={opener} type="button" className="e5-weekly-open" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden />Weekly responsibility</button>
+    <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} pathname={location.pathname} onReturnFocus={() => opener.current?.focus()} />
   </div>;
 }
 export function WeeklyCalendarSummary({ read, refresh, pathname, onInspect }: {

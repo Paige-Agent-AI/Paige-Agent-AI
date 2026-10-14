@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { CrmWorkRecord } from "./operations-native-work";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
+import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
   crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null }));
@@ -36,12 +37,22 @@ import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
 let root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-beforeEach(() => { harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
+beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
-afterEach(() => { act(() => root.unmount()); container.remove(); });
+afterEach(() => { act(() => root.unmount()); setScopedUserId(null); container.remove(); });
+it("effective client view immediately removes business work and its open inspection", async () => {
+  await act(async () => root.render(<OperationsWorkspace view="work" />));
+  const task = container.querySelector<HTMLButtonElement>(".ops-work-card");
+  await act(async () => task?.click());
+  expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+  await act(async () => setScopedUserId("client"));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(container.textContent).not.toContain("test-tenant-a assigned work");
+  expect(container.textContent).toContain("Business work is unavailable in this view");
+});
 async function click(text: string) {
   const button = Array.from(container.querySelectorAll("button")).find((entry) => entry.textContent === text);
   expect(button).toBeTruthy(); await act(async () => button?.click());

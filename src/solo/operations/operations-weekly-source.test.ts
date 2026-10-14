@@ -1,4 +1,5 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { setScopedUserId } from "@/lib/scopedUser";
 import type { PlanItem } from "@/hooks/usePlanList";
 
 const mock = vi.hoisted(() => ({ session: vi.fn(), rpc: vi.fn(), from: vi.fn(), select: vi.fn(), eq: vi.fn(), or: vi.fn(), read: vi.fn() }));
@@ -14,11 +15,21 @@ const item: PlanItem = { id: itemId, tenant_id: tenantId, plan_id: null, item_ty
   remind_at: null, remind_target: null, reminded_at: null, created_by: actorId, linked_action_id: null,
   updated_at: "2026-10-10T12:00:00.123456Z" };
 beforeEach(() => {
+  setScopedUserId(null);
   vi.resetAllMocks(); mock.session.mockResolvedValue({ data: { session: { user: { id: actorId } } }, error: null });
   mock.rpc.mockImplementation(async name => ({ data: name === "is_tenant_member" ? true : tenantId, error: null }));
   const query = { select: mock.select, eq: mock.eq, or: mock.or, maybeSingle: mock.read };
   mock.from.mockReturnValue(query); mock.select.mockReturnValue(query); mock.eq.mockReturnValue(query); mock.or.mockReturnValue(query);
   mock.read.mockResolvedValue({ data: item, error: null });
+});
+afterEach(() => setScopedUserId(null));
+it("refuses an effective client persona before calls and discards a point read when it changes", async () => {
+  setScopedUserId("client");
+  expect((await readWeeklyPlanningSource(scope, () => true)).kind).toBe("unavailable");
+  expect(mock.session).not.toHaveBeenCalled(); expect(mock.from).not.toHaveBeenCalled();
+  setScopedUserId(null);
+  mock.read.mockImplementation(async () => { setScopedUserId("client"); return { data: item, error: null }; });
+  expect((await readWeeklyPlanningSource(scope, () => true)).kind).toBe("unavailable");
 });
 it("accepts only one explicitly typed Planning UUID target", () => {
   expect(parseWeeklyPlanningSource(`?weeklySource=planning_item&item=${itemId}`)).toEqual({ kind: "planning_item", id: itemId });

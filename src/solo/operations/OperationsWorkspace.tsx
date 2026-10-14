@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { getScopedUserId, subscribeScopedUser } from "@/lib/scopedUser";
 import { usePlanList, type Plan, type PlanItem, type PlanItemStatus } from "@/hooks/usePlanList";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { OperationsAssignee } from "./OperationsAssignee";
@@ -36,8 +38,15 @@ type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?:
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
   onNavigationGuardChange?: (guard: (() => string | null) | null) => void };
+const subscribePersona = (changed: () => void) => subscribeScopedUser(() => changed());
+const serverPersona = () => null;
 export function OperationsWorkspace(props: WorkspaceProps) {
   const { activeTenantId, activeUserId, loading, accountContextStatus } = useTenantContext();
+  const { isImpersonating } = useImpersonation();
+  const scopedUser = useSyncExternalStore(subscribePersona, getScopedUserId, serverPersona);
+  if (isImpersonating || scopedUser !== null) return <div className="ops-state" role="status">
+    <h1>Business work is unavailable in this view</h1><p>Leave View as Client to inspect your business commitments.</p>
+  </div>;
   if (loading || accountContextStatus === "resolving") return <OperationsLoading />;
   if (!activeTenantId || !activeUserId || accountContextStatus !== "ready") return <div className="ops-state" role="status">
     <h1>Choose your workspace</h1><p>Open an authorized company workspace to see its work.</p>

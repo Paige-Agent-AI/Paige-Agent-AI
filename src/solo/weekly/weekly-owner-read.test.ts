@@ -12,6 +12,11 @@ function fixture() {
   return { scope: current!, caller, raw, current: () => current, change: (next: WeeklyBrowserScope | null) => { current = next; }, changeSession: (value: string) => { sessionActor = value; } };
 }
 describe("browser weekly owner read", () => {
+  it("refuses an active client persona without any authenticated session or RPC call", async () => {
+    const f = fixture(); f.scope.actAsClientId = tenant;
+    expect((await readWeeklyOwner(f.scope, f.caller, f.current)).status).toBe("refused");
+    expect(f.caller.auth.getSession).not.toHaveBeenCalled(); expect(f.caller.rpc).not.toHaveBeenCalled();
+  });
   it("reads real canonical status with independent session/tenant/owner readback and no writes", async () => {
     const f = fixture();
     expect((await readWeeklyOwner(f.scope, f.caller, f.current)).status).toBe("ready");

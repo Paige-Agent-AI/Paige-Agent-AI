@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getScopedUserId } from "@/lib/scopedUser";
 import type { PlanItem } from "@/hooks/usePlanList";
 
 export type WeeklyPlanningSource = { kind: "planning_item"; id: string } | { kind: "invalid" } | null;
@@ -23,25 +24,26 @@ const nullableInstant = (value: unknown) => value === null || (typeof value === 
 export async function readWeeklyPlanningSource(scope: { actorId: string; tenantId: string; itemId: string },
   isCurrent: () => boolean): Promise<WeeklyPlanningRead> {
   const unavailable: WeeklyPlanningRead = { kind: "unavailable" };
-  if (![scope.actorId, scope.tenantId, scope.itemId].every(uuid) || !isCurrent()) return unavailable;
+  const matches = () => getScopedUserId() === null && isCurrent();
+  if (![scope.actorId, scope.tenantId, scope.itemId].every(uuid) || !matches()) return unavailable;
   try {
     const before = await supabase.auth.getSession();
-    if (!isCurrent() || before.error || before.data.session?.user.id !== scope.actorId) return unavailable;
+    if (!matches() || before.error || before.data.session?.user.id !== scope.actorId) return unavailable;
     const tenantBefore = await supabase.rpc("current_user_tenant_id");
-    if (!isCurrent() || tenantBefore.error || tenantBefore.data !== scope.tenantId) return unavailable;
+    if (!matches() || tenantBefore.error || tenantBefore.data !== scope.tenantId) return unavailable;
     const memberBefore = await supabase.rpc("is_tenant_member", { _tenant: scope.tenantId });
-    if (!isCurrent() || memberBefore.error || memberBefore.data !== true) return unavailable;
+    if (!matches() || memberBefore.error || memberBefore.data !== true) return unavailable;
     const read = await supabase.from("plan_items")
       .select("id,tenant_id,plan_id,item_type,assigned_to_user_id,contact_id,title,summary,status,priority,due_at,remind_at,remind_target,reminded_at,created_by,linked_action_id,updated_at")
       .eq("tenant_id", scope.tenantId).eq("id", scope.itemId)
       .or(`created_by.eq.${scope.actorId},assigned_to_user_id.eq.${scope.actorId}`).maybeSingle();
-    if (!isCurrent() || read.error || !read.data) return unavailable;
+    if (!matches() || read.error || !read.data) return unavailable;
     const tenantAfter = await supabase.rpc("current_user_tenant_id");
-    if (!isCurrent() || tenantAfter.error || tenantAfter.data !== scope.tenantId) return unavailable;
+    if (!matches() || tenantAfter.error || tenantAfter.data !== scope.tenantId) return unavailable;
     const memberAfter = await supabase.rpc("is_tenant_member", { _tenant: scope.tenantId });
-    if (!isCurrent() || memberAfter.error || memberAfter.data !== true) return unavailable;
+    if (!matches() || memberAfter.error || memberAfter.data !== true) return unavailable;
     const after = await supabase.auth.getSession();
-    if (!isCurrent() || after.error || after.data.session?.user.id !== scope.actorId) return unavailable;
+    if (!matches() || after.error || after.data.session?.user.id !== scope.actorId) return unavailable;
     const row = read.data;
     if (row.id !== scope.itemId || row.tenant_id !== scope.tenantId
       || (row.created_by !== scope.actorId && row.assigned_to_user_id !== scope.actorId)

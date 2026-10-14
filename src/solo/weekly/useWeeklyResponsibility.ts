@@ -1,14 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { getScopedUserId, subscribeScopedUser } from "@/lib/scopedUser";
 import { supabase } from "@/integrations/supabase/client";
 import { readWeeklyOwner, type WeeklyBrowserScope, type WeeklyOwnerRead } from "./weekly-owner-read";
 
+const subscribePersona = (changed: () => void) => subscribeScopedUser(() => changed());
+const serverPersona = () => null;
+/** Presentation eligibility only; each read still proves canonical session, tenant and owner authority. */
+export function useWeeklyOwnerAudience() {
+  const context = useTenantContext();
+  const persona = useImpersonation();
+  const scopedUser = useSyncExternalStore(subscribePersona, getScopedUserId, serverPersona);
+  const eligible = !context.loading && context.accountContextStatus === "ready" && !context.isPlatformStaff &&
+    Boolean(context.activeUserId && context.activeTenantId) && context.soloShellEnabled && !persona.isImpersonating && scopedUser === null;
+  return { context, eligible, key: `${eligible}:${context.activeUserId}:${context.activeTenantId}:${persona.target?.contactId}:${scopedUser}` };
+}
+
 /** A fresh canonical read on entry/focus/manual refresh. No cache, persistence, timer schedule or tool offer. */
 export function useWeeklyResponsibility(enabled = true) {
-  const context = useTenantContext();
-  const eligible = enabled && !context.loading && context.accountContextStatus === "ready" && !context.isPlatformStaff &&
-    Boolean(context.activeUserId && context.activeTenantId) && context.soloShellEnabled;
-  const key = `${eligible}:${context.activeUserId}:${context.activeTenantId}`;
+  const audience = useWeeklyOwnerAudience();
+  const { context } = audience;
+  const eligible = enabled && audience.eligible;
+  const key = `${enabled}:${audience.key}`;
   const generation = useRef({ key, epoch: 0 });
   if (generation.current.key !== key) generation.current = { key, epoch: generation.current.epoch + 1 };
   const scope = useRef<WeeklyBrowserScope | null>(null);
@@ -20,7 +34,7 @@ export function useWeeklyResponsibility(enabled = true) {
     const captured = scope.current, ticket = ++request.current;
     if (!captured) { setRead({ key, value: { status: "refused" } }); return; }
     setRead({ key, value: { status: "loading" } });
-    const value = await readWeeklyOwner(captured, supabase as unknown as Parameters<typeof readWeeklyOwner>[1], () => scope.current);
+    const value = await readWeeklyOwner(captured, supabase as unknown as Parameters<typeof readWeeklyOwner>[1], () => getScopedUserId() === null ? scope.current : null);
     if (ticket === request.current && scope.current?.epoch === captured.epoch && generation.current.key === key) setRead({ key, value });
   }, [key]);
   useEffect(() => {

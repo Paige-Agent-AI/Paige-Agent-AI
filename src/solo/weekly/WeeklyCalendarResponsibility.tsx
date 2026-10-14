@@ -1,15 +1,14 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { useTenantContext } from "@/hooks/useTenantContext";
 import { WeeklyCalendarSummary, WeeklyResponsibilityDialog } from "./WeeklyResponsibilityEntry";
-import { useWeeklyResponsibility } from "./useWeeklyResponsibility";
+import { useWeeklyOwnerAudience, useWeeklyResponsibility } from "./useWeeklyResponsibility";
 
 export type WeeklyCalendarSlot = (controls: { closeViewOptions: () => void; returnFocus: () => void }) => ReactNode;
 /** One browser read/dialog lifetime outside both responsive Calendar rail placements. No booking or execution authority. */
 export function WeeklyCalendarResponsibility({ children }: { children: (slot: WeeklyCalendarSlot) => ReactNode }) {
-  const context = useTenantContext();
-  if (!context.activeUserId || !context.activeTenantId || context.loading || context.accountContextStatus !== "ready" || context.isPlatformStaff || !context.soloShellEnabled) return children(() => null);
-  return <ScopedCalendar key={`${context.activeUserId}:${context.activeTenantId}`}>{children}</ScopedCalendar>;
+  const audience = useWeeklyOwnerAudience();
+  if (!audience.eligible) return children(() => null);
+  return <ScopedCalendar key={audience.key}>{children}</ScopedCalendar>;
 }
 function ScopedCalendar({ children }: { children: (slot: WeeklyCalendarSlot) => ReactNode }) {
   const location = useLocation();

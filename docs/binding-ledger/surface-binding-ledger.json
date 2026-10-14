@@ -868,7 +868,7 @@
       },
       "prohibited_context": ["start_at/status/booking_kind as they sit in the Rail payload", "attendee name/email", "provider bodies", "all internal ids"],
       "state": "UNAVAILABLE",
-      "state_reason": "Groundwork is promising (per-client Rail linkage, enumerable vocabulary, real freshness clock) but blocked contractually (FU-3 absent) and jurisdictionally (a ruled priority-order item vs the Mind Wave 0 BLOCKED direction disagree; owner resolves). Do NOT build a Calendar lens/projection/UI/migration.",
+        "state_reason": "Booking/Mind binding remains blocked by FU-3 and #786 attribution; those contracts are not repaired by E5. Owner2026-10-13 independently authorizes internal weekly responsibility visibility using the existing owner-only process/receipt projection in Calendar, with no booking, recurrence engine, Mind lens or authority grant. That connected UI is a development candidate; authenticated recurring acceptance remains UNVERIFIED.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": ["#786", "#673", "#648", "#646", "#638", "#644", "#776", "#777"],
       "next_slice": "None; blocked. Resolve #786 (attribution) and FU-3 (Calendar Rail contract) first.",

@@ -22,8 +22,14 @@
 // acknowledge and no send-message call. Those messages go out only through the governed email command
 // (comms-email-command / comms.email_send); there is no second sender path. The row stays pending and
 // can still be declined. reason_code tells the caller what the person can do: review_and_send (a reply
-// to a new lead: the reply screen) or decline_only (every other send kind, for now). A quiet-hours/DND hold that QUEUES a message on the generic comms path below
-// is accepted: the claim is kept so a second Approve cannot queue a second copy.
+// to a new lead: the reply screen) or decline_only (every other send kind, for now).
+//
+// A QUIET-HOURS / DO-NOT-DISTURB HOLD IS ANSWERED HELD, NEVER QUEUED BEHIND THE APPROVAL (#2132): on the
+// generic comms path below, the pre-send seam (runPreSend, the function send-message itself runs) is read
+// first; a hold returns HELD with nothing queued or sent and the approval pending and unclaimed. A queued
+// copy has a lifecycle the approval cannot follow (the drain never closes the approval; a decline never
+// stops the message), so it is not created. If send-message queues anyway (the hours began in between),
+// that copy is cancelled through the existing undo seam and the answer is the same HELD.
 //
 // LAYER C (C5): an approval minted by the event→act engine (metadata.source='paige_orchestration') carries a
 // held act's coordinates. This one door also delegates those to the Layer-C approval-executor — re-running the
@@ -33,7 +39,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
-import { classifySendResult, refuseSendKindApproval, type SendKindAdmin } from "./action-email.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import { classifySendResult, heldPayload, holdReasonOf, refuseSendKindApproval, type HoldReason, type SendKindAdmin } from "./action-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -248,6 +255,22 @@ Deno.serve(async (req) => {
     const body = String(dc.body ?? dc.message ?? "");
     if (!body) { await releaseClaim(); return json(422, { error: "empty_body" }); }
 
+    // HELD (#2132): release the claim — checked, so a hold is never reported while the row stays held.
+    const answerHeld = async (reason: HoldReason, retryAfter: string | null, extra: Record<string, unknown> = {}) => {
+      const { error: releaseErr } = await releaseClaim();
+      if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      return json(200, heldPayload(reason, retryAfter, channel, approvalId, extra));
+    };
+
+    // The hours are read from the ONE pre-send seam before anything is sent or queued. Only a hold stops
+    // here; a block (client DND, suppression, no consent) and a check error still go to send-message,
+    // which records them exactly as before and refuses the send.
+    const preSend = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
+      tenantId: approval.tenant_id ?? null, channel, to, contactId: approval.contact_id ?? null,
+    });
+    const preHold = preSend.proceed ? null : holdReasonOf(preSend.outcome);
+    if (preHold) return await answerHeld(preHold, preSend.queueUntil);
+
     // Forward the caller's JWT so send-message authorizes the same user and
     // performs the send + status flip (status='approved' on success).
     const resp = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/send-message`, {
@@ -266,13 +289,32 @@ Deno.serve(async (req) => {
     const sendResult = await resp.json().catch(() => ({}));
     const sendOutcome = classifySendResult(resp.ok, sendResult);
     if (sendOutcome.kind === "queued") {
-      // A quiet-hours/DND hold queued the message to go later: ACCEPTED. Keep the claim so a second
-      // Approve cannot queue a second copy; the row is not marked approved because nothing has gone yet.
+      // send-message held it after the check above said clear (the hours began in between). A queued row
+      // with no approval behind it is what #2132 removed, so cancel it through the existing undo seam
+      // (cancel_scheduled_message, the caller's own JWT: it returns the row to an unsent draft) and answer
+      // HELD. No message_id means send-message persisted no row: nothing is queued, so it is simply held.
+      const reason = holdReasonOf(sendOutcome.outcome) ?? "other";
+      if (!sendOutcome.messageId) return await answerHeld(reason, sendOutcome.scheduledFor);
+      const { data: cancelled, error: cancelErr } = await userClient.rpc("cancel_scheduled_message", { _id: sendOutcome.messageId });
+      if (!cancelErr && cancelled === true) {
+        return await answerHeld(reason, sendOutcome.scheduledFor, { returned_to_draft_message_id: sendOutcome.messageId });
+      }
+      // It could not be cancelled, so it WILL go out when the hold ends. The claim is KEPT: releasing it
+      // would let a second Approve queue a second copy to the same person. The link is recorded and its
+      // write is checked; if it fails, the answer is a 500 carrying the message id, never a success.
       const qMeta = (typeof approval.metadata === "object" && approval.metadata) || {};
-      await admin.from("paige_pending_approvals").update({
-        metadata: { ...qMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, at: new Date().toISOString() } },
-      }).eq("id", approvalId);
-      return json(200, { ok: true, executed: false, queued: true, outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, channel, approval_id: approvalId });
+      const { error: linkErr } = await admin.from("paige_pending_approvals").update({
+        metadata: { ...qMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, cancel_failed: true, at: new Date().toISOString() } },
+      }).eq("id", approvalId).eq("status", "pending");
+      if (linkErr) {
+        console.error(`[execute-approval] approval ${approvalId}: queued message ${sendOutcome.messageId} could not be cancelled and the link could not be recorded: ${linkErr.message}`);
+        return json(500, { ok: false, executed: false, error: "queued_link_not_recorded", detail: linkErr.message, message_id: sendOutcome.messageId, scheduled_for: sendOutcome.scheduledFor, approval_id: approvalId });
+      }
+      return json(202, {
+        ok: false, executed: false, queued: true, outcome: "queued", message_id: sendOutcome.messageId, scheduled_for: sendOutcome.scheduledFor, channel,
+        error: "Already scheduled: this message goes out when the hold ends. It can't be approved again, so a second copy can't be sent.",
+        approval_id: approvalId,
+      });
     }
     if (sendOutcome.kind !== "sent") {
       // send-message leaves the row 'pending' on failure — release the claim so a

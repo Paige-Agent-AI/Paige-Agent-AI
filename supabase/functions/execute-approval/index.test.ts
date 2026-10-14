@@ -6,7 +6,9 @@
 //     send-message call, no write at all;
 //   • a failed acknowledge write releases the claim instead of leaving the row held;
 //   • a non-send action approval and a non-action approval behave exactly as before;
-//   • a queued_* hold on the generic comms path keeps the claim (no second copy on a second Approve).
+//   • a quiet-hours / do-not-disturb hold on the generic comms path is HELD (#2132): nothing queued or
+//     sent, the approval pending and unclaimed; a copy send-message queues anyway is cancelled, and one
+//     that cannot be cancelled keeps the claim (no second copy) with its link write checked.
 // Nothing here reaches a network or a database.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,9 +33,11 @@ const C = "30000000-0000-4000-8000-000000000001";
 interface Write { table: string; values: Row; filters: [string, string, unknown][] }
 
 /** A small PostgREST-shaped fake: select/update with eq/is, maybeSingle or await. Records every write. */
-function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUpdateWhen?: (table: string, values: Row) => boolean) {
+function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUpdateWhen?: (table: string, values: Row) => boolean,
+  rpcAnswers: Record<string, { data: unknown; error: unknown }> = {}) {
   const writes: Write[] = [];
   const rpcs: string[] = [];
+  const rpcArgs: { name: string; args: unknown }[] = [];
   const from = (table: string) => {
     let op: "select" | "update" = "select";
     let values: Row = {};
@@ -52,6 +56,10 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUp
       eq: (k: string, v: unknown) => { filters.push(["eq", k, v]); return q; },
       is: (k: string, v: unknown) => { filters.push(["is", k, v]); return q; },
       in: (k: string, v: unknown[]) => { filters.push(["in", k, v]); return q; },
+      // The pre-send seam's reads (or/order/limit) narrow nothing here: each test seeds only matching rows.
+      or: () => q,
+      order: () => q,
+      limit: () => q,
       maybeSingle: () => Promise.resolve(run(true)),
       then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(run(false)).then(res, rej),
     };
@@ -59,10 +67,10 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUp
   };
   const client = {
     auth: { getUser: async () => ({ data: { user: { id: USER } } }) },
-    rpc: async (name: string) => { rpcs.push(name); return { data: true, error: null }; },
+    rpc: async (name: string, args?: unknown) => { rpcs.push(name); rpcArgs.push({ name, args }); return rpcAnswers[name] ?? { data: true, error: null }; },
     from,
   };
-  return { client, writes, rpcs, tables };
+  return { client, writes, rpcs, rpcArgs, tables };
 }
 
 const kinds = [
@@ -107,7 +115,7 @@ const approve = async () => {
 };
 
 beforeEach(() => { fetchCalls = []; sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-1" } }; mocks.executeApprovedLayerCAct.mockReset(); });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("execute-approval: a send_via_approval approval is never sent and never completed here", () => {
   it("the legacy nested client.followup shape (125 such rows pending in production) → 409, nothing written, nothing sent", async () => {
@@ -232,24 +240,6 @@ describe("execute-approval: everything else behaves exactly as before", () => {
     expect(await approve()).toEqual({ status: 200, body: { ok: true, executed: false, acknowledged: true, approval_id: A } });
   });
 
-  it("a QUEUED send (quiet hours) keeps the claim — the row is not released and not approved", async () => {
-    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T08:00:00Z", message_id: "m1" } };
-    const db = fakeDb({ paige_pending_approvals: [approval({ category: "followup", metadata: {}, draft_content: { channel: "email", subject: "S", body: "B" } })], clients: [contact] });
-    await load(db);
-    const r = await approve();
-    expect(r.body).toMatchObject({ ok: true, executed: false, queued: true, outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T08:00:00Z" });
-    const row = db.tables.paige_pending_approvals[0];
-    expect(row.claimed_at).not.toBeNull();   // kept: a second Approve gets "in_progress", not a second copy
-    expect(row.status).toBe("pending");
-    expect(db.writes.some((w) => w.values.claimed_at === null)).toBe(false);
-    expect((row.metadata as Row).send_queued).toMatchObject({ outcome: "queued_quiet_hours", message_id: "m1" });
-
-    // A second press cannot queue a second copy.
-    fetchCalls = [];
-    expect((await approve()).body).toMatchObject({ already: "in_progress" });
-    expect(fetchCalls).toEqual([]);
-  });
-
   it("a FAILED send releases the claim and never reports success", async () => {
     sendAnswer = { status: 200, body: { status: "failed", outcome: "blocked_suppressed" } };
     const db = fakeDb({ paige_pending_approvals: [approval({ category: "followup", metadata: {}, draft_content: { channel: "email", subject: "S", body: "B" } })], clients: [contact] });
@@ -258,5 +248,124 @@ describe("execute-approval: everything else behaves exactly as before", () => {
     expect(r.status).toBe(502);
     expect(r.body).toMatchObject({ ok: false, executed: false });
     expect(db.tables.paige_pending_approvals[0].claimed_at).toBeNull();
+  });
+});
+
+// #2132 — an approval is never left claimed behind a queued message. A quiet-hours / do-not-disturb hold
+// is answered HELD: nothing is queued, nothing is sent, the approval stays pending and unclaimed, and the
+// person approves it again later. Quiet hours and DND are decided by the ONE pre-send seam (runPreSend) —
+// the same function send-message runs — so nothing here sends during quiet hours or to a DND contact.
+describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never queued behind the approval (#2132)", () => {
+  const emailDraft = { channel: "email", subject: "S", body: "B" };
+  const pending = (extra: Row = {}) => approval({ category: "followup", type: "cs_draft", metadata: {}, draft_content: emailDraft, ...extra });
+  // 2026-10-14T03:00:00Z is 23:00 the previous evening in New York — inside 20:00–08:00.
+  const NIGHT = new Date("2026-10-14T03:00:00Z");
+  const businessDnd = { tenant_id: T, autosend_dnd_enabled: true, autosend_dnd_start: "20:00:00", autosend_dnd_end: "08:00:00", autosend_dnd_timezone: "America/New_York", autosend_dnd_channels: ["email", "sms"] };
+
+  it("the business's do-not-disturb hours: HELD — send-message is never called, the approval is pending and unclaimed", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NIGHT);
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], tenant_comms_preferences: [businessDnd] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, held: true, outcome: "held", hold_reason: "tenant_dnd", retry_after: "2026-10-14T12:00:00.000Z", channel: "email", approval_id: A });
+    expect(String(r.body.error)).toContain("Nothing went out");
+    expect(fetchCalls).toEqual([]);                       // nothing queued, nothing sent
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row).toMatchObject({ status: "pending", claimed_at: null });
+    expect((row.metadata as Row).send_queued).toBeUndefined();
+    // A second press is not "in progress": it is evaluated again (and held again while the hours last).
+    expect((await approve()).body).toMatchObject({ held: true });
+    expect(fetchCalls).toEqual([]);
+  });
+
+  it("SMS quiet hours in the contact's own time zone: HELD, never sent at night", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NIGHT);
+    const smsContact = { ...contact, timezone: "America/New_York", client_contact_methods: [{ kind: "phone", value: "+15555550123", is_primary: true, position: 0 }] };
+    const db = fakeDb({ paige_pending_approvals: [pending({ category: "sms", draft_content: { channel: "sms", body: "hi" } })], clients: [smsContact],
+      paige_consent_events: [{ tenant_id: T, channel: "sms", action: "granted", created_at: "2026-01-01T00:00:00Z" }] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, executed: false, held: true, hold_reason: "quiet_hours", channel: "sms", retry_after: "2026-10-14T12:00:00.000Z" });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
+  it("outside the hours it sends exactly as before (the hold check never blocks a clear send)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-14T16:00:00Z")); // noon in New York
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], tenant_comms_preferences: [businessDnd] });
+    await load(db);
+    expect(await approve()).toEqual({ status: 200, body: { ok: true, executed: true, channel: "email", approval_id: A, audit_id: "aud-1" } });
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it("a contact on do-not-disturb is still refused by send-message's own check (blocked, never sent, claim released)", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "blocked_client_dnd", reason: "This contact is on a do-not-disturb hold." } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [{ ...contact, dnd_active: true }] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(502);
+    expect(r.body).toMatchObject({ ok: false, executed: false });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
+  it("a hold whose claim cannot be released says so (500), never reports a clean hold", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NIGHT);
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], tenant_comms_preferences: [businessDnd] }, [],
+      (table, values) => table === "paige_pending_approvals" && values.claimed_at === null);
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(500);
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "claim_release_failed", approval_id: A });
+    expect(fetchCalls).toEqual([]);
+  });
+
+  it("if send-message queues anyway (the hours began between the check and the send), the queued copy is cancelled and the approval released", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1", reason: "Held until your team's quiet hours end." } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, held: true, outcome: "held", hold_reason: "tenant_dnd", retry_after: "2026-10-14T12:00:00Z", returned_to_draft_message_id: "m1" });
+    expect(db.rpcArgs).toContainEqual({ name: "cancel_scheduled_message", args: { _id: "m1" } });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row).toMatchObject({ status: "pending", claimed_at: null });
+    expect((row.metadata as Row).send_queued).toBeUndefined();
+  });
+
+  it("a hold answer with no message id (send-message persisted no row) is simply HELD: nothing to cancel, claim released", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T12:00:00Z", message_id: null } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] });
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, held: true, hold_reason: "quiet_hours" });
+    expect(db.rpcs).not.toContain("cancel_scheduled_message");
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
+  it("if that queued copy cannot be cancelled, the claim is KEPT (a second Approve would queue a second copy) and the link is recorded", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(202);
+    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "queued", message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row.claimed_at).not.toBeNull();
+    expect((row.metadata as Row).send_queued).toMatchObject({ outcome: "queued_quiet_hours", message_id: "m1", cancel_failed: true });
+    fetchCalls = [];
+    expect((await approve()).body).toMatchObject({ already: "in_progress" });
+    expect(fetchCalls).toEqual([]);
+  });
+
+  it("if recording that link fails, it fails CLOSED: 500 with the message id, never a success", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] }, [],
+      (table, values) => table === "paige_pending_approvals" && "metadata" in values,
+      { cancel_scheduled_message: { data: null, error: { message: "forbidden" } } });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(500);
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "queued_link_not_recorded", message_id: "m1", approval_id: A });
   });
 });

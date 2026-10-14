@@ -48,6 +48,37 @@ export function classifySendResult(httpOk: boolean, body: unknown): SendOutcome 
   return { kind: "failed", error: typeof b.error === "string" && b.error ? b.error : (typeof b.outcome === "string" && b.outcome ? b.outcome : "send_failed") };
 }
 
+/* ───────────────────────── a quiet-hours / do-not-disturb hold (#2132) ───────────────────────── */
+
+/**
+ * An approval is never left claimed behind a queued message. A queued copy and the approval have two
+ * lifecycles nothing joins: the drain released the message without ever closing the approval (it stayed
+ * "in progress" forever), and a decline would not have stopped the message. So an approval-driven send
+ * that the pre-send seam would HOLD (the business's do-not-disturb hours, or SMS quiet hours in the
+ * contact's time zone) is answered HELD: nothing is queued, nothing is sent, the approval stays pending
+ * and unclaimed, and the person approves it again when the hours end. The hold itself is decided by the
+ * ONE pre-send seam (runPreSend) — the same function send-message runs — never re-derived here.
+ */
+export type HoldReason = "quiet_hours" | "tenant_dnd" | "other";
+
+export const HOLD_MESSAGE: Record<HoldReason, string> = {
+  quiet_hours: "Not sent: it's quiet hours where this contact is. Nothing went out, and it's still waiting for you. Approve it again after quiet hours end.",
+  tenant_dnd: "Not sent: your business's do-not-disturb hours are on. Nothing went out, and it's still waiting for you. Approve it again when they end.",
+  other: "Not sent: messages to this contact are on hold right now. Nothing went out, and it's still waiting for you. Approve it again later.",
+};
+
+/** The hold a pre-send (or send-message) outcome stands for; null when the outcome is not a hold. */
+export function holdReasonOf(outcome: unknown): HoldReason | null {
+  if (outcome === "queued_quiet_hours") return "quiet_hours";
+  if (outcome === "queued_tenant_dnd") return "tenant_dnd";
+  return typeof outcome === "string" && outcome.startsWith("queued_") ? "other" : null;
+}
+
+/** The HELD answer. ok:false so every caller keeps the row on screen; `error` is what the person reads. */
+export function heldPayload(reason: HoldReason, retryAfter: string | null, channel: string, approvalId: string, extra: Obj = {}): Obj {
+  return { ok: false, executed: false, held: true, outcome: "held", hold_reason: reason, retry_after: retryAfter, channel, error: HOLD_MESSAGE[reason], approval_id: approvalId, ...extra };
+}
+
 /* ───────────────────────── the outbound-message refusal ───────────────────────── */
 
 interface Res { data: unknown; error: unknown }

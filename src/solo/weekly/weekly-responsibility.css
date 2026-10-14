@@ -36,7 +36,7 @@
 .e5-weekly-sheet { width:min(100%,600px); max-width:600px!important; overflow-y:auto; background:var(--pg-canvas,hsl(var(--background))); color:var(--pg-ink,hsl(var(--foreground))); }
 .e5-weekly-sheet > header { margin-bottom:24px; }
 .e5-weekly-chat-entry { margin-left:auto; flex:none; }
-.spw-chat-head:has(> .e5-weekly-chat-entry) { container-name:e5-weekly-chat-header; container-type:inline-size; flex-shrink:0; }
+.spw-chat-head:has(> .e5-weekly-chat-entry) { container-name:e5-weekly-chat-header; container-type:inline-size; flex-shrink:0; height:auto; min-height:46px; padding-block:1px; }
 .e5-weekly-chat-entry .e5-weekly-open-label { display:inline; font-size:inherit; color:inherit; margin:0; }
 .e5-weekly-open { display:flex; align-items:center; gap:8px; font-size:12px; }
 .e5-weekly-calendar-entry { padding:16px 0; font-size:12px; line-height:1.5; border-top:1px solid var(--pg-line,hsl(var(--border))); }

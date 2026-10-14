@@ -35,6 +35,12 @@ const cleanup = () => run(`BEGIN;
   ALTER TABLE public.business_mission_target_versions ENABLE TRIGGER business_mission_target_version_immutable;
   ALTER TABLE public.business_mission_brief_versions ENABLE TRIGGER business_mission_brief_immutable;
   DELETE FROM public.paige_audit_log WHERE tenant_id='${tenant}';
+  -- This proof committed one temporary issuer reference so its concurrent callers
+  -- could share it. Retire only that random fixture's own reference before the
+  -- canonical account lifecycle checks security-held relations. Never change the
+  -- production deletion catalogue or weaken its correct unknown-record refusal.
+  DELETE FROM public.analytics_evidence_reference
+    WHERE tenant_id='${tenant}' AND issued_to='${user}' AND metric_id='business.active_clients_current';
   DELETE FROM public.tenant_members WHERE tenant_id='${tenant}';
   DELETE FROM public.profiles WHERE user_id='${user}';
   ${retireSyntheticTenantSQL(tenant)}

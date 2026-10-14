@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: valid legacy linked/null documents, changed source, malfor
 TRUTHFUL_STATE_LABELS: PASS: economic context null means unknown, never zero or signed compatibility; C1 remains PARTIAL.
 SOLO_UI: NO: public token recipient signing page, not a Solo workspace surface.
 UNVERIFIED: historical signed economics, prospective presented-approved snapshot producer, hosted auth/browser, real signature and production deployment remain unproven.
-INTERNAL_BUILD_IDENTITY: implementation=bfd69f16df5f4bbcaeb270f9a268bc27cb34fc6c; deployment=UNVERIFIED; environment=development isolated native PostgreSQL; migrations=PROOF_OWED(20271101120000 production persistence); edge=NOT_APPLICABLE; evidence=this record and canonical native proof
+INTERNAL_BUILD_IDENTITY: implementation=7be1154a78b6f4cf24d15684ee4fdd06d337fc1f; deployment=UNVERIFIED; environment=development isolated native PostgreSQL; migrations=PROOF_OWED(20271101153000 production persistence); edge=NOT_APPLICABLE; evidence=this record and canonical native proof
 RELEASE_CHANNEL: development: production migration and hosted acceptance remain owed.
 RELEASE_CLASSIFICATION: internal-only: bounded historical signing-read truth correction.
 CUSTOMER_RELEASE_IDENTITY: none: no complete signed-economic acceptance or customer announcement.
@@ -29,11 +29,11 @@ RELEASE_RECOVERY: position=forward-fix through canonical signing read; reference
 
 ## Scope and collisions
 
-Owned signing read correction, native proof and Sales delivery note only. Migration provisional 20271101120000: root census found no collision across 35 open PRs, production frontier 20271101110001. Root must recheck before release. No signing history/body/hash, acceptance policy, shared guards/Chat, provider, ledger, scheduler, Operations or Analytics writes.
+Owned signing read correction, native proof and Sales delivery note only. Original provisional 20271101120000 was never applied. After EXP03 #2151 persisted 20271101142133, this identical SQL was renamed forward to 20271101153000. No applied history changed. Root must recheck collision/order before release. No signing history/body/hash, acceptance policy, shared guards/Chat, provider, ledger, scheduler, Operations or Analytics writes.
 
 ## Evidence index
 
-Implementation base: e31cb94c8f3263bc033a937254ce96f48bf6372d. Channel: development. Pre-publication census: 33 open PR file sets, zero lookup errors or 20271101120000 collisions; production frontier 20271101110001, proposed version unapplied. Recheck immediately before merge.
+Implementation base: a3d5b2e3187790269b6407dde0fab4c8ed0891db. Channel: development. Original pre-publication census: 33 open PR file sets, zero lookup errors or 20271101120000 collisions. Fresh production readback establishes 20271101142133 frontier and both proposed versions unapplied. Recheck immediately before merge.
 
 Command: node scripts/agreements/signing-context-economics-proof.mjs <PG16-psql> 55449 postgres <verified-local-data-directory> baseline|repaired. Verifies directory before creating unique database; finally drops only that database; never stops shared cluster.
 
@@ -41,4 +41,4 @@ Baseline FAIL: valid readable twelve-column priced agreement exposed current ter
 
 ## Review and limitations
 
-Implementation self-check only; root owns non-author review, CI and release. Hosted CI runs the same native proof through the existing Sales Collections PostgreSQL service. No deployment, customer signature or provider action performed. Header correction does not complete signed commercial effectiveness.
+Initial independent NON-AUTHOR review COMPLETE / SHIP at 7be1154a78b6f4cf24d15684ee4fdd06d337fc1f, with independent 24 native checks and no material findings. Current-main composition and identical migration rename require affected final confirmation. Hosted CI runs the same native proof through the existing Sales Collections PostgreSQL service. First postgres-authority job 116033235661 failed before checkout at the pinned public registry download limit; no source test ran in that job and no gate is waived. New exact-head CI required. No deployment, customer signature or provider action performed. Header correction does not complete signed commercial effectiveness.

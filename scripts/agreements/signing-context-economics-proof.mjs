@@ -39,7 +39,7 @@ try {
     INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order,token_hash,token_expires_at)
     VALUES('${id}','aaaaaaaa-0000-4000-8000-000000000001','Synthetic Signer','fixture@example.com',1,encode(digest(repeat('c',64),'sha256'),'hex'),now()+interval '1 day');`);
   if(mode==='repaired') {
-    const migration=read('supabase/migrations/20271101120000_signing_context_unknown_economics.sql');
+    const migration=read('supabase/migrations/20271101153000_signing_context_unknown_economics.sql');
     sql(migration);sql(migration);
   }
   const context = (token="repeat('c',64)",role='anon') => JSON.parse(sql(`SET ROLE ${role}; SELECT row_to_json(p) FROM peek_agreement_signing(${token}) p;`));

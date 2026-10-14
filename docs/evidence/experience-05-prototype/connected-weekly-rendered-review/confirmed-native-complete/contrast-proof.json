@@ -1,0 +1,89 @@
+{
+  "artifactSHA256": "D42391441837EDA337A6BCFE200087516B5A09F5D4A6E51CA401B3DEE030B6C1",
+  "scope": "Actual compiled native proposal input/select computed colors. Text ≥4.5:1 and visible input boundary ≥3:1. No blanket WCAG conformance or assistive-technology claim.",
+  "summary": {
+    "checks": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "results": [
+    {
+      "theme": "dark",
+      "label": "Day",
+      "colors": {
+        "foreground": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "border": "rgb(172, 166, 157)",
+        "outline": "rgb(246, 242, 234)"
+      },
+      "textContrast": 17.176628146214266,
+      "boundaryContrast": 7.941454567611965,
+      "status": "PASS"
+    },
+    {
+      "theme": "dark",
+      "label": "Time",
+      "colors": {
+        "foreground": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "border": "rgb(172, 166, 157)",
+        "outline": "rgb(246, 242, 234)"
+      },
+      "textContrast": 17.176628146214266,
+      "boundaryContrast": 7.941454567611965,
+      "status": "PASS"
+    },
+    {
+      "theme": "dark",
+      "label": "Time zone",
+      "colors": {
+        "foreground": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "border": "rgb(172, 166, 157)",
+        "outline": "rgb(246, 242, 234)"
+      },
+      "textContrast": 17.176628146214266,
+      "boundaryContrast": 7.941454567611965,
+      "status": "PASS"
+    },
+    {
+      "theme": "light",
+      "label": "Day",
+      "colors": {
+        "foreground": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "border": "rgb(103, 97, 107)",
+        "outline": "rgb(32, 30, 35)"
+      },
+      "textContrast": 15.70766206024138,
+      "boundaryContrast": 5.707692331559825,
+      "status": "PASS"
+    },
+    {
+      "theme": "light",
+      "label": "Time",
+      "colors": {
+        "foreground": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "border": "rgb(103, 97, 107)",
+        "outline": "rgb(32, 30, 35)"
+      },
+      "textContrast": 15.70766206024138,
+      "boundaryContrast": 5.707692331559825,
+      "status": "PASS"
+    },
+    {
+      "theme": "light",
+      "label": "Time zone",
+      "colors": {
+        "foreground": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "border": "rgb(103, 97, 107)",
+        "outline": "rgb(32, 30, 35)"
+      },
+      "textContrast": 15.70766206024138,
+      "boundaryContrast": 5.707692331559825,
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "scope": "Actual compiled native primary-button hover/normal text contrast, composited against native panel. Synthetic fixture only. Material source CSS finding; no child product edit.",
+  "artifactSHA256": "D42391441837EDA337A6BCFE200087516B5A09F5D4A6E51CA401B3DEE030B6C1",
+  "summary": {
+    "checks": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "results": [
+    {
+      "theme": "dark",
+      "hover": false,
+      "colors": {
+        "foreground": "rgb(16, 14, 20)",
+        "background": "rgb(246, 242, 234)",
+        "opacity": 1,
+        "behind": "rgb(16, 14, 20)"
+      },
+      "effectiveContrast": 17.176628146214266,
+      "status": "PASS"
+    },
+    {
+      "theme": "dark",
+      "hover": true,
+      "colors": {
+        "foreground": "rgb(16, 14, 20)",
+        "background": "rgb(246, 242, 234)",
+        "opacity": 0.85,
+        "behind": "rgb(16, 14, 20)"
+      },
+      "effectiveContrast": 12.45659963971353,
+      "status": "PASS"
+    },
+    {
+      "theme": "light",
+      "hover": false,
+      "colors": {
+        "foreground": "rgb(251, 249, 245)",
+        "background": "rgb(32, 30, 35)",
+        "opacity": 1,
+        "behind": "rgb(251, 249, 245)"
+      },
+      "effectiveContrast": 15.70766206024138,
+      "status": "PASS"
+    },
+    {
+      "theme": "light",
+      "hover": true,
+      "colors": {
+        "foreground": "rgb(251, 249, 245)",
+        "background": "rgb(32, 30, 35)",
+        "opacity": 0.85,
+        "behind": "rgb(251, 249, 245)"
+      },
+      "effectiveContrast": 9.929318002720159,
+      "status": "PASS"
+    }
+  ]
+}

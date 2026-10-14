@@ -1,0 +1,25 @@
+{
+  "artifactSHA256": "D42391441837EDA337A6BCFE200087516B5A09F5D4A6E51CA401B3DEE030B6C1",
+  "scope": "Actual Operations Work inspector title text range/close control at390px, synthetic source-link flow. Root-owned source untouched.",
+  "status": "PASS",
+  "titleRects": [
+    {
+      "left": 29.609375,
+      "right": 333.375,
+      "top": 16,
+      "bottom": 35
+    },
+    {
+      "left": 155.921875,
+      "right": 207.078125,
+      "top": 40.5,
+      "bottom": 59.5
+    }
+  ],
+  "close": {
+    "left": 362,
+    "right": 376,
+    "top": 14,
+    "bottom": 28
+  }
+}

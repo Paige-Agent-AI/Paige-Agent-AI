@@ -358,10 +358,13 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
 
   it("if that queued copy cannot be cancelled, the claim is KEPT (a second Approve would queue a second copy) and the link is recorded", async () => {
     sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
-    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
+    // A second, unrelated pending approval: the link write must touch THIS approval only.
+    const other = pending({ id: "00000000-0000-4000-8000-0000000000b2", metadata: { untouched: true } });
+    const db = fakeDb({ paige_pending_approvals: [pending(), other], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
     await load(db);
     const r = await approve();
     expect(r.status).toBe(202);
+    expect(db.tables.paige_pending_approvals[1].metadata).toEqual({ untouched: true });
     expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "queued", message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
     const row = db.tables.paige_pending_approvals[0];
     expect(row.claimed_at).not.toBeNull();

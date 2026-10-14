@@ -26,6 +26,41 @@ function harness(change: (result: Fixture) => void = () => {}, denied = false, s
   return { calls, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
 }
 describe('governed conversational metric read', () => {
+  const overdue = { metric_key: 'sales.receivables.overdue_current', period: 'last_7_days' };
+  const calendar = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-08' };
+  function overdueFixture(r: Fixture) {
+    r.metric_version = '1.1.0'; r.owner_department = 'sales'; r.unit = 'currency_minor';
+    r.values = { kind: 'currency_totals', by_currency: [], breakdown: [] };
+    r.coverage = { state: 'complete', candidate_count: 0, contributing_count: 0, excluded_count: 0 };
+    r.source_refs = ['public.paige_invoices', 'public.paige_invoice_payments', 'public._sales_invoice_balance_rows', 'public.tenant_business_time_zones'];
+    r.business_time_zone = calendar;
+  }
+  it('requests only the overdue metric at 1.1.0 and preserves verified business calendar evidence', async () => {
+    const h = harness(overdueFixture); const result = await h.run(overdue);
+    expect(result.status).toBe('available');
+    expect(h.calls.find(c => c.name === 'issue_analytics_evidence_bundle')?.args?.p_metric_version).toBe('1.1.0');
+    expect(result.metric).toHaveProperty('business_time_zone', calendar);
+  });
+  it.each(['missing', 'invalid'])('preserves %s calendar as unavailable/null instead of currency zero', async state => {
+    const result = await harness(r => {
+      overdueFixture(r); r.business_time_zone = { state, zone: null, set_at: state === 'missing' ? null : calendar.set_at, as_of_date: null };
+      r.truth_state = 'UNAVAILABLE'; r.values = null;
+      r.coverage = { state: 'unavailable', reason: `business_time_zone_${state}`, candidate_count: 2, contributing_count: 0, excluded_count: 2 };
+      r.exclusions = [{ reason: `business_time_zone_${state}`, count: 2 }];
+    }).run(overdue);
+    expect(result.status).toBe('available'); expect(result.metric?.values).toBeNull();
+    expect(result.metric).toHaveProperty('business_time_zone.state', state);
+    expect(result.metric?.coverage.reason).toBe(`business_time_zone_${state}`);
+  });
+  it.each([undefined, { ...calendar, as_of_date: '2026-10-07' }, { ...calendar, zone: 'Invalid/Zone' }, { ...calendar, private_payload: 'hidden' }])('refuses missing or inconsistent calendar evidence', async value => {
+    const result = await harness(r => { overdueFixture(r); r.business_time_zone = value; }).run(overdue);
+    expect(result.status).toBe('unavailable');
+  });
+  it('refuses legacy overdue evidence without a replacement read', async () => {
+    const h = harness(r => { overdueFixture(r); r.metric_version = '1.0.0'; });
+    expect((await h.run(overdue)).status).toBe('unavailable');
+    expect(h.calls.filter(c => c.name === 'issue_analytics_evidence_bundle')).toHaveLength(1);
+  });
   it('issues and resolves through caller authority and projects closed current-turn evidence', async () => {
     const h = harness(); const result = await h.run();
     expect(result.status).toBe('available');

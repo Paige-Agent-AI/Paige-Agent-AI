@@ -11,7 +11,7 @@ The additive authenticated RPC is `issue_analytics_evidence_bundle` with these n
 | Argument | Contract |
 |---|---|
 | `p_metric_key` | Explicit registered department metric key |
-| `p_metric_version` | `1.0.0` |
+| `p_metric_version` | Registered version: `sales.receivables.overdue_current` requires `1.1.0`; other incumbent keys retain `1.0.0`. Requires the composed #2086 producer/shared release; this candidate is not deployed. |
 | `p_dimensions` | JSON object; current producers require `{}` |
 | `p_range_key` | `week`, `month`, `quarter` or `year` |
 | `p_range_start` | Finite UTC timestamp, inclusive |
@@ -81,5 +81,13 @@ Settings adds operations.recorded_workflow_activity (event timestamp cohort) and
 INT-339 PRIVACY BLOCKER CLEARED remains closed. Shared foundation PR #1814 merged as 27ea26556f6e3ce68741567ebc18208d913dcb34. Vercel production dpl_FWZvX1JiQofXk4NKDxRUHzBGNqMC is READY with production aliases. Supabase migrations 20270601000005/06 are persisted; deployment run 37693903137 succeeded and db-live matches the merge SHA. Independent catalog readback confirms committed function bodies and authorization ACLs. Controlled authenticated GoTrue/PostgREST proof passed all 33 metric issuer/parser/resolver cases and scope/membership negatives; synthetic fixture cleanup absence passed. Sales received the direct production handoff for #1821. Authenticated Settings browser UI, typed Chat and Live acceptance remain separate and are not inferred from this foundation proof.
 
 ### #1837 consumer binding — 2026-10-08
+
+### #2086 owner-calendar compatibility candidate — development only
+
+Sales owns the private overdue producer and Performance requests. Shared compatibility migration `20271101110001_int2086_overdue_metric_compatibility.sql` must compose after Sales `20271101110000_sales_overdue_business_calendar.sql`, in one reviewed release. No producer-only deployment or consumer default ahead of database support. The shared currentMetricVersion helper selects overdue 1.1.0; other versions stay 1.0.0. UTC reporting bounds and current_snapshot remain separate from the business-local overdue calendar.
+
+Only overdue 1.1.0 carries validated business_time_zone: configured includes IANA zone, set_at and the canonical local date of as_of; missing has all three null; invalid has null zone/date with stored set_at retained. Missing/invalid coverage reason is preserved, values remain null and truth is UNAVAILABLE. Raw invalid zones remain private revision inputs. The strict validator and closed conversational projection preserve this evidence without calculating monetary KPIs. Old overdue 1.0.0 issuance rejects 22023; references are revoked/refused without reinterpreting, replacing or reissuing them. Other metrics and legacy three-argument funnel references retain their existing contracts.
+
+Native composed SQL, independent exact-head review, required CI, production persistence and authenticated product acceptance remain separate gates; this development contract claims none of them. Operator, admission, approvals, providers and execution are unchanged.
 
 The conversational read uses the same validator, now canonically located in `supabase/functions/_shared/analytics-metrics/metric-contract.ts` and reexported at the existing frontend address. `analytics.metric_read` / `read_business_metric` consumes authenticated issuance plus resolver readback and projects the verified result through the existing bounded current-turn context interface. It creates no alternate issuer, snapshot composer, Memory store or action receipt. Existing-reference refusals do not fall back to replacement issuance. Chat/Live production acceptance is separate from the completed Settings acceptance; see `int340-conversational-metric-read.md` for the exact proof boundary.

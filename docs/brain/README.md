@@ -1,5 +1,7 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+**2026-10-14 Sales overdue calendar candidate (#2086), not released:** Sales producer and Performance consumer are composed with Analytics-owned issuer/resolver compatibility. Only overdue advances to1.1.0, using the canonical business calendar: due today excluded, missing/invalid calendar null/UNAVAILABLE. Other ten versions remain1.0.0. Local175 native PostgreSQL checks use synthetic auth stand-ins;88 consumer tests and19 browser fixture cases passed. Final review, exact-head CI, migration/runtime readback and ordinary customer acceptance remain owed. [Sales evidence](../evidence/ui-delivery/int2086-sales-performance-calendar.md), [shared compatibility](../evidence/ui-delivery/int2086-shared-overdue-compatibility.md). C1 signed economics, Chat execution and Stripe TEST acceptance are not established here.
+
 **What this is.** A durable, verified index of Paige Agent AI's doctrine + platform state, so a
 future session can answer *"do we have X?" / "where does Y live?" / "what did we already decide?"*
 from a **document** instead of re-diagnosing a system that's already been built and documented.

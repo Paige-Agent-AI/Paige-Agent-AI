@@ -8,7 +8,9 @@
 //   • a non-send action approval and a non-action approval behave exactly as before;
 //   • a quiet-hours / do-not-disturb hold on the generic comms path is HELD (#2132): nothing queued or
 //     sent, the approval pending and unclaimed; a copy send-message queues anyway is cancelled, and one
-//     that cannot be cancelled keeps the claim (no second copy) with its link write checked.
+//     that cannot be cancelled keeps the claim (no second copy) with its link write checked. The cancel runs
+//     on the caller's own login (the service-role client is refused by the RPC, as on production), and the
+//     link is written only onto a row that is still pending.
 // Nothing here reaches a network or a database.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,7 +39,7 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUp
   rpcAnswers: Record<string, { data: unknown; error: unknown }> = {}) {
   const writes: Write[] = [];
   const rpcs: string[] = [];
-  const rpcArgs: { name: string; args: unknown }[] = [];
+  const rpcArgs: { name: string; args: unknown; by: "service" | "user" }[] = [];
   const from = (table: string) => {
     let op: "select" | "update" = "select";
     let values: Row = {};
@@ -65,12 +67,18 @@ function fakeDb(tables: Record<string, Row[]>, failSelect: string[] = [], failUp
     };
     return q;
   };
-  const client = {
-    auth: { getUser: async () => ({ data: { user: { id: USER } } }) },
-    rpc: async (name: string, args?: unknown) => { rpcs.push(name); rpcArgs.push({ name, args }); return rpcAnswers[name] ?? { data: true, error: null }; },
-    from,
+  const rpcFor = (by: "service" | "user") => async (name: string, args?: unknown) => {
+    rpcs.push(name); rpcArgs.push({ name, args, by });
+    // The SERVICE-ROLE client has no auth.uid(), so production's cancel_scheduled_message (super admin, or the
+    // caller's active business with the admin role) refuses it with 42501 — exactly as it does on production.
+    if (by === "service" && name === "cancel_scheduled_message") return { data: null, error: { code: "42501", message: "forbidden" } };
+    return rpcAnswers[name] ?? { data: true, error: null };
   };
-  return { client, writes, rpcs, rpcArgs, tables };
+  // Two clients over the same tables, as in index.ts: the service-role client (SERVICE_ROLE_KEY) and the
+  // caller's own login (ANON_KEY + the forwarded JWT). Which one made each rpc is recorded.
+  const client = { auth: { getUser: async () => ({ data: { user: { id: USER } } }) }, rpc: rpcFor("service"), from };
+  const userClient = { auth: client.auth, rpc: rpcFor("user"), from };
+  return { client, userClient, writes, rpcs, rpcArgs, tables };
 }
 
 const kinds = [
@@ -93,15 +101,18 @@ const contact = { id: C, tenant_id: T, client_contact_methods: [{ kind: "email",
 
 let fetchCalls: { url: string; body: Row }[] = [];
 let sendAnswer: { status: number; body: Row } = { status: 200, body: { status: "sent", audit_id: "aud-1" } };
+/** Runs while send-message is "in flight" — lets a test change the world between the claim and the answer. */
+let onSend: (() => void) | null = null;
 
 async function load(db: ReturnType<typeof fakeDb>) {
   vi.resetModules();
   mocks.handler = null;
-  mocks.createClient.mockReset().mockImplementation(() => db.client);
+  mocks.createClient.mockReset().mockImplementation((_url: string, key: string) => (key === "anon" ? db.userClient : db.client));
   const env: Record<string, string> = { SUPABASE_URL: "https://unit.invalid", SUPABASE_SERVICE_ROLE_KEY: "svc", SUPABASE_ANON_KEY: "anon" };
   vi.stubGlobal("Deno", { serve: (h: (req: Request) => Promise<Response>) => { mocks.handler = h; }, env: { get: (k: string) => env[k] } });
   vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
     fetchCalls.push({ url: String(url), body: JSON.parse(String(init?.body ?? "{}")) });
+    onSend?.();
     return new Response(JSON.stringify(sendAnswer.body), { status: sendAnswer.status, headers: { "Content-Type": "application/json" } });
   });
   await import("./index.ts");
@@ -114,7 +125,7 @@ const approve = async () => {
   return { status: res.status, body: await res.json() as Row };
 };
 
-beforeEach(() => { fetchCalls = []; sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-1" } }; mocks.executeApprovedLayerCAct.mockReset(); });
+beforeEach(() => { fetchCalls = []; onSend = null; sendAnswer = { status: 200, body: { status: "sent", audit_id: "aud-1" } }; mocks.executeApprovedLayerCAct.mockReset(); });
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("execute-approval: a send_via_approval approval is never sent and never completed here", () => {
@@ -327,7 +338,9 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     const r = await approve();
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: false, executed: false, held: true, outcome: "held", hold_reason: "tenant_dnd", retry_after: "2026-10-14T12:00:00Z", returned_to_draft_message_id: "m1" });
-    expect(db.rpcArgs).toContainEqual({ name: "cancel_scheduled_message", args: { _id: "m1" } });
+    // The cancel runs as the CALLER (their login, so the RPC's own business/role check applies) — never as
+    // the service role, which production refuses (42501) and which would leave the approval claimed.
+    expect(db.rpcArgs.filter((c) => c.name === "cancel_scheduled_message")).toEqual([{ name: "cancel_scheduled_message", args: { _id: "m1" }, by: "user" }]);
     const row = db.tables.paige_pending_approvals[0];
     expect(row).toMatchObject({ status: "pending", claimed_at: null });
     expect((row.metadata as Row).send_queued).toBeUndefined();
@@ -356,6 +369,19 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     fetchCalls = [];
     expect((await approve()).body).toMatchObject({ already: "in_progress" });
     expect(fetchCalls).toEqual([]);
+  });
+
+  it("the link is written only onto a row still PENDING: an approval declined while send-message ran is left as decided", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_quiet_hours", scheduled_for: "2026-10-14T12:00:00Z", message_id: "m1" } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
+    onSend = () => { db.tables.paige_pending_approvals[0].status = "declined"; };   // a decline lands mid-send
+    await load(db);
+    await approve();
+    const link = db.writes.find((w) => w.table === "paige_pending_approvals" && "metadata" in w.values);
+    expect(link?.filters).toContainEqual(["eq", "status", "pending"]);
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row.status).toBe("declined");
+    expect((row.metadata as Row).send_queued).toBeUndefined();   // the decided row is not rewritten
   });
 
   it("if recording that link fails, it fails CLOSED: 500 with the message id, never a success", async () => {

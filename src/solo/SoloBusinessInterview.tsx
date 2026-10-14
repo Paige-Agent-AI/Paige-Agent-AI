@@ -165,7 +165,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
   const proposal = context.pendingProposal;
   const pending = nextField === undefined ? nextInterviewField(context.brief) : nextField;
   return <aside ref={panel} className={`sbi${onboarding ? " sbi--onboarding" : ""}`} aria-label="Business interview profile">
-    <div className="sbi-head"><div><strong>Your business profile</strong><span>Review a detail before saving it to Setup.</span></div><div className="sbi-head-actions">{onboarding && !draft && <button type="button" aria-expanded={profileOpen} onClick={() => setProfileOpen(open => !open)}>{profileOpen ? "Hide profile details" : "Review business profile"}</button>}<button type="button" onClick={setup}>Open Setup</button></div></div>
+    <div className="sbi-head"><div><strong>Your business profile</strong><span>Review a detail before saving it to Setup.</span></div><div className="sbi-head-actions">{onboarding && !draft && <button type="button" aria-expanded={profileOpen} onClick={() => setProfileOpen(open => !open)}>{profileOpen ? "Hide details" : "Review profile"}</button>}<button type="button" onClick={setup}>Open Setup</button></div></div>
     {context.loading && <p role="status">Loading your Setup records…</p>}
     {(context.error || error) && <p role="alert" className="sbi-error">{context.error || error}</p>}
     {message && <p role="status" className="sbi-status">{message}</p>}

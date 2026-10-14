@@ -2980,7 +2980,7 @@ const PaigeAIChatInner = ({
               />
             ))}
         <div
-          className={enableHistory ? "flex flex-col h-full min-w-0 flex-1" : "contents"}
+          className={enableHistory ? "flex flex-col h-full min-h-0 min-w-0 flex-1" : "contents"}
         >
         {!hideHeader && (
           <div className="mb-6">

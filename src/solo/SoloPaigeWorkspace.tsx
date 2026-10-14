@@ -12,6 +12,7 @@ import { useSoloSkills } from "./data/useSoloSkills";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
+import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
 import { supabase } from "@/integrations/supabase/client";
 import { interviewThreadFromSearch } from "./solo-interview-navigation";
@@ -422,7 +423,7 @@ export function SoloPaigeWorkspace({
   };
 
   return (
-    <div className="spw-root" data-account-epoch={activeTenantId ?? "resolving"} style={{ containerType: "inline-size" }}>
+    <div className={`spw-root${firstRun ? " spw-root--onboarding" : ""}`} data-account-epoch={activeTenantId ?? "resolving"} style={{ containerType: "inline-size" }}>
       <style>{`@container (max-width: 650px){[data-solo-thread-rail="true"]{display:none!important}[data-solo-mobile-history="true"]{display:flex!important}.spw-tabs button{padding-inline:6px;font-size:11px;gap:4px}}`}</style>
       <div className="spw-tabs" role="tablist" aria-label="Solo PAIGE workspace">
         {TABS.map((item, index) => {
@@ -442,7 +443,7 @@ export function SoloPaigeWorkspace({
           onActiveThreadIdChange={observeThread}
           activeThreadId={resumedThread}
           onTrace={observeChat}
-          greeting={interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
+          greeting={interviewFocused && firstRun ? "I'm PAIGE. What does your business do, and what would you most like to improve?" : interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
           chips={interviewFocused ? [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
           clientId={clientScope?.clientId ?? null}
           surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
@@ -467,7 +468,7 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && interviewFocused && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className="spw-chat-head"><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
+          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && interviewFocused && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className={`spw-chat-head${firstRun && interviewFocused ? " spw-chat-head--onboarding-open" : ""}`}><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={firstRun} />}{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
         />}
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>

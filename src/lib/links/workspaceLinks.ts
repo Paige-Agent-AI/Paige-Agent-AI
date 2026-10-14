@@ -32,7 +32,7 @@ export function workspaceLinkTier(
   return null;
 }
 
-/** The frozen words. A list is named as a list; only an exact client link names the client. */
+/** The frozen list labels. Exact record labels are applied only after route resolution. */
 export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = Object.freeze({
   contacts: "Open Clients",
   sales_agreements: "Open terms & agreements",
@@ -65,9 +65,11 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     recordId: link.record_id,
   });
   if (!resolved) return null;
-  const label = link.destination === "contacts" && resolved.status === "exact"
+  const label = resolved.status === "exact" && link.destination === "contacts"
     ? (link.subject ? `Open ${link.subject}` : "Open client record")
-    : DESTINATION_LABEL[link.destination];
+    : resolved.status === "exact" && link.destination === "sales_invoices"
+      ? "Open invoice"
+      : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

@@ -1679,7 +1679,7 @@ function ScenarioLab({ offers, deals, stages, onAskPaige }) {
   );
 }
 
-export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false }) {
+export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false, invoiceAccountEpoch = null }) {
   const sales = useSoloSalesOps();
   const agreements = useSoloCommercialTerms();
   const signings = useSoloAgreementSignings();
@@ -1708,6 +1708,16 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
   // default; existing command/revenue/scenarios deep links remain supported.
   const rawView = new URLSearchParams(location.search).get("view");
+  const focusInvoiceIds = new URLSearchParams(location.search).getAll("invoice");
+  const clearInvoiceFocus = () => {
+    const proceed = () => {
+      const query = new URLSearchParams(location.search);
+      query.delete("invoice");
+      navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+    };
+    const event = new CustomEvent('paige:sales-before-navigation', { cancelable: true, detail: { proceed } });
+    if (window.dispatchEvent(event)) proceed();
+  };
   const view = controlledView ?? (SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview");
   const setView = React.useCallback((next) => {
     if (onViewChange) { onViewChange(next); return; }
@@ -2064,7 +2074,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       {!hideNavigation && <SubNav view={view} setView={setView} />}
       <div id="sales-view-panel" role={hideNavigation ? undefined : "tabpanel"} aria-labelledby={hideNavigation || LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
-      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
+      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} focusInvoiceIds={focusInvoiceIds} onClearInvoiceFocus={clearInvoiceFocus} accountEpoch={`${location.pathname.split("/").slice(0, 3).join("/")}:${invoiceAccountEpoch ?? ""}`} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
       {view === "command" && (
         <div className="so-cmd">
           <header className="so-cmd-head">

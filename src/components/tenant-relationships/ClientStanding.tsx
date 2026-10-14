@@ -11,6 +11,7 @@ import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
   NOT_RECORDED_TEXT,
+  standingInvoiceLink,
 } from "../../../supabase/functions/_shared/client-engagement/labels";
 import type { ClientEngagementStatus } from "../../../supabase/functions/_shared/client-engagement/status";
 import type { ReadLinkDestination } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -92,8 +93,8 @@ function timeLabel(value: string, zone: string | null): string {
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", ...(zone ? { timeZone: zone } : {}) }).format(at);
 }
 
-function StandingLink({ destination, account, label }: { destination: ReadLinkDestination; account: string | null; label?: string }) {
-  const target = routeLinkTarget({ destination, record_id: null }, "solo", account);
+function StandingLink({ destination, account, label, recordId = null }: { destination: ReadLinkDestination; account: string | null; label?: string; recordId?: string | null }) {
+  const target = routeLinkTarget({ destination, record_id: recordId }, "solo", account);
   if (!target) return null;
   const text = label ?? target.label, cut = text.lastIndexOf(" ");
   // The arrow travels with the last word, so a wrapped link never strands it at the cell's far edge.
@@ -197,7 +198,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
         </Row>
 
         <Row state={moneyPill(s)} label="Money" actions={<>
-          <StandingLink destination="sales_invoices" account={account} />
+          <StandingLink destination="sales_invoices" recordId={standingInvoiceLink(s).record_id} account={account} />
           {terms?.schedule.length ? <StandingLink destination="sales_collections" account={account} /> : null}
         </>}>
           <dl className="trc-standing-money">
@@ -225,7 +226,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
                 // One link per place: a second step that goes to the same place does not repeat it.
                 const destination = ATTENTION_DESTINATION[step];
                 const repeat = destination !== null && shown.slice(0, i).some(prior => ATTENTION_DESTINATION[prior] === destination);
-                return <li key={step}><span>{ATTENTION_TEXT[step]}</span>{destination && !repeat && <StandingLink destination={destination} account={account} />}</li>;
+                return <li key={step}><span>{ATTENTION_TEXT[step]}</span>{destination && !repeat && <StandingLink destination={destination} recordId={destination === 'sales_invoices' ? standingInvoiceLink(s).record_id : null} account={account} />}</li>;
               })}
             </ul>
             {steps.length > 3 && <button type="button" className="trc-standing-quiet" aria-expanded={allSteps} onClick={() => setAllSteps(v => !v)}>{allSteps ? "Show fewer" : `Show ${steps.length - 3} more`}</button>}

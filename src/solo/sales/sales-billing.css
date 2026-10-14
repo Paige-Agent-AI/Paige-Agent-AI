@@ -174,3 +174,9 @@
 @media(max-width:1050px){.sb-invoice-workspace-grid{grid-template-columns:minmax(0,1fr)}.sb-invoice-workspace-grid>section:last-child{grid-row:1}.sb-invoice-preview{display:none}.sb-invoice-preview.is-visible{display:block}.sb-invoice-workspace .sb-preview-toggle{display:inline-flex!important}}
 @media(max-width:650px){.paige-solo.sb-invoice-workspace{width:100vw;height:100dvh;border-radius:0}.sb-invoice-workspace-body{padding:16px}.sb-invoice-workspace>div:first-child{padding:18px 48px 18px 16px}}
 @media(prefers-reduced-motion:reduce){.sb-invoice-workspace,.sb-invoice-workspace-overlay{animation:none!important;transition:none!important}}
+
+/* Exact invoice review uses the existing bounded workspace; its inspector owns scrolling. */
+.sb-workspace.sb-focused-invoice>.sb-detail-grid,.so-billing .sb-workspace.sb-focused-invoice>.sb-detail-grid{flex:1;min-height:0;max-height:none;overflow:auto}
+.sb-focused-invoice>.sb-panel{min-height:0;overflow:auto}
+.sb-focused-invoice .sb-paper{overflow-wrap:anywhere}
+.sb-focused-invoice>.sb-detail-grid>.sb-panel>button{margin:18px}

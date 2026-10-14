@@ -60,7 +60,7 @@ type Values =
   | { kind: 'currency_totals'; by_currency: { currency: string; amount_minor: string; record_count: number }[]; breakdown: [] };
 
 /** What the fake issuer answers for one read. `error` = the RPC's Postgres error code. */
-type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string; metricVersion?: string; calendar?: MetricBusinessTimeZone | null };
+type Script = { values?: Values | null; truth?: 'LIVE' | 'PARTIAL' | 'UNAVAILABLE'; error?: string; metricVersion?: string; calendar?: MetricBusinessTimeZone | null; payloadOverride?: Record<string, unknown> };
 type IssueArgs = { p_metric_key: string; p_metric_version: string; p_range_key: string; p_range_start: string; p_range_end: string };
 // Fixed synthetic server evidence, paired with NOW; never a browser-derived business day.
 const BUSINESS_CALENDAR: MetricBusinessTimeZone = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-12' };
@@ -135,6 +135,8 @@ function fakeCaller(opts: {
           truth_state: truth, caveats: [], source_revision_ref: 'sr_v1_' + 'a'.repeat(64), account_epoch: TENANT,
           account_epoch_ref: 'ae_v1_' + 'b'.repeat(64), evidence_ref: ref, reference_expires_at: new Date(NOW_MS + 900_000).toISOString(),
         };
+        // Intentional malformed producer payloads stay independent of the valid factory.
+        Object.assign(result, s.payloadOverride);
         store.set(ref, result);
         return { data: structuredClone(result), error: null };
       }
@@ -319,6 +321,25 @@ describe('payments adapter', () => {
     expect(s.coverage).toBe('partial');
     expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
     expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses extra calendar fields instead of repairing the producer payload', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.receivables.overdue_current'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: { ...BUSINESS_CALENDAR, invented: true } } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.receivables_overdue'))).toBe(false);
+    expect(s.risks.some(risk => risk.kind === 'receivables_overdue')).toBe(false);
+  });
+
+  it('refuses a calendar attached to a non-overdue metric without inventing recorded cash', async () => {
+    const f = fakeCaller({ script: request => request.p_metric_key === 'sales.cash.recorded_received'
+      ? { values: money(['usd', '50000']), payloadOverride: { business_time_zone: BUSINESS_CALENDAR } } : defaultScript(request) });
+    const s = data(await createPaymentsSnapshotAdapter(f.caller, { tenantId: TENANT }, clock).read(ctx()));
+    expect(s.coverage).toBe('partial');
+    expect(s.headline.some(row => row.key.startsWith('payments.cash_recorded_received'))).toBe(false);
+    expect(s.changes).toHaveLength(0);
+    expect(f.issued().filter(row => row.p_metric_key === 'sales.cash.recorded_received').every(row => row.p_metric_version === '1.0.0')).toBe(true);
   });
 
   it('keeps every currency separate, upper-cases codes, and never sums them', async () => {

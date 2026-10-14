@@ -49,13 +49,14 @@ try {
     CREATE TABLE public.tenants(id uuid PRIMARY KEY,status text DEFAULT 'active');
     CREATE TABLE public.clients(id uuid PRIMARY KEY,tenant_id uuid,linked_user_id uuid UNIQUE,status text DEFAULT 'active',merged_into_contact_id uuid,
       first_name text,last_name text,entity_name text,street_address text,city text,state text,zip_code text,
-      onboarding_stage text,source text,paige_shared_context_consent boolean,paige_shared_context_consent_updated_at timestamptz,updated_at timestamptz,
+      onboarding_stage text CHECK (onboarding_stage IS NULL OR onboarding_stage IN ('pre_invite','invited','signing_agreement','accepting_payment','completing_intake','uploading_docs','completed')),
+      source text,paige_shared_context_consent boolean,paige_shared_context_consent_updated_at timestamptz,updated_at timestamptz,
       current_notes text,lead_score int,created_by uuid,provider_secret text);
     CREATE TABLE public.client_contact_methods(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),client_id uuid,tenant_id uuid,kind text,value text,is_primary boolean,label text,match_key text);
     INSERT INTO tenants(id) VALUES('${tenant}'),('${foreign}');
     INSERT INTO clients(id,tenant_id,linked_user_id,first_name,last_name,entity_name,street_address,city,state,zip_code,onboarding_stage,source,current_notes,lead_score,provider_secret)
-      VALUES('${contact}','${tenant}','${uid}','Jordan','Reyes','Client company','1 Test Road','Test City','TS','00000','intake','invitation','INTERNAL NOTES',99,'INTERNAL PROVIDER'),
-      ('${otherContact}','${foreign}','${other}','Foreign','Person',NULL,NULL,NULL,NULL,NULL,'intake','signup','FOREIGN NOTES',98,'FOREIGN PROVIDER');
+      VALUES('${contact}','${tenant}','${uid}','Jordan','Reyes','Client company','1 Test Road','Test City','TS','00000','invited','invitation','INTERNAL NOTES',99,'INTERNAL PROVIDER'),
+      ('${otherContact}','${foreign}','${other}','Foreign','Person',NULL,NULL,NULL,NULL,NULL,'invited','signup','FOREIGN NOTES',98,'FOREIGN PROVIDER');
     INSERT INTO client_contact_methods(client_id,tenant_id,kind,value,is_primary,label,match_key) VALUES
       ('${contact}','${tenant}','email','primary@tests.invalid',true,'INTERNAL LABEL','INTERNAL MATCH'),
       ('${contact}','${tenant}','email','secondary@tests.invalid',false,'OTHER LABEL','OTHER MATCH'),

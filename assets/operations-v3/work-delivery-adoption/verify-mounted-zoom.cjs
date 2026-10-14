@@ -18,13 +18,26 @@ for(const factor of [2,4]){
   for(let i=0;i<45&&!await action.evaluate(el=>document.activeElement===el);i++)await p.keyboard.press('Tab');
   const focus=await action.evaluate(el=>({active:document.activeElement===el,style:getComputedStyle(el).outlineStyle,width:getComputedStyle(el).outlineWidth}));if(!focus.active||focus.style!=='solid'||parseFloat(focus.width)<2)throw Error('Visible keyboard focus missing');
   await p.keyboard.press('Enter');const confirm=p.getByRole('alertdialog');await confirm.waitFor();const cancel=confirm.getByRole('button',{name:mode==='review'?'Keep reviewing':'Keep preparing',exact:true});await cancel.scrollIntoViewIfNeeded();
-  const geometry=await confirm.evaluate(el=>({contained:el.scrollWidth<=el.clientWidth,height:el.getBoundingClientRect().height}));if(!geometry.contained||geometry.height>zoom.innerHeight)throw Error('Confirmation clipped at native zoom');
-  await p.screenshot({path:path.join(out,`${theme}-${factor*100}-${mode}.png`)});await cancel.click();await confirm.waitFor({state:'hidden'});
+  const geometry=await confirm.evaluate(el=>{const r=el.getBoundingClientRect();return{contained:el.scrollWidth<=el.clientWidth,left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,viewportWidth:innerWidth,viewportHeight:innerHeight}});
+  const controlBounds=await confirm.getByRole('button').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return{name:el.textContent.trim(),left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,visible:getComputedStyle(el).visibility==='visible',viewportWidth:innerWidth,viewportHeight:innerHeight}}));
+  const inside=r=>r.left>=-.5&&r.top>=-.5&&r.right<=r.viewportWidth+.5&&r.bottom<=r.viewportHeight+.5&&r.width>0&&r.height>0;
+  if(!geometry.contained||!inside(geometry)||controlBounds.length!==2||controlBounds.some(r=>!r.visible||!inside(r)))throw Error('Confirmation or decision controls clipped at native zoom: '+JSON.stringify({geometry,controlBounds}));
+  const confirmationScroll=await confirm.evaluate(el=>({scrollable:el.scrollHeight>el.clientHeight,scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}));
+  const cdp=await context.newCDPSession(p);
+  if(confirmationScroll.scrollable){
+   await p.mouse.move(geometry.left+geometry.width/2,geometry.top+geometry.height/2);await p.mouse.wheel(0,-2000);await p.waitForFunction(()=>{const el=document.querySelector('[role=alertdialog]');return el&&el.scrollTop===0;});
+   const titleBounds=await confirm.getByRole('heading').evaluate(el=>{const r=el.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,viewportWidth:innerWidth,viewportHeight:innerHeight}});if(!inside(titleBounds))throw Error('Confirmation title not reachable at native zoom');
+   const topShot=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});fs.writeFileSync(path.join(out,`${theme}-${factor*100}-${mode}-top.png`),Buffer.from(topShot.data,'base64'));
+   await cancel.scrollIntoViewIfNeeded();confirmationScroll.topReachable=true;confirmationScroll.titleBounds=titleBounds;confirmationScroll.bottomRestored=await cancel.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight});if(!confirmationScroll.bottomRestored)throw Error('Cancel not restored after confirmation scrolling');
+  }
+  const shot=await cdp.send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await cdp.detach();const png=Buffer.from(shot.data,'base64');const capture={width:png.readUInt32BE(16),height:png.readUInt32BE(20),mechanism:'CDP compositor surface, captureBeyondViewport=false'};
+  if(capture.width<zoom.innerWidth*factor-2||capture.height<zoom.innerHeight*factor-2)throw Error('Capture lost physical browser viewport: '+JSON.stringify({capture,zoom}));
+  fs.writeFileSync(path.join(out,`${theme}-${factor*100}-${mode}.png`),png);await cancel.click();await confirm.waitFor({state:'hidden'});
   if((await p.evaluate(()=>window.__opsMountedFixture.calls())).some(c=>['operations_delivery_submit_scoped','operations_delivery_review_scoped','operations_delivery_release_scoped'].includes(c.name)))throw Error('Cancelled confirmation wrote');
   if(!await action.evaluate(el=>document.activeElement===el))throw Error('Confirmation did not restore focus');
-  results.push({theme,zoomPercent:factor*100,mode,zoom,documentGeometry,focus,geometry,cancelNoWrite:true,focusRestored:true,reducedMotion:true});console.log('ZOOM_PASS',theme,factor,mode);
+  results.push({theme,zoomPercent:factor*100,mode,zoom,documentGeometry,focus,geometry,controlBounds,confirmationScroll,capture,cancelNoWrite:true,focusRestored:true,reducedMotion:true});console.log('ZOOM_PASS',theme,factor,mode);
  }
  }finally{await context.close();}
 }
-fs.writeFileSync(path.join(__dirname,'mounted-zoom-verification.json'),JSON.stringify({boundary:'Actual Solo shell and mounted Operations with synthetic RPCs in isolated signed-out native Chrome 200/400 percent browser zoom. No real customer account/persistence/provider/INT346 proof.',results,errors},null,2));console.log(JSON.stringify({cases:results.length,errors}));if(results.length!==8||errors.length)throw Error('Incomplete native zoom proof');
+fs.writeFileSync(path.join(__dirname,'mounted-zoom-verification.json'),JSON.stringify({supersedes:'Original Playwright screenshots were reduced CSS-frame crops and did not establish visual zoom PASS; retained in native-zoom-original-evidence.json and legacy-zoom-capture-failure.png. No product clipping was established by those captures.',boundary:'Actual Solo shell and mounted Operations with synthetic RPCs in isolated signed-out native Chrome 200/400 percent browser zoom. No real customer account/persistence/provider/INT346 proof.',results,errors},null,2));console.log(JSON.stringify({cases:results.length,errors}));if(results.length!==8||errors.length)throw Error('Incomplete native zoom proof');
 })().catch(e=>{console.error(e);process.exitCode=1});

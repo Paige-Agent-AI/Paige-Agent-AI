@@ -256,3 +256,10 @@ MUST_NOT_HAPPEN: edit held `OperationsRoute.tsx`, `OperationsWorkEditor.tsx` or 
 State map: eligible work → source inspection → preparation or review → consequence confirmation → canonical write/readback → verified recorded result. Loading/refusal/missing source remains per item. Dirty or uncertain children block mode/detail/destination closure through the incumbent reason-bearing guard. Actual workspace/persona loss masks old content. Browser recovery entries preserve original intent and are explicitly local drafts, not company work or authority.
 
 Current audit setup attempts: sandbox dependency junction denied, corrected by authorized local junction; initial test cache EPERM executed zero tests; initial sandbox server was not reachable by isolated Chrome. These are INVALID setup attempts, not product failures or passing evidence. Fresh unsandboxed baseline/render proof follows separately.
+
+
+### Work adoption first review and one evidence correction
+
+Non-author first review at 5eebf5c99c0017d8e4385f2da059ac68aa811592 completed with no material source/security finding and eight independent scope/recovery checks passing. Its P2 found that the original native-zoom PNGs cropped the controls; the visual PASS was unsupported. One combined evidence correction uses full physical viewport CDP capture, complete dialog/control viewport bounds, natural 400% confirmation content scrolling and readable top/action frames. Eight corrected native cases pass with zero page errors; original defective evidence is retained. Product bytes remain unchanged. Final independent recheck and genuinely green exact-head CI are still owed.
+
+Required comms-provider-boundary job 116108633128 failed before checkout because the pinned PostgreSQL public-ECR pull was rate-limited three times. All product/authority steps skipped. The actual setup failure is coordinated with the existing owner; no unrelated source change or gate waiver. Full Operations remains PARTIAL; authenticated staff/client acceptance remains UNVERIFIED.

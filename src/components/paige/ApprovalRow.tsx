@@ -65,6 +65,10 @@ export function ApprovalRow({
 }) {
   const location = useLocation();
   const leadReply = a.category === "owner.lead_followup";
+  const metadata: unknown = a.metadata;
+  const heldEmail = a.type === "email_draft" && !!metadata && typeof metadata === "object" && !Array.isArray(metadata) && Object.prototype.hasOwnProperty.call(metadata, "held_draft_message_id");
+  const declineOnly = a.category === "client.followup" || heldEmail;
+  const canDecline = showDecline || declineOnly;
   const routeRoot = tenantRoutePrefixForPath(location.pathname);
   const replyHref = a.contact_id && routeRoot ? `${routeRoot}/clients/conversations?contact=${encodeURIComponent(a.contact_id)}&approval=${encodeURIComponent(a.id)}` : null;
   const [busy, setBusy] = useState(false);
@@ -81,15 +85,20 @@ export function ApprovalRow({
     // Reject-with-reason: a decline is a decision write (not the execute transition), so it uses
     // this surviving surface's own tenant-scoped RLS-protected UPDATE directly (§18) —
     // permissive admin|coach + RESTRICTIVE tenant policy gate it server-side.
-    const { error } = await supabase
-      .from("paige_pending_approvals")
-      .update({ status: "rejected", decision_rationale: reason, reviewed_at: new Date().toISOString() })
-      .eq("id", a.id);
-    setRejectBusy(false);
-    if (error) { toast.error(error.message ?? "Couldn't decline that."); return; }
-    setDeclining(false);
-    setCollapsing(true);
-    onResolved?.();
+    try {
+      if (!a.tenant_id) { toast.error("Reopen this draft in its workspace before declining."); return; }
+      const { data, error } = await supabase
+        .from("paige_pending_approvals")
+        .update({ status: "rejected", decision_rationale: reason, reviewed_at: new Date().toISOString() })
+        .eq("id", a.id).eq("tenant_id", a.tenant_id).eq("status", "pending")
+        .select("id,status").maybeSingle();
+      if (error || data?.id !== a.id || data.status !== "rejected") { toast.error("Couldn't confirm the decline. Refresh this draft to check its status."); return; }
+      setDeclining(false);
+      setCollapsing(true);
+      onResolved?.();
+    } catch {
+      toast.error("Couldn't confirm the decline. Refresh this draft to check its status.");
+    } finally { setRejectBusy(false); }
   };
 
   const dc = a.draft_content as Record<string, unknown> | string | null;
@@ -105,7 +114,7 @@ export function ApprovalRow({
   const draftedVp = resolveVpForActionKind(a.category);
 
   const approve = async () => {
-    if (leadReply) return; // This send kind must be reviewed in canonical Conversations.
+    if (leadReply || declineOnly) return; // These rows cannot execute through generic approval.
     setBusy(true);
     // Approve AND act via the callable execute-approval seam (§10): email/SMS
     // drafts are sent (send-message flips the row to approved+sent_at); other
@@ -164,8 +173,9 @@ export function ApprovalRow({
                 leadIn="Drafted by your Paige team"
               />
             )}
+            {declineOnly && <p className="text-xs text-muted-foreground">This older draft cannot send with a proven approval. Decline it and prepare a fresh reply in Conversations.</p>}
             <div className="flex items-center justify-end gap-1.5 pt-0.5">
-              {leadReply ? (replyHref ? <Button asChild size="sm" variant="outline" className="h-7"><Link to={replyHref}>Review reply</Link></Button> : <span className="text-xs text-muted-foreground">Open this lead in Conversations to review.</span>) : <Button
+              {leadReply || declineOnly ? (replyHref ? <Button asChild size="sm" variant="outline" className="h-7"><Link to={replyHref}>{leadReply ? "Review reply" : "Open Conversations"}</Link></Button> : <span className="text-xs text-muted-foreground">Open this lead in Conversations to review.</span>) : <Button
                 size="sm"
                 onClick={approve}
                 disabled={busy || approved || rejectBusy}
@@ -175,16 +185,16 @@ export function ApprovalRow({
               </Button>}
               {/* Edit-then-approve routes to the full detail surface (§18 — no inline
                   duplicate editor); "Decline" is neutral/ghost (gold stays on Approve). */}
-              {!leadReply && <Button asChild size="sm" variant="ghost" className="h-7">
+              {!leadReply && !declineOnly && <Button asChild size="sm" variant="ghost" className="h-7">
                 <Link to={"/choose-account"}>{showDecline ? "Edit" : "View"}</Link>
               </Button>}
-              {showDecline && (
+              {canDecline && (
                 <Button size="sm" variant="ghost" className="h-7 text-muted-foreground" onClick={() => setDeclining((d) => !d)} disabled={busy || approved}>
                   Decline
                 </Button>
               )}
             </div>
-            {showDecline && declining && (
+            {canDecline && declining && (
               <div className="space-y-2 rounded-md border border-border bg-muted/30 p-2">
                 <Textarea
                   value={rationale}

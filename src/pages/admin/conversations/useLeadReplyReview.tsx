@@ -56,13 +56,24 @@ export function useLeadReplyReview(input: Input, onAccepted: () => void) {
   const [busyScope, setBusyScope] = useState<object | null>(null);
   const lock = useRef<object | null>(null);
   const accepted = useRef<Set<string>>(new Set());
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const current = review?.scope === scope ? review : null;
   const busy = busyScope === scope;
   const currentScope = (requestScope: object) => live.current && scopeRef.current === requestScope;
   const hasUnsettledSend = current?.phase === "report" && (current.state === "working" || current.state === "unconfirmed");
+  useEffect(() => {
+    if (!current || (current.phase === "decide" && current.revision !== revision)) return;
+    // Review is an intentional entry: focus the existing card, never its Approve button.
+    // Background readback must not pull focus out of a field the owner has resumed editing.
+    if (document.activeElement?.matches("input, textarea, [role='combobox']")) return;
+    panelRef.current?.querySelector<HTMLElement>("[role='group']")?.focus();
+  }, [current, revision]);
+  const dismiss = () => { setReview(null); if (triggerRef.current?.isConnected) triggerRef.current.focus(); };
 
   const prepare = async () => {
     if (input.disabled || hasUnsettledSend || lock.current === scope) return;
+    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setError(null);
     const refuse = (text: string) => setError({ scope, text });
     if (!input.tenantId || !input.contactId || !input.threadKey || !input.approvalId) return refuse("Open the lead reply in its original conversation first.");
@@ -102,7 +113,7 @@ export function useLeadReplyReview(input: Input, onAccepted: () => void) {
   const approve = async (fingerprints: string[]) => {
     if (!current || current.phase !== "decide" || input.disabled || lock.current === scope) return;
     if (current.revision !== revision || current.expiresAt! <= Date.now() || fingerprints.length !== 1 || fingerprints[0] !== current.fingerprint) {
-      setReview(null); setError({ scope, text: "The draft or sending identity changed, or this review expired. Review the current reply again." }); return;
+      dismiss(); setError({ scope, text: "The draft or sending identity changed, or this review expired. Review the current reply again." }); return;
     }
     lock.current = scope; setBusyScope(scope);
     setReview({ ...current, phase: "report", state: "working", fingerprint: undefined, note: "Sending the exact reply you approved…" });
@@ -163,8 +174,8 @@ export function useLeadReplyReview(input: Input, onAccepted: () => void) {
   const panel = <>
     {error?.scope === scope ? <p role="alert" className="px-3 py-2 text-sm text-destructive">{error.text}</p> : null}
     {stale ? <p role="status" className="px-3 py-2 text-sm text-muted-foreground">The draft changed. Review the current reply again before approving.</p> : current ? (
-      <div className="space-y-2 border-t border-border px-3 py-3">
-        {current.phase === "decide" ? <PaigeConfirmCard actions={[{ summary: current.summary, fingerprint: current.fingerprint, preview: current.preview }]} disabled={busy || input.disabled} focusOnMount onApprove={(fps) => { void approve(fps); }} onDeny={() => setReview(null)} />
+      <div ref={panelRef} className="space-y-2 border-t border-border px-3 py-3">
+        {current.phase === "decide" ? <PaigeConfirmCard actions={[{ summary: current.summary, fingerprint: current.fingerprint, preview: current.preview }]} disabled={busy || input.disabled} focusOnMount onApprove={(fps) => { void approve(fps); }} onDeny={dismiss} />
           : <PaigeConfirmCard mode="report" actions={[{ summary: current.summary, preview: current.preview, state: current.state, note: current.note }]} note={current.note} focusOnMount />}
         {current.canCheck ? <Button variant="outline" size="sm" disabled={busy} onClick={() => { void checkStatus(); }}>{busy ? "Checking…" : "Check sending status"}</Button> : null}
       </div>

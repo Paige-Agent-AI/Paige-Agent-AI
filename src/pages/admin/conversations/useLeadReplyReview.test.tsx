@@ -45,6 +45,14 @@ beforeEach(async () => {
 afterEach(async () => { await act(async () => { root.unmount(); }); host.remove(); });
 
 describe("lead reply through the existing approval door", () => {
+  it("moves focus from the review trigger to the exact card, never directly to Approve", async () => {
+    const trigger = document.createElement("button"); trigger.textContent = "Review reply"; document.body.append(trigger); trigger.focus();
+    try {
+      await prepare();
+      expect(document.activeElement?.getAttribute("aria-label")).toBe("Needs your OK");
+      expect(document.activeElement?.tagName).not.toBe("BUTTON");
+    } finally { trigger.remove(); }
+  });
   it("reviews the server's exact envelope, then echoes the same operation, command and fingerprint", async () => {
     await prepare();
     expect(host.textContent).toContain("lead@example.test"); expect(host.textContent).toContain("hello@business.example");

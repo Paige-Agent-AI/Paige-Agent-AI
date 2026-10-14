@@ -7,12 +7,12 @@ MATERIAL_FLOW_CHANGE: YES: existing form opt-in, canonical inquiry, contextual d
 FLOW_PROTOTYPE: PASS: e03-conversations-flow-review.html reviewed in the existing coding conversation; owner2026-10-14 said Yes as long as we maintain what we already have; current Conversations screenshot is the preservation baseline, not prototype replacement chrome
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner opens a form inquiry in canonical Conversations, edits its PAIGE reply in the existing composer and approves its server-resolved exact envelope
 VISUAL_DIRECTION: PASS: preserve Clients navigation, thread list/search/filters, history, operating bar, rich composer, People context and PAIGE panel; no shell redesign
-AUTOMATED_EVIDENCE: PARTIAL: form settings33/33, exact-review adapter38/38, incumbent lead-reply60/60, native PostgreSQL canonical inquiry identity/ACL/idempotency/concurrent replay PASS; integrated final batch pending
-STATIC_EVIDENCE: PARTIAL: changed-file lint zero errors and three incumbent growth2 warnings; migration version collision PASS; earlier TypeScript baseline10/current10 PASS, latest integrated TypeScript/build pending
-RENDERED_EVIDENCE: UNVERIFIED: prototype frames are design evidence only; new actual-component harness exists with simulated adapters; browser attachment failed before a rendered product-source proof
-BEHAVIORAL_EVIDENCE: UNVERIFIED: actual browser flow/focus/refusal/recovery traversal owed; unit behavior and native SQL are not browser or production evidence
+AUTOMATED_EVIDENCE: PASS: six changed-flow suites103/103 including exact-review focus39/39; expanded legacy/held decline suite12/12; incumbent lead-reply60/60; C0b integrity152/152; native PostgreSQL canonical inquiry identity/ACL/idempotency/concurrent replay PASS
+STATIC_EVIDENCE: PARTIAL: changed-file lint zero errors and three incumbent growth2 warnings; migration version collision PASS; TypeScript baseline10/current10 and production build PASS before the final legacy-decline extension, final candidate repeat pending; Impeccable exit0 with one retained incumbent10px advisory
+RENDERED_EVIDENCE: UNVERIFIED: actual ClientsConversations tree loaded with fixture-only adapters; capture stalled and yielded a blank frame, explicitly invalidated; no eight-viewport actual UI matrix claimed
+BEHAVIORAL_EVIDENCE: PARTIAL: actual component browser drive proved draft entry into existing composer, server-resolved preview, edit invalidation, Not now retaining words/restoring focus, accepted-not-delivered and unknown locked/status-read-only behavior; no authenticated/provider acceptance
 AUTHENTICATED_RUNTIME: UNVERIFIED: no authenticated ordinary SOLO acceptance or provider send authorized/performed
-KEYBOARD_FOCUS: UNVERIFIED: reuses existing controls and confirm card; actual rendered keyboard path and focus restore owed
+KEYBOARD_FOCUS: PARTIAL: observed review-trigger defect reproduced by a failing regression then corrected; actual DOM focus lands on Needs your OK group (never Approve), Not now returns to Review reply; complete keyboard traversal owed
 ZOOM_REFLOW: UNVERIFIED: actual UI reflow proof owed
 REDUCED_MOTION: UNVERIFIED: no new product animation; actual UI preference proof owed
 STATE_COVERAGE: PARTIAL: automated stale/expired/repeated approval, identity/content changes, unsupported attachments/schedule/signature, workspace A-B-A, refusal/unknown/accepted/delivered and read-only recovery; actual UI and provider states owed
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: ordinary owner/admin completes the nine-step flow on the re
 MOTION_PURPOSE: NONE: no product animation added
 PROTECTED_SEAMS: affected isolation/authority/approval/canonical write/readback/provider state/retry/idempotency/privacy/geometry/accessibility; fixture regression and native SQL prove subsets only. Authentication/account choice, signup/paywall/billing/provisioning, Spine registry/executor, Rail/Memory engine, Chat transcript/popout/stream, Live Conversation and Secure Browser/Vault implementations not modified. Existing native processor and retry lifecycle reused; no new queue.
 
-INTERNAL_BUILD_IDENTITY: local-working-tree; deployment=NONE; environment=development; migrations=NOT_APPLIED(20271101143000); edge=NOT_DEPLOYED; evidence=this-record
+INTERNAL_BUILD_IDENTITY: b19841b58c734e4ae91b7233d585b91a53fc8bb4; deployment=NONE; environment=development; migrations=NOT_APPLIED(20271101143000); edge=NOT_DEPLOYED; evidence=this-record-plus-uncommitted-focused-corrections
 RELEASE_CHANNEL: internal: source continuation only, no activation
 RELEASE_CLASSIFICATION: implementation: unfinished customer journey
 CUSTOMER_RELEASE_IDENTITY: none: acceptance and release authority not established
@@ -51,3 +51,7 @@ Preserved PRs:2131=60bc59d95ab94e76b54788476908651df08a9399;2150=feb0e10da2d0217
 The new migration was CLI-created as20261014223525, then renamed before application above verified production frontier20271101142133. It adds one logical source ID and an inbound-only Form value to existing Messages. A service-only SECURITY INVOKER RPC derives scope from the claimed submission, gates current opt-in and exact primary email, and inserts once; existing tenant/thread triggers retain ownership. Old inquiries are not backfilled. The source is not deployed and no migration applied outside a task-owned disposable local PostgreSQL cluster.
 
 S3 UI round7 and G1 round13 original complete bytes/review reports/pins are still unavailable. This is explicit reconstruction against the released S3 backend, not invented recovery. G1 L1-L6 and issue2135 remain open. SendGrid-only cutover, credentials/DNS/Auth/inbound/provider receipts and final go-live are separate owner/external gates.
+
+The continuation is rebased cleanly onto mainbf0a8b60bee8d3a83c17c214655ea6425fc168d4. Original local preservation commita9045b2e1120c5d42c7d4092b98e3596edd1e65f remains on codex/e03-preserved-20261014-a9045b2e1. No overlap with E2-6 product files, no shared pin helper modification. The same-thread composer selection guard now keeps unsent words/review identity through canonical message readback; a real thread/workspace change still resets them.
+
+Legacy client.followup and held email approvals expose the existing decline exit and canonical Conversations link, with generic execution refused. Decline readback must match exact row, tenant filter, pending predicate and rejected status; an empty/foreign/stale answer never collapses the row. The frozen execute-approval source in2150 is untouched.

@@ -18,7 +18,7 @@ function files(dir: string): string[] {
   });
 }
 
-const source = files(ROOT).map((path) => ({ path: relative(ROOT, path).replaceAll("\\", "/"), text: readFileSync(path, "utf8") }));
+const source = files(ROOT).map((path) => ({ path: relative(ROOT, path).replace(/\\/g, "/"), text: readFileSync(path, "utf8") }));
 
 /** Every `.from(<table>)` call's full chain, up to the end of its statement. Handles the
  *  `from("t" as never)` style and chains that run over many lines. */

@@ -80,10 +80,10 @@ jobs:
           name: sales-collections-sql-proof
           path: supabase/functions/_shared/sales-collections/sql-proof-result.txt
           if-no-files-found: warn
-      - name: Sales Performance canonical sums, balance equivalence and tenant gates
+      - name: Sales Performance canonical sums, business-calendar overdue, balance equivalence and tenant gates
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+        run: node scripts/sql/sales-performance-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --forward-migration supabase/migrations/20271101110000_sales_overdue_business_calendar.sql
       - name: Preserve Sales Performance proof
         if: always()
         uses: actions/upload-artifact@v4
@@ -94,7 +94,7 @@ jobs:
       - name: Sales Performance mutation controls
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-performance-mutation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+        run: node scripts/sql/sales-performance-mutation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --forward-migration supabase/migrations/20271101110000_sales_overdue_business_calendar.sql
       - name: Preserve Sales Performance mutation proof
         if: always()
         uses: actions/upload-artifact@v4

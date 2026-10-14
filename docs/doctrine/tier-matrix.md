@@ -334,7 +334,22 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### Experience 04 E4-S3 PR alpha — chat read links, truthful read steps, the owner's own time-zone save attributed to a person (branch `claude/clever-lovelace-r111ru`, 2026-10-14; ships on merge, NOT live)
+### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (merged as #2136 → main `d5a8e6e76`, 2026-10-14; deployed — remote `edge-live` and `db-live` at `d5a8e6e7`, migration `20271031005000` read back on production, Vercel production READY; authenticated runtime still owed)
+
+Three Exp04 SQL reads become pure reads (no Rail row for a page); Sales › Payments › Collections judges "Overdue" on the business's calendar day ("On hold" without a zone); "Where {client} stands" opens the Solo client record. `client_standing` is a §61 exception declared for the direct-client-book tiers and mounted on Solo only.
+
+| Tier | Display reads write no receipt | Collections Overdue on the business calendar | Client standing on the record |
+|---|---|---|---|
+| God / Operator | N/A — reads are tenant owner/admin only | N/A — no Sales | N/A — not declared (no client book) |
+| Agency | N/A — reads refuse a non-owner/admin of the active workspace | N/A — no Sales | N/A — not declared |
+| Enterprise | applies if reached (same reads) | N/A — no Solo Sales mounted | declared, **not mounted** ("relationships" variant) |
+| Standalone (Solo) | ✓ on merge | ✓ on merge — "Overdue" / "On hold" | ✓ on merge — first section of the client record |
+| Sub-account | ✓ on merge (same reads, chat reachable when typed `sub_account`) | N/A — the sub-account tree mounts no Sales | declared, **not mounted** (legacy People table) — §60 parity gap, pinned by a test |
+| Client / Anonymous | N/A — reads not granted to anon; clients refused in-body | N/A | N/A |
+
+Evidence: unit/render (failing first, review fixes mutation-checked), a focused SQL proof (22/22, FAILS without the migration), harness renders of the real Clients record and the real Sales › Collections in both themes, phone and the Solo frame matrix, re-run on the fix-pass tree (32/32, 30/30 plus two late-row frames). Full-schema SQL proof runs in CI; authenticated runtime (Solo owner, one sub-account walk) is UNVERIFIED and owed. See `docs/delivery/exp04-get-paid-deliver-journey.md` §16.4.
+
+### Experience 04 E4-S3 PR alpha — chat read links, truthful read steps, the owner's own time-zone save attributed to a person (merged as #2129, 2026-10-14; deployed — remote `edge-live` and `db-live` at `50c32a605`; authenticated runtime still owed)
 
 Main chat (`paige-ai-chat` + `PaigeAIChat`) and the Solo Rail. An available client-standing or time-zone read now shows "See it in your workspace" links beside the answer (live and after reload), built from the current account; a refused or no-match read leaves no finished-check row; the owner's own business-time-zone save reads as "Person" on the Solo Rail. No tier gains a read, write or action; INT-346 stays inactive.
 

@@ -227,9 +227,11 @@ select pg_temp.check_true((select value->'not_recorded' ? 'payment_disputes' and
 -- Time zone: the owner's configured zone, and the owner-local calendar date of the read.
 select pg_temp.check_true((select value->'business_time_zone'='{"state":"configured","zone":"America/New_York"}'::jsonb from status_result),'business time zone is the owner''s configured zone');
 select pg_temp.check_true((select (value->>'as_of_date')::date=((value->>'read_at')::timestamptz at time zone 'America/New_York')::date from status_result),'as-of date is the owner-local date of the read, not the UTC date');
--- The read writes exactly one capability receipt and nothing else.
-select pg_temp.check_true((select count(*)=1 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and source_id=(select (value->>'receipt_id')::uuid from status_result)),'one capability receipt recorded');
-select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events e,status_result s where e.source_id=(s.value->>'receipt_id')::uuid and e::text ~ 'Consulting Client|350000'),'receipt carries no client name or amount');
+-- E4-S3 PR beta (20271031005000): the read is a pure read. The client record displays it on every
+-- open, so it writes no receipt and returns no receipt id; PAIGE's chat answer is recorded by her
+-- executor instead (paige-ai-chat, service role, detail.channel='paige_chat').
+select pg_temp.check_true((select not (value ? 'receipt_id') from status_result),'E4-S3: the client status read returns no receipt id');
+select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='read_client_engagement_status'),'E4-S3: reading a client''s standing writes no Rail row');
 
 -- An admin of the same workspace may read; a client with no records reads as empty, never as an error.
 select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000002',true);
@@ -273,6 +275,8 @@ select pg_temp.check_true((select value->'business_time_zone'='{"state":"missing
 select pg_temp.check_true((select bool_and((value->>'as_of_date')::date=((value->>'read_at')::timestamptz at time zone (value->'business_time_zone'->>'zone'))::date) from zone_probe where label in ('far_east','far_west')),'as-of date follows the owner zone at both ends of the clock');
 select pg_temp.check_true((select bool_or((value->>'as_of_date')::date<>((value->>'read_at')::timestamptz at time zone 'UTC')::date) from zone_probe where label in ('far_east','far_west')),'the zone probes really differ from UTC (the check above can fail)');
 select pg_temp.check_true((select count(*)>=4 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='set_business_time_zone'),'every time zone change leaves a receipt');
+-- …and the eight client-status reads above (owner, admin, the four zone probes) left none.
+select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='read_client_engagement_status'),'E4-S3: repeated client-status reads (owner and admin) write no receipt');
 
 -- A zone that slipped past the writer (a privileged write; CHECK shape only) degrades to 'invalid'
 -- rather than making the client status unreadable.
@@ -349,8 +353,10 @@ select pg_temp.check_true((select (select array_agg(m->>'id' order by m->>'id') 
 select pg_temp.check_true((select jsonb_array_length(value->'matches')=0 from s2 where label='foreign_name'),'lookup: another workspace''s client is never found');
 select pg_temp.check_true((select bool_and(jsonb_array_length(value->'matches')=0) from s2 where label in ('wildcard_pct','wildcard_us')),'lookup: % and _ are literal text, not wildcards');
 select pg_temp.check_true((select jsonb_array_length(value->'matches')=5 and (value->>'more')::boolean from s2 where label='many'),'lookup: at most five matches, and says there are more');
-select pg_temp.check_true((select count(*)=9 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='find_clients_for_status'),'lookup: each of the nine searches leaves exactly one receipt; a refused search leaves none');
-select pg_temp.check_true((select count(*)=1 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='read_business_time_zone'),'zone readback: each read leaves exactly one receipt');
+-- E4-S3 PR beta: Setup's readback and the lookup are pure reads — no receipt, no receipt id.
+select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='find_clients_for_status'),'E4-S3: the nine client searches write no receipt');
+select pg_temp.check_true((select count(*)=0 from public.paige_workspace_events where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and source_kind='capability_run' and capability_key='read_business_time_zone'),'E4-S3: reading the business time zone (a Setup page load) writes no receipt');
+select pg_temp.check_true((select bool_and(not (value ? 'receipt_id')) from s2),'E4-S3: neither the zone read nor any search returns a receipt id');
 
 -- An admin may read the zone and search, but cannot change the zone; the admin's own Tokyo profile never leaks in.
 select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000002',true);
@@ -399,10 +405,26 @@ reset role;
 select pg_temp.check_true((select value->>'state'='missing' and value->'zone'='null'::jsonb and value->'set_at'='null'::jsonb and value->'local_date'='null'::jsonb from s2 where label='cleared'),'zone readback: a cleared zone reads as missing with no date');
 select pg_temp.check_true((select value->>'state'='invalid' and value->'zone'='null'::jsonb and value->'local_date'='null'::jsonb from s2 where label='unrecognised'),'zone readback: an unrecognised stored zone reads as invalid, not an error');
 select pg_temp.check_true((select r.value->>'zone'=s.value->>'time_zone' and r.value->>'state'='configured' from s2 r, s2 s where r.label='readback' and s.label='saved'),'zone readback: returns exactly what the owner saved');
+select pg_temp.check_true((select (s.value ? 'receipt_id') and not (r.value ? 'receipt_id') from s2 r, s2 s where r.label='readback' and s.label='saved'),
+  'E4-S3: the owner''s save keeps its receipt id; the readback after it returns none');
+-- E4-S3 PR beta, static guard on the APPLIED definitions: no display read can write a receipt again.
+select pg_temp.check_true(pg_get_functiondef('public.read_business_time_zone(uuid)'::regprocedure) !~ 'record_capability_run'
+  and pg_get_functiondef('public.find_clients_for_status(uuid,text)'::regprocedure) !~ 'record_capability_run'
+  and pg_get_functiondef('public.read_client_engagement_status(uuid,uuid)'::regprocedure) !~ 'record_capability_run',
+  'E4-S3: none of the three display readers calls record_capability_run');
+select pg_temp.check_true(pg_get_functiondef('public.set_business_time_zone(uuid,text)'::regprocedure) ~ 'record_capability_run',
+  'E4-S3: the owner''s save still writes its receipt');
+select pg_temp.check_true((select bool_and(p.prosecdef) from pg_proc p where p.oid in ('public.read_business_time_zone(uuid)'::regprocedure,
+  'public.find_clients_for_status(uuid,text)'::regprocedure,'public.read_client_engagement_status(uuid,uuid)'::regprocedure)),
+  'E4-S3: the readers stay SECURITY DEFINER with their in-body checks');
+select pg_temp.check_true(has_function_privilege('authenticated','public.read_client_engagement_status(uuid,uuid)','EXECUTE')
+  and not has_function_privilege('anon','public.read_client_engagement_status(uuid,uuid)','EXECUTE')
+  and not has_function_privilege('service_role','public.read_client_engagement_status(uuid,uuid)','EXECUTE')
+  and not has_function_privilege('public','public.read_client_engagement_status(uuid,uuid)','EXECUTE'),'E4-S3: client status read stays authenticated only');
 
--- ── E4-S3 PR alpha: the owner's own act reads as the owner's (migration 20271031004000). ──
--- set_business_time_zone is owner-only (chat cannot save it), so its receipt renders as a person's
--- act; every other key — the three read keys included, until PR beta — renders exactly as before.
+-- ── E4-S3: the owner's own act reads as the owner's (20271031004000); PAIGE's chat reads read as
+-- PAIGE's reads (20271031005000). set_business_time_zone is owner-only (chat cannot save it), so its
+-- receipt renders as a person's act; every other key renders exactly as before.
 select pg_temp.check_true((select d->>'actor_type'='owner_staff' and d->>'title'='Business time zone changed'
   and d->>'summary' not ilike '%Paige did this%'
   from (select public._workspace_event_display('capability_run','capability_succeeded','set_business_time_zone') d) x),
@@ -410,11 +432,21 @@ select pg_temp.check_true((select d->>'actor_type'='owner_staff' and d->>'title'
 select pg_temp.check_true((select d->>'actor_type'='owner_staff' and d->>'title'='Business time zone not changed'
   from (select public._workspace_event_display('capability_run','capability_failed','set_business_time_zone') d) x),
   'E4-S3: a non-success outcome is never worded as a change');
-select pg_temp.check_true(public._workspace_event_display('capability_run','capability_succeeded','read_business_time_zone')
-  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','read_business_time_zone')
-  and public._workspace_event_display('capability_run','capability_succeeded','read_client_engagement_status')
-  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','read_client_engagement_status'),
-  'E4-S3: read keys render exactly as before in PR alpha');
+-- PR beta: only PAIGE's executor writes the two read keys now, so they read as her reads, in the
+-- frozen titles (cross-track contract §2.5), and say nothing was changed.
+select pg_temp.check_true((select d->>'actor_type'='paige_agent' and d->>'title'='Checked your business time zone'
+  and d->>'summary'='PAIGE read this setting to answer you in chat. Nothing was changed.'
+  from (select public._workspace_event_display('capability_run','capability_succeeded','read_business_time_zone') d) x),
+  'E4-S3: PAIGE''s zone read reads "Checked your business time zone"');
+select pg_temp.check_true((select d->>'actor_type'='paige_agent' and d->>'title'='Checked where a client stands'
+  and d->>'summary' like '%Nothing was changed.' and d::text !~ 'Consulting|350000'
+  from (select public._workspace_event_display('capability_run','capability_succeeded','read_client_engagement_status') d) x),
+  'E4-S3: PAIGE''s client read reads "Checked where a client stands", with no client name or amount');
+select pg_temp.check_true(public._workspace_event_display('capability_run','capability_failed','read_client_engagement_status')
+  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_failed','read_client_engagement_status')
+  and public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')
+  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','find_clients_for_status'),
+  'E4-S3: a non-success read and the lookup key keep the inherited wording');
 select pg_temp.check_true((select public._workspace_event_display('capability_run','capability_succeeded','planning_weekly_commitment_check')->>'title')='Weekly commitment check completed'
   and public._workspace_event_display('capability_run','capability_succeeded','n8n_run_workflow')
   =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','n8n_run_workflow'),
@@ -436,6 +468,18 @@ insert into rail_probe select r.actor_type, r.title from public.get_solo_rail_ac
 reset role;
 select pg_temp.check_true((select count(*)>=1 and bool_and(actor_type='owner_staff' and title='Business time zone changed') from rail_probe),
   'E4-S3: the owner''s Rail shows each time-zone change as the person''s, never PAIGE''s');
+-- PR beta end to end: the receipt PAIGE's executor writes (service role, the same 10-argument seam
+-- paige-ai-chat calls) shows on the owner's Rail as PAIGE's read — and it is the only read row there.
+select public.record_capability_run('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-000000000001',
+  'read_client_engagement_status','capability_succeeded','e4000000-0000-4000-8000-0000000ee001',null,null,null,null,
+  '{"channel":"paige_chat","tool":"read_client_engagement_status"}'::jsonb);
+delete from rail_probe;
+select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+insert into rail_probe select r.actor_type, r.title from public.get_solo_rail_activity(200) r where r.title like 'Checked%';
+reset role;
+select pg_temp.check_true((select count(*)=1 and bool_and(actor_type='paige_agent' and title='Checked where a client stands') from rail_probe),
+  'E4-S3: PAIGE''s one recorded chat read is the only read on the owner''s Rail, credited to PAIGE');
 
 -- A workspace switch is honoured at read time: the owner, also a member of B, switches to B and
 -- can no longer read A's client. (Fixture: the invite trigger would park a direct insert as

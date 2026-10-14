@@ -11,7 +11,9 @@ import {
  * Experience 04 · E4-S1. Reads ONE client's status through the caller's own session
  * (public.read_client_engagement_status — owner/admin of the active workspace only) and composes
  * it with the shared composer. No provider call, no mutation, no inferred payment or signing state.
- * Not mounted in any shell yet: the Engagement panel waits on the owner's UI review.
+ * Mounted (E4-S3 PR beta) as "Where {client} stands", the first section of the Solo client record
+ * (Clients › People › a client; src/components/tenant-relationships/ClientStanding.tsx). The read writes no
+ * receipt (20271031005000), so opening a record leaves nothing on the Rail.
  */
 const UNREADABLE = 'This client’s status could not be read.';
 

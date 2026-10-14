@@ -13,8 +13,11 @@
 -- the database predicate _comms_email_sendgrid_sender_verified answer the SAME for a mixed-case /
 -- space-padded domain; a case-or-space-only edit keeps a SendGrid verification, a real re-point still
 -- clears it; a connector provisioned on verify and the delete/unverify switch-off still find each
--- other; and the backfill normalizes old rows without losing a verification, and refuses (deleting
--- nothing) when two rows of a business would collide or a connector hangs off the old spelling.
+-- other; a tenant admin's own write under the authenticated role (RLS on, normalizer not executable
+-- by that role) is normalized too; and the backfill normalizes old rows without losing a
+-- verification, and refuses (deleting nothing) when two rows of a business would collide or a
+-- connector hangs off the old spelling. The collision refusal is proven on its own ([66]), apart from
+-- the unique key that would otherwise abort the same backfill.
 -- Fixtures are fresh uuids, `ted-norm-proof-*` slugs, .invalid mail (§63).
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 BEGIN;
@@ -137,10 +140,46 @@ SELECT pg_temp.ok(34, (SELECT domain='elsewhere.example.invalid' AND sendgrid_st
 SELECT pg_temp.ok(35, pg_temp.agree('aaaaaaaa-2133-4000-8000-000000000001','hello@elsewhere.example.invalid')
   AND NOT public._comms_email_sendgrid_sender_verified('aaaaaaaa-2133-4000-8000-000000000001','hello@elsewhere.example.invalid'),
   'neither reader admits the re-pointed, unverified domain');
--- A signed-in caller's direct write is normalized as well (the RLS path no edge function mediates).
+-- JWT claims of a signed-in caller only (the session stays postgres, so RLS is NOT exercised here;
+-- [37]–[39] below run under the app role itself).
 SELECT pg_temp.as_user('ffffffff-2133-4000-8000-000000000001');
-SELECT pg_temp.runs(36, 'a signed-in caller can still edit a non-SendGrid column',
+SELECT pg_temp.runs(36, 'with a signed-in caller''s claims, a non-SendGrid column can still be edited',
   $q$UPDATE public.tenant_email_domains SET from_name='One Renamed' WHERE id='eeeeeeee-2133-4000-8000-000000000001'$q$);
+
+-- The tenant admin's direct write, the path no edge function mediates: SET LOCAL ROLE authenticated,
+-- so RLS ("Tenant admins manage own domains") and the app role's own privileges apply. The writes
+-- run in DO blocks that stash their outcome in transaction-local settings (the role has no access
+-- to this proof's temp table); the assertions run back as postgres.
+INSERT INTO public.user_roles (user_id, role) VALUES ('ffffffff-2133-4000-8000-000000000001','admin')
+  ON CONFLICT DO NOTHING;
+SET LOCAL ROLE authenticated;
+SELECT set_config('ted_norm.role', current_user, true),
+       set_config('ted_norm.can_exec', has_function_privilege('public.normalize_tenant_email_domain()', 'EXECUTE')::text, true);
+DO $$ BEGIN
+  INSERT INTO public.tenant_email_domains (id, tenant_id, domain, from_email_local, from_name, status) VALUES
+   ('eeeeeeee-2133-4000-8000-000000000037','aaaaaaaa-2133-4000-8000-000000000001','  Auth.Example.INVALID ','auth','One','pending');
+  PERFORM set_config('ted_norm.ins', 'no error', true);
+EXCEPTION WHEN OTHERS THEN PERFORM set_config('ted_norm.ins', SQLSTATE || ' ' || SQLERRM, true); END $$;
+RESET ROLE;
+SELECT pg_temp.ok(37, current_setting('ted_norm.role') = 'authenticated' AND current_setting('ted_norm.ins') = 'no error'
+  AND (SELECT domain FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000037') = 'auth.example.invalid',
+  'as the tenant owner under the authenticated role, an INSERT of ''  Auth.Example.INVALID '' is stored as auth.example.invalid (insert: '
+  || current_setting('ted_norm.ins') || ')');
+SET LOCAL ROLE authenticated;
+SELECT set_config('ted_norm.role2', current_user, true);
+DO $$ DECLARE n int; BEGIN
+  UPDATE public.tenant_email_domains SET domain=' Renamed.EXAMPLE.invalid' WHERE id='eeeeeeee-2133-4000-8000-000000000037';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  PERFORM set_config('ted_norm.upd', n::text || ' row(s)', true);
+EXCEPTION WHEN OTHERS THEN PERFORM set_config('ted_norm.upd', SQLSTATE || ' ' || SQLERRM, true); END $$;
+RESET ROLE;
+SELECT pg_temp.ok(38, current_setting('ted_norm.role2') = 'authenticated' AND current_setting('ted_norm.upd') = '1 row(s)'
+  AND (SELECT domain FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000037') = 'renamed.example.invalid',
+  'as the tenant owner under the authenticated role, an UPDATE to '' Renamed.EXAMPLE.invalid'' is stored as renamed.example.invalid (update: '
+  || current_setting('ted_norm.upd') || ')');
+SELECT pg_temp.ok(39, current_setting('ted_norm.can_exec') = 'false',
+  'the authenticated role cannot EXECUTE the normalizer, yet its trigger fired on that role''s writes');
+DELETE FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000037';
 SELECT pg_temp.as_service();
 
 -- ── 4. one business cannot hold the same domain twice under two spellings ───────────────────
@@ -218,6 +257,35 @@ ROLLBACK TO SAVEPOINT replay_linked;
 SELECT pg_temp.ok(65, :'replay_linked' = 'aborted'
   AND (SELECT domain='Linked.Example.invalid' FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000064'),
   'a row backing a connector on its old spelling makes the migration refuse; the row is untouched');
+DELETE FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000064';
+
+-- The collision refusal ON ITS OWN. [63] cannot tell it apart from the existing UNIQUE (tenant_id,
+-- domain) key: without the refusal the backfill UPDATE still aborts on that key, so [63] passes either
+-- way. Here, inside a savepoint (the rollback restores everything), the key is dropped so the backfill
+-- itself could merge, and psql's ON_ERROR_ROLLBACK lets the replay run past a failing statement, so
+-- :LAST_ERROR_MESSAGE ends as the last error the replay raised. With the refusal it is the refusal's
+-- own text and counts (1 collision, 0 linked, since [64]'s row is gone); without it the replay raises
+-- nothing and the sentinel survives.
+ALTER TABLE public.tenant_email_domains DISABLE TRIGGER trg_domain_normalize;
+INSERT INTO public.tenant_email_domains (id, tenant_id, domain, from_email_local, from_name, status) VALUES
+ ('eeeeeeee-2133-4000-8000-000000000066','aaaaaaaa-2133-4000-8000-000000000002','solo.example.invalid','a','A','pending'),
+ ('eeeeeeee-2133-4000-8000-000000000067','aaaaaaaa-2133-4000-8000-000000000002',' Solo.EXAMPLE.invalid','b','B','pending');
+ALTER TABLE public.tenant_email_domains ENABLE TRIGGER trg_domain_normalize;
+SAVEPOINT replay_collision_alone;
+ALTER TABLE public.tenant_email_domains DROP CONSTRAINT tenant_email_domains_tenant_id_domain_key;
+\set LAST_ERROR_MESSAGE 'no error raised by the replay'
+\set ON_ERROR_STOP 0
+\set ON_ERROR_ROLLBACK on
+\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\set ON_ERROR_ROLLBACK off
+\set ON_ERROR_STOP 1
+\set refusal_alone :LAST_ERROR_MESSAGE
+ROLLBACK TO SAVEPOINT replay_collision_alone;
+SELECT pg_temp.ok(66, :'refusal_alone' LIKE 'TENANT_EMAIL_DOMAIN_NORMALIZE_REFUSED: 1 business domain(s) differ only by case or spaces and 0 row(s) %',
+  'with the unique key out of the way, the collision refusal alone stops the backfill (last error: ' || :'refusal_alone' || ')');
+SELECT pg_temp.ok(67, (SELECT count(*)=2 FROM public.tenant_email_domains WHERE id IN ('eeeeeeee-2133-4000-8000-000000000066','eeeeeeee-2133-4000-8000-000000000067'))
+  AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname='tenant_email_domains_tenant_id_domain_key' AND conrelid='public.tenant_email_domains'::regclass),
+  'both colliding rows survive and the unique key is back after the rollback');
 
 SELECT count(*) FILTER (WHERE res='ok') AS ok,
        count(*) FILTER (WHERE res<>'ok') AS failed,

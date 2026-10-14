@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing owner metric question → caller-JWT issuer/resolver → strict calendar/version evidence → unchanged consumer
-PAIGE_UI_DESIGN: NOT_APPLICABLE: shared contract only; Sales retains all Performance presentation ownership
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and routed upstream/accessibility/quality/review references; contract-state audit only, Sales retains all presentation ownership
 MATERIAL_FLOW_CHANGE: NO: owner-ruling correction to existing overdue interpretation; no new interaction, route or control
 FLOW_PROTOTYPE: NOT_REQUIRED: #2086 canonical owner-calendar ruling changes evidence semantics only
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized Solo owner/admin receives trustworthy current overdue evidence using the configured business calendar
@@ -27,13 +27,13 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: composed authenticated answer not driven
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no layout changes
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: composed authenticated answer not driven
 UNVERIFIED: immutable composed-head review/required CI, production persistence and authenticated Chat/Live/Performance acceptance
-INTERNAL_BUILD_IDENTITY: base= f0e6a6fcdfe0a4dc00f3eaa746116ed24a84fdb8; candidate recorded by git handoff; deployment=NOT_APPLICABLE; environment=development; migrations=UNAPPLIED(20271101110001); edge=NOT_APPLICABLE; evidence=#2086-and-int340-shared-metric-consumer-contract
+INTERNAL_BUILD_IDENTITY: base=f0e6a6fcdfe0a4dc00f3eaa746116ed24a84fdb8; candidate recorded by git handoff; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(composed-release-20271101110001_int2086_overdue_metric_compatibility); edge=NOT_APPLICABLE; evidence=docs/delivery/int340-shared-metric-consumer-contract.md
 RELEASE_CHANNEL: development: unpublished composed-only compatibility handoff
-RELEASE_CLASSIFICATION: internal: shared evidence compatibility; no standalone producer deployment
+RELEASE_CLASSIFICATION: internal-only: shared evidence compatibility; no standalone producer deployment
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or availability claim
 RELEASE_NOTE_REQUIRED: NO: no production/customer release
 RELEASE_TRUTH_BOUNDARY: PARTIAL: tested candidate; production and authenticated acceptance owed
-RELEASE_RECOVERY: position=do not deploy independently; forward-fix after any production application; reference=#2086 composed Sales/shared release
+RELEASE_RECOVERY: position=compose before deployment and use forward-fix after production application; reference=docs/delivery/int340-shared-metric-consumer-contract.md
 
 Scope: Sales owns producer and Performance; Analytics exclusively owns this issuer/resolver/reference/validator/reader delta. Other ten Sales metric versions, Settings and Marketing definitions, UTC reporting ranges, operator routes, admitted reads, approvals and provider/execution controls are preserved. Exactly overdue 1.1.0 adds validated calendar evidence. Existing 1.0.0 stored references remain historical identities and are revoked/refused, never reinterpreted.
 

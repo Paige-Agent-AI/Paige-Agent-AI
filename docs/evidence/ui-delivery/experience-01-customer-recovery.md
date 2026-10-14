@@ -58,3 +58,5 @@ Historical pre-correction source review COMPLETE/FIX_FIRST at59ab1ebb8: CR-1 unc
 
 
 Actual native finding: docs/evidence/experience-01-foundation/corrective-native-finding.json. Same local host safely restarted, actual IAB entry recovered; original failed attempt retained. Current cleanup PASS, priorerror absent, viewportreset/own tabclose/IABempty. No policy bypass or owner Chrome/customer touch. Final source review is a distinct gate and cannot override FAIL.
+
+2026-10-14 new owner exception6173156681: ONE further bounded E1 opening-question correction/recheck. Current mainc35e2e768 composed; only opening greeting presentation/composer footprint and constrained-height native workspace scrolling change. Existing transcript controller/history/Setup/unknown/private return/logout preserved. Fresh synthetic native batch and exact committed-head independent review pending; historical first-run45.2px FAIL is retained, not relabelled PASS. Real mobile OS keyboard opening/insets cannot be established by desktop IAB resizing and remains UNVERIFIED. All23 original authenticated cases/permissions/results remain unchanged. No release/production/auth/provider effect.

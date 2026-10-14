@@ -2,6 +2,8 @@
 
 Status: source candidate, development channel. The owner approved the experience and its SOLO/Operator boundary; this slice does not reopen product discovery. It does not complete authenticated Experience 01 acceptance.
 
+2026-10-14 restart: owner comment [6173156681](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2071#issuecomment-6173156681) authorizes ONE further bounded correction and ONE non-author exact-head review after the recorded native failure. Current main `c35e2e768` is composed without conflict. REPAIR only existing E1 mobile presentation: full-width unpersisted opening bubble, smaller empty composer footprint, live/attachment/Send wrapping with 44px icon controls, and native workspace-panel scrolling when keyboard/reflow leaves insufficient height. The shared anchored transcript controller and persisted-thread positions are unchanged. REUSE all canonical Setup, unknown outcome, private checkpoint, navigation, local logout, presence and consented Live contracts. No NEW infrastructure. Native confirmation, this new independent review, exact-head CI and protected Preview repair are pending; prior failure stays historical, all23 authenticated cases remain unrun. Another material review finding stops this cycle.
+
 ## Flow-by-Flow implementation
 
 | Flow | Contract / state / exit |

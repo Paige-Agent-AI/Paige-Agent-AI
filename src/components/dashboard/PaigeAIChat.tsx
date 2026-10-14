@@ -3058,6 +3058,7 @@ const PaigeAIChatInner = ({
               <div
                 key={message.id}
                 data-paige-message-id={message.id}
+                data-paige-opening-greeting={!activeThreadId && messages.length === 1 && message.role === "assistant" && message.content === openingGreeting ? "true" : undefined}
                 data-paige-message-anchor-key={messageScrollAnchorKey(message.role, message.content)}
                 data-paige-continues={resumedHere ? "resumed" : continues ? "approval" : undefined}
                 className={cn(

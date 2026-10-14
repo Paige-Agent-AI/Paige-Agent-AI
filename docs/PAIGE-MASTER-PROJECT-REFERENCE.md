@@ -4504,6 +4504,8 @@ Journey record: [`delivery/exp04-get-paid-deliver-journey.md`](delivery/exp04-ge
 
 ### Experience 01 / ANT-50 — SOLO interview foundation candidate (2026-10-12)
 
+**2026-10-14 owner-authorized restart, unreleased:** #2071 comment6173156681 grants ONE additional bounded repair/review of the recorded320×720 clipped greeting, preserving improved Send/presence and all canonical contracts. Local mainc35e2e768 composition keeps current shared domains; presentation-only changes recover opening-message width, compact empty composer space and preserve control reachability through native workspace scrolling at constrained height. Shared transcript/controller/persisted positions are unchanged. New native/independent review/exact-head CI/Preview proof pending; previous FAIL remains historical. All23 customer cases and separate new registration remain unrun; Shipped Log N/A.
+
 **2026-10-14 native confirmation FAIL / stopped:** exact320×720 BEFORE/AFTER pair and7962 unchanged source/asset/font hashes show repaired Send visibility and mobile presence, but the opening question remains clipped45.2px in a98.36px transcript at initialscrollTop72. Material P1; remaining matrix NOT_RUN; cleanup PASS. No further UI correction/confirmation or release; the one granted final source review cannot clear this rendered failure. [Native finding](evidence/experience-01-foundation/corrective-native-finding.json). All23 authenticated cases remain unrun.
 
 

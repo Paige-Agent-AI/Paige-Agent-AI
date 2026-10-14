@@ -464,7 +464,7 @@ until authorized.
 PAIGE-SENDGRID-PLATFORM-ADMIN (configuration). Customer Gmail and iCloud Mail stay optional customer mailboxes, as
 planned above.
 
-**Status: GROUNDED PLAN. Only P0 (this docs record) is done.** Grounded read-only at main
+**Status: GROUNDED PLAN. Only P0 (this docs record) is written; it is on branch `claude/stoic-archimedes-pv4r8u-sendgrid-p0-docs` (PR #2152), not yet merged.** Grounded read-only at main
 `6428c2ba61959ef302cf69e0dbd64a878ddbb35f` against production project `xygzykjyynhzqytbqnzu`: no edits, sends,
 deploys, provider changes or secret values read. Four read-only investigations (code, production, credentials, and
 the #2126 governed door) were synthesised and then checked by an independent reviewer; their reports are not
@@ -564,7 +564,7 @@ Tiers are op (operator/platform) and ten (tenant). Paths are under `supabase/fun
 
 **Env names (names only):**
 - `RESEND_API_KEY` is read in 19 function directories plus `_shared` (code read).
-- `RESEND_WEBHOOK_SECRET` is read by 2 functions.
+- `RESEND_WEBHOOK_SECRET` is named by 3 functions (`handle-inbound-email`, `handle-resend-webhook`, and `resend-admin-probe` in an install hint; see §10 item 6).
 - `vault.secrets` has no names matching resend or sendgrid (code and production reads).
 
 ## 3. SendGrid credentials: what each one does and can do
@@ -625,8 +625,8 @@ Nothing binds `SENDGRID_PLATFORM_ADMIN_API_KEY`.
 1. **One SendGrid transport.**
    - Extract `send-message:348-403` into one shared module (proposed name `_shared/email/sendgrid-mail-send.ts`).
    - It accepts only a prepared binding that has been re-read from the database. It never accepts config or a key from the caller.
-   - It is the **only** reader of the executor credential.
-   - A new CI guard forbids `api.sendgrid.com/v3/mail/send` and the executor env name anywhere else, mirroring the admin-key guard.
+   - It is the **only** module that sends with the executor credential.
+   - A new CI guard forbids `api.sendgrid.com/v3/mail/send` anywhere else, and forbids reading the executor env name's value anywhere else, mirroring the admin-key guard. Named exceptions, each listed in the guard's allowlist: `comms-sendgrid-scopes` (P1's read-only scope check, `GET /v3/scopes` only), and the existing presence-only checks in `comms-email-command`, `_shared/comms-email/readiness.ts` and `growth-process-submission/lead-reply.ts`, which test whether the key is set and never send. P2 may route those presence checks through the transport module instead and drop them from the allowlist.
    - There is **no Resend arm and no default fallback.** An unknown or missing provider fails closed with a named error.
 2. **One governed door, with two sender scopes on the binding (`sender_scope: tenant | platform`).**
    - **Tenant scope** keeps the existing chain: `comms-email-command` → `prepare_comms_email_send` (tenant, seat, client recipient, verified-domain sender) → `send-message` → `finalize_comms_email_send`. The managed "PAIGE Email" becomes a SendGrid connector.

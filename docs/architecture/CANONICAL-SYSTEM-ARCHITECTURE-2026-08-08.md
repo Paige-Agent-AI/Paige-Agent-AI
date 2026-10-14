@@ -81,7 +81,7 @@ flowchart TB
         ANTH["Anthropic — LLM (100% of prod traces)"]
         MULTI["OpenAI / Groq / Featherless / Gemini<br/>(in-code, DORMANT — keys unset)"]
         TW["Twilio — 5 live subaccounts"]
-        RS["Resend — platform email"]
+        RS["Resend — platform email (SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: SendGrid-only; Resend being retired)"]
         VOY["Voyage AI — voyage-3 @ 1024d"]
         EL["ElevenLabs — TTS only (dormant)"]
         STR["Stripe — Paige-held rails"]
@@ -262,7 +262,7 @@ Every external integration follows the same discipline: **one shared client seam
 | **Twilio** | SMS + voice/telephony, per-tenant subaccounts | `_shared/twilio.ts` | **Active** — 5 tenant subaccounts |
 | **n8n** | Per-tenant workflow automation | `paige-n8n/index.ts` | In-code, not verified live |
 | **Zapier** | Per-tenant automation via MCP | `call-zapier-action/index.ts` | In-code, not verified live |
-| **Resend** | Platform-default email provider | `_shared/email/providers.ts` | In-code, not verified live |
+| **Resend** | Platform-default email provider *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: all PAIGE email moves to SendGrid; Resend is being retired. Row kept as the 2026-08-08 snapshot.)* | `_shared/email/providers.ts` | In-code, not verified live |
 | **Voyage AI** | Single canonical embedding space | `_shared/voyage.ts` | In-code, not verified live |
 | **Featherless / Groq / OpenAI / Gemini / Ideogram / Replicate** | Open-tier text, image, TTS via router | `_shared/model-router.ts` + per-provider `_shared/*.ts` | In-code, **dormant** (keys unset) |
 

@@ -20,6 +20,7 @@ import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
+import { ClientReleasedWork } from "@/components/client/ClientReleasedWork";
 
 const TYPE_LABEL: Record<CustomerAction["action_type"], string> = {
   task: "Task",
@@ -194,6 +195,7 @@ export default function ActionItems() {
         </p>
       </div>
 
+      <ClientReleasedWork />
       <ClientActivityFeed contactId={contactId} />
 
       {loading ? (

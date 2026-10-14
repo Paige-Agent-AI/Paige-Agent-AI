@@ -1,0 +1,440 @@
+{
+  "evidence": "ISOLATED_ACTUAL_COMPONENTS_SYNTHETIC_SDK_AND_SHELL",
+  "cases": [
+    {
+      "name": "light-1536x770",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "light-1366x768",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "light-1024x768",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "light-900x1000",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "light-390x844",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "light-320x720",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "light",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-1536x770",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-1366x768",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-1024x768",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-900x1000",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-390x844",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "dark-320x720",
+      "result": "PASS",
+      "pageFits": true,
+      "contentFits": true,
+      "boundsFit": true,
+      "controls": [
+        {
+          "name": "Close review",
+          "height": 44
+        },
+        {
+          "name": "Request changes",
+          "height": 44
+        },
+        {
+          "name": "Accept this version",
+          "height": 44
+        },
+        {
+          "name": "Check recorded review",
+          "height": 44
+        }
+      ],
+      "theme": "dark",
+      "reducedMotion": true,
+      "localFaceLoaded": true
+    },
+    {
+      "name": "state-loading",
+      "result": "PASS"
+    },
+    {
+      "name": "state-empty",
+      "result": "PASS"
+    },
+    {
+      "name": "state-unlinked",
+      "result": "PASS"
+    },
+    {
+      "name": "state-ambiguous",
+      "result": "PASS"
+    },
+    {
+      "name": "state-error",
+      "result": "PASS"
+    },
+    {
+      "name": "state-refused",
+      "result": "PASS"
+    },
+    {
+      "name": "state-foreign",
+      "result": "PASS"
+    },
+    {
+      "name": "state-partial",
+      "result": "PASS"
+    },
+    {
+      "name": "state-capped",
+      "result": "PASS"
+    },
+    {
+      "name": "light-320-long-content-and-confirmation",
+      "result": "PASS"
+    },
+    {
+      "name": "light-1366-long-content-and-confirmation",
+      "result": "PASS"
+    },
+    {
+      "name": "dark-320-long-content-and-confirmation",
+      "result": "PASS"
+    },
+    {
+      "name": "dark-1366-long-content-and-confirmation",
+      "result": "PASS"
+    },
+    {
+      "name": "nested-escape-and-opener-focus",
+      "result": "PASS",
+      "expectedFocus": "Review version 3"
+    },
+    {
+      "name": "actual-back-forward-outside-app-retains-instance",
+      "result": "PASS"
+    },
+    {
+      "name": "unknown-original-source-recovery-no-replay-no-causal-callback",
+      "result": "PASS"
+    },
+    {
+      "name": "consumer-refresh-failure-preserves-verified-source",
+      "result": "PASS"
+    },
+    {
+      "name": "uncertain-recheck-retains-proven-snapshot-definitive-loss-scrubs",
+      "result": "PASS"
+    },
+    {
+      "name": "modal-background-logout-inert-security-loss-unblocked",
+      "result": "PASS"
+    },
+    {
+      "name": "actual-a-b-a-retired-write-does-not-revive",
+      "result": "PASS"
+    },
+    {
+      "name": "client-context-local-face-and-visible-focus-role",
+      "result": "PASS",
+      "width": "2px",
+      "style": "solid",
+      "color": "rgb(101, 90, 150)"
+    },
+    {
+      "name": "fresh-mount-terminal-record-presentation-seeded-not-persistence-proof",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "externalRequestsBlocked": [],
+  "authenticatedAcceptance": "NOT_RUN",
+  "actualAppNavChat": "NOT_RUN",
+  "productionReloadPersistence": "NOT_RUN",
+  "nativeZoom": "NOT_RUN",
+  "status": "PASS"
+}

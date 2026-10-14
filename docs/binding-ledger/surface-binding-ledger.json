@@ -889,9 +889,9 @@
       "group": "clients",
       "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx:749 (PortalView)",
-      "canonical_source": "usePortalConfig (config is a real read); 6 capability cards are static strings",
+      "canonical_source": "usePortalConfig; native linked-client relation; operations_delivery_client_reviews_scoped metadata and existing exact Operations artifact/review records. Legacy capability cards remain static strings.",
       "chain": {
-        "canonical_source": {"status": "partial", "note": "config is real; capability cards are static (UI-REPAIR)"},
+        "canonical_source": {"status": "partial", "note": "config is real; E04 mounts explicit linked-client released metadata and unchanged exact Operations review in /app/actions, authenticated proof owed. Legacy capability cards remain static (UI-REPAIR)."},
         "tenant_scope": {"status": "server_resolved"},
         "safe_context": {"status": "partial", "note": "real client-scoped reads exist, but no complete approved shared-item projection is proven"},
         "authority": {"status": "partial", "note": "a narrow client tool allowance and action-item RPC exist; complete per-action tenant policy is not proven"},
@@ -903,11 +903,11 @@
       },
       "prohibited_context": ["tenant full Second Brain", "private Mind or Memory", "Vault or connected-account secrets", "internal team conversations", "other clients", "financial controls", "private strategy", "credentials or private browser content", "hidden prompts or reasoning traces"],
       "state": "PARTIAL",
-      "state_reason": "A real external-client portal substrate exists, but consumer-invite recipient binding, accepted-access revocation, multi-workspace switching, canonical conversation/document/task convergence, approval-record decisions, tenant-facing support/booking, tenant service-agreement receipt/PDF, governed portal tools, and authenticated isolation/recovery proof remain unavailable, broken, or owed.",
-      "evidence_class": ["source_read"],
-      "linked": ["docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"],
-      "next_slice": "Dedicated Client Portal MVP build after explicit owner start; preserve active Clients, Chat, Conversations and binding-ledger ownership.",
-      "sources": ["docs/strategy/client-experience-workstream-2026-07-21.md", "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"]
+      "state_reason": "A real external-client portal substrate exists. E04 mounts canonical released-work metadata and unchanged Operations exact-version review through existing Action items with local source/native composition proof; authenticated client decisions, actual AppNav/logout and durable reload remain PROOF OWED. Consumer-invite binding, accepted-access revocation, multi-workspace switching, full conversation/document/task convergence, broader approval records, support/booking, service-agreement receipt/PDF and governed portal tools remain unavailable, broken or owed.",
+      "evidence_class": ["source_read", "automated_test", "rendered_structural"],
+      "linked": ["docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md", "docs/evidence/ui-delivery/exp04-client-delivery-review.md"],
+      "next_slice": "Complete authenticated proof of the bounded owner-authorized E04 released-work integration through Central QA; broader Client Portal MVP remains separately owned. Preserve Clients, Chat, Conversations and binding-ledger ownership.",
+      "sources": ["docs/strategy/client-experience-workstream-2026-07-21.md", "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md", "src/components/client/ClientDeliveryReviewProvider.tsx", "src/components/client/ClientReleasedWork.tsx", "src/lib/client-delivery-portal.ts"]
     },
     {
       "id": "settings.setup",

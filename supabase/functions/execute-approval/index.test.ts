@@ -553,7 +553,7 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
     expect(fetchCalls).toEqual([]);                                           // nothing sent, the original text included
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: false, executed: false, outcome: "changed_in_conversations", changed, message_id: "m1", approval_id: A });
-    expect(r.body.error).toBe("This reply was changed in Conversations — send it from there, or decline it here.");
+    expect(r.body.error).toBe("This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). Nothing was sent: review it in Conversations, or decline it here.");
     const row = db.tables.paige_pending_approvals[0];
     expect(row).toMatchObject({ status: "pending", claimed_at: null });      // released, never approved
     expect(row.reviewed_at).toBeUndefined();
@@ -581,6 +581,24 @@ describe("execute-approval: a held copy returned to a draft stays ONE message (#
       messages: [msg({ subject: "S (updated)" })] });
     await load(db);
     expectRefusedAsChanged(await approve(), db, "subject");
+  });
+
+  it("a draft whose CHANNEL changed is treated as changed: nothing is sent", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ channel_type: "sms" })] });
+    await load(db);
+    expectRefusedAsChanged(await approve(), db, "channel");
+  });
+
+  it("a changed draft whose claim cannot be released answers 500 and sends nothing", async () => {
+    const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
+      messages: [msg({ body_html: "B — edited" })] },
+      [], (table, values) => table === "paige_pending_approvals" && Object.keys(values).length === 1 && values.claimed_at === null);
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(500);
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "claim_release_failed" });
+    expect(fetchCalls).toEqual([]);
   });
 
   it("a draft whose body cannot be read is treated as changed: unsure is never sent", async () => {

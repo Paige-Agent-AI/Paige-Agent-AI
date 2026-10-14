@@ -109,7 +109,7 @@ export const SCHEDULED_FROM_CONVERSATIONS =
   "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
 export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
 export const HELD_DRAFT_CHANGED =
-  "This reply was changed in Conversations — send it from there, or decline it here.";
+  "This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). Nothing was sent: review it in Conversations, or decline it here.";
 
 /** The held draft's stored content, as the messages row carries it (comms C-1 columns). */
 export interface HeldDraftContent {

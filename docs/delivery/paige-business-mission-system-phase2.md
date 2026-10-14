@@ -96,3 +96,53 @@ Proof Owed before final release consideration:
 - Deployment and exact-SHA production proof.
 
 No capability in this record is claimed live.
+
+## F7 continuation — Play-linked numeric target foundation, 2026-10-14
+
+Owner approval ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef` selects numeric
+targets attached to existing Strategic Plays. E02 is the sole implementation lead;
+retired agents are not a dependency. This is a bounded foundation on main
+`bf0a8b60bee8d3a83c17c214655ea6425fc168d4`, not completion of O10 or all nineteen.
+
+Pre-edit capability routing:
+1. Owner sets/revises/pauses/retires a measured Play goal and returns to the same record.
+2. F7 Business Game Plan owns targets; existing Analytics owns definitions/actuals.
+3. Existing current-caller Mission domain, Analytics issuer/resolver and Rail are reused.
+4. `business_mission.targets` is a read registration only, self-description off;
+   Chat/Mind binding explicitly UNAVAILABLE. New mutating Chat admission is absent.
+5. No external connection/provider or expense is required or activated.
+6. Native owner RPC authority remains `business_mission_owner_context`; eventual
+   Chat mutation requires the existing high-risk canonical approval/admission path.
+7. No job, event runner, scheduler or automation is added.
+8. Existing `business_mission_mutation_receipts` plus immutable revision, exact canonical
+   readback, narrow receipt readback and existing `recordCapabilityRun` are the proof path.
+9. Existing Game Plan surface remains PARTIAL; no UI, native Edge door or Chat handler
+   mounts these new adapters in this foundation. The consumer flow remains required.
+10. Source proof cannot establish release, target writes by Antonio or customer acceptance.
+
+Proposed `20271101180000_business_mission_numeric_targets.sql` adds exactly the shared
+target and immutable version relations under existing Missions. Caller input never selects
+tenant/actor; raw browser access and service-role RPC fallback are revoked. Revisions use
+Mission/target CAS, request-key/payload idempotency and atomic existing receipt/audit writes.
+Replay rechecks current authority even after metric-reference expiry. Pause/resume/retire
+append history; retired is terminal. The native adapter verifies the EXACT committed revision
+and receipt before Rail, so later edits do not turn a historical replay into invented failure.
+
+Actuals are never persisted here. `observeMissionTarget` consumes the existing issued metric
+contract, checks workspace/version/dimensions/unit/range/calendar/currency/expiry, and computes
+decimal variance without floating-point loss. Missing actuals stay unavailable, partial coverage
+has unknown attainment/no trustworthy variance, and today's snapshot cannot prove a past target.
+The saved IANA period calendar is explicit; overdue retains the issuer's business calendar.
+
+Local proof: 60 focused tests including the existing Mission adapter; 39 rollback-only SQL
+assertions against the real incumbent issuer/resolver and target migration; actual concurrent
+duplicate creation produces one target/receipt and a replay, competing revisions one commit and
+one CAS refusal. Identity/relation scaffolding is synthetic, not full Supabase/Auth acceptance.
+Both SQL suites are wired into the EXISTING Spine workflow; hosted results are still owed.
+
+Remaining sequence: independent nonauthor review/exact-head CI and authorized release of this
+contract; prototype and complete native target editor/recovery/history; same canonical target
+and issuer in Executive and governed Chat/Live; authenticated SOLO positive/negative/reload
+evidence; owner acceptance. Storage approval grants no privileged production activation,
+provider effects, protected fixture creation or INT-346 exception. Shipped-log status N/A:
+this foundation has not merged. Master/Brain and the existing E02 matrix remain canonical.

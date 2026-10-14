@@ -1,5 +1,19 @@
 # Roles & Permissions — domain brain
 
+**2026-10-14 E09 consumer-invite repair candidate, NOT RELEASED:** the existing
+`accept_tenant_invite(text)` consumer branch is being repaired to require the stored
+confirmed recipient and exact active, unmerged CRM contact/address binding, refuse
+replay/occupied/stale contact fallback, and record the authenticated acceptance actor
+in existing `audit_logs`. External client identity remains `auth.users.id`; relationship
+authority remains `clients.id/tenant_id/linked_user_id` and `client_contact_methods`.
+Consumers must not gain `tenant_members` standing or change the business staff
+`profiles.active_tenant_id` pointer. The shared active-workspace guard and other invite
+branches are preserved. Current single-tenant uniqueness stays in this bounded first
+repair; coordinated multi-business relationships, scoped suspend/revoke and full safe
+client projections remain required E09 work. Native synthetic proof and full-schema
+CI are separate from legitimate authenticated customer acceptance. See
+`../evidence/ui-delivery/e09-consumer-invite-integrity.md`; overall portal remains PARTIAL.
+
 **Read this before touching any role check, RLS policy, or `SECURITY DEFINER` function.**
 Authoritative design: `docs/doctrine/role-taxonomy-and-matrix.md`. Live audit:
 `docs/audits/R1-role-call-site-inventory.md`. This file is the fast answer to

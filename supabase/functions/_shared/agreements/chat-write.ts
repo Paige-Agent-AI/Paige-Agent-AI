@@ -40,9 +40,10 @@ export type AgreementWriteRpcPort = {
     args?: Record<string, unknown>,
   ) => PromiseLike<{ data: unknown; error: { message?: string; code?: string } | null }>;
   /** Caller-JWT read of the existing canonical record, never the service-role client. */
-  from?: (table: "paige_agreements") => {
-    select: (columns: string) => AgreementDraftQuery;
-  };
+  // Keep the generic Supabase select parser out of structural caller assignability. The
+  // narrow query shape is asserted at the single read below; returned records stay unknown
+  // and are validated before the writer is called.
+  from?: (table: "paige_agreements") => unknown;
 };
 
 type AgreementDraftQuery = {
@@ -166,7 +167,10 @@ export async function draftAgreement(input: {
     if (!caller.from) return fail("unavailable");
     let source: Record<string, unknown> | null;
     try {
-      const reply = await caller.from("paige_agreements")
+      const table = caller.from("paige_agreements") as {
+        select: (columns: string) => AgreementDraftQuery;
+      };
+      const reply = await table
         .select("id,tenant_id,contact_id,status,updated_at,offer_id,commercial_terms_id,body_source,source_version_id,document_path")
         .eq("tenant_id", expectedTenantId).eq("id", agreementId).maybeSingle();
       if (reply.error) return fail(classify(reply.error));

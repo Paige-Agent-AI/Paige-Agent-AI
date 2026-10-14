@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: valid legacy linked/null documents, changed source, malfor
 TRUTHFUL_STATE_LABELS: PASS: economic context null means unknown, never zero or signed compatibility; C1 remains PARTIAL.
 SOLO_UI: NO: public token recipient signing page, not a Solo workspace surface.
 UNVERIFIED: historical signed economics, prospective presented-approved snapshot producer, hosted auth/browser, real signature and production deployment remain unproven.
-INTERNAL_BUILD_IDENTITY: candidate=head of sales/signed-commercial-context; deployment=UNVERIFIED; environment=isolated native PostgreSQL; migrations=NOT_APPLIED in production; edge=NOT_APPLICABLE; evidence=this record and canonical native proof
+INTERNAL_BUILD_IDENTITY: implementation=bfd69f16df5f4bbcaeb270f9a268bc27cb34fc6c; deployment=UNVERIFIED; environment=development isolated native PostgreSQL; migrations=PROOF_OWED(20271101120000 production persistence); edge=NOT_APPLICABLE; evidence=this record and canonical native proof
 RELEASE_CHANNEL: development: production migration and hosted acceptance remain owed.
 RELEASE_CLASSIFICATION: internal-only: bounded historical signing-read truth correction.
 CUSTOMER_RELEASE_IDENTITY: none: no complete signed-economic acceptance or customer announcement.
@@ -33,7 +33,7 @@ Owned signing read correction, native proof and Sales delivery note only. Migrat
 
 ## Evidence index
 
-Base: c32bde1d17070d9e3bf5d98ba1d0fcc8f4527d53. Channel: development.
+Implementation base: e31cb94c8f3263bc033a937254ce96f48bf6372d. Channel: development. Pre-publication census: 33 open PR file sets, zero lookup errors or 20271101120000 collisions; production frontier 20271101110001, proposed version unapplied. Recheck immediately before merge.
 
 Command: node scripts/agreements/signing-context-economics-proof.mjs <PG16-psql> 55449 postgres <verified-local-data-directory> baseline|repaired. Verifies directory before creating unique database; finally drops only that database; never stops shared cluster.
 

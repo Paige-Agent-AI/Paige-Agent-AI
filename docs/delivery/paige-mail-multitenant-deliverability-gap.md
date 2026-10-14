@@ -7,6 +7,10 @@ nothing:** no DNS change, purchase, provider call, or live send. Branding unchan
 (including prohibited credit-repair/debt-relief traffic without written permission) and INT-346
 gates are preserved.
 
+> **Later decision (2026-10-13, owner policy):** a business's PAIGE Email sends through SendGrid, and Resend
+> stays the Platform Operator's own email. The provider-selection question in §6 below is answered by that
+> policy. The assessment is kept as written. See `docs/brain/decision-log.md` (Experience 03 S3).
+
 ## 1. Inventory — what exists today (grounded on main `cbd10e9c7`)
 
 | Capability | State | Source |

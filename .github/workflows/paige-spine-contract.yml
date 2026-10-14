@@ -124,6 +124,23 @@ on:
       - "supabase/tests/exp04_client_engagement_status.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
+      # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
+      # contract it pins (the drafter, the filer; the approve door is listed above).
+      - "supabase/tests/exp03_lead_reply_draft.sql"
+      - "supabase/migrations/20271031000000_exp03_lead_reply_once_per_submission.sql"
+      - "supabase/functions/paige-action-worker/**"
+      - "supabase/functions/growth-process-submission/**"
+      # Experience 03 S3 — the PAIGE Email (SendGrid) governed door, its receipts/history and sender
+      # integrity: the three rollback proofs and the migrations they pin.
+      - "supabase/tests/paige_email_sendgrid_door.sql"
+      - "supabase/tests/paige_email_sendgrid_receipts.sql"
+      - "supabase/tests/paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql"
+      - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
+      - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/functions/comms-email-command/**"
+      - "supabase/functions/send-message/**"
+      - "supabase/functions/handle-sendgrid-webhook/**"
 
 permissions:
   contents: read
@@ -359,6 +376,35 @@ jobs:
       - name: Experience 04 client status composer parity over the real read
         if: ${{ !cancelled() }}
         run: node --experimental-strip-types scripts/proof/exp04-client-status-parity.mjs postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+      # Experience 03 S3 "PAIGE works your leads": one reply draft per submission; the per-form
+      # opt-in set only through growth_form_set_intake (both signatures); no outbound-message approval
+      # (a reply, or a legacy client.followup) marked approved/sent without a provider-accepted governed
+      # send of the same business and person; lead_reply_record_send scope and every send state —
+      # driven through the governed email door's real prepare/claim/finalize.
+      - name: Experience 03 lead reply draft, opt-in and governed-send guard (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp03_lead_reply_draft.sql
+
+      # Experience 03 S3 — PAIGE Email (SendGrid). The migrations 20271031000000 → 000100 → 000200 →
+      # 000250 are already applied in filename order by the "apply the change under review" step
+      # (`supabase migration up --include-all`); each proof also re-applies the migration it pins
+      # inside its own BEGIN..ROLLBACK (\ir), which proves that migration is idempotent. Each proof
+      # ends by RAISING when any assertion failed, so ON_ERROR_STOP turns a FAIL into a red step.
+      # Door: SendGrid verification facts are service-only, a SendGrid sender is admitted only with
+      # its own business's verified domain, an 'unknown' outcome is never re-dispatched, and one live
+      # send per drafted reply.
+      - name: Experience 03 PAIGE Email governed door (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_door.sql
+      # Receipts: acceptance is never delivery, receipts land once, one connected history.
+      - name: Experience 03 PAIGE Email receipts and history (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_receipts.sql
+      # Sender integrity: the rollback proof for 20271031000250 (the PAIGE Email sender a send is bound to).
+      - name: Experience 03 PAIGE Email sender integrity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_sender_integrity.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.

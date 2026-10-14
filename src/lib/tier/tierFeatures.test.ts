@@ -207,6 +207,33 @@ describe("§60 other load-bearing cells", () => {
     expect(hasFeature(cls("standalone", { parent: "agency-uuid" }), "live_conversation")).toBe(false);
   });
 
+  it("§61 lead_reply — the default distribution: god/solo/sub/enterprise GET it, a pure agency does NOT", () => {
+    for (const c of [GOD, SOLO, SUB, ENTERPRISE, cls("standalone", { parent: "agency-uuid" })]) {
+      expect(hasFeature(c, "lead_reply")).toBe(true);
+    }
+    expect(hasFeature(AGENCY, "lead_reply")).toBe(false);
+  });
+
+  // §18/§60 — the server decides whether a lead is drafted (growth-process-submission/lead-reply.ts,
+  // LEAD_REPLY_ACCOUNT_TYPES). That list and this map must give the same answer for every real
+  // tenants.account_type (NOT NULL, CHECK-limited to these four), including the legacy parented
+  // 'standalone' sub-account. God is not a tenants row, so it has no server entry to compare.
+  it("§18 the server's lead-reply account types agree with this map about lead_reply", () => {
+    const src = readFileSync("supabase/functions/growth-process-submission/lead-reply.ts", "utf8");
+    const m = src.match(/export const LEAD_REPLY_ACCOUNT_TYPES: ReadonlySet<string> = new Set\(\[([^\]]*)\]\);/);
+    expect(m, "LEAD_REPLY_ACCOUNT_TYPES could not be located in lead-reply.ts").not.toBeNull();
+    const server = new Set(m![1].split(",").map((p) => p.trim().replace(/^"|"$/g, "")).filter(Boolean));
+    const serverAllows = (accountType: string) => server.has(accountType);
+    expect(serverAllows("standalone")).toBe(hasFeature(SOLO, "lead_reply"));
+    expect(serverAllows("sub_account")).toBe(hasFeature(SUB, "lead_reply"));
+    expect(serverAllows("enterprise")).toBe(hasFeature(ENTERPRISE, "lead_reply"));
+    expect(serverAllows("agency")).toBe(hasFeature(AGENCY, "lead_reply"));
+    // The legacy sub-account still typed 'standalone' under a parent: both layers say yes.
+    expect(serverAllows("standalone")).toBe(hasFeature(cls("standalone", { parent: "agency-uuid" }), "lead_reply"));
+    // Nothing on the server list that is not a real account_type.
+    for (const t of server) expect(["standalone", "sub_account", "enterprise", "agency"]).toContain(t);
+  });
+
   it("enterprise is a superset of agency (never falls below it — even after the growth/studio split)", () => {
     const agencySet = getTierFeatureSet(AGENCY);
     const enterpriseSet = getTierFeatureSet(ENTERPRISE);

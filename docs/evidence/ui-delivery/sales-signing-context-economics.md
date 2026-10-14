@@ -19,6 +19,13 @@ STATE_COVERAGE: PASS: valid legacy linked/null documents, changed source, malfor
 TRUTHFUL_STATE_LABELS: PASS: economic context null means unknown, never zero or signed compatibility; C1 remains PARTIAL.
 SOLO_UI: NO: public token recipient signing page, not a Solo workspace surface.
 UNVERIFIED: historical signed economics, prospective presented-approved snapshot producer, hosted auth/browser, real signature and production deployment remain unproven.
+INTERNAL_BUILD_IDENTITY: candidate=head of sales/signed-commercial-context; deployment=UNVERIFIED; environment=isolated native PostgreSQL; migrations=NOT_APPLIED in production; edge=NOT_APPLICABLE; evidence=this record and canonical native proof
+RELEASE_CHANNEL: development: production migration and hosted acceptance remain owed.
+RELEASE_CLASSIFICATION: internal-only: bounded historical signing-read truth correction.
+CUSTOMER_RELEASE_IDENTITY: none: no complete signed-economic acceptance or customer announcement.
+RELEASE_NOTE_REQUIRED: no: internal correction with explicit proof limits.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: historical optional economics are unknown; PROOF OWED: hosted token/browser behavior; UNAVAILABLE: prospective immutable presented-and-approved economics producer.
+RELEASE_RECOVERY: position=forward-fix through canonical signing read; reference=existing agreement signing contract and this native proof
 
 ## Scope and collisions
 
@@ -34,4 +41,4 @@ Baseline FAIL: valid readable twelve-column priced agreement exposed current ter
 
 ## Review and limitations
 
-Implementation self-check only; root owns non-author review, CI and release. No PR, push, deployment, customer signature or provider action performed. Header correction does not complete signed commercial effectiveness.
+Implementation self-check only; root owns non-author review, CI and release. Hosted CI runs the same native proof through the existing Sales Collections PostgreSQL service. No deployment, customer signature or provider action performed. Header correction does not complete signed commercial effectiveness.

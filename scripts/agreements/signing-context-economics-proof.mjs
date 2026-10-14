@@ -1,4 +1,4 @@
-// PRIVATE failing-first grounding. Native synthetic PG only; no real signature or provider.
+// Canonical signing-context regression proof. Native synthetic PG only; no real signature or provider.
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';

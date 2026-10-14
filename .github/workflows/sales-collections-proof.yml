@@ -15,6 +15,7 @@ on:
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
+      - 'scripts/agreements/signing-context-economics-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
   push:
     branches: [main]
@@ -31,6 +32,7 @@ on:
       - 'scripts/sql/sales-performance-proof.mjs'
       - 'scripts/sql/sales-performance-mutation-proof.mjs'
       - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
+      - 'scripts/agreements/signing-context-economics-proof.mjs'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
   contents: read
@@ -115,3 +117,7 @@ jobs:
           name: int2086-shared-compatibility-proof
           path: work/int2086-shared-compatibility-proof.json
           if-no-files-found: error
+      - name: Signing context unknown economics, token scope, view idempotency and document immutability
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/agreements/signing-context-economics-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data repaired

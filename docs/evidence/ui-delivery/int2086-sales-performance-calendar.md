@@ -1,0 +1,48 @@
+# Sales Performance: canonical overdue calendar
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: existing metric read, currency presentation, evidence inspection, unavailable state and workspace fencing preserved.
+PAIGE_UI_DESIGN: PASS: project skill and routed references read; all five applicable modules considered; approved Performance composition retained.
+MATERIAL_FLOW_CHANGE: NO: repair overdue interpretation and access to the existing evidence inspector when amounts are unavailable; no new owner goal, container, editor, approval or external effect.
+FLOW_PROTOTYPE: NOT_REQUIRED: ordinary completion of the approved Performance evidence flow under the owner calendar ruling in #2086.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owners/admins understand the canonical overdue balance and the business day behind it.
+VISUAL_DIRECTION: PASS: existing Performance tokens, chart interactions, responsive composition and drawer retained; no CSS changes.
+AUTOMATED_EVIDENCE: PASS: affected Performance and shared Analytics regression 88 tests passed; first-red version control failed against incumbent 1.0.0; corrected drawer controls first failed 3/24 before implementation. Composed native PostgreSQL 175 checks passed using synthetic authorization stand-ins.
+STATIC_EVIDENCE: PASS: changed Sales files ESLint and diff whitespace checks passed; full composed-head type/build/hosted gates remain owed.
+RENDERED_EVIDENCE: UNVERIFIED: browser geometry and visual capture of this composed candidate have not yet run.
+BEHAVIORAL_EVIDENCE: PASS: controlled React tests cover exact request version, legacy result rejection, configured/missing/invalid calendar evidence, chart remount and period/workspace transitions; these are not protected customer-session proof.
+AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary owner/admin and foreign-workspace production acceptance remain owed; existing QA transport restrictions retained.
+KEYBOARD_FOCUS: UNVERIFIED: existing drawer and opener handling preserved; real keyboard browser verification remains owed.
+ZOOM_REFLOW: UNVERIFIED: existing responsive CSS unchanged; composed rendered proof remains owed.
+REDUCED_MOTION: UNVERIFIED: approved animation and reduced-motion CSS unchanged; actual browser recheck remains owed.
+STATE_COVERAGE: PASS: controlled loading, denial, error, retry, unresolved workspace, unavailable calendar, legacy version, stale workspace and evidence identity controls included in affected regression.
+TRUTHFUL_STATE_LABELS: PASS: null/UNAVAILABLE is not zero; due today is excluded by the server; reporting ranges remain UTC snapshots/cohorts rather than reconstructed history.
+SOLO_UI: YES: one canonical Sales Performance consumer for eligible Solo tenants.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: composed rendered proof owed.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: composed rendered proof owed.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: composed rendered proof owed.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: composed rendered proof owed.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: composed rendered proof owed.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: composed rendered proof owed.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: composed rendered proof owed.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: composed rendered proof owed.
+UNVERIFIED: final immutable composed-head non-author review, full required CI, production persistence/source identity, authenticated acceptance and owner readback.
+OWNER_INTENT: advance the existing conversation-led Sales golden path and preserve one defensible commercial measurement system.
+MUST_NOT_HAPPEN: fallback to a host/UTC overdue day, reinterpret old evidence, widen tenant/role scope, collapse currencies, or replace missing data with zero.
+MUST_PRESERVE: canonical balance ownership, issuer/resolver and closed shared reader, current snapshot semantics, other ten versions, approved automatic chart behavior and all provider/security gates.
+ACCEPTANCE_CRITERIA: Performance requests the same governed overdue 1.1.0 identity as the shared reader; its evidence drawer displays the issued business date and source coverage; missing/invalid calendar evidence is inspectable and unavailable.
+MOTION_PURPOSE: unchanged approved chart transitions; this patch adds no motion.
+PROTECTED_SEAMS: tenant/authentication epoch, metric identity/version, evidence expiry/revalidation and money truth are affected and covered by controlled UI/shared-reader and native SQL proof. No financial writer, provider setup, signing, Chat approval, execution admission, Memory or scheduler is edited by Sales.
+INTERNAL_BUILD_IDENTITY: base=f0e6a6fcdfe0a4dc00f3eaa746116ed24a84fdb8; candidate=recorded by git; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(composed-20271101110000-and-20271101110001); edge=PROOF_OWED(affected shared reader importers); evidence=docs/evidence/ui-delivery/int2086-shared-overdue-compatibility.md
+RELEASE_CHANNEL: development: composed candidate; no live availability or customer acceptance inferred.
+RELEASE_CLASSIFICATION: patch: existing overdue metric and evidence consumer correction.
+CUSTOMER_RELEASE_IDENTITY: none: no announcement or named release.
+RELEASE_NOTE_REQUIRED: no: production acceptance not established.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local composed source and controlled proofs, release and authenticated readback owed.
+RELEASE_RECOVERY: position=forward-fix after persistence; reference=canonical business calendar and Sales balance contract; never reinterpret retired 1.0.0 references.
+
+Sales owns the private producer and Performance presentation. Analytics-authored shared commits were composed with preserved authorship; Sales has not written a second validator, issuer, resolver, ledger or metric calculator. The five source/test consumer files consume the canonical `currentMetricVersion` and `MetricBusinessTimeZone` exports.
+
+The business date is displayed exactly as supplied by validated evidence. The UI does not derive overdue status or business dates. An additional entry to the existing inspector remains available when no currency amounts exist. Historical definitions, financial writer behavior, current-period truth and signed economic acceptance remain distinct.
+
+Impeccable context, harden and craft-floor applied. Its context reported a stale design sidecar; no design-record repair or visual redesign was absorbed. Static semantics and state tests passed; rendered accessibility/geometry and finish review are still owed, not replaced by this record.

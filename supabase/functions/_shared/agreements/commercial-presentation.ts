@@ -43,7 +43,7 @@ export type CommercialPresentationPayload = {
   body_sha256: string;
   principal_minor: number;
   currency: "usd";
-  amount_basis: "total" | "per_cycle";
+  amount_basis: "total";
   collection_terms: CollectionTerms;
   obligations: ScheduleRow[];
   conditions: CommercialConditions;
@@ -57,6 +57,8 @@ export type PreparedCommercialPresentation = {
 export type RenderedCommercialPresentation = PreparedCommercialPresentation & {
   document_bytes: Uint8Array;
   document_sha256: string;
+  presented_body_markdown: string;
+  presented_body_sha256: string;
 };
 const refuse = (): never => {
   throw Error("COMMERCIAL_PRESENTATION_UNAVAILABLE");
@@ -178,11 +180,13 @@ export async function prepareCommercialPresentation(
   if (
     terms.late_fee.fixed_cents !== 0 || terms.late_fee.rate_bps !== 0 ||
     terms.interest.annual_bps !== 0 || terms.currency !== input.currency ||
-    terms.total_cents !== principal || terms.count === null
+    terms.total_cents !== principal || terms.count === null ||
+    terms.kind === "recurring"
   ) return refuse();
   const preview = previewCollectionSchedule(terms, MAX_SCHEDULE);
   if (
-    preview.has_more || preview.rows.length !== terms.count ||
+    preview.amount_basis !== "total" || preview.has_more ||
+    preview.rows.length !== terms.count ||
     !preview.rows.length
   ) return refuse();
   const conditions = parseCommercialConditions(input.conditions);
@@ -214,30 +218,44 @@ export async function prepareCommercialPresentation(
     lines,
   };
   const digest = await sha256Hex(canonicalPresentationJson(payload));
-  // Plain deterministic Markdown travels through the incumbent document renderer.
-  // JSON-escaped string values prevent supplied labels/policy/source from introducing new headings.
+  // Display formatting only: canonical minor units and schedule rows are unchanged.
+  // Internal IDs, schema and source digests remain in the proof payload, not the contract text.
+  const money = (minor: number) =>
+    `USD ${
+      new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(minor / 100)
+    }`;
+  const human = (value: string) => value.replace(/[\r\n\t]+/g, " ").trim();
+  const treatment = (name: string, value: CommercialConditions["tax"]) =>
+    [
+      `${name}: ${
+        value.state === "not_applicable"
+          ? "Not applicable."
+          : "Recorded included charges."
+      }`,
+      ...value.charges.map((charge) =>
+        `${money(charge.amount_minor)} included in invoice item ${
+          charge.line_index + 1
+        }.`
+      ),
+      `Source: ${human(value.source!)}`,
+      `Policy: ${human(value.policy!)}`,
+    ].join(" ");
   const appendix = [
-    "## Recorded commercial terms for review",
-    `Presentation schema: 1`,
-    `Source agreement revision: ${payload.source.agreement_version}`,
-    `Source commercial terms revision: ${payload.source.terms_version}`,
-    `Source invoice revision: ${payload.source.invoice_version}`,
-    `Economic payload SHA-256: ${digest}`,
-    `Amount basis: ${payload.amount_basis}`,
-    `Recorded principal minor units: ${principal} usd`,
-    "### Full dated principal obligations",
+    "## Commercial terms",
+    `Principal: ${money(principal)}`,
+    "### Dated payments",
     ...preview.rows.map((row) =>
-      `${row.sequence}. ${row.due_date} | ${row.amount_cents} ${row.currency} | ${
-        JSON.stringify(row.label)
+      `${row.sequence}. ${row.due_date} - ${money(row.amount_cents)}${
+        row.label ? " - " + human(row.label) : ""
       }`
     ),
-    "### Recorded tax and fee treatment",
-    `Tax: ${canonicalPresentationJson(conditions.tax)}`,
-    `Fees: ${canonicalPresentationJson(conditions.fees)}`,
-    "### Recorded schedule configuration",
-    canonicalPresentationJson(terms),
-    "### Exact source references",
-    canonicalPresentationJson(payload.source),
+    "### Tax and fees",
+    treatment("Tax", conditions.tax),
+    treatment("Fees", conditions.fees),
+    "Recorded tax and fee amounts are included in the invoice items. They do not add amounts to the dated payments above.",
   ].join("\n\n");
   return freeze({ payload, payload_digest: digest, appendix });
 }
@@ -260,13 +278,16 @@ export async function renderCommercialPresentation(
   ) throw Error("COMMERCIAL_PRESENTATION_CHANGED");
   const body = (captured as Record<string, unknown>).body_markdown as string;
   const render = renderer ?? (await import("./document.ts")).renderPresentedPdf;
+  const presentedBody = `${body}\n\n${prepared.appendix}`;
   const bytes = await render({
     title: prepared.payload.title,
-    bodyMarkdown: `${body}\n\n${prepared.appendix}`,
+    bodyMarkdown: presentedBody,
   });
   return {
     ...prepared,
     document_bytes: bytes,
     document_sha256: await sha256Hex(bytes),
+    presented_body_markdown: presentedBody,
+    presented_body_sha256: await sha256Hex(presentedBody),
   };
 }

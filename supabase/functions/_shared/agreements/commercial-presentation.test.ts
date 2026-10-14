@@ -1,5 +1,6 @@
 import { describe, it } from "https://deno.land/std@0.190.0/testing/bdd.ts";
 import assert from "node:assert/strict";
+import { sha256Hex } from "./token.ts";
 import { PDFDocument } from "npm:pdf-lib@1.17.1";
 const expect = (value: unknown) => ({
   toEqual: (other: unknown) => assert.deepEqual(value, other),
@@ -98,8 +99,8 @@ describe("prospective commercial presentation preparation only", () => {
     const b = await prepareCommercialPresentation(x);
     expect(a).toEqual(b);
     expect(a.payload.obligations).toHaveLength(2);
-    expect(a.appendix).toContain("2026-11-01 | 50000 usd");
-    expect(a.appendix).toContain("2026-12-01 | 300000 usd");
+    expect(a.appendix).toContain("2026-11-01 - USD 500.00");
+    expect(a.appendix).toContain("2026-12-01 - USD 3,000.00");
     expect(a.payload_digest).toMatch(/^[a-f0-9]{64}$/);
     expect(Object.isFrozen(a.payload)).toBe(true);
     expect(Object.isFrozen(a.payload.obligations)).toBe(true);
@@ -268,4 +269,65 @@ it("refuses incomplete charge declaration and mismatched principal/currency", as
     mutate(x);
     await expect(prepareCommercialPresentation(x)).rejects.toThrow();
   }
+});
+
+it("refuses a finite-count recurring contract in this finite principal slice", async () => {
+  const x = fixture();
+  Object.assign(x.collection_terms, {
+    kind: "recurring",
+    cadence: "monthly",
+    count: 2,
+    dates: [],
+  });
+  await expect(prepareCommercialPresentation(x)).rejects.toThrow();
+});
+it("presents exact human amounts and dates without internal proof fields", async () => {
+  const prepared = await prepareCommercialPresentation(fixture());
+  expect(prepared.appendix).toContain("Commercial terms");
+  expect(prepared.appendix).toContain("USD 3,500.00");
+  expect(prepared.appendix).toContain("2026-11-01");
+  expect(prepared.appendix).toContain("USD 500.00");
+  expect(prepared.appendix).toContain("USD 3,000.00");
+  for (
+    const internal of [
+      "schema_version",
+      "line_index",
+      "minor units",
+      "SHA-256",
+      "terms_id",
+      "0%",
+      fixture().source.agreement_id,
+    ]
+  ) assert(!prepared.appendix.includes(internal));
+});
+it("returns the exact presented Markdown and digest from the same renderer input", async () => {
+  const x = fixture(), prepared = await prepareCommercialPresentation(x);
+  let seen = "";
+  const result = await renderCommercialPresentation(
+    x,
+    prepared,
+    async (input) => {
+      seen = input.bodyMarkdown;
+      return new Uint8Array([1]);
+    },
+  );
+  expect(result.presented_body_markdown).toBe(seen);
+  expect(result.presented_body_sha256).toBe(await sha256Hex(seen));
+  expect(x.body_markdown).toBe("Approved scope text.");
+});
+
+it("describes recorded included tax without raw line indexes or additional obligations", async () => {
+  const x = fixture();
+  Object.assign(x.conditions.tax, {
+    state: "recorded",
+    charges: [{ line_index: 0, amount_minor: 2500, currency: "usd" }],
+    source: "Recorded invoice tax",
+    policy: "Included sales tax",
+  });
+  const p = await prepareCommercialPresentation(x);
+  expect(p.appendix).toContain("USD 25.00 included in invoice item 1.");
+  expect(p.appendix).toContain("They do not add amounts");
+  expect(p.payload.obligations).toHaveLength(2);
+  expect(p.payload.principal_minor).toBe(350000);
+  assert(!p.appendix.includes("line_index"));
 });

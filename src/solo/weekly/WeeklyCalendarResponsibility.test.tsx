@@ -40,7 +40,8 @@ it("responsive Calendar inspection replaces its outer modal and retains one read
   expect(harness.read.mock.calls.every(args => args.length === 0)).toBe(true);
   await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(document.activeElement?.className).toContain("sc-board");
+  // Radix restores focus from its deferred unmount cleanup, after Escape closes the dialog.
+  await vi.waitFor(() => expect(document.activeElement?.className).toContain("sc-board"));
 });
 it("Chat Escape returns focus to the existing weekly opener", async () => {
   await act(async () => root.render(<MemoryRouter><WeeklyResponsibilityEntry /></MemoryRouter>));
@@ -48,7 +49,8 @@ it("Chat Escape returns focus to the existing weekly opener", async () => {
   await act(async () => opener.click());
   expect(document.querySelector('[role="dialog"]')).toBeTruthy();
   await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-  expect(document.querySelector('[role="dialog"]')).toBeNull(); expect(document.activeElement).toBe(opener);
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  await vi.waitFor(() => expect(document.activeElement).toBe(opener));
 });
 it("audience refusal removes Chat and the weekly dialog while preserving the Calendar child", async () => {
   const render = () => <MemoryRouter><WeeklyResponsibilityEntry /><WeeklyCalendarResponsibility>{slot => <section>Existing Calendar{slot({ closeViewOptions: () => {}, returnFocus: () => {} })}</section>}</WeeklyCalendarResponsibility></MemoryRouter>;

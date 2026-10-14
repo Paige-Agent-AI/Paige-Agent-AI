@@ -127,6 +127,13 @@ Vercel `dpl_FFCf1d7WYc8KPNe9DgEJ63sKJiaN` READY exactmerge/targetproduction/cano
 
 One-PAIGE matrix update: exact staff controls are source/isolated-render verified; preparation/source selection, nomination discovery, guarded Operations mount and coordinated Client Portal acceptance continue. SharedQA#1832/ANT-7/ANT-86 remains under singleANT21; full-shell/PAIGE and authentic linked-client revision/acceptance remain UNVERIFIED. SOP/capacity and governed Spine/Harness/Trust/durable/Rail/MetricEvidence/Fabric/Mind/Memory/Model/AgentIntelligence/same ChatLive outcomes remain owed. Full Operations PARTIAL.
 
+## Canonical preparation source release - #2065
+
+Reviewed head `8a42047fbd0b08c3c114c487d31cc8a8053d693a`; protected squash `df62114536fab12b22c3a2adcf1c85aceac0753e`. Independent source COMPLETE and current-main compatibility COMPLETE COMPATIBLE against `be8d92780b254416eba3dde27ec8196df8da7f3b`; actual/prospective merge tree `b576faa69c465f40dc37503b49246137ad493923` matches. Required exact-head verify114909750810/database-contract114909749560/UI114909755802 SUCCESS, other applicable checks SUCCESS; preview SKIPPED/N/A(noSQL).76 focused tests/scoped lint,26 component cases,8 genuine nativeChrome200/400 and6phone recovery captures PASS. Critic's bounded SHIP covers recovery feedback fixes, not whole mounted-flow approval.
+
+Vercel `dpl_7Egw7uY1ZvGcNFPiGEE8pdk3zzdX` READY/production/exact merge/canonical aliases; anonymous version `df62114536fab12b22c3a2adcf1c85aceac0753e-mv5i42qh`, customerUpdate null. No new migration/edge. Production catalog preserves Delivery320/20/30/50/10/20/30; current frontier20271024100000 belongs to peer Marketing. Submit/list/artifact/discovery MD5s e97e99702a61ea2be38ab05e78302255 / 062707a4dd3c0bac92c5f3317021334d / 725570b6b1e90a02275755e217466e55 / 858c5e1f6cad208111a6b2438b4686c7, auth-only EXECUTE, SECURITY DEFINER, empty search_path, private submissions RLS/direct authenticated CRUD denied. Proof: [production readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2065#issuecomment-6128928563).
+
+Preparation remains unmounted source; original-scope/navigation recovery and guarded Work integration continue. Client portal mount, real linked-client revision/acceptance, shared governed COO/Chat/Live and protected QA remain owed. No account authentication, customer mutation, credentials, new QA account, provider effect or INT346 activation. Full Operations PARTIAL; metadata inventory is owner-private and does not imply per-account testing.
 
 ## Pending reviewer discovery source - ANT-11 / ANT-86
 

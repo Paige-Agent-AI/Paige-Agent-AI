@@ -12,6 +12,7 @@ import { useSoloSkills } from "./data/useSoloSkills";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
+import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
 type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilities";
@@ -380,7 +381,7 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div></div>}
+          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={new URLSearchParams(location.search).get("onboarding") === "1"} />}</div>}
         />
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>

@@ -3,10 +3,16 @@
 export type BusinessTimeZone = { state: "configured" | "missing" | "invalid"; zone: string | null };
 export type WeeklySchedule = { weekday: number; local_time: string; timezone: string };
 export type WeeklyRunStatus = "scheduled" | "running" | "completed" | "failed" | "unknown" | "cancelled" | "needs_approval" | "held" | "refused" | "skipped";
+/** Private owner presentation only. Never copied into model context or shared Rail. */
+export type WeeklySourceItem = {
+  id: string; kind: "task" | "milestone" | "reminder"; title: string;
+  status: "open" | "in_progress" | "blocked"; priority: "low" | "normal" | "high" | "urgent"; due_at: string | null;
+};
 export type VerifiedWeeklyRun = {
   event_id: string; act_id: string; receipt_id: string; observed_at: string; scheduled_for: string;
   schedule_revision: number; status: "completed"; truncated: boolean;
   counts: { open: number; blocked: number; overdue: number; due_next_week: number; undated: number };
+  source_items?: WeeklySourceItem[] | null;
 };
 export type WeeklyRun = { event_id: string; act_id: string | null; scheduled_for: string; status: WeeklyRunStatus };
 export type WeeklyCheck = {
@@ -25,6 +31,20 @@ const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}
 const instant = (v: unknown): v is string => typeof v === "string" && v.length <= 40 &&
   /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v) && Number.isFinite(Date.parse(v));
 const integer = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
+export function parseWeeklySourceItems(raw: unknown): WeeklySourceItem[] | null {
+  if (!Array.isArray(raw) || raw.length > 50) return null;
+  const items: WeeklySourceItem[] = [], ids = new Set<string>();
+  for (const value of raw) {
+    const item = record(value);
+    if (!item || !uuid(item.id) || ids.has(item.id) || !["task", "milestone", "reminder"].includes(String(item.kind)) ||
+      typeof item.title !== "string" || item.title.length > 320 || Array.from(item.title).length > 160 || !["open", "in_progress", "blocked"].includes(String(item.status)) ||
+      !["low", "normal", "high", "urgent"].includes(String(item.priority)) || (item.due_at !== null && !instant(item.due_at))) return null;
+    ids.add(item.id);
+    items.push({ id: item.id, kind: item.kind as WeeklySourceItem["kind"], title: item.title,
+      status: item.status as WeeklySourceItem["status"], priority: item.priority as WeeklySourceItem["priority"], due_at: item.due_at as string | null });
+  }
+  return items;
+}
 function zone(v: unknown): v is string {
   if (typeof v !== "string" || v.length > 80 || !/^(UTC|[A-Za-z]+\/[A-Za-z0-9_+/-]+)$/.test(v)) return false;
   try { new Intl.DateTimeFormat("en", { timeZone: v }).format(0); return true; } catch { return false; }
@@ -49,6 +69,7 @@ function verified(raw: unknown, process: string, tenant: string, actor: string):
     scheduled_for: run.scheduled_for, schedule_revision: o.schedule_revision, status: "completed", truncated: o.truncated,
     counts: { open: Number(o.open_count), blocked: Number(o.blocked_count), overdue: Number(o.overdue_count),
       due_next_week: Number(o.due_next_week_count), undated: Number(o.undated_count) },
+    source_items: parseWeeklySourceItems(o.items),
   };
 }
 /** Only called after the current caller/workspace/owner fences. Never exposes raw observations or errors. */
@@ -119,7 +140,12 @@ export function projectWeeklyCommitmentChat(snapshot: WeeklyCommitmentSnapshot):
   for (;;) {
     const result = JSON.stringify({ source: snapshot.source, read_at: snapshot.read_at, business_time_zone: snapshot.business_time_zone,
       included_checks: included, has_more: snapshot.has_more || included < snapshot.checks.length,
-      checks: snapshot.checks.slice(0, included) });
+      checks: snapshot.checks.slice(0, included).map(c => ({ ...c, last_verified_run: c.last_verified_run ? {
+        event_id: c.last_verified_run.event_id, act_id: c.last_verified_run.act_id, receipt_id: c.last_verified_run.receipt_id,
+        observed_at: c.last_verified_run.observed_at, scheduled_for: c.last_verified_run.scheduled_for,
+        schedule_revision: c.last_verified_run.schedule_revision, status: c.last_verified_run.status,
+        truncated: c.last_verified_run.truncated, counts: c.last_verified_run.counts,
+      } : null })) });
     if (result.length <= 12000 || included === 0) return result;
     included--;
   }

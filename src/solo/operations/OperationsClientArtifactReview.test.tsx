@@ -101,6 +101,19 @@ it.each(["scope","session"])("a late %s change never notifies the parent about a
  expect(verified).not.toHaveBeenCalled();expect(host.textContent).not.toContain("Your acceptance is recorded");expect(host.textContent).not.toContain(record.body);
  expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
 });
+it("returning A to B to A never revives the retired decision or registered close guard",async()=>{
+ const verified=vi.fn();const guards:Array<()=>boolean>=[];
+ const register=(guard:()=>boolean)=>{guards.push(guard);return()=>{};};
+ const show=(releaseId:string)=>act(async()=>root.render(<OperationsClientArtifactReview {...scope} releaseId={releaseId} registerCloseGuard={register} onVerifiedDecision={verified}/>));
+ await show(scope.releaseId);const originalGuard=guards[0];
+ await act(async()=>button("Accept this version").click());let resolve!:(value:unknown)=>void;
+ mocks.rpc.mockImplementationOnce(()=>new Promise(r=>{resolve=r;}));await act(async()=>button("Confirm acceptance").click());
+ await show("other-release");await show(scope.releaseId);
+ const saved={...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"};
+ mocks.rpc.mockResolvedValue({data:saved,error:null});await act(async()=>resolve({data:saved,error:null}));
+ expect(verified).not.toHaveBeenCalled();expect(host.textContent).not.toContain("Your acceptance is recorded");expect(originalGuard()).toBe(false);
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
 it("an asynchronously rejected refresh cannot turn a verified decision into a failed write",async()=>{
  const verified=vi.fn(()=>Promise.reject(new Error("PRIVATE_REFRESH_REJECTION")));
  await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));

@@ -18,7 +18,8 @@ type ReadState = { key:string; phase:"loading"|"ready"|"unavailable"; artifact?:
 export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme="dark",registerCloseGuard,onVerifiedDecision}:ClientArtifactReviewProps) {
  const reviewNoteHint=useId();
  const key=JSON.stringify([actorId,tenantId,releaseId]);
- const live=useRef(key);live.current=key;const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
+ const live=useRef({key});if(live.current.key!==key)live.current={key};const epoch=live.current;
+ const mounted=useRef(false);const requestNo=useRef(0);const writing=useRef(false);
  const [read,setRead]=useState<ReadState>({key,phase:"loading"});
  const noteScope=useRef(key);const [noteSource,setNoteSource]=useState<string|null>(null);
  const [note,setNote]=useState("");const [busy,setBusy]=useState(false);
@@ -27,7 +28,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  const attempt=useRef<{key:string; artifact:ClientDeliveryArtifact; choice:"accepted"|"client_revision_requested"; note:string|null}|null>(null);
  const [readAgain,setReadAgain]=useState(0);
  const invoker=useRef<HTMLButtonElement|null>(null);const feedback=useRef<HTMLDivElement>(null);
- const current=()=>mounted.current&&live.current===key;
+ const current=()=>mounted.current&&live.current===epoch;
  const caller=supabase as unknown as ClientDeliveryCaller;
  const restoreFocus=(event:Event)=>{const target=invoker.current;if(target?.isConnected&&!target.disabled){event.preventDefault();target.focus();}else if(feedback.current?.isConnected){event.preventDefault();feedback.current.focus();}};
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
@@ -49,7 +50,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
   return()=>{cancelled=true;};
  // The exact scope/read sequence owns all content. No effective/view-as identity can grant acceptance.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[key,readAgain]);
+ },[epoch,readAgain]);
  const visible=read.key===key?read:null;
  const result=outcome?.key===key?outcome:null;
  const artifact=visible?.phase==="ready"?visible.artifact:undefined;
@@ -72,7 +73,7 @@ export function OperationsClientArtifactReview({actorId,tenantId,releaseId,theme
  useBeforeUnloadGuard(leaveBlocked);
  useEffect(()=>registerAccountSwitchGuard(()=>!leaveBlocked),[leaveBlocked]);
  // Expose the existing close boundary; a host must honor false and owns SPA routing.
- useEffect(()=>registerCloseGuard?.(()=>mounted.current&&live.current===key&&!writing.current&&!leaveState.current.busy&&!leaveState.current.dirty&&!leaveState.current.uncertain&&!leaveState.current.confirming),[key,registerCloseGuard]);
+ useEffect(()=>registerCloseGuard?.(()=>mounted.current&&live.current===epoch&&!writing.current&&!leaveState.current.busy&&!leaveState.current.dirty&&!leaveState.current.uncertain&&!leaveState.current.confirming),[epoch,registerCloseGuard]);
  const review=(choice:"accepted"|"client_revision_requested",button:HTMLButtonElement)=>{
   if(!current()||!awaiting||locked)return;
   if(choice==="client_revision_requested"&&!note.trim()){setOutcome({key,kind:"invalid"});feedback.current?.focus();return;}

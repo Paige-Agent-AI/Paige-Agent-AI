@@ -12,6 +12,112 @@ beforeEach(()=>{vi.clearAllMocks();mocks.session.mockResolvedValue({data:{sessio
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 async function render(props=scope){await act(async()=>root.render(<OperationsClientArtifactReview {...props}/>));}
 const button=(label:string)=>Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(b=>b.textContent===label)!;
+
+it("exposes the existing note/save close boundary and unregisters it on unmount",async()=>{
+ let guard:()=>boolean=()=>true;const unregister=vi.fn();
+ const register=vi.fn((next:()=>boolean)=>{guard=next;return unregister;});
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={register}/>));
+ expect(register).toHaveBeenCalledOnce();expect(guard()).toBe(true);
+ const note=host.querySelector<HTMLTextAreaElement>("textarea")!;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Keep this review note");note.dispatchEvent(new Event("input",{bubbles:true}));});
+ expect(guard()).toBe(false);expect(note.value).toBe("Keep this review note");
+ await act(async()=>button("Clear review note").click());expect(guard()).toBe(true);
+ await act(async()=>root.render(null));expect(unregister).toHaveBeenCalledOnce();expect(guard()).toBe(false);
+});
+it("blocks parent close during a pending exact decision and never notifies an unknown write",async()=>{
+ let guard:()=>boolean=()=>true;const verified=vi.fn();
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ let resolve!:(value:unknown)=>void;
+ mocks.rpc.mockImplementationOnce(()=>new Promise(r=>{resolve=r;}));
+ await act(async()=>button("Confirm acceptance").click());
+ expect(guard()).toBe(false);expect(verified).not.toHaveBeenCalled();
+ await act(async()=>resolve({data:null,error:{code:"08006"}}));
+ expect(verified).not.toHaveBeenCalled();expect(button("Accept this version").disabled).toBe(true);
+});
+it("keeps a blank-note confirmation and unknown outcome guarded until exact terminal source recovery",async()=>{
+ let guard:()=>boolean=()=>true;const verified=vi.fn();
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}} onVerifiedDecision={verified}/>));
+ expect(guard()).toBe(true);await act(async()=>button("Accept this version").click());expect(guard()).toBe(false);
+ await act(async()=>button("Keep reviewing").click());expect(guard()).toBe(true);
+ await act(async()=>button("Accept this version").click());mocks.rpc.mockResolvedValueOnce({data:null,error:{code:"08006"}});
+ await act(async()=>button("Confirm acceptance").click());expect(guard()).toBe(false);expect(verified).not.toHaveBeenCalled();
+ await act(async()=>expect(await allowAccountSwitch({fromTenantId:scope.tenantId,toTenantId:"foreign",toTenantName:"Synthetic other workspace"})).toBe(false));
+ const unload=new Event("beforeunload",{cancelable:true});window.dispatchEvent(unload);expect(unload.defaultPrevented).toBe(true);
+ await act(async()=>button("Check recorded review").click());expect(guard()).toBe(false);
+ mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Check recorded review").click());expect(guard()).toBe(true);expect(verified).not.toHaveBeenCalled();
+ await act(async()=>expect(await allowAccountSwitch({fromTenantId:scope.tenantId,toTenantId:"foreign",toTenantName:"Synthetic other workspace"})).toBe(true));
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+it.each(["version","note"])("a changed %s cannot discharge an unresolved blank-note decision",async change=>{
+ let guard:()=>boolean=()=>true;
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}}/>));
+ await act(async()=>button("Accept this version").click());mocks.rpc.mockResolvedValueOnce({data:null,error:{code:"08006"}});
+ await act(async()=>button("Confirm acceptance").click());
+ mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:change==="note"?"A different decision":null,revision_no:change==="version"?3:2,updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Check recorded review").click());expect(guard()).toBe(false);
+});
+it("notifies only the named source tuple after independently verified acceptance",async()=>{
+ const verified=vi.fn();await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ expect(verified).not.toHaveBeenCalled();await act(async()=>button("Accept this version").click());
+ const saved={...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"};
+ mocks.rpc.mockResolvedValue({data:saved,error:null});await act(async()=>button("Confirm acceptance").click());
+ expect(verified).toHaveBeenCalledOnce();expect(verified).toHaveBeenCalledWith({actorId:scope.actorId,tenantId:scope.tenantId,
+  releaseId:scope.releaseId,submissionId:record.submission_id,state:"accepted",revisionNo:2,artifactDigest:record.artifact_digest,updatedAt:saved.updated_at});
+ expect(JSON.stringify(verified.mock.calls)).not.toContain(record.body);
+});
+it.each(["42501","08006"])("a %s decision never emits a verified notification",async code=>{
+ const verified=vi.fn();await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());mocks.rpc.mockResolvedValue({data:null,error:{code}});
+ await act(async()=>button("Confirm acceptance").click());expect(verified).not.toHaveBeenCalled();
+});
+it("consumer notification failure cannot change an independently verified write into failure",async()=>{
+ const verified=vi.fn(()=>{throw new Error("PRIVATE_CONSUMER_REFRESH");});
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Confirm acceptance").click());
+ expect(verified).toHaveBeenCalledOnce();expect(host.textContent).toContain("Your acceptance is recorded");
+ expect(host.textContent).not.toContain("could not be confirmed");expect(host.textContent).not.toContain("PRIVATE_CONSUMER_REFRESH");
+});
+it("a slow consumer does not hold a completed decision or its close guard busy",async()=>{
+ let guard:()=>boolean=()=>false;const verified=vi.fn(()=>new Promise<void>(()=>{}));
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Confirm acceptance").click());
+ expect(verified).toHaveBeenCalledOnce();expect(guard()).toBe(true);expect(host.textContent).not.toContain("Saving and checking");
+});
+it.each(["scope","session"])("a late %s change never notifies the parent about an old decision",async change=>{
+ const verified=vi.fn();const register=vi.fn(()=>()=>{});
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={register} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ let resolve!:(value:unknown)=>void;mocks.rpc.mockImplementationOnce(()=>new Promise(r=>{resolve=r;}));
+ await act(async()=>button("Confirm acceptance").click());
+ if(change==="scope")await act(async()=>root.render(<OperationsClientArtifactReview {...scope} releaseId="other-release" registerCloseGuard={register} onVerifiedDecision={verified}/>));
+ else mocks.session.mockResolvedValue({data:{session:{user:{id:"other-actual-user"}}},error:null});
+ await act(async()=>resolve({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null}));
+ expect(verified).not.toHaveBeenCalled();expect(host.textContent).not.toContain("Your acceptance is recorded");expect(host.textContent).not.toContain(record.body);
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+it("an asynchronously rejected refresh cannot turn a verified decision into a failed write",async()=>{
+ const verified=vi.fn(()=>Promise.reject(new Error("PRIVATE_REFRESH_REJECTION")));
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Confirm acceptance").click());
+ expect(verified).toHaveBeenCalledOnce();expect(host.textContent).toContain("Your acceptance is recorded");expect(host.textContent).not.toContain("PRIVATE_REFRESH_REJECTION");expect(host.textContent).not.toContain("could not be confirmed");
+});
+it("a verified revision notification excludes the private review note",async()=>{
+ const verified=vi.fn();await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ const note=host.querySelector<HTMLTextAreaElement>("textarea")!;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Private requested revision");note.dispatchEvent(new Event("input",{bubbles:true}));});
+ await act(async()=>button("Request changes").click());
+ mocks.rpc.mockResolvedValue({data:{...record,state:"client_revision_requested",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:"Private requested revision",updated_at:"2026-10-12T01:00:00Z"},error:null});
+ await act(async()=>button("Confirm changes").click());
+ expect(verified).toHaveBeenCalledOnce();expect(verified.mock.calls[0][0]).toMatchObject({state:"client_revision_requested",releaseId:scope.releaseId,revisionNo:2});expect(JSON.stringify(verified.mock.calls)).not.toContain("Private requested revision");
+});
 it("reads only the exact released client artifact and never executes on opening",async()=>{await render();expect(host.textContent).toContain("Synthetic deliverable");expect(host.textContent).toContain("Version 2");expect(host.textContent).toContain(record.body);expect(host.querySelector("script")).toBeNull();expect(mocks.rpc.mock.calls.map(c=>c[0])).toEqual(["operations_delivery_client_read_scoped"]);});
 it("foreign or mismatched source content stays hidden and cannot be accepted",async()=>{mocks.rpc.mockResolvedValue({data:{...record,tenant_id:"foreign"},error:null});await render();expect(host.textContent).not.toContain(record.title);expect(host.textContent).toContain("Review unavailable");expect(button("Accept this version")).toBeUndefined();});
 it("acceptance requires confirmation and independent decision readback",async()=>{await render();await act(async()=>button("Accept this version").click());expect(mocks.rpc).toHaveBeenCalledOnce();expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("Accept version 2?");mocks.rpc.mockResolvedValue({data:{...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"},error:null});await act(async()=>button("Confirm acceptance").click());expect(mocks.rpc.mock.calls.map(c=>c[0])).toEqual(["operations_delivery_client_read_scoped","operations_delivery_client_decide_scoped","operations_delivery_client_read_scoped"]);expect(host.textContent).toContain("Your acceptance is recorded");});

@@ -25,7 +25,7 @@ MUST_PRESERVE: Existing save_paige_agreement, signing immutability, one confirma
 ACCEPTANCE_CRITERIA: With legitimate customer authorization, a proposal carries the exact read updatedAt; its approved revision reloads with the original client/offer/terms/source; stale or forbidden cases refuse with no write. This authenticated criterion remains proof owed.
 MOTION_PURPOSE: NONE: No motion change.
 PROTECTED_SEAMS: Affected: tenant/client scope, approved source revision, canonical save/readback and uncertain-outcome reporting, covered by 14 adapter tests and 26 PostgreSQL checks. Approval proof, authentication, entitlement/billing/provisioning, transcript/stream/thread/popout, Live, Vault/browser, providers, durable jobs, Memory, shell geometry and accessibility implementation are not edited. Shared schema/dispatch integration and actual receipt rendering remain independently verified by their owners.
-INTERNAL_BUILD_IDENTITY: 9bcdd7cdbead5b1ec8a72fe4ea0d4a3fa46e6014; deployment=NOT_APPLICABLE; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat domain adapter release); evidence=scripts/agreements/chat-draft-revision.test.mjs,scripts/agreements/chat-draft-revision-pg.mjs
+INTERNAL_BUILD_IDENTITY: 00234a4afab4f612ff379654033c3a15f08950b1; deployment=NOT_APPLICABLE; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat domain adapter release); evidence=scripts/agreements/chat-draft-revision.test.mjs,scripts/agreements/chat-draft-revision-pg.mjs
 RELEASE_CHANNEL: development: Local domain source and isolated synthetic proof; no production execution claimed.
 RELEASE_CLASSIFICATION: patch: Repair existing agreement draft revision integrity and truthful uncertain save outcomes.
 CUSTOMER_RELEASE_IDENTITY: none: Internal correction awaiting release evidence; no named customer release.
@@ -35,13 +35,21 @@ RELEASE_RECOVERY: position=forward-fix; reference=existing draft writer and prot
 
 ## Contract and collision boundary
 
-Sales owns `_shared/agreements/chat-write.ts`. Experience 04 holds the shared tool-schema and `paige-ai-chat` callsite lease. No shared file is edited here.
+Sales owns `_shared/agreements/chat-write.ts`. The appointed Shared Chat Runtime owner holds the shared tool-schema, declaration and `paige-ai-chat` callsite lease, coordinated with Experience 04. No shared file is edited here.
 
 `draftAgreement` requires `expectedUpdatedAt` for a revision. It is the exact `updatedAt` from the canonical agreement read and must be included in the existing stored proposal and fingerprint by the shared owner. A fresh timestamp fetched after approval is not a replacement. The adapter reads only the specific active-tenant agreement through the caller client, preserves its persisted bindings, and passes the original timestamp into the existing PostgreSQL writer. Missing integration fails closed.
 
 An uploaded document cannot be revised as markdown through this capability. The source file is preserved by refusal. Creating a normal new draft continues through the existing writer without a revision read. A transport failure or wrong/missing save readback reports an unconfirmed outcome and advises inspecting existing records before another draft attempt.
 
 The PostgreSQL proof reuses `scripts/agreements/_fixture-schema.sql`, the canonical `20270401000000` writer and signing triggers, and the delivered `20271020000310` table-specific trigger contracts. Auth helpers are explicit synthetic stand-ins; these checks do not prove a production customer session.
+
+## Required CI diagnosis
+
+Published head `11f14c866aeffedd78dab3631fd669783ccd5179` received independent non-author SHIP review and passed the hosted full test step, but failed the Deno ratchet. Run `38576442933`, retained artifact `11899114858`, binds the exact base and head: nine inherited diagnostics and one new `TS2589` at the existing `draftAgreement` call site. This was Sales-owned generic query-port typing, not an unrelated baseline failure.
+
+Build `00234a4afab4f612ff379654033c3a15f08950b1` confines the query-shape assertion to the existing read, keeping Supabase's generic select parser out of caller assignability. No runtime guards or writes changed. A local actual Deno importer check reports the same nine inherited diagnostics and no `TS2589`; this is not a passing hosted release check. Adapter tests remain 14 PASS and canonical PostgreSQL checks remain 26 PASS. The new published head still requires satisfactory exact-head hosted CI and review-policy disposition before merge. The repository's further review-round limit has been escalated in the existing program record; no waiver is inferred.
+
+The adapter's `no_readback` result must be translated by the shared dispatch owner into the existing `outcome_unknown` envelope and Rail outcome. This domain slice does not change the shared classifier or prove the successor-write brake. Chat/Live acceptance remains owed.
 
 ## Separate dependencies
 

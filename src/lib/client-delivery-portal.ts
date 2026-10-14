@@ -1,4 +1,5 @@
 import { readClientReleasedDeliveries, type ClientReleasedDelivery } from '@/solo/operations/operations-client-delivery-discovery';
+import { readClientDeliveryArtifact } from '@/lib/operations-client-review';
 
 type Reply = { data: unknown; error: unknown };
 type ClientLimit = { limit: (count: 2) => PromiseLike<Reply> };
@@ -16,6 +17,62 @@ export type PortalReleasedWork = {
   kind: 'ready'; scope: LinkedPortalClient; releases: ClientReleasedDelivery[];
   unavailableCount: number; hasMore: boolean;
 } | LinkFailure;
+
+export type PortalReviewReference = Readonly<{ scope: LinkedPortalClient; release: ClientReleasedDelivery }>;
+export type PortalReviewAccess = { kind: 'ready' } | LinkFailure
+  | { kind: 'refused'; invalidated: true };
+
+/** Existing exact reader proves visibility only; no body, receipt, close permission or mutation. */
+export async function checkPortalReviewAccess(
+  caller: ClientDeliveryPortalPort, reference: PortalReviewReference, current: () => boolean,
+): Promise<PortalReviewAccess> {
+  if (!current()) return { kind: 'scope_changed' };
+  const { scope, release } = reference;
+  const sameLink = (fresh: LinkedPortalClient) => fresh.actorId === scope.actorId
+    && fresh.clientId === scope.clientId && fresh.tenantId === scope.tenantId;
+  let actorChanged = false;
+  // Observe the same existing auth reads, without a second session lookup/store.
+  // An SDK error is uncertain; a successful different/missing user is actual loss.
+  const observedCaller: ClientDeliveryPortalPort = {
+    auth: { getUser: async () => {
+      const result = await caller.auth.getUser();
+      if (!result.error && result.data?.user?.id !== scope.actorId) actorChanged = true;
+      return result;
+    } },
+    from: table => caller.from(table), rpc: (name, args) => caller.rpc(name, args),
+  };
+  try {
+    const before = await readLinkedPortalClient(observedCaller, scope.actorId, current);
+    if (!current()) return { kind: 'scope_changed' };
+    if (before.kind !== 'ready') return actorChanged ? { kind: 'refused', invalidated: true } : before;
+    if (!sameLink(before.scope)) return { kind: 'refused', invalidated: true };
+    const reply = await caller.rpc('operations_delivery_client_read_scoped', {
+      p_release_id: release.release_id, p_expected_actor_id: scope.actorId,
+      p_expected_tenant_id: scope.tenantId,
+    });
+    if (!current()) return { kind: 'scope_changed' };
+    const after = await readLinkedPortalClient(observedCaller, scope.actorId, current);
+    if (!current()) return { kind: 'scope_changed' };
+    if (after.kind !== 'ready') return actorChanged ? { kind: 'refused', invalidated: true } : after;
+    if (!sameLink(after.scope)) return { kind: 'refused', invalidated: true };
+    if (reply.error) {
+      const code = object(reply.error)?.code;
+      return typeof code === 'string' && ['42501', '40001', '22023'].includes(code)
+        ? { kind: 'refused', invalidated: true } : { kind: 'unavailable' };
+    }
+    const artifact = readClientDeliveryArtifact(reply.data, {
+      actorId: scope.actorId, tenantId: scope.tenantId, releaseId: release.release_id,
+    });
+    if (!artifact) return { kind: 'unavailable' };
+    if (artifact.submissionId !== release.submission_id || artifact.revisionNo !== release.revision_no
+      || artifact.artifactDigest !== release.artifact_digest || artifact.title !== release.title) return { kind: 'refused', invalidated: true };
+    // A canonical terminal decision may change updatedAt. It is still only access
+    // evidence here; the unchanged Operations component reconciles its own attempt.
+    return { kind: 'ready' };
+  } catch {
+    return { kind: current() ? 'unavailable' : 'scope_changed' };
+  }
+}
 
 const uuid = (value: unknown): value is string => typeof value === 'string'
   && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);

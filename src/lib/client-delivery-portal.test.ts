@@ -1,11 +1,11 @@
 import { expect, it, vi } from 'vitest';
-import { readLinkedPortalClient, readPortalReleasedWork } from './client-delivery-portal';
+import { checkPortalReviewAccess, readLinkedPortalClient, readPortalReleasedWork } from './client-delivery-portal';
 
 const id = (n: number) => `ec040000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const actor = id(1), clientId = id(2), tenantId = id(3);
 const linked = { id: clientId, tenant_id: tenantId };
 const scope = { actorId: actor, clientId, tenantId };
-const release = { release_id: id(4), submission_id: id(5), state: 'awaiting_client',
+const release = { release_id: id(4), submission_id: id(5), state: 'awaiting_client' as const,
   revision_no: 2, artifact_digest: 'a'.repeat(64), title: 'Released service outcome',
   updated_at: '2026-10-14T00:00:00.123456Z' };
 const envelope = { actor_id: actor, tenant_id: tenantId, releases: [release], unavailable_count: 0, has_more: false };
@@ -123,5 +123,84 @@ it('preserves capped and unavailable discovery instead of claiming a complete em
 it('has no privileged or unscoped fallback after unexpected auth transport errors', async () => {
   const c = fixture(); c.auth.getUser.mockRejectedValue(new Error('offline'));
   expect(await readPortalReleasedWork(c, actor, current)).toEqual({ kind: 'unavailable' });
+  expect(c.from).not.toHaveBeenCalled(); expect(c.rpc).not.toHaveBeenCalled();
+});
+
+const reviewReference = { scope, release };
+const artifact = { actor_id: actor, tenant_id: tenantId, release_id: release.release_id,
+  submission_id: release.submission_id, state: 'awaiting_client', revision_no: release.revision_no,
+  artifact_digest: release.artifact_digest, title: release.title, body: 'Exact private released content',
+  updated_at: release.updated_at };
+const accessFixture = () => {
+  const c = fixture(); c.rpc.mockResolvedValue({ data: artifact, error: null }); return c;
+};
+it('checks selected access through one canonical exact read without returning private content', async () => {
+  const c = accessFixture();
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'ready' });
+  expect(c.rpc.mock.calls).toEqual([['operations_delivery_client_read_scoped', {
+    p_release_id: release.release_id, p_expected_actor_id: actor, p_expected_tenant_id: tenantId,
+  }]]);
+});
+it('permits fresh terminal source access without turning it into a verified execution receipt', async () => {
+  const c = accessFixture(); c.rpc.mockResolvedValue({ data: { ...artifact, state: 'accepted',
+    updated_at: '2026-10-14T01:00:00.654321Z', decision_by: actor,
+    decision_at: '2026-10-14T01:00:00.654321Z', client_note: null }, error: null });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'ready' });
+});
+it.each(['42501', '40001', '22023'])('preserves definitive exact-read refusal %s', async code => {
+  const c = accessFixture(); c.rpc.mockResolvedValue({ data: null, error: { code } });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused', invalidated: true });
+});
+it('keeps transport uncertainty unavailable rather than inventing revocation or a receipt', async () => {
+  const c = accessFixture(); c.rpc.mockResolvedValue({ data: null, error: { code: '08006' } });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'unavailable' });
+  expect(c.rpc).toHaveBeenCalledTimes(1);
+});
+it.each([{ revision_no: 3 }, { artifact_digest: 'b'.repeat(64) }, { submission_id: id(8) }, { title: 'Another version' }])(
+  'refuses a changed selected source %j without adopting it', async change => {
+    const c = accessFixture(); c.rpc.mockResolvedValue({ data: { ...artifact, ...change }, error: null });
+    expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused', invalidated: true });
+  },
+);
+it('does not turn a malformed or foreign exact artifact into usable access', async () => {
+  const c = accessFixture(); c.rpc.mockResolvedValue({ data: { ...artifact, actor_id: id(9) }, error: null });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'unavailable' });
+  c.rpc.mockResolvedValue({ data: null, error: null });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'unavailable' });
+});
+it('refuses relink before selected access without calling the exact reader', async () => {
+  const c = accessFixture(); c.limit.mockResolvedValue({ data: [{ ...linked, id: id(8) }], error: null });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused', invalidated: true });
+  expect(c.rpc).not.toHaveBeenCalled();
+});
+it('withdraws selected access when link or actor changes during the exact read', async () => {
+  for (const change of ['link', 'actor']) {
+    const c = accessFixture(); c.rpc.mockImplementation(async () => {
+      if (change === 'link') c.limit.mockResolvedValue({ data: [{ ...linked, tenant_id: id(9) }], error: null });
+      else c.auth.getUser.mockResolvedValue({ data: { user: { id: id(9) } }, error: null });
+      return { data: artifact, error: null };
+    });
+    expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused', invalidated: true });
+  }
+});
+it('fences selected access after A-B-A even when the exact artifact and actor appear unchanged', async () => {
+  const c = accessFixture(); let epoch = 1;
+  c.rpc.mockImplementation(async () => { epoch += 2; return { data: artifact, error: null }; });
+  expect(await checkPortalReviewAccess(c, reviewReference, () => epoch === 1)).toEqual({ kind: 'scope_changed' });
+});
+it('does not start superseded exact access', async () => {
+  const c = accessFixture();
+  expect(await checkPortalReviewAccess(c, reviewReference, () => false)).toEqual({ kind: 'scope_changed' });
+  expect(c.auth.getUser).not.toHaveBeenCalled(); expect(c.rpc).not.toHaveBeenCalled();
+});
+it('does not label an auth-read error as definitive source invalidation', async () => {
+  const c = accessFixture();
+  c.auth.getUser.mockResolvedValue({ data: { user: null }, error: { message: 'Auth read unavailable' } });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused' });
+  expect(c.rpc).not.toHaveBeenCalled();
+});
+it('invalidates a successful missing-user read even before a session event reaches the host', async () => {
+  const c = accessFixture(); c.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
+  expect(await checkPortalReviewAccess(c, reviewReference, current)).toEqual({ kind: 'refused', invalidated: true });
   expect(c.from).not.toHaveBeenCalled(); expect(c.rpc).not.toHaveBeenCalled();
 });

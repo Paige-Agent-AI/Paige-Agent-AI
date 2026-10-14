@@ -22,7 +22,7 @@ describe("tenant Command Center core workspace", () => {
           data={{
             greeting: { name: "Antonio", dateLabel: "Tuesday, August 25", summary: "You're all caught up." },
             metrics: [
-              { label: "Active clients", value: "1", state: "LIVE" },
+              { label: "Active contacts", value: "1", state: "LIVE" },
               { label: "Net revenue retention", state: "UNAVAILABLE", note: "No connected read yet" },
             ],
             approvals: [],
@@ -39,7 +39,7 @@ describe("tenant Command Center core workspace", () => {
       </MemoryRouter>,
     ));
 
-    expect(host.textContent).toContain("Active clients");
+    expect(host.textContent).toContain("Active contacts");
     expect(host.querySelector("[data-tenant-account-name]")?.textContent).toBe("First Sterling Capital");
     expect(host.querySelector("[data-tenant-account-tier]")?.textContent).toBe("Solo");
     expect(host.textContent).not.toContain("Your business");

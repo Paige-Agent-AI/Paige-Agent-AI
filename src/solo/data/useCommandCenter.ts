@@ -160,9 +160,9 @@ export function useCommandCenter(): CommandCenterData {
     const out: CommandMetric[] = [];
     if (!m) return out;
     if (typeof m.won_value_cents === "number")
-      out.push({ k: "Revenue this period", v: usd(m.won_value_cents) });
+      out.push({ k: "Won this period (estimated)", v: usd(m.won_value_cents) });
     if (typeof m.active_clients === "number")
-      out.push({ k: "Active clients", v: String(m.active_clients) });
+      out.push({ k: "Active contacts", v: String(m.active_clients) });
     if (typeof m.active_retainers === "number")
       out.push({ k: "Active retainers", v: String(m.active_retainers) });
     if (typeof m.pipeline_value_cents === "number")
@@ -197,7 +197,7 @@ export function useCommandCenter(): CommandCenterData {
     if (approvals.length)
       parts.push(`${approvals.length} draft${approvals.length === 1 ? "" : "s"} waiting`);
     if (at.at_risk_clients)
-      parts.push(`${at.at_risk_clients} client${at.at_risk_clients === 1 ? "" : "s"} at risk`);
+      parts.push(`${at.at_risk_clients} contact${at.at_risk_clients === 1 ? "" : "s"} at risk`);
     if (at.follow_ups_due)
       parts.push(`${at.follow_ups_due} follow-up${at.follow_ups_due === 1 ? "" : "s"} due`);
     const summary = parts.length ? `${parts.join(" · ")}.` : "You're all caught up.";

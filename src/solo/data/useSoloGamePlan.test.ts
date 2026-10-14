@@ -303,7 +303,7 @@ describe("useSoloGamePlan derivation", () => {
     render();
     const byLabel = (needle: string) => view.attention.find((a) => a.label.includes(needle));
     expect(byLabel("drafts waiting")?.destination).toBe("paige");
-    expect(byLabel("clients at risk")?.destination).toBe("clients");
+    expect(byLabel("contacts at risk")?.destination).toBe("clients");
     expect(byLabel("follow-up")?.destination).toBe("clients");
     // Every chip has SOME real destination — none is a dead label.
     expect(view.attention.every((a) => typeof a.destination === "string" && a.destination.length > 0)).toBe(true);

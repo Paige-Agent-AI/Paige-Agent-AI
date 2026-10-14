@@ -6,13 +6,13 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone,
+  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone, FileInput,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // ── message substrate (locked columns from public.messages) ────────────────────────
-export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice";
+export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice" | "form";
 export type Direction = "inbound" | "outbound";
 export type MsgStatus = "draft" | "queued" | "sent" | "delivered" | "failed" | "received" | "read";
 
@@ -187,11 +187,11 @@ export interface SelectedView {
 // ── channel presentation ────────────────────────────────────────────────────────────
 export const CHANNEL_ICON: Record<ChannelType, LucideIcon> = {
   email: Mail, sms: MessageSquare, whatsapp: MessageCircle,
-  instagram: Instagram, facebook: Facebook, voice: Phone,
+  instagram: Instagram, facebook: Facebook, voice: Phone, form: FileInput,
 };
 export const CHANNEL_LABEL: Record<ChannelType, string> = {
   email: "Email", sms: "SMS", whatsapp: "WhatsApp",
-  instagram: "Instagram", facebook: "Facebook", voice: "Voice",
+  instagram: "Instagram", facebook: "Facebook", voice: "Voice", form: "Form",
 };
 
 // #10 channel-of-origin — human label for clients.created_by_channel_type (a BROADER vocabulary

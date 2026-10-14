@@ -2,6 +2,7 @@ import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FormIntakePanel } from "./form-intake";
+import { FormSettings } from "./studio/FormSettings";
 import type { PipelineWorkspace } from "./useSoloCampaigns";
 
 /**
@@ -19,7 +20,9 @@ const db = vi.hoisted(() => ({
   admin: true as boolean | null,
   failRead: false,
   failMore: false,
+  leadReplyFeature: true,
 }));
+vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => db.leadReplyFeature, loading: false }) }));
 
 function builder(table: string) {
   const call = { table, filters: [] as Array<[string, unknown]>, range: undefined as [number, number] | undefined };
@@ -121,6 +124,7 @@ beforeEach(() => {
   db.calls = [];
   db.failRead = false;
   db.failMore = false;
+  db.leadReplyFeature = true;
   db.admin = true;
   db.rpc.mockReset();
   onOpenContact.mockReset();
@@ -297,7 +301,7 @@ describe("form intake panel — settings", () => {
     expect(container.querySelector('[role="switch"]')).toBeNull();
     expect(container.querySelector("#intake-email")).toBeNull();
     const rows = Array.from(container.querySelectorAll(".intake-readonly .campaigns-detail-row")).map((r) => r.textContent);
-    expect(rows).toEqual(["PipelineSales pipeline → New inquiry", "Email alertsOn"]);
+    expect(rows).toEqual(["PipelineSales pipeline → New inquiry", "Email alertsOn", "PAIGE reply draftsOff"]);
     expect(text()).not.toContain("hello@yourbusiness.example");
   });
 
@@ -343,5 +347,134 @@ describe("form intake panel — robustness", () => {
     expect(db.rpc).not.toHaveBeenCalled();
     expect(text()).toContain("Create a pipeline first, or turn this off to save the email setting.");
     expect(text()).not.toContain("Choose the pipeline new leads go into.");
+  });
+});
+
+describe("lead reply opt-in — existing form intake contract", () => {
+  const replySwitch = () => container.querySelector<HTMLButtonElement>('[aria-labelledby="intake-reply-label"]')!;
+
+  it("reads the saved opt-in and leaves it untouched when another setting changes", async () => {
+    db.form = { ...db.form!, lead_reply_enabled: true };
+    db.rpc.mockResolvedValue({ data: { ...db.form, notify_email: "changed@yourbusiness.example" }, error: null });
+    await render();
+    expect(replySwitch().getAttribute("aria-checked")).toBe("true");
+    expect(button("Save changes")).toBeUndefined();
+    await act(async () => setValue(container.querySelector<HTMLInputElement>("#intake-email")!, "changed@yourbusiness.example"));
+    await act(async () => button("Save changes")!.click());
+    const args = db.rpc.mock.calls[0][1];
+    expect(args).not.toHaveProperty("_lead_reply_enabled");
+    expect(replySwitch().getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("shows a recorded drafting refusal beside the existing intake result without claiming a draft exists", async () => {
+    db.submissions = [SUBMISSION({ lead_reply_skipped_reason: "no_email_sender" })];
+    await render();
+    expect(text()).toContain("Reply needs business email setup");
+    expect(text()).toContain("Lead created");
+    expect(text()).not.toContain("Awaiting approval");
+    expect(button("Open contact")).toBeTruthy();
+  });
+
+  it("does not expose an unrecognized stored drafting reason as customer or provider text", async () => {
+    db.submissions = [SUBMISSION({ lead_reply_skipped_reason: "file_refused:PRIVATE-INTERNAL-DETAIL" })];
+    await render();
+    expect(text()).toContain("Reply draft wasn't prepared");
+    expect(text()).not.toContain("PRIVATE-INTERNAL-DETAIL");
+  });
+
+  it("sends an explicit changed opt-in to the existing six-argument seam and reads it back", async () => {
+    db.form = { ...db.form!, lead_reply_enabled: false };
+    db.rpc.mockResolvedValue({ data: { ...db.form, lead_reply_enabled: true }, error: null });
+    await render();
+    await act(async () => replySwitch().click());
+    expect(text()).toContain("Unsaved changes");
+    await act(async () => button("Save changes")!.click());
+    expect(db.rpc).toHaveBeenCalledWith("growth_form_set_intake", {
+      p_form_id: "form-1", p_auto_create_deal: true, p_pipeline_id: "p-sales", p_stage_id: "s-new",
+      p_notify_email: "hello@yourbusiness.example", _lead_reply_enabled: true,
+    });
+    expect(container.querySelector(".intake-status")?.textContent).toBe("Saved");
+    expect(replySwitch().getAttribute("aria-checked")).toBe("true");
+    expect(button("Save changes")).toBeUndefined();
+  });
+
+  it("does not claim a save when the server returns a different opt-in", async () => {
+    db.form = { ...db.form!, lead_reply_enabled: false };
+    db.rpc.mockResolvedValue({ data: db.form, error: null });
+    await render();
+    await act(async () => replySwitch().click());
+    await act(async () => button("Save changes")!.click());
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("couldn't be confirmed");
+    expect(replySwitch().getAttribute("aria-checked")).toBe("true");
+    expect(button("Save changes")).toBeTruthy();
+  });
+
+  it("can discard an unsaved reply opt-in without changing the existing pipeline or sending a request", async () => {
+    await render();
+    await act(async () => replySwitch().click());
+    await act(async () => button("Discard")!.click());
+    expect(replySwitch().getAttribute("aria-checked")).toBe("false");
+    expect((container.querySelector("select") as HTMLSelectElement).value).toBe("p-sales");
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+
+  it("uses the feature registry without removing the incumbent intake controls", async () => {
+    db.leadReplyFeature = false;
+    await render();
+    expect(replySwitch()).toBeNull();
+    expect(container.querySelector('[aria-labelledby="intake-toggle-label"]')).not.toBeNull();
+    expect(container.querySelector("#intake-email")).not.toBeNull();
+  });
+
+  it("does not apply an old form's save result to a newly selected workspace and form", async () => {
+    let finishSave!: (value: unknown) => void;
+    db.rpc.mockImplementation(() => new Promise(resolve => { finishSave = resolve; }));
+    await render();
+    await act(async () => replySwitch().click());
+    await act(async () => button("Save changes")!.click());
+    db.form = { ...db.form!, lead_reply_enabled: false, notify_email: "current@yourbusiness.example" };
+    const onSaved = vi.fn();
+    await act(async () => root.render(<FormIntakePanel tenantId="biz-2" formId="form-2" workspace={WORKSPACE} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal} onSaved={onSaved} />));
+    await act(async () => finishSave({ data: { ...db.form, lead_reply_enabled: true, notify_email: "old@yourbusiness.example" }, error: null }));
+    expect((container.querySelector("#intake-email") as HTMLInputElement).value).toBe("current@yourbusiness.example");
+    expect(replySwitch().getAttribute("aria-checked")).toBe("false");
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("also discards an old response after leaving and returning to the same form", async () => {
+    let finishSave!: (value: unknown) => void;
+    db.rpc.mockImplementation(() => new Promise(resolve => { finishSave = resolve; }));
+    await render();
+    await act(async () => replySwitch().click());
+    await act(async () => button("Save changes")!.click());
+    db.form = { ...db.form!, lead_reply_enabled: false };
+    await act(async () => root.render(<FormIntakePanel tenantId="biz-2" formId="form-2" workspace={WORKSPACE} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal} />));
+    await render();
+    await act(async () => finishSave({ data: { ...db.form, lead_reply_enabled: true }, error: null }));
+    expect(replySwitch().getAttribute("aria-checked")).toBe("false");
+    expect(container.querySelector(".intake-status")?.textContent).not.toBe("Saved");
+  });
+
+  it("the existing Studio settings save an explicit reply opt-in through the same hook", async () => {
+    db.form = { ...db.form!, auto_create_deal: false, pipeline_id: null, stage_id: null, lead_reply_enabled: false };
+    db.rpc.mockResolvedValue({ data: { ...db.form, lead_reply_enabled: true }, error: null });
+    const onSaved = vi.fn();
+    await act(async () => root.render(<FormSettings tenantId="biz-1" formId="form-1" onClose={() => {}} onSaved={onSaved} />));
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-labelledby="vs-reply-label"]')!;
+    expect(toggle).not.toBeNull();
+    expect(container.querySelector('[aria-labelledby="vs-deal-label"]')).not.toBeNull();
+    await act(async () => toggle.click());
+    await act(async () => button("Save")!.click());
+    expect(db.rpc).toHaveBeenCalledWith("growth_form_set_intake", expect.objectContaining({ p_form_id: "form-1", _lead_reply_enabled: true }));
+    expect(onSaved).toHaveBeenCalledOnce();
+  });
+
+  it("Studio's unrelated saves preserve the reply setting instead of writing a stale opt-in", async () => {
+    db.form = { ...db.form!, auto_create_deal: false, pipeline_id: null, stage_id: null, lead_reply_enabled: true };
+    db.rpc.mockResolvedValue({ data: db.form, error: null });
+    await act(async () => root.render(<FormSettings tenantId="biz-1" formId="form-1" onClose={() => {}} onSaved={() => {}} />));
+    await act(async () => button("Save")!.click());
+    expect(db.rpc.mock.calls[0][1]).not.toHaveProperty("_lead_reply_enabled");
+    expect(container.querySelector('[aria-labelledby="vs-reply-label"]')?.getAttribute("aria-checked")).toBe("true");
   });
 });

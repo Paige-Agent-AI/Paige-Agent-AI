@@ -16,6 +16,8 @@ export type FormIntakeSettings = {
   pipelineId: string | null;
   stageId: string | null;
   notifyEmail: string | null;
+  /** Omitted on a save means preserve the existing opt-in through the five-argument seam. */
+  leadReplyEnabled?: boolean;
 };
 
 export type FormIntakeField = {
@@ -33,6 +35,7 @@ export type FormIntakeSubmission = {
   dealId: string | null;
   alertSentAt: string | null;
   alertSkippedReason: string | null;
+  leadReplySkippedReason?: string | null;
   answers: Record<string, unknown>;
 };
 
@@ -55,6 +58,7 @@ type FormRow = {
   pipeline_id: string | null;
   stage_id: string | null;
   notify_email: string | null;
+  lead_reply_enabled?: boolean;
   schema_json: unknown;
 };
 
@@ -66,13 +70,14 @@ type SubmissionRow = {
   deal_id: string | null;
   alert_sent_at: string | null;
   alert_skipped_reason: string | null;
+  lead_reply_skipped_reason?: string | null;
   payload_json: Record<string, unknown> | null;
 };
 
 export const FORM_INTAKE_PAGE_SIZE = 20;
 
 const SUBMISSION_COLUMNS =
-  "id,created_at,processing_state,contact_id,deal_id,alert_sent_at,alert_skipped_reason,payload_json";
+  "id,created_at,processing_state,contact_id,deal_id,alert_sent_at,alert_skipped_reason,lead_reply_skipped_reason,payload_json";
 
 /** The form's fields in order, whether the schema is sectioned or a bare list. */
 export function formIntakeFields(schema: unknown): FormIntakeField[] {
@@ -102,6 +107,7 @@ function toSubmission(row: SubmissionRow): FormIntakeSubmission {
     dealId: row.deal_id,
     alertSentAt: row.alert_sent_at,
     alertSkippedReason: row.alert_skipped_reason,
+    leadReplySkippedReason: typeof row.lead_reply_skipped_reason === "string" ? row.lead_reply_skipped_reason : null,
     answers: row.payload_json && typeof row.payload_json === "object" ? row.payload_json : {},
   };
 }
@@ -115,6 +121,10 @@ function refusalMessage(error: { message?: string } | null): string {
 }
 
 export function useFormIntake(tenantId: string | null, formId: string, pageSize = FORM_INTAKE_PAGE_SIZE) {
+  const scope = `${tenantId ?? ""}:${formId}`;
+  const currentScope = useRef({ key: scope });
+  if (currentScope.current.key !== scope) currentScope.current = { key: scope };
+  const requestScope = currentScope.current;
   const [state, setState] = useState<FormIntakeState>({
     phase: "loading", canEdit: false, loadMoreFailed: false, settings: null, fields: [], submissions: [], hasMore: false, loadingMore: false,
   });
@@ -131,7 +141,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       const [formResponse, submissionResponse, authorityResponse] = await Promise.all([
         supabase
           .from("growth_forms")
-          .select("auto_create_deal,pipeline_id,stage_id,notify_email,schema_json" as never)
+          .select("auto_create_deal,pipeline_id,stage_id,notify_email,lead_reply_enabled,schema_json" as never)
           .eq("id", formId)
           .eq("tenant_id", tenantId)
           .maybeSingle(),
@@ -164,6 +174,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
           pipelineId: form.pipeline_id,
           stageId: form.stage_id,
           notifyEmail: form.notify_email,
+          leadReplyEnabled: form.lead_reply_enabled === true,
         },
         fields: formIntakeFields(form.schema_json),
         submissions: rows.slice(0, pageSize).map(toSubmission),
@@ -187,7 +198,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       .eq("form_id", formId)
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize);
-    if (!live.current) return;
+    if (!live.current || currentScope.current !== requestScope) return;
     if (error) {
       console.error("[form-intake] load more failed", error);
       setState((s) => ({ ...s, loadingMore: false, loadMoreFailed: true }));
@@ -199,7 +210,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       const next = rows.slice(0, pageSize).map(toSubmission).filter((row) => !seen.has(row.id));
       return { ...s, submissions: [...s.submissions, ...next], hasMore: rows.length > pageSize, loadingMore: false };
     });
-  }, [tenantId, formId, pageSize, state.loadingMore, state.hasMore, state.submissions.length]);
+  }, [tenantId, formId, requestScope, pageSize, state.loadingMore, state.hasMore, state.submissions.length]);
 
   /** Save through the one write seam. Success means the server returned the saved row. */
   const save = useCallback(async (next: FormIntakeSettings): Promise<{ ok: boolean; message: string }> => {
@@ -209,11 +220,18 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       p_pipeline_id: next.autoCreateDeal ? next.pipelineId : null,
       p_stage_id: next.autoCreateDeal ? next.stageId : null,
       p_notify_email: next.notifyEmail?.trim() ? next.notifyEmail.trim() : null,
+      ...(typeof next.leadReplyEnabled === "boolean" ? { _lead_reply_enabled: next.leadReplyEnabled } : {}),
     } as never);
+    if (!live.current || currentScope.current !== requestScope) {
+      return { ok: false, message: "The workspace or form changed. Reopen this form to check its saved settings." };
+    }
     const row = data as unknown as FormRow | null;
     if (error || !row) {
       if (error) console.error("[form-intake] save refused", error);
       return { ok: false, message: refusalMessage(error) };
+    }
+    if (typeof next.leadReplyEnabled === "boolean" && row.lead_reply_enabled !== next.leadReplyEnabled) {
+      return { ok: false, message: "The saved reply setting couldn't be confirmed. Reload this form before trying again." };
     }
     if (live.current) {
       setState((s) => ({
@@ -223,11 +241,12 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
           pipelineId: row.pipeline_id,
           stageId: row.stage_id,
           notifyEmail: row.notify_email,
+          leadReplyEnabled: row.lead_reply_enabled === true,
         },
       }));
     }
     return { ok: true, message: "Saved" };
-  }, [formId]);
+  }, [formId, requestScope]);
 
   return { ...state, retry, loadMore, save };
 }

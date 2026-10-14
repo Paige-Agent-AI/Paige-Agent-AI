@@ -6,7 +6,7 @@
 // gold check flash + the row collapses (motion #2) and the realtime subscription
 // ticks the count down. On error: toast, keep the row.
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Check, Timer, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { PaigeAttribution } from "@/components/ui/page";
 import { cn } from "@/lib/utils";
 import { resolveVpForActionKind } from "@/lib/paige/vpDepartments";
 import type { ApprovalQueueRow } from "@/hooks/usePendingApprovals";
+import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 
 const SLA_LABEL: Record<string, string> = {
   overdue: "Overdue",
@@ -62,6 +63,10 @@ export function ApprovalRow({
   /** Fired after a successful approve or decline, so a parent list can refresh. */
   onResolved?: () => void;
 }) {
+  const location = useLocation();
+  const leadReply = a.category === "owner.lead_followup";
+  const routeRoot = tenantRoutePrefixForPath(location.pathname);
+  const replyHref = a.contact_id && routeRoot ? `${routeRoot}/clients/conversations?contact=${encodeURIComponent(a.contact_id)}&approval=${encodeURIComponent(a.id)}` : null;
   const [busy, setBusy] = useState(false);
   const [collapsing, setCollapsing] = useState(false);
   const [approved, setApproved] = useState(false);
@@ -100,22 +105,28 @@ export function ApprovalRow({
   const draftedVp = resolveVpForActionKind(a.category);
 
   const approve = async () => {
+    if (leadReply) return; // This send kind must be reviewed in canonical Conversations.
     setBusy(true);
     // Approve AND act via the callable execute-approval seam (§10): email/SMS
     // drafts are sent (send-message flips the row to approved+sent_at); other
     // categories are acknowledged (marked approved) as before.
-    const { data, error } = await supabase.functions.invoke("execute-approval", {
-      body: { approval_id: a.id },
-    });
-    setBusy(false);
-    if (error || (data && data.ok === false)) {
-      toast.error(error?.message ?? data?.error ?? "Couldn't complete that action."); // keep the row on failure
-      return;
+    try {
+      const { data, error } = await supabase.functions.invoke("execute-approval", {
+        body: { approval_id: a.id },
+      });
+      if (error || data?.ok !== true) {
+        toast.error("Couldn't confirm that action completed. Check its status before trying again.");
+        return;
+      }
+      // Success beat follows an explicit receipt, never a missing response.
+      setApproved(true);
+      setTimeout(() => setCollapsing(true), 240);
+      onResolved?.();
+    } catch {
+      toast.error("Couldn't confirm that action completed. Check its status before trying again.");
+    } finally {
+      setBusy(false);
     }
-    // Success beat: flash the check, then collapse. Realtime refresh ticks count.
-    setApproved(true);
-    setTimeout(() => setCollapsing(true), 240);
-    onResolved?.();
   };
 
   return (
@@ -154,19 +165,19 @@ export function ApprovalRow({
               />
             )}
             <div className="flex items-center justify-end gap-1.5 pt-0.5">
-              <Button
+              {leadReply ? (replyHref ? <Button asChild size="sm" variant="outline" className="h-7"><Link to={replyHref}>Review reply</Link></Button> : <span className="text-xs text-muted-foreground">Open this lead in Conversations to review.</span>) : <Button
                 size="sm"
                 onClick={approve}
                 disabled={busy || approved || rejectBusy}
                 className="h-7 bg-gradient-gold text-accent-foreground hover:opacity-90"
               >
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
-              </Button>
+              </Button>}
               {/* Edit-then-approve routes to the full detail surface (§18 — no inline
                   duplicate editor); "Decline" is neutral/ghost (gold stays on Approve). */}
-              <Button asChild size="sm" variant="ghost" className="h-7">
+              {!leadReply && <Button asChild size="sm" variant="ghost" className="h-7">
                 <Link to={"/choose-account"}>{showDecline ? "Edit" : "View"}</Link>
-              </Button>
+              </Button>}
               {showDecline && (
                 <Button size="sm" variant="ghost" className="h-7 text-muted-foreground" onClick={() => setDeclining((d) => !d)} disabled={busy || approved}>
                   Decline

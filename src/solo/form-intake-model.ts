@@ -18,6 +18,26 @@ const SKIP_REASON: Record<string, string> = {
   business_daily_cap: "daily limit reached",
 };
 
+// Only known platform reason codes become customer copy. Never echo a provider payload,
+// internal file refusal or address from an unrecognized stored reason.
+const REPLY_SKIP_REASON: Record<string, string> = {
+  form_not_opted_in: "Reply drafts are off for this form",
+  business_not_eligible: "Reply drafting is unavailable for this business",
+  business_not_active: "Business needs attention before drafting",
+  no_contact: "Reply needs a contact",
+  contact_not_in_workspace: "Reply needs contact review",
+  no_contact_email: "Reply needs the contact's email",
+  submitted_email_not_contact_email: "Reply needs contact review",
+  no_email_sender: "Reply needs business email setup",
+  several_email_senders: "Reply needs one sending address",
+  email_readiness_unreadable: "Business email status unavailable",
+  lead_reply_unavailable: "Reply drafting status unavailable",
+  cap_unreadable: "Reply drafting limit unavailable",
+  business_hourly_cap: "Reply drafting limit reached",
+  business_daily_cap: "Reply drafting limit reached",
+  contact_daily_cap: "This contact's reply drafting limit reached",
+};
+
 export function submissionChips(row: FormIntakeSubmission, workspace: PipelineWorkspace): Chip[] {
   const chips: Chip[] = [];
   if (row.state === "pending" || row.state === "claimed") chips.push({ tone: "n", text: "Processing" });
@@ -29,6 +49,7 @@ export function submissionChips(row: FormIntakeSubmission, workspace: PipelineWo
   }
   if (row.alertSentAt) chips.push({ tone: "ok", text: "Alert emailed" });
   else if (row.alertSkippedReason) chips.push({ tone: "warn", text: `Alert withheld — ${SKIP_REASON[row.alertSkippedReason] ?? row.alertSkippedReason.replace(/_/g, " ")}` });
+  if (row.leadReplySkippedReason) chips.push({ tone: "warn", text: REPLY_SKIP_REASON[row.leadReplySkippedReason] ?? "Reply draft wasn't prepared" });
   if (row.state === "error") chips.push({ tone: "bad", text: "Needs attention" });
   return chips;
 }

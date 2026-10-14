@@ -49,13 +49,13 @@ had NOT persisted. The file rolled back as a whole.
 - **It recurred the next day (2026-10-14, #2126 → `f2e2a0af6`).** `20271031000200` deadlocked at
   statement 13 (`ALTER TABLE communication_log`) while holding `sendgrid_receipt_processing`, again
   against `dumpFunc` sessions. Read-back again showed a whole-file rollback, and one retry after the
-  dumps ended applied it. Two new lessons:
-  - **Edge deploys do not wait for migrations.** `deploy-edge-functions` and `deploy-migrations` run
-    in parallel on merge, so functions can run against the old schema for as long as a migration is
-    stuck. Here that was about 15 minutes, harmless only because the feature was inert. For anything
-    live, make the new code tolerate the old schema, or ship the migration in an earlier PR.
-  - Twice in two days makes this a pipeline property, not bad luck. Taking table locks up front in a
-    fixed order under a `lock_timeout` is still the open mitigation (recorded on #1548).
+  dumps ended applied it. Two observations:
+  - Observed: `deploy-edge-functions` and `deploy-migrations` run in parallel on merge, so for about
+    15 minutes the new functions ran against the pre-`000200` schema. Nothing was affected because the
+    feature was inert (0 forms opted in, 0 SendGrid receipts).
+  - Second occurrence in two days. The mitigation discussed on #1548 (table locks taken up front in a
+    fixed order under a `lock_timeout`) is still not adopted; any deploy-order or locking rule is a
+    separate governance decision, not made here.
 - A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
   reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
   `lock_timeout`, narrows the window but does not close it.

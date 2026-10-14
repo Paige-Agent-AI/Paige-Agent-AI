@@ -12,9 +12,9 @@ DECLARE
     -- E09_CONSUMER_INVITE_INTEGRITY_V1
     SELECT email, email_confirmed_at INTO _email, _email_confirmed_at
       FROM auth.users WHERE id = _uid;
-    IF _email_confirmed_at IS NULL
+    IF NULLIF(btrim(_tok.email), '') IS NULL
+       OR _email_confirmed_at IS NULL
        OR NULLIF(btrim(_email), '') IS NULL
-       OR NULLIF(btrim(_tok.email), '') IS NULL
        OR lower(btrim(_tok.email)) <> lower(btrim(_email)) THEN
       RAISE EXCEPTION 'portal invitation belongs to a different verified recipient' USING ERRCODE = '42501';
     END IF;

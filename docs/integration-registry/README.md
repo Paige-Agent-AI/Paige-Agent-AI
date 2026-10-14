@@ -208,7 +208,7 @@ correct stays a human §5/§39 responsibility.
   Marketplace** surface (install mechanics shipped) and the **inbound MCP door** (the governed decision
   is live — and it *refuses* every mutation). LIVE there is a delivery fact, not a Paige-autonomy fact.
 - The communications/scheduling/social/automation providers (Twilio, Google Calendar, Resend, Meta,
-  n8n, Zapier) are `PARTIAL` with named gaps; accounting/e-sign (QuickBooks, DocuSign) are
+  n8n, Zapier) are `PARTIAL` with named gaps; accounting/e-sign (QuickBooks, DocuSign) and SendGrid (PAIGE Email, 2026-10-13) are
   `PROOF_OWED`; Microsoft 365 is `DEFERRED`; HubSpot / Vapi are `UNAVAILABLE`; Browserbase is `PROPOSED` (owner-ruled 2026-09-07 as the replaceable bootstrap browser-worker runtime for the Paige-owned Secure Browser, behind a provider-neutral internal contract — desk review 2026-09-07 = **CONDITIONAL GO** with seven owner-side vendor gates before credentialed wiring; `BROWSERBASE_API_KEY` present as an Edge secret = infra readiness only, not wired, not live); the Vault
   OCR/DLP seam is `PROPOSED`.
 - **Coverage is honest, not complete.** The catalogued providers span all six taxonomy groups and all
@@ -255,7 +255,8 @@ longer exists).
 | Business verification (multi-source) | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package-gated; OpenCorporates/SEC direct + SoS via Firecrawl real; D&B/LexisNexis/TU/Array are inert stubs; package-entitlement gate OWED (§2/§194) |
 | Twilio | CRM/calendar/communications | `PARTIAL` | confirm | per-tenant A2P go-live; vanity/premium number search |
 | Google Calendar | CRM/calendar/communications | `PARTIAL` | confirm | FU-3 Rail contract; attribution truthfulness (#786) |
-| Resend | CRM/calendar/communications | `PARTIAL` | confirm | per-tenant sending identity; send receipt on Rail |
+| Resend | CRM/calendar/communications | `PARTIAL` | confirm | Platform Operator email under the 2026-10-13 owner policy; existing tenant Resend connectors kept, not converted; per-tenant sending identity; send receipt on Rail |
+| SendGrid (PAIGE Email) | CRM/calendar/communications | `PROOF_OWED` | confirm | tenant PAIGE Email (owner policy 2026-10-13); governed door + verified-domain gate + receipts built in Experience 03 S3 (not merged 2026-10-13); operator steps (key, domain authentication, verification facts, connector, Event Webhook) and the first owner-approved live send owed |
 | HubSpot | CRM/calendar/communications | `UNAVAILABLE` | prohibited | not wired; native CRM is default |
 | ElevenLabs (optional Paige voice I/O) | CRM/calendar/communications | `PROOF_OWED` | read | transport disabled; owner-only metadata inspection in development cannot substitute for account scopes, voice, retention, quota, concurrency and cost proof |
 | Vapi (voice AI telephony) | CRM/calendar/communications | `UNAVAILABLE` | prohibited | not wired; provider-hosted agents cannot own Paige reasoning or actions |

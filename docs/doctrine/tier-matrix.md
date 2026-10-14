@@ -334,6 +334,30 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Lead reply drafts — `lead_reply` (Experience 03 S3 "PAIGE works your leads", branch `claude/stoic-archimedes-pv4r8u`, 2026-10-13; ships on merge, NOT live)
+
+**Not live.** On production, 2026-10-13: 0 `owner.lead_followup` actions, and the migrations (`20271031000000`, `000100`, `000200`, `000250`) are not applied. There is no screen; the reply screen waits for owner design approval. Each tier's answer below is what the branch's code decides.
+
+**What it does.** When an opted-in form brings in a lead, PAIGE files one `owner.lead_followup` draft for the owner. The reply can go out only through the governed email door (`comms-email-command` with `approval_id`), never through `execute-approval`.
+
+§61 declaration in `tierFeatures.ts`: default, no exception.
+
+| Tier | `hasFeature('lead_reply')` | Server: draft filed? | Server: can turn the per-form opt-in on? |
+|---|---|---|---|
+| God / Super Admin | ✓ (§35 dogfooding) | — no tenant row, so no server answer | — |
+| Agency (own operator surface) | — | — (`agency` is not in `LEAD_REPLY_ACCOUNT_TYPES`) | — (`growth_form_set_intake` refuses) |
+| Enterprise | ✓ (Solo union) | ✓ | ✓ owner/admin (round 4: `growth_form_set_intake` admits `enterprise`, matching the declaration; it previously refused) |
+| Standalone (Solo) | ✓ | ✓ (trial, active or past_due, not archived) | ✓ owner/admin of the form's business |
+| Sub-account (`sub_account`, or a legacy `standalone` with a parent) | ✓ | ✓ | ✓ owner/admin |
+| Client | — | — | — |
+| Anonymous | — | — (submitting a form only triggers the server's decision) | — |
+
+**Every tier that has approvals.** An approval that stands for a send-kind action other than `owner.lead_followup` (for example `client.followup`) can never become `approved` or `sent`: decline-only at the database and at `execute-approval`. A lead-reply approval becomes `approved`/`sent` only with a provider-accepted governed send for the same business and person that was prepared for that approval. `execute-approval` answers every send-kind approval with 409 and `reason_code` (`review_and_send` | `decline_only`). Declining is unchanged everywhere (§58: what is removed is a false completion, master §10).
+
+**Every tier, SendGrid connectors (`20271031000250`).** No signed-in user on any tier, the platform owner from the app included, can create, change or re-enable a SendGrid connector; only the service role (the operator step) can. Anyone may still switch one off, so a business can delete its own domain. `send-message` refuses any SendGrid send that is not the email door's.
+
+**Client tier, history.** A lead reply's `communication_log` row carries `user_id = NULL`, so client portal readers (all keyed on `user_id`) never show it.
+
 ### Governed one-to-one business email — `comms.email_send` (INT-328) — LIVE since 2026-10-06 (#1770 `be0db95`, #1778 `d200055`; migration `20270597000000` persisted on production)
 
 **Shipped reality (2026-10-06, §66).** Solo owner: LIVE and production-verified by an authenticated drive of the synthetic Solo workspace (card → Approve → one send; replay, concurrent approval, expiry, decline, recipient drift, suppression and DND all held). Sub-account and Agency-own-book: same door and seat rule, not separately driven. God / Client / Anonymous refusals: unit- and SQL-proven; anonymous 401 also seen live. *(Earlier heading, kept for the record: "branch `claude/hopeful-goldberg-p6ind7`; NOT live until merged and its migration is persisted".)*

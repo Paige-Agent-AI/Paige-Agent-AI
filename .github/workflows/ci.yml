@@ -1260,6 +1260,34 @@ jobs:
           path: unit-failure-attribution.json
           if-no-files-found: error
 
+      # Experience 03 · S3 "PAIGE works your leads" — the lead-reply edge tests. They sit beside
+      # their functions, which the root vitest config (src/** only) never runs, so each is named here.
+      # Same invocation style as "Public form intake" above; appended at the end of the job so the
+      # historical failing-step ordinals keep their meaning.
+      - name: Lead reply filing (opt-in form, business account, one email sender, caps, one draft per submission)
+        if: ${{ !cancelled() }}
+        run: npm run test:lead-reply
+
+      - name: Lead reply drafting (form content is data, plain-text body, never a recipient from the model)
+        if: ${{ !cancelled() }}
+        run: npm run test:lead-reply-draft
+
+      - name: Approve door refuses every outbound-message approval (no send, no false completion)
+        if: ${{ !cancelled() }}
+        run: npm run test:execute-approval
+
+      - name: Lead reply composer prompt (submission quoted as untrusted data, never instructions)
+        if: ${{ !cancelled() }}
+        run: npm run test:email-composer-prompt
+
+      - name: Governed email door binds a lead reply approval to one send (verified PAIGE Email sender only)
+        if: ${{ !cancelled() }}
+        run: npm run test:comms-lead-reply-approval
+
+      - name: SendGrid webhook door (signed events only, acceptance is never delivery)
+        if: ${{ !cancelled() }}
+        run: npm run test:sendgrid-webhook
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

@@ -334,7 +334,7 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (on branch on top of merged PR alpha #2129, 2026-10-14; ships on merge, NOT live)
+### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (merged as #2136 → main `d5a8e6e76`, 2026-10-14; deployed — remote `edge-live` and `db-live` at `d5a8e6e7`, migration `20271031005000` read back on production, Vercel production READY; authenticated runtime still owed)
 
 Three Exp04 SQL reads become pure reads (no Rail row for a page); Sales › Payments › Collections judges "Overdue" on the business's calendar day ("On hold" without a zone); "Where {client} stands" opens the Solo client record. `client_standing` is a §61 exception declared for the direct-client-book tiers and mounted on Solo only.
 

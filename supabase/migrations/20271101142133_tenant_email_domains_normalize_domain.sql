@@ -40,10 +40,9 @@
 --
 -- RELEASE ORDER (merge gate, read before merging). deploy-migrations.yml runs a plain
 -- `supabase db push`, which refuses any local migration older than production's newest recorded one.
--- Decided 2026-10-14: this migration merges FIRST. Production's newest at that time (SELECT only) was
--- 20271031005020, below this version. The two sibling branches that sort near it, the S3 reply-screen
--- UI and Experience 03 email G1, were renumbered above it before they were pushed
--- (S3 UI 20271101050700; G1 2027110105080x and later). Before merging, re-read production's newest
+-- Decided 2026-10-14: this migration merges FIRST. Production's newest when renumbered (SELECT only) was
+-- 20271101110001 (#2146), below this version (renumbered from 20271101042133 for that reason). The two sibling branches that sort near it, the S3 reply-screen
+-- UI and Experience 03 email G1, are each renumbered above it before they merge. Before merging, re-read production's newest
 -- version; if it is at or above this one, renumber this file above it.
 --
 -- Proof: supabase/tests/tenant_email_domain_normalization.sql.

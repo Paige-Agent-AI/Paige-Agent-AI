@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
--- Experience 03 · S3 — rollback proof for 20271101042133_tenant_email_domains_normalize_domain.sql
+-- Experience 03 · S3 — rollback proof for 20271101142133_tenant_email_domains_normalize_domain.sql
 -- (issue #2133).
 --
 -- ISOLATED production-schema clone (or the local stack) only; never COMMIT. Run from the repo root:
@@ -29,7 +29,7 @@ CREATE TEMP TABLE _p(ord int, res text, label text);
 
 \ir ../migrations/20271031000100_paige_email_sendgrid_governed_door.sql
 \ir ../migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql
-\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\ir ../migrations/20271101142133_tenant_email_domains_normalize_domain.sql
 
 CREATE FUNCTION pg_temp.ok(_ord int, _cond boolean, _label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
@@ -211,7 +211,7 @@ ALTER TABLE public.tenant_email_domains ENABLE TRIGGER trg_domain_normalize;
 SELECT pg_temp.ok(60, NOT pg_temp.readiness_verified('aaaaaaaa-2133-4000-8000-000000000001','hi@legacy.example.invalid')
   AND public._comms_email_sendgrid_sender_verified('aaaaaaaa-2133-4000-8000-000000000001','hi@legacy.example.invalid'),
   'control: a legacy-spelled verified row reproduces the #2133 disagreement before the backfill');
-\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\ir ../migrations/20271101142133_tenant_email_domains_normalize_domain.sql
 SELECT pg_temp.ok(61, (SELECT domain='legacy.example.invalid' AND sendgrid_status='verified' AND sendgrid_domain_id='sg-2133-61' AND sendgrid_verified_at IS NOT NULL
   FROM public.tenant_email_domains WHERE id='eeeeeeee-2133-4000-8000-000000000061'),
   'the backfill normalizes the legacy row and keeps its SendGrid verification');
@@ -231,7 +231,7 @@ ALTER TABLE public.tenant_email_domains ENABLE TRIGGER trg_domain_normalize;
 \set replay_collision aborted
 SAVEPOINT replay_collision;
 \set ON_ERROR_STOP 0
-\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\ir ../migrations/20271101142133_tenant_email_domains_normalize_domain.sql
 SELECT 'completed' AS replay_collision \gset
 \set ON_ERROR_STOP 1
 ROLLBACK TO SAVEPOINT replay_collision;
@@ -250,7 +250,7 @@ SELECT pg_temp.ok(64, EXISTS (SELECT 1 FROM public.channel_connectors WHERE inbo
 \set replay_linked aborted
 SAVEPOINT replay_linked;
 \set ON_ERROR_STOP 0
-\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\ir ../migrations/20271101142133_tenant_email_domains_normalize_domain.sql
 SELECT 'completed' AS replay_linked \gset
 \set ON_ERROR_STOP 1
 ROLLBACK TO SAVEPOINT replay_linked;
@@ -276,7 +276,7 @@ ALTER TABLE public.tenant_email_domains DROP CONSTRAINT tenant_email_domains_ten
 \set LAST_ERROR_MESSAGE 'no error raised by the replay'
 \set ON_ERROR_STOP 0
 \set ON_ERROR_ROLLBACK on
-\ir ../migrations/20271101042133_tenant_email_domains_normalize_domain.sql
+\ir ../migrations/20271101142133_tenant_email_domains_normalize_domain.sql
 \set ON_ERROR_ROLLBACK off
 \set ON_ERROR_STOP 1
 \set refusal_alone :LAST_ERROR_MESSAGE

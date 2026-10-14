@@ -6,6 +6,33 @@
   "release_channel": "production",
   "classification": "internal-only",
   "customer_release_identity": null,
+  "post_merge_reports": {
+    "reported_at": "2026-10-14T03:42:49Z",
+    "status": "HOLD_PENDING_OWNER_BOUNDED_REPAIR_REVIEW",
+    "triage": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#issuecomment-6160529991",
+    "scope": "Author triage of three supplied post-merge reports only; no additional independent product audit or authenticated acceptance.",
+    "reports": [
+      {
+        "priority": "P1",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536344",
+        "assessment": "Current ordinary draft-departure gap also present before this PR; source-supported, no customer loss observed"
+      },
+      {
+        "priority": "P2",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536352",
+        "assessment": "One local synthetic expected-behavior assertion FAIL reproduces Back-history destruction; two supporting tests skipped"
+      },
+      {
+        "priority": "P2",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536356",
+        "assessment": "Static-supported exclusion of reassigned source when current same-tenant admin RLS permits read; no business rows read"
+      }
+    ],
+    "product_repair_made": false,
+    "additional_independent_product_review_started": false,
+    "review_limit_disposition": "Requested under AGENTS.md99; original source review plus allowed recheck already complete",
+    "customer_outcome": "UNVERIFIED"
+  },
   "independent_review": {
     "kind": "non_author_agent",
     "status": "COMPLETE",

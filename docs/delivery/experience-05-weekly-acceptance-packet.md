@@ -1,5 +1,7 @@
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+**CURRENT HOLD:** New post-merge #2130 reports require bounded disposition before customer correctness clearance: local Back-history FAIL, static-supported reassigned-source read, and ordinary draft-departure gap also pre-existing. [Author triage](../evidence/experience-05-prototype/connected-weekly-rendered-review/postmerge-findings-disposition.md). Pre-merge SHIP/CI and observed release identity remain historical evidence only; #2134 is Draft/Held. Original cases and E5-CV1–9 stay unchanged and NOT_RUN. No protected fixture, login, admission, recurring execution or provider action is authorized by this status correction.
+
 ## Released inert #2130 — 2026-10-14 UTC, acceptance not run
 
 Reviewed head `a31196b8c619119f8926e778d3d6a9614fd8cd99` COMPLETE/SHIP and all six exact-head workflow groups PASS; main `e0f8e40add39d76a739328c6275d00bc0702dbb8`, production `dpl_9ZymaDEaSLYLU3YicioK1xoCoz71` READY, public build `e0f8e40add39d76a739328c6275d00bc0702dbb8-mv7k5brp` verified03:37UTC. [Release/readback](../evidence/experience-05-connected-weekly-release.json) confirms OFF/zero/no weekly cron with unchanged canonical safeguards. This is the deployed source identity for a status-only QA handoff, not clearance to authenticate, create fixtures, enable controls, schedule work or activate weekly/Chat/Live/provider effects. All original tests and E5-CV1–9 remain unchanged and NOT_RUN.

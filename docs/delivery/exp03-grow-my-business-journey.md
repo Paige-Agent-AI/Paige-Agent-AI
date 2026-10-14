@@ -379,11 +379,11 @@ Every slice: independent non-author review, exact-head CI, `deploy-migrations` p
 reference §4/§5 and tier matrix updated in the same PR, four evidence states kept separate (CODE_COMPLETE, RELEASED,
 AUTHENTICATED_WORKFLOW_VERIFIED, OWNER_ACCEPTED).
 
-## 12. S3 "PAIGE works your leads" — backend built, not merged (2026-10-13; updated for review round 4)
+## 12. S3 "PAIGE works your leads" — backend shipped and live, inert (merged 2026-10-14; first written 2026-10-13)
 
 **Naming note (§13).** §10's table plans S3 as "chat: attach asset, transition campaign, read leads". The work built on this branch under the S3 label is a different deliverable: a drafted reply to each new lead, sent only through the governed email door. The chat-tools deliverable is not built by this work, and no slice number is assigned to it here.
 
-**Status.** CODE_COMPLETE on branch `claude/stoic-archimedes-pv4r8u`. Not RELEASED: not merged, and migrations `20271031000000`/`000100`/`000200`/`000250` are not applied. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
+**Status (2026-10-14).** RELEASED (backend only): PR #2126 → main `f2e2a0af6e667ea39f8135d9f2f53b719776e52a`; migrations `20271031000000`/`000100`/`000200`/`000250` persisted on production (`db-live` = `f2e2a0af6`); the seven functions deployed (`edge-live` = `f2e2a0af6`). Inert: 0 forms opted in, 0 SendGrid-verified domains. *(Supersedes the 2026-10-13 status "CODE_COMPLETE on branch; not merged; migrations not applied".)* The reply screen is the separate S3 UI slice, still in review. Not AUTHENTICATED_WORKFLOW_VERIFIED. Not OWNER_ACCEPTED. Full record: master §4.0 (2026-10-13 S3 entry), with the gaps in master §5.
 
 **Flow covered (backend):**
 1. A lead submits an opted-in form.

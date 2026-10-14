@@ -147,7 +147,7 @@ routing, real sends/paid tests, treating synthetic test events as delivery
 evidence, INT-346 activation. Unsubscribe/suppression protections preserved
 ahead of any customer-facing routing.
 
-**Update 2026-10-13 (Experience 03 S3, branch `claude/stoic-archimedes-pv4r8u`, not merged when recorded).**
+**Update 2026-10-13 (Experience 03 S3, branch `claude/stoic-archimedes-pv4r8u`, not merged when recorded; merged 2026-10-14 as #2126 → `f2e2a0af6`, migrations persisted on production — see master §4.0).**
 Owner policy: a business's PAIGE Email sends through SendGrid, and Resend is the Platform Operator's own email.
 S3 builds tenant SendGrid routing at the governed one-to-one door (`20271031000100`): verification facts on
 `tenant_email_domains` that only the service role may write, and admission at prepare and again at send time.

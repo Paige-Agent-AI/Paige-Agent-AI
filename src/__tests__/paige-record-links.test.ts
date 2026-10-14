@@ -34,7 +34,7 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
     ])).toEqual([{ destination: "sales_invoices", record_id: null }]);
   });
 
-  it("keeps a record id only when it is a UUID on a contacts link", () => {
+  it("keeps UUID record ids only for mounted client and invoice focus", () => {
     expect(readRecordLinks([
       { destination: "contacts", record_id: A, subject: "Acme Ltd" },
       { destination: "contacts", record_id: "x\" onload=\"alert(1)" },
@@ -42,7 +42,7 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
     ])).toEqual([
       { destination: "contacts", record_id: A, subject: "Acme Ltd" },
       { destination: "contacts", record_id: null },
-      { destination: "sales_invoices", record_id: null },
+      { destination: "sales_invoices", record_id: B },
     ]);
   });
 

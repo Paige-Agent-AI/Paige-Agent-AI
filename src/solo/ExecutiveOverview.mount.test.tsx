@@ -75,6 +75,22 @@ describe("Executive — integrated customer flow", () => {
     expect(gaps.textContent).toContain("Marketing campaigns"); expect(gaps.textContent).toContain("Not connected");
     expect(gaps.textContent).not.toMatch(/\b0\b/);
   });
+  it.each([
+    ["JPY", "JPY 125,000"], ["KWD", "KWD 125.000"],
+    ["CLF", "CLF 12.5000"], ["XYZ", "XYZ 125,000 minor units"],
+  ])("keeps the %s headline consistent with its canonical risk evidence", async (currency, amount) => {
+    const original = SNAPSHOT.domains.payments.data!;
+    const snapshot = { ...SNAPSHOT, domains: { ...SNAPSHOT.domains, payments: {
+      status: "available" as const, data: { ...original,
+        headline: [{ ...original.headline[0], value: 125000, currency }],
+        risks: [{ kind: "receivables", severity: "act" as const, summary: amount + " recorded as overdue" }],
+      },
+    } } };
+    mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() });
+    await mount();
+    expect(host.querySelector("[aria-labelledby='exec-domain-payments'] dd")?.textContent).toContain(amount);
+    expect(host.querySelector(".exec-priority-list")?.textContent).toContain(amount + " recorded as overdue");
+  });
   it("names returned unavailable and missing requested domain results", async () => {
     const snapshot = structuredClone(SNAPSHOT); snapshot.requested.push("game_plan");
     mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() }); await mount();

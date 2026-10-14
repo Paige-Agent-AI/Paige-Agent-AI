@@ -34,4 +34,10 @@ describe("Executive presentation of canonical evidence", () => {
     expect(formatReviewMetric({ value: null, unit: "count" } as never)).toBe("Unavailable");
     expect(formatReviewMetric({ value: 125000, unit: "currency_minor", currency: "USD" } as never)).toBe("USD 1,250.00");
   });
+  it.each([
+    ["JPY", "JPY 125,000"], ["KWD", "KWD 125.000"],
+    ["CLF", "CLF 12.5000"], ["XYZ", "XYZ 125,000 minor units"],
+  ])("preserves the canonical minor-unit representation for %s", (currency, expected) => {
+    expect(formatReviewMetric({ value: 125000, unit: "currency_minor", currency } as never)).toBe(expected);
+  });
 });

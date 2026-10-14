@@ -1,4 +1,5 @@
 import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige-turn/record-links";
+import { formatSnapshotMetricValue } from "../../supabase/functions/_shared/paige-context/snapshot";
 import type { BusinessReviewSnapshot, ReviewMetric } from "./data/useBusinessReview";
 
 /** Presentation metadata only. The Fabric owns figures, risks, coverage and provenance. */
@@ -34,12 +35,10 @@ export function executivePriorities(snapshot: BusinessReviewSnapshot) {
 
 export function formatReviewMetric(metric: ReviewMetric): string {
   if (metric.value === null || !Number.isFinite(metric.value)) return "Unavailable";
-  if (metric.unit === "currency_minor") {
-    if (!metric.currency) return "Unavailable";
-    return `${metric.currency} ${(metric.value / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  const value = metric.value.toLocaleString("en-US", { maximumFractionDigits: 2 });
-  return metric.unit === "percent" ? `${value}%` : metric.unit === "days" ? `${value} days` : value;
+  if (metric.unit === "currency_minor" && !metric.currency) return "Unavailable";
+  // Same representation as the canonical snapshot/Chat projection, including non-two-decimal
+  // and unknown currencies. A visual must never reinterpret the owning source's minor units.
+  return formatSnapshotMetricValue(metric);
 }
 
 export function formatReviewInstant(instant: string, timezone: string, withTime = false): string {

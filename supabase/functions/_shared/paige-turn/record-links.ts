@@ -30,7 +30,7 @@ export const READ_LINK_DESTINATIONS = [
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];
 
-/** `record_id` (a UUID) and `subject` (at most 80 characters) are kept only on a `contacts` link. */
+/** UUID references are supported for clients and managed invoices. Subject text is contact-only. */
 export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string };
 
 export const MAX_RECORD_LINKS = 6;
@@ -54,8 +54,9 @@ function one(value: unknown): ReadRecordLink | null {
   const v = value as Record<string, unknown>;
   if (typeof v.destination !== "string" || !DESTINATIONS.has(v.destination)) return null;
   const destination = v.destination as ReadLinkDestination;
-  if (destination !== "contacts") return { destination, record_id: null };
+  if (destination !== "contacts" && destination !== "sales_invoices") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
+  if (destination === "sales_invoices") return { destination, record_id };
   const subject = subjectOf(v.subject);
   return subject ? { destination, record_id, subject } : { destination, record_id };
 }

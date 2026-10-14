@@ -63,7 +63,12 @@ export type ClientEngagementSource = {
   invoices: SourceInvoice[]; invoices_has_more: boolean;
   work: { total: number; done: number; cancelled: number; blocked: number; open: number; overdue: number;
     undated_open: number; items: SourceWorkItem[]; items_has_more: boolean };
-  not_recorded: string[]; receipt_id: string;
+  /**
+   * The read's own capability receipt, while the SQL reader still writes one. Optional (E4-S3): the
+   * display reads stop receipting and PAIGE's chat read is recorded at the executor. No consumer may
+   * branch on it.
+   */
+  not_recorded: string[]; receipt_id?: string | null;
 };
 
 export type TimeZoneState = 'configured' | 'missing' | 'invalid';
@@ -156,7 +161,8 @@ export type ClientEngagementStatus = {
   attention: Attention[];
   not_recorded: string[];
   truncated: { terms: boolean; signings: boolean; invoices: boolean; work: boolean };
-  receipt_id: string;
+  /** See ClientEngagementSource.receipt_id: null once the read writes no receipt. Never branch on it. */
+  receipt_id: string | null;
 };
 
 const BILLED = new Set(['issued', 'recorded', 'sent', 'paid']);
@@ -397,7 +403,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     attention: [...attention],
     not_recorded: source.not_recorded,
     truncated,
-    receipt_id: source.receipt_id,
+    receipt_id: source.receipt_id ?? null,
   };
 }
 
@@ -408,6 +414,8 @@ export function parseClientEngagementSource(value: unknown): ClientEngagementSou
   for (const key of ['terms', 'signings', 'invoices']) if (!Array.isArray(v[key])) fail(key);
   const work = v.work as Json;
   if (!work || typeof work !== 'object' || !Array.isArray(work.items)) fail('work');
-  if (typeof v.contact_id !== 'string' || typeof v.receipt_id !== 'string' || !Array.isArray(v.not_recorded)) fail('identity');
+  if (typeof v.contact_id !== 'string' || !Array.isArray(v.not_recorded)) fail('identity');
+  // Absent or null once the reader writes no receipt (E4-S3); any other present value is a broken shape.
+  if (v.receipt_id !== undefined && v.receipt_id !== null && typeof v.receipt_id !== 'string') fail('identity');
   return value as ClientEngagementSource;
 }

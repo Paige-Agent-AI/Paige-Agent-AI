@@ -334,6 +334,21 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Experience 04 E4-S3 PR alpha — chat read links, truthful read steps, the owner's own time-zone save attributed to a person (branch `claude/clever-lovelace-r111ru`, 2026-10-14; ships on merge, NOT live)
+
+Main chat (`paige-ai-chat` + `PaigeAIChat`) and the Solo Rail. An available client-standing or time-zone read now shows "See it in your workspace" links beside the answer (live and after reload), built from the current account; a refused or no-match read leaves no finished-check row; the owner's own business-time-zone save reads as "Person" on the Solo Rail. No tier gains a read, write or action; INT-346 stays inactive.
+
+| Tier | Chat read links | Step line truth | Time-zone save attribution |
+|---|---|---|---|
+| God / Operator | N/A — reads not offered; resolver returns nothing | applies (shared step reader) | N/A — no tenant Rail of its own |
+| Agency / Enterprise | N/A — reads not offered; resolver returns nothing (enterprise unmounted) | applies | N/A — Solo-shell Setup only |
+| Standalone (Solo) | ✓ on merge — client exact (`?person=`), Sales/Operations/Setup surface-only | ✓ on merge | ✓ on merge — "Person" |
+| Sub-account (`account_type='sub_account'`, resolves to tenant) | Clients list only (surface-only); every other destination fails closed | ✓ on merge | same shell as Solo |
+| Sub-account (legacy standalone-typed child, resolves to `subaccount`) | N/A — reads not offered | applies | same shell as Solo |
+| Client / Anonymous | N/A — no chat tool | N/A | N/A |
+
+Evidence: unit, render, handler and a focused SQL proof; the full-schema SQL proof runs in CI. Authenticated runtime (Solo owner, and one sub-account walk) is UNVERIFIED and owed. See `docs/delivery/exp04-get-paid-deliver-journey.md` §16.
+
 ### Governed one-to-one business email — `comms.email_send` (INT-328) — LIVE since 2026-10-06 (#1770 `be0db95`, #1778 `d200055`; migration `20270597000000` persisted on production)
 
 **Shipped reality (2026-10-06, §66).** Solo owner: LIVE and production-verified by an authenticated drive of the synthetic Solo workspace (card → Approve → one send; replay, concurrent approval, expiry, decline, recipient drift, suppression and DND all held). Sub-account and Agency-own-book: same door and seat rule, not separately driven. God / Client / Anonymous refusals: unit- and SQL-proven; anonymous 401 also seen live. *(Earlier heading, kept for the record: "branch `claude/hopeful-goldberg-p6ind7`; NOT live until merged and its migration is persisted".)*

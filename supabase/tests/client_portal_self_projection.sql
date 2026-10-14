@@ -12,7 +12,9 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
 ('e0931000-0000-0000-0000-000000000001','e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001',
  'e0911000-0000-0000-0000-000000000002','Synthetic','Client A','Company A','active','intake','invitation','PRIVATE CRM NOTE A'),
 ('e0931000-0000-0000-0000-000000000002','e0921000-0000-0000-0000-000000000002','e0911000-0000-0000-0000-000000000002',
- 'e0911000-0000-0000-0000-000000000001','Foreign','Client B','Company B','active','intake','signup','PRIVATE CRM NOTE B');
+ 'e0911000-0000-0000-0000-000000000001','Foreign','Client B','Company B','active','intake','signup','PRIVATE CRM NOTE B'),
+('e0931000-0000-0000-0000-000000000003','e0921000-0000-0000-0000-000000000001',NULL,
+ 'e0911000-0000-0000-0000-000000000002','Synthetic','Survivor','Company A','active','intake','invitation',NULL);
 SELECT public._attach_client_address('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','email','e09-primary@tests.invalid');
 SELECT public._attach_client_address('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','phone','+12025550109');
 
@@ -58,9 +60,23 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revocation is effective on reload');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001',status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship cannot read profile');
-UPDATE public.clients SET status='active',merged_into_contact_id='e0931000-0000-0000-0000-000000000002' WHERE id='e0931000-0000-0000-0000-000000000001';
+-- Trusted fixture executor uses the existing governed lineage convention; same
+-- tenant survivor and paired timestamp. Actual authenticated reads remain below.
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SET LOCAL ROLE service_role;
+SELECT set_config('app.crm_merge_lineage_write','on',true);
+UPDATE public.clients SET status='active',merged_into_contact_id='e0931000-0000-0000-0000-000000000003',merged_at=now() WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT set_config('app.crm_merge_lineage_write','off',true);
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship cannot read profile');
-UPDATE public.clients SET merged_into_contact_id=NULL,first_name='Updated',paige_shared_context_consent=true WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SET LOCAL ROLE service_role;
+SELECT set_config('app.crm_merge_lineage_write','on',true);
+UPDATE public.clients SET merged_into_contact_id=NULL,merged_at=NULL,first_name='Updated',paige_shared_context_consent=true WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT set_config('app.crm_merge_lineage_write','off',true);
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'first_name','Updated','reload reads canonical updated name');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'paige_shared_context_consent','true','reload reads actual shared-context consent');
 SELECT * FROM finish();

@@ -56,6 +56,8 @@ The additive foundation does not close the current raw CRM/self MCP/context expo
 
 `supabase/tests/client_portal_self_projection.sql` uses actual authenticated/service/anonymous privilege boundaries and synthetic fixtures in the existing hosted database-contract job, rolling back all data and grants. Its full-schema result remains UNVERIFIED until that job runs. Source review and authenticated customer acceptance are distinct.
 
+Independent non-author first pass at5e19b30e2 completed HOLD with one MAJOR fixture finding: merged-state setup violated governed lineage, same-tenant reference and paired timestamp requirements. The repair uses a same-tenant synthetic survivor and the existing subjectless service-role lineage-test convention, with both lineage fields set/cleared and actual authenticated reads between them. No guard is disabled. Final affected confirmation on the repaired head and hosted completion remain owed.
+
 Metadata/source grounding: ten customer policy dependencies, three invoker readers, plus service-role self-profile/internal-note paths require coordinated migration. A metadata-only production read confirms `client_contact_methods_read_with_contact` depends on visible raw clients; the safe profile privately resolves canonical methods without restoring that raw row grant.
 
 Impeccable reference: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . Existing product/context and state-contract review applied; no visual implementation or rendered finish verdict is claimed.

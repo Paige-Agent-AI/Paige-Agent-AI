@@ -26,7 +26,7 @@ MUST_PRESERVE: Shared runtime owner controls Chat/index/schema; Sales/Clients/E5
 ACCEPTANCE_CRITERIA: Reviewed supported source writes/readback plus real single-use claim/original arguments, canonical outcome attribution/receipt and eligible customer acceptance before a LIVE Chat/Live claim.
 MOTION_PURPOSE: NONE: no animation change.
 PROTECTED_SEAMS: Existing scoped Planning RPCs reused, no SQL/history/ACL changes; no shared Core/Spine registry/runtime, scheduler, ledger, provider or tenant identity store edit.
-INTERNAL_BUILD_IDENTITY: supporting source head78548f188606f736f62011d371cfebfb38948026; final exact immutable head recorded in PR#2147; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing project-creation packet and actual adapter/test source.
+INTERNAL_BUILD_IDENTITY: supporting source head 78548f188606f736f62011d371cfebfb38948026; final exact immutable head recorded in PR#2147; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=existing project-creation packet and actual adapter/test source.
 RELEASE_CHANNEL: development: source preparation only; no active consumer.
 RELEASE_CLASSIFICATION: internal-only: domain-source adapter, not complete Operations or customer capability.
 CUSTOMER_RELEASE_IDENTITY: none: unregistered/unmounted preparation and authenticated proof owed.

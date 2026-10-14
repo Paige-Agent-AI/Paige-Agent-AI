@@ -1438,7 +1438,7 @@
       "id": "resend",
       "name": "Resend (transactional / platform email)",
       "taxonomy": "crm_calendar_communications",
-      "business_reason": "Email delivery for platform and tenant sending identities. Owner policy 2026-10-13: Resend is the Platform Operator's own email, and a business's PAIGE Email moves to SendGrid (see the sendgrid entry). Existing tenant Resend connectors are not converted; the governed door still admits them, and only Resend sends can be reconciled.",
+      "business_reason": "BEING RETIRED — SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: all PAIGE email (Platform Operator, platform transactional and tenant) moves to SendGrid and Resend is retired. Not yet retired: production still sends on Resend only (8 resend channel_connectors, 0 sendgrid, 2026-10-14), so status stays PARTIAL until cutover P10/P11 (docs/delivery/exp03-launch-email-providers-plan.md, addendum 'SendGrid-only cutover plan'). The status vocabulary has no RETIRED word; recording retirement is a P11 registry decision. Original text kept: Email delivery for platform and tenant sending identities. Owner policy 2026-10-13: Resend is the Platform Operator's own email, and a business's PAIGE Email moves to SendGrid (see the sendgrid entry). Existing tenant Resend connectors are not converted; the governed door still admits them, and only Resend sends can be reconciled.",
       "paige_use_cases": [
         "send platform/tenant email from a verified sending identity",
         "verify a sending domain",
@@ -1461,7 +1461,7 @@
       "status": "PARTIAL",
       "owner": "Comms workstream",
       "dependency": "Per-tenant sending-identity wiring. The 2026-10-04 invoice.settings_update numbering/presentation and six-tab Opportunities List/Board changes are internal Sales contracts, not new provider connections or sender readiness. Frozen issued invoice presentation is reused by email. The 2026-10-04 PDF workspace derives a version-checked PDF attachment server-side through the existing paige-browser host; Resend/Gmail/SMTP share the existing transport. Missing PDF host or changed invoice refuses dispatch. Authenticated customization, hosted PDF and real attachment acceptance remain UNVERIFIED. The post-merge invoice dispatch repair uses the existing claim/finalize state and invoice lock to refuse concurrent financial mutations while dispatching; no sender authority or provider maturity is added.",
-      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing).",
+      "next_slice": "Retirement, not growth: no new Resend functionality (owner directive 2026-10-14). Cutover P2–P10 move every Resend producer onto the governed SendGrid transport, then P10 removes Resend after a soak. Original text kept: Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing).",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -1527,7 +1527,7 @@
       "id": "sendgrid",
       "name": "SendGrid (PAIGE Email — tenant one-to-one email)",
       "taxonomy": "crm_calendar_communications",
-      "business_reason": "Owner policy 2026-10-13: a business's PAIGE Email sends through SendGrid on the platform's account. Resend stays the Platform Operator's own email, and existing tenant Resend connectors are not converted. Customers see 'PAIGE Email', never a provider name.",
+      "business_reason": "SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: SendGrid is the one email provider for all PAIGE email — Platform Operator, platform transactional and tenant PAIGE Email — and Resend is being retired. The owner named two credentials, PAIGE-SENDGRID-MAIL-EXECUTOR (sending only) and PAIGE-SENDGRID-PLATFORM-ADMIN (configuration only); their edge secret names and scopes are UNVERIFIED. Only the tenant governed door is built; the platform/operator route is cutover P2/P5. Original text kept: Owner policy 2026-10-13: a business's PAIGE Email sends through SendGrid on the platform's account. Resend stays the Platform Operator's own email, and existing tenant Resend connectors are not converted. Customers see 'PAIGE Email', never a provider name.",
       "paige_use_cases": [
         "send one approved email to one existing contact from the business's SendGrid-verified domain through the governed door (comms-email-command / comms.email_send); provider acceptance only",
         "send an approved reply to a new lead (owner.lead_followup, Experience 03 S3) with approval_id; prepare stores the approval on the send binding and allows one live send per approval; record the send on that approval only (lead_reply_record_send_service, LEAD_REPLY_NOT_THIS_APPROVAL otherwise)",
@@ -1551,9 +1551,9 @@
       "status": "PROOF_OWED",
       "owner": "Comms workstream (Experience 03 S3 for the lead-reply binding)",
       "dependency": "Operator steps in connection_prerequisite; merge and persisted apply of 20271031000100, 20271031000200 and 20271031000250 (branch claude/stoic-archimedes-pv4r8u, not merged on 2026-10-13); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
-      "next_slice": "Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
+      "next_slice": "Cutover P1 (credential model) first, then P2 (one SendGrid transport with tenant and platform sender scopes) per docs/delivery/exp03-launch-email-providers-plan.md, addendum 'SendGrid-only cutover plan (owner directive 2026-10-14)'. Platform eligibility is a directive, not proof: status stays PROOF_OWED. Original text kept: Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
       "tier_eligibility": {
-        "platform": "ineligible",
+        "platform": "eligible",
         "solo": "eligible",
         "agency_future": "resell",
         "enterprise_future": "eligible"

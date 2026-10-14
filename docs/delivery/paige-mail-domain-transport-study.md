@@ -62,6 +62,9 @@ the owner clarification).
 
 ## 3. Transport architecture — build versus buy
 
+*(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: the target transport is SendGrid for all PAIGE email and Resend is being retired; the
+paragraph below is kept as the 2026-10 record of the then-current state. Plan: `docs/delivery/exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan").)*
+
 Current state: Resend is the transport implementation behind the canonical boundary
 (`comms-provider-boundary.ts` + `comms_provider_execution_allowed`; Svix-verified receipt and
 inbound doors; suppression, bounce, and delivery-state tracking). The boundary is the asset: every
@@ -125,7 +128,8 @@ following remain, each a separately authorized external action:
 1. **Dedicated organizational domain** — owner selects/approves the domain (purchase + registration
    are owner actions); PAIGE never purchases.
 2. **DNS** — owner-approved DNS changes on that domain (provider verification + inbound MX).
-3. **Resend domain provisioning** — platform-operator action in the Resend console: add the domain,
+3. **Resend domain provisioning** *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: domain authentication moves to SendGrid, done through the
+   operator-only admin credential — cutover P3; this step is kept as written)* — platform-operator action in the Resend console: add the domain,
    retrieve verification records, enable inbound, obtain the Svix signing secret (multi-secret
    rotation supported by both doors).
 4. **Secret installation** — `RESEND_WEBHOOK_SECRET` (env or operator-managed settings row) for the

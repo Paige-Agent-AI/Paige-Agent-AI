@@ -81,7 +81,7 @@ flowchart TB
         ANTH["Anthropic — LLM (100% of prod traces)"]
         MULTI["OpenAI / Groq / Featherless / Gemini<br/>(in-code, DORMANT — keys unset)"]
         TW["Twilio — 5 live subaccounts"]
-        RS["Resend — platform email"]
+        RS["Resend — platform email (SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: SendGrid-only; Resend being retired)"]
         VOY["Voyage AI — voyage-3 @ 1024d"]
         EL["ElevenLabs — TTS only (dormant)"]
         STR["Stripe — Paige-held rails"]
@@ -155,7 +155,7 @@ The repo contains **241 edge-function directories** (excluding `_shared`) under 
 13 `subagent-*` functions: `subagent-forge`, `-compliance`, `-content-drafter`, `-data-consistency`, `-email-composer`, `-financial-research`, `-fundability`, `-funding-path`, `-intake-concierge`, `-market-research`, `-sales-pipeline`, `-stack-strategist`, `-coach-copilot`; plus `skill-forge`, `skill-runner`. (Presence grounds the orchestration doctrine at the function layer; it is **not** proof the full action-bus wiring runs end-to-end — that requires runtime trace verification not done here.)
 
 ### Comms — email + SMS/telephony
-Email: `send-transactional-email`, `send-welcome-email`, `process-email-queue`, `handle-inbound-email`, `handle-email-suppression`/`-unsubscribe`, `comms-email-unsubscribe`, `auth-email-hook`, `preview-*-email`. SMS/telephony: `send-sms`, `send-sms-reminder`/`-verification`, `verify-sms-code`, `handle-inbound-sms`, `twilio-inbound-webhook`, `twilio-status-callback`, `comms-purchase-number`/`-search-numbers`, `comms-a2p-draft`/`-submit`, `provision-tenant-twilio`, `send-telegram`, `send-push-notification`. Resend is the platform-default email provider (`_shared/email/providers.ts`); Twilio is **deployed/active** (5 live subaccounts, `_shared/twilio.ts`), with A2P TrustHub wrappers honestly returning `needs_config` (not wired).
+Email: `send-transactional-email`, `send-welcome-email`, `process-email-queue`, `handle-inbound-email`, `handle-email-suppression`/`-unsubscribe`, `comms-email-unsubscribe`, `auth-email-hook`, `preview-*-email`. SMS/telephony: `send-sms`, `send-sms-reminder`/`-verification`, `verify-sms-code`, `handle-inbound-sms`, `twilio-inbound-webhook`, `twilio-status-callback`, `comms-purchase-number`/`-search-numbers`, `comms-a2p-draft`/`-submit`, `provision-tenant-twilio`, `send-telegram`, `send-push-notification`. Resend is the platform-default email provider (`_shared/email/providers.ts`) *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: still true of production, but the target is SendGrid for all PAIGE email and Resend is being retired — see the Email correction note below and master §5 "SendGrid-only cutover")*; Twilio is **deployed/active** (5 live subaccounts, `_shared/twilio.ts`), with A2P TrustHub wrappers honestly returning `needs_config` (not wired).
 
 ### Voice / TTS / STT — mixed deployed
 `paige-tts`, `paige-stt`, `paige-dictate`, `voice-access-token`, `voice-command-processor`, `voice-twiml` (repo). **Deployed-only (no repo dir):** `paige-voice-chat`, `paige-voice-greeting`, `paige-voice-summary`, `elevenlabs-conversation-token`, `elevenlabs-signed-url`. **Honesty flag:** ElevenLabs is **TTS-only** (direct REST `/v1/text-to-speech/{voiceId}`, `_shared/elevenlabs.ts`) and **dormant** (key very likely unset, fail-closed to OpenAI-standard). There is **no ElevenLabs ConvAI/agent** wiring — voice conversations are assembled from Twilio media streams + Paige's own STT/TTS routers.
@@ -262,7 +262,7 @@ Every external integration follows the same discipline: **one shared client seam
 | **Twilio** | SMS + voice/telephony, per-tenant subaccounts | `_shared/twilio.ts` | **Active** — 5 tenant subaccounts |
 | **n8n** | Per-tenant workflow automation | `paige-n8n/index.ts` | In-code, not verified live |
 | **Zapier** | Per-tenant automation via MCP | `call-zapier-action/index.ts` | In-code, not verified live |
-| **Resend** | Platform-default email provider | `_shared/email/providers.ts` | In-code, not verified live |
+| **Resend** | Platform-default email provider *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: all PAIGE email moves to SendGrid; Resend is being retired. Row kept as the 2026-08-08 snapshot.)* | `_shared/email/providers.ts` | In-code, not verified live |
 | **Voyage AI** | Single canonical embedding space | `_shared/voyage.ts` | In-code, not verified live |
 | **Featherless / Groq / OpenAI / Gemini / Ideogram / Replicate** | Open-tier text, image, TTS via router | `_shared/model-router.ts` + per-provider `_shared/*.ts` | In-code, **dormant** (keys unset) |
 
@@ -287,7 +287,7 @@ Both replaced an earlier shared-token model with per-tenant credentials. `paige-
 
 ### Email — Resend is the only implemented provider
 
-A pluggable `EmailProvider` interface (`buildProvider`) falls back to the platform `RESEND_API_KEY` when a tenant has no BYO config. SMTP/Mailgun/Mailchimp/Postmark are **registered-but-stubbed** (fail-loud). **SendGrid is not a wired provider** — only Resend is implemented; other names are future stubs. *(Corrected 2026-10-13: no longer true. `SendGridProvider` shipped in PR #1995 (2026-10-11, master §4.0). Experience 03 S3 adds SendGrid to the governed one-to-one door (not merged when recorded). Owner policy 2026-10-13: a business's PAIGE Email is SendGrid, and Resend is the Platform Operator's own email.)*
+A pluggable `EmailProvider` interface (`buildProvider`) falls back to the platform `RESEND_API_KEY` when a tenant has no BYO config. SMTP/Mailgun/Mailchimp/Postmark are **registered-but-stubbed** (fail-loud). **SendGrid is not a wired provider** — only Resend is implemented; other names are future stubs. *(Corrected 2026-10-13: no longer true. `SendGridProvider` shipped in PR #1995 (2026-10-11, master §4.0). Experience 03 S3 adds SendGrid to the governed one-to-one door (not merged when recorded). Owner policy 2026-10-13: a business's PAIGE Email is SendGrid, and Resend is the Platform Operator's own email.)* *(SUPERSEDED BY OWNER DIRECTIVE 2026-10-14: SendGrid is the one email provider for all PAIGE email, including the Platform Operator's; Resend is being retired. Production still sends on Resend only until cutover. Plan: `docs/delivery/exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan").)*
 
 ### Model Router — multi-provider in code, Anthropic-only on prod
 

@@ -5,6 +5,10 @@ no transport switch (platform default remains Resend), no webhook configured, no
 changes. Branding unchanged: tenants see **PAIGE Email**; SendGrid is an invisible backend; Resend
 remains available for Platform Operator communications.
 
+> **SUPERSEDED BY OWNER DIRECTIVE 2026-10-14**: SendGrid is the one email provider for all PAIGE email, and Resend is being retired.
+> "Platform default remains Resend" and "Resend remains available for Platform Operator communications" above are kept
+> as written for the 2026-10-10 record. Plan: `docs/delivery/exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan").
+
 ## Source integration matrix
 
 | Surface | State | Where |
@@ -13,7 +17,7 @@ remains available for Platform Operator communications.
 | Canonical send door | `send-message` gains a `sendgrid` dispatch arm, selected ONLY by `connectorRow.provider === "sendgrid"`; key is ALWAYS the platform executor secret `SENDGRID_MAIL_SEND_API_KEY` (the `buildProvider` seam separately honors namespaced `TENANT_EMAIL_KEY_*` tenant keys); List-Unsubscribe + In-Reply-To headers preserved; `provider_message_id` = `X-Message-Id` | `send-message/index.ts` |
 | Signature verification | Canonical ES256 verifier `verifySendgridEvent` (SPKI PEM public key, DER→P-1363 conversion, fail-closed reasons) with 2 deno tests | `_shared/webhookSig.ts` |
 | Scopes self-check | `comms-sendgrid-scopes` — operator-gated (JWT + `is_platform_owner`), GET `/v3/scopes` with the EXECUTOR key only, returns scopes + `can_send_mail`/`non_sending_scopes`; never the key; no send capability | `comms-sendgrid-scopes/index.ts` |
-| Admin-key guard | CI step forbids `SENDGRID_PLATFORM_ADMIN_API_KEY` references in ALL function code (allowlist intentionally empty) | `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` + ci.yml |
+| Admin-key guard | CI step forbids `SENDGRID_PLATFORM_ADMIN_API_KEY` references in ALL function code (allowlist intentionally empty) *(out of date since S7.4, 2026-10-12, corrected 2026-10-14: the guard is per-(file, key) and allows exactly `comms-sendgrid-webhook-admin/index.ts` → `SENDGRID_WEBHOOK_ADMIN_API_KEY`; the full-access key stays forbidden everywhere. See the S7.4 section below)* | `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` + ci.yml |
 | Gate preservation | Provider selection cannot bypass tenant authorization, Marketplace eligibility, content policy, approval or quotas: the arm sits INSIDE the canonical door after the capability gate, action-risk/one-approval-gate, and `comms_provider_execution_allowed` — no new authority, no second dispatch system | `send-message` + `comms-email/adapter.ts` (unchanged) |
 | Delivery events | **Not in this slice** (next sub-slice): the ES256 verifier is ready; the event door cannot activate until the owner configures the SendGrid Event Webhook (verification key via env), and inbound-provider verification stays separate | — |
 
@@ -23,7 +27,10 @@ The full-access admin key (`SENDGRID_PLATFORM_ADMIN_API_KEY`) currently lives in
 Edge secrets — readable by ANY deployed function. Smallest safe plan, in order:
 
 1. **Now (shipped in this slice):** CI-enforced zero-reference guard — no function reads it; the
-   allowlist is empty until operator tooling exists.
+   allowlist is empty until operator tooling exists. *(Corrected 2026-10-14: the allowlist gained its one entry in
+   S7.4 — the operator broker, scoped key only. The full-access key is still read by nothing. Under the owner's
+   2026-10-14 two-credential model, PAIGE-SENDGRID-PLATFORM-ADMIN would be read in one operator-only admin function,
+   which needs an owner ruling to amend this guard — cutover P1.)*
 2. **Owner action (rotation):** rotate the admin key in the SendGrid console once this guard is
    deployed, closing the historical exposure window; the new value is installed only when
    operator-only tooling exists to use it.
@@ -149,6 +156,8 @@ ahead of any customer-facing routing.
 
 **Update 2026-10-13 (Experience 03 S3, branch `claude/stoic-archimedes-pv4r8u`, not merged when recorded).**
 Owner policy: a business's PAIGE Email sends through SendGrid, and Resend is the Platform Operator's own email.
+**SUPERSEDED BY OWNER DIRECTIVE 2026-10-14** (sentence above kept as written): Resend is no longer the Platform Operator's email; all PAIGE email moves to
+SendGrid and Resend is being retired. Plan: `docs/delivery/exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan").
 S3 builds tenant SendGrid routing at the governed one-to-one door (`20271031000100`): verification facts on
 `tenant_email_domains` that only the service role may write, and admission at prepare and again at send time.
 It also builds the correlated, forward-only application of verified Event Webhook events to governed

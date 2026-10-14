@@ -10,6 +10,9 @@ gates are preserved.
 > **Later decision (2026-10-13, owner policy):** a business's PAIGE Email sends through SendGrid, and Resend
 > stays the Platform Operator's own email. The provider-selection question in §6 below is answered by that
 > policy. The assessment is kept as written. See `docs/brain/decision-log.md` (Experience 03 S3).
+>
+> **SUPERSEDED BY OWNER DIRECTIVE 2026-10-14**: the 2026-10-13 note above is kept as written, but Resend no longer stays the Platform Operator's
+> email. All PAIGE email moves to SendGrid and Resend is being retired. Plan: `docs/delivery/exp03-launch-email-providers-plan.md` (addendum "SendGrid-only cutover plan").
 
 ## 1. Inventory — what exists today (grounded on main `cbd10e9c7`)
 

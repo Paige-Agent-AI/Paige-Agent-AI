@@ -886,6 +886,9 @@ jobs:
           node --test scripts/ci/c0b-*.test.mjs
           node --test scripts/proof/int304-authenticated-observation.test.mjs
 
+      - name: E09 invitation proof directory containment on POSIX and Windows paths
+        run: node --test scripts/proof/e09-proof-path.test.mjs
+
       - name: INT-336 — typed supersession and canonical settlement
         if: ${{ !cancelled() }}
         run: |

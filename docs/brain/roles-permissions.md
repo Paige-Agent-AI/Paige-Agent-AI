@@ -1,5 +1,15 @@
 # Roles & Permissions — domain brain
 
+**2026-10-14 E09 additive customer-safe read candidate, NOT RELEASED:**
+`client_portal_relationship_id(uuid)` resolves only the authenticated subject's active,
+unmerged canonical client relationship in an active business. A tenant argument narrows
+authority and ambiguous unselected scope refuses. `client_portal_self_profile(uuid)`
+returns explicit safe profile/own contact-method fields without raw CRM notes, staff
+assignments, scores, labels or provider metadata. No new identity registry, staff grant
+or active-workspace pointer. This foundation does **not** close existing raw self RLS,
+MCP/context paths or activate external entry: migrate their consumers coherently first.
+See `../evidence/ui-delivery/e09-client-self-projection.md`. Full Portal remains PARTIAL.
+
 **2026-10-14 E09 consumer-invite repair candidate, NOT RELEASED:** the existing
 `accept_tenant_invite(text)` consumer branch is being repaired to require the stored
 confirmed recipient and exact active, unmerged CRM contact/address binding, refuse

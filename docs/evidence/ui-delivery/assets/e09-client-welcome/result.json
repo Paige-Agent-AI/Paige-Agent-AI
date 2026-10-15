@@ -1,0 +1,857 @@
+{
+  "evidence": "isolated-actual-source",
+  "network": "blocked",
+  "auth": "explicit-synthetic-double",
+  "domainRecords": "in-memory-UI-fixtures-only",
+  "productionAcceptance": "UNVERIFIED",
+  "fonts": "local compiled fonts; remote fallback when unavailable",
+  "sourcePins": {
+    "src/pages/onboard/OnboardLayout.tsx": "92353cd859e71c6712e5eedbce56492b329be1475ef485b4adb89d67e1866202",
+    "src/pages/onboard/Step1Welcome.tsx": "c344a14163d6ecf593f7283bebb8286d29fbd6d9da9cacd871d0408684b163d5",
+    "src/pages/onboard/useClientWelcome.ts": "16f1fc97035afa1cf9f274558c76ba36cf35d8e0bad418b0011a2cab60c4da9a",
+    "src/pages/onboard/useOnboardingClient.ts": "089d54ccc0e42a4d2a287eda213795aa48b38a4d158e370058b84923fd7df298",
+    "src/lib/client-portal-welcome.ts": "a75953bedac269b211c10f385e5cbfb8ed582020cf41440da8c02ecbd5988a1e",
+    "src/pages/onboard/onboard-theme.css": "2bbe2d5c06b4ed8070c37f9f76c6a9d5f29cc181984da4016c93bcaf98bd7184"
+  },
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "ready",
+      "context": "a",
+      "filename": "1536-770-a-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "ready",
+      "context": "a",
+      "filename": "1536-770-a-ready-conflict.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "state": "ready",
+      "context": "b",
+      "filename": "1366-768-b-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "state": "ready",
+      "context": "b",
+      "filename": "1024-768-b-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "ready",
+      "context": "a",
+      "filename": "900-1000-a-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "ready",
+      "context": "a",
+      "filename": "390-844-a-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "ready",
+      "context": "a",
+      "filename": "390-844-a-ready-unknown.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "ready",
+      "context": "b",
+      "filename": "320-720-b-ready-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "ready",
+      "context": "b",
+      "filename": "320-720-b-ready-continue-reachable.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "ready",
+      "context": "b",
+      "filename": "320-720-b-ready-returned-fixture-state.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "TEXTAREA",
+            "height": 90.390625,
+            "font": "16px"
+          },
+          {
+            "tag": "SELECT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "INPUT",
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "loading",
+      "context": "a",
+      "filename": "390-844-a-loading-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "unavailable",
+      "context": "a",
+      "filename": "390-844-a-unavailable-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "read_error",
+      "context": "a",
+      "filename": "390-844-a-read_error-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "configuration_required",
+      "context": "b",
+      "filename": "390-844-b-configuration_required-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [
+          {
+            "tag": "BUTTON",
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "signed_out",
+      "context": "a",
+      "filename": "390-844-a-signed_out-initial.png",
+      "geometry": {
+        "overflow": false,
+        "sizes": [],
+        "brandColor": "rgb(244, 236, 214)",
+        "reduced": true
+      }
+    }
+  ],
+  "errors": []
+}

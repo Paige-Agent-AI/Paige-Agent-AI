@@ -72,7 +72,18 @@ export function useOnboardingClient() {
     void refresh();
     return () => { mounted.current = false; invalidateRequests(); subscription.unsubscribe(); };
   }, [refresh, invalidateRequests]);
-  return { ...state, refresh };
+  // Project an already checked native save without a clearing refresh/unmount.
+  // This is not an identity grant or a writer; refuse a different actor/tuple.
+  const acceptSavedProfile = useCallback((value: OnboardClient): boolean => {
+    if (!mounted.current || !actor.current) return false;
+    const profile = readClientPortalSelfProfile(value, actor.current);
+    if (!profile || !state.client || profile.id !== state.client.id || profile.tenant_id !== state.client.tenant_id
+      || profile.linked_user_id !== state.client.linked_user_id) return false;
+    setState(previous => previous.client?.id === profile.id && previous.client.tenant_id === profile.tenant_id
+      && actor.current === profile.linked_user_id ? { ...previous, client: profile } : previous);
+    return true;
+  }, [state.client]);
+  return { ...state, refresh, acceptSavedProfile };
 }
 
 export async function advanceOnboardingStage(_clientId: string, toStage: string, extraPatch: Record<string, unknown> = {}) {

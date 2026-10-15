@@ -46,20 +46,30 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
   await page.screenshot({ path: path.join(output, name), fullPage: true });
   cases.push({ width, height, open, theme, tenant, state, tab, geometry, screenshot: name });
   if (width === 1536 && !open && theme === "light" && state === "content" && tab === "Overview") {
+    await page.getByRole("button", { name: "Preview portal", exact: true }).focus();
     await page.getByRole("button", { name: "Preview portal", exact: true }).click();
     await page.getByRole("dialog").waitFor(); await page.keyboard.press("Escape");
     assert.equal(await page.getByRole("dialog").count(), 0);
+    await page.waitForFunction(() => document.activeElement?.textContent?.trim() === "Preview portal");
+    await page.getByRole("button", { name: "Invite client", exact: true }).focus();
     await page.getByRole("button", { name: "Invite client", exact: true }).click();
     await page.getByLabel("Existing client", { exact: true }).selectOption("test-contact-1");
     await page.getByRole("button", { name: "Send invitation email", exact: true }).waitFor();
     await page.screenshot({ path: path.join(output, "invitation-dialog.png") });
     // Do not click: source fixtures cannot send or create an invitation.
     await page.keyboard.press("Escape");
+    await page.waitForFunction(() => document.activeElement?.textContent?.trim() === "Invite client");
     await page.getByRole("button", { name: "Customize experience", exact: true }).click();
     await page.getByRole("textbox", { name: "Headline", exact: true }).fill("Unsaved source-proof greeting");
     await page.getByRole("tab", { name: "Overview", exact: true }).click();
     await page.getByRole("tab", { name: /Experience/, exact: true }).click();
     assert.equal(await page.getByRole("textbox", { name: "Headline", exact: true }).inputValue(), "Unsaved source-proof greeting");
+    const save = page.getByRole("button", { name: "Save portal", exact: true });
+    assert.equal(await save.evaluate((node) => getComputedStyle(node).boxShadow), "none");
+    await save.hover();
+    assert.equal(await save.evaluate((node) => getComputedStyle(node).boxShadow), "none");
+    assert.equal(await page.locator(".opd-editor .overflow-hidden.rounded-xl.border").first().evaluate((node) => getComputedStyle(node).boxShadow), "none");
+    await page.getByRole("textbox", { name: "Headline", exact: true }).focus();
     await page.screenshot({ path: path.join(output, "experience-editor-draft.png") });
   }
   await page.close();

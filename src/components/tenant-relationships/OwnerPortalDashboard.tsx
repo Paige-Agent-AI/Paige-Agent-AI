@@ -170,6 +170,16 @@ export function OwnerPortalDashboard({
   };
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const searchRef = useRef<HTMLInputElement>(null);
+  const previewTriggerRef = useRef<HTMLButtonElement>(null);
+  const inviteTriggerRef = useRef<HTMLButtonElement>(null);
+  const invitationReturnRef = useRef<HTMLElement | null>(null);
+  const restoreDialogFocus = (event: Event, preferred: HTMLElement | null, fallback: HTMLElement | null) => {
+    event.preventDefault();
+    const target = [preferred, fallback, tabRefs.current[tabs.indexOf(tab)]].find(
+      (node) => node?.isConnected && !node.matches(":disabled") && !node.closest("[hidden], [inert]"),
+    );
+    target?.focus();
+  };
   const id = useId();
   const brand = useBrandKit(tenantId);
   const invitations = usePortalInvitations(tenantId);
@@ -224,8 +234,9 @@ export function OwnerPortalDashboard({
     setTab("Client access");
     requestAnimationFrame(() => searchRef.current?.focus());
   };
-  const manageInvitation = (person: RelationshipPerson) => {
+  const manageInvitation = (person: RelationshipPerson, trigger: HTMLElement) => {
     if (person.status !== "active") { openClient(person.id); return; }
+    invitationReturnRef.current = trigger;
     setSelectedId(person.id);
     setInviting(true);
   };
@@ -375,7 +386,7 @@ export function OwnerPortalDashboard({
                       <button
                         type="button"
                         className="opd-text-button opd-next-step"
-                        onClick={() =>
+                        onClick={(event) =>
                           [
                             "not-invited",
                             "expired",
@@ -384,7 +395,7 @@ export function OwnerPortalDashboard({
                           ].includes(access) &&
                           person.email &&
                           !person.doNotContact
-                            ? manageInvitation(person)
+                            ? manageInvitation(person, event.currentTarget)
                             : openClient(person.id)
                         }
                       >
@@ -431,6 +442,7 @@ export function OwnerPortalDashboard({
             type="button"
             className="opd-button"
             disabled={!canPreview}
+            ref={previewTriggerRef}
             onClick={() => setPreview(true)}
           >
             <Eye /> Preview portal
@@ -438,7 +450,8 @@ export function OwnerPortalDashboard({
           <button
             type="button"
             className="opd-button opd-primary"
-            onClick={() => setInviting(true)}
+            ref={inviteTriggerRef}
+            onClick={(event) => { invitationReturnRef.current = event.currentTarget; setInviting(true); }}
           >
             <UserPlus /> Invite client
           </button>
@@ -522,13 +535,13 @@ export function OwnerPortalDashboard({
                         <button
                           type="button"
                           className="opd-button"
-                          onClick={() =>
+                          onClick={(event) =>
                             ["not-invited", "expired", "canceled"].includes(
                               access,
                             ) &&
                             person.email &&
                             !person.doNotContact
-                              ? manageInvitation(person)
+                              ? manageInvitation(person, event.currentTarget)
                               : openClient(person.id)
                           }
                         >
@@ -839,7 +852,7 @@ export function OwnerPortalDashboard({
         )}
       </div>
       <Dialog open={inviting} onOpenChange={setInviting}>
-        <DialogContent className="opd-preview-dialog opd-invite-dialog">
+        <DialogContent className="opd-preview-dialog opd-invite-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, invitationReturnRef.current, inviteTriggerRef.current)}>
           <DialogTitle>Invite a client</DialogTitle>
           <DialogDescription>
             Choose an existing contact. The invitation is bound to their saved
@@ -913,7 +926,7 @@ export function OwnerPortalDashboard({
         </DialogContent>
       </Dialog>
       <Dialog open={preview} onOpenChange={setPreview}>
-        <DialogContent className="opd-preview-dialog">
+        <DialogContent className="opd-preview-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, previewTriggerRef.current, null)}>
           <DialogTitle>Portal presentation preview</DialogTitle>
           <DialogDescription>
             Saved branding and configured modules. Customer records and actions

@@ -96,4 +96,25 @@ describe("approved owner dashboard is a real scoped product surface", () => {
     await act(async () => (dialog.querySelector('button') as HTMLButtonElement).click());
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
+  it.each(["Preview portal", "Invite client"])("returns keyboard focus to %s after Escape", async (name) => {
+    await show(); const trigger = button(name); trigger.focus(); await click(name);
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    await act(async () => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+    expect(document.querySelector('[role="dialog"]')).toBeNull(); expect(document.activeElement).toBe(trigger);
+  });
+  it("returns close-button focus to the row Review control that opened the invitation", async () => {
+    await show(); const trigger = button("Review"); trigger.focus(); await click("Review");
+    const close = Array.from(document.querySelector('[role="dialog"]')!.querySelectorAll<HTMLButtonElement>("button")).find((node) => node.textContent === "Close")!;
+    await act(async () => close.click());
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+    expect(document.activeElement).toBe(trigger);
+  });
+  it("uses a live toolbar fallback when the invoking client row disappears", async () => {
+    await show(); const trigger = button("Review"); trigger.focus(); await click("Review");
+    data.people = []; await show(); expect(trigger.isConnected).toBe(false);
+    await act(async () => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+    expect(document.activeElement).toBe(button("Invite client"));
+  });
 });

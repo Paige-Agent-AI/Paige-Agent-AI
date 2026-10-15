@@ -261,7 +261,7 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
         actions={
           <div className="flex items-center gap-3">
             {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-            <Button variant="gold" onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
+            <Button variant={embedded ? "outline" : "gold"} className={embedded ? "opd-button opd-primary" : undefined} onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : null}
               Save portal
             </Button>
@@ -426,7 +426,7 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
               description="A representative view — not live client data."
             >
               <div className="p-4">
-                <div ref={previewRef} className="overflow-hidden rounded-xl border border-border shadow-card">
+                <div ref={previewRef} className={cn("overflow-hidden rounded-xl border border-border", !embedded && "shadow-card")}>
                   {/* masthead */}
                   <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: previewPrimary }}>
                     {previewLogo ? (

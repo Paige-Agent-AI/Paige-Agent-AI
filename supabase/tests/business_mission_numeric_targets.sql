@@ -136,12 +136,31 @@ SELECT pg_temp.target_throws(format($q$SELECT public.save_business_mission_targe
  '20000000-0000-4000-8000-000000000006','%s',1,'%s',5,%L::jsonb,%L,'Attempt rewrite')$q$,
  (SELECT id FROM target_mission),(SELECT result->>'target_id' FROM target_created),(SELECT value::text FROM target_definition),(SELECT token FROM target_evidence)),
  'MISSION_TARGET_RETIRED','retired definition cannot be overwritten');
+-- Native consumer continuation: history and receipts use independent canonical
+-- reads after all five revisions. No browser recovery state supplies this proof.
+SELECT pg_temp.assert_target(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)#>>'{versions,0,receipt,revision}'='5',
+ 'latest history receipt binds the exact immutable revision');
+SELECT pg_temp.assert_target(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)#>>'{versions,0,receipt,operation}'='target_transition',
+ 'historical receipt preserves the operation');
+SELECT pg_temp.assert_target(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)#>>'{versions,4,receipt,id}'=(SELECT result->>'receipt_id' FROM target_created),
+ 'original creation receipt remains retrievable after later revisions');
+SELECT pg_temp.assert_target((SELECT count(*)=5 FROM jsonb_array_elements(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)->'versions') v
+ WHERE v->'receipt' IS DISTINCT FROM 'null'::jsonb),'every saved revision resolves its matching canonical receipt');
+SELECT pg_temp.assert_target((SELECT bool_and(NOT (v->'receipt' ? 'payload_hash') AND NOT (v->'receipt' ? 'metric_evidence_ref') AND NOT (v->'receipt' ? 'result'))
+ FROM jsonb_array_elements(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)->'versions') v),
+ 'history receipt projection excludes private hashes bearer references and raw result');
+SELECT pg_temp.assert_target(public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0)
+ = public.list_business_mission_target_versions((SELECT (result->>'target_id')::uuid FROM target_created),20,0),'independent reread returns the same immutable history and receipts');
 RESET ROLE;
+SELECT pg_temp.assert_target(NOT has_function_privilege('anon','public.list_business_mission_target_versions(uuid,integer,integer)','EXECUTE'),'history remains denied to anonymous callers');
+SELECT pg_temp.assert_target(NOT has_function_privilege('service_role','public.list_business_mission_target_versions(uuid,integer,integer)','EXECUTE'),'history has no privileged service fallback');
 SELECT set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
 SELECT set_config('request.jwt.claims','{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}',true);
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.target_throws(format('SELECT public.get_business_mission_target(%L::uuid)',(SELECT result->>'target_id' FROM target_created)),
  'MISSION_TARGET_NOT_FOUND','foreign owner cannot read target');
+SELECT pg_temp.target_throws(format('SELECT public.list_business_mission_target_versions(%L::uuid)',(SELECT result->>'target_id' FROM target_created)),
+ 'MISSION_TARGET_NOT_FOUND','foreign owner cannot read target history or receipts');
 SELECT pg_temp.target_throws($q$SELECT public.get_business_mission_target_receipt('20000000-0000-4000-8000-000000000001')$q$,
  'MISSION_TARGET_RECEIPT_NOT_FOUND','foreign owner cannot read another actor receipt');
 RESET ROLE;
@@ -150,11 +169,15 @@ SELECT set_config('request.jwt.claims','{"sub":"55555555-5555-4555-8555-55555555
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.target_throws(format('SELECT public.get_business_mission_target(%L::uuid)',(SELECT result->>'target_id' FROM target_created)),
  'MISSION_OWNER_REQUIRED','same-tenant member cannot use owner-only target port');
+SELECT pg_temp.target_throws(format('SELECT public.list_business_mission_target_versions(%L::uuid)',(SELECT result->>'target_id' FROM target_created)),
+ 'MISSION_OWNER_REQUIRED','same-tenant member cannot read owner history receipts');
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
 SELECT set_config('request.jwt.claims','{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}',true);
 UPDATE public.tenant_members SET status='inactive' WHERE user_id='11111111-1111-4111-8111-111111111111';
 SET LOCAL ROLE authenticated;
+SELECT pg_temp.target_throws(format('SELECT public.list_business_mission_target_versions(%L::uuid)',(SELECT result->>'target_id' FROM target_created)),
+ 'MISSION_OWNER_REQUIRED','revoked owner cannot read formerly authorized history receipts');
 SELECT pg_temp.target_throws(format($q$SELECT public.save_business_mission_target(
  '20000000-0000-4000-8000-000000000001','%s',1,NULL,NULL,%L::jsonb,%L,'Initial owner-defined target')$q$,
  (SELECT id FROM target_mission),(SELECT value::text FROM target_definition),(SELECT token FROM target_evidence)),

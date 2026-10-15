@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useOnboardingClient } from "./useOnboardingClient";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +62,15 @@ const LEGACY_PATH_ALIASES: Record<string, string> = {
 
 
 export default function OnboardLayout() {
+  const retryButton = useRef<HTMLButtonElement>(null);
+  const restoreRetryFocus = useRef(false);
   const { loading, error, client, userEmail, refresh } = useOnboardingClient();
+  const retryRead = () => { restoreRetryFocus.current = true; void refresh(); };
+  useEffect(() => {
+    if (loading) return;
+    if (restoreRetryFocus.current && error) retryButton.current?.focus();
+    restoreRetryFocus.current = false;
+  }, [loading, error]);
   const navigate = useNavigate();
   const location = useLocation();
   const [brand, setBrand] = useState<OnboardBrand | null>(null);
@@ -71,15 +79,16 @@ export default function OnboardLayout() {
   // tenant's brand via a SECURITY DEFINER helper. This makes onboarding wear the
   // TENANT's brand (§6/§9), not the platform's.
   useEffect(() => {
+    setBrand(null);
     if (!client?.id) return;
     let cancelled = false;
     supabase.rpc("get_client_portal_brand").then(({ data }) => {
       const row = Array.isArray(data) ? data[0] : data;
       if (!cancelled && row) {
         setBrand({
-          tenant_name: (row as any).tenant_name,
-          logo_url: (row as any).logo_url ?? null,
-          primary_color: (row as any).primary_color ?? null,
+          tenant_name: row.tenant_name,
+          logo_url: row.logo_url ?? null,
+          primary_color: row.primary_color ?? null,
         });
       }
     });
@@ -170,6 +179,20 @@ export default function OnboardLayout() {
     );
   }
 
+  if (error === "profile_unavailable") {
+    return (
+      <div className="onboard-shell">
+        <div className="onboard-container">
+          <div className="onboard-card p-10 text-center space-y-3" role="alert">
+            <h1 className="text-xl font-semibold">We couldn't load your onboarding</h1>
+            <p className="text-sm" style={{ color: "rgba(8,20,40,0.7)" }}>Try again to load your current account.</p>
+            <button ref={retryButton} className="underline" onClick={retryRead}>Try again</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error === "no_client_record" || !client) {
     return (
       <div className="onboard-shell">
@@ -181,7 +204,7 @@ export default function OnboardLayout() {
               yet, or the email on your account ({userEmail ?? "—"}) doesn't match their records. Please
               reply to your welcome email and they'll sort it out.
             </p>
-            <button className="underline" onClick={refresh}>Try again</button>
+            <button ref={retryButton} className="underline" onClick={retryRead}>Try again</button>
           </div>
         </div>
       </div>

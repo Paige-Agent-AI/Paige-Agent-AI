@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: earlier ordinary sessions/harmless persisted 
 KEYBOARD_FOCUS: UNVERIFIED: no focus/control implementation change; changed-result authenticated proof owed
 ZOOM_REFLOW: UNVERIFIED: no geometry change; changed-result authenticated proof owed
 REDUCED_MOTION: NOT_APPLICABLE: no motion introduced
-STATE_COVERAGE: PASS: exact saved record, missing/malformed acknowledgement, missing/foreign/changed readback, read/transport failure, native SQL refusal, absent stored approval, ordinary member denial, unknown successor hold and explicit-tenant receipt attribution
+STATE_COVERAGE: PASS:42 actual source cases and eight full-handler scenarios cover saved/empty/malformed acknowledgement, foreign/changed readback, read/transport failure, native SQL refusal, absent stored approval, member denial, uncertain successor hold and explicit-tenant receipt attribution
 TRUTHFUL_STATE_LABELS: PASS: saved requires strict UUID and matching native record; uncertainty cannot claim non-application or publish an unverified booking reference; native booking is not proof of an external calendar invitation or email delivery
 SOLO_UI: NO: shared backend binding used by existing SOLO Chat; no frontend geometry/control changes
 UNVERIFIED: final guard renewal/CI, production source identity, original-operation replay/interruption/recovery, real native records/Rail, paired isolation and owner final acceptance

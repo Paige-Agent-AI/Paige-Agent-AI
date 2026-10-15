@@ -12002,12 +12002,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // rather than guessing (§13). Runs are persisted owner-scoped to this user —
           // deliberately NOT attached to the client-in-focus, so a coach's research is
           // not exposed on a client's profile (§9).
+          let researchStarted = false;
+          let pendingResearchRunId: string | null = null;
+          let researchScopeInvalidated = false;
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
+            const tenantId = personaCtx?.tenant_id;
+            const researchUuid = (value: unknown): value is string => typeof value === "string" &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+            const researchScopeHolds = async () => {
+              const resolved = await supabaseClient.rpc("current_user_tenant_id");
+              const holds = !resolved.error && researchUuid(tenantId) && resolved.data === tenantId;
+              if (!holds) researchScopeInvalidated = true;
+              return holds;
+            };
+            if (typeof args.question !== "string" || args.question.trim().length < 3 || !await researchScopeHolds()) {
+              throw new Error("RESEARCH_REQUEST_NOT_ADMITTED");
+            }
             void logAnalyticsEvent(supabase, user.id, "deep_research_triggered", "paige", {
               question: typeof args.question === "string" ? args.question.slice(0, 200) : null,
               domain: typeof args.domain === "string" ? args.domain.slice(0, 40) : null,
             });
+            researchStarted = true;
             const drResp = await fetch(`${supabaseUrl}/functions/v1/paige-deep-research`, {
               method: "POST",
               headers: { Authorization: `Bearer ${supabaseServiceKey}`, "Content-Type": "application/json" },
@@ -12016,25 +12032,54 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 domain: args.domain,
                 max_hops: args.max_hops,
                 user_id: user.id,
+                expected_tenant_id: tenantId,
                 caller: "chat",
                 persist: true,
               }),
             });
+            if (!drResp.ok) throw new Error("RESEARCH_RESPONSE_UNCONFIRMED");
             const dr = await drResp.json();
-            const coverage = dr?.coverage ?? {};
+            if (!dr || typeof dr !== "object" || Array.isArray(dr) || !researchUuid(dr.run_id) ||
+                dr.question !== args.question.trim() || !Array.isArray(dr.findings) || !Array.isArray(dr.sources) ||
+                !dr.coverage || typeof dr.coverage !== "object" || Array.isArray(dr.coverage) ||
+                typeof dr.coverage.configured !== "boolean" ||
+                !["answered", "max_hops", "budget", "wall_clock", "no_results", "unconfigured", "error"].includes(dr.coverage.stop_reason)) {
+              throw new Error("RESEARCH_RESPONSE_UNCONFIRMED");
+            }
+            const coverage = dr.coverage;
             const findings = Array.isArray(dr?.findings) ? dr.findings : [];
             const sources = Array.isArray(dr?.sources) ? dr.sources : [];
             // R2b §10 — the governed readback: never claim a saved run without proving the
             // row through the M0 RPC (the caller's own client; scope server-derived). A
             // failed/absent row renders the honest not-saved state downstream.
-            const drRunId = typeof dr?.run_id === "string" ? dr.run_id : null;
+            const drRunId = dr.run_id;
+            pendingResearchRunId = drRunId;
             let drSaved = false;
             if (drRunId) {
               try {
-                const { data: drReadback } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
-                drSaved = !!drReadback;
+                const { data: drReadback, error: drReadError } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
+                const canonicalResearchJson = (value: unknown): string => JSON.stringify(value, (_key, v) =>
+                  v && typeof v === "object" && !Array.isArray(v)
+                    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+                const sameResearchTime = (a: unknown, b: unknown) => a === null && b === null ||
+                  typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a) === Date.parse(b);
+                const sourceFields = ["index", "url", "title", "snippet", "reliability_score", "tier", "reliability", "excluded"];
+                drSaved = !drReadError && !!drReadback && typeof drReadback === "object" && !Array.isArray(drReadback) &&
+                  drReadback.id === drRunId && drReadback.question === args.question &&
+                  drReadback.domain === (args.domain ?? "general") && drReadback.caller === "chat" &&
+                  drReadback.configured === coverage.configured && drReadback.stop_reason === coverage.stop_reason &&
+                  canonicalResearchJson(drReadback.coverage) === canonicalResearchJson(coverage) &&
+                  canonicalResearchJson(drReadback.findings) === canonicalResearchJson(findings) &&
+                  canonicalResearchJson(drReadback.entity_profile ?? null) === canonicalResearchJson(dr.entity_profile ?? null) &&
+                  Array.isArray(drReadback.sources) && drReadback.sources.length === sources.length &&
+                  sources.every((sc: Record<string, unknown>, i: number) => {
+                    const savedSource = drReadback.sources[i];
+                    return !!sc && !!savedSource && sourceFields.every(k => sc[k] === savedSource[k]) &&
+                      sameResearchTime(sc.published_at, savedSource.published_at) && sameResearchTime(sc.fetched_at, savedSource.fetched_at);
+                  });
               } catch { drSaved = false; }
             }
+            if (!await researchScopeHolds()) throw new Error("RESEARCH_SCOPE_CHANGED");
             // D1 — dossier mode. When the engine detected an entity target it
             // returns a gate-survived `entity_profile` (per-field cited). Format it
             // as a structured intel block: summary, Structure/People/Offerings/
@@ -12084,8 +12129,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               tool_call_id: tc.id,
               role: "tool",
               content: JSON.stringify({
+                success: coverage.configured === true && coverage.stop_reason !== "error",
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
+                research_run_id: drRunId,
                 saved: drSaved,
                 // R2c: the derived status pair the reply's language must obey.
                 research_status: researchStatus,
@@ -12111,11 +12158,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 note,
               }),
             });
-          } catch (err) {
+          } catch (_err) {
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unknown error" }),
+              content: JSON.stringify({ success: false, saved: false,
+                ...(researchStarted ? { outcome_unknown: true } : { not_applied: true }),
+                ...(!researchScopeInvalidated && pendingResearchRunId ? { run_id: pendingResearchRunId, research_run_id: pendingResearchRunId } : {}),
+                error: researchStarted ? "Research could not be confirmed. Inspect the workspace research library before repeating this request."
+                  : "Research was not started. Check the question and current workspace before requesting it." }),
             });
           }
         } else if (tc.function.name === "get_client_rail") {

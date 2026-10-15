@@ -1665,6 +1665,9 @@ const mirrorConfirms = (st) => (t, row) => {
   const AUTO = { rpcOverrides: {
     resolve_tool_autonomy: { data: "auto", error: null },
     get_actor_access: { data: { tier: "tenant" }, error: null },
+    // The ordinary workspace process cases need the real server persona precondition,
+    // not the harness's intentionally workspace-less client-seat default.
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null },
   } };
   const AS_CLIENT = { get_actor_access: { data: { tier: "client" }, error: null } };
   /** Model the process tables. The trigger catalogue is real reference data; the automations table

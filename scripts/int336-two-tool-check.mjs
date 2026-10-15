@@ -52,7 +52,13 @@ if(recoveryMode){
  assert.equal(receipts.length,1,'one canonical terminal receipt');
  assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,recoveryMode==='refused'?'reported_failure':'outcome_unknown');
  assert.equal(modelCalls,2,'normal explanation remains possible after refusal/uncertainty');
- if(recoveryMode!=='refused')assert.ok(receipts[0].bundle_ref.interactive.effects.every(e=>e.outcome!=='reported_success'));
+ if(recoveryMode!=='refused'){
+  assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an execution effect');
+  assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,'outcome_unknown');
+  const audit=rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create');
+  assert.equal(audit.length,1,'never attribute a blocked successor as an attempted write');
+  assert.equal(audit[0].row.payload.outcome,'outcome_unknown');
+ }
  console.log(`PASS actual handler Planning ${recoveryMode}: original write once, subsequent writes held only for uncertainty, truthful durable effect`);
  process.exit(0);
 }

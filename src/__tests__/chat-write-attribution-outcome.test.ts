@@ -36,5 +36,16 @@ describe('canonical write attribution preserves domain outcome evidence', () => 
   it('does not duplicate the canonical Knowledge SQL receipt or record a proposal as execution', async () => {
     expect(await drive('knowledge_update', { success: true })).toHaveLength(0);
     expect(await drive('plan_create', { needs_confirm: true })).toHaveLength(0);
+    expect(await drive('plan_create', { success: false, not_applied: true, refused_before_run: true,
+      error: 'prior_effect_reconciliation_required' })).toHaveLength(0);
+  });
+  it.each([
+    { success: false, not_applied: true, refused_before_run: true, outcome_unknown: true },
+    { success: false, not_applied: true, refused_before_run: true, error: 'outcome_unknown' },
+  ])('does not hide contradictory uncertainty from the canonical receipt: %j', result => {
+    // A genuine uncertain effect must continue to hold later execution.
+    return import('../../supabase/functions/_shared/paige-turn/interactive').then(({ interactiveEffect }) => {
+      expect(interactiveEffect('plan_create', result)?.outcome).toBe('outcome_unknown');
+    });
   });
 });

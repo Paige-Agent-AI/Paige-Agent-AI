@@ -1,0 +1,83 @@
+{
+  "evidenceClass": "isolated-actual-source-navigation",
+  "auth": "synthetic; not customer acceptance",
+  "network": "all blocked",
+  "native": "AppNav/hooks/router/UI; NotificationBell,role/playbook and transports fixture-backed",
+  "sources": [
+    {
+      "file": "src/hooks/useClientPortalRead.ts",
+      "sha256": "848a374fa5efbf28362bbdc861b5ab89f7e5489ce7b3a4ff681809843234465e"
+    },
+    {
+      "file": "src/hooks/useClientPortalBrand.ts",
+      "sha256": "3015046f43bf9b06da35009411f685648ac9e7a7378b113a68130e1efb2ab755"
+    },
+    {
+      "file": "src/hooks/useClientPortalConfig.ts",
+      "sha256": "0a1039548ed76e911d80d18870c52c87d9d5cac6d6a7e710ad7ec1830a6b644e"
+    },
+    {
+      "file": "src/components/app/AppNav.tsx",
+      "sha256": "5ebc3335f93120af04f484ed5478ee81295d9fdef7bdab28b717ff88a9832f06"
+    }
+  ],
+  "captures": [
+    {
+      "file": "1536-770-actor-a.png",
+      "width": 1536,
+      "height": 770,
+      "state": "actor-a",
+      "overflow": false
+    },
+    {
+      "file": "1536-770-switch-pending.png",
+      "width": 1536,
+      "height": 770,
+      "state": "switch-pending",
+      "overflow": false
+    },
+    {
+      "file": "1536-770-actor-b.png",
+      "width": 1536,
+      "height": 770,
+      "state": "actor-b",
+      "overflow": false
+    },
+    {
+      "file": "1536-770-signed-out.png",
+      "width": 1536,
+      "height": 770,
+      "state": "signed-out",
+      "overflow": false
+    },
+    {
+      "file": "390-844-actor-a.png",
+      "width": 390,
+      "height": 844,
+      "state": "actor-a",
+      "overflow": false
+    },
+    {
+      "file": "390-844-switch-pending.png",
+      "width": 390,
+      "height": 844,
+      "state": "switch-pending",
+      "overflow": false
+    },
+    {
+      "file": "390-844-actor-b.png",
+      "width": 390,
+      "height": 844,
+      "state": "actor-b",
+      "overflow": false
+    },
+    {
+      "file": "390-844-signed-out.png",
+      "width": 390,
+      "height": 844,
+      "state": "signed-out",
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

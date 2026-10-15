@@ -47,6 +47,29 @@ BEGIN
  RETURN _result;
 END;
 $$;
+-- Exercise the existing stage writer under the real caller role; no new CI lane.
+CREATE FUNCTION pg_temp.e09_stage(_actor uuid,_stage text DEFAULT 'signing_agreement',_payload jsonb DEFAULT '{}',_role text DEFAULT 'authenticated')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _result jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
+ IF _role='anon' THEN SET LOCAL ROLE anon;
+ ELSIF _role='service_role' THEN SET LOCAL ROLE service_role;
+ ELSE SET LOCAL ROLE authenticated; END IF;
+ SELECT to_jsonb(s) INTO _result FROM public.client_advance_onboarding_stage(_stage,_payload) s;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _result;
+END;
+$$;
+CREATE FUNCTION pg_temp.e09_stage_error(_actor uuid,_stage text DEFAULT 'completed',_role text DEFAULT 'authenticated')
+RETURNS text LANGUAGE plpgsql AS $$
+BEGIN
+ PERFORM pg_temp.e09_stage(_actor,_stage,'{}',_role);
+ RETURN 'NO_ERROR';
+EXCEPTION WHEN OTHERS THEN RETURN SQLSTATE;
+END;
+$$;
 UPDATE public.tenants SET brand='{"product_name":"Test tenant A","primary_color":"#26483e"}',
  features='{"portal_config":{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}}'
  WHERE id='e0921000-0000-0000-0000-000000000001';
@@ -85,10 +108,29 @@ SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000099'),NULL::json
 SELECT throws_ok($$ SELECT pg_temp.e09_profile(NULL,'e0921000-0000-0000-0000-000000000001','service_role') $$,'42501','customer authentication required','service role without a subject is not a client identity');
 SELECT throws_ok($$ SELECT pg_temp.e09_profile(NULL) $$,'42501','customer authentication required','missing auth subject refuses');
 
+SELECT ok(NOT has_function_privilege('anon','public.client_advance_onboarding_stage(text,jsonb)','EXECUTE'),'anonymous cannot execute the stage writer');
+SELECT ok(has_function_privilege('authenticated','public.client_advance_onboarding_stage(text,jsonb)','EXECUTE'),'authenticated caller retains the existing checked stage ABI');
+SELECT is(pg_temp.e09_stage('e0911000-0000-0000-0000-000000000001')->>'client_id','e0931000-0000-0000-0000-000000000001','stage writer resolves the actual external customer without raw SELECT');
+SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'onboarding_stage','signing_agreement','stage change reloads through the canonical customer projection');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.e09_stage('e0911000-0000-0000-0000-000000000001')) k),ARRAY['client_id','onboarding_stage','updated_at']::text[],'stage return ABI stays exactly three columns');
+SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND actor_user_id='e0911000-0000-0000-0000-000000000001' AND target_id='e0931000-0000-0000-0000-000000000001' AND payload->>'to_stage'='signing_agreement'),1::bigint,'exact actor and client receive one existing durable stage audit');
+SELECT is(pg_temp.e09_stage('e0911000-0000-0000-0000-000000000001','invited')->>'onboarding_stage','signing_agreement','reverse stage remains a no-op');
+SELECT is(pg_temp.e09_stage('e0911000-0000-0000-0000-000000000001','accepting_payment','{"client_id":"e0931000-0000-0000-0000-000000000002","tenant_id":"e0921000-0000-0000-0000-000000000002"}')->>'client_id','e0931000-0000-0000-0000-000000000001','payload supplies no foreign target authority');
+SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000002')->>'onboarding_stage','invited','foreign customer stage is untouched');
+UPDATE public.clients SET onboarding_stage='invited' WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_stage_error(NULL),'P0001','missing subject cannot change stage');
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000099'),'P0001','unlinked actor cannot change stage');
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001',NULL),'P0001','null stage is invalid');
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001','not-a-stage'),'P0001','unknown stage is invalid');
+SELECT is(pg_temp.e09_stage_error(NULL,'completed','anon'),'42501','anonymous stage request fails at execution permission');
+SELECT ok(pg_temp.e09_stage_error(NULL,'completed','service_role')=ANY(ARRAY['42501','P0001']),'service role alone cannot become an external customer');
+
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','revoked link cannot advance stage');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revocation is effective on reload');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'presentation revocation is effective on the next server read');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001',status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','archived relationship cannot advance stage');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship cannot read profile');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'archived relationship cannot resolve customer presentation');
 -- Trusted fixture executor uses the existing governed lineage convention; same
@@ -101,6 +143,7 @@ SELECT set_config('app.crm_merge_lineage_write','off',true);
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship cannot read profile');
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','merged relationship cannot advance stage');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'merged relationship cannot resolve customer presentation');
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SET LOCAL ROLE service_role;
@@ -112,6 +155,7 @@ SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'first_name','Updated','reload reads canonical updated name');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'paige_shared_context_consent','true','reload reads actual shared-context consent');
 UPDATE public.tenants SET status='suspended' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','inactive sponsoring business cannot advance stage');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'inactive sponsoring business cannot resolve customer presentation');
 UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'welcome'->>'headline','Saved greeting A','returning to an active legitimate relationship reloads its saved configuration');
@@ -128,8 +172,11 @@ SELECT throws_ok($$ SELECT * FROM public.get_client_portal_brand() $$,'42501','s
 SELECT throws_ok($$ SELECT public.get_client_portal_config() $$,'42501','select an authorized customer relationship','ambiguous business configuration refuses instead of choosing the oldest row');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
+SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'42501','ambiguous future relationships cannot advance an arbitrary client stage');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000002' WHERE id='e0931000-0000-0000-0000-000000000002';
 CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future-shape cleanup restores the canonical global guard before outer rollback');
+SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'onboarding_stage','invited','all denied stage attempts preserve the last legitimate saved stage');
+SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND target_id='e0931000-0000-0000-0000-000000000001'),2::bigint,'no-op and refused stage requests add no success audit');
 SELECT * FROM finish();
 ROLLBACK;

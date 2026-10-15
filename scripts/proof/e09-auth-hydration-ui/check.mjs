@@ -39,9 +39,9 @@ try {
       await page.getByText("Loading...", { exact: true }).waitFor();
       if (staff) {
         await page.evaluate(() => { window.authHydrationProof.staff(); window.authHydrationProof.newer(); });
-        await page.getByRole("status").filter({ hasText: "Staff destination" }).waitFor();
+        await page.getByRole("status").filter({ hasText: "Workspace chooser" }).waitFor();
         await page.evaluate(() => window.authHydrationProof.staleEmpty());
-        await page.waitForTimeout(60); assert.match(await page.getByRole("status").innerText(), /Staff destination/);
+        await page.waitForTimeout(60); assert.match(await page.getByRole("status").innerText(), /Workspace chooser/);
         await capture("staff-after-retired-null");
       } else {
         await capture("initial-loading");

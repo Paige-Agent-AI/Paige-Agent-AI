@@ -46,7 +46,7 @@ let root: Root, host: HTMLDivElement, mounted: boolean;
 async function flush() { await act(async () => { for (let i = 0; i < 14; i++) await Promise.resolve(); }); }
 async function mount(initialPath = "/app") {
   mounted = true;
-  await act(async () => root.render(<MemoryRouter initialEntries={[initialPath]}><Routes><Route path="/app/*" element={<AppShell />} /><Route path="/auth" element={<p>Sign in</p>} /><Route path="/admin" element={<p>Staff workspace</p>} /></Routes></MemoryRouter>));
+  await act(async () => root.render(<MemoryRouter initialEntries={[initialPath]}><Routes><Route path="/app/*" element={<AppShell />} /><Route path="/auth" element={<p>Sign in</p>} /><Route path="/choose-account" element={<p>Workspace chooser</p>} /></Routes></MemoryRouter>));
   await flush();
 }
 beforeEach(() => {
@@ -78,7 +78,7 @@ describe("customer shell without raw CRM Realtime", () => {
     expect(host.querySelector('[data-testid="paige-chat"]')).toBeNull(); expect(channel).not.toHaveBeenCalled();
   });
   it("retains the staff landing policy instead of borrowing a customer session", async () => {
-    landing.mockResolvedValue("/admin"); await mount(); expect(host.textContent).toBe("Staff workspace");
+    landing.mockResolvedValue("/choose-account"); await mount(); expect(host.textContent).toBe("Workspace chooser");
     expect(channel).not.toHaveBeenCalled();
   });
   it("removes customer content on confirmed sign-out without a channel or cache-wake loop", async () => {
@@ -100,11 +100,11 @@ describe("customer shell initial Auth lifetime", () => {
     expect(host.textContent).toContain(nextActorId); expect(host.textContent).not.toContain(actorId);
   });
   it("does not navigate away from the staff landing when an old initial read returns null", async () => {
-    const initial = deferInitialSession(); landing.mockResolvedValue("/admin"); await mount();
+    const initial = deferInitialSession(); landing.mockResolvedValue("/choose-account"); await mount();
     act(() => authListener?.("SIGNED_IN", session)); await flush();
-    expect(host.textContent).toBe("Staff workspace"); expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(host.textContent).toBe("Workspace chooser"); expect(unsubscribe).toHaveBeenCalledOnce();
     initial.resolve(null); await flush();
-    expect(host.textContent).toBe("Staff workspace");
+    expect(host.textContent).toBe("Workspace chooser");
   });
   it("ignores a rejected initial read after a newer SDK session has settled", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});

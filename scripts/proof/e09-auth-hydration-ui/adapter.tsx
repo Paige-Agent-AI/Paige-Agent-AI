@@ -39,7 +39,7 @@ export const usePresenceHeartbeat = () => {};
 export const useImpersonation = () => ({ target: null, isImpersonating: false });
 export const setScopedUserId = () => {};
 export const trackEvent = async () => {};
-export const resolveLandingRoute = async () => staff ? "/admin" : "/app";
+export const resolveLandingRoute = async () => staff ? "/choose-account" : "/app";
 export const shouldOfferOnboarding = async () => false;
 export const usePlaybook = () => coachingDefault;
 export const useDashboardMode = () => ({ isAdmin: false, mode: "client", setMode: () => {} });

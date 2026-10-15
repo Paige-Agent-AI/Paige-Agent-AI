@@ -36,6 +36,7 @@ import { PeopleContactEditor } from "./PeopleContactEditor";
 import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
+import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -804,9 +805,9 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
       </div>
       {configurationOpen && (
         <div className="trc-canonical-mount" data-portal-configuration>
-          <RoleGate allow={["admin"]} fallback={<BoundedState eyebrow="Portal · PERMISSION LIMITED" title="Owner or admin access required" detail="Portal configuration remains behind its existing administrative gate." kind="unavailable" />}>
+          <PortalConfigurationGate tenantId={activeTenantId}>
             <Suspense fallback={<BoundedState eyebrow="Portal · PARTIAL" title="Loading Portal configuration" detail="The existing PortalStudio owner is mounting for the active account." kind="loading" />}><PortalStudio key={activeTenantId} /></Suspense>
-          </RoleGate>
+          </PortalConfigurationGate>
         </div>
       )}
       {accessOpen && selectedContact && (

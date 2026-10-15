@@ -20,6 +20,7 @@ const useTenantRelationshipsData = vi.fn();
 const ownerHarness = vi.hoisted(() => ({ conversations: 0, calendars: 0, portals: 0 }));
 const editorHarness = vi.hoisted(() => ({
   rpc: vi.fn(async (..._args: unknown[]) => ({ data: [] })),
+  portalPermission: vi.fn(async (..._args: unknown[]) => ({ data: true, error: null })),
   upsert: vi.fn(async (..._args: unknown[]) => "saved-contact"),
   // What `clients` answers when the editor re-reads a contact after a stale refusal.
   latest: { data: null as unknown, error: null as unknown },
@@ -29,7 +30,7 @@ const editorHarness = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => useTenantContext() }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: "actor-test", accountContextStatus: "ready", ...useTenantContext() }) }));
 vi.mock("@/components/tenant-calendar/SoloCalendarWorkspace", async () => {
   const ReactModule = await import("react");
   return {
@@ -62,7 +63,14 @@ vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: (...args: unkno
 vi.mock("./useTenantRelationshipsData", () => ({
   useTenantRelationshipsData: (...args: unknown[]) => useTenantRelationshipsData(...args),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc, from: editorHarness.from } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  rpc: (...args: unknown[]) => args[0] === "can_manage_tenant_brand" ? editorHarness.portalPermission(...args) : editorHarness.rpc(...args),
+  from: editorHarness.from,
+  auth: {
+    getUser: async () => ({ data: { user: { id: "actor-test" } }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+  },
+} }));
 vi.mock("./contactUpsert", () => ({
   upsertRelationshipContact: (...args: unknown[]) => editorHarness.upsert(...args),
 }));
@@ -127,6 +135,7 @@ describe("tenant Relationships / Clients workspace", () => {
     useSubtabRoute.mockReset();
     useTenantRelationshipsData.mockReset();
     editorHarness.rpc.mockClear();
+    editorHarness.portalPermission.mockReset().mockResolvedValue({ data: true, error: null });
     editorHarness.upsert.mockReset();
     editorHarness.upsert.mockImplementation(async () => "saved-contact");
     editorHarness.from.mockClear();
@@ -1149,10 +1158,25 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Configuration remains owner/admin gated");
     expect(html).toContain("Choose a client to manage access");
     const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
-    expect(source).toContain("<RoleGate allow={[\"admin\"]}");
+    expect(source).toContain("<PortalConfigurationGate tenantId={activeTenantId}>");
     expect(source).toContain("<PortalStudio key={activeTenantId} />");
     expect(source).toContain("<ContactPortalAccess");
     expect(html).toContain("UNAVAILABLE");
+  });
+
+  it("keeps the mounted Portal editor closed when the tenant permission refuses", async () => {
+    editorHarness.portalPermission.mockResolvedValue({ data: false, error: null });
+    useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/portal"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      const open = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open gated Portal configuration");
+      await act(async () => open?.click());
+      expect(editorHarness.portalPermission).toHaveBeenCalledWith("can_manage_tenant_brand", { _tenant_id: "tenant-solo" });
+      expect(host.querySelector("[data-mocked-portal-studio]")).toBeNull();
+      expect(host.textContent).toContain("Configuration access required");
+    } finally { act(() => root.unmount()); }
   });
 
   it("requires explicit keyboard-operable People selection before mounting client access", async () => {
@@ -1168,6 +1192,7 @@ describe("tenant Relationships / Clients workspace", () => {
     const configurationButton = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open gated Portal configuration");
     await act(async () => configurationButton?.click());
     await vi.waitFor(() => expect(host.querySelector("[data-mocked-portal-studio]")).not.toBeNull());
+    expect(editorHarness.portalPermission).toHaveBeenCalledWith("can_manage_tenant_brand", { _tenant_id: "tenant-solo" });
     const accessButton = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open selected client access");
     expect(accessButton?.disabled).toBe(false);
     await act(async () => accessButton?.click());

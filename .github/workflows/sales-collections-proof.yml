@@ -139,3 +139,7 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/agreements/commercial-presentation-pg.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data repaired
+      - name: Exact retained signing media, frozen economics and token context
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/agreements/commercial-presentation-pg.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data repaired --signing-context supabase/migrations/20271101181000_e04_signing_exact_presented_record.sql

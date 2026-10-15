@@ -6,8 +6,11 @@ import {randomUUID,createHash} from 'node:crypto';
 import {prepareCommercialPresentation,canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 const [psql,port,user,directory,mode]=process.argv.slice(2);
+const contextIndex=process.argv.indexOf('--signing-context');
+const contextMigration=contextIndex>=0?process.argv[contextIndex+1]:null;
+if(contextIndex>=0)assert(contextMigration&&mode==='repaired');
 assert(psql&&/^\d+$/.test(port??'')&&user&&directory&&['baseline','repaired'].includes(mode));
-let database='postgres',checks=0;
+let database='postgres',checks=0,contextChecks=0;
 const sql=(input)=>{const r=spawnSync(psql,['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose'],{input,encoding:'utf8',windowsHide:true,maxBuffer:8e6});if(r.status!==0)throw Error(r.stderr);return r.stdout.trim();};
 const read=p=>readFileSync(new URL(`../../${p}`,import.meta.url),'utf8');
 const literal=value=>`'${JSON.stringify(value).replaceAll("'","''")}'::jsonb`;
@@ -28,7 +31,7 @@ try{
     CREATE TABLE profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
     CREATE TABLE tenant_members(user_id uuid,tenant_id uuid,status text,role text);
     ALTER TABLE tenant_client_agreements ADD COLUMN offer_id uuid,ADD COLUMN catalog_price_id uuid,ADD COLUMN status text DEFAULT 'draft',
-      ADD COLUMN collection_terms jsonb,ADD COLUMN collection_terms_version bigint DEFAULT 1,ADD COLUMN updated_at timestamptz DEFAULT now();
+      ADD COLUMN collection_terms jsonb,ADD COLUMN collection_terms_version bigint DEFAULT 1,ADD COLUMN installments_total integer,ADD COLUMN updated_at timestamptz DEFAULT now();
     INSERT INTO auth.users(id) VALUES('${actor}');INSERT INTO profiles VALUES('${actor}','${tenant}');
     INSERT INTO tenant_members VALUES('${actor}','${tenant}','active','owner');
     INSERT INTO tenant_products(id,tenant_id) VALUES('${offer}','${tenant}');
@@ -45,8 +48,8 @@ try{
   assert.equal(schedule.state,'ready');
   const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'};
   const conditions={schema_version:1,tax:treatment,fees:treatment};
-  sql(`INSERT INTO tenant_client_agreements(id,tenant_id,contact_id,offer_id,agreed_amount_minor,agreed_currency,term_kind,collection_terms)
-    VALUES('${termsId}','${tenant}','${client}','${offer}',350000,'USD','installments',${literal(schedule.terms)});`);
+  sql(`INSERT INTO tenant_client_agreements(id,tenant_id,contact_id,offer_id,agreed_amount_minor,agreed_currency,term_kind,installments_total,collection_terms)
+    VALUES('${termsId}','${tenant}','${client}','${offer}',350000,'USD','installment',10,${literal(schedule.terms)});`);
   const created=JSON.parse(sql(scope+`SELECT save_paige_agreement(_expected_tenant_id=>'${tenant}',_agreement_id=>NULL,_contact_id=>'${client}',_offer_id=>'${offer}',_commercial_terms_id=>'${termsId}',_title=>'Synthetic package',_body_markdown=>'Existing owner-authored service agreement.');`));
   const agreementId=created.id;assert(/^[0-9a-f-]{36}$/.test(agreementId));
   const draft={schema_version:3,total_minor:350000,agreement_snapshot:{id:agreementId,version:1},commercial_terms_reference:{id:termsId,version:1},commercial_conditions:conditions,
@@ -98,5 +101,73 @@ try{
   assert.throws(()=>sql(`UPDATE paige_agreements SET presented_body_markdown='Changed' WHERE id='${agreementId}';`),/23514/);checks++;
   assert.throws(()=>sql(`UPDATE paige_agreements SET commercial_presentation='{}'::jsonb WHERE id='${agreementId}';`),/23514/);checks++;
   assert.equal(sql(`SELECT commercial_presentation->>'payload_digest' FROM paige_agreements WHERE id='${agreementId}';`),prepared.payload_digest);checks++;
-  console.log(JSON.stringify({result:'PASS',checks,migrationReplay:2,scope:'Native synthetic service actor floor/canonical draft/freeze only; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
+  if(contextMigration){
+    const contextStart=checks;
+    sql(read('supabase/migrations/20270407000000_agreement_view_tracking.sql'));
+    sql(read('supabase/migrations/20271101153000_signing_context_unknown_economics.sql'));
+    sql(read(contextMigration));sql(read(contextMigration));
+    sql(`UPDATE paige_agreements SET status='sent',sent_at=now(),expires_at=now()+interval '1 day' WHERE id='${agreementId}';
+      INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order,token_hash,token_expires_at)
+      VALUES('${agreementId}','${tenant}','Synthetic Signer','signer@example.test',1,encode(digest(repeat('c',64),'sha256'),'hex'),now()+interval '1 day');`);
+    const context=(token="repeat('c',64)",role='anon')=>JSON.parse(sql(`SET ROLE ${role};SELECT row_to_json(p) FROM public.peek_agreement_signing(${token}) p;`));
+    const shown=context();assert.equal(shown.document_body,null);checks++;
+    assert.equal(shown.document_path,'retained-document');checks++;
+    assert.equal(shown.amount_minor,350000);checks++;assert.equal(shown.amount_currency,'usd');checks++;
+    assert.equal(JSON.stringify(shown).includes(key),false);checks++;
+    assert.equal(shown.is_valid,true);checks++;
+    assert.equal(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${agreementId}' AND event_type='viewed';`),'1');checks++;
+    context();assert.equal(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${agreementId}' AND event_type='viewed';`),'1');checks++;
+    sql(`UPDATE tenant_client_agreements SET agreed_amount_minor=999900,collection_terms_version=2 WHERE id='${termsId}';`);
+    assert.equal(context().amount_minor,350000);checks++;
+    const absent=context("repeat('d',64)");assert.equal(absent.is_valid,false);checks++;assert.equal(absent.document_path,null);checks++;
+    sql(`UPDATE paige_agreement_signers SET token_revoked_at=now() WHERE agreement_id='${agreementId}';`);
+    assert.equal(context().is_valid,false);checks++;
+    sql(`UPDATE paige_agreement_signers SET token_revoked_at=NULL,token_expires_at=now()-interval '1 second' WHERE agreement_id='${agreementId}';`);
+    assert.equal(context().is_valid,false);checks++;
+    sql(`UPDATE paige_agreement_signers SET token_expires_at=now()+interval '1 day' WHERE agreement_id='${agreementId}';
+      UPDATE paige_agreements SET expires_at=now()-interval '1 second' WHERE id='${agreementId}';`);
+    assert.equal(context().is_valid,false);checks++;
+    assert.equal(sql(`SELECT has_function_privilege('anon','public.peek_agreement_signing(text)','EXECUTE') AND has_function_privilege('authenticated','public.peek_agreement_signing(text)','EXECUTE');`),'t');checks++;
+    assert.equal(sql(`SELECT NOT EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid='public.peek_agreement_signing(text)'::regprocedure AND a.grantee=0 AND a.privilege_type='EXECUTE');`),'t');checks++;
+    assert.equal(JSON.parse(sql(`SELECT to_json(body_markdown) FROM paige_agreements WHERE id='${agreementId}';`)),input.body_markdown);checks++;
+    // Existing text-only contracts remain text, without invented economics.
+    const legacyBody='Synthetic historical text-only agreement.';
+    const legacy=JSON.parse(sql(scope+`SELECT save_paige_agreement(_expected_tenant_id=>'${tenant}',_agreement_id=>NULL,_contact_id=>'${client}',_title=>'Synthetic historical text',_body_markdown=>${text(legacyBody)});`));
+    sql(`UPDATE paige_agreements SET status='sent',sent_at=now(),content_sha256=encode(digest(${text(legacyBody)},'sha256'),'hex'),expires_at=now()+interval '1 day' WHERE id='${legacy.id}';
+      INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order,token_hash,token_expires_at)
+      VALUES('${legacy.id}','${tenant}','Synthetic Historical Signer','historical@example.test',1,encode(digest(repeat('b',64),'sha256'),'hex'),now()+interval '1 day');`);
+    const old=context("repeat('b',64)");assert.equal(old.document_body,legacyBody);checks++;
+    assert.equal(old.document_path,null);checks++;assert.equal(old.amount_minor,null);checks++;
+    // A historical frozen PDF keeps unknown economics and never exposes its key.
+    sql(`UPDATE paige_agreements SET expires_at=now()+interval '1 day' WHERE id='${agreementId}';
+      INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order,token_hash,token_expires_at)
+      VALUES('${agreementId}','${tenant}','Synthetic Second Signer','second@example.test',2,encode(digest(repeat('e',64),'sha256'),'hex'),now()+interval '1 day');`);
+    const original=JSON.parse(sql(`SELECT commercial_presentation FROM paige_agreements WHERE id='${agreementId}';`));
+    // Privileged fault injection in this unique synthetic DB only; not an
+    // ordinary-role write path or a production reproduction.
+    const corrupt=value=>sql(`BEGIN;SET LOCAL session_replication_role=replica;
+      UPDATE paige_agreements SET commercial_presentation=${value===null?'NULL':literal(value)} WHERE id='${agreementId}';COMMIT;`);
+    for(const change of [
+      value=>{value.payload_digest='b'.repeat(64);},
+      value=>{value.payload.source.client_id='bbbbbbbb-0000-4000-8000-000000000002';value.payload_digest=digest(canonicalPresentationJson(value.payload));},
+      value=>{value.payload.source.terms_version=99;value.payload_digest=digest(canonicalPresentationJson(value.payload));},
+      value=>{value.document_sha256='b'.repeat(64);},
+      value=>{value.presented_body_sha256='b'.repeat(64);},
+      value=>{value.payload.principal_minor='350000';value.payload_digest=digest(canonicalPresentationJson(value.payload));},
+    ]){
+      const changed=structuredClone(original);change(changed);corrupt(changed);
+      assert.equal(context("repeat('e',64)").is_valid,false);checks++;
+      assert.equal(sql(`SELECT status FROM paige_agreement_signers WHERE agreement_id='${agreementId}' AND signing_order=2;`),'pending');checks++;
+    }
+    corrupt(null);const historical=context();assert.equal(historical.document_body,null);checks++;
+    assert.equal(historical.document_path,'retained-document');checks++;assert.equal(historical.amount_minor,null);checks++;
+    corrupt(original);assert.equal(context("repeat('e',64)").amount_minor,350000);checks++;
+    assert.equal(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${agreementId}' AND event_type='viewed';`),'2');checks++;
+    sql(`BEGIN;SET LOCAL session_replication_role=replica;UPDATE paige_agreement_signers SET tenant_id='bbbbbbbb-0000-4000-8000-000000000002' WHERE agreement_id='${agreementId}' AND signing_order=2;COMMIT;`);
+    assert.equal(context("repeat('e',64)").is_valid,false);checks++;
+    sql(`BEGIN;SET LOCAL session_replication_role=replica;UPDATE paige_agreement_signers SET tenant_id='${tenant}' WHERE agreement_id='${agreementId}' AND signing_order=2;COMMIT;`);
+    assert.equal(context("repeat('e',64)").is_valid,true);checks++;
+    contextChecks=checks-contextStart;
+  }
+  console.log(JSON.stringify({result:'PASS',checks,contextChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
 }finally{database='postgres';sql(`DROP DATABASE ${own};`);}

@@ -23,6 +23,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
 import { TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
+import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +64,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const agreementParam = (url.searchParams.get("agreementId") ?? "").trim();
 
   let sealedKey: string | null = null;
+  let expectedDigest: unknown;
+  let retainedAgreementId: string | null = null;
   let filename = "agreement.pdf";
 
   if (token) {
@@ -76,7 +79,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const { data: signer } = await db.from("paige_agreement_signers")
-      .select("agreement_id,token_expires_at,token_revoked_at")
+      .select("agreement_id,tenant_id,token_expires_at,token_revoked_at")
       .eq("token_hash", tokenHash).maybeSingle();
     if (!signer) return refuse();
     if (signer.token_revoked_at) return refuse();
@@ -84,9 +87,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // The agreement is read FROM THE TOKEN ROW. No query parameter names or steers it.
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,content_storage_key,sealed_storage_key")
+      .select("id,tenant_id,title,status,expires_at,content_storage_key,content_sha256,sealed_storage_key,sealed_sha256")
       .eq("id", signer.agreement_id).maybeSingle();
-    if (!agreement) return refuse();
+    if (!agreement || agreement.tenant_id !== signer.tenant_id) return refuse();
+    retainedAgreementId = String(agreement.id);
 
     // ── ONE TOKEN, TWO DOCUMENTS, decided by the agreement's state — not by the caller ────────────
     // BEFORE completion the signing token opens the PRESENTED document: the exact frozen bytes the
@@ -97,9 +101,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (agreement.status === "completed") {
       if (!agreement.sealed_storage_key) return refuse();
       sealedKey = String(agreement.sealed_storage_key);
+      expectedDigest = agreement.sealed_sha256;
     } else if (["sent", "viewed", "partially_signed"].includes(String(agreement.status))) {
+      if (agreement.expires_at && new Date(String(agreement.expires_at)).getTime() <= Date.now()) return refuse();
       if (!agreement.content_storage_key) return refuse();
       sealedKey = String(agreement.content_storage_key);
+      expectedDigest = agreement.content_sha256;
     } else {
       return refuse();
     }
@@ -124,10 +131,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (isAdmin !== true) return refuse();
 
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,sealed_storage_key")
+      .select("id,title,status,sealed_storage_key,sealed_sha256")
       .eq("id", agreementParam).eq("tenant_id", tenantId).maybeSingle();
     if (!agreement || agreement.status !== "completed" || !agreement.sealed_storage_key) return refuse();
     sealedKey = String(agreement.sealed_storage_key);
+    expectedDigest = agreement.sealed_sha256;
+    retainedAgreementId = String(agreement.id);
     filename = safeFilename(String(agreement.title));
   }
 
@@ -144,7 +153,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }, 503);
   }
 
-  return new Response(await file.data.arrayBuffer(), {
+  const bytes = new Uint8Array(await file.data.arrayBuffer());
+  if (!await verifyRetainedAgreementPdf(bytes, expectedDigest)) {
+    console.error("[agreement-document] retained document integrity check failed", { agreementId: retainedAgreementId });
+    return json({ ok: false, error: "This document is temporarily unavailable. Please try again shortly." }, 503);
+  }
+  return new Response(bytes.buffer as ArrayBuffer, {
     status: 200,
     headers: {
       ...corsHeaders,

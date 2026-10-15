@@ -828,7 +828,14 @@ jobs:
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts \
-            supabase/functions/_shared/agreements/commercial-presentation.test.ts
+            supabase/functions/_shared/agreements/commercial-presentation.test.ts \
+              supabase/functions/_shared/agreements/retained-document.test.ts
+            # The real endpoint import registers Deno.serve. Its isolated test
+            # intercepts every transport and never starts a listener or signs.
+            deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+              supabase/functions/sign-agreement/preflight.test.ts
+            deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+              supabase/functions/agreement-document/retained-read.test.ts
           # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
           # contracts. Same deny-all sandbox; the modules under test are pure by design.
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \

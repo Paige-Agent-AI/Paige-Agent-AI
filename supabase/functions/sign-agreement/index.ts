@@ -21,6 +21,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
+import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 import { checkSignatureImage, decideSigningAccess, MAX_BODY_BYTES, TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
 import { assertDocumentIsRenderable, UnrenderableDocumentError, wouldLoseCharacters } from "../_shared/agreements/document.ts";
 import { consentEvidenceText, ESIGN_CONSENT_DISCLOSURE } from "../_shared/agreements/disclosure.ts";
@@ -98,14 +99,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const { data: signer } = await db.from("paige_agreement_signers")
-    .select("id,agreement_id,tenant_id,status,signing_order,full_name,email,token_expires_at,token_revoked_at")
+    .select("id,agreement_id,tenant_id,status,signing_order,full_name,email,token_hash,token_expires_at,token_revoked_at")
     .eq("token_hash", tokenHash).maybeSingle();
   if (!signer) return refuse();
 
   const now = new Date();
 
   const { data: agreement } = await db.from("paige_agreements")
-    .select("id,tenant_id,title,body_source,body_markdown,status,expires_at")
+    .select("id,tenant_id,title,body_source,body_markdown,status,expires_at,content_storage_key,content_sha256")
     .eq("id", signer.agreement_id).maybeSingle();
 
   // Out of turn is a refusal for the same reason as everything else: this person cannot sign yet, and
@@ -126,7 +127,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     now,
   });
   if (!decision.allow || !decision.canSign) return refuse();
-  if (!agreement) return refuse();
+  if (!agreement || agreement.tenant_id !== signer.tenant_id) return refuse();
 
   // ── Now the parts that are the SIGNER's mistake to make, and are told plainly ──────────────────
   if (!consentRead || !consentEsign) {
@@ -167,6 +168,35 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }, 422);
     }
     throw e;
+  }
+
+  // The seal checks again after the signature. Check the same frozen presentation
+  // BEFORE the one-way write as well: an absent or altered file/text must not leave
+  // a new signer bound to a record we already know cannot be retained faithfully.
+  // No rendering or mutable commercial-terms lookup belongs in this check.
+  let presentationVerified = false;
+  try {
+    if (agreement.content_storage_key) {
+      const presented = await db.storage.from("paige-agreements").download(agreement.content_storage_key);
+      if (!presented.error && presented.data) {
+        presentationVerified = await verifyRetainedAgreementPdf(
+          new Uint8Array(await presented.data.arrayBuffer()), agreement.content_sha256,
+        );
+      }
+    } else if (agreement.body_source !== "tenant_upload" && typeof agreement.body_markdown === "string") {
+      presentationVerified = typeof agreement.content_sha256 === "string" &&
+        /^[a-f0-9]{64}$/.test(agreement.content_sha256) &&
+        await sha256Hex(agreement.body_markdown) === agreement.content_sha256;
+    }
+  } catch {
+    // Storage/verification failure cannot grant permission to commit a signature.
+  }
+  if (!presentationVerified) {
+    console.error("[sign-agreement] retained presentation could not be verified", { agreementId: agreement.id });
+    return json({
+      ok: false,
+      error: "This agreement cannot be signed right now because its retained document could not be verified. Please reload or contact the sender.",
+    }, 503);
   }
 
   const tenantContact = await tenantContactForDisclosure(db as never, String(signer.tenant_id));
@@ -273,7 +303,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       signing_id: agreement.id,
       signed_pdf_path: null,
       completed: false,
-      note: "Your signature is recorded. The completed copy is still being prepared and will be emailed to you.",
+      note: "Your signature is recorded. The completed retained copy is not ready yet.",
     });
   }
 

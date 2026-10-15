@@ -1,0 +1,972 @@
+{
+  "rows": [
+    {
+      "file": "a-light-1536-770-closed.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:54:34.233Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "346e48f3473abfb99d20191a5a10abb7ed229647f55bcbed554fae4595f01b2f",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "a-light-1536-770-open.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:54:35.367Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "131a59806e560680a4aa339d2fe04dd45505f357f2eb57d280cd8029d70d1527",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "a-light-1366-768-closed.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:54:36.401Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "1aa44605d09125cca03912d9de5fd771287c17fb8a40be99c0c9e594d1fe91aa",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-light-1366-768-open.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:54:37.323Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "fd1aa8e3e1ff2e289655386b8054813cf3837e022bd5ae5356441124680771ae",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-light-1024-768-closed.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:54:38.450Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "b7c9a143f4b94e3c947eb0e5b80ec017ff6c8664039a1a4b40d4fc330a6bfe8b",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-light-1024-768-open.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:54:39.667Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "f20c0ef7db7b2616770757527366549a16c12451164eea33684414f53f79d8dc",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-light-900-1000-closed.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:54:40.792Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "7dce424191b47f8bd146358a784b5d646d769ea2c1eb6cd345b713063775673e",
+      "exactRaster": true,
+      "disposition": "PARTIAL_RENDER_VIEWPORT",
+      "reason": "Image footer ends near768 although recorded DOM/raster is900x1000; full frame consistency unverified"
+    },
+    {
+      "file": "a-light-900-1000-open.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:54:41.978Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "b97f81a26d02ecc0c4bc2b5ee0cea2b28a3f41e194ec0be0aedf9183a6d88b20",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-1536-770-closed.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:54:53.414Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "14ebb362811cc7276fd74073ea59a11534d62f8d7ccf440050df62f1b49d4a2d",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "b-light-1536-770-open.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:54:58.533Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "b82aac24b24e73e3abddfa4d602df7fd7b831f34be0c7951c204cc325339190b",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "b-light-1366-768-closed.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:55:01.286Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "04fe79db531cffbd4fe51c467ec7cbf7b35448b2f742db2ec43bccae3d22ab04",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-1366-768-open.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:55:06.294Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "3941c6ca9051d9ff91530ebbfac5121421d34711877f58136d72ef583269a5f6",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-1024-768-closed.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:55:07.195Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "257def32d654dd18d319cc2b85b18e67c13622b51bc898a67f7a8897b2c33511",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-1024-768-open.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:55:08.040Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "7033ae6d9fb0609791a6467838c3162fab4449930ffd7b443b16220cc3a8ecd9",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-900-1000-closed.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "light",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:55:09.173Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "b160af5e00efc5606025a97cae7d7c55ed13cb5a7f38cfb49ccf427334ea1899",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-light-900-1000-open.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "light",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:55:12.404Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "e7d7d9d517d5cff3f7a9495556d292f8e81a481ff22c2f087de53ddb4286af73",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-dark-1536-770-closed.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:55:22.971Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "1f3bf59304fe499ad196707b01ede5b39d2f18754906de329d0a0245df78f342",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "a-dark-1536-770-open.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:55:24.393Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "1375dcb93665a03c14b93a103014fac27f57131b84ef747571c5c83fd56d6613",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "a-dark-1366-768-closed.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:55:25.462Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "1afd0a36bdd796ef4513aa5e9d07ca9f6817bbd31abdd848bf2275f4d2be64b6",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-dark-1366-768-open.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:55:30.125Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "1143e9089769d7c96dcd16ba227af7cfc70328fef5715e3f3275b3e7802b7396",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-dark-1024-768-closed.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:55:31.447Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "036d7f47709475b5127a0cd12d1d4bfb2528b37410f4ba8de882009d7d95be4f",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-dark-1024-768-open.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:55:34.090Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "775f3c223acfa6cfd080d3ad1c73988188b6994d9cc754b4902b47e64638c5e5",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "a-dark-900-1000-closed-retry.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:55:35.484Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "53c2ccdbe75ed0fedaed75bee060bca0b9d9aff2c8069dbfceef0cc0165f5821",
+      "exactRaster": true,
+      "retryDomEvidence": "a-dark-900-1000-closed-retry.dom.json",
+      "disposition": "INVALID_RENDER_STATE",
+      "reason": "Native image shows Current scoped page while DOM record says failure; cannot serve as failure proof"
+    },
+    {
+      "file": "a-dark-900-1000-open.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:55:36.757Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "fe0749cd8c1bbc8d85112b0f4e64caf5e97dba22839c6386c23f71074103532a",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-1536-770-closed.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:55:58.046Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "f7383040dfb29422e5f7a97d07ab03c51bf5baa0c0c8295cb8d788fde7214a9b",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "b-dark-1536-770-open.jpg",
+      "requested": [
+        1536,
+        770
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 770,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1536
+      },
+      "observedUtc": "2026-10-15T21:55:59.694Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1535,
+        770
+      ],
+      "format": "JPEG",
+      "sha256": "3005f00df037c36dd82d4c51f604a9373ab4ad61ee458c4ca08c90f3c81c251c",
+      "exactRaster": false,
+      "disposition": "BOUNDED_NATIVE_EDGE_CAPTURE"
+    },
+    {
+      "file": "b-dark-1366-768-closed.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:56:20.506Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "e13edd6710880a99a40f733fe0509a900571f5dc8903aca84b9a85a0a98a81dd",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-1366-768-open.jpg",
+      "requested": [
+        1366,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1366
+      },
+      "observedUtc": "2026-10-15T21:56:21.546Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1366,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "5ee90b952b0e841190ef7bfa99f1b719afe691d04f87e52a0a07072263c9438c",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-1024-768-closed.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:56:23.972Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "92619b0adbc1931b6d9d5b5670113ba703cf4e5d5f187cbdb12f32fecb8fd686",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-1024-768-open.jpg",
+      "requested": [
+        1024,
+        768
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 768,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 1024
+      },
+      "observedUtc": "2026-10-15T21:56:25.677Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        1024,
+        768
+      ],
+      "format": "JPEG",
+      "sha256": "45bb5c3d15b2b254cd1459c003126401dbba7a21d0dca3fc67c85f5bd63d1568",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-900-1000-closed.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:56:29.499Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "6dfb9bb34a2914d28907b482cb324ee565755224ac768c0e0e1c52a38de5ad0c",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    },
+    {
+      "file": "b-dark-900-1000-open.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "b",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "open",
+        "theme": "dark",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:56:30.409Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        1000
+      ],
+      "format": "JPEG",
+      "sha256": "5e4c367da42bd443ac29c1317a08b0ee134f82f5c468c09be53b8cbc3da90633",
+      "exactRaster": true,
+      "disposition": "DOM_ASSERTION_RECORDED_RENDER_REVIEW_REQUIRED"
+    }
+  ],
+  "exactRaster": 24,
+  "boundary": "32 recorded DOM checks and24 exact raster dimensions do not prove32 current rendered states; native state/viewport inconsistencies remain HOLD. Original bytes retained, no pixel editing.",
+  "invalidCaptures": [
+    {
+      "file": "a-dark-900-1000-closed.jpg",
+      "requested": [
+        900,
+        1000
+      ],
+      "dom": {
+        "actor": "a",
+        "alert": true,
+        "height": 1000,
+        "links": 9,
+        "overflow": false,
+        "paige": "closed",
+        "theme": "dark",
+        "width": 900
+      },
+      "observedUtc": "2026-10-15T21:55:35.484Z",
+      "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+      "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+      "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof",
+      "raster": [
+        900,
+        675
+      ],
+      "format": "JPEG",
+      "sha256": "ee860a5b67ea4d69880b479006769dceee178dcf455b2e7e1de6dc0dffeb8840",
+      "exactRaster": false,
+      "disposition": "INVALID_RENDER_PROOF",
+      "reason": "Native capture returned900x675 for an exact900x1000 DOM; original retained"
+    }
+  ],
+  "boundedOnePixelCaptures": 8,
+  "recordedExactDomStates": 32,
+  "completeRenderAcceptance": "UNVERIFIED"
+}

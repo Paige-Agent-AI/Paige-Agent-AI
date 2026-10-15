@@ -1,0 +1,21 @@
+{
+  "file": "a-dark-1366-768-closed.jpg",
+  "requested": [
+    1366,
+    768
+  ],
+  "dom": {
+    "actor": "a",
+    "alert": true,
+    "height": 768,
+    "links": 9,
+    "overflow": false,
+    "paige": "closed",
+    "theme": "dark",
+    "width": 1366
+  },
+  "observedUtc": "2026-10-15T21:55:25.462Z",
+  "sourceProductFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+  "fixtureSource": "78a54dac9dfc70c16117faaea230022e92f9123c",
+  "boundary": "Actual source; synthetic identity/presence/department/version only; no authenticated or business execution proof"
+}

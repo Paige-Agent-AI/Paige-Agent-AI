@@ -236,22 +236,22 @@ function CapabilitiesView() {
   return (
     <div className="spw-management-view">
       <PanelHeader
-        eyebrow="Capability Registry"
-        title="What PAIGE can actually use"
-        description="Capabilities are skills, tools, connectors, and executable abilities. Marketplace acquisition remains separate and is not implemented here."
-        state={<TruthPill tone="live">Registry read</TruthPill>}
+        eyebrow="Skill catalogue"
+        title="Workspace capabilities"
+        description="Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them."
+        state={<TruthPill>Catalogue</TruthPill>}
       />
       <div className="spw-scroll">
         <section className="spw-capabilities" aria-label="Capabilities">
-          <div className="spw-cap-head"><span>Capability</span><span>Availability</span><span>Authority</span></div>
-          {capability.loading && <div className="spw-state" role="status">Loading available capabilities…</div>}
+          <div className="spw-cap-head"><span>Capability</span><span>Status</span><span>Access</span></div>
+          {capability.loading && <div className="spw-state" role="status">Loading this workspace’s skill catalogue…</div>}
           {capability.error && <div className="spw-state spw-state-error" role="alert"><strong>Capabilities could not be loaded.</strong><span>{capability.error}</span><button type="button" onClick={capability.refresh}><RotateCw aria-hidden size={14} /> Retry</button></div>}
-          {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No callable capabilities are available</strong><span>This is an honest empty registry state, not a permissions promise.</span></div>}
+          {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No skills are listed</strong><span>This workspace’s skill catalogue is empty.</span></div>}
           {rows.map((skill) => (
             <div className="spw-cap-row" key={skill.slug}>
               <div><strong>{skill.n}</strong><small>{skill.d || skill.cat || "Registry description unavailable"}</small></div>
-              <TruthPill tone={skill.on ? "live" : "unavailable"}>{skill.on ? "Available" : "Unavailable"}</TruthPill>
-              <span>{skill.ro ? "Read only" : "Ask first"}</span>
+              <TruthPill>{skill.on ? "Listed" : "Inactive"}</TruthPill>
+              <span>Unverified</span>
             </div>
           ))}
           {/* §13 — THIS ROW CONTRADICTED THE SURFACE IT DESCRIBES. It read "Partial / Not

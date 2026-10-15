@@ -14,9 +14,10 @@ const A = "e4000000-0000-4000-8000-0000000c0001";
 const B = "e4000000-0000-4000-8000-0000000c0002";
 
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
-  it("names exactly the six read destinations", () => {
+  it("retains the E4 destinations and admits only the bounded E2 Executive destinations", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
+      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind",
     ]);
   });
 

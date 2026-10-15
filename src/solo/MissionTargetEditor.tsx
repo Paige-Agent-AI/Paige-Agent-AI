@@ -9,11 +9,11 @@ import type { TargetMetricRead } from "./mission-target-client";
 import type { TargetAttempt } from "./mission-target-recovery";
 import { formatTargetValue, targetPeriod, targetValue } from "./mission-target-form";
 
-type Props = { actorId: string; tenantId: string; missionId: string; missionRevision: number; target: MissionTarget | null; busy: boolean;
+type Props = { actorId: string; tenantId: string; missionId: string; missionRevision: number; target: MissionTarget | null; busy: boolean; blocked?: boolean;
   readMetric: (query: { metricKey: string; rangeKey: MetricRequestIdentity["rangeKey"]; rangeStart: string; rangeEnd: string }) => Promise<TargetMetricRead>;
   onSave(attempt: TargetAttempt): Promise<void>; onCancel(): void };
 const metricName = (key: string) => key.split(".").map(part => { const words = part.replace(/_/g, " "); return words[0].toUpperCase() + words.slice(1); }).join(" / ");
-export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevision, target, busy, readMetric, onSave, onCancel }: Props) {
+export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevision, target, busy, blocked = false, readMetric, onSave, onCancel }: Props) {
   const labelId = useId(), titleRef = useRef<HTMLInputElement>(null), series = useRef(0);
   const initialZone = target?.period.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const today = localDateInZone(Date.now(), initialZone) ?? new Date().toISOString().slice(0, 10);
@@ -48,7 +48,7 @@ export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevis
   const numeric = kind === "count" || kind === "decimal" || kind === "currency_totals";
   const currencies = metric?.values?.kind === "currency_totals" ? metric.values.by_currency.map(row => row.currency) : [];
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); if (busy) return;
+    event.preventDefault(); if (busy || blocked) return;
     const period = targetPeriod(start, through, zone);
     if (title.trim().length < 3) { setError("Give this target a title of at least three characters."); titleRef.current?.focus(); return; }
     if (!period) { setError("Choose valid dates and a calendar that resolves both days. The end date includes that whole day."); return; }
@@ -71,11 +71,11 @@ export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevis
   };
   return <form className="mgt-editor" onSubmit={event => void submit(event)} aria-labelledby={labelId}>
     <div className="mgt-heading"><h4 id={labelId}>{target ? "Revise target" : "Add measured target"}</h4><button type="button" className="sd-btn sd-btn-sm" onClick={onCancel}><X /> Cancel</button></div>
-    <fieldset disabled={busy}><legend className="sr-only">Target definition</legend>
+    <fieldset disabled={busy || blocked}><legend className="sr-only">Target definition</legend>
       <label className="ov-field"><span>Title</span><input ref={titleRef} className="fin" value={title} maxLength={180} required onChange={e => setTitle(e.target.value)} /></label>
       <label className="ov-field"><span>Measurement</span><Select value={key} onValueChange={setKey}><SelectTrigger aria-label="Measurement" className="fin"><SelectValue /></SelectTrigger><SelectContent>{BUSINESS_METRIC_KEYS.map(item => <SelectItem key={item} value={item}>{metricName(item)}</SelectItem>)}</SelectContent></Select></label>
       <div className="mgt-definition" role="status">{checking ? "Checking the measurement definition." : metric ? <><b>{metric.label}</b><p>{metric.definition}</p>{!numeric && <p>This source does not currently provide a numeric measurement for a target.</p>}</> : "This measurement could not be verified."}</div>
-      <button type="button" className="sd-btn sd-btn-sm" disabled={busy || checking} onClick={() => setRefreshDefinition(v => v + 1)}>Refresh measurement definition</button>
+      <button type="button" className="sd-btn sd-btn-sm" disabled={busy || blocked || checking} onClick={() => setRefreshDefinition(v => v + 1)}>Refresh measurement definition</button>
       <div className="mgt-fields"><label className="ov-field"><span>Start date</span><input className="fin" type="date" value={start} required onChange={e => setStart(e.target.value)} /></label><label className="ov-field"><span>Through date, included</span><input className="fin" type="date" value={through} required onChange={e => setThrough(e.target.value)} /></label></div>
       <label className="ov-field"><span>Calendar</span><input className="fin" value={zone} required maxLength={100} onChange={e => setZone(e.target.value)} aria-describedby={`${labelId}-calendar`} /><small id={`${labelId}-calendar`}>Use a named time zone, such as America/New_York or UTC. Saved dates retain this calendar.</small></label>
       <label className="ov-field"><span>Reporting range</span><Select value={range} onValueChange={value => setRange(value as typeof range)}><SelectTrigger className="fin" aria-label="Reporting range"><SelectValue /></SelectTrigger><SelectContent>{["week", "month", "quarter", "year"].map(item => <SelectItem key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</SelectItem>)}</SelectContent></Select></label>
@@ -86,6 +86,6 @@ export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevis
     </fieldset>
     {error && <p className="ov-err" role="alert">{error}</p>}
     <p className="mgt-caption">Saving changes this Play's target. Actual performance is measured separately from business records.</p>
-    <div className="mgt-actions"><button type="submit" className="sd-btn sd-btn-sm sd-act" disabled={busy || checking || !numeric}><Check />{busy ? "Verifying change" : target ? "Save target revision" : "Save target"}</button></div>
+    <div className="mgt-actions"><button type="submit" className="sd-btn sd-btn-sm sd-act" disabled={busy || blocked || checking || !numeric}><Check />{busy ? "Verifying change" : target ? "Save target revision" : "Save target"}</button></div>
   </form>;
 }

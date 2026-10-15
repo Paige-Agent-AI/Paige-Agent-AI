@@ -219,6 +219,13 @@ These synthetic source checks are not authenticated customer acceptance or fullO
 Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
 rendered/native coverage, production release, protected acceptance and owner review remain owed.
 
+Native corrective review contract: serialize each overlapping same-series issue/resolve
+cycle inside the existing SDK reader, without caching values or changing Analytics issuer
+semantics. A pending attempt keeps its mounted editor/draft locked until its outcome is
+known. Revision conflicts retain draft inputs, require an explicit latest-record inspection
+and never silently substitute newer target/Play CAS or the original request identity.
+All changes remain in the native consumer boundary; protected acceptance stays owed.
+
 ## F7 Executive / conversation read integration — pre-edit contract
 
 The preceding foundation candidate text is historical: #2167 merged892b1bdfe with

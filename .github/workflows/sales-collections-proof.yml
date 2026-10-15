@@ -19,6 +19,7 @@ on:
       - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - 'scripts/agreements/signing-context-economics-proof.mjs'
       - 'scripts/agreements/commercial-presentation-pg.mjs'
+      - 'scripts/sql/e04-client-commercial-status-proof.mjs'
       - 'supabase/functions/_shared/agreements/commercial-presentation*'
       - '.github/workflows/sales-collections-proof.yml'
   push:
@@ -40,6 +41,7 @@ on:
       - 'scripts/sql/int2086-shared-compatibility-proof.mjs'
       - 'scripts/agreements/signing-context-economics-proof.mjs'
       - 'scripts/agreements/commercial-presentation-pg.mjs'
+      - 'scripts/sql/e04-client-commercial-status-proof.mjs'
       - 'supabase/functions/_shared/agreements/commercial-presentation*'
       - '.github/workflows/sales-collections-proof.yml'
 permissions:
@@ -139,3 +141,7 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/agreements/commercial-presentation-pg.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data repaired
+      - name: Authenticated client scope, canonical balances, invoice ledger and reload
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/e04-client-commercial-status-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data

@@ -19,7 +19,7 @@ STATE_COVERAGE: UNVERIFIED: source drift, invalid/extra fields, dated-row change
 TRUTHFUL_STATE_LABELS: PASS: prepared/frozen is not approved, signed, paid, effective or delivered.
 SOLO_UI: NO: existing Sales destination is unchanged; these helpers have no new mounted surface.
 UNVERIFIED: approval consumption, both signing paths, effective terms, hosted storage, settlement and O1–O12 customer acceptance.
-INTERNAL_BUILD_IDENTITY: implementation=8ae013af0daf04775bcc1a90e36c66c41a7da39c; deployment=UNVERIFIED; environment=local development native PG16 and source runners; migrations=PROOF_OWED(20271101163000 production persistence); edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: implementation=8ae013af0daf04775bcc1a90e36c66c41a7da39c; deployment=UNVERIFIED; environment=local development native PG16 and source runners; migrations=PROOF_OWED(20271105101000 production persistence); edge=NOT_APPLICABLE; evidence=this record
 RELEASE_CHANNEL: development: no production activation or release claim.
 RELEASE_CLASSIFICATION: internal-only: incomplete source/presentation/freeze dependency for O1–O3.
 CUSTOMER_RELEASE_IDENTITY: none: full E04 outcome is incomplete.
@@ -49,3 +49,10 @@ The default Vitest glob and a cached-only Deno attempt executed zero tests. The 
 Canonical Collections generates every date and amount. SQL validates exact source, finite row shape, total and explicit dated-row provenance; it does not calculate a competing payment schedule. The PDF hash in the native database fixture is synthetic; only the separate Deno render is a real PDF. Neither is hosted customer signing evidence. Historical economic compatibility remains unknown.
 
 All twelve E04 outcomes remain mandatory and incomplete. This record is supporting development evidence, not a replacement capability register, outcome matrix or acceptance record. ANT-51 remains the E04 matrix and ANT-52 the protected acceptance record.
+
+
+## Forward-only migration identity reconciliation — 2026-10-15 UTC
+
+Production recorded the released Knowledge migration20271102110000. This E04 migration is NOT recorded in production and is moved forward without changing a single SQL byte. Existing historical filenames and test observations above remain historical evidence. Current proof loaders and this record's pending migration field use the new identity. Preview reconciliation may change only the exact matching installed migration receipt version after branch/data/receipt checks; it must retain its original name and statement array. No production history rewrite, schema replay, reset, include-all bypass, activation or authenticated acceptance follows from this source rename.
+
+Current mappings in this source: 20271101153000 → 20271105100000, 20271101163000 → 20271105101000.

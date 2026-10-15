@@ -1,5 +1,5 @@
 {
-  "packagedAt": "2026-10-15T00:53:00.964Z",
+  "packagedAt": "2026-10-15T01:28:04.087Z",
   "status": "PARTIAL",
   "proofClass": "Actual component tree with simulated boundaries; author evidence only",
   "sourceGeometry": "430dff611c4b47a5579fb45d8c7c555bb6792c56",
@@ -81,9 +81,17 @@
       "height": 720,
       "sha256": "2a7a4985c135b370c4576497a8f5f314d30c0f852dc9b3ed74a23e0216538c90",
       "source": "f2a6676ead640610b7399983848da9367d054668"
+    },
+    {
+      "file": "e03-actual-reopened-unknown.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d007c9dbcb9833995b856f95fa767c8133d6b74cb949697d42145feadffa722f",
+      "source": "50cbdc58203a5b20dc2678d810096ab903e5ba7e"
     }
   ],
   "fullSoloShellAndActualPaigePanel": "UNVERIFIED",
   "authenticatedTenantRoleProviderAcceptance": "UNVERIFIED",
-  "privateOwnerScreenshot": "Excluded; no real customer data included"
+  "privateOwnerScreenshot": "Excluded; no real customer data included",
+  "sourceReturnHistory": "50cbdc58203a5b20dc2678d810096ab903e5ba7e"
 }

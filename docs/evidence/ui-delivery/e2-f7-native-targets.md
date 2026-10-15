@@ -25,7 +25,7 @@ MUST_NOT_HAPPEN: No second goal/actuals/approval/activity store, silent new requ
 ACCEPTANCE_CRITERIA: Owner creates/revises and transitions a real measured Play target through existing authority; sees compatible actuals/variance and exact saved receipt; reload/history independently retrieves the same authoritative revisions; unknown response reconciles identical original key/args/CAS; denied/foreign/revoked callers cannot act or read private targets.
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: Current actor/workspace owner context, canonical target immutable revisions and receipts, issuer/resolver, existing owner Edge door and record_capability_run. Native actions use owner-prefixed attribution keys and the current Rail display chain. Shared Chat admission, INT-346, provider, approval, external communications and E04/E05 runtime ownership remain unchanged.
-INTERNAL_BUILD_IDENTITY: e612e19caa7f98c0f07c2934c944b3f713488902; deployment=none-local-consumer; environment=local; migrations=PROOF_OWED(20271103100000_e2_native_target_attribution and20271103101000_e2_target_history_receipts); edge=PROOF_OWED(business-mission-action existing owner door); evidence=docs/delivery/paige-business-mission-system-phase2.md native continuation; identity-role=corrected source composed with current main bca8642745ecf7fc9a31dca0aa90bb4693e61718; final exact review identity is recorded in PR2174.
+INTERNAL_BUILD_IDENTITY: ca7db8d5992ceade25617ecc4e703fa8ef0e44b2; deployment=none-local-consumer; environment=local; migrations=PROOF_OWED(20271104100000_e2_native_target_attribution and20271104101000_e2_target_history_receipts); edge=PROOF_OWED(business-mission-action existing owner door); evidence=docs/delivery/paige-business-mission-system-phase2.md native continuation; identity-role=corrected source composed with current main bca8642745ecf7fc9a31dca0aa90bb4693e61718; final exact review identity is recorded in PR2174.
 RELEASE_CHANNEL: development: consumer is not merged or customer-reachable.
 RELEASE_CLASSIFICATION: internal-only: bounded native consumer implementation with integration and customer proof still owed.
 CUSTOMER_RELEASE_IDENTITY: none: complete target workflow and all19 outcomes are not accepted.
@@ -62,6 +62,8 @@ Current-main composition includes the existing E09 invitation release. Its forwa
 advances the repository frontier beyond the two still-unreleased native target migrations.
 Those two files are renamed above that frontier with unchanged SQL bytes; no applied history,
 deployed migration, shared owner source or production database is rewritten.
+The earlier20271103100000 choice was then found reserved by E01 in ANT-147;
+E02 preserves that prior reservation and uses20271104100000/20271104101000.
 
 Exact target revision plus existing canonical receipt are checked before Rail. Returned SDK
 transport loss and readback loss stay uncertain. The native owner display wrapper delegates

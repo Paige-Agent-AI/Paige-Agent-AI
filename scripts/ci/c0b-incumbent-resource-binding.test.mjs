@@ -9,6 +9,8 @@ test('all 29 reviewed incumbent adapters bind to real dispatch and dependency so
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
+ ['E04 attribution targets wrong canonical record',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','sales_effectuate_commercial_terms: "clients",')],
+ ['E04 attribution entry removed',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','')],
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],

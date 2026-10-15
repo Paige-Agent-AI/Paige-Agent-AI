@@ -7,6 +7,7 @@ import {prepareCommercialPresentation,canonicalPresentationJson} from '../../sup
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 import {proveAcceptedCommercialRecord} from './accepted-commercial-proof.mjs';
 import {proveEffectiveCommercialTerms} from './effective-commercial-proof.mjs';
+import {proveEffectuationCatalogue} from './effectuation-catalogue-proof.mjs';
 const [psql,port,user,directory,mode]=process.argv.slice(2);
 const contextIndex=process.argv.indexOf('--signing-context');
 const contextMigration=contextIndex>=0?process.argv[contextIndex+1]:null;
@@ -14,6 +15,9 @@ const acceptedIndex=process.argv.indexOf('--accepted-record');
 const acceptedMigration=acceptedIndex>=0?process.argv[acceptedIndex+1]:null;
 const effectiveIndex=process.argv.indexOf('--effective-terms');
 const effectiveMigration=effectiveIndex>=0?process.argv[effectiveIndex+1]:null;
+const catalogueIndex=process.argv.indexOf('--effectuation-catalogue');
+const catalogueMigration=catalogueIndex>=0?process.argv[catalogueIndex+1]:null;
+if(catalogueIndex>=0)assert(catalogueMigration&&effectiveMigration&&mode==='repaired');
 if(effectiveIndex>=0)assert(effectiveMigration&&acceptedMigration&&contextMigration&&mode==='repaired');
 if(acceptedIndex>=0)assert(acceptedMigration&&contextMigration&&mode==='repaired');
 if(contextIndex>=0)assert(contextMigration&&mode==='repaired');
@@ -186,5 +190,6 @@ try{
   }
   const acceptedChecks=acceptedMigration?await proveAcceptedCommercialRecord({sql,read,scope,tenant,actor,client,offer,termsId,invoiceId,agreementId,prepared,input,presented,migration:acceptedMigration}):0;
   const effectiveChecks=effectiveMigration?await proveEffectiveCommercialTerms({sql,concurrent,read,scope,tenant,actor,termsId,invoiceId,agreementId,prepared,migration:effectiveMigration}):0;
-  console.log(JSON.stringify({result:'PASS',checks,contextChecks,acceptedChecks,effectiveChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing/accepted/effective context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
+  const catalogue=catalogueMigration?proveEffectuationCatalogue({sql,read,scope,tenant,migration:catalogueMigration}):null;
+  console.log(JSON.stringify({result:'PASS',checks,contextChecks,acceptedChecks,effectiveChecks,catalogue,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing/accepted/effective context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
 }finally{database='postgres';sql(`DROP DATABASE ${own};`);}

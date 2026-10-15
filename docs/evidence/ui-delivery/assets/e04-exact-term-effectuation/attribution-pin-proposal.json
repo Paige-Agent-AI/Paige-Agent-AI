@@ -1,0 +1,154 @@
+{
+  "base": "0995f52c52907b4a468b9b002a93f56580c74e6f",
+  "delta": "Exactly one attribution-only canonical table property; all prior Chat bytes and every dispatch/import unchanged",
+  "sameSourceAfterRemovingSingleRow": true,
+  "independentReview": "PROOF_OWED",
+  "admission": "UNAVAILABLE; no Chat binding, tool, branch or protocol change",
+  "proposal": [
+    {
+      "tool": "comms_setup_calling",
+      "old": "fbd3781ca6985116730b22ec93f0e553bd596603d1a013fba15f006f4d3bf02c",
+      "proposed": "8a6557a86b219b0558e36c38e8a6465c988b45bbe3d5cf0f517ca086f68a64fc"
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "old": "9b9116b51abcfecd2fa6efa3a80866ee728b87c605504b530a3f467dcf623f78",
+      "proposed": "8ff6d9f0531986c627f357a08e18aba1521d7dea283fa30644f22cf7de511fa3"
+    },
+    {
+      "tool": "calendar_link_send",
+      "old": "cc3223743be61015e7330ef6eb2bf334b0a5e4f16c54a1e6fa78191fccb58513",
+      "proposed": "05175dee3649d9da1ad6f2e4742fb48883f9926557bafc51a81e199d905e492c"
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "old": "d18ca4d8e26c200d15ecf554d70bc4abb49613abfcf35e04e09c2dc9c1cd8d89",
+      "proposed": "9f1da231c1310914239c07be08ec1c82c49901124f04b686e99270be11619b74"
+    },
+    {
+      "tool": "update_business_profile",
+      "old": "deab33d59c05da9dbf9ac40d6351d09a634dc6b7c82497ccb358074271175469",
+      "proposed": "46b660f70a160ef06ef31946586aeaf9fdacd60e206f5046f5ff2abb38a05c8b"
+    },
+    {
+      "tool": "capability_status",
+      "old": "c06bcf4354d026550833790a5cb4b52c68c346a0b43b62f705b69f82259e3a54",
+      "proposed": "ba4a81354be675aa2d6c7a8a6b2833cd88a95dcb9c90d8c78e96de4293587464"
+    },
+    {
+      "tool": "improvement_propose",
+      "old": "2abb156ca68391e84a6fb9ea1382690f6e127b301dad7ba25afbfad372785261",
+      "proposed": "05c54a2d929fccbc8ecbf459c14711f25c8d26ed6c466a7ee02f7466343fcf39"
+    },
+    {
+      "tool": "improvement_decide",
+      "old": "493a64b63047019aba7b7b854c4c5b8778d4fe3b6cd419a505d9b681049c090a",
+      "proposed": "ab015c2c759c3371e499fa0fdf95d970e38e1a710fb371f87ffec91ddc9ac108"
+    },
+    {
+      "tool": "list_subagents",
+      "old": "a7c43191fa7f823f0b06940d5f428d5142c0d7ed24a88dfc9291cefe3d637e12",
+      "proposed": "11817d7509bc93416f213204638369f619c8cc535d812ea6f5f33beb00939859"
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "old": "a7c43191fa7f823f0b06940d5f428d5142c0d7ed24a88dfc9291cefe3d637e12",
+      "proposed": "11817d7509bc93416f213204638369f619c8cc535d812ea6f5f33beb00939859"
+    },
+    {
+      "tool": "forge_subagent",
+      "old": "b1bd46dba1b241c9f6fd6f06ba54b6f193c78ea64329b688626f4864aa2337ce",
+      "proposed": "e85e6c885ea91cb7a177e8840d2a25d6bbedd9550324feed0cea383b82af735f"
+    },
+    {
+      "tool": "author_event_kind",
+      "old": "b82c11901ab9fe50dadb2933a22c378d9a8c44a29f01f2eca204db8a00b949bd",
+      "proposed": "5e96355a6e2649b3707d31952eb0a9ff8e8fe89b117cc1028e6c340936ae523a"
+    },
+    {
+      "tool": "crm_add_note",
+      "old": "d5835ba7447f216ad052617bcd74c270297c19a31f4238034daf7063a936dfac",
+      "proposed": "11d189e4c7f233183164e0c352fbc519b357f51f1db09a11dfa6372cf32bb513"
+    },
+    {
+      "tool": "crm_file_document",
+      "old": "66195e4a2d65a530373f403553b7843b9169309be66b3e58132e093d41deee9d",
+      "proposed": "f79894a28d29c70026304fec860843d145b524835b938c9ae0a47251e8fb950b"
+    },
+    {
+      "tool": "update_client_data",
+      "old": "19c740a9702b068696ac2f4d1c1f843f42cb2965733eb0eb0b07f9eb82c6b15f",
+      "proposed": "e50260f4c26bff75423f124ad40f5d73caec4b382af118b6e087d4dfbe322047"
+    },
+    {
+      "tool": "pipeline_configure",
+      "old": "fbcccd60f5a13748648f6356bbd68d9e71bbd38ec637eab9837c20dba91c7a82",
+      "proposed": "c930977ecd62c7d35f7b417f7e8643ce277b9cf69c88e83c03d0cb2a81a1caa6"
+    },
+    {
+      "tool": "deep_research",
+      "old": "d1f141a947ce196a241443f1dafe4b995a65fb32919b04b3b2ac1e3c85d6fb8b",
+      "proposed": "3cb7552be72bfc9de0dd963f4ef11f32577d52b66a13e91f32136b5fac40921d"
+    },
+    {
+      "tool": "web_search",
+      "old": "6a3f70352d35277df2f6074ad97bb371bafc1501ec43fcfdfe2c623592b4832b",
+      "proposed": "9ff43f66efe18b7caf37ed5c02579200769a7413d0597ebf4a3447a4b35a4912"
+    },
+    {
+      "tool": "web_fetch",
+      "old": "871b646994a1bb20617b44939ec7666202303d10dfe297c06ec7c5c56d297efb",
+      "proposed": "bf1ca8896e7924df5da39e32f6304549a4e388e61e3f6065af220741423da06c"
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "old": "f869da8f17ef44834e1a86589f8ad4ac3fef91fbbce6544f20dd1772b603869e",
+      "proposed": "6c520a3a050115166b1a21d334034c50df98265455936544e827d12dfe23812b"
+    },
+    {
+      "tool": "automation_draft",
+      "old": "853642da66bd61970d26a0b62793b8fedc4d191b5fdca0f5d88dbd9b86aa1f1b",
+      "proposed": "30ee5c3b4b274c669d4e5d59d91cc25789997637ddce340b9e73e814db19d3b3"
+    },
+    {
+      "tool": "comms_connection_summary",
+      "old": "52b3226ba8b852cf884ec108e60dd64a41c43b6bb3a5d1b2fe3b3ad09eae172e",
+      "proposed": "7e67457995317bd5a885d06706eee9e82f21b870d0e98d9a0038e14b5fdf97d8"
+    },
+    {
+      "tool": "comms_registration_status",
+      "old": "f3897b3d3f7e5671c1a4f032d4acce4c07ee0ff8264eebbc4cf3478fd43958fc",
+      "proposed": "1dd3790bfaccd0d4b6f88045dac45dddf4a869e91889a29fb569a596fc89dd8f"
+    },
+    {
+      "tool": "comms_list_numbers",
+      "old": "26520b6feeb8f7560384012d51d0e731d0fb25115af7c25bbd7c4194aa4b399b",
+      "proposed": "b5506773ffd53e07585f55a6cd2826816e20edf1f9edb3939402261c6cd68f0b"
+    },
+    {
+      "tool": "comms_search_numbers",
+      "old": "364cadbb1ef3410763e78463caca1c0ab72bacafeb2e4ebed5d34b2e51cf12c9",
+      "proposed": "509879b96f124279ef973e4361ba2620f4ffab835d7fa94c53c177a6234a8b17"
+    },
+    {
+      "tool": "comms_buy_number",
+      "old": "7c2e90541b589d1220ad46583d2cd299ea51af26639da828e524a5b8d94909b4",
+      "proposed": "966a36146fe5e6b42662d14d12e93ae715547717dcd70853cc846458bd04f886"
+    },
+    {
+      "tool": "comms_draft_registration",
+      "old": "edfe5263956e7ebb0c57d0995d90b68151549458c4a4774383169ae4fb019806",
+      "proposed": "53652f1def14eaf3ccddb6037a7ea70bf409f50d4304af6de5613af7dd7c2cd3"
+    },
+    {
+      "tool": "comms_name_number",
+      "old": "86962fce03abc5a1a76c2a4111ec8c100c4efd7ebe15204ac930c16dd32ef1e4",
+      "proposed": "166b4302b3ad342ad982520aa7b96608ee7f2887a55f035ef9998485a3ae7027"
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "old": "2c955709365aadb9ef2e3b84b44419dde308b2883275cf327e00aa6516435178",
+      "proposed": "eea0ccc60e24fe93707191d5f783773c4a47d567895e86af2fe3dcd2f157349f"
+    }
+  ]
+}

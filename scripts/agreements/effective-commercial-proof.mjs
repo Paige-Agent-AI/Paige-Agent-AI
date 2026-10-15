@@ -88,6 +88,7 @@ export async function proveEffectiveCommercialTerms({sql,concurrent,read,scope,t
   [`BEGIN;UPDATE tenant_members SET role='member' WHERE user_id='${actor}';`,governance],
   [`BEGIN;UPDATE profiles SET active_tenant_id='bbbbbbbb-0000-4000-8000-000000000002' WHERE user_id='${actor}';`,governance],
   ["SET test.rung='0';",governance],
+  [`BEGIN;INSERT INTO tenant_tool_autonomy VALUES('${tenant}','sales_effectuate_commercial_terms','off',now());`,governance],
  ]){assert.throws(()=>sql(scope+prefix+'SET ROLE service_role;'+execute(command,g)),/42501/);checks++;}
  for(const role of ['anon','authenticated']){
   assert.throws(()=>sql(scope+`SET ROLE ${role};`+execute()),/42501/);checks++;

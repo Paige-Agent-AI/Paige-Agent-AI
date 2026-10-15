@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "executed_sha": "e18ea7526248fa5ec9d037d2dac216513d441ca8",
+  "workflow_sha": "e18ea7526248fa5ec9d037d2dac216513d441ca8",
+  "candidate_sha": "0995f52c52907b4a468b9b002a93f56580c74e6f",
+  "run_id": "38690989115",
+  "run_attempt": "1",
+  "status": "FAIL",
+  "totals": {
+    "total": 13232,
+    "passed": 13231,
+    "failed": 1,
+    "pending": 0,
+    "todo": 0
+  },
+  "failures": [
+    {
+      "test_file": "src/operator/surfaces/settings/capabilities.v3.test.tsx",
+      "test_name": "what the surface says about the gap is the measured number matches the live diff of the runtime gate against the catalogue",
+      "category": "TEST_FAILURE_UNCLASSIFIED",
+      "owner": "owning test lane"
+    }
+  ]
+}

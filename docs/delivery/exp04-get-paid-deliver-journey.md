@@ -1144,3 +1144,10 @@ Preserve every original observation and QA row. These additional cases require t
 | E4-C6-07 | Desktop/mobile light/dark, keyboard, reduced motion and full shell with PAIGE open/closed | Same real records/controls, reachable exits, no title/close overlap, correct focus and motion/reflow; ordinary account proof | NOT_RUN |
 
 Protected results belong in ANT52; the full existing twelve-outcome matrix remains in ANT51 and shared dependency/release updates in ANT147. No provider, signing, financial, communications, privilege or INT346 activation is authorized by this supplement.
+
+
+#### C6 exact-head CI corrective continuation — 2026-10-15
+
+Original0995/run38690989115 verify FAIL is retained: missing catalogue/receipt metadata, one unchanged zero-gap unit assertion (13231/13232) and the unchanged executable-target smoke (1034/1035). Forward-only051051 preserves already-preview-applied051050 and every actual catalogue predecessor, adds one default-confirm Settings control, and honors existing saved Off. The existing receipt declaration and canonical attribution-table entry complete the same key without adding Chat exposure or a dispatch. Root directly corrected these gaps; no tests, source pins, baselines, authorization or activation were waived. Local unchanged Settings8 and smoke1035 pass; native70+36+106 plus21 catalogue checks, all15 actual wrappers/192 incumbent rows and replay2 pass. Full details and original failure artifact are in the existing [C6 evidence](../evidence/ui-delivery/e04-exact-term-effectuation.md). Fresh hosted CI, independent review, production release/readback and every protected C6 case remain owed. No all-outcome acceptance state changes.
+
+Mandatory Sales overdue consistency is REUSE: independently reviewed/released#2146 and production20271101110000/110001/actual producer digest readback already supply business-time-zone overdue1.1.0. Do not build a competing calendar/metric engine. Ordinary authenticated Sales/Collections consistency remains UNVERIFIED.

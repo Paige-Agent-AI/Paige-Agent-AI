@@ -98,7 +98,7 @@ jobs:
       - name: Retained commercial economics, owner authorization and reload in disposable PostgreSQL
         run: |
           E04_PROOF_DIRECTORY=$(psql -h 127.0.0.1 -U postgres -d postgres -Atc 'SHOW data_directory;')
-          node scripts/agreements/commercial-presentation-pg.mjs "$(command -v psql)" 5432 postgres "$E04_PROOF_DIRECTORY" repaired --signing-context supabase/migrations/20271105103000_e04_signing_exact_presented_record.sql --accepted-record supabase/migrations/20271105104000_e04_accepted_commercial_record.sql --effective-terms supabase/migrations/20271105105000_e04_exact_term_effectuation.sql
+          node scripts/agreements/commercial-presentation-pg.mjs "$(command -v psql)" 5432 postgres "$E04_PROOF_DIRECTORY" repaired --signing-context supabase/migrations/20271105103000_e04_signing_exact_presented_record.sql --accepted-record supabase/migrations/20271105104000_e04_accepted_commercial_record.sql --effective-terms supabase/migrations/20271105105000_e04_exact_term_effectuation.sql --effectuation-catalogue supabase/migrations/20271105105100_e04_effectuation_catalogue.sql
   verify:
     runs-on: ubuntu-latest
     steps:

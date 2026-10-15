@@ -13,6 +13,7 @@
 //         real. A fire is not a delivery.
 //   §12 — one home; kb-ingest-doc and studio-learn-from-artifact both call ingestDoc().
 import { embeddingsCompat, VOYAGE_DIMS } from "./voyage.ts";
+import { databaseAnswered } from "./approval-outcome.ts";
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
@@ -71,6 +72,8 @@ export interface IngestDocParams {
 
 export interface IngestResult {
   ok: boolean;
+  /** Proven before writing, by a single-statement refusal, or by verified cleanup. */
+  not_applied?: true;
   doc_id?: string;
   chunk_count: number;
   embedded: boolean;         // true only if EVERY chunk embedded
@@ -99,13 +102,13 @@ export async function ingestDoc(
   const docClient = opts?.docClient ?? admin;
   const chunks = chunkText(params.content);
   if (chunks.length === 0) {
-    return { ok: false, chunk_count: 0, embedded: false, error: "empty_content", detail: "Nothing to save — the content was empty after cleanup." };
+    return { ok: false, not_applied: true, chunk_count: 0, embedded: false, error: "empty_content", detail: "Nothing to save — the content was empty after cleanup." };
   }
 
   const authorized = async () => {
     try { await opts?.authorize?.(); return true; } catch { return false; }
   };
-  if (!await authorized()) return { ok: false, chunk_count: 0, embedded: false, error: "ingestion_not_started" };
+  if (!await authorized()) return { ok: false, not_applied: true, chunk_count: 0, embedded: false, error: "ingestion_not_started" };
   const share = params.share_to_network ?? false;
   const { data: doc, error: docErr } = await docClient
     .from("tenant_knowledge_docs")
@@ -127,7 +130,12 @@ export async function ingestDoc(
     .select("id, tenant_id")
     .single();
   if (docErr || !doc) {
-    return { ok: false, chunk_count: 0, embedded: false, error: docErr?.message ?? "insert_failed" };
+    // This is one insert statement. A lost response can leave the new document
+    // committed without returning its identity; never search/delete by title.
+    return databaseAnswered(docErr)
+      ? { ok: false, not_applied: true, chunk_count: 0, embedded: false, error: "insert_refused" }
+      : { ok: false, chunk_count: 0, embedded: false, error: "persistence_unverified",
+        detail: "The document insert could not be confirmed. Inspect your knowledge before another request." };
   }
 
   // The row is new to this call. Cleanup must prove absence before claiming nothing was saved.
@@ -138,7 +146,7 @@ export async function ingestDoc(
       const { data: remaining, error: readError } = await admin.from("tenant_knowledge_docs")
         .select("id").eq("tenant_id", params.tenantId).eq("id", doc.id).maybeSingle();
       if (!readError && remaining === null) {
-        return { ok: false, chunk_count: 0, embedded: false, error,
+        return { ok: false, not_applied: true, chunk_count: 0, embedded: false, error,
           detail: "Indexing could not be verified. The new entry was removed; nothing was saved." };
       }
     } catch { /* A lost cleanup response is not proof of deletion. */ }

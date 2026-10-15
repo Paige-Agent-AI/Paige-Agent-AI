@@ -1,0 +1,153 @@
+{
+  "class": "NATIVE_ACTUAL_COMPONENT_SYNTHETIC_PORTS_ONLY",
+  "at": "2026-10-13T19:43:43.887Z",
+  "sourceIdentity": {
+    "src/solo/SoloBusinessInterview.tsx": "5713f051b2c1d111ad11013bf61dd13d327deac13005069b48e4aadf6fac7145",
+    "src/solo/solo-paige-workspace.css": "46b164930aee1ad457e3d02c566f21d41d509d81e669207ff8f15e574d13365c",
+    "scripts/live-drive/harness/mount/interview.fixture.ts": "bf59c663100b4f099014926eee37f6920d3784904374bfed3f66ac511dd2dd2d",
+    "scripts/live-drive/harness/mount/interview.config.ts": "f2a56659229bf1ebd49a6c2d075b94e8cd5a34150d4c822eb47a3c3be502845e"
+  },
+  "url": "http://127.0.0.1:5204/interview.html?state=populated&theme=dark",
+  "captures": [
+    {
+      "file": "320-dark-final-controls.jpg",
+      "bytes": 31002,
+      "sha256": "8fbbb22e1039dbcf6f260687cbed5b40272f9266e603aaa575d87a0ec1943290",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-keyboard-cancel.jpg",
+      "bytes": 30717,
+      "sha256": "f7118e56dbc82aa668328df33ce02c2768cbd4a44fd79a797a13c7d56f17b30e",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-keyboard-confirm.jpg",
+      "bytes": 31049,
+      "sha256": "132da67d858359dc37d68aa58af0dfcdacf237f38e337db7c4bf001bc717bbf0",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-synthetic-correction-readback.jpg",
+      "bytes": 31003,
+      "sha256": "7dbab1d44866df6d9e2561150fe9859de83953e757357d226beb2cbdee971e59",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-synthetic-paused.jpg",
+      "bytes": 23640,
+      "sha256": "2a0436815487087fa823e3a0eeb461e2dff5982834759c025fbcf906e7a8e2a5",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-synthetic-readback-status.jpg",
+      "bytes": 38984,
+      "sha256": "7af828d6fe560adc2385168c42b77ebf50e9e35c082a3de9b42f2f9a0fd3689d",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-synthetic-resume-control.jpg",
+      "bytes": 31000,
+      "sha256": "896ea04163796207826f9d0311ef93065e94c841b8789db394dbdfbb7fc853e7",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "320-dark-synthetic-resume.jpg",
+      "bytes": 33492,
+      "sha256": "d5b751bd20ac0bc5991f4c1f65468e2458ab443d3fd891efbaf1aa3877ec4ffc",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 694,
+        "width": 320
+      }
+    },
+    {
+      "file": "default-dark-synthetic-resumed.jpg",
+      "bytes": 74770,
+      "sha256": "cfe64db088bad776a9f5ff21637d29ded793304f359bc16c16a44cc47b0f8afb",
+      "actualPixels": {
+        "format": "JPEG",
+        "height": 720,
+        "width": 1280
+      }
+    }
+  ],
+  "checks": {
+    "narrowWidth": 320,
+    "narrowDocumentWidth": 320,
+    "profileScrollOwner": {
+      "clientHeight": 266,
+      "scrollHeight": 1366,
+      "scrollTop": 1100
+    },
+    "lastControlsReachable": true,
+    "lastControlHeight": 44,
+    "editLabel": "Industry",
+    "keyboardConfirmationFocusVisible": true,
+    "keyboardCancelFocusVisible": true,
+    "cancelFocusReturn": "Correct Industry",
+    "syntheticCorrectedValue": "Consulting for local firms",
+    "syntheticStatusRole": true,
+    "syntheticPauseReopenResumeRetained": true,
+    "reducedMotionRenderedStyles": {
+      "animationName": "none",
+      "animationDuration": "1e-05s",
+      "transitionDuration": "1e-05s",
+      "scrollBehavior": "auto"
+    },
+    "overridesReset": true
+  },
+  "limits": {
+    "native200PercentZoom": "UNVERIFIED; supported key shortcut left CSS width and DPR unchanged",
+    "screenReaderExecution": "UNVERIFIED; native accessibility tree, labels and status were inspected but no assistive reader executed",
+    "temporalMotion": "UNVERIFIED; rendered styles only",
+    "canonicalPersistence": "NOT_EXERCISED",
+    "authentication": "NOT_EXERCISED",
+    "ChatTransport": "NOT_EXERCISED",
+    "modelOrProviderEffects": "NOT_EXERCISED",
+    "pageReloadPersistence": "NOT_EXERCISED"
+  },
+  "independentReview": {
+    "status": "COMPLETE_PASS",
+    "nonAuthor": true,
+    "disposition": "SHIP_BOUNDED_SYNTHETIC_ONLY",
+    "recaptureFindingsResolved": true,
+    "sourceEdits": false,
+    "limitsPreserved": true
+  },
+  "recapture": {
+    "reason": "Independent review found corrected value/status and pre-activation Resume were outside prior frame",
+    "visibleReadbackFrame": "320-dark-synthetic-correction-readback.jpg",
+    "separateVisibleStatusFrame": "320-dark-synthetic-readback-status.jpg",
+    "preActivationResumeFrame": "320-dark-synthetic-resume-control.jpg",
+    "priorSourceAndBehaviorUnchanged": true
+  }
+}

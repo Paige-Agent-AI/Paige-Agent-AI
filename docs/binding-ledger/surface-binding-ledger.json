@@ -956,7 +956,7 @@
       "group": "settings",
       "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloBusinessContextSetup.tsx (settings.tsx:1774); 6 subtabs per settings-business-context-contract.ts: business-profile, public-presence, people-email, knowledge-bucket, direction, paige-brief",
-      "canonical_source": "save_solo_setup_context (write); Spine read get_business_context_readiness (business fields only). Other subtabs: knowledge-bucket authors tenant_knowledge_docs (same source as command-center.mind); direction/paige-brief author Paige's operating brief",
+      "canonical_source": "save_solo_business_context wraps canonical save_solo_setup_context (human UI write); Spine read get_business_context_readiness (business fields only). Other subtabs: knowledge-bucket authors tenant_knowledge_docs (same source as command-center.mind); direction/paige-brief author Paige's operating brief. Experience 01 source candidate reuses the same writer/readback for inline review; see docs/delivery/experience-01-foundation.md.",
       "chain": {
         "canonical_source": {"status": "real", "note": "Setup is the source for four business fields (website, business_phone, industry, primary_business_email)"},
         "tenant_scope": {"status": "server_resolved", "note": "get_business_context_readiness: DEFINER, JWT->current_user_tenant_id else service _tenant_id, is_tenant_admin gate, returns status+provenance NOT raw values"},
@@ -973,7 +973,7 @@
       "state_reason": "business_context.readiness is LIVE on production as a deployed function and chat-injected; not LIVE by this ledger's bar because the owner's own authenticated UI-flow proof is still owed. First WORKSPACE-level Spine capability (a live read, no Rail). SCOPE NOTE: the readiness binding covers the four business fields only; the knowledge-bucket subtab's tenant_knowledge_docs authoring is the owner's UI write (not a Paige governed write, and its Mind lens is scoped-out with command-center.mind), and direction/paige-brief persona authoring is deliberately not a Paige-safe evidence lens.",
       "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
       "linked": ["PR #864", "PR #958"],
-      "next_slice": "Phase 4.4: authenticated owner runtime proof; keep status+provenance narrow (never a raw value); a setup save does not become Memory. The knowledge-bucket/persona subtabs' binding is a separate, unscoped concern (do not let Mind read them until contracted).",
+      "next_slice": "Experience 01 foundation candidate: exact-head review/CI, normal release and protected approved ordinary SOLO customer authenticated interview/review/save/correction/resume proof. Private owner/thread operational projection is separate from this readiness/Mind binding; it grants no Memory or AI write authority. INT-346 remains DRAINING and fresh model proposal staging unavailable. Phase 4.4 owner runtime proof remains owed; keep readiness status+provenance narrow. Knowledge-bucket/persona Mind binding remains unscoped.",
       "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/business_context.ts", "docs/doctrine/surface-cards/setup.md", "docs/delivery/canonical-readiness-contract.md"]
     },
     {

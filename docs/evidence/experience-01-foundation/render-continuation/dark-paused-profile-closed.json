@@ -1,0 +1,34 @@
+{
+  "label": "dark-paused-profile-closed",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "width": 1366,
+    "height": 768
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=paused",
+  "dom": {
+    "alerts": [],
+    "background": null,
+    "focus": {
+      "name": "BODY",
+      "tag": "BODY"
+    },
+    "foreground": null,
+    "overflow": false,
+    "paige": "open",
+    "pg": "dark",
+    "profileOverflow": null,
+    "secondary": null,
+    "statuses": [],
+    "theme": "dark",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "native screenshot after settled DOM"
+}

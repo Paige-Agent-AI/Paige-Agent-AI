@@ -54,6 +54,14 @@ had NOT persisted. The file rolled back as a whole.
 
 **Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Subject invalidation must clear every prior actor status/error and scope its presentation to the corresponding current view; in-flight cancellation tests alone missed a settled-failure transition. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct. Post-merge #2096 review exposed a separate timing gap: verification late in polling exhausted canonical readback time. Budget sequential bounded phases independently and test a verified response both near and beyond the polling deadline; fast fulfillment alone misses that class. Current forward fix and evidence are in `docs/delivery/experience-01-admission-readback-window.md`.
 
+### Focus restoration can race disabled checkpoint controls (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Rendered save put focus on BODY although an immediate-fixture test passed. Canonical save finished first; the private checkpoint still disabled the correction button when an animation-frame callback tried to focus it. Use deferred checkpoints and assert enabled-control focus after settlement. Restore through a scope-fenced effect, cancel on scope changes and retain the failed-save editor. Setup success and progress-write failure remain separate outcomes.
+
+### A theme class and DOM fit do not prove the captured surface (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** A harness declared dark while the shell's ThemeProvider emitted light tokens; rapid viewport changes also captured another viewport's dimensions. Drive the actual provider, compare computed token state, validate each native image's dimensions/state after settlement and reject mismatches.320CSS reflow does not substantiate native200%zoom when browser geometry is unchanged. Synthetic context/provider rendering cannot substantiate customer authentication or stored records.
+
 ### A per-person field is not a business setting (2026-10-12, Experience 04)
 
 **Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from
@@ -3466,3 +3474,18 @@ through PUBLIC, so revoking PUBLIC removes nothing. The test that would have cau
 - **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
   grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
 
+
+### A renamed pending migration leaves real Preview history behind (2026-10-13, Experience01)
+
+**Symptom → root cause → rule.** Forward-only production ordering moved the unchanged checkpoint file while the existing Preview retained its original260000 history row. The required check rejected remote versions absent from local files. Rebase alone did not clear that record. Compare stored SQL AND live definitions/ACL against canonical candidate before choosing supported history-only repair; preserve all original identities. Do not convert an infra/recovery failure into a fake SQL pass, reset/recreate blindly, pre-mark a new version applied, or bypass a403 credential endpoint. Normal Preview must still execute canonical pending SQL at the reviewed head.
+
+- **A forward source rename does not make identical Preview SQL unapplied (Experience01,2026-10-13).** Export and compare the original statements plus live function signatures/bodies/configuration/grants before history repair. Preserve the original export, use the supported applied/reverted metadata statuses to reconcile the new filename, and verify the old/new ledger keys and unchanged functions before normal Preview verification. Do not remove a ledger row merely to reexecute already-installed SQL; a read-only integration also does not establish branch repair authority. Production still owes normal migration execution.
+
+
+### 2026-10-14 — E1 conversation space requires native proof
+
+Component/SQL tests proved the canonical save/checkpoint contracts but did not expose the first-run header consuming transcript space or cropped Send at 320px. The native finish review correctly returned FIX despite source PASS. Apply the bounded correction once, bind before/after native captures to immutable source/compiled assets, and keep source review, rendered finish, deployment and ordinary-owner acceptance distinct. An expired review-round allowance requires the explicit bounded exception, not another automatic author/reviewer loop. Preserve invalid frames and source-attribution limitations rather than retroactively upgrading them.
+
+### 2026-10-14 E1 native source and pixels require independent binding
+
+The bounded presentation repair preserved the shared transcript controller and makes the complete opening question fit native320x720. Local tests/DOM dimensions cannot certify other pixels: requested390x844 encoded390x843, and rapid open-state labels disagreed with folded/transition screenshots. Independently decode dimensions, inspect pixels against visible state, complete source/asset hashes before navigation and after, preserve invalid originals and stop bounded confirmation on another mismatch. Reset/new own tab/DPR1.25 did not establish a cause or repair; route the existing capture integration defect instead of changing pixels, assertions, product state or drivers. Desktop focus/resize cannot prove a real OS keyboard. The original fixture used state, so validate query semantics before navigation. Private canonical records/23 acceptance permissions stay separate from synthetic native proof.

@@ -201,11 +201,12 @@ export async function performSignOut(
 
   try {
     try {
-      await supabase.auth.signOut({ scope });
+      const { error } = await supabase.auth.signOut({ scope });
+      if (error) throw error;
     } catch (err) {
       console.error(`Sign out (${scope}) failed, falling back to local:`, err);
       try {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
       } catch (innerErr) {
         console.error("Local sign out also failed:", innerErr);
       }

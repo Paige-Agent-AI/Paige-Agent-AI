@@ -1,0 +1,35 @@
+{
+  "label": "dark-reduced-motion-320",
+  "requested": {
+    "width": 320,
+    "height": 844
+  },
+  "screenshotDimensions": {
+    "width": 320,
+    "height": 844
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+  "dom": {
+    "alerts": [],
+    "background": "rgb(17, 15, 21)",
+    "focus": {
+      "name": "Reload Setup",
+      "tag": "BUTTON"
+    },
+    "foreground": "rgb(246, 242, 234)",
+    "overflow": false,
+    "paige": "open",
+    "pg": "dark",
+    "profileOverflow": false,
+    "profileScroll": 992,
+    "secondary": "rgb(173, 167, 159)",
+    "statuses": [],
+    "theme": "dark",
+    "viewport": {
+      "height": 844,
+      "width": 320
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "documented tab screenshot after settled DOM"
+}

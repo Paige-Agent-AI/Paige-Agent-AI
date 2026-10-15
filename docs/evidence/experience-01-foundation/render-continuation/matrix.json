@@ -1,0 +1,1129 @@
+{
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureMethod": "native screenshots plus DOM geometry; not authenticated owner proof",
+  "expectedFrames": 32,
+  "actualFrames": 32,
+  "invalid": [],
+  "frames": [
+    {
+      "label": "dark-primary-1024x768-closed",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-1024x768-open",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 800,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-1366x768-closed",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-1366x768-open",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 800,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-1536x770-closed",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-1536x770-open",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 777.5999755859375,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-900x1000-closed",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-primary-900x1000-open",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 696.7999877929688,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1024x768-closed",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1024x768-open",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1366x768-closed",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1366x768-open",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1536x770-closed",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "BODY",
+          "tag": "BODY"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-1536x770-open",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-900x1000-closed",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "dark-second-900x1000-open",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(17, 15, 21)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(246, 242, 234)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "dark",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(173, 167, 159)",
+        "statuses": [],
+        "theme": "dark",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1024x768-closed",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1024x768-open",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1366x768-closed",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1366x768-open",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1536x770-closed",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-1536x770-open",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-900x1000-closed",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-primary-900x1000-open",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1024x768-closed",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1024x768-open",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1024,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1366x768-closed",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1366x768-open",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "screenshotDimensions": {
+        "width": 1366,
+        "height": 768
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1536x770-closed",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "BODY",
+          "tag": "BODY"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-1536x770-open",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "screenshotDimensions": {
+        "width": 1535,
+        "height": 770
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-900x1000-closed",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "closed",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    },
+    {
+      "label": "light-second-900x1000-open",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "screenshotDimensions": {
+        "width": 900,
+        "height": 1000
+      },
+      "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+      "dom": {
+        "alerts": [],
+        "background": "rgb(251, 248, 244)",
+        "focus": {
+          "name": "Direct PAIGE",
+          "tag": "BUTTON"
+        },
+        "foreground": "rgb(33, 30, 36)",
+        "overflow": false,
+        "paige": "open",
+        "pg": "light",
+        "profileOverflow": false,
+        "profileScroll": 0,
+        "secondary": "rgb(103, 97, 107)",
+        "statuses": [],
+        "theme": "light",
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+      "captureAPI": "native screenshot after settled DOM"
+    }
+  ]
+}

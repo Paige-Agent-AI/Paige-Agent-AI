@@ -64,7 +64,9 @@ calendar utilities and retain explicit IANA zone/DST bounds; currencies remain s
 
 Flow-by-Flow, Paige UI, Flow Prototype, Impeccable and React quality checks were applied.
 Source hardening covers disclosure lifetime, request races, exact receipts, field fit,
-44px controls and truthful error/status paths. Impeccable canonical guidance:
+44px controls and truthful error/status paths. Pinned Impeccable detection found zero
+anti-patterns; its two type-ramp advisories were resolved to the existing16/21px steps.
+Impeccable canonical guidance:
 https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
 All62 focused tests in7 files PASS on composed3796f52f; the final type ratchet and
 browser build also PASS. Final author review/finish review remains pending; no

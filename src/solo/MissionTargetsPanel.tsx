@@ -10,7 +10,7 @@ import { formatTargetValue } from "./mission-target-form";
 import "./mission-targets.css";
 
 type Props = { workspaceId?: string | null; mission: { id: string; revision: number; state: string } };
-type Editor = { key: string; target: MissionTarget | null } | null;
+type Editor = { key: string; instance: number; missionRevision: number; target: MissionTarget | null } | null;
 const display = (target: MissionTarget, value: string) => formatTargetValue(value, target.metric.value_kind, target.metric.currency);
 const instant = (value: string) => new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 export function MissionTargetsPanel({ workspaceId, mission }: Props) {
@@ -25,6 +25,9 @@ function ScopedTargetsPanel({ actor, tenant, mission }: { actor: string | null; 
   const model = useMissionTargets(actor, tenant, mission.id), offset = model.offset;
   const key = `${actor}:${tenant}:${mission.id}`;
   const [editor, setEditor] = useState<Editor>(null);
+  const [refusedPlayRevision, setRefusedPlayRevision] = useState<number | null>(null);
+  const [editorRefused, setEditorRefused] = useState(false);
+  const editorSequence = useRef(0);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const add = useRef<HTMLButtonElement>(null);
@@ -33,22 +36,33 @@ function ScopedTargetsPanel({ actor, tenant, mission }: { actor: string | null; 
     const result = await model.run(attempt);
     if (!alive.current) return false;
     if (result?.kind === "verified") { setEditor(null); add.current?.focus(); return true; }
+    if (result?.kind === "refused") {
+      if (result.code === "MISSION_REVISION_CONFLICT") setRefusedPlayRevision(Number(attempt.args.expected_mission_revision));
+      if (["MISSION_TARGET_REVISION_CONFLICT", "MISSION_TARGET_NOT_FOUND", "MISSION_TARGET_RETIRED"].includes(result.code)) setEditorRefused(true);
+    }
     return false;
   };
-  const closeEditor = () => { setEditor(null); add.current?.focus(); };
+  const closeEditor = () => { setEditor(null); setEditorRefused(false); add.current?.focus(); };
+  const openEditor = (target: MissionTarget | null) => { setEditorRefused(false); setEditor({ key, instance: ++editorSequence.current, missionRevision: mission.revision, target }); };
   if (model.list.kind === "loading") return <section className="mgt" aria-label="Measured targets" aria-busy="true"><h4>Measured targets</h4><div className="sd-sk mgt-skeleton" /><span className="sr-only">Reading this Play's targets.</span></section>;
   if (model.list.kind !== "ready") return <section className="mgt" aria-label="Measured targets"><h4>Measured targets</h4><p><AlertTriangle />{model.list.kind === "refused" ? "Owner access is required to read this Play's targets." : "Targets could not be verified for this workspace."}</p><button className="sd-btn sd-btn-sm" onClick={() => void model.refresh(offset)}><RefreshCw /> Retry target read</button></section>;
-  const locked = model.busy || !!model.pending || model.recoveryUnavailable;
+  const playStale = refusedPlayRevision === mission.revision;
+  const latestTarget = editor?.target && model.list.targets.find(target => target.id === editor.target?.id);
+  const editorStale = !!editor && (editorRefused || editor.missionRevision !== mission.revision
+    || !!latestTarget && latestTarget.revision !== editor.target?.revision);
+  const locked = model.busy || !!model.pending || model.recoveryUnavailable || playStale;
   return <section className="mgt" aria-label="Measured targets">
-    <div className="mgt-heading"><h4>Measured targets <span className="mgt-count">{model.list.totalCount}</span></h4>{!closed && <button ref={add} className="sd-btn sd-btn-sm" disabled={locked} onClick={() => setEditor({ key, target: null })}><Plus /> Add target</button>}</div>
+    <div className="mgt-heading"><h4>Measured targets <span className="mgt-count">{model.list.totalCount}</span></h4>{!closed && <button ref={add} className="sd-btn sd-btn-sm" disabled={locked} onClick={() => openEditor(null)}><Plus /> Add target</button>}</div>
     {model.notice && <p className="mgt-status" role="status">{model.notice}</p>}
     {model.receipt && <details className="mgt-receipt"><summary><Check /> Saved revision {model.receipt.revision} · {model.railRecorded ? "Activity recorded" : "Activity unconfirmed"}</summary><p>Receipt reference: <span>{model.receipt.id}</span></p></details>}
-    {model.pending && <div className="mgt-recovery" role="status"><p>Your original target request is retained. Checking it uses the same request and original revisions.</p><button className="sd-btn sd-btn-sm" disabled={model.busy} onClick={() => void model.reconcile()}><RefreshCw />{model.busy ? "Checking original request" : "Check original request"}</button></div>}
+    {model.pending && <div className="mgt-recovery" role="status"><p>Your original target request is retained. Checking it uses the same request and original revisions.</p><button className="sd-btn sd-btn-sm" disabled={model.busy} onClick={() => model.pending && void finish(model.pending)}><RefreshCw />{model.busy ? "Checking original request" : "Check original request"}</button></div>}
     {model.recoveryUnavailable && <p className="ov-err" role="alert">Safe request recovery is unavailable. No new change will be sent.</p>}
-    {editor?.key === key && actor && tenant && !model.pending && <MissionTargetEditor key={editor.target?.id ?? "new-target"} actorId={actor} tenantId={tenant} missionId={mission.id} missionRevision={mission.revision} target={editor.target} busy={locked} readMetric={model.readMetric} onSave={async attempt => { await finish(attempt); }} onCancel={closeEditor} />}
+    {playStale && <p className="ov-err" role="alert">This Play changed. Close and reopen this Play to read its latest revision before another target change.</p>}
+    {editorStale && <p className="ov-err" role="alert">This record changed. Your draft is retained. Cancel this edit, inspect the latest record, then open a new edit.</p>}
+    {editor?.key === key && actor && tenant && <MissionTargetEditor key={editor.instance} actorId={actor} tenantId={tenant} missionId={mission.id} missionRevision={editor.missionRevision} target={editor.target} busy={model.busy} blocked={locked || closed || editorStale} readMetric={model.readMetric} onSave={async attempt => { await finish(attempt); }} onCancel={closeEditor} />}
     {model.list.targets.length === 0 && !editor && <p className="mgt-empty">No measured targets on this Play yet. Add a target to compare it with a verified business measurement.</p>}
     <div className="mgt-list">{model.list.targets.map(target => <TargetRow key={`${key}:${target.id}:${target.revision}`} target={target} actual={model.actuals[target.id]} locked={locked} closed={closed}
-      onEdit={() => setEditor({ key, target })} history={model.history} onTransition={async (state, reason) => {
+      onEdit={() => openEditor(target)} history={model.history} onTransition={async (state, reason) => {
         if (!actor || !tenant) return false;
         return finish({ version: 1, scope: { actorId: actor, tenantId: tenant, missionId: mission.id }, tool: "mission_target_transition",
           args: { request_key: crypto.randomUUID(), mission_id: mission.id, expected_mission_revision: mission.revision,

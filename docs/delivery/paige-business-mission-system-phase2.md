@@ -218,3 +218,10 @@ remain unavailable until that currency is reported. The existing approved schema
 These synthetic source checks are not authenticated customer acceptance or fullO10 delivery.
 Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
 rendered/native coverage, production release, protected acceptance and owner review remain owed.
+
+Native corrective review contract: serialize each overlapping same-series issue/resolve
+cycle inside the existing SDK reader, without caching values or changing Analytics issuer
+semantics. A pending attempt keeps its mounted editor/draft locked until its outcome is
+known. Revision conflicts retain draft inputs, require an explicit latest-record inspection
+and never silently substitute newer target/Play CAS or the original request identity.
+All changes remain in the native consumer boundary; protected acceptance stays owed.

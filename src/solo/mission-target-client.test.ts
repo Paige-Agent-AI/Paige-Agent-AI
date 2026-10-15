@@ -106,12 +106,62 @@ describe("native target consumer scopes and truthful outcomes", () => {
     expect(await readMissionTargetActual(h.caller, h.scope, target, () => now)).toEqual({ kind: "scope_changed" });
     expect(h.caller.rpc).not.toHaveBeenCalled();
   });
-  it("issues and resolves an actual through the incumbent metric contract before projecting exact variance", async () => {
-    const h = harness();
-    const metric = { metric_key: target.metric.key, metric_version: "1.0.0", owner_department: "business", label: "Active clients", definition: "Current active clients", formula: "Count scoped active clients",
+  const actualMetric = () => ({ metric_key: target.metric.key, metric_version: "1.0.0", owner_department: "business", label: "Active clients", definition: "Current active clients", formula: "Count scoped active clients",
       range: { key: "quarter", start: target.period.start, end: new Date(now).toISOString(), bounds: "[start,end)", timezone: "UTC", semantics: "current_snapshot" }, dimensions: {}, values: { kind: "count", count: 12 }, unit: "count",
       source_refs: ["public.clients"], as_of: new Date(now).toISOString(), freshness: { queried_at: new Date(now).toISOString(), source_updated_through: null }, coverage: { state: "complete", candidate_count: 12, contributing_count: 12, excluded_count: 0 },
-      exclusions: [], truth_state: "LIVE", caveats: [], source_revision_ref: "sr_v1_" + "a".repeat(64), account_epoch: tenant, account_epoch_ref: "ae_v1_" + "b".repeat(64), evidence_ref: "aneb_v1_" + "c".repeat(64), reference_expires_at: new Date(now + 900000).toISOString() };
+      exclusions: [], truth_state: "LIVE", caveats: [], source_revision_ref: "sr_v1_" + "a".repeat(64), account_epoch: tenant, account_epoch_ref: "ae_v1_" + "b".repeat(64), evidence_ref: "aneb_v1_" + "c".repeat(64), reference_expires_at: new Date(now + 900000).toISOString() });
+  it("finishes each same-series issuance/resolution before a later target read revokes it", async () => {
+    const h = harness(), events: string[] = [];
+    let active: ReturnType<typeof actualMetric> | null = null, sequence = 0;
+    h.caller.rpc.mockImplementation(async (name, params?: Record<string, unknown>) => {
+      if (name === "current_user_tenant_id") return { data: tenant, error: null };
+      if (name === "get_business_mission") return { data: { mission: { id: mission } }, error: null };
+      if (name === "issue_analytics_evidence_bundle") {
+        events.push("issue");
+        active = { ...actualMetric(), evidence_ref: "aneb_v1_" + String(++sequence).padStart(64, "0"),
+          range: { ...actualMetric().range, start: String(params?.p_range_start), end: String(params?.p_range_end) } };
+        return { data: active, error: null };
+      }
+      events.push("resolve");
+      // The real issuer invalidates the earlier same-series reference, even
+      // when its exact requested start/end differ from this later issuance.
+      return { data: params?.p_evidence_ref === active?.evidence_ref ? active : null, error: null };
+    });
+    const results = await Promise.all([target, { ...target, period: { ...target.period, start: "2026-10-02T00:00:00Z" } }, target]
+      .map(row => readMissionTargetActual(h.caller, h.scope, row, () => now)));
+    expect(results.map(result => result.kind)).toEqual(["ready", "ready", "ready"]);
+    expect(events).toEqual(["issue", "resolve", "issue", "resolve", "issue", "resolve"]);
+    expect(h.caller.functions.invoke).not.toHaveBeenCalled();
+  });
+  it("rechecks a queued scope before issuance and leaves unrelated metric ranges responsive", async () => {
+    const h = harness(), metric = actualMetric();
+    let release!: (value: { data: unknown; error: null }) => void, entered!: () => void, retired = false;
+    const resolving = new Promise<void>(resolve => { entered = resolve; });
+    const issued = new Map<string, ReturnType<typeof actualMetric>>();
+    h.caller.rpc.mockImplementation(async (name, params?: Record<string, unknown>) => {
+      if (name === "current_user_tenant_id") return { data: tenant, error: null };
+      if (name === "get_business_mission") return { data: { mission: { id: mission } }, error: null };
+      if (name === "issue_analytics_evidence_bundle") {
+        const reference = "aneb_v1_" + String(issued.size + 1).padStart(64, "0");
+        const value = { ...metric, evidence_ref: reference, range: { ...metric.range, key: String(params?.p_range_key) } };
+        issued.set(reference, value); return { data: value, error: null };
+      }
+      const value = issued.get(String(params?.p_evidence_ref));
+      if (value?.range.key === "quarter") { entered(); return new Promise(resolve => { release = resolve; }); }
+      return { data: value, error: null };
+    });
+    const first = readMissionTargetActual(h.caller, h.scope, target, () => now);
+    await resolving;
+    const queued = readMissionTargetActual(h.caller, { ...h.scope, current: () => !retired }, target, () => now);
+    // Same-series waiting must not block another range's evidence cycle.
+    const other = await readMissionTargetActual(h.caller, h.scope, { ...target, metric: { ...target.metric, range_key: "month" } }, () => now);
+    expect(other.kind).toBe("ready"); retired = true;
+    release({ data: issued.values().next().value, error: null });
+    expect((await first).kind).toBe("ready"); expect(await queued).toEqual({ kind: "scope_changed" });
+    expect(issued.size).toBe(2);
+  });
+  it("issues and resolves an actual through the incumbent metric contract before projecting exact variance", async () => {
+    const h = harness(), metric = actualMetric();
     h.caller.rpc.mockImplementation(async name => ({ data: name === "current_user_tenant_id" ? tenant : name === "get_business_mission" ? { mission: { id: mission } } : metric, error: null }));
     expect(await readMissionTargetActual(h.caller, h.scope, target, () => now)).toMatchObject({ kind: "ready", observation: { actual: "12", variance: "2", attainment: "met" } });
     expect(h.caller.rpc.mock.calls.filter(c => /analytics_evidence/.test(c[0])).map(c => c[0])).toEqual(["issue_analytics_evidence_bundle", "resolve_analytics_evidence_reference"]);

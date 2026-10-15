@@ -163,10 +163,30 @@ export async function mutateMissionTarget(caller: TargetCaller, scope: TargetSco
   }
 }
 
-/** Shared native target read of the incumbent issuer/resolver, including definition selection. */
-export async function readMissionTargetMetric(caller: TargetCaller, scope: TargetScope, query: {
+type MetricQuery = {
   metricKey: string; rangeKey: MetricRequestIdentity["rangeKey"]; rangeStart: string; rangeEnd: string; dimensions?: Record<string, string>;
-}, clock = Date.now): Promise<TargetMetricRead> {
+};
+// The incumbent issuer revokes older same-series references, even for different
+// exact windows. Coordinate target rows, definition reads and overlapping refreshes
+// in this SDK instance until resolution finishes. This queue stores no values or
+// references; other browser sessions can still invalidate evidence and are refused.
+const metricReadFlights = new WeakMap<TargetCaller, Map<string, Promise<void>>>();
+export function readMissionTargetMetric(caller: TargetCaller, scope: TargetScope, query: MetricQuery, clock = Date.now): Promise<TargetMetricRead> {
+  let flights = metricReadFlights.get(caller);
+  if (!flights) { flights = new Map(); metricReadFlights.set(caller, flights); }
+  const series = JSON.stringify([scope.actorId, scope.tenantId, query.metricKey, query.rangeKey]);
+  const result = (flights.get(series) ?? Promise.resolve()).then(() => readMissionTargetMetricCycle(caller, scope, query, clock));
+  const tail = result.then(() => {}, () => {});
+  flights.set(series, tail);
+  void tail.then(() => {
+    if (flights.get(series) === tail) flights.delete(series);
+    if (!flights.size) metricReadFlights.delete(caller);
+  });
+  return result;
+}
+
+/** Shared native target read of the incumbent issuer/resolver, including definition selection. */
+async function readMissionTargetMetricCycle(caller: TargetCaller, scope: TargetScope, query: MetricQuery, clock: () => number): Promise<TargetMetricRead> {
   try {
     const initial = await scopeCheck(caller, scope);
     if (initial !== "current") return { kind: initial };

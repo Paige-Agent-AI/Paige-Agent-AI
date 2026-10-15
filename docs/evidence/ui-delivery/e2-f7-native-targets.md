@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: add/revise a measured Play target, compare actuals, p
 FLOW_PROTOTYPE: PASS: existing e2-target-flow-prototype.html and e2-target-prototype-source-checks.json in the owner conversation outputs; explicit full-outcome delivery ruling authorizes implementation without intermediate owner design approvals. Prototype source/DOM evidence is distinct from product runtime evidence.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: verified Solo owner manages numeric targets inside the existing Strategic Play detail and returns to authoritative definitions and receipts.
 VISUAL_DIRECTION: PASS: inherited Mineral/Obsidian tokens and existing Game Plan drawer; compact target rows and inline editor preserve the chosen product world without a new route or dashboard.
-AUTOMATED_EVIDENCE: PASS: composed source62 tests in7 files PASS; follow-up actual-editor2 and malformed-body4 regressions pass, with all12 tests in those two affected files green. Aggregate68 source tests in8 files. Earlier drawer worker initialization timed out without executing that file; bounded single-worker rerun passes all3. Canonical local PostgreSQL target suite50 PASS with rollback, including11 new receipt-history/refusal checks; separate display attribution8 PASS against the incumbent display chain. Full final-head hosted replay remains owed.
+AUTOMATED_EVIDENCE: PASS: native source73 tests in8 files passed after corrective read/draft/CAS repairs; a further queued-scope/disjoint-range regression passes with all24 SDK tests. Aggregate74 source tests in8 files. Four failing-first regressions reproduced same-series evidence revocation, draft unmount, missing Play conflict lock and silently upgraded open-draft CAS before repair. Earlier drawer worker initialization timed out without executing that file; bounded single-worker rerun passes all3. Canonical local PostgreSQL target suite50 PASS with rollback, including11 new receipt-history/refusal checks; separate display attribution8 PASS against the incumbent display chain. Full final-head hosted replay remains owed.
 STATIC_EVIDENCE: PASS: final scoped ESLint has zero errors/warnings; unchanged type ratchet baseline10/current10, production Vite build, UI evidence,35-surface binding ledger,1299 migration collision,180 attribution-target and definer signature/ACL guards pass. Initial callback return-type and server-module browser-import defects were repaired before this final source check. Hosted exact-head results remain owed.
 RENDERED_EVIDENCE: UNVERIFIED: actual new component pixels are not captured. Existing capture transport returned1535x770 for requested1536x770; one explicit clip retry timed out and all capture retries stopped. This is an invalid capture, not a product failure or visual PASS.
 BEHAVIORAL_EVIDENCE: PASS: mounted source tests cover independent history/receipt reopening, unavailable actuals, uncertain-intent locking, refused-transition reason retention, A-B-A drawer response retirement and closing during a pending lifecycle mutation. Source behavior only; genuine browser/customer drive remains owed.
@@ -48,6 +48,15 @@ dispatch, following the existing recovery pattern. It is not authority, truth or
 storage. SDK getUser/current workspace and owner-only RPCs revalidate every act/read.
 No automatic retry runs. Reconciliation reuses original key, exact args and original CAS;
 Auth loss or uncertain transport cannot erase an older pending intent.
+
+Corrective review preserves the mounted draft throughout a pending/refused request.
+The existing SDK reader serializes a same-series issue/resolve cycle across target rows,
+definition reads and overlapping refreshes because the canonical issuer revokes an older
+same-series reference even when exact period bounds differ. The per-caller wait queue holds
+no metric values or evidence; unrelated metric/range reads remain concurrent, and queued
+retired scopes are checked before issuance. External reference revocation remains a truthful
+refusal. A conflicting Play requires close/reopen; an open draft retains its captured CAS
+and inputs until explicit cancel/new edit. Stale/uncertain blocking never says work is running.
 
 Exact target revision plus existing canonical receipt are checked before Rail. Returned SDK
 transport loss and readback loss stay uncertain. The native owner display wrapper delegates

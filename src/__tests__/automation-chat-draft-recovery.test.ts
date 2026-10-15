@@ -40,6 +40,7 @@ async function drive(fault = '', args: object = input) {
       const rows = table === 'paige_automations' ? state.processes : state.acts;
       if (op === 'insert') {
         if (table === 'paige_automations' && fault === 'create-refused') return { data: null, error: { code: '42501', message: 'denied' } };
+        if (table === 'paige_automations' && fault === 'name-conflict') return { data: null, error: { code: '23505', message: 'duplicate' } };
         if (table === 'paige_automation_acts' && ['step-fail', 'cleanup-zero', 'concurrent-edit'].includes(fault)) {
           if (fault === 'concurrent-edit') state.processes[0].updated_at = '2026-10-15T16:01:00Z';
           return { data: null, error: { code: '23514', message: 'step refused' } };
@@ -147,6 +148,15 @@ describe('automation draft exact configuration and recovery', () => {
   it('retains a native single-insert authorization refusal as non-application', async () => {
     const { state, result } = await drive('create-refused');
     expect(state.processes).toHaveLength(0); expect(result).toMatchObject({ success: false, not_applied: true });
+  });
+  it('gives name-conflict recovery without changing approved arguments or retrying', async () => {
+    const { state, result, recovery } = await drive('name-conflict');
+    expect(result).toMatchObject({ success: false, not_applied: true, execution_started: false, reason: 'name_conflict' });
+    expect(result.error).toMatch(/name.*already exists/i);
+    expect(result.note).toMatch(/inspect.*existing|existing.*inspect/i);
+    expect(result.note).toMatch(/new approval/i);
+    expect(state.writes).toHaveLength(1); expect(state.processes).toHaveLength(0); expect(state.acts).toHaveLength(0);
+    expect(recovery.needsReview).toBe(false);
   });
   it.each([
     { ...input, name: 'x'.repeat(121) }, { ...input, category: 'x'.repeat(41) },

@@ -133,6 +133,33 @@ SELECT ok(EXISTS(SELECT 1 FROM public.audit_logs WHERE action='welcome_saved'
  AND data->>'tenant_id'='e0922000-0000-0000-0000-000000000001'),'existing audit attributes actual customer Welcome action');
 SELECT ok(NOT EXISTS(SELECT 1 FROM public.audit_logs WHERE entity_id='e0932000-0000-0000-0000-000000000001'
  AND (data::text LIKE '%Hosted synthetic answer%' OR data::text LIKE '%Welcome Native%')),'Welcome audit omits personal answers');
+CREATE FUNCTION pg_temp.e09_legacy_welcome_number(_legacy text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _state jsonb;
+BEGIN
+ BEGIN
+  UPDATE public.tenants SET features=jsonb_set(features,'{playbook_config,intake}',
+   (features#>'{playbook_config,intake}')||'[{"key":"count","label":"Count","type":"number"}]'::jsonb)
+   WHERE id='e0922000-0000-0000-0000-000000000001';
+  UPDATE public.paige_client_intake_submissions SET payload=payload||jsonb_build_object('count',_legacy)
+   WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+  _state := pg_temp.e09_welcome(false);
+  _state := pg_temp.e09_welcome(true,_state->>'expected_token','{"phone":"+12025550131"}',_state->'answers');
+  IF _state IS DISTINCT FROM pg_temp.e09_welcome(false) THEN RAISE EXCEPTION 'legacy save reload mismatch'; END IF;
+  RAISE SQLSTATE 'ZX009' USING MESSAGE='TEST_FIXTURE_ROLLBACK';
+ EXCEPTION WHEN SQLSTATE 'ZX009' THEN NULL;
+ END;
+ RETURN _state;
+END;$$;
+CREATE TEMP TABLE e09_legacy_welcome_before AS SELECT pg_temp.e09_welcome_snapshot() AS state;
+SELECT is(pg_temp.e09_legacy_welcome_number('3')#>'{answers,count}','3'::jsonb,'untouched legacy numeric string saves as canonical number');
+SELECT is(pg_temp.e09_legacy_welcome_number('0')#>'{answers,count}','0'::jsonb,'legacy zero remains a real numeric answer');
+SELECT is(pg_temp.e09_legacy_welcome_number('3.5')#>'{answers,count}','3.5'::jsonb,'legacy decimal resumes without re-entry');
+SELECT is(pg_temp.e09_legacy_welcome_number('3e1')#>'{answers,count}','30'::jsonb,'legacy finite exponent resumes as canonical number');
+SELECT is(pg_temp.e09_legacy_welcome_number('')#>'{answers,count}','null'::jsonb,'optional legacy blank has explicit null representation');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('NaN')$$,'22023',NULL,'invalid legacy numeric text remains refused');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('0x10')$$,'22023',NULL,'hex text receives no permissive numeric coercion');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('1e999')$$,'22023',NULL,'out-of-range legacy exponent remains refused');
+SELECT is(pg_temp.e09_welcome_snapshot(),(SELECT state FROM e09_legacy_welcome_before),'legacy compatibility fixtures roll back every canonical row and audit');
 CREATE TEMP TABLE e09_welcome_before AS SELECT pg_temp.e09_welcome_snapshot() AS state;
 SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(SELECT state->>'expected_token' FROM e09_welcome_loaded),'{"first_name":"No"}','{"goal":"No"}')$$,
  '40001','Welcome information changed; reload before saving','prior token conflicts even within same now() transaction');

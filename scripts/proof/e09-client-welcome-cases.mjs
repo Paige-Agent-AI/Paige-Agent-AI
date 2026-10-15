@@ -180,6 +180,23 @@ export async function runWelcomeCases(ctx) {
     assert.deepEqual(welcome.data,{actor_user_id:ids.a,tenant_id:ids.ta,client_id:ids.ca,
       answer_fields:Object.keys(answers).sort(),via:'client_portal_save_welcome'});
   });
+  check('Untouched historical numeric strings resume through normalized canonical save and reload',()=>{
+    for(const [legacy,number]of [['3',3],['0',0],['3.5',3.5],['3e1',30],['',null]]){
+      const before=snapshot(),saved=row(sql(`BEGIN;
+        UPDATE public.paige_client_intake_submissions SET payload=payload||${json({count:legacy})}
+          WHERE client_id=${lit(ids.ca)} AND section='playbook_intake';
+        SELECT set_config('test.actor',${lit(ids.a)},true);SET LOCAL ROLE authenticated;
+        SELECT public.client_portal_save_welcome(public.client_portal_welcome_state()->>'expected_token',${json(profile)},public.client_portal_welcome_state()->'answers');ROLLBACK;`));
+      assert.equal(saved.answers.count,number);assert.equal(typeof saved.answers.count,typeof number);assert.equal(snapshot(),before);
+    }
+  });
+  check('Historical invalid numeric strings do not receive permissive coercion',()=>{
+    for(const legacy of ['NaN','0x10','1e999'])unchangedRefusal(()=>sql(`BEGIN;
+      UPDATE public.paige_client_intake_submissions SET payload=payload||${json({count:legacy})}
+        WHERE client_id=${lit(ids.ca)} AND section='playbook_intake';
+      SELECT set_config('test.actor',${lit(ids.a)},true);SET LOCAL ROLE authenticated;
+      SELECT public.client_portal_save_welcome(public.client_portal_welcome_state()->>'expected_token',${json(profile)},public.client_portal_welcome_state()->'answers');ROLLBACK;`),'22023');
+  });
   check('Optional visible answers may be omitted/removed while unseen history is preserved',()=>{
     save(state().expected_token,profile,answers);
     const retained={goal:answers.goal,plan:answers.plan};

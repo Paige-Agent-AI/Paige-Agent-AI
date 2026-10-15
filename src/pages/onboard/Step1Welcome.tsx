@@ -23,6 +23,7 @@ function IntakeQuestion({field,value,onChange,disabled}:{field:IntakeField;value
         disabled={disabled} required={field.required} onChange={e=>onChange(e.target.value)}>
         <option value="">Select…</option>{field.options?.map(option=><option key={option} value={option}>{option}</option>)}
       </select>:<Input id={id} className={controlClass} type={field.type==="number"?"number":field.type==="date"?"date":field.type==="phone"?"tel":"text"}
+        step={field.type==="number"?"any":undefined}
         value={value??""} disabled={disabled} required={field.required} maxLength={field.type==="address"?1000:2000}
         onChange={e=>onChange(field.type==="number"?(e.target.value===""?null:Number(e.target.value)):e.target.value)}/>}
   </div>;

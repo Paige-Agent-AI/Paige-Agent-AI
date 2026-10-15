@@ -133,7 +133,7 @@ DECLARE
   _uid uuid := auth.uid(); _id uuid; _client public.clients%ROWTYPE;
   _config jsonb; _fields jsonb; _profile jsonb; _answers jsonb := '{}'::jsonb;
   _intake public.paige_client_intake_submissions%ROWTYPE;
-  _intake_exists boolean; _token text; _field jsonb;
+  _intake_exists boolean; _token text; _field jsonb; _answer jsonb; _number numeric;
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE='42501'; END IF;
   _id := public.client_portal_relationship_id();
@@ -166,7 +166,21 @@ BEGIN
     END IF;
     FOR _field IN SELECT value FROM jsonb_array_elements(_fields) LOOP
       IF _intake.payload ? (_field->>'key') THEN
-        _answers := _answers || jsonb_build_object(_field->>'key',_intake.payload->(_field->>'key'));
+        _answer := _intake.payload->(_field->>'key');
+        -- The incumbent form stored number input values as text. Normalize only
+        -- valid bounded historical numbers for this read projection; the CAS
+        -- below still hashes the original complete payload. Reads write nothing,
+        -- and the writer continues to require JSON numbers (or optional null).
+        IF _field->>'type'='number' AND jsonb_typeof(_answer)='string' THEN
+          IF nullif(btrim(_answer#>>'{}'),'') IS NULL THEN
+            _answer := 'null'::jsonb;
+          ELSIF char_length(_answer#>>'{}')<=64 AND (_answer#>>'{}') ~
+            '^-?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]{1,3})?$' THEN
+            _number := (_answer#>>'{}')::numeric;
+            IF abs(_number)<=1000000000000 THEN _answer := to_jsonb(_number); END IF;
+          END IF;
+        END IF;
+        _answers := _answers || jsonb_build_object(_field->>'key',_answer);
       END IF;
     END LOOP;
   END IF;

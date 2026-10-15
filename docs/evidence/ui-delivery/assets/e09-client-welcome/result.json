@@ -7,7 +7,7 @@
   "fonts": "local compiled fonts; remote fallback when unavailable",
   "sourcePins": {
     "src/pages/onboard/OnboardLayout.tsx": "92353cd859e71c6712e5eedbce56492b329be1475ef485b4adb89d67e1866202",
-    "src/pages/onboard/Step1Welcome.tsx": "cc5d17c2a1f0259add2799c193164ef4bdb383e7909710d7733ec7bb2724fcd7",
+    "src/pages/onboard/Step1Welcome.tsx": "78614ab21f0f989b218716cc27e61c1f427b5bfbff89e1c25efa18aa7671ca58",
     "src/pages/onboard/useClientWelcome.ts": "16f1fc97035afa1cf9f274558c76ba36cf35d8e0bad418b0011a2cab60c4da9a",
     "src/pages/onboard/useOnboardingClient.ts": "089d54ccc0e42a4d2a287eda213795aa48b38a4d158e370058b84923fd7df298",
     "src/lib/client-portal-welcome.ts": "a75953bedac269b211c10f385e5cbfb8ed582020cf41440da8c02ecbd5988a1e",

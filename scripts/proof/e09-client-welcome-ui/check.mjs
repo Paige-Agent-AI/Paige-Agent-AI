@@ -65,11 +65,14 @@ try{
       const next=page.getByRole("button",{name:"Continue to agreement",exact:true});await next.scrollIntoViewIfNeeded();
       const rect=await next.boundingBox();assert(rect&&rect.y>=0&&rect.y+rect.height<=height+1);await capture("continue-reachable");
       await page.getByLabel("Phone number",{exact:true}).fill("+12025550131");await page.getByLabel("Your goal",{exact:true}).fill("Persistent fixture goal");
-      await next.click();await page.getByText("Agreement route test double",{exact:true}).waitFor();
+      const numeric=page.getByLabel("Target milestones");await numeric.fill("3.5");
+      assert.equal(await numeric.evaluate(e=>e.validity.stepMismatch),false);await numeric.press("Enter");
+      await page.getByText("Agreement route test double",{exact:true}).waitFor();
       const calls=await page.evaluate(()=>window.welcomeProof.calls());assert.equal(calls.filter(x=>x.name==="client_portal_save_welcome").length,1);
       assert(calls.filter(x=>x.name.startsWith("client_portal_welcome")||x.name==="client_portal_save_welcome").every(x=>x.pinned));
       await page.getByRole("button",{name:"Return to information",exact:true}).click();await page.getByLabel("Your goal",{exact:true}).waitFor();
       assert.equal(await page.getByLabel("Your goal",{exact:true}).inputValue(),"Persistent fixture goal");assert.equal(await page.getByLabel("Phone number",{exact:true}).inputValue(),"+12025550131");
+      assert.equal(await numeric.inputValue(),"3.5");
       await capture("returned-fixture-state");
     }
     await page.close();

@@ -104,6 +104,24 @@ it("renders an existing editor's digit-leading question key through the native e
     answers:{"90_day_goal":"Saved native answer"}},error:null});await mount();
   expect(input("90 day goal")?.value).toBe("Saved native answer");expect(raw).not.toHaveBeenCalled();
 });
+for(const count of [0,3.5,null])it(`saves untouched normalized numeric readback ${String(count)} without re-entry`,async()=>{
+  native={...initialState(),fields:[...initialState().fields,{key:"count",label:"Target milestones",type:"number",required:false}],
+    answers:{goal:"Saved goal",count}} as ReturnType<typeof initialState>;
+  await mount();await submit();
+  expect(rpc).toHaveBeenCalledWith("client_portal_save_welcome",expect.objectContaining({p_answers:{goal:"Saved goal",count}}));
+  expect(host.textContent).toContain("Agreement route");
+});
+it("accepts focused decimal input through native form submission without step mismatch",async()=>{
+  native={...initialState(),fields:[...initialState().fields,{key:"count",label:"Target milestones",type:"number",required:false}],
+    answers:{goal:"Saved goal",count:3}} as ReturnType<typeof initialState>;
+  await mount();act(()=>input("Target milestones")!.focus());await change("Target milestones","3.5");
+  expect(input("Target milestones")?.value).toBe("3.5");
+  expect(input("Target milestones")?.validity.stepMismatch).toBe(false);
+  expect(host.querySelector('form')?.checkValidity()).toBe(true);
+  await act(async()=>host.querySelector('form')!.requestSubmit());await flush();
+  expect(rpc).toHaveBeenCalledWith("client_portal_save_welcome",expect.objectContaining({p_answers:{goal:"Saved goal",count:3.5}}));
+  expect(host.textContent).toContain("Agreement route");
+});
 it("retains a draft on conflict and does not navigate or blindly replay", async () => {
   await mount(); await change("Your goal","Keep draft"); saveError={code:"40001"}; await submit();
   expect(host.textContent).toContain("changed"); expect(input("Your goal")?.value).toBe("Keep draft");

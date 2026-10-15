@@ -47,9 +47,17 @@ test('rejects reviewed metric adapter effect substitution',()=>{
  assert.ok(changed.get(path)!==raw);assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
 test('rejects missing reviewed metric ancestry adapter or validator',()=>{
- for(const path of ['supabase/functions/_shared/analytics-metrics/read.ts','supabase/functions/_shared/analytics-metrics/metric-contract.ts']){
+ for(const path of ['supabase/functions/_shared/analytics-metrics/read.ts','supabase/functions/_shared/analytics-metrics/keys.ts','supabase/functions/_shared/analytics-metrics/metric-contract.ts']){
   const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  }
+});
+for(const [label,mutate]of [
+ ['a metric key changes',s=>s.replace('business.active_clients_current','business.counterfeit_metric')],
+ ['an effect is added to the pure key dependency',s=>s+'\nfetch("https://counterfeit.invalid");'],
+])test(`rejects reviewed metric-key extraction: ${label}`,()=>{
+ const path='supabase/functions/_shared/analytics-metrics/keys.ts',raw=sources.get(path),changed=mutate(raw);
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(f=>f.includes(path)));
 });
 for(const [label,mutate]of [
  ['discovery caller replaced by service client',s=>s.replace('await findPipelineOriginalEffect(originalScope, supabaseClient);','await findPipelineOriginalEffect(originalScope, supabase);')],

@@ -45,6 +45,7 @@ import { DashboardModeProvider } from "./contexts/DashboardModeContext";
 import { BusinessProvider } from "./contexts/BusinessContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
 import { ClientOnlyRouteGuard } from "./components/auth/ClientOnlyRouteGuard";
+import { ClientDeliveryReviewProvider } from "./components/client/ClientDeliveryReviewProvider";
 import { useHostRouting } from "./lib/hostRouting";
 import { useReferralTracking } from "./hooks/useReferralTracking";
 import { GlobalAuthSessionManager } from "./lib/auth/GlobalAuthSessionManager";
@@ -234,6 +235,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
           {!isFormOnBusinessSite() && <MetaPixel />}
           <SpeedInsights />
           <ClientOnlyRouteGuard />
+          <ClientDeliveryReviewProvider>
           <Routes>
             {/* Live homepage — the new gold+indigo Paige design */}
             <Route path="/" element={<PageSuspense><PaigeHome /></PageSuspense>} />
@@ -386,6 +388,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ClientDeliveryReviewProvider>
         </BrowserRouter>
         </ImpersonationProvider>
         </DashboardModeProvider>

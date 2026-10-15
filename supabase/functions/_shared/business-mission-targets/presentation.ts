@@ -65,7 +65,7 @@ export function validateMissionTargetSnapshot(value: unknown, tenantId: string |
 
 export function missionTargetCurrencyDigits(currency: string | null): number | null {
   if (!currency || !/^[a-z]{3}$/.test(currency)) return null;
-  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits; }
+  try { return new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? null; }
   catch { return null; }
 }
 

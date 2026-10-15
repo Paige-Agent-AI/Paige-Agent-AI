@@ -1,12 +1,12 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createGamePlanSnapshotAdapter } from '../../supabase/functions/_shared/paige-context/adapters/game-plan';
 import { composeOperatingSnapshot, projectOperatingSnapshot, resolveSnapshotPeriod } from '../../supabase/functions/_shared/paige-context/snapshot';
 import { readBusinessMetric } from '../../supabase/functions/_shared/analytics-metrics/read';
 import { businessReviewRecordLinks } from '../../supabase/functions/_shared/paige-context/business-review-chat';
 import { readRecordLinks } from '../../supabase/functions/_shared/paige-turn/record-links';
 import { resolveCanonicalRecordLink } from '../../supabase/functions/_shared/canonical-app-url';
-import { validateMissionTargetSnapshot, type MissionTargetSnapshot } from '../../supabase/functions/_shared/business-mission-targets/presentation';
+import { formatMissionTargetValue, missionTargetCurrencyDigits, validateMissionTargetSnapshot, type MissionTargetSnapshot } from '../../supabase/functions/_shared/business-mission-targets/presentation';
 import type { MissionTarget } from '../../supabase/functions/_shared/business-mission-targets/contract';
 import type { MetricResult } from '../../supabase/functions/_shared/analytics-metrics/metric-contract';
 const tenant = '11111111-1111-4111-8111-111111111111', mission = '33333333-3333-4333-8333-333333333333';
@@ -47,6 +47,13 @@ function harness() {
   return { caller, calls, review, read, compose, workspace: (value: string) => { workspace = value; }, deny: () => { denied = true; }, partial: () => { partial = true; } };
 }
 describe('one shared Game Plan review', () => {
+  it('withholds currency formatting when the runtime provides no fraction metadata', () => {
+    const options = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).resolvedOptions();
+    Reflect.deleteProperty(options, 'maximumFractionDigits');
+    const missing = vi.spyOn(Intl.NumberFormat.prototype, 'resolvedOptions').mockReturnValue(options);
+    try { expect(missionTargetCurrencyDigits('usd')).toBeNull(); expect(formatMissionTargetValue('1200', 'currency_totals', 'usd')).toBe('Unavailable'); }
+    finally { missing.mockRestore(); }
+  });
   it('shares issued actuals across concurrent consumers without inventing epochs, zero or receipts', async () => {
     const h = harness();
     const [domain, metric] = await Promise.all([h.read(), readBusinessMetric(h.caller, { tenantId: tenant }, {

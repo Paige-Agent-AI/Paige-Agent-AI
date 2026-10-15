@@ -47,3 +47,11 @@ scope lifetime and purposeful interaction. No motion or token redesign. Finish r
 author self-review under Antonio's standing sole-lead exception, lower assurance.
 Canonical guidance: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
 Source/DOM evidence does not substitute for authenticated or captured product acceptance.
+
+Hosted CI38674852193 on cbf906bf8467326324cdb36bd54584dac124f150 found one new
+strict-Deno TS2322 diagnostic in the shared currency helper, repeated through five
+dependent packages: Intl fraction metadata may be undefined. The helper now converts
+that absence to its existing null/unavailable contract. A new missing-metadata negative
+and the three affected consumer suites pass57 local cases. No type assertion, baseline,
+skip or authority change; fresh exact-head Deno/full CI remains required. Earlier292-case
+regression and55 source-contract controls are preserved historical source evidence.

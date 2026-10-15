@@ -1,5 +1,26 @@
 # Roles & Permissions — domain brain
 
+**2026-10-14 E09 customer self-profile writer candidate, NOT RELEASED:**
+`client_portal_update_self_profile(timestamptz,jsonb,uuid)` resolves and locks the
+authenticated subject's eligible canonical relationship, compares the loaded version,
+and accepts only own name/postal/primary-phone changes. Existing checked contact-method
+helpers preserve other addresses; existing audit_logs records actor/tenant/client and
+submitted field names without personal values. Safe explicit profile readback is required
+before success; late errors roll back the entire call. No email/linkage/staff/consent/stage
+change, raw policy reopening or external-entry activation. Caller adoption, full-schema
+and actual customer acceptance remain owed. See
+`../evidence/ui-delivery/e09-client-self-profile-write.md`. Full Portal stays PARTIAL.
+
+**2026-10-14 E09 additive customer-safe read candidate, NOT RELEASED:**
+`client_portal_relationship_id(uuid)` resolves only the authenticated subject's active,
+unmerged canonical client relationship in an active business. A tenant argument narrows
+authority and ambiguous unselected scope refuses. `client_portal_self_profile(uuid)`
+returns explicit safe profile/own contact-method fields without raw CRM notes, staff
+assignments, scores, labels or provider metadata. No new identity registry, staff grant
+or active-workspace pointer. This foundation does **not** close existing raw self RLS,
+MCP/context paths or activate external entry: migrate their consumers coherently first.
+See `../evidence/ui-delivery/e09-client-self-projection.md`. Full Portal remains PARTIAL.
+
 **2026-10-14 E09 consumer-invite repair candidate, NOT RELEASED:** the existing
 `accept_tenant_invite(text)` consumer branch is being repaired to require the stored
 confirmed recipient and exact active, unmerged CRM contact/address binding, refuse

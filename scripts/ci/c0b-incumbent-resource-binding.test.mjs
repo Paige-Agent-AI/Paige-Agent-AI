@@ -34,6 +34,16 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
+for(const [label,before,after]of [
+ ['activation authority lowered','["automation_set_state", "owner_only",','["automation_set_state", "ordinary",'],
+ ['unapproved draft policy changed','["weekly_commitment_draft", "ordinary",','["weekly_commitment_draft", "high",'],
+ ['unknown actions become ordinary','RISK_BY_TOOL.get(tool) ?? "unclassified"','RISK_BY_TOOL.get(tool) ?? "ordinary"'],
+])test(`policy fingerprint still refuses ${label}`,()=>{
+ const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace(before,after);
+ assert.notEqual(changed,raw,'fixture must alter the canonical policy');
+ const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(f=>f.includes(path)));
+});
 test('malformed source is refused',()=>assert.ok(validateIncumbentResourceBindings('const broken = ;',sources).findings.length));
 for(const [label,mutate]of [
  ['metric caller-JWT replaced by service client',s=>s.replace('await readBusinessMetric(supabaseClient,','await readBusinessMetric(supabase,')],

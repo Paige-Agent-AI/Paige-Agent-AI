@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import { createWeeklyDraftCommand } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-command";
+import { classifyAction } from "../../supabase/functions/_shared/action-risk";
 
 const actor="11111111-1111-4111-8111-111111111111",tenant="22222222-2222-4222-8222-222222222222";
 const id="33333333-3333-4333-8333-333333333333",nonce="44444444-4444-4444-8444-444444444444";
@@ -38,6 +39,11 @@ function fixture(){
   return {send,handler,caller,admin,writes,queries,setOwner:(v:boolean)=>{owner=v;},setTenant:(v:string)=>{active=v;},setLane:(v:string)=>{lane=v;},setRow:(v:Record<string,unknown>)=>{row=v;},setState:(v:Record<string,unknown>)=>{state={...state,...v};}};
 }
 describe("weekly draft canonical domain adapter",()=>{
+  it("classifies only the unapproved draft while preserving owner-only activation and refusal of undeclared controls",()=>{
+    expect(classifyAction("weekly_commitment_draft")).toBe("ordinary");
+    for(const key of ["automation_set_state","automation_set_grant"])expect(classifyAction(key)).toBe("owner_only");
+    for(const key of ["weekly_commitment_activate","weekly_commitment_resume","weekly_commitment_run","constructor","__proto__"])expect(classifyAction(key)).toBe("unclassified");
+  });
   it("refuses absent credentials before any tenant query",async()=>{const f=fixture();expect((await f.send({action:"pending"},{authorization:""})).status).toBe(401);expect(f.caller.rpc).not.toHaveBeenCalled();});
   it("refuses an old surface address before querying or issuing proposals",async()=>{const f=fixture();f.setTenant(actor);expect((await f.send({action:"prepare",draft})).status).toBe(409);expect(f.admin.from).not.toHaveBeenCalled();});
   it("proves current owner authority rather than trusting headers or route",async()=>{const f=fixture();f.setOwner(false);expect((await f.send({action:"prepare",draft})).status).toBe(403);expect(f.writes).toEqual([]);});

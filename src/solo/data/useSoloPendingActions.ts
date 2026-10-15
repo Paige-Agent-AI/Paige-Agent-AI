@@ -63,6 +63,8 @@ export interface SoloPendingAction {
 
 export interface SoloPendingActionsData {
   items: SoloPendingAction[];
+  /** Exact caller-scoped count, independently of the ten-row preview; null means not supplied. */
+  total?: number | null;
   loading: boolean;
   /** Distinct from an empty list. A failed read is not "nothing is waiting" (§13). */
   error: string | null;
@@ -97,20 +99,26 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
   const [items, setItems] = useState<SoloPendingAction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
   const mounted = useRef(false);
   const scope = typeof tenantId === "string" && tenantId ? tenantId : null;
+  const [settledScope, setSettledScope] = useState(scope);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     mounted.current = true;
     let cancelled = false;
+    setSettledScope(scope);
+    setItems([]);
+    setTotal(null);
 
     // No resolved workspace → no read at all (§9). Never run an unscoped query that the global-admin
     // operator escape on pa_tenant_staff_read would widen to every tenant.
     if (!scope) {
       setItems([]);
+      setTotal(null);
       setError(null);
       setLoading(false);
       return () => { cancelled = true; mounted.current = false; };
@@ -119,9 +127,9 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
     setLoading(true);
     void (async () => {
       try {
-        const { data, error: readError } = await supabase
+        const { data, error: readError, count } = await supabase
           .from("paige_actions")
-          .select("id,title,summary,draft_content,decision_rationale,from_department,created_at")
+          .select("id,title,summary,draft_content,decision_rationale,from_department,created_at", { count: "exact" })
           .eq("tenant_id", scope) // §9 — bind to the VIEWED workspace, not the operator's whole book
           .eq("status", "filed")
           .eq("autonomy_lane", "confirm")
@@ -129,11 +137,14 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
           .limit(MAX_ITEMS);
         if (cancelled || !mounted.current) return;
         if (readError) {
+          setItems([]);
+          setTotal(null);
           setError(readError.message || "could not load what is waiting on you");
           setLoading(false);
           return;
         }
         setItems((data ?? []).map(toPendingAction).filter((a): a is SoloPendingAction => a !== null));
+        setTotal(typeof count === "number" && Number.isSafeInteger(count) && count >= 0 ? count : null);
         setError(null);
         setLoading(false);
       } catch (err) {
@@ -146,5 +157,7 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
     return () => { cancelled = true; mounted.current = false; };
   }, [tick, scope]);
 
-  return useMemo(() => ({ items, loading, error, refresh }), [items, loading, error, refresh]);
+  return useMemo(() => settledScope === scope
+    ? { items, total, loading, error, refresh }
+    : { items: [], total: null, loading: true, error: null, refresh }, [items, total, loading, error, refresh, settledScope, scope]);
 }

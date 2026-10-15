@@ -169,9 +169,9 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
           <span className="spw-eyebrow">Evidence library</span>
           <h2>Research</h2>
           <p>
-            Every investigation PAIGE runs in Chat lands here — the question, the
-            findings with their citations, and the sources behind them. Ask PAIGE to
-            research something deeply and the saved run appears in this library.
+            Saved investigations appear here with their findings, citations and sources.
+            Request new research in Chat; it runs only when available and permitted
+            for that conversation.
           </p>
         </div>
         <span className="spw-truth spw-truth-live">Workspace-scoped</span>
@@ -229,8 +229,8 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
                 <Search aria-hidden size={24} />
                 <strong>No saved research yet</strong>
                 <span>
-                  Ask PAIGE in Chat — "research this deeply", "do a deep dive", or just a
-                  question that deserves real sources — and the saved run appears here.
+                  Ask PAIGE in Chat to "research this deeply". Availability depends on
+                  the conversation’s permissions and connected research services.
                 </span>
               </div>
             )}
@@ -244,9 +244,9 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
             <span className="spw-truth spw-truth-live">One research engine</span>
             <h3>The same engine chat uses</h3>
             <p>
-              Ask in Chat — PAIGE decides when a question deserves real sources — and the
-              saved run lands here: planned searches, reliability-ranked sources, and a
-              validation gate that refuses to invent. One history, however it was started.
+              Research starts in Chat when current permissions and research services
+              allow it. Saved runs share this history, including their searches,
+              sources and validated findings.
             </p>
             <hr />
             <span className="spw-truth spw-truth-neutral">Bounded by design</span>

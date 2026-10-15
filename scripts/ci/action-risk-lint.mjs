@@ -511,6 +511,13 @@ if (chatSrc.includes('...CAMPAIGN_BRIEF_TOOLS')) {
   if (!campaignTools.length) throw new Error('Campaign Brief catalog could not be parsed');
   importedTools.push(...campaignTools);
 }
+if (chatSrc.includes('...KNOWLEDGE_TOOLS')) {
+  if (!/import\s*\{[^}]*KNOWLEDGE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/knowledge\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Knowledge catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/knowledge.ts', 'utf8');
+  const knowledgeTools = [...source.matchAll(/\bname:\s*"((?:read_tenant_knowledge|knowledge_update|knowledge_delete))"/g)].map(m => m[1]);
+  if (knowledgeTools.length !== 3) throw new Error('Knowledge catalog could not be parsed');
+  importedTools.push(...knowledgeTools);
+}
 if (chatSrc.includes('...EMAIL_CAMPAIGN_TOOLS')) {
   if (!/import\s*\{[^}]*EMAIL_CAMPAIGN_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/email-campaign-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved email campaign catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/email-campaign-chat.ts', 'utf8');

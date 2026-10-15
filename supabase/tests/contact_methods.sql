@@ -26,7 +26,7 @@
 -- Synthetic fixtures only. Rolls back.
 -- ============================================================================
 BEGIN;
-SELECT plan(101);
+SELECT plan(102);
 
 -- ── Fixtures ────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users (id, aud, role, email) VALUES
@@ -230,32 +230,26 @@ SELECT is((SELECT array_agg(kind || ':' || value ORDER BY kind) FROM public.clie
 -- A customer invited at a contact's SECONDARY address, who signs in with it, is linked to that
 -- contact rather than given a duplicate.
 --
--- KNOWN, SEPARATE DEFECT (recorded for the Register, not fixed in this lane): accept_tenant_invite
--- ends by setting the invitee's profiles.active_tenant_id, and for a customer invite no membership
--- exists, so production's guard_active_tenant_membership (trg_guard_active_tenant, since
--- 20260714144656) refuses it and rolls the whole acceptance back. No customer invite has been
--- accepted on production since that guard landed. This proof is about which contact the invite
--- recognises, so the guard is suspended around this one call and restored immediately after.
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.profiles'::regclass AND tgname = 'trg_guard_active_tenant') THEN
-    ALTER TABLE public.profiles DISABLE TRIGGER trg_guard_active_tenant;
-  END IF;
-END $$;
+-- E09 binds the exact CRM contact and preserves the real staff workspace guard.
+-- This existing address-recognition proof uses a recipient with existing staff
+-- standing; pure external entry stays denied until client-safe projections ship.
+-- Leave the preceding owner caller context before assembling trusted fixtures;
+-- otherwise enforce_tenant_member_consent correctly makes this foreign seat pending.
+SELECT set_config('request.jwt.claims', '{}', true);
 INSERT INTO auth.users (id, aud, role, email, email_confirmed_at) VALUES
   ('c3000000-0000-4000-8000-0000000000c1', 'authenticated', 'authenticated', 'ADA@a.tests.invalid', now());
-INSERT INTO public.tenant_invite_tokens (tenant_id, token, kind, created_by, email) VALUES
-  ('c3000000-0000-4000-8000-00000000000a', 'cm-consumer-invite-token', 'consumer', 'c3000000-0000-4000-8000-0000000000a1', 'ada@a.tests.invalid');
+INSERT INTO public.tenant_members (tenant_id,user_id,role,status,is_owner,joined_at) VALUES
+  ('c3000000-0000-4000-8000-00000000000a','c3000000-0000-4000-8000-0000000000c1','member','active',false,now());
+SELECT is((SELECT status FROM public.tenant_members WHERE tenant_id='c3000000-0000-4000-8000-00000000000a'
+  AND user_id='c3000000-0000-4000-8000-0000000000c1'),'active','address-recognition fixture has actual pre-existing staff standing');
+INSERT INTO public.tenant_invite_tokens (tenant_id, token, kind, created_by, email, contact_id) VALUES
+  ('c3000000-0000-4000-8000-00000000000a', 'cm-consumer-invite-token', 'consumer', 'c3000000-0000-4000-8000-0000000000a1', 'ada@a.tests.invalid', 'c3000000-0000-4000-8000-000000000ca1');
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000c1","role":"authenticated"}', true);
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($q$SELECT public.accept_tenant_invite('cm-consumer-invite-token')$q$,
-  'an invite sent to a contact''s secondary address is accepted once the active-workspace guard is set aside');
+  'an exact-contact invite sent to a secondary address is accepted with the staff workspace guard enabled');
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '', true);
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.profiles'::regclass AND tgname = 'trg_guard_active_tenant') THEN
-    ALTER TABLE public.profiles ENABLE TRIGGER trg_guard_active_tenant;
-  END IF;
-END $$;
 SELECT is((SELECT linked_user_id FROM public.clients WHERE id = 'c3000000-0000-4000-8000-000000000ca1'),
           'c3000000-0000-4000-8000-0000000000c1'::uuid, 'the invite links the existing contact that holds that address');
 SELECT is((SELECT count(*)::int FROM public.clients WHERE tenant_id = 'c3000000-0000-4000-8000-00000000000a' AND linked_user_id = 'c3000000-0000-4000-8000-0000000000c1'),

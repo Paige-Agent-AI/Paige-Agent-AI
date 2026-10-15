@@ -10,11 +10,12 @@ export const supabase={
  auth:{getUser:async()=>({data:{user:signedIn?{id:actor}:null},error:null}),
   getSession:async()=>({data:{session:signedIn?{user:{id:actor},access_token:'synthetic-browser-transport-only'}:null},error:null}),
   onAuthStateChange:(listener:(event:string,session:{user:{id:string}}|null)=>void)=>{listeners.add(listener);return {data:{subscription:{unsubscribe:()=>listeners.delete(listener)}}};}},
- from:()=>({select:()=>({eq:()=>({is:()=>({limit:async()=>({data:signedIn?[{id:client,tenant_id:tenant}]:[],error:null})})})})}),
- rpc:async(_name:string,args:Record<string,unknown>)=>{
+ from:()=>{throw Error('Raw CRM transport is not available in this fixture');},
+ rpc:async(name:string,args:Record<string,unknown>)=>{
   if(phase==='loading')return new Promise(()=>{});
   if(phase==='offline')return {data:null,error:{code:'NETWORK'}};
   if(!signedIn)return {data:null,error:{code:'42501'}};
+  if(name==='client_portal_self_profile')return {data:{id:client,tenant_id:tenant,linked_user_id:actor},error:null};
   const page=Boolean(args.p_after),empty=phase==='empty',hasMore=phase==='partial'&&!page,test=phase==='test';
   const row={id:page?id(5):invoice,invoice_number:page?'SYN-2':'SYN-1',status:'issued',currency:'usd',issued_at:date,due_date:'2026-10-15',issued_snapshot_version:1,
    amount_minor:'350000',allocated_minor:'45000',remaining_minor:'305000',manual_recorded_minor:'2000',provider_verified_minor:'43000',test_provider_minor:test?'3000':'0',document_available:true};

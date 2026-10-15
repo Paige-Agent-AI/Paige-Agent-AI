@@ -829,7 +829,8 @@ jobs:
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts \
             supabase/functions/_shared/agreements/commercial-presentation.test.ts \
-              supabase/functions/_shared/agreements/retained-document.test.ts
+              supabase/functions/_shared/agreements/retained-document.test.ts \
+              supabase/functions/_shared/agreements/seal-readback.test.ts
             # The real endpoint import registers Deno.serve. Its isolated test
             # intercepts every transport and never starts a listener or signs.
             deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \

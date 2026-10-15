@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
+import { mergeIntoDraft, subscribePaigePromptHandoff, takePendingPaigePrompt } from "@/lib/paigePromptHandoff";
 const state = vi.hoisted(() => ({ context: {} as Record<string, unknown>, rpc: vi.fn(), save: vi.fn(), reconcile: vi.fn(), refresh: vi.fn(), tenant: "tenant-a" }));
 vi.mock("./data/useSoloBusinessContext", () => ({ useSoloBusinessContext: () => state.context }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: state.tenant, activeTenant: { account_number: "test-tenant-a" } }) }));
@@ -14,6 +15,7 @@ function button(text: string) { return [...host.querySelectorAll("button")].find
 async function click(node: HTMLElement) { await act(async () => node.click()); }
 async function input(value: string) { await act(async () => { const node = host.querySelector("textarea")!; Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(node, value); node.dispatchEvent(new Event("input", { bubbles: true })); }); }
 beforeEach(() => {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   state.tenant = "tenant-a"; state.rpc.mockReset(); state.save.mockReset(); state.refresh.mockReset();
   state.context = { loading: false, error: null, saving: false, accessScope: "owner_full", resolvedTenantId: "tenant-a", contextRevision: 7,
     brief: cleanSoloSetupBrief({ publicName: "Test business", industry: "Consulting", provenance: { industry: { source: "connection_sourced", confidence: "observed" } }, updatedAt: "original" }),
@@ -23,6 +25,20 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 describe("owner interview review over canonical Setup", () => {
+  it("offers visible next-step questions through the existing draft handoff without sending, saving or discarding typed text", async () => {
+    state.context.brief = cleanSoloSetupBrief({ currentPriority: "Improve delivery", provenance: { currentPriority: { source: "owner_confirmed", confidence: "confirmed" } } });
+    let composerDraft = "An existing unsent question";
+    const stop = subscribePaigePromptHandoff(prompt => { composerDraft = mergeIntoDraft(composerDraft, prompt); });
+    try {
+      await render(); await click(button("Choose a first action"));
+      expect(composerDraft).toMatch(/^An existing unsent question\n\nHelp me choose/);
+      expect(composerDraft).toContain("Do not execute it yet");
+      expect(composerDraft).not.toContain("Improve delivery");
+      expect(host.textContent).toContain("No action has been submitted");
+      expect(takePendingPaigePrompt()).toBeNull(); expect(state.save).not.toHaveBeenCalled();
+      expect(state.rpc.mock.calls.filter(([name]) => name !== "get_solo_business_interview_checkpoint")).toHaveLength(0);
+    } finally { stop(); takePendingPaigePrompt(); }
+  });
   it("opens native secure handoffs with a thread address only and no write", async () => {
     const threadId = "10000000-0000-4000-8000-000000000001";
     const RouteProbe = () => { const location = useLocation(); return <output>{location.pathname + location.search}</output>; };

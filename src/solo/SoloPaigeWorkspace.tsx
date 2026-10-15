@@ -16,7 +16,7 @@ import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
 import { supabase } from "@/integrations/supabase/client";
 import { interviewThreadFromSearch } from "./solo-interview-navigation";
-import { cleanInterviewCheckpoint } from "./solo-business-interview-contract";
+import { cleanInterviewCheckpoint, INTERVIEW_NEXT_PROMPTS } from "./solo-business-interview-contract";
 import { SoloOnboardingStage, type OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
@@ -445,7 +445,7 @@ export function SoloPaigeWorkspace({
           onTrace={observeChat}
           greeting={interviewFocused && firstRun ? "I'm PAIGE. What does your business do, and what would you most like to improve?" : interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
           chips={interviewFocused ? profileStatus?.tenantId === activeTenantId && profileStatus.state === "ready" && profileStatus.hasConfirmedPriority
-            ? [{ label: "What can help?", prompt: "Using my confirmed business profile, recommend three or four relevant PAIGE capabilities. Explain how each would help, what you can actually do here, and any permissions or setup still needed." }, { label: "What should I connect?", prompt: "Based on my business priorities and current systems, recommend useful integrations. Check what is actually connected, explain the benefits, prerequisites and permissions, and guide me to the secure connection controls. Keep passwords and tokens out of Chat." }, { label: "Choose a first action", prompt: "Help me choose one useful first business action for my confirmed priority. Check what is available and any existing work, then show me a proposal to review. Do not execute it yet. If I approve it later, show me the saved result, its status and where I can find it again. If the outcome is uncertain, check it before another attempt." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }]
+            ? [...INTERVIEW_NEXT_PROMPTS, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }]
             : [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
           clientId={clientScope?.clientId ?? null}
           surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}

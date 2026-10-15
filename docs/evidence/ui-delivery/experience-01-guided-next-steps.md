@@ -45,37 +45,37 @@ PAIGE_UI_DESIGN: PASS: incumbent interview surface brief, five project modules, 
 MATERIAL_FLOW_CHANGE: YES: recommendations, secure native handoffs and first-action continuation.
 FLOW_PROTOTYPE: PASS: the existing isolated framework harness exercised the approved extension before production wiring. Native desktop1366x768/light and320x720/dark in two synthetic contexts covered missing-priority clarification, fixture priority review, guidance, native-destination handoff, refusal, unavailable/retry and keyboard return with the conversation retained. Local receipts guided-next-steps-prototype-72acf43-confirm-build.json and guided-prototype-native-72acf43.json bind71 source inputs/3 assets; no real model/provider/Auth/write effect. One batched correction applied the incumbent theme root and clearer control labels, then one confirmation pass. Ordinary UX decisions are owner-delegated; no new discovery or replacement world.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: ordinary SOLO owner chooses a useful next step from confirmed business facts and opens existing secure Settings controls without leaving their private conversation behind.
-VISUAL_DIRECTION: PASS: inherit the current immersive PAIGE/Operate surface. Secure handoffs stay inside the existing expanded profile area; the existing Chat composer chips carry editable guidance requests instead of introducing another prompt transport. Initial collapsed profile, greeting, presence and composer geometry are preserved; secure return target uses44px inline-flex geometry.
+VISUAL_DIRECTION: PASS: inherit the current immersive PAIGE/Operate surface. Visible guidance questions and secure handoffs stay inside the existing expanded profile area, using the incumbent Ask PAIGE draft handoff; the same questions remain in Chat's existing slash menu. Nothing sends automatically. Initial collapsed profile, greeting, presence and composer geometry are preserved; secure return target uses44px inline-flex geometry.
 MOTION_PURPOSE: NONE: no new motion; current real-state presence and reduced-motion behavior preserved.
 AUTOMATED_EVIDENCE: PASS:67 focused tests in5 files passed before current-main composition, covering owned Setup controls/correction/reconciliation, confirmed-priority readiness, no-write secure navigation, ambiguous/foreign return hints and held/Operator states. This is local source evidence; hosted CI and composed-source checks remain required. First sandbox attempt failed before tests on a temporary-file rename; actual isolated rerun passed.
-STATIC_EVIDENCE: UNVERIFIED: scoped ESLint has zero errors/13 incumbent refresh warnings; full type output has9 incumbent diagnostics outside changed files, not global type PASS. The canonical type ratchet, build and separate exact-head review remain pending. Only E1 context's ancestry scalar changes in the protected checker; its algorithm, all29 effect fingerprints, declarations and negative controls remain intact.
-RENDERED_EVIDENCE: UNVERIFIED: two native prototype frames demonstrate the proposed flow, not the final product source. Final actual-component desktop/mobile/both-theme evidence remains pending.
+STATIC_EVIDENCE: UNVERIFIED: initial scoped ESLint has zero errors/13 incumbent refresh warnings. Composed canonical type ratchet passes baseline10/current8; initial production build passes5491 modules. All158 protected binding controls pass after explicitly correcting the E1 source pin to its canonical AST digest; the first incorrect raw-byte digest was rejected. Visible-question handoff completion still needs its final-source checks, native proof and separate exact-head review. Checker algorithm, all29 effect fingerprints, declarations and negative controls remain intact.
+RENDERED_EVIDENCE: UNVERIFIED: final product source has no native desktop/mobile capture. Two native prototype frames demonstrate only the isolated proposed flow.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: native synthetic prototype handoff/refusal/retry/return and fixture correction were exercised;67 mounted/unit source tests passed. Actual final UI, model recommendation, first-action execution and departmental receipt behavior remain unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary customer window/session/per-case gates outstanding; original23 unchanged.
 RELEASE_CHANNEL: development: no extension release or activation.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: this source prepares profile-informed guidance, secure native navigation and truthful orchestration instructions; it is not an executed business action, working provider connection or completed customer outcome.
 
-KEYBOARD_FOCUS: UNVERIFIED: prototype Enter handoff/return exercised; final-source focus and native keyboard proof remain pending.
+KEYBOARD_FOCUS: UNVERIFIED: final product handoff controls have no native keyboard/focus capture; prototype Enter handoff/return was exercised in isolation.
 ZOOM_REFLOW: UNVERIFIED: prototype320px reflow had no horizontal overflow; actual200% browser zoom is not proved.
 REDUCED_MOTION: UNVERIFIED: no new motion; final-source preference check pending.
 STATE_COVERAGE: UNVERIFIED: prototype and67 source tests cover confirmed/missing/unknown/foreign/denied/unavailable/retry/return. Final rendered states, real recommendations, execution and reload remain owed.
-TRUTHFUL_STATE_LABELS: PASS: source never promotes a catalogue or navigation click into eligibility, connection, effect or receipt. Unknown Setup save holds exit suggestions; first-action prompt requests a proposal only and inherits the existing approval path.
+TRUTHFUL_STATE_LABELS: PASS: source never promotes a catalogue or navigation click into eligibility, connection, effect or receipt. Uncertain Setup save holds exit suggestions; first-action prompt requests a proposal only and inherits the existing approval path.
 SOLO_UI: YES: existing SOLO PAIGE interview/profile/Chat chips and native Settings return navigation; one shared implementation for every eligible current/future SOLO account.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final-source render pending.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final-source render pending.
 SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final-source render pending.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final-source render pending; prior prototype is not this proof.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final product frame absent; prior isolated prototype covers only its proposed flow.
 SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final-source render pending.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final-source render pending.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final-source render pending.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final-source render pending.
 UNVERIFIED: actual model guidance, admitted first action/record/receipt, provider readiness/secure connection effects, ordinary-owner authorization/continuity, two legitimate SOLO cohorts, registration, physical keyboard, assistive technology and browser zoom. Original23 cases and per-case permissions remain unchanged; Central QA's exclusive-window request remains separately pending.
 
-INTERNAL_BUILD_IDENTITY: development successor of main cdbe02d0931c98f8e29c2d1d1d2ea6f784a83a11; exact candidate in Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=existing E01 local source/prototype receipts.
-RELEASE_CLASSIFICATION: internal-only development slice; no customer announcement.
+INTERNAL_BUILD_IDENTITY: development successor of main cdbe02d0931c98f8e29c2d1d1d2ea6f784a83a11; exact candidate in Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(guided interview context is not deployed); evidence=existing E01 local source/prototype receipts.
+RELEASE_CLASSIFICATION: internal-only: development slice with no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full outcome and authenticated evidence remain incomplete.
 RELEASE_NOTE_REQUIRED: no: no customer release identity or publication decision.
-RELEASE_RECOVERY: position=forward correction through the existing reviewed release path; no provider or business effects in this slice; reference=docs/delivery/experience-01-foundation.md.
+RELEASE_RECOVERY: position=forward correction through the existing reviewed release path without provider or business effects; reference=docs/delivery/experience-01-foundation.md.
 
 ## Customer experience integration matrix — additive to ANT-50
 

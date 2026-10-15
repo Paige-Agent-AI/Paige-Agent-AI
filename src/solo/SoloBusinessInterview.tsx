@@ -4,7 +4,8 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useSoloBusinessContext } from "./data/useSoloBusinessContext";
 import { applySetupProposal, prepareOwnerConfirmedBrief, setupSourceLabel, validateSoloSetupBrief, type SoloSetupBrief } from "./settings-setup-contract";
-import { INTERVIEW_FIELDS, cleanInterviewCheckpoint, isOperationalProposal, nextInterviewField, type InterviewField } from "./solo-business-interview-contract";
+import { INTERVIEW_FIELDS, INTERVIEW_NEXT_PROMPTS, cleanInterviewCheckpoint, isOperationalProposal, nextInterviewField, type InterviewField } from "./solo-business-interview-contract";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import "./solo-business-interview.css";
 import { interviewConnectionPath, interviewSetupPath } from "./solo-interview-navigation";
 import type { OnboardingProfileStatus } from "./SoloOnboardingStage";
@@ -191,6 +192,12 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
       {(!onboarding || profileOpen || !!draft || !!threadId) && <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>}
       {!threadId && (!onboarding || profileOpen) && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}
       {(!onboarding || profileOpen) && !draft && !context.saveOutcomeUnknown && <section className="sbi-next-steps" aria-label="Secure setup handoffs">
+        {hasConfirmedPriority && <div className="sbi-actions">{INTERVIEW_NEXT_PROMPTS.map(question => <button key={question.label} type="button" disabled={locked} onClick={() => {
+          if (!ready || locked || context.saveOutcomeUnknown) return;
+          handOffPaigePrompt(question.prompt);
+          setMessage("Review the question in Chat, then press Send. No action has been submitted.");
+          panel.current?.closest(".spw-root")?.querySelector<HTMLTextAreaElement>("[data-solo-composer-input] textarea")?.focus({ preventScroll: true });
+        }}>{question.label}</button>)}</div>}
         <p className="sbi-note">Ask PAIGE what fits your business. Review connections in Settings; keep passwords and tokens out of Chat. Opening a page makes no connection or business change.</p>
         <div className="sbi-actions">{(["integrations", "connections", "vault"] as const).map(destination => <button key={destination} type="button" disabled={locked || !activeTenant?.account_number} onClick={() => {
           if (!ready || locked || context.saveOutcomeUnknown || !activeTenant?.account_number) return;

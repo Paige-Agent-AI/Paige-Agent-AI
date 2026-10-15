@@ -827,7 +827,8 @@ jobs:
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
-            supabase/functions/_shared/agreements/signing-guard.test.ts
+            supabase/functions/_shared/agreements/signing-guard.test.ts \
+            supabase/functions/_shared/agreements/commercial-presentation.test.ts
           # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
           # contracts. Same deny-all sandbox; the modules under test are pure by design.
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
@@ -1021,6 +1022,10 @@ jobs:
       - name: Sales provider operation, account binding and recovery contract tests
         if: ${{ !cancelled() }}
         run: node node_modules/vitest/vitest.mjs run --config supabase/functions/_shared/sales-payments/vitest.config.ts
+
+      - name: Canonical commercial presentation source and drift tests
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config vitest.agreement-commercial.config.ts
 
       - name: Invoice delivery authority and transient-link tests
         if: ${{ !cancelled() }}

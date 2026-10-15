@@ -42,3 +42,19 @@ Implementation/tests/review/CI/merge/deployment are recorded only after observed
 Local verification: eight failing-first projection tests reproduced before implementation. Six focused test files pass (127 checks). Canonical stale/conflicting economics remain readable, with schedule preview withheld; inactive terms retain explicit status. Capability declaration lint has zero source disagreements and no baseline growth. Independent review, hosted CI, merge, deployment and authenticated acceptance remain owed.
 
 Impeccable clarification checks applied: recorded due amounts are distinct from settlement/allocation, inactive terms remain explicit, missing taxes/fees remain unresolved, and no preview grants autopay or package authority. No visual layout changed. Canonical skill source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
+
+## C1 historical signing-context correction — development proof
+
+The canonical `peek_agreement_signing(text)` read previously joined current mutable commercial terms next to a frozen document. The forward correction returns null amount/currency/term-summary while preserving the exact twelve-column response, document readability, token denials, first-view events and existing grants. Null means unknown; it is not zero, compatibility or acceptance. No signed history, document body/hash, approval, provider, schedule or activation is rewritten.
+
+Native PostgreSQL proof: `scripts/agreements/signing-context-economics-proof.mjs`; failing-first baseline rejects the priced header, repaired replay twice passes 24 checks using the canonical draft writer and actual anon/authenticated RPC caller roles in a unique isolated database. This is synthetic database evidence, not hosted authentication, real signing or production acceptance. Evidence: `docs/evidence/ui-delivery/sales-signing-context-economics.md`.
+
+C1 remains PARTIAL: a prospective approved-and-presented immutable economic/schedule producer is still absent. Historical signed financial compatibility stays UNVERIFIED; this correction removes an unsupported header claim only. E04 journey, shared Chat/authority, Analytics, INT335/346, and Operations handoff are unchanged.
+
+## E04 direct continuation — prospective source and freeze contract
+
+The retired lane's presentation and caller-scoped source helpers are preserved in the E04 continuation. The original SQL placeholder was empty; E04 adds the service-only freeze contract to the existing `paige_agreements` record. It retains the original body and freezes the exact rendered body, source versions, finite principal schedule, explicit included tax/fee treatment and document digests. The existing Collections producer owns all schedule generation. Replays return the same freeze without another event; changed source or payload is refused. This function neither authorizes an act nor sends or signs a document.
+
+Fresh local proof: native PG16 31 checks with two migration applications; Deno 10 tests and 16 steps, including a real incumbent PDF render; caller-scoped reader Vitest 15 tests. The initial fixture-signature mismatch, missing new column and Windows raw-text newline mismatch were repaired before the successful native run. Cached-only Deno and default Vitest discovery attempts executed zero tests; explicit existing runners resolved those setup failures without a product fallback. Hosted CI, independent review and authenticated operation remain owed for this new composition.
+
+All twelve E04 outcomes remain mandatory. This is an incomplete internal contract: approved execution wiring, both signature entry paths, effective-term transition, invoice/obligation lifecycle, owner/client UI and authenticated acceptance remain to be delivered. No historical terms are inferred or backfilled, no signed history is changed, and no production effect or provider readiness is asserted.

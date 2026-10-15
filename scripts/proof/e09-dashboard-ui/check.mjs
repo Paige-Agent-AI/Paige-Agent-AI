@@ -69,7 +69,11 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     await save.hover();
     assert.equal(await save.evaluate((node) => getComputedStyle(node).boxShadow), "none");
     assert.equal(await page.locator(".opd-editor .overflow-hidden.rounded-xl.border").first().evaluate((node) => getComputedStyle(node).boxShadow), "none");
-    await page.getByRole("textbox", { name: "Headline", exact: true }).focus();
+    await page.getByRole("textbox", { name: "Headline", exact: true }).evaluate((node) => node.focus({ preventScroll: true }));
+    await page.locator(".trc-panel--portal").evaluate((node) => { node.scrollTop = 0; });
+    await page.mouse.move(8, 8);
+    const saveBounds = await save.boundingBox();
+    assert.ok(saveBounds && saveBounds.y >= 0 && saveBounds.y + saveBounds.height <= height, "editor verdict capture must include Save portal");
     await page.screenshot({ path: path.join(output, "experience-editor-draft.png") });
   }
   await page.close();

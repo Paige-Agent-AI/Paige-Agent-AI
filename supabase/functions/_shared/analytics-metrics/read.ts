@@ -2,21 +2,10 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from '.
 import type { SpineCapability } from '../paige-spine/contracts.ts';
 import { currentMetricVersion, parseMetricResult, type MetricResult } from './metric-contract.ts';
 import { contextAvailable, contextDegraded, contextUnavailable, type ContextSourceResult } from '../paige-context/mod.ts';
+import { BUSINESS_METRIC_KEYS } from './keys.ts';
+export { BUSINESS_METRIC_KEYS } from './keys.ts';
 
 // The deployed issuer owns this vocabulary and every definition/calculation. No raw-table fallback.
-export const BUSINESS_METRIC_KEYS = [
-  'business.active_clients_current', 'business.onboarding_current', 'business.lifecycle_current',
-  'business.retention', 'business.profitability', 'business.nps',
-  'operations.systems_check_latest', 'operations.unresolved_findings_current', 'operations.workflows_active_current',
-  'operations.recorded_workflow_runs', 'operations.recorded_workflow_activity', 'operations.current_system_exceptions',
-  'team.active_members_current', 'team.role_distribution_current', 'team.performance_scorecards',
-  'ai.recorded_model_requests', 'ai.recorded_model_requests_daily', 'ai.recorded_tokens', 'ai.estimated_model_cost',
-  'ai.recorded_latency', 'ai.recorded_browser_calls', 'ai.voice_consumption',
-  'sales.opportunities.created', 'sales.opportunities.open_current', 'sales.opportunities.won_current_close_date',
-  'sales.opportunities.lost_current_close_date', 'sales.pipeline.open_value', 'sales.invoices.issued_count',
-  'sales.invoices.issued_amount', 'sales.receivables.outstanding_current', 'sales.receivables.overdue_current',
-  'sales.cash.recorded_received', 'sales.payments.posted_net_allocations',
-] as const;
 const PERIODS = ['last_7_days', 'last_30_days', 'last_90_days', 'this_month', 'last_month', 'year_to_date', 'custom'] as const;
 export const BUSINESS_METRIC_READ = defineCapability({
   identity: { id: 'analytics.metric_read', version: 1, domain: 'analytics', owner: 'analytics', humanSurface: '/solo/:account/settings/analytics', description: 'Read one canonical authorized business measurement and revalidate its evidence for this turn.' },

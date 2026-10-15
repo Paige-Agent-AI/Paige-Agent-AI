@@ -1,0 +1,116 @@
+{
+  "evidence_class": "SIMULATED_COMPONENT_CAPTURE_DIAGNOSTIC",
+  "captures": [
+    {
+      "file": "light-1024x768-closed.png",
+      "requested": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        490
+      ],
+      "status": "INVALID",
+      "sha256": "488cc027916d531f9d3d130d2f5c1c8918c5728b0f1d6d3c6dad08e2cb4388ec"
+    },
+    {
+      "file": "light-1024x768-open.png",
+      "requested": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        490
+      ],
+      "status": "INVALID",
+      "sha256": "25f0fa07031bdeba5b9432f1242fd4860ffb103a9082d56c65c91a5edce7e3d3"
+    },
+    {
+      "file": "light-1366x768-closed.png",
+      "requested": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        654
+      ],
+      "status": "INVALID",
+      "sha256": "3be3b303ff06900c23c0cd87bb0f2015915d267f3da1f00b008177ad59247676"
+    },
+    {
+      "file": "light-1366x768-open.png",
+      "requested": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        654
+      ],
+      "status": "INVALID",
+      "sha256": "e77b666212288196fc2e13abaa841b6ba35db1761c7cc1983f4636439aa1b26f"
+    },
+    {
+      "file": "light-1536x770-closed.png",
+      "requested": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1536,
+        735
+      ],
+      "status": "INVALID",
+      "sha256": "b31d84c3c6690a850319ab6120307c5ff9fd4f7fb95cdf592c32133810360c53"
+    },
+    {
+      "file": "light-1536x770-open.png",
+      "requested": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1536,
+        735
+      ],
+      "status": "INVALID",
+      "sha256": "8de2771b76aaab415401f1891cd5c07d5eddea6f0b4542fb6736fb6a35cf2132"
+    },
+    {
+      "file": "light-900x1000-closed.png",
+      "requested": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        431
+      ],
+      "status": "INVALID",
+      "sha256": "e9339109123b97da0d21bb895962d8ad8609c3d837e29c956cc15c9c1b6f2a61"
+    },
+    {
+      "file": "light-900x1000-open.png",
+      "requested": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        431
+      ],
+      "status": "INVALID",
+      "sha256": "42b35e6804847a2f43b08be30a4b41745d2dde4ba9750464cbb9f7de06f5d35d"
+    }
+  ],
+  "sources_sha256": {
+    "src/solo/SoloPaigeWorkspace.tsx": "468ddcebc4271bf84e2c607f11ee4cb7ffb7158d98ef64d261c1d3990a0fcd54",
+    "src/solo/paige-research.tsx": "b317a2376f681fbbe07c5e35ee23b660e8b1bd08ed16b0435a2daf31b51aa0e8",
+    "src/solo/SoloParityTruthfulness.test.tsx": "d1159ceb15ce877e7855fae8149383a97389a4098d9b2cc62155be804f608d60",
+    "src/solo/solo-paige-workspace.css": "46b164930aee1ad457e3d02c566f21d41d509d81e669207ff8f15e574d13365c"
+  },
+  "conclusion": "Eight DOM states measured; all eight encoded pixel dimensions mismatch requested viewport. No transform or recapture used; exact-size native evidence remains unverified."
+}

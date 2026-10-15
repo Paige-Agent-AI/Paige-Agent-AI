@@ -1,0 +1,250 @@
+[
+  {
+    "name": "light-1536x770-closed",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 770,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 1536,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1536,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Docked workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-1536x770-open",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 770,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 559.2000122070312,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1536,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Full workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-1366x768-closed",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 768,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 1366.4000244140625,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1366,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Docked workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-1366x768-open",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 768,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 559.2000122070312,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1366,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Full workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-1024x768-closed",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 768,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 1024,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1024,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Docked workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-1024x768-open",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 768,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 559.2000122070312,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 1024,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Full workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-900x1000-closed",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 1000,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 900,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 900,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Docked workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  },
+  {
+    "name": "light-900x1000-open",
+    "evidenceClass": "SIMULATED_COMPONENT_RENDER",
+    "background": "rgba(242, 240, 244, 0.18)",
+    "foreground": "rgb(4, 20, 57)",
+    "height": 1000,
+    "pageOverflow": false,
+    "panelOverflow": false,
+    "rootWidth": 559.2000122070312,
+    "rows": [
+      {
+        "overflow": false,
+        "text": "Public browsingA registered read skill; current execution has not been verified.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Manage tasksA registered action skill; permission is checked when used.ListedUnverified"
+      },
+      {
+        "overflow": false,
+        "text": "Voice inputHold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.AvailableActive"
+      },
+      {
+        "overflow": false,
+        "text": "Code or sandbox executionContextual previews may be shown, but no execution substrate is available.UnavailableOff"
+      }
+    ],
+    "scrollOwner": "auto",
+    "width": 900,
+    "snapshot": "- banner:\n  - text: SIMULATED DATA · actual SOLO components · no authenticated proof\n  - button \"Full workspace\"\n- tablist \"Solo PAIGE workspace\":\n  - tab \"Chat\":\n    - text: Chat\n  - tab \"Knowledge\":\n    - text: Knowledge\n  - tab \"Research\":\n    - text: Research\n  - tab \"Helpers\":\n    - text: Helpers\n  - tab \"Capabilities\" [selected]:\n    - text: Capabilities\n- tabpanel \"Capabilities\":\n  - banner:\n    - text: Skill catalogue\n    - heading \"Workspace capabilities\" [level=2]\n    - paragraph: Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them.\n    - generic: Catalogue\n  - region \"Capabilities\":\n    - generic: Capability\n    - generic: Status\n    - generic: Access\n    - strong: Public browsing\n    - generic: A registered read skill; current execution has not been verified.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Manage tasks\n    - generic: A registered action skill; permission is checked when used.\n    - generic: Listed\n    - generic: Unverified\n    - strong: Voice input\n    - generic: Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.\n    - generic: Available\n    - generic: Active\n    - strong: Code or sandbox execution\n    - generic: Contextual previews may be shown, but no execution substrate is available.\n    - generic: Unavailable\n    - generic: \"Off\"\n- generic: Capabilities view open"
+  }
+]

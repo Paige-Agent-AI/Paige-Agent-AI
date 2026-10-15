@@ -1,5 +1,5 @@
 {
-  "packagedAt": "2026-10-15T01:28:04.087Z",
+  "packagedAt": "2026-10-15T01:47:41.469Z",
   "status": "PARTIAL",
   "proofClass": "Actual component tree with simulated boundaries; author evidence only",
   "sourceGeometry": "430dff611c4b47a5579fb45d8c7c555bb6792c56",
@@ -88,10 +88,18 @@
       "height": 720,
       "sha256": "d007c9dbcb9833995b856f95fa767c8133d6b74cb949697d42145feadffa722f",
       "source": "50cbdc58203a5b20dc2678d810096ab903e5ba7e"
+    },
+    {
+      "file": "e03-actual-draft-thread-switch.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c7ed6ed89bc1fa2668269aee6dc3c7f181d1047eb5f3a708c603fb7c0abafe5e",
+      "source": "066dbda7f5588441301e71a45321e6a7b1e2f1e2"
     }
   ],
   "fullSoloShellAndActualPaigePanel": "UNVERIFIED",
   "authenticatedTenantRoleProviderAcceptance": "UNVERIFIED",
   "privateOwnerScreenshot": "Excluded; no real customer data included",
-  "sourceReturnHistory": "50cbdc58203a5b20dc2678d810096ab903e5ba7e"
+  "sourceReturnHistory": "50cbdc58203a5b20dc2678d810096ab903e5ba7e",
+  "sourceDraftAssist": "066dbda7f5588441301e71a45321e6a7b1e2f1e2"
 }

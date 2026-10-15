@@ -1,0 +1,641 @@
+{
+  "evidenceClass": "isolated-actual-source-account-parent",
+  "auth": "synthetic SDK/RPC, not actual external-client acceptance",
+  "network": "all blocked; in-memory documents, no URL navigation or existing profiles",
+  "styles": [
+    "main-DtUP0Tyx.css"
+  ],
+  "fonts": "incumbent CSS font stack; remote font loading blocked, platform fallback may apply",
+  "native": "Account/controller/exit guard/ProfileSettings wrapper/AppShell/AppNav/UI/router/resizer; PAIGE/domain/consent/context/notifications explicit doubles",
+  "sources": [
+    {
+      "file": "src/components/client/ClientAccount.tsx",
+      "sha256": "729250f4a5e1fed3d22a1cd12d3c5313bafc81a3f6033adf4538f8231e127356"
+    },
+    {
+      "file": "src/components/client/useClientAccount.ts",
+      "sha256": "27dcc40776a63ff71d608abc67a762e2c744c06b86ac24373626b843ed03c7a0"
+    },
+    {
+      "file": "src/components/client/useClientAccountExit.ts",
+      "sha256": "866c2ed37bb00c37114a083f5c8c4432b815ae0d5041a9a23b2d4928c962ece3"
+    },
+    {
+      "file": "src/components/dashboard/ProfileSettings.tsx",
+      "sha256": "4fc41a3acb6e2233f12b438f9eedb41e9cecff7813843bb640d3fdcf01302763"
+    },
+    {
+      "file": "src/components/app/AppNav.tsx",
+      "sha256": "58fdbfde5a5ce297574cd1605848c5941304354d15cde7c637dbe7bd25811268"
+    },
+    {
+      "file": "src/pages/AppShell.tsx",
+      "sha256": "3401faf59e620fe64b5b6a79a6618af3eb06eed9c4784f1ca94a3b96761549dd"
+    }
+  ],
+  "cases": [
+    {
+      "file": "1536-770-light-a-ready-initial.png",
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1536-770-light-a-ready-saved.png",
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "saved",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1536-770-light-a-ready-conflict.png",
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "conflict",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          },
+          {
+            "text": "Discard edits and reload",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1536-770-light-a-ready-unknown.png",
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "unknown",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          },
+          {
+            "text": "Check saved information",
+            "height": 44
+          },
+          {
+            "text": "Discard edits and reload",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1366-768-light-b-ready-initial.png",
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "context": "b",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1024-768-light-b-ready-initial.png",
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "context": "b",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 571.796875,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "900-1000-light-a-ready-initial.png",
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 497.40625,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "390-844-light-a-ready-initial.png",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 362,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "1536-770-dark-b-ready-initial.png",
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "context": "b",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 588,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "390-844-dark-b-ready-initial.png",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "context": "b",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 362,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "320-720-light-a-ready-initial.png",
+      "width": 320,
+      "height": 720,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 292,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "320-720-light-a-ready-save-reachable.png",
+      "width": 320,
+      "height": 720,
+      "theme": "light",
+      "context": "a",
+      "state": "ready",
+      "suffix": "save-reachable",
+      "geometry": {
+        "overflow": false,
+        "formWidth": 292,
+        "inputSizes": [
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          },
+          {
+            "height": 44,
+            "font": "16px"
+          }
+        ],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Save information",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "390-844-light-a-loading-initial.png",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "context": "a",
+      "state": "loading",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": null,
+        "inputSizes": [],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "390-844-light-a-unavailable-initial.png",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "context": "a",
+      "state": "unavailable",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": null,
+        "inputSizes": [],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Try again",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    },
+    {
+      "file": "390-844-light-a-read-error-initial.png",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "context": "a",
+      "state": "read-error",
+      "suffix": "initial",
+      "geometry": {
+        "overflow": false,
+        "formWidth": null,
+        "inputSizes": [],
+        "controls": [
+          {
+            "text": "Settings and security",
+            "height": 44
+          },
+          {
+            "text": "Try again",
+            "height": 44
+          }
+        ],
+        "reducedMotion": true,
+        "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6"
+      }
+    }
+  ],
+  "errors": []
+}

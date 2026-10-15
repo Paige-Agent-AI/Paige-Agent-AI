@@ -27,13 +27,13 @@ MUST_PRESERVE: canonical CRM/contact methods and their permissions, existing sta
 ACCEPTANCE_CRITERIA: actual authenticated synthetic customer with no staff/raw table rights saves only own allowlisted fields; canonical phone and audit persist; invalid/stale/foreign/late-failure calls roll back; safe projection reloads exact own fields
 MOTION_PURPOSE: NONE: no motion or UI source changed
 PROTECTED_SEAMS: auth subject, client/tenant isolation, canonical primary methods, stale version, private field preservation, exact audit and rollback tested. Unchanged: signup/provisioning/entitlements/paywall; Trust/approval/Spine execution admission; Chat/Live; Memory/Vault/browser; provider and payment effects; scheduling; E03/E04/E05 domain implementations and shell geometry.
-INTERNAL_BUILD_IDENTITY: development-source candidate; base=c576b8e6debbcf348402d17f20288ab33df695c1; deployment=NOT_DEPLOYED; migration=20271102120000_e09_client_self_profile_write(PROOF_OWED); edge=NOT_APPLICABLE; proof=scripts/proof/e09-client-self-write.mjs
+INTERNAL_BUILD_IDENTITY: source-base=c576b8e6debbcf348402d17f20288ab33df695c1; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271102120000_e09_client_self_profile_write exact candidate review/full-schema/deployment); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-write.mjs
 RELEASE_CHANNEL: development: isolated actual-role native PostgreSQL proof, not managed/authenticated production proof
 RELEASE_CLASSIFICATION: internal-only: additive checked self-profile writer prerequisite
 CUSTOMER_RELEASE_IDENTITY: none: complete Portal outcome not accepted
 RELEASE_NOTE_REQUIRED: no: no complete customer release or publication in this slice
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: native SQL proof does not establish frontend adoption, managed schema deployment, legitimate client authentication or complete Portal acceptance
-RELEASE_RECOVERY: reviewed forward fix; retain safe-reader/relationship checks and canonical phone integrity; never reopen raw self CRM writes
+RELEASE_RECOVERY: position=forward-fix retaining safe-reader and canonical phone integrity; reference=client_portal_update_self_profile and scripts/proof/e09-client-self-write.mjs; never reopen raw self CRM writes
 
 Impeccable source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md . Existing-world direction, state honesty and protected contract checks applied. No visual detector target or rendered finish verdict is claimed for this SQL-only slice.
 

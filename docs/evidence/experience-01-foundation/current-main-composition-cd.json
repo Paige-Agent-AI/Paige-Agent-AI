@@ -1,0 +1,21 @@
+{
+  "class": "NON_AUTHOR_PRE_COMMIT_CURRENT_MAIN_COMPOSITION",
+  "at": "2026-10-13T20:54:52.838Z",
+  "reviewedHead": "20e1e3846feb7ce519139012f63fd8a64741763d",
+  "currentMain": "cd2f1fad4abb9875597680ca37cfb4029912b825",
+  "sourceAudit": "COMPLETE_PASS",
+  "mergedChatSha256": "64b5a2ca6a03b1493a8dec8bed7c19f5c9af69b7304636160270c3be802e291f",
+  "upstreamDiffSha256": "c96f6df6d9ee78efb5f4175013bd0d68611297b7ce9c546878e6e032cd4a313c",
+  "contracts": 29,
+  "changedIdentityPart": 12,
+  "additionalCanonicalCharacters": 553,
+  "branchesControlsHelpersImportsUnchanged": true,
+  "currentMainSourceAndAncestryPinsRetained": true,
+  "helperAstPin": "5927f625f25e6e1baeeb9da64a80a6544ba731aff1b36375eb3b56270152540b",
+  "newPendingMigration": "20271030100000",
+  "migrationSqlSha256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
+  "localSqlProof": "sql-proof-301000.json",
+  "finalHeadReview": "PROOF_OWED",
+  "productionApplied": false,
+  "previewRepair": "PROPOSED_NOT_EXECUTED"
+}

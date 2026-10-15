@@ -145,7 +145,7 @@ const SoloAppContent=()=>{
 const urlParams = useParams();
 const navigate = useNavigate();
 const location = useLocation();
-const { expandRail } = useAgentPresence();
+const { expandRail, railExpanded } = useAgentPresence();
 const { resolvedTheme } = useTheme();
 const urlAccount = urlParams.account || null;
 const urlDriven = !!urlAccount;
@@ -243,6 +243,19 @@ React.useEffect(() => {
   return () => { alive = false; };
 }, [probeTenant, probeUser]);
 const canFinishSetup = isPrimaryOwner || isMembershipEditor;
+// Optional first meeting, never an access gate. The same canonical readiness
+// and current-owner facts already feed the shell; no first-run store is added.
+const onboardingOwner = showSetupReminder && !setupReminderDismissed &&
+  (isPrimaryOwner || (roleProbe?.tenant === activeTenantId && roleProbe?.user === activeUserId && roleProbe.owner));
+const firstMeeting = React.useRef<string | null>(null);
+React.useEffect(() => {
+  if (!onboardingOwner || !activeTenantId || !activeUserId || route !== 'home') return;
+  const scope = `${activeTenantId}:${activeUserId}`;
+  if (firstMeeting.current === scope) return;
+  firstMeeting.current = scope;
+  setPaigeDockedTab('chat');
+  expandRail();
+}, [onboardingOwner, activeTenantId, activeUserId, route, expandRail]);
 const soloSetupHref = showSetupReminder && canFinishSetup
   ? `/solo/${activeTenant!.account_number}/settings/setup`
   : null;
@@ -379,7 +392,7 @@ accountType={accountContext.accountType}
 userRole={shellRole}
 accountControls={<WorkspaceExitControl />}
 contextualNavigation={contextualNavigation}
-soloPaigeWorkspace={<SoloPaigeWorkspace key={accountEpochKey} full={route==='paige'} dockedTab={paigeDockedTab} onDockedTabChange={setPaigeDockedTab}/>}
+soloPaigeWorkspace={<SoloPaigeWorkspace key={accountEpochKey} full={route==='paige'} dockedTab={paigeDockedTab} onDockedTabChange={setPaigeDockedTab} onboarding={Boolean(onboardingOwner)} visible={route === 'paige' || railExpanded}/>}
 paigeFull={route==='paige'}
 paigeFullHref={urlDriven?`${branchPath('solo',urlAccount,'paige')}/${paigeDockedTab}`:undefined}
 paigeReturnHref={urlDriven?branchPath('solo',urlAccount,'command-center'):undefined}

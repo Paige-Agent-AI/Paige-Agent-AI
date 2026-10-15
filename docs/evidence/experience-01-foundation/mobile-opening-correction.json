@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-14",
+  "runtime": "92ec6a319a5bdca512c526d72cf5b0f25cf6dc8e",
+  "before": "d3ff2bc1b348400fdb0882852644aa916660e5cf",
+  "main": "a44ec6d356a01e9409d2643a2eb9c34247606328",
+  "sourceCorrectionPaths": [
+    "src/components/dashboard/PaigeAIChat.tsx",
+    "src/solo/solo-onboarding-stage.css"
+  ],
+  "classification": "REPAIR_EXISTING_PRESENTATION_NO_CONTROLLER_OR_STORE_CHANGE",
+  "evidenceClass": "SYNTHETIC_NATIVE_NOT_AUTHENTICATED",
+  "sourceIntegrity": {
+    "pre": 19919,
+    "post": 19919,
+    "mismatches": 0,
+    "sourceAssetsUnchanged": true
+  },
+  "limited320": {
+    "native320DarkOpening": "PASS limited to actual 320x720 source-bound BEFORE/AFTER pair; prior45.2px crop reproduced, AFTER entire greeting within transcript",
+    "afterGreeting": {
+      "y": 378.0375061035156,
+      "bottom": 441.4125061035156,
+      "transcriptTop": 355.2375183105469,
+      "transcriptBottom": 505.2000274658203,
+      "scrollTop": 0
+    },
+    "send": {
+      "visibility": "PASS",
+      "width": 44,
+      "height": 44,
+      "bottom": 688
+    },
+    "presence": "PASS visible at320dark",
+    "keyboard": "PASS observed Tab composer->Permissions, ShiftTab->composer, Escape folds and focuses Direct PAIGE; no ChatSend"
+  },
+  "images": [
+    {
+      "kind": "before",
+      "path": "before-first-use-dark-docked-320x720-open.jpg",
+      "sha256": "8ce2c72cbe0f5b2d5d355cbb65a44f929dbafd7e41119996f695ed310bc5d097"
+    },
+    {
+      "kind": "after",
+      "path": "after-first-use-dark-docked-320x720-open.jpg",
+      "sha256": "9475e9b033d2f424cd32ed5b31e4a185c2147d87c38648eb01dcb66b8c074af9"
+    }
+  ],
+  "fullVisual": "UNVERIFIED_NATIVE_CAPTURE_INTEGRATION_BLOCKED",
+  "captureDefect": "390x844 requested/DOM;390x843 rawJPEG/independentdecoder, including one supported fresh-tab/DPR1.25 confirmation",
+  "cause": "UNVERIFIED; not classified as product regression",
+  "remaining": {
+    "mobile390Light": "NOT_RUN",
+    "mobile390DarkExactFrame": "INVALID / required proof NOT VERIFIED",
+    "mobile320LightRendered": "INVALID / state not bound; DOM geometry alone is not rendered PASS",
+    "tabletDesktopBothThemesOpenClosed": "NOT_RUN",
+    "profileUnknownLocalSaveReconcile": "NOT_RUN",
+    "reflowReducedMotionContrast": "NOT_RUN",
+    "realMobileOSKeyboard": "NOT VERIFIED - desktop IAB cannot prove actual OS keyboard opening/insets/occlusion",
+    "namedFontResourceTrace": "NOT VERIFIED"
+  },
+  "confirmation": "ONE_STOPPED_NO_FURTHER_RETRIES",
+  "cleanup": "PASS_BOTH_BATCHES_OWN_TABS_ONLY_VIEWPORT_RESET_INVENTORY_EMPTY",
+  "authenticatedCases": "ORIGINAL23_NOT_RUN",
+  "newRegistration": "SEPARATE_UNVERIFIED",
+  "effects": 0
+}

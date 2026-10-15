@@ -2,7 +2,7 @@
 // cluster. Surrounding Auth/table shapes are stand-ins; this is not Supabase or QA.
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 
@@ -39,12 +39,20 @@ const check=(name,fn)=>{try{fn();results.push({name,status:'PASS'});}catch(e){re
 const profile=(actor=uid,scope=tenant)=>{const data=call('client_portal_self_profile',actor,scope);return data?JSON.parse(data):null;};
 const migration=fs.readFileSync(path.join(root,'supabase/migrations/20271102120000_e09_client_self_projection.sql'),'utf8');
 const presentationMigration=fs.readFileSync(path.join(root,'supabase/migrations/20271106110000_e09_client_presentation_scope.sql'),'utf8');
+const stageMigration=fs.readFileSync(path.join(root,'supabase/migrations/20271106120000_e09_client_stage_scope.sql'),'utf8');
 const brandCascadeSource=fs.readFileSync(path.join(root,'supabase/migrations/20260804030000_debrand_operator_identity_seam.sql'),'utf8');
 const brandCascade=brandCascadeSource.match(/CREATE FUNCTION public\.resolve_tenant_brand\([\s\S]*?\$\$;/)?.[0];
 assert(brandCascade,'Incumbent native brand cascade must exist');
 const unsafeControl=process.argv.includes('--unsafe-control');
 const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
-const reportStem=unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+const unsafeStage=process.argv.includes('--stage-unsafe-control');
+assert([unsafeControl,unsafePresentation,unsafeStage].filter(Boolean).length<=1,'Choose one negative control');
+const reportStem=unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+function advance(actor=uid,stage='signing_agreement',payload={},role='authenticated') {
+  const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT row_to_json(s) FROM public.client_advance_onboarding_stage(${stage===null?'NULL':`'${stage}'`},$payload$${JSON.stringify(payload)}$payload$::jsonb) s; COMMIT;`);
+  return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
+}
+const stageSnapshot=()=>sql("SELECT jsonb_build_object('clients',(SELECT jsonb_agg(to_jsonb(c) ORDER BY id) FROM clients c),'audit',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM paige_audit_log a));");
 function presentation(actor=uid,role='authenticated') {
   const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT jsonb_build_object('brand',(SELECT to_jsonb(b) FROM public.get_client_portal_brand() b),'config',public.get_client_portal_config()); COMMIT;`);
   return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
@@ -66,6 +74,7 @@ try {
     CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
     CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients(tenant_id,linked_user_id);
     CREATE TABLE public.client_contact_methods(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),client_id uuid,tenant_id uuid,kind text,value text,is_primary boolean,label text,match_key text);
+    CREATE TABLE public.paige_audit_log(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,actor_user_id uuid,action text,target_type text,target_id uuid,payload jsonb);
     INSERT INTO tenants(id) VALUES('${tenant}'),('${foreign}');
     INSERT INTO clients(id,tenant_id,linked_user_id,first_name,last_name,entity_name,street_address,city,state,zip_code,onboarding_stage,source,current_notes,lead_score,provider_secret)
       VALUES('${contact}','${tenant}','${uid}','Jordan','Reyes','Client company','1 Test Road','Test City','TS','00000','invited','invitation','INTERNAL NOTES',99,'INTERNAL PROVIDER'),
@@ -86,6 +95,11 @@ try {
   const presentationOnce=sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('get_client_portal_brand','get_client_portal_config');");
   sql(presentationMigration);
   check('Presentation migration reapplication is idempotent',()=>assert.equal(sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('get_client_portal_brand','get_client_portal_config');"),presentationOnce));
+  sql(stageMigration);
+  const stageOnce=sql("SELECT pg_get_functiondef('public.client_advance_onboarding_stage(text,jsonb)'::regprocedure);");
+  sql(stageMigration);
+  check('Stage migration reapplication is idempotent',()=>assert.equal(sql("SELECT pg_get_functiondef('public.client_advance_onboarding_stage(text,jsonb)'::regprocedure);"),stageOnce));
+  if(unsafeStage)sql(fs.readFileSync(path.join(root,'supabase/migrations/20260630230153_a0569f6b-876c-4f40-84f6-afbbc37a1f22.sql'),'utf8'));
   sql(`UPDATE tenants SET name='Test tenant A',slug='test-tenant-a',brand='{"product_name":"Test portal A","primary_color":"#26483e"}',features='{"portal_config":{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}}' WHERE id='${tenant}'; UPDATE tenants SET name='Test tenant B',slug='test-tenant-b',brand='{"product_name":"Foreign portal B"}',features='{"portal_config":{"welcome":{"headline":"Foreign greeting B"}}}' WHERE id='${foreign}'; INSERT INTO tenant_legal_profile VALUES('${tenant}','https://assets.example.test/legacy-logo.png');`);
   if(unsafePresentation){
     assert.equal(presentationMigration.split('WHERE c.id = public.client_portal_relationship_id()').length-1,2,'Both presentation control targets must exist');
@@ -129,8 +143,72 @@ try {
   check('Explicit future relationship selection stays isolated',()=>{assert.equal(profile(uid,tenant).id,contact);const p=profile(uid,foreign);assert.equal(p.id,otherContact);assert.equal(p.first_name,'Foreign');assert(!JSON.stringify(p).includes('secondary@'));assert.equal(p.is_signup_contact,true);});
   sql(`UPDATE clients SET linked_user_id='${other}' WHERE id='${otherContact}'; CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;`);
   check('Disposable future-shape cleanup restores the canonical global guard',()=>assert.equal(sql("SELECT indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)' FROM pg_index WHERE indexrelid='public.clients_linked_user_id_unique'::regclass;"),'t'));
+
+  check('Stage advancement returns the unchanged three-column ABI and canonical saved state',()=>{
+    const row=advance();assert.deepEqual(Object.keys(row).sort(),['client_id','onboarding_stage','updated_at'].sort());
+    assert.equal(row.client_id,contact);assert.equal(row.onboarding_stage,'signing_agreement');assert(row.updated_at);
+    assert.equal(profile().onboarding_stage,'signing_agreement');
+  });
+  check('Existing durable stage audit attributes the exact actor and client',()=>{
+    const a=JSON.parse(sql('SELECT row_to_json(a) FROM paige_audit_log a ORDER BY id DESC LIMIT 1;'));
+    assert.equal(a.actor_user_id,uid);assert.equal(a.target_id,contact);assert.equal(a.action,'onboarding_stage_advanced');
+    assert.equal(a.payload.from_stage,'invited');assert.equal(a.payload.to_stage,'signing_agreement');
+  });
+  check('Same or earlier stage remains a no-op with no new audit',()=>{
+    const before=stageSnapshot();advance();advance(uid,'invited');assert.equal(stageSnapshot(),before);
+  });
+  check('Caller payload cannot redirect stage mutation to a foreign client',()=>{
+    const row=advance(uid,'accepting_payment',{client_id:otherContact,tenant_id:foreign});
+    assert.equal(row.client_id,contact);assert.equal(profile(other,foreign).onboarding_stage,'invited');
+    assert.equal(sql(`SELECT target_id FROM paige_audit_log ORDER BY id DESC LIMIT 1;`),contact);
+  });
+  const deniedStage=(name,actor=uid,stage='completed',role='authenticated')=>check(name,()=>{
+    const before=stageSnapshot();assert.throws(()=>advance(actor,stage,{},role));assert.equal(stageSnapshot(),before);
+  });
+  deniedStage('Anonymous stage invocation refuses without writes',null,'completed','anon');
+  deniedStage('Missing subject cannot change stage',null);
+  deniedStage('Unlinked identity cannot change stage','e0911000-0000-0000-0000-000000000099');
+  deniedStage('Service role alone cannot become a customer',null,'completed','service_role');
+  deniedStage('Unknown stage refuses without writes',uid,'not-a-stage');
+  deniedStage('Null stage refuses without writes',uid,null);
+  for(const [name,setup,restore] of [
+    ['Revoked link',`UPDATE clients SET linked_user_id=NULL WHERE id='${contact}'`,`UPDATE clients SET linked_user_id='${uid}' WHERE id='${contact}'`],
+    ['Archived client',`UPDATE clients SET status='archived' WHERE id='${contact}'`,`UPDATE clients SET status='active' WHERE id='${contact}'`],
+    ['Merged client',`UPDATE clients SET merged_into_contact_id='${otherContact}' WHERE id='${contact}'`,`UPDATE clients SET merged_into_contact_id=NULL WHERE id='${contact}'`],
+    ['Inactive business',`UPDATE tenants SET status='suspended' WHERE id='${tenant}'`,`UPDATE tenants SET status='active' WHERE id='${tenant}'`],
+  ]){sql(setup);try{deniedStage(`${name} cannot advance stage`);}finally{sql(restore);}}
+  sql(`DROP INDEX public.clients_linked_user_id_unique; UPDATE clients SET linked_user_id='${uid}' WHERE id='${otherContact}';`);
+  try{deniedStage('Ambiguous future relationship cannot advance an arbitrary row');}
+  finally{sql(`UPDATE clients SET linked_user_id='${other}' WHERE id='${otherContact}'; CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;`);}
+
+  // Real two-session wait: the revoker owns the row lock before the caller reads.
+  // No application table/event/scheduler is introduced by this disposable proof.
+  sql(`UPDATE clients SET onboarding_stage='invited',updated_at=NULL WHERE id='${contact}';`);
+  let revokeChild;
+  const revoker=new Promise((resolve,reject)=>{
+    revokeChild=spawn(exe('psql'),['-X','-h','127.0.0.1','-p',String(port),'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{windowsHide:true});
+    let stdout='',stderr='';revokeChild.stdout.on('data',d=>stdout+=d);revokeChild.stderr.on('data',d=>stderr+=d);
+    revokeChild.on('error',reject);revokeChild.on('close',exit=>{transcripts.push({command:'concurrent-stage-revoker',exitCode:exit,stdout,stderr});resolve(exit);});
+    revokeChild.stdin.end(`BEGIN; SET LOCAL application_name='e09-stage-revoker'; UPDATE clients SET status='archived' WHERE id='${contact}'; SELECT pg_sleep(2); COMMIT;`);
+  });
+  try{
+    let locked=false;
+    for(let attempt=0;attempt<30;attempt++){
+      locked=sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='e09-stage-revoker' AND wait_event='PgSleep');")==='t';
+      if(locked)break;await new Promise(resolve=>setTimeout(resolve,20));
+    }
+    assert(locked,'Revoker must reach its post-lock barrier before client call');
+    const auditBefore=sql('SELECT count(*) FROM paige_audit_log;');
+    let refused=false;try{advance();}catch{refused=true;}
+    assert.equal(await revoker,0,'Concurrent revoker must commit successfully');
+    check('A concurrent archive winning the lock prevents stage change and audit',()=>{
+      assert(refused,'Waiting caller must refuse the now-archived row');
+      assert.equal(sql(`SELECT onboarding_stage FROM clients WHERE id='${contact}';`),'invited');
+      assert.equal(sql('SELECT count(*) FROM paige_audit_log;'),auditBefore);
+    });
+  }finally{await revoker;sql(`UPDATE clients SET status='active' WHERE id='${contact}';`);}
   const failed=results.filter(x=>x.status==='FAIL');
-  const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
+  const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
   fs.writeFileSync(path.join(work,`${reportStem}.json`),JSON.stringify(report,null,2));
   console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
   if(failed.length)process.exitCode=1;

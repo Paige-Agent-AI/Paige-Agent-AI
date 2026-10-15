@@ -107,6 +107,13 @@ export function usePlatformUpdate(): {
     };
     const onVisibility = () => document.hidden ? stop() : (start(), void check());
     const onFocus = () => void check();
+    // A long-lived tab may lose a lazy screen after a release. Recheck the same
+    // version source and offer the existing explicit, unsaved-work-safe reload.
+    // Do not suppress the import error, invent a build, or reload automatically.
+    const onPreloadError = () => {
+      setDismissedId(null);
+      void check();
+    };
     let serviceWorker: ServiceWorkerContainer | undefined;
     const hadController = typeof navigator !== "undefined" && "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
     const onControllerChange = () => {
@@ -120,12 +127,14 @@ export function usePlatformUpdate(): {
     void check();
     start();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("vite:preloadError", onPreloadError);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
       stop();
       controllers.forEach((controller) => controller.abort());
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("vite:preloadError", onPreloadError);
       document.removeEventListener("visibilitychange", onVisibility);
       serviceWorker?.removeEventListener("controllerchange", onControllerChange);
     };

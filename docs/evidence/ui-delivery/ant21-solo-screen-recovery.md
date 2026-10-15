@@ -1,0 +1,38 @@
+# UI delivery evidence: retain the SOLO shell after a screen import fails
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: bounded failure -> existing navigation exit or canonical explicit update Reload; shared SOLO presentation only, no capability execution
+PAIGE_UI_DESIGN: PASS: installed project UI skill and routed protected-behavior/design references read before design; same EmptyState, shell tokens and sole update banner reused
+MATERIAL_FLOW_CHANGE: YES: recover an existing navigation failure without unmounting the entire SOLO root; no new destination, action control or reload channel
+FLOW_PROTOTYPE: PASS: isolated deterministic HTML reviewed before source integration for loading/failure/success/navigation exit, retained sibling draft, guarded explicit Reload and keyboard/mobile flow; superseded by scripts/proof/ant21-screen-recovery actual-source fixture. Owner authority is the approved full restoration UI/UX and ordinary release-before-manual-Experience-review directive, not a claim of final product acceptance
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible current/future SOLO customer can keep using native navigation and PAIGE after a departmental render fails
+VISUAL_DIRECTION: PASS: incumbent TenantCommandCenterShell, generic EmptyState and PlatformUpdateBanner; no new tokens, motion, alternative update surface or account-specific branch
+AUTOMATED_EVIDENCE: PASS:17 focused assertions across6 suites, including actual React.lazy rejection and canonical production-hook event/read checks; incumbent Solo-shell contract5/5 on unchanged isolated retry. Original combined run21/22 retains a5-second repository-scan timeout, not an assertion failure; Windows cache/fork failures before tests are retained
+STATIC_EVIDENCE: PARTIAL: four changed typed component/hook/test files scoped ESLint PASS; source fixture builds. Full application type/build and final exact-head CI remain required
+RENDERED_EVIDENCE: PARTIAL: actual source fixture shows native navigation, generic failure, PAIGE open and sole canonical update notice. Required complete viewport/theme/source-pin capture matrix remains UNVERIFIED after browser attachment interruption; no exact-size screenshot PASS is claimed
+BEHAVIORAL_EVIDENCE: PASS: actual-source rejected import contained; native PAIGE can open; real registered sibling work blocks canonical Reload with truthful save/finish copy; clear synthetic work then explicit Reload restores source view. These are isolated source outcomes, not authenticated customer or business-action proof
+AUTHENTICATED_RUNTIME: UNVERIFIED: affected scope=SOLO departmental error recovery; blocker=reviewed source not production-deployed; excluded LIVE claim=paired customer recovery after the patch. Genuine earlier two-account blank-root failure and fresh-reload success remain protected audit evidence
+KEYBOARD_FOCUS: PARTIAL: prototype Shift-Tab/Return leaves failed screen using existing navigation; no new control/focus trap in production boundary. Full actual-source keyboard/mounted view matrix remains owed
+ZOOM_REFLOW: PARTIAL: prototype390x844 DOM has no horizontal overflow; native source complete viewport/zoom evidence remains owed. Prototype is not native pixel proof
+REDUCED_MOTION: PASS: no motion added by boundary/event; incumbent canonical banner and native shell reduced-motion policy retained. Complete rendered preference matrix remains owed
+STATE_COVERAGE: PARTIAL: real lazy pending/rejected, successful native control, route/actor/tenant-key reset, truthful same/unavailable/different version, dismissed notice recheck, unsaved hold and listener cleanup covered. Interrupted business writes, save recovery and cross-tenant authorization are separate and not inferred
+TRUTHFUL_STATE_LABELS: PASS: fallback says the page could not open; no raw error/asset URL/customer detail or false save/update claim. Update hook still requires a real different build, ignores error payload, never suppresses import failure or automatically reloads
+SOLO_UI: YES: same shared shell and current actor/tenant/path epoch for all SOLO customers; no real account literals in source/fixtures
+UNVERIFIED: affected scope=full rendered and authenticated recovery acceptance; blocker=remaining source-render capture/review/CI/deploy and protected paired QA. No feature availability, provider readiness, business record, Rail completion, security activation or owner acceptance is inferred
+OWNER_INTENT: restore the entire18-capability/50-row SOLO program using existing architecture, preserving all current and future eligible customers
+MUST_PRESERVE: exact native departmental writers/readers, Portal and onboarding changes, shell navigation, PAIGE sibling lifetime, sole canonical explicit update reload and current unsaved-work guards
+PROTECTED_SEAMS: no Harness/Spine/Trust/Rail/provider/credential/RLS/subscription or execution admission change; no new store or scheduler. A failed child is unmounted; this patch does not claim to preserve unsaved state inside the crashed child
+EXPERIENCE_CONTRACT: PARTIAL: original shared crash is reproduced in ordinary sessions; bounded recovery source works in protected fixtures, complete production customer proof remains owed
+INTERNAL_BUILD_IDENTITY: PROOF_OWED(source candidate not yet reviewed/released); deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/ant21-solo-screen-recovery.md and scripts/proof/ant21-screen-recovery
+RELEASE_CHANNEL: development: isolated source fixture only
+RELEASE_CLASSIFICATION: internal-only: shared SOLO rendering recovery repair
+CUSTOMER_RELEASE_IDENTITY: none: owner final product acceptance remains separate
+RELEASE_NOTE_REQUIRED: no: no customer publication decision
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: full exact-head review/CI, required rendered matrix, served source and paired authenticated customer recovery
+RELEASE_RECOVERY: position=bounded source forward fix or revert preserving incumbent navigation/update/unsaved work policy; reference=docs/doctrine/release-governance-and-customer-update-policy.md section8
+
+Source containment wraps only the existing SoloApp screen child, below TenantCommandCenterShell and outside the PAIGE workspace sibling. Keyed current actor/tenant/path resets failure state on explicit route or identity changes; no authority derives from that key. The existing update hook listens to Vite's actual preload-error notification only to recheck version.json and reopen a previously dismissed canonical notice. It never cancels the error, invents an update or reloads automatically. Authenticated error injection and execution activation are not part of this source fixture.
+
+Collision checks: main025cbdefa, then e6efe3979 and latest cdaea833b inspected; all47 initial open PR file lists and subsequent Portal2206/2207 additions reviewed. Portal AppShell/read hooks/native relationship migrations and both master closeout insertions remain theirs. Onboarding2071 SoloApp hunks change setup behavior and PAIGE props; this narrow wrapper leaves them intact. Existing bounded Chat bindings remain a separate repair. Latest production/PR composition must be rechecked before merge.
+
+Impeccable checks applied: honest failure and update copy; reuse established component/tokens; no decorative card grid, new accent or motion; navigation escape and no duplicate reload UI; raw error privacy and retained sibling guard. Finish review is still required on the final captured source and exact head; this record does not substitute for it.

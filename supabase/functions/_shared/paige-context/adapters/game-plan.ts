@@ -67,6 +67,11 @@ export function createGamePlanSnapshotAdapter(caller: MetricCaller, scope: { ten
       }
       const current = await caller.rpc('current_user_tenant_id');
       if (current.error || current.data !== scope.tenantId || ctx.signal?.aborted) return gap('mission_review_scope_changed');
+      // Metric reads admit owner/admin; definitions remain owner-only. Re-enter
+      // the existing authorized read after awaits without exposing its private helper.
+      const owner = await caller.rpc('get_business_mission_review');
+      if (owner.error) return gap(['42501', '28000'].includes(owner.error.code ?? '') ? 'mission_owner_required' : 'mission_review_unavailable');
+      if (!object(owner.data) || owner.data.resolved_tenant_id !== scope.tenantId || ctx.signal?.aborted) return gap('mission_review_scope_changed');
       const headlines: DomainSnapshot['headline'] = [
         { key: 'game_plan.plays', label: 'Saved Strategic Plays', value: data.mission_counts.total, unit: 'count', basis: 'point_in_time' },
         { key: 'game_plan.active_plays', label: 'Active Strategic Plays', value: data.mission_counts.active, unit: 'count', basis: 'point_in_time' },

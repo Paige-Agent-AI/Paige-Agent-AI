@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: owner reviews canonical Play targets in Executive or 
 FLOW_PROTOTYPE: PASS: e2-executive-target-flow-prototype.html and e2-executive-target-prototype-source-checks.json in owner-conversation outputs;11 source/DOM checks passed. Mock data only; owner full-scope directive authorizes implementation without repeated design approval.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current Solo owner compares saved desired values with compatible issued actuals, understands unknowns and opens the authoritative Play.
 VISUAL_DIRECTION: PASS: existing Executive sections, typography, tokens and provenance disclosure; compact target rows and existing Game Plan drawer, no new dashboard or navigation system.
-AUTOMATED_EVIDENCE: PASS:292 tests across15 focused files; owner denial, exact counts/sample, closed projection, issued evidence, partial/expired observations, current-account links, fresh mount and late route responses. Existing target SQL suite extended to61 rollback-only assertions in isolated PostgreSQL.
+AUTOMATED_EVIDENCE: PASS:294 tests across15 focused files, including missing currency precision and late owner refusal; exact counts/sample, closed projection, issued evidence, partial/expired observations, current-account links, fresh mount and late route responses. Existing target SQL suite extended to61 rollback-only assertions in isolated PostgreSQL.
 STATIC_EVIDENCE: PASS: scoped ESLint zero errors/warnings, type ratchet baseline10/current10, production Vite build and unchanged Spine self-test. Two reviewed fixed source pins renewed for the existing metric reader and UUID Play route only; all29 dispatch fingerprints and authority/effect negative controls unchanged.
 RENDERED_EVIDENCE: UNVERIFIED: capture hold remains after1536x770 yielded1535x770 and one explicit clip retry timed out. No recapture, alternate driver or pixel PASS claimed.
 BEHAVIORAL_EVIDENCE: PASS: mounted source tests verify target labels/period/ref expiry, canonical link resolution, fresh-mount reopening, preserving unrelated query/hash on close, route removal, A-B-A and late-response retirement. Product browser/authenticated behavior remains owed.
@@ -55,3 +55,11 @@ that absence to its existing null/unavailable contract. A new missing-metadata n
 and the three affected consumer suites pass57 local cases. No type assertion, baseline,
 skip or authority change; fresh exact-head Deno/full CI remains required. Earlier292-case
 regression and55 source-contract controls are preserved historical source evidence.
+
+Final source hardening re-enters the same canonical owner read after metric awaits:
+the metric issuer's owner/admin permission cannot substitute for the target definition's
+owner-only permission. One controlled late-owner-refusal case failed before this guard
+and passes afterward. No grant to the private owner helper, new RPC or database change;
+the same existing public read applies its authority again before projection. This is
+unreleased source verification, not a production role-change/negative-fixture claim.
+The final bounded15-file regression passes294 cases; focused lint/diff check PASS.

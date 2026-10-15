@@ -25,10 +25,15 @@ function harness() {
     target_counts: { total: 2, active: 2, paused: 0, retired: 0 },
     targets: targets.map(target => ({ mission: { id: mission, title: 'Grow the business', revision: 3, state: 'active' }, target: { ...target, created_by: 'PRIVATE_ACTOR' } })) };
   const calls: string[] = []; let sequence = 0, active: MetricResult | null = null, workspace = tenant, denied = false, partial = false;
+  let ownerChecks = 0, loseOwnerBeforeFinish = false;
   const caller = { rpc: async (name: string, args?: Record<string, unknown>) => {
     calls.push(name);
     if (name === 'current_user_tenant_id') return { data: workspace, error: null };
-    if (name === 'get_business_mission_review') return denied ? { data: null, error: { code: '42501' } } : { data: review, error: null };
+    if (name === 'get_business_mission_review') {
+      ownerChecks++;
+      return denied || loseOwnerBeforeFinish && ownerChecks > 1
+        ? { data: null, error: { code: '42501' } } : { data: review, error: null };
+    }
     if (name === 'issue_analytics_evidence_bundle') {
       active = { metric_key: String(args?.p_metric_key), metric_version: '1.0.0', owner_department: 'client_experience', label: 'Active clients', definition: 'Current scoped active clients', formula: 'Count active clients',
         range: { key: String(args?.p_range_key), start: String(args?.p_range_start), end: String(args?.p_range_end), bounds: '[start,end)', timezone: 'UTC', semantics: 'current_snapshot' },
@@ -44,7 +49,8 @@ function harness() {
   const adapter = createGamePlanSnapshotAdapter(caller, { tenantId: tenant }, () => now);
   const read = () => adapter.read({ identity, period, now: new Date(now) });
   const compose = () => composeOperatingSnapshot({ identity, period, domains: ['game_plan'], adapters: [adapter], now: new Date(now), currentScopeEpoch: () => workspace });
-  return { caller, calls, review, read, compose, workspace: (value: string) => { workspace = value; }, deny: () => { denied = true; }, partial: () => { partial = true; } };
+  return { caller, calls, review, read, compose, workspace: (value: string) => { workspace = value; }, deny: () => { denied = true; },
+    partial: () => { partial = true; }, loseOwnerBeforeFinish: () => { loseOwnerBeforeFinish = true; } };
 }
 describe('one shared Game Plan review', () => {
   it('withholds currency formatting when the runtime provides no fraction metadata', () => {
@@ -106,6 +112,10 @@ describe('one shared Game Plan review', () => {
     const denied = harness(); denied.deny();
     expect(await denied.read()).toMatchObject({ status: 'degraded', reason: 'mission_owner_required', data: null });
     expect(denied.calls).toEqual(['get_business_mission_review']);
+  });
+  it('withholds owner-only definitions when ownership is lost while compatible metrics are read', async () => {
+    const h = harness(); h.loseOwnerBeforeFinish();
+    expect(await h.read()).toMatchObject({ status: 'degraded', reason: 'mission_owner_required', data: null });
   });
   it('preserves the target definition but retires expired performance evidence at the browser boundary', async () => {
     const result = await harness().read(), row = result.data!.mission_targets![0];

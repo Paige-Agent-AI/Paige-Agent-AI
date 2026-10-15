@@ -317,3 +317,9 @@ assurance. See docs/evidence/ui-delivery/e2-f7-executive-target-context.md. Host
 CI, forward migration, affected web/Edge source readback, authenticated target/briefing/
 reload/isolation, native/accessibility/Live parity and final owner full-product acceptance
 remain owed. The capture hold and historical9/0 plus supplement12/0/4 are unchanged.
+
+Final source hardening rechecks the canonical owner read after issued metrics, because
+its owner-only definitions do not inherit Analytics' broader owner/admin permission.
+A synthetic late-owner-refusal control failed before repair;294 cases across the same
+15-file bounded suite now pass, including this case and absent currency precision.
+The private authority helper remains ungranted; no new RPC or database change is added.

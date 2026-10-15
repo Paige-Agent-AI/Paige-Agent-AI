@@ -1,6 +1,8 @@
 import { BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY } from '../paige-spine/domains/business-review.ts';
 import { composeBusinessReview, type BusinessReviewWho } from './business-review.ts';
 import type { MetricCaller } from '../analytics-metrics/read.ts';
+import type { BusinessOperatingSnapshot } from './snapshot.ts';
+import { readRecordLinks, type ReadRecordLink } from '../paige-turn/record-links.ts';
 
 // The business snapshot from chat (Experience 02 / Operating Fabric F2a+F2b Chat hand-off).
 // ONE tool, get_business_snapshot, that calls the SAME composer the fabric owns
@@ -38,7 +40,24 @@ export const BUSINESS_SNAPSHOT_TOOLS = [
 ] as const;
 
 export type BusinessSnapshotStatus = 'available' | 'needs_input' | 'refused' | 'unavailable';
-export type BusinessSnapshotChatResult = { status: BusinessSnapshotStatus; message: string; projection?: string };
+export type BusinessSnapshotChatResult = { status: BusinessSnapshotStatus; message: string; projection?: string; record_links?: ReadRecordLink[] };
+
+/** E2-6 references only. The existing E4 frame resolves addresses in the current workspace. */
+export function businessReviewRecordLinks(snapshot: BusinessOperatingSnapshot): ReadRecordLink[] {
+  const destinations = {
+    payments: ['finance', 'sales_collections'],
+    sales_pipeline: ['sales_pipeline'],
+    operations: ['systems_check'],
+    clients: ['contacts'],
+  } as const;
+  const links: ReadRecordLink[] = [];
+  for (const key of snapshot.requested) {
+    const entry = snapshot.domains[key];
+    if (entry?.status !== 'available' || !entry.data) continue;
+    for (const destination of destinations[key as keyof typeof destinations] ?? []) links.push({ destination, record_id: null });
+  }
+  return links.length ? readRecordLinks([{ destination: 'executive', record_id: null }, ...links]) : [];
+}
 
 export type BusinessSnapshotChatDeps = { caller: MetricCaller };
 export type BusinessSnapshotChatContext = { who: BusinessReviewWho; timezone: string };
@@ -122,5 +141,5 @@ export async function dispatchBusinessSnapshotChat(
   }
   // The composer's projection is already bounded (projectOperatingSnapshot caps its text), so the
   // result is relayed whole — no second, unreachable size guard here.
-  return { status: 'available', message: AVAILABLE_NOTE, projection: review.projection };
+  return { status: 'available', message: AVAILABLE_NOTE, projection: review.projection, record_links: businessReviewRecordLinks(review.snapshot) };
 }

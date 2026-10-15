@@ -1,4 +1,21 @@
 # E04 shared agreement revision contract — source candidate
+
+## Current SOLO restoration composition — 2026-10-15
+
+The single SOLO Parity BUG lead holds the owner-granted bounded restoration-binding lease. The owner explicitly authorized bounded sequential author review for PR1615/2143; ANT6 comment215348f7-9410-451a-a807-073860a6be13 and PR2143 comment6182374058 record the lower-assurance exception. It is not independent non-author security approval and does not waive provider cessation, admission/activation, exact-head CI or customer acceptance.
+
+PR2143 is now composed with Knowledge candidate729fefecd946f9e8d7d1af290e500f623992fed7 and main bca8642745ecf7fc9a31dca0aa90bb4693e61718. The Knowledge slice must clear and merge first. The former Sales helper prerequisite (#2140) is present in this composition: missing revision versions are refused before any read/write. Existing current-main snapshot record-link protection and the bounded Knowledge repair are preserved.
+
+Sequential review covered the original agreement schema/Kit input and actual dispatch: exact original `expectedUpdatedAt` survives stored-proposal approval unchanged; create remains compatible; only native prewrite refusals carry `not_applied`; missing readback and thrown dispatch remain outcome-unknown in the Rail, model result and successor brake. Caller JWT, server tenant/actor/client, confirmation fingerprint/claim, native agreement writer, authorization, source record store and general receipt machinery are unchanged. No send, payment, provider or activation change.
+
+Exactly29 dispatch fingerprint scalars are renewed against the actual composed handler. All other guard bytes, including the Knowledge-reviewed action-risk digest, extractor, frozen capability metadata, source/ancestry pins and four-tool allowance, remain identical to the Knowledge candidate. The older JSON renewal packet and evidence below describe their explicitly named historical heads; they are not current-head release approval.
+
+Current proof: the actual-source/approved-handler proof passes9 checks on the landed Sales helper, and the eight deliberate behavior mutants are detected in the current-main review retained on PR2143 comment6182313506. Final composed-head guard/mutation checks and exact-head hosted CI are recorded on the PR after push. No authenticated or production restoration is inferred from fixtures.
+
+Status: DEVELOPMENT / NOT MERGED / NOT DEPLOYED / NOT RESTORED. INT346 remains inactive; Supabase cessation caseSU508602 is pending. Ordinary Academy/Antonio positive/negative execution, canonical records, durable receipts/reload/recovery and owner product acceptance remain PROOF OWED. The source review resolves only this bounded repair's review dependency.
+
+## Retained original review and implementation evidence
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Existing-project repair, Deep security/persistence risk; grounding packet and ten capability answers returned before code; canonical owner flow preserved.
 PAIGE_UI_DESIGN: PASS: Router/provenance/frontend core/accessibility/quality/review references plus applicable owner-intent/protected-behavior/release modules read. This is backend contract repair with no changed UI design or geometry.
@@ -65,4 +82,3 @@ The dated failure record above is historical. Authorized manual renewal changes 
 Sales343626135 is the exact local compatibility prerequisite, never copied into this lane's diff. Its full CI and completed affected review do not waive the separate exhausted-cycle escalation or establish release. Uncomposed main intentionally cannot pass the domain-contract wrapper. PRE-2 remains without a reviewed helper; no Planning integration is adopted. No Ready, merge, deployment, activation or authenticated acceptance follows from this checkpoint.
 
 Initial containment control failed because Windows PATH omitted the installed Git `grep`, before that one producer-enumeration check ran. Rechecked the unchanged23-test file with only `C:\Program Files\Git\usr\bin` added to that process PATH:23/23PASS. No test/source change. Current-main shared required-domain script executes all8 source controls before the expected prerequisite failure: old helper returnsno_readback instead of pre-I/O conflict for missing version. This is a real dependency hold, never called green. Deno/full hosted CI remain owed. The canonical transitive affected-function resolver returns exactly`execute-approval`, `paige-ai-chat` and `paige-native-event-dispatch` for this shared schema/index diff. The Sales helper-only diff has a separate one-importer result; it is not this patch's blast radius. All three shared importers require exact release/package readback if later authorized, preserving existing admission. This is non-inert source even under inactive consequential admission.
-

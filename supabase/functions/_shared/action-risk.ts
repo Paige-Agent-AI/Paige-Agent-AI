@@ -52,6 +52,8 @@ export type ActionRiskVerdict = ActionRisk | "unclassified";
  * says where it goes. An entry with no defensible reason is an entry that should be `high`.
  */
 const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
+  ["knowledge_update", "ordinary", "changes only reversible in-workspace Knowledge metadata at an exact revision"],
+  ["knowledge_delete", "high", "permanently deletes the reviewed Knowledge document and chunks"],
   // ── owner_only ────────────────────────────────────────────────────────────────────────────
   // §67's red line. How much Paige may do unattended is the operator's decision about Paige, and
   // an assistant that can argue its way into more authority has no ceiling — the wording of the

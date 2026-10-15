@@ -18,7 +18,17 @@ export const BUSINESS_MISSION_TRANSITION = {
   outcome:{kinds:["active","blocked","paused","completed","stopped","refused","failed"],projector:"public.get_business_mission",railVisibility:"PARTIAL: paige-ai-chat re-reads and verifies the canonical Mission before recording mission_transition through the existing capability_run Rail writer; authenticated runtime proof remains owed."},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
-export const BUSINESS_MISSION_CAPABILITIES=[BUSINESS_MISSION_CREATE,BUSINESS_MISSION_REVISE,BUSINESS_MISSION_TRANSITION] as const;
+/** Domain foundation only. No Chat tool or customer capability claim until consumer integration. */
+export const BUSINESS_MISSION_TARGETS = {
+  key: "business_mission.targets", domain: "business_mission", owner: "business-mission-system",
+  humanSurface: "/solo/:account/command-center/business-game-plan", selfDescribe: false,
+  action: { classification: "read", executor: "public.list_business_mission_targets", riskPolicyKey: "read_only",
+    approvalAuthority: "none", idempotency: "Read-only current-owner projection of existing Play-linked target records; exact counts and bounded pagination." },
+  outcome: { kinds: ["available", "refused", "unavailable"], projector: "public.list_business_mission_targets",
+    railVisibility: "Target mutation receipts reuse business_mission_mutation_receipts. This unmounted read records no activity; native verified mutation adapter and all customer consumers remain unreleased." },
+  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+} as const satisfies SpineCapability;
+export const BUSINESS_MISSION_CAPABILITIES=[BUSINESS_MISSION_CREATE,BUSINESS_MISSION_REVISE,BUSINESS_MISSION_TRANSITION,BUSINESS_MISSION_TARGETS] as const;
 
 export const BUSINESS_MISSION_TOOLS = [
   {type:"function",function:{name:"mission_create",description:"Propose a private Business Mission from an owner outcome. Ask only for material missing details. Creates a PROPOSED brief only; it runs no business work, contacts nobody, and publishes nothing. After approval, Paige verifies the canonical Mission readback before recording the saved outcome on Rail. Requires the rendered approval card.",parameters:{type:"object",properties:{title:{type:"string",minLength:3,maxLength:180},desired_outcome:{type:"string",minLength:3,maxLength:2000},deadline_on:{type:"string",description:"ISO date, or omit when unknown."},baseline:{type:"string",minLength:1,maxLength:4000},strategy:{type:"string",minLength:1,maxLength:6000},constraints:{type:"array",maxItems:30,items:{type:"string",minLength:1,maxLength:600}},success_definition:{type:"string",minLength:1,maxLength:3000},owner_authority:{type:"string",minLength:1,maxLength:3000,description:"Documentary boundary only; never grants autonomy."},assumptions:{type:"array",maxItems:30,items:{type:"string",minLength:1,maxLength:600}},missing_information:{type:"array",maxItems:30,items:{type:"string",minLength:1,maxLength:600}},next_action:{type:"string",maxLength:1200}},required:["title","desired_outcome","baseline","strategy","success_definition","owner_authority"]}}},

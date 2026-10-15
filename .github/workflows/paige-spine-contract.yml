@@ -71,6 +71,7 @@ on:
       - "supabase/tests/business_context_readiness.sql"
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
+      - "supabase/tests/business_mission_numeric_targets.sql"
       - "supabase/tests/social_foundation.sql"
       - "supabase/tests/social_foundation_rls.sql"
       - "scripts/sql/social-foundation-legacy-shape-proof.sql"
@@ -106,6 +107,7 @@ on:
       - "scripts/proof/resend-receipt-concurrency.mjs"
       - "scripts/proof/secure-browser-browse-budget-concurrency.mjs"
       - "scripts/proof/business-mission-concurrency.mjs"
+      - "scripts/proof/business-mission-target-concurrency.mjs"
       - "src/__tests__/paige-spine-*.test.ts"
       - "src/__tests__/paige-orchestration-approve-executor.test.ts"
       - "src/solo/paigeClientScope.ts"
@@ -138,6 +140,8 @@ on:
       - "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql"
       - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
       - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/tests/tenant_email_domain_normalization.sql"
+      - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
       - "supabase/functions/comms-email-command/**"
       - "supabase/functions/send-message/**"
       - "supabase/functions/handle-sendgrid-webhook/**"
@@ -348,6 +352,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_review.sql
 
+      - name: Operations client released-work discovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_discovery.sql
+
       - name: Operations native competing client decisions
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-client-decision-concurrency.mjs
@@ -405,6 +413,11 @@ jobs:
       - name: Experience 03 PAIGE Email sender integrity (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_sender_integrity.sql
+      # One spelling of a sending domain (#2133): stored as lower(btrim(domain)), so the readiness read
+      # and _comms_email_sendgrid_sender_verified agree; the backfill refuses rather than merging.
+      - name: Experience 03 sending-domain normalization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/tenant_email_domain_normalization.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -502,6 +515,9 @@ jobs:
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
+      # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
+      - run: supabase test db supabase/tests/consumer_invite_acceptance.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql
@@ -553,6 +569,9 @@ jobs:
       - run: supabase test db supabase/tests/team_authority_readiness.sql
       # Business Mission owner/RLS/lifecycle proof and true concurrent replay/CAS proof.
       - run: supabase test db supabase/tests/business_mission_foundation.sql
+      - name: Mission-linked numeric targets — caller scope, real issuer, revisions and replay (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/business_mission_numeric_targets.sql
       - run: supabase test db supabase/tests/social_foundation.sql
       - run: supabase test db supabase/tests/social_foundation_rls.sql
       - run: supabase test db supabase/tests/social_connection_lifecycle.sql
@@ -793,6 +812,9 @@ jobs:
       - run: node scripts/proof/business-mission-concurrency.mjs
         env:
           BUSINESS_MISSION_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - run: node scripts/proof/business-mission-target-concurrency.mjs
+        env:
+          MISSION_TARGET_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # The grant reproduction must never overwrite the change under review. A migration production
       # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
       # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them

@@ -6,9 +6,9 @@ import {ClientInvoices} from './ClientInvoices';
 
 const id=(n:number)=>`ec041103-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),client=id(3),invoice=id(4),date='2026-10-14T12:00:00+00:00';
-const fixture=vi.hoisted(()=>({user:vi.fn(),limit:vi.fn(),rpc:vi.fn(),listen:vi.fn(),unsubscribe:vi.fn(),listener:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
+const fixture=vi.hoisted(()=>({user:vi.fn(),profile:vi.fn(),rpc:vi.fn(),listen:vi.fn(),unsubscribe:vi.fn(),listener:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getUser:fixture.user,onAuthStateChange:fixture.listen},
-  from:()=>({select:()=>({eq:()=>({is:()=>({limit:fixture.limit})})})}),rpc:fixture.rpc}}));
+  from:()=>{throw Error('Raw CRM read unavailable');},rpc:(name:string,args:Record<string,unknown>)=>name==='client_portal_self_profile'?fixture.profile(args):fixture.rpc(name,args)}}));
 vi.mock('react-router-dom',()=>({useOutletContext:()=>({session:{user:{id:'ec041103-0000-4000-8000-000000000001'}}})}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const row={id:invoice,invoice_number:'SYN-1',status:'issued',currency:'usd',issued_at:date,due_date:'2026-10-15',issued_snapshot_version:1,
@@ -21,7 +21,7 @@ const portal=(preview=false):ClientDeliveryPortalView=>({preview,work:{actorId:a
 const render=async(preview=false)=>{await act(async()=>{root.render(<ClientDeliveryPortalContext.Provider value={portal(preview)}><ClientInvoices/></ClientDeliveryPortalContext.Provider>);});};
 beforeEach(()=>{
   fixture.user.mockReset().mockResolvedValue({data:{user:{id:actor}},error:null});
-  fixture.limit.mockReset().mockResolvedValue({data:[{id:client,tenant_id:tenant}],error:null});
+  fixture.profile.mockReset().mockResolvedValue({data:{id:client,tenant_id:tenant,linked_user_id:actor},error:null});
   fixture.rpc.mockReset().mockResolvedValue({data:envelope(),error:null});
   fixture.listen.mockReset().mockImplementation(listener=>{fixture.listener=listener;return {data:{subscription:{unsubscribe:fixture.unsubscribe}}};});
   fixture.unsubscribe.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);

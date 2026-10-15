@@ -79,17 +79,12 @@ beforeEach(() => {
     listeners.add(listener); allListeners.push(listener);
     return { data: { subscription: { unsubscribe: () => listeners.delete(listener) } } };
   });
-  mocks.from.mockImplementation((table: string) => {
-    expect(table).toBe('clients');
-    return { select: (columns: string) => { expect(columns).toBe('id,tenant_id'); return {
-      eq: (column: string, value: string) => { expect([column, value]).toEqual(['linked_user_id', actor]); return {
-        is: (column: string, value: unknown) => { expect([column, value]).toEqual(['merged_into_contact_id', null]); return {
-          limit: async (count: number) => { expect(count).toBe(2); return { data: rows, error: null }; },
-        }; },
-      }; },
-    }; } };
-  });
+  mocks.from.mockImplementation(() => { throw Error('Raw CRM read unavailable'); });
   mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>): Promise<Reply> => {
+    if(name==='client_portal_self_profile'){
+      expect(args).toEqual({});
+      return rows.length>1?{data:null,error:{code:'42501'}}:{data:rows.length?{...rows[0],linked_user_id:actor}:null,error:null};
+    }
     expect(args.p_expected_actor_id).toBe(actor); expect(args.p_expected_tenant_id).toBe(tenant);
     if (name === 'operations_delivery_client_reviews_scoped') return { data: discoveryError ? null : {
       actor_id: actor, tenant_id: tenant, releases: [metadata()], unavailable_count: unavailable, has_more: hasMore,
@@ -128,7 +123,10 @@ it('does not turn a discovery failure or ambiguous link into an empty completed 
   discoveryError = { code: '08006' }; await show();
   expect(host.textContent).toContain('could not be read'); expect(host.textContent).not.toContain('No work has been released');
   rows = [...rows, { id: id(8), tenant_id: id(9) }]; discoveryError = null;
-  await click('Check released work again'); expect(host.textContent).toContain('could not be resolved safely'); expect(decisions()).toHaveLength(0);
+  // The canonical producer refuses ambiguous relationships without returning
+  // rows or a client-visible ambiguity reason. Do not invent one from 42501.
+  await click('Check released work again'); expect(host.textContent).toContain('could not be read');
+  expect(host.textContent).not.toContain('No work has been released');expect(mocks.from).not.toHaveBeenCalled();expect(decisions()).toHaveLength(0);
 });
 it('does not mount the artifact or a writer when selected access is refused', async () => {
   await show(); await ready(); exactError = { code: '42501' }; await click('Review version 2');

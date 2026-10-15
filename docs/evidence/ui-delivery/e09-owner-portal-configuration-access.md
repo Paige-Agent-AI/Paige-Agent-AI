@@ -40,7 +40,7 @@ RELEASE_CHANNEL: development: local source implementation, not an authenticated 
 RELEASE_CLASSIFICATION: internal-only: bounded configuration-entry repair; complete dashboard and Portal outcomes remain incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: the full owner/customer experience has not passed acceptance.
 RELEASE_NOTE_REQUIRED: no: no customer announcement or new version.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source implementation only; authenticated owner/customer behavior and full Portal PROOF OWED. No new Portal configuration Spine key or Chat/Live activation; conversational applicability UNAVAILABLE in this slice.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source configuration-entry implementation only; PROOF OWED: authenticated owner/customer behavior, real Solo geometry and the full Portal; UNAVAILABLE: conversational applicability, since this slice registers no new Portal configuration Spine key or Chat/Live activation.
 RELEASE_RECOVERY: position=close configuration on failed/unresolved permission and forward-correct without changing canonical records or security guards; reference=this evidence and exact source/review/CI identities in the PR.
 
 ## Contract, ownership and readback

@@ -174,7 +174,7 @@ try{
   run(zoneSource.match(/REVOKE ALL ON public\.tenant_business_time_zones[^;]+;/)[0]);
   if(!baselineRead){run(readMigrationSource);run(readMigrationSource);run(source(historyMigration));run(source(historyMigration));}
   if(draftOnly){
-    const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin});
+    const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
     evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,boundary:'local additive draft-only iteration; full native CI unchanged; no production/provider/authenticated acceptance'};
     writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
   }else{
@@ -551,7 +551,7 @@ try{
   const historyPerformance=historyPerformanceProof({run,json,literal,source,owner,tenant,otherOwner,foreign,member,admin,templateEvent:event,migration:historyMigration,onMeasurement:m=>writeFileSync(join(scratch,'history-measurement.json'),JSON.stringify(m,null,2))});
   check('accumulated historical getter indexed performance, role isolation and receipt correlation',()=>assert.equal(historyPerformance.status,'PASS'));
   console.log(JSON.stringify({history_performance:{status:historyPerformance.status,scenarios:historyPerformance.scenarios.map(s=>({seeded_history_rows:s.seeded_history_rows,after_median_ms:s.after_median_ms,assertions:s.assertions}))}}));
-  const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin});
+  const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource});
   const retirement=source('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql');
   const archives=source('supabase/migrations/20270602000203_operator_account_archive.sql');
   run(`CREATE FUNCTION operator_preview_account_deletion(uuid) RETURNS jsonb LANGUAGE sql AS $$

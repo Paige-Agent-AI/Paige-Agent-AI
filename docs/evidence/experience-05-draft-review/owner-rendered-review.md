@@ -2,6 +2,8 @@
 
 Development evidence, not customer acceptance or authorization to activate recurrence. Actual React components and the incumbent SOLO design system render over an explicitly synthetic local transport. No screenshot proves a production save, provider connection or authenticated result. Calendar's existing booking-service label in these captures belongs to the fixture; no booking was created.
 
+Render source is the E5 product captured in dc0f9a79 and preserved in reconciled6c895051; the later migration-version, catalogue-proof and documentation changes do not redesign these E5 components. The inherited complete authenticated shell is still UNVERIFIED. [Actual native SQL/engine proof](native-draft-indexed-proof.json) and [read-only production DARK observation](production-dark-readback.json) are different evidence classes.
+
 The human decision is **save an unapproved draft**. The shared `PaigeConfirmCard` shows the exact server-authored scope. Its saved report means the draft was recorded; Calendar still says **Awaiting approval**, has no executable next run and has no verified completed check. The original Planning commitments stay in Operations → Work.
 
 ## Connected native surfaces

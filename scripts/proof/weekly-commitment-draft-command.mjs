@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
+import {catalogueDeclarations} from '../ci/tool-catalogue-lint.mjs';
 
 /** Additive cases in the existing disposable native PostgreSQL proof, never a QA account.
  * Runs actual canonical proposal schema/integrity, native draft and stable Rail functions.
  * Auth/current-tenant/Trust fixture boundary is inherited from the existing proof.
  */
-export async function weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin}) {
+export async function weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource}) {
   const ctx={actor:owner,tenant,role:'authenticated'};
-  const migration='supabase/migrations/20271102090000_experience05_confirmed_weekly_draft.sql';
+  const migration='supabase/migrations/20271105090500_experience05_confirmed_weekly_draft.sql';
   const eventsBefore=run('SELECT count(*) FROM paige_native_events;');
   const flagBefore=run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';");
   run(source('supabase/migrations/20261023000000_confirmations_bind_the_approval_to_the_call.sql'));
@@ -22,6 +23,10 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
       (${literal(admin)},${literal(admin)},${literal(tenant)});`);
   check('weekly draft seam is absent before its forward migration',()=>
     assert.equal(run("SELECT to_regprocedure('public.commit_weekly_commitment_draft(uuid,uuid,jsonb)') IS NULL;"),'t'));
+  // Original weekly proof intentionally starts at its own historical frontier.
+  // A3 must additionally preserve every later, currently merged catalogue body.
+  const laterCatalogues=catalogueDeclarations().filter(d=>d.file>='20271029000000'&&d.file<migration.split('/').at(-1));
+  for(const declaration of laterCatalogues)run(catalogueSource(declaration));
   const catalogueBefore=json(`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(tenant)}) t;`,ctx);
   run(source(migration));run(source(migration));
   check('draft catalogue preserves every incumbent permission and adds only default-confirm metadata',()=>{
@@ -184,6 +189,7 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     proposalHistory={rows:10000,list: listPlan,point:pointPlan,actual_owner_rpc:true,read_writes:0};
   });
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),
+    incumbent_catalogue:{source:laterCatalogues.at(-1)?.file??'original_weekly_frontier',rows:catalogueBefore.length,preserved_metadata_and_defaults:true},
     decline_history:{rows:10000,actual_extracted_query:true,plan:declinePlan},proposal_history:proposalHistory,actual_native_drafts:true,actual_rail:true,concurrent_claims:6,concurrent_commits:6,
     additional_occurrences:0,provider_effects:0,authenticated_customer_acceptance:'NOT_RUN'};
 }

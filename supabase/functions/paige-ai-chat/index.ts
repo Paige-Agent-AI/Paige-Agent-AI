@@ -12356,7 +12356,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const refused = { success: false, not_applied: true, execution_started: false,
                 error: "The process was not saved. Use an exact name, a registered trigger, and one to twenty valid steps." };
               const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
-              if (!object(args) || Object.keys(args).some(k => !["name", "trigger_key", "steps", "category", "confirm"].includes(k)) ||
+              if (!object(args) || Object.keys(args).some(k => !["name", "trigger_key", "steps", "category", "confirm", "granted_lane", "state"].includes(k)) ||
                   typeof args.name !== "string" || !args.name.trim() || args.name.length > 120 ||
                   typeof args.trigger_key !== "string" || !args.trigger_key.trim() ||
                   args.category !== undefined && (typeof args.category !== "string" || args.category.length > 40) ||
@@ -12376,16 +12376,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!await scopeHolds()) return refused;
               const { data: trig, error: triggerError } = await supabaseClient.from("paige_automation_triggers")
                 .select("key,is_live,dark_reason").eq("key", args.trigger_key).maybeSingle();
-              if (triggerError || !trig || trig.key !== args.trigger_key || !await scopeHolds()) return refused;
+              if (triggerError || !await scopeHolds()) return refused;
+              if (!trig || trig.key !== args.trigger_key) return { ...refused,
+                error: "That trigger is not registered. Call automation_triggers_list and pick an available trigger; do not invent one." };
               draftWriteAttempted = true;
-              const createdResult = await supabaseClient.from("paige_automations").insert({
+              const { data: created, error: creationError } = await supabaseClient.from("paige_automations").insert({
                 tenant_id: tenantId, name: args.name, category: args.category ?? "general", trigger_key: trig.key,
                 created_by: user.id, granted_lane: "confirm", state: "draft",
               }).select("id,updated_at").single();
-              if (createdResult.error || !createdResult.data) {
-                return databaseAnswered(createdResult.error) && !createdResult.data ? refused : draftUnknown();
+              if (creationError || !created) {
+                return databaseAnswered(creationError) && !created ? refused : draftUnknown();
               }
-              const created = createdResult.data;
               if (!validId(created.id)) return draftUnknown();
               draftId = created.id;
               if (typeof created.updated_at !== "string" || !Number.isFinite(Date.parse(created.updated_at)) || !await scopeHolds()) return draftUnknown();

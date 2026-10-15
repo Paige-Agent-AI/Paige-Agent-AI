@@ -78,6 +78,11 @@ describe('automation draft exact configuration and recovery', () => {
     expect(state.reads).toContain('paige_automations'); expect(state.reads).toContain('paige_automation_acts');
     expect(state.processes[0]).toMatchObject({ tenant_id: tenant, created_by: actor, state: 'draft', granted_lane: 'confirm' });
   });
+  it('never grants autonomy from model-supplied grant or state fields', async () => {
+    const { state, result } = await drive('', { ...input, granted_lane: 'auto', state: 'live' });
+    expect(result).toMatchObject({ success: true, execution_started: false, state: 'draft', granted: 'confirm' });
+    expect(state.processes[0]).toMatchObject({ state: 'draft', granted_lane: 'confirm' });
+  });
   it('rejects 21 steps before writing instead of silently truncating the approved process', async () => {
     const { state, result } = await drive('', { ...input, steps: Array.from({ length: 21 }, () => input.steps[0]) });
     expect(state.writes).toHaveLength(0); expect(result).toMatchObject({ success: false, not_applied: true });

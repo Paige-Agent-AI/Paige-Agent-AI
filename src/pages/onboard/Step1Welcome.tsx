@@ -1,266 +1,94 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { usePlaybook } from "@/lib/playbook";
-import type { IntakeField } from "@/lib/playbook";
+import type { IntakeField } from "@/lib/playbook/types";
+import type { WelcomeAnswer } from "@/lib/client-portal-welcome";
 import { readableTextOn } from "@/lib/brand/contrast";
+import { useClientAccountExit } from "@/components/client/useClientAccountExit";
+import { useClientWelcome } from "./useClientWelcome";
 import type { OnboardClient } from "./useOnboardingClient";
-import type { Tables } from "@/integrations/supabase/types";
-import { advanceOnboardingStage } from "./useOnboardingClient";
 import type { OnboardBrand } from "./OnboardLayout";
 
-type Ctx = { client: OnboardClient; refresh: () => void; brand: OnboardBrand | null };
-
-/** The postal address columns of the contact row, read when the onboarding record carries them. */
-type ClientPostalAddress = Partial<Pick<Tables<"clients">, "street_address" | "city" | "state" | "zip_code">>;
-
-const STEPS = ["Your info", "Agreement"];
-
-// Contact identity is captured by the fields above, so a tenant's Playbook intake
-// shouldn't re-ask these — we render only the vertical-specific questions here.
-const CONTACT_KEYS = new Set(["full_name", "first_name", "last_name", "name", "email", "phone"]);
-
-function ProgressHeader({ stepIndex, title, subtitle }: { stepIndex: number; title: string; subtitle: string }) {
-  const pct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
-  return (
-    <div className="mb-6">
-      <span className="onboard-step-chip">Step {stepIndex + 1} of {STEPS.length} · {STEPS[stepIndex]}</span>
-      <h1 className="onboard-h1">{title}</h1>
-      <p className="onboard-sub">{subtitle}</p>
-      <div className="onboard-progress"><div style={{ width: `${pct}%` }} /></div>
-    </div>
-  );
-}
-
-/** Renders one tenant-authored Playbook intake question by its type. */
-function IntakeQuestion({ field, value, onChange }: {
-  field: IntakeField;
-  value: unknown;
-  onChange: (v: unknown) => void;
-}) {
-  const v = (value ?? "") as string;
-  return (
-    <div className="space-y-2">
-      <Label>
-        {field.label}
-        {!field.required && <span className="text-xs ml-1" style={{ color: "rgba(8,20,40,0.5)" }}>(optional)</span>}
-      </Label>
-      {field.type === "longtext" ? (
-        <Textarea value={v} onChange={(e) => onChange(e.target.value)} rows={3} />
-      ) : field.type === "select" ? (
-        <select
-          value={v}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full h-10 rounded-md border px-3 text-sm bg-white"
-          style={{ borderColor: "rgba(8,20,40,0.2)", color: "#081428" }}
-        >
-          <option value="">Select…</option>
-          {(field.options ?? []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      ) : (
-        <Input
-          type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
-          value={v}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      )}
-    </div>
-  );
+type Ctx = {client:OnboardClient;brand:OnboardBrand|null;refresh:()=>void;acceptSavedProfile:(profile:OnboardClient)=>boolean};
+const controlClass="min-h-[44px] text-[16px] md:text-[16px]";
+function IntakeQuestion({field,value,onChange,disabled}:{field:IntakeField;value:WelcomeAnswer|undefined;onChange:(v:WelcomeAnswer)=>void;disabled:boolean}) {
+  const id=`welcome-answer-${field.key}`;
+  return <div className="space-y-2"><Label htmlFor={id}>{field.label}{!field.required&&<span className="text-xs ml-1">(optional)</span>}</Label>
+    {field.type==="longtext"?<Textarea id={id} className={controlClass} value={value??""} disabled={disabled} required={field.required}
+      onChange={e=>onChange(e.target.value)} rows={3} maxLength={10000}/>
+      :field.type==="select"?<select id={id} className={`w-full rounded-md border px-3 bg-white ${controlClass}`} value={value??""}
+        disabled={disabled} required={field.required} onChange={e=>onChange(e.target.value)}>
+        <option value="">Select…</option>{field.options?.map(option=><option key={option} value={option}>{option}</option>)}
+      </select>:<Input id={id} className={controlClass} type={field.type==="number"?"number":field.type==="date"?"date":field.type==="phone"?"tel":"text"}
+        step={field.type==="number"?"any":undefined}
+        value={value??""} disabled={disabled} required={field.required} maxLength={field.type==="address"?1000:2000}
+        onChange={e=>onChange(field.type==="number"?(e.target.value===""?null:Number(e.target.value)):e.target.value)}/>}
+  </div>;
 }
 
 export default function Step1Welcome() {
-  const { client, refresh, brand } = useOutletContext<Ctx>();
-  const navigate = useNavigate();
-  const pb = usePlaybook();
-  const [busy, setBusy] = useState(false);
-
-  const [firstName, setFirstName] = useState(client.first_name ?? "");
-  const [lastName, setLastName] = useState(client.last_name ?? "");
-  const [phone, setPhone] = useState<string>(client.phone ?? "");
-  const postal = client as OnboardClient & ClientPostalAddress;
-  const [street, setStreet] = useState<string>(postal.street_address ?? "");
-  const [city, setCity] = useState<string>(postal.city ?? "");
-  const [stateRegion, setStateRegion] = useState<string>(postal.state ?? "");
-  const [zip, setZip] = useState<string>(postal.zip_code ?? "");
-
-  // The tenant's Playbook drives the intake — never a hardcoded (funding) set.
-  const questions = (pb.intake ?? []).filter((f) => !CONTACT_KEYS.has(f.key));
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
-
-  // Hydrate any previously-saved answers so the client can resume.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("paige_client_intake_submissions")
-        .select("payload")
-        .eq("client_id", client.id)
-        .eq("section", "playbook_intake")
-        .maybeSingle();
-      // Only hydrate if the client hasn't started typing (don't clobber input).
-      if (!cancelled && data?.payload) {
-        setAnswers((prev) => (Object.keys(prev).length ? prev : (data.payload as Record<string, unknown>)));
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [client.id]);
-
-  const missingRequired = questions.some(
-    (f) => f.required && !String(answers[f.key] ?? "").trim(),
-  );
-
-  const canContinue =
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
-    phone.trim().length >= 7 &&
-    !missingRequired &&
-    !busy;
-
-  const begin = async () => {
-    if (!canContinue) return;
-    setBusy(true);
-    try {
-      const { error: updErr } = await supabase
-        .from("clients")
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          // The phone is NOT written here: a contact's phones live in its contact methods, and a
-          // linked client has no seam that writes their own (upsert_contact is staff-only). A
-          // client-self address RPC is the missing backend piece; until it exists the number is
-          // collected and not stored — as it already was for a linked client, whose UPDATE on
-          // `clients` matches no policy and changes no row.
-          street_address: street.trim() || null,
-          city: city.trim() || null,
-          state: stateRegion.trim() || null,
-          zip_code: zip.trim() || null,
-        })
-        .eq("id", client.id);
-      if (updErr) throw updErr;
-
-      // Persist the Playbook intake answers (upsert; resumable) so the tenant's
-      // team + Paige have the client's context from the first minute.
-      if (questions.length > 0) {
-        const { error: intakeErr } = await supabase
-          .from("paige_client_intake_submissions")
-          .upsert(
-            {
-              client_id: client.id,
-              section: "playbook_intake",
-              payload: answers,
-              submitted_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "client_id,section" },
-          );
-        if (intakeErr) throw intakeErr;
-      }
-
-      const { error } = await advanceOnboardingStage(client.id, "signing_agreement");
-      if (error) throw error;
-      await refresh();
-      navigate("/onboard/agreement");
-    } catch (e) {
-      toast.error((e as { message?: string } | null | undefined)?.message || "Couldn't save your info — please try again.");
-      setBusy(false);
-    }
-  };
-
-  const accent = brand?.primary_color || null;
-  const workspace = brand?.tenant_name || "your workspace";
-
-  return (
-    <>
-      <ProgressHeader
-        stepIndex={0}
-        title={`Welcome, ${client.first_name ?? "there"}.`}
-        subtitle={`A couple of quick things: confirm your details${questions.length ? " and tell us a bit about you" : ""}, then sign your agreement. After that you're in — and ${pb.persona.name} takes it from there.`}
-      />
-      <div className="onboard-card p-6 sm:p-8 space-y-6">
-        <div>
-          <div className="text-xs uppercase tracking-wide" style={{ color: "rgba(8,20,40,0.5)" }}>Account on file</div>
-          <div className="text-sm" style={{ color: "rgba(8,20,40,0.7)" }}>{client.email}</div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>First name</Label>
-            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+  const {client,brand,refresh,acceptSavedProfile}=useOutletContext<Ctx>();
+  const model=useClientWelcome(client),navigate=useNavigate(),navigation=useRef(false);
+  const [continuationError,setContinuationError]=useState(false);
+  const busy=model.outcome==="saving",blocked=["conflict","unknown"].includes(model.outcome);
+  const guarded=model.dirty||busy||model.outcome==="unknown";
+  useClientAccountExit(guarded,busy);
+  useEffect(()=>{
+    if(!guarded)return;
+    const prevent=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};
+    window.addEventListener("beforeunload",prevent);return()=>window.removeEventListener("beforeunload",prevent);
+  },[guarded]);
+  useEffect(()=>{
+    if(model.phase!=="ready"||model.outcome!=="saved"||!model.state||navigation.current)return;
+    if(!acceptSavedProfile(model.state.profile)){setContinuationError(true);return;}
+    navigation.current=true;
+    const stage=model.state.profile.onboarding_stage;
+    navigate(["accepting_payment","completing_intake","uploading_docs","completed"].includes(stage??"")?"/app":"/onboard/agreement");
+  },[model.phase,model.outcome,model.state,acceptSavedProfile,navigate]);
+  const accent=brand?.primary_color,workspace=brand?.tenant_name??"your business";
+  const reload=()=>{if(!model.dirty||window.confirm("Discard your edits and reload saved information?"))void model.reload(true);};
+  return <section aria-labelledby="welcome-title">
+    <div className="mb-6"><h1 id="welcome-title" className="onboard-h1">Welcome.</h1>
+      <p className="onboard-sub">Confirm your details for {workspace}, then review your agreement.</p>
+      <p className="text-sm mb-2">Step 1 of 2 · Your info</p>
+      <div className="onboard-progress"><div style={{width:"50%",transition:"none"}}/></div>
+    </div>
+    <div className="onboard-card p-6 sm:p-8 space-y-6">
+      {continuationError?<div role="alert"><p>The next step could not be opened. Reload your onboarding to continue.</p>
+        <Button className={`mt-4 ${controlClass}`} onClick={refresh}>Reload onboarding</Button></div>
+        :model.phase==="loading"?<p role="status">Loading your information…</p>
+        :model.phase!=="ready"?<div role="alert"><p>{model.phase==="signed_out"?"Sign in again to continue."
+          :model.phase==="unavailable"?"Your information is unavailable for this business. Contact the business for help."
+          :"Your information could not be loaded. Your edits have been kept in this session. Try again when connected."}</p>
+          {model.phase==="signed_out"?<Button asChild className={`mt-4 ${controlClass}`}><a href="/auth" style={{color:"hsl(var(--primary-foreground))"}}>Go to sign in</a></Button>
+            :<Button className={`mt-4 ${controlClass}`} onClick={()=>void model.reload()}>Try again</Button>}</div>
+        :model.state?.status==="configuration_required"?<div role="status"><p>{workspace} needs to finish setting up your welcome questions. Contact the business before continuing.</p>
+          <Button className={`mt-4 ${controlClass}`} onClick={()=>void model.reload()}>Check again</Button></div>
+        :<form className="space-y-6" onSubmit={e=>{e.preventDefault();void model.save();}}>
+          <div><div className="text-xs uppercase tracking-wide">Account on file</div><p>{model.state?.profile.email??"No email on file"}</p></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {([['first_name','First name','given-name'],['last_name','Last name','family-name'],['phone','Phone number','tel'],
+              ['street_address','Street address','street-address'],['city','City','address-level2'],['state','State','address-level1'],['zip_code','ZIP','postal-code']] as const).map(([key,label,autocomplete])=>
+              <div key={key} className={`space-y-2 ${key==='phone'||key==='street_address'?'sm:col-span-2':''}`}>
+                <Label htmlFor={`welcome-${key}`}>{label}{!['first_name','last_name','phone'].includes(key)&&<span className="text-xs ml-1">(optional)</span>}</Label>
+                <Input id={`welcome-${key}`} className={controlClass} autoComplete={autocomplete} type={key==='phone'?'tel':'text'}
+                  required={['first_name','last_name','phone'].includes(key)} disabled={busy} maxLength={key==='street_address'?500:200}
+                  value={model.draft[key]} onChange={e=>model.edit(key,e.target.value)}/>
+              </div>)}
           </div>
-          <div className="space-y-2">
-            <Label>Last name</Label>
-            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Phone number</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Street address <span className="text-xs" style={{ color: "rgba(8,20,40,0.5)" }}>(optional)</span></Label>
-            <Input value={street} onChange={(e) => setStreet(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>City <span className="text-xs" style={{ color: "rgba(8,20,40,0.5)" }}>(optional)</span></Label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>State <span className="text-xs" style={{ color: "rgba(8,20,40,0.5)" }}>(optional)</span></Label>
-            <Input value={stateRegion} onChange={(e) => setStateRegion(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>ZIP <span className="text-xs" style={{ color: "rgba(8,20,40,0.5)" }}>(optional)</span></Label>
-            <Input value={zip} onChange={(e) => setZip(e.target.value)} />
-          </div>
-        </div>
-
-        {questions.length > 0 && (
-          <div className="space-y-5 pt-2 border-t" style={{ borderColor: "rgba(8,20,40,0.1)" }}>
-            <div>
-              <div className="text-sm font-semibold" style={{ color: "#081428" }}>A bit about you</div>
-              <div className="text-xs" style={{ color: "rgba(8,20,40,0.6)" }}>
-                This helps {workspace} and {pb.persona.name} tailor everything to you.
-              </div>
-            </div>
-            {questions.map((f) => (
-              <IntakeQuestion
-                key={f.key}
-                field={f}
-                value={answers[f.key]}
-                onChange={(v) => setAnswers((a) => ({ ...a, [f.key]: v }))}
-              />
-            ))}
-          </div>
-        )}
-
-        <div
-          className="rounded-lg p-4"
-          style={{
-            background: accent ? `color-mix(in srgb, ${accent} 12%, transparent)` : "rgba(207,174,112,0.12)",
-            border: `1px solid ${accent ? `color-mix(in srgb, ${accent} 35%, transparent)` : "rgba(207,174,112,0.35)"}`,
-          }}
-        >
-          <div className="font-semibold mb-1">What happens next</div>
-          <p className="text-sm" style={{ color: "rgba(8,20,40,0.78)" }}>
-            Once you sign your agreement you'll go straight into your portal. {pb.persona.name} will walk you
-            through everything else from there.
-          </p>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={begin}
-            disabled={!canContinue}
-            style={accent ? { backgroundColor: accent, color: readableTextOn(accent) } : undefined}
-          >
-            {busy ? "Saving…" : "Continue to agreement"}
-          </Button>
-        </div>
-      </div>
-    </>
-  );
+          {!!model.state?.fields.length&&<div className="space-y-5 pt-4 border-t">{model.state.fields.map(field=><IntakeQuestion key={field.key}
+            field={field} value={model.answers[field.key]} onChange={v=>model.answer(field.key,v)} disabled={busy}/>)}</div>}
+          {model.notice&&<p role={model.outcome==='invalid'||blocked?'alert':'status'} aria-live="polite">{model.notice}</p>}
+          {blocked&&<div className="flex flex-wrap gap-3">
+            {model.outcome==='unknown'&&<Button type="button" variant="outline" className={controlClass} onClick={()=>void model.reload(false,true)}>Check saved information</Button>}
+            <Button type="button" variant="outline" className={controlClass} onClick={reload}>Discard edits and reload</Button>
+          </div>}
+          <div className="flex justify-end"><Button type="submit" className={controlClass} disabled={busy||blocked||model.outcome==='saved'}
+            style={accent?{backgroundColor:accent,color:readableTextOn(accent)}:undefined}>{busy?"Saving…":"Continue to agreement"}</Button></div>
+        </form>}
+    </div>
+  </section>;
 }

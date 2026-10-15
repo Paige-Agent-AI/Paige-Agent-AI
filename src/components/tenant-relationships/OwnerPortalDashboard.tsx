@@ -34,7 +34,7 @@ import {
   portalNextStep,
 } from "./portalDashboardModel";
 import { usePortalInvitations } from "./usePortalInvitations";
-import { PortalInvitationManager } from "./PortalInvitationManager";
+import { PortalInvitationManager, type PortalInvitationActionLock } from "./PortalInvitationManager";
 import "./owner-portal-dashboard.css";
 
 const PortalStudio = lazy(() => import("@/pages/admin/PortalStudio"));
@@ -151,6 +151,23 @@ export function OwnerPortalDashboard({
   const [editorMounted, setEditorMounted] = useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const invitationActions = useRef(new Set<string>());
+  const [pendingInvitations, setPendingInvitations] = useState<ReadonlySet<string>>(new Set());
+  const invitationActionLock: PortalInvitationActionLock = {
+    pending: pendingInvitations,
+    acquire: (key) => {
+      if (invitationActions.current.has(key)) return null;
+      invitationActions.current.add(key);
+      setPendingInvitations(new Set(invitationActions.current));
+      let held = true;
+      return () => {
+        if (!held) return;
+        held = false;
+        invitationActions.current.delete(key);
+        setPendingInvitations(new Set(invitationActions.current));
+      };
+    },
+  };
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const searchRef = useRef<HTMLInputElement>(null);
   const id = useId();
@@ -667,6 +684,7 @@ export function OwnerPortalDashboard({
                           (row) => row.contact_id === selected.id,
                         )}
                         onReadback={() => invitations.invalidate()}
+                        actionLock={invitationActionLock}
                       />
                     </PortalConfigurationGate>
                   )}
@@ -869,6 +887,7 @@ export function OwnerPortalDashboard({
                       (row) => row.contact_id === selected.id,
                     )}
                     onReadback={() => invitations.invalidate()}
+                    actionLock={invitationActionLock}
                   />
                 </PortalConfigurationGate>
               ) : selected ? (

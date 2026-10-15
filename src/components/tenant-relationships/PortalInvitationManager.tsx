@@ -11,17 +11,24 @@ import { CLIENT_CONTACT_METHODS_EMBED } from "@/lib/contact-methods";
 const invitationContactSelect: string = `id,status,merged_into_contact_id,do_not_contact,linked_user_id,${CLIENT_CONTACT_METHODS_EMBED}`;
 type InvitationContact = { id?: unknown; status?: unknown; merged_into_contact_id?: unknown; do_not_contact?: unknown; linked_user_id?: unknown; client_contact_methods?: Array<{ kind?: unknown; is_primary?: unknown; value?: unknown }> };
 
+export type PortalInvitationActionLock = {
+  pending: ReadonlySet<string>;
+  acquire: (key: string) => (() => void) | null;
+};
+
 /** Explicit, recipient-bound use of the incumbent invitation contracts. No identity administration. */
 export function PortalInvitationManager({
   tenantId,
   person,
   latest,
   onReadback,
+  actionLock,
 }: {
   tenantId: string;
   person: RelationshipPerson;
   latest: PortalInvitation | undefined;
   onReadback: () => Promise<unknown>;
+  actionLock?: PortalInvitationActionLock;
 }) {
   const {
     activeUserId,
@@ -36,6 +43,8 @@ export function PortalInvitationManager({
   );
   const alive = useRef(true);
   const inFlight = useRef(false);
+  const actionKey = JSON.stringify([activeUserId, tenantId, person.id]);
+  const actionBusy = busy || !!actionLock?.pending.has(actionKey);
   const scope = `${activeUserId}:${activeTenantId}:${person.id}:${accountContextStatus}:${accountContextLoading}`;
   const currentScope = useRef(scope);
   currentScope.current = scope;
@@ -71,6 +80,10 @@ export function PortalInvitationManager({
       (cancel && !pending)
     )
       return;
+    // The owner dashboard can mount this control inline and in a dialog. Its
+    // synchronous lock outlives either instance and remains held through readback.
+    const release = actionLock?.acquire(actionKey);
+    if (actionLock && !release) return;
     inFlight.current = true;
     const startingScope = scope;
     const current = () =>
@@ -231,8 +244,9 @@ export function PortalInvitationManager({
               text: `${previous?.text || "The action finished."} The latest invitation status could not be reloaded. Refresh before retrying.`,
             }));
         } finally {
+          release?.();
+          inFlight.current = false;
           if (current()) {
-            inFlight.current = false;
             setBusy(false);
           }
         }
@@ -277,10 +291,10 @@ export function PortalInvitationManager({
         <button
           className="opd-button opd-primary"
           type="button"
-          disabled={busy || !eligible}
+          disabled={actionBusy || !eligible}
           onClick={() => void act(false)}
         >
-          {busy
+          {actionBusy
             ? "Checking invitation…"
             : pending
               ? "Resend invitation email"
@@ -290,7 +304,7 @@ export function PortalInvitationManager({
           <button
             className="opd-button"
             type="button"
-            disabled={busy || !ready}
+            disabled={actionBusy || !ready}
             onClick={() => void act(true)}
           >
             Cancel pending invitation

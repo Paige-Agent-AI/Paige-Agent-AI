@@ -72,7 +72,7 @@ try {
   await renderCase({width:768,height:385,open:false,theme:"light",tenant:"test-tenant-a"});
   assert.equal(errors.length, 0, JSON.stringify(errors));
 } finally { await browser.close(); }
-const sources = ["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/owner-portal-dashboard.css","src/pages/admin/PortalStudio.tsx"];
+const sources = ["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/owner-portal-dashboard.css","src/pages/admin/PortalStudio.tsx"];
 const sourceHashes = await Promise.all(sources.map(async (file) => ({file,sha256:createHash("sha256").update(await fs.readFile(path.join(project,file))).digest("hex")})));
 const boundary = "Actual Solo shell, workspace, dashboard and native editor source; read-only neutral test transports and placeholder PAIGE content. Network blocked. No real session, account acceptance, production read/write, provider send or owner acceptance is proven.";
 await fs.writeFile(path.join(output,"result.json"),JSON.stringify({sourceHashes,cases,errors,boundary},null,2));

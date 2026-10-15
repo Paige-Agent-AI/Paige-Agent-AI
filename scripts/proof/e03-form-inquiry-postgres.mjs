@@ -45,7 +45,7 @@ create trigger trg_messages_upsert_thread after insert on public.messages for ea
 grant usage on schema public to anon,authenticated,service_role;
 grant all on all tables in schema public to service_role;
 grant select,insert,update on messages to authenticated;
-${readFileSync('supabase/migrations/20271101143000_e03_form_inquiry_conversations.sql','utf8')}
+${readFileSync('supabase/migrations/20271102120000_e03_form_inquiry_conversations.sql','utf8')}
 create function public.proof_assert(ok boolean,note text) returns void language plpgsql as $$begin if ok is distinct from true then raise exception 'FAIL: %',note;end if;end$$;
 insert into tenants values('11111111-1111-4111-8111-111111111111'),('99999999-9999-4999-8999-999999999999');
 insert into clients values('22222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111','Test','Lead'),('88888888-8888-4888-8888-888888888888','99999999-9999-4999-8999-999999999999','Other','Lead');

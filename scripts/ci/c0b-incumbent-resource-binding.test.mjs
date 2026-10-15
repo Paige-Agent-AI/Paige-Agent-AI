@@ -13,7 +13,7 @@ const mutations=[
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],
  ['verified actor refusal removed',s=>s.replace('if (authError || !user)', 'if (false)')],
- ['Research actor substituted',s=>s.replace(/user_id: user.id,\r?\n                caller: "chat",/,'user_id: args.user_id,\n                caller: "chat",')],
+ ['Research actor substituted',s=>s.replace(/user_id: user\.id,(\r?\n                expected_tenant_id: tenantId,\r?\n                caller: "chat",)/,'user_id: args.user_id,$1')],
  ['Research persistence changed',s=>s.replace('persist: true,','persist: false,')],
  ['automation grant broadened',s=>s.replace('granted_lane: "confirm",','granted_lane: "auto",')],
  ['number tenant filter removed',s=>s.replace(/\.eq\("tenant_id", crmTenantId\)\r?\n                \.order\("is_primary"/, '.eq("tenant_id", args.tenant_id)\n                .order("is_primary"')],

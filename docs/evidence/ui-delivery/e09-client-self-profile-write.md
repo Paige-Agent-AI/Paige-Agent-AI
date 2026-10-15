@@ -27,7 +27,7 @@ MUST_PRESERVE: canonical CRM/contact methods and their permissions, existing sta
 ACCEPTANCE_CRITERIA: actual authenticated synthetic customer with no staff/raw table rights saves only own allowlisted fields; canonical phone and audit persist; invalid/stale/foreign/late-failure calls roll back; safe projection reloads exact own fields
 MOTION_PURPOSE: NONE: no motion or UI source changed
 PROTECTED_SEAMS: auth subject, client/tenant isolation, canonical primary methods, stale version, private field preservation, exact audit and rollback tested. Unchanged: signup/provisioning/entitlements/paywall; Trust/approval/Spine execution admission; Chat/Live; Memory/Vault/browser; provider and payment effects; scheduling; E03/E04/E05 domain implementations and shell geometry.
-INTERNAL_BUILD_IDENTITY: source-base=c576b8e6debbcf348402d17f20288ab33df695c1; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271102120000_e09_client_self_profile_write exact candidate review/full-schema/deployment); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-write.mjs
+INTERNAL_BUILD_IDENTITY: source-base=fdcc8f2f99f10d05ad097ac69db651f8e4342ecf; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271102130000_e09_client_self_profile_write exact candidate review/full-schema/deployment); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-write.mjs
 RELEASE_CHANNEL: development: isolated actual-role native PostgreSQL proof, not managed/authenticated production proof
 RELEASE_CLASSIFICATION: internal-only: additive checked self-profile writer prerequisite
 CUSTOMER_RELEASE_IDENTITY: none: complete Portal outcome not accepted

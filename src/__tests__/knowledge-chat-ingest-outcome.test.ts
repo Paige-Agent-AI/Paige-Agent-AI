@@ -8,7 +8,10 @@ import { interactiveEffect } from '../../supabase/functions/_shared/paige-turn/i
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
+let reconciliationGuard: ts.IfStatement | undefined;
 function visit(n: ts.Node) {
+  if (ts.isIfStatement(n) && n.expression.getText(ast).includes('MUTATING_TOOLS.has(tc.function.name)')
+    && n.thenStatement.getText(ast).includes('prior_effect_reconciliation_required')) reconciliationGuard = n;
   if (ts.isIfStatement(n) && n.expression.getText(ast) === 'tc.function.name === "save_to_knowledge_base"') branch = n.thenStatement;
   ts.forEachChild(n, visit);
 }
@@ -34,6 +37,21 @@ async function drive(data: unknown, options: { status?: number; raw?: string; th
   return { result: JSON.parse(outputs[0].content), calls, requestExecutionState };
 }
 describe('Knowledge Chat ingestion uses native scope and outcome evidence', () => {
+  it('keeps the uncertain save separate from its definitely unexecuted approved successor', async () => {
+    const prior = await drive(null, { thrown: new TypeError('Lost ingestion acknowledgement') });
+    if (!reconciliationGuard) throw new Error('Canonical reconciliation guard missing');
+    const run = new Function('MUTATING_TOOLS', 'requestExecutionState', 'interactive', 'interactiveReceiptScanSaturated',
+      'interactiveUnresolvedEffects', 'tc', `const toolResults=[]; let dispatches=0; for(let i=0;i<1;i++) {
+      ${reconciliationGuard.getText(ast)} dispatches++; } return { toolResults, dispatches };`);
+    const observed = run(new Set(['plan_create']), prior.requestExecutionState, false, false, [],
+      { id: 'approved-successor', function: { name: 'plan_create', arguments: '{}' } });
+    expect(observed.dispatches).toBe(0);
+    const result = JSON.parse(observed.toolResults[0].content);
+    expect(result).toMatchObject({ success: false, not_applied: true, refused_before_run: true });
+    expect(classifySpentApproval(JSON.stringify(result)).outcome).toBe('not_run');
+    expect(interactiveEffect('plan_create', result)).toBeNull();
+    expect(interactiveEffect('save_to_knowledge_base', prior.result)?.outcome).toBe('outcome_unknown');
+  });
   it('pins the native request to the server workspace and preserves the ordinary caller JWT', async () => {
     const { calls } = await drive({ ok: true, doc_id: doc, chunk_count: 2, embedded: true });
     expect(calls).toHaveLength(1);

@@ -112,6 +112,9 @@ const AppShell = () => {
     if (DEV_MODE) return;
 
     let settled = false;
+    let disposed = false;
+    let receivedAuthEvent = false;
+    let hydrationTimeoutId: number | undefined;
     const markSettled = () => {
       settled = true;
       setIsLoading(false);
@@ -119,6 +122,9 @@ const AppShell = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
+        if (disposed) return;
+        // A fresh SDK event supersedes the initial cached-session read.
+        receivedAuthEvent = true;
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
         markSettled();
@@ -131,10 +137,10 @@ const AppShell = () => {
 
     Promise.race<Awaited<ReturnType<typeof supabase.auth.getSession>> | null>([
       supabase.auth.getSession(),
-      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 5000)),
+      new Promise<null>((resolve) => { hydrationTimeoutId = window.setTimeout(() => resolve(null), 5000); }),
     ])
       .then((result) => {
-        if (!result) return;
+        if (disposed || receivedAuthEvent || !result) return;
         const currentSession = result.data.session;
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -145,6 +151,7 @@ const AppShell = () => {
         }
       })
       .catch((err) => {
+        if (disposed || receivedAuthEvent) return;
         console.error("[AppShell] getSession failed:", err);
         markSettled();
       });
@@ -153,7 +160,7 @@ const AppShell = () => {
     // in 5s (network stall, paused tab, stale lock), clear the loading gate
     // so the user can act instead of staring at "Loading..." forever.
     const timeoutId = window.setTimeout(() => {
-      if (!settled) {
+      if (!disposed && !settled) {
         console.warn("[AppShell] auth hydration timed out after 5s — releasing loading gate");
         setIsLoading(false);
         navigate("/auth", { replace: true });
@@ -161,7 +168,9 @@ const AppShell = () => {
     }, 5000);
 
     return () => {
+      disposed = true;
       subscription.unsubscribe();
+      window.clearTimeout(hydrationTimeoutId);
       window.clearTimeout(timeoutId);
     };
   }, [navigate]);
@@ -186,25 +195,8 @@ const AppShell = () => {
     return () => { setScopedUserId(null); };
   }, [isImpersonating, effectiveUserId, queryClient]);
 
-  // Realtime: a client should see staff-driven onboarding stage advances
-  // (or rollbacks) without refreshing. Listens only on the signed-in user's
-  // own row and only invalidates client-scoped queries to avoid nuking the
-  // entire cache on every row update.
-  useEffect(() => {
-    if (!user?.id) return;
-    const channel = supabase
-      .channel(`clients-self-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "clients", filter: `linked_user_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["clients"] });
-          queryClient.invalidateQueries({ queryKey: ["onboarding"] });
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user?.id, queryClient]);
+  // Customer refresh must use canonical client projections/events. Never
+  // subscribe this shell to full CRM rows for query-cache invalidation.
 
   // Role-based landing redirect: admins/coaches → /admin, brokers → /broker/app,
   // BTF workspace clients → /app. Honors ?stay=1 (or the (Sprint 211.b: BTF surface retired; routing preserved)

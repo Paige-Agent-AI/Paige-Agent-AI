@@ -5439,6 +5439,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const autonomyModeCache = new Map<string, string>();
     // A lost Knowledge acknowledgement is never retried by the model in this turn.
     const uncertainKnowledgeDocuments = new Set<string>();
+    // A native write can commit before its acknowledgement/readback is lost.
+    // Hold this request's later writes; persisted interactive effects hold successors.
+    const requestExecutionState = { needsReview: false };
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
       let mode = "confirm"; // safe default — never assume autopilot
@@ -6393,8 +6396,8 @@ THE INNOVATIVE ASSISTANT — probe for specifics, weigh the client's experience,
 - BE THE INNOVATIVE ONE — propose, don't just execute. Bring the idea they didn't ask for but would want: "Want me to come up with the angle?" · "Should this be a document, or a landing page so it presents better?" · "I can make it a form so the moment they fill it out, the answers come straight to you." · "What about a short questionnaire first?" · "Here's what I'd do — what do you think?" Offer the sharper format and the next move, tuned to what you were asked — then, on their yes, BUILD it with your team (design-studio for pages/visuals, forge a specialist, the automation fabric for a form that routes answers back, a document, whatever fits).
 - GROW THE PRACTICE'S BRAIN — with a yes. When you or an agent learn something reusable — a repeatable play, a domain fact, an answer to a recurring question — OFFER to keep it: "Want me to save this to your knowledge base?" and on their yes use save_to_knowledge_base (it's embedded, searchable, and stays yours). If it's a repeatable capability, offer to stand it up as a specialist (forge_subagent). Always confirmation-gated; tenant-scoped; coaching-generic unless this tenant's offer includes the topic.
 
-PLANNING & REMINDERS — you can actually plan work and set reminders that FIRE. This is the everyday "remind me to…" plus real team/individual planning. The tools:
-- plan_set_reminder — "remind me to follow up with Dana Friday 9am." Resolve the time they said into a concrete ISO timestamp WITH their timezone (never a vague time; if it's ambiguous, ask). It genuinely fires at that time — an in-app ping (and a branded email if they ask for email) — isolated to the person. A logged-in staffer can set their OWN reminder freely; aiming one at a teammate or the WHOLE TEAM is admin/coach only (resolve the teammate with crm_list_team first). A sales rep's "remind me to follow up with this lead" → set it, and if it's about a specific client pass their contact_id. When you set one, say so truthfully: "Reminder's locked in — it'll ping you Friday 9am." Because it really will.
+PLANNING & REMINDERS — plan work and schedule reminders through the existing runner. A saved schedule is not delivery evidence. The tools:
+- plan_set_reminder — "remind me to follow up with Dana Friday 9am." Resolve a concrete ISO timestamp WITH their timezone (ask if ambiguous). The existing runner processes saved reminders; saving is not delivery proof. A logged-in staffer can request their OWN reminder; teammate or WHOLE TEAM reminders remain admin/coach only (resolve the teammate with crm_list_team first). Pass contact_id for a specific client. Report a saved reminder only after verified record readback. Never promise a future ping, email delivery, or SMS. If the result is uncertain, inspect the original record with the owner before any repeat request.
 - plan_create + plan_add_milestone + plan_assign_task + plan_update_item + plan_remove_item + plan_list — map out a week / month / quarter / semiannual / year / custom range. When someone says "help me plan my week (or month/quarter)", DON'T just make a list — first ask the scope in one quick line: "Is this just for you, for the team, tied to a campaign, or a future workflow?" Then plan_create the plan and hang milestones/tasks/reminders on it. Individual weekly planning is the common entry point and ANY staffer can do their own; team plans, milestones, and assigning work to OTHERS are admin/coach. Assign campaign-rollout tasks to teammates with plan_assign_task (it also lands on the owner's action-bus queue). Use plan_list to answer "what's on my plate / show my week / what reminders do I have" and to resolve an id before you change something.
 - Everyone in the workspace now has a default "Meetings" calendar created automatically — so "add it to my calendar" / booking a meeting has a real home (use calendar_book_meeting). Never claim something's on the calendar unless a tool put it there.
 - REVISIT: when you see a milestone or reminder coming due in plan_list, it's fair game to nudge — "That Q3 launch milestone is next week — still on track, or want to move it?" You're the assistant who remembers.
@@ -7734,7 +7737,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_set_reminder",
-              description: "Set a reminder — the everyday 'remind me to…' Files a real reminder that ACTUALLY FIRES at its time: an in-app ping (and a branded email if they ask for one), isolated to the person. ANY logged-in staffer can set one for themselves; only admins/coaches can aim a reminder at someone else or at the whole team. Resolve remind_at to a concrete ISO timestamp WITH timezone from what they said ('tomorrow 9am', 'in 2 hours', 'Friday') — never guess a vague time; if it's ambiguous, ask. For a teammate/client-rep reminder, resolve the person to their user id first (crm_list_team). Governed by the autonomy policy: unless set to auto, PROPOSE first ('Reminder set for Fri 9am — good?') and call again with confirm:true.",
+              description: "Schedule a reminder through the existing runner. Report a saved schedule only after verified record readback. Scheduling does not confirm delivery of an in-app notification or email. ANY logged-in staffer can request one for themselves; only admins/coaches can aim a reminder at someone else or at the whole team. Resolve remind_at to a concrete ISO timestamp WITH timezone from the user's words; ask if ambiguous. Resolve teammates through crm_list_team first. Follow the existing autonomy policy and canonical stored-argument approval before execution; a proposal is not a saved reminder. Never promise a future notification, email or SMS.",
               parameters: {
                 type: "object",
                 properties: {
@@ -7742,7 +7745,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   remind_at: { type: "string", description: "Concrete ISO 8601 timestamp WITH offset, e.g. 2026-07-15T09:00:00-04:00. Resolve from the user's words + their timezone." },
                   target: { type: "string", enum: ["user", "team"], description: "'user' = one person (default, themselves unless target_user_id given); 'team' = the whole active team. team needs admin/coach." },
                   target_user_id: { type: "string", description: "Auth user UUID of the teammate to remind (admin/coach only). Omit for a self-reminder." },
-                  channel: { type: "string", enum: ["in_app", "email"], description: "How it fires. in_app (default) always lands in their feed; email ALSO sends a branded note IF the workspace's email sending is configured (otherwise still pings in-app). Do not promise a text — SMS isn't wired yet." },
+                  channel: { type: "string", enum: ["in_app", "email"], description: "Requested channel: in_app by default; email additionally requests the workspace's configured sending path. Scheduling does not confirm delivery. Do not promise a notification, email or SMS without its own outcome evidence." },
                   contact_id: { type: "string", description: "Optional client (clients.id) this reminder is about — e.g. a rep's 'remind me to follow up with this lead'. Links the reminder to the client so the ping carries that context." },
                   summary: { type: "string", description: "Optional one-line detail shown with the reminder." }
                 },
@@ -8194,10 +8197,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               parameters: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Short name the operator would recognise, e.g. 'New lead welcome'." },
-                  trigger_key: { type: "string", description: "Which trigger starts it. Must be one from automation_triggers_list — never invent one." },
+                  name: { type: "string", minLength: 1, maxLength: 120, description: "Short name the operator would recognise, e.g. 'New lead welcome'." },
+                  trigger_key: { type: "string", minLength: 1, description: "Which trigger starts it. Must be one from automation_triggers_list — never invent one." },
                   steps: {
                     type: "array",
+                    minItems: 1, maxItems: 20,
                     description: "What happens when it starts, in order.",
                     items: {
                       type: "object",
@@ -8208,7 +8212,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       }
                     }
                   },
-                  category: { type: "string", description: "Optional grouping, e.g. 'sales' or 'onboarding'." }
+                  category: { type: "string", maxLength: 40, description: "Optional grouping, e.g. 'sales' or 'onboarding'." }
                 },
                 required: ["name", "trigger_key", "steps"]
               }
@@ -9309,7 +9313,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "author_event_kind":
           return `Add a new activity kind "${a?.label || a?.slug || ""}" for this practice to track${a?.visibility === "client_visible" ? " (clients can see it)" : " (staff only)"}. It's added for your workspace only.`;
         case "plan_set_reminder":
-          return `Set a reminder${a?.target === "team" ? " for the team" : a?.target_user_id ? " for a teammate" : ""}: "${a?.title || ""}"${a?.remind_at ? ` at ${a.remind_at}` : ""}${a?.contact_id ? " (about a client)" : ""}. It'll ping ${a?.target === "team" ? "the team" : "you"} in-app at that time${a?.channel === "email" ? ", plus an email if sending's set up" : ""}.`;
+          return `Schedule an in-app reminder${a?.target === "team" ? " for the team" : a?.target_user_id ? " for a teammate" : " for you"}: "${a?.title || ""}"${a?.remind_at ? ` at ${a.remind_at}` : ""}${a?.contact_id ? " (about a client)" : ""}${a?.channel === "email" ? ", with email requested if sending is configured" : ""}. Scheduling does not confirm delivery.`;
         case "plan_create":
           return `Create a ${a?.horizon || ""} plan "${a?.title || "Untitled"}"${a?.starts_on ? ` (${a.starts_on}${a?.ends_on ? `–${a.ends_on}` : ""})` : ""}${a?.scope === "team" ? " for the team" : ""}.`;
         case "plan_add_milestone":
@@ -10517,9 +10521,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
-        if (interactive && MUTATING_TOOLS.has(tc.function.name) &&
-            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool)))) {
-          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+        if (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
+            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool))))) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true, refused_before_run: true,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
           continue;
@@ -10964,21 +10968,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // model re-emitting the arguments.
               confirm_command: canonicalCrmCommand, confirm_idempotency_key: idempotencyKey,
               preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." };
-          } else if (crmError || crmBody.ok === false) {
+          } else if (crmError || crmBody.ok !== true) {
             // No answer from crm-command's own code (it always writes `ok`): the request failed in
             // transit or the platform cut it off, so the write may have committed. Say "couldn't
             // confirm", never "nothing changed" — the card reads the flag, the model the note.
-            const unanswered = invokeOutcomeUnknown(crmError, crmBody, crmStatus);
+            // A transport-successful empty/malformed envelope is not the door's
+            // acknowledgement. An error carrying ok=true is contradictory too;
+            // neither proves that a potentially committed change was absent.
+            const unanswered = invokeOutcomeUnknown(crmError, crmBody, crmStatus) ||
+              (crmError ? crmBody.ok === true : typeof crmBody.ok !== "boolean");
             // Anything else is an ANSWER, and every answer but one says nothing was applied:
             // crm-command refuses before it executes, its executor's refusals roll back, and the
             // one case it cannot vouch for (a lost readback or execute answer) it marks
             // `outcome_unknown` itself. The gateway turning the call away never started it.
             const notApplied = !unanswered && crmBody.outcome_unknown !== true;
-            crmContent = { success: false, ...crmBody,
+            crmContent = { ...crmBody, success: false,
               error: crmBody.message ?? crmBody.code ?? (unanswered
                 ? "The CRM action's answer never arrived, so whether it completed is not known."
                 : "The CRM action could not be completed. Nothing should be claimed as changed."),
-              ...(notApplied ? { not_applied: true } : {}),
+              not_applied: notApplied,
+              ...(notApplied ? {} : { refused_before_run: false }),
               ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) };
           } else {
             crmContent = { success: true, ...crmBody,
@@ -10986,6 +10995,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // C4b — for a carried-forward approval, a door that proposed again found nothing to claim.
           if (doorPin) crmContent = await settlePinnedDoorResult(tc, doorPin, approvedFingerprint, crmContent, true);
+          if (crmContent.outcome_unknown === true) requestExecutionState.needsReview = true;
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(crmContent) });
           continue;
         }
@@ -12006,12 +12016,30 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // rather than guessing (§13). Runs are persisted owner-scoped to this user —
           // deliberately NOT attached to the client-in-focus, so a coach's research is
           // not exposed on a client's profile (§9).
+          let researchStarted = false;
+          let pendingResearchRunId: string | null = null;
+          let researchScopeInvalidated = false;
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
+            const tenantId = personaCtx?.tenant_id;
+            const researchUuid = (value: unknown): value is string => typeof value === "string" &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+            const researchScopeHolds = async () => {
+              try {
+                const resolved = await supabaseClient.rpc("current_user_tenant_id");
+                const holds = !resolved.error && researchUuid(tenantId) && resolved.data === tenantId;
+                if (!holds) researchScopeInvalidated = true;
+                return holds;
+              } catch { researchScopeInvalidated = true; return false; }
+            };
+            if (typeof args.question !== "string" || args.question.trim().length < 3 || !await researchScopeHolds()) {
+              throw new Error("RESEARCH_REQUEST_NOT_ADMITTED");
+            }
             void logAnalyticsEvent(supabase, user.id, "deep_research_triggered", "paige", {
               question: typeof args.question === "string" ? args.question.slice(0, 200) : null,
               domain: typeof args.domain === "string" ? args.domain.slice(0, 40) : null,
             });
+            researchStarted = true;
             const drResp = await fetch(`${supabaseUrl}/functions/v1/paige-deep-research`, {
               method: "POST",
               headers: { Authorization: `Bearer ${supabaseServiceKey}`, "Content-Type": "application/json" },
@@ -12020,25 +12048,54 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 domain: args.domain,
                 max_hops: args.max_hops,
                 user_id: user.id,
+                expected_tenant_id: tenantId,
                 caller: "chat",
                 persist: true,
               }),
             });
+            if (!drResp.ok) throw new Error("RESEARCH_RESPONSE_UNCONFIRMED");
             const dr = await drResp.json();
-            const coverage = dr?.coverage ?? {};
+            if (!dr || typeof dr !== "object" || Array.isArray(dr) || !researchUuid(dr.run_id) ||
+                dr.question !== args.question.trim() || !Array.isArray(dr.findings) || !Array.isArray(dr.sources) ||
+                !dr.coverage || typeof dr.coverage !== "object" || Array.isArray(dr.coverage) ||
+                typeof dr.coverage.configured !== "boolean" ||
+                !["answered", "max_hops", "budget", "wall_clock", "no_results", "unconfigured", "error"].includes(dr.coverage.stop_reason)) {
+              throw new Error("RESEARCH_RESPONSE_UNCONFIRMED");
+            }
+            const coverage = dr.coverage;
             const findings = Array.isArray(dr?.findings) ? dr.findings : [];
             const sources = Array.isArray(dr?.sources) ? dr.sources : [];
             // R2b §10 — the governed readback: never claim a saved run without proving the
             // row through the M0 RPC (the caller's own client; scope server-derived). A
             // failed/absent row renders the honest not-saved state downstream.
-            const drRunId = typeof dr?.run_id === "string" ? dr.run_id : null;
+            const drRunId = dr.run_id;
+            pendingResearchRunId = drRunId;
             let drSaved = false;
             if (drRunId) {
               try {
-                const { data: drReadback } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
-                drSaved = !!drReadback;
+                const { data: drReadback, error: drReadError } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
+                const canonicalResearchJson = (value: unknown): string => JSON.stringify(value, (_key, v) =>
+                  v && typeof v === "object" && !Array.isArray(v)
+                    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+                const sameResearchTime = (a: unknown, b: unknown) => a === null && b === null ||
+                  typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a) === Date.parse(b);
+                const sourceFields = ["index", "url", "title", "snippet", "reliability_score", "tier", "reliability", "excluded"];
+                drSaved = !drReadError && !!drReadback && typeof drReadback === "object" && !Array.isArray(drReadback) &&
+                  drReadback.id === drRunId && drReadback.question === args.question &&
+                  drReadback.domain === (args.domain ?? "general") && drReadback.caller === "chat" &&
+                  drReadback.configured === coverage.configured && drReadback.stop_reason === coverage.stop_reason &&
+                  canonicalResearchJson(drReadback.coverage) === canonicalResearchJson(coverage) &&
+                  canonicalResearchJson(drReadback.findings) === canonicalResearchJson(findings) &&
+                  canonicalResearchJson(drReadback.entity_profile ?? null) === canonicalResearchJson(dr.entity_profile ?? null) &&
+                  Array.isArray(drReadback.sources) && drReadback.sources.length === sources.length &&
+                  sources.every((sc: Record<string, unknown>, i: number) => {
+                    const savedSource = drReadback.sources[i];
+                    return !!sc && !!savedSource && sourceFields.every(k => sc[k] === savedSource[k]) &&
+                      sameResearchTime(sc.published_at, savedSource.published_at) && sameResearchTime(sc.fetched_at, savedSource.fetched_at);
+                  });
               } catch { drSaved = false; }
             }
+            if (!await researchScopeHolds()) throw new Error("RESEARCH_SCOPE_CHANGED");
             // D1 — dossier mode. When the engine detected an entity target it
             // returns a gate-survived `entity_profile` (per-field cited). Format it
             // as a structured intel block: summary, Structure/People/Offerings/
@@ -12088,8 +12145,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               tool_call_id: tc.id,
               role: "tool",
               content: JSON.stringify({
+                success: coverage.configured === true && coverage.stop_reason !== "error",
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
+                ...(drSaved ? { research_run_id: drRunId } : {}),
                 saved: drSaved,
                 // R2c: the derived status pair the reply's language must obey.
                 research_status: researchStatus,
@@ -12115,11 +12174,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 note,
               }),
             });
-          } catch (err) {
+          } catch (_err) {
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unknown error" }),
+              content: JSON.stringify({ success: false, saved: false,
+                ...(researchStarted ? { outcome_unknown: true } : { not_applied: true }),
+              ...(!researchScopeInvalidated && pendingResearchRunId ? { run_id: pendingResearchRunId } : {}),
+                error: researchStarted ? "Research could not be confirmed. Inspect the workspace research library before repeating this request."
+                  : "Research was not started. Check the question and current workspace before requesting it." }),
             });
           }
         } else if (tc.function.name === "get_client_rail") {
@@ -12346,90 +12409,110 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't read this workspace's processes right now." }) });
           }
         } else if (tc.function.name === "automation_draft") {
-          // §67 — SHE BUILDS IT, SHE DOES NOT GRANT IT. The row is created at the floor: `confirm`
-          // and `draft`, never `auto` and never `live`, regardless of anything the operator said in
-          // the same breath. Granting autonomy is a separate, deliberate act by a human through
-          // `automation_set_grant`, which is itself confirm-gated. An agent that could compose a
-          // process AND authorise it in one call would be granting itself autonomy.
-          try {
-            const args = JSON.parse(tc.function.arguments || "{}");
-            const steps: Array<Record<string, unknown>> = Array.isArray(args.steps) ? args.steps.slice(0, 20) : [];
-            if (steps.length === 0) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "A process needs at least one step. Ask the operator what should actually happen when it starts." }) });
-            } else {
-              const { data: trig } = await supabaseClient
-                .from("paige_automation_triggers").select("key,is_live,dark_reason")
-                .eq("key", String(args.trigger_key ?? "")).maybeSingle();
-              if (!trig) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "That isn't something that can start a process. Call automation_triggers_list and pick one from `available` — do not invent one." }) });
-              } else {
-                const { data: created, error: cErr } = await supabaseClient
-                  .from("paige_automations")
-                  .insert({
-                    tenant_id: personaCtx?.tenant_id ?? null,
-                    name: String(args.name ?? "").slice(0, 120),
-                    category: typeof args.category === "string" ? args.category.slice(0, 40) : "general",
-                    trigger_key: trig.key,
-                    created_by: user.id,
-                    // Explicit, not defaulted: the floor is a decision this code is making, and a
-                    // reader should not have to look up a column default to see it.
-                    granted_lane: "confirm",
-                    state: "draft",
-                  })
-                  .select("id").single();
-                if (cErr || !created) {
-                  toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                    success: false,
-                    error: (cErr?.code === "23505")
-                      ? "This workspace already has a process with that name. Suggest a different one."
-                      : "Couldn't set that up. Tell the operator you hit a snag — don't say it was created.",
-                  }) });
-                } else {
-                  const rows = steps.map((s, n) => ({
-                    automation_id: created.id, position: n + 1,
-                    action_kind: typeof s.action_kind === "string" && s.action_kind ? s.action_kind : null,
-                    tool_key: typeof s.tool_key === "string" && s.tool_key ? s.tool_key : null,
-                    config: (s.config && typeof s.config === "object") ? s.config : {},
-                  }));
-                  const { error: aErr } = await supabaseClient.from("paige_automation_acts").insert(rows);
-                  if (aErr) {
-                    // The steps ARE the process. A half-built one that LOOKS created is worse than
-                    // none, so it is removed rather than left as a shell the operator finds later
-                    // and cannot explain — the reachable version of that: the acts insert fails
-                    // 23514 on a model-supplied act, the shell keeps the name, and the operator's
-                    // retry hits the (tenant_id, name) unique index with "you already have one of
-                    // those" for a process they were just told was not created.
-                    //
-                    // AND THE ROLLBACK IS CHECKED, because the sentence below asserts it happened.
-                    // Claiming "nothing was created" when the delete was itself rejected is the
-                    // same class of untruth as the write that reported success without landing.
-                    const rolledBack = await recordWrite("paige_automations:rollback",
-                      supabaseClient.from("paige_automations").delete().eq("id", created.id));
-                    toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                      success: false,
-                      error: !rolledBack
-                        ? `The steps didn't save, and I couldn't tidy up the half-made process either — it may be sitting there under the name "${String(args.name ?? "").slice(0, 120)}". Tell the operator that plainly and suggest a different name if they try again.`
-                        : aErr.code === "23514"
-                          ? "Each step has to name exactly one thing to do — either one of your tools or one activity kind, not both and not neither. Rebuild the steps and try again."
-                          : "Couldn't save the steps, so nothing was created. Say that plainly.",
-                    }) });
-                  } else {
-                    const { data: posture } = await supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: created.id });
-                    const v = (posture ?? {}) as Record<string, unknown>;
-                    toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                      success: true, automation_id: created.id, steps: rows.length,
-                      state: "draft", granted: "confirm",
-                      what_it_would_do: v.effective ?? "confirm",
-                      cannot_fire_because: v.dark ?? [],
-                      note: "Built, but switched OFF and set to ask you first — you never turn one on yourself. Walk the operator through what it would do, step by step, in their words. Then ask whether to turn it on, and whether it should run on its own or check with them each time. Do NOT claim it is running.",
-                    }) });
-                  }
+          // Drafting never grants autonomy. Reconcile native records before claiming a saved process.
+          let draftWriteAttempted = false;
+          let draftId: string | null = null;
+          const draftUnknown = () => {
+            requestExecutionState.needsReview = true;
+            return { success: false, outcome_unknown: true, ...(draftId ? { automation_id: draftId } : {}),
+              execution_started: false, error: OUTCOME_UNKNOWN_NOTE };
+          };
+          const draftResult = await (async () => {
+            try {
+              const args = JSON.parse(tc.function.arguments || "{}");
+              const refused = { success: false, not_applied: true, execution_started: false,
+                error: "The process was not saved. Use an exact name, a registered trigger, and one to twenty valid steps." };
+              const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+              if (!object(args) || Object.keys(args).some(k => !["name", "trigger_key", "steps", "category", "confirm", "granted_lane", "state"].includes(k)) ||
+                  typeof args.name !== "string" || !args.name.trim() || args.name.length > 120 ||
+                  typeof args.trigger_key !== "string" || !args.trigger_key.trim() ||
+                  args.category !== undefined && (typeof args.category !== "string" || args.category.length > 40) ||
+                  !Array.isArray(args.steps) || args.steps.length < 1 || args.steps.length > 20) return refused;
+              const steps = args.steps as Array<Record<string, unknown>>;
+              if (steps.some(s => !object(s) || Object.keys(s).some(k => !["action_kind", "tool_key", "config"].includes(k)) ||
+                  s.action_kind !== undefined && (typeof s.action_kind !== "string" || !s.action_kind.trim()) ||
+                  s.tool_key !== undefined && (typeof s.tool_key !== "string" || !s.tool_key.trim()) ||
+                  Boolean(s.action_kind) === Boolean(s.tool_key) || s.config !== undefined && !object(s.config))) return refused;
+              const tenantId = personaCtx?.tenant_id;
+              const validId = (v: unknown): v is string => typeof v === "string" &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+              const scopeHolds = async () => {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                return !scope.error && validId(tenantId) && scope.data === tenantId;
+              };
+              if (!await scopeHolds()) return refused;
+              const { data: trig, error: triggerError } = await supabaseClient.from("paige_automation_triggers")
+                .select("key,is_live,dark_reason").eq("key", args.trigger_key).maybeSingle();
+              if (triggerError || !await scopeHolds()) return refused;
+              if (!trig || trig.key !== args.trigger_key) return { ...refused,
+                error: "That trigger is not registered. Call automation_triggers_list and pick an available trigger; do not invent one." };
+              draftWriteAttempted = true;
+              const { data: created, error: creationError } = await supabaseClient.from("paige_automations").insert({
+                tenant_id: tenantId, name: args.name, category: args.category ?? "general", trigger_key: trig.key,
+                created_by: user.id, granted_lane: "confirm", state: "draft",
+              }).select("id,updated_at").single();
+              if (creationError || !created) {
+                if (databaseAnswered(creationError) && !created) {
+                  return creationError?.code === "23505" ? { ...refused, reason: "name_conflict",
+                    error: "A process with that name already exists.",
+                    note: "Inspect the existing process. For a distinct process, choose a different name and obtain new approval before creating it. Do not rename or retry automatically." } : refused;
                 }
+                return draftUnknown();
               }
+              if (!validId(created.id)) return draftUnknown();
+              draftId = created.id;
+              if (typeof created.updated_at !== "string" || !Number.isFinite(Date.parse(created.updated_at)) || !await scopeHolds()) return draftUnknown();
+              const rows = steps.map((s, n) => ({
+                automation_id: created.id, position: n + 1,
+                action_kind: s.action_kind ?? null, tool_key: s.tool_key ?? null, config: s.config ?? {},
+              }));
+              const { error: actsError } = await supabaseClient.from("paige_automation_acts").insert(rows);
+              if (databaseAnswered(actsError)) {
+                // Only compensate this new, unchanged draft after a definite single-statement refusal.
+                if (!await scopeHolds()) return draftUnknown();
+                const cleanup = await supabaseClient.from("paige_automations").delete()
+                  .eq("tenant_id", tenantId).eq("id", created.id).eq("created_by", user.id)
+                  .eq("state", "draft").eq("granted_lane", "confirm").eq("updated_at", created.updated_at).select("id");
+                return !cleanup.error && Array.isArray(cleanup.data) && cleanup.data.length === 1 &&
+                  cleanup.data[0]?.id === created.id ? refused : draftUnknown();
+              }
+              // A lost steps response is reconciled by reads, never by a repeat insert or deletion.
+              const reopened = await supabaseClient.from("paige_automations")
+                .select("id,tenant_id,name,category,trigger_key,created_by,state,granted_lane,updated_at")
+                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle();
+              const savedActs = await supabaseClient.from("paige_automation_acts")
+                .select("automation_id,position,action_kind,tool_key,config")
+                .eq("automation_id", created.id).order("position");
+              const canonical = (value: unknown): string => JSON.stringify(value, (_key, v) =>
+                object(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+              const saved = reopened.data;
+              if (reopened.error || savedActs.error || !saved || saved.id !== created.id || saved.tenant_id !== tenantId ||
+                  saved.name !== args.name || saved.category !== (args.category ?? "general") || saved.trigger_key !== trig.key ||
+                  saved.created_by !== user.id || saved.state !== "draft" || saved.granted_lane !== "confirm" ||
+                  typeof saved.updated_at !== "string" || !Number.isFinite(Date.parse(saved.updated_at)) ||
+                  !Array.isArray(savedActs.data) || savedActs.data.length !== rows.length ||
+                  savedActs.data.some((row, i) => canonical(row) !== canonical(rows[i])) || !await scopeHolds()) return draftUnknown();
+              const stable = await supabaseClient.from("paige_automations").select("updated_at")
+                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle();
+              if (stable.error || stable.data?.updated_at !== saved.updated_at) return draftUnknown();
+              let posture: Record<string, unknown> | null = null;
+              try {
+                const resolved = await supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: created.id });
+                if (!resolved.error && object(resolved.data)) posture = resolved.data;
+              } catch (_e) { /* Saved configuration is known; read-only readiness remains unverified. */ }
+              const readinessVerified = object(posture) && ["auto", "confirm", "off"].includes(String(posture.effective)) &&
+                Array.isArray(posture.dark);
+              return { success: true, automation_id: created.id, steps: rows.length, state: "draft", granted: "confirm",
+                verified_readback: true, execution_started: false, readiness: readinessVerified ? "resolved" : "unverified",
+                what_it_would_do: readinessVerified ? posture?.effective : null,
+                cannot_fire_because: readinessVerified ? posture?.dark : null,
+                note: "The exact process and its steps were saved as a draft, switched off and asking first. No execution was started. Autonomy and activation remain separate human decisions." };
+            } catch (_e) {
+              return draftWriteAttempted ? draftUnknown() : { success: false, not_applied: true,
+                execution_started: false, error: "The process was not saved. Check the requested configuration." };
             }
-          } catch (_e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't set that up right now." }) });
-          }
+          })();
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftResult) });
         } else if (tc.function.name === "automation_set_grant" || tc.function.name === "automation_set_state") {
           // Both are confirm-gated above, so by here the operator has said yes to this exact change.
           try {
@@ -12749,6 +12832,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // once per iteration (result XOR catch), never fails the turn. `crmWriteAttempted` splits a
           // throw honestly (post-write → outcome_unknown; pre-write → failed).
           let crmWriteAttempted = false;
+          // Booking passes an explicit workspace to its native RPC, unlike the
+          // other incumbent CRM calls that derive current_user_tenant_id().
+          let bookingReceiptTenant: string | null | undefined;
           const recordCrmRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean; writeAttempted?: boolean },
           ): Promise<void> => {
@@ -12758,7 +12844,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ...input,
               });
               if (!outcome) return;
-              const crmTenant = await resolveActorTenant();
+              const crmTenant = tc.function.name === "calendar_book_meeting" && bookingReceiptTenant !== undefined
+                ? bookingReceiptTenant : await resolveActorTenant();
               // §13/§32 idempotency: a retried create must not write a second receipt/Rail row.
               // Key the run id on the act's natural identity (email when present, else the
               // originating thread + tool-call) so a retry folds to ONE capability-run row via the
@@ -12772,8 +12859,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 crmRunId = await stableRunId(["crm_create_contact", crmTenant ?? "", anchor]);
               }
               await recordCapabilityRun(supabase, {
-                // Attribute to the tenant the write actually LANDED in — the RPC-resolved
-                // current_user_tenant_id(), not the persona echo (#1040 finding #3 / §9).
+                // Match the native write contract: explicit booking workspace or
+                // current_user_tenant_id() for the remaining incumbent CRM calls.
                 tenantId: crmTenant,
                 actorId: user.id,
                 capabilityKey: tc.function.name,
@@ -14272,21 +14359,66 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "calendar_book_meeting") {
               // Confirm is enforced by the central autonomy gate above (a booking
               // is a real event → defaults to 'confirm'); here we're cleared to book.
-              crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
-              const { data: bid, error } = await supabaseClient.rpc("create_internal_booking", {
-                _title: args.title,
-                _start_at: args.start_at,
-                _end_at: args.end_at,
-                _timezone: args.timezone ?? "UTC",
-                _contact_id: args.contact_id ?? null,
-                _guest_name: args.guest_name ?? null,
-                _guest_email: args.guest_email ?? null,
-                _notes: args.notes ?? null,
-                _location: args.location ?? null,
-                _tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, booking_id: bid };
+              bookingReceiptTenant = personaCtx?.tenant_id ?? await resolveActorTenant();
+              const bookingUnknown = () => {
+                requestExecutionState.needsReview = true;
+                return { success: false, outcome_unknown: true, not_applied: false,
+                  error: "The booking could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+              };
+              try {
+                crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
+                const { data: bid, error } = await supabaseClient.rpc("create_internal_booking", {
+                  _title: args.title,
+                  _start_at: args.start_at,
+                  _end_at: args.end_at,
+                  _timezone: args.timezone ?? "UTC",
+                  _contact_id: args.contact_id ?? null,
+                  _guest_name: args.guest_name ?? null,
+                  _guest_email: args.guest_email ?? null,
+                  _notes: args.notes ?? null,
+                  _location: args.location ?? null,
+                  _tenant_id: personaCtx?.tenant_id ?? null,
+                });
+                if (error) throw error;
+                if (typeof bid !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(bid)) {
+                  result = bookingUnknown();
+                } else {
+                  let verified = false;
+                  try {
+                    let read = supabaseClient.from("internal_bookings")
+                      .select("id,tenant_id,host_user_id,contact_id,title,start_at,end_at,timezone,status,notes,location,guest_name,guest_email").eq("id", bid);
+                    read = bookingReceiptTenant === null ? read.is("tenant_id", null) : read.eq("tenant_id", bookingReceiptTenant);
+                    const { data: booking, error: readError } = await read.maybeSingle();
+                    // Same native instant comparison as Planning: milliseconds
+                    // alone would discard PostgreSQL's fractional precision.
+                    const instantKey = (value: unknown): string | null => {
+                      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+                      const milliseconds = Date.parse(value);
+                      const fraction = (/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/.exec(value)?.[1] ?? "").padEnd(6, "0");
+                      return Number.isFinite(milliseconds) ? `${milliseconds}:${fraction}` : null;
+                    };
+                    const start = instantKey(args.start_at), end = instantKey(args.end_at);
+                    const contact = typeof args.contact_id === "string" ? args.contact_id.toLowerCase() : args.contact_id ?? null;
+                    // Match PostgreSQL btrim(text), which trims ASCII spaces;
+                    // legitimate title tabs/nonbreaking spaces are preserved.
+                    const timezone = typeof args.timezone === "string" ? args.timezone.replace(/^ +| +$/g, "") || "UTC" : "UTC";
+                    verified = !readError && !!booking && !Array.isArray(booking)
+                      && booking.id === bid && booking.tenant_id === bookingReceiptTenant
+                      && booking.host_user_id === user.id && booking.contact_id === contact
+                      && typeof args.title === "string" && booking.title === args.title.replace(/^ +| +$/g, "")
+                      && start !== null && end !== null && instantKey(booking.start_at) === start && instantKey(booking.end_at) === end
+                      && booking.notes === (args.notes ?? null) && booking.location === (args.location ?? null)
+                      && (contact !== null && args.guest_name == null || booking.guest_name === (args.guest_name ?? null))
+                      && (contact !== null && args.guest_email == null || booking.guest_email === (args.guest_email ?? null))
+                      && booking.timezone === timezone && booking.status === "scheduled";
+                  } catch { /* A returned identifier is not proof that its record can be verified. */ }
+                  // Publish a durable booking reference only after exact scoped readback.
+                  result = verified ? { success: true, booking_id: bid, readback_verified: true } : bookingUnknown();
+                }
+              } catch (error) {
+                if (thrownOutcomeUnknown(error)) result = bookingUnknown();
+                else throw error; // Preserve answered native authorization/validation failures.
+              }
             } else if (tc.function.name === "content_save") {
               const { data: cid, error } = await supabaseClient.rpc("save_marketing_content", {
                 p_kind: "text",
@@ -15533,34 +15665,58 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else if (tc.function.name === "save_to_knowledge_base") {
           // Grow the tenant's brain (§15). Calls kb-ingest-doc with the CALLER's JWT
           // so the entry is embedded + tenant-scoped via RLS (never cross-tenant).
+          let knowledgeRequestStarted = false;
+          const knowledgeUnknown = (docId?: unknown) => {
+            requestExecutionState.needsReview = true;
+            return { success: false, ok: false, outcome_unknown: true,
+              ...(typeof docId === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(docId) ? { doc_id: docId, knowledge_doc_id: docId } : {}),
+              error: "The knowledge save could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+          };
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
+            const knowledgeTenant = personaCtx?.tenant_id;
+            if (typeof knowledgeTenant !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(knowledgeTenant)) throw new Error("knowledge_workspace_unresolved");
+            knowledgeRequestStarted = true;
             const kbResp = await fetch(`${supabaseUrl}/functions/v1/kb-ingest-doc`, {
               method: "POST",
               headers: { Authorization: authHeader, "Content-Type": "application/json" },
               body: JSON.stringify({
                 title: args.title, content: args.content, summary: args.summary,
-                category: args.category, tags: args.tags, source: "paste",
+                category: args.category, tags: args.tags, source: "paste", tenant_id: knowledgeTenant, share_to_network: false,
               }),
             });
             const kbText = await kbResp.text();
-            let kbData: any; try { kbData = JSON.parse(kbText); } catch { kbData = { raw: kbText }; }
+            let kbData: Record<string, unknown> = {};
+            try { const parsed = JSON.parse(kbText); if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) kbData = parsed; } catch { /* An HTML/gateway response is not native evidence. */ }
             // Saved ONLY if the transport succeeded AND the doc actually embedded
             // (kb-ingest-doc returns 200 + ok:false when the embedder is down; a doc
             // with 0 vectors is not searchable, so it is NOT a real save).
-            const kbOk = kbResp.ok && kbData?.ok !== false && kbData?.error == null && kbData?.chunk_count !== 0;
+            const kbOk = kbResp.ok && kbData.ok === true && kbData.error == null
+              && typeof kbData.doc_id === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(kbData.doc_id)
+              && Number.isSafeInteger(kbData.chunk_count) && (kbData.chunk_count as number) > 0 && typeof kbData.embedded === "boolean"
+              && kbData.not_applied !== true && kbData.ingestion_started !== false;
             // §13: DECLARE the binding. The only `result` in this handler is the CRM-operator
             // `let result` (declared inside the try that opens at the `crm_*` branch and closes
             // long before this branch), so a bare `result =` here is an assignment to an
             // undeclared identifier — a ReferenceError under ESM implicit strict mode, swallowed
             // by this branch's own catch. Paige then reported "it did NOT save" on every save,
             // including the ones kb-ingest-doc had genuinely completed.
+            const notApplied = kbData.ok !== true && kbData.error !== "persistence_unverified" && !kbData.doc_id
+              && kbData.embedded !== true && (kbData.chunk_count === undefined || kbData.chunk_count === 0)
+              && (kbData.not_applied === true || kbData.ingestion_started === false);
             const result = kbOk
-              ? { success: true, ...kbData, note: "Saved to the knowledge base and embedded — it's searchable now. Tell the operator it's stored; never mention internal table/function names." }
-              : { success: false, ...kbData, note: "It did NOT save — the entry couldn't be embedded/stored (the knowledge service may be down). Tell the operator plainly that it did not save and you'll retry once it's back. Do NOT say it's saved or 'in memory'." };
+              ? { success: true, ok: true, doc_id: kbData.doc_id, knowledge_doc_id: kbData.doc_id, chunk_count: kbData.chunk_count, embedded: kbData.embedded,
+                partial: kbData.embedded !== true,
+                note: kbData.embedded === true
+                  ? "The knowledge entry and its indexed chunks are saved and verified by the knowledge service."
+                  : "The entry is saved, but indexing is incomplete. Only part of its content is searchable; inspect the saved entry before making another change." }
+              : notApplied ? { success: false, ok: false, not_applied: true,
+                error: "The knowledge service refused the save or verified removal of the incomplete new entry. Nothing was saved." }
+              : knowledgeUnknown(kbData.doc_id);
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
-          } catch (e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "kb_error" }) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(knowledgeRequestStarted ? knowledgeUnknown()
+              : { success: false, ok: false, not_applied: true, error: "The current workspace or request could not be verified. Nothing was saved." }) });
           }
         } else if (tc.function.name === "propose_action") {
           // Propose→confirm: draft a consequential outbound action and FILE it as a
@@ -16282,9 +16438,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // tenant_id is also passed explicitly as a belt-and-suspenders match.
           // These RPCs are the honest seam: a reminder filed here is a row the
           // minute-cadence runner actually fires — no claim without a backing action.
+          const planningIsWrite = tc.function.name !== "plan_list";
+          let planningWriteAttempted = false;
+          let planningRecordReference: Record<string, string> = {};
+          const planningUnknown = () => {
+            requestExecutionState.needsReview = true;
+            return { ...planningRecordReference, success: false, outcome_unknown: true,
+              error: "The planning change could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+          };
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
             const tid = personaCtx?.tenant_id ?? null;
+            if (planningIsWrite) {
+              const scope = await supabaseClient.rpc("current_user_tenant_id");
+              if (!tid || scope.error || scope.data !== tid) throw new Error("planning_scope_changed");
+            }
             let rpcName = "", rpcArgs: Record<string, unknown> = {};
             switch (tc.function.name) {
               case "plan_set_reminder":
@@ -16316,6 +16484,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
                 break;
             }
+            planningWriteAttempted = planningIsWrite;
             const { data: rpcData, error: rpcErr } = await supabaseClient.rpc(rpcName, rpcArgs);
             if (rpcErr) {
               // Surface the real reason (PLAN_FORBIDDEN, missing time, etc.) — never
@@ -16339,19 +16508,83 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : msg.includes("PLAN_TITLE_REQUIRED") ? "That needs a title."
                 : msg.includes("PLAN_NO_TENANT") ? "Couldn't resolve the workspace for that."
                 : "That didn't go through. Try again or ask for the missing detail.";
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: friendly, note: "It did NOT happen — tell the operator plainly why; do not claim it was set." }) });
+              // Only an answered single-RPC refusal proves its transaction rolled back.
+              // A gateway/network error can arrive after the database committed.
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
+                planningIsWrite && !databaseAnswered(rpcErr) ? planningUnknown()
+                  : { success: false, ...(planningIsWrite ? { not_applied: true } : {}), error: friendly,
+                    note: planningIsWrite ? "The database refused this change. Nothing was applied." : "The planning records could not be read." }) });
             } else {
-              // Honesty on delivery: the IN-APP ping is the hard guarantee. Email
-              // is a best-effort side channel (only if the workspace's sending is
-              // configured), so never tell the operator email is 'locked in'.
+              let verifiedRecord: Record<string, unknown> | null = null;
+              let recordLocator: { table: string; id: string } | null = null;
+              if (planningIsWrite) {
+                const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
+                const table = tc.function.name === "plan_create" ? "plans" : "plan_items";
+                const recordId = table === "plans" ? ack?.plan_id : ack?.item_id;
+                if (ack?.ok !== true || typeof recordId !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(recordId)
+                  || args.item_id && recordId.toLowerCase() !== String(args.item_id).toLowerCase()) throw new Error("planning_ack_unverified");
+                // An acknowledged native id is a reconciliation reference, not proof of success.
+                planningRecordReference = table === "plans" ? { plan_id: recordId } : { plan_item_id: recordId };
+                const expected: Record<string, unknown> = {};
+                if (["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder"].includes(tc.function.name)) {
+                  Object.assign(expected, { title: String(args.title ?? "").trim(), summary: args.summary ?? null, created_by: user.id });
+                }
+                if (tc.function.name === "plan_create") Object.assign(expected, {
+                  horizon: args.horizon, starts_on: args.starts_on, ends_on: args.ends_on, scope: args.scope ?? "individual",
+                  owner_user_id: args.owner_user_id ?? user.id, campaign_ref: args.campaign_ref ?? null, status: "active" });
+                else if (tc.function.name === "plan_set_reminder") Object.assign(expected, {
+                  item_type: "reminder", remind_at: args.remind_at, remind_target: args.target ?? "user",
+                  remind_channel: args.channel === "email" ? "email" : "in_app", plan_id: args.plan_id ?? null,
+                  assigned_to_user_id: args.target === "team" ? null : args.target_user_id ?? user.id,
+                  contact_id: args.contact_id ?? null, status: "open" });
+                else if (tc.function.name === "plan_add_milestone" || tc.function.name === "plan_assign_task") {
+                  Object.assign(expected, { item_type: tc.function.name === "plan_add_milestone" ? "milestone" : "task",
+                    assigned_to_user_id: args.assigned_to_user_id ?? null, priority: args.priority ?? "normal",
+                    plan_id: args.plan_id ?? null, due_at: args.due_at ?? null, status: "open" });
+                  if (tc.function.name === "plan_assign_task") Object.assign(expected, {
+                    parent_item_id: args.milestone_id ?? null, contact_id: args.contact_id ?? null, campaign_ref: args.campaign_ref ?? null });
+                } else if (tc.function.name === "plan_remove_item") expected.status = "cancelled";
+                else for (const key of ["status", "title", "summary", "due_at", "remind_at", "priority", "assigned_to_user_id"]) {
+                  if (args[key] != null) expected[key] = key === "title" ? String(args[key]).trim() : args[key];
+                }
+                const columns = ["id", "tenant_id", "updated_at", ...Object.keys(expected)].join(",");
+                const read = await supabaseClient.from(table).select(columns).eq("tenant_id", tid).eq("id", recordId).maybeSingle();
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                const row = read.data as Record<string, unknown> | null;
+                if (read.error || scope.error || scope.data !== tid || !row || row.id !== recordId || row.tenant_id !== tid
+                  || typeof row.updated_at !== "string" || !Number.isFinite(Date.parse(row.updated_at))) throw new Error("planning_readback_unverified");
+                const canonicalPlanningValue = (value: unknown): string => {
+                  if (Array.isArray(value)) return `[${value.map(canonicalPlanningValue).join(",")}]`;
+                  if (value && typeof value === "object") return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalPlanningValue((value as Record<string, unknown>)[key])}`).join(",")}}`;
+                  return JSON.stringify(value) ?? "undefined";
+                };
+                for (const [key, expectedValue] of Object.entries(expected)) {
+                  const actual = row[key];
+                  // PostgreSQL renders timestamptz with an offset; preserve sub-ms precision.
+                  const instantKey = key === "due_at" || key === "remind_at";
+                  const fraction = (value: string) => (/\.(\d+)(?:Z|[+-]\d{2}:?\d{2})$/.exec(value)?.[1] ?? "").padEnd(6, "0");
+                  const matches = instantKey && expectedValue != null
+                    ? typeof actual === "string" && typeof expectedValue === "string" && Number.isFinite(Date.parse(actual))
+                      && Date.parse(actual) === Date.parse(expectedValue) && fraction(actual) === fraction(expectedValue)
+                    : key.endsWith("_id") && typeof actual === "string" && typeof expectedValue === "string" ? actual.toLowerCase() === expectedValue.toLowerCase()
+                    : key === "campaign_ref" ? canonicalPlanningValue(actual) === canonicalPlanningValue(expectedValue) : actual === expectedValue;
+                  if (!matches) throw new Error("planning_record_mismatch");
+                }
+                verifiedRecord = Object.fromEntries(["id", "updated_at", ...Object.keys(expected)].map(key => [key, row[key]]));
+                recordLocator = { table, id: recordId };
+              }
               const note = tc.function.name === "plan_set_reminder"
-                ? "Reminder is set — it WILL ping them in-app at its time. If they asked for email, add: a branded email will ALSO go out if this workspace's email sending is set up. Do NOT promise a text (SMS isn't wired). Confirm plainly."
+                ? "The reminder record is saved and verified. Scheduled does not mean delivered; do not promise a future ping or email delivery."
                 : tc.function.name === "plan_list" ? undefined
-                : "Done and saved. Report exactly what was created/changed; never mention internal table/function names.";
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: true, ...(rpcData && typeof rpcData === "object" ? rpcData : { result: rpcData }), ...(note ? { note } : {}) }) });
+                : "The planning record is saved and verified. Report exactly what was created or changed; do not claim execution or delivery of its work.";
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ ...(rpcData && typeof rpcData === "object" ? rpcData : { result: rpcData }), success: true,
+                ...(verifiedRecord ? { readback: verifiedRecord, record_locator: recordLocator, verified_readback: true,
+                  ...(recordLocator?.table === "plan_items" ? { plan_item_id: recordLocator.id } : {}) } : {}), ...(note ? { note } : {}) }) });
             }
           } catch (e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "plan_error", note: "It did NOT happen — do not claim success." }) });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(planningWriteAttempted ? planningUnknown()
+              : { success: false, ...(planningIsWrite ? { not_applied: true } : {}),
+                error: planningIsWrite ? "The current workspace could not be verified. Nothing was changed." : "The planning records could not be read." }) });
           }
         } else if (tc.function.name === "read_client_engagement_status" || tc.function.name === "read_business_time_zone") {
           // E4-S2 — last in the chain so no reviewed incumbent dispatch gains a dominating condition. Same finished-round, scope, cancellation and read-only Harness gates as every tool
@@ -16484,7 +16717,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         crm_complete_task: "tasks", crm_reopen_task: "tasks", crm_cancel_task: "tasks", crm_delete_task: "tasks",
         crm_assign_contact: "clients", crm_assign_coach: "clients", crm_update_pipeline_stage: "clients",
         update_client_data: "clients",
-        crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "tasks",
+        crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "plan_items",
         update_business_profile: "tenants",
         deal_create: "deals", deal_move_stage: "deals",
         member_grant_role: "user_roles", member_revoke_role: "user_roles",
@@ -16514,7 +16747,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         zapier_run_action: "external_provider",
         ghl_run_action: "external_provider",
         forge_subagent: "paige_subagents", delegate_to_subagent: "paige_subagents",
-        save_to_knowledge_base: "knowledge_base",
+        save_to_knowledge_base: "tenant_knowledge_docs",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
@@ -16531,8 +16764,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         booking_preset_duplicate: "calendars", booking_preset_archive: "calendars",
         booking_preset_restore: "calendars",
         calendar_link_prepare: "calendars", calendar_link_send: "calendars", calendar_link_social_copy: "calendars",
-        plan_create: "plans", plan_add_milestone: "plans", plan_set_reminder: "plans",
-        plan_update_item: "plans", plan_remove_item: "plans",
+        plan_create: "plans", plan_add_milestone: "plan_items", plan_set_reminder: "plan_items",
+        plan_update_item: "plan_items", plan_remove_item: "plan_items",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
@@ -16660,7 +16893,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "campaign_id", "tenant_id", "id",
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const resolveWriteTargetId = (args: any, out: any): string | null => {
+      const resolveWriteTargetId = (args: any, out: any, tool?: string): string | null => {
+        if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
+        if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
+        // A Planning item's parent plan/contact/action is not the record changed.
+        if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item"].includes(tool)) {
+          const locator = out?.record_locator;
+          if (out?.verified_readback === true && locator?.table === WRITE_TARGET[tool] && typeof locator.id === "string" && UUID.test(locator.id)) return locator.id;
+          return typeof args?.item_id === "string" && UUID.test(args.item_id) ? args.item_id : null;
+        }
         for (const k of TARGET_ID_KEYS) {
           for (const src of [out?.readback, out, args]) {
             const v = src?.[k];
@@ -16730,7 +16971,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
           const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;
-          const outcome = missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
+          const outcome = out?.outcome_unknown === true || out?.outcome === "outcome_unknown" || out?.outcome === "capability_outcome_unknown" ? "outcome_unknown"
+            : missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
             : failed ? "failed" : n8nOutcome && out?.started === true ? "started" : "succeeded";
           const n8nSafeErrors = new Set(["outcome_unknown", "authorization_needed", "owner_approval_required", "provider_tool_unavailable", "unsupported_operation", "forbidden", "invalid_arguments", "provider_refused", "provider_response_invalid", "provider_scope_refused", "token_expired", "oauth_needed", "busy", "tenant_changed", "stale_operation", "operation_refused"]);
           // `Promise.resolve` around the builder, not `void builder.then?.()`: a postgrest builder
@@ -16744,7 +16986,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             actor_role: "paige_chat",
             action: name,
             target_type: WRITE_TARGET[name] ?? null,
-            target_id: resolveWriteTargetId(args, out),
+            target_id: resolveWriteTargetId(args, out, tc.function.name),
             payload: {
               source: "paige_chat",
               risk,
@@ -16796,7 +17038,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             p_summary: null,
             p_ref_table: WRITE_TARGET[name] ?? null,
             // Was hardcoded null, so a rail event could never navigate to what it changed.
-            p_ref_id: resolveWriteTargetId(args, out),
+            p_ref_id: resolveWriteTargetId(args, out, tc.function.name),
           }).then?.(({ error }: any) => { if (error) console.warn("[paige-ai-chat] rail producer non-fatal:", error.message); })
             .catch?.((e: any) => console.warn("[paige-ai-chat] rail producer skipped:", e?.message));
         } catch (e) { console.warn("[paige-ai-chat] rail producer skipped:", (e as Error)?.message); }
@@ -18148,7 +18390,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (liveRuntimeScope) throw new Error("live_answer_unavailable");
             // Couldn't finish. Show the fallback AND persist it, so a reload
             // shows the same thing the user saw (not a question with no reply).
-            const fallback = "I gathered what I could but couldn't finish that — mind trying again?";
+            const fallback = requestExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+              ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
+              : "I gathered what I could but couldn't finish that — mind trying again?";
             finalAssistantText = fallback;
             emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fallback } }] })}\n\n`));
             // THE SENTINEL GOES THROUGH THE BUFFER TOO, and this line is why. It used to be a
@@ -18341,7 +18585,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // The live loop or final stream failed mid-flight. Never leave the client
            // with a truncated stream — emit a clean fallback reply and a [DONE].
            console.error("[paige] live reasoning stream failed:", (e as Error)?.message);
-           const snag = "I hit a snag finishing that — mind trying again?";
+           const snag = requestExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+             ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
+             : "I hit a snag finishing that — mind trying again?";
            // Before the invitation to try again: the card says what already ran, so trying again is
            // never the way something happens twice.
            await emitApprovalOutcome(controller);

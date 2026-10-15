@@ -1665,6 +1665,9 @@ const mirrorConfirms = (st) => (t, row) => {
   const AUTO = { rpcOverrides: {
     resolve_tool_autonomy: { data: "auto", error: null },
     get_actor_access: { data: { tier: "tenant" }, error: null },
+    // The ordinary workspace process cases need the real server persona precondition,
+    // not the harness's intentionally workspace-less client-seat default.
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null },
   } };
   const AS_CLIENT = { get_actor_access: { data: { tier: "client" }, error: null } };
   /** Model the process tables. The trigger catalogue is real reference data; the automations table
@@ -2525,9 +2528,12 @@ const mirrorConfirms = (st) => (t, row) => {
         && /could not confirm whether it went through/.test(toldModel(o16)), show(o16));
 
     // OUT17 — a change the CRM door reports as not applied carries that fact to the card, so a
-    // refusal reads "didn't run" and offers asking again; the same refusal without it would not.
+    // refusal reads "didn't run" and offers asking again. Unknown outcomes explicitly clear
+    // that claim so a contradictory native envelope cannot preserve not_applied=true.
     assert("18.OUT17 crm-command's answered refusal is marked not applied, and a lost answer is not",
-      /"not_applied":\s*true/.test(toldModel(o7)) && !/"not_applied"/.test(toldModel(o5)) && !/"not_applied"/.test(toldModel(o6)), "");
+      /"not_applied":\s*true/.test(toldModel(o7))
+        && /"not_applied":\s*false/.test(toldModel(o5)) && /"outcome_unknown":\s*true/.test(toldModel(o5))
+        && /"not_applied":\s*false/.test(toldModel(o6)) && /"outcome_unknown":\s*true/.test(toldModel(o6)), "");
   }
 
   const h28Store = makeConfirmStore();
@@ -8334,11 +8340,20 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     const rr = await turnR10(st, cs, dbx, { text: reply, script, ...extra });
     return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
   };
-  const DR26 = { "paige-deep-research": { status: 200, body: { run_id: "11111111-1111-4111-8111-111111111111", findings: [{ claim: "Acme's main competitor is Bolt.", source_ids: [1] }], sources: [{ id: 1, url: "https://example.com/a", title: "A" }], coverage: { stop_reason: "complete" } } } };
-  const DRRPC26 = { get_workspace_research_run: { data: { id: "11111111-1111-4111-8111-111111111111" }, error: null } };
+  // Native engine + library shapes, pinned to each actual request question. These
+  // fixtures retain the original continuity assertions; an id alone proves no saved report.
+  const researchResult26 = question => ({run_id:"11111111-1111-4111-8111-111111111111",question,
+    findings:[{text:"Acme's main competitor is Bolt.",citations:[1],confidence:"high"}],
+    sources:[{index:1,url:"https://example.com/a",title:"A",snippet:"Fixture source",reliability_score:.9,tier:"T1",reliability:"high",
+      excluded:false,published_at:null,fetched_at:"2026-10-15T16:00:00Z"}],
+    coverage:{configured:true,stop_reason:"answered",hops_used:1,searches:1,reads:1,note:""}});
+  const DR26 = question => ({"paige-deep-research":{status:200,body:researchResult26(question)}});
+  const DRRPC26 = question => { const result=researchResult26(question); return {get_workspace_research_run:{data:{
+    id:result.run_id,question,domain:"general",caller:"chat",configured:true,stop_reason:"answered",
+    findings:result.findings,sources:result.sources,coverage:result.coverage},error:null}}; };
   const SAVEDR26 = "Acme's main competitor is Bolt [1]. I've saved the full report to your Research tab.";
   for (const [id, offer] of [["43.26.N4", "Acme is a new prospect.\n\nWant me to research Acme's competitors?"], ["43.26.N4b", "Her funnel dropped last week.\n\nWant me to look into that for you?"]]) {
-    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26("Who are Acme's competitors?"), rpc: DRRPC26("Who are Acme's competitors?") });
     assert(`${id} deep_research saved a run: the server's line that nothing was saved is never added`, typeof o.saved === "string" && !o.saved.includes(NOTE), JSON.stringify(o));
   }
   for (const reply of ["yes link it", "sure, link it", "yes link the deal"]) {
@@ -8406,7 +8421,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       { fns: { "growth-page-draft": { data: null, error: { message: "boom" } } }, rpc: CDR });
     assert("43.29.GF the page generator FAILED, then \"I've created a draft\": not the step, held, never saved as said", gf.saved !== PAGEF && gf.calls > 2, JSON.stringify(gf));
     const FAKE13 = "Linked! Dana's deal is now attached to her contact.";
-    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26, rpc: DRRPC26 });
+    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26("Dana deal?"), rpc: DRRPC26("Dana deal?") });
     assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(x1));
   }
 
@@ -8425,10 +8440,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       const o = await run26(offer, reply, [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
       assert(`${id} the generator ran on a generic/idiomatic page offer: "I've created a draft" ends the turn, no false line`, o.calls === 2 && o.saved === MADE && o.terminal === "FINAL", JSON.stringify(o));
     }
-    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26("Acme?"), rpc: DRRPC26("Acme?") });
     assert("43.30.V12 research ran on a generic offer whose plan is research: the answer stands", v12.calls === 2 && v12.saved === SAVEDR26, JSON.stringify(v12));
     const FAKEL = "Linked! Dana's deal is now attached to her contact.";
-    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26, rpc: DRRPC26 });
+    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26("Dana?"), rpc: DRRPC26("Dana?") });
     assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(lk));
     const EM = "Done, I've emailed her the recap.";
     const q1 = await run26("Call went well.\n\nWant me to email Dana the recap and move her deal to Proposal?", "yes email her", x4(EM));

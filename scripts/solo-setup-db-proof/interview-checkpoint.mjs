@@ -1,6 +1,6 @@
 // Additional contract cases in the EXISTING isolated PostgreSQL proof runner.
 // No independent QA runtime, network, credential or production connection.
-export const interviewCheckpointMigration = '20271106100000_solo_business_interview_checkpoint.sql';
+export const interviewCheckpointMigration = '20271107100000_solo_business_interview_checkpoint.sql';
 export const interviewRealFunctions = [
   ['20270521000000_operator_authority_in_company_workspaces.sql', 'is_company_workspace'],
   ['20270521000000_operator_authority_in_company_workspaces.sql', 'is_tenant_owner'],

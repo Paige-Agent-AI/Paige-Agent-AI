@@ -1143,7 +1143,7 @@ describe("tenant Relationships / Clients workspace", () => {
     act(() => root.unmount());
   });
 
-  it("renders the approved Portal audience boundaries only for client contexts", () => {
+  it("retains the incumbent non-Solo Portal audience boundaries", () => {
     useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
     const html = render("/business/2/clients/portal", "sub_account");
     expect(html).toContain("One relationship. Two authorized views.");
@@ -1170,7 +1170,7 @@ describe("tenant Relationships / Clients workspace", () => {
     const host = document.createElement("div");
     const root = createRoot(host);
     try {
-      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/portal"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => root.render(<MemoryRouter initialEntries={["/business/2/clients/portal"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
       const open = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open gated Portal configuration");
       await act(async () => open?.click());
       expect(editorHarness.portalPermission).toHaveBeenCalledWith("can_manage_tenant_brand", { _tenant_id: "tenant-solo" });

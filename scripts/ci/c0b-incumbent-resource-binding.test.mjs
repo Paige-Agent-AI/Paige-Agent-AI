@@ -13,7 +13,7 @@ const mutations=[
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],
  ['verified actor refusal removed',s=>s.replace('if (authError || !user)', 'if (false)')],
- ['Research actor substituted',s=>s.replace(/user_id: user.id,\r?\n                caller: "chat",/,'user_id: args.user_id,\n                caller: "chat",')],
+ ['Research actor substituted',s=>s.replace(/user_id: user\.id,(\r?\n                expected_tenant_id: tenantId,\r?\n                caller: "chat",)/,'user_id: args.user_id,$1')],
  ['Research persistence changed',s=>s.replace('persist: true,','persist: false,')],
  ['automation grant broadened',s=>s.replace('granted_lane: "confirm",','granted_lane: "auto",')],
  ['number tenant filter removed',s=>s.replace(/\.eq\("tenant_id", crmTenantId\)\r?\n                \.order\("is_primary"/, '.eq("tenant_id", args.tenant_id)\n                .order("is_primary"')],
@@ -29,6 +29,15 @@ const mutations=[
  ['authentication implementation replaced before verification',s=>s.replace('const { data: { user }, error: authError } = await supabaseClient.auth.getUser();','supabaseClient.auth.getUser = async () => ({data:{user:{id:"forged"}},error:null});\n    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();')],
 ];
 for(const [label,mutate]of mutations)test(`rejects ${label}`,()=>{const changed=mutate(chat);assert.ok(changed!==chat,'fixture must mutate actual source');assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
+for(const [label,mutate]of [
+ ['booking readback uses service client',s=>s.replace('let read = supabaseClient.from("internal_bookings")','let read = supabase.from("internal_bookings")')],
+ ['booking readback workspace replaced by model',s=>s.replace('read.eq("tenant_id", bookingReceiptTenant)','read.eq("tenant_id", args.tenant_id)')],
+ ['booking success skips record verification',s=>s.replace('result = verified ? { success: true, booking_id: bid, readback_verified: true }','result = true ? { success: true, booking_id: bid, readback_verified: true }')],
+ ['booking receipt attributed to unrelated default',s=>s.replace('? bookingReceiptTenant : await resolveActorTenant()','? await resolveActorTenant() : await resolveActorTenant()')],
+])test(`rejects reviewed booking binding: ${label}`,()=>{
+ const changed=mutate(chat);assert.notEqual(changed,chat,'fixture must change the actual booking binding');
+ assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);
+});
 test('missing or modified endpoint/helper cannot be accepted',()=>{
  assert.ok(incumbentSourcePaths.length>10);
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);

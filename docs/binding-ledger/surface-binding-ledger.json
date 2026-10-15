@@ -921,10 +921,10 @@
       "surface": "Clients -> Portal (Tenant Client Portal MVP through one Harness)",
       "group": "clients",
       "tier_scope": ["solo"],
-      "owner_component": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx:749 (PortalView)",
-      "canonical_source": "usePortalConfig (config is a real read); 6 capability cards are static strings",
+      "owner_component": "src/components/tenant-relationships/OwnerPortalDashboard.tsx (Solo mount in TenantRelationshipsClientsWorkspace)",
+      "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused",
       "chain": {
-        "canonical_source": {"status": "partial", "note": "config is real; capability cards are static (UI-REPAIR)"},
+        "canonical_source": {"status": "partial", "note": "approved owner dashboard replaces the six static capability cards; client, invitation, brand/config and shared-activity projections reuse canonical records; complete customer convergence and authenticated proof remain owed"},
         "tenant_scope": {"status": "server_resolved"},
         "safe_context": {"status": "partial", "note": "real client-scoped reads exist, but no complete approved shared-item projection is proven"},
         "authority": {"status": "partial", "note": "a narrow client tool allowance and action-item RPC exist; complete per-action tenant policy is not proven"},
@@ -939,7 +939,7 @@
       "state_reason": "A real external-client portal substrate exists, but consumer-invite recipient binding, accepted-access revocation, multi-workspace switching, canonical conversation/document/task convergence, approval-record decisions, tenant-facing support/booking, tenant service-agreement receipt/PDF, governed portal tools, and authenticated isolation/recovery proof remain unavailable, broken, or owed.",
       "evidence_class": ["source_read"],
       "linked": ["docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"],
-      "next_slice": "Dedicated Client Portal MVP build after explicit owner start; preserve active Clients, Chat, Conversations and binding-ledger ownership.",
+      "next_slice": "Continue the approved complete Portal: customer-safe entry/readers, relationship lifecycle and multi-business isolation, all seven pillars, governed assistance and authenticated acceptance; preserve active domain ownership.",
       "sources": ["docs/strategy/client-experience-workstream-2026-07-21.md", "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"]
     },
     {

@@ -225,6 +225,15 @@ export function AppNav({ user }: AppNavProps) {
                   </span>
                 )}
               </button>
+              {!brandLoading && brand?.tenant_id && (
+                <button
+                  onClick={() => { navigate("/app/settings?view=client-account"); setMobileMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Account
+                </button>
+              )}
               <button
                 onClick={() => { navigate("/app/settings"); setMobileMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -359,6 +368,12 @@ export function AppNav({ user }: AppNavProps) {
                 </span>
               )}
             </DropdownMenuItem>
+            {!brandLoading && brand?.tenant_id && (
+              <DropdownMenuItem onClick={() => navigate("/app/settings?view=client-account")}>
+                <UserIcon className="w-4 h-4 mr-2" />
+                Account
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => navigate("/app/settings")}>
               <Settings className="w-4 h-4 mr-2" />
               Settings

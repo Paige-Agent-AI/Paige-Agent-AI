@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClientPortalRead } from "./useClientPortalRead";
 
 /**
  * The tenant's PRESENTATION OVERLAY for the signed-in customer's client portal.
  * Resolves via get_client_portal_config() (SECURITY DEFINER, keyed on
- * clients.linked_user_id = auth.uid()), mirroring get_client_portal_brand().
+ * the canonical active relationship), mirroring get_client_portal_brand().
  *
  * This is a purely subtractive/reordering overlay over the Playbook's module
  * catalog — it NEVER introduces new module keys. It hides keys (visible:false),
@@ -47,37 +47,15 @@ export interface ClientPortalConfigState {
  * payloads are normalized to {} — an absent/empty overlay must never hide a tab.
  */
 export function useClientPortalConfigState(): ClientPortalConfigState {
-  const [state, setState] = useState<ClientPortalConfigState>({ config: {}, loading: true });
+  const { data: config, loading } = useClientPortalRead(readConfig, EMPTY_CONFIG);
+  return { config, loading };
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      try {
-        // Cast the RPC name: get_client_portal_config ships in a paired migration;
-        // the generated Supabase types don't list it yet, so we narrow the call
-        // locally. Drop this cast once `supabase gen types` picks up the function.
-        const rpc = supabase.rpc as unknown as (
-          fn: string,
-        ) => PromiseLike<{ data: unknown; error: unknown }>;
-        const { data, error } = await rpc("get_client_portal_config");
-        if (cancelled) return;
-        if (error) {
-          setState({ config: {}, loading: false });
-          return;
-        }
-        const row = Array.isArray(data) ? data[0] : data;
-        setState({ config: normalizePortalConfig(row), loading: false });
-      } catch {
-        if (!cancelled) setState({ config: {}, loading: false });
-      }
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return state;
+const EMPTY_CONFIG: ClientPortalConfig = {};
+async function readConfig(): Promise<ClientPortalConfig> {
+  const { data, error } = await supabase.rpc("get_client_portal_config");
+  if (error) throw error;
+  return normalizePortalConfig(Array.isArray(data) ? data[0] : data);
 }
 
 /**

@@ -12,7 +12,7 @@ import { formatTargetValue, targetPeriod, targetValue } from "./mission-target-f
 type Props = { actorId: string; tenantId: string; missionId: string; missionRevision: number; target: MissionTarget | null; busy: boolean;
   readMetric: (query: { metricKey: string; rangeKey: MetricRequestIdentity["rangeKey"]; rangeStart: string; rangeEnd: string }) => Promise<TargetMetricRead>;
   onSave(attempt: TargetAttempt): Promise<void>; onCancel(): void };
-const metricName = (key: string) => key.split(".").map(part => part.replace(/_/g, " ")).join(" / ");
+const metricName = (key: string) => key.split(".").map(part => { const words = part.replace(/_/g, " "); return words[0].toUpperCase() + words.slice(1); }).join(" / ");
 export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevision, target, busy, readMetric, onSave, onCancel }: Props) {
   const labelId = useId(), titleRef = useRef<HTMLInputElement>(null), series = useRef(0);
   const initialZone = target?.period.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -53,8 +53,8 @@ export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevis
     if (title.trim().length < 3) { setError("Give this target a title of at least three characters."); titleRef.current?.focus(); return; }
     if (!period) { setError("Choose valid dates and a calendar that resolves both days. The end date includes that whole day."); return; }
     if (!metric || !numeric || Date.parse(metric.reference_expires_at) <= Date.now()) { setError("Refresh the measurement definition before saving this target."); return; }
-    const selectedCurrency = kind === "currency_totals" ? currency : null;
-    if (kind === "currency_totals" && !currencies.includes(currency)) { setError("Choose one of the measurement's recorded currencies. Currencies are never combined."); return; }
+    const selectedCurrency = kind === "currency_totals" ? currency.trim().toLowerCase() : null;
+    if (kind === "currency_totals" && !/^[a-z]{3}$/.test(selectedCurrency!)) { setError("Enter the target's three-letter currency. Currencies are never combined."); return; }
     const desiredValue = targetValue(desired, kind, selectedCurrency), upperValue = comparison === "within_range" ? targetValue(upper, kind, selectedCurrency) : null;
     if (desiredValue === null || comparison === "within_range" && upperValue === null || !reason.trim()) { setError("Enter a valid target value and a reason. Counts use whole numbers; currency precision follows the selected currency."); return; }
     const definition = { title: title.trim(), metric: { key, version: currentMetricVersion(key), unit: metric.unit, value_kind: kind,
@@ -80,7 +80,7 @@ export function MissionTargetEditor({ actorId, tenantId, missionId, missionRevis
       <label className="ov-field"><span>Calendar</span><input className="fin" value={zone} required maxLength={100} onChange={e => setZone(e.target.value)} aria-describedby={`${labelId}-calendar`} /><small id={`${labelId}-calendar`}>Use a named time zone, such as America/New_York or UTC. Saved dates retain this calendar.</small></label>
       <label className="ov-field"><span>Reporting range</span><Select value={range} onValueChange={value => setRange(value as typeof range)}><SelectTrigger className="fin" aria-label="Reporting range"><SelectValue /></SelectTrigger><SelectContent>{["week", "month", "quarter", "year"].map(item => <SelectItem key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</SelectItem>)}</SelectContent></Select></label>
       <label className="ov-field"><span>Comparison</span><Select value={comparison} onValueChange={value => setComparison(value as MissionTarget["comparison"])}><SelectTrigger className="fin" aria-label="Comparison"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="at_least">At least</SelectItem><SelectItem value="at_most">At most</SelectItem><SelectItem value="within_range">Within range</SelectItem></SelectContent></Select></label>
-      {kind === "currency_totals" && <label className="ov-field"><span>Currency</span><Select value={currency} onValueChange={setCurrency}><SelectTrigger className="fin" aria-label="Currency"><SelectValue placeholder="Choose currency" /></SelectTrigger><SelectContent>{currencies.map(item => <SelectItem key={item} value={item}>{item.toUpperCase()}</SelectItem>)}</SelectContent></Select></label>}
+      {kind === "currency_totals" && <label className="ov-field"><span>Currency</span><input className="fin" value={currency} required maxLength={3} list={`${labelId}-currencies`} aria-describedby={`${labelId}-currency-note`} onChange={e => setCurrency(e.target.value)} /><datalist id={`${labelId}-currencies`}>{currencies.map(item => <option key={item} value={item.toUpperCase()} />)}</datalist><small id={`${labelId}-currency-note`}>Use a three-letter currency for this target. Actuals stay unavailable until the source reports that currency.</small></label>}
       <div className="mgt-fields"><label className="ov-field"><span>{comparison === "within_range" ? "Lower target" : "Target value"}{kind === "currency_totals" && currency ? ` (${currency.toUpperCase()})` : metric ? ` (${metric.unit})` : ""}</span><input className="fin" inputMode="decimal" value={desired} required maxLength={64} onChange={e => setDesired(e.target.value)} /></label>{comparison === "within_range" && <label className="ov-field"><span>Upper target</span><input className="fin" inputMode="decimal" value={upper} required maxLength={64} onChange={e => setUpper(e.target.value)} /></label>}</div>
       <label className="ov-field"><span>Why this target</span><textarea className="fin" value={reason} required maxLength={1200} onChange={e => setReason(e.target.value)} /></label>
     </fieldset>

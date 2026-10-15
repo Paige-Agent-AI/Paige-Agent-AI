@@ -212,6 +212,9 @@ single-worker rerun passed3. First type/build checks found a callback return-typ
 and server-module import; both are repaired. Composed3796f52f passes all62 focused
 tests in7 files, scoped ESLint without warnings, unchanged type ratchet10/10,
 production browser build and binding/migration/attribution/definer/evidence guards.
+Follow-up editor2/malformed-request4 regressions pass;68 aggregate tests in8 files.
+Prospective currency goals are allowed without an existing source bucket, while actuals
+remain unavailable until that currency is reported. The existing approved schema is unchanged.
 These synthetic source checks are not authenticated customer acceptance or fullO10 delivery.
 Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
 rendered/native coverage, production release, protected acceptance and owner review remain owed.

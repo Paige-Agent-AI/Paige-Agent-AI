@@ -32,7 +32,11 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown>;
   try {
-    body = await req.json() as Record<string, unknown>;
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return response(400, { success: false, verified: false, code: "BAD_JSON" });
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return response(400, { success: false, verified: false, code: "BAD_JSON" });
   }

@@ -56,6 +56,11 @@ describe("actual existing native Mission HTTP door with target adoption", () => 
     const h = harness(); expect((await h.run({ tool: "arbitrary_rpc", args })).status).toBe(400);
     expect(h.caller.auth.getUser).not.toHaveBeenCalled(); expect(h.record).not.toHaveBeenCalled();
   });
+  it.each([null, [], 42, "text"])("refuses a non-object JSON body before any authority or writer: %j", async body => {
+    const h = harness(), response = await h.run(body);
+    expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ success: false, verified: false, code: "BAD_JSON" });
+    expect(h.caller.auth.getUser).not.toHaveBeenCalled(); expect(h.caller.rpc).not.toHaveBeenCalled(); expect(h.record).not.toHaveBeenCalled();
+  });
   it("never takes actor or tenant authority from body fields", async () => {
     const h = harness(); await h.run({ tool: "mission_target_save", args, tenant_id: actor, actor_id: tenant });
     expect(h.record).toHaveBeenCalledWith(h.admin, expect.objectContaining({ tenantId: tenant, actorId: actor }));

@@ -37,7 +37,7 @@ function call(name='client_portal_self_profile',actor=uid,scope=tenant,role='aut
 }
 const check=(name,fn)=>{try{fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:String(e.message)});}};
 const profile=(actor=uid,scope=tenant)=>{const data=call('client_portal_self_profile',actor,scope);return data?JSON.parse(data):null;};
-const migration=fs.readFileSync(path.join(root,'supabase/migrations/20271102110000_e09_client_self_projection.sql'),'utf8');
+const migration=fs.readFileSync(path.join(root,'supabase/migrations/20271102120000_e09_client_self_projection.sql'),'utf8');
 const unsafeControl=process.argv.includes('--unsafe-control');
 let started=false;
 try {

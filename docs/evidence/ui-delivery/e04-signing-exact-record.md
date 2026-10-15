@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing approved-frozen ceremony; mounted source 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the designated counterparty reviews the exact retained agreement and intentionally signs or declines; public token authority remains the existing engine's authority.
 VISUAL_DIRECTION: PASS: incumbent signing tokens, type, layout and both OS themes preserved; fieldset removes keyboard interaction while the existing gate is locked without adding visual chrome.
 AUTOMATED_EVIDENCE: PASS: native PostgreSQL70 assertions, including39 signing-context checks and migration replay twice; preserved Deno agreement engine82 tests/16 nested steps plus isolated actual-handler preflight1 test; mounted/preserved Vitest17 tests. Commands below.
-STATIC_EVIDENCE: PASS: both affected Edge endpoints Deno check; scoped component/test ESLint; production Vite build1m17s. Exact-head hosted CI and independent review remain owed. App-wide tsc is reported separately below when available.
+STATIC_EVIDENCE: PASS: both affected Edge endpoints Deno check; scoped component/test ESLint; production Vite build1m17s. Raw app tsc retains ten baseline diagnostics and zero edited-file diagnostics; no globally clean typecheck is claimed. Exact-head hosted CI and independent review remain owed.
 RENDERED_EVIDENCE: PASS: actual component and native Chromium PDF viewer successful load state at1536x770,1366x768,1024x768,900x1000,390x844,320x720 in light/dark; screenshots and result under assets/e04-signing-exact-record. Synthetic SDK/PDF only.
 BEHAVIORAL_EVIDENCE: PASS: delayed bytes hold the gate; native viewer loads retained PDF; consent still required; keyboard follows legal-name -> consent; document failure remains locked; legacy text keeps unknown structured economics; token changes retire previous document/consent; invalid link removes document. No actual signature or decline was submitted by the browser fixture.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary owner/staff or linked external-client login, real signing token, hosted storage ceremony, email or provider action. Central QA and owner acceptance remain owed.
@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: fieldset disables controls before document readiness (moun
 ZOOM_REFLOW: UNVERIFIED: six responsive widths have no horizontal document overflow; native200% zoom, Safari/mobile PDF behavior and assistive-tech review remain owed.
 REDUCED_MOTION: UNVERIFIED: reduced-motion preference enabled in browser; no motion CSS changed; existing animation behavior was not exhaustively evaluated.
 STATE_COVERAGE: PASS: pending/viewer load, failure, legacy text, invalid link, changed token, unmounted late reply, explicit signature-recorded vs completed, malformed/unknown response and decline cancellation covered by source tests or browser as stated.
-TRUTHFUL_STATE_LABELS: PASS: only ok===true records a signature result; only completed===true displays completed. No email-delivery claim from signature/seal response; unknown transport does not claim nothing was signed. These are local contract checks, not runtime acceptance.
+TRUTHFUL_STATE_LABELS: PASS: mounted AgreementSigning.test.tsx verifies strict signature/completion booleans, withheld email-delivery claims and honest unconfirmed transport handling. See the separate authenticated-runtime boundary.
 SOLO_UI: NO: public /sign/:token lives outside Solo shell; no PAIGE-open/closed variants are introduced.
 UNVERIFIED: hosted storage/signing, real legal consent, effective-terms activation, installment execution, native zoom/print, supported mobile browsers, independent source/finish review, exact-head hosted CI, production readback, Central QA and owner acceptance.
 
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Authorized real counterparty reads the exact frozen agreeme
 MOTION_PURPOSE: NONE: no motion code changed; existing frozen styling retained.
 PROTECTED_SEAMS: Existing tokenState/decideSigningAccess, SHA-256 helper, canonical agreement/signers/events and conditional signature update reused. Existing private service-only commercial freeze remains untouched. Chat/Kit/Harness/admission, provider and Communications dispatch source unchanged.
 
-INTERNAL_BUILD_IDENTITY: Git commit containing this record; deployment=UNVERIFIED; environment=local synthetic; migrations=NOT_APPLIED_HOSTED(20271101181000); edge=NOT_DEPLOYED(agreement-document,sign-agreement); evidence=this record and committed fixture
+INTERNAL_BUILD_IDENTITY: 5ec67ac4be376d34411d930ac1febc2f849fdc5b product source; deployment=UNVERIFIED; environment=local; migrations=PROOF_OWED(20271101181000 lacks hosted deployment); edge=PROOF_OWED(agreement-document and sign-agreement lack hosted deployment); evidence=docs/evidence/ui-delivery/e04-signing-exact-record.md
 RELEASE_CHANNEL: development: source-only draft; no production activation
 RELEASE_CLASSIFICATION: internal-only: prerequisite repair, full E04 outcome and acceptance unfinished
 CUSTOMER_RELEASE_IDENTITY: none: no coherent accepted customer release yet

@@ -914,6 +914,10 @@ jobs:
           RESEARCH_READBACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           RESEARCH_READBACK_TEST=partial-library node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           RESEARCH_READBACK_TEST=unconfirmed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=malformed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=contradictory node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_ACK_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs

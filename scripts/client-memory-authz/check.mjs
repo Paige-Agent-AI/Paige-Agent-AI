@@ -2528,9 +2528,12 @@ const mirrorConfirms = (st) => (t, row) => {
         && /could not confirm whether it went through/.test(toldModel(o16)), show(o16));
 
     // OUT17 — a change the CRM door reports as not applied carries that fact to the card, so a
-    // refusal reads "didn't run" and offers asking again; the same refusal without it would not.
+    // refusal reads "didn't run" and offers asking again. Unknown outcomes explicitly clear
+    // that claim so a contradictory native envelope cannot preserve not_applied=true.
     assert("18.OUT17 crm-command's answered refusal is marked not applied, and a lost answer is not",
-      /"not_applied":\s*true/.test(toldModel(o7)) && !/"not_applied"/.test(toldModel(o5)) && !/"not_applied"/.test(toldModel(o6)), "");
+      /"not_applied":\s*true/.test(toldModel(o7))
+        && /"not_applied":\s*false/.test(toldModel(o5)) && /"outcome_unknown":\s*true/.test(toldModel(o5))
+        && /"not_applied":\s*false/.test(toldModel(o6)) && /"outcome_unknown":\s*true/.test(toldModel(o6)), "");
   }
 
   const h28Store = makeConfirmStore();

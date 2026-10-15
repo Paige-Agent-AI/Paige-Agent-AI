@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Authorized real counterparty reads the exact frozen agreeme
 MOTION_PURPOSE: NONE: no motion code changed; existing frozen styling retained.
 PROTECTED_SEAMS: Existing tokenState/decideSigningAccess, SHA-256 helper, canonical agreement/signers/events and conditional signature update reused. Existing private service-only commercial freeze remains untouched. Chat/Kit/Harness/admission, provider and Communications dispatch source unchanged.
 
-INTERNAL_BUILD_IDENTITY: 5ec67ac4be376d34411d930ac1febc2f849fdc5b product source; deployment=UNVERIFIED; environment=local; migrations=PROOF_OWED(20271101181000 lacks hosted deployment); edge=PROOF_OWED(agreement-document and sign-agreement lack hosted deployment); evidence=docs/evidence/ui-delivery/e04-signing-exact-record.md
+INTERNAL_BUILD_IDENTITY: 5ec67ac4be376d34411d930ac1febc2f849fdc5b product source; deployment=UNVERIFIED; environment=local; migrations=PROOF_OWED(20271105103000 lacks hosted deployment); edge=PROOF_OWED(agreement-document and sign-agreement lack hosted deployment); evidence=docs/evidence/ui-delivery/e04-signing-exact-record.md
 RELEASE_CHANNEL: development: source-only draft; no production activation
 RELEASE_CLASSIFICATION: internal-only: prerequisite repair, full E04 outcome and acceptance unfinished
 CUSTOMER_RELEASE_IDENTITY: none: no coherent accepted customer release yet
@@ -61,3 +61,10 @@ RELEASE_RECOVERY: position=forward-fix; reference=preserve immutable prior agree
 ## Remaining E04 destination
 
 O1–O12 remain mandatory. This source does not wire the C1 producer into every send/link path, establish signed-to-effective commercial terms, create/allocate canonical installments, execute Stripe TEST settlement, complete client onboarding, release/accept every deliverable, send Collections follow-ups or establish final engagement completion. Those integrations remain E04's responsibility. ANT-51 is the canonical twelve-outcome matrix; ANT-147 shared updates and ANT-52 protected QA evidence stay separate. Master Section4.0=N/A while unmerged; no shipped claim.
+
+
+## Forward-only migration identity reconciliation — 2026-10-15 UTC
+
+Production recorded the released Knowledge migration20271102110000. This E04 migration is NOT recorded in production and is moved forward without changing a single SQL byte. Existing historical filenames and test observations above remain historical evidence. Current proof loaders and this record's pending migration field use the new identity. Preview reconciliation may change only the exact matching installed migration receipt version after branch/data/receipt checks; it must retain its original name and statement array. No production history rewrite, schema replay, reset, include-all bypass, activation or authenticated acceptance follows from this source rename.
+
+Current mappings in this source: 20271101181000 → 20271105103000.

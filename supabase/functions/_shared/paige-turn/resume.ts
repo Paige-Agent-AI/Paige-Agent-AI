@@ -167,8 +167,9 @@ export function classifyResumedApproval(input: {
   withheld?: boolean;
   refusal?: ApprovalRefusalReason;
   reportsOk?: boolean;
+  reportsKnowledge?: boolean;
 }) {
-  if (input.spent) return classifySpentApproval(input.spentContent, { reportsOk: input.reportsOk });
+  if (input.spent) return classifySpentApproval(input.spentContent, { reportsOk: input.reportsOk, reportsKnowledge: input.reportsKnowledge });
   if (input.lost) return settleUsedEarlier(classifyUnspentApproval(undefined), true);
   if (input.expired) return classifyUnspentApproval("expired");
   if (input.withheld) return classifyUnspentApproval("unclaimable");

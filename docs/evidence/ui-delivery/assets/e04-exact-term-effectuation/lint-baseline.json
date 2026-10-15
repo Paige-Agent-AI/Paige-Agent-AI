@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "baseline": 399,
+  "current": 399,
+  "newOrChangedDiagnostics": 0,
+  "source": "same ESLint filePath/config; old HEAD compared to current with insertion offset normalized"
+}

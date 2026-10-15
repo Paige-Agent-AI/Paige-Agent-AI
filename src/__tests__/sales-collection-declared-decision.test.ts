@@ -6,6 +6,16 @@ const tenant='33333333-3333-4333-8333-333333333333';
 const requestArgs={command:{action:'collection.commit_import',batch_id:'11111111-1111-4111-8111-111111111111',expected_digest:'a'.repeat(64)},operation_id:'22222222-2222-4222-8222-222222222222',expected_tenant_id:tenant,approval_subject:'collection.commit_import:11111111-1111-4111-8111-111111111111'};
 const input={caller:{authenticated:true,userId:'44444444-4444-4444-8444-444444444444',principal:'person',tenantId:tenant,tenantSource:'server',door:'other',access:{allowed:true,reason:'Checked owner/admin'}},capability:{id:'sales_commit_collection_import',effect:'mutate',outcomeChannel:'record_capability_run',availability:'needs_approval'},approval:{autonomyLane:'confirm'},requestArgs} as const;
 describe('Collections canonical governance',()=>{
+ it('effectuation retains high confirmation even under auto and rejects off',()=>{
+  const declaration=SALES_COLLECTION_KIT_BY_ACTION.sales_effectuate_commercial_terms;
+  const command={action:'collection.effectuate_terms',agreement_id:'55555555-0000-4000-8000-000000000001',expected_version:3,expected_updated_at:'2026-10-15T05:17:00.123456+00:00',signing_id:'99999999-0000-4000-8000-000000000001',signing_version:4,invoice_id:'66666666-0000-4000-8000-000000000001',invoice_draft_version:2,payload_digest:'a'.repeat(64),sealed_sha256:'b'.repeat(64)};
+  const adapted={...input,capability:{...input.capability,id:'sales_effectuate_commercial_terms'},requestArgs:{...requestArgs,command},approval:{autonomyLane:'auto'}};
+  expect(decideDeclaredCapability(declaration,adapted as never).kind).toBe('propose');
+  expect(decideDeclaredCapability(declaration,{...adapted,approval:{autonomyLane:'off'}} as never).kind).toBe('refuse');
+  const claimed={...adapted.requestArgs,command:{...command,expected_version:4}};
+  const decision=decideDeclaredCapability(declaration,{...adapted,approval:{autonomyLane:'confirm',claimedFor:'sales_effectuate_commercial_terms',claimedArgs:claimed}} as never);
+  expect(decision.kind).toBe('execute');if(decision.kind==='execute')expect(decision.args).toEqual(claimed);
+ });
  it('retains exactly one canonical Chat owner for receipt and reversal actions',()=>{
   const tools=[...SALES_INVOICE_CAPABILITIES,...SALES_COLLECTION_CAPABILITIES].map(c=>c.action?.chatTool).filter(Boolean);
   expect(tools.filter(t=>t==='sales_record_manual_payment')).toHaveLength(1);

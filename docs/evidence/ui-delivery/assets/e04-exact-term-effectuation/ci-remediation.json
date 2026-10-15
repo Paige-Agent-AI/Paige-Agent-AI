@@ -1,0 +1,56 @@
+{
+  "originalCandidate": "0995f52c52907b4a468b9b002a93f56580c74e6f",
+  "originalRun": 38690989115,
+  "originalVerify": "FAIL",
+  "originalFailedSteps": [
+    36,
+    46,
+    104,
+    118
+  ],
+  "settingsTests": {
+    "passed": 8,
+    "failed": 0,
+    "assertionsChanged": false
+  },
+  "clientMemorySmoke": {
+    "before": {
+      "passed": 1034,
+      "failed": 1,
+      "case": "19.8",
+      "missing": [
+        "sales_effectuate_commercial_terms"
+      ]
+    },
+    "after": {
+      "passed": 1035,
+      "failed": 0
+    },
+    "assertionsChanged": false
+  },
+  "catalogue": {
+    "classified": 190,
+    "visible": 193,
+    "invisible": 0,
+    "baselineChanged": false
+  },
+  "receipt": {
+    "classified": 190,
+    "findings": 0,
+    "selfTests": 10,
+    "frozenSeedChanged": false,
+    "windowsCheck": "actual exported checks explicitly executed"
+  },
+  "writeTargets": 183,
+  "protectedBindings": {
+    "passed": 59,
+    "failed": 0,
+    "priorCasesPreserved": 57,
+    "newNegativeControls": 2,
+    "pinReview": "PROOF_OWED"
+  },
+  "newMigration": "20271105105100",
+  "productionRelease": "NOT_DEPLOYED",
+  "authenticatedAcceptance": "NOT_RUN",
+  "otherAgents": "NONE"
+}

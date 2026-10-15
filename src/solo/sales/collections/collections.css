@@ -26,7 +26,10 @@
 @container(max-width:680px){.sc-column-head{display:none}.sc-register-row{grid-template-columns:minmax(0,1fr) auto}.sc-register-row>span:nth-child(2){grid-column:1;font-size:12px}.sc-register-row>strong{grid-column:2;grid-row:1}.sc-register-row>span:nth-child(4){grid-column:1}.sc-register-row>button{grid-column:2;grid-row:2/4}.sc-builder-grid,.sc-aside{grid-template-columns:1fr}.sc-facts{grid-template-columns:1fr 1fr}}
 @keyframes sc-drawer-in{from{transform:translateX(32px)}to{transform:translateX(0)}}
 @media(max-width:600px){.paige-solo.sc-drawer .sc-drawer-header{top:-18px;margin:-18px -18px 0;padding:20px 70px 16px 18px}}
-@media(prefers-reduced-motion:reduce){.sc-workspace *,.sc-drawer *,.sc-command-dialog *,.paige-solo.sc-drawer[data-state]{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){.sc-workspace *,.sc-drawer *,.sc-command-dialog *,.paige-solo.sc-drawer[data-state],.paige-solo.sc-command-dialog[data-state]{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.paige-solo.sc-command-dialog .sc-command-heading{padding-right:44px;text-align:left}
+.paige-solo.sc-command-dialog[data-unresolved="true"]>button:last-child{display:none}
+@media(prefers-reduced-motion:reduce){.sc-command-overlay[data-state]{animation:none!important;transition:none!important}}
 
 /* Keep the working drawer above its backdrop; nested canonical dialogs stay later at50. */
 .sc-drawer-backdrop[data-state]{z-index:49;background:rgba(12,10,27,.42)}

@@ -11,6 +11,15 @@ function scheduledFixture():Record<string,unknown>{
 }
 const readFixture=(data:Record<string,unknown>)=>readCommercialPackage(tenant,{invoice_id:invoice},{rpc:vi.fn().mockResolvedValue({data,error:null})});
 describe('canonical commercial package caller-JWT read',()=>{
+ it('retains bounded historical effective provenance independently of current status',async()=>{
+  const data=scheduledFixture();const provenance={signing_id:'70000000-0000-0000-0000-000000000001',terms_version:2,recorded_at:'2026-10-15T05:17:00.123456+00:00',operation_id:'80000000-0000-0000-0000-000000000001'};
+  Object.assign(data.commercial_terms as object,{status:'paused',effective_provenance:provenance});
+  expect((await readFixture(data)).content).toMatchObject({success:true,commercial_terms:{status:'paused',version:3,effective_provenance:provenance},authority:'not_evaluated',execution:'not_started'});
+ });
+ it.each([{signing_id:'wrong'},{terms_version:-1},{recorded_at:'unknown'},{operation_id:null},{approval:true}])('refuses malformed or authority-bearing effective provenance %s',async change=>{
+  const data=scheduledFixture();Object.assign(data.commercial_terms as object,{effective_provenance:{signing_id:'70000000-0000-0000-0000-000000000001',terms_version:2,recorded_at:'2026-10-15T05:17:00Z',operation_id:'80000000-0000-0000-0000-000000000001',...change}});
+  expect((await readFixture(data)).content.success).toBe(false);
+ });
  it('reads invoice-bound terms and their exact schedule independently of a missing signing link',async()=>{
   const data=scheduledFixture();data.agreement=null;
   Object.assign(data.invoice as object,{commercial_terms_reference:{id:'40000000-0000-0000-0000-000000000001',version:3}});

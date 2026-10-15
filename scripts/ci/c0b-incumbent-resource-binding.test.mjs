@@ -9,6 +9,8 @@ test('all 29 reviewed incumbent adapters bind to real dispatch and dependency so
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
+ ['E04 attribution targets wrong canonical record',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','sales_effectuate_commercial_terms: "clients",')],
+ ['E04 attribution entry removed',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','')],
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],
  ['verified actor removed',s=>s.replace('await supabaseClient.auth.getUser()','({data:{user:{id:"counterfeit"}},error:null})')],
@@ -123,3 +125,19 @@ for(const [label,from,to]of [
  ['owner refusal removed','if (risk === "owner_only") {','if (false) {'],
 ])test(`rejects retired owner automation ${label}`,()=>{const changed=chat.replace(from,to);assert.notEqual(changed,chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
 test('rejects retired automation owner-only classification downgrade',()=>{const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace('["automation_set_grant", "owner_only"','["automation_set_grant", "ordinary"');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
+test('E04 proposed policy pin rejects effectuation risk downgrade',()=>{
+ const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace('["sales_effectuate_commercial_terms", "high"','["sales_effectuate_commercial_terms", "ordinary"');
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);const result=validateIncumbentResourceBindings(chat,altered);
+ assert.ok(result.findings.includes(`incumbent reviewed source changed: ${path}`));
+ // The collector can retain an advisory partial map; the combined findings
+ // and metadata validator must refuse the complete incumbent declaration set.
+ const declared=[...actual.tools.values()].map(spec=>({key:spec.key,selfDescribe:spec.selfDescribe,readiness:spec.readiness,chatBinding:'LIVE',mindBinding:'UNAVAILABLE',maturity:'PARTIAL',action:{...spec}}));
+ assert.ok(validateIncumbentDeclarations(declared,result).length>0);
+});
+test('E04 proposed policy pin rejects removing the exact high UI key',()=>{
+ const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace(/^.*\["sales_effectuate_commercial_terms", "high".*\r?\n/m,'');
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);const result=validateIncumbentResourceBindings(chat,altered);
+ assert.ok(result.findings.includes(`incumbent reviewed source changed: ${path}`));
+ const declared=[...actual.tools.values()].map(spec=>({key:spec.key,selfDescribe:spec.selfDescribe,readiness:spec.readiness,chatBinding:'LIVE',mindBinding:'UNAVAILABLE',maturity:'PARTIAL',action:{...spec}}));
+ assert.ok(validateIncumbentDeclarations(declared,result).length>0);
+});

@@ -1,0 +1,181 @@
+{
+  "result": "PASS",
+  "cases": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "light",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "dark",
+      "scenario": "review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "scenario": "missing",
+      "result": "PASS"
+    },
+    {
+      "scenario": "off",
+      "result": "PASS"
+    },
+    {
+      "scenario": "malformed",
+      "result": "PASS"
+    },
+    {
+      "scenario": "receipt_failed",
+      "result": "PASS"
+    },
+    {
+      "scenario": "changed",
+      "result": "PASS"
+    },
+    {
+      "scenario": "denied",
+      "result": "PASS"
+    },
+    {
+      "scenario": "uncertain-original-operation-recovery-current-readback-focus",
+      "result": "PASS"
+    },
+    {
+      "scenario": "component-remount-same-transport-record",
+      "result": "PASS"
+    },
+    {
+      "scenario": "accepted-record-neighbor-remains-read-only",
+      "result": "PASS"
+    },
+    {
+      "scenario": "reduced-motion",
+      "result": "PASS"
+    }
+  ],
+  "sourceHashes": {
+    "src/solo/sales/CommercialTermsEffectuation.tsx": "875b0183e1a0077e1b958df4134398428bce0734f7fe03c919ea25ef60983bc7",
+    "src/solo/sales/collections/CollectionCommandReview.tsx": "dde93bcf39515db2a4fa989e0ff400e98fa8a998d309ffbc6dbc18068f449e0f",
+    "src/solo/sales/CommercialPackageInspection.tsx": "0f2149ac4c1ac3c2626fb622161eef6be4dcbb584f65244c483c23f0fd0f6f94",
+    "src/solo/sales/CommercialAgreementPreview.tsx": "6520298f301f89a5e7a820d20fe8c7732ac85a515f2aaf9ea32882a0ec59e43f",
+    "supabase/functions/_shared/agreements/accepted-commercial-read.ts": "f8ab3f864625fbedb9178e18c28adc80694b4a2c9234b1293a2719d8882a800d",
+    "supabase/functions/_shared/sales-commercial/effectuation-command.ts": "650420657160aa25d43554a8b104509e46477ae1a0c73934fc47412bbc1f9473",
+    "supabase/functions/_shared/sales-commercial/package-projection.ts": "59703b8bc902b58ba8f999b6f5fffec711e89831eda7dfec3a7aea80c7a590ec",
+    "scripts/proof/e04-effective-terms-ui/source.tsx": "071ccc3a28170b6986b212b3a2c63d67ea22589548253afc569118b749bf3a77",
+    "scripts/proof/e04-effective-terms-ui/sdk.ts": "a24ee7be44d17879e3b9f05fb079b1cca040120e3adc40425dc1941ebc067d5e",
+    "scripts/proof/e04-accepted-commercial-ui/sdk.ts": "b95b340293447937a864f0598daa32ba29625b2d27e0cdb10d741028a6ff990e"
+  },
+  "errors": [],
+  "externalRequests": [],
+  "scope": "Actual mounted source; synthetic controlled Auth/RPC/functions. Local fonts fallback with external imports omitted. Remount is not authenticated persistence, signature, provider or production acceptance.",
+  "canonicalSourceHashes": {
+    "src/solo/sales/CommercialTermsEffectuation.tsx": "875b0183e1a0077e1b958df4134398428bce0734f7fe03c919ea25ef60983bc7",
+    "src/solo/sales/collections/CollectionCommandReview.tsx": "cf2e2248c8c4db49d0893c78c52c76cb5cbe1085ee8c4974a3f7909abc206c0e",
+    "src/solo/sales/CommercialPackageInspection.tsx": "09eb914f0033c6c010baf5fbd097a1e0d6384a53b472232cf32a842e00df0147",
+    "src/solo/sales/CommercialAgreementPreview.tsx": "6520298f301f89a5e7a820d20fe8c7732ac85a515f2aaf9ea32882a0ec59e43f",
+    "supabase/functions/_shared/agreements/accepted-commercial-read.ts": "f8ab3f864625fbedb9178e18c28adc80694b4a2c9234b1293a2719d8882a800d",
+    "supabase/functions/_shared/sales-commercial/effectuation-command.ts": "650420657160aa25d43554a8b104509e46477ae1a0c73934fc47412bbc1f9473",
+    "supabase/functions/_shared/sales-commercial/package-projection.ts": "59703b8bc902b58ba8f999b6f5fffec711e89831eda7dfec3a7aea80c7a590ec",
+    "scripts/proof/e04-effective-terms-ui/source.tsx": "071ccc3a28170b6986b212b3a2c63d67ea22589548253afc569118b749bf3a77",
+    "scripts/proof/e04-effective-terms-ui/sdk.ts": "5c836813f3e13acfe50a017158e9ae95b2cf56876194c75a41c63f802564a728",
+    "scripts/proof/e04-accepted-commercial-ui/sdk.ts": "b95b340293447937a864f0598daa32ba29625b2d27e0cdb10d741028a6ff990e"
+  },
+  "sourceHashNormalization": "sourceHashes are exact working bytes rendered; canonicalSourceHashes normalize CRLF to LF per repository text/eol attributes"
+}

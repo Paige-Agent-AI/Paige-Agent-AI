@@ -353,6 +353,39 @@
       "sources": ["docs/doctrine/paige-modality-neutrality.md", "docs/doctrine/surface-context-handoff-contract.md", "src/solo/paigeClientScope.ts", "src/components/dashboard/PaigeAIChat.tsx", "src/components/paige/live/PaigeLiveConversation.tsx", "supabase/functions/paige-ai-chat/index.ts", "supabase/functions/paige-live-session/index.ts", "supabase/migrations/20260907155052_paige_live_conversation_control_plane.sql", "docs/delivery/paige-live-conversation-mvp.md"]
     },
     {
+      "id": "command-center.executive",
+      "intended_capability": {
+        "read": "Caller-authorized Operating Fabric business review, canonical Strategic Plays, filed confirm-lane work and existing recorded activity, with source windows, coverage and honest unreadable states.",
+        "draft": "Explain sourced business priorities and prepare a briefing or recommendation in the existing PAIGE composer for the owner to send; no automatic send or execution.",
+        "auto": "Within existing tenant policy and admission, perform authorized reads and eligible governed follow-ups through the one Spine/Harness path; INT-346 consequential restrictions currently remain in force.",
+        "confirm": "Any consequential follow-up retains its existing Chat approval card, canonical owner permissions and current admission restrictions; the Executive page grants no authority.",
+        "prohibited": "No competing Fabric read, metric store, approval gate, activity ledger, navigation system, inferred provider connectivity, fabricated completion, automatic Memory promotion or Trust Compass authority raise.",
+        "completion_criterion": "An authenticated owner completes a source-backed COO review, reaches the owning departmental records, verifies persisted conversation references and, when the existing authority lane permits it, directs a governed follow-up whose canonical readback and recorded receipt prove the result."
+      },
+      "surface": "Command Center -> Executive — conversational COO review and business evidence",
+      "group": "command-center",
+      "tier_scope": ["solo standalone"],
+      "owner_component": "src/solo/ExecutiveOverview.tsx via src/solo/CommandCenter.tsx",
+      "canonical_source": "business.operating_snapshot -> get_business_snapshot -> dispatchBusinessSnapshotChat -> composeBusinessReview; UI src/solo/data/useBusinessReview.ts invokes caller-JWT paige-business-review; list_business_missions, tenant-scoped paige_actions and get_solo_rail_activity remain their canonical owners",
+      "chain": {
+        "canonical_source": {"status": "partial", "note": "UI and Chat use the same Fabric composer and INT-340 issuer/resolver. Available Sales receipts/pipeline, Operations and Clients evidence is presented with its source semantics; absent producers and numeric goal KPIs remain explicitly unavailable."},
+        "tenant_scope": {"status": "server_resolved", "note": "The edge resolves caller/workspace on the caller JWT, and the issuer re-proves owner/admin authority. The UI rejects malformed/foreign-scope snapshots and hides prior workspace results; filed-work reads retain an explicit viewed-tenant filter. Integrated authenticated isolation proof remains owed."},
+        "safe_context": {"status": "partial", "note": "Existing prompt handoff prefills the sole PAIGE composer without sending. Chat receives only the bounded review projection; E4 semantic record references are presentation metadata, resolved against the current account and re-authorized by the destination."},
+        "authority": {"status": "inherited", "note": "business.operating_snapshot is read/read_only, approval none, workspace-admin seat. Existing consequential-action restrictions, Trust authority and the one Chat approval gate remain unchanged."},
+        "governed_write": {"status": "none", "note": "The page introduces no business mutation. Filed confirm-lane work is prepared, not executed; viewing or navigating creates no approval or ACT receipt."},
+        "verified_outcome": {"status": "proof_owed", "note": "The 2026-10-13 authenticated COO briefing baseline is 9 PASS / 0 FAIL (#2102). It does not prove this integrated Executive candidate, its navigation, persisted links or later-session recovery."},
+        "rail_evidence": {"producer": "none", "read": "resolver", "note": "Recorded activity reuses get_solo_rail_activity and names the recorded actor. Existing Chat settlement persists turn/bundle references; neither a read nor a link is reported as an executed business act."},
+        "mind_eligibility": {"axis_a": "n/a", "axis_b": "NO", "note": "Executive consumes bounded current-turn Fabric evidence; it adds no Mind producer, retention eligibility or authority path. The existing Mind visualization and Trust Compass retain their separate boundaries."},
+        "memory_retention": {"status": "none", "note": "Changing business figures, review text and pending work never automatically become durable Memory. Later review re-reads canonical evidence."}
+      },
+      "state": "PARTIAL",
+      "state_reason": "E2-6 continuation is an in-flight extension of preserved PR #2128, reusing shipped E2-6a #2123 and E4 reference/navigation contracts. Source bindings are present; independent exact-head review, CI, deployment/readback, responsive interaction evidence and supplemental authenticated customer acceptance remain separate delivery gates. The dated 9/9 Chat baseline is preserved, not promoted to integrated Executive PASS or LIVE. Numeric goal metrics and missing departmental producers remain unavailable; INT-346 effects remain restricted.",
+      "evidence_class": ["source_read"],
+      "linked": ["#2128", "#2123", "#2102", "ANT-138", "ANT-147"],
+      "next_slice": "Complete candidate review and exact-head release gates, then prove ordinary authorized SOLO Chat -> same Fabric evidence -> Executive -> owning department, truthful states, persisted references/reload and existing receipts. Final owner product review remains pending; gated consequential actions are not activated by this surface.",
+      "sources": ["docs/delivery/e2-6-continuation-contract.md", "docs/delivery/e2-customer-experience-integration-matrix.md", "src/solo/ExecutiveOverview.tsx", "src/solo/data/useBusinessReview.ts", "src/solo/data/useSoloPendingActions.ts", "src/solo/data/useSoloActivityFeed.ts", "src/solo/data/useBusinessGamePlanMissions.ts", "supabase/functions/paige-business-review/index.ts", "supabase/functions/_shared/paige-context/business-review-chat.ts", "supabase/functions/_shared/paige-context/business-review.ts", "supabase/functions/_shared/paige-turn/record-links.ts", "supabase/functions/_shared/canonical-app-url.ts", "src/lib/links/workspaceLinks.ts"]
+    },
+    {
       "id": "command-center.business-game-plan",
       "consequential": true,
       "intended_capability": {

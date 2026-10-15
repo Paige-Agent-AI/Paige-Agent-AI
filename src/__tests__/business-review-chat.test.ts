@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat,
+  BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat, businessReviewRecordLinks,
 } from "../../supabase/functions/_shared/paige-context/business-review-chat.ts";
 import {
   BUSINESS_OPERATING_SNAPSHOT, BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY,
@@ -16,6 +16,7 @@ import {
 import { PAIGE_SPINE_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/registry.ts";
 import { STEP_START_LABELS, STEP_NO_START } from "../../supabase/functions/_shared/paige-turn/step-start.ts";
 import type { BusinessReviewWho } from "../../supabase/functions/_shared/paige-context/business-review.ts";
+import { TEST_BUSINESS_REVIEW } from "@/test/fixtures/business-review";
 
 const TENANT = "d2000000-0000-4000-8000-0000000000e2";
 const CHAT_SOURCE = fs.readFileSync(
@@ -113,6 +114,23 @@ describe("E2-3a briefing narrative contract", () => {
 });
 
 describe("E2-1 dispatch behavior", () => {
+  it("E2-6 names only readable sources through E4 references, with no persisted account path", () => {
+    const links = businessReviewRecordLinks(TEST_BUSINESS_REVIEW);
+    expect(links.map((link) => link.destination)).toEqual(["executive", "finance", "sales_collections", "sales_pipeline", "systems_check", "contacts"]);
+    expect(links.every((link) => link.record_id === null)).toBe(true);
+    expect(JSON.stringify(links)).not.toMatch(/tenant_id|actor_id|\/solo\/|125000/);
+  });
+  it("E2-6 exposes no reference when every domain was refused or invalidated by a scope switch", () => {
+    const snapshot = structuredClone(TEST_BUSINESS_REVIEW);
+    for (const domain of snapshot.requested) snapshot.domains[domain] = { status: "degraded", data: null, reason: "scope_changed" };
+    expect(businessReviewRecordLinks(snapshot)).toEqual([]);
+  });
+  it("E2-6 keeps references beside the tool result and out of the model projection", () => {
+    const branch = CHAT_SOURCE.slice(CHAT_SOURCE.indexOf('} else if (tc.function.name === "get_business_snapshot")'), CHAT_SOURCE.indexOf('} else if (tc.function.name === "update_client_data")'));
+    expect(branch).toContain("readRecordLinkSource.set(tc, snapshotLinks)");
+    expect(branch).toContain("JSON.stringify(snapshotForModel)");
+    expect(branch).not.toContain("JSON.stringify(result)");
+  });
   it("returns the composer's bounded projection as an available read with no-action-authority guidance", async () => {
     const r = await dispatch({});
     expect(r.status).toBe("available");

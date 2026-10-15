@@ -1,0 +1,1406 @@
+[
+  {
+    "name": "1536-dark-open",
+    "result": {
+      "body": {
+        "height": 738,
+        "scrollHeight": 738,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 672,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 672.4000244140625,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 66,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 672,
+          "scrollWidth": 942,
+          "selector": "tcs-main",
+          "width": 942
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 66,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 932,
+          "selector": "tablist",
+          "width": 932
+        },
+        {
+          "height": 628,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 738.4000396728516,
+            "height": 627.6000366210938,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 110.8000030517578,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2123,
+          "scrollWidth": 927,
+          "selector": "executive-root",
+          "width": 927
+        },
+        {
+          "height": 1783,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2193.625061035156,
+            "height": 1782.800048828125,
+            "left": 100.25,
+            "right": 970.3125,
+            "top": 410.8250122070313,
+            "width": 870.0625,
+            "x": 100.25,
+            "y": 410.8250122070313
+          },
+          "scrollHeight": 1783,
+          "scrollWidth": 870,
+          "selector": "exec-layout",
+          "width": 870
+        },
+        {
+          "height": 738,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 738.4000244140625,
+            "left": 1013.7625122070312,
+            "right": 1536,
+            "top": 0,
+            "width": 522.2374877929688,
+            "x": 1013.7625122070312,
+            "y": 0
+          },
+          "scrollHeight": 738,
+          "scrollWidth": 521,
+          "selector": "tcs-paige",
+          "width": 521
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    }
+  },
+  {
+    "name": "1536-dark-closed",
+    "result": {
+      "body": {
+        "height": 738,
+        "scrollHeight": 738,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 672,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 672.4000244140625,
+            "left": 72,
+            "right": 1536,
+            "top": 66,
+            "width": 1464,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 672,
+          "scrollWidth": 1464,
+          "selector": "tcs-main",
+          "width": 1464
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1536,
+            "top": 66,
+            "width": 1464,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 1454,
+          "selector": "tablist",
+          "width": 1454
+        },
+        {
+          "height": 628,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 738.4000396728516,
+            "height": 627.6000366210938,
+            "left": 72,
+            "right": 1536,
+            "top": 110.8000030517578,
+            "width": 1464,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2025,
+          "scrollWidth": 1449,
+          "selector": "executive-root",
+          "width": 1449
+        },
+        {
+          "height": 1683,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2095.9000854492188,
+            "height": 1683.2000732421875,
+            "left": 172.40000915527344,
+            "right": 1420.4000091552734,
+            "top": 412.7000122070313,
+            "width": 1248,
+            "x": 172.40000915527344,
+            "y": 412.7000122070313
+          },
+          "scrollHeight": 1683,
+          "scrollWidth": 1248,
+          "selector": "exec-layout",
+          "width": 1248
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    }
+  },
+  {
+    "name": "1366-dark-closed",
+    "result": {
+      "body": {
+        "height": 736,
+        "scrollHeight": 736,
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 670,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 670,
+            "left": 72,
+            "right": 1366.4000244140625,
+            "top": 66,
+            "width": 1294.4000244140625,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 670,
+          "scrollWidth": 1294,
+          "selector": "tcs-main",
+          "width": 1294
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1366.4000244140625,
+            "top": 66,
+            "width": 1294.4000244140625,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 1285,
+          "selector": "tablist",
+          "width": 1285
+        },
+        {
+          "height": 625,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 736.0000152587891,
+            "height": 625.2000122070312,
+            "left": 72,
+            "right": 1366.4000244140625,
+            "top": 110.8000030517578,
+            "width": 1294.4000244140625,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2025,
+          "scrollWidth": 1279,
+          "selector": "executive-root",
+          "width": 1279
+        },
+        {
+          "height": 1683,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2095.9000854492188,
+            "height": 1683.2000732421875,
+            "left": 108,
+            "right": 1315.2000732421875,
+            "top": 412.7000122070313,
+            "width": 1207.2000732421875,
+            "x": 108,
+            "y": 412.7000122070313
+          },
+          "scrollHeight": 1683,
+          "scrollWidth": 1207,
+          "selector": "exec-layout",
+          "width": 1207
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    }
+  },
+  {
+    "name": "1366-dark-open",
+    "result": {
+      "body": {
+        "height": 736,
+        "scrollHeight": 736,
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 670,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 670,
+            "left": 72,
+            "right": 901.8250122070312,
+            "top": 66,
+            "width": 829.8250122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 670,
+          "scrollWidth": 830,
+          "selector": "tcs-main",
+          "width": 830
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 901.8250122070312,
+            "top": 66,
+            "width": 829.8250122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 820,
+          "selector": "tablist",
+          "width": 820
+        },
+        {
+          "height": 625,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 736.0000152587891,
+            "height": 625.2000122070312,
+            "left": 72,
+            "right": 901.8250122070312,
+            "top": 110.8000030517578,
+            "width": 829.8250122070312,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2896,
+          "scrollWidth": 815,
+          "selector": "executive-root",
+          "width": 815
+        },
+        {
+          "height": 2560,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2966.9124450683594,
+            "height": 2559.699951171875,
+            "left": 96.88750457763672,
+            "right": 861.7375411987305,
+            "top": 407.2124938964844,
+            "width": 764.8500366210938,
+            "x": 96.88750457763672,
+            "y": 407.2124938964844
+          },
+          "scrollHeight": 2560,
+          "scrollWidth": 765,
+          "selector": "exec-layout",
+          "width": 765
+        },
+        {
+          "height": 736,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 736,
+            "left": 901.8250122070312,
+            "right": 1366.4000244140625,
+            "top": 0,
+            "width": 464.5750122070313,
+            "x": 901.8250122070312,
+            "y": 0
+          },
+          "scrollHeight": 736,
+          "scrollWidth": 464,
+          "selector": "tcs-paige",
+          "width": 464
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    }
+  },
+  {
+    "name": "1024-dark-closed",
+    "result": {
+      "body": {
+        "height": 736,
+        "scrollHeight": 736,
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 670,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 670,
+            "left": 72,
+            "right": 1024,
+            "top": 66,
+            "width": 952,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 670,
+          "scrollWidth": 952,
+          "selector": "tcs-main",
+          "width": 952
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1024,
+            "top": 66,
+            "width": 952,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 942,
+          "selector": "tablist",
+          "width": 942
+        },
+        {
+          "height": 625,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 736.0000152587891,
+            "height": 625.2000122070312,
+            "left": 72,
+            "right": 1024,
+            "top": 110.8000030517578,
+            "width": 952,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2123,
+          "scrollWidth": 937,
+          "selector": "executive-root",
+          "width": 937
+        },
+        {
+          "height": 1783,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2193.9500427246094,
+            "height": 1782.800048828125,
+            "left": 100.5500030517578,
+            "right": 980.2500152587892,
+            "top": 411.1499938964844,
+            "width": 879.7000122070312,
+            "x": 100.5500030517578,
+            "y": 411.1499938964844
+          },
+          "scrollHeight": 1783,
+          "scrollWidth": 880,
+          "selector": "exec-layout",
+          "width": 880
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    }
+  },
+  {
+    "name": "1024-dark-open",
+    "result": {
+      "body": {
+        "height": 736,
+        "scrollHeight": 736,
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 670,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 670,
+            "left": 72,
+            "right": 1024,
+            "top": 66,
+            "width": 952,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 670,
+          "scrollWidth": 952,
+          "selector": "tcs-main",
+          "width": 952
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1024,
+            "top": 66,
+            "width": 952,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 942,
+          "selector": "tablist",
+          "width": 942
+        },
+        {
+          "height": 625,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 736.0000152587891,
+            "height": 625.2000122070312,
+            "left": 72,
+            "right": 1024,
+            "top": 110.8000030517578,
+            "width": 952,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2123,
+          "scrollWidth": 937,
+          "selector": "executive-root",
+          "width": 937
+        },
+        {
+          "height": 1783,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2193.9500427246094,
+            "height": 1782.800048828125,
+            "left": 100.5500030517578,
+            "right": 980.2500152587892,
+            "top": 411.1499938964844,
+            "width": 879.7000122070312,
+            "x": 100.5500030517578,
+            "y": 411.1499938964844
+          },
+          "scrollHeight": 1783,
+          "scrollWidth": 880,
+          "selector": "exec-layout",
+          "width": 880
+        },
+        {
+          "height": 736,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 736,
+            "height": 736,
+            "left": 614,
+            "right": 1024,
+            "top": 0,
+            "width": 410,
+            "x": 614,
+            "y": 0
+          },
+          "scrollHeight": 736,
+          "scrollWidth": 409,
+          "selector": "tcs-paige",
+          "width": 409
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    }
+  },
+  {
+    "name": "900-dark-closed",
+    "result": {
+      "body": {
+        "height": 968,
+        "scrollHeight": 968,
+        "scrollWidth": 900,
+        "width": 900
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 902,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 968,
+            "height": 902,
+            "left": 72,
+            "right": 900,
+            "top": 66,
+            "width": 828,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 902,
+          "scrollWidth": 828,
+          "selector": "tcs-main",
+          "width": 828
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 900,
+            "top": 66,
+            "width": 828,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 818,
+          "selector": "tablist",
+          "width": 818
+        },
+        {
+          "height": 857,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 968.0000152587892,
+            "height": 857.2000122070312,
+            "left": 72,
+            "right": 900,
+            "top": 110.8000030517578,
+            "width": 828,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2896,
+          "scrollWidth": 813,
+          "selector": "executive-root",
+          "width": 813
+        },
+        {
+          "height": 2560,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2966.8624572753906,
+            "height": 2559.699951171875,
+            "left": 96.8375015258789,
+            "right": 859.9625015258789,
+            "top": 407.1625061035156,
+            "width": 763.125,
+            "x": 96.8375015258789,
+            "y": 407.1625061035156
+          },
+          "scrollHeight": 2560,
+          "scrollWidth": 763,
+          "selector": "exec-layout",
+          "width": 763
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    }
+  },
+  {
+    "name": "900-dark-open",
+    "result": {
+      "body": {
+        "height": 968,
+        "scrollHeight": 968,
+        "scrollWidth": 900,
+        "width": 900
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 902,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 968,
+            "height": 902,
+            "left": 72,
+            "right": 900,
+            "top": 66,
+            "width": 828,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 902,
+          "scrollWidth": 828,
+          "selector": "tcs-main",
+          "width": 828
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 900,
+            "top": 66,
+            "width": 828,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 818,
+          "selector": "tablist",
+          "width": 818
+        },
+        {
+          "height": 857,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 968.0000152587892,
+            "height": 857.2000122070312,
+            "left": 72,
+            "right": 900,
+            "top": 110.8000030517578,
+            "width": 828,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2896,
+          "scrollWidth": 813,
+          "selector": "executive-root",
+          "width": 813
+        },
+        {
+          "height": 2560,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2966.8624572753906,
+            "height": 2559.699951171875,
+            "left": 96.8375015258789,
+            "right": 859.9625015258789,
+            "top": 407.1625061035156,
+            "width": 763.125,
+            "x": 96.8375015258789,
+            "y": 407.1625061035156
+          },
+          "scrollHeight": 2560,
+          "scrollWidth": 763,
+          "selector": "exec-layout",
+          "width": 763
+        },
+        {
+          "height": 968,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 968,
+            "height": 968,
+            "left": 490,
+            "right": 900,
+            "top": 0,
+            "width": 410,
+            "x": 490,
+            "y": 0
+          },
+          "scrollHeight": 968,
+          "scrollWidth": 409,
+          "selector": "tcs-paige",
+          "width": 409
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      }
+    }
+  },
+  {
+    "name": "390-dark-closed",
+    "result": {
+      "body": {
+        "height": 812,
+        "scrollHeight": 812,
+        "scrollWidth": 390,
+        "width": 390
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 753,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 812.0000114440918,
+            "height": 753.2000122070312,
+            "left": 72,
+            "right": 390.3999938964844,
+            "top": 58.79999923706055,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 753,
+          "scrollWidth": 318,
+          "selector": "tcs-main",
+          "width": 318
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 113.20000076293944,
+            "height": 54.400001525878906,
+            "left": 72,
+            "right": 390.3999938964844,
+            "top": 58.79999923706055,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 615,
+          "selector": "tablist",
+          "width": 309
+        },
+        {
+          "height": 699,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 811.9999923706055,
+            "height": 698.7999877929688,
+            "left": 72,
+            "right": 390.3999938964844,
+            "top": 113.20000457763672,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 3863,
+          "scrollWidth": 303,
+          "selector": "executive-root",
+          "width": 303
+        },
+        {
+          "height": 3323,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 3936.200134277344,
+            "height": 3323.10009765625,
+            "left": 88,
+            "right": 359.20001220703125,
+            "top": 613.1000366210938,
+            "width": 271.20001220703125,
+            "x": 88,
+            "y": 613.1000366210938
+          },
+          "scrollHeight": 3323,
+          "scrollWidth": 271,
+          "selector": "exec-layout",
+          "width": 271
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  },
+  {
+    "name": "320-dark-closed",
+    "result": {
+      "body": {
+        "height": 812,
+        "scrollHeight": 812,
+        "scrollWidth": 320,
+        "width": 320
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 753,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 812.0000114440918,
+            "height": 753.2000122070312,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 753,
+          "scrollWidth": 248,
+          "selector": "tcs-main",
+          "width": 248
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 113.20000076293944,
+            "height": 54.400001525878906,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 615,
+          "selector": "tablist",
+          "width": 238
+        },
+        {
+          "height": 699,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 811.9999923706055,
+            "height": 698.7999877929688,
+            "left": 72,
+            "right": 320,
+            "top": 113.20000457763672,
+            "width": 248,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 4509,
+          "scrollWidth": 233,
+          "selector": "executive-root",
+          "width": 233
+        },
+        {
+          "height": 3817,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 4581.8001708984375,
+            "height": 3816.900146484375,
+            "left": 88,
+            "right": 288.8000030517578,
+            "top": 764.9000244140625,
+            "width": 200.8000030517578,
+            "x": 88,
+            "y": 764.9000244140625
+          },
+          "scrollHeight": 3817,
+          "scrollWidth": 201,
+          "selector": "exec-layout",
+          "width": 201
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 320
+      }
+    }
+  },
+  {
+    "name": "320-dark-open",
+    "result": {
+      "body": {
+        "height": 812,
+        "scrollHeight": 812,
+        "scrollWidth": 320,
+        "width": 320
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 753,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 812.0000114440918,
+            "height": 753.2000122070312,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 753,
+          "scrollWidth": 248,
+          "selector": "tcs-main",
+          "width": 248
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 113.20000076293944,
+            "height": 54.400001525878906,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 615,
+          "selector": "tablist",
+          "width": 238
+        },
+        {
+          "height": 699,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 811.9999923706055,
+            "height": 698.7999877929688,
+            "left": 72,
+            "right": 320,
+            "top": 113.20000457763672,
+            "width": 248,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 4509,
+          "scrollWidth": 233,
+          "selector": "executive-root",
+          "width": 233
+        },
+        {
+          "height": 3817,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 4461.000183105469,
+            "height": 3816.900146484375,
+            "left": 88,
+            "right": 288.8000030517578,
+            "top": 644.1000366210938,
+            "width": 200.8000030517578,
+            "x": 88,
+            "y": 644.1000366210938
+          },
+          "scrollHeight": 3817,
+          "scrollWidth": 201,
+          "selector": "exec-layout",
+          "width": 201
+        },
+        {
+          "height": 812,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 812,
+            "height": 812,
+            "left": 72,
+            "right": 320,
+            "top": 0,
+            "width": 248,
+            "x": 72,
+            "y": 0
+          },
+          "scrollHeight": 812,
+          "scrollWidth": 247,
+          "selector": "tcs-paige",
+          "width": 247
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 320
+      }
+    }
+  },
+  {
+    "name": "1536-mineral-closed",
+    "result": {
+      "body": {
+        "height": 738,
+        "scrollHeight": 738,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 672,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 672.4000244140625,
+            "left": 72,
+            "right": 1536,
+            "top": 66,
+            "width": 1464,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 672,
+          "scrollWidth": 1464,
+          "selector": "tcs-main",
+          "width": 1464
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1536,
+            "top": 66,
+            "width": 1464,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 1454,
+          "selector": "tablist",
+          "width": 1454
+        },
+        {
+          "height": 628,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 738.4000396728516,
+            "height": 627.6000366210938,
+            "left": 72,
+            "right": 1536,
+            "top": 110.8000030517578,
+            "width": 1464,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2025,
+          "scrollWidth": 1449,
+          "selector": "executive-root",
+          "width": 1449
+        },
+        {
+          "height": 1683,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 1975.100067138672,
+            "height": 1683.2000732421875,
+            "left": 172.40000915527344,
+            "right": 1420.4000091552734,
+            "top": 291.8999938964844,
+            "width": 1248,
+            "x": 172.40000915527344,
+            "y": 291.8999938964844
+          },
+          "scrollHeight": 1683,
+          "scrollWidth": 1248,
+          "selector": "exec-layout",
+          "width": 1248
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    }
+  },
+  {
+    "name": "1536-mineral-open",
+    "result": {
+      "body": {
+        "height": 738,
+        "scrollHeight": 738,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "focus": "How's my business doing?",
+      "surfaces": [
+        {
+          "height": 672,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 672.4000244140625,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 66,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 672,
+          "scrollWidth": 942,
+          "selector": "tcs-main",
+          "width": 942
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 110.79999923706056,
+            "height": 44.79999923706055,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 66,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 932,
+          "selector": "tablist",
+          "width": 932
+        },
+        {
+          "height": 628,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 738.4000396728516,
+            "height": 627.6000366210938,
+            "left": 72,
+            "right": 1013.7625122070312,
+            "top": 110.8000030517578,
+            "width": 941.7625122070312,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 2123,
+          "scrollWidth": 927,
+          "selector": "executive-root",
+          "width": 927
+        },
+        {
+          "height": 1783,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 2193.625061035156,
+            "height": 1782.800048828125,
+            "left": 100.25,
+            "right": 970.3125,
+            "top": 410.8250122070313,
+            "width": 870.0625,
+            "x": 100.25,
+            "y": 410.8250122070313
+          },
+          "scrollHeight": 1783,
+          "scrollWidth": 870,
+          "selector": "exec-layout",
+          "width": 870
+        },
+        {
+          "height": 738,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 738.4000244140625,
+            "height": 738.4000244140625,
+            "left": 1013.7625122070312,
+            "right": 1536,
+            "top": 0,
+            "width": 522.2374877929688,
+            "x": 1013.7625122070312,
+            "y": 0
+          },
+          "scrollHeight": 738,
+          "scrollWidth": 521,
+          "selector": "tcs-paige",
+          "width": 521
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    }
+  }
+]

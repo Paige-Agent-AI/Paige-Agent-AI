@@ -5,6 +5,8 @@ import { setPaigeBusinessPlanScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import { createRequestKeyKeeper } from "./mission-retry";
 import { useBusinessGamePlanMissions, type StrategicPlay } from "./data/useBusinessGamePlanMissions";
+import { MissionTargetsPanel } from "./MissionTargetsPanel";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
 type Props = { workspaceId?: string | null; openPaige?: () => void; onNotice?: (message: string) => void };
 type Form = MissionBriefInput & { revisionReason: string };
@@ -41,8 +43,23 @@ function formFrom(detail: BusinessMissionDetail): Form {
   };
 }
 
-export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
+export function PlanInMotion(props: Props) {
+  const context = useOptionalTenantContext();
+  const allowed = context?.accountContextStatus === "ready" && !context.loading && !!context.activeUserId
+    && !!props.workspaceId && context.activeTenantId === props.workspaceId;
+  // Retire the entire drawer lifetime synchronously, including an A-B-A switch.
+  // RPCs still decide authority; context only narrows which record can render.
+  return <ScopedPlanInMotion key={`${context?.activeUserId}:${context?.activeTenantId}:${allowed}`}
+    {...props} workspaceId={allowed ? props.workspaceId : null} />;
+}
+function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
   const brain = useBusinessGamePlanMissions(workspaceId);
+  const lifetime = useRef({ alive: true, read: 0 });
+  useEffect(() => {
+    const instance = lifetime.current;
+    instance.alive = true;
+    return () => { instance.alive = false; instance.read++; };
+  }, []);
   const [selected, setSelected] = useState<BusinessMissionDetail | null>(null);
   const [drawer, setDrawer] = useState<"view" | "create" | "edit" | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
@@ -74,8 +91,10 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     document.body.style.overflow = "hidden";
     closeButton.current?.focus();
     const handleKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === "Escape") {
-        setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null);
+        lifetime.current.read++;
+        setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null);
         return;
       }
       if (event.key !== "Tab") return;
@@ -93,8 +112,10 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     };
   }, [drawer]);
 
-  const close = () => { setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null); };
+  const close = () => { lifetime.current.read++; setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null); };
   const openCreate = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!workspaceId) return;
+    lifetime.current.read++;
     opener.current = event.currentTarget;
     setForm(emptyForm());
     setError(null);
@@ -102,13 +123,14 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     setDrawer("create");
   };
   const openPlay = async (play: StrategicPlay, event: React.MouseEvent<HTMLButtonElement>) => {
+    const read = ++lifetime.current.read;
     opener.current = event.currentTarget;
     setDrawer("view");
     setSelected(null);
     setError(null);
     setUnknown(null);
-    try { setSelected(await brain.getDetail(play.id)); }
-    catch (caught) { setError(friendlyError(caught instanceof Error ? caught.message : null)); }
+    try { const detail = await brain.getDetail(play.id); if (lifetime.current.alive && lifetime.current.read === read) setSelected(detail); }
+    catch (caught) { if (lifetime.current.alive && lifetime.current.read === read) setError(friendlyError(caught instanceof Error ? caught.message : null)); }
   };
   const planWithPaige = (play?: StrategicPlay | BusinessMissionDetail["mission"]) => {
     if (!workspaceId) return;
@@ -122,7 +144,9 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     openPaige?.();
   };
 
-  const finish = async (result: Awaited<ReturnType<typeof brain.mutate>>, success: string) => {
+  const finish = async (result: Awaited<ReturnType<typeof brain.mutate>>, success: string, expectedRead: number) => {
+    const current = () => lifetime.current.alive && lifetime.current.read === expectedRead;
+    if (!current()) return false;
     if (!result.ok) {
       if (result.outcomeUnknown) {
         // Outcome unknown ≠ failure: the write may have landed and only its
@@ -143,8 +167,10 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     setLastToState(null);
     onNotice?.(result.railRecorded ? success : success + " The saved change is verified, but its Rail receipt is not yet confirmed.");
     if (result.missionId) {
-      try { setSelected(await brain.getDetail(result.missionId)); } catch { setSelected(null); }
+      try { const detail = await brain.getDetail(result.missionId); if (current()) setSelected(detail); }
+      catch { if (current()) setSelected(null); }
     }
+    if (!current()) return false;
     setPending(null);
     setReason("");
     return true;
@@ -186,8 +212,10 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     const keyDecision = saveKeeper.current.keyFor(JSON.stringify(payload));
     if (!keyDecision.reused) setUnknown(null);
     const args = { ...payload, request_key: keyDecision.key };
+    const read = lifetime.current.read;
     const result = await brain.mutate(drawer === "edit" ? "mission_revise" : "mission_create", args);
-    const ok = await finish(result, drawer === "edit" ? "Strategic play revised and verified." : "Draft strategic play created and verified.");
+    const ok = await finish(result, drawer === "edit" ? "Strategic play revised and verified." : "Draft strategic play created and verified.", read);
+    if (!lifetime.current.alive || lifetime.current.read !== read) return;
     if (ok) { saveKeeper.current.settle(); setDrawer("view"); }
     setBusy(false);
   };
@@ -216,12 +244,14 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     if (!keyDecision.reused) setUnknown(null);
     const args = { ...payload, request_key: keyDecision.key };
     setBusy(true); setError(null);
+    const read = lifetime.current.read;
     const result = await brain.mutate("mission_transition", args);
     const ok = await finish(result, toState === "active" ? "Strategic play is active and verified."
       : toState === "paused" ? "Strategic play paused and verified."
       : toState === "blocked" ? "Blocker recorded and verified."
       : toState === "completed" ? "Outcome recorded and completion verified."
-      : "Strategic play archived with its history preserved.");
+      : "Strategic play archived with its history preserved.", read);
+    if (!lifetime.current.alive || lifetime.current.read !== read) return;
     if (ok) transitionKeeper.current.settle();
     setBusy(false);
   };
@@ -258,7 +288,7 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
       <section className="sd-card pim" aria-labelledby="plan-in-motion-title">
         <div className="sd-card-hd pim-head">
           <div><span className="sd-eyebrow"><Flag /> Plan in Motion</span><p>Strategic plays you can revisit, approve, pause, and verify.</p></div>
-          <button className="sd-btn sd-btn-sm" onClick={openCreate}>Add play</button>
+          <button className="sd-btn sd-btn-sm" disabled={!workspaceId || brain.status !== "ready"} onClick={openCreate}>Add play</button>
         </div>
         {brain.status === "loading" && <div className="pim-state" aria-busy="true"><RefreshCw className="pim-spin" /> Loading strategic plays.</div>}
         {brain.status === "forbidden" && <div className="pim-state"><AlertTriangle /><span><b>Owner access required.</b> This workspace does not grant you permission to change strategic plays.</span></div>}
@@ -305,7 +335,7 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
             ) : !selected ? (
               <div className="ov-body">{error ? <div className="sd-errbox"><AlertTriangle /><p>{error}</p></div> : <div className="pim-state" aria-busy="true">Loading the canonical play.</div>}</div>
             ) : (
-              <PlayDetail detail={selected} pending={pending} setPending={setPending} reason={reason} setReason={setReason} outcome={outcome} setOutcome={setOutcome} error={error} busy={busy} onEdit={beginEdit} onPaige={() => planWithPaige(selected.mission)} onTransition={transition} />
+              <PlayDetail workspaceId={workspaceId} detail={selected} pending={pending} setPending={setPending} reason={reason} setReason={setReason} outcome={outcome} setOutcome={setOutcome} error={error} busy={busy} onEdit={beginEdit} onPaige={() => planWithPaige(selected.mission)} onTransition={transition} />
             )}
             {unknown && (
               <div className="ov-err pim-reconcile" data-mission-reconcile role="status" aria-live="polite">
@@ -323,7 +353,8 @@ export function PlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
   );
 }
 
-function PlayDetail({ detail, pending, setPending, reason, setReason, outcome, setOutcome, error, busy, onEdit, onPaige, onTransition }: {
+function PlayDetail({ workspaceId, detail, pending, setPending, reason, setReason, outcome, setOutcome, error, busy, onEdit, onPaige, onTransition }: {
+  workspaceId?: string | null;
   detail: BusinessMissionDetail; pending: PendingAction; setPending: (value: PendingAction) => void; reason: string; setReason: (value: string) => void;
   outcome: MissionOutcome; setOutcome: (value: MissionOutcome) => void; error: string | null; busy: boolean; onEdit: () => void; onPaige: () => void; onTransition: (state: MissionState) => void;
 }) {
@@ -331,6 +362,7 @@ function PlayDetail({ detail, pending, setPending, reason, setReason, outcome, s
   const proposed = state === "proposed";
   return <><div className="ov-body">
     <div className="pim-detail-stage">{proposed && detail.mission.request_source === "paige_chat" ? "Awaiting owner approval" : state === "stopped" ? "Archived" : state === "completed" ? "Complete" : state[0].toUpperCase() + state.slice(1)} - revision {detail.mission.revision}</div>
+    <MissionTargetsPanel workspaceId={workspaceId} mission={detail.mission} />
     <Fact label="Desired outcome" value={detail.brief.desired_outcome} /><Fact label="Horizon" value={detail.brief.deadline_on || "Open horizon"} /><Fact label="Starting point" value={detail.brief.baseline} /><Fact label="Approach" value={detail.brief.strategy} /><Fact label="Success criteria" value={detail.brief.success_definition} /><Fact label="Next meaningful step" value={detail.mission.next_action || "Not set"} /><Fact label="Next owner" value="Owner" />
     {state === "blocked" && detail.mission.state_reason && <div className="pim-blocker"><AlertTriangle />{detail.mission.state_reason}</div>}
     {(state === "completed" || state === "stopped") && detail.mission.outcome_summary && <Fact label="Recorded outcome" value={detail.mission.outcome_summary} />}

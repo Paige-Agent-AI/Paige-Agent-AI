@@ -40,7 +40,7 @@ it("responsive Calendar inspection replaces its outer modal and retains one read
   expect(harness.read.mock.calls.every(args => args.length === 0)).toBe(true);
   await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  // Radix restores focus from its deferred unmount cleanup, after Escape closes the dialog.
+  // Radix dispatches close autofocus from its deferred FocusScope cleanup.
   await vi.waitFor(() => expect(document.activeElement?.className).toContain("sc-board"));
 });
 it("Chat Escape returns focus to the existing weekly opener", async () => {

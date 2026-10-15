@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useClientPortalRead } from "./useClientPortalRead";
 
 /**
  * The tenant brand for the signed-in customer's client portal (§6). Resolves the
  * caller's own tenant via get_client_portal_brand() (SECURITY DEFINER, keyed on
- * clients.linked_user_id = auth.uid()). Returns null until loaded / for non-clients.
+ * the canonical active relationship). Returns null until loaded / for non-clients.
  */
 export interface ClientPortalBrand {
   tenant_id: string | null;
@@ -31,19 +31,16 @@ export interface ClientPortalBrandState {
  * tenant brand, then fall back to the platform brand only once resolved-empty.
  */
 export function useClientPortalBrandState(): ClientPortalBrandState {
-  const [state, setState] = useState<ClientPortalBrandState>({ brand: null, loading: true });
+  const { data: brand, loading } = useClientPortalRead(readBrand, null);
+  return { brand, loading };
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    supabase.rpc("get_client_portal_brand").then(({ data }) => {
-      if (cancelled) return;
-      const row = Array.isArray(data) ? data[0] : data;
-      setState({ brand: (row as ClientPortalBrand) ?? null, loading: false });
-    }).catch(() => { if (!cancelled) setState({ brand: null, loading: false }); });
-    return () => { cancelled = true; };
-  }, []);
-
-  return state;
+async function readBrand(): Promise<ClientPortalBrand | null> {
+  const { data, error } = await supabase.rpc("get_client_portal_brand");
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== "object" || typeof row.tenant_id !== "string" || !row.tenant_id) return null;
+  return row as ClientPortalBrand;
 }
 
 /**

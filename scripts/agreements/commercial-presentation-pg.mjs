@@ -104,7 +104,7 @@ try{
   if(contextMigration){
     const contextStart=checks;
     sql(read('supabase/migrations/20270407000000_agreement_view_tracking.sql'));
-    sql(read('supabase/migrations/20271101153000_signing_context_unknown_economics.sql'));
+    sql(read('supabase/migrations/20271105100000_signing_context_unknown_economics.sql'));
     sql(read(contextMigration));sql(read(contextMigration));
     sql(`UPDATE paige_agreements SET status='sent',sent_at=now(),expires_at=now()+interval '1 day' WHERE id='${agreementId}';
       INSERT INTO paige_agreement_signers(agreement_id,tenant_id,full_name,email,signing_order,token_hash,token_expires_at)

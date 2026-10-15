@@ -1,0 +1,14 @@
+{
+  "url": "https://paigeagent.ai/assets/LiveTranscriptPanel-D5hBLtYp.js",
+  "http_status": 200,
+  "utf8_bytes": 188610,
+  "utf8_sha256": "2E5531E744014F6D4A6713CFD5A44BA45AFDD4661AE0F926C8144919F97FA106",
+  "observed_at": "2026-10-14T03:39:39.8399047Z",
+  "markers": {
+    "weekly_commitment_owner": true,
+    "get_weekly_commitment_checks": true,
+    "weeklySource": true,
+    "Weekly responsibility": true,
+    "Authorize schedule unavailable": true
+  }
+}

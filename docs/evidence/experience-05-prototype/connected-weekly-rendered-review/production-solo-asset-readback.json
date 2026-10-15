@@ -1,0 +1,14 @@
+{
+  "url": "https://paigeagent.ai/assets/SoloEntry-B43QwZe7.js",
+  "http_status": 200,
+  "utf8_bytes": 2273993,
+  "utf8_sha256": "14C8ED2BFCF8943C98EF481D79EDD7F9C3A122A41CA8D1FFE4DBEAF54AD18622",
+  "observed_at": "2026-10-14T03:38:57.7544345Z",
+  "markers": {
+    "weekly_commitment_owner": false,
+    "get_weekly_commitment_checks": false,
+    "weeklySource": true,
+    "Weekly responsibility": false,
+    "Authorize schedule unavailable": false
+  }
+}

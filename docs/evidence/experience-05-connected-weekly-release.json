@@ -1,0 +1,201 @@
+{
+  "evidence_class": "guarded_inert_ui_release_and_read_only_production_metadata",
+  "pr": 2130,
+  "reviewed_head": "a31196b8c619119f8926e778d3d6a9614fd8cd99",
+  "main_commit": "e0f8e40add39d76a739328c6275d00bc0702dbb8",
+  "release_channel": "production",
+  "classification": "internal-only",
+  "customer_release_identity": null,
+  "post_merge_reports": {
+    "reported_at": "2026-10-14T03:42:49Z",
+    "status": "HOLD_PENDING_OWNER_BOUNDED_REPAIR_REVIEW",
+    "triage": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#issuecomment-6160529991",
+    "scope": "Author triage of three supplied post-merge reports only; no additional independent product audit or authenticated acceptance.",
+    "reports": [
+      {
+        "priority": "P1",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536344",
+        "assessment": "Current ordinary draft-departure gap also present before this PR; source-supported, no customer loss observed"
+      },
+      {
+        "priority": "P2",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536352",
+        "assessment": "One local synthetic expected-behavior assertion FAIL reproduces Back-history destruction; two supporting tests skipped"
+      },
+      {
+        "priority": "P2",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#discussion_r4266536356",
+        "assessment": "Static-supported exclusion of reassigned source when current same-tenant admin RLS permits read; no business rows read"
+      }
+    ],
+    "product_repair_made": false,
+    "additional_independent_product_review_started": false,
+    "review_limit_disposition": "Requested under AGENTS.md99; original source review plus allowed recheck already complete",
+    "customer_outcome": "UNVERIFIED"
+  },
+  "independent_review": {
+    "kind": "non_author_agent",
+    "status": "COMPLETE",
+    "verdict": "SHIP",
+    "unresolved_material_findings": 0,
+    "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2130#issuecomment-6160190429"
+  },
+  "exact_head_workflows": [
+    {
+      "name": "ui-delivery-evidence",
+      "run_id": 38505435523,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Security Audit",
+      "run_id": 38505435625,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Finance source proof",
+      "run_id": 38505435609,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "PAIGE Spine contract",
+      "run_id": 38505435591,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "ci",
+      "run_id": 38505435576,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "migration-lint",
+      "run_id": 38505435554,
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "deployment": {
+    "id": "dpl_9ZymaDEaSLYLU3YicioK1xoCoz71",
+    "project_id": "prj_P4H3mXpEWCTtorB5Hi56OAlr5eqO",
+    "team_id": "team_eGiYeMXQEtcQqVAzuimviA78",
+    "state": "READY",
+    "target": "production",
+    "sha": "e0f8e40add39d76a739328c6275d00bc0702dbb8",
+    "url": "https://paige-agent-meagall2s-paige-agent-ai.vercel.app"
+  },
+  "public_readback": {
+    "observed_at": "2026-10-14T03:37:32.9081212Z",
+    "origin": "https://paigeagent.ai",
+    "html_http_status": 200,
+    "version_http_status": 200,
+    "build_id": "e0f8e40add39d76a739328c6275d00bc0702dbb8-mv7k5brp",
+    "customer_update": null,
+    "scope": "Public metadata/static assets only; no authenticated shell, backend behavior or customer acceptance claim."
+  },
+  "migrations": "NOT_APPLICABLE: this PR changes no migration; existing weekly28/29/30 persisted in readback",
+  "edge": "NOT_APPLICABLE: changed prepared projection has no Edge entrypoint importer; no declaration/admission/executor change",
+  "backend_dark_readback": {
+    "observed_at": "2026-10-14 03:37:34.584119+00",
+    "chat_protocol": {
+      "active": false,
+      "version": 2
+    },
+    "recurring_trigger": {
+      "key": "schedule.weekly_commitment_check",
+      "is_live": false,
+      "dark_reason": "Weekly occurrence publication is awaiting released and authenticated acceptance."
+    },
+    "weekly_processes": 0,
+    "weekly_events": 0,
+    "weekly_acts": 0,
+    "weekly_provider_refs": 0,
+    "weekly_receipts": 0,
+    "weekly_permission_overrides": 0,
+    "cron_job_count": 27,
+    "weekly_cron_jobs": 0,
+    "migrations": [
+      {
+        "version": "20271028000000",
+        "statements": 75
+      },
+      {
+        "version": "20271029000000",
+        "statements": 4
+      },
+      {
+        "version": "20271030000000",
+        "statements": 9
+      }
+    ],
+    "getter_md5": "99218816ce1b8111e80360b1bd9aa189",
+    "getter_grants": {
+      "anon": false,
+      "service_role": false,
+      "authenticated": true
+    },
+    "executor_grants": {
+      "anon": false,
+      "service_role": true,
+      "authenticated": false
+    },
+    "history_indexes": [
+      {
+        "name": "weekly_commitment_event_recency_idx",
+        "ready": true,
+        "valid": true
+      },
+      {
+        "name": "weekly_commitment_receipt_lookup_idx",
+        "ready": true,
+        "valid": true
+      }
+    ]
+  },
+  "render": {
+    "source": "22376f01aaf9ea52e363c830bd42d75e856f24dd",
+    "artifact_sha256": "40D39A4DDC50B071A4CBF2E28A88EA34C93CCC2E141A57DFFB8C7CD1B550037F",
+    "synthetic_checks_passed": 570,
+    "raw_pngs": 148,
+    "stable_source_hashes": 39,
+    "scope": "Local deterministic native-component review only; original pixel payloads unchanged in origin-tagged publication copies."
+  },
+  "effectful_controls_exposed": false,
+  "trigger_activated": false,
+  "weekly_chat_live_admission_changed": false,
+  "customer_records_mutated_for_demo": false,
+  "authenticated_customer_cases": "E5-CV1–9 NOT_RUN",
+  "customer_outcome": "UNVERIFIED",
+  "owner_design_and_first_live_execution_authorization": "PENDING",
+  "remaining_engineering": [
+    "Exact canonical command/authorization binding",
+    "Full bounded run history/future controls",
+    "Scoped receipt-bound in-app notice producer/readback"
+  ],
+  "recovery": "Ordinary reviewed source revert; preserve trigger OFF, receipts and reconcile unknown before replay.",
+  "corrective_followup": {
+    "as_of": "2026-10-15",
+    "owner_authorization": "Direct owner full-completion directive: one bounded correction and one independent final review for the three supplied findings",
+    "pr": 2163,
+    "head": "36abedc4869408922dfd8940841fa91ea6436097",
+    "state": "OPEN_DRAFT_UNMERGED_NOT_DEPLOYED",
+    "required_exact_head_ci": "SUCCESS",
+    "vercel_statuses": "SUCCESS",
+    "focused_tests": {
+      "passed": 34,
+      "failed": 0,
+      "evidence_class": "local_source_test_not_authenticated_acceptance"
+    },
+    "independent_final_review": "NOT_RUN_UNCONSUMED",
+    "docs_closeout_pr": 2134,
+    "docs_final_recheck": "NOT_RUN",
+    "other_agents_involved": false,
+    "all_ten_customer_acceptance": "UNVERIFIED",
+    "original_and_nine_additive_qa": "NOT_RUN",
+    "production_release_identity_changed": false,
+    "boundary": "Historical #2130 release/readback below is not production proof of the correction. No activation or effect authority."
+  }
+}

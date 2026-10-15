@@ -1,0 +1,15 @@
+{
+  "url": "https://paigeagent.ai/assets/main-BaPdIt8o.js",
+  "http_status": 200,
+  "utf8_bytes": 1102050,
+  "utf8_sha256": "05C4EAB019D4E608669FE58B7A946222DF24F35D7BE0FA81F2830187B2B76C04",
+  "observed_at": "2026-10-14T03:38:22.4196869Z",
+  "markers": {
+    "e0f8e40add39d76a739328c6275d00bc0702dbb8": true,
+    "weekly_commitment_owner": false,
+    "get_weekly_commitment_checks": false,
+    "weeklySource": false,
+    "Weekly responsibility": false,
+    "Authorize schedule unavailable": false
+  }
+}

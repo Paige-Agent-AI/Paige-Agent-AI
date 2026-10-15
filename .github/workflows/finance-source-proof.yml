@@ -13,7 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
+        # Same immutable official linux/amd64 image; ECR Public exhausted its anonymous
+        # data quota before tests on 2026-10-15. Origin manifest bytes/digest verified.
+        image: postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:

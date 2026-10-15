@@ -229,9 +229,10 @@ All changes remain in the native consumer boundary; protected acceptance stays o
 ## F7 Executive / conversation read integration — pre-edit contract
 
 The preceding foundation candidate text is historical: #2167 merged892b1bdfe with
-verified production source. Native consumer#2174 is separately draft7a898a10d with
-fresh CI after the original retry-fixture correction. This slice is read integration,
-not consequential activation.
+verified production source. Native consumer#2174 has since released as3fa8b501619782f533ac80d778fb309bf21b53b0
+from reviewed7a898a10d, with eight exact-head workflow groups and production web/database/Edge
+source readback verified. Authenticated target acceptance remains owed. This following
+slice#2181 is read integration, not consequential activation.
 
 1. Intended outcome: an owner asks about goals, sees the same saved target/compatible
    actual in PAIGE and Executive, opens the owning Play and returns to the same record.

@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: Reviewed forward privilege-only change denies the unintende
 MOTION_PURPOSE: NONE: no motion.
 PROTECTED_SEAMS: No raw-table privilege expansion, new callable/RPC/executor/registry/inbox/CRM/store, actor credentials or provider activation.
 
-INTERNAL_BUILD_IDENTITY:4ef741354ac0353eba24e56bf70e8268e8f04974; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271106130000_e09_client_intake_table_authority is an unapplied local candidate); edge=NOT_APPLICABLE; evidence=existing native self-write proof and hosted actual-schema self-profile test
+INTERNAL_BUILD_IDENTITY:bca7a6cb5b0498058c72ed29828ad6d5313f23c0; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271106130000_e09_client_intake_table_authority is an unapplied local candidate); edge=NOT_APPLICABLE; evidence=existing native self-write proof and hosted actual-schema self-profile test
 RELEASE_CHANNEL: development: local preparation only; normal reviewed production migration pipeline owns apply.
 RELEASE_CLASSIFICATION: internal-only: privilege containment within incomplete Portal delivery.
 CUSTOMER_RELEASE_IDENTITY: none: no authenticated coherent product outcome or publication approval.
 RELEASE_NOTE_REQUIRED: NO: no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: implementation and source/persistence/effective-permission validation; actual customer acceptance and full Portal remain unverified.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: native command ACL/profile regressions proven; PROOF OWED hosted schema, exact-head reviews/CI and production persistence/effective-permission validation. Actual customer acceptance and full Portal remain unverified.
 RELEASE_RECOVERY: position=reviewed forward ACL correction preserving safe restrictions; reference=AGENTS.md and release-governance-and-customer-update-policy.md; never restore unintended destructive public/client access.
 
 ## Precise proof boundary
@@ -40,3 +40,5 @@ RELEASE_RECOVERY: position=reviewed forward ACL correction preserving safe restr
 This is least-privilege database command containment, not a reproduced public HTTP exploit or incident/privacy closure. Catalog role privileges alone do not establish a reachable browser/API path; no destructive command was attempted against production. Native fixtures explicitly seed direct-role plus PUBLIC grant controls and use declared Auth/table stand-ins. Actual PostgreSQL permission evaluation proves the bounded command ACL and unchanged native profile behavior; the hosted schema, normal migration pipeline and effective production privilege readback remain required.
 
 The candidate starts a fresh dedicated loopback PostgreSQL16 cluster on port55457, runs36 checks and stops in finally. The earlier port55456 omitted-migration control retained32PASS/3expectedFAIL; all three failures are the intended command-grant assertions, and profile/phone behavior still passes. Both reports/transcripts are retained under the originating task work/e09-intake-authority-{proof,baseline}. No dependency install, frontend build, unrelated UI recapture, new CI lane, raw-table grant expansion, provider effect or account creation occurred.
+
+CLI2.109.1 created the empty file before safe unapplied renumbering above observed production20271106120000 to20271106130000. The first CLI attempt was blocked only by its normal local telemetry filesystem write; the authorized local retry succeeded without a production connection. Migration SHA2568c15e202d22fde1243bc2db893c3a7003ff9abc825426fcdf7bcced804e4acfd. Native profile writer/functions, ordinary DML grants, existing RLS/policies and trusted service command authority are preserved. The five new hosted pgTAP checks extend the incumbent full-schema profile job and remain unexecuted at this checkpoint. No applied migration was renamed or rewritten.

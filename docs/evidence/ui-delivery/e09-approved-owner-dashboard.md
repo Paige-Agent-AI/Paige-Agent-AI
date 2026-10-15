@@ -32,11 +32,11 @@ RELEASE_CHANNEL: development: isolated source verification; intended ordinary pr
 RELEASE_CLASSIFICATION: internal-only: bounded owner dashboard adoption within incomplete E09 product, no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved named customer release or demonstrated complete seven-pillar outcome.
 RELEASE_NOTE_REQUIRED: no: internal implementation increment; customer announcement gate not met.
-RELEASE_TRUTH_BOUNDARY: PARTIAL owner Portal source composition and incumbent record connections; UNVERIFIED authenticated owner/customer flows and final acceptance; UNAVAILABLE new aggregate conversational capability; no LIVE end-to-end Portal claim.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: owner Portal source composition and incumbent record connections; UNVERIFIED authenticated owner/customer flows and final acceptance; UNAVAILABLE new aggregate conversational capability; no LIVE end-to-end Portal claim.
 RELEASE_RECOVERY: position=forward-correct or revert this bounded UI while retaining canonical records and server guards; reference=AGENTS.md and release-governance-and-customer-update-policy.md; no database/history reset or blind send replay.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e09-approved-dashboard/1536-770-closed-light-test-tenant-a-content-Overview.png; matching dark capture; actual shell, compact dashboard and panel scroll owner.
-SOLO_1536X770_PAIGE_OPEN: PASS: assets/e09-approved-dashboard/1536-770-open-light-test-tenant-a-content-Overview.png; matching dark capture; existing PAIGE panel with isolated placeholder content, no new Chat engine.
+SOLO_1536X770_PAIGE_OPEN: PASS: assets/e09-approved-dashboard/1536-770-open-light-test-tenant-a-content-Overview.png; matching dark capture; existing PAIGE panel with isolated read-only test content, no Chat provider exercised.
 SOLO_1366X768_PAIGE_CLOSED: PASS: assets/e09-approved-dashboard/1366-768-closed-light-test-tenant-a-content-Overview.png; matching dark capture; no document overflow or clipped non-table control.
 SOLO_1366X768_PAIGE_OPEN: PASS: assets/e09-approved-dashboard/1366-768-open-light-test-tenant-a-content-Overview.png; matching dark capture; shell panel follows actual responsive behavior.
 SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e09-approved-dashboard/1024-768-closed-light-test-tenant-a-content-Overview.png; matching dark capture; table scroll remains local.

@@ -1,0 +1,136 @@
+{
+  "result": "PASS",
+  "cases": 17,
+  "details": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "light",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "dark",
+      "phase": "canonical-reader-proposal",
+      "result": "PASS"
+    },
+    {
+      "mode": "pending",
+      "result": "PASS"
+    },
+    {
+      "mode": "missing",
+      "result": "PASS"
+    },
+    {
+      "mode": "denied",
+      "result": "PASS"
+    },
+    {
+      "mode": "error",
+      "result": "PASS"
+    },
+    {
+      "mode": "long",
+      "result": "PASS"
+    }
+  ],
+  "requestsBlocked": 0,
+  "additional": "Actual mounted inspection and canonical proposal/source/schedule/hash modules; fake database transports, no authentication or writes. Portal, Escape focus, late close, scope retirement, missing/denied/error, long body. Native zoom and provider acceptance unverified."
+}

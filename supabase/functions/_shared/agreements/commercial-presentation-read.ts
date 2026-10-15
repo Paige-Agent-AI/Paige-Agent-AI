@@ -1,5 +1,5 @@
 import { UUID } from '../sales-collections/primitives.ts';
-import { prepareCommercialPresentation, type PreparedCommercialPresentation } from './commercial-presentation.ts';
+import { commercialPresentationText, prepareCommercialPresentation, type PreparedCommercialPresentation } from './commercial-presentation.ts';
 
 type Row = Record<string, unknown>;
 type Result = {data:unknown;error:unknown};
@@ -86,11 +86,15 @@ export async function readCommercialPresentationSource(
 }
 
 /** Original proposal material only; it creates no approval and freezes no record. */
-export async function prepareCommercialPresentationFromRecords(tenant:unknown,args:unknown,caller:Caller):Promise<
-  Exclude<PresentationSourceRead,{state:'source'}>|{state:'proposed';presentation:PreparedCommercialPresentation}
-> {
+export type CommercialPresentationProposal = Exclude<PresentationSourceRead,{state:'source'}>|{
+  state:'proposed';presentation:PreparedCommercialPresentation;presented_body_markdown:string;
+};
+export async function prepareCommercialPresentationFromRecords(tenant:unknown,args:unknown,caller:Caller):Promise<CommercialPresentationProposal> {
   const source=await readCommercialPresentationSource(tenant,args,caller);
   if(source.state!=='source')return source;
-  try{return {state:'proposed',presentation:await prepareCommercialPresentation(source.input)};}
+  try{
+    const presentation=await prepareCommercialPresentation(source.input);
+    return {state:'proposed',presentation,presented_body_markdown:commercialPresentationText(source.input.body_markdown as string,presentation)};
+  }
   catch{return {state:'needs_input',fields:['complete_supported_commercial_presentation']};}
 }

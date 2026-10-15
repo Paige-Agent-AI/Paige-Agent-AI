@@ -1,0 +1,8 @@
+{
+  "base": "11d25091961bf3ef105f9f68f8602a95e87f9dda",
+  "oldDigest": "4286ebbf49192920713f840eb56bc524f31f146fd4431357c99336f40c137260",
+  "proposedDigest": "3b9a1e7656aeb35804d7e29a8c8f75adf272f997a2ac71f01cf3a5caa44eadb8",
+  "delta": "Exactly one high-classified UI key; every prior byte/tuple/function unchanged",
+  "independentReview": "PROOF_OWED",
+  "admission": "No new Chat binding; INT346 unchanged"
+}

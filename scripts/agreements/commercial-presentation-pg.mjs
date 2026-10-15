@@ -1,21 +1,32 @@
 // Isolated canonical agreement/actor fixtures only. No customer login, signing or provider.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {spawnSync,spawn} from 'node:child_process';
 import {randomUUID,createHash} from 'node:crypto';
 import {prepareCommercialPresentation,canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 import {proveAcceptedCommercialRecord} from './accepted-commercial-proof.mjs';
+import {proveEffectiveCommercialTerms} from './effective-commercial-proof.mjs';
 const [psql,port,user,directory,mode]=process.argv.slice(2);
 const contextIndex=process.argv.indexOf('--signing-context');
 const contextMigration=contextIndex>=0?process.argv[contextIndex+1]:null;
 const acceptedIndex=process.argv.indexOf('--accepted-record');
 const acceptedMigration=acceptedIndex>=0?process.argv[acceptedIndex+1]:null;
+const effectiveIndex=process.argv.indexOf('--effective-terms');
+const effectiveMigration=effectiveIndex>=0?process.argv[effectiveIndex+1]:null;
+if(effectiveIndex>=0)assert(effectiveMigration&&acceptedMigration&&contextMigration&&mode==='repaired');
 if(acceptedIndex>=0)assert(acceptedMigration&&contextMigration&&mode==='repaired');
 if(contextIndex>=0)assert(contextMigration&&mode==='repaired');
 assert(psql&&/^\d+$/.test(port??'')&&user&&directory&&['baseline','repaired'].includes(mode));
 let database='postgres',checks=0,contextChecks=0;
 const sql=(input)=>{const r=spawnSync(psql,['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose'],{input,encoding:'utf8',windowsHide:true,maxBuffer:8e6});if(r.status!==0)throw Error(r.stderr);return r.stdout.trim();};
+const concurrent=async inputs=>{
+  const results=await Promise.allSettled(inputs.map(input=>new Promise((resolve,reject)=>{assert(database.startsWith('commercial_presentation_'));const child=spawn(psql,['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose'],{windowsHide:true});let out='',err='';child.stdout.on('data',v=>out+=v);child.stderr.on('data',v=>err+=v);child.on('error',reject);child.on('close',code=>code===0?resolve(out.trim()):reject(Error(err)));child.stdin.end(input);})));
+  // Wait for every owned connection before finally drops the unique database,
+  // including when one participant fails. Never leave a sibling query behind.
+  const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+  return results.map(result=>result.value);
+};
 const read=p=>readFileSync(new URL(`../../${p}`,import.meta.url),'utf8');
 const literal=value=>`'${JSON.stringify(value).replaceAll("'","''")}'::jsonb`;
 const text=value=>`'${value.replaceAll("'","''")}'`;
@@ -174,5 +185,6 @@ try{
     contextChecks=checks-contextStart;
   }
   const acceptedChecks=acceptedMigration?await proveAcceptedCommercialRecord({sql,read,scope,tenant,actor,client,offer,termsId,invoiceId,agreementId,prepared,input,presented,migration:acceptedMigration}):0;
-  console.log(JSON.stringify({result:'PASS',checks,contextChecks,acceptedChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing/accepted context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
+  const effectiveChecks=effectiveMigration?await proveEffectiveCommercialTerms({sql,concurrent,read,scope,tenant,actor,termsId,invoiceId,agreementId,prepared,migration:effectiveMigration}):0;
+  console.log(JSON.stringify({result:'PASS',checks,contextChecks,acceptedChecks,effectiveChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing/accepted/effective context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
 }finally{database='postgres';sql(`DROP DATABASE ${own};`);}

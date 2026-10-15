@@ -58,12 +58,16 @@ function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
  if('commercial_terms_reference' in i){try{reference=parseCommercialTermsReference(i.commercial_terms_reference);}catch{return false;}}
  if(reference&&t===null)return false;
  if(t!==null){
-  if(!object(t)||!only(t,['id','version','updated_at','status','offer_id','amount_minor','currency','record_owner','schedule'])
+  if(!object(t)||!only(t,['id','version','updated_at','status','offer_id','amount_minor','currency','record_owner','schedule','effective_provenance'])
    ||!id(t.id)||!Number.isSafeInteger(t.version)||Number(t.version)<0||t.record_owner!=='commercial_collection_terms'
    ||!(t.offer_id===null||id(t.offer_id))||!(t.amount_minor===null||minor(t.amount_minor))
    ||!(t.currency===null||typeof t.currency==='string'&&/^[a-z]{3}$/.test(t.currency))
    ||!['draft','active','paused','completed','cancelled'].includes(String(t.status))
    ||typeof t.updated_at!=='string'||t.updated_at.length>50||!Number.isFinite(Date.parse(t.updated_at)))return false;
+  if(t.effective_provenance!==undefined&&t.effective_provenance!==null){const e=t.effective_provenance;
+   if(!object(e)||!only(e,['signing_id','terms_version','recorded_at','operation_id'])||!id(e.signing_id)||!id(e.operation_id)
+    ||!Number.isSafeInteger(e.terms_version)||Number(e.terms_version)<0||typeof e.recorded_at!=='string'||e.recorded_at.length>50||!Number.isFinite(Date.parse(e.recorded_at)))return false;
+  }
   if(reference){
    if(reference.id!==t.id||!codes(r.conflicts))return false;
    if(reference.version!==t.version&&!r.conflicts.includes('commercial_terms_version_changed'))return false;

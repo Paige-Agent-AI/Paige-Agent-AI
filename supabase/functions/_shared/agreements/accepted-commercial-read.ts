@@ -10,7 +10,7 @@ const only=(v:Row,keys:string[])=>Object.keys(v).every(k=>keys.includes(k));
 export type AcceptedCommercialRead=
  | {state:'refused'}
  | {state:'unverified'}
- | {state:'recorded';presentation:PreparedCommercialPresentation;presented_body_markdown:string;completed_at:string;receipt_id:string};
+ | {state:'recorded';presentation:PreparedCommercialPresentation;presented_body_markdown:string;completed_at:string;receipt_id:string;sealed_sha256:string};
 
 /** Explicit owner inspection of retained economics. Existing RPC owns caller,
  * tenant, client, invoice/signing linkage, consent and completion authorization.
@@ -39,6 +39,6 @@ export async function readAcceptedCommercialAgreement(tenant:unknown,args:unknow
    body_markdown:r.body_markdown,principal_minor:p.principal_minor,currency:p.currency,collection_terms:p.collection_terms,conditions:p.conditions,lines:p.lines});
   if(presentation.payload_digest!==r.payload_digest||canonicalPresentationJson(presentation.payload)!==canonicalPresentationJson(p)
    ||commercialPresentationText(r.body_markdown,presentation)!==r.presented_body_markdown)return refused;
-  return {state:'recorded',presentation,presented_body_markdown:r.presented_body_markdown,completed_at:r.completed_at,receipt_id:r.receipt_id};
+  return {state:'recorded',presentation,presented_body_markdown:r.presented_body_markdown,completed_at:r.completed_at,receipt_id:r.receipt_id,sealed_sha256:r.sealed_sha256 as string};
  }catch{return refused;}
 }

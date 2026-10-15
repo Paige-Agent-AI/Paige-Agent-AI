@@ -116,7 +116,7 @@ try{
     environment text,amount_minor bigint,currency text,state text,provider_url text,expires_at timestamptz,created_at timestamptz DEFAULT now());
     CREATE TABLE tenant_stripe_accounts(tenant_id uuid,stripe_account_id text,binding_version bigint,provider_environment text,
       charges_enabled boolean,sales_payment_permission boolean);`);
-  const migration=read('supabase/migrations/20271101164000_e04_client_commercial_status.sql');
+  const migration=read('supabase/migrations/20271105102000_e04_client_commercial_status.sql');
   sql(migration);sql(migration);
   const first=result();
   equal(first.client_id,client);equal(first.invoice_count,3);equal(first.has_more,false);

@@ -33,7 +33,7 @@ MUST_PRESERVE: Existing bearer-grant invoice access and bootstrap privacy, froze
 ACCEPTANCE_CRITERIA: Properly linked client sees only their invoices/balances, opens the same record, sees current approved request with correct environment, loses access on revocation, and returns/reloads without fabricated success. Hosted acceptance remains unverified.
 MOTION_PURPOSE: NONE: immediate read/status transitions only.
 PROTECTED_SEAMS: Actual actor/self-link and before/after scope checks; canonical ledger/version cursor; existing merchant binding/expiry/version checks; public invoice bootstrap; delivery review presenter untouched. Signing, approval consumption, Operations writes, provider dispatch and Chat admission are unchanged.
-INTERNAL_BUILD_IDENTITY: implementation=01931a84da782818c6e8930b7b0c167d491dbcd2; source=a4eb489a4d1264aa7e608040e8ccca691fd88465; main=ffbdd1d3c1b7fa2aebbc79fcf2562c7822f80006; deployment=UNVERIFIED; environment=local development; migrations=PROOF_OWED(20271101164000); edge=PROOF_OWED(sales-invoice-document); evidence=this record and assets/e04-client-commercial-status/result.json
+INTERNAL_BUILD_IDENTITY: implementation=01931a84da782818c6e8930b7b0c167d491dbcd2; source=a4eb489a4d1264aa7e608040e8ccca691fd88465; main=ffbdd1d3c1b7fa2aebbc79fcf2562c7822f80006; deployment=UNVERIFIED; environment=local development; migrations=PROOF_OWED(20271105102000); edge=PROOF_OWED(sales-invoice-document); evidence=this record and assets/e04-client-commercial-status/result.json
 RELEASE_CHANNEL: development: local source and synthetic proof only; no runtime/provider activation.
 RELEASE_CLASSIFICATION: internal-only: incomplete development integration toward the full E04 destination; no customer release candidate is declared.
 CUSTOMER_RELEASE_IDENTITY: none: whole E04 customer outcome and acceptance remain incomplete.
@@ -97,3 +97,10 @@ At published head `0c8167a1a189db95649baa4ce950ff989a898f3d`, required SQL proof
 The adjacent hosted-request test's positive fixture lacked the new canonical environment field. Its URL/rel/no-dispatch assertions are preserved for explicit live and test fixtures; a separate unclassified fixture now proves no checkout is offered. The initially failed hosted Test job's full log could not be retrieved through the connector; the adjacent failure was independently reproduced locally, and fresh complete hosted CI remains required. No global suite pass is inferred from the targeted reproduction.
 
 The provider-boundary job also failed before tests at public ECR container initialization (`Data limit exceeded`), independently of the source failures. Only #2156's affected infrastructure job was selectively retried. Original failure evidence remains; no test, container digest, authority rule or CI gate was waived.
+
+
+## Forward-only migration identity reconciliation — 2026-10-15 UTC
+
+Production recorded the released Knowledge migration20271102110000. This E04 migration is NOT recorded in production and is moved forward without changing a single SQL byte. Existing historical filenames and test observations above remain historical evidence. Current proof loaders and this record's pending migration field use the new identity. Preview reconciliation may change only the exact matching installed migration receipt version after branch/data/receipt checks; it must retain its original name and statement array. No production history rewrite, schema replay, reset, include-all bypass, activation or authenticated acceptance follows from this source rename.
+
+Current mappings in this source: 20271101164000 → 20271105102000.

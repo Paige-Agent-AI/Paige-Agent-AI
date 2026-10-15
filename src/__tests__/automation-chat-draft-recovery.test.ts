@@ -2,7 +2,6 @@
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { checkedWrite } from '../../supabase/functions/_shared/checked-write';
 import { databaseAnswered, OUTCOME_UNKNOWN_NOTE } from '../../supabase/functions/_shared/approval-outcome';
 import { interactiveEffect, interactiveReceiptContext } from '../../supabase/functions/_shared/paige-turn/interactive';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
@@ -17,7 +16,7 @@ function visit(n: ts.Node) {
 visit(ast);
 if (!branch) throw new Error('Canonical automation draft dispatch missing');
 const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, personaCtx, user, toolResults,
-  recordWrite, databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState) ${branch.getText(ast)}`,
+  databaseAnswered, OUTCOME_UNKNOWN_NOTE, requestExecutionState) ${branch.getText(ast)}`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const dispatch = new Function(`${code}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -67,7 +66,7 @@ async function drive(fault = '', args: object = input) {
     return q;
   } };
   await dispatch({ id: 'draft-call', function: { name: 'automation_draft', arguments: JSON.stringify(args) } }, caller, { tenant_id: tenant }, { id: actor }, outputs,
-    (label: string, write: PromiseLike<unknown>) => checkedWrite(label, write, () => {}), databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery);
+    databaseAnswered, OUTCOME_UNKNOWN_NOTE, recovery);
   expect(outputs).toHaveLength(1);
   return { state, result: JSON.parse(outputs[0].content), recovery };
 }

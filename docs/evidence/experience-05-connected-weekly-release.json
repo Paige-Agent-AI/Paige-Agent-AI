@@ -175,5 +175,27 @@
     "Full bounded run history/future controls",
     "Scoped receipt-bound in-app notice producer/readback"
   ],
-  "recovery": "Ordinary reviewed source revert; preserve trigger OFF, receipts and reconcile unknown before replay."
+  "recovery": "Ordinary reviewed source revert; preserve trigger OFF, receipts and reconcile unknown before replay.",
+  "corrective_followup": {
+    "as_of": "2026-10-15",
+    "owner_authorization": "Direct owner full-completion directive: one bounded correction and one independent final review for the three supplied findings",
+    "pr": 2163,
+    "head": "36abedc4869408922dfd8940841fa91ea6436097",
+    "state": "OPEN_DRAFT_UNMERGED_NOT_DEPLOYED",
+    "required_exact_head_ci": "SUCCESS",
+    "vercel_statuses": "SUCCESS",
+    "focused_tests": {
+      "passed": 34,
+      "failed": 0,
+      "evidence_class": "local_source_test_not_authenticated_acceptance"
+    },
+    "independent_final_review": "NOT_RUN_UNCONSUMED",
+    "docs_closeout_pr": 2134,
+    "docs_final_recheck": "NOT_RUN",
+    "other_agents_involved": false,
+    "all_ten_customer_acceptance": "UNVERIFIED",
+    "original_and_nine_additive_qa": "NOT_RUN",
+    "production_release_identity_changed": false,
+    "boundary": "Historical #2130 release/readback below is not production proof of the correction. No activation or effect authority."
+  }
 }

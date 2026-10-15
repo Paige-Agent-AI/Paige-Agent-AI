@@ -10,7 +10,7 @@
     },
     {
       "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
-      "sha256": "7834e40b1f2bce3cdef37cb0e965c76c12fd6814ed9374976b2640fa9b299559"
+      "sha256": "539299b1e21caf40072e2c3c74f27f2d8737749da7c696e71c915185ef73e033"
     },
     {
       "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
@@ -22,7 +22,7 @@
     },
     {
       "file": "src/pages/admin/PortalStudio.tsx",
-      "sha256": "93f9870f11d26e13906d9f458fa50943271da15fa745823d70e8b73cc6f5830c"
+      "sha256": "fc3bcaf36f327948d2751916c4d524728d91fca8c008335906a163ad53dc69ab"
     }
   ],
   "cases": [

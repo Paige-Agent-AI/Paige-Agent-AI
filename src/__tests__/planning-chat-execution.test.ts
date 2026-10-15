@@ -83,8 +83,7 @@ describe('canonical Planning Chat execution and recovery', () => {
     expect(result.note).not.toMatch(/will ping|will.*email|locked in/i);
   });
   it.each([null, { ...saved, tenant_id: id(99) }, { ...saved, title: 'Different reminder' },
-    { ...saved, remind_at: '2026-10-16T14:00:00Z' }, { ...saved, assigned_to_user_id: id(99) }])
-  ('does not turn missing or mismatched record evidence into success', async readback => {
+    { ...saved, remind_at: '2026-10-16T14:00:00Z' }, { ...saved, assigned_to_user_id: id(99) }])('does not turn missing or mismatched record evidence into success', async readback => {
     const { result } = await drive({ readback });
     expect(result).toMatchObject({ success: false, outcome_unknown: true });
     expect(result.not_applied).not.toBe(true);

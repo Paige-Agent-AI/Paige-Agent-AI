@@ -3,6 +3,8 @@
 .invoice-document-toolbar button{min-height:44px;padding:10px 16px;border:1px solid #bbb;border-radius:8px;background:#f6f4fa;color:#172033;font:600 16px/1.4 system-ui;cursor:pointer}
 .invoice-document-toolbar button:disabled{opacity:.55;cursor:default}
 .invoice-document-toolbar button:focus-visible{outline:2px solid #6247aa;outline-offset:3px}
+.invoice-document-toolbar a{min-height:44px;padding:10px 16px;border:1px solid #bbb;border-radius:8px;background:#f6f4fa;color:#172033;font:600 16px/1.4 system-ui;text-decoration:none;display:inline-flex;align-items:center}
+.invoice-document-toolbar a:focus-visible{outline:2px solid #6247aa;outline-offset:3px}
 .invoice-document-page iframe{flex:1;min-height:0;width:100%;border:0}
 .invoice-document-page>p{padding:24px}
 
@@ -14,3 +16,4 @@
 .invoice-payment-request{padding:12px 20px;background:#f5f2ff;border-bottom:1px solid #d8ceff;color:#182442}.invoice-payment-request p{margin:8px 0}.invoice-payment-request a{display:inline-block;padding:10px 16px;border-radius:8px;background:#5937d5;color:white;text-decoration:none;font-weight:600}.invoice-payment-request button{padding:8px 12px;border:1px solid #c6b7ef;border-radius:8px;background:white;color:#2d2059}
 
 .invoice-payment-request button,.invoice-payment-request a{min-height:44px;display:inline-flex;align-items:center}.invoice-payment-request button:focus-visible,.invoice-payment-request a:focus-visible{outline:2px solid #6640d8;outline-offset:3px}
+@media(max-width:600px){.invoice-document-toolbar>:is(button,a){flex:1 1 calc(50% - 6px);justify-content:center;text-align:center}}

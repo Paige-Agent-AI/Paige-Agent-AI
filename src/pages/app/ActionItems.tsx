@@ -21,6 +21,7 @@ import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
 import { ClientReleasedWork } from "@/components/client/ClientReleasedWork";
+import { ClientInvoices } from "@/components/client/ClientInvoices";
 
 const TYPE_LABEL: Record<CustomerAction["action_type"], string> = {
   task: "Task",
@@ -195,6 +196,7 @@ export default function ActionItems() {
         </p>
       </div>
 
+      <ClientInvoices />
       <ClientReleasedWork />
       <ClientActivityFeed contactId={contactId} />
 

@@ -1,4 +1,5 @@
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
+import {readAuthenticatedClientInvoiceLedger,readAuthenticatedClientInvoicePaymentRequest} from '../_shared/sales-invoice-client.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 import {overRateLimit,trustedClientIp} from '../_shared/rateLimit.ts';
 import {sha256Hex} from '../_shared/agreements/token.ts';
@@ -26,7 +27,15 @@ Deno.serve(async req=>{
     const authorization=req.headers.get('authorization');
     if(!invoiceId||!tenantId||!authorization?.startsWith('Bearer '))return refuse();
     const caller=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false},global:{headers:{Authorization:authorization}}});
-    projection=await collectInvoiceLedger(caller,'read_sales_invoice_payment_ledger',{_expected_tenant_id:tenantId,_invoice_id:invoiceId});
+    const clientId=url.searchParams.get('client_id');
+    if(clientId!==null&&url.searchParams.get('format')==='payment-request'){
+      const data=await readAuthenticatedClientInvoicePaymentRequest(caller,{tenantId,clientId,invoiceId});
+      if(!data)return refuse();
+      return new Response(JSON.stringify(data),{headers:{...headers,'Content-Type':'application/json'}});
+    }
+    projection=clientId!==null
+      ?await readAuthenticatedClientInvoiceLedger(caller,{tenantId,clientId,invoiceId})
+      :await collectInvoiceLedger(caller,'read_sales_invoice_payment_ledger',{_expected_tenant_id:tenantId,_invoice_id:invoiceId});
     if(!projection)return refuse();
   }
   const html=renderSalesInvoiceDocument(projection);if(!html)return refuse();

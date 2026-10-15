@@ -2,6 +2,20 @@
 
 These instructions apply to Codex, Claude, and every other implementation agent working in this repository.
 
+## Owner standing delegation, complete outcomes, and release policy (2026-10-14)
+
+These are owner-directed requirements for **every active and future PAIGE agent**, including Experience, shared-capability, Customer Portal and BUG work. They supplement, rather than waive, the independent-review, CI, security, privacy and approval rules below.
+
+**End-to-end accountability and quality.** The assigned agent owns all approved customer outcomes through grounding, necessary domain research, implementation, reuse of shared capabilities, UI/UX, integration, review, CI, merge, deployment/readback, authenticated QA coordination and owner product acceptance. Deliver the **full approved experience**, not a reduced dashboard or backend slice. Use small PRs as delivery increments, never a permanent scope reduction. Preserve earlier working Spine/Chat/Harness/Trust/Rail capabilities; coordinate protected shared-file ownership with the active BUG restoration and other active agents. Never silently disable or replace an existing feature. Impeccable and the other mandatory design skills above remain fully required.
+
+**Supabase MCP and ordinary engineering autonomy.** The owner delegates **routine authorized Supabase engineering within the agent's assignment** to each active agent using its existing MCP access. Independently inspect actual project and branch scope; diagnose Preview, migration history/frontier, CI, Edge deployments, function/source parity and permissions; resolve safe within-scope issues; coordinate concurrent writers; and record guarded pre/post-operation evidence. Do **not** refer routine Supabase work to an archived administrator or the sole human owner. MCP connectivity alone does **not** prove permission for every protected project, Preview branch or operation. A 403 requires exact permission/branch/runner diagnosis, not an authorization bypass, secret extraction, migration reset or unsafe history rewrite. Privileged or destructive changes require their existing legitimate authority and review.
+
+**Merge to main after green.** Following all applicable **independent non-author SHIP review**, required exact-head CI, migration/source compatibility and standard authorized release gates, agents **must merge the completed PR to `main` and perform ordinary live production deployment and authoritative readback**, without treating the owner's later hands-on UX evaluation as a routine pre-merge gate. Owner personally evaluates the released Experience afterward and retains **final product acceptance**. Explicitly report code merge, deployment, feature activation, authenticated QA and owner acceptance as different states; a READY deployment is not proof of a working customer outcome.
+
+**Mandatory holds still apply.** Never bypass an unresolved material review finding, an exhausted review exception under this file, failed required CI/Preview, unauthorized RLS/identity/credential or privileged production action, destructive database change, live external send or provider spend/payment, or gated effectful Chat, Computer, Research or recurring-work activation. The full product mandate authorizes building, **not** automatic execution of previously prohibited production effects. Routine rebases, non-destructive migration renumbering, tests and ordinary reviewed release housekeeping belong to the agent and should not generate repetitive owner approval requests.
+
+Publish exact PR/head, non-author review, required CI, merge SHA, production web/Edge/migration readback, authenticated QA and remaining owner decisions to the original coding conversation and canonical Linear record. Continue independent safe work while a narrow security/permission dependency is held.
+
 ## Mandatory routing
 
 1. Every software assignment starts by reading the installed Flow-by-Flow skill completely and following every routed reference.

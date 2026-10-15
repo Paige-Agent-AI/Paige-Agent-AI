@@ -1,5 +1,6 @@
 import { UUID } from '../sales-collections/primitives.ts';
-import { canonicalPresentationJson, commercialPresentationText, prepareCommercialPresentation, type PreparedCommercialPresentation } from './commercial-presentation.ts';
+import type {PreparedCommercialPresentation} from './commercial-presentation.ts';
+import {decodeRetainedCommercialPresentation} from './retained-presentation.ts';
 
 type Row=Record<string,unknown>;
 type Caller={rpc(name:string,args?:Row):PromiseLike<{data:unknown;error:unknown}>};
@@ -33,12 +34,10 @@ export async function readAcceptedCommercialAgreement(tenant:unknown,args:unknow
    ||typeof r.completed_at!=='string'||!Number.isFinite(Date.parse(r.completed_at))
    ||typeof r.body_markdown!=='string'||typeof r.presented_body_markdown!=='string'||r.presented_body_markdown.length>300000)return refused;
   const p=r.payload;
-  if(!only(p,['schema_version','source','title','body_sha256','principal_minor','currency','amount_basis','collection_terms','obligations','conditions','lines'])
+  if(!only(p,['schema_version','source','title','body_sha256','principal_minor','currency','amount_basis','collection_terms','obligations','conditions','lines',...(p.schema_version===2?['engagement']:[])])
    ||!object(p.source)||p.source.tenant_id!==tenant||p.source.invoice_id!==args.invoice_id||p.source.agreement_id!==args.agreement_id)return refused;
-  const presentation=await prepareCommercialPresentation({schema_version:p.schema_version,source:p.source,title:p.title,
-   body_markdown:r.body_markdown,principal_minor:p.principal_minor,currency:p.currency,collection_terms:p.collection_terms,conditions:p.conditions,lines:p.lines});
-  if(presentation.payload_digest!==r.payload_digest||canonicalPresentationJson(presentation.payload)!==canonicalPresentationJson(p)
-   ||commercialPresentationText(r.body_markdown,presentation)!==r.presented_body_markdown)return refused;
+  const presentation=await decodeRetainedCommercialPresentation(p,r.payload_digest,r.body_markdown,r.presented_body_markdown);
+  if(!presentation)return refused;
   return {state:'recorded',presentation,presented_body_markdown:r.presented_body_markdown,completed_at:r.completed_at,receipt_id:r.receipt_id,sealed_sha256:r.sealed_sha256 as string};
  }catch{return refused;}
 }

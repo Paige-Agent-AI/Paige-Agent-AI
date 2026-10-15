@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "method": "Same real ESLint filePath/config; multiset of rule/severity/message/node type and exact trimmed source line, with indentation-relative columns. No baseline/config changes.",
+  "files": [
+    {
+      "file": "supabase/functions/paige-ai-chat/index.ts",
+      "baseline": 399,
+      "current": 399,
+      "newOrChangedDiagnostics": 0,
+      "added": []
+    },
+    {
+      "file": "src/solo/sales-ops.tsx",
+      "baseline": 1,
+      "current": 1,
+      "newOrChangedDiagnostics": 0,
+      "added": []
+    }
+  ]
+}

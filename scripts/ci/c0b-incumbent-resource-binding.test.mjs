@@ -9,6 +9,8 @@ test('all 29 reviewed incumbent adapters bind to real dispatch and dependency so
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
 const mutations=[
+ ['E04 preparation attribution targets wrong record',s=>s.replace('sales_prepare_agreement: "paige_agreements",','sales_prepare_agreement: "clients",')],
+ ['E04 preparation attribution removed',s=>s.replace('sales_prepare_agreement: "paige_agreements",','')],
  ['E04 attribution targets wrong canonical record',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','sales_effectuate_commercial_terms: "clients",')],
  ['E04 attribution entry removed',s=>s.replace('sales_effectuate_commercial_terms: "tenant_client_agreements",','')],
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
@@ -131,6 +133,16 @@ test('E04 proposed policy pin rejects effectuation risk downgrade',()=>{
  assert.ok(result.findings.includes(`incumbent reviewed source changed: ${path}`));
  // The collector can retain an advisory partial map; the combined findings
  // and metadata validator must refuse the complete incumbent declaration set.
+ const declared=[...actual.tools.values()].map(spec=>({key:spec.key,selfDescribe:spec.selfDescribe,readiness:spec.readiness,chatBinding:'LIVE',mindBinding:'UNAVAILABLE',maturity:'PARTIAL',action:{...spec}}));
+ assert.ok(validateIncumbentDeclarations(declared,result).length>0);
+});
+for(const [label,mutate]of [
+ ['downgraded',s=>s.replace('["sales_prepare_agreement", "high"','["sales_prepare_agreement", "ordinary"')],
+ ['removed',s=>s.replace(/^.*\["sales_prepare_agreement", "high".*\r?\n/m,'')],
+])test(`E04 preparation proposed policy pin rejects ${label} high UI key`,()=>{
+ const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=mutate(raw);assert.notEqual(changed,raw);
+ const altered=new Map(sources);altered.set(path,changed);const result=validateIncumbentResourceBindings(chat,altered);
+ assert.ok(result.findings.includes(`incumbent reviewed source changed: ${path}`));
  const declared=[...actual.tools.values()].map(spec=>({key:spec.key,selfDescribe:spec.selfDescribe,readiness:spec.readiness,chatBinding:'LIVE',mindBinding:'UNAVAILABLE',maturity:'PARTIAL',action:{...spec}}));
  assert.ok(validateIncumbentDeclarations(declared,result).length>0);
 });

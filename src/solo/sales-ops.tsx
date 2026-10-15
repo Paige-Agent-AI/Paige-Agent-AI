@@ -1213,7 +1213,7 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-send-title">Send for signature</h2>
-            <p>{sent ? "This has been sent." : "Nothing has been sent yet."}</p>
+            <p>{sent ? "The send request has a recorded result." : ["sent", "viewed", "partially_signed"].includes(signing.signatureState) ? "An earlier signature request is recorded. Review its current status before sending again." : "Review this agreement before requesting signatures."}</p>
           </div>
           <button className="btn btn-s btn-q" onClick={onClose} disabled={busy}>{sent ? "Done" : "Back"}</button>
         </header>
@@ -1227,6 +1227,7 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
           <div className="so-recap">
             <div className="so-rrow"><span>To</span><span><b>{clientName || "This client"}</b></span></div>
             <div className="so-rrow"><span>Document</span><span>{signing.documentTitle}</span></div>
+            {Number.isSafeInteger(signing.sourceVersion)&&signing.sourceVersion>0&&<div className="so-rrow"><span>Signing version</span><span>{signing.sourceVersion}</span></div>}
             <div className="so-rrow"><span>They agree to</span><span className="so-num">{agreedLabel || "No price is stated on this document"}</span></div>
             <div className="so-rrow"><span>Link expires</span><span>{SEND_TTL_DAYS} days after it is sent</span></div>
           </div>
@@ -1842,10 +1843,19 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
             ? ` · ${CADENCE_LABEL[row.billingInterval] || row.billingInterval}`
             : ""}`;
 
+  const openInvoiceSigning=async(target,stillCurrent)=>{
+    const unavailable={ok:false,message:"This exact agreement could not be opened. Refresh its current signing record before continuing."};
+    if(!canSign||!signings.canManage||signings.tenantId!==target.tenantId)return unavailable;
+    const result=await signings.readSigning(target.agreementId,target.tenantId);
+    if(!stillCurrent()||!result.ok||result.version!==target.agreementVersion||result.signing.contactId!==target.clientId||!['draft','sent','viewed','partially_signed'].includes(result.signing.signatureState))return unavailable;
+    setSending({...result.signing,scopeTenantId:target.tenantId,sourceVersion:result.version,agreedLabel:"As recorded in the retained agreement"});
+    return {ok:true};
+  };
+
   /** Open the send step for a document, from wherever it was reached. */
   const openSender = (signing, contactId, agreement) => {
     setDetail(null);
-    setSending({ ...signing, contactId, agreedLabel: agreedLabelFor(agreement) });
+    setSending({ ...signing, contactId, agreedLabel: agreedLabelFor(agreement),scopeTenantId:signings.tenantId });
   };
 
   /** The document's own rows in the shared drawer. A record with no document says so plainly
@@ -2045,12 +2055,12 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
             setEditing(null);
             // Straight into the send step, carrying the client it is for so nobody has to
             // re-identify the person they just chose.
-            setSending({ ...created, displayState: created.signatureState || "draft" });
+            setSending({ ...created, displayState: created.signatureState || "draft",scopeTenantId:signings.tenantId });
           }}
           onClose={() => { setEditor(null); setEditing(null); }}
         />
       ) : null}
-      {sending ? (
+      {sending&&sending.scopeTenantId===signings.tenantId ? (
         <SignatureSender
           signings={signings}
           signing={sending}
@@ -2074,7 +2084,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       {!hideNavigation && <SubNav view={view} setView={setView} />}
       <div id="sales-view-panel" role={hideNavigation ? undefined : "tabpanel"} aria-labelledby={hideNavigation || LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
-      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} focusInvoiceIds={focusInvoiceIds} onClearInvoiceFocus={clearInvoiceFocus} accountEpoch={`${location.pathname.split("/").slice(0, 3).join("/")}:${invoiceAccountEpoch ?? ""}`} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
+      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} focusInvoiceIds={focusInvoiceIds} onClearInvoiceFocus={clearInvoiceFocus} accountEpoch={`${location.pathname.split("/").slice(0, 3).join("/")}:${invoiceAccountEpoch ?? ""}`} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} onManageSignatures={canSign ? openInvoiceSigning : undefined} />}
       {view === "command" && (
         <div className="so-cmd">
           <header className="so-cmd-head">

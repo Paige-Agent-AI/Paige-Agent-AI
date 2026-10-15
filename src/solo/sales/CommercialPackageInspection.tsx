@@ -1,7 +1,9 @@
 import React from 'react';
 import {supabase} from '@/integrations/supabase/client';
 import {readCommercialPackage} from '../../../supabase/functions/_shared/sales-commercial/package-projection';
+import {CommercialSigningNavigation,type OpenCommercialSigning} from './CommercialSigningNavigation';
 import {CommercialAgreementPreview} from './CommercialAgreementPreview';
+import {CommercialAgreementPreparation} from './CommercialAgreementPreparation';
 import {CommercialTermsEffectuation} from './CommercialTermsEffectuation';
 
 const record=(v:unknown):Record<string,unknown>=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{};
@@ -9,12 +11,22 @@ const explain=(code:string)=>({accepted_commercial_terms_changed:'Current paymen
 
 /** Same caller-JWT inspection used by PAIGE; a separate explicit owner action
  * below reuses the incumbent Collections approval rather than making reads act. */
-export function CommercialPackageInspection({tenantId,invoiceId,version,canPrepare=false}:{tenantId:string;invoiceId:string;version:number;canPrepare?:boolean}) {
+export function CommercialPackageInspection({tenantId,invoiceId,version,canPrepare=false,canManage=canPrepare,onManageSignatures}:{tenantId:string;invoiceId:string;version:number;canPrepare?:boolean;canManage?:boolean;onManageSignatures?:OpenCommercialSigning}) {
  const [request,setRequest]=React.useState(0),[result,setResult]=React.useState<{scope:string;content:Record<string,unknown>}|null>(null);
  const [notification,setNotification]=React.useState(''),refreshButton=React.useRef<HTMLButtonElement>(null);
+ const authEpoch=React.useRef(0);
  const scope=`${tenantId}:${invoiceId}:${version}`;
+ React.useEffect(()=>{
+  const lifecycle=authEpoch;let actor:string|null|undefined;
+  const {data}=supabase.auth.onAuthStateChange((event,session)=>{
+   const next=session?.user.id??null,previous=actor;actor=next;
+   if(previous===next||previous===undefined&&event==='INITIAL_SESSION')return;
+   authEpoch.current++;setResult(null);setNotification('');setRequest(n=>n>0?n+1:0);
+  });
+  return()=>{lifecycle.current++;data.subscription.unsubscribe();};
+ },[]);
  React.useEffect(()=>{setNotification('');},[scope]);
- React.useEffect(()=>{setResult(null);if(!request)return;let current=true;void readCommercialPackage(tenantId,{invoice_id:invoiceId},supabase).then(({content})=>{if(current)setResult({scope,content})});return()=>{current=false};},[scope,request,tenantId,invoiceId]);
+ React.useEffect(()=>{setResult(null);if(!request)return;let current=true;const started=authEpoch.current;void readCommercialPackage(tenantId,{invoice_id:invoiceId},supabase).then(({content})=>{if(current&&started===authEpoch.current)setResult({scope,content})});return()=>{current=false};},[scope,request,tenantId,invoiceId]);
  const content=result?.scope===scope?result.content:null, invoice=record(content?.invoice),agreement=record(content?.agreement),terms=record(content?.commercial_terms),preview=record(content?.schedule_preview),conditions=record(content?.commercial_conditions),acceptedTerms=record(content?.accepted_commercial_terms);
  const provenance=record(terms.effective_provenance);
  const money=(v:unknown,currency:unknown=invoice.currency)=>typeof v==='number'?new Intl.NumberFormat('en-US',{style:'currency',currency:typeof currency==='string'?currency.toUpperCase():'USD'}).format(v/100):'Not recorded';
@@ -26,9 +38,11 @@ export function CommercialPackageInspection({tenantId,invoiceId,version,canPrepa
  {Array.isArray(preview.rows)&&<><h4>Recorded obligations · not collected payments</h4><ol>{preview.rows.map((row,index)=>{const r=record(row);return <li key={index}>{String(r.due_date)} · {money(r.amount_cents)}</li>})}</ol>{preview.has_more===true&&<p>Additional recorded obligations are available in Collections.</p>}</>}
  {(['conflicts','missing_fields'] as const).map(key=>Array.isArray(content[key])&&content[key].length>0?<div key={key}><h4>{key==='conflicts'?'Resolve conflicts':'Information still needed'}</h4><ul>{(content[key] as string[]).map(code=><li key={code}>{explain(code)}</li>)}</ul></div>:null)}
  <p>Inspection does not approve, publish, send or collect. Each next action retains its own authorization.</p>
- {canPrepare&&invoice.status==='draft'&&agreement.status==='draft'&&typeof agreement.id==='string'&&<CommercialAgreementPreview key={scope+':'+request} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id}/>}
- {canPrepare&&agreement.status==='completed'&&typeof agreement.id==='string'&&<div className="sc-actions"><CommercialAgreementPreview key={scope+':'+request+':accepted'} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id} mode="accepted"/>
- {acceptedTerms.basis==='completed_immutable_presentation'&&typeof terms.id==='string'&&typeof terms.version==='number'&&typeof terms.updated_at==='string'&&['draft','active'].includes(String(terms.status))
+ {canPrepare&&invoice.status==='draft'&&agreement.status==='draft'&&agreement.document_available!==true&&typeof agreement.id==='string'&&<div className="sc-actions"><CommercialAgreementPreview key={scope+':'+request} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id}/><CommercialAgreementPreparation key={scope+':'+request+':prepare'} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id} onReturnFocus={()=>refreshButton.current?.focus()} onRecorded={message=>{setNotification(message);setRequest(n=>n+1);}}/></div>}
+ {canManage&&agreement.document_available===true&&agreement.status!=='completed'&&typeof agreement.id==='string'&&<CommercialAgreementPreview key={scope+':'+request+':retained'} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id} mode="retained"/>}
+ {canManage&&onManageSignatures&&agreement.document_available===true&&['draft','sent','viewed','partially_signed'].includes(String(agreement.status))&&typeof agreement.id==='string'&&typeof agreement.version==='number'&&typeof invoice.client_id==='string'&&<CommercialSigningNavigation key={scope+':'+request+':signatures'} target={{tenantId,agreementId:agreement.id,agreementVersion:agreement.version,clientId:invoice.client_id}} onOpen={onManageSignatures}/>}
+ {canManage&&agreement.status==='completed'&&typeof agreement.id==='string'&&<div className="sc-actions"><CommercialAgreementPreview key={scope+':'+request+':accepted'} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id} mode="accepted"/>
+ {canPrepare&&acceptedTerms.basis==='completed_immutable_presentation'&&typeof terms.id==='string'&&typeof terms.version==='number'&&typeof terms.updated_at==='string'&&['draft','active'].includes(String(terms.status))
   &&!(provenance.signing_id===agreement.id&&provenance.terms_version===terms.version)&&<CommercialTermsEffectuation key={scope+':'+request+':effectuate'} tenantId={tenantId} invoiceId={invoiceId} agreementId={agreement.id}
    termsId={terms.id} termsVersion={terms.version} termsUpdatedAt={terms.updated_at} onReturnFocus={()=>refreshButton.current?.focus()} onRecorded={message=>{setNotification(message);setRequest(n=>n+1);}}/>}
  </div>}

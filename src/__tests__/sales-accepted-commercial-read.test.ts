@@ -9,11 +9,11 @@ const id=(n:number)=>`${String(n).padStart(8,'0')}-0000-4000-8000-000000000001`;
 const tenant=id(1),client=id(2),offer=id(3),agreement=id(4),terms=id(5),invoice=id(6),receipt=id(7);
 const treatment={state:'not_applicable',charges:[],source:'Synthetic recorded decision',policy:'No additional charge'};
 const conditions={schema_version:1,tax:treatment,fees:treatment};
-async function retained(){
+async function retained(schemaVersion:1|2=1){
  const schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-15',cadence:'monthly'});
  if(schedule.state!=='ready')throw Error('Synthetic schedule unavailable');
  const body='Synthetic retained service agreement.';
- const presentation=await prepareCommercialPresentation({schema_version:1,source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:agreement,agreement_version:4,agreement_updated_at:'2026-10-14T18:00:00Z',body_source:'tenant_template',status:'draft',content_sha256:null,terms_id:terms,terms_version:3,terms_updated_at:'2026-10-14T18:00:00Z',invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},title:'Synthetic agreement',body_markdown:body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]});
+ const presentation=await prepareCommercialPresentation({schema_version:schemaVersion,...(schemaVersion===2?{engagement:{starts_on:"2026-10-01",ends_on:null,price_basis:"negotiated"}}:{}),source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:agreement,agreement_version:4,agreement_updated_at:'2026-10-14T18:00:00Z',body_source:'tenant_template',status:'draft',content_sha256:null,terms_id:terms,terms_version:3,terms_updated_at:'2026-10-14T18:00:00Z',invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:'2026-10-14T18:00:00Z'},title:'Synthetic agreement',body_markdown:body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]});
  return {schema_version:1,state:'recorded',tenant_id:tenant,invoice_id:invoice,agreement_id:agreement,receipt_id:receipt,completed_at:'2026-10-15T00:00:00Z',payload:presentation.payload,payload_digest:presentation.payload_digest,body_markdown:body,presented_body_markdown:commercialPresentationText(body,presentation),document_sha256:'a'.repeat(64),sealed_sha256:'b'.repeat(64)};
 }
 const read=async(data:unknown)=>readAcceptedCommercialAgreement(tenant,{invoice_id:invoice,agreement_id:agreement},{rpc:async()=>({data,error:null})});
@@ -83,4 +83,12 @@ it.each(['identity','amount','rows','leak','unsigned','invented_compatibility','
  if(kind==='invoice_revision')data.invoice.draft_version=2;
  if(kind==='terms_revision')data.commercial_terms.version=4;
  expect((await packageRead(data)).success).toBe(false);
+});
+
+it('reads retained v2 service facts without borrowing the later mutable source',async()=>{
+ const data=await retained(2),result=await read(data);
+ expect(result).toMatchObject({state:'recorded',presentation:{payload:{schema_version:2,engagement:{starts_on:'2026-10-01',ends_on:null,price_basis:'negotiated'}}}});
+ if(result.state==='recorded')expect(result.presented_body_markdown).toContain('Service starts: 2026-10-01');
+ const changed=structuredClone(data);(changed.payload.engagement as {starts_on:string}).starts_on='2026-10-02';
+ expect(await read(changed)).toEqual({state:'refused'});
 });

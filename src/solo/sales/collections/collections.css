@@ -45,3 +45,5 @@
 .sc-calendar-notice{display:flex;align-items:center;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;margin-top:12px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .sc-calendar-notice p{margin:0!important;max-width:68ch;font-size:13px}
 .sc-overdue{color:var(--bad);font-weight:650}
+
+.sc-preparation-document{min-width:0;padding-top:16px;border-top:1px solid var(--line)}.sc-preparation-document summary{min-height:44px;display:flex;align-items:center;font-weight:600;cursor:pointer}.sc-preparation-document article{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;max-width:70ch;margin:14px 0;font-family:inherit}

@@ -638,10 +638,11 @@ if (fs.existsSync(collectionHandlerPath)) {
   const contract=fs.readFileSync('supabase/functions/_shared/sales-collections/contract.ts','utf8');
   const map=contract.slice(contract.indexOf('export const COLLECTION_ACTIONS ='),contract.indexOf('} as const;'));
   const actions=[...map.matchAll(/'collection\.[a-z_]+':\s*'([a-z0-9_]+)'/g)].map(match=>match[1]);
-  const expectedCollectionActions=['sales_save_collection_terms','sales_stage_collection_import','sales_commit_collection_import','sales_record_manual_payment','sales_reverse_manual_payment','sales_create_commercial_terms','sales_effectuate_commercial_terms'];
+  const expectedCollectionActions=['sales_save_collection_terms','sales_stage_collection_import','sales_commit_collection_import','sales_record_manual_payment','sales_reverse_manual_payment','sales_create_commercial_terms','sales_effectuate_commercial_terms','sales_prepare_agreement'];
   if(actions.length!==expectedCollectionActions.length||new Set(actions).size!==actions.length||expectedCollectionActions.some(action=>!actions.includes(action)))throw new Error('Collections closed action map could not be parsed');
   // C-1 extends the owner UI only. Classification is not Chat admission.
   if(parseChat(chatSrc,importedTools).declared.includes('sales_effectuate_commercial_terms'))throw new Error('Signed-term effectuation has no authorized Chat binding');
+  if(parseChat(chatSrc,importedTools).declared.includes('sales_prepare_agreement'))throw new Error('Agreement preparation has no authorized Chat binding');
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);
 }

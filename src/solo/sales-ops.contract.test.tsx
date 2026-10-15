@@ -1488,6 +1488,28 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(after.textContent).toContain("This is the only time you will see it");
   });
 
+  it("opens the incumbent signature manager for the exact invoice agreement absent from the register",async()=>{
+    const module=await import('./sales/SalesBillingWorkspace');
+    const target={tenantId:'tenant-1',agreementId:'exact-retained',agreementVersion:4,clientId:'c1'};
+    const spy=vi.spyOn(module,'SalesBillingWorkspace').mockImplementation(props=><button onClick={()=>void props.onManageSignatures?.(target,()=>true)}>Open exact invoice signing</button>);
+    try{
+      harness.signings.readSigning=vi.fn(async()=>({ok:true,version:4,signing:{...SIGNING,id:target.agreementId,signatureState:'draft',displayState:'draft',documentTitle:'Exact retained services'}}));
+      harness.signings.signings=[];render('invoices');await act(async()=>buttonSaying('Open exact invoice signing')!.click());
+      expect(harness.signings.readSigning).toHaveBeenCalledWith('exact-retained','tenant-1');const dialog=document.querySelector('[role="dialog"]')!;
+      expect(dialog.textContent).toContain('Exact retained services');expect(dialog.textContent).toContain('As recorded in the retained agreement');expect(dialog.textContent).toContain('Signing version');expect(dialog.textContent).not.toContain('No price is stated');
+      expect(dialog.textContent).toContain('Or copy a link to send yourself');expect(harness.signings.sendForSignature).not.toHaveBeenCalled();expect(harness.signings.issueLink).not.toHaveBeenCalled();
+      await act(async()=>Array.from(dialog.querySelectorAll('button')).find(b=>b.textContent==='Back')!.click());expect(document.querySelector('[role="dialog"]')).toBeNull();expect(buttonSaying('Open exact invoice signing')).toBeDefined();
+    }finally{spy.mockRestore();}
+  });
+  it.each(['version','client','status','retired_consumer'])('refuses %s mismatch before opening invoice signature management',async kind=>{
+    const module=await import('./sales/SalesBillingWorkspace'),target={tenantId:'tenant-1',agreementId:'exact-retained',agreementVersion:4,clientId:'c1'};
+    const spy=vi.spyOn(module,'SalesBillingWorkspace').mockImplementation(props=><button onClick={()=>void props.onManageSignatures?.(target,()=>kind!=='retired_consumer')}>Open exact invoice signing</button>);
+    try{
+      harness.signings.readSigning=vi.fn(async()=>({ok:true,version:kind==='version'?5:4,signing:{...SIGNING,id:target.agreementId,contactId:kind==='client'?'other-client':'c1',signatureState:kind==='status'?'completed':'draft'}}));
+      render('invoices');await act(async()=>buttonSaying('Open exact invoice signing')!.click());expect(document.querySelector('[role="dialog"]')).toBeNull();expect(harness.signings.sendForSignature).not.toHaveBeenCalled();
+    }finally{spy.mockRestore();}
+  });
+
   /* ── the approved act: a real send (§28 screen 3) ───────────────────────────────────────── */
 
   const openSender = () => {

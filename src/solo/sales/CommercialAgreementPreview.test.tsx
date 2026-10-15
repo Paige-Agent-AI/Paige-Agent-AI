@@ -3,17 +3,18 @@ import {createRoot,type Root} from 'react-dom/client';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {CommercialAgreementPreview} from './CommercialAgreementPreview';
 
-const fixture=vi.hoisted(()=>({prepare:vi.fn(),accepted:vi.fn(),rpc:vi.fn()}));
-vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:fixture.rpc}}));
+const fixture=vi.hoisted(()=>({prepare:vi.fn(),accepted:vi.fn(),retained:vi.fn(),rpc:vi.fn(),onAuth:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:fixture.rpc,auth:{onAuthStateChange:(callback:NonNullable<typeof fixture.onAuth>)=>{fixture.onAuth=callback;callback('INITIAL_SESSION',{user:{id:'synthetic-owner'}});return {data:{subscription:{unsubscribe(){}}}};}}}}));
 vi.mock('../../../supabase/functions/_shared/agreements/commercial-presentation-read',()=>({prepareCommercialPresentationFromRecords:fixture.prepare}));
 vi.mock('../../../supabase/functions/_shared/agreements/accepted-commercial-read',()=>({readAcceptedCommercialAgreement:fixture.accepted}));
+vi.mock('../../../supabase/functions/_shared/agreements/retained-commercial-read',()=>({readRetainedCommercialAgreement:fixture.retained}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let host:HTMLDivElement,root:Root;
 const proposed=(title='Synthetic agreement')=>({state:'proposed',presentation:{payload:{title,source:{agreement_version:4,invoice_draft_version:3,terms_version:5}}},presented_body_markdown:'Original saved services.\n\nPrincipal: USD 3,500.00\nDeposit: USD 500.00\nTen dated payments of USD 300.00.'});
 const accepted=()=>({...proposed(),state:'recorded',completed_at:'2026-10-15T00:00:00Z',receipt_id:'test-receipt'});
-beforeEach(()=>{fixture.prepare.mockReset().mockResolvedValue(proposed());fixture.accepted.mockReset().mockResolvedValue(accepted());fixture.rpc.mockReset();host=document.createElement('div');host.className='solo-campaigns';document.body.append(host);root=createRoot(host);});
+beforeEach(()=>{fixture.prepare.mockReset().mockResolvedValue(proposed());fixture.accepted.mockReset().mockResolvedValue(accepted());fixture.retained.mockReset().mockResolvedValue({...proposed(),state:'retained',current_status:'sent',preparation:{receipt_id:'synthetic-receipt'}});fixture.rpc.mockReset();fixture.onAuth=null;host=document.createElement('div');host.className='solo-campaigns';document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();vi.restoreAllMocks();});
-const render=(tenantId='test-tenant-a',invoiceId='test-invoice-a',key='same',mode:'proposed'|'accepted'='proposed')=>act(()=>root.render(<CommercialAgreementPreview key={key} tenantId={tenantId} invoiceId={invoiceId} agreementId="test-agreement-a" mode={mode}/>));
+const render=(tenantId='test-tenant-a',invoiceId='test-invoice-a',key='same',mode:'proposed'|'accepted'|'retained'='proposed')=>act(()=>root.render(<CommercialAgreementPreview key={key} tenantId={tenantId} invoiceId={invoiceId} agreementId="test-agreement-a" mode={mode}/>));
 const button=(text:string)=>[...document.body.querySelectorAll<HTMLButtonElement>('button')].find(el=>el.textContent===text)!;
 const open=async()=>{await act(async()=>button('Review saved agreement').click());};
 const close=async()=>{await act(async()=>button('Close').click());};
@@ -61,4 +62,18 @@ it('retries an unavailable retained read without exposing private failures or us
 it('retires accepted text on close, late return and source-mode change',async()=>{
  let finish!:(v:unknown)=>void;fixture.accepted.mockImplementationOnce(()=>new Promise(resolve=>finish=resolve));render('test-tenant-a','test-invoice-a','same','accepted');await act(async()=>button('Review accepted agreement').click());await close();await act(async()=>finish(accepted()));expect(document.body.querySelector('[role=dialog]')).toBeNull();
  await act(async()=>button('Review accepted agreement').click());expect(document.body.textContent).toContain('Accepted payment terms version');fixture.prepare.mockResolvedValue({state:'needs_input',fields:['recorded_collection_terms']});render();expect(document.body.querySelector('[aria-label="Accepted agreement document"]')).toBeNull();expect(document.body.textContent).not.toContain('USD 3,500');await act(async()=>{});
+});
+it('opens the exact retained document and separates current status from its preparation receipt',async()=>{
+ render('test-tenant-a','test-invoice-a','same','retained');expect(fixture.retained).not.toHaveBeenCalled();await act(async()=>button('Inspect retained agreement').click());
+ expect(fixture.retained.mock.calls[0].slice(0,2)).toEqual(['test-tenant-a',{invoice_id:'test-invoice-a',agreement_id:'test-agreement-a'}]);expect(fixture.prepare).not.toHaveBeenCalled();expect(fixture.accepted).not.toHaveBeenCalled();
+ expect(document.querySelector('[aria-label="Retained agreement document"]')?.textContent).toContain('Original saved services');expect(document.body.textContent).toContain('Current signing status: sent');expect(document.body.textContent).toContain('approved preparation receipt is recorded');expect(document.body.textContent).toContain('separate from a signature or customer notification');
+});
+it('does not invent governed preparation for a retained historical document',async()=>{
+ fixture.retained.mockResolvedValue({...proposed(),state:'retained',current_status:'unrecognised',preparation:null});render('test-tenant-a','test-invoice-a','same','retained');await act(async()=>button('Inspect retained agreement').click());
+ expect(document.body.textContent).toContain('receipt is not verified');expect(document.body.textContent).toContain('unrecognised');expect(document.body.textContent).not.toContain('approved preparation receipt is recorded');
+});
+it.each(['proposed','accepted','retained'] as const)('retires %s wording on actor change while preserving a same-actor refresh',async mode=>{
+ render('test-tenant-a','test-invoice-a','same',mode);await act(async()=>button(mode==='accepted'?'Review accepted agreement':mode==='retained'?'Inspect retained agreement':'Review saved agreement').click());
+ const reader=mode==='accepted'?fixture.accepted:mode==='retained'?fixture.retained:fixture.prepare;await act(async()=>fixture.onAuth!('TOKEN_REFRESHED',{user:{id:'synthetic-owner'}}));expect(document.querySelector('article')).not.toBeNull();expect(reader).toHaveBeenCalledOnce();
+ reader.mockResolvedValue({state:'refused'});await act(async()=>fixture.onAuth!('SIGNED_IN',{user:{id:'different-actor'}}));expect(document.querySelector('article')).toBeNull();expect(document.body.textContent).not.toContain('Original saved services');expect(reader).toHaveBeenCalledTimes(2);
 });

@@ -1116,6 +1116,12 @@
       "evidence": "_create_sales_commercial_terms_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270587000000_sales_governed_commercial_create.sql; scripts/sql/sales-commercial-create-proof.mjs verifies exactly-once replay and receipt-failure rollback."
     },
     {
+      "tool": "sales_prepare_agreement",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_agreement_preparation in supabase/migrations/20271105110000_e04_retained_agreement_preparation.sql invokes the existing canonical freeze writer, immutable Collections operation and exact owner-attributed record_capability_run readback in one transaction; scripts/agreements/preparation-commercial-proof.mjs verifies rollback, source identity and replay."
+    },
+    {
       "tool": "sales_effectuate_commercial_terms",
       "risk": "high",
       "receipt": "emits",

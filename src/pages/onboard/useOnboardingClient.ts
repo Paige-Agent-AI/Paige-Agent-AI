@@ -53,7 +53,9 @@ export function useOnboardingClient() {
     mounted.current = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const next = session?.user.id ?? null;
-      if (next === actor.current) return;
+      // A null session must invalidate even the initial pending Auth lookup,
+      // before that lookup has established an actor.
+      if (next !== null && next === actor.current) return;
       actor.current = next;
       invalidateRequests();
       setState({ loading: Boolean(next), error: next ? null : "not_authenticated", client: null, userEmail: null });

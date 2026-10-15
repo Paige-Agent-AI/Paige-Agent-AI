@@ -10,6 +10,7 @@ let user: { id: string; email: string } | null;
 let authError: { name: string; status?: number } | null;
 let authListener: ((event: string, session: Session | null) => void) | null;
 const rpc = vi.fn();
+const getUser = vi.fn();
 const rawRead = vi.fn((..._args: unknown[]) => { throw new Error("raw CRM access is forbidden in this hook"); });
 const unsubscribe = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({
@@ -17,7 +18,7 @@ vi.mock("@/integrations/supabase/client", () => ({
     from: (...args: unknown[]) => rawRead(...args),
     rpc: (...args: unknown[]) => rpc(...args),
     auth: {
-      getUser: () => Promise.resolve({ data: { user }, error: authError }),
+      getUser: () => getUser(),
       onAuthStateChange: (callback: typeof authListener) => {
         authListener = callback;
         return { data: { subscription: { unsubscribe } } };
@@ -54,7 +55,8 @@ const deferred = () => {
 };
 beforeEach(() => {
   state = null; user = { id: actorA, email: "secondary@tests.invalid" }; authError = null; authListener = null;
-  rpc.mockReset(); rawRead.mockClear(); unsubscribe.mockClear();
+  rpc.mockReset(); getUser.mockReset(); rawRead.mockClear(); unsubscribe.mockClear();
+  getUser.mockImplementation(() => Promise.resolve({ data: { user }, error: authError }));
   rpc.mockResolvedValue({ data: profile(), error: null });
   host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
 });
@@ -108,6 +110,18 @@ describe("safe onboarding relationship", () => {
     user = null; authError = { name: "AuthRetryableFetchError", status: 0 };
     await mount();
     expect(state?.error).toBe("profile_unavailable");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("sign-out invalidates the initial pending Auth lookup before any profile request", async () => {
+    const oldUser = user;
+    const pending = deferred(); getUser.mockImplementationOnce(() => pending.promise);
+    await mount(); user = null;
+    act(() => authListener?.("SIGNED_OUT", null));
+    await act(async () => { pending.resolve({ data: { user: oldUser }, error: null }); });
+    expect(state?.loading).toBe(false);
+    expect(state?.error).toBe("not_authenticated");
+    expect(state?.client).toBeNull();
+    expect(state?.userEmail).toBeNull();
     expect(rpc).not.toHaveBeenCalled();
   });
   it("sign-out fences a late response and clears prior client identity", async () => {

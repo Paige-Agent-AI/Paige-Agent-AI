@@ -2,7 +2,8 @@ import {UUID,MAX_MINOR,MAX_SCHEDULE,object,invalid,integer,date,text,only} from 
 export {UUID,MAX_MINOR,MAX_SCHEDULE,object,invalid,integer,date,text,only} from './primitives.ts';
 import {parseCommercialTermsCreateCommand,type CommercialTermsCreateCommand} from '../sales-commercial/terms-command.ts';
 import {parseCommercialEffectuationCommand,type CommercialEffectuationCommand} from '../sales-commercial/effectuation-command.ts';
-export const COLLECTION_ACTIONS = { 'collection.effectuate_terms':'sales_effectuate_commercial_terms','collection.create_commercial_terms':'sales_create_commercial_terms', 'collection.save_terms': 'sales_save_collection_terms', 'collection.stage_import': 'sales_stage_collection_import', 'collection.commit_import': 'sales_commit_collection_import', 'collection.record_receipt':'sales_record_manual_payment', 'collection.reverse_receipt':'sales_reverse_manual_payment' } as const;
+import {parseCommercialPreparationCommand,type CommercialPreparationCommand} from '../sales-commercial/preparation-command.ts';
+export const COLLECTION_ACTIONS = { 'collection.prepare_agreement':'sales_prepare_agreement', 'collection.effectuate_terms':'sales_effectuate_commercial_terms','collection.create_commercial_terms':'sales_create_commercial_terms', 'collection.save_terms': 'sales_save_collection_terms', 'collection.stage_import': 'sales_stage_collection_import', 'collection.commit_import': 'sales_commit_collection_import', 'collection.record_receipt':'sales_record_manual_payment', 'collection.reverse_receipt':'sales_reverse_manual_payment' } as const;
 export type CollectionKind = 'full'|'installment'|'recurring'|'deposit'|'milestone'|'custom';
 export type CollectionDate = { due_date:string; amount_cents:number; label:string|null };
 export type CollectionTerms = {
@@ -47,6 +48,7 @@ export function parseCollectionTerms(value:unknown):CollectionTerms{
 }
 
 export type CollectionCommand =
+ | CommercialPreparationCommand
  | CommercialEffectuationCommand
  | CommercialTermsCreateCommand
  | {action:'collection.save_terms';agreement_id:string;expected_version:number;terms:CollectionTerms}
@@ -82,6 +84,7 @@ export function parseCollectionImportRows(value:unknown):CollectionImportRow[]{
 }
 export function parseCollectionCommand(value:unknown):CollectionCommand{
   if(!object(value))return invalid();
+  if(value.action==='collection.prepare_agreement')return parseCommercialPreparationCommand(value);
   if(value.action==='collection.effectuate_terms')return parseCommercialEffectuationCommand(value);
   if(value.action==='collection.create_commercial_terms')return parseCommercialTermsCreateCommand(value);
   if(value.action==='collection.record_receipt'||value.action==='collection.reverse_receipt'){

@@ -1,3 +1,4 @@
+import type {OpenCommercialSigning} from './CommercialSigningNavigation';
 import React from 'react';
 import {supabase} from '@/integrations/supabase/client';
 import { useSalesInvoiceDrafts } from '../useSalesInvoiceDrafts';
@@ -23,7 +24,7 @@ const label = (kind: BillingDraftInput['kind']) => kind === 'recurring' ? 'Month
 type Catalog = ReturnType<typeof useCatalogOffers>;
 type Store = ReturnType<typeof useSalesInvoiceDrafts>;
 const invoiceState = (row: InvoiceDraft) => (row as Partial<InvoiceRecord>).status ?? 'draft';
-function InvoiceRecordInspection({row,tenantId,canManage,contextEpoch,open,onOpenChange,onChanged}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;contextEpoch?:string|null;open:boolean;onOpenChange(open:boolean):void;onChanged():void}) {
+function InvoiceRecordInspection({row,tenantId,canManage,contextEpoch,open,onOpenChange,onChanged,onManageSignatures}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;contextEpoch?:string|null;open:boolean;onOpenChange(open:boolean):void;onChanged():void;onManageSignatures?:OpenCommercialSigning}) {
  const record=row as InvoiceRecord|null;
  return <div className="sb-detail-grid"><section className="sb-panel"><header><h3>{row?'Invoice record':'Record details'}</h3></header><div className="sb-paper">{row?<>
   <h3>{row.snapshot.items.map(item=>item.item).join(', ')}</h3>{row.snapshot.items.map((item,index)=>item.description&&<p className="sb-line-description" key={index}>{item.description}</p>)}
@@ -34,7 +35,7 @@ function InvoiceRecordInspection({row,tenantId,canManage,contextEpoch,open,onOpe
    {record&&Number.isSafeInteger(record.manualRecordedMinor)&&<><dt>Manual payment records</dt><dd>{cash(record.manualRecordedMinor)}</dd></>}
    <dt>Version</dt><dd>{row.version}</dd></dl>
   <p>{invoiceState(row)==='draft'?'Not issued · no payment requested':invoiceState(row)==='void'?'Voided invoice · review its recorded history':'Immutable issued obligation'}</p>
-  {tenantId&&<CommercialPackageInspection key={tenantId+row.id+(contextEpoch??'')} tenantId={tenantId} invoiceId={row.id} version={row.version} canPrepare={canManage&&invoiceState(row)==='draft'}/>}
+  {tenantId&&<CommercialPackageInspection key={tenantId+row.id+(contextEpoch??'')} tenantId={tenantId} invoiceId={row.id} version={row.version} canPrepare={canManage&&invoiceState(row)==='draft'} canManage={canManage} onManageSignatures={onManageSignatures}/>}
  </>:<p>Select an invoice to inspect its saved facts.</p>}</div></section><section className="sb-panel"><header><h3>Invoice actions and payments</h3></header>{row&&tenantId?<InvoiceWorkspace key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} open={open} onOpenChange={onOpenChange} number={row.number} status={invoiceState(row)} version={row.version} canManage={canManage} onChanged={onChanged}/>:<p className="sb-paper">Select an invoice to review its actions.</p>}</section></div>;
 }
 function DraftEditor({row, recurring, store, sources, catalog, browse, onSelection, onReferences, canManage, onClose}: {row:InvoiceDraft|null;recurring:boolean;store:Store;sources:ReturnType<typeof useInvoiceBillingSources>;catalog:Catalog;browse:InvoiceBrowseControls;onSelection(clientId:string,agreementId:string|null):void;onReferences(ids:string[]):void;canManage:boolean;onClose:()=>void}) {
@@ -67,7 +68,7 @@ function DraftEditor({row, recurring, store, sources, catalog, browse, onSelecti
  if(publication&&store.tenantId&&canManage)return <InvoiceCommandReview tenantId={store.tenantId} command={{action:'invoice.publish',invoice_id:publication.id,expected_version:publication.version}} onClose={onClose} onComplete={()=>{store.retry();onClose();}}/>;
  return <div className="sb-editor" ref={wrapper}><InvoiceDraftEditor value={value} onChange={next=>{if(busy||unknown)return;setValue(next);onSelection(next.client_id,next.agreement_id);onReferences(next.items.flatMap(item=>{const found=choices.find(c=>c.priceId===item.price_id);return found?[found.productId]:[]}));request.current=null;setNotice('');}} customers={sources.customers} catalog={frozenChoices.current??choices} agreements={sources.agreements} commercialTerms={commercialTerms.commercialTerms} termsPhase={commercialTerms.phase} termsHasMore={commercialTerms.hasMore} termsLoadingMore={commercialTerms.loadingMore} termsError={commercialTerms.error} onRetryTerms={commercialTerms.retry} onMoreTerms={commercialTerms.loadMore} processors={[]} busy={busy} frozen={unknown} canManage={canManage} notice={notice} sourceNotice={!unknown?repriced.join(" "):undefined} browse={browse} review={review} onReview={()=>setReview(true)} onEdit={()=>setReview(false)} onSave={()=>{publishAfterSave.current=false;void save();}} onPublishReview={()=>{publishAfterSave.current=true;void save();}} onClose={close}/>{unknown&&<div className="sb-notice"><p>The original save may have succeeded. Keep these details fixed and recover the same operation.</p><button className="btn btn-p" onClick={save} disabled={busy}>Recover original save</button></div>}{confirmation}</div>;
 }
-export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds = [], onClearInvoiceFocus, accountEpoch = null }: { view: string; integrationsPath?: string; focusInvoiceIds?: readonly string[]; onClearInvoiceFocus?: () => void; accountEpoch?: string | null }) {
+export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds = [], onClearInvoiceFocus, accountEpoch = null,onManageSignatures }: { view: string; integrationsPath?: string; focusInvoiceIds?: readonly string[]; onClearInvoiceFocus?: () => void; accountEpoch?: string | null;onManageSignatures?:OpenCommercialSigning }) {
   const store = useSalesInvoiceDrafts(true);
   const clients = useSoloCommercialTerms();
   const [search, setSearch] = React.useState('');
@@ -116,7 +117,7 @@ export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds 
   if (currentEditor) return <DraftEditor key={`${currentEditor.tenant}:${currentEditor.row?.id ?? 'new'}`} row={currentEditor.row} recurring={currentEditor.recurring} store={store} sources={sources} catalog={catalog} browse={browse} onSelection={(clientId,agreementId)=>{setSourceSelection({clientId:clientId||null,agreementId});setAgreementPage(0)}} onReferences={ids=>setCatalogReferences(old=>[...new Set([...old,...ids])])} canManage={canEdit} onClose={() => setEditing(null)} />;
   if(hasFocus)return <div className="sb-workspace sb-focused-invoice" ref={registerRef}>
    <header className="sb-toolbar"><h2 ref={focusedHeading} tabIndex={-1}>Invoice review</h2><button type="button" className="btn" disabled={!onClearInvoiceFocus} onClick={onClearInvoiceFocus}>Back to invoices</button></header>
-   {focused.phase==='ready'&&focused.row?<InvoiceRecordInspection row={focused.row} tenantId={focused.row.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={focusedActionRow===focused.row} onOpenChange={open=>{setFocusedActionRow(open?focused.row:null);if(!open)focused.retry();}} onChanged={store.retry}/>:
+   {focused.phase==='ready'&&focused.row?<InvoiceRecordInspection row={focused.row} tenantId={focused.row.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={focusedActionRow===focused.row} onOpenChange={open=>{setFocusedActionRow(open?focused.row:null);if(!open)focused.retry();}} onChanged={store.retry} onManageSignatures={onManageSignatures}/>:
     <section className="sb-panel"><div className="sb-empty" role={focused.phase==='loading'||focused.phase==='idle'?'status':'alert'}>{focused.phase==='loading'||focused.phase==='idle'?<p>Reading this invoice…</p>:<><h3>{focused.phase==='refused'?'Invoice could not be opened':'Invoice unavailable'}</h3><p>{focused.message}</p>{!focused.message.startsWith('This invoice link is invalid')&&<button type="button" className="btn" onClick={focused.retry}>Retry invoice</button>}</>}</div></section>}
   </div>;
   const rows = store.rows.filter(row => (view === 'recurring' ? row.snapshot.kind === 'recurring' : view === 'invoices' ? row.snapshot.kind !== 'recurring' : true) && `${row.snapshot.items.map(item => item.item).join(', ')} ${row.number} ${clients.clients.find(c => c.id === row.snapshot.client_id)?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()));
@@ -134,7 +135,7 @@ export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds 
         {store.pageMessage && <p className="sb-notice" role="status">{store.pageMessage}</p>}
         {store.hasMore && <button className="btn" onClick={store.loadMore} disabled={store.loadingMore}>{store.loadingMore ? 'Reading more…' : 'Load more drafts'}</button>}
       </section>
-      <InvoiceRecordInspection row={selected??null} tenantId={store.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={workspaceOpen} onOpenChange={setWorkspaceOpen} onChanged={store.retry}/>
+      <InvoiceRecordInspection row={selected??null} tenantId={store.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={workspaceOpen} onOpenChange={setWorkspaceOpen} onChanged={store.retry} onManageSignatures={onManageSignatures}/>
     </>}
     {catalog.hasMore && <label className="sb-catalog-search">Find a Catalog offer<input type="search" value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)} /></label>}
     </div>

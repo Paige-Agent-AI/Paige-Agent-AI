@@ -18,6 +18,8 @@ import {
   validateCommercialConditionLines,
 } from "../sales-commercial/conditions.ts";
 import { sha256Hex } from "./token.ts";
+import {parseCommercialEngagement,type CommercialEngagement} from "./commercial-engagement.ts";
+export {parseCommercialEngagement,type CommercialEngagement} from "./commercial-engagement.ts";
 export type PresentationSource = {
   tenant_id: string;
   client_id: string;
@@ -36,8 +38,7 @@ export type PresentationSource = {
   invoice_draft_version: number;
   invoice_updated_at: string;
 };
-export type CommercialPresentationPayload = {
-  schema_version: 1;
+type CommercialPresentationFacts = {
   source: PresentationSource;
   title: string;
   body_sha256: string;
@@ -49,6 +50,10 @@ export type CommercialPresentationPayload = {
   conditions: CommercialConditions;
   lines: ResolvedCommercialLine[];
 };
+export type CommercialPresentationPayload = CommercialPresentationFacts & (
+  | {schema_version:1;engagement?:never}
+  | {schema_version:2;engagement:CommercialEngagement}
+);
 export type PreparedCommercialPresentation = {
   payload: CommercialPresentationPayload;
   payload_digest: string;
@@ -129,8 +134,10 @@ export async function prepareCommercialPresentation(
     "collection_terms",
     "conditions",
     "lines",
+    ...(input.schema_version===2?["engagement"]:[]),
   ]);
-  if (input.schema_version !== 1 || !object(input.source)) return refuse();
+  if ((input.schema_version!==1&&input.schema_version!==2) || !object(input.source)) return refuse();
+  const engagement=input.schema_version===2?parseCommercialEngagement(input.engagement):null;
   const raw = input.source;
   only(raw, keys);
   if (keys.some((k) => !(k in raw))) return refuse();
@@ -209,8 +216,7 @@ export async function prepareCommercialPresentation(
     unit_minor: line.unit_minor,
     quantity: line.quantity,
   }));
-  const payload: CommercialPresentationPayload = {
-    schema_version: 1,
+  const facts: CommercialPresentationFacts = {
     source: structuredClone(raw) as PresentationSource,
     title,
     body_sha256: await sha256Hex(body),
@@ -222,6 +228,9 @@ export async function prepareCommercialPresentation(
     conditions,
     lines,
   };
+  const payload:CommercialPresentationPayload=engagement
+    ?{schema_version:2,...facts,engagement}
+    :{schema_version:1,...facts};
   const digest = await sha256Hex(canonicalPresentationJson(payload));
   // Display formatting only: canonical minor units and schedule rows are unchanged.
   // Internal IDs, schema and source digests remain in the proof payload, not the contract text.
@@ -250,6 +259,11 @@ export async function prepareCommercialPresentation(
     ].join(" ");
   const appendix = [
     "## Commercial terms",
+    ...(engagement?[
+      `Service starts: ${engagement.starts_on}`,
+      `Service ends: ${engagement.ends_on??"Not specified in the recorded terms."}`,
+      `Agreed price basis: ${engagement.price_basis==="catalog"?"Catalog":"Negotiated"}`,
+    ]:[]),
     `Principal: ${money(principal)}`,
     "### Dated payments",
     ...preview.rows.map((row) =>

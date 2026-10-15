@@ -1,0 +1,201 @@
+{
+  "result": "PASS",
+  "captures": 12,
+  "cases": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "light",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "dark",
+      "scenario": "exact-full-text-review-cancel-focus",
+      "result": "PASS"
+    },
+    {
+      "scenario": "off",
+      "result": "PASS"
+    },
+    {
+      "scenario": "malformed_text",
+      "result": "PASS"
+    },
+    {
+      "scenario": "malformed_fact",
+      "result": "PASS"
+    },
+    {
+      "scenario": "receipt_failed",
+      "result": "PASS"
+    },
+    {
+      "scenario": "missing-explicit-service-start",
+      "result": "PASS"
+    },
+    {
+      "scenario": "denied-owner-package",
+      "result": "PASS"
+    },
+    {
+      "scenario": "unknown-original-operation-recovery-refresh-focus",
+      "result": "PASS"
+    },
+    {
+      "scenario": "malformed_receipt-original-operation-recovery-refresh-focus",
+      "result": "PASS"
+    },
+    {
+      "scenario": "remount-retained-exact-wording-and-historical-receipt",
+      "result": "PASS"
+    },
+    {
+      "scenario": "exact-signature-navigation-controlled-parent-port-only",
+      "result": "PASS"
+    },
+    {
+      "scenario": "changed-actor-retires-full-approval-document",
+      "result": "PASS"
+    },
+    {
+      "scenario": "reduced-motion",
+      "result": "PASS"
+    }
+  ],
+  "sourceHashes": {
+    "src/solo/sales/CommercialAgreementPreparation.tsx": "214ddce60ff167b8947f0d37c33c5d2762e5f0811efa39eefcce7d87afbd22ea",
+    "src/solo/sales/CommercialSigningNavigation.tsx": "68faeb6d1b10b5e793bb7dba8faf34f0e476b740d1fa603d943f98f2c6d00430",
+    "src/solo/sales/CommercialAgreementPreview.tsx": "a4cf521efec6d35ca5cb75e8d043c49d19664e1de8d8fc44afd887d91315021e",
+    "src/solo/sales/CommercialPackageInspection.tsx": "313fec513abe51228c46cb52082db27d816a48613b363df7311cbbde23bc6d51",
+    "src/solo/sales/collections/CollectionCommandReview.tsx": "e765dd13560fce9325017739d512c3b0809e1da2a855ecbf801ba45637885986",
+    "src/solo/sales/collections/collections.css": "d9bf81116549bdcb22d7139378b03101c231317a6a6188e2f1905cb2bc57ffb9",
+    "supabase/functions/_shared/agreements/preparation-review.ts": "ed18b1648a4dfd58bedd3fe7f7f220fcefc58090cc0784da3b57bfd9e8dcca4a",
+    "supabase/functions/_shared/agreements/commercial-presentation-read.ts": "a71ccdd8777f7010462fa4f94c67b0ffb65be67d7e9c51ba800b2a1b2030a10c",
+    "supabase/functions/_shared/agreements/commercial-presentation.ts": "046954ef0375034765828f01d48ee07bb051240d14de5efd915343dca2d5d5fc",
+    "supabase/functions/_shared/agreements/commercial-engagement.ts": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+    "supabase/functions/_shared/agreements/retained-commercial-read.ts": "73c1a208a9872631d9f7e7153186fcb406215eca0d93244d07527b88a5e42815",
+    "supabase/functions/_shared/agreements/retained-presentation.ts": "ab1c88cc1de72c6c4aa9d47e57ce1597375b77fdb3855219f572b855036a61d8",
+    "supabase/functions/_shared/sales-commercial/preparation-command.ts": "b04802c91bdc29022c8aa2b5b6ac51eb66e34437454c32694f0f058d133ef953",
+    "src/test/fixtures/e04-commercial-presentation.ts": "bbc8d9112e3ffec7189a0e4c95fd9d83485e8fbf89e7236c6d6b403b115329ab",
+    "scripts/proof/e04-preparation-ui/source.tsx": "9195501d4278955c06ef162f9f72b083b8024eda6b5db3a17d2491d159db675e",
+    "scripts/proof/e04-preparation-ui/sdk.ts": "c2cc632020da5ab51a568555d0995d1b7bef7899d410ff231d3a27962462c622"
+  },
+  "canonicalSourceHashes": {
+    "src/solo/sales/CommercialAgreementPreparation.tsx": "214ddce60ff167b8947f0d37c33c5d2762e5f0811efa39eefcce7d87afbd22ea",
+    "src/solo/sales/CommercialSigningNavigation.tsx": "68faeb6d1b10b5e793bb7dba8faf34f0e476b740d1fa603d943f98f2c6d00430",
+    "src/solo/sales/CommercialAgreementPreview.tsx": "7787e53c62d8a137dd1d8a7b3a1ac72c712070494e1a092fa6fcd96791aa20bd",
+    "src/solo/sales/CommercialPackageInspection.tsx": "2b7d216eb3e8346dfaf068905aab9a34a8052b9b5d357fa156f19710dd53a6b4",
+    "src/solo/sales/collections/CollectionCommandReview.tsx": "4ebd6c5c61f2dfba2e31fe46602e826d3923b7c7bdff096707bc3879a37800ac",
+    "src/solo/sales/collections/collections.css": "8c1f0d806c459cf3068db6be5622344b49c8456e18d80e6d6f9d6a77da59696c",
+    "supabase/functions/_shared/agreements/preparation-review.ts": "ed18b1648a4dfd58bedd3fe7f7f220fcefc58090cc0784da3b57bfd9e8dcca4a",
+    "supabase/functions/_shared/agreements/commercial-presentation-read.ts": "a71ccdd8777f7010462fa4f94c67b0ffb65be67d7e9c51ba800b2a1b2030a10c",
+    "supabase/functions/_shared/agreements/commercial-presentation.ts": "046954ef0375034765828f01d48ee07bb051240d14de5efd915343dca2d5d5fc",
+    "supabase/functions/_shared/agreements/commercial-engagement.ts": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574",
+    "supabase/functions/_shared/agreements/retained-commercial-read.ts": "73c1a208a9872631d9f7e7153186fcb406215eca0d93244d07527b88a5e42815",
+    "supabase/functions/_shared/agreements/retained-presentation.ts": "ab1c88cc1de72c6c4aa9d47e57ce1597375b77fdb3855219f572b855036a61d8",
+    "supabase/functions/_shared/sales-commercial/preparation-command.ts": "b04802c91bdc29022c8aa2b5b6ac51eb66e34437454c32694f0f058d133ef953",
+    "src/test/fixtures/e04-commercial-presentation.ts": "bbc8d9112e3ffec7189a0e4c95fd9d83485e8fbf89e7236c6d6b403b115329ab",
+    "scripts/proof/e04-preparation-ui/source.tsx": "9195501d4278955c06ef162f9f72b083b8024eda6b5db3a17d2491d159db675e",
+    "scripts/proof/e04-preparation-ui/sdk.ts": "c2cc632020da5ab51a568555d0995d1b7bef7899d410ff231d3a27962462c622"
+  },
+  "errors": [],
+  "externalRequests": [],
+  "scope": "Actual components and canonical source/read/review/receipt validators; controlled synthetic Auth/RPC/function transports. No real signature, PDF storage, message, payment, production, signed-in customer acceptance or independent review. Remount reuses controlled fixture memory, not durable authenticated database proof. Parent navigation callback is synthetic; real incumbent SignatureSender mounting is verified separately by the owner workspace contract suite. External fonts omitted; local fallback."
+}

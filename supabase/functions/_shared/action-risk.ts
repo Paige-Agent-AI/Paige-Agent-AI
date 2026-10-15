@@ -466,6 +466,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["sales_start_merchant_onboarding", "high", "creates or resumes a hosted Stripe merchant setup outside the workspace"],
   ["sales_create_merchant_login_link", "high", "creates a credential-bearing hosted access link to the tenant merchant dashboard"],
   ["sales_create_commercial_terms", "high", "creates a fixed client commercial obligation without an invoice, signature or payment"],
+  ["sales_prepare_agreement", "high", "retains exactly reviewed commercial wording and economics for signature; explicit owner approval, no signature request or payment"],
   ["sales_effectuate_commercial_terms", "high", "makes matching completed signed commercial terms effective under explicit owner approval; no payment or service completion"],
   ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
   ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],

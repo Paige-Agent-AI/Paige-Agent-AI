@@ -28,6 +28,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import {UUID} from "../../supabase/functions/_shared/sales-collections/primitives";
 
 /**
  * Mirrors `paige_agreements.status`'s CHECK, plus `unrecognised` for a value this build has no
@@ -182,6 +183,7 @@ export type SigningsState = {
   /** The authority read itself failed. Distinct from "the caller is not an admin". */
   readonly authorityUnknown: boolean;
   readonly retry: () => void;
+  readonly readSigning:(signingId:string,loadedTenantId:string|null)=>Promise<{ok:true;signing:AgreementSigning;version:number}|{ok:false;message:string}>;
   readonly uploadDocument: (
     file: File,
     loadedTenantId: string | null,
@@ -319,6 +321,54 @@ async function refusalMessage(error: unknown): Promise<string | null> {
   }
 }
 
+const SIGNING_METADATA_COLUMNS=
+  "id,contact_id,commercial_terms_id,title,body_source,status," +
+  "expires_at,sent_at,completed_at,declined_at,voided_at,sealed_sha256," +
+  "created_at,updated_at," +
+  "paige_agreement_signers(full_name,decline_reason,first_viewed_at,signing_order)";
+
+/** One metadata projection for the bounded register and exact-record navigation. */
+function readSigningRow(row:Record<string,unknown>):AgreementSigning {
+  // A value this build cannot read is NAMED, never coerced into a state it might not be.
+  const stored = narrow(row.status, SIGNATURE_STATES) ?? "unrecognised";
+  const expiresAt = toText(row.expires_at);
+  // The counterparty. The engine supports several signers in an explicit order, so the one
+  // this single-counterparty surface speaks for is the FIRST by that order — not whichever
+  // row the database happened to return. `decline_reason` is taken from whoever actually
+  // declined rather than from the first signer, because on a multi-party document those
+  // need not be the same person, and attributing one signer's reason to another is a lie
+  // the surface would state confidently. `viewed` is the EARLIEST view: the question the
+  // column answers is "has anybody opened this yet", not "did signer one open it".
+  const signers = Array.isArray(row.paige_agreement_signers)
+    ? [...(row.paige_agreement_signers as Record<string, unknown>[])]
+        .sort((a, b) => Number(a?.signing_order ?? 0) - Number(b?.signing_order ?? 0))
+    : [];
+  const firstViewed = signers
+    .map((x) => toText(x?.first_viewed_at))
+    .filter((x): x is string => Boolean(x))
+    .sort()[0] ?? null;
+  return {
+    id: String(row.id),
+    contactId: String(row.contact_id),
+    agreementId: toText(row.commercial_terms_id),
+    documentTitle: toText(row.title) ?? "Untitled document",
+    documentSource: narrow(row.body_source, DOCUMENT_SOURCES),
+    signatureState: stored,
+    displayState: readState(stored, expiresAt),
+    expiresAt,
+    sentAt: toText(row.sent_at),
+    viewedAt: firstViewed,
+    completedAt: toText(row.completed_at),
+    declinedAt: toText(row.declined_at),
+    voidedAt: toText(row.voided_at),
+    declineReason: signers.map((x) => toText(x?.decline_reason)).find(Boolean) ?? null,
+    signerName: toText(signers[0]?.full_name),
+    hasSealedCopy: Boolean(toText(row.sealed_sha256)),
+    createdAt: toText(row.created_at),
+    updatedAt: toText(row.updated_at),
+  };
+}
+
 export function useSoloAgreementSignings(): SigningsState {
   const { activeTenantId, accountContextLoading } = useTenantContext();
   // An identity epoch also invalidates a completion after A -> B -> A.
@@ -334,6 +384,31 @@ export function useSoloAgreementSignings(): SigningsState {
     ...EMPTY,
   });
   const retry = useCallback(() => setRefreshKey((key) => key + 1), []);
+
+  // Exact-target metadata navigation never substitutes the first register row.
+  // Keep the same canonical RLS/read projection and current account/role fences.
+  const readSigning=useCallback(async(signingId:string,loadedTenantId:string|null)=>{
+    const unavailable={ok:false as const,message:"This agreement could not be opened with your current access. Refresh its record and try again."};
+    const opened=identity.current;
+    if(!loadedTenantId||opened.resolving||opened.tenantId!==loadedTenantId||!UUID.test(signingId))return unavailable;
+    let unsubscribe:(()=>void)|undefined,retired=false;
+    try{
+      const initial=await supabase.auth.getUser();const actor=initial.data.user?.id;
+      if(initial.error||!actor||initial.data.user?.is_anonymous||identity.current!==opened)return unavailable;
+      const subscription=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||session?.user.id!==actor)retired=true;});
+      unsubscribe=()=>subscription.data.subscription.unsubscribe();
+      const current=async()=>{
+        if(retired||identity.current!==opened)return false;
+        const [user,tenant,admin]=await Promise.all([supabase.auth.getUser(),supabase.rpc('current_user_tenant_id'),supabase.rpc('is_tenant_admin',{_tenant:loadedTenantId})]);
+        return !retired&&identity.current===opened&&!user.error&&user.data.user?.id===actor&&!user.data.user?.is_anonymous&&!tenant.error&&tenant.data===loadedTenantId&&!admin.error&&admin.data===true;
+      };
+      if(!await current())return unavailable;
+      const response=await supabase.from('paige_agreements' as never).select(SIGNING_METADATA_COLUMNS+',tenant_id,version').eq('tenant_id',loadedTenantId).eq('id',signingId).maybeSingle();
+      const row=response.data as unknown as Record<string,unknown>|null;
+      if(response.error||!row||row.id!==signingId||row.tenant_id!==loadedTenantId||typeof row.version!=='number'||!Number.isSafeInteger(row.version)||row.version<1||!await current())return unavailable;
+      return {ok:true as const,signing:readSigningRow(row),version:row.version};
+    }catch{return unavailable;}finally{unsubscribe?.();}
+  },[]);
 
   /**
    * One place where every write checks that the workspace it was STARTED in is still the workspace
@@ -356,7 +431,7 @@ export function useSoloAgreementSignings(): SigningsState {
     try {
       const { data, error } = await call();
       if (identity.current !== openedIdentity) {
-        return { ok: false, message: "Your workspace changed. Reopen this form in the intended workspace." };
+        return { ok: false, message: "Your workspace changed before the result could be shown. Check the original record in its workspace before trying again." };
       }
       if (error) {
         console.error("[signings] write refused", { code: error.code });
@@ -377,7 +452,7 @@ export function useSoloAgreementSignings(): SigningsState {
       return {
         ok: false,
         message: identity.current !== openedIdentity
-          ? "Your workspace changed. Reopen this form in the intended workspace."
+          ? "Your workspace changed before the result could be shown. Check the original record in its workspace before trying again."
           : "That could not be confirmed. Refresh and check your records before trying again.",
       };
     }
@@ -563,12 +638,16 @@ export function useSoloAgreementSignings(): SigningsState {
     const expected = loadedTenantId ?? activeTenantId;
     if (!expected) return { ok: false, message: "This workspace could not be resolved, so nothing was sent." };
     const openedIdentity = identity.current;
+    if (openedIdentity.resolving || openedIdentity.tenantId !== expected) {
+      return { ok: false, message: "Reopen this agreement in its workspace before sending." };
+    }
+    const uncertain = "The sending result could not be confirmed. Check the original agreement and its message history before trying again.";
     try {
       const { data, error } = await supabase.functions.invoke("agreement-send", {
-        body: { agreementId: signingId, resend },
+        body: { agreementId: signingId, expectedTenantId: expected, resend },
       });
       if (identity.current !== openedIdentity) {
-        return { ok: false, message: "Your workspace changed, so nothing was sent." };
+        return { ok: false, message: "Your workspace changed before the sending result could be shown. Check the original agreement in its workspace before trying again." };
       }
       const payload = (data ?? {}) as { ok?: boolean; error?: unknown; sent?: unknown; notDelivered?: unknown };
       // §13: a 200 is not a delivery. The endpoint reports who it actually reached, and an answer
@@ -582,7 +661,8 @@ export function useSoloAgreementSignings(): SigningsState {
         // replaced by the generic fallback below. The operator was told to "check the record"
         // when the function had already told them exactly what to do.
         const said = toText(payload.error) ?? await refusalMessage(error);
-        return { ok: false, message: said || "That could not be sent. Nothing was delivered; check the record before trying again." };
+        if (identity.current !== openedIdentity) return { ok: false, message: uncertain };
+        return { ok: false, message: said || uncertain };
       }
       // The function reports the people it emailed as OBJECTS — `{ email }` and `{ email, reason }`
       // (agreement-send/index.ts:281-282, :367). Reading them as strings filtered every one of
@@ -597,7 +677,7 @@ export function useSoloAgreementSignings(): SigningsState {
       setRefreshKey((key) => key + 1);
       return { ok: true, sent: list(payload.sent), notDelivered: list(payload.notDelivered) };
     } catch {
-      return { ok: false, message: "That could not be sent. Nothing was delivered; check the record before trying again." };
+      return { ok: false, message: uncertain };
     }
   }, [activeTenantId]);
 
@@ -692,10 +772,7 @@ export function useSoloAgreementSignings(): SigningsState {
               // the CHECK at 20270401000000:124 makes the hash answer that identically
               // (`status <> 'completed' OR (sealed_sha256 IS NOT NULL AND sealed_storage_key IS NOT NULL)`)
               // while disclosing no path. `document_path` had no read-side consumer at all.
-              "id,contact_id,commercial_terms_id,title,body_source,status," +
-              "expires_at,sent_at,completed_at,declined_at,voided_at,sealed_sha256," +
-              "created_at,updated_at," +
-              "paige_agreement_signers(full_name,decline_reason,first_viewed_at,signing_order)",
+              SIGNING_METADATA_COLUMNS,
             )
             // NOT redundant with RLS. `is_platform_owner()` is a disjunct in the isolation policy,
             // so a platform operator acting inside a tenant would otherwise see every signing on the
@@ -730,46 +807,7 @@ export function useSoloAgreementSignings(): SigningsState {
         }
 
         const rows = (signingResponse.data ?? []) as unknown as Record<string, unknown>[];
-        const signings: AgreementSigning[] = rows.map((row) => {
-          // A value this build cannot read is NAMED, never coerced into a state it might not be.
-          const stored = narrow(row.status, SIGNATURE_STATES) ?? "unrecognised";
-          const expiresAt = toText(row.expires_at);
-          // The counterparty. The engine supports several signers in an explicit order, so the one
-          // this single-counterparty surface speaks for is the FIRST by that order — not whichever
-          // row the database happened to return. `decline_reason` is taken from whoever actually
-          // declined rather than from the first signer, because on a multi-party document those
-          // need not be the same person, and attributing one signer's reason to another is a lie
-          // the surface would state confidently. `viewed` is the EARLIEST view: the question the
-          // column answers is "has anybody opened this yet", not "did signer one open it".
-          const signers = Array.isArray(row.paige_agreement_signers)
-            ? [...(row.paige_agreement_signers as Record<string, unknown>[])]
-                .sort((a, b) => Number(a?.signing_order ?? 0) - Number(b?.signing_order ?? 0))
-            : [];
-          const firstViewed = signers
-            .map((x) => toText(x?.first_viewed_at))
-            .filter((x): x is string => Boolean(x))
-            .sort()[0] ?? null;
-          return {
-            id: String(row.id),
-            contactId: String(row.contact_id),
-            agreementId: toText(row.commercial_terms_id),
-            documentTitle: toText(row.title) ?? "Untitled document",
-            documentSource: narrow(row.body_source, DOCUMENT_SOURCES),
-            signatureState: stored,
-            displayState: readState(stored, expiresAt),
-            expiresAt,
-            sentAt: toText(row.sent_at),
-            viewedAt: firstViewed,
-            completedAt: toText(row.completed_at),
-            declinedAt: toText(row.declined_at),
-            voidedAt: toText(row.voided_at),
-            declineReason: signers.map((x) => toText(x?.decline_reason)).find(Boolean) ?? null,
-            signerName: toText(signers[0]?.full_name),
-            hasSealedCopy: Boolean(toText(row.sealed_sha256)),
-            createdAt: toText(row.created_at),
-            updatedAt: toText(row.updated_at),
-          };
-        });
+        const signings: AgreementSigning[] = rows.map(readSigningRow);
 
         const role = typeof roleResponse.data?.role === "string" ? roleResponse.data.role : null;
         const canManage = role === "owner" || role === "admin";
@@ -813,5 +851,5 @@ export function useSoloAgreementSignings(): SigningsState {
       : "unavailable" as const,
     ...EMPTY,
   };
-  return { ...visible, retry, uploadDocument, createSigning, sendForSignature, signingEvents, issueLink, voidSigning, signedCopyUrl };
+  return { ...visible, retry, readSigning, uploadDocument, createSigning, sendForSignature, signingEvents, issueLink, voidSigning, signedCopyUrl };
 }

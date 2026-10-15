@@ -1,0 +1,21 @@
+{
+  "result": "PASS",
+  "checks": 70,
+  "contextChecks": 39,
+  "acceptedChecks": 36,
+  "effectiveChecks": 106,
+  "catalogue": {
+    "checks": 21,
+    "predecessorWrappers": 15,
+    "incumbentRows": 192,
+    "migrationReplay": 2
+  },
+  "preparation": {
+    "checks": 119,
+    "migrationReplay": 2,
+    "legacy": "existing accepted v1 and fresh v1 preserved",
+    "v2": "explicit service facts, tamper refusal, immutable retention independent of current terms"
+  },
+  "migrationReplay": 2,
+  "scope": "Native synthetic service actor/canonical draft/freeze and optional signing/accepted/effective context; PDF hash fixture is not hosted upload, signature or provider acceptance"
+}

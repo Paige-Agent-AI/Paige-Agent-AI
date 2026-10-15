@@ -17,6 +17,7 @@
 // comes from `current_user_tenant_id()` under the CALLER'S OWN JWT, every query is scoped to it, and
 // the database re-proves each link by trigger even for the service role.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {verifyRetainedAgreementPdf} from "../_shared/agreements/retained-document.ts";
 import { renderPresentedPdf, hashDocument, assertDocumentIsRenderable, assertNamesAreStampable, inspectUploadedPdf, isOwnedByTenant, planPresentedDocument, UnrenderableDocumentError, UnrenderableNameError } from "../_shared/agreements/document.ts";
 import { expiryFromNow, mintSignerToken, sha256Hex, SIGNING_TOKEN_TTL_DAYS } from "../_shared/agreements/token.ts";
 import { tenantContactForDisclosure } from "../_shared/agreements/notify.ts";
@@ -87,6 +88,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { return json({ ok: false, error: "Malformed request." }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json({ ok: false, error: "Malformed request." }, 400);
+  }
+  // A stale owner form must not resolve its original agreement against a newly
+  // active workspace. This is a brake, never a source of tenant authority.
+  if (Object.prototype.hasOwnProperty.call(body, "expectedTenantId") && body.expectedTenantId !== tenantId) {
+    return json({ ok: false, error: "Your workspace changed. Reopen the agreement in its workspace before sending." }, 409);
+  }
 
   const agreementId = String(body.agreementId ?? "");
   const resend = body.resend === true;
@@ -110,9 +119,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Scoped by the caller's tenant, never by an id from the body alone.
   const { data: agreement } = await admin.from("paige_agreements")
-    .select("id,tenant_id,title,body_source,body_markdown,document_path,status,expires_at,content_storage_key,content_sha256")
+    .select("id,tenant_id,title,body_source,body_markdown,document_path,status,expires_at,content_storage_key,content_sha256,commercial_terms_id")
     .eq("id", agreementId).eq("tenant_id", tenantId).maybeSingle();
   if (!agreement) return json({ ok: false, error: "That agreement is not in this workspace." }, 404);
+
+  if(agreement.commercial_terms_id!==null&&agreement.commercial_terms_id!==undefined){
+    const ready=await admin.rpc('check_sales_agreement_preparation',{_actor_user_id:actorId,_expected_tenant_id:tenantId,_agreement_id:agreement.id});
+    if(ready.error||ready.data!==true)return json({ok:false,error:'Prepare and review the exact commercial document before requesting signatures.'},422);
+    let verified=false;
+    try{
+      const retained=agreement.content_storage_key?await admin.storage.from('paige-agreements').download(agreement.content_storage_key):null;
+      verified=!!retained?.data&&!retained.error&&await verifyRetainedAgreementPdf(new Uint8Array(await retained.data.arrayBuffer()),agreement.content_sha256);
+    }catch{/* No signature request may use an unverified retained file. */}
+    if(!verified)return json({ok:false,error:'The retained commercial document could not be verified. Inspect the agreement before requesting signatures.'},422);
+  }
 
   if (!resend && agreement.status !== "draft") {
     return json({ ok: false, error: `This agreement is already ${agreement.status}. Draft a new one rather than resending this.` }, 409);

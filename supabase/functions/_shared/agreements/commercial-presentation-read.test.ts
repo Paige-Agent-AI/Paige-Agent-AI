@@ -14,12 +14,12 @@ function fixture(change?: (rows:Record<string,Record<string,unknown>>) => void, 
   const rows:Record<string,Record<string,unknown>>={
     paige_invoices:{id:invoice,tenant_id:tenant,contact_id:client,status:'draft',currency:'usd',updated_at:date,
       billing_lifecycle_version:2,billing_draft_version:3,billing_draft:{schema_version:3,total_minor:350000,
-        agreement_snapshot:{id:agreement,version:4},commercial_terms_reference:{id:terms,version:5},
+        agreement_id:agreement,agreement_snapshot:{id:agreement,version:4},commercial_terms_reference:{id:terms,version:5},
         commercial_conditions:{schema_version:1},items:[{unit_minor:350000,quantity:1,catalog_facts:{product_id:offer}}]}},
     paige_agreements:{id:agreement,tenant_id:tenant,contact_id:client,offer_id:offer,commercial_terms_id:terms,version:4,
       updated_at:date,title:'Synthetic package',body_markdown:'Existing owner-supplied agreement',body_source:'paige_draft',status:'draft',content_sha256:null},
     tenant_client_agreements:{id:terms,tenant_id:tenant,contact_id:client,offer_id:offer,status:'draft',collection_terms_version:5,
-      updated_at:date,agreed_amount_minor:350000,agreed_currency:'USD',collection_terms:{schema_version:1}},
+      updated_at:date,agreed_amount_minor:350000,agreed_currency:'USD',starts_on:'2026-10-01',ends_on:null,price_basis:'negotiated',collection_terms:{schema_version:1}},
   };
   change?.(rows);let scopes=0;const filters:Array<[string,string,string]>=[];
   const caller={rpc:async(name:string)=>({data:name==='is_tenant_admin'?admin:(++scopes>1&&switchAfter?'99999999-0000-4000-8000-000000000001':tenant),error:null}),
@@ -47,6 +47,7 @@ describe('canonical commercial presentation source read',()=>{
     ['foreign tenant',(r:Record<string,Record<string,unknown>>)=>{r.paige_agreements.tenant_id='foreign';}],
     ['foreign client',(r:Record<string,Record<string,unknown>>)=>{r.tenant_client_agreements.contact_id='foreign';}],
     ['stale agreement',(r:Record<string,Record<string,unknown>>)=>{r.paige_agreements.version=6;}],
+    ['mismatched canonical invoice agreement',(r:Record<string,Record<string,unknown>>)=>{(r.paige_invoices.billing_draft as Record<string,unknown>).agreement_id='99999999-0000-4000-8000-000000000001';}],
     ['stale terms',(r:Record<string,Record<string,unknown>>)=>{r.tenant_client_agreements.collection_terms_version=7;}],
     ['issued invoice',(r:Record<string,Record<string,unknown>>)=>{r.paige_invoices.status='issued';}],
     ['frozen document',(r:Record<string,Record<string,unknown>>)=>{r.paige_agreements.content_sha256='a'.repeat(64);}],
@@ -79,6 +80,9 @@ describe('canonical commercial presentation source read',()=>{
       expect(result.presentation.payload.obligations[0]).toMatchObject({due_date:'2026-10-15',amount_cents:50000});
       expect(result.presentation.payload.obligations.slice(1).every(r=>r.amount_cents===30000)).toBe(true);
       expect(result.presentation.payload.principal_minor).toBe(350000);
+      expect(result.presentation.payload.schema_version).toBe(2);
+      expect(result.presentation.payload.engagement).toEqual({starts_on:'2026-10-01',ends_on:null,price_basis:'negotiated'});
+      expect(result.presentation.appendix).toContain('Service starts: 2026-10-01');
       expect(result.presentation.payload.source.invoice_draft_version).toBe(3);
       expect(result.presentation.appendix).toContain('2027-08-15');
       expect(Object.keys(result)).toEqual(['state','presentation','presented_body_markdown']);
@@ -92,5 +96,13 @@ describe('canonical commercial presentation source read',()=>{
     const {caller}=fixture();
     expect(await prepareCommercialPresentationFromRecords(tenant,{invoice_id:invoice,agreement_id:agreement},caller))
       .toEqual({state:'needs_input',fields:['complete_supported_commercial_presentation']});
+  });
+  it('asks for missing service commencement independently of the deposit date',async()=>{
+    const {caller}=fixture(r=>{r.tenant_client_agreements.starts_on=null;});
+    expect(await readCommercialPresentationSource(tenant,{invoice_id:invoice,agreement_id:agreement},caller)).toEqual({state:'needs_input',fields:['commercial_service_start']});
+  });
+  it('asks for an agreed price rather than retaining quote-pending economics',async()=>{
+    const {caller}=fixture(r=>{r.tenant_client_agreements.price_basis='quote_pending';});
+    expect(await readCommercialPresentationSource(tenant,{invoice_id:invoice,agreement_id:agreement},caller)).toEqual({state:'needs_input',fields:['agreed_price_basis']});
   });
 });

@@ -16616,6 +16616,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // Owner-UI-only classified action. Attribution coverage does not expose
         // a Chat tool, dispatch branch or admission through INT346.
         sales_effectuate_commercial_terms: "tenant_client_agreements",
+        sales_prepare_agreement: "paige_agreements", // same owner-only attribution coverage; no Chat tool/dispatch
         sales_save_collection_terms: "tenant_client_agreements",
         sales_stage_collection_import: "paige_sales_import_batches",
         sales_commit_collection_import: "paige_sales_import_batches",

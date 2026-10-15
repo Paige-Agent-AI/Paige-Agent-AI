@@ -1,0 +1,75 @@
+[
+  {
+    "name": "risk",
+    "code": 0,
+    "tail": [
+      "✓ action-risk-lint: 191 classified action(s) — 82 ordinary · 106 high · 3 owner-only · 6 exempted · 0 unclassified writes."
+    ]
+  },
+  {
+    "name": "risk-self",
+    "code": 0,
+    "tail": [
+      "",
+      "✓ action-risk-lint self-test passed."
+    ]
+  },
+  {
+    "name": "catalogue",
+    "code": 0,
+    "tail": [
+      "",
+      "9 passed, 0 failed"
+    ]
+  },
+  {
+    "name": "catalogue-self",
+    "code": 0,
+    "tail": [
+      "",
+      "✓ tool-catalogue-lint self-test: every check bites when it should."
+    ]
+  },
+  {
+    "name": "spine",
+    "code": 0,
+    "tail": [
+      "PAIGE Spine registry lint: PASS (216 capability)"
+    ]
+  },
+  {
+    "name": "spine-self",
+    "code": 0,
+    "tail": [
+      "PAIGE Spine registry lint self-test: PASS (SQL + exact TS AST bindings)"
+    ]
+  },
+  {
+    "name": "targets",
+    "code": 0,
+    "tail": [
+      "✓ write-target-lint: 184 attribution target(s), every one a real table or a declared label."
+    ]
+  },
+  {
+    "name": "bindings",
+    "code": 0,
+    "tail": [
+      "ℹ todo 0",
+      "ℹ duration_ms 54619.7333"
+    ]
+  },
+  {
+    "name": "versions",
+    "code": 0,
+    "tail": [
+      "✓ migration-version-collision-lint: 1309 migration(s), no version reused (base origin/main)."
+    ]
+  },
+  {
+    "name": "receipt-real-check",
+    "classified": 191,
+    "findings": [],
+    "selfTest": 0
+  }
+]

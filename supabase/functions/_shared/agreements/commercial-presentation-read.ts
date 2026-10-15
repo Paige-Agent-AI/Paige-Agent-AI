@@ -1,5 +1,5 @@
 import { UUID } from '../sales-collections/primitives.ts';
-import { commercialPresentationText, prepareCommercialPresentation, type PreparedCommercialPresentation } from './commercial-presentation.ts';
+import { commercialPresentationText, parseCommercialEngagement, prepareCommercialPresentation, type PreparedCommercialPresentation } from './commercial-presentation.ts';
 
 type Row = Record<string, unknown>;
 type Result = {data:unknown;error:unknown};
@@ -50,23 +50,27 @@ export async function readCommercialPresentationSource(
       ||!['paige_draft','tenant_template'].includes(String(a.body_source)))return refuse();
     if(!object(i.billing_draft))return {state:'needs_input',fields:['canonical_invoice_draft']};
     const d=i.billing_draft;
+    if(d.agreement_id!==a.id)return refuse();
     if(!object(d.agreement_snapshot))return {state:'needs_input',fields:['agreement_source_version']};
     if(d.agreement_snapshot.id!==a.id||d.agreement_snapshot.version!==a.version)return refuse();
     if(!object(d.commercial_terms_reference))return {state:'needs_input',fields:['commercial_terms_reference']};
     const ref=d.commercial_terms_reference;
     if(!id(ref.id)||ref.id!==a.commercial_terms_id)return refuse();
     const t=await read('tenant_client_agreements',
-      'id,tenant_id,contact_id,offer_id,status,collection_terms_version,collection_terms,updated_at,agreed_amount_minor,agreed_currency',ref.id);
+      'id,tenant_id,contact_id,offer_id,status,collection_terms_version,collection_terms,updated_at,agreed_amount_minor,agreed_currency,starts_on,ends_on,price_basis',ref.id);
     if(!t||t.contact_id!==i.contact_id||!id(t.offer_id)||t.offer_id!==a.offer_id
       ||!['draft','active','paused'].includes(String(t.status))||ref.version!==t.collection_terms_version)return refuse();
     if(!version(a.version)||!version(i.billing_lifecycle_version)||!version(i.billing_draft_version)
       ||!Number.isSafeInteger(t.collection_terms_version)||Number(t.collection_terms_version)<0
       ||![a.updated_at,i.updated_at,t.updated_at].every(timestamp))return refuse();
     const missing:string[]=[];
+    if(t.starts_on===null||t.starts_on===undefined)missing.push('commercial_service_start');
+    if(!['catalog','negotiated'].includes(String(t.price_basis)))missing.push('agreed_price_basis');
     if(!object(t.collection_terms))missing.push('recorded_collection_terms');
     if(!object(d.commercial_conditions))missing.push('tax_and_fee_treatment');
     if(!Array.isArray(d.items)||!d.items.length)missing.push('recorded_invoice_lines');
     if(missing.length)return {state:'needs_input',fields:missing};
+    const engagement=parseCommercialEngagement({starts_on:t.starts_on,ends_on:t.ends_on,price_basis:t.price_basis});
     if(i.currency!=='usd'||String(t.agreed_currency).toLowerCase()!=='usd'
       ||!Number.isSafeInteger(d.total_minor)||Number(d.total_minor)<=0||d.total_minor!==t.agreed_amount_minor)return refuse();
     const items=d.items as unknown[];
@@ -74,7 +78,7 @@ export async function readCommercialPresentationSource(
     const lines=items.map(item=>({unit_minor:item.unit_minor??(object(item.catalog_facts)?item.catalog_facts.unit_minor:undefined),quantity:item.quantity}));
     if(!await scope())return refuse();
     return {state:'source',input:{
-      schema_version:1,
+      schema_version:2,engagement,
       source:{tenant_id:tenant,client_id:i.contact_id,offer_id:t.offer_id,agreement_id:a.id,
         agreement_version:a.version,agreement_updated_at:a.updated_at,body_source:a.body_source,status:a.status,content_sha256:a.content_sha256,
         terms_id:t.id,terms_version:t.collection_terms_version,terms_updated_at:t.updated_at,

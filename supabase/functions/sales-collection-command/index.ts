@@ -4,6 +4,11 @@ import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { SALES_COLLECTION_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sales_collections.ts";
 import { readCommercialEffectuationConsequence, hasCommercialEffectuationReceipt } from "../_shared/sales-commercial/effectuation-command.ts";
+import {commercialPreparationCommand,readCommercialPreparationConsequence,hasCommercialPreparationReceipt} from "../_shared/sales-commercial/preparation-command.ts";
+import {prepareCommercialPresentationFromRecords} from "../_shared/agreements/commercial-presentation-read.ts";
+import {canonicalPresentationJson} from "../_shared/agreements/commercial-presentation.ts";
+import {preparationReviewDocument,readPreparationReviewDocument} from "../_shared/agreements/preparation-review.ts";
+import {AgreementPreparationUnavailable,prepareRetainedAgreementArtifact,type PreparedAgreementArtifact} from "../_shared/agreements/prepare-retained.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { UUID, COLLECTION_ACTIONS, parseCollectionCommand } from "../_shared/sales-collections/contract.ts";
 
@@ -50,12 +55,26 @@ Deno.serve(async req => {
   if (replayError) return response(409, { ok: false, outcome: "refused", code: "SALES_COLLECTION_REPLAY_UNAVAILABLE" });
   const preparedRecovery = false;
   if (object(replay) && command.action === "collection.effectuate_terms" && !hasCommercialEffectuationReceipt(replay, tenantId, command)) return response(503, {ok:false,outcome:"outcome_unknown",code:"SALES_COLLECTION_READBACK_INVALID",operation_id:body.operation_id});
+  if (object(replay) && command.action === "collection.prepare_agreement" && !hasCommercialPreparationReceipt(replay,tenantId,command)) return response(503,{ok:false,outcome:"outcome_unknown",code:"SALES_COLLECTION_READBACK_INVALID",operation_id:body.operation_id});
   if (object(replay)) return response(200, { ...object(replay)!, replayed: true, capability });
+
+  let preparationReview:Record<string,unknown>|undefined;
+  if(command.action==='collection.prepare_agreement'){
+    const source=await prepareCommercialPresentationFromRecords(tenantId,{invoice_id:command.invoice_id,agreement_id:command.agreement_id},caller);
+    if(source.state!=='proposed')return response(422,{ok:false,outcome:'refused',code:'PREPARATION_SOURCE_UNAVAILABLE',
+      message:'The signing document needs complete current services, service dates, agreed economics and invoice source. Correct the records before reviewing it.',
+      ...(source.state==='needs_input'?{missing_fields:source.fields}:{})});
+    if(canonicalPresentationJson(commercialPreparationCommand(source.presentation))!==canonicalPresentationJson(command))return response(409,{ok:false,outcome:'refused',code:'PREPARATION_SOURCE_CHANGED',message:'The document source changed. Review the current agreement before continuing.'});
+    try{preparationReview=await preparationReviewDocument(source);}
+    catch{return response(422,{ok:false,outcome:'refused',code:'COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE'});}
+  }
 
   const { data: previewData, error: previewError } = await admin.rpc("preview_sales_collection_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_COLLECTION_INELIGIBLE", ...(command.action === "collection.effectuate_terms" ? {message:"These records cannot currently be made effective. Check the matching signed revision, commercial start date and agreed price in Terms & Agreements."} : {}), ...(preview ? { preview } : {}) });
   if (command.action === "collection.effectuate_terms" && !readCommercialEffectuationConsequence(preview.consequence, command)) return response(422, {ok:false,outcome:"refused",code:"COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE"});
+  if (command.action === 'collection.prepare_agreement' && !readCommercialPreparationConsequence(preview.consequence,command)) return response(422,{ok:false,outcome:'refused',code:'COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE'});
+  if(command.action==='collection.prepare_agreement'&&!await readPreparationReviewDocument(preparationReview,command,preview.consequence))return response(422,{ok:false,outcome:'refused',code:'COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE'});
   if (preparedRecovery || body.approved_fingerprint === undefined) {
     // Reuse a live server-issued proposal cycle. If an approval was consumed but
     // the process stopped before its business record, mint a fresh card for the
@@ -131,7 +150,8 @@ Deno.serve(async req => {
       proposal = existing.data; proposalError = existing.error;
     }
     if (proposalError || !proposal) return response(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE" });
-    return response(202, { ok: false, outcome: "approval_required", capability, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at, preview });
+    return response(202, { ok: false, outcome: "approval_required", capability, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at, preview,
+      ...(preparationReview?{review_document:preparationReview}:{}) });
   }
   let decided: ReturnType<typeof parseCollectionCommand>;
   const args = object(decision.args);
@@ -144,13 +164,24 @@ Deno.serve(async req => {
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
     decision_receipt_recorded: true,
   };
-  const { data: result, error: executeError } = await admin.rpc("execute_sales_collection_command", {
+  let artifact:PreparedAgreementArtifact|undefined;
+  if(decided.action==='collection.prepare_agreement'){
+    try{artifact=await prepareRetainedAgreementArtifact(tenantId,args.operation_id,decided,caller,admin.storage,stillCurrent);}
+    catch(error){
+      const beforeUpload=error instanceof AgreementPreparationUnavailable&&['SOURCE_UNAVAILABLE','SOURCE_CHANGED','RENDER_UNAVAILABLE'].includes(error.code);
+      return response(beforeUpload?422:503,{ok:false,outcome:beforeUpload?'refused':'outcome_unknown',code:'AGREEMENT_PREPARATION_UNVERIFIED',
+        message:beforeUpload?'The current agreement no longer matches this review. Refresh the document before continuing.':'The preparation result is not confirmed. Recover the original operation before starting another.',operation_id:args.operation_id});
+    }
+  }
+  const { data: result, error: executeError } = await admin.rpc(decided.action==='collection.prepare_agreement'?'execute_sales_agreement_preparation':"execute_sales_collection_command", {
     _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: args.operation_id, _command: decided, _governance: governance,
+    ...(artifact?{_prepared:artifact}:{}),
   });
   if (executeError) return response(databaseAnswered(executeError) ? 422 : 503, { ok: false,
     outcome: databaseAnswered(executeError) ? "refused" : "outcome_unknown", code: "SALES_COLLECTION_COMMAND_FAILED",
     message: databaseAnswered(executeError) ? "The collection action could not complete. Reload its current state before trying again." : "The result is unknown. Recover this operation before starting another.", operation_id: args.operation_id });
   const resultObject = object(result);
   if (!resultObject || resultObject.ok !== true || decided.action === "collection.effectuate_terms" && !hasCommercialEffectuationReceipt(resultObject, tenantId, decided)) return response(503, { ok: false, outcome: "outcome_unknown", code: "SALES_COLLECTION_READBACK_INVALID", operation_id: args.operation_id });
+  if(decided.action==='collection.prepare_agreement'&&(!hasCommercialPreparationReceipt(resultObject,tenantId,decided)||object(resultObject.row)?.document_sha256!==artifact?.document_sha256))return response(503,{ok:false,outcome:'outcome_unknown',code:'SALES_COLLECTION_READBACK_INVALID',operation_id:args.operation_id});
   return response(200, { ...resultObject, capability });
 });

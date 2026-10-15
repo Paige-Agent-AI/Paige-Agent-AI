@@ -331,3 +331,46 @@ it("describes recorded included tax without raw line indexes or additional oblig
   expect(p.payload.principal_minor).toBe(350000);
   assert(!p.appendix.includes("line_index"));
 });
+
+
+describe("v2 explicit service commencement without rewriting v1",()=>{
+ const engagement={starts_on:"2026-10-15",ends_on:null,price_basis:"negotiated"};
+ it("retains explicit service timing independently of payment dates",async()=>{
+  const original=fixture(),legacy=await prepareCommercialPresentation(original);
+  const next=await prepareCommercialPresentation({...original,schema_version:2,engagement});
+  assert.equal(legacy.payload.schema_version,1);assert.equal("engagement" in legacy.payload,false);
+  assert(!legacy.appendix.includes("Service starts:"));
+  assert.equal(next.payload.schema_version,2);assert.deepEqual(next.payload.engagement,engagement);
+  assert(next.appendix.includes("Service starts: 2026-10-15"));
+  assert(!next.appendix.includes("Service starts: 2026-11-01"));
+  assert.deepEqual(next.payload.obligations,legacy.payload.obligations);
+  assert.equal(next.payload.principal_minor,legacy.payload.principal_minor);
+  assert.notEqual(next.payload_digest,legacy.payload_digest);
+  assert.deepEqual(original,fixture());assert(Object.isFrozen(next.payload.engagement));
+ });
+ for(const [label,change] of [
+  ["missing service start",{starts_on:null}],
+  ["payment date is not a service-start default",{starts_on:undefined}],
+  ["invalid calendar day",{starts_on:"2026-02-30"}],
+  ["quote pending",{price_basis:"quote_pending"}],
+  ["unrecognized price basis",{price_basis:"inferred"}],
+  ["end before start",{ends_on:"2026-10-14"}],
+  ["unrecognized retained fact",{approved:true}],
+ ] as const)it(`refuses ${label}`,async()=>{
+  await assert.rejects(()=>prepareCommercialPresentation({...fixture(),schema_version:2,engagement:{...engagement,...change}}));
+ });
+ it("requires the closed v2 engagement and forbids attaching it to v1",async()=>{
+  await assert.rejects(()=>prepareCommercialPresentation({...fixture(),schema_version:2}));
+  await assert.rejects(()=>prepareCommercialPresentation({...fixture(),engagement}));
+  await assert.rejects(()=>prepareCommercialPresentation({...fixture(),schema_version:2,engagement:{starts_on:engagement.starts_on,price_basis:"negotiated"}}));
+ });
+ it("binds service commencement and price basis into the exact review digest",async()=>{
+  const input={...fixture(),schema_version:2,engagement};
+  const prepared=await prepareCommercialPresentation(input);
+  for(const delta of [{starts_on:"2026-10-16"},{ends_on:"2027-10-15"},{price_basis:"catalog"}]){
+   const changed={...input,engagement:{...engagement,...delta}};let renders=0;
+   await assert.rejects(()=>renderCommercialPresentation(changed,prepared,async()=>{renders++;return new Uint8Array();}),/COMMERCIAL_PRESENTATION_CHANGED/);
+   assert.equal(renders,0);
+  }
+ });
+});

@@ -1,0 +1,6 @@
+{
+  "result": "PASS",
+  "sourceBase": "8cb3cfec56dffd8354ebbac8a1c25efb9f43def0",
+  "comparison": "actual prior implementation vs v2-capable implementation on identical canonical v1 fixture; entire payload/digest/appendix deeply equal",
+  "v1PayloadDigest": "908246b378b86d13f1180bf36cae659d3fdf71b62e53ae95918ab7c67e76ef54"
+}

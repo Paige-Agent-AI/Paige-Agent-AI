@@ -7,12 +7,12 @@ MATERIAL_FLOW_CHANGE: YES: existing form opt-in, canonical inquiry, contextual d
 FLOW_PROTOTYPE: PASS: e03-conversations-flow-review.html reviewed in the existing coding conversation; owner2026-10-14 said Yes as long as we maintain what we already have; current Conversations screenshot is the preservation baseline, not prototype replacement chrome
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner opens a form inquiry in canonical Conversations, edits its PAIGE reply in the existing composer and approves its server-resolved exact envelope
 VISUAL_DIRECTION: PASS: preserve Clients navigation, thread list/search/filters, history, operating bar, rich composer, People context and PAIGE panel; no shell redesign
-AUTOMATED_EVIDENCE: PASS: six changed-flow suites108/108 at4437003; expanded actual Solo/admin inbox plus decline cases50/50 with only the existing HTML artifact generator skipped; incumbent lead-reply60/60; current-main C0b integrity152/152; native PostgreSQL canonical inquiry identity/ACL/idempotency/concurrent replay PASS
-STATIC_EVIDENCE: PASS: final product source b14149befec29b2ecc2535f34888e1a694129b72 TypeScript baseline10/current10 and production build PASS (1m46s); changed-file lint zero errors and three incumbent growth2 warnings; migration version collision PASS (1296 migrations); Impeccable exit0 with one retained incumbent10px advisory; git diff --check PASS
-RENDERED_EVIDENCE: UNVERIFIED: actual ClientsConversations tree loaded with fixture-only adapters; capture stalled and yielded a blank frame, explicitly invalidated; no eight-viewport actual UI matrix claimed
-BEHAVIORAL_EVIDENCE: UNVERIFIED: actual component browser drive proved draft entry into existing composer, server-resolved preview, edit invalidation, Not now retaining words/restoring focus, accepted-not-delivered and unknown locked/status-read-only behavior with simulated boundaries; complete authenticated/provider flow remains owed
+AUTOMATED_EVIDENCE: PASS: latest six-suite143 PASS and1 existing HTML-artifact-generator skipped; all29 new scheduled/reply/new-composer cancellation cases pass; original-source feedback17 failures with3 positive controls, and reply-unmount2 failures reproduced before corrections. Earlier unchanged form settings33/33, lead-reply60/60, C0b152/152 and native PostgreSQL canonical inquiry identity/ACL/idempotency/concurrent replay PASS
+STATIC_EVIDENCE: PASS: final product source f2a6676ead640610b7399983848da9367d054668 TypeScript baseline10/current10 and production build PASS (2m29s); changed product lint zero errors/warnings, fixture entry retains one fast-refresh warning; earlier untouched growth2 retains3 warnings; migration collision1296 PASS. Installed detector exit0 on the3 cancellation source files; earlier full continuation detector retained one incumbent10px advisory. git diff --check PASS
+RENDERED_EVIDENCE: UNVERIFIED: eight actual-component CSS viewport/panel cases observed, six exact-sized raster frames;1536 CSS captures are1535px wide and remain qualified. Eleven neutral fixture JPEG frames and manifests retained in e03-conversations-components/. Original blank capture invalidated. Full Solo shell/actual PAIGE panel/two authenticated tenants remain owed
+BEHAVIORAL_EVIDENCE: UNVERIFIED: actual component browser drive proves existing composer entry, exact preview, edit invalidation, Not now retaining words/restoring focus, accepted-not-delivered, unknown locked/read-only recovery, and confirmed vs empty cancellation receipts with simulated boundaries; complete authenticated/provider flow remains owed
 AUTHENTICATED_RUNTIME: UNVERIFIED: no authenticated ordinary SOLO acceptance or provider send authorized/performed
-KEYBOARD_FOCUS: UNVERIFIED: observed review-trigger defect reproduced by a failing regression then corrected; actual DOM focus lands on Needs your OK group (never Approve), Not now returns to Review reply; complete keyboard traversal owed
+KEYBOARD_FOCUS: UNVERIFIED: actual review group -> Tab Approve -> Tab Not now -> Enter returns focus to Review reply and keeps draft; narrow900px card fits without horizontal overflow. Complete shell traversal/assistive-tech proof owed
 ZOOM_REFLOW: UNVERIFIED: actual UI reflow proof owed
 REDUCED_MOTION: UNVERIFIED: no new product animation; actual UI preference proof owed
 STATE_COVERAGE: UNVERIFIED: automated stale/expired/repeated approval, identity/content changes, unsupported attachments/schedule/signature, workspace A-B-A, refusal/unknown/accepted/delivered and read-only recovery pass; complete actual UI and provider states owed
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: ordinary owner/admin completes the nine-step flow on the re
 MOTION_PURPOSE: NONE: no product animation added
 PROTECTED_SEAMS: affected isolation/authority/approval/canonical write/readback/provider state/retry/idempotency/privacy/geometry/accessibility; fixture regression and native SQL prove subsets only. Authentication/account choice, signup/paywall/billing/provisioning, Spine registry/executor, Rail/Memory engine, Chat transcript/popout/stream, Live Conversation and Secure Browser/Vault implementations not modified. Existing native processor and retry lifecycle reused; no new queue.
 
-INTERNAL_BUILD_IDENTITY: b14149befec29b2ecc2535f34888e1a694129b72; deployment=none-local; environment=development; migrations=PROOF_OWED(20271101143000_e03_form_inquiry_conversations production unapplied); edge=PROOF_OWED(growth-process-submission source not deployed); evidence=docs/evidence/ui-delivery/e03-conversations-lead-reply-continuation.md and scripts/proof/e03-form-inquiry-postgres.mjs
+INTERNAL_BUILD_IDENTITY: f2a6676ead640610b7399983848da9367d054668; deployment=none-local; environment=development; migrations=PROOF_OWED(20271101143000_e03_form_inquiry_conversations production unapplied); edge=PROOF_OWED(growth-process-submission source not deployed); evidence=docs/evidence/ui-delivery/e03-conversations-lead-reply-continuation.md and scripts/proof/e03-form-inquiry-postgres.mjs
 RELEASE_CHANNEL: development: source continuation only, no activation; automatic Git branch preview is a separate evidence leg
 RELEASE_CLASSIFICATION: internal-only: unfinished customer journey source, no customer release
 CUSTOMER_RELEASE_IDENTITY: none: acceptance and release authority not established
@@ -35,14 +35,14 @@ RELEASE_NOTE_REQUIRED: no: no customer release
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source and focused proof only
 RELEASE_RECOVERY: position=unreleased continuation branch; reference=original frozen PRs and current main remain separate
 
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual source capture owed
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual source capture owed
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: actual source capture owed
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: actual source capture owed
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: actual source capture owed
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: actual source capture owed
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: actual source capture owed
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: actual source capture owed
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: component CSS1536 observed, JPEG1535x770; full shell/actual panel/authenticated contexts owed
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: component CSS1536 observed, JPEG1535x770; width fixture only, full shell owed
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-1366-closed.jpg; full shell/tenant proof owed
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-1366-open.jpg; actual panel/full shell owed
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-1024-closed.jpg; full shell/tenant proof owed
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-1024-open.jpg; actual panel/full shell owed
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-900-closed.jpg; fixture adds5px body scroll; full shell owed
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: exact component frame in e03-conversations-components/e03-actual-900-open.jpg; actual panel/full shell owed
 
 ## Source and release boundaries
 
@@ -57,3 +57,9 @@ The continuation is rebased cleanly onto mainbf0a8b60bee8d3a83c17c214655ea6425fc
 Legacy client.followup and held email approvals expose the existing decline exit and canonical Conversations link, with generic execution refused. Decline readback must match exact row, tenant filter, pending predicate and rejected status; an empty/foreign/stale answer never collapses the row. The frozen execute-approval source in2150 is untouched.
 
 Durable governed-email history now distinguishes Accepted from Delivered using the existing six-scalar projection. An inbox read marker does not create recipient delivery evidence. The real mounted Solo and admin inbox tests prove sent/read -> Accepted, delivered -> Delivered, failed -> Failed, without restoring approval controls. No sending or receipt producer changed.
+
+All three existing scheduled Cancel/Undo callers now require an exact true/no-error RPC receipt before announcing cancellation. Empty/malformed/denied/transport answers do not invent Sent or Undone. Same-workspace closed-dialog Undo remains usable; changed workspace, A-B-A, unmount and late answers are fenced with the existing account-epoch helper. The server cancellation RPC/private-mail authority is unchanged and #2135 remains open. This is caller correctness, not G1 security closure.
+
+Shipped Delivery Log: N/A; this source has not reached main. Internal development/draft only. No reviewer or release authority is inferred from this evidence or a draft PR.
+
+Fresh pre-draft main check: origin/main f633dbec2ab77ce9827f61ba2a0f0ea2a0953b4c (after2162/2164/2169);20 incoming paths, zero overlap with this continuation. The branch retains its bf0a8b60 base and all original commits; no forced rewrite. Required hosted CI must prove the actual candidate/main composition. Existing reviewed PR heads and their budgets are unchanged.

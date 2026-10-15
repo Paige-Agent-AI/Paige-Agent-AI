@@ -1,0 +1,360 @@
+{
+  "source": [
+    {
+      "file": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "file": "src/components/tenant-relationships/tenant-relationships-clients-workspace.css",
+      "sha256": "bd2e43ee695a6c14f47b375ccac961e66947d268372e1a81b4653bbb6d7c4a49"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalConfigurationGate.tsx",
+      "sha256": "9e0f7cb8136d1e5c396982e61a9b42eeed79b02638a8073c4279560b4cfee414"
+    }
+  ],
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "reservedPanelWidth": 0,
+      "availableWidth": 1224,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1536-wide-light.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "reservedPanelWidth": 0,
+      "availableWidth": 1224,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1536-wide-dark.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "reservedPanelWidth": 420,
+      "availableWidth": 804,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1536-narrow-light.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "reservedPanelWidth": 420,
+      "availableWidth": 804,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1536-narrow-dark.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "reservedPanelWidth": 0,
+      "availableWidth": 1054,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1366-wide-light.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "reservedPanelWidth": 0,
+      "availableWidth": 1054,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1366-wide-dark.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "reservedPanelWidth": 420,
+      "availableWidth": 634,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1366-narrow-light.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "reservedPanelWidth": 420,
+      "availableWidth": 634,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1366-narrow-dark.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reservedPanelWidth": 0,
+      "availableWidth": 712,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1024-wide-light.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reservedPanelWidth": 0,
+      "availableWidth": 712,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1024-wide-dark.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reservedPanelWidth": 420,
+      "availableWidth": 292,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1024-narrow-light.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "reservedPanelWidth": 420,
+      "availableWidth": 292,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "1024-narrow-dark.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "reservedPanelWidth": 0,
+      "availableWidth": 588,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "900-wide-light.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "reservedPanelWidth": 0,
+      "availableWidth": 588,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "900-wide-dark.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "reservedPanelWidth": 420,
+      "availableWidth": 280,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "900-narrow-light.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "reservedPanelWidth": 420,
+      "availableWidth": 280,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "900-narrow-dark.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reservedPanelWidth": 0,
+      "availableWidth": 358,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "390-wide-light.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reservedPanelWidth": 0,
+      "availableWidth": 358,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "390-wide-dark.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reservedPanelWidth": 420,
+      "availableWidth": 358,
+      "theme": "light",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "390-narrow-light.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "reservedPanelWidth": 420,
+      "availableWidth": 358,
+      "theme": "dark",
+      "reducedMotion": true,
+      "geometry": {
+        "overflow": false,
+        "hiddenText": false,
+        "error": true,
+        "waiting": true,
+        "deniedMounts": 0,
+        "allowedMounts": 1
+      },
+      "screenshot": "390-narrow-dark.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Actual gate source and incumbent CSS in isolated synthetic browser documents. Width reservations exercise the component; they are not the real Solo shell or authenticated tenant proof. No server, user preview tab, production endpoint, credential or business operation was accessed."
+}

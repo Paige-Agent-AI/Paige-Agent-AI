@@ -8,9 +8,9 @@ FLOW_PROTOTYPE: NOT_REQUIRED: restores existing approval-outcome and interruptio
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible ordinary SOLO owner schedules or manages authorized work and can distinguish saved records from uncertain changes and future delivery
 VISUAL_DIRECTION: PASS: incumbent Chat confirmation, trace and interruption presentation; no geometry, tokens, components or motion changes
 AUTOMATED_EVIDENCE: PASS: actual-dispatch regression first failed15/16; repaired focused suite109 checks; full-handler lost response, gateway, missing readback, SQL refusal, typed supersession and both interruption exits exercised; exact commands below
-STATIC_EVIDENCE: UNVERIFIED: action-risk, one-approval-gate and write-target lints pass; type and hosted checks pending; restrictive Spine source pins intentionally remain held for non-author review
+STATIC_EVIDENCE: UNVERIFIED: scripts/ci/paige-spine-registry-lint.mjs refuses changed dispatch fingerprints because required non-author review is absent; type ratchet10/10, scoped lint, action-risk, one-approval-gate and write-target checks pass
 RENDERED_EVIDENCE: UNVERIFIED: no claim of new authenticated action-card screenshots while INT-346 action admission remains inactive
-BEHAVIORAL_EVIDENCE: PASS: actual handler against protected doubles preserves one original write, holds the next write only for uncertainty, persists unknown evidence, and blocks a later request after interruption; not ordinary authenticated execution
+BEHAVIORAL_EVIDENCE: UNVERIFIED: scripts/int336-two-tool-check.mjs and scripts/int336-error-receipt-check.mjs exercise actual source against protected doubles; ordinary customer execution cannot be verified while production action admission is inactive
 AUTHENTICATED_RUNTIME: UNVERIFIED: provider cessation evidence, governed activation/security gates and ordinary paired SOLO action QA remain owed
 KEYBOARD_FOCUS: UNVERIFIED: no control/focus changes; current authenticated action-card regression remains owed
 ZOOM_REFLOW: UNVERIFIED: no layout changes; current authenticated changed-message regression remains owed
@@ -22,13 +22,13 @@ UNVERIFIED: independent non-author review, protected source-pin renewal, exact-h
 OWNER_INTENT: restore all18 supported historical capabilities and all50 parity findings through the existing governed architecture; this bounded Planning repair does not close that program
 EXPERIENCE_CONTRACT: PASS: preserve actual business records, domain authorization, exact approved arguments, truthful outcomes, safe recovery, tenant isolation and the existing owner controls
 PROTECTED_SEAMS: PASS: affected isolation/authority/Spine/readback/receipt/recovery/privacy are covered by the named source/handler tests; authentication/account-choice, entitlements/signup/billing, transcript geometry/history/pop-out, Live state, Vault/credentials, providers and responsive/accessibility implementation are unchanged; authenticated regression claims remain owed
-INTERNAL_BUILD_IDENTITY: development: branch fix/ant21-planning-result-recovery from f87e9fcb343eb9da14ce0e23ec55e3dd83e83c0f; candidate commit to be recorded by PR; migrations NOT_APPLICABLE; production edge NOT_DEPLOYED
-RELEASE_CHANNEL: development: protected local fixtures only; no production effects or activation
+INTERNAL_BUILD_IDENTITY: 64f0b535835468c4f5996ed5cfe77111858d1fa4 source and fixture freeze from main f87e9fcb343eb9da14ce0e23ec55e3dd83e83c0f; final documentation head is recorded in the PR; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(held shared Chat source review and release); evidence=docs/evidence/ui-delivery/ant21-planning-chat-recovery.md and src/__tests__/planning-chat-execution.test.ts
+RELEASE_CHANNEL: development: isolated local source candidate with protected fixtures and no customer-reachability claim
 RELEASE_CLASSIFICATION: internal-only: bounded restoration source candidate
 CUSTOMER_RELEASE_IDENTITY: none: no owner publication decision or completed customer restoration claim
 RELEASE_NOTE_REQUIRED: no: internal candidate only
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for actual customer action execution, durable domain Rail integration, dispatch/delivery, paired parity and owner acceptance
-RELEASE_RECOVERY: position=hold release until source review and exact-head checks; no migration or production state to reverse; reference=existing INT-346 issuance and conversational admission evidence
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: actual customer action execution, complete domain Rail integration, dispatch/delivery, paired parity and owner acceptance
+RELEASE_RECOVERY: position=retain inactive admission and withhold source release until review and exact-head checks; reference=docs/evidence/ui-delivery/int346-interactive-issuance.md and docs/evidence/ui-delivery/int346-conversational-admission.md
 
 ## Defect and scope
 

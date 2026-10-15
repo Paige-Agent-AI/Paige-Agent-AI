@@ -177,6 +177,51 @@ assert.equal(rec.rpc.filter((c) => c.name === 'plan_create').length, 0, 'an unof
 assert.equal(rec.rpc.filter((c) => c.name === 'paige_chat_interactive_settle').length, 1);
 emitToolUse = false;
 
+// SOLO historical-capability regression: these are real domain bindings, but
+// DRAINING grants none of them execution authority. In particular Research's
+// incumbent read classification must not admit provider spend or persistence.
+// Exercise actual model-emitted calls, rather than only inspecting registry text.
+for (const [index, [name, input]] of [
+  ['deep_research', { question: 'Protected fixture research' }],
+  ['crm_create_contact', { first_name: 'Protected', last_name: 'Fixture' }],
+  ['crm_create_task', { title: 'Protected fixture task' }],
+  ['plan_assign_task', { title: 'Protected fixture assignment' }],
+  ['automation_draft', { name: 'Protected fixture process', trigger_key: 'fixture', steps: [] }],
+  ['comms_send_email', { contact_id: id(70), subject: 'Protected fixture', body: 'No external send' }],
+  ['plan_set_reminder', { title: 'Protected fixture reminder', remind_at: '2030-01-01T12:00:00Z' }],
+  ['propose_action', { action_kind: 'client.followup', summary: 'Protected fixture follow-up' }],
+  ['save_to_knowledge_base', { title: 'Protected fixture knowledge', content: 'Fixture only' }],
+].entries()) {
+  receipts.length = 0; modelCalls = 0; executorState.held = null;
+  readToolUse = { name, input }; // adversarial emission; the name was not offered
+  rec = scenario();
+  const beforeModels = modelBodies.length;
+  const outbound = [];
+  const modelFixture = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    if (!String(url).includes('api.anthropic.com')) outbound.push(String(url));
+    return modelFixture(url, options);
+  };
+  try {
+    const response = await capturedHandler()(req({}, id(100 + index)));
+    assert.equal(response.status, 200, `${name}: conversation remains available`);
+    const wire = await response.text();
+    assert.ok(wire.includes('Answered in words.'), `${name}: refused tool still permits a conversational answer`);
+    assert.ok(modelBodies.slice(beforeModels).every(body => !body.tools?.some(tool => tool.name === name)), `${name}: never offered`);
+    assert.ok(rec.rpc.some(c => c.name === 'paige_chat_interactive_begin_v2' && c.args.p_effectful === false), `${name}: non-effectful admission`);
+    assert.equal(rec.rpc.some(c => c.name === 'paige_chat_interactive_executor_v2' && c.args.p_operation === 'acquire'), false, `${name}: no executor claim`);
+    assert.equal(rec.functions.length, 0, `${name}: no domain Edge invocation`);
+    assert.deepEqual(outbound, [], `${name}: no provider or ingestion request`);
+    assert.equal(rec.rpc.some(c => [name, 'execute_crm_command', 'prepare_comms_email_send'].includes(c.name)), false, `${name}: no domain command`);
+    assert.equal(rec.inserts.some(c => ['clients', 'tasks', 'plan_items', 'paige_automations', 'paige_automation_acts', 'paige_actions', 'messages', 'tenant_knowledge_docs', 'research_runs', 'research_sources', 'paige_pending_confirmations'].includes(c.table)), false, `${name}: no business effect or approval proposal`);
+    assert.equal(rec.rpc.filter(c => c.name === 'paige_chat_interactive_settle').length, 1, `${name}: one conversational terminal receipt`);
+    assert.equal(rec.rpc.some(c => c.name === 'paige_chat_interactive_settle' && c.args.p_bundle_ref?.interactive?.effects?.some(effect => effect.outcome === 'reported_success')), false, `${name}: no recorded action success`);
+  } finally {
+    globalThis.fetch = modelFixture;
+    readToolUse = null;
+  }
+}
+
 // 5 — Approvals cannot be consumed while staged: the decision request is refused truthfully
 //     BEFORE acceptance, with nothing consumed and no message accepted.
 receipts.length = 0;

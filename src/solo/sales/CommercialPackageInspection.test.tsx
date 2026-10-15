@@ -6,7 +6,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const h=vi.hoisted(()=>({read:vi.fn(),preview:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn()}}));
 vi.mock('../../../supabase/functions/_shared/sales-commercial/package-projection',()=>({readCommercialPackage:h.read}));
-vi.mock('./CommercialAgreementPreview',()=>({CommercialAgreementPreview:(props:unknown)=>{h.preview(props);return <button>Review saved agreement</button>;}}));
+vi.mock('./CommercialAgreementPreview',()=>({CommercialAgreementPreview:(props:{mode?:string})=>{h.preview(props);return <button>{props.mode==='accepted'?'Review accepted agreement':'Review saved agreement'}</button>;}}));
 let host:HTMLDivElement,root:Root;
 const fixture={success:true,invoice:{currency:'usd',obligation_total_minor:350000,due_now_minor:50000,remaining_scheduled_minor:300000,outstanding_minor:350000},agreement:{status:'completed',version:2},commercial_terms:{status:'active',version:3},schedule_preview:{rows:[{due_date:'2026-11-01',amount_cents:50000},...Array.from({length:10},(_,i)=>({due_date:`2027-${String(i+1).padStart(2,'0')}-01`,amount_cents:30000}))],has_more:false},missing_fields:['signed_terms_compatibility'],conflicts:[]};
 beforeEach(()=>{h.read.mockReset();h.preview.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host)});
@@ -19,6 +19,11 @@ it('mounts canonical agreement review from the saved draft inspection for a mana
  h.read.mockResolvedValue({content:{...fixture,invoice:{...fixture.invoice,status:'draft'},agreement:{id:'test-agreement-a',status:'draft',version:4}}});render('test-tenant-a','test-invoice-a',2,true);await act(async()=>host.querySelector('button')!.click());
  expect(h.preview).toHaveBeenCalledWith({tenantId:'test-tenant-a',invoiceId:'test-invoice-a',agreementId:'test-agreement-a'});expect(host.textContent).toContain('Review saved agreement');
 });
-it.each([[false,'draft','draft'],[true,'issued','draft'],[true,'draft','completed']] as const)('preserves review boundaries: manage=%s invoice=%s agreement=%s',async(canPrepare,status,agreementStatus)=>{
+it.each([[false,'draft','draft'],[true,'issued','draft'],[false,'issued','completed']] as const)('preserves review boundaries: manage=%s invoice=%s agreement=%s',async(canPrepare,status,agreementStatus)=>{
  h.read.mockResolvedValue({content:{...fixture,invoice:{...fixture.invoice,status},agreement:{id:'test-agreement-a',status:agreementStatus,version:4}}});render('test-tenant-a','test-invoice-a',2,canPrepare);await act(async()=>host.querySelector('button')!.click());expect(h.preview).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Review saved agreement');
+});
+it('mounts retained inspection for an eligible owner without offering another proposal or recasting accepted currency',async()=>{
+ h.read.mockResolvedValue({content:{...fixture,invoice:{...fixture.invoice,status:'issued',currency:'eur'},agreement:{id:'test-agreement-a',status:'completed',version:4},accepted_commercial_terms:{basis:'completed_immutable_presentation',principal_minor:350000,currency:'usd',commercial_terms_version:3,obligations:Array(11).fill({})}}});
+ render('test-tenant-a','test-invoice-a',2,true);await act(async()=>host.querySelector('button')!.click());expect(h.preview).toHaveBeenCalledWith({tenantId:'test-tenant-a',invoiceId:'test-invoice-a',agreementId:'test-agreement-a',mode:'accepted'});
+ expect(host.textContent).toContain('Review accepted agreement');expect(host.textContent).not.toContain('Review saved agreement');expect(host.textContent).toContain('Accepted contract principal$3,500.00');expect(host.textContent).toContain('records 11 dated obligations');expect(host.textContent).toContain('do not confirm payment or completed services');
 });

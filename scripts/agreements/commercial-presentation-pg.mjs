@@ -5,9 +5,13 @@ import {spawnSync} from 'node:child_process';
 import {randomUUID,createHash} from 'node:crypto';
 import {prepareCommercialPresentation,canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
+import {proveAcceptedCommercialRecord} from './accepted-commercial-proof.mjs';
 const [psql,port,user,directory,mode]=process.argv.slice(2);
 const contextIndex=process.argv.indexOf('--signing-context');
 const contextMigration=contextIndex>=0?process.argv[contextIndex+1]:null;
+const acceptedIndex=process.argv.indexOf('--accepted-record');
+const acceptedMigration=acceptedIndex>=0?process.argv[acceptedIndex+1]:null;
+if(acceptedIndex>=0)assert(acceptedMigration&&contextMigration&&mode==='repaired');
 if(contextIndex>=0)assert(contextMigration&&mode==='repaired');
 assert(psql&&/^\d+$/.test(port??'')&&user&&directory&&['baseline','repaired'].includes(mode));
 let database='postgres',checks=0,contextChecks=0;
@@ -53,7 +57,7 @@ try{
   const created=JSON.parse(sql(scope+`SELECT save_paige_agreement(_expected_tenant_id=>'${tenant}',_agreement_id=>NULL,_contact_id=>'${client}',_offer_id=>'${offer}',_commercial_terms_id=>'${termsId}',_title=>'Synthetic package',_body_markdown=>'Existing owner-authored service agreement.');`));
   const agreementId=created.id;assert(/^[0-9a-f-]{36}$/.test(agreementId));
   const draft={schema_version:3,total_minor:350000,agreement_snapshot:{id:agreementId,version:1},commercial_terms_reference:{id:termsId,version:1},commercial_conditions:conditions,
-    items:[{unit_minor:350000,quantity:1,catalog_facts:{product_id:offer,unit_minor:350000,currency:'usd'}}]};
+    items:[{unit_minor:350000,quantity:1,catalog_facts:{product_id:offer,price_id:'88888888-0000-4000-8000-000000000001',unit_minor:350000,currency:'usd'}}]};
   sql(`INSERT INTO paige_invoices(id,tenant_id,contact_id,status,currency,billing_lifecycle_version,billing_draft_version,billing_draft) VALUES('${invoiceId}','${tenant}','${client}','draft','usd',1,1,${literal(draft)});`);
   const stamps=JSON.parse(sql(`SELECT jsonb_build_object('agreement',a.updated_at,'terms',t.updated_at,'invoice',i.updated_at) FROM paige_agreements a,tenant_client_agreements t,paige_invoices i WHERE a.id='${agreementId}' AND t.id='${termsId}' AND i.id='${invoiceId}';`));
   const input={schema_version:1,source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:agreementId,agreement_version:1,agreement_updated_at:stamps.agreement,body_source:'paige_draft',status:'draft',content_sha256:null,
@@ -169,5 +173,6 @@ try{
     assert.equal(context("repeat('e',64)").is_valid,true);checks++;
     contextChecks=checks-contextStart;
   }
-  console.log(JSON.stringify({result:'PASS',checks,contextChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
+  const acceptedChecks=acceptedMigration?await proveAcceptedCommercialRecord({sql,read,scope,tenant,actor,client,offer,termsId,invoiceId,agreementId,prepared,input,presented,migration:acceptedMigration}):0;
+  console.log(JSON.stringify({result:'PASS',checks,contextChecks,acceptedChecks,migrationReplay:2,scope:'Native synthetic service actor/canonical draft/freeze and optional signing/accepted context; PDF hash fixture is not hosted upload, signature or provider acceptance'}));
 }finally{database='postgres';sql(`DROP DATABASE ${own};`);}

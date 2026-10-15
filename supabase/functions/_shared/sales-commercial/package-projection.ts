@@ -10,6 +10,33 @@ const minor=(v:unknown)=>Number.isSafeInteger(v)&&Number(v)>=0&&Number(v)<=21474
 const positive=(v:unknown)=>Number.isSafeInteger(v)&&Number(v)>0;
 const date=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 const codes=(v:unknown):v is string[]=>Array.isArray(v)&&v.length<=30&&v.every(x=>typeof x==='string'&&/^[a-z_]{1,100}$/.test(x));
+function boundedAcceptedTerms(r:Record<string,unknown>):boolean {
+ const v=r.accepted_commercial_terms;
+ if(v===undefined||v===null)return true;
+ const a=r.agreement,i=r.invoice,t=r.commercial_terms;
+ if(!object(v)||!object(a)||!object(i)||!object(t)
+  ||!only(v,['schema_version','basis','agreement_id','agreement_version','completed_at','commercial_terms_id','commercial_terms_version','invoice_id','invoice_draft_version','principal_minor','currency','obligations','conditions'])
+  ||v.schema_version!==1||v.basis!=='completed_immutable_presentation'||a.status!=='completed'
+  ||v.agreement_id!==a.id||v.agreement_version!==a.version||v.commercial_terms_id!==a.commercial_terms_id
+  ||v.commercial_terms_id!==t.id||v.invoice_id!==i.id||!positive(v.invoice_draft_version)
+  ||!Number.isSafeInteger(v.commercial_terms_version)||Number(v.commercial_terms_version)<0
+  ||typeof v.completed_at!=='string'||v.completed_at.length>50||!Number.isFinite(Date.parse(v.completed_at))
+  ||!minor(v.principal_minor)||Number(v.principal_minor)<=0||v.currency!=='usd'
+  ||!Array.isArray(v.obligations)||v.obligations.length<1||v.obligations.length>240)return false;
+ const rows=v.obligations;
+ if(rows.some((row,index)=>!object(row)||!only(row,['sequence','due_date','amount_cents','currency','label'])
+  ||row.sequence!==index+1||!date(row.due_date)||!minor(row.amount_cents)||row.currency!=='usd'
+  ||!(row.label===null||typeof row.label==='string'&&row.label.length<=200)))return false;
+ // Integrity assertion only: no new due dates, price, payment or allocation engine.
+ if(rows.reduce((sum,row)=>sum+Number(row.amount_cents),0)!==v.principal_minor)return false;
+ const conditions=parseCommercialConditions(v.conditions);
+ if(conditions===null||conditions.tax.state==='unknown'||conditions.fees.state==='unknown')return false;
+ if(!codes(r.conflicts))return false;
+ if((t.version!==v.commercial_terms_version||t.amount_minor!==v.principal_minor||String(t.currency).toLowerCase()!==v.currency)
+   &&!r.conflicts.includes('accepted_commercial_terms_changed'))return false;
+ if(i.draft_version!==v.invoice_draft_version&&!r.conflicts.includes('accepted_invoice_changed'))return false;
+ return true;
+}
 function boundedProjection(r:Record<string,unknown>,invoiceId:string):boolean {
  const i=r.invoice,a=r.agreement,t=r.commercial_terms;
  if(!object(i)||!only(i,['id','client_id','status','version','draft_version','issued_snapshot_version','obligation_total_minor','due_now_minor','remaining_scheduled_minor','currency','receivable_total_minor','allocated_minor','manual_recorded_minor','provider_verified_minor','outstanding_minor','due_date','delivery_channels','commercial_terms_reference'])
@@ -100,16 +127,20 @@ export async function readCommercialPackage(tenant:string|null,args:Record<strin
     ||r.authority!=='not_evaluated'||r.execution!=='not_started'||!['needs_input','conflict'].includes(String(r.state)))return refused();
   // The database is the canonical allowlisted projector. Refuse extensions rather than
   // sending a future raw row/document/authority field into a model consumer.
-  const keys=['schema_version','tenant_id','invoice','offers','agreement','commercial_terms','commercial_conditions','compatibility','missing_fields','conflicts','authority','execution','state','receipt_id'];
-  if(Object.keys(r).some(k=>!keys.includes(k))||!boundedProjection(r,args.invoice_id))return refused();
+ const keys=['schema_version','tenant_id','invoice','offers','agreement','commercial_terms','commercial_conditions','accepted_commercial_terms','compatibility','missing_fields','conflicts','authority','execution','state','receipt_id'];
+  if(Object.keys(r).some(k=>!keys.includes(k))||!boundedProjection(r,args.invoice_id)||!boundedAcceptedTerms(r))return refused();
   const conditions=parseCommercialConditions(r.commercial_conditions);
   const unresolved=conditions===null||conditions.tax.state==='unknown'||conditions.fees.state==='unknown';
   if(unresolved&&!(r.missing_fields as string[]).includes('tax_and_fee_treatment'))return refused();
+  if(object(r.accepted_commercial_terms)&&!object(r.compatibility))return refused();
   if('compatibility' in r){const c=r.compatibility;
    if(!object(c)||!only(c,['basis','signed_economics'])||c.basis!=='canonical_relationship_and_invoice_source_version'
-    ||!['unverified_no_frozen_commercial_snapshot','not_signed'].includes(String(c.signed_economics)))return refused();
+    ||!['unverified_no_frozen_commercial_snapshot','not_signed','recorded_immutable_presentation'].includes(String(c.signed_economics)))return refused();
    if(object(r.agreement)&&r.agreement.status==='completed'
-    &&(c.signed_economics!=='unverified_no_frozen_commercial_snapshot'||!(r.missing_fields as string[]).includes('signed_terms_compatibility')))return refused();
+    &&(object(r.accepted_commercial_terms)
+      ?c.signed_economics!=='recorded_immutable_presentation'||(r.missing_fields as string[]).includes('signed_terms_compatibility')
+      :c.signed_economics!=='unverified_no_frozen_commercial_snapshot'||!(r.missing_fields as string[]).includes('signed_terms_compatibility')))return refused();
+   if(c.signed_economics==='recorded_immutable_presentation'&&!object(r.accepted_commercial_terms))return refused();
   }
   return {content:{success:true,...r,schedule_preview:recordedSchedulePreview(r)}};
  }catch{return refused();}

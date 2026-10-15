@@ -130,8 +130,10 @@ describe("CRM capability run WIRING in paige-ai-chat (source assertions)", () =>
     const block = src.slice(at, at + 2400);
     expect(block).toContain("classifyCrmRun({");
     expect(block).toContain("await recordCapabilityRun(supabase, {");
-    // Attributed to the RPC-resolved tenant the write LANDED in, not the persona echo (#1040/§9).
-    expect(block).toContain("const crmTenant = await resolveActorTenant()");
+    // Booking's RPC accepts the explicit acted-on tenant. Other incumbent CRM
+    // calls retain current_user_tenant_id(); actual recorder tests cover both.
+    expect(block).toContain('tc.function.name === "calendar_book_meeting" && bookingReceiptTenant !== undefined');
+    expect(block).toContain("? bookingReceiptTenant : await resolveActorTenant()");
     expect(block).toContain("tenantId: crmTenant");
     expect(block).toContain("actorId: user.id");
     // never the anon/JWT client, which would silently write nothing

@@ -12824,6 +12824,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // once per iteration (result XOR catch), never fails the turn. `crmWriteAttempted` splits a
           // throw honestly (post-write → outcome_unknown; pre-write → failed).
           let crmWriteAttempted = false;
+          // Booking passes an explicit workspace to its native RPC, unlike the
+          // other incumbent CRM calls that derive current_user_tenant_id().
+          let bookingReceiptTenant: string | null | undefined;
           const recordCrmRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean; writeAttempted?: boolean },
           ): Promise<void> => {
@@ -12833,7 +12836,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ...input,
               });
               if (!outcome) return;
-              const crmTenant = await resolveActorTenant();
+              const crmTenant = tc.function.name === "calendar_book_meeting" && bookingReceiptTenant !== undefined
+                ? bookingReceiptTenant : await resolveActorTenant();
               // §13/§32 idempotency: a retried create must not write a second receipt/Rail row.
               // Key the run id on the act's natural identity (email when present, else the
               // originating thread + tool-call) so a retry folds to ONE capability-run row via the
@@ -12847,8 +12851,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 crmRunId = await stableRunId(["crm_create_contact", crmTenant ?? "", anchor]);
               }
               await recordCapabilityRun(supabase, {
-                // Attribute to the tenant the write actually LANDED in — the RPC-resolved
-                // current_user_tenant_id(), not the persona echo (#1040 finding #3 / §9).
+                // Match the native write contract: explicit booking workspace or
+                // current_user_tenant_id() for the remaining incumbent CRM calls.
                 tenantId: crmTenant,
                 actorId: user.id,
                 capabilityKey: tc.function.name,
@@ -14347,21 +14351,66 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "calendar_book_meeting") {
               // Confirm is enforced by the central autonomy gate above (a booking
               // is a real event → defaults to 'confirm'); here we're cleared to book.
-              crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
-              const { data: bid, error } = await supabaseClient.rpc("create_internal_booking", {
-                _title: args.title,
-                _start_at: args.start_at,
-                _end_at: args.end_at,
-                _timezone: args.timezone ?? "UTC",
-                _contact_id: args.contact_id ?? null,
-                _guest_name: args.guest_name ?? null,
-                _guest_email: args.guest_email ?? null,
-                _notes: args.notes ?? null,
-                _location: args.location ?? null,
-                _tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, booking_id: bid };
+              bookingReceiptTenant = personaCtx?.tenant_id ?? await resolveActorTenant();
+              const bookingUnknown = () => {
+                requestExecutionState.needsReview = true;
+                return { success: false, outcome_unknown: true, not_applied: false,
+                  error: "The booking could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+              };
+              try {
+                crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
+                const { data: bid, error } = await supabaseClient.rpc("create_internal_booking", {
+                  _title: args.title,
+                  _start_at: args.start_at,
+                  _end_at: args.end_at,
+                  _timezone: args.timezone ?? "UTC",
+                  _contact_id: args.contact_id ?? null,
+                  _guest_name: args.guest_name ?? null,
+                  _guest_email: args.guest_email ?? null,
+                  _notes: args.notes ?? null,
+                  _location: args.location ?? null,
+                  _tenant_id: personaCtx?.tenant_id ?? null,
+                });
+                if (error) throw error;
+                if (typeof bid !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(bid)) {
+                  result = bookingUnknown();
+                } else {
+                  let verified = false;
+                  try {
+                    let read = supabaseClient.from("internal_bookings")
+                      .select("id,tenant_id,host_user_id,contact_id,title,start_at,end_at,timezone,status,notes,location,guest_name,guest_email").eq("id", bid);
+                    read = bookingReceiptTenant === null ? read.is("tenant_id", null) : read.eq("tenant_id", bookingReceiptTenant);
+                    const { data: booking, error: readError } = await read.maybeSingle();
+                    // Same native instant comparison as Planning: milliseconds
+                    // alone would discard PostgreSQL's fractional precision.
+                    const instantKey = (value: unknown): string | null => {
+                      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+                      const milliseconds = Date.parse(value);
+                      const fraction = (/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/.exec(value)?.[1] ?? "").padEnd(6, "0");
+                      return Number.isFinite(milliseconds) ? `${milliseconds}:${fraction}` : null;
+                    };
+                    const start = instantKey(args.start_at), end = instantKey(args.end_at);
+                    const contact = typeof args.contact_id === "string" ? args.contact_id.toLowerCase() : args.contact_id ?? null;
+                    // Match PostgreSQL btrim(text), which trims ASCII spaces;
+                    // legitimate title tabs/nonbreaking spaces are preserved.
+                    const timezone = typeof args.timezone === "string" ? args.timezone.replace(/^ +| +$/g, "") || "UTC" : "UTC";
+                    verified = !readError && !!booking && !Array.isArray(booking)
+                      && booking.id === bid && booking.tenant_id === bookingReceiptTenant
+                      && booking.host_user_id === user.id && booking.contact_id === contact
+                      && typeof args.title === "string" && booking.title === args.title.replace(/^ +| +$/g, "")
+                      && start !== null && end !== null && instantKey(booking.start_at) === start && instantKey(booking.end_at) === end
+                      && booking.notes === (args.notes ?? null) && booking.location === (args.location ?? null)
+                      && (contact !== null && args.guest_name == null || booking.guest_name === (args.guest_name ?? null))
+                      && (contact !== null && args.guest_email == null || booking.guest_email === (args.guest_email ?? null))
+                      && booking.timezone === timezone && booking.status === "scheduled";
+                  } catch { /* A returned identifier is not proof that its record can be verified. */ }
+                  // Publish a durable booking reference only after exact scoped readback.
+                  result = verified ? { success: true, booking_id: bid, readback_verified: true } : bookingUnknown();
+                }
+              } catch (error) {
+                if (thrownOutcomeUnknown(error)) result = bookingUnknown();
+                else throw error; // Preserve answered native authorization/validation failures.
+              }
             } else if (tc.function.name === "content_save") {
               const { data: cid, error } = await supabaseClient.rpc("save_marketing_content", {
                 p_kind: "text",

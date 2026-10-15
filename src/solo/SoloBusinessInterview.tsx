@@ -6,7 +6,7 @@ import { useSoloBusinessContext } from "./data/useSoloBusinessContext";
 import { applySetupProposal, prepareOwnerConfirmedBrief, setupSourceLabel, validateSoloSetupBrief, type SoloSetupBrief } from "./settings-setup-contract";
 import { INTERVIEW_FIELDS, cleanInterviewCheckpoint, isOperationalProposal, nextInterviewField, type InterviewField } from "./solo-business-interview-contract";
 import "./solo-business-interview.css";
-import { interviewSetupPath } from "./solo-interview-navigation";
+import { interviewConnectionPath, interviewSetupPath } from "./solo-interview-navigation";
 import type { OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 async function checkpointRpc(name: string, args: Record<string, unknown>) {
@@ -48,11 +48,13 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
   const refreshRef = useRef(context.refresh); refreshRef.current = context.refresh;
   const confirmedCount = INTERVIEW_FIELDS.filter(([field]) => context.brief[field]?.trim() &&
     context.brief.provenance[field]?.source === "owner_confirmed" && context.brief.provenance[field]?.confidence === "confirmed").length;
+  const hasConfirmedPriority = (["currentPriority", "goals90Day"] as const).some(field => context.brief[field]?.trim() &&
+    context.brief.provenance[field]?.source === "owner_confirmed" && context.brief.provenance[field]?.confidence === "confirmed");
   const recordState = context.reconciling ? "reconciling" : context.saveOutcomeUnknown ? "unknown" :
     context.saving ? "saving" : context.loading ? "reading" : context.error || !ready ? "unavailable" : "ready";
   useEffect(() => {
-    onProfileStatus?.({ tenantId: activeTenantId, state: recordState, confirmedCount: ready ? confirmedCount : 0 });
-  }, [onProfileStatus, activeTenantId, recordState, confirmedCount, ready]);
+    onProfileStatus?.({ tenantId: activeTenantId, state: recordState, confirmedCount: ready ? confirmedCount : 0, hasConfirmedPriority: ready && hasConfirmedPriority });
+  }, [onProfileStatus, activeTenantId, recordState, confirmedCount, hasConfirmedPriority, ready]);
 
   useEffect(() => { liveScope.current = scope; progressGeneration.current++; returnFocusField.current = null; setDraft(null); setMessage(null); setError(null); setPaused(false); setNextField(undefined); setCheckpointBusy(false); return () => { liveScope.current = ""; progressGeneration.current++; }; }, [scope]);
   useEffect(() => {
@@ -188,6 +190,13 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
       </form>}
       {(!onboarding || profileOpen || !!draft || !!threadId) && <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>}
       {!threadId && (!onboarding || profileOpen) && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}
+      {(!onboarding || profileOpen) && !draft && !context.saveOutcomeUnknown && <section className="sbi-next-steps" aria-label="Secure setup handoffs">
+        <p className="sbi-note">Ask PAIGE what fits your business. Review connections in Settings; keep passwords and tokens out of Chat. Opening a page makes no connection or business change.</p>
+        <div className="sbi-actions">{(["integrations", "connections", "vault"] as const).map(destination => <button key={destination} type="button" disabled={locked || !activeTenant?.account_number} onClick={() => {
+          if (!ready || locked || context.saveOutcomeUnknown || !activeTenant?.account_number) return;
+          navigate(interviewConnectionPath(activeTenant.account_number, destination, threadId));
+        }}>Open {destination === "vault" ? "Vault" : destination === "connections" ? "Connections" : "Integrations"}</button>)}</div>
+      </section>}
     </>}
   </aside>;
 }

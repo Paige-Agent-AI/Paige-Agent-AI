@@ -1,6 +1,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
@@ -23,6 +23,34 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 describe("owner interview review over canonical Setup", () => {
+  it("opens native secure handoffs with a thread address only and no write", async () => {
+    const threadId = "10000000-0000-4000-8000-000000000001";
+    const RouteProbe = () => { const location = useLocation(); return <output>{location.pathname + location.search}</output>; };
+    await act(async () => root.render(<MemoryRouter><SoloBusinessInterview threadId={threadId} busy={false} refreshEpoch={0} onPause={() => {}} /><RouteProbe /></MemoryRouter>));
+    for (const [label, destination] of [["Open Integrations", "integrations"], ["Open Connections", "connections"], ["Open Vault", "vault"]]) {
+      await click(button(label));
+      expect(host.querySelector("output")?.textContent).toBe(`/solo/test-tenant-a/settings/${destination}?interviewThread=${threadId}`);
+    }
+    expect(state.save).not.toHaveBeenCalled();
+    expect(state.rpc.mock.calls.filter(([name]) => name !== "get_solo_business_interview_checkpoint")).toHaveLength(0);
+  });
+  it("does not offer a secure exit while an edit is open or a save is unknown", async () => {
+    await render(); expect(button("Open Vault")).toBeTruthy();
+    await click(host.querySelector('[aria-label="Correct Industry"]')!); expect(button("Open Vault")).toBeUndefined();
+    await click(button("Cancel")); state.context.saveOutcomeUnknown = true; await render();
+    expect(button("Open Connections")).toBeUndefined(); expect(state.save).not.toHaveBeenCalled();
+  });
+  it("only signals recommendation readiness from a confirmed priority in the resolved owner scope", async () => {
+    const onProfileStatus = vi.fn();
+    const show = () => act(async () => root.render(<MemoryRouter><SoloBusinessInterview threadId={null} busy={false} refreshEpoch={0} onPause={() => {}} onProfileStatus={onProfileStatus}/></MemoryRouter>));
+    state.context.brief = cleanSoloSetupBrief({ currentPriority: "Grow recurring work", provenance: { currentPriority: { source: "connection_sourced", confidence: "observed" } } });
+    await show(); expect(onProfileStatus.mock.lastCall?.[0].hasConfirmedPriority).toBe(false);
+    state.context.brief = cleanSoloSetupBrief({ currentPriority: "Grow recurring work", provenance: { currentPriority: { source: "owner_confirmed", confidence: "confirmed" } } });
+    await show(); expect(onProfileStatus.mock.lastCall?.[0].hasConfirmedPriority).toBe(true);
+    state.tenant = "tenant-b"; await show();
+    expect(onProfileStatus.mock.lastCall?.[0]).toMatchObject({ tenantId: "tenant-b", hasConfirmedPriority: false, state: "unavailable" });
+    expect(button("Open Vault")).toBeUndefined();
+  });
   it("focuses the recovery notice after an uncertain save without retrying writes", async () => {
     const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
     vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.set(++frameId, callback); return frameId; });

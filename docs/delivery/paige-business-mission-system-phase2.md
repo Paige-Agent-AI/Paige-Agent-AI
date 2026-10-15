@@ -162,3 +162,45 @@ and issuer in Executive and governed Chat/Live; authenticated SOLO positive/nega
 evidence; owner acceptance. Storage approval grants no privileged production activation,
 provider effects, protected fixture creation or INT-346 exception. Shipped-log status N/A:
 this foundation has not merged. Master/Brain and the existing E02 matrix remain canonical.
+
+## F7 Executive / conversation read integration — pre-edit contract
+
+The preceding foundation candidate text is historical: #2167 merged892b1bdfe with
+verified production source. Native consumer#2174 is separately draft0076263af with
+fresh CI running. This next slice is read integration, not consequential activation.
+
+1. Intended outcome: an owner asks about goals, sees the same saved target/compatible
+   actual in PAIGE and Executive, opens the owning Play and returns to the same record.
+2. Domain: existing Business Mission/Fabric/Analytics; E02 remains sole implementing
+   lead. Current BUG Chat/admission and E04/E05 runtime leases remain protected.
+3. Shared Harness: reuse the currently admitted read-only business snapshot, canonical
+   owner context, current-caller metric issuer/resolver and existing turn persistence.
+4. Spine: extend business.operating_snapshot's existing game_plan domain using canonical
+   business_mission.targets records. No new direct Chat tool/admission. A standalone
+   target Chat binding stays unavailable unless actually integrated/authorized.
+5. Provider: none for this projection. Existing model/Live provider contracts and their
+   readiness/expense gates are unchanged; no provider is activated or newly purchased.
+6. Authorization: current Mission owner context and issuer permission checks. Owner
+   counts/definitions cannot leak to an admin/member through aggregate snapshot access.
+   Read-only action-risk lane, no second confirmation or model-supplied authority.
+7. Durable execution: no new job/event/scheduler. Reading a target starts no business work.
+8. Truth/receipts: canonical saved versions and existing receipts remain authoritative;
+   actuals require existing verified issued evidence and the shared target evaluator.
+   Never fabricate an ACT/Rail receipt for viewing or an actual from an absent currency.
+9. UI: extend existing Executive and owning Play detail plus shared current-account record
+   links; Business Game Plan/Executive Binding Ledger states remain PARTIAL. Reuse the
+   native target flow prototype for the evidence -> owning record -> return interaction.
+10. Proof: scoped owner/refused/foreign/revoked reads, bounded exact totals, decimal and
+    calendar consistency, safe model projection, same Chat/Executive values, reload and
+    record navigation. Native/capture, protected customer fixtures, final customer/owner
+    acceptance and any held Live provider proof remain separate and owed.
+
+REUSE: existing target/version/Mission/receipt relations, metric issuer, target evaluator,
+Fabric composer, turn records and E04 semantic reference resolver. EXTEND: game_plan
+projection/closed snapshot schema and existing Executive/navigation consumers. REPAIR:
+current generic Game Plan surface-only references gain validated owning-Play context.
+NEW: only a bounded owner-authorized domain projection over existing target/Mission
+records if global enumeration needs it; no new authoritative store, goal engine or ledger.
+Any new projection must retain current authority and exact counts; capped samples never
+become full totals or a whole-business success claim. Source changes await the interactive
+read-flow extension before production UI work; ordinary source/release work remains authorized.

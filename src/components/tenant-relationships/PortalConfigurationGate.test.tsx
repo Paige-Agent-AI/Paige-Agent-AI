@@ -140,4 +140,22 @@ describe("Portal configuration uses the writer's tenant authority", () => {
     await act(async () => old.resolve(permission(true))); expect(host.textContent).toBe(""); expect(fixture.getUser).toHaveBeenCalledTimes(calls);
     root = createRoot(host);
   });
+  it("keeps keyboard focus on retry after a repeated read failure", async () => {
+    fixture.rpc.mockResolvedValue({ data: null, error: new Error("failure") }); await show();
+    const retry = host.querySelector<HTMLButtonElement>("button")!; retry.focus();
+    await act(async () => retry.click()); expect(document.activeElement).toBe(host.querySelector("button"));
+  });
+  it("moves an intentional retry into the verified editor", async () => {
+    fixture.rpc.mockResolvedValueOnce({ data: null, error: new Error("failure") }); await show();
+    const retry = host.querySelector<HTMLButtonElement>("button")!; retry.focus(); await act(async () => retry.click());
+    expect(host.querySelector('[role="region"][aria-label="Portal configuration editor"]')).toBe(document.activeElement);
+  });
+  it("does not steal focus if the user moved elsewhere while retrying", async () => {
+    const pending = deferred<ReturnType<typeof permission>>();
+    fixture.rpc.mockResolvedValueOnce({ data: null, error: new Error("failure") }).mockReturnValueOnce(pending.promise); await show();
+    const retry = host.querySelector<HTMLButtonElement>("button")!; retry.focus(); await act(async () => retry.click());
+    const other = document.createElement("button"); document.body.append(other);
+    try { other.focus(); await act(async () => pending.resolve(permission(true))); expect(document.activeElement).toBe(other); }
+    finally { other.remove(); }
+  });
 });

@@ -15,6 +15,9 @@ export function PortalConfigurationGate({ tenantId, children }: { tenantId: stri
   const scope = context ? `${context}:${boundary.current.generation}` : null;
   const [access, setAccess] = useState<Access>({ scope: null, verdict: "checking" });
   const [attempt, setAttempt] = useState(0);
+  const focusAfterRetry = useRef<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const stateRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!scope || !activeUserId) return;
@@ -41,6 +44,7 @@ export function PortalConfigurationGate({ tenantId, children }: { tenantId: stri
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       if (event === "SIGNED_OUT") {
+        focusAfterRetry.current = null;
         retired = true;
         sequence += 1;
         setAccess({ scope, verdict: "denied" });
@@ -48,6 +52,7 @@ export function PortalConfigurationGate({ tenantId, children }: { tenantId: stri
       }
       // Routine same-actor refreshes must not remount an editor with unsaved work.
       if (!retired && session?.user.id === activeUserId) return;
+      focusAfterRetry.current = null;
       retired = true;
       const scheduled = ++sequence;
       setAccess({ scope, verdict: "checking" });
@@ -59,12 +64,22 @@ export function PortalConfigurationGate({ tenantId, children }: { tenantId: stri
   }, [scope, tenantId, activeUserId, attempt]);
 
   const verdict = scope && access.scope === scope ? access.verdict : "checking";
-  if (verdict === "allowed") return <>{children}</>;
+  useEffect(() => {
+    if (!scope || focusAfterRetry.current !== scope || (verdict !== "allowed" && verdict !== "denied")) return;
+    focusAfterRetry.current = null;
+    // Only continue an intentional keyboard retry; never take focus back from another control.
+    if (document.activeElement === document.body) (verdict === "allowed" ? editorRef.current : stateRef.current)?.focus();
+  }, [scope, verdict]);
+  if (verdict === "allowed") return <div ref={editorRef} role="region" aria-label="Portal configuration editor" tabIndex={-1}>{children}</div>;
   return (
-    <section className="trc-state" role={verdict === "error" ? "alert" : "status"} aria-busy={verdict === "checking"}>
+    <section ref={stateRef} tabIndex={-1} className="trc-state" role={verdict === "error" ? "alert" : "status"} aria-busy={verdict === "checking"}>
       <h2>{verdict === "checking" ? "Checking configuration access" : verdict === "error" ? "We couldn’t check configuration access" : "Configuration access required"}</h2>
-      <p>{verdict === "checking" ? "The editor will open after your access to this workspace is verified." : verdict === "error" ? "Your changes remain blocked until this check succeeds. Try again." : "This account does not have permission to change this portal’s appearance or content."}</p>
-      {verdict === "error" && <button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry access check</button>}
+      <p>{verdict === "checking" ? "The editor will open after your access to this workspace is verified." : verdict === "error" ? "The editor will stay closed until this check succeeds. Try again." : "This account does not have permission to change this portal’s appearance or content."}</p>
+      {(verdict === "error" || (verdict === "checking" && scope && focusAfterRetry.current === scope)) && <button type="button" aria-disabled={verdict !== "error"} onClick={(event) => {
+        if (verdict !== "error") return;
+        focusAfterRetry.current = document.activeElement === event.currentTarget ? scope : null;
+        setAttempt((value) => value + 1);
+      }}>Retry access check</button>}
     </section>
   );
 }

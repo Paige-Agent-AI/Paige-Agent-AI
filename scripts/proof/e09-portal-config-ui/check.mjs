@@ -49,7 +49,10 @@ try {
         assert.equal(geometry.error, true); assert.equal(geometry.waiting, true);
         assert.equal(geometry.deniedMounts, 0); assert.equal(geometry.allowedMounts, 1);
         const retry = page.getByRole("button", { name: "Retry access check" });
-        await retry.focus(); assert.equal(await retry.evaluate((node) => node === document.activeElement), true);
+        await page.keyboard.press("Tab"); assert.equal(await retry.evaluate((node) => node === document.activeElement), true);
+        await page.keyboard.press("Enter");
+        await page.getByRole("alert").waitFor();
+        assert.equal(await retry.evaluate((node) => node === document.activeElement), true);
         const name = `${width}-${open ? "narrow" : "wide"}-${theme}.png`;
         await page.screenshot({ path: path.join(output, name), fullPage: true });
         cases.push({ width, height, reservedPanelWidth: open ? 420 : 0, availableWidth, theme, reducedMotion: true, geometry, screenshot: name });

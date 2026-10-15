@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const actorId = "e0913000-0000-0000-0000-000000000001";
+const nextActorId = "e0913000-0000-0000-0000-000000000002";
 type TestSession = { user: { id: string; email: string } };
 let session: TestSession | null;
 let authListener: ((_event: string, next: TestSession | null) => void) | null;
@@ -43,9 +44,9 @@ const { default: AppShell } = await import("./AppShell");
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement, mounted: boolean;
 async function flush() { await act(async () => { for (let i = 0; i < 14; i++) await Promise.resolve(); }); }
-async function mount() {
+async function mount(initialPath = "/app") {
   mounted = true;
-  await act(async () => root.render(<MemoryRouter initialEntries={["/app"]}><Routes><Route path="/app" element={<AppShell />} /><Route path="/auth" element={<p>Sign in</p>} /><Route path="/admin" element={<p>Staff workspace</p>} /></Routes></MemoryRouter>));
+  await act(async () => root.render(<MemoryRouter initialEntries={[initialPath]}><Routes><Route path="/app/*" element={<AppShell />} /><Route path="/auth" element={<p>Sign in</p>} /><Route path="/choose-account" element={<p>Workspace chooser</p>} /></Routes></MemoryRouter>));
   await flush();
 }
 beforeEach(() => {
@@ -54,7 +55,15 @@ beforeEach(() => {
   unsubscribe.mockClear(); channel.mockClear(); invalidateQueries.mockClear(); landing.mockReset(); landing.mockResolvedValue("/app");
   host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
 });
-afterEach(() => { if (mounted) act(() => root.unmount()); host.remove(); });
+afterEach(() => { if (mounted) act(() => root.unmount()); host.remove(); vi.useRealTimers(); vi.restoreAllMocks(); });
+
+function deferInitialSession() {
+  let resolve!: (value: { data: { session: TestSession | null }; error: null }) => void;
+  let reject!: (reason: Error) => void;
+  const promise = new Promise<{ data: { session: TestSession | null }; error: null }>((yes, no) => { resolve = yes; reject = no; });
+  getSession.mockReturnValue(promise);
+  return { resolve: (value: TestSession | null) => resolve({ data: { session: value }, error: null }), reject };
+}
 
 describe("customer shell without raw CRM Realtime", () => {
   it("mounts existing navigation, single PAIGE and actual home without opening a CRM channel", async () => {
@@ -69,7 +78,7 @@ describe("customer shell without raw CRM Realtime", () => {
     expect(host.querySelector('[data-testid="paige-chat"]')).toBeNull(); expect(channel).not.toHaveBeenCalled();
   });
   it("retains the staff landing policy instead of borrowing a customer session", async () => {
-    landing.mockResolvedValue("/admin"); await mount(); expect(host.textContent).toBe("Staff workspace");
+    landing.mockResolvedValue("/choose-account"); await mount(); expect(host.textContent).toBe("Workspace chooser");
     expect(channel).not.toHaveBeenCalled();
   });
   it("removes customer content on confirmed sign-out without a channel or cache-wake loop", async () => {
@@ -79,5 +88,55 @@ describe("customer shell without raw CRM Realtime", () => {
   it("cleans up the existing SDK subscription when the shell unmounts", async () => {
     await mount(); act(() => root.unmount()); mounted = false;
     expect(unsubscribe).toHaveBeenCalledOnce(); expect(channel).not.toHaveBeenCalled();
+  });
+});
+
+describe("customer shell initial Auth lifetime", () => {
+  it("keeps a newer SDK actor when the initial cached session resolves late", async () => {
+    const initial = deferInitialSession(); await mount();
+    act(() => authListener?.("SIGNED_IN", { user: { id: nextActorId, email: "next-client@example.test" } })); await flush();
+    expect(host.textContent).toContain(nextActorId);
+    initial.resolve(session); await flush();
+    expect(host.textContent).toContain(nextActorId); expect(host.textContent).not.toContain(actorId);
+  });
+  it("does not navigate away from the staff landing when an old initial read returns null", async () => {
+    const initial = deferInitialSession(); landing.mockResolvedValue("/choose-account"); await mount();
+    act(() => authListener?.("SIGNED_IN", session)); await flush();
+    expect(host.textContent).toBe("Workspace chooser"); expect(unsubscribe).toHaveBeenCalledOnce();
+    initial.resolve(null); await flush();
+    expect(host.textContent).toBe("Workspace chooser");
+  });
+  it("ignores a rejected initial read after a newer SDK session has settled", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const initial = deferInitialSession(); await mount();
+    act(() => authListener?.("SIGNED_IN", session)); await flush();
+    initial.reject(new Error("Obsolete initial read")); await flush();
+    expect(host.textContent).toContain(actorId); expect(error).not.toHaveBeenCalled();
+  });
+  it("ignores queued callbacks and initial replies after unmount", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const initial = deferInitialSession(); await mount(); const queued = authListener;
+    act(() => root.unmount()); mounted = false;
+    act(() => queued?.("SIGNED_IN", session)); initial.reject(new Error("Retired read")); await flush();
+    expect(unsubscribe).toHaveBeenCalledOnce(); expect(error).not.toHaveBeenCalled();
+  });
+  it("keeps confirmed sign-out retired when the cached initial session resolves late", async () => {
+    const initial = deferInitialSession(); await mount();
+    act(() => authListener?.("SIGNED_OUT", null)); await flush();
+    expect(host.textContent).toBe("Sign in"); initial.resolve(session); await flush();
+    expect(host.textContent).toBe("Sign in"); expect(host.querySelector('[data-testid="paige-chat"]')).toBeNull();
+  });
+  it("clears both mount-owned hydration timers when the shell unmounts", async () => {
+    vi.useFakeTimers(); deferInitialSession(); await mount("/app/settings");
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    act(() => root.unmount()); mounted = false; expect(vi.getTimerCount()).toBe(0);
+  });
+  it("retains the bounded sign-in recovery on a stalled initial session", async () => {
+    vi.useFakeTimers(); const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const initial = deferInitialSession(); await mount();
+    expect(host.textContent).toBe("Loading...");
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); }); await flush();
+    expect(host.textContent).toBe("Sign in"); expect(warning).toHaveBeenCalledOnce();
+    initial.resolve(session); await flush(); expect(host.textContent).toBe("Sign in");
   });
 });

@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useMissionTargets } from "./useMissionTargets";
 import type { TargetCaller } from "../mission-target-client";
 import type { TargetAttempt } from "../mission-target-recovery";
+const actualReader = vi.hoisted(() => vi.fn());
+vi.mock('../mission-target-client', async importOriginal => ({ ...await importOriginal<typeof import('../mission-target-client')>(), readMissionTargetActual: actualReader }));
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222", mission = "33333333-3333-4333-8333-333333333333";
@@ -29,9 +31,26 @@ function Probe({ ports, workspace = tenant }: { ports: { caller: TargetCaller; s
   model = useMissionTargets(actor, workspace, mission, ports); return <div>{model.list.kind}</div>;
 }
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
-beforeEach(() => { host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+beforeEach(() => { actualReader.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+afterEach(() => { act(() => root.unmount()); host.remove(); vi.useRealTimers(); });
 describe("mounted native target recovery continuity", () => {
+  it('retires a current-snapshot actual when its target period ends, before later evidence expiry', async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-14T12:00:00Z'));
+    const now = Date.now(), h = fixture(), ports = { caller: h.caller as TargetCaller, storage: h.storage as Storage };
+    const activeTarget = { ...target, state: 'active', period: { ...target.period, end: new Date(now + 2000).toISOString() } };
+    h.caller.rpc.mockImplementation(async name => ({ data: name === 'current_user_tenant_id' ? tenant
+      : { resolved_tenant_id: tenant, targets: [activeTarget], total_count: 1, has_more: false }, error: null }));
+    actualReader.mockResolvedValue({ kind: 'ready', metric: { reference_expires_at: new Date(now + 60000).toISOString() },
+      observation: { state: 'available', actual: '12', variance: '2', attainment: 'met', period_complete: false } });
+    await act(async () => { root.render(<Probe ports={ports} />); await flush(); });
+    expect(model.actuals[targetId]).toMatchObject({ kind: 'ready', observation: { state: 'available' } });
+    await act(async () => { vi.advanceTimersByTime(2001); });
+    expect(model.actuals[targetId]).toMatchObject({ kind: 'ready', observation: { state: 'unavailable', reason: 'historical_snapshot_unavailable' } });
+    expect(model.list).toMatchObject({ kind: 'ready', targets: [{ state: 'active', desired_value: '10' }] });
+    await act(async () => { vi.advanceTimersByTime(60000); });
+    expect(model.actuals[targetId]).toEqual({ kind: 'unavailable' });
+    expect(h.caller.functions.invoke).not.toHaveBeenCalled();
+  });
   it("retains original key/CAS across response loss, unmount/reload and Auth refusal until canonical completion", async () => {
     const h = fixture(), ports = { caller: h.caller as TargetCaller, storage: h.storage as Storage };
     await act(async () => { root.render(<Probe ports={ports} />); await flush(); });

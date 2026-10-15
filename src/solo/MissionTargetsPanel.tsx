@@ -80,7 +80,8 @@ function TargetRow({ target, actual, locked, closed, onEdit, history, onTransiti
   const lifetime = useRef({ alive: true, historySequence: 0 });
   useEffect(() => { const instance = lifetime.current; instance.alive = true; return () => { instance.alive = false; instance.historySequence++; }; }, []);
   const evidence = actual?.kind === "ready" && Date.parse(actual.metric.reference_expires_at) > Date.now() ? actual : null;
-  const observation = evidence?.observation;
+  const observation = evidence && target.metric.semantics !== 'event_timestamp_cohort' && Date.now() > Date.parse(target.period.end)
+    ? { state: 'unavailable' as const, reason: 'historical_snapshot_unavailable' as const } : evidence?.observation;
   const comparable = observation?.state === "available" || observation?.state === "partial" ? observation : null;
   const attainment = comparable?.attainment === "met" ? comparable.period_complete ? "Target met" : "At target now"
     : comparable?.attainment === "not_met" ? target.comparison === "at_most" ? "Above limit" : target.comparison === "within_range" ? "Outside target range" : "Below target"

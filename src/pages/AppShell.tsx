@@ -186,25 +186,8 @@ const AppShell = () => {
     return () => { setScopedUserId(null); };
   }, [isImpersonating, effectiveUserId, queryClient]);
 
-  // Realtime: a client should see staff-driven onboarding stage advances
-  // (or rollbacks) without refreshing. Listens only on the signed-in user's
-  // own row and only invalidates client-scoped queries to avoid nuking the
-  // entire cache on every row update.
-  useEffect(() => {
-    if (!user?.id) return;
-    const channel = supabase
-      .channel(`clients-self-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "clients", filter: `linked_user_id=eq.${user.id}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["clients"] });
-          queryClient.invalidateQueries({ queryKey: ["onboarding"] });
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user?.id, queryClient]);
+  // Customer refresh must use canonical client projections/events. Never
+  // subscribe this shell to full CRM rows for query-cache invalidation.
 
   // Role-based landing redirect: admins/coaches → /admin, brokers → /broker/app,
   // BTF workspace clients → /app. Honors ?stay=1 (or the (Sprint 211.b: BTF surface retired; routing preserved)

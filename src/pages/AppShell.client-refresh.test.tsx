@@ -1,0 +1,83 @@
+import { act, type PropsWithChildren } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const actorId = "e0913000-0000-0000-0000-000000000001";
+type TestSession = { user: { id: string; email: string } };
+let session: TestSession | null;
+let authListener: ((_event: string, next: TestSession | null) => void) | null;
+const getSession = vi.fn(), unsubscribe = vi.fn(), invalidateQueries = vi.fn(), landing = vi.fn();
+const channel = vi.fn(() => { throw new Error("Customer shell must not receive raw CRM rows"); });
+const queryClient = { invalidateQueries };
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  auth: { getSession: () => getSession(), onAuthStateChange: (callback: typeof authListener) => { authListener = callback; return { data: { subscription: { unsubscribe } } }; } },
+  channel,
+} }));
+vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => queryClient }));
+vi.mock("@/components/app/PaigeChat", () => ({ PaigeChat: ({ user }: { user: { id: string } }) => <div data-testid="paige-chat">{user.id}</div> }));
+vi.mock("@/components/app/AppNav", () => ({ AppNav: () => <nav>Existing navigation</nav> }));
+vi.mock("@/components/app/QuickStatsBar", () => ({ QuickStatsBar: () => null }));
+vi.mock("@/hooks/useCreditFactors", () => ({ useCreditFactors: () => ({ factors: null }) }));
+vi.mock("@/hooks/useTenantFeature", () => ({ useTenantFeature: () => ({ enabled: false }) }));
+vi.mock("@/components/admin/AdminViewBanner", () => ({ AdminViewBanner: () => null }));
+vi.mock("@/hooks/useSessionTimeout", () => ({ useSessionTimeout: () => ({ showWarning: false, staySignedIn: () => {} }) }));
+vi.mock("@/components/auth/SessionTimeoutWarning", () => ({ SessionTimeoutWarning: () => null }));
+vi.mock("@/components/dashboard/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div>Existing checklist</div> }));
+vi.mock("@/components/dashboard/OnboardingFlow", () => ({ OnboardingFlow: () => null }));
+vi.mock("@/components/notifications/PushNotificationPrompt", () => ({ PushNotificationPrompt: () => null }));
+vi.mock("@/components/ui/resizable", () => ({ ResizablePanelGroup: ({ children }: PropsWithChildren) => <div>{children}</div>, ResizablePanel: ({ children }: PropsWithChildren) => <div>{children}</div>, ResizableHandle: () => null }));
+vi.mock("@/hooks/useAnalytics", () => ({ trackEvent: () => Promise.resolve() }));
+vi.mock("@/lib/auth/resolveLandingRoute", () => ({ resolveLandingRoute: () => landing() }));
+vi.mock("@/lib/onboardingOffer", () => ({ shouldOfferOnboarding: () => Promise.resolve(false) }));
+vi.mock("@/components/legal/RequiredConsentsGate", () => ({ RequiredConsentsGate: () => null }));
+vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ target: null, isImpersonating: false }) }));
+vi.mock("@/lib/scopedUser", () => ({ setScopedUserId: () => {} }));
+vi.mock("@/components/client/ClientHomeTiles", () => ({ ClientHomeTiles: () => <div>Existing client tiles</div> }));
+vi.mock("@/components/app/ClientActivityFeed", () => ({ ClientActivityFeed: () => <div>Existing canonical activity</div> }));
+vi.mock("@/components/planning/UpcomingWidget", () => ({ UpcomingWidget: () => null }));
+vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Assistant", greeting: "Existing greeting" } }) }));
+vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfig: () => ({}) }));
+vi.mock("@/hooks/usePresenceHeartbeat", () => ({ usePresenceHeartbeat: () => {} }));
+const { default: AppShell } = await import("./AppShell");
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+let root: Root, host: HTMLDivElement, mounted: boolean;
+async function flush() { await act(async () => { for (let i = 0; i < 14; i++) await Promise.resolve(); }); }
+async function mount() {
+  mounted = true;
+  await act(async () => root.render(<MemoryRouter initialEntries={["/app"]}><Routes><Route path="/app" element={<AppShell />} /><Route path="/auth" element={<p>Sign in</p>} /><Route path="/admin" element={<p>Staff workspace</p>} /></Routes></MemoryRouter>));
+  await flush();
+}
+beforeEach(() => {
+  session = { user: { id: actorId, email: "client@example.test" } }; authListener = null; mounted = false;
+  getSession.mockReset(); getSession.mockImplementation(async () => ({ data: { session }, error: null }));
+  unsubscribe.mockClear(); channel.mockClear(); invalidateQueries.mockClear(); landing.mockReset(); landing.mockResolvedValue("/app");
+  host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
+});
+afterEach(() => { if (mounted) act(() => root.unmount()); host.remove(); });
+
+describe("customer shell without raw CRM Realtime", () => {
+  it("mounts existing navigation, single PAIGE and actual home without opening a CRM channel", async () => {
+    await mount();
+    expect(host.textContent).toContain("Existing navigation"); expect(host.textContent).toContain("Welcome Back");
+    expect(host.querySelectorAll('[data-testid="paige-chat"]')).toHaveLength(1);
+    expect(host.textContent).toContain(actorId); expect(host.textContent).toContain("Existing canonical activity");
+    expect(channel).not.toHaveBeenCalled(); expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+  it("keeps unauthenticated visitors outside the customer shell", async () => {
+    session = null; await mount(); expect(host.textContent).toBe("Sign in");
+    expect(host.querySelector('[data-testid="paige-chat"]')).toBeNull(); expect(channel).not.toHaveBeenCalled();
+  });
+  it("retains the staff landing policy instead of borrowing a customer session", async () => {
+    landing.mockResolvedValue("/admin"); await mount(); expect(host.textContent).toBe("Staff workspace");
+    expect(channel).not.toHaveBeenCalled();
+  });
+  it("removes customer content on confirmed sign-out without a channel or cache-wake loop", async () => {
+    await mount(); act(() => authListener?.("SIGNED_OUT", null)); await flush();
+    expect(host.textContent).toBe("Sign in"); expect(channel).not.toHaveBeenCalled(); expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+  it("cleans up the existing SDK subscription when the shell unmounts", async () => {
+    await mount(); act(() => root.unmount()); mounted = false;
+    expect(unsubscribe).toHaveBeenCalledOnce(); expect(channel).not.toHaveBeenCalled();
+  });
+});

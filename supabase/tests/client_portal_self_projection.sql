@@ -118,7 +118,9 @@ SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'con
 
 -- Future multi-business shape is synthetic within this rollback only. Production's
 -- unique linkage is unchanged; current readers must already refuse ambiguity.
-ALTER TABLE public.clients DROP CONSTRAINT clients_linked_user_id_key;
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'fixture starts with the canonical global partial unique link index');
+DROP INDEX public.clients_linked_user_id_unique;
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'future cross-business fixture preserves the per-tenant unique link');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001' WHERE id='e0931000-0000-0000-0000-000000000002';
 SELECT set_config('request.jwt.claims','{"sub":"e0911000-0000-0000-0000-000000000001","role":"authenticated"}',true);
 SET LOCAL ROLE authenticated;
@@ -126,5 +128,8 @@ SELECT throws_ok($$ SELECT * FROM public.get_client_portal_brand() $$,'42501','s
 SELECT throws_ok($$ SELECT public.get_client_portal_config() $$,'42501','select an authorized customer relationship','ambiguous business configuration refuses instead of choosing the oldest row');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000002' WHERE id='e0931000-0000-0000-0000-000000000002';
+CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future-shape cleanup restores the canonical global guard before outer rollback');
 SELECT * FROM finish();
 ROLLBACK;

@@ -58,11 +58,13 @@ try {
     GRANT USAGE ON SCHEMA auth TO authenticated,anon,service_role;
     CREATE TABLE public.tenants(id uuid PRIMARY KEY,status text DEFAULT 'active',name text,slug text,parent_tenant_id uuid,brand jsonb DEFAULT '{}',features jsonb DEFAULT '{}');
     CREATE TABLE public.tenant_legal_profile(tenant_id uuid PRIMARY KEY,brand_logo_url text);
-    CREATE TABLE public.clients(id uuid PRIMARY KEY,tenant_id uuid,linked_user_id uuid UNIQUE,status text DEFAULT 'active',merged_into_contact_id uuid,
+    CREATE TABLE public.clients(id uuid PRIMARY KEY,tenant_id uuid,linked_user_id uuid,status text DEFAULT 'active',merged_into_contact_id uuid,
       first_name text,last_name text,entity_name text,street_address text,city text,state text,zip_code text,
       onboarding_stage text CHECK (onboarding_stage IS NULL OR onboarding_stage IN ('pre_invite','invited','signing_agreement','accepting_payment','completing_intake','uploading_docs','completed')),
       source text,paige_shared_context_consent boolean,paige_shared_context_consent_updated_at timestamptz,updated_at timestamptz,
       current_notes text,lead_score int,created_by uuid,provider_secret text,created_at timestamptz DEFAULT now());
+    CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
+    CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients(tenant_id,linked_user_id);
     CREATE TABLE public.client_contact_methods(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),client_id uuid,tenant_id uuid,kind text,value text,is_primary boolean,label text,match_key text);
     INSERT INTO tenants(id) VALUES('${tenant}'),('${foreign}');
     INSERT INTO clients(id,tenant_id,linked_user_id,first_name,last_name,entity_name,street_address,city,state,zip_code,onboarding_stage,source,current_notes,lead_score,provider_secret)
@@ -76,6 +78,7 @@ try {
       ('${otherContact}','${foreign}','email','foreign@tests.invalid',true,'FOREIGN LABEL','FOREIGN MATCH');
     ALTER TABLE clients ENABLE ROW LEVEL SECURITY; ALTER TABLE client_contact_methods ENABLE ROW LEVEL SECURITY;
     REVOKE ALL ON clients,client_contact_methods FROM PUBLIC,authenticated,anon,service_role;`);
+  check('Native fixture models the canonical global partial unique link index',()=>assert.equal(sql("SELECT indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)' FROM pg_index WHERE indexrelid='public.clients_linked_user_id_unique'::regclass;"),'t'));
   sql(migration);const once=sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('client_portal_relationship_id','client_portal_self_profile');");sql(migration);
   check('Migration reapplication is idempotent',()=>assert.equal(sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('client_portal_relationship_id','client_portal_self_profile');"),once));
   sql(brandCascade+` REVOKE ALL ON FUNCTION public.resolve_tenant_brand(uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.resolve_tenant_brand(uuid) TO authenticated,service_role;`);
@@ -119,10 +122,13 @@ try {
   check('Reload reads actual updated profile and consent',()=>{sql(`UPDATE clients SET first_name='Updated',paige_shared_context_consent=true WHERE id='${contact}';`);const p=profile();assert.equal(p.first_name,'Updated');assert.equal(p.paige_shared_context_consent,true);});
   check('Reads produce no client, address or tenant mutations',()=>{const snapshot=()=>sql('SELECT jsonb_build_object(\'clients\',(SELECT jsonb_agg(to_jsonb(x)) FROM clients x),\'methods\',(SELECT jsonb_agg(to_jsonb(x)) FROM client_contact_methods x),\'tenants\',(SELECT jsonb_agg(to_jsonb(x)) FROM tenants x));');const before=snapshot();profile();assert.equal(snapshot(),before);});
   // Future multi-business shape is synthetic only: production's unique link is untouched.
-  sql(`ALTER TABLE clients DROP CONSTRAINT clients_linked_user_id_key; UPDATE clients SET linked_user_id='${uid}' WHERE id='${otherContact}';`);
+  sql(`DROP INDEX public.clients_linked_user_id_unique; UPDATE clients SET linked_user_id='${uid}' WHERE id='${otherContact}';`);
+  check('Future cross-business fixture preserves the canonical per-tenant unique link',()=>assert.equal(sql("SELECT indisunique FROM pg_index WHERE indexrelid='public.clients_tenant_linked_user_key'::regclass;"),'t'));
   check('Ambiguous relationship refuses instead of earliest-row selection',()=>assert.throws(()=>profile(uid,null)));
   check('Both presentation readers refuse future ambiguous business relationships',()=>assert.throws(()=>presentation()));
   check('Explicit future relationship selection stays isolated',()=>{assert.equal(profile(uid,tenant).id,contact);const p=profile(uid,foreign);assert.equal(p.id,otherContact);assert.equal(p.first_name,'Foreign');assert(!JSON.stringify(p).includes('secondary@'));assert.equal(p.is_signup_contact,true);});
+  sql(`UPDATE clients SET linked_user_id='${other}' WHERE id='${otherContact}'; CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;`);
+  check('Disposable future-shape cleanup restores the canonical global guard',()=>assert.equal(sql("SELECT indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)' FROM pg_index WHERE indexrelid='public.clients_linked_user_id_unique'::regclass;"),'t'));
   const failed=results.filter(x=>x.status==='FAIL');
   const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
   fs.writeFileSync(path.join(work,`${reportStem}.json`),JSON.stringify(report,null,2));

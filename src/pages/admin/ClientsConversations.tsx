@@ -385,6 +385,10 @@ export default function ClientsConversations() {
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [leadReplyApprovalId, setLeadReplyApprovalId] = useState<string | null>(null);
   const composerThreadRef = useRef<string | null>(null);
+  const draftScopeKey = JSON.stringify([activeTenantId, selectedKey]);
+  const draftScopeRef = useRef({ key: draftScopeKey });
+  if (draftScopeRef.current.key !== draftScopeKey) draftScopeRef.current = { key: draftScopeKey };
+  const draftRequestRef = useRef<object | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Composer depth state. Attachments run through the ONE shared upload seam (§18) — the
@@ -844,6 +848,7 @@ export default function ClientsConversations() {
     setComposeChannel(chosenConnector?.channel_type ?? "");
     if (!changedThread) return; // Changed readiness/identity invalidates review, keeps the draft.
     composerThreadRef.current = threadScope;
+    setDrafting(false); setDraftReadingDoc(false); setDraftFlags([]);
     setEditingDraftId(null);
     setLeadReplyApprovalId(null);
     setSubject("");
@@ -1116,6 +1121,13 @@ export default function ClientsConversations() {
     }
     setDrafting(true);
     const epoch = accountEpochRef.current.capture();
+    const draftScope = draftScopeRef.current;
+    const request = {};
+    draftRequestRef.current = request;
+    // An account can keep the same identity while its selected conversation changes.
+    // The object incarnation also retires an old A response after an A-B-A switch.
+    const currentDraft = () => accountEpochRef.current.accept(epoch)
+      && draftScopeRef.current === draftScope && draftRequestRef.current === request;
     setDraftFlags([]);
     // #176 — the document(s) the coach wants Paige to consider are the attachments STAGED
     // into this composer (guaranteed comms-attachments object paths `${tenantId}/…`, so the
@@ -1146,7 +1158,7 @@ export default function ClientsConversations() {
           context: { contact_id: selected.contactId ?? undefined },
         },
       });
-      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!currentDraft()) return;
       // §13/§36 honest error: a non-2xx (compliance_blocked 422, reviewer_unavailable/timeout 503)
       // returns FunctionsHttpError whose `.message` is the generic "non-2xx status code" — the REAL
       // reason (summary/error) is in `.context`. Surface that so the coach knows to revise, never a
@@ -1188,10 +1200,10 @@ export default function ClientsConversations() {
         toast.success("Paige drafted a reply — review before you send.");
       }
     } catch (e) {
-      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!currentDraft()) return;
       toast.error(e instanceof Error ? e.message : "Paige couldn't draft that — try again.");
     } finally {
-      if (accountEpochRef.current.accept(epoch)) {
+      if (currentDraft()) {
         setDrafting(false);
         setDraftReadingDoc(false);
       }

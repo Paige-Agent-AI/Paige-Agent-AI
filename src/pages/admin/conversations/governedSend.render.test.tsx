@@ -28,6 +28,7 @@ const db = vi.hoisted(() => ({
   cancel: async (): Promise<{ data: unknown; error: unknown }> => ({ data: true, error: null }),
   contact: null as Record<string, unknown> | null,
   invokes: [] as string[],
+  draft: null as null | (() => Promise<{ data: unknown; error: unknown }>),
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -64,7 +65,7 @@ vi.mock("@/integrations/supabase/client", () => {
       channel: () => channel,
       removeChannel: () => {},
       auth: { getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }) },
-      functions: { invoke: (name: string) => { db.invokes.push(name); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
+      functions: { invoke: (name: string) => { db.invokes.push(name); if (name === "subagent-email-composer" && db.draft) return db.draft(); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },
   };
@@ -125,7 +126,7 @@ const flush = async () => {
 
 const mounted: Array<() => Promise<void>> = [];
 beforeEach(() => {
-  vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client;
+  vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null;
   db.cancel = async () => ({ data: true, error: null });
 });
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
@@ -144,6 +145,73 @@ async function mountInbox(path: string) {
 }
 
 const buttons = (host: HTMLElement) => Array.from(host.querySelectorAll("button")).map((b) => (b.textContent ?? "").trim());
+
+describe("draft assistance stays with its original conversation", () => {
+  async function start() {
+    const otherKey = "contact:tenant-a:contact-2";
+    const otherClient = { ...client, id: "contact-2", first_name: "Test", last_name: "Recipient", client_contact_methods: [{ kind: "email", value: "other@example.test", is_primary: true }] };
+    db.messages = [message({ direction: "inbound", status: "received" }), message({ id: "m-2", thread_key: otherKey, contact_id: "contact-2", direction: "inbound", status: "received", clients: otherClient })];
+    db.threads = [thread, { ...thread, id: "t-2", thread_key: otherKey, contact_id: "contact-2", clients: otherClient }];
+    let finish!: (answer: { data: unknown; error: unknown }) => void;
+    db.draft = () => new Promise(resolve => { finish = resolve; });
+    const host = await mountInbox("/solo/3855/clients/conversations");
+    const select = async (key: string) => {
+      const row = [...host.querySelectorAll<HTMLElement>("[data-thread-key]")].find(el => el.dataset.threadKey === key);
+      expect(row).toBeTruthy(); await act(async () => { row!.click(); await flush(); });
+    };
+    await select(KEY);
+    const draft = [...host.querySelectorAll("button")].find(b => b.textContent?.trim() === "Draft with Paige");
+    expect(draft).toBeTruthy(); await act(async () => { draft!.click(); await flush(); });
+    expect(db.invokes).toEqual(["subagent-email-composer"]);
+    return { host, select, otherKey, finish };
+  }
+  it.each([false, true])("retains the existing same-thread positive draft path (reselect: %s)", async reselect => {
+    const { host, select, finish } = await start();
+    if (reselect) await select(KEY);
+    await act(async () => { finish({ data: { draft: { subject: "Original inquiry", body_text: "Reply for original contact" } }, error: null }); await flush(); });
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("Reply for original contact");
+    expect(toast.success).toHaveBeenCalledWith("Paige drafted a reply — review before you send.");
+  });
+  it.each([false, true])("retires old output after a thread switch (return to original: %s)", async back => {
+    const { host, select, otherKey, finish } = await start();
+    await select(otherKey); if (back) await select(KEY);
+    await act(async () => { finish({ data: { draft: { subject: "Original inquiry", body_text: "Reply for original contact" } }, error: null }); await flush(); });
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("");
+    expect(toast.success).not.toHaveBeenCalled();
+    const draft = [...host.querySelectorAll("button")].find(b => b.textContent?.trim() === "Draft with Paige");
+    expect(draft?.disabled).toBe(false);
+  });
+  it("retires the old error after switching conversations", async () => {
+    const { host, select, otherKey, finish } = await start();
+    await select(otherKey);
+    await act(async () => { finish({ data: null, error: { message: "old draft failed" } }); await flush(); });
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("");
+  });
+  it("does not let old completion finish or overwrite a newer conversation's draft request", async () => {
+    const { host, select, otherKey, finish } = await start();
+    await select(otherKey);
+    let finishNew!: (answer: { data: unknown; error: unknown }) => void;
+    db.draft = () => new Promise(resolve => { finishNew = resolve; });
+    const draft = [...host.querySelectorAll("button")].find(b => b.textContent?.trim() === "Draft with Paige");
+    expect(draft?.disabled).toBe(false);
+    await act(async () => { draft!.click(); await flush(); });
+    await act(async () => { finish({ data: { draft: { body_text: "Old contact response" } }, error: null }); await flush(); });
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("");
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.disabled).toBe(true);
+    expect(toast.success).not.toHaveBeenCalled();
+    await act(async () => { finishNew({ data: { draft: { subject: "New inquiry", body_text: "New contact response" } }, error: null }); await flush(); });
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("New contact response");
+    expect(toast.success).toHaveBeenCalledTimes(1);
+  });
+  it("retires an unfinished request when the page unmounts", async () => {
+    const { finish } = await start();
+    await mounted.pop()!();
+    await act(async () => { finish({ data: { draft: { body_text: "Old page response" } }, error: null }); await flush(); });
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+});
 
 describe("existing scheduled cancellation receipts", () => {
   const outcomes: Array<[string, () => Promise<{data: unknown; error: unknown}>]> = [

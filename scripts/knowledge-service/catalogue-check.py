@@ -19,7 +19,7 @@ try:
  weekly=(root/'supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql').read_text()
  run(['-d',db,'-c',weekly[weekly.index('DO $$ BEGIN'):weekly.index('-- Preserve the incumbent activity display')]])
  run(['-d',db,'-c',"CREATE TABLE old_catalogue AS SELECT * FROM public.list_tool_autonomy('00000000-0000-0000-0000-000000000001');"])
- for _ in range(2): run(['-d',db,'-f','supabase/migrations/20271101142134_knowledge_tool_catalogue.sql'])
+ for _ in range(2): run(['-d',db,'-f','supabase/migrations/20271101180001_knowledge_tool_catalogue.sql'])
  run(['-d',db,'-c',"""
  SELECT public.test_assert(NOT EXISTS((SELECT * FROM old_catalogue EXCEPT SELECT * FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001'))),'all previous rows preserved');
  SELECT public.test_assert((SELECT count(*)=1 FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001') WHERE tool_key='planning_weekly_commitment_check'),'later native catalogue extension preserved');

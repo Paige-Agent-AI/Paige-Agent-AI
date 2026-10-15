@@ -17,6 +17,7 @@ try{
   assert(await dialog.getByText('Principal: USD 3,500.00',{exact:false}).isVisible());assert((await dialog.textContent()).includes('2027-08-15 - USD 300.00'));assert((await dialog.textContent()).includes('Invoice draft version 3'));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),0);assert.equal(await dialog.evaluate(el=>el.scrollWidth-el.clientWidth),0);
   const bounds=await dialog.boundingBox();assert(bounds.y>=11&&bounds.y+bounds.height<=viewport.height-11,JSON.stringify({viewport,bounds,error:'Reader must remain inside the actual viewport'}));
+  assert(await dialog.evaluate(el=>parseFloat(getComputedStyle(el).paddingLeft)>=16&&parseFloat(getComputedStyle(el).paddingRight)>=16),'Agreement wording needs readable insets under the actual Solo reset');
   const close=dialog.getByRole('button',{name:'Close',exact:true});const box=await close.boundingBox();assert(box.width>=44&&box.height>=44);
   assert.equal(await dialog.getAttribute('data-theme'),theme);assert(await dialog.evaluate(el=>el.classList.contains('paige-solo')));const png=await page.screenshot({path:`${directory}/${viewport.width}-${theme}.png`});assert.equal(png.readUInt32BE(16),viewport.width);assert.equal(png.readUInt32BE(20),viewport.height);
   await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight;});const back=dialog.getByRole('button',{name:'Back to invoice',exact:true}),exitBounds=await back.boundingBox();assert(exitBounds.y>=bounds.y&&exitBounds.y+exitBounds.height<=bounds.y+bounds.height+1);

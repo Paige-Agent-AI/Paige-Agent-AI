@@ -16,8 +16,16 @@ KEYBOARD_FOCUS: PASS: actual source link focus and component tests; existing doc
 ZOOM_REFLOW: UNVERIFIED: no horizontal overflow at six CSS viewport widths including 320; native browser zoom for this changed flow was not exercised.
 REDUCED_MOTION: PASS: browser preference exercised; list disables transition/animation and this flow adds no motion. No native/device-motion claim.
 STATE_COVERAGE: PASS: loading, valid empty, unavailable, refused, ambiguous, retired response, paging, mixed currencies, exact large aggregate, test evidence, scope loss and PDF failure covered locally.
-TRUTHFUL_STATE_LABELS: PASS: manual, live, test and unknown evidence remain distinct; unavailable next obligation and unevaluated engagement completion are not promoted to paid or completed.
-SOLO_UI: NO: existing external-client /app/actions and isolated /invoice surfaces; no Solo department UI or Chat admission change.
+TRUTHFUL_STATE_LABELS: PASS: server and component tests distinguish manual/live/test payments and undetermined provider environment; next obligation and engagement completion cannot be promoted to paid or completed.
+SOLO_UI: YES: shared Sales payment copy/formatter path changes; mounted new surfaces are external-client /app/actions and isolated /invoice. No Solo layout or Chat admission change.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: owner Solo shell not exercised for this shared formatter change; external-client image is separate evidence.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: owner Solo shell with PAIGE open not exercised for this shared formatter change.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: owner Solo shell not exercised for this shared formatter change; external-client image is separate evidence.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: owner Solo shell with PAIGE open not exercised for this shared formatter change.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: owner Solo shell not exercised for this shared formatter change; external-client image is separate evidence.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: owner Solo shell with PAIGE open not exercised for this shared formatter change.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: owner Solo shell not exercised for this shared formatter change; external-client image is separate evidence.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: owner Solo shell with PAIGE open not exercised for this shared formatter change.
 UNVERIFIED: independent non-author review and finish review, exact-head hosted CI, Preview/production deployment, E09 privacy cutover, native zoom/print/download, authorized provider TEST settlement, Central QA and owner acceptance.
 OWNER_INTENT: All twelve E04 outcomes remain mandatory. This continuation supplies part of O4/O5/O11 while preserving O8 and the complete agreement-to-delivery destination.
 MUST_NOT_HAPPEN: No borrowed owner authority, first-client choice, token mint, service key in browser, invented payment/signature/service success, duplicate ledger or automatic provider action.
@@ -27,7 +35,7 @@ MOTION_PURPOSE: NONE: immediate read/status transitions only.
 PROTECTED_SEAMS: Actual actor/self-link and before/after scope checks; canonical ledger/version cursor; existing merchant binding/expiry/version checks; public invoice bootstrap; delivery review presenter untouched. Signing, approval consumption, Operations writes, provider dispatch and Chat admission are unchanged.
 INTERNAL_BUILD_IDENTITY: implementation=01931a84da782818c6e8930b7b0c167d491dbcd2; source=a4eb489a4d1264aa7e608040e8ccca691fd88465; main=ffbdd1d3c1b7fa2aebbc79fcf2562c7822f80006; deployment=UNVERIFIED; environment=local development; migrations=PROOF_OWED(20271101164000); edge=PROOF_OWED(sales-invoice-document); evidence=this record and assets/e04-client-commercial-status/result.json
 RELEASE_CHANNEL: development: local source and synthetic proof only; no runtime/provider activation.
-RELEASE_CLASSIFICATION: minor-candidate: incomplete customer self-service integration within the full E04 destination.
+RELEASE_CLASSIFICATION: internal-only: incomplete development integration toward the full E04 destination; no customer release candidate is declared.
 CUSTOMER_RELEASE_IDENTITY: none: whole E04 customer outcome and acceptance remain incomplete.
 RELEASE_NOTE_REQUIRED: no: no customer release is announced by this draft.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: implemented local scoped invoice/status/document reader; PROOF OWED: coherent privacy integration, authorized hosted operation and customer acceptance.

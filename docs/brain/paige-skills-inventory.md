@@ -188,6 +188,15 @@ bespoke handlers. A seeded or `active` database row proves registration state,
 not tenant-safe execution, tool/provider readiness, evaluated quality, or
 production agent eligibility.
 
+The SOLO Capabilities view therefore presents active catalogue entries as **Listed**
+with access **Unverified**. A stored read/action risk classification is not a current
+permission or an approval promise. The existing Voice input and unsupported sandbox
+rows retain their separate surface facts. The Research library describes saved
+history and qualifies new Chat research by current availability and permission;
+neither catalogue nor history creates execution authority. This presentation repair
+does not activate a provider, change admission, or establish authenticated parity.
+Evidence: `../evidence/ui-delivery/solo-parity-truthfulness.md`.
+
 Use these truth labels per skill version and environment:
 
 - `LIVE` — registered, callable through the shared Harness, authority-resolved,

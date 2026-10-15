@@ -8189,10 +8189,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               parameters: {
                 type: "object",
                 properties: {
-                  name: { type: "string", description: "Short name the operator would recognise, e.g. 'New lead welcome'." },
-                  trigger_key: { type: "string", description: "Which trigger starts it. Must be one from automation_triggers_list — never invent one." },
+                  name: { type: "string", minLength: 1, maxLength: 120, description: "Short name the operator would recognise, e.g. 'New lead welcome'." },
+                  trigger_key: { type: "string", minLength: 1, description: "Which trigger starts it. Must be one from automation_triggers_list — never invent one." },
                   steps: {
                     type: "array",
+                    minItems: 1, maxItems: 20,
                     description: "What happens when it starts, in order.",
                     items: {
                       type: "object",
@@ -8203,7 +8204,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       }
                     }
                   },
-                  category: { type: "string", description: "Optional grouping, e.g. 'sales' or 'onboarding'." }
+                  category: { type: "string", maxLength: 40, description: "Optional grouping, e.g. 'sales' or 'onboarding'." }
                 },
                 required: ["name", "trigger_key", "steps"]
               }
@@ -12341,90 +12342,104 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't read this workspace's processes right now." }) });
           }
         } else if (tc.function.name === "automation_draft") {
-          // §67 — SHE BUILDS IT, SHE DOES NOT GRANT IT. The row is created at the floor: `confirm`
-          // and `draft`, never `auto` and never `live`, regardless of anything the operator said in
-          // the same breath. Granting autonomy is a separate, deliberate act by a human through
-          // `automation_set_grant`, which is itself confirm-gated. An agent that could compose a
-          // process AND authorise it in one call would be granting itself autonomy.
-          try {
-            const args = JSON.parse(tc.function.arguments || "{}");
-            const steps: Array<Record<string, unknown>> = Array.isArray(args.steps) ? args.steps.slice(0, 20) : [];
-            if (steps.length === 0) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "A process needs at least one step. Ask the operator what should actually happen when it starts." }) });
-            } else {
-              const { data: trig } = await supabaseClient
-                .from("paige_automation_triggers").select("key,is_live,dark_reason")
-                .eq("key", String(args.trigger_key ?? "")).maybeSingle();
-              if (!trig) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "That isn't something that can start a process. Call automation_triggers_list and pick one from `available` — do not invent one." }) });
-              } else {
-                const { data: created, error: cErr } = await supabaseClient
-                  .from("paige_automations")
-                  .insert({
-                    tenant_id: personaCtx?.tenant_id ?? null,
-                    name: String(args.name ?? "").slice(0, 120),
-                    category: typeof args.category === "string" ? args.category.slice(0, 40) : "general",
-                    trigger_key: trig.key,
-                    created_by: user.id,
-                    // Explicit, not defaulted: the floor is a decision this code is making, and a
-                    // reader should not have to look up a column default to see it.
-                    granted_lane: "confirm",
-                    state: "draft",
-                  })
-                  .select("id").single();
-                if (cErr || !created) {
-                  toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                    success: false,
-                    error: (cErr?.code === "23505")
-                      ? "This workspace already has a process with that name. Suggest a different one."
-                      : "Couldn't set that up. Tell the operator you hit a snag — don't say it was created.",
-                  }) });
-                } else {
-                  const rows = steps.map((s, n) => ({
-                    automation_id: created.id, position: n + 1,
-                    action_kind: typeof s.action_kind === "string" && s.action_kind ? s.action_kind : null,
-                    tool_key: typeof s.tool_key === "string" && s.tool_key ? s.tool_key : null,
-                    config: (s.config && typeof s.config === "object") ? s.config : {},
-                  }));
-                  const { error: aErr } = await supabaseClient.from("paige_automation_acts").insert(rows);
-                  if (aErr) {
-                    // The steps ARE the process. A half-built one that LOOKS created is worse than
-                    // none, so it is removed rather than left as a shell the operator finds later
-                    // and cannot explain — the reachable version of that: the acts insert fails
-                    // 23514 on a model-supplied act, the shell keeps the name, and the operator's
-                    // retry hits the (tenant_id, name) unique index with "you already have one of
-                    // those" for a process they were just told was not created.
-                    //
-                    // AND THE ROLLBACK IS CHECKED, because the sentence below asserts it happened.
-                    // Claiming "nothing was created" when the delete was itself rejected is the
-                    // same class of untruth as the write that reported success without landing.
-                    const rolledBack = await recordWrite("paige_automations:rollback",
-                      supabaseClient.from("paige_automations").delete().eq("id", created.id));
-                    toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                      success: false,
-                      error: !rolledBack
-                        ? `The steps didn't save, and I couldn't tidy up the half-made process either — it may be sitting there under the name "${String(args.name ?? "").slice(0, 120)}". Tell the operator that plainly and suggest a different name if they try again.`
-                        : aErr.code === "23514"
-                          ? "Each step has to name exactly one thing to do — either one of your tools or one activity kind, not both and not neither. Rebuild the steps and try again."
-                          : "Couldn't save the steps, so nothing was created. Say that plainly.",
-                    }) });
-                  } else {
-                    const { data: posture } = await supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: created.id });
-                    const v = (posture ?? {}) as Record<string, unknown>;
-                    toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-                      success: true, automation_id: created.id, steps: rows.length,
-                      state: "draft", granted: "confirm",
-                      what_it_would_do: v.effective ?? "confirm",
-                      cannot_fire_because: v.dark ?? [],
-                      note: "Built, but switched OFF and set to ask you first — you never turn one on yourself. Walk the operator through what it would do, step by step, in their words. Then ask whether to turn it on, and whether it should run on its own or check with them each time. Do NOT claim it is running.",
-                    }) });
-                  }
-                }
+          // Drafting never grants autonomy. Reconcile native records before claiming a saved process.
+          let draftWriteAttempted = false;
+          let draftId: string | null = null;
+          const draftUnknown = () => {
+            requestExecutionState.needsReview = true;
+            return { success: false, outcome_unknown: true, ...(draftId ? { automation_id: draftId } : {}),
+              execution_started: false, error: OUTCOME_UNKNOWN_NOTE };
+          };
+          const draftResult = await (async () => {
+            try {
+              const args = JSON.parse(tc.function.arguments || "{}");
+              const refused = { success: false, not_applied: true, execution_started: false,
+                error: "The process was not saved. Use an exact name, a registered trigger, and one to twenty valid steps." };
+              const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+              if (!object(args) || Object.keys(args).some(k => !["name", "trigger_key", "steps", "category", "confirm"].includes(k)) ||
+                  typeof args.name !== "string" || !args.name.trim() || args.name.length > 120 ||
+                  typeof args.trigger_key !== "string" || !args.trigger_key.trim() ||
+                  args.category !== undefined && (typeof args.category !== "string" || args.category.length > 40) ||
+                  !Array.isArray(args.steps) || args.steps.length < 1 || args.steps.length > 20) return refused;
+              const steps = args.steps as Array<Record<string, unknown>>;
+              if (steps.some(s => !object(s) || Object.keys(s).some(k => !["action_kind", "tool_key", "config"].includes(k)) ||
+                  s.action_kind !== undefined && (typeof s.action_kind !== "string" || !s.action_kind.trim()) ||
+                  s.tool_key !== undefined && (typeof s.tool_key !== "string" || !s.tool_key.trim()) ||
+                  Boolean(s.action_kind) === Boolean(s.tool_key) || s.config !== undefined && !object(s.config))) return refused;
+              const tenantId = personaCtx?.tenant_id;
+              const validId = (v: unknown): v is string => typeof v === "string" &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+              const scopeHolds = async () => {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                return !scope.error && validId(tenantId) && scope.data === tenantId;
+              };
+              if (!await scopeHolds()) return refused;
+              const { data: trig, error: triggerError } = await supabaseClient.from("paige_automation_triggers")
+                .select("key,is_live,dark_reason").eq("key", args.trigger_key).maybeSingle();
+              if (triggerError || !trig || trig.key !== args.trigger_key || !await scopeHolds()) return refused;
+              draftWriteAttempted = true;
+              const createdResult = await supabaseClient.from("paige_automations").insert({
+                tenant_id: tenantId, name: args.name, category: args.category ?? "general", trigger_key: trig.key,
+                created_by: user.id, granted_lane: "confirm", state: "draft",
+              }).select("id,updated_at").single();
+              if (createdResult.error || !createdResult.data) {
+                return databaseAnswered(createdResult.error) && !createdResult.data ? refused : draftUnknown();
               }
+              const created = createdResult.data;
+              if (!validId(created.id)) return draftUnknown();
+              draftId = created.id;
+              if (typeof created.updated_at !== "string" || !Number.isFinite(Date.parse(created.updated_at)) || !await scopeHolds()) return draftUnknown();
+              const rows = steps.map((s, n) => ({
+                automation_id: created.id, position: n + 1,
+                action_kind: s.action_kind ?? null, tool_key: s.tool_key ?? null, config: s.config ?? {},
+              }));
+              const { error: actsError } = await supabaseClient.from("paige_automation_acts").insert(rows);
+              if (databaseAnswered(actsError)) {
+                // Only compensate this new, unchanged draft after a definite single-statement refusal.
+                if (!await scopeHolds()) return draftUnknown();
+                const cleanup = await supabaseClient.from("paige_automations").delete()
+                  .eq("tenant_id", tenantId).eq("id", created.id).eq("created_by", user.id)
+                  .eq("state", "draft").eq("granted_lane", "confirm").eq("updated_at", created.updated_at).select("id");
+                return !cleanup.error && Array.isArray(cleanup.data) && cleanup.data.length === 1 &&
+                  cleanup.data[0]?.id === created.id ? refused : draftUnknown();
+              }
+              // A lost steps response is reconciled by reads, never by a repeat insert or deletion.
+              const reopened = await supabaseClient.from("paige_automations")
+                .select("id,tenant_id,name,category,trigger_key,created_by,state,granted_lane,updated_at")
+                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle();
+              const savedActs = await supabaseClient.from("paige_automation_acts")
+                .select("automation_id,position,action_kind,tool_key,config")
+                .eq("automation_id", created.id).order("position");
+              const canonical = (value: unknown): string => JSON.stringify(value, (_key, v) =>
+                object(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+              const saved = reopened.data;
+              if (reopened.error || savedActs.error || !saved || saved.id !== created.id || saved.tenant_id !== tenantId ||
+                  saved.name !== args.name || saved.category !== (args.category ?? "general") || saved.trigger_key !== trig.key ||
+                  saved.created_by !== user.id || saved.state !== "draft" || saved.granted_lane !== "confirm" ||
+                  typeof saved.updated_at !== "string" || !Number.isFinite(Date.parse(saved.updated_at)) ||
+                  !Array.isArray(savedActs.data) || savedActs.data.length !== rows.length ||
+                  savedActs.data.some((row, i) => canonical(row) !== canonical(rows[i])) || !await scopeHolds()) return draftUnknown();
+              const stable = await supabaseClient.from("paige_automations").select("updated_at")
+                .eq("tenant_id", tenantId).eq("id", created.id).maybeSingle();
+              if (stable.error || stable.data?.updated_at !== saved.updated_at) return draftUnknown();
+              let posture: Record<string, unknown> | null = null;
+              try {
+                const resolved = await supabaseClient.rpc("resolve_automation_autonomy", { _automation_id: created.id });
+                if (!resolved.error && object(resolved.data)) posture = resolved.data;
+              } catch (_e) { /* Saved configuration is known; read-only readiness remains unverified. */ }
+              const readinessVerified = object(posture) && ["auto", "confirm", "off"].includes(String(posture.effective)) &&
+                Array.isArray(posture.dark);
+              return { success: true, automation_id: created.id, steps: rows.length, state: "draft", granted: "confirm",
+                verified_readback: true, execution_started: false, readiness: readinessVerified ? "resolved" : "unverified",
+                what_it_would_do: readinessVerified ? posture?.effective : null,
+                cannot_fire_because: readinessVerified ? posture?.dark : null,
+                note: "The exact process and its steps were saved as a draft, switched off and asking first. No execution was started. Autonomy and activation remain separate human decisions." };
+            } catch (_e) {
+              return draftWriteAttempted ? draftUnknown() : { success: false, not_applied: true,
+                execution_started: false, error: "The process was not saved. Check the requested configuration." };
             }
-          } catch (_e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Couldn't set that up right now." }) });
-          }
+          })();
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftResult) });
         } else if (tc.function.name === "automation_set_grant" || tc.function.name === "automation_set_state") {
           // Both are confirm-gated above, so by here the operator has said yes to this exact change.
           try {
@@ -16757,6 +16772,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const resolveWriteTargetId = (args: any, out: any, tool?: string): string | null => {
+        if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // A Planning item's parent plan/contact/action is not the record changed.
         if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item"].includes(tool)) {

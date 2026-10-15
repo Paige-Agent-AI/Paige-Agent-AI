@@ -11,7 +11,7 @@ export async function runWelcomeCases(ctx) {
   const json=value=>lit(JSON.stringify(value))+'::jsonb';
   const row=value=>JSON.parse(value.split(/\r?\n/).find(line=>line.startsWith('{')));
   const scalar=value=>value.split(/\r?\n/).find(line=>/^\d+$/.test(line));
-  const migrationFile=path.join(root,'supabase/migrations/20271106140000_e09_client_welcome_atomic.sql');
+  const migrationFile=path.join(root,'supabase/migrations/20271107110000_e09_client_welcome_atomic.sql');
   const fullPlaybook=intake=>({slug:'test-welcome',name:'Test Welcome',vertical:'General',
     persona:{name:'Assistant',role:'Service assistant',greeting:'Welcome',tone:'Clear',domain:'General'},
     quickActions:[],probingQuestions:[],journey:[],intake,portal:{modules:[]}});

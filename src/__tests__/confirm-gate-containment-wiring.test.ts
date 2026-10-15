@@ -186,22 +186,26 @@ describe("the write trail skips only what declares it never ran", () => {
     expect(HANDLER).not.toMatch(/out\?\.executed === false\) return;/);
   });
 
-  it("no other edge code produces the marker", () => {
-    // Two producers, both refusals before anything ran; everything else that names it only reads
+  it("only reviewed pre-dispatch refusals produce the marker", () => {
+    // Three producers, all refusals before anything ran; everything else that names it only reads
     // it: the audit skip, the approval card's outcome (approval-outcome.ts, which reports such a
     // call as not run), and the turn record (paige-turn/reducer.ts, which does not count such a call
     // as a tool that ran). C4a added the second producer: the approval resume's three refusals
     // (paige-turn/resume.ts — an approval another request used, a check that could not run, an act
     // already carried forward this reply). None of them is ever a SPENT approval, so the card never
     // reads them as "couldn't tell which item"; the resume classifies them itself.
+    // ANT-21 adds the canonical Chat reconciliation guard: it continues before any executor,
+    // explicitly reports not_applied, and has actual-guard/handler approval+audit negatives.
+    // The receipt projection consumes both flags but preserves contradictory effect evidence.
     const producers = execSync("grep -rlE 'refused_before_run: ?true' supabase/functions --include=*.ts", { encoding: "utf8" })
       .trim().split("\n").sort();
-    expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts", "supabase/functions/_shared/paige-turn/resume.ts"]);
+    expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts", "supabase/functions/_shared/paige-turn/resume.ts", "supabase/functions/paige-ai-chat/index.ts"]);
     const mentions = execSync("grep -rl 'refused_before_run' supabase/functions --include=*.ts", { encoding: "utf8" })
       .trim().split("\n").sort();
     expect(mentions).toEqual([
       "supabase/functions/_shared/approval-outcome.ts",
       "supabase/functions/_shared/confirm-fingerprint.ts",
+      "supabase/functions/_shared/paige-turn/interactive.ts",
       "supabase/functions/_shared/paige-turn/reducer.ts",
       "supabase/functions/_shared/paige-turn/resume.test.ts",
       "supabase/functions/_shared/paige-turn/resume.ts",

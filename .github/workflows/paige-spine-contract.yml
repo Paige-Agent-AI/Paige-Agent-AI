@@ -518,6 +518,8 @@ jobs:
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
       - run: supabase test db supabase/tests/client_portal_self_projection.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/client_portal_self_profile_write.sql
+        if: ${{ !cancelled() }}
       # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
       - run: supabase test db supabase/tests/consumer_invite_acceptance.sql
         if: ${{ !cancelled() }}

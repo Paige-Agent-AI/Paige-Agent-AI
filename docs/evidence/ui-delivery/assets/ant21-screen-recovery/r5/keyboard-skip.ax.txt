@@ -1,0 +1,4 @@
+Browser tab: 170265210, Title: "Isolated source recovery proof", URL: "http://localhost:8776/#tenant-shell-main".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~0 AXWebArea Isolated source recovery proof, URL: localhost:8776/#tenant-shell-main
+The focused UI element is 0 AXWebArea Isolated source recovery proof, URL: localhost:8776/#tenant-shell-main

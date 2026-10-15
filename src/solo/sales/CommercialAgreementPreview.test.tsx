@@ -3,15 +3,17 @@ import {createRoot,type Root} from 'react-dom/client';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {CommercialAgreementPreview} from './CommercialAgreementPreview';
 
-const fixture=vi.hoisted(()=>({prepare:vi.fn(),rpc:vi.fn()}));
+const fixture=vi.hoisted(()=>({prepare:vi.fn(),accepted:vi.fn(),rpc:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:fixture.rpc}}));
 vi.mock('../../../supabase/functions/_shared/agreements/commercial-presentation-read',()=>({prepareCommercialPresentationFromRecords:fixture.prepare}));
+vi.mock('../../../supabase/functions/_shared/agreements/accepted-commercial-read',()=>({readAcceptedCommercialAgreement:fixture.accepted}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let host:HTMLDivElement,root:Root;
 const proposed=(title='Synthetic agreement')=>({state:'proposed',presentation:{payload:{title,source:{agreement_version:4,invoice_draft_version:3,terms_version:5}}},presented_body_markdown:'Original saved services.\n\nPrincipal: USD 3,500.00\nDeposit: USD 500.00\nTen dated payments of USD 300.00.'});
-beforeEach(()=>{fixture.prepare.mockReset().mockResolvedValue(proposed());fixture.rpc.mockReset();host=document.createElement('div');host.className='solo-campaigns';document.body.append(host);root=createRoot(host);});
+const accepted=()=>({...proposed(),state:'recorded',completed_at:'2026-10-15T00:00:00Z',receipt_id:'test-receipt'});
+beforeEach(()=>{fixture.prepare.mockReset().mockResolvedValue(proposed());fixture.accepted.mockReset().mockResolvedValue(accepted());fixture.rpc.mockReset();host=document.createElement('div');host.className='solo-campaigns';document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();vi.restoreAllMocks();});
-const render=(tenantId='test-tenant-a',invoiceId='test-invoice-a',key='same')=>act(()=>root.render(<CommercialAgreementPreview key={key} tenantId={tenantId} invoiceId={invoiceId} agreementId="test-agreement-a"/>));
+const render=(tenantId='test-tenant-a',invoiceId='test-invoice-a',key='same',mode:'proposed'|'accepted'='proposed')=>act(()=>root.render(<CommercialAgreementPreview key={key} tenantId={tenantId} invoiceId={invoiceId} agreementId="test-agreement-a" mode={mode}/>));
 const button=(text:string)=>[...document.body.querySelectorAll<HTMLButtonElement>('button')].find(el=>el.textContent===text)!;
 const open=async()=>{await act(async()=>button('Review saved agreement').click());};
 const close=async()=>{await act(async()=>button('Close').click());};
@@ -43,4 +45,20 @@ it('supports Escape and restores focus to the existing inspection entry',async()
 });
 it('returns to the invoice through the document exit and rereads on the next review',async()=>{
  render();await open();await act(async()=>button('Back to invoice').click());expect(document.body.querySelector('[role=dialog]')).toBeNull();await open();expect(fixture.prepare).toHaveBeenCalledTimes(2);
+});
+it('reads accepted text only on explicit open, through the retained reader and the same document dialog',async()=>{
+ render('test-tenant-a','test-invoice-a','same','accepted');expect(fixture.accepted).not.toHaveBeenCalled();await act(async()=>button('Review accepted agreement').click());
+ expect(fixture.accepted.mock.calls[0].slice(0,2)).toEqual(['test-tenant-a',{invoice_id:'test-invoice-a',agreement_id:'test-agreement-a'}]);expect(fixture.prepare).not.toHaveBeenCalled();
+ expect(document.body.querySelector('[aria-label="Accepted agreement document"]')?.textContent).toContain('Original saved services');expect(document.body.textContent).toContain('Accepted payment terms version 5');expect(document.body.textContent).toContain('does not activate commercial terms');expect(document.body.textContent).toContain('Signing completion recorded at 2026-10-15T00:00:00Z');
+ await act(async()=>button('Back to invoice').click());expect(document.body.querySelector('[role=dialog]')).toBeNull();await act(async()=>button('Review accepted agreement').click());expect(fixture.accepted).toHaveBeenCalledTimes(2);
+});
+it('leaves legacy accepted economics unverified rather than substituting a current proposal',async()=>{
+ fixture.accepted.mockResolvedValue({state:'unverified'});render('test-tenant-a','test-invoice-a','same','accepted');await act(async()=>button('Review accepted agreement').click());expect(document.body.textContent).toContain('Current payment terms cannot establish what was signed');expect(document.body.textContent).not.toContain('USD 3,500');expect(document.body.querySelector('article')).toBeNull();expect(fixture.prepare).not.toHaveBeenCalled();
+});
+it('retries an unavailable retained read without exposing private failures or using proposed text',async()=>{
+ fixture.accepted.mockRejectedValueOnce(Error('Private retained failure'));render('test-tenant-a','test-invoice-a','same','accepted');await act(async()=>button('Review accepted agreement').click());expect(document.body.querySelector('[role=alert]')).not.toBeNull();expect(document.body.textContent).not.toContain('Private retained failure');await act(async()=>button('Try again').click());expect(document.body.textContent).toContain('Original saved services');expect(fixture.prepare).not.toHaveBeenCalled();
+});
+it('retires accepted text on close, late return and source-mode change',async()=>{
+ let finish!:(v:unknown)=>void;fixture.accepted.mockImplementationOnce(()=>new Promise(resolve=>finish=resolve));render('test-tenant-a','test-invoice-a','same','accepted');await act(async()=>button('Review accepted agreement').click());await close();await act(async()=>finish(accepted()));expect(document.body.querySelector('[role=dialog]')).toBeNull();
+ await act(async()=>button('Review accepted agreement').click());expect(document.body.textContent).toContain('Accepted payment terms version');fixture.prepare.mockResolvedValue({state:'needs_input',fields:['recorded_collection_terms']});render();expect(document.body.querySelector('[aria-label="Accepted agreement document"]')).toBeNull();expect(document.body.textContent).not.toContain('USD 3,500');await act(async()=>{});
 });

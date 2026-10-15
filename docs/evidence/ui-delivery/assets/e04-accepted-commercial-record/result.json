@@ -1,0 +1,186 @@
+{
+  "cases": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "light",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "theme": "dark",
+      "result": "PASS"
+    },
+    {
+      "mode": "changed",
+      "result": "PASS"
+    },
+    {
+      "mode": "unverified",
+      "result": "PASS"
+    },
+    {
+      "mode": "pending",
+      "result": "PASS"
+    },
+    {
+      "mode": "denied",
+      "result": "PASS"
+    },
+    {
+      "mode": "error",
+      "result": "PASS"
+    },
+    {
+      "mode": "long",
+      "result": "PASS"
+    },
+    {
+      "mode": "reduced-motion",
+      "result": "PASS"
+    },
+    {
+      "mode": "source-epoch-retirement",
+      "result": "PASS"
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "calls": [
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement",
+    "read_sales_commercial_package",
+    "read_sales_accepted_agreement"
+  ],
+  "sourceHashes": {
+    "src/solo/sales/CommercialAgreementPreview.tsx": "6520298f301f89a5e7a820d20fe8c7732ac85a515f2aaf9ea32882a0ec59e43f",
+    "src/solo/sales/CommercialPackageInspection.tsx": "0abb9d849179a398f73d72cf6f7ae3256666b8dcaa10845c7905330a68f72155",
+    "src/solo/sales/commercial-agreement-preview.css": "2d01b07db4e4b8faa78a00a961bc2f3bb8d9590c888470ac905df0d55cb8a624",
+    "supabase/functions/_shared/agreements/accepted-commercial-read.ts": "24e819831b5f137052d8546cff3ed86a68dce7eb229a12ea038d3147cc1dde21",
+    "supabase/functions/_shared/agreements/commercial-presentation.ts": "291f8d8f7ad8681df8f688fd49ab4157bb459275dd1e52d5f1d41918e4def7f4",
+    "supabase/functions/_shared/sales-commercial/package-projection.ts": "c2b5e9da44c21d0e46baedd11a64bb0f2b90b5b4b2022059aea195aa360f75b8",
+    "supabase/functions/_shared/sales-collections/model.ts": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+    "scripts/proof/e04-accepted-commercial-ui/source.tsx": "883d5fe7aa61bb82191a3e968f9122c6bb898df85d2dff3f3c1e9f671a42ce00",
+    "scripts/proof/e04-accepted-commercial-ui/sdk.ts": "b95b340293447937a864f0598daa32ba29625b2d27e0cdb10d741028a6ff990e"
+  },
+  "scope": "Actual mounted components and canonical C1 parser/composer; synthetic RPC ports, no authenticated or provider acceptance"
+}

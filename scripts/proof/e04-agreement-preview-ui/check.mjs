@@ -3,7 +3,7 @@ const bundle=await build({entryPoints:['scripts/proof/e04-agreement-preview-ui/s
 const cssFile=readdirSync('dist/assets').find(name=>/^main-.*\.css$/.test(name));assert(cssFile,'build the current application first');
 const css=readFileSync('dist/assets/'+cssFile,'utf8')+['src/solo/solo-tokens.css','src/solo/sales/sales-billing.css','src/solo/sales/commercial-agreement-preview.css'].map(path=>readFileSync(path,'utf8')).join('\n');
 const exe=[chromium.executablePath(),'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'].find(existsSync);assert(exe);
-const browser=await chromium.launch({executablePath:exe,headless:true}),context=await browser.newContext({serviceWorkers:'block'}),errors=[],requests=[],cases=[];
+const browser=await chromium.launch({executablePath:exe,headless:true}),context=await browser.newContext({serviceWorkers:'block',deviceScaleFactor:1}),errors=[],requests=[],cases=[];
 await context.route('**/*',route=>{requests.push(new URL(route.request().url()).origin);return route.abort();});
 const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.route('https://e04-review.invalid/',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div></body></html>'}));
 const directory='docs/evidence/ui-delivery/assets/e04-commercial-agreement-review';mkdirSync(directory,{recursive:true});
@@ -18,7 +18,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),0);assert.equal(await dialog.evaluate(el=>el.scrollWidth-el.clientWidth),0);
   const bounds=await dialog.boundingBox();assert(bounds.y>=11&&bounds.y+bounds.height<=viewport.height-11,JSON.stringify({viewport,bounds,error:'Reader must remain inside the actual viewport'}));
   const close=dialog.getByRole('button',{name:'Close',exact:true});const box=await close.boundingBox();assert(box.width>=44&&box.height>=44);
-  assert.equal(await dialog.getAttribute('data-theme'),theme);assert(await dialog.evaluate(el=>el.classList.contains('paige-solo')));await page.screenshot({path:`${directory}/${viewport.width}-${theme}.png`});
+  assert.equal(await dialog.getAttribute('data-theme'),theme);assert(await dialog.evaluate(el=>el.classList.contains('paige-solo')));const png=await page.screenshot({path:`${directory}/${viewport.width}-${theme}.png`});assert.equal(png.readUInt32BE(16),viewport.width);assert.equal(png.readUInt32BE(20),viewport.height);
   await dialog.evaluate(el=>{el.scrollTop=el.scrollHeight;});const back=dialog.getByRole('button',{name:'Back to invoice',exact:true}),exitBounds=await back.boundingBox();assert(exitBounds.y>=bounds.y&&exitBounds.y+exitBounds.height<=bounds.y+bounds.height+1);
   await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});await page.waitForFunction(()=>document.activeElement?.textContent==='Review saved agreement');cases.push({viewport,theme,phase:'canonical-reader-proposal',result:'PASS'});
  }}

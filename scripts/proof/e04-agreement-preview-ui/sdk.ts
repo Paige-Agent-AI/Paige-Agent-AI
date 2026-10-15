@@ -7,10 +7,9 @@ if(schedule.state!=='ready')throw Error('Invalid canonical fixture schedule');
 const terms=schedule.terms;
 const known={state:'not_applicable',charges:[],source:'Synthetic owner record',policy:'No applicable charge recorded'};
 const conditions={schema_version:1,tax:known,fees:known};
-const {schema_version:_,late_fee:__,interest:___,...boundedSchedule}=terms;
 // Match the canonical SQL projection's allowlist; labels remain in the real
 // source terms for the C1 presentation, not this bounded package schedule.
-boundedSchedule.dates=terms.dates.map(({due_date,amount_cents})=>({due_date,amount_cents}));
+const boundedSchedule={kind:terms.kind,total_cents:terms.total_cents,currency:terms.currency,cadence:terms.cadence,anchor_date:terms.anchor_date,count:terms.count,end_date:terms.end_date,deposit_cents:terms.deposit_cents,dates:terms.dates.map(({due_date,amount_cents})=>({due_date,amount_cents}))};
 const packageProjection=()=>({schema_version:1,tenant_id:id(1),receipt_id:id(9),state:'needs_input',authority:'not_evaluated',execution:'not_started',missing_fields:[],conflicts:[],
  invoice:{id:id(4),client_id:id(2),status:'draft',version:2,draft_version:3,issued_snapshot_version:null,obligation_total_minor:350000,due_now_minor:50000,remaining_scheduled_minor:300000,currency:'usd',receivable_total_minor:0,allocated_minor:0,manual_recorded_minor:0,provider_verified_minor:0,outstanding_minor:0,due_date:'2026-10-15',delivery_channels:[],commercial_terms_reference:{id:id(5),version:5}},
  agreement:{id:id(3),version:4,status:'draft',body_source:'paige_draft',commercial_terms_id:id(5),document_available:true,treatment:'unsigned_canonical_agreement'},

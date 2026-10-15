@@ -1,0 +1,12 @@
+BEGIN;
+SELECT plan(8);
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','owner_mission_target_save')->>'actor_type','owner_staff','native target save credits the person');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','owner_mission_target_transition')->>'actor_type','owner_staff','native lifecycle credits the person');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','owner_mission_target_save')->>'title','Play target saved','target record save does not claim performance');
+SELECT is(public._workspace_event_display('capability_run','capability_outcome_unknown','owner_mission_target_save')->>'title','Target change needs verification','uncertain result is not completion');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','set_business_time_zone'),public._workspace_event_display_before_e02_targets('capability_run','capability_succeeded','set_business_time_zone'),'E04 owner attribution is unchanged');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','mission_target_save'),public._workspace_event_display_before_e02_targets('capability_run','capability_succeeded','mission_target_save'),'a future distinct Chat path is never credited to a person by this wrapper');
+SELECT ok(NOT has_function_privilege('anon','public._workspace_event_display(text,text,text)','EXECUTE'),'anonymous direct display invocation remains denied');
+SELECT ok(NOT has_function_privilege('authenticated','public._workspace_event_display(text,text,text)','EXECUTE'),'authenticated direct display invocation remains denied');
+SELECT * FROM finish();
+ROLLBACK;

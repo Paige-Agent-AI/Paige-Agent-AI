@@ -542,7 +542,11 @@ const SOURCES = {
 // Original-effect discovery and status projection are reviewed read-only context.
 // Pin both so a changed helper cannot introduce effects or fabricate settlement.
 const ANCESTRY_SOURCES = {
- "supabase/functions/_shared/analytics-metrics/read.ts": "de8bb66bb6c759e7f39d347cb2b9e45a1b2a89e6ded73bf35829100adb0c90ec",
+ // E02 source review: the33-key literal moved unchanged into a pure dependency.
+ // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.
+ // Pin BOTH reviewed files; no generated digest acceptance or effect guard waiver.
+ "supabase/functions/_shared/analytics-metrics/read.ts": "a666df00a26f6b7d52237afdeb89868898dffb298acce4ba9fbceb18935b15d6",
+ "supabase/functions/_shared/analytics-metrics/keys.ts": "7d6469a106f5200147e360e46b0ef1846581795207fa74d7c48f0ecc14d4fbc6",
  "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "8bbc6b91d259e2ab80643dd37667d88736043066e14d725bbca5344874d0c2a5",
  "supabase/functions/_shared/pipeline-original-discovery.ts": "4c55fee76bc2622a0b57b33282276f36aa3a8552725168c45ab1b2774b7e7fa9",
  "supabase/functions/_shared/paige-turn/outcome-status.ts": "2efe3c91386d47e475cfc38e69b97a542a9286f3d09ec853d4c6a126e64075f8",

@@ -12,10 +12,10 @@ STATIC_EVIDENCE: PASS: Isolated strict server module types0 diagnostics; reconci
 RENDERED_EVIDENCE: PASS: [Actual-component gallery](../experience-05-draft-review/owner-rendered-review.md), all four requested desktop/tablet sizes PAIGE closed/open plus390px confirmation and native Calendar retrieval. Synthetic caller transport only.
 BEHAVIORAL_EVIDENCE: PASS: Native Chat entry→review→explicit draft approval→receipt→existing Calendar→mobile View options→same saved responsibility/receipt readback. Definition save is separate from recurrence approval and completion of underlying work.
 AUTHENTICATED_RUNTIME: UNVERIFIED: No protected fixture or first recurring activation authorized/executed; original QA and E5-CV1–9 remain NOT_RUN.
-KEYBOARD_FOCUS: PASS: Shared approval-card keyboard controls retained; mobile receipt/readback reachable and single Calendar inspection dialog. Existing three Calendar close-focus assertions retained and passing. Native assistive-technology proof owed.
+KEYBOARD_FOCUS: UNVERIFIED: Synthetic mobile receipt/readback and single-dialog keyboard path pass in the native render; existing three Calendar close-focus assertions pass. Complete authenticated owner shell and native assistive technologies were not exercised because protected customer acceptance is not authorized yet.
 ZOOM_REFLOW: UNVERIFIED:390 CSS viewport/document width matches; actual browser zoom and authenticated full-shell reflow remain untested.
 REDUCED_MOTION: UNVERIFIED: No new animation; incumbent card spinner used. Fresh preference and authenticated-shell drive not performed.
-STATE_COVERAGE: PASS: Empty, pending, working, receipt-backed draft save, declined, expired, unavailable, unknown, saved-unreceipted, changed and session/scope-loss contracts; uncertainty offers readback without a mutation retry. Rendered positive subset is separate from automated negative proof.
+STATE_COVERAGE: UNVERIFIED: Local contracts cover empty, pending, working, receipt-backed draft save, declined, expired, unavailable, unknown, saved-unreceipted, changed and session/scope-loss; rendered positive subset and automated negatives are documented. Protected authenticated state coverage is not authorized or executed yet.
 TRUTHFUL_STATE_LABELS: PASS: Saved draft is unapproved, Calendar awaits recurring authorization, next run is absent until supported; a weekly check never completes a business task.
 SOLO_UI: YES: Existing PAIGE Chat/Clients Calendar weekly inspection sheet and Operations source navigation.
 UNVERIFIED: Independent non-author/finish review, exact-head hosted CI, guarded deployment, official Antonio Cook authenticated QA, second legitimate tenant, real zoom/assistive technology and all-ten final product acceptance. Weekly recurring controls, model admission, notices and PC-1 remain separate incomplete/gated integrations.
@@ -26,12 +26,12 @@ MUST_PRESERVE: Canonical proposal integrity, Trust off, owner predicates, native
 ACCEPTANCE_CRITERIA: Explicit surface approval executes stored args only; one native draft and matching Rail receipt survive response loss/reload; Calendar reflects that same draft and no executable next run; current role/session/tenant changes refuse and clear private state.
 MOTION_PURPOSE: NONE: no new motion; existing confirmation progress only.
 PROTECTED_SEAMS: Tested owner/tenant/session/epoch/persona, approval token/nonce/expiry, current Trust, exact stored args, duplicate claims/commits, receipt rollback and canonical retirement. Unchanged weekly trigger, native execution/reconciliation, cron, provider effects, roles/RLS, booking actions and Chat/Live admission.
-INTERNAL_BUILD_IDENTITY: Product source6c89505116fdafb1f996d8a4ccc35008ada02a9e with forward-version/evidence reconciliation; parent36abedc4869408922dfd8940841fa91ea6436097; deployment=NOT_DEPLOYED; environment=development; migration20271105090500=NOT_APPLIED; edge weekly-commitment-command=NOT_DEPLOYED; final immutable PR head is recorded in Git and the PR body.
+INTERNAL_BUILD_IDENTITY: sha=6f94dfd67d629abf368f48f786b602d10b59dd69; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(production application of 20271105090500_experience05_confirmed_weekly_draft under guarded release); edge=PROOF_OWED(weekly-commitment-command deployment and source readback under guarded release); evidence=docs/evidence/experience-05-draft-review/owner-rendered-review.md and native-draft-indexed-proof.json; identity_scope=reconciled product and evidence before this evidence-format-only correction
 RELEASE_CHANNEL: development: isolated source/render/proof, no staged or production cohort.
-RELEASE_CLASSIFICATION: internal-only bounded integration candidate; coherent all-ten customer release not yet earned.
+RELEASE_CLASSIFICATION: internal-only: bounded integration candidate with no earned all-ten customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release or announcement authorization.
 RELEASE_NOTE_REQUIRED: no: development candidate only.
-RELEASE_TRUTH_BOUNDARY: PARTIAL local canonical/native and rendered evidence; PROOF OWED reviewed release and authenticated customer behavior; weekly model admission/recurrence remains UNAVAILABLE.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local canonical/native and rendered evidence; PROOF OWED: reviewed release and authenticated customer behavior; UNAVAILABLE: weekly model admission and recurring execution while activation held.
 RELEASE_RECOVERY: position=reviewed source revert or forward repair preserving canonical proposals/processes/receipts; reference=existing E5 delivery and acceptance packets.
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: native synthetic1536-closed.jpg; authenticated complete tenant shell not exercised.

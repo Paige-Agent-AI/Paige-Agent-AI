@@ -1,0 +1,16 @@
+{
+  "evidence_class": "read_only_production_metadata",
+  "observed_at": "2026-10-15T04:11:56.827728Z",
+  "trigger_live": false,
+  "weekly_processes": 0,
+  "weekly_events": 0,
+  "weekly_receipts": 0,
+  "weekly_cron": 0,
+  "weekly_permission_overrides": 0,
+  "new_draft_writer_present": false,
+  "new_migration_applied": false,
+  "migration": "20271105090500",
+  "production_mutations_by_this_readback": 0,
+  "authenticated_customer_acceptance": "NOT_RUN",
+  "boundary": "Supabase read-only transaction and aggregate canonical metadata. No customer content, protected sign-in, production mutation, new release or unrelated-provider claim."
+}

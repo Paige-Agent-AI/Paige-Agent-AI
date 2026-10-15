@@ -379,6 +379,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // Born at `confirm` + `draft` by construction, so it creates something that cannot act. Turning
   // it on is `automation_set_state`, which is owner_only.
   ["automation_draft", "ordinary", "writes down a process that cannot yet run"],
+  ["weekly_commitment_draft", "ordinary", "saves a private weekly definition as an unapproved draft that cannot execute"],
   // Solo Team work details, added 2026-09-02. A job title and a written set of responsibilities
   // describe what somebody does; they are not a claim about what that person may do. The product
   // makes that separation load-bearing in three places at once — the RPC writes only those two

@@ -702,3 +702,7 @@ verify_jwt = false # Internal service bearer / canonical cron token is checked i
 verify_jwt = true
 [functions.operator-account-retirement]
 verify_jwt = true
+
+[functions.weekly-commitment-command]
+# Canonical owner draft/confirmation adapter only; recurrence and Chat/Live remain unadmitted.
+verify_jwt = true

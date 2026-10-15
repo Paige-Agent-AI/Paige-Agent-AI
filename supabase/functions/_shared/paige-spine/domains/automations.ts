@@ -1,5 +1,34 @@
 import type { SpineCapability } from "../contracts.ts";
 import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../../capability-kit/mod.ts";
+import { WEEKLY_CONTROL_REVIEW_INPUTS } from "../../paige-orchestration/weekly-commitment-control-input.ts";
+
+/** Owner UI draft only. Registration is not Chat/Live admission or recurring authority. */
+export const WEEKLY_COMMITMENT_DRAFT_CAPABILITY = defineCapability({
+  identity: { id: "automations.weekly_commitment_draft", version: 1, domain: "automations", owner: "experience-05",
+    humanSurface: "PAIGE / Clients Calendar weekly responsibility", description: "Save a reviewed owner-private weekly definition as an unapproved draft. No future run is authorized." },
+  input: WEEKLY_CONTROL_REVIEW_INPUTS.draft,
+  effect: "mutation",
+  governance: { actionRiskKey: "weekly_commitment_draft", risk: "ordinary", approval: "confirm",
+    requiredPermission: ownerGrantablePermission("automations.weekly_commitment_draft.write") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval", "unavailable", "not_for_tier"] },
+  providerBinding: { kind: "internal", operation: "public.commit_weekly_commitment_draft", connectionResolver: null },
+  idempotency: { mode: "required", key: "Canonical confirmation ID + stored draft request UUID; one native request index and one stable Rail run ID.",
+    readback: "public.read_weekly_commitment_draft", replay: "reconcile_then_return" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+// Prepared metadata only. The incumbent registry requires a real LIVE Chat binding
+// for mutations; do not register this or invent a tool name before admission review.
+export const WEEKLY_COMMITMENT_DRAFT = {
+  key: "automations.weekly_commitment_draft", domain: "automations", owner: "experience-05",
+  humanSurface: "PAIGE / Clients Calendar weekly responsibility", readiness: "none", selfDescribe: false,
+  action: { classification: "mutate", executor: "public.commit_weekly_commitment_draft", riskPolicyKey: "ordinary",
+    approvalAuthority: "chat-canonical", idempotency: "Exact canonical stored proposal, native unique request and stable Rail receipt; unknown reads never replay." },
+  outcome: { kinds: ["capability_run"], projector: "public.record_capability_run", railVisibility: "owner_internal" },
+  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+} as const satisfies SpineCapability;
 
 // Declaration for the prepared owner-only reader, not a conversational tool grant.
 // Chat/Live offer/dispatch and source-bound lint adoption remain with their admission owners.

@@ -9,7 +9,7 @@ export type WeeklyCommitmentReadDeps = {
   currentIdentity: () => ContextIdentity;
   timeoutMs?: number;
 };
-function sameScope(expected: ContextIdentity, current: ContextIdentity) {
+export function isCurrentWeeklyCommitmentScope(expected: ContextIdentity, current: ContextIdentity) {
   return !identityScopeChanged(expected, current.scopeEpoch) && expected.actorId === current.actorId &&
     expected.tenantId === current.tenantId && expected.workspaceId === current.workspaceId &&
     expected.role === current.role && expected.accountShape === current.accountShape &&
@@ -30,7 +30,7 @@ export async function readWeeklyCommitmentProjection(
   if (!identity.actorId || !identity.tenantId || identity.role !== "owner" || identity.actAsClientId !== null ||
     identity.accountShape === null) return contextUnavailable("owner_context_required");
   const ms = Number.isFinite(deps.timeoutMs) && Number(deps.timeoutMs) > 0 ? Math.min(Number(deps.timeoutMs), 2000) : 2000;
-  const scope = () => sameScope(identity, deps.currentIdentity());
+  const scope = () => isCurrentWeeklyCommitmentScope(identity, deps.currentIdentity());
   const rpc = (name: string, args?: Record<string, unknown>) => bounded(() => deps.caller.rpc(name, args), ms);
   try {
     if (!scope()) return contextDegraded("scope_changed");

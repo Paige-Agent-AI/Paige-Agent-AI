@@ -2,19 +2,22 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 import type { SpineCapability } from "../contracts.ts";
 export const KNOWLEDGE_READ = {
  key:"knowledge.read",domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",
- action:{classification:"read",executor:"public.read_tenant_knowledge",chatTool:"read_tenant_knowledge",riskPolicyKey:"read_only",approvalAuthority:"none",idempotency:"Read only, bounded active workspace projection."},
+ action:{classification:"read",executor:"public.read_tenant_knowledge",chatTool:"read_tenant_knowledge",riskPolicyKey:"read_only",approvalAuthority:"none",seatAuthority:"member",idempotency:"Read only, bounded active workspace projection."},
+ readiness:"none",
  outcome:{kinds:["verified","refused","unverified","completed_unrecorded"],projector:"public.read_tenant_knowledge",railVisibility:"Read only, no mutation receipt."},
  chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
 export const KNOWLEDGE_UPDATE = {
  key:"knowledge.update",domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",
- action:{classification:"mutate",executor:"public.update_tenant_knowledge_metadata",chatTool:"knowledge_update",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",idempotency:"Exact document revision CAS; never automatically retry uncertain acknowledgement. Existing Chat proposal binds document, revision and normalized metadata patch."},
+ action:{classification:"mutate",executor:"public.update_tenant_knowledge_metadata",chatTool:"knowledge_update",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",seatAuthority:"member",idempotency:"Exact document revision CAS; never automatically retry uncertain acknowledgement. Existing Chat proposal binds document, revision and normalized metadata patch."},
+ readiness:"none",
  outcome:{kinds:["verified","refused","unverified","completed_unrecorded"],projector:"public.read_tenant_knowledge",railVisibility:"Canonical SQL owns operation receipt; completed_unrecorded means change verified but receipt missing. Source objects and Memory are unchanged."},
  chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"SCR-2026-09-30-KNOWLEDGE-OUTCOME",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
 export const KNOWLEDGE_DELETE = {
  key:"knowledge.delete",domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",
- action:{classification:"mutate",executor:"public.delete_tenant_knowledge",chatTool:"knowledge_delete",riskPolicyKey:"high",approvalAuthority:"chat-canonical",idempotency:"Exact document revision CAS; never automatically retry uncertain acknowledgement. Existing Chat proposal binds document, revision and normalized metadata patch."},
+ action:{classification:"mutate",executor:"public.delete_tenant_knowledge",chatTool:"knowledge_delete",riskPolicyKey:"high",approvalAuthority:"chat-canonical",seatAuthority:"member",idempotency:"Exact document revision CAS; never automatically retry uncertain acknowledgement. Existing Chat proposal binds document, revision and normalized metadata patch."},
+ readiness:"none",
  outcome:{kinds:["verified","refused","unverified","completed_unrecorded"],projector:"public.read_tenant_knowledge",railVisibility:"Canonical SQL owns operation receipt; completed_unrecorded means change verified but receipt missing. Source objects and Memory are unchanged."},
  chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"SCR-2026-09-30-KNOWLEDGE-OUTCOME",maturity:"PARTIAL",
 } as const satisfies SpineCapability;

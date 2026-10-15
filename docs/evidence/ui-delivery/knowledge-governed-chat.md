@@ -1,8 +1,8 @@
 # Governed Knowledge Chat binding
 
-> Current composition — 2026-10-15: the SOLO Parity BUG lead holds the owner-granted bounded restoration-binding lease. Existing PR1615 is reconciled onto main f633dbec2ab77ce9827f61ba2a0f0ea2a0953b4c, then cleanly composed with892b1bdfe207a8e1c2e16f934748376e734e0a2f. This section supersedes the earlier stacked-branch delivery state below; the earlier review is retained as historical evidence only.
+> Current composition — 2026-10-15: the SOLO Parity BUG lead holds the owner-granted bounded restoration-binding lease. Existing PR1615 is reconciled onto current main bca8642745ecf7fc9a31dca0aa90bb4693e61718, preserving the invitation-integrity release. This section supersedes the earlier stacked-branch delivery state below; the earlier review is retained as historical evidence only.
 >
-> Development only; NOT MERGED / NOT DEPLOYED / NOT RESTORED. INT346 remains inactive. Independent security/source review and exact-head CI remain required. No customer acceptance or activation authority is inferred.
+> Development only; NOT MERGED / NOT DEPLOYED / NOT RESTORED. INT346 remains inactive. The owner authorized bounded sequential author review for PR1615/2143 as a lower-assurance exception; it is not independent review. Exact-head CI, provider cessation evidence, production activation requirements and authenticated acceptance are not waived.
 
 ## Current restoration composition
 
@@ -13,10 +13,23 @@
 - Real isolated PostgreSQL16.14: canonical metadata, delete, concurrent revision denial, record/receipt readback, role/scope denial and migration replay PASS. Additive native permission-catalogue composition preserves the later weekly extension, all predecessor rows, default confirm, anonymous denial, private predecessor ACL and existing off preference. Fixture cluster stopped afterward.
 - The obsolete full catalogue replacement is replaced by the same native additive wrapper pattern already used by the platform. Migration `20271101180001_knowledge_tool_catalogue.sql`; no tenant grant or runtime activation.
 - The normal browser-payload INT346 regression now includes12 held historical/Knowledge capabilities; all remain unoffered and produce no domain RPC, provider call, ingestion, approval proposal or business record while staged. Existing supported conversation/reads/recovery controls remain exercised.
-- Capability Kit lint PASS (288/296 debt entries, no new bypass); action-risk lint PASS (189 classified, zero unclassified writes). Spine registry check FAIL at its reviewed-source boundary because the handler and canonical risk source changed. Fingerprints, extractor, protected source metadata and allowances were not changed. No green/ready/merge claim.
+- Capability Kit lint PASS (288/296 debt entries, no new bypass); action-risk lint PASS (189 classified, zero unclassified writes). The initial Spine source-contract FAIL is retained. After the bounded sequential review below, the registry and its self-test pass; all53 incumbent binding mutation tests pass. No extractor, allowance or frozen capability metadata change.
 - The initial hosted UI evidence run used the obsolete stacked base2d86a602 (before PR retarget), so its broad inherited-surface failures do not establish the final main-relative result. It is retained; fresh final-head CI is required. No guard is weakened.
 - CI now runs the three native Knowledge SQL scripts in its existing isolated PostgreSQL job. Exact-head hosted results are recorded on PR1615 after push.
 - No layout/component change; the already approved Knowledge flow and current Conversations controls are reused. Authenticated positive/negative SOLO drives, receipt persistence/reload/recovery, deployment identity, rendering and owner acceptance remain PROOF OWED.
+
+## Bounded sequential author review — owner exception
+
+Authorization: owner explicitly replied “Authorize bounded sequential author review” for the restoration bindings in PR1615/2143. Recorded in ANT6 comment215348f7-9410-451a-a807-073860a6be13 and PR1615 comment6182373369. This is a lower-assurance author review, not independent security approval.
+
+- Reviewed the complete main-relative Knowledge adapter, three declarations, catalogue wrapper, dispatcher/approval integration and their tests. Caller-JWT native RPCs retain the active-profile tenant lock, membership check, exact revision CAS and SQL-owned record/receipt verification. No service client, model actor/tenant, new executor, new store or permission grant is introduced.
+- The two risk additions are limited to reversible metadata (`ordinary`) and permanent document/chunk deletion (`high`). Existing risk clamping and stored-proposal confirmation remain authoritative. Existing Knowledge SQL permits authenticated workspace members, so declarations explicitly use `seatAuthority: member` and `readiness: none`; this does not claim availability through the closed Chat gate.
+- Only29 dispatch fingerprint scalars and the action-risk source digest change in `c0b-incumbent-resource-binding.mjs`. The enclosing dispatcher control is part of each incumbent fingerprint, so the bounded Knowledge addition changes all29. The extractor, all29 frozen metadata records, every other source/ancestry hash and degraded-read allowance are byte-identical to main. Reviewed risk digest: `4286ebbf49192920713f840eb56bc524f31f146fd4431357c99336f40c137260`.
+- Guard regression repair preserves its supported additive-wrapper syntax: predecessor privileges are revoked from PUBLIC/anon/authenticated and separately from service_role. Effective ACLs are unchanged. No catalogue guard, baseline, permission mode or tenant preference is relaxed.
+- Knowledge preflight and uncertain-successor refusals use the existing `not_applied` domain result. They do not mint the confirmation gate's reserved `refused_before_run` marker. Uncertain predecessor effects remain uncertain; this result describes only the successor that performed no I/O.
+- Hosted candidate7fe6a8ad6 built and passed affected-edge Deno/typecheck, real handler, SQL and containment checks, but failed catalogue/declaration checks and five unit tests (12901/12906 passed). These failures are retained and repaired/rechecked on the next exact head; no green CI or release claim is inferred from partial success.
+
+Remaining release boundaries: final-head CI, guarded merge/deployment/readback, SU508602 authoritative worker cessation, governed activation, genuine Academy/Antonio positive/negative drives and owner product acceptance. No activation or supported-capability restoration is claimed by this source review.
 
 Shipped Delivery Log: N/A — this composition has not merged to main. Supabase worker-cessation support evidence is pending separately; no production settings changed.
 

@@ -11,6 +11,12 @@ it("constructs branded read and mutation contracts without changing risk", () =>
   ["read",null,"read_only","none"],["mutation","knowledge_update","ordinary","confirm"],["mutation","knowledge_delete","high","confirm"]]);
 });
 it("preserves the existing first Spine entry", () => { expect(PAIGE_SPINE_CAPABILITIES[0].key).toBe("pipeline.deal_stage_evidence"); });
+it("describes existing member SQL authority without inventing provider readiness", () => {
+ for (const capability of knowledge.KNOWLEDGE_CAPABILITIES) {
+  expect(capability.action.seatAuthority).toBe("member");
+  expect(capability.readiness).toBe("none");
+ }
+});
 it("local validation is proven not applied without impersonating the confirmation gate", async () => {
  let calls=0; const caller={rpc:async()=>{calls++;return {data:null,error:null};}};
  for(const args of [{document_id:"bad"},{}]) {

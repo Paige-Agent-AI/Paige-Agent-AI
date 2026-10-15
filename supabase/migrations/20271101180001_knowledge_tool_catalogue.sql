@@ -6,7 +6,8 @@ DO $$ BEGIN
     ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _list_tool_autonomy_before_knowledge_chat;
   END IF;
 END $$;
-REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_knowledge_chat(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_knowledge_chat(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public._list_tool_autonomy_before_knowledge_chat(uuid) FROM service_role;
 
 CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
 RETURNS TABLE(tool_key text,label text,category text,mode text,is_default boolean,updated_at timestamptz)

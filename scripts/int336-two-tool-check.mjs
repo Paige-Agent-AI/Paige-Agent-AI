@@ -7,10 +7,20 @@ const knowledgeMode=process.env.KNOWLEDGE_INGEST_TEST;
 if(knowledgeMode){assert.ok(['success','uncertain','refused','partial'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
 const automationMode=process.env.AUTOMATION_DRAFT_TEST;
 if(automationMode){assert.ok(['success','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
+const researchMode=process.env.RESEARCH_READBACK_TEST;
+if(researchMode){assert.ok(['success','partial-library','unconfirmed'].includes(researchMode));assert.ok(!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+const researchRequests=[];
+const researchFixture=()=>({run_id:id(11),question:'Fixture public question',findings:[{text:'Fixture cited finding',citations:[1],confidence:'high'}],
+ sources:[{index:1,url:'https://example.com/source',title:'Fixture source',snippet:'Source text',reliability_score:.9,tier:'T1',reliability:'high',excluded:false,published_at:null,fetched_at:'2026-10-15T16:00:00Z'}],
+ coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:''}});
 const draftArgs={name:'Fixture process',trigger_key:'contact.created',steps:[{action_kind:'crm.advance_journey_stage',config:{stage:'review'}}]};
 const ingestRequests=[];
 let modelCalls=0;
 globalThis.fetch=async(url,opts)=>{
+ if(String(url)==='https://test.supabase.co/functions/v1/paige-deep-research'){
+  researchRequests.push(JSON.parse(opts.body));
+  return Response.json(researchMode==='unconfirmed'?{error:'fixture private provider failure'}:researchFixture(),{status:researchMode==='unconfirmed'?503:200});
+ }
  if(String(url)==='https://test.supabase.co/functions/v1/kb-ingest-doc'){
   ingestRequests.push({body:JSON.parse(opts.body),authorization:opts.headers.Authorization});
   return Response.json(knowledgeMode==='uncertain'?{ok:false,doc_id:'00000000-0000-4000-8000-000000000009',error:'persistence_unverified',chunk_count:0,embedded:false}
@@ -24,7 +34,14 @@ globalThis.fetch=async(url,opts)=>{
  modelCalls++;
  if(modelCalls>1)return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Readback is required."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
  const events=[{type:'message_start',message:{usage:{input_tokens:1}}}];
- for(let i=0;i<2;i++)events.push({type:'content_block_start',index:i,content_block:{type:'tool_use',id:`tool-${i}`,name:automationMode&&i===0?'automation_draft':knowledgeMode&&i===0?'save_to_knowledge_base':'plan_create'}},{type:'content_block_delta',index:i,delta:{type:'input_json_delta',partial_json:JSON.stringify(automationMode&&i===0?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}:knowledgeMode&&i===0?{title:'Fixture reference',content:'Private fixture content'}:{title:`Plan ${knowledgeMode||automationMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'})}});
+ for(let i=0;i<2;i++){
+  const name=i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
+  const args=name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
+   :name==='automation_draft'?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}
+   :name==='save_to_knowledge_base'?{title:'Fixture reference',content:'Private fixture content'}
+   :{title:`Plan ${knowledgeMode||automationMode||researchMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
+  events.push({type:'content_block_start',index:i,content_block:{type:'tool_use',id:`tool-${i}`,name}},{type:'content_block_delta',index:i,delta:{type:'input_json_delta',partial_json:JSON.stringify(args)}});
+ }
  events.push({type:'message_delta',delta:{stop_reason:'tool_use'},usage:{output_tokens:1}},{type:'message_stop'});
  return new Response(events.map(e=>`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(''),{headers:{'Content-Type':'text/event-stream'}});
 };
@@ -53,6 +70,8 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  resolve_tool_autonomy:{data:"auto",error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
  resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},
  resolve_automation_autonomy:{data:{found:true,effective:'confirm',dark:[],state:'draft',granted:'confirm',would_run:false},error:null},
+ get_workspace_research_run:()=>{const r=researchFixture();return {data:{id:r.run_id,question:r.question,domain:'general',caller:'chat',
+  configured:true,stop_reason:'answered',coverage:r.coverage,findings:r.findings,sources:researchMode==='partial-library'?[]:r.sources},error:null};},
  get_actor_access:{data:{tier:'tenant'},error:null},
  get_paige_persona_context:{data:[{tenant_id:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null},
  paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},
@@ -61,13 +80,28 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
   if(recoveryMode==='lost')throw new TypeError('Failed to fetch after commit');
   if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
   if(recoveryMode==='refused')return {data:null,error:{code:'42501',message:'PLAN_FORBIDDEN'}};
-  if(!recoveryMode&&!automationMode)latest=id(6);
+  if(!recoveryMode&&!automationMode&&!researchMode)latest=id(6);
   return {data:{ok:true,plan_id:id(7)},error:null};
  },
  paige_chat_interactive_settle:a=>{receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(8),error:null};}
 }});
 const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Create two individual plans'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'}})}));
 const wire=await response.text();
+if(researchMode){
+ assert.equal(researchRequests.length,1,'one incumbent invocation; no blind research retry');
+ assert.equal(researchRequests[0].user_id,actor);assert.equal(researchRequests[0].expected_tenant_id,tenant);assert.equal(researchRequests[0].persist,true);
+ assert.equal(receipts.length,1,'one canonical terminal receipt');
+ const bundle=receipts[0].bundle_ref,effect=bundle.interactive.effects.find(e=>e.tool==='deep_research');
+ assert.equal(effect.outcome,researchMode==='unconfirmed'?'outcome_unknown':'reported_success');
+ if(researchMode!=='unconfirmed'){
+  assert.equal((effect.record_refs??[]).some(r=>r.kind==='research_run'&&r.id===id(11)),researchMode==='success','durable record identity requires complete native readback');
+  assert.equal(bundle.paige_research[0].saved,researchMode==='success','library availability needs matching run and sources');
+  assert.equal(bundle.paige_research[0].run_id,id(11));assert.ok(!('sources' in bundle.paige_research[0]),'durable reference only');
+ }
+ assert.ok(!wire.includes('fixture private provider failure'));
+ console.log(`PASS actual handler Research ${researchMode}: server workspace/actor, native invocation, complete library verdict, canonical scoped run reference, bounded failure`);
+ process.exit(0);
+}
 if(automationMode){
  const drafts=rec.inserts.filter(r=>r.table==='paige_automations'&&!r.update),acts=rec.inserts.filter(r=>r.table==='paige_automation_acts');
  assert.equal(drafts.length,automationMode==='refused'?0:1,'one native draft insert; never retry by name');

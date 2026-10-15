@@ -95,7 +95,13 @@ describe("persistence readback (ruling §6)", () => {
     const chat = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
     expect(chat).toContain("// R2b §10 — the governed readback: never claim a saved run without proving");
     expect(chat).toContain('supabaseClient.rpc("get_workspace_research_run"');
-    expect(chat).toContain("drSaved = !!drReadback");
+    // A truthy row is insufficient: Chat must reject a read error and prove
+    // that the governed record is the complete run returned by the engine.
+    expect(chat).not.toContain("drSaved = !!drReadback");
+    expect(chat).toContain("drSaved = !drReadError && !!drReadback");
+    expect(chat).toContain("drReadback.id === drRunId");
+    expect(chat).toContain("canonicalResearchJson(drReadback.findings) === canonicalResearchJson(findings)");
+    expect(chat).toContain("drReadback.sources.length === sources.length");
   });
 
   it("the card's saved/not-saved verdict is the readback's, never assumed", () => {

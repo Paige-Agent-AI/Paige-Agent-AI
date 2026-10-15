@@ -515,6 +515,11 @@ jobs:
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
+      # Additive E09 customer-safe relationship/profile foundation; no new CI database.
+      - run: supabase test db supabase/tests/client_portal_self_projection.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/client_portal_self_profile_write.sql
+        if: ${{ !cancelled() }}
       # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
       - run: supabase test db supabase/tests/consumer_invite_acceptance.sql
         if: ${{ !cancelled() }}

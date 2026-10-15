@@ -1,0 +1,116 @@
+{
+  "result": "PASS",
+  "cases": 12,
+  "details": [
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "colorScheme": "light",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 720
+      },
+      "colorScheme": "dark",
+      "phase": "actual-PDF-load-with-consent-still-required",
+      "result": "PASS"
+    }
+  ],
+  "nativeViewerResources": 189,
+  "additional": "Actual component/PDF load, keyboard, failure, text fallback, token retirement and reduced-motion preference; intercepted synthetic SDK, no signature or authenticated acceptance. Native zoom/print remain unverified."
+}

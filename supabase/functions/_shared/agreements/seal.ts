@@ -20,6 +20,7 @@
 import { renderPresentedPdf, sealAgreementPdf, UnrenderableDocumentError, UnrenderableNameError } from "./document.ts";
 import { expiryFromNow, mintSignerToken, RETRIEVAL_TOKEN_TTL_DAYS, sha256Hex } from "./token.ts";
 import { notify, ownerNotificationEmail } from "./notify.ts";
+import { verifyRetainedAgreementPdf } from "./retained-document.ts";
 
 export type SealOutcome =
   | { ok: true; sealedSha256: string; sealedKey: string }
@@ -30,16 +31,38 @@ interface Db {
   storage: { from: (b: string) => any };
 }
 
+/** A replay reads the committed record and its actual retained bytes. It never
+ * re-seals, changes a legal state, rotates links, files events or sends notices.
+ * Storage failure cannot roll back a completed agreement; it withholds this
+ * request's completion confirmation until its retained evidence can be read.
+ */
+async function verifiedCompletedCopy(db: Db, record: {
+  status?: unknown; sealed_storage_key?: unknown; sealed_sha256?: unknown;
+}): Promise<SealOutcome> {
+  if (record.status !== "completed") return { ok: false, reason: "not_ready", detail: "completion is not recorded" };
+  const key = record.sealed_storage_key, digest = record.sealed_sha256;
+  if (typeof key !== "string" || !key.trim() || typeof digest !== "string" || !/^[a-f0-9]{64}$/.test(digest)) {
+    return { ok: false, reason: "verify_failed", detail: "completed retained reference is incomplete" };
+  }
+  try {
+    const retained = await db.storage.from("paige-agreements").download(key);
+    if (retained.error || !retained.data) return { ok: false, reason: "storage_failed", detail: "completed retained copy is unreadable" };
+    const bytes = new Uint8Array(await retained.data.arrayBuffer());
+    if (!await verifyRetainedAgreementPdf(bytes, digest)) return { ok: false, reason: "verify_failed", detail: "completed retained copy does not match its record" };
+    return { ok: true, sealedSha256: digest, sealedKey: key };
+  } catch {
+    return { ok: false, reason: "storage_failed", detail: "completed retained copy could not be verified" };
+  }
+}
+
 export async function sealAndComplete(db: Db, agreementId: string): Promise<SealOutcome> {
-  const { data: agreement } = await db.from("paige_agreements")
-    .select("id,tenant_id,title,status,body_source,body_markdown,content_storage_key,content_sha256,sealed_sha256")
+  const { data: agreement, error: readError } = await db.from("paige_agreements")
+    .select("id,tenant_id,title,status,body_source,body_markdown,content_storage_key,content_sha256,sealed_sha256,sealed_storage_key")
     .eq("id", agreementId).maybeSingle();
 
-  if (!agreement) return { ok: false, reason: "not_ready", detail: "agreement not found" };
-  if (agreement.sealed_sha256) {
-    // Idempotent: a retry after a successful seal is answered from the committed result rather than
-    // burning a second seal. The write-once trigger would refuse anyway; this makes it graceful.
-    return { ok: true, sealedSha256: agreement.sealed_sha256, sealedKey: "" };
+  if (readError || !agreement) return { ok: false, reason: "not_ready", detail: "agreement unavailable" };
+  if (agreement.status === "completed" || agreement.sealed_sha256) {
+    return verifiedCompletedCopy(db, agreement);
   }
   if (!agreement.content_sha256) {
     return { ok: false, reason: "missing_presented", detail: "no frozen document to seal" };
@@ -205,10 +228,10 @@ export async function sealAndComplete(db: Db, agreementId: string): Promise<Seal
     if (rm.error) {
       console.error("[agreements] orphaned sealed copy could not be removed", { agreementId, sealedKey, error: rm.error.message });
     }
-    const { data: winner } = await db.from("paige_agreements")
-      .select("sealed_sha256,sealed_storage_key").eq("id", agreementId).maybeSingle();
-    if (winner?.sealed_sha256) {
-      return { ok: true, sealedSha256: String(winner.sealed_sha256), sealedKey: String(winner.sealed_storage_key ?? "") };
+    const { data: winner, error: winnerError } = await db.from("paige_agreements")
+      .select("status,sealed_sha256,sealed_storage_key").eq("id", agreementId).maybeSingle();
+    if (!winnerError && winner?.sealed_sha256) {
+      return verifiedCompletedCopy(db, winner);
     }
     // Nobody sealed it and the status moved elsewhere — voided or declined between our read and our
     // write. Honest failure, not a claimed completion.

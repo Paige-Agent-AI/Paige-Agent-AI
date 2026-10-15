@@ -655,6 +655,18 @@ Invariants:
 
 ## H. Game Plan / goals / milestones / missions — current state
 
+**F7 continuation, 2026-10-14:** owner approved targets linked to Strategic Plays
+(ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef`). A proposed shared domain foundation
+now implements `business_mission_targets` and immutable versions, reusing Mission
+owner authority/receipts and the existing Analytics issuer for actuals. This is local
+source only: no deployed target schema or customer acceptance, native UI and
+Executive/Chat/Live integration still required. `business_mission.targets` is registered
+as an unmounted read with self-description off, Chat/Mind UNAVAILABLE. No target
+mutation is admitted to Chat; INT-346 and provider/privileged activation holds remain.
+See [the existing Mission delivery record](../delivery/paige-business-mission-system-phase2.md#f7-continuation--play-linked-numeric-target-foundation-2026-10-14)
+and [E02 outcome O10](../delivery/e2-customer-experience-integration-matrix.md).
+The following census findings retain their original production observation boundary.
+
 - **Canonical and reusable:**
   - `business_missions`: title, lifecycle, next action, closure outcome, revision.
   - `business_mission_brief_versions`: immutable versions with desired outcome, deadline, baseline,

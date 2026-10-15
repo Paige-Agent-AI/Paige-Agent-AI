@@ -71,6 +71,7 @@ on:
       - "supabase/tests/business_context_readiness.sql"
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
+      - "supabase/tests/business_mission_numeric_targets.sql"
       - "supabase/tests/social_foundation.sql"
       - "supabase/tests/social_foundation_rls.sql"
       - "scripts/sql/social-foundation-legacy-shape-proof.sql"
@@ -106,6 +107,7 @@ on:
       - "scripts/proof/resend-receipt-concurrency.mjs"
       - "scripts/proof/secure-browser-browse-budget-concurrency.mjs"
       - "scripts/proof/business-mission-concurrency.mjs"
+      - "scripts/proof/business-mission-target-concurrency.mjs"
       - "src/__tests__/paige-spine-*.test.ts"
       - "src/__tests__/paige-orchestration-approve-executor.test.ts"
       - "src/solo/paigeClientScope.ts"
@@ -513,6 +515,9 @@ jobs:
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
+      # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
+      - run: supabase test db supabase/tests/consumer_invite_acceptance.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql
@@ -564,6 +569,9 @@ jobs:
       - run: supabase test db supabase/tests/team_authority_readiness.sql
       # Business Mission owner/RLS/lifecycle proof and true concurrent replay/CAS proof.
       - run: supabase test db supabase/tests/business_mission_foundation.sql
+      - name: Mission-linked numeric targets — caller scope, real issuer, revisions and replay (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/business_mission_numeric_targets.sql
       - run: supabase test db supabase/tests/social_foundation.sql
       - run: supabase test db supabase/tests/social_foundation_rls.sql
       - run: supabase test db supabase/tests/social_connection_lifecycle.sql
@@ -804,6 +812,9 @@ jobs:
       - run: node scripts/proof/business-mission-concurrency.mjs
         env:
           BUSINESS_MISSION_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - run: node scripts/proof/business-mission-target-concurrency.mjs
+        env:
+          MISSION_TARGET_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # The grant reproduction must never overwrite the change under review. A migration production
       # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
       # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them

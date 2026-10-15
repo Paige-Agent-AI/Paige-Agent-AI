@@ -21,7 +21,7 @@
  *        screen unconditionally (no conditional wrapper on their mount sites).
  *   SP4  no identity branches in Solo route/shell code: no account-number or
  *        tenant-UUID literals, no tenant-name/slug identity comparisons, and no
- *        creation-date branches in the solo tree + the routing seam files.
+ *        creation-date branches in the solo tree + routing, chrome and tier seams.
  *   SP5  registry snapshot for nav + tier floor, with doc counts derived from the
  *        SAME registries: the settings destinations and nav branch slugs are
  *        re-derived from SOLO_SETTINGS_DESTINATIONS / SOLO_BRANCHES and compared
@@ -44,8 +44,9 @@
  *         pass the component-set check; the wrapper EXPRESSION is not parsed.
  *   SP2 — aliased navigation bindings (`const goTo = useNavigate(); goTo(…)`)
  *         pass; only a literal `navigate(` is recognized in the Solo branch.
- *   SP4 — qualified or reversed comparisons (`1234567 === activeTenant?.account_number`)
- *         pass; the reverse direction only matches a bare identifier.
+ *   SP4 — aliases, computed property names and indirect identity predicates are
+ *         not resolved. Literal comparisons in either direction, including
+ *         qualified and quoted account-number access, are covered.
  * Fail-closed fragilities (a reformat trips the guard RED, never silently
  * passes): SP1 depends on the /solo/* route mount living on ONE line in
  * App.tsx, and SP2 depends on the `// ── SUB-ACCOUNT` marker delimiting the
@@ -150,6 +151,9 @@ const sweepFiles = (() => {
     "src/lib/auth/workspaceEntry.ts",
     "src/lib/auth/resolveLandingRoute.ts",
     "src/components/auth/RequireSetupComplete.tsx",
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+    "src/components/auth/RequireSoloBetaEntitlement.tsx",
+    "src/lib/tier/tierFeatures.ts",
   ]) {
     try { out.push(join(root, seam)); } catch { /* missing seam file is SP4's own finding below */ }
   }
@@ -160,7 +164,13 @@ for (const p of sweepFiles) {
   let code;
   try { code = stripComments(readFileSync(p, "utf8")); } catch { fail("SP4", `unreadable sweep file: ${p}`); continue; }
   const rel = p.slice(root.length + 1).replace(/\\/g, "/");
-  const acct = code.match(/account_?[Nn]umber\s*===?\s*(?:["'`]\s*\d{3,}|\d{3,}\b)/) ?? code.match(/(?:["'`]\d{4,}["'`]|\b\d{4,}\b)\s*===?\s*\w*account_?[Nn]umber/);
+  // Account numbers are positive addresses. Zero validation and dynamic route
+  // construction remain legal; selecting behavior by a positive literal does not.
+  const accountOperand = String.raw`(?:\b(?:[A-Za-z_$][\w$]*\s*(?:\?\.|\.)\s*)*account_?[Nn]umber\b|\b[A-Za-z_$][\w$]*(?:\s*(?:\?\.|\.)\s*[A-Za-z_$][\w$]*)*\s*(?:\?\.)?\s*\[\s*["']account_?[Nn]umber["']\s*\])`;
+  const positiveAddress = String.raw`(?:["'\x60]0*[1-9]\d*["'\x60]|\b[1-9]\d*\b)`;
+  const comparison = String.raw`\s*(?:={2,3}|!={1,2})\s*`;
+  const acct = code.match(new RegExp(accountOperand + comparison + positiveAddress))
+    ?? code.match(new RegExp(positiveAddress + comparison + accountOperand));
   if (acct) fail("SP4", `account-number literal comparison in ${rel}`);
   const uuid = code.match(/["'`][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}["'`]/i);
   if (uuid) fail("SP4", `tenant-UUID literal in ${rel}`);
@@ -234,8 +244,25 @@ if (process.argv.includes("--self-test")) {
   const mutate = (fn) => {
     const tmp = mkdtempSync(join(tmpdir(), "solo-parity-"));
     try {
-      cpSync(join(root, "src"), join(tmp, "src"), { recursive: true });
-      cpSync(join(root, "docs"), join(tmp, "docs"), { recursive: true });
+      // Copy every source boundary the guard reads, rather than unrelated
+      // product/media trees. Positive controls below fail if a required input
+      // is missing; all original mutation assertions remain unchanged.
+      cpSync(join(root, "src/solo"), join(tmp, "src/solo"), { recursive: true });
+      for (const file of [
+        "src/App.tsx", "src/lib/routing/tierBranches.ts",
+        "src/lib/auth/workspaceEntry.ts", "src/lib/auth/resolveLandingRoute.ts",
+        "src/components/auth/RequireSetupComplete.tsx",
+        "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+        "src/components/auth/RequireSoloBetaEntitlement.tsx",
+        "src/lib/tier/tierFeatures.ts",
+      ]) {
+        mkdirSync(dirname(join(tmp, file)), { recursive: true });
+        cpSync(join(root, file), join(tmp, file));
+      }
+      // The guard reads this one doctrine file. Copying historical screenshots
+      // and release archives adds no negative-control coverage.
+      mkdirSync(join(tmp, "docs", "doctrine"), { recursive: true });
+      cpSync(join(root, "docs/doctrine/solo-shell-contract.md"), join(tmp, "docs/doctrine/solo-shell-contract.md"));
       mkdirSync(join(tmp, "scripts", "ci"), { recursive: true });
       cpSync(join(root, "scripts/ci/solo-parity-snapshot.json"), join(tmp, "scripts", "ci", "solo-parity-snapshot.json"));
       fn(tmp);
@@ -257,11 +284,26 @@ if (process.argv.includes("--self-test")) {
     ["SP3", (t) => patch(t, "src/solo/SoloApp.tsx", "soloPaigeWorkspace={<SoloPaigeWorkspace", 'soloPaigeWorkspace={role === "owner" ? <SoloPaigeWorkspace')],
     ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = accountNumber === "1234567";\nexport const ENTERPRISE_EXTRA')],
     ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = activeTenant?.account_number === 1234567;\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = 7654321 === activeTenant?.account_number;\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = activeTenant["account_number"] === "7654321";\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = accountNumber === 42;\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => writeFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), readFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), "utf8") + '\nconst sp4Mutation = activeTenant?.id === "11111111-2222-4333-8444-555555555555";\n')],
+    ["SP4", (t) => writeFileSync(join(t, "src/components/auth/RequireSoloBetaEntitlement.tsx"), readFileSync(join(t, "src/components/auth/RequireSoloBetaEntitlement.tsx"), "utf8") + '\nconst sp4Mutation = activeTenant?.account_number === 7654321;\n')],
+    ["SP4", (t) => writeFileSync(join(t, "src/lib/tier/tierFeatures.ts"), readFileSync(join(t, "src/lib/tier/tierFeatures.ts"), "utf8") + '\nconst sp4Mutation = tenantName === "test-tenant-special";\n')],
+    ["PASS", (t) => writeFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), readFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), "utf8") + '\nconst sp4Address = "/solo/" + activeTenant.account_number + "/clients";\nconst sp4Validation = accountNumber === 0;\n')],
+    ["PASS", (t) => writeFileSync(join(t, "src/lib/tier/tierFeatures.ts"), readFileSync(join(t, "src/lib/tier/tierFeatures.ts"), "utf8") + '\nconst sp4Eligibility = tenant.account_type === "standalone" && entitlement.enabled && permission.allowed && provider.ready;\n')],
     ["SP5", (t) => patch(t, "src/solo/settings-contract.ts", '{ key: "vault", label: "Vault", truth: "PROPOSED" },', "")],
   ];
   let selfTestOk = true;
   for (const [code, fn] of cases) {
     const out = mutate(fn);
+    if (code === "PASS") {
+      if (out) {
+        selfTestOk = false;
+        console.error(`SELF-TEST FAIL: legitimate address/eligibility fixture was refused (${out.slice(0, 200)})`);
+      } else console.log("self-test: legitimate address/eligibility fixture passed ✓");
+      continue;
+    }
     if (!out || !out.includes(code)) {
       selfTestOk = false;
       console.error(`SELF-TEST FAIL: mutation for ${code} did not fire (output: ${(out ?? "exit 0").slice(0, 200)})`);

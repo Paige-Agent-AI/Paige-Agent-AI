@@ -77,7 +77,7 @@ function seedRows(catalog: PortalCatalogItem[], overlay: PortalModuleOverlay[] |
     }));
 }
 
-export default function PortalStudio() {
+export default function PortalStudio({ embedded = false, onDirtyChange }: { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void } = {}) {
   const { activeTenantId } = useTenantContext();
   const { toast } = useToast();
   const bk = useBrandKit(activeTenantId);
@@ -192,6 +192,7 @@ export default function PortalStudio() {
   const dirty = brandDirty || portalDirty;
   const busy = bk.saving || pc.saving;
   useBeforeUnloadGuard(dirty || busy);
+  useEffect(() => { onDirtyChange?.(dirty || busy); }, [dirty, busy, onDirtyChange]);
 
   const move = (index: number, delta: number) => {
     setRows((prev) => {
@@ -243,18 +244,24 @@ export default function PortalStudio() {
     );
   }
 
+  if (bk.isError || pc.isError) return <section role="alert" className="p-6 space-y-3">
+    <h2 className="text-lg font-semibold">We couldn’t load the saved experience</h2>
+    <p className="text-sm text-muted-foreground">Try again before editing the portal’s appearance or content.</p>
+    <Button variant="outline" onClick={() => { void bk.refetch(); void pc.refetch(); }}>Retry experience</Button>
+  </section>;
+
   return (
     <PageShell width="wide">
       <PageHeader
         variant="plain"
         icon={Palette}
-        eyebrow="Client Portal"
-        title="Your client's portal"
-        description="Everything your clients see when they sign in — brand, tabs, and greeting. Set it once; Paige carries it everywhere."
+        eyebrow={embedded ? undefined : "Client Portal"}
+        title={embedded ? "Customize experience" : "Your client's portal"}
+        description={embedded ? undefined : "Everything your clients see when they sign in — brand, tabs, and greeting. Set it once; Paige carries it everywhere."}
         actions={
           <div className="flex items-center gap-3">
             {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-            <Button variant="gold" onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
+            <Button variant={embedded ? "outline" : "gold"} className={embedded ? "opd-button opd-primary" : undefined} onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : null}
               Save portal
             </Button>
@@ -262,7 +269,7 @@ export default function PortalStudio() {
         }
       />
 
-      {bk.isLoading ? (
+      {bk.isLoading || pc.isLoading ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           <div className="space-y-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 w-full rounded-xl" />)}</div>
           <Skeleton className="h-96 w-full rounded-xl" />
@@ -298,8 +305,9 @@ export default function PortalStudio() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <span className="text-sm font-medium text-foreground">Portal name</span>
+                    <label htmlFor="portal-product-name" className="text-sm font-medium text-foreground">Portal name</label>
                     <Input
+                      id="portal-product-name"
                       value={brandForm.product_name} placeholder={bk.state?.tenantName || "Your brand"}
                       onChange={(e) => setBrandForm((f) => ({ ...f, product_name: e.target.value }))}
                     />
@@ -316,8 +324,9 @@ export default function PortalStudio() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-foreground">Tagline</span>
+                  <label htmlFor="portal-tagline" className="text-sm font-medium text-foreground">Tagline</label>
                   <Input
+                    id="portal-tagline"
                     value={brandForm.tagline} placeholder="One line that says what you do."
                     onChange={(e) => setBrandForm((f) => ({ ...f, tagline: e.target.value }))}
                   />
@@ -389,15 +398,17 @@ export default function PortalStudio() {
             >
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-foreground">Headline</span>
+                  <label htmlFor="portal-welcome-headline" className="text-sm font-medium text-foreground">Headline</label>
                   <Input
+                    id="portal-welcome-headline"
                     value={welcome.headline} placeholder="Welcome back"
                     onChange={(e) => setWelcome((w) => ({ ...w, headline: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-foreground">Subhead</span>
+                  <label htmlFor="portal-welcome-subhead" className="text-sm font-medium text-foreground">Subhead</label>
                   <Input
+                    id="portal-welcome-subhead"
                     value={welcome.subhead} placeholder="Here's where things stand — your next steps are ready."
                     onChange={(e) => setWelcome((w) => ({ ...w, subhead: e.target.value }))}
                   />
@@ -415,7 +426,7 @@ export default function PortalStudio() {
               description="A representative view — not live client data."
             >
               <div className="p-4">
-                <div ref={previewRef} className="overflow-hidden rounded-xl border border-border shadow-card">
+                <div ref={previewRef} className={cn("overflow-hidden rounded-xl border border-border", !embedded && "shadow-card")}>
                   {/* masthead */}
                   <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: previewPrimary }}>
                     {previewLogo ? (

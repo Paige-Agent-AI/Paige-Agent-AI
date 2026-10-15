@@ -4,12 +4,13 @@ import { existsSync, readFileSync, mkdirSync, mkdtempSync, writeFileSync } from 
 import { createServer } from 'node:net';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { interviewCheckpointMigration, interviewRealFunctions, runInterviewCheckpointProof } from './solo-setup-db-proof/interview-checkpoint.mjs';
 
 // Never uses PGHOST, the existing Windows PostgreSQL service, a configured
 // project connection, a cloud database, or production credentials.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const bin = process.env.SOLO_PROOF_PG_BIN || 'C:/Program Files/PostgreSQL/16/bin';
-const migrationNames = ['20261102010000_official_2022_naics_reference.sql','20261103000000_solo_setup_business_context.sql','20261104000000_solo_managed_sender_lifecycle.sql'];
+const migrationNames = ['20261102010000_official_2022_naics_reference.sql','20261103000000_solo_setup_business_context.sql','20261104000000_solo_managed_sender_lifecycle.sql',interviewCheckpointMigration];
 for (const name of migrationNames) if (!existsSync(join(root,'supabase/migrations',name))) throw new Error(`Required migration absent: ${name}`);
 const outputRoot = join(root, 'outputs', 'solo-setup-db-proof');
 mkdirSync(outputRoot, { recursive: true });
@@ -18,6 +19,9 @@ const cluster = join(runDir, 'cluster');
 if (!resolve(cluster).startsWith(resolve(outputRoot) + '/'.replace('/', process.platform === 'win32' ? '\\' : '/'))) throw new Error('Cluster path escaped isolated output root');
 const results = [];
 const transcript = [];
+const recoveryFindings = [];
+const appliedMigrationNames = [];
+let schemaFingerprint = null;
 let started = false;
 let clusterStopped = false;
 let port;
@@ -118,7 +122,10 @@ try {
       for each row execute function public.sync_paige_managed_email_connector_on_tenant();
     create table public.fixture_nonsolo_before as select tenant_id,to_jsonb(c)-'created_at'-'updated_at' as snapshot from public.channel_connectors c where tenant_id not in ('${tid(1)}','${tid(2)}');`);
   await test('all three new migrations compile and apply on isolated real PostgreSQL',async()=>{
-    for(const name of migrationNames) await psql(read(`supabase/migrations/${name}`));
+    for(const name of migrationNames.slice(0,3)) {
+      await psql(read(`supabase/migrations/${name}`));
+      appliedMigrationNames.push(name);
+    }
   });
   await test('Agency, Enterprise, child standalone, sub-account, system and suspended behavior is preserved',async()=>{
     await psql(`select public.provision_paige_managed_email_connector(id) from public.tenants where id not in ('${tid(1)}','${tid(2)}');`);
@@ -278,18 +285,34 @@ try {
     assert(removed.knowledgeSources.length===0&&removed.voiceExamples.length===0,'Removal did not persist');
     assert(JSON.stringify(members)===JSON.stringify(await json('select jsonb_agg(to_jsonb(m) order by tenant_id,user_id) from public.tenant_members m;')),'Supplement changed Team roster or roles');
   });
+  await runInterviewCheckpointProof({psql,json,asUser,rejected,test,assert,tid,uid,sqlJson,read,extract,
+    onMigrationApplied:name=>appliedMigrationNames.push(name)});
 } catch(error) {
   process.exitCode=1;
+  recoveryFindings.push({error:error.message});
   console.error(error.message);
 } finally {
   if(started) {
+    try {
+      const schema=await json(`select jsonb_build_object(
+        'columns',(select jsonb_agg(to_jsonb(c) order by table_schema,table_name,ordinal_position)
+          from information_schema.columns c where table_schema in ('public','auth','vault')),
+        'functions',(select jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid)) order by p.oid::regprocedure::text)
+          from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','auth','vault')));`);
+      schemaFingerprint=createHash('sha256').update(JSON.stringify(schema)).digest('hex');
+    } catch(error) {process.exitCode=1;recoveryFindings.push({error:error.message});console.error(error.message);}
     try {await run(join(bin,'pg_ctl.exe'),['-D',cluster,'-w','-t','30','-m','fast','stop']);clusterStopped=true;}
-    catch(error){process.exitCode=1;console.error(error.message);}
+    catch(error){process.exitCode=1;recoveryFindings.push({error:error.message});console.error(error.message);}
   }
   const proof={generatedAt:new Date().toISOString(),status:process.exitCode?'FAIL':'PASS',environment:'new disposable local PostgreSQL cluster; synthetic records only',host:'127.0.0.1',port,clusterStopped,
-    assurance:'Real PostgreSQL execution of tracked new migrations and extracted real sender/access functions. Synthetic dependency schema; NOT full production schema replay, provider delivery, or authenticated browser proof.',
+    assurance:'Real PostgreSQL execution of tracked migrations, extracted sender/access functions, canonical Setup save/get functions and checkpoint RPCs. Initial supplemental cases use the explicitly stubbed base seam; interview cases replace it with verbatim real base functions and assert real tenants.brand writes. Synthetic dependency schema; NOT full production schema replay, protected Vault/provider delivery, or authenticated browser proof.',
+    interviewFunctions:interviewRealFunctions.map(([name,fn])=>({name,fn,sha256:createHash('sha256').update(extract(`supabase/migrations/${name}`,fn)).digest('hex')})),
     migrations:migrationNames.map(name=>({name,sha256:createHash('sha256').update(read(`supabase/migrations/${name}`)).digest('hex')})),results};
   writeFileSync(join(runDir,'proof.json'),JSON.stringify(proof,null,2));
+  writeFileSync(join(runDir,'migration-state.json'),JSON.stringify({generatedAt:proof.generatedAt,
+    environment:proof.environment,assurance:'Scoped fixture replay and exact function extraction; not the full production migration chain.',
+    trackedMigrations:proof.migrations,appliedMigrations:appliedMigrationNames,schemaFingerprint,
+    openRecoveryFindings:[...recoveryFindings,...results.filter(result=>result.status==='FAIL').map(result=>({test:result.name,error:result.error}))]},null,2));
   writeFileSync(join(runDir,'commands.json'),JSON.stringify(transcript,null,2));
   console.log(`Evidence: ${join(runDir,'proof.json')}`);
 }

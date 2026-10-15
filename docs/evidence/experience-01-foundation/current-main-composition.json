@@ -1,0 +1,28 @@
+{
+  "class": "INDEPENDENT_PRE_REPIN_SOURCE_COMPOSITION_AND_LOCAL_AUTOMATED_PROOF",
+  "generatedAt": "2026-10-13T05:15:16.288Z",
+  "runtimeBase": "138b8207dee5462c24773ceb95d9d088f8cb3736",
+  "documentationSuccessor": "c4a68eb38b52ba86bd7e9f9919256460dceecfbd",
+  "mergedChatSha256": "f7ef7db297abe56967cd73eedc1bcbfbdf25c86dbad648e1b121dda5bff73fd2",
+  "inputChatPatchSha256": "ba2b7a78fde1526da327912d975ba85fcfd83a6d21301b9e741b6e118f835dde",
+  "independentNonAuthor": true,
+  "sourceAudit": "COMPLETE_PASS",
+  "findings": [],
+  "contracts": 29,
+  "changedIdentityPart": 12,
+  "additionalCanonicalCharacters": 553,
+  "branchesControlsHelpersImportsUnchanged": true,
+  "declarationAndExistingSourcePinsUnchanged": true,
+  "E2UserAppendRefusalBudgetGuardsRetained": true,
+  "helperAstPin": "5927f625f25e6e1baeeb9da64a80a6544ba731aff1b36375eb3b56270152540b",
+  "localTests": {
+    "focusedExistingSuites": 90,
+    "c0bPositiveAndAdversarial": 53
+  },
+  "finalImmutableHeadReview": "OWED",
+  "hostedCI": "OWED",
+  "previewReleaseGate": "HELD_SUPABASE_PREVIEW_FAILURE",
+  "production": false,
+  "authenticated": false,
+  "ownerAccepted": false
+}

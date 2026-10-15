@@ -10,6 +10,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("sonner", () => ({ toast: { error: (m: string) => { h.errors.push(m); } } }));
 
 import type { ActAsSettlement } from "./signOut";
+import { supabase } from "@/integrations/supabase/client";
 
 // A completed sign-out leaves the module's in-flight flag set (the page is navigating away), so each
 // case loads a fresh copy of the module.
@@ -25,6 +26,7 @@ describe("performSignOut and an open act-as", () => {
     ({ performSignOut, registerSignOutActAsGuard } = await import("./signOut"));
     h.order = [];
     h.errors = [];
+    vi.mocked(supabase.auth.signOut).mockClear();
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { ...original, replace: vi.fn(() => { h.order.push("redirect"); }) },
@@ -93,5 +95,19 @@ describe("performSignOut and an open act-as", () => {
   it("signs out as before when nothing is registered", async () => {
     expect(await performSignOut("/")).toBe(true);
     expect(h.order).toEqual(["signOut", "redirect"]);
+  });
+
+  it("keeps the local scope when transport rejects the first logout", async () => {
+    vi.mocked(supabase.auth.signOut).mockRejectedValueOnce(new Error("offline"));
+    expect(await performSignOut("/auth")).toBe(true);
+    expect(supabase.auth.signOut).toHaveBeenNthCalledWith(1, { scope: "local" });
+    expect(supabase.auth.signOut).toHaveBeenNthCalledWith(2, { scope: "local" });
+  });
+
+  it("does not widen a refused local logout when the SDK returns an error", async () => {
+    vi.mocked(supabase.auth.signOut).mockResolvedValueOnce({ error: new Error("offline") } as never);
+    expect(await performSignOut("/auth")).toBe(true);
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(2);
+    expect(supabase.auth.signOut).toHaveBeenLastCalledWith({ scope: "local" });
   });
 });

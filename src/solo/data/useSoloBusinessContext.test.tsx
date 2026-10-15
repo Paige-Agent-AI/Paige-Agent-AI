@@ -61,9 +61,130 @@ const loaded = (tenantId = "tenant-a", accessScope = "owner_full") => ({
 });
 
 describe("Solo business context data boundary", () => {
+  it.each(["08007", "40003", "08006"])("holds uncertain PostgreSQL outcome %s until authoritative getter without another write", async code => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({data:null,error:{code,message:"private connection details"}}).mockResolvedValueOnce(loaded());
+    const root=createRoot(document.createElement("div"));await act(async()=>root.render(<Probe />));
+    await act(async()=>{expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"});});
+    expect(latest.saveOutcomeUnknown).toBe(true);
+    await act(async()=>{expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"});});
+    expect(state.rpc.mock.calls.filter(([name])=>name==="save_solo_business_context")).toHaveLength(1);
+    await act(async()=>{expect(await latest.reconcileSave()).toMatchObject({ok:true,kind:"reconciled"});});
+    expect(latest.saveOutcomeUnknown).toBe(false);await act(async()=>root.unmount());
+  });
+
+  it("keeps a proxy ERROR outcome unknown after a failed read without another write", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({ data: null, error: {code:"ERROR",message:"conflict private proxy detail"} }).mockResolvedValueOnce({data:null,error:{code:"42501",message:"private denied detail"}});
+    const root = createRoot(document.createElement("div"));
+    await act(async()=>root.render(<Probe />));
+    await act(async()=>{ expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"}); });
+    await act(async()=>{ expect(await latest.reconcileSave()).toMatchObject({ok:false}); });
+    expect(latest.saveOutcomeUnknown).toBe(true); expect(latest.reconciling).toBe(false);
+    await act(async()=>{ expect(await latest.save(currentDraft())).toMatchObject({ok:false,kind:"unknown"}); });
+    expect(state.rpc.mock.calls.filter(([name])=>name==="save_solo_business_context")).toHaveLength(1);
+    expect(latest.error).not.toContain("private");
+    await act(async()=>root.unmount());
+  });
+
   beforeEach(() => {
     state.tenantId = "tenant-a";
     state.rpc.mockReset();
+  });
+
+  it("returns the canonical saved brief and revision instead of treating the interview draft as readback", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({
+      data: {
+        ...loaded().data,
+        contextRevision: 5,
+        brief: {
+          publicName: "Stored business name",
+          currentPriority: "Follow up with warm leads",
+          updatedAt: "2026-10-12T18:00:00Z",
+          provenance: {
+            currentPriority: { source: "owner_confirmed", confidence: "confirmed" },
+          },
+        },
+      },
+      error: null,
+    });
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    const draft = currentDraft();
+    draft.brief = { ...draft.brief, currentPriority: "  Follow up with warm leads  " };
+    await act(async () => {
+      const result = await latest.save(draft);
+      expect(result).toMatchObject({
+        ok: true,
+        kind: "saved",
+        readback: {
+          tenantId: "tenant-a",
+          contextRevision: 5,
+          brief: { publicName: "Stored business name", currentPriority: "Follow up with warm leads" },
+        },
+      });
+    });
+    expect(latest.brief.currentPriority).toBe("Follow up with warm leads");
+    expect(state.rpc).toHaveBeenCalledTimes(2);
+    await act(async () => root.unmount());
+  });
+
+  it("does not return a foreign workspace's save payload as interview readback", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce(loaded("tenant-b"));
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    await act(async () => {
+      const result = await latest.save(currentDraft());
+      expect(result).toMatchObject({ ok: false, kind: "unknown" });
+      expect(result).not.toHaveProperty("readback");
+    });
+    expect(latest.brief.publicName).toBe("tenant-a");
+    await act(async () => root.unmount());
+  });
+
+  it("requires reconciliation when the saved revision is absent", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockResolvedValueOnce({
+      data: { tenantId: "tenant-a", brief: { publicName: "Stored name" }, accessScope: "owner_full" },
+      error: null,
+    });
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    await act(async () => {
+      expect(await latest.save(currentDraft())).toMatchObject({ ok: false, kind: "unknown" });
+    });
+    await act(async () => root.unmount());
+  });
+
+  it("reconciles a lost write response through the canonical getter without resubmitting", async () => {
+    let stored = loaded();
+    state.rpc.mockImplementation(async name => {
+      if (name === "save_solo_business_context") {
+        stored = { ...loaded(), data: { ...loaded().data, brief: { publicName: "Saved before connection loss" }, contextRevision: 5 } };
+        throw new Error("response lost after commit");
+      }
+      return stored;
+    });
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    const draft = currentDraft();
+    await act(async () => expect(await latest.save(draft)).toMatchObject({ ok: false, kind: "unknown" }));
+    expect(latest.saveOutcomeUnknown).toBe(true);
+    await act(async () => expect(await latest.save(draft)).toMatchObject({ ok: false, kind: "unknown" }));
+    await act(async () => expect(await latest.reconcileSave()).toMatchObject({ ok: true, kind: "reconciled", readback: { tenantId: "tenant-a", contextRevision: 5, brief: { publicName: "Saved before connection loss" } } }));
+    expect(latest.saveOutcomeUnknown).toBe(false);
+    expect(latest.brief.publicName).toBe("Saved before connection loss");
+    expect(state.rpc.mock.calls.filter(([name]) => name === "save_solo_business_context")).toHaveLength(1);
+    await act(async () => root.unmount());
+  });
+
+  it("keeps the write blocked when reconciliation is denied or returns a foreign workspace", async () => {
+    state.rpc.mockResolvedValueOnce(loaded()).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce(loaded("tenant-b"));
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(<Probe />));
+    await act(async () => latest.save(currentDraft()));
+    await act(async () => expect(await latest.reconcileSave()).toMatchObject({ ok: false }));
+    expect(latest.saveOutcomeUnknown).toBe(true);
+    expect(latest.brief.publicName).not.toBe("tenant-b");
+    expect(state.rpc.mock.calls.filter(([name]) => name === "save_solo_business_context")).toHaveLength(1);
+    await act(async () => root.unmount());
   });
 
   it("shows a safe retryable load failure instead of spinning forever or leaking database detail", async () => {

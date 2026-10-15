@@ -1,0 +1,47 @@
+{
+  "recordedAt": "2026-10-14T14:54:09.459Z",
+  "evidenceClass": "SYNTHETIC_NATIVE_RENDER_NOT_AUTHENTICATED",
+  "status": "FAIL_P1_INITIAL_GREETING",
+  "before": "b18d6ce359ec29d85fd43d368ae37559a61d47e0",
+  "after": "f0474622eecd419b75252676191133ad313331ae",
+  "sourceAssetBinding": {
+    "preFiles": 7962,
+    "postFiles": 7962,
+    "mismatches": 0,
+    "unchanged": true,
+    "loadedCompiledModuleAndCss": true
+  },
+  "captures": [
+    {
+      "label": "before-first-use-dark-docked-320x720-open",
+      "width": 320,
+      "height": 720,
+      "sha256": "e8cef5401fc7e9507c00fa150c8b745478fc40d7cedf68c0fed5f393eb8bfbfb",
+      "capturedAt": "2026-10-14T14:52:28.083Z"
+    },
+    {
+      "label": "after-first-use-dark-docked-320x720-open",
+      "width": 320,
+      "height": 720,
+      "sha256": "5a93da7a026e508b5b459191923f17c1d7bcb3b5531b069931ef58af8f917556",
+      "capturedAt": "2026-10-14T14:52:45.758Z"
+    }
+  ],
+  "finding": {
+    "severity": "P1",
+    "classification": "REPAIR",
+    "conversationHeight": 98.3625030517578,
+    "initialScrollTop": 72,
+    "scrollHeight": 170,
+    "greetingAboveVisibleTop": 45.2,
+    "actual": "Opening business question initially clipped after bounded correction",
+    "send": "VISIBLE_ONLY;44px high/40px wide; no44x44 or invocation claim",
+    "presence": "VISIBLE_MOBILE_ONLY;FULL_WORKSPACE_UNVERIFIED"
+  },
+  "remainingMatrix": "NOT_RUN_STOPPED_ON_MATERIAL_FINDING",
+  "cleanup": "PASS_VIEWPORT_RESET_OWN_TAB_CLOSED_IAB_EMPTY_NO_POLICY_BYPASS",
+  "authenticated23": "PREPARED_NOT_EXECUTED",
+  "priorHostFailure": "PRESERVED; SAME_HOST_RESTART_HTTP200_AND_IAB_ENTRY_RECOVERED",
+  "sourceReview": "FINAL_CORRECTIVE_REVIEW_OWED; OWNER_GRANTED_EXACTLY_ONE",
+  "release": "UNMERGED_UNDEPLOYED"
+}

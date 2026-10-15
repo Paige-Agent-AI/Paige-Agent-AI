@@ -6,6 +6,7 @@ import os from 'node:os';
 import { spawnSync, spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { isProofDescendant } from './e09-proof-path.mjs';
 
 const baselineOnly = process.argv.includes('--baseline');
 const root = process.cwd();
@@ -14,7 +15,7 @@ const exe = name => bin ? path.join(bin, name + (process.platform === 'win32' ? 
 const port = Number(process.env.E09_PG_PORT ?? 55439);
 assert(Number.isInteger(port) && port >= 1024 && port <= 65535 && port !== 5432, 'Dedicated loopback port required');
 const work = path.resolve(root, process.env.E09_PROOF_DIR ?? '../../work/e09-invite-proof');
-assert(work.startsWith(path.resolve(root, '../..') + path.sep), 'Proof directory must remain in this task workspace');
+assert(isProofDescendant(path.resolve(root, '../..'), work), 'Proof directory must remain in this task workspace');
 fs.mkdirSync(work, { recursive: true });
 const cluster = fs.mkdtempSync(path.join(work, 'cluster-'));
 const transcripts = [];

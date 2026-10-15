@@ -48,6 +48,8 @@ The granted bounded restoration lease covers Chat bindings. Open #2071, #2191 an
 
 The two incumbent Planning fixtures now supply current_user_tenant_id and the actual native ok=true acknowledgement instead of an invented success=true shape. The supersession fixture provides the matching record; the interruption fixture deliberately withholds readback. Original assertion failures are retained in the working audit evidence. These are synthetic development checks, not customer records, provider outcomes or production acceptance.
 
+Additional actual-attribution reproduction: four non-n8n uncertain writes were recorded as failed in paige_audit_log despite their unknown model/terminal result. The existing attribution function now preserves the explicit boolean and closed canonical uncertainty outcomes. Ten actual-function checks retain success/refusal/n8n behavior and prevent duplicate canonical Knowledge SQL receipts or proposal-as-execution records. This correction belongs to the Planning candidate as well as later restoration bindings; it changes no writer, grant, approval or receipt store.
+
 ## Review and release gates
 
 The latest owner directive requires independent non-author technical review. Earlier bounded sequential-author exceptions covered #1615/#2143 and do not establish that review for this new source candidate. No reviewer has been invented and no other agent has been used. Accepted dispatch fingerprints remain unchanged until that gate clears. CI and deployment identities must be observed after review; no activation can be inferred from this PR.

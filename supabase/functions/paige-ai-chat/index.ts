@@ -16808,7 +16808,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
           const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;
-          const outcome = missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
+          const outcome = out?.outcome_unknown === true || out?.outcome === "outcome_unknown" || out?.outcome === "capability_outcome_unknown" ? "outcome_unknown"
+            : missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
             : failed ? "failed" : n8nOutcome && out?.started === true ? "started" : "succeeded";
           const n8nSafeErrors = new Set(["outcome_unknown", "authorization_needed", "owner_approval_required", "provider_tool_unavailable", "unsupported_operation", "forbidden", "invalid_arguments", "provider_refused", "provider_response_invalid", "provider_scope_refused", "token_expired", "oauth_needed", "busy", "tenant_changed", "stale_operation", "operation_refused"]);
           // `Promise.resolve` around the builder, not `void builder.then?.()`: a postgrest builder

@@ -23,7 +23,7 @@ const label = (kind: BillingDraftInput['kind']) => kind === 'recurring' ? 'Month
 type Catalog = ReturnType<typeof useCatalogOffers>;
 type Store = ReturnType<typeof useSalesInvoiceDrafts>;
 const invoiceState = (row: InvoiceDraft) => (row as Partial<InvoiceRecord>).status ?? 'draft';
-function InvoiceRecordInspection({row,tenantId,canManage,open,onOpenChange,onChanged}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;open:boolean;onOpenChange(open:boolean):void;onChanged():void}) {
+function InvoiceRecordInspection({row,tenantId,canManage,contextEpoch,open,onOpenChange,onChanged}:{row:InvoiceDraft|null;tenantId:string|null;canManage:boolean;contextEpoch?:string|null;open:boolean;onOpenChange(open:boolean):void;onChanged():void}) {
  const record=row as InvoiceRecord|null;
  return <div className="sb-detail-grid"><section className="sb-panel"><header><h3>{row?'Invoice record':'Record details'}</h3></header><div className="sb-paper">{row?<>
   <h3>{row.snapshot.items.map(item=>item.item).join(', ')}</h3>{row.snapshot.items.map((item,index)=>item.description&&<p className="sb-line-description" key={index}>{item.description}</p>)}
@@ -34,7 +34,7 @@ function InvoiceRecordInspection({row,tenantId,canManage,open,onOpenChange,onCha
    {record&&Number.isSafeInteger(record.manualRecordedMinor)&&<><dt>Manual payment records</dt><dd>{cash(record.manualRecordedMinor)}</dd></>}
    <dt>Version</dt><dd>{row.version}</dd></dl>
   <p>{invoiceState(row)==='draft'?'Not issued · no payment requested':invoiceState(row)==='void'?'Voided invoice · review its recorded history':'Immutable issued obligation'}</p>
-  {tenantId&&<CommercialPackageInspection key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} version={row.version}/>}
+  {tenantId&&<CommercialPackageInspection key={tenantId+row.id+(contextEpoch??'')} tenantId={tenantId} invoiceId={row.id} version={row.version} canPrepare={canManage&&invoiceState(row)==='draft'}/>}
  </>:<p>Select an invoice to inspect its saved facts.</p>}</div></section><section className="sb-panel"><header><h3>Invoice actions and payments</h3></header>{row&&tenantId?<InvoiceWorkspace key={tenantId+row.id} tenantId={tenantId} invoiceId={row.id} open={open} onOpenChange={onOpenChange} number={row.number} status={invoiceState(row)} version={row.version} canManage={canManage} onChanged={onChanged}/>:<p className="sb-paper">Select an invoice to review its actions.</p>}</section></div>;
 }
 function DraftEditor({row, recurring, store, sources, catalog, browse, onSelection, onReferences, canManage, onClose}: {row:InvoiceDraft|null;recurring:boolean;store:Store;sources:ReturnType<typeof useInvoiceBillingSources>;catalog:Catalog;browse:InvoiceBrowseControls;onSelection(clientId:string,agreementId:string|null):void;onReferences(ids:string[]):void;canManage:boolean;onClose:()=>void}) {
@@ -116,7 +116,7 @@ export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds 
   if (currentEditor) return <DraftEditor key={`${currentEditor.tenant}:${currentEditor.row?.id ?? 'new'}`} row={currentEditor.row} recurring={currentEditor.recurring} store={store} sources={sources} catalog={catalog} browse={browse} onSelection={(clientId,agreementId)=>{setSourceSelection({clientId:clientId||null,agreementId});setAgreementPage(0)}} onReferences={ids=>setCatalogReferences(old=>[...new Set([...old,...ids])])} canManage={canEdit} onClose={() => setEditing(null)} />;
   if(hasFocus)return <div className="sb-workspace sb-focused-invoice" ref={registerRef}>
    <header className="sb-toolbar"><h2 ref={focusedHeading} tabIndex={-1}>Invoice review</h2><button type="button" className="btn" disabled={!onClearInvoiceFocus} onClick={onClearInvoiceFocus}>Back to invoices</button></header>
-   {focused.phase==='ready'&&focused.row?<InvoiceRecordInspection row={focused.row} tenantId={focused.row.tenantId} canManage={canEdit} open={focusedActionRow===focused.row} onOpenChange={open=>{setFocusedActionRow(open?focused.row:null);if(!open)focused.retry();}} onChanged={store.retry}/>:
+   {focused.phase==='ready'&&focused.row?<InvoiceRecordInspection row={focused.row} tenantId={focused.row.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={focusedActionRow===focused.row} onOpenChange={open=>{setFocusedActionRow(open?focused.row:null);if(!open)focused.retry();}} onChanged={store.retry}/>:
     <section className="sb-panel"><div className="sb-empty" role={focused.phase==='loading'||focused.phase==='idle'?'status':'alert'}>{focused.phase==='loading'||focused.phase==='idle'?<p>Reading this invoice…</p>:<><h3>{focused.phase==='refused'?'Invoice could not be opened':'Invoice unavailable'}</h3><p>{focused.message}</p>{!focused.message.startsWith('This invoice link is invalid')&&<button type="button" className="btn" onClick={focused.retry}>Retry invoice</button>}</>}</div></section>}
   </div>;
   const rows = store.rows.filter(row => (view === 'recurring' ? row.snapshot.kind === 'recurring' : view === 'invoices' ? row.snapshot.kind !== 'recurring' : true) && `${row.snapshot.items.map(item => item.item).join(', ')} ${row.number} ${clients.clients.find(c => c.id === row.snapshot.client_id)?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()));
@@ -134,7 +134,7 @@ export function SalesBillingWorkspace({ view, integrationsPath, focusInvoiceIds 
         {store.pageMessage && <p className="sb-notice" role="status">{store.pageMessage}</p>}
         {store.hasMore && <button className="btn" onClick={store.loadMore} disabled={store.loadingMore}>{store.loadingMore ? 'Reading more…' : 'Load more drafts'}</button>}
       </section>
-      <InvoiceRecordInspection row={selected??null} tenantId={store.tenantId} canManage={canEdit} open={workspaceOpen} onOpenChange={setWorkspaceOpen} onChanged={store.retry}/>
+      <InvoiceRecordInspection row={selected??null} tenantId={store.tenantId} canManage={canEdit} contextEpoch={accountEpoch} open={workspaceOpen} onOpenChange={setWorkspaceOpen} onChanged={store.retry}/>
     </>}
     {catalog.hasMore && <label className="sb-catalog-search">Find a Catalog offer<input type="search" value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)} /></label>}
     </div>

@@ -4,6 +4,8 @@ Development evidence, not customer acceptance or authorization to activate recur
 
 Render source is the E5 product captured in dc0f9a79 and preserved in reconciled6c895051; the later migration-version, catalogue-proof and documentation changes do not redesign these E5 components. The inherited complete authenticated shell is still UNVERIFIED. [Actual native SQL/engine proof](native-draft-indexed-proof.json) and [read-only production DARK observation](production-dark-readback.json) are different evidence classes.
 
+**October15 evidence correction:** the two Chat frames were recaptured at source a63b797b4c13eec19814120c7936542b74e57c28,1366×768. The prior frames were taken before their state transition painted: the first still showed the form and the frame labeled saved still showed confirmation. They are superseded here. The replacement confirmation visibly shows `Needs your OK`; after the synthetic approval, the replacement saved frame visibly shows the unapproved-draft result, absent executable next run and expanded original process/revision/Rail receipt. Navigation then displayed that same Monday09:00 America/New_York draft in native Calendar as awaiting approval with no verified check. No product source was changed for these captures, and neither browser approval nor the receipt fixture is a production effect or authenticated proof.
+
 The human decision is **save an unapproved draft**. The shared `PaigeConfirmCard` shows the exact server-authored scope. Its saved report means the draft was recorded; Calendar still says **Awaiting approval**, has no executable next run and has no verified completed check. The original Planning commitments stay in Operations → Work.
 
 ## Connected native surfaces

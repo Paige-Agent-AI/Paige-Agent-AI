@@ -2,6 +2,11 @@
 -- full canonical schema/helpers; every fixture/write is rolled back.
 BEGIN;
 SELECT no_plan();
+SELECT ok(NOT has_table_privilege('anon','public.paige_client_intake_submissions','TRUNCATE'),'public role lacks destructive whole-intake authority');
+SELECT ok(NOT has_table_privilege('authenticated','public.paige_client_intake_submissions','TRUNCATE'),'customer role lacks destructive whole-intake authority');
+SELECT ok(NOT EXISTS(SELECT 1 FROM pg_class c CROSS JOIN LATERAL aclexplode(c.relacl) a WHERE c.oid='public.paige_client_intake_submissions'::regclass AND a.grantee=0 AND a.privilege_type='TRUNCATE'),'PUBLIC has no destructive intake-table grant');
+SELECT ok((SELECT bool_and(has_table_privilege('authenticated','public.paige_client_intake_submissions',p)) FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) p),'ordinary customer intake privileges preserved under existing RLS');
+SELECT ok(has_table_privilege('service_role','public.paige_client_intake_submissions','TRUNCATE'),'trusted backend table privilege preserved');
 INSERT INTO auth.users(id,email,email_confirmed_at,raw_app_meta_data) VALUES
 ('e0912000-0000-0000-0000-000000000001','e09-write-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
 ('e0912000-0000-0000-0000-000000000002','e09-write-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');

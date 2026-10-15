@@ -1,0 +1,625 @@
+{
+  "supersedes": "Original Playwright screenshots were reduced CSS-frame crops and did not establish visual zoom PASS; retained in native-zoom-original-evidence.json and legacy-zoom-capture-failure.png. No product clipping was established by those captures.",
+  "boundary": "Actual Solo shell and mounted Operations with synthetic RPCs in isolated signed-out native Chrome 200/400 percent browser zoom. No real customer account/persistence/provider/INT346 proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 81,
+        "top": 77,
+        "right": 593,
+        "bottom": 259,
+        "width": 512,
+        "height": 182,
+        "viewportWidth": 674,
+        "viewportHeight": 336
+      },
+      "controlBounds": [
+        {
+          "name": "Keep reviewing",
+          "left": 234.3828125,
+          "top": 194,
+          "right": 365.1875,
+          "bottom": 234,
+          "width": 130.8046875,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        },
+        {
+          "name": "Confirm internal approval",
+          "left": 373.1875,
+          "top": 194,
+          "right": 568,
+          "bottom": 234,
+          "width": 194.8125,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": false,
+        "scrollTop": 0,
+        "scrollHeight": 180,
+        "clientHeight": 180
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 200,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 81,
+        "top": 67,
+        "right": 593,
+        "bottom": 269,
+        "width": 512,
+        "height": 202,
+        "viewportWidth": 674,
+        "viewportHeight": 336
+      },
+      "controlBounds": [
+        {
+          "name": "Keep preparing",
+          "left": 270.9453125,
+          "top": 204,
+          "right": 402.359375,
+          "bottom": 244,
+          "width": 131.4140625,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        },
+        {
+          "name": "Confirm submission",
+          "left": 410.359375,
+          "top": 204,
+          "right": 568,
+          "bottom": 244,
+          "width": 157.640625,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": false,
+        "scrollTop": 0,
+        "scrollHeight": 200,
+        "clientHeight": 200
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 81,
+        "top": 77,
+        "right": 593,
+        "bottom": 259,
+        "width": 512,
+        "height": 182,
+        "viewportWidth": 674,
+        "viewportHeight": 336
+      },
+      "controlBounds": [
+        {
+          "name": "Keep reviewing",
+          "left": 234.3828125,
+          "top": 194,
+          "right": 365.1875,
+          "bottom": 234,
+          "width": 130.8046875,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        },
+        {
+          "name": "Confirm internal approval",
+          "left": 373.1875,
+          "top": 194,
+          "right": 568,
+          "bottom": 234,
+          "width": 194.8125,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": false,
+        "scrollTop": 0,
+        "scrollHeight": 180,
+        "clientHeight": 180
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 200,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 674,
+        "innerHeight": 336,
+        "devicePixelRatio": 2
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 145,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 81,
+        "top": 67,
+        "right": 593,
+        "bottom": 269,
+        "width": 512,
+        "height": 202,
+        "viewportWidth": 674,
+        "viewportHeight": 336
+      },
+      "controlBounds": [
+        {
+          "name": "Keep preparing",
+          "left": 270.9453125,
+          "top": 204,
+          "right": 402.359375,
+          "bottom": 244,
+          "width": 131.4140625,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        },
+        {
+          "name": "Confirm submission",
+          "left": 410.359375,
+          "top": 204,
+          "right": 568,
+          "bottom": 244,
+          "width": 157.640625,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 674,
+          "viewportHeight": 336
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": false,
+        "scrollTop": 0,
+        "scrollHeight": 200,
+        "clientHeight": 200
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 0,
+        "top": 12,
+        "right": 337,
+        "bottom": 156,
+        "width": 337,
+        "height": 144,
+        "viewportWidth": 337,
+        "viewportHeight": 168
+      },
+      "controlBounds": [
+        {
+          "name": "Keep reviewing",
+          "left": 25,
+          "top": 91,
+          "right": 312,
+          "bottom": 131,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        {
+          "name": "Confirm internal approval",
+          "left": 25,
+          "top": 43,
+          "right": 312,
+          "bottom": 83,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": true,
+        "scrollTop": 106,
+        "scrollHeight": 248,
+        "clientHeight": 142,
+        "topReachable": true,
+        "titleBounds": {
+          "left": 25,
+          "top": 37,
+          "right": 312,
+          "bottom": 65,
+          "width": 287,
+          "height": 28,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        "bottomRestored": true
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "dark",
+      "zoomPercent": 400,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 0,
+        "top": 12,
+        "right": 337,
+        "bottom": 156,
+        "width": 337,
+        "height": 144,
+        "viewportWidth": 337,
+        "viewportHeight": 168
+      },
+      "controlBounds": [
+        {
+          "name": "Keep preparing",
+          "left": 25,
+          "top": 91,
+          "right": 312,
+          "bottom": 131,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        {
+          "name": "Confirm submission",
+          "left": 25,
+          "top": 43,
+          "right": 312,
+          "bottom": 83,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": true,
+        "scrollTop": 154,
+        "scrollHeight": 296,
+        "clientHeight": 142,
+        "topReachable": true,
+        "titleBounds": {
+          "left": 25,
+          "top": 37,
+          "right": 312,
+          "bottom": 93,
+          "width": 287,
+          "height": 56,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        "bottomRestored": true
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "mode": "review",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 0,
+        "top": 12,
+        "right": 337,
+        "bottom": 156,
+        "width": 337,
+        "height": 144,
+        "viewportWidth": 337,
+        "viewportHeight": 168
+      },
+      "controlBounds": [
+        {
+          "name": "Keep reviewing",
+          "left": 25,
+          "top": 91,
+          "right": 312,
+          "bottom": 131,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        {
+          "name": "Confirm internal approval",
+          "left": 25,
+          "top": 43,
+          "right": 312,
+          "bottom": 83,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": true,
+        "scrollTop": 106,
+        "scrollHeight": 248,
+        "clientHeight": 142,
+        "topReachable": true,
+        "titleBounds": {
+          "left": 25,
+          "top": 37,
+          "right": 312,
+          "bottom": 65,
+          "width": 287,
+          "height": 28,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        "bottomRestored": true
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    },
+    {
+      "theme": "light",
+      "zoomPercent": 400,
+      "mode": "prepare",
+      "zoom": {
+        "innerWidth": 337,
+        "innerHeight": 168,
+        "devicePixelRatio": 4
+      },
+      "documentGeometry": {
+        "contained": true,
+        "scrollTop": 71.75,
+        "scrollable": true
+      },
+      "focus": {
+        "active": true,
+        "style": "solid",
+        "width": "2px"
+      },
+      "geometry": {
+        "contained": true,
+        "left": 0,
+        "top": 12,
+        "right": 337,
+        "bottom": 156,
+        "width": 337,
+        "height": 144,
+        "viewportWidth": 337,
+        "viewportHeight": 168
+      },
+      "controlBounds": [
+        {
+          "name": "Keep preparing",
+          "left": 25,
+          "top": 91,
+          "right": 312,
+          "bottom": 131,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        {
+          "name": "Confirm submission",
+          "left": 25,
+          "top": 43,
+          "right": 312,
+          "bottom": 83,
+          "width": 287,
+          "height": 40,
+          "visible": true,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        }
+      ],
+      "confirmationScroll": {
+        "scrollable": true,
+        "scrollTop": 154,
+        "scrollHeight": 296,
+        "clientHeight": 142,
+        "topReachable": true,
+        "titleBounds": {
+          "left": 25,
+          "top": 37,
+          "right": 312,
+          "bottom": 93,
+          "width": 287,
+          "height": 56,
+          "viewportWidth": 337,
+          "viewportHeight": 168
+        },
+        "bottomRestored": true
+      },
+      "capture": {
+        "width": 1348,
+        "height": 672,
+        "mechanism": "CDP compositor surface, captureBeyondViewport=false"
+      },
+      "cancelNoWrite": true,
+      "focusRestored": true,
+      "reducedMotion": true
+    }
+  ],
+  "errors": [],
+  "productCommit": "d537ed907e8e97cef7d93bbd02f79fc973377eda",
+  "candidateBase": "5c90859ac1d4fe560200069c5a783e90fb21be19"
+}

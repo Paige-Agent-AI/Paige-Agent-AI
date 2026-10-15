@@ -218,3 +218,48 @@ A blank-note unknown save and an open decision confirmation block voluntary depa
 Local proof: four original port failures before implementation; subsequent current-suite61 PASS. The blank-note/confirmation recovery additions then genuinely reproduced3 FAIL/24 skipped; corrected final source64 PASS (27 component/37 unchanged helper). A known-refusal regression was detected as1 FAIL/63 PASS and fixed by clearing only definitive refused/invalid attempt context; original uncertain writes remain protected. Earlier sandbox temp-cache EPERM ran zero tests and is INVALID setup. Native current isolated component32 cases and optional-port8 cases PASS/zero page errors in both worlds; full canonical shell and authenticated client acceptance remain UNVERIFIED.
 
 Independent first frozen-head review5b7e268b9490e7b40bdcd496ec43c1284e193c9e COMPLETE with one P2: A-to-B-to-A restored tuple equality could revive a retired save/verified notification and old close guard. Non-author actual-component reproduction and one deterministic local regression genuinely failed. One combined fix captures a scope incarnation, invalidates it on every tuple transition and uses that exact incarnation for reads, saves and registered guard lifetime. Final65 source tests PASS (28 component/37 helper), changed lint/detector PASS; default markup/styles unchanged. Independent final-head recheck and fresh required CI remain owed; no third review/fix round authorized. An automatic tool-approval deadline interrupted the first regression launch before execution; permitted once-only retry ran the real failure. No customer/provider or privileged runtime access occurred.
+# October 14 owner-requested usable UI audit and Work adoption
+
+Owner intent: the approved V3 Operations UI must be reachable and usable through the canonical Solo shell on main, not merely present as unmounted components. Actor: an authorized owner/assigned staff member prepares an exact saved deliverable; an independently nominated reviewer records revision/approval; authorized staff explicitly release it; the real linked client records acceptance separately.
+
+Current-source audit baseline: `1203b58b130b3d0f28abd9dd965b76e82cf65be7`. Independent NON-AUTHOR source coverage audit COMPLETE; authenticated customer acceptance remains UNVERIFIED. All six tabs mount. Board/list/deadline timeline, scoped edits, task/project/milestone creation, profile images, signing evidence and eligible engagement handoff are already reachable in source. The audit does not recast those as missing or certify their authenticated behavior.
+
+| Approved human flow | Actual remaining gap | Completion responsibility |
+| --- | --- | --- |
+| Prepare and submit an exact saved version | Released preparation source is unmounted | Operations Work adoption |
+| Discover nominations, review, revise and release | Released nomination reader/review source is unmounted | Operations Work adoption |
+| Client discovers, reviews, revises or accepts | Canonical component/readers exist; client host #2156 is unmerged with required CI failure | Existing Clients/E04 host owner |
+| Delivery/project/overview show verified fulfillment | Acceptance is always unavailable in Delivery; recorded outcome projection is not consumed | Operations, reuse existing exact domain readers |
+| Execute a procedure and retain approved work progress | Knowledge sources are readable; SOP/workflow execution is not connected | Operations through existing Knowledge/Planning/workflow contracts |
+| Compare workload with real availability | Assignments/CRM estimates exist; confirmed working hours/Planning effort projection are missing | Operations consuming Team/Calendar-owned facts |
+| Resolve dependencies and record completion evidence | Editor supports status/date/priority/assignment, not causal dependency/evidence updates | Operations extending canonical Planning |
+| PAIGE proposes, authorizes, executes and verifies | Existing UI opens a composer draft; scoped adapter is not adopted by governed runtime | Operations domain ports; existing Kit/Spine/Runtime owners |
+
+This is a completeness audit, not a new design decision or substitute task/capacity/approval engine. No synthetic company work enters production. Signed engagement, payment, employee completion and client acceptance stay distinct.
+
+Pre-edit routing for the narrow staff mount:
+1. Outcome: enter an eligible client-linked Planning task from Work and complete preparation/review through released domain controls.
+2. Owner: existing Operations/ANT-11; Clients/E04 retains its client host. E5 confirms no overlapping Workspace edits in ANT-147 `bedfbc48-20bb-4838-8422-7b85435442ac`.
+3. Shared layers: reuse existing authenticated canonical manual readers/writers and UI guard ports; governed conversational execution remains separately incomplete.
+4. Spine: existing Planning keys remain unchanged; this mount adds no new key or registered conversational caller.
+5. Providers: none added. Existing Team profile image references and immutable Studio versions only.
+6. Authority: existing server item/reviewer/client permission checks; existing confirmation UI reviews consequences but grants no authority. No new Trust channel.
+7. Durable work: none added; no scheduler or event drainer.
+8. Readback: original scope/CAS, exact submitted version, canonical writer acknowledgement and independent readback. Unknown outcomes inspect original state without replay.
+9. Surface: `operations.department` remains `PROOF_OWED`; owner-visible Work adoption adds supported source reachability, not full department acceptance.
+10. Proof: failing-first mount regressions, existing authorization negatives, actual rendered shell/themes/geometry/keyboard/reflow, independent final-head review and exact CI. Authenticated customer/client flow remains separately UNVERIFIED.
+
+MUST_PRESERVE: approved V3, one Solo shell, real authorized photos, actor/tenant/persona fences, source versions, item-level permission, nomination-only review scope, existing string-or-null navigation guard with cleanup, exact weekly reading/dismissal, linked title clearance and `retainDraftOnLeave`.
+
+MUST_NOT_HAPPEN: edit held `OperationsRoute.tsx`, `OperationsWorkEditor.tsx` or `operations-weekly-source.ts`; copy private branch history; grant reviewer generic Planning edits; replay unknown effects; fabricate availability/acceptance; replace Chat/Trust/Rail; access customer accounts or activate providers/INT-346.
+
+State map: eligible work → source inspection → preparation or review → consequence confirmation → canonical write/readback → verified recorded result. Loading/refusal/missing source remains per item. Dirty or uncertain children block mode/detail/destination closure through the incumbent reason-bearing guard. Actual workspace/persona loss masks old content. Browser recovery entries preserve original intent and are explicitly local drafts, not company work or authority.
+
+Current audit setup attempts: sandbox dependency junction denied, corrected by authorized local junction; initial test cache EPERM executed zero tests; initial sandbox server was not reachable by isolated Chrome. These are INVALID setup attempts, not product failures or passing evidence. Fresh unsandboxed baseline/render proof follows separately.
+
+
+### Work adoption first review and one evidence correction
+
+Non-author first review at 5eebf5c99c0017d8e4385f2da059ac68aa811592 completed with no material source/security finding and eight independent scope/recovery checks passing. Its P2 found that the original native-zoom PNGs cropped the controls; the visual PASS was unsupported. One combined evidence correction uses full physical viewport CDP capture, complete dialog/control viewport bounds, natural 400% confirmation content scrolling and readable top/action frames. Eight corrected native cases pass with zero page errors; original defective evidence is retained. Product bytes remain unchanged. Final independent recheck and genuinely green exact-head CI are still owed.
+
+Required comms-provider-boundary job 116108633128 failed before checkout because the pinned PostgreSQL public-ECR pull was rate-limited three times. All product/authority steps skipped. The actual setup failure is coordinated with the existing owner; no unrelated source change or gate waiver. Full Operations remains PARTIAL; authenticated staff/client acceptance remains UNVERIFIED.

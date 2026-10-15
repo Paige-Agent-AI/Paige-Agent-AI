@@ -86,6 +86,15 @@ describe("resolveCanonicalRecordLink", () => {
     expect(resolveCanonicalRecordLink({ ...solo, destination: "contacts", recordId: UUID }))
       .toEqual({ path: `/solo/1971670/clients/people?person=${UUID}`, status: "exact" });
   });
+  it("opens only a UUID Play locator through the mounted owner Game Plan surface", () => {
+    expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId: UUID }))
+      .toEqual({ path: `/solo/1971670/command-center/business-game-plan?play=${UUID}`, status: "exact" });
+    for (const recordId of ["../foreign", `${UUID}#x`, "", null]) {
+      expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId }))
+        .toEqual({ path: "/solo/1971670/command-center/business-game-plan", status: "surface_only" });
+    }
+    expect(resolveCanonicalRecordLink({ ...solo, tier: "sub_account", destination: "business_game_plan", recordId: UUID })).toBeNull();
+  });
 
   it.each([
     ["sales_agreements", "/solo/1971670/sales/agreements"],

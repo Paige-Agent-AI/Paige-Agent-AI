@@ -38,7 +38,7 @@ export function parseBusinessReview(data: unknown, tenant: string, timezone: str
     const entry = domains[domain];
     if (!entry || !["available", "degraded", "unavailable"].includes(entry.status)) return null;
     if (entry.status === "available") {
-      const checked = validateDomainSnapshot(entry.data, { domain: domain as SnapshotDomain, period: s.period });
+      const checked = validateDomainSnapshot(entry.data, { domain: domain as SnapshotDomain, period: s.period, tenantId: tenant });
       if ("reason" in checked) return null;
       domains[domain] = { status: "available", data: checked.snapshot };
     }

@@ -15,6 +15,7 @@ import { clearPaigeSurfaceScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import { executiveAreas, executivePriorities, formatReviewInstant, formatReviewMetric, reviewGapNote } from "./executive-review";
 import "./executive-overview.css";
+import { ExecutiveTargets } from './ExecutiveTargets';
 
 const BRIEFING = "How's my business doing, what needs attention, and what should we work on today?";
 const PERIODS: Array<{ key: SnapshotPeriodKey; label: string }> = [
@@ -28,7 +29,7 @@ function Destination({ destination, account, children }: { destination: ReadLink
     : <span className="exec-unresolved">{children ?? "Destination resolves with this workspace"}</span>;
 }
 
-function DomainEvidence({ domain, timezone }: { domain: ReviewDomain; timezone: string }) {
+function DomainEvidence({ domain, timezone, account }: { domain: ReviewDomain; timezone: string; account?: string | null }) {
   return <>
     {domain.coverage_note && <p className="exec-note">{domain.coverage_note}</p>}
     <dl className="exec-figures">
@@ -39,6 +40,7 @@ function DomainEvidence({ domain, timezone }: { domain: ReviewDomain; timezone: 
     </dl>
     {!domain.headline.length && <p className="exec-note">This source returned no headline figures. No value is inferred.</p>}
     {domain.changes.map((change, i) => <p className="exec-change" key={i}>{change.summary}</p>)}
+    {domain.mission_targets && <ExecutiveTargets targets={domain.mission_targets} account={account} />}
     <details className="exec-provenance">
       <summary>Source &amp; freshness</summary>
       <dl>
@@ -111,11 +113,12 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
             {!readable.length && <p className="exec-read-state">No business figures could be read. The source gaps are listed below; they are not zero results.</p>}
             {readable.map((area) => <section key={area.key} className="exec-domain" aria-labelledby={"exec-domain-" + area.key}>
               <div className="exec-section-head"><h3 id={"exec-domain-" + area.key}>{area.label}</h3><span className={"exec-state " + (area.entry.data!.coverage === "partial" ? "is-held" : "")}>{area.entry.data!.coverage === "partial" ? "Partial" : "Source read"}</span></div>
-              <DomainEvidence domain={area.entry.data!} timezone={snapshot.period.timezone} />
+              <DomainEvidence domain={area.entry.data!} timezone={snapshot.period.timezone} account={account} />
+              {area.key === 'game_plan' && <button className="exec-text-button" disabled={!openPaige} onClick={() => ask('Review my saved Strategic Play targets and compatible actuals. Focus the business review on game_plan. Explain variance, periods and unknowns, and link me to the owning Plays. Do not take an action.')}>Review targets with PAIGE</button>}
               <div className="exec-domain-links">{area.destination && <Destination destination={area.destination} account={account} />}{area.key === "payments" && <Destination destination="sales_collections" account={account} />}{area.key === "operations" && <Destination destination="operations_work" account={account} />}</div>
             </section>)}
             {gaps.length > 0 && <section className="exec-gaps" aria-labelledby="exec-gaps-title"><h3 id="exec-gaps-title">What this review cannot measure</h3><ul>{gaps.map((area) => <li key={area.key}><strong>{area.label}</strong><span>{area.entry.status === "degraded" ? "Read incomplete. " : ""}{reviewGapNote(area.entry.reason)}</span></li>)}</ul></section>}
-            <p className="exec-note">Ad and social performance, numeric targets and unlisted sources are not included in this review. No results are inferred from their absence.</p>
+            <p className="exec-note">Ad and social performance and unlisted sources are not included in this review. Numeric targets use their own saved periods. No results are inferred from missing evidence.</p>
           </>}
         </section>
 

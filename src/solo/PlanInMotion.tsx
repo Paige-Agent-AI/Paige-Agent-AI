@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Archive, Check, CirclePause, Flag, Info, Pencil, Play, RefreshCw, Sparkles, SquareCheck, X } from "lucide-react";
 import type { BusinessMissionDetail, MissionBriefInput, MissionOutcome, MissionState } from "@/types/businessMission";
 import { setPaigeBusinessPlanScope } from "./paigeClientScope";
@@ -8,7 +8,8 @@ import { useBusinessGamePlanMissions, type StrategicPlay } from "./data/useBusin
 import { MissionTargetsPanel } from "./MissionTargetsPanel";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
-type Props = { workspaceId?: string | null; openPaige?: () => void; onNotice?: (message: string) => void };
+type Props = { workspaceId?: string | null; openPaige?: () => void; onNotice?: (message: string) => void;
+  selectedPlayId?: string | null; onSelectPlay?: (id: string) => void; onClosePlay?: () => void };
 type Form = MissionBriefInput & { revisionReason: string };
 type PendingAction = "decline" | "pause" | "block" | "complete" | "archive" | null;
 
@@ -52,7 +53,7 @@ export function PlanInMotion(props: Props) {
   return <ScopedPlanInMotion key={`${context?.activeUserId}:${context?.activeTenantId}:${allowed}`}
     {...props} workspaceId={allowed ? props.workspaceId : null} />;
 }
-function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
+function ScopedPlanInMotion({ workspaceId, openPaige, onNotice, selectedPlayId, onSelectPlay, onClosePlay }: Props) {
   const brain = useBusinessGamePlanMissions(workspaceId);
   const lifetime = useRef({ alive: true, read: 0 });
   useEffect(() => {
@@ -95,6 +96,7 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
       if (event.key === "Escape") {
         lifetime.current.read++;
         setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null);
+        onClosePlay?.();
         return;
       }
       if (event.key !== "Tab") return;
@@ -110,9 +112,9 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
       window.removeEventListener("keydown", handleKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [drawer]);
+  }, [drawer, onClosePlay]);
 
-  const close = () => { lifetime.current.read++; setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null); };
+  const close = () => { lifetime.current.read++; setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null); onClosePlay?.(); };
   const openCreate = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!workspaceId) return;
     lifetime.current.read++;
@@ -122,15 +124,36 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
     setUnknown(null);
     setDrawer("create");
   };
-  const openPlay = async (play: StrategicPlay, event: React.MouseEvent<HTMLButtonElement>) => {
+  const getDetail = brain.getDetail;
+  const routeSelection = useRef<string | null>(null);
+  const readPlay = useCallback(async (id: string) => {
     const read = ++lifetime.current.read;
-    opener.current = event.currentTarget;
     setDrawer("view");
     setSelected(null);
     setError(null);
     setUnknown(null);
-    try { const detail = await brain.getDetail(play.id); if (lifetime.current.alive && lifetime.current.read === read) setSelected(detail); }
-    catch (caught) { if (lifetime.current.alive && lifetime.current.read === read) setError(friendlyError(caught instanceof Error ? caught.message : null)); }
+    try { const detail = await getDetail(id); if (lifetime.current.alive && lifetime.current.read === read) setSelected(detail); }
+    catch (caught) { if (lifetime.current.alive && lifetime.current.read === read) setError(caught instanceof Error && caught.message === 'MISSION_OWNER_REQUIRED'
+      ? 'Only the verified Solo owner can read this Play.' : 'This Play could not be verified in the current workspace.'); }
+  }, [getDetail]);
+  useEffect(() => {
+    const previous = routeSelection.current;
+    routeSelection.current = selectedPlayId ?? null;
+    if (!workspaceId || !selectedPlayId) {
+      if (previous) {
+        lifetime.current.read++;
+        setBusy(false); setDrawer(null); setSelected(null); setPending(null); setError(null); setUnknown(null);
+      }
+      return;
+    }
+    const instance = lifetime.current;
+    void readPlay(selectedPlayId);
+    return () => { instance.read++; };
+  }, [workspaceId, selectedPlayId, readPlay]);
+  const openPlay = async (play: StrategicPlay, event: React.MouseEvent<HTMLButtonElement>) => {
+    opener.current = event.currentTarget;
+    if (onSelectPlay && selectedPlayId !== play.id) { onSelectPlay(play.id); return; }
+    await readPlay(play.id);
   };
   const planWithPaige = (play?: StrategicPlay | BusinessMissionDetail["mission"]) => {
     if (!workspaceId) return;
@@ -333,7 +356,7 @@ function ScopedPlanInMotion({ workspaceId, openPaige, onNotice }: Props) {
                 <div className="ov-foot"><button className="sd-btn sd-btn-sm" onClick={close}>Cancel</button><button className="sd-btn sd-btn-sm sd-act" disabled={busy} onClick={() => void save()}><Check />{busy ? "Verifying." : drawer === "edit" ? "Save revision" : "Save draft"}</button></div>
               </>
             ) : !selected ? (
-              <div className="ov-body">{error ? <div className="sd-errbox"><AlertTriangle /><p>{error}</p></div> : <div className="pim-state" aria-busy="true">Loading the canonical play.</div>}</div>
+              <div className="ov-body">{error ? <div className="sd-errbox"><AlertTriangle /><p>{error}</p>{selectedPlayId && <button className="sd-btn sd-btn-sm" onClick={() => void readPlay(selectedPlayId)}>Retry Play read</button>}</div> : <div className="pim-state" aria-busy="true">Loading the canonical play.</div>}</div>
             ) : (
               <PlayDetail workspaceId={workspaceId} detail={selected} pending={pending} setPending={setPending} reason={reason} setReason={setReason} outcome={outcome} setOutcome={setOutcome} error={error} busy={busy} onEdit={beginEdit} onPaige={() => planWithPaige(selected.mission)} onTransition={transition} />
             )}

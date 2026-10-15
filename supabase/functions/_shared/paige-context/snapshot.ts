@@ -38,6 +38,7 @@ import {
   type ContextSourceResult,
   type DegradationEntry,
 } from "./mod.ts";
+import { formatMissionTargetValue, validateMissionTargetSnapshot, type MissionTargetSnapshot } from "../business-mission-targets/presentation.ts";
 
 export const OPERATING_SNAPSHOT_VERSION = 1 as const;
 
@@ -500,6 +501,8 @@ export type DomainSnapshot = {
     readonly mission_id: string;
     readonly relation: (typeof SNAPSHOT_GOAL_RELATIONS)[number];
   }[];
+  /** Canonical Play target definitions plus issued observations; game_plan only. */
+  readonly mission_targets?: readonly MissionTargetSnapshot[];
   /** Provenance; at least one. */
   readonly sources: readonly { readonly system: string; readonly adapter: string; readonly reference?: string }[];
 };
@@ -656,12 +659,12 @@ export const SNAPSHOT_AS_OF_FUTURE_TOLERANCE_MS = 5 * 60_000;
  */
 export function validateDomainSnapshot(
   value: unknown,
-  expected: { readonly domain: SnapshotDomain; readonly period: SnapshotPeriod; readonly notAfter?: Date },
+  expected: { readonly domain: SnapshotDomain; readonly period: SnapshotPeriod; readonly notAfter?: Date; readonly tenantId?: string | null },
 ): ValidateDomainSnapshotResult {
   try {
     const s = record(value, "snapshot", [
       "domain", "owner", "period", "as_of", "freshness", "coverage", "coverage_note",
-      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources",
+      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources", "mission_targets",
     ]);
     if (s.domain !== expected.domain) fail("domain_mismatch");
     const domain = expected.domain;
@@ -750,6 +753,16 @@ export function validateDomainSnapshot(
       };
     });
 
+    let mission_targets: MissionTargetSnapshot[] | undefined;
+    if (s.mission_targets !== undefined) {
+      if (domain !== 'game_plan') fail('target_domain_mismatch');
+      const targets = list(s, 'mission_targets', 'snapshot', 6).map(row => validateMissionTargetSnapshot(row, expected.tenantId,
+        Number.isFinite(notAfterMs) ? notAfterMs : Date.now()));
+      if (targets.some(row => row === null)) fail('target_projection_invalid');
+      mission_targets = targets as MissionTargetSnapshot[];
+      if (new Set(mission_targets.map(row => row.target.id)).size !== mission_targets.length) fail('duplicate_target');
+    }
+
     const sourcesRaw = list(s, "sources", "snapshot", SNAPSHOT_BOUNDS.sources);
     if (sourcesRaw.length === 0) fail("sources_required");
     const sources = sourcesRaw.map((c, i) => {
@@ -776,6 +789,7 @@ export function validateDomainSnapshot(
       risks,
       upcoming,
       goal_links,
+      mission_targets,
       sources,
     });
     return { ok: true, snapshot };
@@ -1016,6 +1030,7 @@ function settle(
   domain: SnapshotDomain,
   period: SnapshotPeriod,
   now: Date,
+  tenantId: string | null,
 ): ContextSourceResult<DomainSnapshot> {
   if (outcome.kind === "timeout") return contextDegraded(SNAPSHOT_REASON.timeout);
   if (outcome.kind === "error") return contextDegraded(errorReason(outcome.error));
@@ -1025,7 +1040,7 @@ function settle(
     const r = result as { status?: unknown; reason?: unknown; data?: unknown };
     const status = r.status;
     if (status === "available") {
-      const checked = validateDomainSnapshot(r.data, { domain, period, notAfter: now });
+      const checked = validateDomainSnapshot(r.data, { domain, period, notAfter: now, tenantId });
       // `in` narrows under both strict and the app tsconfig (strict:false), where a boolean
       // discriminant alone does not.
       return "snapshot" in checked
@@ -1137,7 +1152,7 @@ export async function composeOperatingSnapshot(
     }
     const outcome = byDomain.get(domain) as AdapterOutcome;
     if (outcome.kind === "timeout") timedOut.push(domain);
-    domains[domain] = scopeHeld ? settle(outcome, domain, period, now) : scopeChanged();
+    domains[domain] = scopeHeld ? settle(outcome, domain, period, now, identity.tenantId) : scopeChanged();
   }
   return finish();
 }
@@ -1383,6 +1398,19 @@ function domainSection(domain: SnapshotDomain, result: ContextSourceResult<Domai
   for (const r of s.risks) lines.push(`- Risk (${t(r.severity)}): ${q(r.summary)}`);
   for (const u of s.upcoming) lines.push(`- Upcoming ${t(u.at)}: ${q(u.summary)}`);
   for (const g of s.goal_links) lines.push(`- Game plan link: ${t(g.relation)} mission ${q(g.mission_id)}`);
+  for (const row of s.mission_targets ?? []) {
+    const target = row.target, o = row.observation;
+    const value = (v: string) => formatMissionTargetValue(v, target.metric.value_kind, target.metric.currency);
+    const desired = target.comparison === 'within_range' ? `${value(target.desired_value)} to ${value(target.upper_value!)}` : value(target.desired_value);
+    lines.push(`- Target ${q(target.title)} on Play ${q(row.mission.title)}: ${t(target.comparison.replace(/_/g, ' '))} ${q(desired)}; ${t(target.state)} revision ${target.revision}; period ${t(target.period.start)} to ${t(target.period.end)} (${q(target.period.time_zone)}).`);
+    if (o.state === 'unavailable') lines.push(`  Actual unavailable: ${q(o.reason.replace(/_/g, ' '))}. No attainment inferred.`);
+    else {
+      const attainment = o.attainment === 'unknown' ? 'unverified' : o.attainment === 'met' ? o.period_complete ? 'target met' : 'at target now'
+        : target.comparison === 'at_most' ? 'above limit' : target.comparison === 'within_range' ? 'outside target range' : 'below target';
+      lines.push(`  Actual ${q(value(o.actual))}; variance ${o.variance === null ? 'unverified' : q(value(o.variance))}; attainment ${t(attainment)}; ${t(o.state)} as of ${t(o.as_of)}. This is performance evidence, not execution.`);
+      for (const caveat of o.caveats) lines.push(`  Measurement caveat: ${q(caveat)}`);
+    }
+  }
   lines.push(`- Source: ${s.sources.map((x) => `${q(x.system)}/${q(x.adapter)}`).join(", ")}`);
   return lines;
 }

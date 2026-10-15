@@ -38,7 +38,17 @@ function call(name='client_portal_self_profile',actor=uid,scope=tenant,role='aut
 const check=(name,fn)=>{try{fn();results.push({name,status:'PASS'});}catch(e){results.push({name,status:'FAIL',error:String(e.message)});}};
 const profile=(actor=uid,scope=tenant)=>{const data=call('client_portal_self_profile',actor,scope);return data?JSON.parse(data):null;};
 const migration=fs.readFileSync(path.join(root,'supabase/migrations/20271102120000_e09_client_self_projection.sql'),'utf8');
+const presentationMigration=fs.readFileSync(path.join(root,'supabase/migrations/20271106110000_e09_client_presentation_scope.sql'),'utf8');
+const brandCascadeSource=fs.readFileSync(path.join(root,'supabase/migrations/20260804030000_debrand_operator_identity_seam.sql'),'utf8');
+const brandCascade=brandCascadeSource.match(/CREATE FUNCTION public\.resolve_tenant_brand\([\s\S]*?\$\$;/)?.[0];
+assert(brandCascade,'Incumbent native brand cascade must exist');
 const unsafeControl=process.argv.includes('--unsafe-control');
+const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
+const reportStem=unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+function presentation(actor=uid,role='authenticated') {
+  const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT jsonb_build_object('brand',(SELECT to_jsonb(b) FROM public.get_client_portal_brand() b),'config',public.get_client_portal_config()); COMMIT;`);
+  return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
+}
 let started=false;
 try {
   run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);
@@ -46,12 +56,13 @@ try {
   sql(`CREATE ROLE authenticated NOLOGIN; CREATE ROLE anon NOLOGIN; CREATE ROLE service_role NOLOGIN;
     CREATE SCHEMA auth; CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
     GRANT USAGE ON SCHEMA auth TO authenticated,anon,service_role;
-    CREATE TABLE public.tenants(id uuid PRIMARY KEY,status text DEFAULT 'active');
+    CREATE TABLE public.tenants(id uuid PRIMARY KEY,status text DEFAULT 'active',name text,slug text,parent_tenant_id uuid,brand jsonb DEFAULT '{}',features jsonb DEFAULT '{}');
+    CREATE TABLE public.tenant_legal_profile(tenant_id uuid PRIMARY KEY,brand_logo_url text);
     CREATE TABLE public.clients(id uuid PRIMARY KEY,tenant_id uuid,linked_user_id uuid UNIQUE,status text DEFAULT 'active',merged_into_contact_id uuid,
       first_name text,last_name text,entity_name text,street_address text,city text,state text,zip_code text,
       onboarding_stage text CHECK (onboarding_stage IS NULL OR onboarding_stage IN ('pre_invite','invited','signing_agreement','accepting_payment','completing_intake','uploading_docs','completed')),
       source text,paige_shared_context_consent boolean,paige_shared_context_consent_updated_at timestamptz,updated_at timestamptz,
-      current_notes text,lead_score int,created_by uuid,provider_secret text);
+      current_notes text,lead_score int,created_by uuid,provider_secret text,created_at timestamptz DEFAULT now());
     CREATE TABLE public.client_contact_methods(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),client_id uuid,tenant_id uuid,kind text,value text,is_primary boolean,label text,match_key text);
     INSERT INTO tenants(id) VALUES('${tenant}'),('${foreign}');
     INSERT INTO clients(id,tenant_id,linked_user_id,first_name,last_name,entity_name,street_address,city,state,zip_code,onboarding_stage,source,current_notes,lead_score,provider_secret)
@@ -67,6 +78,16 @@ try {
     REVOKE ALL ON clients,client_contact_methods FROM PUBLIC,authenticated,anon,service_role;`);
   sql(migration);const once=sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('client_portal_relationship_id','client_portal_self_profile');");sql(migration);
   check('Migration reapplication is idempotent',()=>assert.equal(sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('client_portal_relationship_id','client_portal_self_profile');"),once));
+  sql(brandCascade+` REVOKE ALL ON FUNCTION public.resolve_tenant_brand(uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.resolve_tenant_brand(uuid) TO authenticated,service_role;`);
+  sql(presentationMigration);
+  const presentationOnce=sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('get_client_portal_brand','get_client_portal_config');");
+  sql(presentationMigration);
+  check('Presentation migration reapplication is idempotent',()=>assert.equal(sql("SELECT string_agg(pg_get_functiondef(oid),'|' ORDER BY proname) FROM pg_proc WHERE proname IN ('get_client_portal_brand','get_client_portal_config');"),presentationOnce));
+  sql(`UPDATE tenants SET name='Test tenant A',slug='test-tenant-a',brand='{"product_name":"Test portal A","primary_color":"#26483e"}',features='{"portal_config":{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}}' WHERE id='${tenant}'; UPDATE tenants SET name='Test tenant B',slug='test-tenant-b',brand='{"product_name":"Foreign portal B"}',features='{"portal_config":{"welcome":{"headline":"Foreign greeting B"}}}' WHERE id='${foreign}'; INSERT INTO tenant_legal_profile VALUES('${tenant}','https://assets.example.test/legacy-logo.png');`);
+  if(unsafePresentation){
+    assert.equal(presentationMigration.split('WHERE c.id = public.client_portal_relationship_id()').length-1,2,'Both presentation control targets must exist');
+    sql(presentationMigration.replaceAll('WHERE c.id = public.client_portal_relationship_id()',"WHERE c.linked_user_id = auth.uid() ORDER BY c.created_at ASC LIMIT 1"));
+  }
   if(unsafeControl){
     const profileDef=sql("SELECT pg_get_functiondef('public.client_portal_self_profile(uuid)'::regprocedure);");
     assert(profileDef.includes("'updated_at', c.updated_at,"),'Control mutation target must exist');
@@ -83,6 +104,14 @@ try {
   check('Anonymous helper access is denied',()=>assert.throws(()=>call('client_portal_relationship_id',null,tenant,'anon')));
   check('Authenticated session without subject cannot call profile',()=>assert.throws(()=>call('client_portal_self_profile',null,tenant)));
   check('Service role alone is not a customer identity',()=>assert.throws(()=>call('client_portal_self_profile',null,tenant,'service_role')));
+  check('Presentation keeps the valid native tenant brand, ABI and canonical overlay',()=>{const p=presentation();assert.equal(p.brand.tenant_id,tenant);assert.equal(p.brand.product_name,'Test portal A');assert.equal(p.brand.primary_color,'#26483e');assert.equal(p.brand.logo_url,'https://assets.example.test/legacy-logo.png');assert.equal(Object.keys(p.brand).length,13);assert.equal(p.config.welcome.headline,'Saved greeting A');assert.equal(p.config.modules[0].visible,false);assert(!JSON.stringify(p).includes('Foreign'));});
+  check('Presentation switches only with the actual authenticated subject',()=>{const p=presentation(other);assert.equal(p.brand.tenant_id,foreign);assert.equal(p.config.welcome.headline,'Foreign greeting B');assert(!JSON.stringify(p).includes('Saved greeting A'));});
+  check('Unlinked and missing subjects receive no presentation',()=>{for(const actor of [null,'e0911000-0000-0000-0000-000000000099'])assert.deepEqual(presentation(actor),{brand:null,config:{}});});
+  check('Anonymous cannot execute either presentation reader',()=>{assert.equal(sql("SELECT has_function_privilege('anon','public.get_client_portal_brand()','EXECUTE') OR has_function_privilege('anon','public.get_client_portal_config()','EXECUTE');"),'f');assert.throws(()=>presentation(null,'anon'));});
+  check('Presentation revocation is effective on the next read',()=>{sql(`UPDATE clients SET linked_user_id=NULL WHERE id='${contact}';`);try{assert.deepEqual(presentation(),{brand:null,config:{}});}finally{sql(`UPDATE clients SET linked_user_id='${uid}' WHERE id='${contact}';`);}});
+  check('Presentation excludes archived and merged client relationships',()=>{for(const patch of ["status='archived'",`merged_into_contact_id='${otherContact}'`]){sql(`UPDATE clients SET ${patch} WHERE id='${contact}';`);try{assert.deepEqual(presentation(),{brand:null,config:{}});}finally{sql(`UPDATE clients SET status='active',merged_into_contact_id=NULL WHERE id='${contact}';`);}}});
+  check('Presentation excludes an inactive sponsoring business',()=>{sql(`UPDATE tenants SET status='suspended' WHERE id='${tenant}';`);try{assert.deepEqual(presentation(),{brand:null,config:{}});}finally{sql(`UPDATE tenants SET status='active' WHERE id='${tenant}';`);}});
+  check('Presentation preserves native ancestor inheritance and own legal-logo fallback',()=>{sql(`UPDATE tenants SET parent_tenant_id='${foreign}',brand='{}' WHERE id='${tenant}';`);try{const p=presentation();assert.equal(p.brand.tenant_id,tenant);assert.equal(p.brand.tenant_name,'Test tenant A');assert.equal(p.brand.product_name,'Foreign portal B');assert.equal(p.brand.logo_url,'https://assets.example.test/legacy-logo.png');assert.equal(p.config.welcome.headline,'Saved greeting A');}finally{sql(`UPDATE tenants SET parent_tenant_id=NULL,brand='{"product_name":"Test portal A","primary_color":"#26483e"}' WHERE id='${tenant}';`);}});
   check('Link revocation takes effect on next read',()=>{sql(`UPDATE clients SET linked_user_id=NULL WHERE id='${contact}';`);assert.equal(profile(),null);sql(`UPDATE clients SET linked_user_id='${uid}' WHERE id='${contact}';`);});
   check('Archived relationship is refused',()=>{sql(`UPDATE clients SET status='archived' WHERE id='${contact}';`);assert.equal(profile(),null);sql(`UPDATE clients SET status='active' WHERE id='${contact}';`);});
   check('Merged relationship is refused',()=>{sql(`UPDATE clients SET merged_into_contact_id='${otherContact}' WHERE id='${contact}';`);assert.equal(profile(),null);sql(`UPDATE clients SET merged_into_contact_id=NULL WHERE id='${contact}';`);});
@@ -92,10 +121,11 @@ try {
   // Future multi-business shape is synthetic only: production's unique link is untouched.
   sql(`ALTER TABLE clients DROP CONSTRAINT clients_linked_user_id_key; UPDATE clients SET linked_user_id='${uid}' WHERE id='${otherContact}';`);
   check('Ambiguous relationship refuses instead of earliest-row selection',()=>assert.throws(()=>profile(uid,null)));
+  check('Both presentation readers refuse future ambiguous business relationships',()=>assert.throws(()=>presentation()));
   check('Explicit future relationship selection stays isolated',()=>{assert.equal(profile(uid,tenant).id,contact);const p=profile(uid,foreign);assert.equal(p.id,otherContact);assert.equal(p.first_name,'Foreign');assert(!JSON.stringify(p).includes('secondary@'));assert.equal(p.is_signup_contact,true);});
   const failed=results.filter(x=>x.status==='FAIL');
-  const report={mode:unsafeControl?'unsafe-control':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
-  fs.writeFileSync(path.join(work,unsafeControl?'unsafe-control.json':'candidate.json'),JSON.stringify(report,null,2));
+  const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
+  fs.writeFileSync(path.join(work,`${reportStem}.json`),JSON.stringify(report,null,2));
   console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
   if(failed.length)process.exitCode=1;
-}finally{if(started)run('pg_ctl',['-D',cluster,'-w','stop','-m','fast']);fs.writeFileSync(path.join(work,unsafeControl?'unsafe-control-transcript.json':'candidate-transcript.json'),JSON.stringify(transcripts,null,2));}
+}finally{if(started)run('pg_ctl',['-D',cluster,'-w','stop','-m','fast']);fs.writeFileSync(path.join(work,`${reportStem}-transcript.json`),JSON.stringify(transcripts,null,2));}

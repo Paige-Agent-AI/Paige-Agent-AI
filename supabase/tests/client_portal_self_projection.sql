@@ -33,6 +33,27 @@ BEGIN
 END;
 $$;
 
+-- Same fully replayed contract job; no additional CI database or workflow lane.
+CREATE FUNCTION pg_temp.e09_presentation(_actor uuid)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _result jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated','email','spoofed-foreign@tests.invalid')::text,true);
+ SET LOCAL ROLE authenticated;
+ SELECT jsonb_build_object('brand',(SELECT to_jsonb(b) FROM public.get_client_portal_brand() b),
+                           'config',public.get_client_portal_config()) INTO _result;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _result;
+END;
+$$;
+UPDATE public.tenants SET brand='{"product_name":"Test tenant A","primary_color":"#26483e"}',
+ features='{"portal_config":{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}}'
+ WHERE id='e0921000-0000-0000-0000-000000000001';
+UPDATE public.tenants SET brand='{"product_name":"Test tenant B"}',
+ features='{"portal_config":{"welcome":{"headline":"Saved greeting B"}}}'
+ WHERE id='e0921000-0000-0000-0000-000000000002';
+
 SELECT ok(NOT has_function_privilege('anon','public.client_portal_self_profile(uuid)','EXECUTE'),'anonymous cannot execute profile');
 SELECT ok(NOT has_function_privilege('anon','public.client_portal_relationship_id(uuid)','EXECUTE'),'anonymous cannot execute relationship helper');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_self_profile(uuid)','EXECUTE'),'authenticated customer can execute checked profile');
@@ -40,6 +61,14 @@ SELECT is((SELECT count(*) FROM public.tenant_members WHERE user_id='e0911000-00
 
 -- The projection must work without exposing the underlying raw CRM or address tables.
 REVOKE SELECT ON public.clients, public.client_contact_methods FROM authenticated;
+SELECT ok(NOT has_function_privilege('anon','public.get_client_portal_brand()','EXECUTE'),'anonymous cannot execute customer brand reader');
+SELECT ok(NOT has_function_privilege('anon','public.get_client_portal_config()','EXECUTE'),'anonymous cannot execute customer configuration reader');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id','e0921000-0000-0000-0000-000000000001','brand follows actual external relationship without raw CRM SELECT');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'brand'->>'product_name','Test tenant A','existing native brand cascade remains compatible');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config','{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}'::jsonb,'saved presentation overlay remains exact');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000002')->'brand'->>'tenant_id','e0921000-0000-0000-0000-000000000002','a different authenticated subject reads only its own business');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000099'),'{"brand":null,"config":{}}'::jsonb,'unlinked subject receives no customer presentation');
+SELECT is(pg_temp.e09_presentation(NULL),'{"brand":null,"config":{}}'::jsonb,'missing subject supplies no presentation authority');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'id','e0931000-0000-0000-0000-000000000001','actual external caller receives only their canonical contact');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'email','e09-primary@tests.invalid','primary address is read through canonical contact methods');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'phone','+12025550109','primary phone is read through canonical contact methods');
@@ -58,8 +87,10 @@ SELECT throws_ok($$ SELECT pg_temp.e09_profile(NULL) $$,'42501','customer authen
 
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revocation is effective on reload');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'presentation revocation is effective on the next server read');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001',status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship cannot read profile');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'archived relationship cannot resolve customer presentation');
 -- Trusted fixture executor uses the existing governed lineage convention; same
 -- tenant survivor and paired timestamp. Actual authenticated reads remain below.
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
@@ -70,6 +101,7 @@ SELECT set_config('app.crm_merge_lineage_write','off',true);
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship cannot read profile');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'merged relationship cannot resolve customer presentation');
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SET LOCAL ROLE service_role;
 SELECT set_config('app.crm_merge_lineage_write','on',true);
@@ -79,5 +111,20 @@ RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'first_name','Updated','reload reads canonical updated name');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'paige_shared_context_consent','true','reload reads actual shared-context consent');
+UPDATE public.tenants SET status='suspended' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'inactive sponsoring business cannot resolve customer presentation');
+UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'welcome'->>'headline','Saved greeting A','returning to an active legitimate relationship reloads its saved configuration');
+
+-- Future multi-business shape is synthetic within this rollback only. Production's
+-- unique linkage is unchanged; current readers must already refuse ambiguity.
+ALTER TABLE public.clients DROP CONSTRAINT clients_linked_user_id_key;
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001' WHERE id='e0931000-0000-0000-0000-000000000002';
+SELECT set_config('request.jwt.claims','{"sub":"e0911000-0000-0000-0000-000000000001","role":"authenticated"}',true);
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$ SELECT * FROM public.get_client_portal_brand() $$,'42501','select an authorized customer relationship','ambiguous business brand refuses instead of choosing the oldest row');
+SELECT throws_ok($$ SELECT public.get_client_portal_config() $$,'42501','select an authorized customer relationship','ambiguous business configuration refuses instead of choosing the oldest row');
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
 SELECT * FROM finish();
 ROLLBACK;

@@ -24,6 +24,7 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { readUserContactMethods, saveUserPrimaryAddresses, type UserContactMethodsRead } from "@/lib/userPrimaryContact";
 import { isContactMethodsStale, primaryValue, type ContactMethod } from "@/lib/contact-methods";
 import { userContactMethodsRefusal } from "@/components/contact-methods/useUserContactMethods";
+import { ClientAccount } from "@/components/client/ClientAccount";
 
 const ssnSchema = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/, "Invalid SSN format (XXX-XX-XXXX)");
 
@@ -77,6 +78,12 @@ const ConnectedAccountsSection = () => {
 };
 
 export const ProfileSettings = () => {
+  const [params] = useSearchParams();
+  // An explicit presentation request only; the native customer contracts prove access.
+  return params.get("view") === "client-account" ? <ClientAccount /> : <IncumbentProfileSettings />;
+};
+
+const IncumbentProfileSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const { toast } = useToast();

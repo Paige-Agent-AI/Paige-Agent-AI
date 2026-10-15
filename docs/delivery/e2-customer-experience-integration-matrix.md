@@ -111,15 +111,24 @@ activation. The detailed customer-outcome audit is ANT-138 comment
 `a3287d4b-b2a9-428b-811f-b31d280ce582`; ANT-147 and ANT-52 remain the integration
 and acceptance homes. This expands the existing matrix, not a replacement registry.
 
-**Release checkpoint:** #2128 remains OPEN/UNMERGED at
-`2c833d37d13f792370be002fff5de05be18a4181`. The independent nonauthor review
-is COMPLETE/SHIP. Required CI `38591796099` failed twice on that same head,
-each 12,740 PASS / 1 FAIL / 12,741: first Weekly Chat Escape focus, then Team
-contact-save. Hosted assertions remain UNCLASSIFIED. The matching preview is READY;
-the Executive is not production-released. Historical 9 PASS / 0 FAIL is preserved;
-all sixteen E2-6 supplemental cases are NOT_RUN. No final owner acceptance exists.
-Main `5c90859ac1d4fe560200069c5a783e90fb21be19` composes cleanly with the
-frozen candidate locally; composition alone is neither review nor CI/release proof.
+**Release checkpoint, 2026-10-14:** #2128 reviewed
+`594fcf3655a538d3c656db449d00f37f2bc9a8cd`, merged main
+`bf0a8b60bee8d3a83c17c214655ea6425fc168d4`. The explicitly authorized bounded
+successor nonauthor review is COMPLETE/SHIP; six exact-head workflows SUCCESS.
+The earlier Weekly/Team failures remain historical, repaired in the final composition.
+Web production `dpl_6PZKJTwWLQ8C5gGpFky9DaNWbemm` READY/exact merge and public
+build `bf0a8b60bee8d3a83c17c214655ea6425fc168d4-mv8ojmxl`; trusted Edge
+38647681553 SUCCESS/edge-live=bf0; 384/384 returned deployed files match source.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2128#issuecomment-6180003073).
+Historical 9 PASS / 0 FAIL is unchanged. The preserved sixteen-case authenticated
+Antonio SOLO supplement is **12 PASS / 0 FAIL / 4 BLOCKED**, recorded in the original
+ANT-52 readiness gate and ANT-138 comment `7bdacc87-caac-4eea-9432-c4cdaeacf823`.
+Ordinary owner scope, one persisted user/FINAL reply, six semantic department links,
+reload/fresh-tab return and no business-effect writes are proven. Isolated auth return,
+protected negative fixtures, exact native capture/zoom/full visual and continuity
+variants remain owed. A 1536x770 DOM yielding a 1535x770 JPEG is not passing native proof.
+The historical 390x844 capture hold is unchanged. No all-nineteen or final owner
+acceptance, customer announcement, provider or consequential execution activation.
 
 The table records the complete customer definition and the existing binding, not a
 claim that the whole outcome is delivered. Shared-register IDs refer to the existing
@@ -139,7 +148,7 @@ PENDING. Each available subset must be tested independently of its remaining req
 | O07 Run real Systems checks and authorized corrective workflows with new result and receipt | Existing Systems Check runner, remediation domain writer, Spine/Harness/Trust/Rail; existing run/finding/action records | Systems Check → PAIGE/approval → canonical result | B on-demand consumer and verified runner owner. Current Refresh only rereads; Ask First only opens PAIGE. Bind actual run lifecycle and correction after authority, prove persisted outcome/reload |
 | O08 Evidence-backed priorities, recommendations and useful next steps | Fabric/Analytics adapter evidence and severity; no priority store | Executive priorities and sourced Chat question | L visual / D bounded narration. Integrate full domain evidence and prove recommendation provenance; a recommendation is not execution |
 | O09 Save direction and create/revise/transition the same Strategic Play truthfully | Existing Setup get/save RPCs; `tenants.brand.business_brief/tenant_setup_private_context`; `business_mission.create/revise/transition`, mission-system owner; missions/versions/mutation receipts | Business Game Plan forms, Plan in Motion, Chat and Executive projection | D manual records / L projection / G consequential Chat mutation. Prove stale revision, idempotency, unknown reconciliation, readback and continuity. Lifecycle Complete is not actual business work |
-| O10 Numeric goals/KPI targets, matched actuals, periods and variance | F7 shared Game Plan/Fabric/Analytics contract; new canonical target record requires owner ruling | Game Plan target editing; Executive and Chat use issued metric actuals | P. Prepare and approve shared target/metric/revision contract, then build/integrate/test it. No E02 private goals or actuals store |
+| O10 Numeric goals/KPI targets, matched actuals, periods and variance | F7 shared Game Plan/Fabric/Analytics contract; owner approved Play-linked targets in ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef` | Game Plan target editing, Executive and Chat are still owed; all must use the same target RPCs and existing issued metric actuals | L foundation: proposed canonical targets/immutable revisions, owner RPCs, incumbent receipts, verified adapter and issued-actual variance. Local proof only. Consumer UI, governed Chat/Live binding, independent review, exact-head CI, migration/release and authenticated acceptance remain required. No separate actuals store |
 | O11 Actual Trust Compass tool policy controls constrained by platform restrictions | S05 Trust/Spine; list/resolve/set tool autonomy; `tenant_tool_autonomy` and platform policy | Trust Compass control/save/error/retry; Chat explanations | D controls. Authenticate role/scope restrictions, save/readback/reload and truthful executor availability; policy choice does not enable an excluded executor |
 | O12 Actual held approval → authorized action → observed outcome/receipt | Existing approval/framework/domain owners; `paige_pending_approvals/paige_approval_queue_v`, Chat confirmations, stored command and canonical domain/Rail receipt | Game Plan/shared Chat approval cards; Executive held preview | D manual subsets / G complete action. Preserve stored-argument redemption, consent, replay and unknown handling; prove real outcome after legitimate activation. Filed `paige_actions` is not an approval grant |
 | O13 Actor-attributed accountable activity and receipts | S06 Rail/INT-179; caller-scoped `get_solo_rail_activity`, `paige_client_events`, existing capability/domain receipts | Executive activity, Compass/System detail and owning records | D existing feed / L Executive. Integrate actual producers, prove human/PAIGE attribution and receipt readback. Viewing/refresh creates no action receipt |

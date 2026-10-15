@@ -62,7 +62,7 @@ export default function Step1Welcome() {
         :model.phase!=="ready"?<div role="alert"><p>{model.phase==="signed_out"?"Sign in again to continue."
           :model.phase==="unavailable"?"Your information is unavailable for this business. Contact the business for help."
           :"Your information could not be loaded. Your edits have been kept in this session. Try again when connected."}</p>
-          {model.phase==="signed_out"?<Button asChild className={`mt-4 ${controlClass}`}><a href="/auth">Go to sign in</a></Button>
+          {model.phase==="signed_out"?<Button asChild className={`mt-4 ${controlClass}`}><a href="/auth" style={{color:"hsl(var(--primary-foreground))"}}>Go to sign in</a></Button>
             :<Button className={`mt-4 ${controlClass}`} onClick={()=>void model.reload()}>Try again</Button>}</div>
         :model.state?.status==="configuration_required"?<div role="status"><p>{workspace} needs to finish setting up your welcome questions. Contact the business before continuing.</p>
           <Button className={`mt-4 ${controlClass}`} onClick={()=>void model.reload()}>Check again</Button></div>

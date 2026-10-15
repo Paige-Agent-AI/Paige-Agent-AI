@@ -30,7 +30,13 @@ try{
     await page.addScriptTag({content:bundle.outputFiles[0].text});await page.getByRole("heading",{name:"Welcome.",exact:true}).waitFor();
     if(state==="ready")await page.getByLabel("First name",{exact:true}).waitFor();
     else await page.getByText(state==="loading"?"Loading your information…":state==="unavailable"?"Your information is unavailable for this business. Contact the business for help.":state==="read_error"?"Your information could not be loaded. Your edits have been kept in this session. Try again when connected.":state==="signed_out"?"Sign in again to continue.":"Second Test Business needs to finish setting up your welcome questions. Contact the business before continuing.",{exact:true}).waitFor();
-    if(state==="signed_out")assert.equal(await page.getByRole("link",{name:"Go to sign in",exact:true}).getAttribute("href"),"/auth");
+    if(state==="signed_out"){
+      const link=page.getByRole("link",{name:"Go to sign in",exact:true});assert.equal(await link.getAttribute("href"),"/auth");
+      const colors=await link.evaluate(e=>({color:getComputedStyle(e).color,background:getComputedStyle(e).backgroundColor}));
+      const luminance=value=>{const channels=value.match(/[\d.]+/g).slice(0,3).map(Number).map(c=>c/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);return channels[0]*.2126+channels[1]*.7152+channels[2]*.0722;};
+      const levels=[luminance(colors.color),luminance(colors.background)].sort((a,b)=>b-a);
+      assert((levels[0]+.05)/(levels[1]+.05)>=4.5,`sign-in recovery contrast ${JSON.stringify(colors)}`);
+    }
     await page.evaluate(()=>document.fonts.ready);
     const capture=async suffix=>{
       const geometry=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,

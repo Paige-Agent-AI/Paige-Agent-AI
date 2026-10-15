@@ -171,6 +171,18 @@
   ],
   "entries": [
     {
+      "tool": "knowledge_update",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "public.update_tenant_knowledge_metadata in 20270531100000_knowledge_canonical_metadata.sql records revision-bound capability receipt; Chat suppresses duplicate audit; completed_unrecorded is preserved."
+    },
+    {
+      "tool": "knowledge_delete",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "public.delete_tenant_knowledge in 20270531200000_knowledge_canonical_delete.sql records verified absence receipt; Chat suppresses duplicate audit; source cleanup is not attempted."
+    },
+    {
       "tool": "action_advance",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"

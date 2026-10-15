@@ -163,6 +163,62 @@ evidence; owner acceptance. Storage approval grants no privileged production act
 provider effects, protected fixture creation or INT-346 exception. Shipped-log status N/A:
 this foundation has not merged. Master/Brain and the existing E02 matrix remain canonical.
 
+### Native consumer continuation — pre-edit contract
+
+The next bounded slice EXTENDS the existing `business-mission-action` owner door and
+Game Plan Strategic Play detail. It REUSES the canonical target/RPC/issuer/receipt/Rail
+foundation and existing scoped browser recovery pattern; it does not replace a shared
+capability. Intended outcome: the Solo owner sets or revises a measured Play target,
+sees compatible actuals and exact variance, inspects its immutable history and receipt,
+and safely returns after interruption. Complete conversational integration remains required.
+
+The existing Harness caller/authority and Rail layers are used as currently implemented,
+with their incomplete acceptance unchanged. `business_mission.targets` remains a read
+registration; no mutating Chat admission or INT-346 activation occurs in this native slice.
+No external provider, expense, job or event is needed. Native mutation is an explicit
+owner control through the incumbent owner RPC authority, with no second approval channel.
+Unknown response retains its exact original intent/CAS/request key before any writer;
+scope/role loss hides private state and forbids replay into another workspace. Recovery
+storage is tab-local UI intent only, never business truth, authority or a receipt store.
+
+The `command-center.business-game-plan` Binding Ledger row remains PARTIAL. Existing
+Mission, approvals, current-account navigation, one shell, Chat/Live history, Mind/Memory,
+provider and security boundaries must be preserved. Source tests and the deterministic
+`e2-target-flow-prototype.html` do not prove customer writes, native pixels or acceptance.
+The owner authorizes implementation/release without intermediate design approvals and
+reserves human review for the complete deployed experience. Use the prototype's compact
+target rows, existing detail context, inline field validation and recoverable editor; no
+new top-level route or dashboard. Native browser/capture holds remain explicit.
+
+Local implementation now mounts measured target rows/editor in the existing Play detail.
+SDK reads canonical target/history and issued/resolved actuals, revalidates actor/workspace/
+Play before and after calls, and retires A-B-A lifetimes. Exact decimal/currency inputs and
+saved IANA calendar periods reuse existing utilities. Unknown requests are retained before
+dispatch as scoped tab-local UI intent and reconciled under the same args/key/CAS. Saved
+revision, activity gap and uncertain outcome stay separate. No new approval/metric/receipt store.
+
+The existing owner Edge door uses the shared target adapter. Native-only owner capability
+keys are attributed through the incumbent Rail display chain; unrelated families delegate
+unchanged. A forward extension of the existing owner history RPC projects matching canonical
+receipt references for each immutable revision on later reads. Private hashes/bearer references
+remain excluded; current owner, foreign/member/revoked denial and service restrictions survive.
+The unchanged issuer metric-key list moves to a dependency-free shared module, re-exported by
+its existing server reader, so browser imports cannot include the Node-only capability kit.
+
+Native source proof: SDK/recovery/form/hook/actual HTTP49 tests, historical SDK6,
+actual-panel4 and actual-drawer3; local target SQL50 and display8 assertions PASS.
+An initial drawer worker initialization timeout executed no drawer tests; a bounded
+single-worker rerun passed3. First type/build checks found a callback return-type mismatch
+and server-module import; both are repaired. Composed3796f52f passes all62 focused
+tests in7 files, scoped ESLint without warnings, unchanged type ratchet10/10,
+production browser build and binding/migration/attribution/definer/evidence guards.
+Follow-up editor2/malformed-request4 regressions pass;68 aggregate tests in8 files.
+Prospective currency goals are allowed without an existing source bucket, while actuals
+remain unavailable until that currency is reported. The existing approved schema is unchanged.
+These synthetic source checks are not authenticated customer acceptance or fullO10 delivery.
+Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
+rendered/native coverage, production release, protected acceptance and owner review remain owed.
+
 ## F7 Executive / conversation read integration — pre-edit contract
 
 The preceding foundation candidate text is historical: #2167 merged892b1bdfe with

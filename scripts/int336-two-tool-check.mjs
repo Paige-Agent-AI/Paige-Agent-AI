@@ -9,6 +9,8 @@ const automationMode=process.env.AUTOMATION_DRAFT_TEST;
 if(automationMode){assert.ok(['success','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchMode=process.env.RESEARCH_READBACK_TEST;
 if(researchMode){assert.ok(['success','partial-library','unconfirmed'].includes(researchMode));assert.ok(!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+const crmMode=process.env.CRM_ACK_TEST;
+if(crmMode){assert.ok(['success','malformed','contradictory','refused'].includes(crmMode));assert.ok(!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchRequests=[];
 const researchFixture=()=>({run_id:id(11),question:'Fixture public question',findings:[{text:'Fixture cited finding',citations:[1],confidence:'high'}],
  sources:[{index:1,url:'https://example.com/source',title:'Fixture source',snippet:'Source text',reliability_score:.9,tier:'T1',reliability:'high',excluded:false,published_at:null,fetched_at:'2026-10-15T16:00:00Z'}],
@@ -35,11 +37,11 @@ globalThis.fetch=async(url,opts)=>{
  if(modelCalls>1)return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Readback is required."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
  const events=[{type:'message_start',message:{usage:{input_tokens:1}}}];
  for(let i=0;i<2;i++){
-  const name=i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
-  const args=name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
+  const name=i===0&&crmMode?'crm_create_task':i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
+  const args=name==='crm_create_task'?{title:'Protected CRM fixture'}:name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
    :name==='automation_draft'?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}
    :name==='save_to_knowledge_base'?{title:'Fixture reference',content:'Private fixture content'}
-   :{title:`Plan ${knowledgeMode||automationMode||researchMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
+   :{title:`Plan ${knowledgeMode||automationMode||researchMode||crmMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
   events.push({type:'content_block_start',index:i,content_block:{type:'tool_use',id:`tool-${i}`,name}},{type:'content_block_delta',index:i,delta:{type:'input_json_delta',partial_json:JSON.stringify(args)}});
  }
  events.push({type:'message_delta',delta:{stop_reason:'tool_use'},usage:{output_tokens:1}},{type:'message_stop'});
@@ -64,7 +66,9 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
   return inserted?[project({...inserted,id:id(10),updated_at:rec.inserts.some(r=>r.table==='paige_automation_acts')?'2026-10-15T16:00:01Z':'2026-10-15T16:00:00Z'},filters)]:[];
  },
  paige_automation_acts:filters=>automationMode==='uncertain'?[]:(rec.inserts.find(r=>r.table==='paige_automation_acts')?.row??[]).map(r=>project(r,filters)),
-},rpcs:{
+},functions:{'crm-command':()=>crmMode==='contradictory'
+ ?{data:null,error:{name:'FunctionsHttpError',context:{status:500,json:async()=>({ok:true,outcome:'executed'})}}}
+ :{data:crmMode==='malformed'?{success:true,not_applied:true,refused_before_run:true}:crmMode==='refused'?{ok:false,code:'CRM_FORBIDDEN'}:{ok:true,outcome:'executed'},error:null}},rpcs:{
  current_user_tenant_id:{data:tenant,error:null},
  paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},
  resolve_tool_autonomy:{data:"auto",error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
@@ -80,13 +84,31 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
   if(recoveryMode==='lost')throw new TypeError('Failed to fetch after commit');
   if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
   if(recoveryMode==='refused')return {data:null,error:{code:'42501',message:'PLAN_FORBIDDEN'}};
-  if(!recoveryMode&&!automationMode&&!researchMode)latest=id(6);
+  if(!recoveryMode&&!automationMode&&!researchMode&&!crmMode)latest=id(6);
   return {data:{ok:true,plan_id:id(7)},error:null};
  },
  paige_chat_interactive_settle:a=>{receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(8),error:null};}
 }});
 const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Create two individual plans'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'}})}));
 const wire=await response.text();
+if(crmMode){
+ const calls=rec.functions.filter(c=>c.name==='crm-command');
+ assert.equal(calls.length,1,'the original native CRM operation is invoked once, never retried');
+ assert.equal(calls[0].client,'jwt');assert.equal(calls[0].options.headers.Authorization,'Bearer test');
+ assert.equal(calls[0].options.body.command.action,'task.create');
+ const unknown=['malformed','contradictory'].includes(crmMode);
+ assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,unknown?0:1,wire);
+ assert.equal(receipts.length,1,'one canonical durable terminal receipt');
+ const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='crm_create_task');
+ assert.ok(effect,'the original attempted native action remains represented');
+ assert.equal(effect.outcome,unknown?'outcome_unknown':crmMode==='refused'?'reported_failure':'reported_success');
+ if(unknown){
+  assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an executed effect');
+  assert.equal(rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create').length,0,'blocked successor has no execution attribution');
+ }
+ console.log(`PASS actual handler CRM acknowledgement ${crmMode}: caller-JWT native door once, truthful effect, canonical settlement and correct successor brake`);
+ process.exit(0);
+}
 if(researchMode){
  assert.equal(researchRequests.length,1,'one incumbent invocation; no blind research retry');
  assert.equal(researchRequests[0].user_id,actor);assert.equal(researchRequests[0].expected_tenant_id,tenant);assert.equal(researchRequests[0].persist,true);

@@ -10960,21 +10960,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // model re-emitting the arguments.
               confirm_command: canonicalCrmCommand, confirm_idempotency_key: idempotencyKey,
               preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." };
-          } else if (crmError || crmBody.ok === false) {
+          } else if (crmError || crmBody.ok !== true) {
             // No answer from crm-command's own code (it always writes `ok`): the request failed in
             // transit or the platform cut it off, so the write may have committed. Say "couldn't
             // confirm", never "nothing changed" — the card reads the flag, the model the note.
-            const unanswered = invokeOutcomeUnknown(crmError, crmBody, crmStatus);
+            // A transport-successful empty/malformed envelope is not the door's
+            // acknowledgement. An error carrying ok=true is contradictory too;
+            // neither proves that a potentially committed change was absent.
+            const unanswered = invokeOutcomeUnknown(crmError, crmBody, crmStatus) ||
+              (crmError ? crmBody.ok === true : typeof crmBody.ok !== "boolean");
             // Anything else is an ANSWER, and every answer but one says nothing was applied:
             // crm-command refuses before it executes, its executor's refusals roll back, and the
             // one case it cannot vouch for (a lost readback or execute answer) it marks
             // `outcome_unknown` itself. The gateway turning the call away never started it.
             const notApplied = !unanswered && crmBody.outcome_unknown !== true;
-            crmContent = { success: false, ...crmBody,
+            crmContent = { ...crmBody, success: false,
               error: crmBody.message ?? crmBody.code ?? (unanswered
                 ? "The CRM action's answer never arrived, so whether it completed is not known."
                 : "The CRM action could not be completed. Nothing should be claimed as changed."),
-              ...(notApplied ? { not_applied: true } : {}),
+              not_applied: notApplied,
+              ...(notApplied ? {} : { refused_before_run: false }),
               ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) };
           } else {
             crmContent = { success: true, ...crmBody,
@@ -10982,6 +10987,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // C4b — for a carried-forward approval, a door that proposed again found nothing to claim.
           if (doorPin) crmContent = await settlePinnedDoorResult(tc, doorPin, approvedFingerprint, crmContent, true);
+          if (crmContent.outcome_unknown === true) requestExecutionState.needsReview = true;
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(crmContent) });
           continue;
         }

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: add/revise a measured Play target, compare actuals, p
 FLOW_PROTOTYPE: PASS: existing e2-target-flow-prototype.html and e2-target-prototype-source-checks.json in the owner conversation outputs; explicit full-outcome delivery ruling authorizes implementation without intermediate owner design approvals. Prototype source/DOM evidence is distinct from product runtime evidence.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: verified Solo owner manages numeric targets inside the existing Strategic Play detail and returns to authoritative definitions and receipts.
 VISUAL_DIRECTION: PASS: inherited Mineral/Obsidian tokens and existing Game Plan drawer; compact target rows and inline editor preserve the chosen product world without a new route or dashboard.
-AUTOMATED_EVIDENCE: PASS: native source73 tests in8 files passed after corrective read/draft/CAS repairs; a further queued-scope/disjoint-range regression passes with all24 SDK tests. Aggregate74 source tests in8 files. Four failing-first regressions reproduced same-series evidence revocation, draft unmount, missing Play conflict lock and silently upgraded open-draft CAS before repair. Earlier drawer worker initialization timed out without executing that file; bounded single-worker rerun passes all3. Canonical local PostgreSQL target suite50 PASS with rollback, including11 new receipt-history/refusal checks; separate display attribution8 PASS against the incumbent display chain. Full final-head hosted replay remains owed.
+AUTOMATED_EVIDENCE: PASS: final native source75 tests in8 files, including same-series issuer scheduling, queued scope retirement, mounted draft/CAS continuity and a new saved-period boundary test. Four failing-first regressions reproduced same-series evidence revocation, draft unmount, missing Play conflict lock and silently upgraded open-draft CAS before repair. Earlier drawer worker initialization timed out without executing that file; bounded single-worker rerun passes all3. Canonical local PostgreSQL target suite50 PASS with rollback, including11 new receipt-history/refusal checks; separate display attribution8 PASS against the incumbent display chain. Full final-head hosted replay remains owed.
 STATIC_EVIDENCE: PASS: final scoped ESLint has zero errors/warnings; unchanged type ratchet baseline10/current10, production Vite build, UI evidence,35-surface binding ledger,1299 migration collision,180 attribution-target and definer signature/ACL guards pass. Initial callback return-type and server-module browser-import defects were repaired before this final source check. Hosted exact-head results remain owed.
 RENDERED_EVIDENCE: UNVERIFIED: actual new component pixels are not captured. Existing capture transport returned1535x770 for requested1536x770; one explicit clip retry timed out and all capture retries stopped. This is an invalid capture, not a product failure or visual PASS.
 BEHAVIORAL_EVIDENCE: PASS: mounted source tests cover independent history/receipt reopening, unavailable actuals, uncertain-intent locking, refused-transition reason retention, A-B-A drawer response retirement and closing during a pending lifecycle mutation. Source behavior only; genuine browser/customer drive remains owed.
@@ -64,6 +64,11 @@ Those two files are renamed above that frontier with unchanged SQL bytes; no app
 deployed migration, shared owner source or production database is rewritten.
 The earlier20271103100000 choice was then found reserved by E01 in ANT-147;
 E02 preserves that prior reservation and uses20271104100000/20271104101000.
+
+The native timer also retires a current-state observation when its saved target period
+ends, before a later evidence expiry. It preserves the canonical target and history;
+neither an old current snapshot nor a timer is presented as a final historical actual.
+The mounted clock test then advances through reference expiry without a mutation.
 
 Exact target revision plus existing canonical receipt are checked before Rail. Returned SDK
 transport loss and readback loss stay uncertain. The native owner display wrapper delegates

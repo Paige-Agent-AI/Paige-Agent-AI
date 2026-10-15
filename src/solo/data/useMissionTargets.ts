@@ -65,13 +65,25 @@ export function useMissionTargets(actorId: string | null, tenantId: string | nul
 
   // Expired evidence is removed even when the owner leaves this view open.
   useEffect(() => {
-    const times = Object.values(saved.actuals).flatMap(row => row.kind === "ready" ? [Date.parse(row.metric.reference_expires_at)] : []);
+    const targets = saved.list.kind === 'ready' ? saved.list.targets : [];
+    const times = Object.entries(saved.actuals).flatMap(([id, row]) => {
+      if (row.kind !== 'ready') return [];
+      const target = targets.find(t => t.id === id);
+      return [Date.parse(row.metric.reference_expires_at), ...(target && target.metric.semantics !== 'event_timestamp_cohort'
+        && row.observation.state !== 'unavailable' ? [Date.parse(target.period.end) + 1] : [])];
+    });
     if (!times.length) return;
     const delay = Math.max(0, Math.min(...times) - Date.now());
     const timer = window.setTimeout(() => setSaved(previous => ({ ...previous, actuals: Object.fromEntries(Object.entries(previous.actuals)
-      .map(([id, row]) => [id, row.kind === "ready" && Date.parse(row.metric.reference_expires_at) <= Date.now() ? { kind: "unavailable" } : row])) })), delay);
+      .map(([id, row]) => {
+        if (row.kind !== 'ready') return [id, row];
+        if (Date.parse(row.metric.reference_expires_at) <= Date.now()) return [id, { kind: 'unavailable' }];
+        const target = targets.find(t => t.id === id);
+        return [id, target && target.metric.semantics !== 'event_timestamp_cohort' && Date.now() > Date.parse(target.period.end)
+          ? { ...row, observation: { state: 'unavailable', reason: 'historical_snapshot_unavailable' } } : row];
+      })) })), delay);
     return () => window.clearTimeout(timer);
-  }, [saved.actuals]);
+  }, [saved.actuals, saved.list]);
 
   const run = useCallback(async (attempt: TargetAttempt): Promise<TargetMutation | null> => {
     const scope = capture(); if (!scope || flight.current === identity.current.stamp) return null;

@@ -14,7 +14,7 @@ export interface InteractiveEffect {
   run_id?: string;
   record_refs?: Array<{ kind: string; id: string }>;
 }
-const RECORD_FIELDS: Readonly<Record<string, string>> = { task_id: "task", plan_id: "plan", contact_id: "contact", deal_id: "deal",
+const RECORD_FIELDS: Readonly<Record<string, string>> = { task_id: "task", plan_id: "plan", plan_item_id: "plan_item", contact_id: "contact", deal_id: "deal",
   booking_id: "booking", payment_id: "payment", message_id: "message", invoice_id: "invoice" };
 function recordReferences(r: Record<string, unknown>) {
   return Object.entries(RECORD_FIELDS).flatMap(([field, kind]) => typeof r[field] === "string" && UUID.test(r[field] as string)
@@ -25,6 +25,11 @@ export function interactiveEffect(tool: string, result: unknown): InteractiveEff
   if (!/^[a-z][a-z0-9_]{0,95}$/.test(tool) || !result || typeof result !== "object" || Array.isArray(result)) return null;
   const r = result as Record<string, unknown>;
   const uncertain = [r.outcome, r.status, r.code, r.error].some((v) => typeof v === "string" && /(?:unknown|uncertain)/i.test(v));
+  // An explicit pre-dispatch refusal is not an execution effect. Never suppress
+  // contradictory uncertainty, success, approval or native/durable identity.
+  if (r.refused_before_run === true && r.not_applied === true && r.success === false && !uncertain
+    && r.outcome_unknown !== true && r.ok !== true && r.accepted !== true && r.needs_confirm !== true && r.queued !== true
+    && r.outcome !== "succeeded" && recordReferences(r).length === 0 && r.work_id == null && r.run_id == null) return null;
   const outcome = uncertain || r.outcome_unknown === true ? "outcome_unknown"
     : r.accepted === true && typeof r.work_id === "string" && UUID.test(r.work_id) ? "durable_accepted"
     : r.needs_confirm === true || r.queued === true ? "approval_required"

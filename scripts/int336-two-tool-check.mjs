@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key'})[k]??''}};
 const unknownTool=process.env.INT336_UNKNOWN_TOOL;
+const recoveryMode=process.env.PLANNING_RECOVERY;
+if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includes(recoveryMode));
 let modelCalls=0;
 globalThis.fetch=async(url,opts)=>{
  if(!String(url).includes('api.anthropic.com')) return new Response('{}',{status:503});
@@ -18,9 +20,48 @@ await import('../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),thread=id(3),intent=id(4);let latest=intent,executor=null;const receipts=[];
-const rec=fake.setScenario({authUser:{id:actor},tables:{profiles:[{active_tenant_id:tenant}],tenant_members:[{tenant_id:tenant}],paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],paige_chat_turns:filters=>unknownTool && filters.some(f=>f[0]==="contains")?[{bundle_ref:{interactive:{effects:[{tool:unknownTool,outcome:"outcome_unknown"}]}}}]:receipts},rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},resolve_tool_autonomy:{data:"auto",error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},get_actor_access:{data:{tier:'tenant'},error:null},get_paige_persona_context:{data:[{tenant_id:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null},paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release')executor=null;return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},plan_create:()=>{latest=id(6);return {data:{success:true,plan_id:id(7)},error:null};},paige_chat_interactive_settle:a=>{receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(8),error:null};}}});
+const rec=fake.setScenario({authUser:{id:actor},tables:{
+ profiles:[{active_tenant_id:tenant}],tenant_members:[{tenant_id:tenant}],
+ plans:recoveryMode==='missing-readback'?[]:[{id:id(7),tenant_id:tenant,created_by:actor,owner_user_id:actor,
+  title:'Plan 0',summary:null,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12',scope:'individual',
+  campaign_ref:null,status:'active',updated_at:'2026-10-06T12:00:00Z'}],
+ paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:actor}],
+ paige_chat_turns:filters=>unknownTool && filters.some(f=>f[0]==="contains")?[{bundle_ref:{interactive:{effects:[{tool:unknownTool,outcome:"outcome_unknown"}]}}}]:receipts
+},rpcs:{
+ current_user_tenant_id:{data:tenant,error:null},
+ paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},
+ resolve_tool_autonomy:{data:"auto",error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
+ resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},
+ get_actor_access:{data:{tier:'tenant'},error:null},
+ get_paige_persona_context:{data:[{tenant_id:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null},
+ paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},
+ paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release')executor=null;return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
+ plan_create:()=>{
+  if(recoveryMode==='lost')throw new TypeError('Failed to fetch after commit');
+  if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
+  if(recoveryMode==='refused')return {data:null,error:{code:'42501',message:'PLAN_FORBIDDEN'}};
+  if(!recoveryMode)latest=id(6);
+  return {data:{ok:true,plan_id:id(7)},error:null};
+ },
+ paige_chat_interactive_settle:a=>{receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(8),error:null};}
+}});
 const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Create two individual plans'}],threadId:thread,requestIntentId:intent,interactive:{kind:'message'}})}));
 const wire=await response.text();
+if(recoveryMode){
+ assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,recoveryMode==='refused'?2:1,wire);
+ assert.equal(receipts.length,1,'one canonical terminal receipt');
+ assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,recoveryMode==='refused'?'reported_failure':'outcome_unknown');
+ assert.equal(modelCalls,2,'normal explanation remains possible after refusal/uncertainty');
+ if(recoveryMode!=='refused'){
+  assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an execution effect');
+  assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,'outcome_unknown');
+  const audit=rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create');
+  assert.equal(audit.length,1,'never attribute a blocked successor as an attempted write');
+  assert.equal(audit[0].row.payload.outcome,'outcome_unknown');
+ }
+ console.log(`PASS actual handler Planning ${recoveryMode}: original write once, subsequent writes held only for uncertainty, truthful durable effect`);
+ process.exit(0);
+}
 if(unknownTool){
  assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,unknownTool==='plan_list'?1:0,wire);
  if(unknownTool!=='plan_list')assert.ok(modelCalls>1,'write refusal must permit normal response');

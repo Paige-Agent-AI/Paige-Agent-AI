@@ -10,15 +10,13 @@ import { SNAPSHOT_DOMAINS, SNAPSHOT_PERIOD_KEYS } from "../../paige-context/snap
 // active owner or admin. There is no chat-only snapshot and no second data path.
 //
 // WHAT THE READ IS. A projection over the live domains (payments, sales_pipeline, operations,
-// clients): per-currency amounts, counts, changes and risks, plus every other domain reported
+// clients, and owner-only game_plan targets): per-currency amounts, counts, changes and risks, plus every other domain reported
 // honestly as not available with its reason. A refused, unverified, partial or dropped read is
 // never a zero, currencies are never summed, and nothing is invented. The model-facing tool JSON
 // and the dispatcher live in _shared/paige-context/business-review-chat.ts.
 //
-// SHIP-DARK (E2-1). The tool is registered and dispatched, but under INT-346's staged rollout an
-// ordinary typed Solo turn runs with ZERO tool exposure, so this capability is not reachable from
-// a conversational turn until it is admitted under the owner-approved read-only admission class.
-// chatBinding is PARTIAL for exactly that reason; it becomes LIVE when admission reaches it.
+// E2-2 admits this existing read-only tool. This extension neither admits new tools nor
+// activates consequential Chat actions. Each source still applies its own caller authority.
 
 const scope = { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] } as const;
 const availability = { resolver: "paige-capability-status", states: ["live", "needs_approval", "not_for_tier", "unavailable"] } as const;
@@ -30,10 +28,10 @@ export const BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY = defineCapability({
   input: objectInputSchema({
     description: "Which period and which areas of the business to review.",
     properties: {
-      period: { type: "string", enum: [...SNAPSHOT_PERIOD_KEYS], description: "Default last_7_days. Calendar periods are computed in the caller's timezone; sales figures always end at the last completed UTC day." },
+      period: { type: "string", enum: [...SNAPSHOT_PERIOD_KEYS], description: "Default last_7_days. Calendar periods use the caller's timezone. Sales review figures disclose their completed UTC-day cutoff; saved targets retain their own periods and compatible source semantics." },
       custom_start: { type: "string", description: "With period 'custom': inclusive start, an ISO instant with a zone or a bare date read as local midnight in the caller's timezone." },
       custom_end: { type: "string", description: "With period 'custom': exclusive end, same formats as custom_start. Required together; the range may not be inverted, in the future, or too long." },
-      focus: { type: "array", items: { type: "string", enum: [...SNAPSHOT_DOMAINS] }, maxItems: 6, description: "Areas to review by domain name (payments, sales_pipeline, operations, clients are live today). Leave it out for the default review set. A domain with no connected source is reported as not available, never skipped silently." },
+      focus: { type: "array", items: { type: "string", enum: [...SNAPSHOT_DOMAINS] }, maxItems: 6, description: "Connected readers: payments, sales_pipeline, operations, clients; game_plan reads the owner's canonical Play targets with exact portfolio counts and bounded observations. Each reader verifies its own authority. Leave it out for the default set; unavailable domains retain their reason." },
     },
     required: [],
   }),
@@ -54,7 +52,7 @@ export const BUSINESS_OPERATING_SNAPSHOT = {
   key: "business.operating_snapshot", domain: "business", owner: "business", humanSurface: surface, readiness: "none",
   action: { classification: "read", executor: "public.issue_analytics_evidence_bundle", chatTool: "get_business_snapshot", seatAuthority: "workspace-admin",
     riskPolicyKey: "read_only", approvalAuthority: "none",
-    idempotency: "Read-only composition on the caller's own session. The active workspace is observed before and after composing; a switch voids every domain. Within an adapter reads run one at a time; adapters run concurrently on disjoint metric keys, and the chat corridor is serial across tools (the issuer revokes a caller's previous evidence reference per metric and range)." },
+    idempotency: "Read-only composition on the caller's own session. The active workspace is observed before and after composing; a switch voids every domain. Same-series reads share the canonical reader's issue/resolve sequencing without value caching. Other clients can still revoke references; refusals remain unavailable. Chat tools execute serially." },
   outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.issue_analytics_evidence_bundle",
     railVisibility: "Measurement provenance only. The E2-1 chat dispatch writes no Rail row; a read is not a business action or settlement receipt." },
   // E2-2 (2026-10-12, ANT-23 delegation): the read-only admission class now admits this tool to

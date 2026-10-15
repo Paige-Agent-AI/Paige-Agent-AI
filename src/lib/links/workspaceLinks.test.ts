@@ -59,6 +59,15 @@ describe("workspaceLinkTarget", () => {
     expect(workspaceLinkTarget({ destination: "contacts", record_id: UUID }, soloTenant))
       .toEqual({ label: "Open client record", to: `/solo/3855/clients/people?person=${UUID}`, status: "exact" });
   });
+  it("opens a persisted Play in the current account and withholds it outside Solo", () => {
+    const reference = { destination: "business_game_plan" as const, record_id: UUID };
+    expect(workspaceLinkTarget(reference, soloTenant)).toEqual({ label: "Open Strategic Play",
+      to: `/solo/3855/command-center/business-game-plan?play=${UUID}`, status: "exact" });
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_number: 9999 })?.to)
+      .toBe(`/solo/9999/command-center/business-game-plan?play=${UUID}`);
+    expect(workspaceLinkTarget(reference, subTenant)).toBeNull();
+    expect(routeLinkTarget(reference, "solo", "not/an/account")).toBeNull();
+  });
 
   it("names a list as a list, never as the exact record", () => {
     expect(workspaceLinkTarget({ destination: "sales_invoices", record_id: null }, soloTenant))

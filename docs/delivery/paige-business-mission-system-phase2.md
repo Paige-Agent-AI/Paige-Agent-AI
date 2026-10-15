@@ -225,3 +225,101 @@ semantics. A pending attempt keeps its mounted editor/draft locked until its out
 known. Revision conflicts retain draft inputs, require an explicit latest-record inspection
 and never silently substitute newer target/Play CAS or the original request identity.
 All changes remain in the native consumer boundary; protected acceptance stays owed.
+
+## F7 Executive / conversation read integration — pre-edit contract
+
+The preceding foundation candidate text is historical: #2167 merged892b1bdfe with
+verified production source. Native consumer#2174 has since released as3fa8b501619782f533ac80d778fb309bf21b53b0
+from reviewed7a898a10d, with eight exact-head workflow groups and production web/database/Edge
+source readback verified. Authenticated target acceptance remains owed. This following
+slice#2181 is read integration, not consequential activation.
+
+1. Intended outcome: an owner asks about goals, sees the same saved target/compatible
+   actual in PAIGE and Executive, opens the owning Play and returns to the same record.
+2. Domain: existing Business Mission/Fabric/Analytics; E02 remains sole implementing
+   lead. Current BUG Chat/admission and E04/E05 runtime leases remain protected.
+3. Shared Harness: reuse the currently admitted read-only business snapshot, canonical
+   owner context, current-caller metric issuer/resolver and existing turn persistence.
+4. Spine: extend business.operating_snapshot's existing game_plan domain using canonical
+   business_mission.targets records. No new direct Chat tool/admission. A standalone
+   target Chat binding stays unavailable unless actually integrated/authorized.
+5. Provider: none for this projection. Existing model/Live provider contracts and their
+   readiness/expense gates are unchanged; no provider is activated or newly purchased.
+6. Authorization: current Mission owner context and issuer permission checks. Owner
+   counts/definitions cannot leak to an admin/member through aggregate snapshot access.
+   Read-only action-risk lane, no second confirmation or model-supplied authority.
+7. Durable execution: no new job/event/scheduler. Reading a target starts no business work.
+8. Truth/receipts: canonical saved versions and existing receipts remain authoritative;
+   actuals require existing verified issued evidence and the shared target evaluator.
+   Never fabricate an ACT/Rail receipt for viewing or an actual from an absent currency.
+9. UI: extend existing Executive and owning Play detail plus shared current-account record
+   links; Business Game Plan/Executive Binding Ledger states remain PARTIAL. Reuse the
+   native target flow prototype for the evidence -> owning record -> return interaction.
+10. Proof: scoped owner/refused/foreign/revoked reads, bounded exact totals, decimal and
+    calendar consistency, safe model projection, same Chat/Executive values, reload and
+    record navigation. Native/capture, protected customer fixtures, final customer/owner
+    acceptance and any held Live provider proof remain separate and owed.
+
+REUSE: existing target/version/Mission/receipt relations, metric issuer, target evaluator,
+Fabric composer, turn records and E04 semantic reference resolver. EXTEND: game_plan
+projection/closed snapshot schema and existing Executive/navigation consumers. REPAIR:
+current generic Game Plan surface-only references gain validated owning-Play context.
+NEW: only a bounded owner-authorized domain projection over existing target/Mission
+records if global enumeration needs it; no new authoritative store, goal engine or ledger.
+Any new projection must retain current authority and exact counts; capped samples never
+become full totals or a whole-business success claim. Source changes await the interactive
+read-flow extension before production UI work; ordinary source/release work remains authorized.
+
+The interactive read-flow extension is now source/DOM exercised in the owner conversation's
+e2-executive-target-flow-prototype.html: Executive, the owning Play, read-only briefing,
+partial/unavailable/expired/denied states, account switching and320px reflow. Deterministic
+mock evidence only; no native pixel/capture or authenticated product acceptance.
+
+Read integration may generalize the incumbent Analytics reader in place with a verified
+internal evidence result for the existing target evaluator. Its existing model-facing
+projection must still remove account/epoch identifiers, refuse old references without
+replacement issuance, revalidate scope and expiry and return no raw producer extras.
+Same-series concurrent consumers must sequence issuance/resolution in that one reader;
+no metric cache, store, second issuer or competing Fabric composer is permitted. The
+global owner review is a bounded read projection over canonical Missions/targets/versions,
+with exact counts independent of its sample and no new authoritative data.
+
+### Implemented source and remaining proof
+
+The existing Fabric composer now mounts an owner-only Game Plan adapter over the new
+bounded `get_business_mission_review` read. It reports exact Play/target counts and at
+most six canonical target definitions with owning Play context. No numeric target does
+not mean no business direction. All target actuals use the incumbent Analytics reader's
+issue/resolve cycle and the shared exact target evaluator; no actual is stored here.
+Same-series operations sequence on that caller without value caching. The internal
+verified-evidence port preserves actual issuer epochs; the model-facing projection still
+excludes them. Existing reference refusal never causes replacement issuance.
+
+The closed shared presentation validates current tenant, definition, decimal/currency,
+period, partial/expiry and historical-snapshot semantics at composer and browser boundaries.
+Executive rows share the exact formatter and observations; existing PAIGE handoff drafts a
+read-only target briefing. Game Plan references extend E04's existing six-link frame and
+current-account resolver with a UUID Play locator. The destination re-reads the canonical
+Play, survives a fresh mount, and retires late reads on account, record or route removal.
+Other department link ordering/caps and the three original Mission tools are preserved.
+
+Local verification:292 tests across15 focused files,61 rollback-only SQL assertions,
+scoped ESLint, type baseline10/current10, production build and Spine self-test PASS.
+Source review renewed only two fixed fingerprints: existing canonical route map plus
+existing metric reader. All29 incumbent dispatch fingerprints and original authority,
+source-substitution and effect negative controls remain unchanged. No auto-accept path.
+The canonical Sales producer accepts timestamp cohorts for recorded cash; its won/lost
+date cohorts separately require UTC-midnight bounds. Incompatible target periods stay
+unavailable; this consumer never changes the source calendar or silently narrows a target.
+
+Finish/source review is AUTHOR SELF-REVIEW under the standing owner exception, lower
+assurance. See docs/evidence/ui-delivery/e2-f7-executive-target-context.md. Hosted exact-head
+CI, forward migration, affected web/Edge source readback, authenticated target/briefing/
+reload/isolation, native/accessibility/Live parity and final owner full-product acceptance
+remain owed. The capture hold and historical9/0 plus supplement12/0/4 are unchanged.
+
+Final source hardening rechecks the canonical owner read after issued metrics, because
+its owner-only definitions do not inherit Analytics' broader owner/admin permission.
+A synthetic late-owner-refusal control failed before repair;294 cases across the same
+15-file bounded suite now pass, including this case and absent currency precision.
+The private authority helper remains ungranted; no new RPC or database change is added.

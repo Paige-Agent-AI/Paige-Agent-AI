@@ -87,4 +87,11 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
       { destination: "business_time_zone", record_id: null },
     ]);
   });
+  it("round-trips an exact Play reference without retaining an old account, address or subject", () => {
+    const persisted = JSON.parse(JSON.stringify({ record_links: [{ destination: "business_game_plan", record_id: A,
+      subject: "Private Play", url: "/solo/old/command-center/business-game-plan", account: "old" }] }));
+    expect(readRecordLinks(persisted.record_links)).toEqual([{ destination: "business_game_plan", record_id: A }]);
+    expect(readRecordLinks([{ destination: "business_game_plan", record_id: "../foreign" }]))
+      .toEqual([{ destination: "business_game_plan", record_id: null }]);
+  });
 });

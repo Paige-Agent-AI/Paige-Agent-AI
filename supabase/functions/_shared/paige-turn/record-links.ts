@@ -30,7 +30,7 @@ export const READ_LINK_DESTINATIONS = [
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];
 
-/** UUID references are supported for clients and managed invoices. Subject text is contact-only. */
+/** UUID references are supported for clients, managed invoices and Strategic Plays. Subject text is contact-only. */
 export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string };
 
 export const MAX_RECORD_LINKS = 6;
@@ -41,6 +41,7 @@ const DESTINATIONS: ReadonlySet<string> = new Set(READ_LINK_DESTINATIONS);
 /** Record text on one line: control characters and line breaks become spaces, direction marks drop. */
 function subjectOf(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
+  // eslint-disable-next-line no-control-regex -- strip control characters from source labels
   const flat = value.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
     .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, "")
     .replace(/\s+/g, " ").trim();
@@ -54,9 +55,9 @@ function one(value: unknown): ReadRecordLink | null {
   const v = value as Record<string, unknown>;
   if (typeof v.destination !== "string" || !DESTINATIONS.has(v.destination)) return null;
   const destination = v.destination as ReadLinkDestination;
-  if (destination !== "contacts" && destination !== "sales_invoices") return { destination, record_id: null };
+  if (destination !== "contacts" && destination !== "sales_invoices" && destination !== "business_game_plan") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
-  if (destination === "sales_invoices") return { destination, record_id };
+  if (destination === "sales_invoices" || destination === "business_game_plan") return { destination, record_id };
   const subject = subjectOf(v.subject);
   return subject ? { destination, record_id, subject } : { destination, record_id };
 }

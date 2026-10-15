@@ -12,6 +12,8 @@ Exactly29 dispatch fingerprint scalars are renewed against the actual composed h
 
 Current proof: the actual-source/approved-handler proof passes9 checks on the landed Sales helper, and the eight deliberate behavior mutants are detected in the current-main review retained on PR2143 comment6182313506. Final composed-head guard/mutation checks and exact-head hosted CI are recorded on the PR after push. No authenticated or production restoration is inferred from fixtures.
 
+CI housekeeping: exact-head20975f222 Finance authority jobs116205093605 and116205732968 both stopped before checkout/tests because ECR Public returned `toomanyrequests: Data limit exceeded`. Both failures are retained. Only that job's image origin is switched to official Docker Hub `library/postgres`; immutable manifest digest remains `sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166`. An anonymous public origin read verified both the Docker-Content-Digest header and SHA256 of actual manifest bytes against the existing pin, with config digest `sha256:275447c94b11b151decd1f29877965301d5a77032037c46de93d990f739f00a9`, linux/amd64 and PostgreSQL16.15. No registry/account credentials, image version, environment, health check, permission or test assertion changes. This is routine release housekeeping; a fresh exact-head run is still required.
+
 Status: DEVELOPMENT / NOT MERGED / NOT DEPLOYED / NOT RESTORED. INT346 remains inactive; Supabase cessation caseSU508602 is pending. Ordinary Academy/Antonio positive/negative execution, canonical records, durable receipts/reload/recovery and owner product acceptance remain PROOF OWED. The source review resolves only this bounded repair's review dependency.
 
 ## Retained original review and implementation evidence

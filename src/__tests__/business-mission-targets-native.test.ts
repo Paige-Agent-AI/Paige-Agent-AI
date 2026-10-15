@@ -15,7 +15,7 @@ const definition = {
 };
 const args = { request_key: request, mission_id: mission, expected_mission_revision: 1, target_id: null, expected_target_revision: null, definition, metric_evidence_ref: "aneb_v1_" + "c".repeat(64), reason: "Reviewed strategy" };
 const target = { ...definition, id, tenant_id: tenant, mission_id: mission, revision: 1, state: "active" } as MissionTarget;
-type Reply = { data: unknown; error: { message?: string } | null };
+type Reply = { data: unknown; error: { message?: string; code?: string } | null };
 function setup(options: { scopes?: string[]; read?: unknown; write?: Reply | Error; rail?: boolean | Error; receipt?: unknown } = {}) {
   const scopes = options.scopes ? [...options.scopes] : [tenant, tenant, tenant, tenant];
   const caller = { rpc: vi.fn(async (name: string): Promise<Reply> => {
@@ -67,9 +67,19 @@ describe("mission target native boundary verifies committed canonical revisions"
   it("distinguishes unknown transport from a definite SQL refusal", async () => {
     const unknown = setup({ write: new Error("connection lost") });
     expect(await unknown.run()).toMatchObject({ success: false, code: "MISSION_TARGET_WRITE_OUTCOME_UNKNOWN", mutationMayHavePersisted: true });
-    const refused = setup({ write: { data: null, error: { message: "MISSION_TARGET_REVISION_CONFLICT" } } });
+    const refused = setup({ write: { data: null, error: { code: "40001", message: "MISSION_TARGET_REVISION_CONFLICT" } } });
     expect(await refused.run()).toMatchObject({ success: false, code: "MISSION_TARGET_REVISION_CONFLICT", mutationMayHavePersisted: false });
     expect(unknown.recordRun).not.toHaveBeenCalled(); expect(refused.recordRun).not.toHaveBeenCalled();
+  });
+  it.each([
+    { message: "TypeError: Failed to fetch" },
+    { code: "503", message: "upstream connection lost" },
+    { message: "MISSION_TARGET_REVISION_CONFLICT" },
+  ])("retains the same intent when the SDK returns an unproven transport error: %j", async error => {
+    const h = setup({ write: { data: null, error } });
+    expect(await h.run()).toMatchObject({ success: false, code: "MISSION_TARGET_WRITE_OUTCOME_UNKNOWN", mutationMayHavePersisted: true });
+    expect(h.recordRun).not.toHaveBeenCalled();
+    expect(h.caller.rpc.mock.calls.filter(c => c[0] === "save_business_mission_target")).toHaveLength(1);
   });
   it.each([{ desired_value: "999" }, { tenant_id: id }, { mission_id: id }, { revision: 2 }, { state: "paused" }])("never records unverified readback %j", async patch => {
     const h = setup({ read: { ...target, ...patch } });

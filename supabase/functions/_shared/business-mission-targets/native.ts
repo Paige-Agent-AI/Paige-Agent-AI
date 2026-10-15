@@ -50,7 +50,15 @@ export async function executeVerifiedMissionTargetMutation(input: {
   let result: Record<string, unknown>;
   try {
     const write = await input.caller.rpc(writer.name, writer.args);
-    if (write.error) return fail(code(write.error, "MISSION_TARGET_WRITE_FAILED"));
+    if (write.error) {
+      // PostgREST also returns network/gateway failures through `error` rather
+      // than throwing. Only a transaction-aborting PostgreSQL SQLSTATE proves
+      // refusal; otherwise preserve the same request for receipt reconciliation.
+      const sqlState = (write.error as { code?: unknown }).code;
+      const refused = typeof sqlState === "string" && /^(?:22|23|40|42|P0)[0-9A-Z]{3}$/.test(sqlState);
+      return refused ? fail(code(write.error, "MISSION_TARGET_WRITE_FAILED"))
+        : fail("MISSION_TARGET_WRITE_OUTCOME_UNKNOWN", true);
+    }
     if (!object(write.data)) return fail("MISSION_TARGET_WRITE_RESULT_INVALID", true);
     result = write.data;
   } catch { return fail("MISSION_TARGET_WRITE_OUTCOME_UNKNOWN", true); }

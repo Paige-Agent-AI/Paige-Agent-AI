@@ -102,7 +102,7 @@ No capability in this record is claimed live.
 Owner approval ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef` selects numeric
 targets attached to existing Strategic Plays. E02 is the sole implementation lead;
 retired agents are not a dependency. This is a bounded foundation on main
-`bf0a8b60bee8d3a83c17c214655ea6425fc168d4`, not completion of O10 or all nineteen.
+`ffbdd1d3c1b7fa2aebbc79fcf2562c7822f80006`, not completion of O10 or all nineteen.
 
 Pre-edit capability routing:
 1. Owner sets/revises/pauses/retires a measured Play goal and returns to the same record.
@@ -134,13 +134,20 @@ decimal variance without floating-point loss. Missing actuals stay unavailable, 
 has unknown attainment/no trustworthy variance, and today's snapshot cannot prove a past target.
 The saved IANA period calendar is explicit; overdue retains the issuer's business calendar.
 
-Local proof: 79 focused tests including the existing Mission adapter and Spine registry; 39 rollback-only SQL
+Local proof: 82 focused tests including the existing Mission adapter and Spine registry; 39 rollback-only SQL
 assertions against the real incumbent issuer/resolver and target migration; actual concurrent
 duplicate creation produces one target/receipt and a replay, competing revisions one commit and
 one CAS refusal. Identity/relation scaffolding is synthetic, not full Supabase/Auth acceptance.
-Both SQL suites are wired into the EXISTING Spine workflow; hosted results are still owed.
+Both SQL suites are wired into the EXISTING Spine workflow. Earlier hosted SQL and concurrent
+assertions passed; fixture retirement then correctly refused its retained temporary issuer
+reference. The proof now deletes only its own random fixture reference before the canonical
+retirement checks; production deletion guards are unchanged. Three failing-first SDK-returned
+transport regressions also pass after preserving uncertain intent unless a PostgreSQL
+transaction-aborting SQLSTATE proves refusal. Final composed-head hosted results remain owed.
 
-Remaining sequence: independent nonauthor review/exact-head CI and authorized release of this
+Owner explicitly authorizes sole-lead author self-review, lower assurance, instead of another
+agent/nonauthor review; final human review is of the integrated deployed experience.
+Remaining sequence: final composed-head author self-review/exact-head CI and authorized release of this
 contract; prototype and complete native target editor/recovery/history; same canonical target
 and issuer in Executive and governed Chat/Live; authenticated SOLO positive/negative/reload
 evidence; owner acceptance. Storage approval grants no privileged production activation,

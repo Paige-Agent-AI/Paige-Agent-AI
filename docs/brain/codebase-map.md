@@ -395,3 +395,8 @@ an integration entry point updates this file in the same commit (§BRAIN.3). Ver
   and the 71-assertion SQL plan first. It must obtain explicit provider approval/credentials before
   enabling bytes, then prove OCR, secret/financial-sensitive detection, encrypted/malformed and
   timeout refusal, cleanup compensation, exact-byte promotion, and authenticated storage behavior.
+
+
+### Knowledge Chat restoration binding — production source / proof owed
+
+PR1615, merged7ee9fb941: `_shared/knowledge-tenant-brain.ts` is the bounded caller-JWT adapter for existing `read_tenant_knowledge`, `update_tenant_knowledge_metadata`, and `delete_tenant_knowledge` SQL services. Spine declarations stay in `_shared/paige-spine/domains/knowledge.ts`; Chat uses its current approval/resume path and SQL owns mutation receipts. No Knowledge, Memory, executor or provider store is created. Production source and additive catalogue migration20271102110000 are verified; subsequent agreement composition72545987 preserves the bindings. Current evidence: `docs/evidence/ui-delivery/knowledge-governed-chat.md`. INT346 remains inactive; provider cessation, governed activation and ordinary authenticated action/receipt/isolation proof remain owed. The owner authorized bounded sequential author review as a lower-assurance exception, not independent security approval.

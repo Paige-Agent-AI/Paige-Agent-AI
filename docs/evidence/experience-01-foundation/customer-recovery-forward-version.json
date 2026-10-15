@@ -40,6 +40,22 @@
     "release": "UNRELEASED",
     "authenticated": "NOT_RUN"
   },
+  "frontier061000Preparation": {
+    "date": "2026-10-15",
+    "status": "CURRENT_MAIN_PREPARATION_NOT_REVIEWED_OR_RELEASED",
+    "reviewedBaseline": "fe10900f0dc4f8f0843a023d591052a3d74ff039",
+    "main": "f87e9fcb343eb9da14ce0e23ec55e3dd83e83c0f",
+    "verifiedProductionFrontier": "20271104101000",
+    "formerUnappliedVersion": "20271103100000",
+    "pendingVersion": "20271106100000",
+    "sqlSHA256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274",
+    "sqlBodyUnchanged": true,
+    "sourceReview": "FUTURE_EXACT_HEAD_REVIEW_NOT_STARTED",
+    "previewRepair": "NOT_EXECUTED",
+    "release": "UNRELEASED",
+    "authenticated": "NOT_RUN",
+    "originalCases": 23
+  },
   "collisionSuccessorPreparation": {
     "date": "2026-10-14",
     "status": "LOCAL_PREPARATION_NOT_REVIEWED_OR_RELEASED",

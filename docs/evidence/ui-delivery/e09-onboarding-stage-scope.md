@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Actual role-bound function resolves the active relationship
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Canonical relationship helper reused unchanged; no RLS/raw-table grant/credential/identity registry/AI admission/provider activation or other domain source change.
 
-INTERNAL_BUILD_IDENTITY:60676f40b8ad5be93cc1659dfecdb0b7f978c69b; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271106120000_e09_client_stage_scope); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-projection.mjs and supabase/tests/client_portal_self_projection.sql
+INTERNAL_BUILD_IDENTITY:60676f40b8ad5be93cc1659dfecdb0b7f978c69b; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271106120000_e09_client_stage_scope awaits review CI and normal production pipeline); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-projection.mjs and supabase/tests/client_portal_self_projection.sql
 RELEASE_CHANNEL: development: local native proof only; ordinary production pipeline/readback follows review/CI/merge.
 RELEASE_CLASSIFICATION: internal-only: canonical scope repair in incomplete Portal delivery.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent authenticated customer outcome or named publication approval.

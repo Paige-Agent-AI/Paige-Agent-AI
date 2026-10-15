@@ -133,6 +133,27 @@ describe("safe onboarding relationship", () => {
     expect(state?.client).toBeNull();
     expect(state?.userEmail).toBeNull();
   });
+  it("an initial null-session event preserves a retryable Auth failure", async () => {
+    const pending = deferred(); getUser.mockImplementationOnce(() => pending.promise);
+    await mount();
+    act(() => authListener?.("INITIAL_SESSION", null));
+    await act(async () => {
+      pending.resolve({ data: { user: null }, error: { name: "AuthRetryableFetchError", status: 0 } });
+    });
+    expect(state?.loading).toBe(false);
+    expect(state?.error).toBe("profile_unavailable");
+    expect(state?.client).toBeNull();
+    expect(state?.userEmail).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("an initial null-session event still requires sign-in after a confirmed missing user", async () => {
+    const pending = deferred(); getUser.mockImplementationOnce(() => pending.promise);
+    await mount();
+    act(() => authListener?.("INITIAL_SESSION", null));
+    await act(async () => { pending.resolve({ data: { user: null }, error: null }); });
+    expect(state?.error).toBe("not_authenticated");
+    expect(rpc).not.toHaveBeenCalled();
+  });
   it("an account switch keeps the new subject's record when the old request finishes later", async () => {
     const pending = deferred(); rpc.mockImplementationOnce(() => pending.promise);
     await mount(); user = { id: actorB, email: "other@tests.invalid" };

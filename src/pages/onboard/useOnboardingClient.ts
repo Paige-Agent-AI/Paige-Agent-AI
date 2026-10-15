@@ -51,16 +51,23 @@ export function useOnboardingClient() {
 
   useEffect(() => {
     mounted.current = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const next = session?.user.id ?? null;
-      // A null session must invalidate even the initial pending Auth lookup,
-      // before that lookup has established an actor.
-      if (next !== null && next === actor.current) return;
+      // Confirmed sign-out invalidates even before the first lookup establishes
+      // an actor. INITIAL_SESSION null can instead represent a retryable SDK
+      // error; let getUser classify that result outside the callback's lock.
+      if (event === "SIGNED_OUT") {
+        actor.current = null;
+        invalidateRequests();
+        setState({ loading: false, error: "not_authenticated", client: null, userEmail: null });
+        return;
+      }
+      if (next === actor.current) return;
       actor.current = next;
       invalidateRequests();
-      setState({ loading: Boolean(next), error: next ? null : "not_authenticated", client: null, userEmail: null });
+      setState({ loading: true, error: null, client: null, userEmail: null });
       // Auth callbacks hold the SDK lock; schedule the new read after returning.
-      if (next) queueMicrotask(() => { if (mounted.current) void refresh(); });
+      queueMicrotask(() => { if (mounted.current) void refresh(); });
     });
     void refresh();
     return () => { mounted.current = false; invalidateRequests(); subscription.unsubscribe(); };

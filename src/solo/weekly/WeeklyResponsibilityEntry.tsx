@@ -7,8 +7,9 @@ import { useWeeklyOwnerAudience, useWeeklyResponsibility } from "./useWeeklyResp
 import { WeeklyResponsibilityPanel } from "./WeeklyResponsibilityPanel";
 import { WEEKDAYS, weeklyInstantLabel, weeklyStateLabel } from "./weekly-responsibility";
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
+import { WeeklyDraftComposer } from "./WeeklyDraftComposer";
 
-/** Additive browser inspection. No conversational tool, confirmation or process writer. */
+/** Same owner review entry in PAIGE and Calendar; conversational tools stay unadmitted. */
 export function WeeklyResponsibilityEntry({ hideEmpty = false }: { hideEmpty?: boolean }) {
   const audience = useWeeklyOwnerAudience();
   if (!audience.eligible) return null;
@@ -56,6 +57,8 @@ export function WeeklyResponsibilityDialog({ open, onOpenChange, theme, read, re
   return <Sheet open={open} onOpenChange={onOpenChange}><SheetContent className="e5-weekly-sheet paige-solo" data-pg={theme} data-theme={theme}
     onCloseAutoFocus={event => { if (onReturnFocus) { event.preventDefault(); onReturnFocus(); } }}>
       <SheetHeader><SheetTitle>Weekly responsibility</SheetTitle><SheetDescription>Current owner scope, canonical schedules and verified results.</SheetDescription></SheetHeader>
-      <WeeklyResponsibilityPanel read={read} refresh={refresh} pathname={pathname} />
+      <WeeklyResponsibilityPanel read={read} refresh={refresh} pathname={pathname} draftComposer={open ? <WeeklyDraftComposer
+        businessZone={read.status === "ready" && read.snapshot.business_time_zone.state === "configured" ? read.snapshot.business_time_zone.zone : null}
+        onSaved={refresh} /> : undefined} />
     </SheetContent></Sheet>;
 }

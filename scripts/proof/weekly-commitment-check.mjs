@@ -13,17 +13,20 @@ import {fileURLToPath} from 'node:url';
 import {randomUUID,createHash} from 'node:crypto';
 import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
 import {historyPerformanceProof} from './weekly-commitment-history-performance.mjs';
+import {weeklyDraftCommandProof} from './weekly-commitment-draft-command.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
 const readMigration='supabase/migrations/20271029000000_experience05_weekly_status_readback.sql';
 const historyMigration='supabase/migrations/20271030000000_experience05_weekly_history_indexes.sql';
 const baselineRead=process.argv.includes('--baseline-read-preparation');
+const draftOnly=process.argv.includes('--draft-command-only');
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');
 if(ci&&simulateCiRole)throw new Error('Role simulation is limited to a newly created local disposable cluster');
 if(ci&&baselineRead)throw new Error('Negative baseline is limited to a newly created local disposable cluster');
+if(ci&&draftOnly)throw new Error('Draft-only iteration is local only; CI always runs the complete native proof');
 if(ci&&process.env.PGHOST&&!['localhost','127.0.0.1'].includes(process.env.PGHOST))throw new Error('Loopback only');
 const bin=process.env.WEEKLY_PROOF_PG_BIN??(process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin':'');
 const command=name=>bin?join(bin,`${name}${process.platform==='win32'?'.exe':''}`):name;
@@ -170,6 +173,11 @@ try{
   run(zoneSource.match(/ALTER TABLE public\.tenant_business_time_zones ENABLE ROW LEVEL SECURITY;/)[0]);
   run(zoneSource.match(/REVOKE ALL ON public\.tenant_business_time_zones[^;]+;/)[0]);
   if(!baselineRead){run(readMigrationSource);run(readMigrationSource);run(source(historyMigration));run(source(historyMigration));}
+  if(draftOnly){
+    const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin});
+    evidence={status:'PASS',cases:cases.length,checks:cases,draft_command:draftCommand,boundary:'local additive draft-only iteration; full native CI unchanged; no production/provider/authenticated acceptance'};
+    writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
+  }else{
   check('migration applies twice; catalogue stays dark',()=>assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f'));
   check('owner read supplies source actor clock and explicit bounded coverage',()=>{
     const data=json('SELECT get_weekly_commitment_checks();',ownerCtx);
@@ -543,6 +551,7 @@ try{
   const historyPerformance=historyPerformanceProof({run,json,literal,source,owner,tenant,otherOwner,foreign,member,admin,templateEvent:event,migration:historyMigration,onMeasurement:m=>writeFileSync(join(scratch,'history-measurement.json'),JSON.stringify(m,null,2))});
   check('accumulated historical getter indexed performance, role isolation and receipt correlation',()=>assert.equal(historyPerformance.status,'PASS'));
   console.log(JSON.stringify({history_performance:{status:historyPerformance.status,scenarios:historyPerformance.scenarios.map(s=>({seeded_history_rows:s.seeded_history_rows,after_median_ms:s.after_median_ms,assertions:s.assertions}))}}));
+  const draftCommand=await weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin});
   const retirement=source('supabase/migrations/20270602000504_operator_provider_independent_retirement.sql');
   const archives=source('supabase/migrations/20270602000203_operator_account_archive.sql');
   run(`CREATE FUNCTION operator_preview_account_deletion(uuid) RETURNS jsonb LANGUAGE sql AS $$
@@ -553,7 +562,7 @@ try{
     CREATE FUNCTION operator_account_deletion_plan(_ids uuid[]) RETURNS jsonb LANGUAGE plpgsql SET search_path=public AS $$
     DECLARE table_name text; tids jsonb; plan jsonb:='{}'; BEGIN
       FOREACH table_name IN ARRAY ARRAY['tenant_members','tenant_tool_autonomy','tenant_business_time_zones','plan_items','plans','paige_automations','paige_native_events',
-        'paige_event_dispatches','paige_act_executions','paige_workspace_events'] LOOP
+        'paige_event_dispatches','paige_act_executions','paige_workspace_events','paige_pending_confirmations'] LOOP
         EXECUTE format('SELECT coalesce(jsonb_agg(ctid::text),''[]''::jsonb) FROM public.%I WHERE tenant_id=ANY($1)',table_name) INTO tids USING _ids;
         IF jsonb_array_length(tids)>0 THEN plan:=plan||jsonb_build_object(table_name,jsonb_build_object('disposition','delete','tids',tids)); END IF;
       END LOOP;
@@ -583,12 +592,13 @@ try{
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
   evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
     read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
-    schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,
+    schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,draft_command:draftCommand,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};
   writeFileSync(join(scratch,'result.json'),JSON.stringify(evidence,null,2));
   console.log(JSON.stringify(evidence));console.log(`Evidence: ${join(scratch,'result.json')}`);
+  }
 }finally{
   if(created){try{run(`DROP DATABASE ${database};`,{db:'postgres'});}catch(e){console.error('Cleanup failed',e.message);process.exitCode=1;}}
   if(roleCaptured){try{

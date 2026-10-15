@@ -29,6 +29,10 @@
 .e5-weekly-actions,.e5-weekly-navigation { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
 .e5-weekly-navigation { padding-top:24px; border-top:1px solid var(--pg-line,hsl(var(--border))); margin-top:24px; }
 .e5-weekly-planning { margin-top:24px; padding-top:24px; border-top:1px solid var(--pg-line,hsl(var(--border))); }
+.e5-weekly-draft-composer { margin-top:24px; border-top:1px solid var(--pg-line,hsl(var(--border))); padding-top:24px; }
+.e5-weekly-draft { margin:20px 0; overflow-wrap:anywhere; }
+.e5-weekly-draft-selector { display:grid; gap:6px; margin:16px 0; }
+.e5-weekly-draft-selector select { max-width:100%; min-height:44px; color:inherit; background:var(--pg-canvas,hsl(var(--background))); }
 .e5-weekly-fields { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
 .e5-weekly-fields label:last-child { grid-column:1/-1; }
 .e5-weekly-fields label { display:grid; gap:6px; font-weight:550; }

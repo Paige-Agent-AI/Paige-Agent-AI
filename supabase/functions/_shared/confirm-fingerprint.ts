@@ -45,6 +45,9 @@ export const NON_IDENTITY_ARGS: Readonly<Record<string, readonly string[]>> = Ob
   // drafts together never matches either card.
   email_campaign_draft: ["request_key"],
   email_series_draft: ["request_key"],
+  // Server-only create identity; the exact human-visible name/schedule is still hashed.
+  // The canonical proposal stores this request UUID and SQL executes only that stored call.
+  weekly_commitment_draft: ["_request_id"],
 });
 
 // ── THE SUBJECT-ID FOR BATCH DISAMBIGUATION (§9/§13/§39) ─────────────────────────────────────────

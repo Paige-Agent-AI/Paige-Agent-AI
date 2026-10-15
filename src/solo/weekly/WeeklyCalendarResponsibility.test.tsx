@@ -9,7 +9,7 @@ import { WeeklyResponsibilityEntry } from "./WeeklyResponsibilityEntry";
 const harness = vi.hoisted(() => ({ read: vi.fn(), eligible: true }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: "actor", activeTenantId: "tenant", loading: false, accountContextStatus: "ready", soloShellEnabled: true, isPlatformStaff: false }) }));
 vi.mock("./useWeeklyResponsibility", () => ({ useWeeklyResponsibility: harness.read,
-  useWeeklyOwnerAudience: () => ({ eligible: harness.eligible, key: "actor:tenant" }) }));
+  useWeeklyOwnerAudience: () => ({ eligible: harness.eligible, key: "actor:tenant", context: { activeUserId: "actor", activeTenantId: "tenant" } }) }));
 vi.mock("@/components/tenant-calendar/useSoloCalendar", async importOriginal => {
   const actual = await importOriginal<typeof import("@/components/tenant-calendar/useSoloCalendar")>();
   return { ...actual, useSoloCalendar: () => ({ bookings: [], calendars: [], seatsBySession: new Map(), conflicts: [], phase: "ready", error: null,

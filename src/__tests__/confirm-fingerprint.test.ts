@@ -71,11 +71,20 @@ describe("the fingerprint still VARIES by the fields that define the action's id
 });
 
 describe("the ignore-set is NARROW — it never swallows a consequential parameter", () => {
-  it("only action_advance's decision_rationale and a new email draft's server-settled create key are listed", () => {
-    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance", "email_campaign_draft", "email_series_draft"]);
+  it("only the named non-consequential notes and server-settled create keys are listed", () => {
+    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance", "email_campaign_draft", "email_series_draft", "weekly_commitment_draft"]);
     expect(NON_IDENTITY_ARGS.email_series_draft).toEqual(["request_key"]);
     expect(NON_IDENTITY_ARGS.action_advance).toEqual(["decision_rationale"]);
     expect(NON_IDENTITY_ARGS.email_campaign_draft).toEqual(["request_key"]);
+    expect(NON_IDENTITY_ARGS.weekly_commitment_draft).toEqual(["_request_id"]);
+  });
+  it("weekly draft identity ignores only its server request key; every consequence and workspace still differs", async () => {
+    const args = { _request_id: "server-1", _name: "Weekly review", _weekday: 1, _local_time: "09:00", _timezone: "America/New_York", scope_tenant_id: "tenant-1" };
+    const fingerprint = await confirmFingerprint("weekly_commitment_draft", args);
+    expect(await confirmFingerprint("weekly_commitment_draft", { ...args, _request_id: "server-2" })).toBe(fingerprint);
+    for (const patch of [{ _name: "Other responsibility" }, { _weekday: 2 }, { _local_time: "10:00" }, { _timezone: "UTC" }, { scope_tenant_id: "tenant-2" }]) {
+      expect(await confirmFingerprint("weekly_commitment_draft", { ...args, ...patch })).not.toBe(fingerprint);
+    }
   });
 
   it("an email draft's create key never changes its card, and everything it drafts still does", async () => {

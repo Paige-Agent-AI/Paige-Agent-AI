@@ -169,7 +169,11 @@ for (const p of sweepFiles) {
   const accountOperand = String.raw`(?:\b(?:[A-Za-z_$][\w$]*\s*(?:\?\.|\.)\s*)*account_?[Nn]umber\b|\b[A-Za-z_$][\w$]*(?:\s*(?:\?\.|\.)\s*[A-Za-z_$][\w$]*)*\s*(?:\?\.)?\s*\[\s*["']account_?[Nn]umber["']\s*\])`;
   const positiveAddress = String.raw`(?:["'\x60]0*[1-9]\d*["'\x60]|\b[1-9]\d*\b)`;
   const comparison = String.raw`\s*(?:={2,3}|!={1,2})\s*`;
-  const acct = code.match(new RegExp(accountOperand + comparison + positiveAddress))
+  // Add coverage without narrowing the incumbent heuristics (which also catch
+  // prefixed identifiers and padded quoted literals). No old check is waived.
+  const acct = code.match(/account_?[Nn]umber\s*===?\s*(?:["'`]\s*\d{3,}|\d{3,}\b)/)
+    ?? code.match(/(?:["'`]\d{4,}["'`]|\b\d{4,}\b)\s*===?\s*\w*account_?[Nn]umber/)
+    ?? code.match(new RegExp(accountOperand + comparison + positiveAddress))
     ?? code.match(new RegExp(positiveAddress + comparison + accountOperand));
   if (acct) fail("SP4", `account-number literal comparison in ${rel}`);
   const uuid = code.match(/["'`][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}["'`]/i);
@@ -287,6 +291,8 @@ if (process.argv.includes("--self-test")) {
     ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = 7654321 === activeTenant?.account_number;\nexport const ENTERPRISE_EXTRA')],
     ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = activeTenant["account_number"] === "7654321";\nexport const ENTERPRISE_EXTRA')],
     ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = accountNumber === 42;\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = myaccountNumber === 7654321;\nexport const ENTERPRISE_EXTRA')],
+    ["SP4", (t) => patch(t, "src/lib/routing/tierBranches.ts", "export const ENTERPRISE_EXTRA", 'const sp4Mutation = accountNumber === " 7654321";\nexport const ENTERPRISE_EXTRA')],
     ["SP4", (t) => writeFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), readFileSync(join(t, "src/components/tenant-shell/TenantCommandCenterShell.tsx"), "utf8") + '\nconst sp4Mutation = activeTenant?.id === "11111111-2222-4333-8444-555555555555";\n')],
     ["SP4", (t) => writeFileSync(join(t, "src/components/auth/RequireSoloBetaEntitlement.tsx"), readFileSync(join(t, "src/components/auth/RequireSoloBetaEntitlement.tsx"), "utf8") + '\nconst sp4Mutation = activeTenant?.account_number === 7654321;\n')],
     ["SP4", (t) => writeFileSync(join(t, "src/lib/tier/tierFeatures.ts"), readFileSync(join(t, "src/lib/tier/tierFeatures.ts"), "utf8") + '\nconst sp4Mutation = tenantName === "test-tenant-special";\n')],

@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: valid legacy linked/null documents, changed source, malfor
 TRUTHFUL_STATE_LABELS: PASS: economic context null means unknown, never zero or signed compatibility; C1 remains PARTIAL.
 SOLO_UI: NO: public token recipient signing page, not a Solo workspace surface.
 UNVERIFIED: historical signed economics, prospective presented-approved snapshot producer, hosted auth/browser, real signature and production deployment remain unproven.
-INTERNAL_BUILD_IDENTITY: implementation=7be1154a78b6f4cf24d15684ee4fdd06d337fc1f; deployment=UNVERIFIED; environment=development isolated native PostgreSQL; migrations=PROOF_OWED(20271101153000 production persistence); edge=NOT_APPLICABLE; evidence=this record and canonical native proof
+INTERNAL_BUILD_IDENTITY: implementation=7be1154a78b6f4cf24d15684ee4fdd06d337fc1f; deployment=UNVERIFIED; environment=development isolated native PostgreSQL; migrations=PROOF_OWED(20271105100000 production persistence); edge=NOT_APPLICABLE; evidence=this record and canonical native proof
 RELEASE_CHANNEL: development: production migration and hosted acceptance remain owed.
 RELEASE_CLASSIFICATION: internal-only: bounded historical signing-read truth correction.
 CUSTOMER_RELEASE_IDENTITY: none: no complete signed-economic acceptance or customer announcement.
@@ -52,3 +52,10 @@ Before repair, its installed `peek_agreement_signing(text)` body SHA256 `b2dee27
 The guarded history-only insert first established153000 by copying that exact existing receipt, committed, and returned both equal records. The first old-identity retirement request returned an expired-request error; readback proved both records remained. One bounded retry retired only120000, conditional on the matching new receipt and unchanged function/ACL. Final readback retains only153000 with the same three-statement hash and unchanged installed function/ACL. No schema SQL was replayed, no reset/recreation or broad history cleanup occurred. The new163000 presentation migration was still absent at this readback; it was not falsely marked applied.
 
 Canonical Supabase Preview must now rerun and turn green, followed by another migration readback. This recovery alone does not establish deployment or acceptance. Current broader E04 source composition has additional product code; the prior evidence-only review allowance does not approve that code. Its applicable independent non-author review remains owed.
+
+
+## Forward-only migration identity reconciliation — 2026-10-15 UTC
+
+Production recorded the released Knowledge migration20271102110000. This E04 migration is NOT recorded in production and is moved forward without changing a single SQL byte. Existing historical filenames and test observations above remain historical evidence. Current proof loaders and this record's pending migration field use the new identity. Preview reconciliation may change only the exact matching installed migration receipt version after branch/data/receipt checks; it must retain its original name and statement array. No production history rewrite, schema replay, reset, include-all bypass, activation or authenticated acceptance follows from this source rename.
+
+Current mappings in this source: 20271101153000 → 20271105100000, 20271101163000 → 20271105101000.

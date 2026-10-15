@@ -59,7 +59,7 @@ try{
   const prepared=await prepareCommercialPresentation(input);
   const presented=input.body_markdown+'\n\n'+prepared.appendix;
   const key=`${tenant}/${agreementId}/presented-commercial-fixture.pdf`,pdfHash='a'.repeat(64);
-  if(mode==='repaired'){const migration=read('supabase/migrations/20271101163000_agreement_commercial_presentation.sql');sql(migration);sql(migration);}
+  if(mode==='repaired'){const migration=read('supabase/migrations/20271105101000_agreement_commercial_presentation.sql');sql(migration);sql(migration);}
   const call=(payload=prepared.payload,payloadDigest=prepared.payload_digest,who=actor,role='service_role')=>`SET ROLE ${role}; SELECT _freeze_paige_commercial_presentation('${who}','${tenant}',${literal(payload)},${text(payloadDigest)},${text(presented)},${text(digest(presented))},${text(key)},${text(pdfHash)});`;
   // Recomputed adversarial digests must fail source/semantic validation,
   // rather than merely failing the transport checksum.

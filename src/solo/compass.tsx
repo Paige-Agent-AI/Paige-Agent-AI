@@ -518,7 +518,7 @@ return <div className="fade-in pg" style={{width:'100%',maxWidth:1440,margin:'0 
  <div className="card">
   <div className="hd"><div><h3>Waiting on your decision</h3>
    <div className="sub">{pending.loading?'Reading what is waiting on you…':pending.error?'This could not be read just now.':pending.items.length?'Work Paige has prepared but will not take without you.':'Nothing is waiting on your decision right now.'}</div></div>
-   <span className={'pill '+(pending.items.length?'pill-warn':'pill-n')}>{pending.loading?'…':pending.error?'Unavailable':pending.items.length?pending.items.length+' waiting':'Clear'}</span></div>
+   <span className={'pill '+(pending.items.length?'pill-warn':'pill-n')}>{pending.loading?'…':pending.error?'Unavailable':pending.items.length?(pending.total??'Up to '+pending.items.length)+' waiting':'Clear'}</span></div>
   {pending.error
    ? <div className="sub" role="alert" style={{padding:'14px 20px'}}>This could not be read, so it is not a record of nothing waiting. <button className="btn btn-s" style={{marginLeft:8}} onClick={pending.refresh}>Try again</button></div>
    : pending.items.slice(0,4).map((a,i)=>

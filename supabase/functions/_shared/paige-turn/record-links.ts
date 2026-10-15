@@ -19,6 +19,13 @@ export const READ_LINK_DESTINATIONS = [
   "sales_collections",
   "operations_work",
   "business_time_zone",
+  "executive",
+  "finance",
+  "sales_pipeline",
+  "systems_check",
+  "business_game_plan",
+  "trust_compass",
+  "mind",
 ] as const;
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];

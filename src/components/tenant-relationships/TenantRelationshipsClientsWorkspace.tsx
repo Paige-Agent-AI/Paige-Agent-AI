@@ -37,6 +37,7 @@ import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsE
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
+import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -100,7 +101,7 @@ export function TenantRelationshipsClientsWorkspace({
   const location = useLocation();
   const navigate = useNavigate();
   const soloClientRoute = /^\/solo\/([^/]+)\/clients(?:\/|$)/.exec(location.pathname);
-  const { activeTenantId, activeTenant, accountContextLoading, refresh } = useTenantContext();
+  const { activeTenantId, activeUserId, activeTenant, accountContextStatus, accountContextLoading, refresh } = useTenantContext();
   const variant = relationshipWorkspaceVariant(activeTenant?.account_type, activeTenant?.parent_tenant_id);
   // Experience 04 E4-S3: where each client stands, on the rich Solo client record only. Declared per
   // §60 (`client_standing`); the route's own account builds its links (same tree, same account).
@@ -169,10 +170,15 @@ export function TenantRelationshipsClientsWorkspace({
     return <BoundedState eyebrow="Account context required" title="We couldn't resolve this workspace" detail="Relationship data stays blocked until the authenticated account context is available." kind="error" onRetry={() => void refresh()} />;
   }
 
+  if (routeTier === "solo" && activeTab === "portal" && (!activeUserId || accountContextStatus !== "ready")) {
+    return <BoundedState eyebrow="Account context required" title="Checking this workspace" detail="Portal records stay closed until your signed-in account is verified." kind="loading" />;
+  }
+
   const workspaceName = variant === "relationships" ? "Relationships" : "Clients";
   const soloPeople = routeTier === "solo" && variant === "clients" && activeTab === "people";
   const soloConversations = routeTier === "solo" && variant === "clients" && activeTab === "conversations";
   const soloCalendar = routeTier === "solo" && activeTab === "calendar";
+  const soloPortal = routeTier === "solo" && variant === "clients" && activeTab === "portal";
   const proof = activeTab === null
     ? { label: "View · UNAVAILABLE", tone: "unavailable" as const }
     : activeTab === "segments"
@@ -184,14 +190,14 @@ export function TenantRelationshipsClientsWorkspace({
       : { label: `${tabs.find(({ id }) => id === activeTab)?.label ?? workspaceName} · PARTIAL`, tone: "partial" as const };
 
   return (
-    <section className={`trc-workspace${soloPeople ? " trc-workspace--people" : ""}${soloConversations ? " trc-workspace--conversations" : ""}${soloCalendar ? " trc-workspace--calendar" : ""}`} data-relationship-workspace data-variant={variant}>
+    <section className={`trc-workspace${soloPeople ? " trc-workspace--people" : ""}${soloConversations ? " trc-workspace--conversations" : ""}${soloCalendar ? " trc-workspace--calendar" : ""}${soloPortal ? " trc-workspace--portal" : ""}`} data-relationship-workspace data-variant={variant}>
       {routeTier === "solo" && soloClientRoute && !(previousTenantId.current && accountIsChanging) && searchParams.get("origin") === "sales" && (
         <div className="trc-sales-return" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,padding:"8px 18px",flexShrink:0,borderBottom:"1px solid var(--pg-line)"}}>
           <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/${searchParams.get("salesReturn") === "department" ? "sales/agreements" : "growth/sales"}?resume=terms`)}>Return to commercial terms</button>
           <span>Create or choose a client here, then return to select them in Sales.</span>
         </div>
       )}
-      {!soloCalendar && !soloPeople && !soloConversations && (
+      {!soloCalendar && !soloPeople && !soloConversations && !soloPortal && (
         <header className="trc-heading">
           <div>
             <span>{workspaceName} · {activeTenant.name}</span>
@@ -225,7 +231,7 @@ export function TenantRelationshipsClientsWorkspace({
 
       <div
         id="trc-panel"
-        className={`trc-panel${soloPeople ? " trc-panel--people" : ""}${soloConversations ? " trc-panel--conversations" : ""}${soloCalendar ? " trc-panel--calendar" : ""}`}
+        className={`trc-panel${soloPeople ? " trc-panel--people" : ""}${soloConversations ? " trc-panel--conversations" : ""}${soloCalendar ? " trc-panel--calendar" : ""}${soloPortal ? " trc-panel--portal" : ""}`}
         role="tabpanel"
         aria-labelledby={activeTab ? `trc-tab-${activeTab}` : undefined}
         aria-label={activeTab ? undefined : "Unavailable relationship view"}
@@ -252,7 +258,15 @@ export function TenantRelationshipsClientsWorkspace({
         )}
         {activeTab === "calendar" && <CalendarLens key={activeTenantId} routeTier={routeTier} activeTenantId={activeTenantId} returnAddress={calendarReturnAddress} openPaige={openPaige} />}
         {activeTab === "segments" && <SegmentsView />}
-        {activeTab === "portal" && <PortalView key={activeTenantId} activeTenantId={activeTenantId} data={data} selectedContactId={selectedContactId} />}
+        {activeTab === "portal" && (soloPortal
+          ? <OwnerPortalDashboard key={`${activeUserId}:${activeTenantId}`} tenantId={activeTenantId} tenantName={activeTenant.name} data={data} openPaige={openPaige} openClient={(contactId) => {
+              setSelectedContactId(contactId ?? null);
+              if (!soloClientRoute) { setRouteTab("people"); return; }
+              const next = new URLSearchParams(searchParams);
+              if (contactId) next.set("person", contactId); else next.delete("person");
+              navigate(`/solo/${soloClientRoute[1]}/clients/people${next.size ? `?${next}` : ""}`);
+            }} />
+          : <PortalView key={activeTenantId} activeTenantId={activeTenantId} data={data} selectedContactId={selectedContactId} />)}
       </div>
     </section>
   );

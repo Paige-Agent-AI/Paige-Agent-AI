@@ -112,3 +112,20 @@ nonauthor review is claimed.
 Preexisting DESIGN.md is newer than its Impeccable sidecar; no unrelated refresh performed.
 Source tests, the prototype and local disposable database cannot substitute for production
 customer acceptance. Existing Master, Brain and E02 matrix remain the only program records.
+
+## Required CI correction — original Mission retry fixture
+
+Exact2144149 CI38672078502 executed12983 tests:12977 passed and six original Mission
+retry component cases failed before reaching their forms. Local unchanged reproduction
+confirmed the same six failures. The test harness supplied no resolved account context
+after the new actor/workspace lifetime guard and registered its cleanup through a dynamic
+import inside a test. The harness now loads before tests, provides ordinary resolved
+context, resets it between cases, and isolates the separately tested target child. All
+original outcome-unknown, exact request-key, changed-intent, known-refusal, settled-intent
+and account-switch assertions remain. A new unresolved-context case verifies no form or
+writer. No product guard, authority, writer, migration or accepted evidence changed.
+
+The corrected retry and adjacent native suites pass96 local cases across8 files. These
+are synthetic source checks. The original hosted failure remains recorded; new-head
+review and all required CI must pass before release. This correction claims no deployment
+or authenticated customer acceptance.

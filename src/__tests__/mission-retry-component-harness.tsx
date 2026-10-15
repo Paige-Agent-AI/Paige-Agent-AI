@@ -12,6 +12,7 @@ import { createRoot, type Root } from "react-dom/client";
  */
 
 const harness = vi.hoisted(() => ({
+  accountReady: true,
   mission: {
     items: [] as unknown[],
     status: "ready" as const,
@@ -88,6 +89,15 @@ vi.mock("../solo/data/useBusinessGamePlanMissions", async () => {
   const actual = await vi.importActual<typeof import("../solo/data/useBusinessGamePlanMissions")>("../solo/data/useBusinessGamePlanMissions");
   return { ...actual, useBusinessGamePlanMissions: () => harness.mission };
 });
+// The real drawer now requires a resolved actor/workspace. Keep that guard real;
+// provide its ordinary positive fixture rather than relying on absent context.
+vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({
+  activeUserId: "test-owner", activeTenantId: "11111111-1111-4111-8111-111111111111",
+  accountContextStatus: harness.accountReady ? "ready" : "resolving", loading: !harness.accountReady,
+}) }));
+// Numeric-target behavior is exercised by its own mounted suite. It must not add
+// unrelated SDK reads to these original Mission retry/receipt assertions.
+vi.mock("../solo/MissionTargetsPanel", () => ({ MissionTargetsPanel: () => <div data-testid="mission-targets-boundary" /> }));
 
 const { PlanInMotion } = await import("../solo/PlanInMotion");
 
@@ -101,6 +111,7 @@ afterEach(() => {
   harness.mission.getDetail.mockReset();
   harness.mission.getDetail.mockImplementation(async () => { throw new Error("not used"); });
   harness.mission.items = [];
+  harness.accountReady = true;
 });
 
 const setNativeValue = (element: HTMLInputElement | HTMLTextAreaElement, value: string) => {
@@ -206,6 +217,8 @@ export const harnessApi = {
   seedProposedPlay,
   openFirstPlay,
   approve,
+  setAccountReady: (ready: boolean) => { harness.accountReady = ready; },
+  openCreate: () => clickButton("Add play"),
 };
 export type HarnessApi = typeof harnessApi;
 void 0;

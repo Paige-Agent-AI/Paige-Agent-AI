@@ -60,6 +60,11 @@ export type RenderedCommercialPresentation = PreparedCommercialPresentation & {
   presented_body_markdown: string;
   presented_body_sha256: string;
 };
+/** The exact text handed to the canonical PDF renderer and owner review. Keep
+ * formatting composition in one place; this adds no financial calculation. */
+export function commercialPresentationText(body: string, prepared: PreparedCommercialPresentation): string {
+  return `${body}\n\n${prepared.appendix}`;
+}
 const refuse = (): never => {
   throw Error("COMMERCIAL_PRESENTATION_UNAVAILABLE");
 };
@@ -278,7 +283,7 @@ export async function renderCommercialPresentation(
   ) throw Error("COMMERCIAL_PRESENTATION_CHANGED");
   const body = (captured as Record<string, unknown>).body_markdown as string;
   const render = renderer ?? (await import("./document.ts")).renderPresentedPdf;
-  const presentedBody = `${body}\n\n${prepared.appendix}`;
+  const presentedBody = commercialPresentationText(body, prepared);
   const bytes = await render({
     title: prepared.payload.title,
     bodyMarkdown: presentedBody,

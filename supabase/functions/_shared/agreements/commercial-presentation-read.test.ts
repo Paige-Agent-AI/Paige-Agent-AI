@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { prepareCommercialPresentationFromRecords, readCommercialPresentationSource } from './commercial-presentation-read.ts';
 import { assembleFixedRepaymentSchedule } from '../sales-collections/model.ts';
+import {sha256Hex} from './token.ts';
 
 const tenant='aaaaaaaa-0000-4000-8000-000000000001';
 const client='bbbbbbbb-0000-4000-8000-000000000001';
@@ -80,7 +81,11 @@ describe('canonical commercial presentation source read',()=>{
       expect(result.presentation.payload.principal_minor).toBe(350000);
       expect(result.presentation.payload.source.invoice_draft_version).toBe(3);
       expect(result.presentation.appendix).toContain('2027-08-15');
-      expect(Object.keys(result)).toEqual(['state','presentation']);
+      expect(Object.keys(result)).toEqual(['state','presentation','presented_body_markdown']);
+      const body='Existing owner-supplied agreement';
+      expect(result.presented_body_markdown).toBe(body+'\n\n'+result.presentation.appendix);
+      expect(result.presentation.payload.body_sha256).toBe(await sha256Hex(body));
+      expect(result.presented_body_markdown.match(/USD 3,500.00/g)).toHaveLength(1);
     }
   });
   it('leaves unknown source facts unavailable to a financial presentation',async()=>{

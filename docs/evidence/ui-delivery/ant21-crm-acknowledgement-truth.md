@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: repair existing native outcome and recovery semantics 
 FLOW_PROTOTYPE: NOT_REQUIRED: no new step, control, destination, layout or permission
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: all eligible current/future SOLO owners can distinguish a confirmed native CRM result from an unanswered action and avoid duplicate work
 VISUAL_DIRECTION: PASS: existing shared Chat components and domain destinations
-AUTOMATED_EVIDENCE: PASS: actual outcome statements reproduce10 failures among28 initial cases;30 current cases plus151 neighboring native/approval/receipt tests; four complete-handler modes. Final review correction requires refreshed validation
-STATIC_EVIDENCE: UNVERIFIED: protected source review, any necessary narrowly scoped pin renewal and exact-head CI remain required
+AUTOMATED_EVIDENCE: PASS: actual outcome statements reproduce10 failures among28 initial cases;30 current cases plus151 neighboring native/approval/receipt tests pass, including the accepted contradictory-flag review correction; four complete-handler modes pass
+STATIC_EVIDENCE: PASS: separate source review, reviewed29 conservative ancestry scalar renewals,55 incumbent baseline/mutants,214-capability Spine and scoped test lint pass; exact-head hosted CI remains required
 RENDERED_EVIDENCE: UNVERIFIED: authenticated changed-outcome card rendering remains blocked by INT346 secure activation
 BEHAVIORAL_EVIDENCE: PASS: actual canonical CRM response statements and full handler against protected native-door doubles; no real provider or customer action
 AUTHENTICATED_RUNTIME: UNVERIFIED: both ordinary sessions available, but positive CRM execution requires cessation, governed activation and protected paired business-record/receipt testing
@@ -22,13 +22,13 @@ UNVERIFIED: final source review/pins/CI, production source readback, native posi
 OWNER_INTENT: restore all18 historical capabilities and all50 parity rows through the existing platform; reference accounts never become product-specific conditions
 EXPERIENCE_CONTRACT: PASS: retain CRM authorization, exact stored approvals, native idempotency and receipts; report truthful outcomes and safe recovery
 PROTECTED_SEAMS: PASS: caller JWT/actor/workspace and native writers unchanged; current request shares the incumbent uncertainty brake; no provider, subscription, role, credential or admission mutation
-INTERNAL_BUILD_IDENTITY: development source freeze recorded at exact final PR head; migrations=NOT_APPLICABLE; edge=PROOF_OWED
+INTERNAL_BUILD_IDENTITY: 50e134fa1f6eb1e21a08eae2f279971f7083f78e source freeze; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(shared Chat production source release and secure action activation remain distinct); evidence=docs/evidence/ui-delivery/ant21-crm-acknowledgement-truth.md and scripts/int336-two-tool-check.mjs
 RELEASE_CHANNEL: development: isolated protected source proof only
 RELEASE_CLASSIFICATION: internal-only: bounded CRM outcome restoration
 CUSTOMER_RELEASE_IDENTITY: none: complete restored customer outcome not yet proven
 RELEASE_NOTE_REQUIRED: no: no customer publication decision
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: real protected domain records, complete customer action/receipt/replay/isolation and owner acceptance
-RELEASE_RECOVERY: retain inactive INT346 admission; guarded source forward fix/revert and native original-operation readback, never blind re-execution
+RELEASE_RECOVERY: position=retain inactive INT346 admission and use guarded source forward correction plus native original-operation readback without blind re-execution; reference=docs/evidence/ui-delivery/int346-interactive-issuance.md and docs/evidence/ui-delivery/ant21-crm-acknowledgement-truth.md
 
 The previous binding took an error-free response without `ok:false` as success. Null, array, primitive and malformed objects therefore became success. Its failure-body spread could override the local success=false or retain an unsupported not_applied=true. An error carrying ok=true also misreported non-application. Initial actual-source regression reproduced10 failures. The first correction exposed the spread override; the complete-handler negative then exposed a missing current-request successor brake. These failures are retained, not reclassified as test success.
 

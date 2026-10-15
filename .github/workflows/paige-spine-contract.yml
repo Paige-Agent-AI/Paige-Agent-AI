@@ -72,6 +72,7 @@ on:
       - "supabase/tests/team_authority_readiness.sql"
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/business_mission_numeric_targets.sql"
+      - "supabase/tests/business_mission_target_attribution.sql"
       - "supabase/tests/social_foundation.sql"
       - "supabase/tests/social_foundation_rls.sql"
       - "scripts/sql/social-foundation-legacy-shape-proof.sql"
@@ -569,6 +570,7 @@ jobs:
       - name: Mission-linked numeric targets — caller scope, real issuer, revisions and replay (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/business_mission_numeric_targets.sql
+      - run: supabase test db supabase/tests/business_mission_target_attribution.sql
       - run: supabase test db supabase/tests/social_foundation.sql
       - run: supabase test db supabase/tests/social_foundation_rls.sql
       - run: supabase test db supabase/tests/social_connection_lifecycle.sql

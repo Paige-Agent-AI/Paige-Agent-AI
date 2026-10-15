@@ -1,0 +1,32 @@
+.paige-solo .mgt { border-top: 1px solid var(--line-soft); padding-top: 16px; min-width: 0; }
+.paige-solo .mgt h4 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.015em; }
+.paige-solo .mgt h5 { margin: 0; font-size: 14px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.paige-solo .mgt p { margin: 0; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.paige-solo .mgt p > svg { width: 16px; height: 16px; display: inline; vertical-align: text-bottom; margin-right: 6px; }
+.paige-solo .mgt-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.paige-solo .mgt-count, .paige-solo .mgt-state { color: var(--ink-3); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.paige-solo .mgt-count { margin-left: 4px; }
+.paige-solo .mgt .mgt-caption, .paige-solo .mgt small { color: var(--ink-3); font-size: 12px; line-height: 1.5; }
+.paige-solo .mgt-row { display: flex; flex-direction: column; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line-soft); min-width: 0; }
+.paige-solo .mgt-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; }
+.paige-solo .mgt .sd-btn { min-height: 44px; }
+.paige-solo .mgt .sd-btn svg, .paige-solo .mgt summary svg { width: 15px; height: 15px; flex: none; }
+.paige-solo .mgt summary { cursor: pointer; font-size: 12px; line-height: 1.5; padding: 8px 0; }
+.paige-solo .mgt summary svg { display: inline; vertical-align: text-bottom; margin-right: 5px; }
+.paige-solo .mgt-history ol { list-style: none; margin: 0; padding: 0; }
+.paige-solo .mgt-history li { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line-soft); font-size: 12px; overflow-wrap: anywhere; }
+.paige-solo .mgt-history time { color: var(--ink-3); }
+.paige-solo .mgt-recovery, .paige-solo .mgt-transition, .paige-solo .mgt-editor { padding: 12px 0; display: flex; flex-direction: column; gap: 12px; }
+.paige-solo .mgt-recovery { color: var(--warn); }
+.paige-solo .mgt-receipt span { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.paige-solo .mgt-values { display: flex; flex-wrap: wrap; gap: 20px; margin: 0; }
+.paige-solo .mgt-values div { flex: 1 1 120px; min-width: 0; }
+.paige-solo .mgt-values dt { color: var(--ink-3); font-size: 12px; }
+.paige-solo .mgt-values dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.paige-solo .mgt-editor fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.paige-solo .mgt-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.paige-solo .mgt .fin { min-width: 0; min-height: 44px; }
+.paige-solo .mgt-definition { color: var(--ink-2); font-size: 12px; line-height: 1.5; }
+.paige-solo .mgt-empty { padding: 14px 0; color: var(--ink-3); }
+.paige-solo .mgt-skeleton { height: 52px; margin-top: 12px; }
+@media (max-width: 620px) { .paige-solo .mgt-heading { flex-wrap: wrap; } .paige-solo .mgt-fields { grid-template-columns: minmax(0, 1fr); } }

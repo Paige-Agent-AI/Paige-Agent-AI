@@ -900,6 +900,17 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=lost node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=missing-readback node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          PLANNING_RECOVERY=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=partial node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          AUTOMATION_DRAFT_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs

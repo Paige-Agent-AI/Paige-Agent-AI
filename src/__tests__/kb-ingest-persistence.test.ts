@@ -8,7 +8,7 @@ vi.mock('../../supabase/functions/_shared/voyage', () => ({ VOYAGE_DIMS: 1024, e
 const vector = () => Array(1024).fill(0.1);
 const params = { tenantId: 'test-tenant-a', title: 'Process', content: 'x'.repeat(1800), source: 'paste' };
 type Row = Record<string, unknown>;
-type Reply = { data?: Row | Row[] | null; error: { message: string } | null; count?: number };
+type Reply = { data?: Row | Row[] | null; error: { message: string; code?: string } | null; count?: number };
 function database(fault = '') {
   const state = { docs: [] as Row[], chunks: [] as Row[], calls: [] as { table: string; op: string; filters: Array<[string, unknown]>; value: Row | Row[] }[] };
   const client = { from(table: string) {
@@ -25,7 +25,7 @@ function database(fault = '') {
       single() { single = true; return q; }, maybeSingle() { single = true; return q; },
       then(resolve: (reply: Reply) => unknown, reject: (reason: unknown) => unknown) { return Promise.resolve().then((): Reply => {
         state.calls.push({ table, op, filters: [...filters], value });
-        if (fault === 'insert-doc' && table.endsWith('docs') && op === 'insert') return { data: null, error: { message: 'denied' } };
+        if (fault === 'insert-doc' && table.endsWith('docs') && op === 'insert') return { data: null, error: { code: '42501', message: 'denied' } };
         if (table.endsWith('chunks') && op === 'insert' && fault === 'insert-chunks') return { error: { message: 'failed' } };
         if (table.endsWith('chunks') && op === 'insert' && fault === 'insert-throw') throw Error('lost response');
         if (table.endsWith('chunks') && op === 'read' && fault === 'readback') return { error: { message: 'read unavailable' } };
@@ -40,6 +40,7 @@ function database(fault = '') {
           if (key === 'chunks' && fault === 'wrong-index') rows[0].chunk_index = 99;
           if (key === 'chunks' && fault === 'duplicate-index') rows[1].chunk_index = rows[0].chunk_index;
           state[key].push(...rows);
+          if (key === 'docs' && fault === 'persisted-doc-error') return { data: null, error: { code: '', message: 'lost response after insert' } };
           if (key === 'chunks' && fault === 'persisted-throw') throw Error('lost acknowledgement');
         }
         if (op === 'update' && fault !== 'zero-update') state[key].filter(matches).forEach(r => Object.assign(r, value));
@@ -52,6 +53,25 @@ function database(fault = '') {
 }
 beforeEach(() => { vi.mocked(embeddingsCompat).mockReset().mockImplementation(async () => new Response(JSON.stringify({ data: [{ embedding: vector() }] }))); });
 describe('ingestion persistence truth', () => {
+  it('does not label a committed document with a lost insert response as not saved', async () => {
+    const { client, state } = database('persisted-doc-error');
+    const result = await ingestDoc(client, params);
+    expect(state.docs).toHaveLength(1);
+    expect(result).toMatchObject({ ok: false, error: 'persistence_unverified' });
+    expect(result.not_applied).not.toBe(true);
+    expect(embeddingsCompat).not.toHaveBeenCalled();
+  });
+  it('marks a native single-statement authorization refusal as not-applied', async () => {
+    const { client, state } = database('insert-doc');
+    expect(await ingestDoc(client, params)).toMatchObject({ ok: false, not_applied: true });
+    expect(state.docs).toHaveLength(0);
+  });
+  it('reports non-application only after failed indexing cleanup is independently absent', async () => {
+    embeddingsCompat.mockResolvedValue(new Response('{}', { status: 503 }));
+    const { client, state } = database();
+    expect(await ingestDoc(client, params)).toMatchObject({ ok: false, not_applied: true, error: 'embedding_failed' });
+    expect(state.docs).toHaveLength(0);
+  });
   it('verifies all persisted searchable chunks and reconciles the document', async () => {
     const { client, state } = database(); const result = await ingestDoc(client, params);
     expect(result).toMatchObject({ ok: true, embedded: true, chunk_count: chunkText(params.content).length });

@@ -64,6 +64,19 @@ as the approved domain contract allows; actuals remain unavailable until that cu
 issued. No empty bucket is converted to zero. The editor provides an explicit definition
 refresh after evidence expiry. Non-object HTTP bodies are refused before any writer.
 
+Hosted Spine correctly refused the changed metric-reader ancestry fingerprint after key
+extraction. Read-only AST review against deployed892b1bdfe proves the33-key module is exactly
+the old declaration and reinserting it recreates the identical original reader AST. The
+existing frozen-source contract now pins both reviewed reader and pure dependency; no digest
+auto-acceptance or policy/effect check is removed. Added negative controls reject a changed
+key, added dependency effect or missing key module. Original29 incumbent bindings and
+metadata/source-substitution negatives remain required. This is a reviewed source-contract
+renewal for a semantics-preserving extraction, not execution activation or a CI waiver.
+All55 incumbent binding/negative-control tests and the unchanged Spine self-test PASS
+after that renewal; the first frozen-contract failure remains historical. Final new-head
+review and hosted checks are required again. The deployed reader and all33 key literals
+were inspected directly; the comparison introduced no generated acceptance mechanism.
+
 ## Review and remaining proof
 
 Flow-by-Flow, Paige UI, Flow Prototype, Impeccable and React quality checks were applied.

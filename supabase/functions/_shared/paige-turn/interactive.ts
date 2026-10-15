@@ -14,7 +14,7 @@ export interface InteractiveEffect {
   run_id?: string;
   record_refs?: Array<{ kind: string; id: string }>;
 }
-const RECORD_FIELDS: Readonly<Record<string, string>> = { task_id: "task", plan_id: "plan", contact_id: "contact", deal_id: "deal",
+const RECORD_FIELDS: Readonly<Record<string, string>> = { task_id: "task", plan_id: "plan", plan_item_id: "plan_item", contact_id: "contact", deal_id: "deal",
   booking_id: "booking", payment_id: "payment", message_id: "message", invoice_id: "invoice" };
 function recordReferences(r: Record<string, unknown>) {
   return Object.entries(RECORD_FIELDS).flatMap(([field, kind]) => typeof r[field] === "string" && UUID.test(r[field] as string)

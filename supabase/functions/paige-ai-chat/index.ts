@@ -5438,6 +5438,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const autonomyModeCache = new Map<string, string>();
     // A lost Knowledge acknowledgement is never retried by the model in this turn.
     const uncertainKnowledgeDocuments = new Set<string>();
+    // A Planning RPC can commit before its acknowledgement/readback is lost.
+    // Hold this request's later writes; persisted interactive effects hold successors.
+    const planningExecutionState = { needsReview: false };
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
       let mode = "confirm"; // safe default — never assume autopilot
@@ -6386,7 +6389,7 @@ THE INNOVATIVE ASSISTANT — probe for specifics, weigh the client's experience,
 - GROW THE PRACTICE'S BRAIN — with a yes. When you or an agent learn something reusable — a repeatable play, a domain fact, an answer to a recurring question — OFFER to keep it: "Want me to save this to your knowledge base?" and on their yes use save_to_knowledge_base (it's embedded, searchable, and stays yours). If it's a repeatable capability, offer to stand it up as a specialist (forge_subagent). Always confirmation-gated; tenant-scoped; coaching-generic unless this tenant's offer includes the topic.
 
 PLANNING & REMINDERS — you can actually plan work and set reminders that FIRE. This is the everyday "remind me to…" plus real team/individual planning. The tools:
-- plan_set_reminder — "remind me to follow up with Dana Friday 9am." Resolve the time they said into a concrete ISO timestamp WITH their timezone (never a vague time; if it's ambiguous, ask). It genuinely fires at that time — an in-app ping (and a branded email if they ask for email) — isolated to the person. A logged-in staffer can set their OWN reminder freely; aiming one at a teammate or the WHOLE TEAM is admin/coach only (resolve the teammate with crm_list_team first). A sales rep's "remind me to follow up with this lead" → set it, and if it's about a specific client pass their contact_id. When you set one, say so truthfully: "Reminder's locked in — it'll ping you Friday 9am." Because it really will.
+- plan_set_reminder — "remind me to follow up with Dana Friday 9am." Resolve a concrete ISO timestamp WITH their timezone (ask if ambiguous). The existing runner processes saved reminders; saving is not delivery proof. A logged-in staffer can request their OWN reminder; teammate or WHOLE TEAM reminders remain admin/coach only (resolve the teammate with crm_list_team first). Pass contact_id for a specific client. Report a saved reminder only after verified record readback. Never promise a future ping, email delivery, or SMS. If the result is uncertain, inspect the original record with the owner before any repeat request.
 - plan_create + plan_add_milestone + plan_assign_task + plan_update_item + plan_remove_item + plan_list — map out a week / month / quarter / semiannual / year / custom range. When someone says "help me plan my week (or month/quarter)", DON'T just make a list — first ask the scope in one quick line: "Is this just for you, for the team, tied to a campaign, or a future workflow?" Then plan_create the plan and hang milestones/tasks/reminders on it. Individual weekly planning is the common entry point and ANY staffer can do their own; team plans, milestones, and assigning work to OTHERS are admin/coach. Assign campaign-rollout tasks to teammates with plan_assign_task (it also lands on the owner's action-bus queue). Use plan_list to answer "what's on my plate / show my week / what reminders do I have" and to resolve an id before you change something.
 - Everyone in the workspace now has a default "Meetings" calendar created automatically — so "add it to my calendar" / booking a meeting has a real home (use calendar_book_meeting). Never claim something's on the calendar unless a tool put it there.
 - REVISIT: when you see a milestone or reminder coming due in plan_list, it's fair game to nudge — "That Q3 launch milestone is next week — still on track, or want to move it?" You're the assistant who remembers.
@@ -9301,7 +9304,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "author_event_kind":
           return `Add a new activity kind "${a?.label || a?.slug || ""}" for this practice to track${a?.visibility === "client_visible" ? " (clients can see it)" : " (staff only)"}. It's added for your workspace only.`;
         case "plan_set_reminder":
-          return `Set a reminder${a?.target === "team" ? " for the team" : a?.target_user_id ? " for a teammate" : ""}: "${a?.title || ""}"${a?.remind_at ? ` at ${a.remind_at}` : ""}${a?.contact_id ? " (about a client)" : ""}. It'll ping ${a?.target === "team" ? "the team" : "you"} in-app at that time${a?.channel === "email" ? ", plus an email if sending's set up" : ""}.`;
+          return `Schedule an in-app reminder${a?.target === "team" ? " for the team" : a?.target_user_id ? " for a teammate" : " for you"}: "${a?.title || ""}"${a?.remind_at ? ` at ${a.remind_at}` : ""}${a?.contact_id ? " (about a client)" : ""}${a?.channel === "email" ? ", with email requested if sending is configured" : ""}. Scheduling does not confirm delivery.`;
         case "plan_create":
           return `Create a ${a?.horizon || ""} plan "${a?.title || "Untitled"}"${a?.starts_on ? ` (${a.starts_on}${a?.ends_on ? `–${a.ends_on}` : ""})` : ""}${a?.scope === "team" ? " for the team" : ""}.`;
         case "plan_add_milestone":
@@ -10509,8 +10512,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
-        if (interactive && MUTATING_TOOLS.has(tc.function.name) &&
-            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool)))) {
+        if (MUTATING_TOOLS.has(tc.function.name) && (planningExecutionState.needsReview || interactive &&
+            (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool))))) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
@@ -16274,9 +16277,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // tenant_id is also passed explicitly as a belt-and-suspenders match.
           // These RPCs are the honest seam: a reminder filed here is a row the
           // minute-cadence runner actually fires — no claim without a backing action.
+          const planningIsWrite = tc.function.name !== "plan_list";
+          let planningWriteAttempted = false;
+          let planningRecordReference: Record<string, string> = {};
+          const planningUnknown = () => {
+            planningExecutionState.needsReview = true;
+            return { ...planningRecordReference, success: false, outcome_unknown: true,
+              error: "The planning change could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+          };
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
             const tid = personaCtx?.tenant_id ?? null;
+            if (planningIsWrite) {
+              const scope = await supabaseClient.rpc("current_user_tenant_id");
+              if (!tid || scope.error || scope.data !== tid) throw new Error("planning_scope_changed");
+            }
             let rpcName = "", rpcArgs: Record<string, unknown> = {};
             switch (tc.function.name) {
               case "plan_set_reminder":
@@ -16308,6 +16323,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
                 break;
             }
+            planningWriteAttempted = planningIsWrite;
             const { data: rpcData, error: rpcErr } = await supabaseClient.rpc(rpcName, rpcArgs);
             if (rpcErr) {
               // Surface the real reason (PLAN_FORBIDDEN, missing time, etc.) — never
@@ -16331,19 +16347,83 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 : msg.includes("PLAN_TITLE_REQUIRED") ? "That needs a title."
                 : msg.includes("PLAN_NO_TENANT") ? "Couldn't resolve the workspace for that."
                 : "That didn't go through. Try again or ask for the missing detail.";
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: friendly, note: "It did NOT happen — tell the operator plainly why; do not claim it was set." }) });
+              // Only an answered single-RPC refusal proves its transaction rolled back.
+              // A gateway/network error can arrive after the database committed.
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
+                planningIsWrite && !databaseAnswered(rpcErr) ? planningUnknown()
+                  : { success: false, ...(planningIsWrite ? { not_applied: true } : {}), error: friendly,
+                    note: planningIsWrite ? "The database refused this change. Nothing was applied." : "The planning records could not be read." }) });
             } else {
-              // Honesty on delivery: the IN-APP ping is the hard guarantee. Email
-              // is a best-effort side channel (only if the workspace's sending is
-              // configured), so never tell the operator email is 'locked in'.
+              let verifiedRecord: Record<string, unknown> | null = null;
+              let recordLocator: { table: string; id: string } | null = null;
+              if (planningIsWrite) {
+                const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
+                const table = tc.function.name === "plan_create" ? "plans" : "plan_items";
+                const recordId = table === "plans" ? ack?.plan_id : ack?.item_id;
+                if (ack?.ok !== true || typeof recordId !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(recordId)
+                  || args.item_id && recordId.toLowerCase() !== String(args.item_id).toLowerCase()) throw new Error("planning_ack_unverified");
+                // An acknowledged native id is a reconciliation reference, not proof of success.
+                planningRecordReference = table === "plans" ? { plan_id: recordId } : { plan_item_id: recordId };
+                const expected: Record<string, unknown> = {};
+                if (["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder"].includes(tc.function.name)) {
+                  Object.assign(expected, { title: String(args.title ?? "").trim(), summary: args.summary ?? null, created_by: user.id });
+                }
+                if (tc.function.name === "plan_create") Object.assign(expected, {
+                  horizon: args.horizon, starts_on: args.starts_on, ends_on: args.ends_on, scope: args.scope ?? "individual",
+                  owner_user_id: args.owner_user_id ?? user.id, campaign_ref: args.campaign_ref ?? null, status: "active" });
+                else if (tc.function.name === "plan_set_reminder") Object.assign(expected, {
+                  item_type: "reminder", remind_at: args.remind_at, remind_target: args.target ?? "user",
+                  remind_channel: args.channel === "email" ? "email" : "in_app", plan_id: args.plan_id ?? null,
+                  assigned_to_user_id: args.target === "team" ? null : args.target_user_id ?? user.id,
+                  contact_id: args.contact_id ?? null, status: "open" });
+                else if (tc.function.name === "plan_add_milestone" || tc.function.name === "plan_assign_task") {
+                  Object.assign(expected, { item_type: tc.function.name === "plan_add_milestone" ? "milestone" : "task",
+                    assigned_to_user_id: args.assigned_to_user_id ?? null, priority: args.priority ?? "normal",
+                    plan_id: args.plan_id ?? null, due_at: args.due_at ?? null, status: "open" });
+                  if (tc.function.name === "plan_assign_task") Object.assign(expected, {
+                    parent_item_id: args.milestone_id ?? null, contact_id: args.contact_id ?? null, campaign_ref: args.campaign_ref ?? null });
+                } else if (tc.function.name === "plan_remove_item") expected.status = "cancelled";
+                else for (const key of ["status", "title", "summary", "due_at", "remind_at", "priority", "assigned_to_user_id"]) {
+                  if (args[key] != null) expected[key] = key === "title" ? String(args[key]).trim() : args[key];
+                }
+                const columns = ["id", "tenant_id", "updated_at", ...Object.keys(expected)].join(",");
+                const read = await supabaseClient.from(table).select(columns).eq("tenant_id", tid).eq("id", recordId).maybeSingle();
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                const row = read.data as Record<string, unknown> | null;
+                if (read.error || scope.error || scope.data !== tid || !row || row.id !== recordId || row.tenant_id !== tid
+                  || typeof row.updated_at !== "string" || !Number.isFinite(Date.parse(row.updated_at))) throw new Error("planning_readback_unverified");
+                const canonicalPlanningValue = (value: unknown): string => {
+                  if (Array.isArray(value)) return `[${value.map(canonicalPlanningValue).join(",")}]`;
+                  if (value && typeof value === "object") return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalPlanningValue((value as Record<string, unknown>)[key])}`).join(",")}}`;
+                  return JSON.stringify(value) ?? "undefined";
+                };
+                for (const [key, expectedValue] of Object.entries(expected)) {
+                  const actual = row[key];
+                  // PostgreSQL renders timestamptz with an offset; preserve sub-ms precision.
+                  const instantKey = key === "due_at" || key === "remind_at";
+                  const fraction = (value: string) => (/\.(\d+)(?:Z|[+-]\d{2}:?\d{2})$/.exec(value)?.[1] ?? "").padEnd(6, "0");
+                  const matches = instantKey && expectedValue != null
+                    ? typeof actual === "string" && typeof expectedValue === "string" && Number.isFinite(Date.parse(actual))
+                      && Date.parse(actual) === Date.parse(expectedValue) && fraction(actual) === fraction(expectedValue)
+                    : key.endsWith("_id") && typeof actual === "string" && typeof expectedValue === "string" ? actual.toLowerCase() === expectedValue.toLowerCase()
+                    : key === "campaign_ref" ? canonicalPlanningValue(actual) === canonicalPlanningValue(expectedValue) : actual === expectedValue;
+                  if (!matches) throw new Error("planning_record_mismatch");
+                }
+                verifiedRecord = Object.fromEntries(["id", "updated_at", ...Object.keys(expected)].map(key => [key, row[key]]));
+                recordLocator = { table, id: recordId };
+              }
               const note = tc.function.name === "plan_set_reminder"
-                ? "Reminder is set — it WILL ping them in-app at its time. If they asked for email, add: a branded email will ALSO go out if this workspace's email sending is set up. Do NOT promise a text (SMS isn't wired). Confirm plainly."
+                ? "The reminder record is saved and verified. Scheduled does not mean delivered; do not promise a future ping or email delivery."
                 : tc.function.name === "plan_list" ? undefined
-                : "Done and saved. Report exactly what was created/changed; never mention internal table/function names.";
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: true, ...(rpcData && typeof rpcData === "object" ? rpcData : { result: rpcData }), ...(note ? { note } : {}) }) });
+                : "The planning record is saved and verified. Report exactly what was created or changed; do not claim execution or delivery of its work.";
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ ...(rpcData && typeof rpcData === "object" ? rpcData : { result: rpcData }), success: true,
+                ...(verifiedRecord ? { readback: verifiedRecord, record_locator: recordLocator, verified_readback: true,
+                  ...(recordLocator?.table === "plan_items" ? { plan_item_id: recordLocator.id } : {}) } : {}), ...(note ? { note } : {}) }) });
             }
           } catch (e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "plan_error", note: "It did NOT happen — do not claim success." }) });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(planningWriteAttempted ? planningUnknown()
+              : { success: false, ...(planningIsWrite ? { not_applied: true } : {}),
+                error: planningIsWrite ? "The current workspace could not be verified. Nothing was changed." : "The planning records could not be read." }) });
           }
         } else if (tc.function.name === "read_client_engagement_status" || tc.function.name === "read_business_time_zone") {
           // E4-S2 — last in the chain so no reviewed incumbent dispatch gains a dominating condition. Same finished-round, scope, cancellation and read-only Harness gates as every tool
@@ -16476,7 +16556,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         crm_complete_task: "tasks", crm_reopen_task: "tasks", crm_cancel_task: "tasks", crm_delete_task: "tasks",
         crm_assign_contact: "clients", crm_assign_coach: "clients", crm_update_pipeline_stage: "clients",
         update_client_data: "clients",
-        crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "tasks",
+        crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "plan_items",
         update_business_profile: "tenants",
         deal_create: "deals", deal_move_stage: "deals",
         member_grant_role: "user_roles", member_revoke_role: "user_roles",
@@ -16523,8 +16603,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         booking_preset_duplicate: "calendars", booking_preset_archive: "calendars",
         booking_preset_restore: "calendars",
         calendar_link_prepare: "calendars", calendar_link_send: "calendars", calendar_link_social_copy: "calendars",
-        plan_create: "plans", plan_add_milestone: "plans", plan_set_reminder: "plans",
-        plan_update_item: "plans", plan_remove_item: "plans",
+        plan_create: "plans", plan_add_milestone: "plan_items", plan_set_reminder: "plan_items",
+        plan_update_item: "plan_items", plan_remove_item: "plan_items",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
@@ -16652,7 +16732,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "campaign_id", "tenant_id", "id",
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const resolveWriteTargetId = (args: any, out: any): string | null => {
+      const resolveWriteTargetId = (args: any, out: any, tool?: string): string | null => {
+        // A Planning item's parent plan/contact/action is not the record changed.
+        if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item"].includes(tool)) {
+          const locator = out?.record_locator;
+          if (out?.verified_readback === true && locator?.table === WRITE_TARGET[tool] && typeof locator.id === "string" && UUID.test(locator.id)) return locator.id;
+          return typeof args?.item_id === "string" && UUID.test(args.item_id) ? args.item_id : null;
+        }
         for (const k of TARGET_ID_KEYS) {
           for (const src of [out?.readback, out, args]) {
             const v = src?.[k];
@@ -16736,7 +16822,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             actor_role: "paige_chat",
             action: name,
             target_type: WRITE_TARGET[name] ?? null,
-            target_id: resolveWriteTargetId(args, out),
+            target_id: resolveWriteTargetId(args, out, tc.function.name),
             payload: {
               source: "paige_chat",
               risk,
@@ -16788,7 +16874,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             p_summary: null,
             p_ref_table: WRITE_TARGET[name] ?? null,
             // Was hardcoded null, so a rail event could never navigate to what it changed.
-            p_ref_id: resolveWriteTargetId(args, out),
+            p_ref_id: resolveWriteTargetId(args, out, tc.function.name),
           }).then?.(({ error }: any) => { if (error) console.warn("[paige-ai-chat] rail producer non-fatal:", error.message); })
             .catch?.((e: any) => console.warn("[paige-ai-chat] rail producer skipped:", e?.message));
         } catch (e) { console.warn("[paige-ai-chat] rail producer skipped:", (e as Error)?.message); }
@@ -18140,7 +18226,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (liveRuntimeScope) throw new Error("live_answer_unavailable");
             // Couldn't finish. Show the fallback AND persist it, so a reload
             // shows the same thing the user saw (not a question with no reply).
-            const fallback = "I gathered what I could but couldn't finish that — mind trying again?";
+            const fallback = planningExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+              ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
+              : "I gathered what I could but couldn't finish that — mind trying again?";
             finalAssistantText = fallback;
             emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: fallback } }] })}\n\n`));
             // THE SENTINEL GOES THROUGH THE BUFFER TOO, and this line is why. It used to be a
@@ -18333,7 +18421,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // The live loop or final stream failed mid-flight. Never leave the client
            // with a truncated stream — emit a clean fallback reply and a [DONE].
            console.error("[paige] live reasoning stream failed:", (e as Error)?.message);
-           const snag = "I hit a snag finishing that — mind trying again?";
+           const snag = planningExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+             ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
+             : "I hit a snag finishing that — mind trying again?";
            // Before the invitation to try again: the card says what already ran, so trying again is
            // never the way something happens twice.
            await emitApprovalOutcome(controller);

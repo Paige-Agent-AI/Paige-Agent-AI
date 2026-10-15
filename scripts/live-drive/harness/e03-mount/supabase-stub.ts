@@ -9,6 +9,7 @@ const contact = { id: contactId, first_name: "Test", last_name: "Lead", entity_n
 const messages: Record<string, unknown>[] = [{ id: "55555555-5555-4555-8555-555555555555", tenant_id: tenantId, thread_key: key, contact_id: contactId, connector_id: null, channel_type: "form", direction: "inbound", status: "received", sender: { address: "lead@example.test", display_name: "Test Lead" }, recipients: [], subject: "Form inquiry: Website inquiry", body_text: "Website form inquiry. The visitor's identity has not been verified.\n\nQuestion: Could we arrange an introductory call?", attachments: [], sent_at: now, created_at: now, clients: contact }];
 const scenario = new URLSearchParams(location.search).get("case");
 if (scenario?.startsWith("cancel-")) messages.push({ id:"88888888-8888-4888-8888-888888888888",tenant_id:tenantId,thread_key:key,contact_id:contactId,connector_id:connectorId,channel_type:"email",direction:"outbound",status:"queued",sender:{address:"hello@business.example"},recipients:[{address:"lead@example.test"}],subject:"Scheduled introductory reply",body_text:"Thanks for your inquiry. We can arrange an introductory call.",attachments:[],scheduled_for:new Date(Date.now()+300000).toISOString(),created_at:now,clients:contact });
+if (scenario === "reopened-unknown") messages.push({ id:"99999999-9999-4999-8999-999999999999",tenant_id:tenantId,thread_key:key,contact_id:contactId,connector_id:connectorId,channel_type:"email",direction:"outbound",status:"draft",sender:{address:"hello@business.example"},recipients:[{address:"lead@example.test"}],subject:"Your introductory call",body_text:"Thanks for your inquiry. What time works for a short introductory call?",attachments:[],created_at:now,clients:contact,lead_reply_approval_id:approvalId,comms_email_operation:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",comms_email_state:"unknown",provider_message_id:null });
 const connector = { id: connectorId, tenant_id: tenantId, channel_type: "email", provider: "sendgrid", display_name: "PAIGE email", from_address: "hello@business.example", status: "active", active: true };
 let resolved = false;
 export const fixtureLog: string[] = [];
@@ -21,7 +22,11 @@ function from(table: string) {
       : table === "channel_connectors" ? [connector]
       : table === "paige_approval_queue_v" && !resolved ? [{ id: approvalId, tenant_id: tenantId, contact_id: contactId, category: "owner.lead_followup", status: "pending", draft_content: { channel: "email", subject: "Your introductory call", body: "Thanks for your inquiry. What time works for a short introductory call?" }, sla_state: "on_track" }]
       : table === "clients" ? [contact] : [];
-    rows = rows.filter((row) => filters.every(([field,value]) => field.includes("->") ? true : row[field] === value));
+    rows = rows.filter((row) => filters.every(([field,value]) => {
+      if (field === "meta->comms_email_binding->>approval_id") return row.lead_reply_approval_id === value;
+      if (field === "meta->comms_email_binding->>operation_id") return row.comms_email_operation === value;
+      return row[field] === value;
+    }));
     return { data: head ? null : rows, error: null, count: rows.length };
   };
   const chain: Record<string, unknown> = {};
@@ -54,7 +59,7 @@ export const supabase = {
     if (!call.approved_fingerprint) return { data: { ok: false, outcome: "approval_required", operation_id: call.operation_id, fingerprint: "abcdef0123456789", summary: "Email Test Lead", expires_at: new Date(Date.now()+300000).toISOString(), preview: { kind: "email", from_address: connector.from_address, to_address: "lead@example.test", subject: call.command.subject, body_text: call.command.body } }, error: null };
     if (new URLSearchParams(location.search).get("case") === "unknown") return { data: null, error: { message: "Simulated interrupted response" } };
     resolved = true;
-    messages.push({ id: crypto.randomUUID(), tenant_id: tenantId, contact_id: contactId, thread_key: key, channel_type: "email", direction: "outbound", status: "sent", body_text: call.command.body, subject: call.command.subject, recipients: [{ address: "lead@example.test" }], sender: { address: connector.from_address }, attachments: [], comms_email_operation: call.operation_id, comms_email_state: "provider_accepted", provider_message_id: "fixture-receipt", sent_at: new Date().toISOString(), created_at: new Date().toISOString(), clients: contact });
+    messages.push({ id: crypto.randomUUID(), tenant_id: tenantId, contact_id: contactId, thread_key: key, channel_type: "email", direction: "outbound", status: "sent", body_text: call.command.body, subject: call.command.subject, recipients: [{ address: "lead@example.test" }], sender: { address: connector.from_address }, attachments: [], lead_reply_approval_id:approvalId, comms_email_operation: call.operation_id, comms_email_state: "provider_accepted", provider_message_id: "fixture-receipt", sent_at: new Date().toISOString(), created_at: new Date().toISOString(), clients: contact });
     return { data: { ok: true, outcome: "provider_accepted", operation_id: call.operation_id, provider_receipt_available: true }, error: null };
   } },
 };

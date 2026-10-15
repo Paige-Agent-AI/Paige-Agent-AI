@@ -209,7 +209,9 @@ Native source proof: SDK/recovery/form/hook/actual HTTP49 tests, historical SDK6
 actual-panel4 and actual-drawer3; local target SQL50 and display8 assertions PASS.
 An initial drawer worker initialization timeout executed no drawer tests; a bounded
 single-worker rerun passed3. First type/build checks found a callback return-type mismatch
-and server-module import; both are repaired, with final verification still pending.
+and server-module import; both are repaired. Composed3796f52f passes all62 focused
+tests in7 files, scoped ESLint without warnings, unchanged type ratchet10/10,
+production browser build and binding/migration/attribution/definer/evidence guards.
 These synthetic source checks are not authenticated customer acceptance or fullO10 delivery.
 Evidence: docs/evidence/ui-delivery/e2-f7-native-targets.md. Executive/Chat/Live consumption,
 rendered/native coverage, production release, protected acceptance and owner review remain owed.

@@ -8,6 +8,13 @@ let actual;
 test('all 29 reviewed incumbent adapters bind to real dispatch and dependency source',()=>{
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
+test('changed invoice presentation cannot promote test records to confirmed payments',()=>{
+ const path='supabase/functions/_shared/sales-invoice-document.ts',original=sources.get(path);
+ const changed=original.replace("'Test payment activity'","'Paid (provider-confirmed)'");
+ assert.notEqual(changed,original,'control must change the actual renderer');
+ const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(message=>message.includes(path)));
+});
 const mutations=[
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],

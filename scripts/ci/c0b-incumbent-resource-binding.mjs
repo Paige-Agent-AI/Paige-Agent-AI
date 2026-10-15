@@ -488,7 +488,9 @@ const SOURCES = {
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
   "supabase/functions/_shared/sales-invoice-ledger.ts": "dab806f8decf8682d311a0eeaff90a2c9e7687f6043ff1d85d27a56d66b1515e",
-  "supabase/functions/_shared/sales-invoice-document.ts": "baf7933a648ca9752ff43b2c5cd654b84267f3573f7eaa0fa6670be2fc22d844",
+  // E04 #2170: pure test/live/undetermined presentation, author-reviewed with
+  // financial/renderer regressions. Fresh non-author review remains a release gate.
+  "supabase/functions/_shared/sales-invoice-document.ts": "14aeef174eb14f18de5ed62b88265f3ef93d6fa82fdaa9c713f68e8544ec78c6",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "cb4236ff9fec37be4043a7b2fa6a91e68b63c1c049f351f3d7f7ed51b8366c11",

@@ -89,3 +89,11 @@ Impeccable detector: zero anti-patterns; 18 advisories, comprising the new inten
 - Actual client invoice/checkout behavior needs properly linked ordinary external-client QA. Designated owner access is not that role. No new QA account was created and no acceptance evidence was self-authored.
 - Fresh exact-head independent review, CI, authorized deployment/readback and Central QA remain separate gates. INT-346 DRAINING is preserved. Final owner review concerns all twelve outcomes.
 - Master Section 4.0 shipped row: **N/A — this draft has not merged to main**. No shipped/deployed/customer-ready claim or customer release name is added.
+
+## Hosted CI continuation — October 14 owner local time
+
+At published head `0c8167a1a189db95649baa4ce950ff989a898f3d`, required SQL proofs, Preview, database contract, UI evidence and lint passed. C0b correctly rejected the changed pure `sales-invoice-document.ts` dependency; Spine's global incumbent proof then refused. Author source review confirmed only presentation/validation of existing balances and evidence classes changed: no provider call, authority, dispatch, mutation, scheduler or new dependency. The one literal AST digest is updated; all29 adapter contracts and negative controls remain. A new mutation control explicitly rejects presenting test activity as confirmed payment. This is author review/lower assurance, not independent approval or permission to release.
+
+The adjacent hosted-request test's positive fixture lacked the new canonical environment field. Its URL/rel/no-dispatch assertions are preserved for explicit live and test fixtures; a separate unclassified fixture now proves no checkout is offered. The initially failed hosted Test job's full log could not be retrieved through the connector; the adjacent failure was independently reproduced locally, and fresh complete hosted CI remains required. No global suite pass is inferred from the targeted reproduction.
+
+The provider-boundary job also failed before tests at public ECR container initialization (`Data limit exceeded`), independently of the source failures. Only #2156's affected infrastructure job was selectively retried. Original failure evidence remains; no test, container digest, authority rule or CI gate was waived.

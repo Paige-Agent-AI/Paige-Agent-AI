@@ -145,6 +145,15 @@ retirement checks; production deletion guards are unchanged. Three failing-first
 transport regressions also pass after preserving uncertain intent unless a PostgreSQL
 transaction-aborting SQLSTATE proves refusal. Final composed-head hosted results remain owed.
 
+The final hosted database-contract (including 39 target assertions, concurrent replay/CAS,
+fixture retirement and grant-ordering proof) passed on `66b7b67c`. Main verify's separate
+Sales payments suite exposed an inherited test's Promise-input-order assumption at
+`sales-payments/merchant-endpoint.test.ts:85`: the other valid concurrent operation won.
+The bounded fixture correction now requires the one stored reservation, one provider
+dispatch/idempotency key and one receipt to agree, across both input orders. All 320 Sales
+contract tests pass locally. No Sales endpoint, approval, SQL or provider runtime changed;
+E04 retains domain ownership. Final new-head review and required CI remain owed.
+
 Owner explicitly authorizes sole-lead author self-review, lower assurance, instead of another
 agent/nonauthor review; final human review is of the integrated deployed experience.
 Remaining sequence: final composed-head author self-review/exact-head CI and authorized release of this

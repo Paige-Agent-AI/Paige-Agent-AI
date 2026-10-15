@@ -14,7 +14,8 @@
 //   Request:
 //     {
 //       brief:      string,   // REQUIRED. >= 5 chars after trim. What the form should ask.
-//       tenant_id?: string,   // SERVICE-ROLE CALLERS ONLY. IGNORED for JWT callers.
+//       tenant_id?: string,   // SERVICE-ROLE CALLERS: names the tenant. JWT CALLERS: never
+//                             //   chooses one; a tenant_id naming another workspace is refused.
 //     }
 //
 //   200  { schema: CleanFormSchema }
@@ -25,7 +26,10 @@
 //     400 EMPTY_BRIEF        brief missing or shorter than 5 characters
 //     400 INVALID_TENANT_ID  service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED    no / invalid bearer token
-//     403 FORBIDDEN          JWT caller lacks admin or super_admin
+//     403 FORBIDDEN          JWT caller has no workspace open, named another workspace, or is
+//                            not its owner/admin or managing agency (body also carries
+//                            `forbidden: true`)
+//     500 INTERNAL           also: the workspace/permission lookup itself failed (retryable)
 //     422 NO_VALID_SCHEMA    the model produced ZERO fields that survive cleanFormSchema().
 //                            Handing back a hardcoded generic schema would dress a failed
 //                            generation up as a successful one (§13) — we refuse; the caller
@@ -35,11 +39,11 @@
 //     500 INTERNAL           anything else — with the real message, never a generic shrug
 //
 // ── SECURITY (§13 — tenant isolation, least privilege) ──────────────────────
-// Same pin as growth-page-draft: a JWT caller's tenant is resolved SERVER-SIDE (never
-// trusted from the body); only a service-role bearer (Paige's agent, §10) may name one.
-// This function reads no tenant-scoped data — the tenant resolve exists purely so this
-// function's auth posture matches its siblings and never drifts if a future revision needs
-// tenant context (e.g. brand-aware phrasing).
+// Same rule as growth-page-draft (_shared/studio-caller.ts resolveStudioCaller): a JWT caller
+// drafts for the workspace their session is in, as its owner/admin or managing agency; a body
+// tenant naming another workspace is refused, and a platform-wide user_roles admin grants
+// nothing. Only a service-role bearer (Paige's agent, §10) may name a tenant. The tenant
+// resolved here is the only one the Studio brain (#310) retrieves knowledge for.
 //
 // Doctrine:
 //   §2  — never invent an "ssn4"/"currency" field, or credit/funding framing, unless the
@@ -58,6 +62,7 @@ import { routedChatCompletion } from "../_shared/model-router.ts";
 import { extractJson, str } from "../_shared/growth-blocks.ts";
 import { cleanFormSchema, GROWTH_FORM_SCHEMA_SPEC } from "../_shared/growth-forms.ts";
 import { retrieveTenantKnowledge, buildKnowledgeBlock } from "../_shared/studio-brain.ts";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -76,8 +81,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const FORM_MAX_TOKENS = 3072;
 
 /** Structured failure. Never a 200-with-{error}; never a swallowed generic (§13). */
-function fail(status: number, code: string, message: string): Response {
-  return new Response(JSON.stringify({ error: { code, message } }), { status, headers: jsonHeaders });
+function fail(status: number, code: string, message: string, extra?: Record<string, unknown>): Response {
+  return new Response(JSON.stringify({ error: { code, message }, ...extra }), { status, headers: jsonHeaders });
 }
 function ok(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: jsonHeaders });
@@ -124,10 +129,10 @@ serve(async (req: Request) => {
         "Give a brief: what should the form ask, and what's it for?");
     }
 
-    // ── 3. Resolve the caller / tenant SERVER-SIDE (same pin as growth-page-draft) ───
+    // ── 3. Resolve the caller / tenant SERVER-SIDE (same rule as growth-page-draft) ───
     // The tenant WE resolve is the only one the Studio brain (#310) reads — a JWT caller can
-    // never steer retrieval at a tenant they don't belong to (§9). May be null (operator with
-    // no active tenant); that only means "no brain context", never "trust the body".
+    // never steer retrieval at a workspace other than their own (§9). Null only for a
+    // service-role caller that named no tenant: that means "no brain context".
     let tenantId: string | null = null;
     if (isServiceRole) {
       const named = str(body?.tenant_id).trim();
@@ -146,22 +151,13 @@ serve(async (req: Request) => {
         return fail(401, "UNAUTHENTICATED", uErr?.message || "Could not verify this session.");
       }
 
-      const { data: roleRows, error: rErr } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      if (rErr) {
-        console.error("growth-form-draft: role lookup failed:", rErr);
-        return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
+      const caller = await resolveStudioCaller(authed, body?.tenant_id);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? fail(403, "FORBIDDEN", caller.error, { forbidden: true })
+          : fail(500, "INTERNAL", caller.error);
       }
-      const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-        return fail(403, "FORBIDDEN", "Admin access required.");
-      }
-
-      const { data: resolved, error: tErr } = await authed.rpc("current_user_tenant_id");
-      if (tErr) {
-        console.error("growth-form-draft: tenant resolve failed:", tErr);
-        return fail(500, "INTERNAL", `Could not resolve your workspace: ${tErr.message}`);
-      }
-      tenantId = str(resolved).trim() || null;
+      tenantId = caller.tenantId;
     }
 
     // The Studio brain (#310): retrieve this practice's own knowledge relevant to the brief so

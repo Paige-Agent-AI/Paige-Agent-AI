@@ -1,0 +1,268 @@
+{
+  "drive": [
+    {
+      "q": "How much venture capital will AI startups raise in total in ",
+      "stop": "max_hops",
+      "cands": 9,
+      "acc": 6,
+      "drops": {
+        "name_token_mismatch": 3
+      },
+      "synth_returned": true,
+      "synth_candidates": 9
+    },
+    {
+      "q": "What is the single best programming language to learn in 202",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Is it a good time to buy a house in Austin, Texas in late 20",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Which three marketing automation platforms should a 15-perso",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "How many businesses closed in Ohio in March 2026, per offici",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Which specific SEC rulemaking will be finalized in Q1 2027, ",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What is the exact number of employees at Cerebras Systems as",
+      "stop": "max_hops",
+      "cands": 7,
+      "acc": 7,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 7
+    },
+    {
+      "q": "What was Plaid's exact total revenue for fiscal year 2025, b",
+      "stop": "max_hops",
+      "cands": 8,
+      "acc": 7,
+      "drops": {
+        "name_token_mismatch": 1
+      },
+      "synth_returned": true,
+      "synth_candidates": 8
+    },
+    {
+      "q": "How many employees does Amazon have in the United States cur",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Does moderate alcohol consumption reduce cardiovascular risk",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What is iPhone vs Android smartphone market share in the Uni",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "How many people have died in space, above the Karman line, i",
+      "stop": "max_hops",
+      "cands": 12,
+      "acc": 12,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 12
+    },
+    {
+      "q": "What percentage of new US businesses fail within their first",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What is the current USCIS H-1B registration fee per benefici",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Under GDPR, what are the statutory maximum fines for standar",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What is the current FDIC insurance limit per depositor per i",
+      "stop": "max_hops",
+      "cands": 15,
+      "acc": 15,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 15
+    },
+    {
+      "q": "What are the current SEC criteria to qualify as an accredite",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What are the 2026 IRS quarterly estimated-tax due dates, and",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Compare Sweden vs Germany current parental leave: total week",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What share of electricity generation came from renewables in",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Which is cheaper for a 2-person US LLC in 2026: Wyoming or D",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "Compare Stripe vs Adyen current published pricing for online",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "For a US-owned software company in 2026, compare Ireland vs ",
+      "stop": "no_results",
+      "cands": 0,
+      "acc": 0,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 0
+    },
+    {
+      "q": "What is the World Health Organization's current guideline li",
+      "stop": "max_hops",
+      "cands": 9,
+      "acc": 9,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 9
+    },
+    {
+      "q": "As of October 2026, which company is the world's most valuab",
+      "stop": "max_hops",
+      "cands": 11,
+      "acc": 11,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 11
+    },
+    {
+      "q": "What is the current price of a US Postal Service First-Class",
+      "stop": "max_hops",
+      "cands": 11,
+      "acc": 7,
+      "drops": {
+        "name_token_mismatch": 4
+      },
+      "synth_returned": true,
+      "synth_candidates": 11
+    },
+    {
+      "q": "What is the current US federal minimum wage as of late 2026,",
+      "stop": "max_hops",
+      "cands": 15,
+      "acc": 15,
+      "drops": {},
+      "synth_returned": true,
+      "synth_candidates": 15
+    }
+  ],
+  "aggregate": {
+    "runs": 27,
+    "candidates": 97,
+    "accepted": 89,
+    "dropped": 8,
+    "drop_reasons": {
+      "name_token_mismatch": 8
+    },
+    "synthesis_false": 0,
+    "citation_absent": 0,
+    "emitted_unresolvable": 0,
+    "resolved_but_rejected": 8,
+    "reads_ok": 133,
+    "reads_empty": 33
+  }
+}

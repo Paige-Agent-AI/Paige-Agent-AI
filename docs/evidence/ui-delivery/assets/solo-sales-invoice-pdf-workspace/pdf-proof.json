@@ -1,0 +1,21 @@
+{
+  "boundary": "Actual Chromium PDF renderer and invoice HTML projection using synthetic records. Hosted tenant/provider/native print UNVERIFIED.",
+  "results": [
+    {
+      "template": "legacy",
+      "bytes": 40003
+    },
+    {
+      "template": "classic",
+      "bytes": 49694
+    },
+    {
+      "template": "modern",
+      "bytes": 49782
+    },
+    {
+      "template": "service",
+      "bytes": 49710
+    }
+  ]
+}

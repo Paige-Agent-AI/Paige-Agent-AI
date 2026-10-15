@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { loadAssignableStaff } from "@/lib/team/assignableStaff";
+import { loadAssignableStaff, type AssignableStaff } from "@/lib/team/assignableStaff";
+import { useTenantContext } from "@/hooks/useTenantContext";
+import { CrmDealCommandReview } from "@/solo/deals/CrmDealCommandReview";
+import { useSoloDealClients } from "@/solo/deals/useSoloDealClients";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +14,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Pipeline, PipelineStage, dollarsToCents, logDealActivity } from "@/lib/pipelines";
+import { Pipeline, PipelineStage, dollarsToCents } from "@/lib/pipelines";
 import { useTenantOffers } from "@/hooks/useTenantOffers";
 import { NewContactDialog } from "@/components/admin/contacts/NewContactDialog";
-import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 type Props = {
   open: boolean;
@@ -26,105 +28,85 @@ type Props = {
   onCreated: () => void;
 };
 
-type ContactOption = { id: string; label: string; email?: string | null };
-
-// Widened to string: the generated types do not know the contact-methods embed yet.
-const DEAL_CONTACT_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED}`;
-type CoachOption = { user_id: string; name: string };
-
 export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultStageId, defaultContactId, onCreated }: Props) {
   const [title, setTitle] = useState("");
   const [stageId, setStageId] = useState<string>("");
   const [contactId, setContactId] = useState<string>("none");
-  const [ownerId, setOwnerId] = useState<string>("me");
+  const { activeTenantId, accountContextLoading } = useTenantContext();
+  const clientPicker = useSoloDealClients(activeTenantId, open);
+  const contacts = clientPicker.clients.map(c => ({ id: c.id, label: c.name, email: c.primaryEmail }));
+  const [unlinkedReason, setUnlinkedReason] = useState("");
+  const [review, setReview] = useState<{tenantId: string; command: Record<string, unknown>} | null>(null);
+  const [ownerId, setOwnerId] = useState("me");
+  const [staff, setStaff] = useState<AssignableStaff[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [value, setValue] = useState<string>("");
   const [closeDate, setCloseDate] = useState<string>("");
   const [offerType, setOfferType] = useState<string>("none");
   const [offerCustom, setOfferCustom] = useState("");
-  const [contacts, setContacts] = useState<ContactOption[]>([]);
+
   const [contactSearch, setContactSearch] = useState("");
   const [contactPickerOpen, setContactPickerOpen] = useState(false);
   const [newContactOpen, setNewContactOpen] = useState(false);
-  const [coaches, setCoaches] = useState<CoachOption[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [meId, setMeId] = useState<string | null>(null);
+
+
+
   const { offers: tenantOffers } = useTenantOffers();
 
-  const loadContacts = async () => {
-    const { data: cs } = await supabase
-      .from("clients")
-      .select(DEAL_CONTACT_SELECT)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    const rows = (cs ?? []) as unknown as Array<{ id: string; first_name: string | null; last_name: string | null; entity_name: string | null } & WithClientContactMethods>;
-    setContacts(rows.map((c) => ({
-      id: c.id,
-      label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() + (c.entity_name ? ` · ${c.entity_name}` : ""),
-      email: withPrimaryAddresses(c).email,
-    })));
-  };
+  useEffect(() => {
+    setStaff([]); setOwnerId("me");
+    if (!open || !activeTenantId || accountContextLoading) return;
+    let cancelled = false;
+    setStaffLoading(true);
+    loadAssignableStaff().then(rows => { if (!cancelled) setStaff(rows); })
+      .catch(() => { if (!cancelled) setStaff([]); })
+      .finally(() => { if (!cancelled) setStaffLoading(false); });
+    return () => { cancelled = true; };
+  }, [open, activeTenantId, accountContextLoading]);
 
+  const initialStageId = defaultStageId || stages[0]?.id || "";
   useEffect(() => {
     if (!open) return;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setMeId(user?.id ?? null);
-      await loadContacts();
-      setCoaches(await loadAssignableStaff());
-      setStageId(defaultStageId || stages[0]?.id || "");
-      setTitle("");
-      setContactId(defaultContactId || "none");
-      setOwnerId("me");
-      setValue("");
-      setCloseDate("");
-      setOfferType("none");
-      setOfferCustom("");
-      setContactSearch("");
-    })();
-  }, [open, defaultStageId, stages, defaultContactId]);
+    setStageId(initialStageId);
+    setTitle(""); setContactId(defaultContactId || "none");
+    setValue(""); setCloseDate(""); setOfferType("none");
+    setOfferCustom(""); setContactSearch(""); setUnlinkedReason(""); setReview(null);
+    setContactPickerOpen(false); setNewContactOpen(false);
+  }, [open, activeTenantId, defaultContactId, initialStageId]);
 
   const orderedStages = useMemo(() => [...stages].sort((a, b) => a.order_index - b.order_index), [stages]);
   const selectedContact = contacts.find((c) => c.id === contactId);
 
   const handleContactCreated = async (newId: string) => {
-    await loadContacts();
+    clientPicker.retry();
     setContactId(newId);
     setContactPickerOpen(false);
   };
 
-  const handleSave = async () => {
-    if (!pipeline || !stageId || !title.trim()) {
-      toast.error("Title and stage are required");
-      return;
+  const handleSave = () => {
+    if (!activeTenantId || accountContextLoading || !pipeline || !stageId || !title.trim()) {
+      toast.error("Choose a workspace, title and stage"); return;
     }
-    setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const resolvedOwner = ownerId === "me" ? user?.id : ownerId === "none" ? null : ownerId;
-    const resolvedOffer =
-      offerType === "none" ? null :
-      offerType === "other" ? (offerCustom.trim() || "other") :
-      offerType;
-    const { data, error } = await supabase
-      .from("deals")
-      .insert({
-        title: title.trim(),
-        pipeline_id: pipeline.id,
-        stage_id: stageId,
-        contact_client_id: contactId === "none" ? null : contactId,
-        owner_user_id: resolvedOwner ?? null,
-        value_cents: dollarsToCents(value || "0"),
-        expected_close_date: closeDate || null,
-        offer_type: resolvedOffer,
-        created_by: user?.id ?? null,
-      })
-      .select()
-      .single();
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    if (data) await logDealActivity(data.id, "deal_created", `Deal created in ${pipeline.name}`);
-    toast.success("Deal created");
-    onOpenChange(false);
-    onCreated();
+    if (!stages.some(stage => stage.id === stageId && stage.pipeline_id === pipeline.id)) {
+      toast.error("Choose a stage from this pipeline"); return;
+    }
+    if (contactId === "none" && (defaultContactId || !unlinkedReason.trim())) {
+      toast.error("Choose a client or explain why this opportunity is unlinked"); return;
+    }
+    if (value && (!/^\d+(?:\.\d{1,2})?$/.test(value) || !Number.isSafeInteger(dollarsToCents(value)))) {
+      toast.error("Enter a non-negative amount with up to two decimal places"); return;
+    }
+    if (ownerId !== "me" && (staffLoading || !staff.some(member => member.user_id === ownerId))) {
+      toast.error("Choose an available workspace member"); return;
+    }
+    setReview({tenantId: activeTenantId, command: {
+      action: "deal.create", title: title.trim(), pipeline_id: pipeline.id, stage_id: stageId,
+      ...(contactId === "none" ? {unlinked_reason: unlinkedReason.trim()} : {contact_id: contactId}),
+      ...(ownerId === "me" ? {} : {owner_user_id: ownerId}),
+      value_cents: dollarsToCents(value || "0"), currency: "USD",
+      expected_close_date: closeDate || null,
+      offer_type: offerType === "none" ? null : offerType === "other" ? (offerCustom.trim() || "other") : offerType,
+    }});
   };
 
   return (
@@ -132,7 +114,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader><DialogTitle>New Deal</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          {review ? <CrmDealCommandReview tenantId={review.tenantId} command={review.command} onClose={() => setReview(null)} onComplete={() => { setReview(null); toast.success("Deal created"); onOpenChange(false); onCreated(); }} /> : <div className="space-y-3">
             <div>
               <Label className="text-xs">Title *</Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Acme SBA Loan" />
@@ -166,7 +148,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                       <span className="truncate">
                         {contactId === "none"
                           ? "— None —"
-                          : selectedContact?.label || "Unnamed contact"}
+                          : selectedContact?.label || "Selected client (details loading)"}
                       </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -198,6 +180,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                           </CommandItem>
                           <CommandItem
                             value="none"
+                            disabled={!!defaultContactId}
                             onSelect={() => {
                               setContactId("none");
                               setContactPickerOpen(false);
@@ -229,17 +212,11 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                 </Popover>
               </div>
               <div>
-                <Label className="text-xs">Owner</Label>
-                <Select value={ownerId} onValueChange={setOwnerId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="me">Me</SelectItem>
-                    <SelectItem value="none">Unassigned</SelectItem>
-                    {coaches.filter((c) => c.user_id !== meId).map((c) => (
-                      <SelectItem key={c.user_id} value={c.user_id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="deal-owner" className="text-xs">Owner</Label>
+                <select id="deal-owner" className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={ownerId} onChange={e => setOwnerId(e.target.value)} disabled={staffLoading}>
+                  <option value="me">Me</option>
+                  {staff.map(member => <option key={member.user_id} value={member.user_id}>{member.name}</option>)}
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -272,12 +249,20 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
                 <Input value={offerCustom} onChange={(e) => setOfferCustom(e.target.value)} placeholder="Name this offer" />
               </div>
             )}
-          </div>
+            {contactId === "none" && !defaultContactId && <div><Label htmlFor="deal-unlinked-reason">Reason for no linked client *</Label><select id="deal-unlinked-reason" className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={unlinkedReason} onChange={e => setUnlinkedReason(e.target.value)}>
+                <option value="">Choose a reason</option>
+                <option value="anonymous_prospect">Anonymous prospect</option>
+                <option value="early_stage_prospect">Early-stage prospect</option>
+                <option value="import_pending_identity">Imported record · identity pending</option>
+              </select></div>}
+            {clientPicker.phase === "error" && <p role="alert">Could not load clients. <Button type="button" variant="outline" onClick={clientPicker.retry}>Retry clients</Button></p>}
+            {clientPicker.hasMore && <Button type="button" variant="outline" onClick={clientPicker.loadMore}>Load more clients</Button>}
+          </div>}
 
-          <DialogFooter>
+          {!review && <DialogFooter>
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Create deal"}</Button>
-          </DialogFooter>
+            <Button onClick={handleSave} disabled={!activeTenantId || accountContextLoading || clientPicker.phase !== "ready"}>Review deal</Button>
+          </DialogFooter>}
         </DialogContent>
       </Dialog>
 

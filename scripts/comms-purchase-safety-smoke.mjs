@@ -115,6 +115,7 @@ let scenario;
 globalThis.__smoke = {
   get calls() { return calls; },
   rpc(name) {
+    if (name === "comms_provider_execution_allowed") return { data: scenario.providerAllowed !== false };
     if (name === "is_platform_owner") return { data: false };
     if (name === "has_role") return { data: true };          // admin
     if (name === "current_user_tenant_id") return { data: "tenant-1" };
@@ -176,6 +177,13 @@ const buy = async (body, sc = {}) => {
 };
 
 console.log("comms-purchase-number safety smoke\n");
+
+{
+  const r = await buy({ phone_number: "+14045550101", agreed_monthly_cents: 120 }, { providerAllowed: false });
+  check("restricted workspace cannot purchase", r.status === 403 && r.body.error === "COMMS_PROVIDER_EXECUTION_DISABLED");
+  check("restricted workspace makes zero paid calls", calls.purchases.length === 0);
+  check("restricted workspace writes no number or spent audit", calls.inserts.length === 0 && calls.audits.length === 0);
+}
 
 /* 1 ── The happy path still works, and is what everything else is measured against. */
 {
@@ -286,7 +294,9 @@ console.log("comms-purchase-number safety smoke\n");
   // Anchor on the EXECUTABLE line that opens the gate, not on a comment banner: an earlier
   // "AUTONOMY GATE WIRING" comment elsewhere in the file made an indexOf on the banner match
   // the wrong place and fail this check against correct code.
-  const gateAt = chat.indexOf("MUTATING_TOOLS.has(tc.function.name)");
+  // The preceding typed-interruption uncertainty brake also checks MUTATING_TOOLS;
+  // anchor this invariant to the existing autonomy gate, not that stricter brake.
+  const gateAt = chat.indexOf("if (MUTATING_TOOLS.has(tc.function.name) && !CRM_COMMAND_TOOL_NAMES.has(tc.function.name as any)) {");
   check("the buy path calls it", guardAt > 0);
   check("  and refuses BEFORE the autonomy gate, so `auto` cannot route around it",
     guardAt > 0 && gateAt > 0 && guardAt < gateAt, `guard@${guardAt} gate@${gateAt}`);

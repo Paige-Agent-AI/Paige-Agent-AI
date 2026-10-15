@@ -142,17 +142,21 @@ describe("tenant Relationships / Clients workspace", () => {
     useTenantRelationshipsData.mockReturnValue(baseData);
   });
 
-  it("returns to the current Solo account without accepting a supplied return URL", () => {
+  it.each([
+    ["", "/solo/42/growth/sales?resume=terms"],
+    ["&salesReturn=department", "/solo/42/sales/agreements?resume=terms"],
+    ["&salesReturn=/solo/99/sales/agreements", "/solo/42/growth/sales?resume=terms"],
+  ])("returns to the current Solo account with enum handoff %s", (flag, expected) => {
     const host = document.createElement("div");
     document.body.append(host);
     const root = createRoot(host);
-    const view = <MemoryRouter initialEntries={["/solo/42/clients/people?origin=sales&returnTo=/solo/99/growth/sales"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()}/><LocationProbe/></MemoryRouter>;
+    const view = <MemoryRouter initialEntries={[`/solo/42/clients/people?origin=sales&returnTo=/solo/99/growth/sales${flag}`]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()}/><LocationProbe/></MemoryRouter>;
     try {
       act(() => root.render(view));
       const back = host.querySelector(".trc-sales-return button") as HTMLButtonElement;
       expect(back).not.toBeNull();
       act(() => back.click());
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/sales?resume=terms");
+      expect(host.querySelector("[data-location]")?.textContent).toBe(expected);
       expect(host.querySelector(".trc-sales-return")).toBeNull();
     } finally {
       act(() => root.unmount());
@@ -213,7 +217,7 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Relationship overview");
     expect(html).toContain("Contact details");
     expect(html).toContain("Relationship intelligence");
-    expect(html).toContain("Campaigns owns pipeline");
+    expect(html).toContain("Sales owns pipeline");
     expect(html).toContain("Portal access");
     expect(html).toContain("Client files");
     expect(html).toContain("PAIGE enrichment");
@@ -1198,5 +1202,62 @@ describe("tenant Relationships / Clients workspace", () => {
   it("does not mount another PAIGE provider or workspace", () => {
     const html = render();
     expect(html).not.toMatch(/tenant-paige-workspace|PAIGE command workspace|AgentPresenceProvider/);
+  });
+
+  // Experience 04 E4-S3 PR beta (Track D): where the client stands, first on the Solo client record.
+  it("E4-S3: a Solo client record opens on where the client stands, read once through the governed read", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const body = host.querySelector(".trc-record-body");
+      expect(body?.firstElementChild?.id).toBe("client-standing");
+      expect(body?.firstElementChild?.querySelector("h3")?.textContent).toBe("Where Supplied Person stands");
+      const reads = editorHarness.rpc.mock.calls.filter(([name]) => name === "read_client_engagement_status");
+      expect(reads).toEqual([["read_client_engagement_status", { _expected_tenant_id: "tenant-solo", _contact_id: "p-1" }]]);
+      // The other record sections are all still there, after it (§58).
+      expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
+        ["Where Supplied Person stands", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E4-S3: no client selected, no read", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_engagement_status")).toBe(false);
+      expect(host.querySelector("#client-standing")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {
+    useTenantContext.mockReturnValue({
+      activeTenantId: "tenant-sub",
+      activeTenant: { id: "tenant-sub", name: "Sub", account_type: "sub_account", parent_tenant_id: "parent" },
+      accountContextLoading: false,
+      isPlatformOwner: false,
+      refresh: vi.fn(),
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/business/2/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_engagement_status")).toBe(false);
+      expect(host.querySelector("#client-standing")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
   });
 });

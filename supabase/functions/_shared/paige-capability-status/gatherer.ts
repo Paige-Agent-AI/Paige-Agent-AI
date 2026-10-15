@@ -1,8 +1,14 @@
 // Server-side capability-status resolver (Main Paige Operational Chat · P3c) — the ASYNC gatherer.
 //
-// The pure seam (signals.ts + resolver.ts) grades already-resolved facts. paige-ai-chat assembles those
-// facts inline for the WHOLE manifest from the verified JWT. This module is the REUSABLE server-side entry
-// the same facts can be resolved through for ONE capability from a NON-JWT caller — the native-event engine
+// STATE AFTER C0a (2026-10-04) — read this first. The chat no longer uses this path: paige-ai-chat
+// projects its whole manifest from the tools it emits (projection.ts). What remains here is the hand-
+// written signals.ts manifest + resolver.ts, used for the native bindings below. That is a second
+// capability-status engine (§18) and it is known: C0b retires it by resolving Layer C's binding through
+// the projection, then deletes signals.ts, the resolver's manifest path and renderCapabilityStatusBlock.
+// Tenant authority is NOT composed here — it comes from _shared/workspace-authority.ts, the one module
+// the chat gate also uses.
+//
+// This module resolves one requested capability for a NON-JWT caller — the native-event engine
 // (Layer C), which holds a service-role client + the authorizing person's user id + the authoritative
 // tenant id, but no JWT. It exists so Layer C resolves a native act's availability THROUGH this canonical
 // Gateway seam (owner correction, 2026-09-13) — never a Layer-C inline `availability` literal, and never a
@@ -16,6 +22,7 @@
 
 import { getActorTier, type Tier } from "../actorTier.ts";
 import { clampLaneByRisk } from "../action-risk.ts";
+import { resolveWorkspaceAuthorityAs } from "../workspace-authority.ts";
 import { buildCapabilitySignals, type CapabilityFacts } from "./signals.ts";
 import { resolveCapabilityStatus, type CapabilityStatus } from "./resolver.ts";
 
@@ -37,6 +44,7 @@ type Lane = "auto" | "confirm" | "off";
 // manifest key (equal to the slug); toolKey is the UNDERSCORE tool key resolve_tool_autonomy expects.
 const NATIVE_CAPABILITY_BINDINGS: Readonly<Record<string, { statusKey: string; toolKey: string }>> = {
   "crm.advance_journey_stage": { statusKey: "crm.advance_journey_stage", toolKey: "crm_advance_journey_stage" },
+  "planning.weekly_commitment_check": { statusKey: "planning.weekly_commitment_check", toolKey: "planning_weekly_commitment_check" },
 };
 
 /** Whether an action_kind has a declared native capability binding (so it can be resolved through here). */
@@ -114,11 +122,12 @@ export async function resolveNativeCapabilityStatus(
     // {ok:false} (retryable) on error, because they cannot fail closed to a safe value the same way.
     const callerTier = await getActorTier(db, { actorUserId: opts.actorUserId, isPlatform: false, scopes: [] });
 
-    // owner-ops role — the SAME direct user_roles read the chat cockpit uses (service client, explicit id).
-    const { data: roleRows, error: roleErr } = await db.from("user_roles").select("role").eq("user_id", opts.actorUserId);
-    if (roleErr) return { ok: false, error: `role read failed: ${roleErr.message ?? String(roleErr)}` };
-    const roles = (Array.isArray(roleRows) ? roleRows : []).map((r: { role?: unknown }) => r.role);
-    const ownerOpsEligible = roles.includes("admin") || roles.includes("super_admin");
+    // owner-ops authority — the SAME tenant question the chat gate asks (C0a, owner ruling 2026-10-04
+    // "ADMIN IS A TENANT ROLE"), in its actor-EXPLICIT form because this path has no JWT. One module
+    // composes it for both (§18); never the tenant-agnostic global `admin` row.
+    const resolved = await resolveWorkspaceAuthorityAs(db, opts.actorUserId, opts.tenantId);
+    if ("error" in resolved) return { ok: false, error: resolved.error };
+    const ownerOpsEligible = resolved.authority.workspaceAdmin || resolved.authority.platformOperator;
 
     // Effective lane = ceiling clamp (resolve_tool_autonomy) THEN action-class clamp (clampLaneByRisk),
     // exactly as the chat manifest computes it. Service branch trusts the passed tenant (auth.uid() NULL).
@@ -130,9 +139,19 @@ export async function resolveNativeCapabilityStatus(
       ? laneData : "confirm"; // safe default, matching the chat helper
     const lane = clampLaneByRisk(rawLane, binding.toolKey);
 
-    const facts: CapabilityFacts = { ...neutralFacts(callerTier, ownerOpsEligible), journeyAdvanceLane: lane };
+    const facts: CapabilityFacts = { ...neutralFacts(callerTier, ownerOpsEligible), journeyAdvanceLane: lane,
+      weeklyCommitmentLane: opts.actionKind === "planning.weekly_commitment_check" ? lane : "off" };
     const status = resolveCapabilityStatus(buildCapabilitySignals(facts)).find((s) => s.key === binding.statusKey);
     if (!status) return { ok: false, error: `capability '${binding.statusKey}' not produced by the manifest` };
+    // The governed core permits an ordinary read even at needs_approval. A recurring
+    // read additionally requires the tool's current automatic permission: a stored
+    // process grant cannot widen an off/confirm tool ceiling. No read is relabeled
+    // as an effectful mutation to force an approval path.
+    if (opts.actionKind === "planning.weekly_commitment_check" && lane !== "auto"
+      && (status.availability === "live" || status.availability === "needs_approval")) {
+      return { ok: true, status: { ...status, availability: "unavailable",
+        reason: "Recurring commitment checks are held until automatic read permission is available." } };
+    }
     return { ok: true, status };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };

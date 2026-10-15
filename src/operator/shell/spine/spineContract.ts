@@ -80,6 +80,19 @@ export type SpineTurn = {
   /** Which option the operator already picked, if any. */
   readonly answered?: string | null;
   readonly onAnswer?: (option: SpineAskOption) => void;
+  /**
+   * The exact things an act covers, one line each — what the operator is agreeing to.
+   *
+   * NOT A PACK KEY, and it is CC's design decision rather than a port (§00, 2026-09-22: the pack
+   * is reference, not authority). v3 draws no confirm card at all — `Needs your OK` and
+   * `fingerprint` are both 0 hits across its 11,358 lines — so N summaries had no drawn home:
+   * `body` is a single `<p>` with no `whiteSpace`, which renders joined summaries as a run-on,
+   * and `trace` hides them behind a collapsed disclosure, which is a §70 failure for the very
+   * thing being approved. This reuses the ask row's own typography as a NON-INTERACTIVE list.
+   *
+   * Absent → the act row is drawn alone, exactly as the pack has it (L4180–L4185).
+   */
+  readonly actItems?: readonly string[] | null;
   /** `t.act` — the act label on a turn that carries one. */
   readonly act?: string | null;
   readonly onAct?: () => void;

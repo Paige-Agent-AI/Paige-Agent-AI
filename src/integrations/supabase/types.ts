@@ -2738,6 +2738,7 @@ export type Database = {
           memory_type: string
           metadata: Json | null
           source_session_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -2751,6 +2752,7 @@ export type Database = {
           memory_type: string
           metadata?: Json | null
           source_session_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -2764,6 +2766,7 @@ export type Database = {
           memory_type?: string
           metadata?: Json | null
           source_session_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -2793,6 +2796,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "paige_unassigned_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_memory_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3125,41 +3135,75 @@ export type Database = {
       communication_log: {
         Row: {
           channel: string
+          contact_id: string | null
           created_at: string
           error_message: string | null
           id: string
+          message_id: string | null
           message_type: string
+          operation_id: string | null
           preview: string | null
           provider_message_id: string | null
           status: string
           subject: string | null
-          user_id: string
+          tenant_id: string | null
+          user_id: string | null
         }
         Insert: {
           channel: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status: string
           subject?: string | null
-          user_id: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
         Update: {
           channel?: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type?: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status?: string
           subject?: string | null
-          user_id?: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communication_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       communication_preferences: {
         Row: {
@@ -20454,6 +20498,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      forget_paige_memory: { Args: { p_id: string; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: boolean }
+      get_paige_memory: { Args: { p_memory_types?: string[] | null; p_limit?: number | null; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: { id: string; memory_type: string; content: string; source_thread_id: string | null; metadata: Json | null; created_at: string; updated_at: string }[] }
       get_paige_persona_context: {
         Args: never
         Returns: {
@@ -20466,6 +20512,10 @@ export type Database = {
         }[]
       }
       get_platform_email_settings: { Args: never; Returns: Json }
+      get_pipeline_lead_funnel: {
+        Args: { p_pipeline_id: string; p_since?: string }
+        Returns: Json
+      }
       get_platform_rail: {
         Args: { p_limit?: number; p_tenant_id?: string }
         Returns: {
@@ -20655,6 +20705,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      growth_attach_inbound_default_deal: {
+        Args: { p_contact_id: string; p_source: string; p_tenant_id: string }
+        Returns: Json
+      }
+      growth_attach_submission_default_deal: {
+        Args: { p_claim_attempt: number; p_submission_id: string }
+        Returns: Json
+      }
       growth_claim_submission: {
         Args: { p_submission_id: string }
         Returns: Json
@@ -20710,7 +20768,7 @@ export type Database = {
         }
       }
       growth_funnel_publish: {
-        Args: { p_id: string; p_tenant_id: string }
+        Args: { p_actor_id?: string; p_id: string; p_tenant_id: string }
         Returns: Json
       }
       growth_funnel_session_upsert: {
@@ -20780,7 +20838,7 @@ export type Database = {
         Returns: Json
       }
       growth_page_publish: {
-        Args: { p_id: string; p_tenant_id: string }
+        Args: { p_actor_id?: string; p_id: string; p_tenant_id: string }
         Returns: Json
       }
       growth_page_upsert: {
@@ -21390,6 +21448,7 @@ export type Database = {
           _message_count?: number
           _query_embedding: string
           _target_client_id?: string
+          _target_tenant_id?: string
           _target_user_id: string
         }
         Returns: {
@@ -21835,6 +21894,7 @@ export type Database = {
         }
         Returns: string
       }
+      record_paige_memory: { Args: { p_memory_type: string; p_content: string; p_source_thread_id?: string | null; p_metadata?: unknown | null; p_supersede_prior?: boolean | null; p_confirmation_state?: string | null; p_user_id?: string | null; p_tenant_id?: string | null }; Returns: string }
       refresh_analytics_views: { Args: never; Returns: undefined }
       reject_affiliate_application: {
         Args: { _application_id: string; _notes?: string }
@@ -21987,6 +22047,10 @@ export type Database = {
       seed_starter_business: {
         Args: { _tenant_id: string }
         Returns: undefined
+      }
+      set_ad_creative_featured: {
+        Args: { p_content_id: string; p_featured: boolean }
+        Returns: Json
       }
       set_agency_login_default: { Args: { _pref: string }; Returns: Json }
       set_calendar_hosts: {
@@ -22270,6 +22334,21 @@ export type Database = {
         }[]
       }
       verify_cron_token: { Args: { _token: string }; Returns: boolean }
+      list_workspace_research: {
+        Args: { _limit?: number; _offset?: number } | undefined
+        Returns: {
+          id: string
+          question: string
+          domain: string | null
+          caller: string | null
+          stop_reason: string | null
+          configured: boolean | null
+          is_dossier: boolean
+          source_count: number
+          created_at: string
+        }[]
+      }
+      get_workspace_research_run: { Args: { _run_id: string }; Returns: string }
     }
     Enums: {
       access_tier:

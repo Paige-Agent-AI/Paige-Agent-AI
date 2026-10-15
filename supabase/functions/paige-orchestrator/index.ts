@@ -8,6 +8,8 @@ import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { idempotencyKey } from "../_shared/durable-job/mod.ts";
+import { applyBoundContact, bindContactToTenant } from "../_shared/paige-orchestration/resource-binder.ts";
+import { isOrchestratorLocalAgentFunctionAllowed } from "../_shared/marketplace-authority-containment.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -89,6 +91,48 @@ async function resolveTenantScope(req: Request, payload: OrchestratorRequest): P
   return { tenantId, fundingEnabled, callerId, isService: false };
 }
 
+/**
+ * INT-308 — the trusted-actor boundary. ONE downstream context is built AFTER authentication,
+ * from verified state only; the raw caller context is never spread forward again:
+ *   • JWT/anon caller: user_id IS the verified callerId — always. A caller-supplied
+ *     context.user_id is IGNORED (and surfaced as a tamper signal), never forwarded, never
+ *     used for attribution. Identity is not request input.
+ *   • SERVICE-ROLE caller: it may name an acting user (a canonical PAIGE service resolved the
+ *     real user upstream), but when BOTH the resolved tenant and the actor are present the
+ *     association is PROVEN server-side (active tenant_members row for actor+tenant) —
+ *     tenant A paired with tenant B's user FAILS CLOSED instead of being forwarded.
+ * contact_id / conversation_id pass through unchanged. Audit finding (INT-308 record):
+ * NEITHER is read as identity/tenant authority downstream, but contact_id IS an unscoped
+ * cross-tenant data-selector in several local specialists (they load clients by id with the
+ * service role and no tenant filter) — a PRE-EXISTING input-validation gap, equally reachable
+ * via input.contact_id, deliberately out of this hotfix's fence.
+ */
+async function buildTrustedContext(
+  payload: OrchestratorRequest,
+  scope: TenantScope,
+): Promise<{ ctx: NonNullable<OrchestratorRequest["context"]> } | { error: string; status: number }> {
+  const supplied = payload.context?.user_id ?? null;
+  if (scope.isService) {
+    const acting = supplied && UUID_RE.test(supplied) ? supplied : null;
+    if (supplied && !acting) return { error: "Invalid acting user_id", status: 400 };
+    if (acting && scope.tenantId) {
+      const { data: member, error: memberErr } = await supabase
+        .from("tenant_members").select("tenant_id").limit(1)
+        .eq("user_id", acting).eq("tenant_id", scope.tenantId).eq("status", "active");
+      if (memberErr) throw memberErr;
+      const associated = Array.isArray(member) ? member.length > 0 : !!member;
+      if (!associated) {
+        return { error: "Acting user is not a member of the resolved workspace", status: 403 };
+      }
+    }
+    return { ctx: { ...payload.context, user_id: acting ?? undefined } };
+  }
+  if (supplied && supplied !== scope.callerId) {
+    console.warn("[paige-orchestrator] INT-308: caller-supplied context.user_id ignored — identity is not request input");
+  }
+  return { ctx: { ...payload.context, user_id: scope.callerId ?? undefined } };
+}
+
 type Action = "tool_search" | "tool_invoke" | "list_subagents" | "inspect" | "set_agent_job_kind";
 
 interface OrchestratorRequest {
@@ -102,6 +146,8 @@ interface OrchestratorRequest {
     contact_id?: string;
     conversation_id?: string;
     user_id?: string;
+    // INT-310 C1: set by the orchestrator ONLY (the server-resolved tenant), never read from a caller.
+    tenant_id?: string;
   };
 }
 
@@ -560,7 +606,21 @@ Deno.serve(async (req) => {
   const scope = await resolveTenantScope(req, payload);
   if ("error" in scope) return fail(scope.error, scope.status);
   const { tenantId, fundingEnabled, callerId, isService } = scope;
-  const ctx = { ...payload.context, user_id: payload.context?.user_id ?? callerId ?? undefined };
+  // INT-308: the ONE trusted downstream context — built from verified state, never from the
+  // raw caller context (see buildTrustedContext). Everything downstream (invocation
+  // attribution + the local/soft/langgraph context envelope) reads THIS, and only this.
+  let ctx: NonNullable<OrchestratorRequest["context"]>;
+  try {
+    const trusted = await buildTrustedContext(payload, scope);
+    if ("error" in trusted) return fail(trusted.error, trusted.status);
+    ctx = trusted.ctx;
+  } catch (e) {
+    // Fail CLOSED with the same JSON/CORS envelope every other error carries — an
+    // identity-proof infrastructure error must never surface as a bare runtime 500
+    // (and must never fall through to an unverified context).
+    console.error("[paige-orchestrator] INT-308 identity proof failed:", (e as Error)?.message);
+    return fail("Identity verification failed; invocation refused", 500);
+  }
 
   try {
     if (payload.action === "list_subagents" || payload.action === "tool_search") {
@@ -582,7 +642,28 @@ Deno.serve(async (req) => {
     if (payload.action !== "tool_invoke") {
       return fail(`Unknown action: ${String(payload.action)}`, 400);
     }
+    // INT-310 C0: invoking a specialist runs it with the SERVICE ROLE, so it needs a real actor —
+    // the canonical trusted service, or a VERIFIED human (callerId from getUser). The public anon key
+    // passes the gateway but resolves no user, so it never satisfies "authenticated" here.
+    if (!isService && !callerId) return fail("Authentication required", 401);
     if (!payload.slug) return fail("Missing slug for tool_invoke", 400);
+
+    // INT-310 C1: bind every caller-selected contact (input.contact_id / input.client_id /
+    // context.contact_id) to the SERVER-RESOLVED tenant before any specialist — all of which read
+    // clients with the service role — can see it. Malformed, missing, foreign or disagreeing
+    // selectors get one indistinguishable refusal, before any agent lookup or invocation row. The
+    // binder reads only the selected row's owning tenant_id (the canonical subject check); no foreign
+    // row CONTENT is ever returned, forwarded to a specialist, or persisted.
+    const binding = await bindContactToTenant(supabase, tenantId, payload.input ?? {}, ctx);
+    if (!binding.ok) {
+      console.warn(`[paige-orchestrator] INT-310: contact selector refused (${binding.error})`);
+      return fail(binding.error, binding.status);
+    }
+    const bound = applyBoundContact(payload.input ?? {}, ctx, binding.contactId);
+    const boundInput = bound.input;
+    // The trusted tenant travels with the context so specialists can bind their own reads to it
+    // (defense in depth); a caller-supplied context.tenant_id never survives this overwrite.
+    ctx = { ...bound.context, tenant_id: tenantId ?? undefined } as typeof ctx;
 
     let invQ = supabase
       .from("paige_subagents")
@@ -600,6 +681,15 @@ Deno.serve(async (req) => {
       return fail(`Unknown sub-agent: ${payload.slug}`, 404);
     }
     if (!agent.enabled) return fail(`Sub-agent disabled: ${payload.slug}`, 403);
+    if (agent.runtime === "local") {
+      // Refused BEFORE the invocation row is written, so a refusal never leaves a `pending` row behind.
+      if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
+      // INT-310: the target comes from a paige_subagents row (tenant-admin writable) and is called with
+      // the SERVICE ROLE, so only an allowlisted, canonical local-agent function may be reached.
+      if (!isOrchestratorLocalAgentFunctionAllowed(agent.edge_function)) {
+        return fail(`Sub-agent ${agent.slug} is not a registered local specialist`, 403);
+      }
+    }
 
     const startedAt = Date.now();
     const invocationId = await logInvocation({
@@ -607,7 +697,7 @@ Deno.serve(async (req) => {
       invoked_by: ctx.user_id ?? null,
       contact_id: ctx.contact_id ?? null,
       conversation_id: ctx.conversation_id ?? null,
-      input: payload.input ?? {},
+      input: boundInput,
       status: "pending",
       tenant_id: tenantId, // §9 attribution: the resolved request tenant, never caller-supplied
     });
@@ -618,18 +708,17 @@ Deno.serve(async (req) => {
     // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
     // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
     if (agent.runtime === "local") {
-      if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
-      result = await invokeLocal(agent.edge_function, payload.input ?? {}, ctx);
+      result = await invokeLocal(agent.edge_function, boundInput, ctx);
     } else if (agent.runtime === "soft") {
       result = await invokeSoft(
         { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
-        payload.input ?? {},
+        boundInput,
         ctx,
         tenantId,
       );
     } else {
       if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
-      result = await dispatchLangGraph(agent.langgraph_graph, payload.input ?? {}, ctx);
+      result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
     }
 
     const latency = Date.now() - startedAt;

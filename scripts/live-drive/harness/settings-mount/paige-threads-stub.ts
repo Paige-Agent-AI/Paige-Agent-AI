@@ -73,11 +73,18 @@ const threads: PaigeThread[] = [
   },
 ];
 
-export function usePaigeThreads() {
+/**
+ * Gated exactly like the real hook (src/hooks/usePaigeThreads.ts:56,176): nothing is "fetched" until
+ * the caller's user id (and tenant, outside platform mode) is known. A constant `isFetched: true`
+ * reported a settled list before the user id resolved, which latched PAIGE Chat on "Loading your
+ * conversations…" in this harness only (E4-S2 diagnosis, 2026-10-13).
+ */
+export function usePaigeThreads(opts: { callerUserId?: string | null; tenantId?: string | null; platform?: boolean } = {}) {
+  const enabled = !!opts.callerUserId && (!!opts.platform || !!opts.tenantId);
   return {
-    threads,
+    threads: enabled ? threads : [],
     isLoading: false,
-    isFetched: true,
+    isFetched: enabled,
     loadTurns: async (threadId: string) => {
       await new Promise((resolve) => setTimeout(resolve, 20));
       return [...(turnsByThread[threadId] ?? []), ...persistedHarnessTurns(threadId)];

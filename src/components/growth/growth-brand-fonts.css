@@ -1,0 +1,16 @@
+/* Workspace pages: headings in the BRAND display face.
+ *
+ * <GrowthBlocks> (and the funnel's form/thank-you scope) mark their root `data-gp`, and add
+ * `data-gp-font="brand"` only when the page resolves a font from the self-hosted library
+ * (src/lib/brand-fonts.ts). The platform-wide `h1, h2, h3, .font-display` rule in src/index.css sets
+ * Bricolage Grotesque on the element itself, so the page scope's inherited --gp-font never reached a
+ * heading. This re-points headings and display figures INSIDE a branded page only.
+ *
+ * Deliberately NOT in src/index.css: that global rule, the body rule and the §28-frozen landing
+ * (`.pa-site`, src/marketing/site.css) stay byte-for-byte untouched. Same pattern as
+ * `[data-pg] :is(h1…h6)` (index.css). Specificity (0,3,0) beats both the global rule (0,1,0) and the
+ * Tailwind `.font-display` utility (0,1,0). Without a library font the attribute is absent and a page
+ * renders exactly as before. */
+[data-gp][data-gp-font="brand"] :is(h1, h2, h3, h4, .font-display) {
+  font-family: var(--gp-font-display, var(--gp-font));
+}

@@ -84,7 +84,10 @@ await check("R9 · dispatcher refuses to run while execution is gated off, and s
 
 console.log("\n--- dispatcher: claiming, eligibility, tenant, honesty ---");
 
-// Shared scenario: one queued run whose registry row is active.
+// Shared scenario: one queued run whose registry row is active. The default target is an n8n webhook:
+// INT-310's dispatch allowlist ends any non-allowlisted `direct_edge_function` run BEFORE the claim, so a
+// direct-target default would make the claim / dispatch checks below vacuous. Pass `direct` to model a
+// direct_edge_function row (R14, R16).
 function dispatcherWorld({ isActive = true, claimRows = [{ id: "run-1" }], queuedErr = null, tenantId = "tenant-A", direct = null } = {}) {
   return makeFakeSupabase({
     "select:paige_workflow_runs": (q) => {
@@ -99,9 +102,9 @@ function dispatcherWorld({ isActive = true, claimRows = [{ id: "run-1" }], queue
     },
     "select:paige_workflow_registry": () => ({
       data: [{
-        id: "reg-1", key: "wf.demo", provider: "direct_edge_function", is_active: isActive,
-        tenant_id: tenantId, n8n_webhook_url: null, needs_n8n_link: false,
-        langgraph_graph_id: null, direct_function_name: direct ?? "send-welcome-email",
+        id: "reg-1", key: "wf.demo", provider: direct ? "direct_edge_function" : "n8n", is_active: isActive,
+        tenant_id: tenantId, n8n_webhook_url: direct ? null : "https://n8n.example.invalid/webhook/demo", needs_n8n_link: false,
+        langgraph_graph_id: null, direct_function_name: direct,
       }],
     }),
     "update:paige_workflow_runs": () => ({ data: claimRows }),
@@ -150,6 +153,17 @@ await check("R14 · a re-entrant direct target is refused", async () => {
   const b = await (await h(req({ headers: { Authorization: `Bearer ${SERVICE_KEY}` } }))).json();
   eq(globalThis.__DISPATCH_CALLS__.length, 0, "must not dispatch into itself");
   assert(b.results.some((r) => String(r.error ?? "").startsWith("re_entrant_target_refused")), "refusal is recorded");
+});
+
+await check("R16 · a direct target that is not on the service-dispatch allowlist ends before the claim (INT-310)", async () => {
+  const fake = dispatcherWorld({ direct: "send-message" });
+  const h = await loadHandler("dispatch-queued-workflow-runs", { WORKFLOW_EXECUTION_ENABLED: "true" }, fake);
+  const b = await (await h(req({ headers: { Authorization: `Bearer ${SERVICE_KEY}` } }))).json();
+  eq(globalThis.__DISPATCH_CALLS__.length, 0, "a non-allowlisted direct target must not dispatch");
+  const claimed = fake.__queries.some((q) => q.op === "update" && q.table === "paige_workflow_runs"
+    && q.payload?.status === "running");
+  assert(!claimed, "it must end before the compare-and-swap claim");
+  assert(b.results.some((r) => r.error === "direct_function_not_allowlisted"), "terminated with an honest reason");
 });
 
 await check("R15 · a queue read failure is reported, not returned as an ok empty sweep", async () => {

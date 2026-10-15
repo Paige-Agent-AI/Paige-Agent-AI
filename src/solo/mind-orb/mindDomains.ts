@@ -144,7 +144,7 @@ function n8nState(channel: N8nChannelInput): MindSignalState {
 
 /**
  * Reconcile the real read contracts onto the six approved domains.
- * - knowledge  ← tenant_knowledge_docs (owner-indexed) — LIVE
+ * - knowledge  ← canonical Knowledge metadata — confirmation/coverage unverified
  * - systems    ← n8n readiness (Connected sources; status only) — LIVE
  * - goals      ← pending approvals (Operating decisions) — LIVE
  * - identity   ← business_context.readiness — NO frontend hook yet → honest absence
@@ -158,25 +158,25 @@ export function buildMindDomains(inputs: MindInputs): MindDomainModel[] {
   const byKey = new Map<MindDomainKey, MindDomainModel>();
   for (const def of MIND_DOMAINS) byKey.set(def.key, { def, verdict: "PARTIAL", records: [] });
 
-  // Knowledge resources — LIVE owner-indexed documents.
+  // Metadata proves a source record exists; it cannot confer Memory or complete-index truth.
   const knowledge = byKey.get("knowledge")!;
   knowledge.records = inputs.knowledge.map((doc) => ({
     id: `knowledge:${doc.id}`,
     domain: "knowledge" as const,
-    state: "owner_confirmed" as const,
-    truth: "LIVE SOURCE" as const,
+    state: "needs_confirmation" as const,
+    truth: "PARTIAL" as const,
     title: doc.title,
-    summary: doc.summary || "Indexed document metadata.",
+    summary: doc.summary || "Saved document metadata.",
     source: doc.source || "PAIGE Knowledge",
-    when: doc.when || doc.createdAt || "Recently indexed",
-    evidence: `${doc.chunkCount ?? 0} indexed chunk${doc.chunkCount === 1 ? "" : "s"}${doc.domain ? ` · ${doc.domain}` : ""}`,
+    when: doc.when || doc.createdAt || "Recorded time unavailable",
+    evidence: `${doc.chunkCount ?? 0} recorded chunk${doc.chunkCount === 1 ? "" : "s"}${doc.domain ? ` · ${doc.domain}` : ""}. Index completeness and owner-confirmed Memory are not established by this record.`,
     owner: "PAIGE Knowledge",
   }));
-  knowledge.verdict = knowledge.records.length ? "LIVE" : "PARTIAL";
+  knowledge.verdict = "PARTIAL";
   if (!knowledge.records.length) {
     knowledge.empty = {
-      heading: "No indexed knowledge yet",
-      body: "Add a knowledge document and PAIGE will index it here. Nothing is invented to fill the space.",
+      heading: "No knowledge documents loaded",
+      body: "Saved Knowledge sources appear here with provenance. Indexing and owner-confirmed Memory require their own evidence.",
     };
   }
 
@@ -245,12 +245,12 @@ export function buildMindDomains(inputs: MindInputs): MindDomainModel[] {
     body: "Canonical people and relationships live in Clients. A governed memory seam can hold context on top, but nothing writes to it yet.",
   };
 
-  // Offers & services — the catalog is real but lives in Campaigns, not as a governed fact.
+  // Offers & services — the catalog is real but lives in Offers, not as a governed fact.
   const offers = byKey.get("offers")!;
   offers.verdict = "UNAVAILABLE";
   offers.empty = {
     heading: "Not on file as knowledge yet",
-    body: "PAIGE has no confirmed record of your offers. Your catalog is real, but it lives in Campaigns and isn't a governed fact yet.",
+    body: "PAIGE has no confirmed record of your offers. Your offers are real and live in Offers, but they aren't a governed fact yet.",
   };
 
   return MIND_DOMAINS.map((def) => byKey.get(def.key)!);

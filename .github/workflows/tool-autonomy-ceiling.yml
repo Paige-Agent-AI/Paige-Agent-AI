@@ -1,0 +1,35 @@
+name: Tool autonomy ceiling fact
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270540000000_tool_autonomy_ceiling_fact.sql'
+      - 'supabase/tests/tool_autonomy_ceiling_fact.sql'
+      - '.github/workflows/tool-autonomy-ceiling.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-equivalence-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: tool_autonomy_ceiling_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: tool_autonomy_ceiling_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migration A — equivalence, ceiling fact, tenant scope, grants (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/tool_autonomy_ceiling_fact.sql

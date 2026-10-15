@@ -1,0 +1,366 @@
+{
+  "boundary": "Actual SalesWorkspace/PipelineSurface/PipelineCommandDesk using synthetic scoped pipeline fixture; no authenticated/provider/mutation proof",
+  "errors": [],
+  "results": [
+    {
+      "width": 1536,
+      "documentWidth": 1536,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 645,
+          "scrollHeight": 645,
+          "overflow": "auto"
+        },
+        {
+          "height": 553,
+          "scrollHeight": 553,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1536,
+      "documentWidth": 1536,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 645,
+          "scrollHeight": 645,
+          "overflow": "auto"
+        },
+        {
+          "height": 505,
+          "scrollHeight": 505,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "documentWidth": 1366,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 551,
+          "scrollHeight": 551,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "documentWidth": 1366,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 603,
+          "scrollHeight": 603,
+          "overflow": "auto"
+        },
+        {
+          "height": 463,
+          "scrollHeight": 463,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "documentWidth": 1024,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 503,
+          "scrollHeight": 503,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "documentWidth": 1024,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 503,
+          "scrollHeight": 503,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 900,
+      "documentWidth": 900,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 875,
+          "scrollHeight": 875,
+          "overflow": "auto"
+        },
+        {
+          "height": 735,
+          "scrollHeight": 735,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 900,
+      "documentWidth": 900,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 875,
+          "scrollHeight": 875,
+          "overflow": "auto"
+        },
+        {
+          "height": 735,
+          "scrollHeight": 735,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 646,
+          "scrollHeight": 646,
+          "overflow": "auto"
+        },
+        {
+          "height": 330,
+          "scrollHeight": 330,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=light&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 646,
+          "scrollHeight": 646,
+          "overflow": "auto"
+        },
+        {
+          "height": 330,
+          "scrollHeight": 330,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1536,
+      "documentWidth": 1536,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 645,
+          "scrollHeight": 645,
+          "overflow": "auto"
+        },
+        {
+          "height": 553,
+          "scrollHeight": 553,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1536,
+      "documentWidth": 1536,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 645,
+          "scrollHeight": 645,
+          "overflow": "auto"
+        },
+        {
+          "height": 505,
+          "scrollHeight": 505,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "documentWidth": 1366,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 551,
+          "scrollHeight": 551,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "documentWidth": 1366,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 603,
+          "scrollHeight": 603,
+          "overflow": "auto"
+        },
+        {
+          "height": 463,
+          "scrollHeight": 463,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "documentWidth": 1024,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 503,
+          "scrollHeight": 503,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "documentWidth": 1024,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 643,
+          "scrollHeight": 643,
+          "overflow": "auto"
+        },
+        {
+          "height": 503,
+          "scrollHeight": 503,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 900,
+      "documentWidth": 900,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 875,
+          "scrollHeight": 875,
+          "overflow": "auto"
+        },
+        {
+          "height": 735,
+          "scrollHeight": 735,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 900,
+      "documentWidth": 900,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 875,
+          "scrollHeight": 875,
+          "overflow": "auto"
+        },
+        {
+          "height": 735,
+          "scrollHeight": 735,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=closed&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 646,
+          "scrollHeight": 646,
+          "overflow": "auto"
+        },
+        {
+          "height": 330,
+          "scrollHeight": 330,
+          "overflow": "auto"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "tabs": 6,
+      "address": "http://127.0.0.1:5263/solo/test-tenant-a/sales/opportunities?theme=dark&paige=open&view=list&pipeline=test-pipeline&search=nonmatching",
+      "scrollOwners": [
+        {
+          "height": 646,
+          "scrollHeight": 646,
+          "overflow": "auto"
+        },
+        {
+          "height": 330,
+          "scrollHeight": 330,
+          "overflow": "auto"
+        }
+      ]
+    }
+  ]
+}

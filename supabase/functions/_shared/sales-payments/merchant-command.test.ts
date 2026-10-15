@@ -1,0 +1,13 @@
+import {describe,it,expect} from 'vitest';
+import {parseMerchantRequest,classifyMerchantFailure} from './merchant-command.ts';
+const tenant='10000000-0000-4000-8000-000000000001',operation='20000000-0000-4000-8000-000000000001';
+describe('merchant command boundary',()=>{
+ it('accepts canonical C4b command with stable operation',()=>expect(parseMerchantRequest({command:{action:'merchant.start_onboarding',provider:'stripe'},expected_tenant_id:tenant,operation_id:operation})).toMatchObject({action:'start_onboarding',operation_id:operation,command:{action:'merchant.start_onboarding',provider:'stripe'}}));
+ it('retains scoped legacy read without creation',()=>expect(parseMerchantRequest({action:'status'}).action).toBe('status'));
+ it('canonicalizes full UUID intent before reservation and exact approval binding',()=>expect(parseMerchantRequest({action:'start_onboarding',expected_tenant_id:'AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA',operation_id:'BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB'})).toMatchObject({expected_tenant_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',operation_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}));
+ it.each([{action:'start_onboarding',expected_tenant_id:tenant},{action:'login_link',operation_id:operation},{command:{action:'merchant.start_onboarding',provider:'paypal'},expected_tenant_id:tenant,operation_id:operation},{action:'status',confirm:true},{action:'status',provider_environment:'live'}])('rejects unsupported intent %#',body=>expect(()=>parseMerchantRequest(body)).toThrow());
+ it('keeps definitive configuration refusal distinct without authorizing redispatch',()=>expect(classifyMerchantFailure('account_create',{type:'StripeAuthenticationError',statusCode:401,message:'SECRET_RAW'})).toEqual({stage:'account_create',outcome:'refused',code:'PROVIDER_CONFIGURATION_REQUIRED',http_status:401}));
+ it.each([{statusCode:400,type:'StripeInvalidRequestError'},{statusCode:500,type:'StripeAPIError'},{statusCode:409,type:'StripeIdempotencyError'},new Error('PROVIDER_OUTCOME_UNKNOWN')])('keeps ambiguous creation unknown %#',error=>expect(classifyMerchantFailure('account_create',error).outcome).toBe('outcome_unknown'));
+ it('classifies known capability configuration refusal without leaking arbitrary provider code',()=>expect(classifyMerchantFailure('account_create',{statusCode:400,type:'StripeInvalidRequestError',code:'account_invalid',message:'SECRET_RAW'})).toMatchObject({outcome:'refused',code:'PROVIDER_CONFIGURATION_REQUIRED'}));
+ it('does not expose raw shape or message',()=>expect(JSON.stringify(classifyMerchantFailure('account_create',{statusCode:402,type:'StripeError',code:'SECRET',requestId:'SECRET',message:'SECRET'}))).not.toContain('SECRET'));
+});

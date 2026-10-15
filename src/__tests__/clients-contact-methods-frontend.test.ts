@@ -4,43 +4,30 @@
 // migration DROPS. These prove the frontend no longer reads, filters or writes those four columns,
 // so the drop breaks nothing here, and that the inbox still hands its consumers `email` / `phone`
 // — now the PRIMARY addresses — under the same field names (§37).
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb } from "@/pages/admin/conversations/inbox-shared";
 
 const ROOT = join(__dirname, "..", "..");
 
-// Every frontend file that read or wrote the old contact columns (inventory 2026-09-28, re-derived).
-const FILES = [
-  "src/agency/data/useAgencyContacts.ts",
-  "src/components/admin/FieldIngestionTab.tsx",
-  "src/components/admin/contacts/DuplicatesBanner.tsx",
-  "src/components/admin/contacts/EditContactDialog.tsx",
-  "src/components/admin/contacts/NewContactDialog.tsx",
-  "src/components/admin/pipeline/NewDealDialog.tsx",
-  "src/components/dashboard/ClientManagementDashboard.tsx",
-  "src/components/dashboard/InternalClientFileView.tsx",
-  "src/components/paige/CustomerSelector.tsx",
-  "src/components/tenant-relationships/contactUpsert.ts",
-  "src/components/tenant-relationships/PeopleContactEditor.tsx",
-  "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
-  "src/components/tenant-relationships/useTenantRelationshipsData.ts",
-  "src/hooks/useClientChatContext.ts",
-  "src/lib/contacts.ts",
-  "src/lib/getClientDisplayInfo.ts",
-  "src/pages/admin/ClientJourney.tsx",
-  "src/pages/admin/ClientsConversations.tsx",
-  "src/pages/admin/ContactDetail.tsx",
-  "src/pages/admin/ContactsAdmin.tsx",
-  "src/pages/admin/ReadinessProposalsAdmin.tsx",
-  "src/pages/admin/conversations/ComposeThreadDialog.tsx",
-  "src/pages/admin/conversations/inbox-shared.ts",
-  "src/pages/onboard/Step1Welcome.tsx",
-  "src/pages/onboard/useOnboardingClient.ts",
-  "src/solo/useConversations.ts",
-  "src/solo/useSoloAgreements.ts",
-];
+// Every frontend source file that touches the `clients` or `profiles` table, found by scanning
+// `src/` rather than kept as a hand-written list: a list goes stale the moment a file is renamed
+// or added (the 2026-09-28 list kept guarding `useSoloAgreements.ts` after its live successor,
+// `useSoloCommercialTerms.ts`, took over).
+const TABLE_TOUCH = /\.from\(\s*["'](clients|profiles)["']|["'`][^"'`\n]*\bclients(?::\w+)?\(/;
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
+    const rel = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) return entry.name === "__tests__" ? [] : sourceFiles(rel);
+    return /\.(ts|tsx)$/.test(entry.name) && !/\.(test|spec)\.(ts|tsx)$/.test(entry.name) && !entry.name.endsWith(".d.ts")
+      ? [rel]
+      : [];
+  });
+}
+
+const FILES = sourceFiles("src").filter((file) => TABLE_TOUCH.test(readFileSync(join(ROOT, file), "utf8")));
 
 const ADDRESS_COLUMN = /(^|[\s,(])(email|phone|work_email)(\s*(,|\)|$|:))/;
 
@@ -68,6 +55,12 @@ function selectStrings(source: string, text: string): string[] {
 }
 
 describe("the frontend is off the old contact address columns", () => {
+  it("finds the files it guards, including the live successors of renamed ones", () => {
+    expect(FILES).toContain("src/solo/useSoloCommercialTerms.ts");
+    expect(FILES).toContain("src/pages/admin/ContactDetail.tsx");
+    expect(FILES.length).toBeGreaterThan(30);
+  });
+
   for (const file of FILES) {
     it(`${file} neither reads, filters nor writes clients.email/phone or profiles.work_email/phone`, () => {
       const source = readFileSync(join(ROOT, file), "utf8");

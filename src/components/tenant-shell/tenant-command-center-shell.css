@@ -25,7 +25,8 @@
 
 [data-tenant-shell] *, [data-tenant-shell] *::before, [data-tenant-shell] *::after { box-sizing: border-box; }
 [data-tenant-shell] button, [data-tenant-shell] a { font: inherit; }
-[data-tenant-shell] :focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 3px; }
+/* Indigo, the shared --ring (owner ruling 2026-10-05): gold is spent on the act alone (§11). */
+[data-tenant-shell] :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
 [data-tenant-shell] ::-webkit-scrollbar { width: 10px; height: 10px; }
 [data-tenant-shell] ::-webkit-scrollbar-track { background: transparent; }
 [data-tenant-shell] ::-webkit-scrollbar-thumb { background: var(--pg-line-strong); border: 3px solid transparent; border-radius: var(--pg-r-pill); background-clip: content-box; }

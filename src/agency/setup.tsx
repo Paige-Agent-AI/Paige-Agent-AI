@@ -2,7 +2,7 @@
 // Agency pack — Setup (SETUP nav) screen. Faithful port of the Claude Design "CRM
 // agency mode" pack Setup view (owner-locked handoff 2026-08-17, §28/§30/§31/§63 —
 // "we do not drift off this whatsoever"), mirroring the Solo setup precedent
-// (src/solo/setup.tsx — the SlideOut/EditDrawer pop-out idiom) and the sibling
+// (the former src/solo/setup.tsx, since deleted — the SlideOut/EditDrawer pop-out idiom) and the sibling
 // agency modules (team.tsx / SetupCard.tsx / fixtures.ts).
 //
 // Source of truth: "Agency Shell.dc.html" —

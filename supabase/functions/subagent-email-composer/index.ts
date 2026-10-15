@@ -18,6 +18,9 @@ import {
   type ModelInvoker,
 } from "../_shared/attachment-extract.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
+import { bindContactToTenant, collectContactSelectors } from "../_shared/paige-orchestration/resource-binder.ts";
+import { buildComposerUserPrompt, untrustedSystemRule } from "./prompt.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -67,6 +70,10 @@ interface Input {
   // #176 — OPTIONAL comms-attachments object paths the coach staged for Paige to READ
   // and reference in the draft. Each is `${tenantId}/${uuid}-${name}`; §9-guarded below.
   attachment_paths?: string[];
+  // Exp03 S3 — the key points (and the contact's own details) were typed by a member of the public
+  // into a website form (paige-action-worker sets this for owner.lead_followup). They are framed as
+  // delimited DATA, never instructions (prompt.ts). Absent/false: the prompt is unchanged.
+  untrusted_submission?: boolean;
 }
 
 function ok(d: unknown, status = 200) {
@@ -118,7 +125,34 @@ function paragraphsToHtml(text: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  let payload: { input?: Input; context?: { contact_id?: string; user_id?: string } } = {};
+  // INT-310 C1 — WHO is calling, and WHICH workspace any selected contact must belong to. Both are
+  // decided server-side before anything is read with the service role:
+  //   • the canonical internal caller (the orchestrator, after its resource binder): the workspace is
+  //     the server-resolved tenant it forwards in context.tenant_id;
+  //   • a person (the two Clients-hub composers call this directly): a VERIFIED user, and the workspace
+  //     is current_user_tenant_id() — never a caller-supplied tenant. The anon key resolves no user and
+  //     is refused.
+  // Both go through the one binder: _shared/paige-orchestration/resource-binder.ts.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const isInternalCall = await isAuthorizedInternalCaller(req, adminClient());
+  let userClient: ReturnType<typeof createClient> | null = null;
+  if (!isInternalCall) {
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    userClient = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+    let userId: string | null = null;
+    try {
+      const { data: who } = await userClient.auth.getUser(token);
+      userId = who?.user?.id ?? null;
+    } catch (_e) {
+      userId = null;
+    }
+    if (!userId) return ok({ ok: false, error: "unauthorized" }, 401);
+  }
+
+  let payload: { input?: Input; context?: { contact_id?: string; user_id?: string; tenant_id?: string } } = {};
   try { payload = await req.json(); } catch { return ok({ ok: false, error: "Invalid JSON" }, 400); }
 
   const input = payload.input ?? {} as Input;
@@ -126,19 +160,49 @@ Deno.serve(async (req) => {
     return ok({ ok: false, error: "intent required (what should this email accomplish?)" }, 400);
   }
 
-  // Resolve recipient — either explicit or via contact_id lookup
-  const contactId = input.contact_id ?? payload.context?.contact_id;
+  let workspaceTenant: string | null = null;
+  let workspaceResolveFailed = false;
+  if (isInternalCall) {
+    // The canonical internal caller (service-role bearer or a verified cron token — the same trust
+    // class) forwards the tenant it already resolved; the orchestrator sets it from its own binder.
+    const t = (payload.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+    workspaceTenant = typeof t === "string" ? t : null;
+  } else if (userClient) {
+    try {
+      const { data: t, error: tErr } = await userClient.rpc("current_user_tenant_id");
+      if (tErr) throw tErr;
+      workspaceTenant = typeof t === "string" ? t : null;
+    } catch (e) {
+      workspaceResolveFailed = true;
+      console.warn("[email-composer] tenant resolve failed:", (e as Error)?.message);
+    }
+  }
+  // Bind the selected contact (input.contact_id / context.contact_id) to that workspace through the
+  // canonical binder: a malformed, missing, foreign or disagreeing selector is one uniform refusal.
+  // An infrastructure failure resolving the workspace is reported as such (503), never as a
+  // not-found — the same distinction the binder draws for its own lookup error.
+  if (workspaceResolveFailed && collectContactSelectors(input as unknown as Record<string, unknown>, payload.context ?? {}).length > 0) {
+    return ok({ ok: false, error: "resource_verification_unavailable" }, 503);
+  }
+  const binding = await bindContactToTenant(
+    supabase, workspaceTenant, input as unknown as Record<string, unknown>, payload.context ?? {},
+  );
+  if (!binding.ok) return ok({ ok: false, error: binding.error }, binding.status);
+
+  // Resolve recipient — either explicit or via the bound contact
+  const contactId = binding.contactId;
   let recipientName = input.recipient_name ?? "";
   let recipientEmail = input.recipient_email ?? "";
   let entityName = "";
   let fundingGoal = "";
   let contactTenantId: string | null = null;
-  if (contactId) {
+  if (contactId && workspaceTenant) {
     // Addressed to the contact's PRIMARY email unless the caller named one.
     const { data: row } = await supabase
       .from("clients")
       .select(`first_name,last_name,entity_name,funding_goal,tenant_id,${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", contactId)
+      .eq("tenant_id", workspaceTenant) // INT-310 C1: defense in depth behind the binder
       .maybeSingle();
     const c = withPrimaryAddresses(row);
     if (c) {
@@ -190,10 +254,6 @@ Deno.serve(async (req) => {
   // another tenant's object and is REFUSED (skip + log), never downloaded. A failed path
   // never throws the whole draft (§13). Internal/service-role callers (the orchestrator)
   // resolve no user tenant and simply skip — they never pass attachment_paths today.
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const isInternalCall =
-    req.headers.get("X-Orchestrator-Call") === "1" ||
-    authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
   const attachmentPaths = Array.isArray(input.attachment_paths)
     ? input.attachment_paths.filter((p): p is string => typeof p === "string" && p.length > 0)
     : [];
@@ -219,19 +279,8 @@ Deno.serve(async (req) => {
   let attachmentsRead = 0;
   let attachmentsSkipped = 0;   // §13: staged-but-not-read count, surfaced so the UI can be honest
   if (attachmentPaths.length > 0) {
-    let callerTenantId: string | null = null;
-    if (!isInternalCall && authHeader) {
-      try {
-        const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-          auth: { persistSession: false },
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data: t } = await userClient.rpc("current_user_tenant_id");
-        callerTenantId = (t as string | null) ?? null;
-      } catch (e) {
-        console.warn("[email-composer] tenant resolve failed:", (e as Error)?.message);
-      }
-    }
+    // The person's workspace, resolved above from current_user_tenant_id(); internal callers skip.
+    const callerTenantId: string | null = isInternalCall ? null : workspaceTenant;
     if (!callerTenantId) {
       console.warn("[email-composer] attachment_paths present but caller tenant unresolved — skipping all (§9 fail-safe).");
     } else {
@@ -290,6 +339,7 @@ Deno.serve(async (req) => {
 
   let subject = input.subject_hint ?? "";
   let bodyPlain = "";
+  const untrustedSubmission = input.untrusted_submission === true;
 
   {
     const system = `You are the Email Composer sub-agent for Paige Agent AI.
@@ -302,26 +352,16 @@ Hard rules:
 - Never name another specific client, coach, admin, or customer of the platform. Use archetype phrasing only ("a client", "the contact", "their business"). Doctrine §116.
 - Sign off exactly as: "${senderName}${senderTitle ? `, ${senderTitle}` : ""}".
 - Do NOT invent facts about the recipient beyond what is provided.${attachmentContext ? `
-- The client shared document(s); their READABLE CONTENT is provided under "ATTACHED DOCUMENT CONTENT". You MAY reference specifics from it in the reply, but ONLY facts literally present there — never invent details beyond what is written. ${ATTACHMENT_SOURCE_INSTRUCTION}` : ""}
+- The client shared document(s); their READABLE CONTENT is provided under "ATTACHED DOCUMENT CONTENT". You MAY reference specifics from it in the reply, but ONLY facts literally present there — never invent details beyond what is written. ${ATTACHMENT_SOURCE_INSTRUCTION}` : ""}${untrustedSystemRule(untrustedSubmission)}
 
 Return STRICT JSON with this shape (no markdown, no code fences):
 {"subject": "<one-line subject>", "body": "<plain-text body with \\n paragraph breaks, no HTML>"}`;
 
-    const user = [
-      `Recipient name: ${recipientName || "(unknown)"}`,
-      `Recipient email: ${recipientEmail || "(unknown)"}`,
-      entityName ? `Business: ${entityName}` : "",
-      fundingGoal ? `Funding goal: ${fundingGoal}` : "",
-      `Tone: ${tone}`,
-      `Length target: ${length} (${wordBudget} words)`,
-      `Intent: ${input.intent}`,
-      input.key_points?.length ? `Key points to include:\n- ${input.key_points.join("\n- ")}` : "",
-      input.cta ? `Call to action: ${input.cta}` : "",
-      input.subject_hint ? `Preferred subject: ${input.subject_hint}` : "",
-      attachmentContext
-        ? `\nATTACHED DOCUMENT CONTENT (reference only what is literally written here):\n${attachmentContext}`
-        : "",
-    ].filter(Boolean).join("\n");
+    const user = buildComposerUserPrompt({
+      recipientName, recipientEmail, entityName, fundingGoal, tone, length, wordBudget,
+      intent: input.intent, keyPoints: input.key_points, cta: input.cta, subjectHint: input.subject_hint,
+      attachmentContext, untrusted: untrustedSubmission,
+    });
 
     const aiRes = await gatewayCompat("anthropic", {
       method: "POST",
@@ -378,7 +418,8 @@ Return STRICT JSON with this shape (no markdown, no code fences):
           draft_text: `${subject}\n\n${bodyPlain}`,
           channel: "email",
         },
-        context: { contact_id: contactId ?? undefined },
+        // INT-310 C1: the compliance reviewer binds its own read to the same workspace.
+        context: { contact_id: contactId ?? undefined, tenant_id: workspaceTenant ?? undefined },
       }),
       signal: AbortSignal.timeout(8000),
     });

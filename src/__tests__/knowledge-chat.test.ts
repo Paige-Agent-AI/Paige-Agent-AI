@@ -2,11 +2,18 @@ import { describe, it, expect, vi } from 'vitest';
 import { executeKnowledgeTool, normalizeKnowledgeArgs } from '../../supabase/functions/_shared/knowledge-tenant-brain';
 import { classifySpentApproval, sayWhatTheCardSays, buildApprovalOutcome } from '../../supabase/functions/_shared/approval-outcome';
 import { confirmFingerprint } from '../../supabase/functions/_shared/confirm-fingerprint';
+import { classifyResumedApproval } from '../../supabase/functions/_shared/paige-turn/resume';
 const tenant='11111111-1111-4111-8111-111111111111';
 const id='22222222-2222-4222-8222-222222222222';
 const row={id,tenant_id:tenant,revision:2,title:'Guide',summary:null,category:null,tags:[],source:'paste',source_url:null,chunk_count:1,content:'private'};
 const port=(data:unknown,error:unknown=null)=>({rpc:vi.fn().mockResolvedValue({data,error})});
 describe('governed Knowledge adapter',()=>{
+ it('resumed approvals preserve verified change with missing receipt only for the Knowledge consumer',()=>{
+  const spentContent=JSON.stringify({success:false,verified:true,railRecorded:false,outcome:'capability_completed_unrecorded'});
+  expect(classifyResumedApproval({spent:true,spentContent,reportsKnowledge:true})).toEqual({outcome:'ran',reason:'completed_unrecorded'});
+  expect(classifyResumedApproval({spent:true,spentContent})).toEqual({outcome:'unconfirmed',reason:'unconfirmed'});
+  expect(classifyResumedApproval({spent:true,spentContent:JSON.stringify({...JSON.parse(spentContent),outcome_unknown:true}),reportsKnowledge:true})).toEqual({outcome:'unconfirmed',reason:'unconfirmed'});
+ });
  it('rejects model scope/consent and empty or unbounded patch',()=>{
   for(const extra of [{tenant_id:tenant},{actor_id:id},{approved:true},{consent:true}]) expect(()=>normalizeKnowledgeArgs('knowledge_delete',{document_id:id,expected_revision:2,...extra})).toThrow();
   expect(()=>normalizeKnowledgeArgs('knowledge_update',{document_id:id,expected_revision:2,patch:{}})).toThrow();
@@ -14,12 +21,12 @@ describe('governed Knowledge adapter',()=>{
  it('normalizes exact title before fingerprint while preserving other metadata',()=>expect(normalizeKnowledgeArgs('knowledge_update',{document_id:id,expected_revision:2,patch:{title:' Guide ',summary:' context '},confirm:true})).toEqual({document_id:id,expected_revision:2,patch:{title:'Guide',summary:' context '},confirm:true}));
  it('uses caller-scoped RPC and bounds contextual detail',async()=>{
   const caller=port({tenant_id:tenant,documents:[{...row,content:'x'.repeat(20000)}]});
-  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_read',args:{document_id:id}});
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id}});
   expect(caller.rpc).toHaveBeenCalledWith('read_tenant_knowledge',expect.objectContaining({p_expected_tenant:tenant,p_doc_id:id}));
   expect(result.success).toBe(true);expect(JSON.stringify(result).length).toBeLessThan(16000);expect(JSON.stringify(result)).toContain('truncated');
  });
  it('never returns another tenant document',async()=>{
-  const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,tenant_id:id}]}),expectedTenantId:tenant,tool:'knowledge_read',args:{}});
+  const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,tenant_id:id}]}),expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{}});
   expect(result.success).toBe(false);expect(JSON.stringify(result)).not.toContain('private');
  });
  it('preserves committed change with missing receipt without another write',async()=>{
@@ -52,7 +59,7 @@ describe('governed Knowledge adapter',()=>{
   expect(await executeKnowledgeTool({caller:port({tenant_id:tenant,document:{...row,revision:3,title:'Other'},outcome:'capability_succeeded',run_id:id}),expectedTenantId:tenant,tool:'knowledge_update',args:{document_id:id,expected_revision:2,patch:{title:'Guide'}}})).toMatchObject({success:false,mutationMayHavePersisted:true});
  });
  it('bounds a metadata-heavy detail without losing its identity',async()=>{
-  const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,content:'x'.repeat(20000),summary:'s'.repeat(2000),tags:Array(20).fill('t'.repeat(60)),source_url:'u'.repeat(1000)}]}),expectedTenantId:tenant,tool:'knowledge_read',args:{document_id:id}});
+  const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,content:'x'.repeat(20000),summary:'s'.repeat(2000),tags:Array(20).fill('t'.repeat(60)),source_url:'u'.repeat(1000)}]}),expectedTenantId:tenant,tool:'read_tenant_knowledge',args:{document_id:id}});
   expect(result.success).toBe(true);expect(JSON.stringify(result).length).toBeLessThan(16000);expect(result.documents).toHaveLength(1);
  });
 

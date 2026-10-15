@@ -31,15 +31,18 @@
 //     400 EMPTY_BRIEF        brief missing or shorter than 5 characters
 //     400 INVALID_TENANT_ID  service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED    no / invalid bearer token
-//     403 FORBIDDEN          JWT caller lacks admin or super_admin
-//     500 INTERNAL           anything else — with the real message, never a generic shrug
+//     403 FORBIDDEN          JWT caller has no workspace open, named another workspace, or is
+//                            not its owner/admin or managing agency (body also carries
+//                            `forbidden: true`)
+//     500 INTERNAL           anything else — with the real message, never a generic shrug —
+//                            including a failed workspace/permission lookup (retryable)
 //
 // ── SECURITY ─────────────────────────────────────────────────────────────────
-// Same auth boilerplate as growth-page-draft: a JWT caller is role-gated and — though this
-// function reads no tenant-scoped data today — the tenant is still resolved server-side
-// (never trusted from the body) so this function's auth posture never drifts from its
-// siblings if a future revision needs tenant context. Only a service-role bearer (Paige's
-// agent, §10) may name a tenant explicitly.
+// Same rule as growth-page-draft (_shared/studio-caller.ts resolveStudioCaller): a JWT caller
+// must be the owner/admin or managing agency of the workspace their session is in, a body
+// tenant naming another workspace is refused, and a platform-wide user_roles admin grants
+// nothing. This function reads no tenant-scoped data today, so the resolved workspace is used
+// only for the gate. Only a service-role bearer (Paige's agent, §10) may name a tenant.
 //
 // Doctrine:
 //   §14 — cheap, fast tier: this is a "classify" job (model-router.ts CHEAP_KINDS), so it
@@ -54,6 +57,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { routedChatCompletion } from "../_shared/model-router.ts";
 import { extractJson, str } from "../_shared/growth-blocks.ts";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -74,8 +78,8 @@ function isStudioArtifact(v: unknown): v is StudioArtifact {
 }
 
 /** Structured failure. Never a swallowed generic (§13). */
-function fail(status: number, code: string, message: string): Response {
-  return new Response(JSON.stringify({ error: { code, message } }), { status, headers: jsonHeaders });
+function fail(status: number, code: string, message: string, extra?: Record<string, unknown>): Response {
+  return new Response(JSON.stringify({ error: { code, message }, ...extra }), { status, headers: jsonHeaders });
 }
 function ok(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: jsonHeaders });
@@ -136,7 +140,7 @@ serve(async (req: Request) => {
       return fail(400, "EMPTY_BRIEF", "Give a brief before Paige can figure out what to build.");
     }
 
-    // ── 3. Resolve the caller / tenant SERVER-SIDE (same pin as growth-page-draft) ───
+    // ── 3. Gate the caller on their workspace SERVER-SIDE (same rule as growth-page-draft) ───
     if (isServiceRole) {
       const named = str(body?.tenant_id).trim();
       if (named && !UUID_RE.test(named)) {
@@ -151,14 +155,11 @@ serve(async (req: Request) => {
         return fail(401, "UNAUTHENTICATED", uErr?.message || "Could not verify this session.");
       }
 
-      const { data: roleRows, error: rErr } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      if (rErr) {
-        console.error("growth-studio-route: role lookup failed:", rErr);
-        return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
-      }
-      const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-        return fail(403, "FORBIDDEN", "Admin access required.");
+      const caller = await resolveStudioCaller(authed, body?.tenant_id);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? fail(403, "FORBIDDEN", caller.error, { forbidden: true })
+          : fail(500, "INTERNAL", caller.error);
       }
     }
 

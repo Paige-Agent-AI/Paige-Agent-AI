@@ -1,0 +1,169 @@
+{
+  "callClaude_default": {
+    "model": "<MODEL>",
+    "max_tokens": 900,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ],
+    "system": "sys"
+  },
+  "callClaude_classification": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ],
+    "temperature": 0.2
+  },
+  "compat_pro_tools": {
+    "model": "<MODEL>",
+    "max_tokens": 1200,
+    "messages": [
+      {
+        "role": "user",
+        "content": "q"
+      }
+    ],
+    "system": "S",
+    "tools": [
+      {
+        "name": "crm_contact_lookup",
+        "description": "Find a contact",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "q": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "q"
+          ]
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "auto"
+    }
+  },
+  "compat_flash": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "q"
+      }
+    ],
+    "temperature": 0.4
+  },
+  "compat_flash_pdf": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "read this"
+          },
+          {
+            "type": "document",
+            "source": {
+              "type": "base64",
+              "media_type": "application/pdf",
+              "data": "JVBERi0xLjQK"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "compat_json": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "json please"
+      }
+    ],
+    "system": "Respond with a single valid JSON value only. No prose, no markdown fences."
+  },
+  "gateway_stream_reasoning": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "look up Ana"
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "system": "persona",
+    "tools": [
+      {
+        "name": "crm_contact_lookup",
+        "description": "Find a contact",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "q": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "q"
+          ]
+        }
+      }
+    ],
+    "tool_choice": {
+      "type": "auto"
+    },
+    "stream": true
+  },
+  "gateway_stream_classification": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "stream": true
+  },
+  "gateway_nonstream_reasoning": {
+    "model": "<MODEL>",
+    "max_tokens": 2048,
+    "messages": [
+      {
+        "role": "user",
+        "content": "summarise"
+      }
+    ]
+  },
+  "routed_doc_draft": {
+    "model": "<MODEL>",
+    "max_tokens": 900,
+    "messages": [
+      {
+        "role": "user",
+        "content": "synthesise"
+      }
+    ]
+  }
+}

@@ -64,7 +64,13 @@ type DbConfig = {
   setStage?: SetStageResult;
   // Gateway resolution (engine phase 3.5 / Part C)
   actorTier?: string;                 // get_actor_access.tier (default "tenant")
-  actorRoles?: string[];              // user_roles (default ["admin"] → owner-ops eligible)
+  actorRoles?: string[];              // user_roles — only `super_admin` grants authority now (C0a)
+  // The canonical TENANT authority (C0a, "ADMIN IS A TENANT ROLE"): an owner/admin seat in THIS tenant
+  // (is_tenant_admin_as) or the agency managing it (agency_can_manage_child). Default: the seat follows
+  // the fixture's "admin" role, which is what production showed on 2026-10-04 (every global admin held a
+  // seat), so existing cases keep their meaning; the new cases below set these explicitly to disagree.
+  workspaceSeat?: boolean;
+  agencyManages?: boolean;
   toolLane?: "auto" | "confirm" | "off"; // resolve_tool_autonomy (default "auto" → availability live)
   gatewayError?: "tier" | "role" | "lane"; // simulate an infra error in a Gateway ingredient
   // ledger current state (phase 5 readActOutcome)
@@ -76,6 +82,7 @@ type DbConfig = {
   lanes?: Record<string, { effective: string }>; // resolve_automation_autonomy
   persistOutcomeOverride?: Record<string, string>;
   failAdvance?: boolean;              // fail a phase-5 ledger advance (a call carrying _dispatched_at)
+  claim?: "held" | "error";   // paige_claim_act_dispatch: another runner holds it / infra error (default: claimed)
   failAcceptedWrite?: boolean;        // fail the phase-5 accepted pre-dispatch write (_dispatched_at null)
   // capture
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
@@ -90,6 +97,7 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       order(): MockQuery;
       eq(k: string, v: unknown): MockQuery;
       limit(): MockQuery;
+      maybeSingle(): Promise<{ data: unknown; error: unknown }>;
       then(
         onF: (value: { data: unknown; error: unknown }) => unknown,
         onR?: (reason: unknown) => unknown,
@@ -100,6 +108,12 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       order() { return q; },
       eq(k: string, v: unknown) { filters[k] = v; return q; },
       limit() { return q; },
+      // single-row read over the same data (the shared authority module reads a membership this way)
+      maybeSingle() {
+        return q.then((r) => ({ ...(r as { data: unknown; error: unknown }),
+          data: Array.isArray((r as { data: unknown }).data) ? ((r as { data: unknown[] }).data[0] ?? null) : (r as { data: unknown }).data,
+        })) as Promise<{ data: unknown; error: unknown }>;
+      },
       then(onF, onR) {
         cfg.queryFilters.push({ table, filters: { ...filters } });
         let data: unknown = [];
@@ -135,12 +149,29 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
         if (cfg.gatewayError === "tier") return { data: null, error: { message: "get_actor_access_failed" } };
         return { data: { tier: cfg.actorTier ?? "tenant" }, error: null };
       }
+      if (fn === "is_tenant_admin_as") {
+        if (cfg.gatewayError === "role") return { data: null, error: { message: "is_tenant_admin_as_failed" } };
+        return { data: cfg.workspaceSeat ?? (cfg.actorRoles ?? ["admin"]).includes("admin"), error: null };
+      }
+      if (fn === "agency_can_manage_child") {
+        return { data: cfg.agencyManages ?? false, error: null };
+      }
       if (fn === "resolve_tool_autonomy") {
         if (cfg.gatewayError === "lane") return { data: null, error: { message: "resolve_tool_autonomy_failed" } };
         return { data: cfg.toolLane ?? "auto", error: null };
       }
       if (fn === "resolve_automation_autonomy") {
         return { data: cfg.lanes?.[args._automation_id as string] ?? { effective: "off" }, error: null };
+      }
+      if (fn === "paige_claim_act_dispatch") {
+        if (cfg.claim === "error") return { data: null, error: { message: "claim_failed" } };
+        return { data: cfg.claim === "held" ? null : { id: `row-${args._act_id as string}` }, error: null };
+      }
+      if (fn === "execute_weekly_commitment_check") {
+        return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: "test-receipt" } }, error: null };
+      }
+      if (fn === "read_weekly_commitment_check") {
+        return { data: null, error: { message: "readback unavailable" } };
       }
       if (fn === "paige_record_act_execution") {
         const actId = args._act_id as string;
@@ -354,6 +385,43 @@ describe("runEventActs — native auto-execute: Gateway availability gate + phas
     expect(cfg.rpcCalls.some((c) => c.fn === "record_rail_event")).toBe(true);
   });
 
+  // ── INT-179 Slice 2b: at most once. Only the dispatch-claim holder fires; everyone else leaves the act alone.
+  it("another runner holds the dispatch claim → NO dispatch; the act stays accepted and owes a reconcile", async () => {
+    const cfg = happy({ claim: "held" });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(res.records[0].outcome).toBe("accepted_for_execution");
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_claim_act_dispatch" && c.args._act_id === "act1")).toBe(true);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_record_act_execution" && c.args._dispatched_at != null)).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "record_capability_run")).toBe(false);
+    expect(res.persist_failures).toEqual([]);
+    expect(res.reconcile_pending).toEqual(["a1"]); // kept reclaimable for a later drain
+  });
+  it("the claim cannot be read or written → NO dispatch, and the act is retried", async () => {
+    const cfg = happy({ claim: "error" });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(res.persist_failures).toEqual(["act1"]);
+  });
+  it("the accepted write lands on a row another runner already advanced → adopt it, never claim or dispatch", async () => {
+    const cfg = happy({ persistOutcomeOverride: { act1: "executed" } });
+    const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
+    expect(res.records[0].outcome).toBe("executed");
+    expect(cfg.rpcCalls.some((c) => c.fn === "paige_claim_act_dispatch")).toBe(false);
+    expect(cfg.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+  });
+  it("an accepted row that never landed is re-dispatched only by the claim holder", async () => {
+    const held = happy({ currentActOutcome: "accepted_for_execution", transitionExists: false, claim: "held" });
+    const r1 = await runEventActs(mockDb(held), event, [journeyAuto()]);
+    expect(held.rpcCalls.some((c) => c.fn === "set_journey_stage")).toBe(false);
+    expect(r1.records[0].outcome).toBe("accepted_for_execution");
+    const free = happy({ currentActOutcome: "accepted_for_execution", transitionExists: false });
+    await runEventActs(mockDb(free), event, [journeyAuto()]);
+    const order = free.rpcCalls.map((c) => c.fn);
+    expect(order.indexOf("paige_claim_act_dispatch")).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf("paige_claim_act_dispatch")).toBeLessThan(order.indexOf("set_journey_stage")); // claim BEFORE dispatch
+  });
+
   it("a TIER-INELIGIBLE actor (client) → refused at the Gateway availability gate, NEVER dispatched", async () => {
     const cfg = happy({ actorTier: "client" });
     const res = await runEventActs(mockDb(cfg), event, [journeyAuto()]);
@@ -500,6 +568,21 @@ describe("resolveNativeCapabilityStatus — availability resolved THROUGH the ca
     expect(retiredTitleRole.ok && retiredTitleRole.status.availability).toBe("not_for_tier");
   });
 
+  it("authority is the TENANT role (C0a): an admin elsewhere is refused here; a seated owner, the managing agency and the operator are not", async () => {
+    // the §59 global-role trap, closed: the global `admin` row no longer admits without a seat HERE
+    const adminElsewhere = await call({ actorTier: "tenant", actorRoles: ["admin"], workspaceSeat: false, toolLane: "auto", rpcCalls: [], queryFilters: [] });
+    expect(adminElsewhere.ok && adminElsewhere.status.availability).toBe("not_for_tier");
+    // a workspace's own owner needs no global row at all
+    const seatedOwner = await call({ actorTier: "tenant", actorRoles: [], workspaceSeat: true, toolLane: "auto", rpcCalls: [], queryFilters: [] });
+    expect(seatedOwner.ok && seatedOwner.status.availability).toBe("live");
+    // the agency managing this sub-account
+    const agency = await call({ actorTier: "agency", actorRoles: [], workspaceSeat: false, agencyManages: true, toolLane: "auto", rpcCalls: [], queryFilters: [] });
+    expect(agency.ok && agency.status.availability).toBe("live");
+    // the Platform Operator (§53) holds no seat and is admitted explicitly
+    const operator = await call({ actorTier: "tenant", actorRoles: ["super_admin"], workspaceSeat: false, toolLane: "auto", rpcCalls: [], queryFilters: [] });
+    expect(operator.ok && operator.status.availability).toBe("live");
+  });
+
   it("a role/lane infra error returns {ok:false} (retryable) — never a fabricated verdict", async () => {
     for (const gatewayError of ["lane", "role"] as const) {
       const r = await call({ gatewayError, rpcCalls: [], queryFilters: [] });
@@ -536,5 +619,34 @@ describe("native registries stay in sync — no dark executor, no orphan binding
     // and the C2 vertical is present in both by its dotted action_kind
     expect(executorKeys).toContain(KIND);
     expect(hasNativeCapabilityBinding(KIND)).toBe(true);
+  });
+});
+
+describe("weekly read through the canonical engine", () => {
+  const weeklyEvent: ClaimedEvent = { event_id: "e1", tenant_id: "t1", event_key: "schedule.weekly_commitment_check",
+    subject_table: "paige_automations", subject_id: "a1", payload: {} };
+  const weeklyActs = { a1: [{ id: "act1", position: 1, action_kind: "planning.weekly_commitment_check", tool_key: null, config: {} }] };
+  it.each(["off", "confirm"] as const)("tool %s holds a weekly read even when the process grant is auto", async (toolLane) => {
+    const cfg = happy({ acts: weeklyActs, toolLane });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).not.toBe("executed");
+    expect(result.records[0].outcome).not.toBe("accepted_for_execution");
+  });
+  it("auto executes once with process references and no contact Rail attribution", async () => {
+    const cfg = happy({ acts: weeklyActs });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(result.records[0].outcome).toBe("executed");
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(1);
+    const receipt = cfg.rpcCalls.find(c => c.fn === "record_capability_run");
+    expect(receipt?.args._detail).toMatchObject({ process_id: "a1" });
+    expect(receipt?.args._detail).not.toHaveProperty("contact_id");
+    expect(cfg.rpcCalls.filter(c => c.fn === "record_rail_event")).toHaveLength(0);
+  });
+  it.each(["accepted_for_execution", "ambiguous"])("%s and a readback error never redispatch", async (currentActOutcome) => {
+    const cfg = happy({ acts: weeklyActs, currentActOutcome });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).toBe(currentActOutcome);
   });
 });

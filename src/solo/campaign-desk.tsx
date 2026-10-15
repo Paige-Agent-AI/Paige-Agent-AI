@@ -7,14 +7,18 @@
 // TRUTH MODEL (§13/§70). A campaign is an OWNER-AUTHORED brief (useSoloCampaignBriefs), never proof
 // of a live campaign. Each growth-loop stage reads "Ready" ONLY where a real fact backs it: a
 // tenant-validated offer link, a tenant-validated pipeline link (with a LIVE deal count), or a
-// recorded workspace artifact. Distribution, Conversations and Recorded outcome are UNAVAILABLE —
-// no connected provider, no campaign attribution — and say so. No counts, revenue, reach, ad spend,
+// recorded workspace artifact. Distribution and Conversations are UNAVAILABLE (no connected provider) and
+// say so. Recorded outcome is PARTIAL since Experience 03 S1: each lead is credited to its campaign at
+// arrival (server-stamped, counted in the dossier's Brought in lane), revenue is not. No counts, revenue, reach, ad spend,
 // audience size, active status, or completion is invented.
 import React from "react";
 import { createPortal } from "react-dom";
 import { Ic } from "./_shared";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useCatalogOffers } from "./useCatalogOffers";
+import { kindLabel, useCampaignAssets } from "./useCampaignAssets";
+import { CampaignComposition } from "./campaign-composition";
+import { CampaignActions } from "./campaign-actions";
 
 // ── vocab ──────────────────────────────────────────────────────────────────────────────────────
 const ST = {
@@ -38,16 +42,23 @@ const PHASE = {
 };
 // The 7 growth-loop stages and the subtab that OWNS each. Overview routes; it never does their work.
 const LOOP = [
-  { k: "offer",         name: "Offer",            ic: "grid",  owner: "Catalog",   route: "catalog",     src: "Catalog offers" },
+  { k: "offer",         name: "Offer",            ic: "grid",  owner: "Offers",    route: "catalog",     src: "Your offers" },
   { k: "audience",      name: "Audience",         ic: "users", owner: "Relationships", route: "clients", src: "Segments / People" },
   { k: "content",       name: "Content",          ic: "spark", owner: "Vibe Studio", route: "studio",    src: "Published Vibe assets" },
   { k: "distribution",  name: "Distribution",     ic: "send",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "conversations", name: "Conversations",    ic: "mail",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "pipeline",      name: "Pipeline",         ic: "trend", owner: "Pipeline",  route: "pipeline",    src: "Deal workspace" },
-  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Performance", route: "performance", src: "No campaign attribution" },
+  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "Leads credited at arrival" },
 ];
 
-const truth = (s) => <span className={`campaigns-truth campaigns-truth--${s.toLowerCase()}`}>{s}</span>;
+// Owner ruling 2026-09-23: the four capability states are said in the customer's words on a tenant
+// surface, never as release vocabulary. Same mapping as growth2.tsx's PLAIN_STATE.
+const PLAIN_TRUTH = { LIVE: "Available", PARTIAL: "Partly available", PROPOSED: "Planned", UNAVAILABLE: "Not available" };
+// The name a person sees on each route's button. Offers was "Catalog" and Analytics was
+// "Performance" before the Marketing department (owner ruling 2026-10-03).
+const ROUTE_LABEL = { catalog: "Offers", analytics: "Analytics", studio: "Vibe Studio", clients: "Clients", social: "Social", pipeline: "Pipeline", sales: "Sales" };
+const routeLabel = (route) => ROUTE_LABEL[route] || route[0].toUpperCase() + route.slice(1);
+const truth = (s) => <span className={`campaigns-truth campaigns-truth--${s.toLowerCase()}`}>{PLAIN_TRUTH[s] || PLAIN_TRUTH.UNAVAILABLE}</span>;
 const stateChip = (k) => { const s = ST[k] || ST.unavail; return <span className={`loop-state ${s.cls}`}><span className="sd"/>{s.label}</span>; };
 const phasePill = (p) => { const [lbl, cls] = PHASE[p] || ["—", "st-unavail"]; return <span className={`phasepill ${cls}`}><span className="sd"/>{lbl}</span>; };
 const fmt = (v) => { if (!v) return "Not recorded"; const d = new Date(v); return Number.isNaN(d.getTime()) ? "Not recorded" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(d); };
@@ -61,7 +72,7 @@ function briefLoop(b) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      b.pipelineId ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 // Workspace-scope loop posture, derived ONLY from real reads. Every non-"setup"/"unavail" state
@@ -84,7 +95,7 @@ function workspaceLoop(data, offerSignal) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      pipelineFailed ? "blocked" : hasPipelines ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 
@@ -93,11 +104,11 @@ function loopNeed(seg, stKey, b, data) {
     return `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} read live from Pipeline.`;
   }
   if (seg.k === "pipeline" && stKey === "blocked") return "The pipeline read failed. Your records were not changed.";
-  if (seg.k === "offer" && stKey === "blocked") return "The Catalog read failed. Your records were not changed.";
-  if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Catalog"}.`;
-  if (seg.k === "offer" && stKey === "partial" && !b) return "Offers are recorded in Catalog. Link one to a brief to make the ask concrete.";
+  if (seg.k === "offer" && stKey === "blocked") return "Your offers could not be read. Your records were not changed.";
+  if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Offers"}.`;
+  if (seg.k === "offer" && stKey === "partial" && !b) return "Your offers are recorded. Link one to a brief to make the ask concrete.";
   if (seg.k === "distribution" || seg.k === "conversations") return "No connected provider. Connect one in Social — no reach, queue or schedule is shown.";
-  if (seg.k === "outcome") return "Attribution needs a verified source; not available yet.";
+  if (seg.k === "outcome") return b ? "Leads are credited to this campaign as they arrive; see them under Brought in in its dossier. Revenue isn't credited to campaigns yet." : "Each lead is credited to its campaign as it arrives; open a campaign to see what it brought in. Revenue isn't credited to campaigns yet.";
   if (stKey === "ready") return "Source connected.";
   if (seg.k === "offer") return "Define or link what this campaign sells.";
   if (seg.k === "audience") return "Name the segment this reaches.";
@@ -126,7 +137,7 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
           const failed = (seg.k === "pipeline" || seg.k === "offer") && stKey === "blocked";
           return (
             <div className="loop-seg" key={seg.k}>
-              <button className="loop-node" onClick={() => onRoute(seg.route)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
+              <button className="loop-node" data-solo-vibe-studio-launcher={seg.route === "studio" ? "" : undefined} onClick={(event) => onRoute(seg.route, event)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
                 <span className={`loop-ic ${st.cls}`} style={{ background: "var(--surface-sunk)" }}>{React.createElement(Ic[seg.ic], { size: 16 })}</span>
                 <span className="loop-name">{seg.name}</span>
                 {stateChip(stKey)}
@@ -143,35 +154,45 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
 }
 
 // ── launch readiness (sourced + routed, no score / no green-all) ───────────────────────────────
-function readinessRows(b) {
+const PLURAL = { Page: "pages", Form: "forms", Funnel: "funnels", Email: "emails", "Email series": "email series", "Social post": "social posts", "Ad copy": "ad copy", "Library piece": "library pieces" };
+// What a brief has attached, in words ("2 pages, 1 email"); empty when nothing is attached.
+function attachedSummary(links) {
+  const counts = new Map();
+  for (const link of links) { const label = kindLabel(link.kind, link.channel); counts.set(label, (counts.get(label) || 0) + 1); }
+  return [...counts].map(([label, n]) => `${n} ${n === 1 ? label.toLowerCase() : PLURAL[label] || label.toLowerCase()}`).join(", ");
+}
+function readinessRows(b, links = []) {
   const loop = briefLoop(b);
+  const attached = attachedSummary(links);
   return [
-    ["Offer ready", loop.offer, "catalog", b.offerId ? `Linked: ${b.offerName || "recorded in Catalog"}` : "No offer linked to this brief."],
+    ["Offer ready", loop.offer, "catalog", b.offerId ? `Linked: ${b.offerName || "recorded in Offers"}` : "No offer linked to this brief."],
     ["Audience identified", loop.audience, "clients", b.audience ? `Recorded: ${b.audience}` : "No audience recorded."],
-    ["Source content / creative ready", loop.content, "studio", b.contentNeeds ? "Content needs recorded; create it in Vibe Studio." : "No content needs recorded."],
+    ["Source content / creative ready", attached ? "partial" : loop.content, "studio", attached ? `Attached: ${attached}.` : b.contentNeeds ? "Content needs recorded; create it in Vibe Studio." : "No content needs recorded."],
     ["Target channels connected", "unavail", "social", "No customer-facing social / publishing provider is connected."],
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
-    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."],
-    ["Tracking / attribution evidence", "unavail", "performance", "No order names a campaign, so revenue is never attributed to one."],
+    // Experience 03 S1b: the server files a form's leads here when the form has no route of its own and is
+    // attached to this campaign only (_growth_form_campaign_route). Stated as the rule, never per lead.
+    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live). ${b.lifecycleStatus === "archived" ? "" : " While it has an open stage, a form attached only to this campaign, with no route of its own, files its leads here."}` : "Not routed to a pipeline."],
+    ["Tracking / attribution evidence", "partial", "analytics", "Leads are credited to this campaign as they arrive, through its form or its tagged link (see Brought in above). Analytics’ per-campaign figure still counts tagged links only. No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
   ];
 }
-function Readiness({ brief, onRoute }) {
+function Readiness({ brief, links, onRoute }) {
   return (
     <div className="rd">
       <div className="rd-head"><Ic.shield size={15}/><h4>Launch readiness</h4>
         <div className="note">Every item is sourced and routed. No score, no green-all. “Unavailable / needs confirmation” where the platform can’t know.</div></div>
       <div className="rd-grid">
-        {readinessRows(brief).map(([label, stKey, route, meta]) => {
+        {readinessRows(brief, links).map(([label, stKey, route, meta]) => {
           const st = ST[stKey] || ST.unavail;
           return (
             <div className="rd-item" key={label}>
               <div className="rk">{label}</div>
               <div className={`rs ${st.cls}`}><span className="sd"/>{st.label}</div>
               <div className="rmeta">{meta}</div>
-              {route !== "overview" && <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={11}/></button>}
+              {route !== "overview" && <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(event) => onRoute(route, event)}>Open {routeLabel(route)} <Ic.arrow size={11}/></button>}
             </div>
           );
         })}
@@ -180,8 +201,20 @@ function Readiness({ brief, onRoute }) {
   );
 }
 
-export default function CampaignOverview({ data, onRoute }) {
+export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
+  const rawAssets = useCampaignAssets(briefsState.tenantId);
+  // Experience 03 S1b: where a form's leads go now depends on its campaign link and the campaign's pipeline,
+  // and Overview, Analytics and the form panel state it from the shared Marketing read. A successful change
+  // here re-reads it (a silent refresh: a ready page stays ready). Production publishes none of these tables
+  // to realtime, so a change made elsewhere (PAIGE in chat) shows on the next load.
+  const refreshRoutes = React.useCallback(() => { if (typeof data.retry === "function") data.retry(); }, [data]);
+  const assets = React.useMemo(() => ({
+    ...rawAssets,
+    attach: async (...args) => { const r = await rawAssets.attach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+    detach: async (...args) => { const r = await rawAssets.detach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+  }), [rawAssets, refreshRoutes]);
+  const afterBriefWrite = async (write) => { const r = await write; if (r && r.ok) refreshRoutes(); return r; };
   // A REAL tenant-scoped Catalog read — the honest backing for the workspace-scope "Offer" loop
   // stage (§13). Only EXISTENCE is needed here, so a single-row page is enough (never the whole
   // catalog). "has" only when offers truly exist; "error" when the read failed; else unknown.
@@ -232,7 +265,9 @@ export default function CampaignOverview({ data, onRoute }) {
     if (filters.q && !(b.name + " " + (b.objective || "")).toLowerCase().includes(filters.q.toLowerCase())) return false;
     if (filters.src !== "all") {
       const l = briefLoop(b);
-      const live = Object.values(l).some((v) => v === "ready" || v === "partial");
+      // A source the brief itself is backed by. Recorded outcome is a platform capability every brief shares
+      // (leads are credited at arrival), so it never makes a bare brief "live-backed".
+      const live = Object.entries(l).some(([k, v]) => k !== "outcome" && (v === "ready" || v === "partial"));
       if (filters.src === "live" && !live) return false;
       if (filters.src === "unavail" && live) return false;
     }
@@ -272,6 +307,20 @@ export default function CampaignOverview({ data, onRoute }) {
     if (both.includes("loading")) return "loading";
     return "ready";
   })();
+  // Marketing › Overview's "Create campaign brief" lands here with `?brief=new`. Open the builder once
+  // both reads are ready (the drawer portals into the mounted desk), then hand the request back so a
+  // refresh or Back does not reopen it. A member who cannot manage briefs is not shown a builder.
+  React.useEffect(() => {
+    if (!autoOpenBrief || worst !== "ready") return;
+    if (canManage) {
+      // The Overview button that asked for this has unmounted with the route change, so return focus
+      // to the Campaigns tab instead of dropping it on <body> when the builder closes.
+      const active = document.activeElement;
+      lastFocus.current = active instanceof HTMLElement && active !== document.body && active.isConnected ? active : document.getElementById("campaigns-tab-campaigns");
+      setDrawer({ kind: "brief" });
+    }
+    onAutoOpenConsumed?.();
+  }, [autoOpenBrief, worst, canManage, onAutoOpenConsumed]);
   if (worst === "resolving")
     return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Campaigns workspace…</div>;
   if (worst === "unavailable")
@@ -291,15 +340,15 @@ export default function CampaignOverview({ data, onRoute }) {
   const drawers = (
     <>
       {drawer?.kind === "dossier" && portalHost && (() => { const b = briefs.find((x) => x.id === drawer.briefId); return b
-        ? createPortal(<DossierDrawer brief={b} canManage={canManage} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
+        ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} tenantId={briefsState.tenantId} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
             onEdit={() => setDrawer({ kind: "brief", briefId: b.id })}
-            onTransition={async (status, blocker, idem) => { const r = await briefsState.transitionBrief(b.id, status, b.version, blocker, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
-            onArchive={async (idem) => { const r = await briefsState.archiveBrief(b.id, b.version, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
+            onTransition={async (status, blocker, idem) => { const r = await afterBriefWrite(briefsState.transitionBrief(b.id, status, b.version, blocker, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
+            onArchive={async (idem) => { const r = await afterBriefWrite(briefsState.archiveBrief(b.id, b.version, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
         : null; })()}
       {drawer?.kind === "brief" && portalHost && createPortal(
         <BriefBuilder existing={drawer.briefId ? briefs.find((x) => x.id === drawer.briefId) : null} data={data}
           onClose={closeDrawer} onRoute={onRoute}
-          onSave={(draft, idem) => briefsState.saveBrief(draft, idem)}
+          onSave={(draft, idem) => afterBriefWrite(briefsState.saveBrief(draft, idem))}
           onRequestReview={async (briefId, version, idem) => briefsState.transitionBrief(briefId, "ready_for_review", version, undefined, idem)}
           onDone={(msg, kind = "ok") => { closeDrawer(); showToast(msg, kind); }}/>,
         portalHost,
@@ -317,7 +366,7 @@ export default function CampaignOverview({ data, onRoute }) {
         <section className="cmd" aria-label="Campaign command">
           <div className="cmd-brief">
             <div>
-              <div className="eyebrow"><Ic.bolt size={13}/> Campaign Command · Overview</div>
+              <div className="eyebrow"><Ic.bolt size={13}/> Marketing · Campaigns</div>
               <div className="cmd-line">{commandLine()}</div>
               <div className="cmd-meta">
                 <span><span className="dot" style={{ background: "var(--ok)" }}/>Live: Pipeline deals, published Vibe assets, recorded payments</span>
@@ -355,7 +404,7 @@ export default function CampaignOverview({ data, onRoute }) {
             {shown.length === 0
               ? <div className="campaigns-state" style={{ minHeight: 150 }}>{truth("PARTIAL")}<h2>No campaigns match these filters</h2><p>Clear the filters, or create a brief. Campaign status is never inferred from partial or global records.</p><button className="btn btn-s" onClick={() => setFilters({ phase: "all", src: "all", q: "" })}>Clear filters</button></div>
               : shown.map((b) => (
-                <PortfolioRow key={b.id} b={b} open={openRow === b.id} onToggle={() => setOpenRow(openRow === b.id ? null : b.id)}
+                <PortfolioRow key={b.id} b={b} links={assets.phase === "ready" ? assets.links.filter((link) => link.briefId === b.id) : []} open={openRow === b.id} onToggle={() => setOpenRow(openRow === b.id ? null : b.id)}
                   onDossier={() => openDrawer("dossier", b.id)} onFocus={() => { setFocusId(b.id); }} onAsk={() => askPaige(b)} onRoute={onRoute}/>
               ))}
           </section>
@@ -363,7 +412,7 @@ export default function CampaignOverview({ data, onRoute }) {
         </div>
 
         <div style={{ textAlign: "center", fontSize: 10.5, color: "var(--ink-3)", padding: "2px 0 6px" }}>
-          Overview coordinates the campaign across Catalog, Sales, Pipeline, Social, Performance and Vibe Studio. It does not recreate them — every value routes to the surface that owns it.
+          Campaigns coordinates each initiative across Offers, Sales, Pipeline, Social, Analytics and Vibe Studio. It does not recreate them — every value routes to the surface that owns it.
         </div>
       </div>
 
@@ -375,7 +424,7 @@ export default function CampaignOverview({ data, onRoute }) {
 }
 
 // ── portfolio row ──────────────────────────────────────────────────────────────────────────────
-function PortfolioRow({ b, open, onToggle, onDossier, onFocus, onAsk, onRoute }) {
+function PortfolioRow({ b, links, open, onToggle, onDossier, onFocus, onAsk, onRoute }) {
   const phaseIcon = b.lifecycleStatus === "active" ? "pulse" : b.lifecycleStatus === "paused" ? "clock" : b.lifecycleStatus === "blocked" ? "bell" : b.lifecycleStatus === "ready_for_review" ? "clock" : "bolt";
   return (
     <div className={`pf-row ${open ? "open" : ""}`}>
@@ -404,7 +453,7 @@ function PortfolioRow({ b, open, onToggle, onDossier, onFocus, onAsk, onRoute })
       </div>
       {open && (
         <div className="pf-fold">
-          <Readiness brief={b} onRoute={onRoute}/>
+          <Readiness brief={b} links={links} onRoute={onRoute}/>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             <button className="btn btn-s" onClick={onFocus}><Ic.pulse size={13}/> Focus loop map on this</button>
             <button className="btn btn-s" onClick={onDossier}><Ic.doc size={13}/> Open dossier</button>
@@ -426,7 +475,7 @@ function WorkInMotion({ briefs, data, onDossier, onAsk }) {
   const drafting = briefs.find((b) => b.lifecycleStatus === "draft");
   if (drafting) items.push({ st: "partial", ic: "doc", t: "Draft in progress", s: `${drafting.name}`, src: "Owner brief · draft" });
   const artifacts = (data.artifacts || []).length;
-  if (artifacts) items.push({ st: "ready", ic: "spark", t: "Published creative", s: "Published Vibe assets are on record in this workspace.", src: "LIVE read · published pages/funnels/forms" });
+  if (artifacts) items.push({ st: "ready", ic: "spark", t: "Published creative", s: "Published Vibe assets are on record in this workspace.", src: "Read from your published pages, funnels and forms" });
   if (!items.length) items.push({ st: "planned", ic: "dots", t: "Nothing queued yet", s: "Real, attributable work appears here — a prepared brief, a review, a blocker, a completed outcome.", src: "No attributable work on record" });
   return (
     <section className="pf" aria-label="Work in motion">
@@ -460,7 +509,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
   return (
     <div className="fr">
       <div className="fr-hero">
-        <div className="eyebrow"><Ic.bolt size={13}/> Campaign Command · Overview</div>
+        <div className="eyebrow"><Ic.bolt size={13}/> Marketing · Campaigns</div>
         <h2>Start your first growth initiative</h2>
         <p>This workspace has no campaigns yet. A campaign here is a <b>brief you author</b> — an objective, an offer, an audience, and a path through the loop. Nothing is invented for you. Build the first one step by step, or ask Paige to draft it.</p>
         <div className="fr-cta">
@@ -474,7 +523,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
           <div className="fr-step" key={n}><span className="n">{n}</span><h4>{h}</h4><p>{p}</p>
             {route === "new"
               ? <button className="rroute" onClick={() => canManage && onNew()}>Start here <Ic.arrow size={12}/></button>
-              : <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={12}/></button>}
+              : <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(event) => onRoute(route, event)}>Open {routeLabel(route)} <Ic.arrow size={12}/></button>}
           </div>
         ))}
       </div>
@@ -520,7 +569,9 @@ function useDrawerA11y(onClose) {
 }
 
 // ── dossier drawer ─────────────────────────────────────────────────────────────────────────────
-function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
+function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose, onRoute, onAsk, onEdit, onTransition, onArchive }) {
+  const links = assets.phase === "ready" ? assets.links.filter((link) => link.briefId === b.id) : [];
+  const attached = attachedSummary(links);
   const ref = useDrawerA11y(onClose);
   const [busy, setBusy] = React.useState(false);
   const act = (fn) => async () => { if (busy) return; setBusy(true); try { await fn(); } finally { setBusy(false); } };
@@ -545,12 +596,14 @@ function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, o
             {b.budgetTarget && <div className="dw-note" style={{ marginTop: 8 }}>The budget target is a figure you set — not actual ad spend, a forecast, or connected media buying.</div>}
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
-          <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} onRoute={onRoute}/></div>
+          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast} tenantId={tenantId} archived={b.lifecycleStatus === "archived"} onRoute={onRoute}/></div>
+          <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
+          <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">
               <button className="dw-link" onClick={() => onRoute("pipeline")}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("studio")}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("performance")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Performance <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}><Ic.spark size={14}/> {attached ? `Attached: ${attached}. Creative is made in Vibe Studio.` : b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" onClick={() => onRoute("analytics")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Analytics <Ic.arrow size={11}/></span></button>
             </div>
           </div>
           <div className="dw-sec"><h4>Decision &amp; lifecycle</h4>
@@ -664,7 +717,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
   </>;
   else if (stage === 1) body = <>
     <div className="bb-field"><label>Linked offer <span className="opt">Optional</span></label>
-      <input type="search" value={offerSearch} onChange={(e) => { setOfferSearch(e.target.value); setOfferPage(0); }} placeholder="Search your Catalog offers by name…" aria-label="Search offers"/>
+      <input type="search" value={offerSearch} onChange={(e) => { setOfferSearch(e.target.value); setOfferPage(0); }} placeholder="Search your offers by name…" aria-label="Search offers"/>
       <div className="bb-pagerow">
         <span role="status">{offers.phase === "ready" ? `Offer page ${offerPage + 1}` : offers.phase === "error" ? "Could not load offers" : "Loading offers…"}</span>
         {offers.phase === "error" && <button type="button" className="btn btn-s" onClick={offers.retry}>Retry</button>}
@@ -675,9 +728,9 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
         <option value="">No offer linked</option>
         {offerRows.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
       </select>
-      <span className="help">Offers live in <b>Catalog</b>. The server validates the offer belongs to this workspace; an offer that isn’t yours is refused.</span></div>
-    {offers.phase === "ready" && !offerRows.length && !offerSearch && <div className="dw-note">This workspace has no offers yet. Create one in Catalog, then link it here.</div>}
-    <div className="bb-link"><Ic.plus size={13}/> Manage offers in Catalog. <button className="rroute" onClick={() => onRoute("catalog")}>Open Catalog <Ic.arrow size={11}/></button></div>
+      <span className="help">Offers live in <b>Offers</b>. The server validates the offer belongs to this workspace; an offer that isn’t yours is refused.</span></div>
+    {offers.phase === "ready" && !offerRows.length && !offerSearch && <div className="dw-note">This workspace has no offers yet. Create one in Offers, then link it here.</div>}
+    <div className="bb-link"><Ic.plus size={13}/> Manage your offers. <button className="rroute" onClick={() => onRoute("catalog")}>Open Offers <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 2) body = <>
     <div className="bb-field"><label>Target audience</label><input value={d.audience} onChange={(e) => set({ audience: e.target.value })} placeholder="A saved segment, or describe who this reaches"/><span className="help">Segments live in <b>Relationships</b>. Sizing stays honest — a segment is never given a fabricated count.</span></div>
@@ -698,7 +751,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
   </>;
   else if (stage === 6) body = <>
     <div className="bb-field"><label>Content / source-material needs</label><textarea value={d.contentNeeds} onChange={(e) => set({ contentNeeds: e.target.value })} placeholder="What creative this needs — a page, a funnel, a form, an email sequence."/><span className="help">Creative is made in <b>Vibe Studio</b>. This just records what’s needed.</span></div>
-    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" onClick={() => onRoute("studio")}>Open Studio <Ic.arrow size={11}/></button></div>
+    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}>Open Vibe Studio <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 7) body = <>
     <div className="bb-field"><label>Conversion destination</label><input value={d.conversionDestination} onChange={(e) => set({ conversionDestination: e.target.value })} placeholder="Where the audience lands — a page, a form, a booking."/></div>

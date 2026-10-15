@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // deno-lint-ignore-file no-explicit-any
 // EXECUTES a `paige_skills` recipe (concept 1 in docs/doctrine/skills-vocabulary.md) — NOT
 // a `paige_subagents` specialist (that's `delegate_to_subagent`) and NOT a `marketplace_items`
@@ -87,7 +88,7 @@ async function browseViaHost(args: { url: string; steps?: unknown[]; waitForSele
  * (interpretSkill via service_role) — this host holds no DB creds and writes nothing (§9/§34).
  */
 const PUBLIC_BROWSE_TIMEOUT_MS = 30_000; // D4 — hard per-call ceiling
-async function browsePublicViaHost(args: { url: string; waitForSelector?: string; maxContentBytes?: number }): Promise<PublicBrowseResult> {
+async function browsePublicViaHost(args: { url: string; waitForSelector?: string; maxContentBytes?: number }, callerSignal?: AbortSignal): Promise<PublicBrowseResult> {
   const base = Deno.env.get("PAIGE_BROWSER_URL");
   const secret = Deno.env.get("PAIGE_BROWSER_SECRET");
   if (!base || !secret) return { needs_config: true };
@@ -100,6 +101,12 @@ async function browsePublicViaHost(args: { url: string; waitForSelector?: string
 
   const attempt = async (): Promise<{ status: number; body: any } | { throwErr: Error }> => {
     const ctrl = new AbortController();
+    // PC-1 cancellation: a disconnected caller aborts the in-flight browse; the 30s cap stays the
+    // ceiling either way. An already-aborted signal keeps both attempts dead (no retry after abort).
+    if (callerSignal) {
+      if (callerSignal.aborted) ctrl.abort();
+      else callerSignal.addEventListener("abort", () => ctrl.abort(), { once: true });
+    }
     const timer = setTimeout(() => ctrl.abort(), PUBLIC_BROWSE_TIMEOUT_MS);
     try {
       const res = await fetch(endpoint, {
@@ -366,6 +373,7 @@ async function runDraftAndEmailDocument(
   const contactId = body.contact_id ?? null;
   if (!contactId) return json(400, { status: "failed", error: "contact_id required" });
   if (!skillCaller.userId) return json(403, { status: "refused", code: "unauthenticated", error: "This action needs a signed-in person behind it." });
+  if (!await commsProviderExecutionAllowed(admin, { tenantId: callerTenantId, actorUserId: skillCaller.userId })) return json(403, { status: "refused", code: COMMS_PROVIDER_EXECUTION_DISABLED });
 
   // §9 — look up the contact SCOPED to the caller's resolved tenant. A cross-tenant contact_id returns
   // nothing, which the pure flow then denies before any draft or send.
@@ -744,7 +752,7 @@ Deno.serve(async (req) => {
         const resolvedActorRole = browserAuthority?.actorRole ?? skillCaller.actorRole;
 
         const interp = await interpretSkill(
-          { forge, admin, browse: browseViaHost, browsePublic: browsePublicViaHost },
+          { forge, admin, browse: browseViaHost, browsePublic: (a) => browsePublicViaHost(a, req.signal) },
           {
             skill: skill as unknown as SkillRow,
             inputs: body.inputs ?? {},

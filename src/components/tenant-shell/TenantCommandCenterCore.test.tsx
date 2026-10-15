@@ -124,7 +124,7 @@ describe("tenant Command Center core workspace", () => {
     const soloAdapter = source("src/solo/CommandCenter.tsx");
 
     expect(soloOwner).toContain("resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id})");
-    expect(soloOwner).toContain("<CommandHub accountContext={accountContext}");
+    expect(soloOwner).toContain("<CommandHub account={urlAccount} accountContext={accountContext}");
     expect(soloOwner).toContain("accountName={accountContext.accountName}");
     expect(soloAdapter).toContain("<SoloSystemsCheckWorkspace accountContext={accountContext} openPaige={openPaige}");
     expect(soloOwner).not.toContain("Your business");

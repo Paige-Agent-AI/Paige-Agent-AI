@@ -1,0 +1,47 @@
+// Disposable local PostgreSQL proof. Never connects to hosted/customer databases.
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
+import {strict as assert} from 'node:assert';
+import {fileURLToPath} from 'node:url';
+const [binary,port,user,expectedDirectory]=process.argv.slice(2);
+if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
+let database='postgres';
+const run=sql=>{const p=spawnSync(binary,['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-t','-A'],{input:sql,encoding:'utf8'});if(p.status!==0)throw Error(p.stderr);return p.stdout;};
+const normalize=s=>s.trim().replaceAll('\\','/').toLowerCase().replace(/\/$/,'');
+assert.equal(normalize(run('SHOW data_directory;')),normalize(expectedDirectory),'refuse another cluster');
+const name='sales_merchant_proof_'+randomUUID().replaceAll('-','');
+const migration=readFileSync(fileURLToPath(new URL('../../supabase/migrations/20270566000000_sales_merchant_readback.sql',import.meta.url)),'utf8');
+run(`CREATE DATABASE ${name}`);database=name;
+try{
+ run(`CREATE TABLE tenants(id uuid PRIMARY KEY);
+ CREATE TABLE tenant_stripe_accounts(tenant_id uuid PRIMARY KEY REFERENCES tenants(id),stripe_account_id text NOT NULL UNIQUE,charges_enabled boolean DEFAULT false,payouts_enabled boolean DEFAULT false,details_submitted boolean DEFAULT false,country text,default_currency text,requirements jsonb);
+ ALTER TABLE tenant_stripe_accounts ENABLE ROW LEVEL SECURITY;
+ GRANT SELECT,INSERT,UPDATE,DELETE ON tenant_stripe_accounts TO authenticated;
+ GRANT ALL ON tenant_stripe_accounts TO service_role;
+ CREATE POLICY local_service_writer ON tenant_stripe_accounts FOR ALL TO service_role USING(true) WITH CHECK(true);
+ CREATE POLICY tsa_admin_manage ON tenant_stripe_accounts FOR ALL TO authenticated USING(tenant_id::text=current_setting('test.tenant',true)) WITH CHECK(tenant_id::text=current_setting('test.tenant',true));
+ CREATE POLICY tsa_admin_select ON tenant_stripe_accounts FOR SELECT TO authenticated USING(tenant_id::text=current_setting('test.tenant',true));
+ INSERT INTO tenants VALUES('20000000-0000-0000-0000-000000000001'),('20000000-0000-0000-0000-000000000002');
+ INSERT INTO tenant_stripe_accounts(tenant_id,stripe_account_id,charges_enabled) VALUES('20000000-0000-0000-0000-000000000001','acct_testA',true),('20000000-0000-0000-0000-000000000002','acct_testB',true);`);
+ run(migration);run(migration);
+ assert.equal(run(`SELECT sales_readback_at IS NULL AND NOT sales_payment_permission FROM tenant_stripe_accounts WHERE stripe_account_id='acct_testA'`).trim(),'t');
+ const rpc=(merchant='acct_testA',version=1,env='test')=>`SELECT record_sales_stripe_readback('20000000-0000-0000-0000-000000000001','${merchant}',${version},'${env}',true,true,true,true,'US','usd','{}');`;
+ const deny=(sql,pattern)=>assert.throws(()=>run(sql),pattern);
+ deny('SET ROLE authenticated;'+rpc(),/permission denied/);
+ deny('SET ROLE anon;'+rpc(),/permission denied/);
+ deny("SET ROLE authenticated; SET test.tenant='20000000-0000-0000-0000-000000000001'; UPDATE tenant_stripe_accounts SET stripe_account_id='acct_forged';",/permission denied/);
+ deny("SET ROLE authenticated; SET test.tenant='20000000-0000-0000-0000-000000000001'; UPDATE tenant_stripe_accounts SET charges_enabled=true;",/permission denied/);
+ assert.equal(run("SET ROLE authenticated; SET test.tenant='20000000-0000-0000-0000-000000000001'; SELECT count(*) FROM tenant_stripe_accounts;").trim().split('\n').at(-1),'1');
+ deny('SET ROLE service_role;'+rpc('acct_testB'),/binding changed/);
+ assert.equal(run('SET ROLE service_role;'+rpc()).trim().split('\n').at(-1),'2');
+ assert.equal(run("SELECT binding_version=2 AND sales_readback_at IS NOT NULL AND sales_payment_permission AND provider_environment='test' FROM tenant_stripe_accounts WHERE stripe_account_id='acct_testA'").trim(),'t');
+ deny('SET ROLE service_role;'+rpc(),/binding changed/);
+ deny('SET ROLE service_role;'+rpc('acct_testA',2,'live'),/binding changed/);
+ assert.equal(run('SET ROLE service_role;'+rpc('acct_testA',2)).trim().split('\n').at(-1),'2');
+ deny("SET ROLE service_role; UPDATE tenant_stripe_accounts SET tenant_id='20000000-0000-0000-0000-000000000003' WHERE stripe_account_id='acct_testA';",/tenant identity is immutable/);
+ run("SET ROLE service_role; UPDATE tenant_stripe_accounts SET stripe_account_id='acct_replacement' WHERE stripe_account_id='acct_testA';");
+ assert.equal(run("SELECT binding_version=3 AND sales_readback_at IS NULL AND NOT sales_payment_permission FROM tenant_stripe_accounts WHERE stripe_account_id='acct_replacement'").trim(),'t');
+ deny('SET ROLE service_role;'+rpc('acct_testA',2),/binding changed/);
+ console.log('SALES_MERCHANT_SQL_PASS: repeated migration; browser writes/anon RPC denied; tenant SELECT isolated; merchant/version/environment CAS; readiness invalidated on rebind. Local synthetic roles only.');
+}finally{database='postgres';run(`DROP DATABASE ${name}`);}

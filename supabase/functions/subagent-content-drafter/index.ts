@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -46,6 +47,11 @@ function complianceScan(text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // INT-310 C0 — internal-only specialist. It reads canonical client data with the SERVICE ROLE, so
+  // the gateway's verify_jwt (which the public anon key and any user JWT pass) is not authority.
+  // Only the canonical internal caller (exact service-role bearer or a verified cron token, e.g. the
+  // orchestrator's invokeLocal) may reach the lookup below.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) return ok({ ok: false, error: "unauthorized" }, 401);
   let payload: { input?: Input; context?: { contact_id?: string } } = {};
   try { payload = await req.json(); } catch { return ok({ ok: false, error: "Invalid JSON" }, 400); }
   const input = payload.input ?? {};
@@ -55,10 +61,17 @@ Deno.serve(async (req) => {
   const goal = input.goal ?? "follow up on next milestone";
   const tone = input.tone ?? "warm";
 
+  // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
+  // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
+  // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+  // The binder that resolved this tenant: _shared/paige-orchestration/resource-binder.ts.
+  const trustedTenant = (payload.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+  if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
   const { data: client } = await supabase
     .from("clients")
     .select("first_name,last_name,entity_name,funding_goal,linked_user_id,tenant_id")
     .eq("id", contactId)
+    .eq("tenant_id", trustedTenant)
     .maybeSingle();
   if (!client) return ok({ ok: false, error: "Client not found" }, 404);
 

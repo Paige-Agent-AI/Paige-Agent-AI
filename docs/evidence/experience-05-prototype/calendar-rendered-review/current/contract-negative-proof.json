@@ -1,0 +1,698 @@
+{
+  "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+  "generatedAt": "2026-10-13T04:25:40.970Z",
+  "browser": "151.0.7922.34",
+  "summary": {
+    "checks": 14,
+    "passed": 14,
+    "failed": [],
+    "captures": 5
+  },
+  "checks": [
+    {
+      "name": "ISO Sunday7 survives canonical shared parser and draft readback",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 2,
+        "schedule": {
+          "weekday": 7,
+          "local_time": "09:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "confirm",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": [
+            {
+              "reason": "trigger_dark"
+            }
+          ]
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "trigger_dark",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "off tool lane retains intended slot but creates no Calendar upcoming marker",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "live",
+        "schedule_status": "scheduled",
+        "revision": 1,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York",
+          "revision": 1,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments",
+          "authorized_revision": 1,
+          "authorized_by": "20000000-0000-4000-8000-000000000005",
+          "next_run_at": "2026-10-26T13:00:00.000Z"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "off",
+        "posture": {
+          "effective": "auto",
+          "would_run": true,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "tool_lane_off",
+        "intended_next_run_at": "2026-10-26T13:00:00.000Z",
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "invalid business display zone has no timezone fallback or placed marker",
+      "status": "PASS",
+      "detail": {
+        "clock": "2026-10-26T12:58:00Z",
+        "record": {
+          "automation_id": "30000000-0000-4000-8000-000000000005",
+          "name": "Weekly commitment check",
+          "state": "live",
+          "schedule_status": "scheduled",
+          "revision": 1,
+          "schedule": {
+            "weekday": 1,
+            "local_time": "09:00",
+            "timezone": "America/New_York",
+            "revision": 1,
+            "request_id": "40000000-0000-4000-8000-000000000005",
+            "scope": "personal_planning_commitments",
+            "authorized_revision": 1,
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "next_run_at": "2026-10-26T13:00:00.000Z"
+          },
+          "last_run": null,
+          "last_verified_run": null
+        },
+        "snapshot": {
+          "ok": true,
+          "tenant_id": "10000000-0000-4000-8000-000000000005",
+          "actor_id": "20000000-0000-4000-8000-000000000005",
+          "read_at": "2026-10-26T12:58:00Z",
+          "limit": 50,
+          "has_more": false,
+          "business_time_zone": {
+            "state": "invalid",
+            "zone": null
+          },
+          "checks": [
+            {
+              "automation_id": "30000000-0000-4000-8000-000000000005",
+              "name": "Weekly commitment check",
+              "state": "live",
+              "schedule_status": "scheduled",
+              "revision": 1,
+              "schedule": {
+                "weekday": 1,
+                "local_time": "09:00",
+                "timezone": "America/New_York",
+                "revision": 1,
+                "request_id": "40000000-0000-4000-8000-000000000005",
+                "scope": "personal_planning_commitments",
+                "authorized_revision": 1,
+                "authorized_by": "20000000-0000-4000-8000-000000000005",
+                "next_run_at": "2026-10-26T13:00:00.000Z"
+              },
+              "last_run": null,
+              "last_verified_run": null,
+              "tool_lane": "auto",
+              "posture": {
+                "effective": "auto",
+                "would_run": true,
+                "dark": []
+              },
+              "execution_availability": "ready",
+              "execution_hold_reason": null,
+              "intended_next_run_at": "2026-10-26T13:00:00.000Z",
+              "next_run_at": "2026-10-26T13:00:00.000Z"
+            }
+          ],
+          "scope": "personal_planning_commitments"
+        },
+        "tool": "auto",
+        "global": "on",
+        "businessZone": {
+          "state": "invalid",
+          "zone": null
+        },
+        "phase": "registered",
+        "proposal": null,
+        "pending": null,
+        "handoff": null,
+        "settings": null,
+        "error": "",
+        "readError": "",
+        "later": false,
+        "inspected": true,
+        "request": "40000000-0000-4000-8000-000000000005",
+        "projected": {
+          "source": "canonical_process_and_act_receipts",
+          "read_at": "2026-10-26T12:58:00Z",
+          "business_time_zone": {
+            "state": "invalid",
+            "zone": null
+          },
+          "limit": 50,
+          "has_more": false,
+          "checks": [
+            {
+              "automation_id": "30000000-0000-4000-8000-000000000005",
+              "name": "Weekly commitment check",
+              "revision": 1,
+              "schedule_status": "scheduled",
+              "schedule": {
+                "weekday": 1,
+                "local_time": "09:00",
+                "timezone": "America/New_York"
+              },
+              "execution_availability": "ready",
+              "execution_hold_reason": null,
+              "next_run_at": "2026-10-26T13:00:00.000Z",
+              "intended_next_run_at": "2026-10-26T13:00:00.000Z",
+              "last_run": null,
+              "last_verified_run": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "older authoritative read does not confirm accepted pause",
+      "status": "PASS",
+      "detail": {
+        "clock": "2026-10-26T12:58:00Z",
+        "record": {
+          "automation_id": "30000000-0000-4000-8000-000000000005",
+          "name": "Weekly commitment check",
+          "state": "paused",
+          "schedule_status": "paused",
+          "revision": 1,
+          "schedule": {
+            "weekday": 1,
+            "local_time": "09:00",
+            "timezone": "America/New_York",
+            "revision": 1,
+            "request_id": "40000000-0000-4000-8000-000000000005",
+            "scope": "personal_planning_commitments",
+            "authorized_revision": 1,
+            "authorized_by": "20000000-0000-4000-8000-000000000005"
+          },
+          "last_run": null,
+          "last_verified_run": null
+        },
+        "snapshot": {
+          "ok": true,
+          "tenant_id": "10000000-0000-4000-8000-000000000005",
+          "actor_id": "20000000-0000-4000-8000-000000000005",
+          "read_at": "2026-10-26T12:58:00Z",
+          "limit": 50,
+          "has_more": false,
+          "business_time_zone": {
+            "state": "configured",
+            "zone": "America/New_York"
+          },
+          "checks": [
+            {
+              "automation_id": "30000000-0000-4000-8000-000000000005",
+              "name": "Weekly commitment check",
+              "state": "live",
+              "schedule_status": "scheduled",
+              "revision": 1,
+              "schedule": {
+                "weekday": 1,
+                "local_time": "09:00",
+                "timezone": "America/New_York",
+                "revision": 1,
+                "request_id": "40000000-0000-4000-8000-000000000005",
+                "scope": "personal_planning_commitments",
+                "authorized_revision": 1,
+                "authorized_by": "20000000-0000-4000-8000-000000000005",
+                "next_run_at": "2026-10-26T13:00:00.000Z"
+              },
+              "last_run": null,
+              "last_verified_run": null,
+              "tool_lane": "auto",
+              "posture": {
+                "effective": "auto",
+                "would_run": true,
+                "dark": []
+              },
+              "execution_availability": "ready",
+              "execution_hold_reason": null,
+              "intended_next_run_at": "2026-10-26T13:00:00.000Z",
+              "next_run_at": "2026-10-26T13:00:00.000Z"
+            }
+          ],
+          "scope": "personal_planning_commitments"
+        },
+        "tool": "auto",
+        "global": "on",
+        "businessZone": {
+          "state": "configured",
+          "zone": "America/New_York"
+        },
+        "phase": "registered",
+        "proposal": null,
+        "pending": {
+          "action": "pause",
+          "id": "30000000-0000-4000-8000-000000000005",
+          "expected": 1,
+          "stage": "readback",
+          "target": "{\"id\":\"30000000-0000-4000-8000-000000000005\",\"revision\":1,\"status\":\"paused\",\"schedule\":{\"weekday\":1,\"local_time\":\"09:00\",\"timezone\":\"America/New_York\",\"revision\":1,\"request_id\":\"40000000-0000-4000-8000-000000000005\",\"scope\":\"personal_planning_commitments\",\"authorized_revision\":1,\"authorized_by\":\"20000000-0000-4000-8000-000000000005\"},\"tool\":\"auto\",\"business\":{\"state\":\"configured\",\"zone\":\"America/New_York\"}}",
+          "responseLost": false
+        },
+        "handoff": {
+          "action": "pause",
+          "id": "30000000-0000-4000-8000-000000000005",
+          "revision": 1
+        },
+        "settings": null,
+        "error": "",
+        "readError": "The read still describes an older revision or state. The requested change is not confirmed. Read again before another command.",
+        "later": false,
+        "inspected": true,
+        "request": "40000000-0000-4000-8000-000000000005",
+        "projected": {
+          "source": "canonical_process_and_act_receipts",
+          "read_at": "2026-10-26T12:58:00Z",
+          "business_time_zone": {
+            "state": "configured",
+            "zone": "America/New_York"
+          },
+          "limit": 50,
+          "has_more": false,
+          "checks": [
+            {
+              "automation_id": "30000000-0000-4000-8000-000000000005",
+              "name": "Weekly commitment check",
+              "revision": 1,
+              "schedule_status": "scheduled",
+              "schedule": {
+                "weekday": 1,
+                "local_time": "09:00",
+                "timezone": "America/New_York"
+              },
+              "execution_availability": "ready",
+              "execution_hold_reason": null,
+              "next_run_at": "2026-10-26T13:00:00.000Z",
+              "intended_next_run_at": "2026-10-26T13:00:00.000Z",
+              "last_run": null,
+              "last_verified_run": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "current readback adopts accepted pause",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "paused",
+        "schedule_status": "paused",
+        "revision": 1,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York",
+          "revision": 1,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments",
+          "authorized_revision": 1,
+          "authorized_by": "20000000-0000-4000-8000-000000000005"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "paused",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "lost command response is not fabricated registration",
+      "status": "PASS",
+      "detail": {
+        "clock": "2026-10-26T12:58:00Z",
+        "record": {
+          "automation_id": "30000000-0000-4000-8000-000000000005",
+          "name": "Weekly commitment check",
+          "state": "draft",
+          "schedule_status": "requested",
+          "revision": 1,
+          "schedule": {
+            "weekday": 1,
+            "local_time": "09:00",
+            "timezone": "America/New_York",
+            "revision": 1,
+            "request_id": "40000000-0000-4000-8000-000000000005",
+            "scope": "personal_planning_commitments"
+          },
+          "last_run": null,
+          "last_verified_run": null
+        },
+        "snapshot": null,
+        "tool": "confirm",
+        "global": "off",
+        "businessZone": {
+          "state": "configured",
+          "zone": "America/New_York"
+        },
+        "phase": "proposal",
+        "proposal": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York"
+        },
+        "pending": {
+          "action": "draft",
+          "config": {
+            "weekday": 1,
+            "local_time": "09:00",
+            "timezone": "America/New_York"
+          },
+          "id": null,
+          "expected": null,
+          "stage": "readback",
+          "target": "{\"id\":\"30000000-0000-4000-8000-000000000005\",\"revision\":1,\"status\":\"requested\",\"schedule\":{\"weekday\":1,\"local_time\":\"09:00\",\"timezone\":\"America/New_York\",\"revision\":1,\"request_id\":\"40000000-0000-4000-8000-000000000005\",\"scope\":\"personal_planning_commitments\"},\"tool\":\"confirm\",\"business\":{\"state\":\"configured\",\"zone\":\"America/New_York\"}}",
+          "responseLost": true
+        },
+        "handoff": null,
+        "settings": null,
+        "error": "",
+        "readError": "",
+        "later": false,
+        "inspected": false,
+        "request": "40000000-0000-4000-8000-000000000005"
+      }
+    },
+    {
+      "name": "lost response readback reuses one process and keeps it requested",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 1,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York",
+          "revision": 1,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "confirm",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": [
+            {
+              "reason": "trigger_dark"
+            }
+          ]
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "trigger_dark",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "offline draft refuses mutation and preserves editable schedule",
+      "status": "PASS",
+      "detail": {
+        "clock": "2026-10-26T12:58:00Z",
+        "record": null,
+        "snapshot": null,
+        "tool": "confirm",
+        "global": "off",
+        "businessZone": {
+          "state": "configured",
+          "zone": "America/New_York"
+        },
+        "phase": "proposal",
+        "proposal": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York"
+        },
+        "pending": null,
+        "handoff": null,
+        "settings": null,
+        "error": "You’re offline. The command was not accepted; your proposal is retained.",
+        "readError": "",
+        "later": false,
+        "inspected": false,
+        "request": "40000000-0000-4000-8000-000000000005"
+      }
+    },
+    {
+      "name": "unknown only resolves after correlated observation plus receipt",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "live",
+        "schedule_status": "scheduled",
+        "revision": 1,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "09:00",
+          "timezone": "America/New_York",
+          "revision": 1,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments",
+          "authorized_revision": 1,
+          "authorized_by": "20000000-0000-4000-8000-000000000005",
+          "next_run_at": "2026-11-02T14:00:00.000Z"
+        },
+        "last_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "last_verified_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "auto",
+          "would_run": true,
+          "dark": []
+        },
+        "execution_availability": "ready",
+        "execution_hold_reason": null,
+        "intended_next_run_at": "2026-11-02T14:00:00.000Z",
+        "next_run_at": "2026-11-02T14:00:00.000Z"
+      }
+    },
+    {
+      "name": "completed-shaped latest response missing receipt projects unknown",
+      "status": "PASS",
+      "detail": {
+        "status": "unknown"
+      }
+    },
+    {
+      "name": "foreign-owner historical receipt rejects whole shared projection",
+      "status": "PASS",
+      "detail": true
+    },
+    {
+      "name": "light current input text/boundary contrast sample",
+      "status": "PASS",
+      "detail": {
+        "foreground": "rgb(23, 19, 49)",
+        "background": "rgb(255, 255, 255)",
+        "border": "rgb(97, 91, 120)",
+        "textContrast": 17.888617856291702,
+        "borderContrast": 6.410403600152248
+      }
+    },
+    {
+      "name": "dark current input text/boundary contrast sample",
+      "status": "PASS",
+      "detail": {
+        "foreground": "rgb(239, 236, 250)",
+        "background": "rgb(20, 17, 41)",
+        "border": "rgb(163, 155, 189)",
+        "textContrast": 15.805298116836154,
+        "borderContrast": 6.988674487807386
+      }
+    },
+    {
+      "name": "same artifact bytes across supplemental proof",
+      "status": "PASS",
+      "detail": {
+        "after": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+      }
+    }
+  ],
+  "captures": [
+    {
+      "file": "mobile-permission-off-no-marker.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+    },
+    {
+      "file": "mobile-business-zone-invalid.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+    },
+    {
+      "file": "mobile-stale-readback-unconfirmed.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+    },
+    {
+      "file": "mobile-lost-command-awaiting-read.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+    },
+    {
+      "file": "mobile-offline-proposal-retained.png",
+      "viewport": {
+        "width": 390,
+        "height": 1000
+      },
+      "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+    }
+  ],
+  "scope": "Actual browser simulation and embedded canonical pure projection; no authenticated backend/security claim"
+}

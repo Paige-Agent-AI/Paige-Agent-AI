@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {createInteractiveExecution,InteractiveSuperseded} from '../supabase/functions/_shared/paige-turn/interactive.ts';
+let latest='a', executor=null, released=0;
+const store = (id) => ({state:async()=>({latest,executor}), acquire:async()=>{if(executor!==null)return false;executor=id;return true},release:async()=>{if(executor===id)executor=null;released++}});
+const a=createInteractiveExecution('a',store('a'));
+await a.acquire(); await a.check();
+latest='b';
+await assert.rejects(a.check(),InteractiveSuperseded);
+const b=createInteractiveExecution('b',store('b'));
+await assert.rejects(b.acquire(1),/RECONCILIATION_REQUIRED/);
+assert.equal(executor,'a');
+await a.release(); await a.release(); assert.equal(released,1);
+await b.acquire(); assert.equal(executor,'b');
+const reader=new ReadableStream({start(){}}).getReader();
+const pending=b.read(reader); setTimeout(()=>latest='c',10);
+await assert.rejects(pending,InteractiveSuperseded);
+await b.release();
+console.log('PASS: latest wins, no timeout theft, idempotent release, stalled model interruption');

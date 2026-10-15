@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // #140 Slice A3 — the voice-twiml webhook. This is the URL the per-tenant TwiML
 // Application's VoiceUrl already targets (see _shared/twilio.ts defaultVoiceTwimlUrl):
 // ${SUPABASE_URL}/functions/v1/voice-twiml. Twilio POSTs application/x-www-form-urlencoded
@@ -622,6 +623,9 @@ Deno.serve(async (req) => {
     return new Response("unauthenticated", { status });
   }
   const authenticatedTenantId = scope?.kind === "tenant" ? scope.tenantId : null;
+  if (authenticatedTenantId && !await commsProviderExecutionAllowed(admin, { tenantId: authenticatedTenantId })) {
+    return new Response("<Response><Hangup/></Response>", { status: 200, headers: { "Content-Type": "text/xml" } });
+  }
 
   // #168 — where Twilio POSTs the call's terminal status (CallStatus + CallDuration) at call end, so
   // twilio-status-callback can stamp the voice row's final status + duration. Mirrors send-message's

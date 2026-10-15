@@ -28,12 +28,17 @@ import type { CapabilityOutcome } from "./capability-record.ts";
  * event where it could be catastrophically wrong.
  */
 
-/** The four Communications acts that CHANGE something. Reads are deliberately absent. */
+/**
+ * The Communications acts that CHANGE something. Reads are deliberately absent.
+ * `comms_setup_calling` (INT-345 K-3) is free and idempotent but creates provider
+ * resources — it is an act, so it is recorded (except its no-op re-run, below).
+ */
 export const COMMS_WRITE_CAPABILITIES: ReadonlySet<string> = new Set([
   "comms_buy_number",
   "comms_name_number",
   "comms_set_primary_number",
   "comms_draft_registration",
+  "comms_setup_calling",
 ]);
 
 /**
@@ -59,6 +64,9 @@ const REFUSED = new Set([
   "REGISTRATION_IMMUTABLE",
   // No model is configured for this workspace. Nothing was attempted.
   "model_not_configured",
+  // comms-setup-calling (INT-345 K-3): the platform's master Twilio credentials are
+  // absent — the precondition itself said no before anything was attempted.
+  "twilio_master_not_configured",
 ]);
 
 /**
@@ -192,6 +200,9 @@ export function classifyCommsRun(input: {
     // did not move, which is the §13 lie this whole family exists to prevent. The Rail is
     // a record of acts; there was no act.
     if (input.capability === "comms_buy_number" && r.already_owned === true) return null;
+    // Same no-act precedent for the setup action: an idempotent re-run that found
+    // the workspace already configured performed no act and moved no money.
+    if (input.capability === "comms_setup_calling" && r.outcome === "skipped_existing") return null;
     return "capability_succeeded";
   }
 

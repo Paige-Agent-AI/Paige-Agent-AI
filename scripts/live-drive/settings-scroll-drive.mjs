@@ -47,7 +47,7 @@ const RUN_THEMES = process.env.FLOW_QUICK === "1" ? ["light"] : ["light", "dark"
 /** The eight addressable destinations, in rail order. */
 const DESTINATIONS = [
   "setup", "team", "connections", "integrations",
-  "notifications", "security-data", "vault", "billing",
+  "analytics", "security-data", "vault", "billing",
 ];
 /** Connections' five segments are child state, not addresses — clicked, not navigated. */
 const SEGMENTS = ["Communications", "Calendars", "Registration", "Health", "Add channel"];
@@ -59,7 +59,7 @@ const SEGMENTS = ["Communications", "Calendars", "Registration", "Health", "Add 
  * surface the product now deliberately scrolls, and fail it for the opposite
  * reason. Setup was added by owner ruling 2026-09-02.
  */
-const VISIBLE_SCROLL_DESTINATIONS = new Set(["setup", "connections", "integrations"]);
+const VISIBLE_SCROLL_DESTINATIONS = new Set(["setup", "connections", "integrations", "analytics"]);
 let currentTheme = "dark";
 
 const results = [];

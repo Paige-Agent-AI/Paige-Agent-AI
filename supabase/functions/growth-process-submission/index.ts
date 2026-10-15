@@ -18,6 +18,8 @@
 // -- EXECUTOR MAP (growth_automation_targets.executor -> what runs) ----------------------------
 //   contact_upsert     -> resolve_contact_id, else create_contact; writes submission.contact_id
 //   pipeline_attach    -> create/advance a tenant-owned deal on the form's pipeline/stage
+//   pipeline_attach_default -> (synthesized, never a row) an unrouted form's lead -> the default
+//                         pipeline's first open stage; see appendDefaultIntake
 //   paige_action       -> file_action(<kind>) onto the action bus (owner draft/approve lane)
 //   surface_to_client  -> file_action(<kind>) (client-facing surface kind), same seam
 //   client_rail_event  -> record_rail_event onto the client's activity timeline
@@ -26,6 +28,14 @@
 //                         send-transactional-email; the provider's answer decides done|error
 //   n8n_workflow       -> file_action(owner.run_workflow, {workflow_key}) then advance_action -> run
 //   outbound_webhook   -> SSRF-guarded POST of the submission to a connected endpoint
+//   lead_reply_draft   -> (synthesized, never a row) a new lead on a form that opted in
+//                         (growth_forms.lead_reply_enabled) of a standalone/sub_account/enterprise
+//                         business that is open (trial/active/past_due, not archived) -> ONE
+//                         owner.lead_followup reply draft for the owner to review and send through the
+//                         governed email door; see appendLeadReply / lead-reply.ts. A form's own
+//                         paige_action automation for owner.lead_followup runs through the same
+//                         fileLeadReply (same gates — INCLUDING lead_reply_enabled, the one opt-in —
+//                         same draft brief, same once-per-submission rule).
 //
 // -- SECURITY (S9/S13) ------------------------------------------------------------------------
 // NOT user-facing. Authorized ONLY by (a) the service-role bearer, or (b) a valid Vault cron token
@@ -42,6 +52,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { isEmailAddress } from "../_shared/growth-intake.ts";
+import { appendLeadReply, fileLeadReply, LEAD_REPLY_ACTION_KIND, leadReplyEnabled } from "./lead-reply.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
 // live ship (see its case below); its only shared import is the pure address check above.
 // The fast-follow that re-enables outbound_webhook re-adds: import { assertPublicHttpUrl } from
@@ -278,6 +290,18 @@ Deno.serve(async (req) => {
     }
 
     applyIntakeSettings(plan, form);
+    appendDefaultIntake(plan, form, (rows?.length ?? 0) > 0);
+    // The business that owns the claimed submission (tenantId above), read here to decide the
+    // lead-reply step (and re-checked when it runs). An unreadable row plans and files no reply draft;
+    // it never fails the lead.
+    const { data: businessRow, error: businessErr } = await admin
+      .from("tenants")
+      .select("id, parent_tenant_id, account_type, status, archived_at")
+      .eq("id", tenantId)
+      .maybeSingle();
+    if (businessErr) console.warn(`[growth-process-submission] lead reply not planned: business read failed (${businessErr.code ?? "no code"})`);
+    const business = businessErr ? null : businessRow;
+    appendLeadReply(plan, form, business);
 
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
@@ -301,7 +325,7 @@ Deno.serve(async (req) => {
       // Idempotency: a done/skipped dispatch is permanent; an error dispatch is retried (re-run + upsert).
       if (p.automationId) {
         const prior = doneByAutomation.get(p.automationId);
-        if (prior === "done" || prior === "skipped") {
+        if ((prior === "done" || prior === "skipped") && p.executor !== "pipeline_attach") {
           skipped.push({ slug: p.slug, reason: "already_dispatched" });
           continue;
         }
@@ -310,7 +334,7 @@ Deno.serve(async (req) => {
       let outcome: ExecOutcome;
       try {
         outcome = await runExecutor(p, {
-          admin, tenantId, submissionId, form, payload, submission,
+          admin, tenantId, submissionId, claimAttempt: claim.attempts, form, payload, submission, business,
           contactId, setContactId: (id: string) => { contactId = id; },
         });
       } catch (e) {
@@ -318,7 +342,7 @@ Deno.serve(async (req) => {
       }
 
       // Ledger the true outcome (real rows only; synthesized fallback carries no automation_id).
-      if (p.automationId) {
+      if (p.automationId && p.executor !== "pipeline_attach") {
         await admin.from("growth_submission_dispatches").upsert({
           submission_id: submissionId,
           automation_id: p.automationId,
@@ -365,17 +389,20 @@ type ExecCtx = {
   admin: any;
   tenantId: string;
   submissionId: string;
+  claimAttempt: number;
   // deno-lint-ignore no-explicit-any
   form: any;
   payload: Record<string, unknown>;
   // deno-lint-ignore no-explicit-any
   submission: any;
+  /** The claimed submission's business row (id, parent_tenant_id, account_type, status, archived_at), or null if unread. */
+  business: unknown;
   contactId: string | null;
   setContactId: (id: string) => void;
 };
 
 async function runExecutor(
-  p: { slug: string; executor: string; lane: string | null; config: Record<string, unknown>; targetConfig: Record<string, unknown> },
+  p: { automationId: string | null; slug: string; executor: string; lane: string | null; config: Record<string, unknown>; targetConfig: Record<string, unknown> },
   ctx: ExecCtx,
 ): Promise<ExecOutcome> {
   const { admin, tenantId, submissionId, form, payload } = ctx;
@@ -425,8 +452,12 @@ async function runExecutor(
           contactId = s(created);
         }
         if (!contactId) return { status: "error", result: {}, error: "contact_unresolved" };
+        const { data: pinned, error: pinErr } = await admin.from("growth_form_submissions")
+          .update({ contact_id: contactId }).eq("id", submissionId).eq("tenant_id", tenantId)
+          .eq("processing_state", "claimed").eq("attempts", ctx.claimAttempt).is("contact_id", null)
+          .select("id").maybeSingle();
+        if(pinErr || !pinned) return {status:"error",result:{},error:"submission_contact_link_failed"};
         ctx.setContactId(contactId);
-        await admin.from("growth_form_submissions").update({ contact_id: contactId }).eq("id", submissionId);
       }
 
       let customFieldsError: string | undefined;
@@ -458,62 +489,56 @@ async function runExecutor(
         if (!idn.email && !idn.phone) return { status: "done", result: { note: "no_contact_for_pipeline" } };
         return { status: "error", result: {}, error: "no_contact_for_pipeline" };
       }
-      const pipelineId = s(p.config.pipeline_id) ?? s(form.pipeline_id);
-      const stageId = s(p.config.stage_id) ?? s(form.stage_id);
-      if (!pipelineId) return { status: "done", result: { note: "no_pipeline_configured" } };
+      const {data: attached,error: attachError}=await admin.rpc("growth_attach_submission_deal",{
+        p_submission_id:submissionId,p_claim_attempt:ctx.claimAttempt,p_automation_id:p.automationId,
+      });
+      if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"};
+      return {status:"done",result:attached};
+    }
 
-      // S9 ownership: the pipeline (and stage) MUST belong to this tenant.
-      const { data: pipe } = await admin.from("pipelines").select("id, tenant_id, name").eq("id", pipelineId).maybeSingle();
-      if (!pipe || pipe.tenant_id !== tenantId) {
-        return { status: "error", result: {}, error: "pipeline_not_in_tenant" };
+    // -- pipeline_attach_default: a form with no deal route of its own files its lead into the
+    // business's DEFAULT pipeline, first open stage (owner ruling 2026-10-11). The database decides:
+    // growth_attach_submission_default_deal refuses a routed form, reuses (never moves) an open deal,
+    // and answers {skipped} when there is no default pipeline or open stage. This step was added to
+    // forms that already processed cleanly, so it must never fail one (§58): only a stale claim
+    // (40001) is retried; every other refusal or skip is "done" with the reason, reported as it is and
+    // never as a deal that was made. --
+    case "pipeline_attach_default": {
+      const notFiled = (reason: string): ExecOutcome =>
+        ({ status: "done", result: { note: "default_pipeline_not_filed", reason } });
+      const contactId = ctx.contactId;
+      if (!contactId) {
+        // Nothing to hang a deal on: a visitor who left no email or phone, or a contact step that did
+        // not produce one (that step reports its own outcome).
+        const idn = extractIdentity(payload, form.schema_json);
+        return notFiled(!idn.email && !idn.phone ? "no_identity" : "no_contact");
       }
-      let resolvedStageId = stageId;
-      if (resolvedStageId) {
-        const { data: st } = await admin.from("pipeline_stages").select("id, pipeline_id, tenant_id").eq("id", resolvedStageId).maybeSingle();
-        if (!st || st.pipeline_id !== pipelineId || (st.tenant_id && st.tenant_id !== tenantId)) {
-          return { status: "error", result: {}, error: "stage_not_in_pipeline" };
+      const { data: filed, error: fileError } = await admin.rpc("growth_attach_submission_default_deal", {
+        p_submission_id: submissionId, p_claim_attempt: ctx.claimAttempt,
+      });
+      if (fileError) {
+        const message = String(fileError.message ?? "");
+        // A stale claim or deadlock, or a failure that never reached a database answer, is retried:
+        // marking it "done" would leave a lead that was never refused unfiled for good. "Never
+        // reached" = no code (the request itself failed), PostgREST's own connection, schema-cache
+        // and pool-timeout codes (PGRST000-003), or Postgres connection 08*, resource 53* and
+        // operator-intervention 57*. PGRST202 (function not found) is NOT retried: Edge and migrations
+        // deploy independently, and if the migration lags or fails, retrying would spend the
+        // submission's attempt budget and end it in a terminal error — failing a submission that
+        // worked before (§58). It finishes as not filed ("default_filing_unavailable"), counted in the
+        // funnel's leads.unfiled, and the release check looks for those rows after the merge.
+        const sqlState = fileError.code ? String(fileError.code) : "";
+        if (sqlState === "PGRST202") return notFiled("default_filing_unavailable");
+        if (sqlState === "40001" || sqlState === "40P01" || sqlState === "" || /^PGRST00[0-3]$/.test(sqlState) || /^(08|53|57)/.test(sqlState)) {
+          return { status: "error", result: {}, error: `submission_default_deal_failed: ${message.slice(0, 200)}` };
         }
-      } else {
-        // No stage named - fall to the lowest-order OPEN stage of the pipeline.
-        const { data: firstStage } = await admin
-          .from("pipeline_stages")
-          .select("id").eq("pipeline_id", pipelineId).eq("stage_type", "open")
-          .is("archived_at", null)
-          .order("order_index", { ascending: true }).limit(1).maybeSingle();
-        resolvedStageId = firstStage?.id ?? null;
-        if (!resolvedStageId) return { status: "error", result: {}, error: "no_open_stage" };
+        const code = /^[A-Z][A-Z0-9_]{2,63}/.exec(message)?.[0] ?? (fileError.code ? String(fileError.code) : "rpc_error");
+        return notFiled(code);
       }
-
-      // Advance an existing OPEN deal for this contact on this pipeline, else create one.
-      const { data: existingDeal } = await admin
-        .from("deals")
-        .select("id, stage_id")
-        .eq("tenant_id", tenantId).eq("pipeline_id", pipelineId).eq("contact_client_id", contactId).eq("status", "open")
-        .order("created_at", { ascending: true }).limit(1).maybeSingle();
-
-      let dealId: string;
-      if (existingDeal?.id) {
-        if (existingDeal.stage_id !== resolvedStageId) {
-          const { error: moveErr } = await admin.from("deals").update({ stage_id: resolvedStageId }).eq("id", existingDeal.id);
-          if (moveErr) return { status: "error", result: {}, error: `deal_stage_update_failed: ${moveErr.message}` };
-        }
-        dealId = existingDeal.id;
-      } else {
-        const title = s(payload.name) ?? s(payload.email) ?? `${form.name ?? "Form"} lead`;
-        const { data: newDeal, error: dealErr } = await admin
-          .from("deals")
-          .insert({
-            title, pipeline_id: pipelineId, stage_id: resolvedStageId, contact_client_id: contactId,
-            status: "open", source: "paige_form", tenant_id: tenantId,
-            created_by: await resolveIntakeOperator(admin, tenantId, form.created_by),
-          })
-          .select("id").single();
-        if (dealErr || !newDeal) return { status: "error", result: {}, error: `deal_insert_failed: ${dealErr?.message ?? "no id"}` };
-        dealId = newDeal.id;
-      }
-      const { error: linkErr } = await admin.from("growth_form_submissions").update({ deal_id: dealId }).eq("id", submissionId);
-      if (linkErr) return { status: "error", result: {}, error: `submission_deal_link_failed: ${linkErr.message}` };
-      return { status: "done", result: { deal_id: dealId, stage_id: resolvedStageId } };
+      if (!filed || typeof filed !== "object") return notFiled("no_result");
+      const skipped = (filed as Record<string, unknown>).skipped;
+      if (typeof skipped === "string" && skipped) return notFiled(skipped);
+      return { status: "done", result: filed as Record<string, unknown> };
     }
 
     // -- paige_action / surface_to_client: file the action onto the bus (governed lane). --
@@ -521,6 +546,12 @@ async function runExecutor(
     case "surface_to_client": {
       const actionKind = s(p.config.action_kind) ?? s(p.targetConfig.action_kind);
       if (!actionKind) return { status: "error", result: {}, error: "no_action_kind_configured" };
+      // A reply draft ("Draft Paige's follow-up" = owner.lead_followup) goes through the one lead-reply
+      // path: the composer brief (draft_input), the tier/sender/suppression gates, the caps, and the
+      // once-per-submission rule (a lost race is "already drafted", never a failed lead). The automation
+      // row is NOT an opt-in of its own: growth_forms.lead_reply_enabled is the one switch, and
+      // fileLeadReply records form_not_opted_in when it is off.
+      if (actionKind === LEAD_REPLY_ACTION_KIND) return await runLeadReply(ctx);
       const { data: filed, error: fileErr } = await admin.rpc("file_action", {
         p_action_kind: actionKind,
         p_title: `New submission - ${form.name ?? "form"}`,
@@ -709,6 +740,12 @@ async function runExecutor(
       return { status: "done", result: { action_id: filed.action_id, workflow_key: workflowKey, action_status: adv?.status ?? filed.status } };
     }
 
+    // -- lead_reply_draft: ONE reply draft for the owner to approve (lead-reply.ts). Files the request
+    // onto the action bus only when the intake's contact has an email and the business can send one;
+    // it never sends, and every reason it does not file is reported and recorded on the submission. --
+    case "lead_reply_draft": // === LEAD_REPLY_STEP (a literal: the case list is evaluated in order)
+      return await runLeadReply(ctx);
+
     // -- outbound_webhook: DEFERRED (fast-follow). ----------------------------------------------
     // Held out of the first live ship on purpose. Two things must land together before a service-role
     // fetch to a tenant-authored URL is safe and honest, and neither is done yet:
@@ -734,6 +771,23 @@ async function runExecutor(
   }
 }
 
+// -- The one lead-reply path, shared by the synthesized lead_reply_draft step and a form's own
+// owner.lead_followup automation. Everything it reads comes from the claimed submission: its tenant,
+// its business row, the intake's contact and the visitor's labelled answers (identity numbers already
+// dropped by labelledAnswers). The environment reader and the pre-send check are the email door's own.
+async function runLeadReply(ctx: ExecCtx): Promise<ExecOutcome> {
+  const { admin, tenantId, submissionId, form, payload } = ctx;
+  const idn = extractIdentity(payload, form.schema_json);
+  return await fileLeadReply(admin, {
+    tenantId, business: ctx.business, submissionId, formId: form.id, formName: s(form.name),
+    formOptedIn: leadReplyEnabled(form),
+    submittedEmail: idn.email,
+    contactId: ctx.contactId,
+    answers: labelledAnswers(payload, form.schema_json),
+    visitorName: [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null,
+  }, { env: (key: string) => Deno.env.get(key), preSendCheck: runPreSend });
+}
+
 // -- A form's alert address, applied to every form (with or without automation rows). --
 // growth_form_set_intake() is the one place an owner sets it. Pipeline routing is NOT added here: that
 // RPC writes it where the plan above already reads it (the form's columns for a form with no
@@ -744,6 +798,26 @@ function applyIntakeSettings(plan: any[], form: any): void {
   if (s(form.notify_email) && !plan.some((p) => p.executor === "email_alert")) {
     plan.push({ automationId: null, slug: "email_alert", executor: "email_alert", lane: null, config: {}, targetConfig: {} });
   }
+}
+
+// -- Every form lead lands in a pipeline (owner ruling 2026-10-11). --
+// A form routes its own deals exactly when the plan above runs a pipeline_attach step: an enabled
+// automation whose target executor is pipeline_attach, or — only while the form has NO enabled automation
+// rows — auto_create_deal with a pipeline on the form. Stale intake columns under enabled automations route
+// nothing (the plan ignores them), so such a form is unrouted. growth_attach_submission_default_deal and
+// marketing.forms.unrouted_current apply the same rule. Any unrouted form gets one unledgered default step,
+// after the contact step, that files the lead into the business's default pipeline. A retry re-runs it
+// safely: the database returns the deal already bound to the submission instead of making a second one.
+function appendDefaultIntake(
+  plan: Array<{ executor: string } & Record<string, unknown>>, form: { auto_create_deal?: unknown; pipeline_id?: unknown },
+  hasAutomationRows: boolean,
+): void {
+  if (plan.some((p) => p.executor === "pipeline_attach" || p.executor === "pipeline_attach_default")) return;
+  if (!hasAutomationRows && form.auto_create_deal && form.pipeline_id) return;
+  plan.push({
+    automationId: null, slug: "pipeline_attach_default", executor: "pipeline_attach_default", lane: null,
+    config: {}, targetConfig: {},
+  });
 }
 
 // -- Who a public submission's contact and deal are recorded as created by. --

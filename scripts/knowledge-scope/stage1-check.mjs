@@ -35,6 +35,8 @@ const VECTOR = Array.from({ length: 1024 }, (_, i) => (i % 7) / 10);
 
 let failures = 0;
 let checks = 0;
+/** Every stream this harness drives, audited for the turn frame in the last group (paige-turn). */
+const drivenStreams = [];
 function assert(label, cond, detail) {
   checks += 1;
   if (cond) {
@@ -70,11 +72,15 @@ const realFetch = globalThis.fetch;
 let embedCount = 0;
 let providerPlan = [];
 let providerCalls = [];
+// INT-334 R4 — the turn classifier's calls, kept apart from `providerCalls` so a check's provider plan
+// and call count stay the model rounds it scripts. Every classifier payload is still egress: checks
+// below prove it never leaves on a switched account and never carries account Knowledge.
+let classifierCalls = [];
 let syncCalls = [];
 let syncThrows = false;
 function embedCalls() { return embedCount; }
 function resetEmbeds() { embedCount = 0; }
-function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; syncCalls = []; }
+function resetProvider(plan = []) { providerPlan = [...plan]; providerCalls = []; classifierCalls = []; syncCalls = []; }
 function anthropicStream(kind = "text") {
   const responseText = kind === "private-text"
     ? "CHILD-PRIVATE-MARKER"
@@ -175,8 +181,8 @@ function anthropicStream(kind = "text") {
         { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } },
         { type: "message_stop" },
       ]
-    // `draft_marketing_content` — a tool that WRITES (so the autonomy gate governs it, and it sits
-    // in `MUTATING_TOOLS`) but whose result is GENERATED COPY grounded in the tenant's name and
+    // `draft_marketing_content` — a tool the autonomy gate no longer holds (it persists nothing; it
+    // left `MUTATING_TOOLS` 2026-10-04) but whose result is GENERATED COPY grounded in the tenant's name and
     // brand voice, read out of storage by `content-draft`. Reusing `MUTATING_TOOLS` as the
     // receipt set therefore left an otherwise-ordinary turn unprotected while its closing reply
     // was written in the previous workspace's voice. Nothing else in this harness drives a tool
@@ -203,6 +209,22 @@ function anthropicStream(kind = "text") {
         { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "tool-1", name: "ask_choices" } },
         { type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify({ prompt: "CHILD-PRIVATE-MARKER — which direction?", options: [{ label: "One", value: "one" }, { label: "Two", value: "two" }] }) } },
         { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } },
+        { type: "message_stop" },
+      ]
+    // A round the provider FINISHES cleanly (end_turn, so the translator sends finish_reason "stop")
+    // with no text and no tool call (paige-turn, 29.8): a clean stop that answered nothing.
+    : kind === "ws-text"
+    ? [
+        { type: "message_start", message: { usage: { input_tokens: 1 } } },
+        { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+        { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "   " } },
+        { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
+        { type: "message_stop" },
+      ]
+    : kind === "empty-end"
+    ? [
+        { type: "message_start", message: { usage: { input_tokens: 1 } } },
+        { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
         { type: "message_stop" },
       ]
     : kind === "two-tools"
@@ -232,6 +254,24 @@ function anthropicStream(kind = "text") {
     headers: { "Content-Type": "text/event-stream" },
   });
 }
+/** The words a `break-mid-text` stream gets out before it breaks (paige-turn probes, group 29). */
+const BROKEN_ANSWER = "Here is the first half of the answer, and then";
+function breakingStream(kind) {
+  const events = [{ type: "message_start", message: { usage: { input_tokens: 1 } } }];
+  if (kind === "break-mid-text") {
+    events.push({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } });
+    events.push({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: BROKEN_ANSWER } });
+  }
+  const bytes = new TextEncoder().encode(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""));
+  let sent = false;
+  // Pull-driven, so the events are READ before the error (erroring in `start` would discard them).
+  const body = new ReadableStream({
+    pull(c) {
+      if (!sent) { sent = true; c.enqueue(bytes); } else c.error(new Error("fixture: upstream connection reset"));
+    },
+  });
+  return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+}
 globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("voyageai.com")) {
@@ -243,10 +283,17 @@ globalThis.fetch = async (url, init) => {
     });
   }
   if (href === "https://api.anthropic.com/v1/messages") {
-    providerCalls.push(JSON.parse(String(init?.body ?? "{}")));
-    if (JSON.stringify(providerCalls.at(-1)).includes("Maintain a rolling memory")) {
-      return new Response(JSON.stringify({ content: [{ type: "text", text: "FOLDED-PRIVATE-MARKER" }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const sent = JSON.parse(String(init?.body ?? "{}"));
+    if (String(sent.system ?? "").startsWith("You label one message sent to PAIGE")) {
+      classifierCalls.push(sent);
+      // An ordinary answer that needs this workspace's records: the route stays operational, as before R4.
+      const label = { intent: "answer", research: "none", difficulty: "routine", image: "none", needs_workspace_data: true, confidence: 0.9 };
+      return new Response(JSON.stringify({ content: [{ type: "text", text: JSON.stringify(label) }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
+    providerCalls.push(sent);
     const next = providerPlan.shift() ?? "text";
     // An extraction that parses but FAILS validation, so the `logSyncFailure` path is reached
     // with the full `structured` payload — the write 14b.1/14b.2 are about.
@@ -264,6 +311,10 @@ globalThis.fetch = async (url, init) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
+    }
+    if (next === "general-extraction") {
+      const extracted = JSON.stringify({ document_type: "Formation Certificate", fields: { "foundation.legal_name": "Acme Holdings LLC" } });
+      return new Response(JSON.stringify({ content: [{ type: "text", text: extracted }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     if (next === "json-extraction") {
       const extracted = JSON.stringify({
@@ -311,6 +362,12 @@ globalThis.fetch = async (url, init) => {
     if (next === "fail") {
       return new Response(JSON.stringify({ error: "upstream" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
+    // A provider stream that BREAKS after answering 200 (paige-turn). It sends its first events, then
+    // the connection resets: the next read rejects. `_shared/claude.ts`'s translator catches that and
+    // still ends with a clean [DONE] — so the ONLY sign the answer was cut off is the missing
+    // finish_reason (the translator sends one only on the provider's own message_stop). `before-text`
+    // breaks after message_start; `mid-text` after part of an answer.
+    if (next === "break-before-text" || next === "break-mid-text") return breakingStream(next);
     return anthropicStream(next);
   }
   if (href.endsWith("/functions/v1/fetch-url-content")) {
@@ -344,15 +401,13 @@ const handler = capturedHandler();
  * ordered so its FIRST row is NOT the active tenant. That is the whole trap: a correct
  * handler must ignore this ordering entirely.
  */
-async function drive({ background = false, afterResponse = null, personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?" }) {
+async function drive({ personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?", insertThrows = [] }) {
   // `profiles.active_tenant_id` is an INDEPENDENT axis from the persona-resolved tenant. It
   // defaults to `personaTenant` so every existing scenario is byte-identical (persona and active
   // agree). A check overrides it to model the case current_user_tenant_id() hides: a null or
   // stale active_tenant_id where the persona tenant is the COALESCE oldest-membership fallback.
   const declaredActiveTenant = activeTenantId === "__USE_PERSONA__" ? personaTenant : activeTenantId;
   const logged = [];
-  const tasks = [];
-  if (background) globalThis.EdgeRuntime = { waitUntil: (p) => tasks.push(p) };
   syncThrows = throwOnSync;
   resetEmbeds();
   const origWarn = console.warn;
@@ -369,6 +424,7 @@ async function drive({ background = false, afterResponse = null, personaTenant, 
   const personaStates = personaSequence ?? [personaTenant];
 
   const rec = fake.setScenario({
+    insertThrows,
     authUser: unauthenticated ? null : { id: USER, email: "owner@example.test" },
     rpcs: {
       check_rate_limit: { data: true, error: null },
@@ -418,6 +474,16 @@ async function drive({ background = false, afterResponse = null, personaTenant, 
       tenant_members: () => memberships.map((t) => ({ tenant_id: t })),
       profiles: () => [{ active_tenant_id: declaredActiveTenant }],
       ...tableExtras,
+      // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
+      // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
+      // A scripted thread row that does not name its tenant models the caller's OWN thread, so it is
+      // filled with the workspace the turn resolves first — the same default `profiles` uses above. A
+      // scenario that scripts `tenant_id` (including null) keeps exactly what it wrote.
+      ...(typeof tableExtras.paige_chat_threads === "function" ? {
+        paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
+          row && typeof row === "object" && !("tenant_id" in row)
+            ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null, ...row } : row),
+      } : {}),
     },
   });
 
@@ -440,8 +506,7 @@ async function drive({ background = false, afterResponse = null, personaTenant, 
     );
     status = res?.status ?? null;
     if (res?.body) responseText = await res.text();
-    afterResponse?.();
-    await Promise.allSettled(tasks);
+    drivenStreams.push({ label: userMessage.slice(0, 40), status, responseText, rec });
   } catch {
     // A downstream failure (no model key configured) is expected and irrelevant — the
     // retrieval call under test happens well before any model call.
@@ -450,13 +515,12 @@ async function drive({ background = false, afterResponse = null, personaTenant, 
     console.error = origError;
     console.log = origLog;
     syncThrows = false;
-    if (background) delete globalThis.EdgeRuntime;
   }
 
   const kbCall = rec.rpc.find((r) => r.name === "match_tenant_knowledge");
   const memberReads = rec.from.filter((f) => f.table === "tenant_members");
   const telemetry = rec.inserts.find((i) => i.table === "kb_query_telemetry");
-  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], responseText, syncCalls: [...syncCalls] };
+  return { rec, kbCall, memberReads, telemetry, logged, status, embeds: embedCalls(), providerCalls: [...providerCalls], classifierCalls: [...classifierCalls], responseText, syncCalls: [...syncCalls] };
 }
 
 // ── 1 · Multi-membership active-account resolution ───────────────────────────────
@@ -745,8 +809,28 @@ group("active-account changes after retrieval fail closed before provider egress
       provider: ["text"],
     });
     assert(`12 ${label}: no provider request is made`, r.providerCalls.length === 0, `provider calls: ${r.providerCalls.length}`);
+    assert(`12 ${label}: not even the turn classifier egresses`, r.classifierCalls.length === 0, `classifier calls: ${r.classifierCalls.length}`);
     assert(`12 ${label}: no stale telemetry is written`, !r.telemetry, JSON.stringify(r.telemetry?.row ?? null));
     assert(`12 ${label}: the turn fails closed`, r.status === 409, `status ${r.status}`);
+  }
+  // 12b · INT-334 R4 — the turn classifier is an AWAITED provider round-trip between the pre-egress check
+  // (persona call 2) and the chat dispatch. A switch that lands DURING it is caught by the re-check after it
+  // (persona call 3): the classifier — which carries only the message — ran, and the Knowledge-carrying chat
+  // call never fires. Without that re-check this dispatches the prior account's Knowledge.
+  {
+    const r = await drive({
+      personaTenant: CHILD,
+      personaSequence: [CHILD, CHILD, AGENCY],
+      memberships: [CHILD, AGENCY],
+      chunkContent: "CHILD-PRIVATE-MARKER",
+      provider: ["text"],
+    });
+    assert("12b a switch during the turn classifier: the classifier ran, the chat dispatch never fired",
+      r.classifierCalls.length === 1 && r.providerCalls.length === 0,
+      `classifier calls: ${r.classifierCalls.length}, provider calls: ${r.providerCalls.length}`);
+    assert("12b-i the classifier payload carries no account Knowledge",
+      !r.classifierCalls.some((b) => JSON.stringify(b).includes("CHILD-PRIVATE-MARKER")), JSON.stringify(r.classifierCalls).slice(0, 400));
+    assert("12b-ii the turn fails closed with the active-account cancellation", r.status === 409, `status ${r.status}`);
   }
 }
 
@@ -761,6 +845,10 @@ group("active-account changes after retrieval fail closed before provider egress
 //
 // If one of these fails, do NOT just bump the number. Re-derive the table for that shape, then
 // fix every timing in the group that depends on it.
+// INT-334 R4 — a fresh agentic turn (every group below drives one: no attachment, no approval, no
+// answer binding) now runs the turn classifier, and re-checks the account after it. That inserts ONE
+// boundary right after the pre-egress check — "post-classifier" — and every later index moves up by one.
+// The tables below are re-derived for it, not bumped.
 const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
 const assertShape = async (label, plan, expected) => {
   const control = await drive({
@@ -776,12 +864,12 @@ const assertShape = async (label, plan, expected) => {
 
 group("active-account changes during the agent loop stop later provider calls");
 {
-  await assertShape("grp13 tool+text", ["tool", "text"], 8);
+  await assertShape("grp13 tool+text", ["tool", "text"], 9);
   const r = await drive({
     personaTenant: CHILD,
-    // initial resolution → initial provider boundary → post-round boundary →
-    // actual tool-dispatch boundary (where the switch occurs)
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    // initial resolution → initial provider boundary → post-classifier boundary → post-round
+    // boundary → actual tool-dispatch boundary (where the switch occurs)
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -831,7 +919,7 @@ group("active-account changes during the agent loop stop later provider calls");
 // ── 14 · Document post-processing revalidates before provider and sync ──────────
 group("document post-processing fails closed at provider and sync boundaries");
 {
-  async function driveDocumentPostProcess(scopeStates, { uploadId = null, plan = ["json-extraction"], throwOnSync = false } = {}) {
+  async function driveDocumentPostProcess(scopeStates, { uploadId = null, plan = ["json-extraction"], throwOnSync = false, ownMemoryScope = undefined } = {}) {
     resetProvider(plan);
     syncThrows = throwOnSync;
     let scopeCall = 0;
@@ -861,6 +949,11 @@ group("document post-processing fails closed at provider and sync boundaries");
           },
         };
       },
+      rpc: null, // replaced below once writes/rpcs exist (hoisting workaround for the const)
+    };
+    service.rpc = (name, args) => {
+      writes.push({ table: `rpc:${name}`, op: "call", args });
+      return Promise.resolve({ data: "owner-memory-row-id", error: null });
     };
     const result = await chatModule.runStructuredExtractionAndSync(
       "CHILD-PRIVATE-MARKER",
@@ -873,6 +966,8 @@ group("document post-processing fails closed at provider and sync boundaries");
       null,
       uploadId,
       async () => scopeStates[Math.min(scopeCall++, scopeStates.length - 1)],
+      undefined,
+      ownMemoryScope,
     );
     syncThrows = false;
     return { result, writes, providerCalls: [...providerCalls], syncCalls: [...syncCalls] };
@@ -890,6 +985,21 @@ group("document post-processing fails closed at provider and sync boundaries");
     JSON.stringify(noRecord.result),
   );
   assert("14.1 valid current scope reaches the extraction provider", valid.providerCalls.length === 1, `provider calls: ${valid.providerCalls.length}`);
+  // INT-326 write rule (review P2): the report_upload row about the CALLER takes the turn's
+  // captured declared∧validated scope. null = no established workspace ⇒ NO memory write at all
+  // (the document's own upload record still proceeds); a string is stamped verbatim.
+  const noScopeRun = await driveDocumentPostProcess([true], { uploadId: "upload-1", ownMemoryScope: null });
+  assert("14.1b a no-scope turn still stamps the document's own upload record and returns success",
+    noScopeRun.result?.success === true && noScopeRun.writes.some((w) => w.table === "credit_report_uploads"),
+    JSON.stringify({ result: noScopeRun.result, uploadWrites: noScopeRun.writes.filter((w) => w.table === "credit_report_uploads").length }));
+  assert("14.1c …and the skip is real: zero client_memory inserts in its write log",
+    !noScopeRun.writes.some((w) => w.table === "client_memory"),
+    JSON.stringify(noScopeRun.writes.filter((w) => w.table === "client_memory")));
+  const scopedRun = await driveDocumentPostProcess([true], { uploadId: "upload-1", ownMemoryScope: CHILD });
+  assert("14.1d a captured scope is stamped verbatim on the owner-memory report_upload write (S5: governed seam)",
+    scopedRun.writes.some((w) => w.table === "rpc:record_paige_memory" && w.args?.p_memory_type === "report_upload"
+      && w.args?.p_tenant_id === CHILD && w.args?.p_confirmation_state === "proposed"),
+    JSON.stringify(scopedRun.writes.filter((w) => w.table === "rpc:record_paige_memory").map((w) => w.args)));
   // §13 — THIS ASSERTION WAS INVERTED, DELIBERATELY, AND THAT IS THE POINT OF THE SLICE.
   // It used to read "14.2 valid current scope reaches sync — syncCalls.length === 1", because a
   // credit report dropped into chat called `sync-credit-report-data` with the service-role key and
@@ -1243,7 +1353,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
 // ── 16 · The dispatch guard is asserted PER TOOL, not once per batch ──────────────
 group("tool dispatch re-asserts scope for every tool, not once per round");
 {
-  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 9);
+  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 10);
   // WHY THIS GROUP EXISTS. Reverting the dispatch check from per-tool back to per-batch
   // was undetectable by every other check in this file: a round with ONE tool behaves
   // identically either way, and every earlier group uses a one-tool round. A batch is not
@@ -1254,15 +1364,17 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // HOW THE SWITCH IS TIMED. `personaSequence` is consumed one entry per
   // `get_paige_persona_context` call, clamped at the last entry, so `n` CHILDs followed by
   // AGENCY switches the account at call index `n`. The calls, in order, are:
-  //   0 turn start (personaCtx)   1 pre-egress revalidation   2 post-round revalidation
-  //   3 tool-1 dispatch           4 tool-2 dispatch           5 pre-continuation
-  // so n=3 lands the switch on the FIRST tool's check and n=4 on the SECOND's.
+  //   0 turn start (personaCtx)   1 pre-egress revalidation   2 post-classifier revalidation
+  //   3 post-round revalidation   4 tool-1 dispatch           5 tool-2 dispatch   6 pre-continuation
+  // so n=4 lands the switch on the FIRST tool's check and n=5 on the SECOND's.
   //
-  // THE DISCRIMINATOR is the step trace. A mid-batch abort returns `scopeInvalidated` and the
-  // caller breaks BEFORE narrating the round, so no `0:tool-*` step is emitted at all. With a
-  // batch-level check at n=4 there is no second check to fail: both tools run, the round
-  // completes, and BOTH steps are narrated (verified by mutation — this is not a guess).
-  const stepIds = (text) => (text.match(/"id":"0:tool-\d"/g) || []).map((m) => m.slice(7, -1));
+  // THE DISCRIMINATOR is the step trace. Since C2b each tool's step is sent the moment that tool
+  // finishes (docs/delivery/paige-conversational-loop-c2.md), so a tool that RAN shows its step even
+  // when a later tool in the same round is refused — it did run. A mid-batch abort therefore shows
+  // exactly the steps of the tools before the switch, and none after it. With a batch-level check at
+  // n=4 there is no second check to fail: both tools run and BOTH steps are shown.
+  // Step ids are `<pass>:<round>:<index>:<call id>`; the call ids here are tool-1 / tool-2.
+  const stepIds = (text) => [...new Set((text.match(/"id":"0:0:\d+:tool-\d"/g) || []).map((m) => m.slice(6, -1).split(":")[3]))];
   const runTools = (n) => drive({
     personaTenant: CHILD,
     personaSequence: n === null ? [CHILD] : Array(n).fill(CHILD).concat([AGENCY]),
@@ -1285,15 +1397,16 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // THE BOUNDARY IS FOUND, NOT WRITTEN DOWN. External review made the sharper version of the
   // point the shape assertions only half-cover: those catch a check being ADDED or REMOVED (the
   // total moves), but not one being MOVED (total unchanged, every index shifts by one). If that
-  // happened, `runTools(4)` would land BEFORE the first tool instead of between the two, and
+  // happened, `runTools(5)` would land BEFORE the first tool instead of between the two, and
   // 16.4-16.6 would still see zero narrated tools, one provider call and no telemetry — passing
   // for the wrong reason with the per-tool guard gone.
   //
   // No tool in this harness leaves a recordable side effect (`plan_list` and `list_event_kinds`
-  // both return an error result before reaching their RPC, and a mid-batch abort suppresses the
-  // step trace), so "tool 1 ran" is not directly observable. What IS observable is the TRANSITION:
-  // the smallest n at which the round completes. A per-tool guard puts three refusal boundaries
-  // before completion (post-round, tool-1, tool-2); a per-batch guard puts two. So the transition
+  // both return an error result before reaching their RPC). Before C2b a mid-batch abort also
+  // suppressed the step trace, so "tool 1 ran" was not observable at all; it now is (16.4). What is
+  // observable either way is the TRANSITION:
+  // the smallest n at which the round completes. A per-tool guard puts four refusal boundaries
+  // before completion (post-classifier, post-round, tool-1, tool-2); a per-batch guard puts three. So the transition
   // point itself distinguishes them, and it is derived rather than assumed.
   let firstComplete = null;
   for (let n = 2; n <= 10; n++) {
@@ -1312,8 +1425,8 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // honest statement of the gap rather than a claim that one exists.
   assert(
     "16.0 the round first completes at the boundary a PER-TOOL guard implies",
-    firstComplete === 5,
-    `first complete at n=${firstComplete}; 5 means three refusal boundaries precede completion (post-round, tool-1, tool-2). 4 means only two — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
+    firstComplete === 6,
+    `first complete at n=${firstComplete}; 6 means four refusal boundaries precede completion (post-classifier, post-round, tool-1, tool-2). 5 means only three — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
   );
 
   const beforeFirst = await runTools(firstComplete - 2);
@@ -1330,9 +1443,9 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 
   const betweenTools = await runTools(firstComplete - 1);
   assert(
-    "16.4 a switch BETWEEN the two tools aborts the round (per-tool guard, not per-batch)",
-    stepIds(betweenTools.responseText).length === 0,
-    `narrated steps: ${JSON.stringify(stepIds(betweenTools.responseText))} — a batch-level check narrates both`,
+    "16.4 a switch BETWEEN the two tools stops the second (per-tool guard, not per-batch): only the first, which ran, shows its step",
+    JSON.stringify(stepIds(betweenTools.responseText)) === JSON.stringify(["tool-1"]),
+    `shown steps: ${JSON.stringify(stepIds(betweenTools.responseText))} — a batch-level check shows both, the old round-end emission none`,
   );
   assert(
     "16.5 a switch between the two tools makes no continuation provider call",
@@ -1350,7 +1463,7 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 // ── 17 · The durable record is written at the LAST boundary, not the first ────────
 group("Knowledge telemetry commits only after the reply has actually crossed");
 {
-  await assertShape("grp17 tool-less round", ["private-text"], 5);
+  await assertShape("grp17 tool-less round", ["private-text"], 6);
   // Telemetry is the one DURABLE row this mechanism writes, so it is committed after the
   // reply has been forwarded and the scope re-asserted a final time — not before the frames,
   // where a later cancellation would leave a permanent record claiming a retrieval grounded
@@ -1358,12 +1471,12 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // otherwise invisible: every earlier group either cancels before the reply (so no telemetry
   // either way) or holds scope throughout (so telemetry either way).
   //
-  // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-round,
-  // 3 pre-emission, 4 post-drain. n=4 therefore switches the account at the post-drain
+  // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-classifier,
+  // 3 post-round, 4 pre-emission, 5 post-drain. n=5 therefore switches the account at the post-drain
   // boundary ALONE — the reply is already out, and only the durable write is left to refuse.
   const atPostDrain = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1407,7 +1520,7 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // its own reason rather than as a side effect of shifting later call indices.
   const atPreEmission = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1428,20 +1541,20 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
 // ── 18 · Each loop-continuation boundary is individually load-bearing ─────────────
 group("every provider re-entry in the agent loop re-asserts scope on its own");
 {
-  await assertShape("grp18a tool+text", ["tool", "text"], 8);
-  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 8);
+  await assertShape("grp18a tool+text", ["tool", "text"], 9);
+  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 9);
   // The loop re-asserts scope at three distinct points and, until this group existed, TWO of
   // them could be deleted with the suite still fully green — the surviving checks happened to
   // catch the switch at a neighbouring boundary instead. A guard that no check can distinguish
   // from its neighbour is a guard nobody will notice losing. Each assertion below pins ONE
   // boundary by timing the switch to land exactly on it (indices, single-tool round:
-  //   0 turn start · 1 pre-egress · 2 post-round · 3 tool dispatch · 4 pre-continuation
-  //   · 5 pre-closing-call · 6 pre-emission · 7 post-drain)
+  //   0 turn start · 1 pre-egress · 2 post-classifier · 3 post-round · 4 tool dispatch
+  //   · 5 pre-continuation · 6 pre-closing-call · 7 pre-emission · 8 post-drain)
   // and by counting provider calls, which is the only signal that separates "the next call was
   // never made" from "it was made and its result was later suppressed".
   //
   // THE TABLE ABOVE IS ONLY VALID FOR THE FAILED-CONTINUATION SHAPE both assertions below
-  // drive. When the continuation SUCCEEDS there is no closing call, and index 5 is the second
+  // drive. When the continuation SUCCEEDS there is no closing call, and index 6 is the second
   // round's post-round check instead of the pre-closing-call one. No assertion here is wrong —
   // 18.3 proves the failed-continuation path was actually taken — but do not time a new switch
   // off this table without re-deriving it for the round shape you are driving. Groups 16 and 17
@@ -1452,7 +1565,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     after a switch re-sends the prior account's private content to the provider.
   const atContinuation = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1474,7 +1587,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     a different code path from (a) and cannot be covered by it.
   const atClosingCall = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "fail", "text"],
@@ -1555,6 +1668,10 @@ group("a document turn withholds its reply at every scope boundary, including a 
     // rather than trusting that it still produced the right one; every check below was green while
     // exercising the degraded path.
     tableExtras: { credit_report_uploads: () => [{ id: "upload-1" }] },
+    // INT-326: the caller is SEATED — the resolver validates the workspace the persona declared.
+    // Without this the turn establishes no memory scope, the report_upload write skips (by
+    // design), and the boundary this group's exact count pins would silently disappear again.
+    rpcExtras: { current_user_tenant_id: { data: CHILD, error: null } },
   });
 
   // POSITIVE CONTROL FIRST. Without it, "the marker never appeared" and "the marker was
@@ -1763,6 +1880,7 @@ group("a document turn withholds its reply at every scope boundary, including a 
 // So it is read out of this file's own source at startup. Add a fixture with a new `*-MARKER`
 // token and it is covered the moment it exists; there is nothing to remember.
 const { APPROVAL_OUTCOME_SENTENCES } = await import("../../supabase/functions/_shared/approval-outcome.ts");
+const { TURN_CONTRACT_VERSION, TURN_EVENTS, TURN_STATES, TURN_MODES } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
 const HARNESS_SOURCE = (await import("node:fs")).readFileSync(new URL(import.meta.url), "utf8");
 const DISCOVERED_MARKERS = [...new Set(HARNESS_SOURCE.match(/\b[A-Z][A-Z0-9-]*MARKER[A-Z0-9-]*\b/g) ?? [])]
   .filter((m) => !/^(PROTECTED_MARKERS|DISCOVERED_MARKERS)$/.test(m));
@@ -1814,16 +1932,23 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
       || typeof a.fingerprint !== "string" || !/^[0-9a-f]{16}(?::[0-9a-f-]{36})?$/.test(a.fingerprint)
       || !["ran", "not_run", "unconfirmed"].includes(a.outcome) || !closed(a.note));
   }
+  // The turn frame: neutral ONLY in its closed shape — exactly v/event/state/mode, each from the
+  // contract's own enums. It is sent direct and the client-seat reader does not scan it, so a field
+  // or a value outside that shape is the one way prose could ride along on it. Written out here
+  // rather than calling the contract's `isTurnFrame`, so loosening the contract cannot loosen this.
+  // Four keys, and each of the four named values checked: a fifth key fails the count, and a renamed
+  // one leaves its named value undefined, which no enum admits (so no separate name check is needed).
+  if (k === "paige_turn") {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return true;
+    if (Object.keys(v).length !== 4) return true;
+    return v.v !== TURN_CONTRACT_VERSION || !TURN_EVENTS.includes(v.event) || !TURN_STATES.includes(v.state)
+      || !TURN_MODES.includes(v.mode);
+  }
   // The refusal sentence itself, and nothing else wearing `choices`.
   if (k === "choices") return !/workspace changed/.test(raw);
   return true;
 });
-// Count turn authority checks before the post-turn compactor starts. Its independent
-// checks must not move tests targeting the final response gate into background work.
-const personaCallsOf = (r) => {
-  const end = r.rec.rpc.findIndex((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
-  return (end < 0 ? r.rec.rpc : r.rec.rpc.slice(0, end)).filter((c) => c.name === "get_paige_persona_context").length;
-};
+const personaCallsOf = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
 
 group("safety-first streaming: protected turns buffer, ordinary turns stream");
 {
@@ -2133,10 +2258,14 @@ group("safety-first streaming: the sources the first enumeration missed");
       // submitting durable work.
       resolve_tool_autonomy: { data: "auto", error: null },
       submit_paige_document_work: { data: [{ work_id: "88888888-8888-4888-8888-888888888888", work_status: "claimed", resumed_existing: false }], error: null },
+      // The creative tools need this workspace's owner or an admin — a TENANT role (C0a, owner
+      // ruling "ADMIN IS A TENANT ROLE"): a seat in the active workspace (`studio_role_ok`) that is
+      // the workspace the chat acts in. Without it the call is refused and nothing is produced.
+      studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
+      current_user_tenant_id: { data: CHILD, error: null },
     },
-    // The creative tools sit behind an admin/coach role gate; without a role the call is
-    // refused and dropped from the trace, so nothing is produced to hold or leak.
-    tableExtras: { user_roles: () => [{ role: "admin" }] },
   };
   const artifactClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...artifactOpts,
@@ -2302,7 +2431,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     provider: ["ask-choices"],
     bodyExtras: { threadId: STUDIO_THREAD, requestIntentId: "66666666-6666-4666-8666-666666666666" },
     // `ask_choices` is Studio-gated, and studioSessionId is read off the thread row.
-    tableExtras: { paige_chat_threads: () => [{ id: STUDIO_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: "studio-sess-1" }] },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
   };
   const choiceClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...choiceOpts,
@@ -2407,7 +2536,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     },
     tableExtras: {
       user_roles: () => [{ role: "admin" }],
-      paige_chat_threads: () => [{ id: STUDIO_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: "studio-sess-1" }],
+      paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
     },
   };
   const studioClean = await drive({
@@ -2582,11 +2711,24 @@ group("safety-first streaming: the sources the first enumeration missed");
   // uploaded PDF — and it is interpolated into the prompt of every later turn. Buffering the
   // frame while streaming the persisted extraction of it on every turn afterwards is not a rule,
   // it is a coincidence of which surface happened to be audited.
+  // INT-326: own memory is read only when the caller has an active workspace, so this scenario
+  // resolves one (CHILD). Without it the handler correctly reads no own memory and the three checks
+  // below would prove nothing about the final-check gate. The row is stamped like a production row;
+  // this fake table does not apply query filters, so the workspace filter itself is proven in
+  // `test:client-memory-authz` group 37, not here.
   const memoryOpts = {
     kbRejects: true,
     provider: ["private-text"],
+    // S5: OWNER/WORKSPACE continuity recalls through the governed read — the marker row is
+    // staged there (client_memory only serves the CLIENT arm now).
+    rpcExtras: {
+      current_user_tenant_id: { data: CHILD, error: null },
+      get_paige_memory: { data: [{ id: "pom-1", memory_type: "report_upload", content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER", source_thread_id: null, metadata: { audience: "owner_personal", confirmation_state: "confirmed" }, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }], error: null },
+    },
     tableExtras: {
       client_memory: () => [{
+        tenant_id: CHILD,
+        client_id: null,
         memory_type: "report_upload",
         content: "Credit report analyzed (consumer). Scores: EQ 712, EX 705, TU 698. PRIVATE-MEMORY-MARKER",
         created_at: new Date().toISOString(),
@@ -2622,6 +2764,27 @@ group("safety-first streaming: the sources the first enumeration missed");
     "21.l a failed final check withholds a reply grounded in persisted memory",
     !memAtGate.responseText.includes("CHILD-PRIVATE-MARKER"),
     memAtGate.responseText.slice(0, 300),
+  );
+  const proposedMemory = structuredClone(memoryOpts.rpcExtras.get_paige_memory);
+  proposedMemory.data[0].metadata.confirmation_state = "proposed";
+  const candidateOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...memoryOpts,
+    rpcExtras: { ...memoryOpts.rpcExtras, get_paige_memory: proposedMemory },
+  });
+  // INT-326 C6 dials: a proposed row may enter ONLY as labelled recollection — never as
+  // unqualified task knowledge. The marker must never appear without the fixed label.
+  const candidateCalls = JSON.stringify(candidateOnly.providerCalls);
+  assert(
+    "21.l C6 — a proposed owner row enters only as labelled recollection, never as bare task context",
+    !candidateCalls.includes("PRIVATE-MEMORY-MARKER")
+      || candidateCalls.includes("(my recollection — not yet confirmed)"),
+    candidateCalls.slice(0, 200),
+  );
+  assert(
+    "21.l C6 — the recollection label rides with the proposed row wherever it appears",
+    !candidateOnly.providerCalls.some((c) =>
+      JSON.stringify(c).includes("PRIVATE-MEMORY-MARKER") && !JSON.stringify(c).includes("(my recollection — not yet confirmed)")),
+    candidateCalls.slice(0, 200),
   );
 
   // 21.m — THE FUNDING TENANT'S CLIENT FILE. Under `fundingEnabled`, `buildUserContext` reads the
@@ -2686,9 +2849,14 @@ group("safety-first streaming: the sources the first enumeration missed");
     rpcExtras: {
       get_actor_access: { data: { tier: "tenant" }, error: null },
       resolve_tool_autonomy: { data: "auto", error: null },
+      // propose_action needs this workspace's owner or an admin (C0a: a tenant seat, not the
+      // global `admin` row).
+      studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
+      current_user_tenant_id: { data: CHILD, error: null },
     },
     tableExtras: {
-      user_roles: () => [{ role: "admin" }],
       // The insert's `.select("id").single()` reads back through the scenario table, so without
       // this the queue insert returns no id and the tool bails before pushing the approval.
       paige_pending_approvals: () => [{ id: "22222222-2222-4222-8222-222222222222" }],
@@ -2873,7 +3041,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     provider: ["private-text"],
     bodyExtras: { threadId: SUMMARY_THREAD },
     tableExtras: {
-      paige_chat_threads: () => [{ id: SUMMARY_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: "Earlier we discussed PRIVATE-SUMMARY-MARKER.", studio_session_id: null }],
+      paige_chat_threads: () => [{ summary: "Earlier we discussed PRIVATE-SUMMARY-MARKER.", studio_session_id: null }],
     },
   };
   const sumClean = await drive({
@@ -3022,6 +3190,10 @@ group("safety-first streaming: the sources the first enumeration missed");
       // unstubbed it returns null and every client-scoped turn is refused before the persona
       // resolution even runs.
       current_user_tenant_id: { data: CHILD, error: null },
+      // The CRM who-line is an owner/admin context (C0a: a tenant seat in this workspace).
+      studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
       is_platform_owner: { data: false, error: null },
       tenant_sender_identity: { data: [{ from_name: "PRIVATE-SENDER-MARKER Coaching", from_address: "private-sender-marker@ada.test" }], error: null },
       // The rail arrives through an RPC, not a table read. #804 moved this seam from
@@ -3031,7 +3203,6 @@ group("safety-first streaming: the sources the first enumeration missed");
       get_client_rail_for_chat: { data: [{ event_kind: "note.added", title: "PRIVATE-RAIL-MARKER call notes", occurred_at: new Date().toISOString() }], error: null },
     },
     tableExtras: {
-      user_roles: () => [{ role: "admin" }],
       clients: () => [{ id: RAIL_CLIENT, tenant_id: CHILD, linked_user_id: USER, first_name: "PRIVATE-CLIENTNAME-MARKER", last_name: "Lovelace" }],
       // The operator's own name; without it `whoLine` is empty and that site never fires.
       profiles: () => [{ active_tenant_id: CHILD, first_name: "PRIVATE-OPERATORNAME-MARKER", last_name: "Rivera", full_name: "PRIVATE-OPERATORNAME-MARKER Rivera" }],
@@ -3217,7 +3388,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
     bodyExtras: { threadId: AGENTIC_THREAD },
-    tableExtras: { paige_chat_threads: () => [{ id: AGENTIC_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: null }] },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
   };
   const assistantAppends = (r) => r.rec.rpc.filter(
     (c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
@@ -3541,7 +3712,9 @@ group("every provider call files its trace row under the tenant whose evidence i
   );
   assert(
     "23.2 every trace row on a resolved-tenant chat turn is ATTRIBUTED, and to the right job",
-    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant"]),
+    // INT-334 R4 — a fresh chat turn also runs the turn classifier, after the account is verified, and
+    // its row is attributed to the same tenant like every other call on the turn.
+    JSON.stringify(traceRows(chatTurn)) === JSON.stringify(["chat-close:tenant", "chat-tool-loop:tenant", "chat:tenant", "turn-classify:tenant"]),
     JSON.stringify(traceRows(chatTurn)),
   );
 
@@ -3601,6 +3774,11 @@ group("the neutral-frame classifier itself");
   // groups 20 and 21 would pass by classifying the whole transcript as a leak.
   assert("22.2 a plain action step is neutral",
     isNeutral(f({ paige_step: { kind: "action", label: "Working on that", detail: "3 found" } })), "");
+  // C2b — a tool's START (and a START taken back) is the same fixed vocabulary: a present-tense label,
+  // never a detail. Sent direct like any action step, so it must classify neutral.
+  assert("22.2b a running action step with a fixed label, and its withdrawal, are neutral",
+    isNeutral(f({ paige_step: { id: "0:0:0:toolu_1", round: 0, seq: 1, kind: "action", label: "Searching the web", group: "shared", status: "running", ts: 3 } }))
+      && isNeutral(f({ paige_step: { id: "0:0:0:toolu_1", round: 0, seq: 1, kind: "action", label: "Searching the web", group: "shared", status: "withdrawn", ts: 9 } })), "");
   assert("22.3 a phase marker is neutral", isNeutral(f({ paige_phase: "writing" })), "");
   assert("22.4 a compaction frame is neutral", isNeutral(f({ paige_compacting: { state: "folding", pct: 42 } })), "");
   assert("22.5 the fixed client-scope category is neutral",
@@ -3663,6 +3841,29 @@ group("the neutral-frame classifier itself");
       && !isNeutral(outcome({ actions: [], title: "x" }))
       && !isNeutral(outcome({ actions: [{ fingerprint: "Add Maya Ortiz", outcome: "ran" }] }))
       && !isNeutral(outcome({ actions: [{ fingerprint: "a".repeat(16), outcome: "maybe" }] })), "");
+
+  // The turn frame (docs/delivery/paige-conversational-loop-c1.md): sent DIRECT on every turn, so a
+  // protected turn can say it started and how it ended. Neutral ONLY in its exact closed shape —
+  // four keys, every value from the contract's enums — because the client-seat reader does not scan
+  // it, so anything else riding on it would reach the wire unread.
+  const turn = (o) => f({ paige_turn: o });
+  assert("22.25 a turn frame in its closed shape is neutral (started, waiting, completed)",
+    isNeutral(turn({ v: 1, event: "started", state: "WORKING", mode: "pending" }))
+      && isNeutral(turn({ v: 1, event: "waiting", state: "WAIT_APPROVAL", mode: "action" }))
+      && isNeutral(turn({ v: 1, event: "completed", state: "WITHHELD", mode: "fast_answer" })), "");
+  assert("22.26 a turn frame growing a field is protected even with no marker",
+    !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", mode: "answer", summary: "Here is what I found." })), "");
+  assert("22.27 a turn frame carrying a value outside the contract's enums is protected",
+    !isNeutral(turn({ v: 1, event: "completed", state: "Here is what I found.", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "finished", state: "FINAL", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", mode: "a free-text mode" })), "");
+  assert("22.28 a turn frame of an unknown version, or missing a field, is protected",
+    !isNeutral(turn({ v: 2, event: "completed", state: "FINAL", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "completed", state: "FINAL" })), "");
+  assert("22.28b a turn frame with a key renamed (still four keys) is protected",
+    !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", summary: "answer" })), "");
+  assert("22.29 a turn frame that is not an object is protected",
+    !isNeutral(turn("completed")) && !isNeutral(turn(["started"])) && !isNeutral(turn(null)), "");
 }
 
 group("a turn that stops on a changed workspace still says what became of each approval");
@@ -3688,6 +3889,17 @@ group("a turn that stops on a changed workspace still says what became of each a
   assert("27.3 …as a frame that carries no evidence",
     outcomes.length === 1 && nonNeutralFrames(`data: ${JSON.stringify({ paige_approval_outcome: outcomes[0] })}\n\n`).length === 0,
     JSON.stringify(outcomes));
+  // The turn frame on the same protected turn: it says it started, and its one terminal frame says
+  // INTERRUPTED — never FINAL — and comes before the sentence. Without this the classifier cases in
+  // group 22 would hold for a frame the server never sends.
+  const turns = r.responseText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .filter((frame) => frame?.paige_turn).map((frame) => frame.paige_turn);
+  const terminals = turns.filter((t) => t.event === "completed" || t.event === "waiting");
+  assert("27.4 …and the turn frame says it started, then INTERRUPTED once, before the sentence",
+    turns[0]?.event === "started" && terminals.length === 1 && terminals[0].state === "INTERRUPTED"
+      && r.responseText.indexOf('"INTERRUPTED"') < r.responseText.indexOf("active workspace changed"),
+    JSON.stringify(turns));
 }
 
 // Fresh-main #591 gap: the resolver may keep its oldest-membership fallback
@@ -3702,7 +3914,11 @@ for (const [label, next] of [
   const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY],
     chunkContent: "DECLARED-SCOPE-PRIVATE-MARKER", tableExtras: { profiles: (filters) => {
       if (filters.some(([op, cols]) => op === "select" && cols === "active_tenant_id")) reads++;
-      if (reads <= 1) return [{ active_tenant_id: CHILD }];
+      // reads <= 2: the FIRST declared read of the turn is INT-326's memory scope (the
+      // declared-and-validated conjunction resolves before any memory work); the second is this
+      // pathway's own initial declared check. Drift begins on the THIRD read — the
+      // post-retrieval recheck this group exists to prove refuses the turn.
+      if (reads <= 2) return [{ active_tenant_id: CHILD }];
       if (next === "throws") throw new Error("profile read unavailable");
       if (next === "missing") return [];
       return [{ active_tenant_id: next }];
@@ -3724,115 +3940,216 @@ for (const [label, next] of [
   assert("28 late clear: no telemetry", !r.telemetry);
 }
 
-// Compactor uses the real preflight and post-turn paths, with long stored turns.
-group("rolling summary thread and workspace scope");
-const FOLD_THREAD = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
-const isFold = (c) => JSON.stringify(c).includes("Maintain a rolling memory");
-for (const phase of ["pre", "post"]) {
-  for (const mode of ["valid", "missing", "foreign-owner", "foreign-tenant", "clear-before", "clear-after", "owner-after", "tenant-after", "missing-after", "resolved-before", "resolved-after", "malformed-before", "throw-before", "zero-write", "readback-clear"]) {
-    let appended = false, transcriptRead = false, written = false;
-    const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY], kbRejects: true,
-      bodyExtras: { threadId: FOLD_THREAD },
-      rpcExtras: {
-        get_paige_persona_context: () => ({ data: [{ tenant_id: (mode === "resolved-before" && transcriptRead) || (mode === "resolved-after" && providerCalls.some(isFold)) ? AGENCY : CHILD }], error: null }),
-        paige_chat_turn_append: (args) => { if (args.p_role === "assistant") appended = true; return { data: "turn", error: null }; }
-      },
-      tableExtras: {
-        profiles: () => {
-          if (mode === "throw-before" && transcriptRead) throw new Error("profile unavailable");
-          return [{ active_tenant_id: mode === "malformed-before" && transcriptRead ? 42 :
-          (mode === "clear-before" && transcriptRead) ||
-          (mode === "clear-after" && providerCalls.some(isFold)) ||
-          (mode === "readback-clear" && written) ? null : CHILD }]; },
-        paige_chat_threads: (filters) => {
-          if (filters.some(([op, cols]) => op === "select" && cols === "id") && providerCalls.some(isFold)) written = true;
-          if (mode === "missing" || (mode === "missing-after" && providerCalls.some(isFold)) || (mode === "zero-write" && written)) return [];
-          return [{ id: FOLD_THREAD, caller_user_id: mode === "foreign-owner" || (mode === "owner-after" && providerCalls.some(isFold)) ? AGENCY : USER,
-            tenant_id: mode === "foreign-tenant" || (mode === "tenant-after" && providerCalls.some(isFold)) ? AGENCY : CHILD, message_count: phase === "post" && !appended ? 12 : 24,
-            summary: null, summary_through_seq: 0, last_compacted_at: null, title: "Existing", studio_session_id: null }];
-        },
-        paige_chat_turns: () => { transcriptRead = true; return Array.from({ length: 24 }, (_, n) => ({ role: n % 2 ? "assistant" : "user", content: "PRIVATE-FOLD-TRANSCRIPT", seq: n + 1 })); },
-      },
-    });
-    const folds = r.providerCalls.filter(isFold);
-    const writes = r.rec.inserts.filter((i) => i.table === "paige_chat_threads" && i.row.summary);
-    if (["missing", "foreign-owner", "foreign-tenant", "clear-before", "resolved-before", "malformed-before", "throw-before"].includes(mode)) {
-      assert(`29 ${phase} ${mode}: no summary egress`, folds.length === 0);
-      assert(`29 ${phase} ${mode}: no summary write`, writes.length === 0);
-    } else if (["clear-after", "owner-after", "tenant-after", "missing-after", "resolved-after"].includes(mode)) {
-      assert(`29 ${phase} ${mode}: initial summary egress exercised`, folds.length === 1);
-      assert(`29 ${phase} ${mode}: no stale summary write`, writes.length === 0);
-    } else {
-      assert(`29 ${phase} ${mode}: summary egress exercised`, folds.length > 0);
-      assert(`29 ${phase} ${mode}: scoped summary stored`, writes.length > 0);
+group("the turn frame on every stream this harness drove (paige-turn)");
+{
+  // An ORDINARY Studio question (no Knowledge hit, so nothing is held): the chips stream live, so the
+  // terminal — ASK_USER, waiting on the person — has to precede them rather than wait for release.
+  const plainChoice = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], provider: ["ask-choices"],
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", requestIntentId: "77777777-7777-4777-8777-777777777777" },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+  });
+  const plainTurns = plainChoice.responseText.split("\n").filter((l) => l.startsWith("data: ") && l.includes("paige_turn"));
+  assert("29.0 an ordinary Studio question ends waiting ASK_USER, ahead of its chips",
+    plainTurns.length === 2 && plainTurns[1].includes('"waiting"') && plainTurns[1].includes('"ASK_USER"')
+      && plainChoice.responseText.indexOf('"ASK_USER"') < plainChoice.responseText.indexOf("paige_choices"),
+    plainChoice.responseText.slice(0, 400));
+  // A DOCUMENT STREAM THAT THROWS still closes. The Knowledge-telemetry write at the very end of the
+  // document close-out is made to throw (not resolve an error), after the reply was released: the
+  // stream must still end with its one terminal and a [DONE], and say why in the log — not error out
+  // and leave the client with no [DONE] at all.
+  const throwingDoc = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], chunkContent: "PRIVATE-KB-SOURCE-MARKER",
+    bodyExtras: { document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    provider: ["private-text", "private-text"], insertThrows: ["kb_query_telemetry"],
+  });
+  const throwingTurns = throwingDoc.responseText.split("\n").filter((l) => l.startsWith("data: ") && l.includes('"paige_turn"'));
+  assert("29.1 a document stream that throws in its close-out still ends with its one terminal and a [DONE]",
+    !!throwingDoc.telemetry && throwingDoc.responseText.includes("CHILD-PRIVATE-MARKER")
+      && throwingTurns.length === 2 && throwingDoc.responseText.trimEnd().endsWith("data: [DONE]")
+      && throwingDoc.logged.some((l) => l.msg.includes("[paige] document stream failed")),
+    JSON.stringify({ telemetryAttempted: !!throwingDoc.telemetry, turns: throwingTurns, tail: throwingDoc.responseText.slice(-200) }));
+
+  // A PROVIDER STREAM THAT BREAKS. `_shared/claude.ts`'s translator ends a broken stream with the same
+  // clean [DONE] as a finished one; the only difference is the finish_reason it never sent. Each turn
+  // below would read FINAL without that check — on the wire, and (where there is text) in the record.
+  const BREAK_THREAD = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const turnsIn = (text) => text.split("\n").filter((l) => l.startsWith("data: ") && l.includes('"paige_turn"'))
+    .map((l) => JSON.parse(l.slice(6)).paige_turn);
+  const terminalIn = (text) => turnsIn(text).filter((t) => t.event !== "started");
+  const assistantRecords = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")
+    .map((c) => ({ content: c.args.p_content, state: c.args.p_bundle_ref?.turn_state ?? null }));
+  const ordinaryBreak = (provider) => drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], provider,
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: BREAK_THREAD },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+  });
+  // Before any text: the only round answered with nothing and no finish_reason. Nothing to persist
+  // (the persist gate), so the wire is the whole record — and it must not say FINAL.
+  const brokeEarly = await ordinaryBreak(["break-before-text"]);
+  assert("29.2 an answer whose stream broke before any text ends INTERRUPTED on the wire, never FINAL, and persists nothing",
+    brokeEarly.status === 200 && brokeEarly.providerCalls.length === 1
+      && terminalIn(brokeEarly.responseText).length === 1 && terminalIn(brokeEarly.responseText)[0].state === "INTERRUPTED"
+      && !brokeEarly.responseText.includes('"FINAL"') && assistantRecords(brokeEarly).length === 0,
+    JSON.stringify({ status: brokeEarly.status, calls: brokeEarly.providerCalls.length, turns: turnsIn(brokeEarly.responseText), records: assistantRecords(brokeEarly) }));
+  // Mid-answer (non-Live): the half-answer is replayed and saved as before — but both the wire terminal
+  // and the record say INTERRUPTED, because the round is replayed whole after the terminal is decided.
+  const brokeMid = await ordinaryBreak(["break-mid-text"]);
+  const midRecords = assistantRecords(brokeMid);
+  assert("29.3 an answer whose stream broke mid-answer ends INTERRUPTED on the wire and in the record, with the half-answer it got",
+    brokeMid.responseText.includes(BROKEN_ANSWER) && terminalIn(brokeMid.responseText).length === 1
+      && terminalIn(brokeMid.responseText)[0].state === "INTERRUPTED" && !brokeMid.responseText.includes('"FINAL"')
+      && brokeMid.responseText.indexOf('"INTERRUPTED"') < brokeMid.responseText.indexOf(BROKEN_ANSWER)
+      && midRecords.length === 1 && midRecords[0].content === BROKEN_ANSWER && midRecords[0].state?.state === "INTERRUPTED",
+    JSON.stringify({ turns: turnsIn(brokeMid.responseText), records: midRecords }));
+  // The DOCUMENT path reads its own stream. A DOCX turn makes two provider calls: the deferred
+  // extraction first (not streamed), then the streamed reply — the one that breaks here. Every document turn is held, so its terminal goes out at release — after
+  // the stream ended — and can say INTERRUPTED on the wire as well as in the record.
+  const docBreak = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "break-mid-text"],
+  });
+  const docRecords = assistantRecords(docBreak);
+  assert("29.4 a document answer whose stream broke mid-answer ends INTERRUPTED on the wire and in the record, never FINAL",
+    docBreak.responseText.includes(BROKEN_ANSWER) && terminalIn(docBreak.responseText).length === 1
+      && terminalIn(docBreak.responseText)[0].state === "INTERRUPTED" && !docBreak.responseText.includes('"FINAL"')
+      && docRecords.length === 1 && docRecords[0].state?.state === "INTERRUPTED"
+      && JSON.stringify(docBreak.providerCalls.map((c) => c.stream === true)) === "[false,true]",
+    JSON.stringify({ calls: docBreak.providerCalls.map((c) => c.stream === true), turns: turnsIn(docBreak.responseText), records: docRecords }));
+
+  // AN EMPTY ANSWER IS NOT A FINAL ONE. The provider FINISHED each reply below, so the finish_reason
+  // check passes; what is missing is the answer. FINAL over an empty bubble tells the client the turn
+  // answered when it said nothing, and with no text the persist gate writes no row, so the wire is
+  // the only record there is.
+  const endsOnDone = (text) => text.trimEnd().endsWith("data: [DONE]");
+  const terminalBeforeDone = (text) => {
+    const t = text.split("\n").findIndex((l) => l.includes('"paige_turn"') && !l.includes('"started"'));
+    return t !== -1 && t < text.split("\n").lastIndexOf("data: [DONE]");
+  };
+  // The document path executes no tool, so a reply that is ONLY a tool call finishes (`tool_calls`)
+  // with no text at all.
+  const docToolOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "action-file"],
+  });
+  assert("29.7 a document reply that is only a tool call (finished, no text) ends INTERRUPTED, never FINAL, with [DONE] last",
+    docToolOnly.status === 200 && JSON.stringify(docToolOnly.providerCalls.map((c) => c.stream === true)) === "[false,true]"
+      && terminalIn(docToolOnly.responseText).length === 1 && terminalIn(docToolOnly.responseText)[0].state === "INTERRUPTED"
+      && !docToolOnly.responseText.includes('"FINAL"') && endsOnDone(docToolOnly.responseText)
+      && terminalBeforeDone(docToolOnly.responseText) && assistantRecords(docToolOnly).length === 0,
+    JSON.stringify({ calls: docToolOnly.providerCalls.map((c) => c.stream === true), turns: turnsIn(docToolOnly.responseText), records: assistantRecords(docToolOnly), tail: docToolOnly.responseText.slice(-200) }));
+  // The agentic path: one round, finished cleanly, no text, no tool — the turn did nothing.
+  const emptyClean = await ordinaryBreak(["empty-end"]);
+  assert("29.8 an answer the provider finished cleanly with no text, after a turn that did no work, ends INTERRUPTED, never FINAL",
+    emptyClean.status === 200 && emptyClean.providerCalls.length === 1
+      && terminalIn(emptyClean.responseText).length === 1 && terminalIn(emptyClean.responseText)[0].state === "INTERRUPTED"
+      && !emptyClean.responseText.includes('"FINAL"') && endsOnDone(emptyClean.responseText)
+      && terminalBeforeDone(emptyClean.responseText) && assistantRecords(emptyClean).length === 0,
+    JSON.stringify({ calls: emptyClean.providerCalls.length, turns: turnsIn(emptyClean.responseText), records: assistantRecords(emptyClean) }));
+  // CONTROLS — the rule changes only an EMPTY FINAL with no work. The same turn answering text stays
+  // FINAL; a turn whose tools RAN and then closed on an empty round keeps FINAL (the work is the answer).
+  const textClean = await ordinaryBreak(["text"]);
+  const workedEmpty = await ordinaryBreak(["two-tools", "empty-end"]);
+  assert("29.9 CONTROL — a clean text answer stays FINAL, and a turn whose tools ran keeps FINAL over an empty closing round",
+    terminalIn(textClean.responseText).length === 1 && terminalIn(textClean.responseText)[0].state === "FINAL"
+      && endsOnDone(textClean.responseText)
+      && workedEmpty.providerCalls.length === 2 && terminalIn(workedEmpty.responseText).length === 1
+      && terminalIn(workedEmpty.responseText)[0].state === "FINAL" && endsOnDone(workedEmpty.responseText),
+    JSON.stringify({ text: turnsIn(textClean.responseText), worked: turnsIn(workedEmpty.responseText), calls: workedEmpty.providerCalls.length }));
+
+  // A WHITESPACE-ONLY answer is an empty one, on both paths: the rule reads the trimmed text.
+  const wsAgentic = await ordinaryBreak(["ws-text"]);
+  const genDoc = { fileName: "formation.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "Certificate of Formation. Legal name: Acme Holdings LLC." };
+  const wsDoc = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "ws-text"],
+  });
+  assert("29.10 a whitespace-only answer is empty — INTERRUPTED, never FINAL — on the agentic and the document path",
+    [wsAgentic, wsDoc].every((r) => r.status === 200 && terminalIn(r.responseText).length === 1
+      && terminalIn(r.responseText)[0].state === "INTERRUPTED" && !r.responseText.includes('"FINAL"')
+      && endsOnDone(r.responseText) && assistantRecords(r).length === 0),
+    JSON.stringify({ agentic: turnsIn(wsAgentic.responseText), doc: turnsIn(wsDoc.responseText) }));
+  // CONTROL — a document turn whose close-out handed the person a proposal card ANSWERED, through the
+  // card, even when its reply text is empty: FINAL, the card on the wire, never INTERRUPTED beside it.
+  const cardOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["general-extraction", "action-file"],
+  });
+  const cardText = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["general-extraction", "private-text"],
+  });
+  assert("29.11 CONTROL — a document turn that delivered a proposal card stays FINAL with or without reply text",
+    [cardOnly, cardText].every((r) => r.status === 200 && r.responseText.includes('"extraction_proposal"')
+      && terminalIn(r.responseText).length === 1 && terminalIn(r.responseText)[0].state === "FINAL"
+      && endsOnDone(r.responseText) && terminalBeforeDone(r.responseText)),
+    JSON.stringify({ cardOnly: turnsIn(cardOnly.responseText), cardText: turnsIn(cardText.responseText), tail: cardOnly.responseText.slice(-200) }));
+  // A LIMIT keeps its state over an empty closing round: a Studio turn that repeats a refused call is
+  // stopped by the no-progress rule (LIMIT_REACHED), and the empty-answer rule reads only FINAL.
+  const studioRepeat = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    provider: ["action-file", "action-file", "empty-end"],
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: BREAK_THREAD },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+  });
+  assert("29.12 a turn stopped at a limit keeps LIMIT_REACHED over an empty closing round, never INTERRUPTED",
+    studioRepeat.status === 200 && terminalIn(studioRepeat.responseText).length === 1
+      && terminalIn(studioRepeat.responseText)[0].state === "LIMIT_REACHED" && endsOnDone(studioRepeat.responseText),
+    JSON.stringify({ calls: studioRepeat.providerCalls.length, turns: turnsIn(studioRepeat.responseText) }));
+
+  // Every protected turn above — the final-gate refusals, the withheld turns, the Studio chips — is a
+  // stream whose turn frame has to tell the truth about how it ended. Audited here, over all of them,
+  // so the rule is held on the turns that exercise the gates rather than on a few written for it.
+  // The structural rules come from the one shared auditor (scripts/lib/audit-turn-frames.mjs); this
+  // harness adds its own: a turn stopped on a changed workspace ends INTERRUPTED.
+  const { auditTurnStream, wireAnswerMatchesSaved } = await import("../lib/audit-turn-frames.mjs");
+  const { isTurnFrame } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
+  const violations = [];
+  let audited = 0, interrupted = 0, withheld = 0;
+  for (const { label, status, responseText } of drivenStreams) {
+    if (status !== 200) continue;
+    const audit = auditTurnStream(responseText, { isTurnFrame });
+    if (!audit) continue;
+    audited += 1;
+    for (const why of audit.violations) violations.push(`${label}: ${why}`);
+    if (!audit.terminal) continue;
+    if (responseText.includes("active workspace changed")) {
+      interrupted += 1;
+      if (audit.terminal.t.state !== "INTERRUPTED") violations.push(`${label}: a turn stopped on a changed workspace ended ${audit.terminal.t.state}`);
     }
-    if (mode === "valid") {
-      const updates = r.rec.from.filter((q) => q.table === "paige_chat_threads" && q.op === "update");
-      assert(`29 ${phase}: summary write pins owner, tenant and watermark`, updates.some((q) =>
-        [["eq", "id", FOLD_THREAD], ["eq", "caller_user_id", USER], ["eq", "tenant_id", CHILD], ["eq", "summary_through_seq", 0]]
-          .every((f) => q.filters.some((v) => JSON.stringify(v) === JSON.stringify(f)))));
-    }
-    if (["readback-clear", "zero-write"].includes(mode)) assert(`29 ${phase}: refused readback never announces compaction done`, !r.responseText.includes('"state":"done"'));
-    if (phase === "post") assert(`29 post ${mode}: parent answer survives compactor skip`, r.status === 200 && r.responseText.includes("[DONE]"));
+    if (audit.has("paige_withheld")) withheld += 1;
   }
-}
-
-for (const tenant of [null, CHILD]) {
-  for (const owner of [true, false, "true"]) {
-    const r = await drive({ personaTenant: tenant, memberships: tenant ? [tenant] : [], kbRejects: true,
-      bodyExtras: { threadId: FOLD_THREAD }, rpcExtras: { is_platform_owner: { data: owner, error: null } },
-      tableExtras: {
-        paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: null, message_count: 24, summary_through_seq: 0, title: "Platform" }],
-        paige_chat_turns: () => Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PLATFORM-PRIVATE-MARKER", seq: n + 1 })),
-      },
-    });
-    assert(`29 platform ${tenant ?? "tenantless"} owner=${owner}: exact owner authority`, r.providerCalls.some(isFold) === (owner === true));
-    assert(`29 platform ${tenant ?? "tenantless"} owner=${owner}: parent completes`, r.status === 200 && r.responseText.includes("[DONE]"));
+  // The wire and the transcript carry the same answer (§13/§94): on a drive that saved one assistant
+  // turn, what a reader got up to the first [DONE] is exactly the saved text, and nothing follows it.
+  const answerMismatches = [];
+  let answersCompared = 0;
+  for (const { label, status, responseText, rec } of drivenStreams) {
+    if (status !== 200) continue;
+    const saved = rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+    if (saved.length !== 1) continue;
+    answersCompared += 1;
+    const why = wireAnswerMatchesSaved(responseText, saved[0].args?.p_content);
+    if (why) answerMismatches.push(`${label}: ${why}`);
   }
-}
-// Delay the post-turn append until AFTER the streamed parent response closes. The
-// waitUntil task must resolve fresh authority, rather than trust the finished turn.
-for (const clear of [false, true]) {
-  let release, disposed = false;
-  const appended = new Promise((resolve) => { release = resolve; });
-  const r = await drive({ background: true, afterResponse: () => { disposed = true; release(); },
-    personaTenant: CHILD, memberships: [CHILD], kbRejects: true, bodyExtras: { threadId: FOLD_THREAD },
-    rpcExtras: { paige_chat_turn_append: async (args) => { if (args.p_role === "assistant") await appended; return { data: "turn", error: null }; } },
-    tableExtras: {
-      profiles: () => [{ active_tenant_id: clear && disposed ? null : CHILD }],
-      paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: CHILD, message_count: disposed ? 24 : 12, summary_through_seq: 0, title: "Existing" }],
-      paige_chat_turns: () => Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PRIVATE-WAITUNTIL-MARKER", seq: n + 1 })),
-    },
-  });
-  assert(`29 waitUntil clear=${clear}: lifecycle exercised`, disposed && r.status === 200 && r.responseText.includes("[DONE]"));
-  assert(`29 waitUntil clear=${clear}: fresh authority controls summary`, r.providerCalls.some(isFold) === !clear);
-  assert(`29 waitUntil clear=${clear}: fresh authority controls persistence`, r.rec.inserts.some((i) => i.table === "paige_chat_threads" && i.row.summary) === !clear);
-}
-
-for (const late of [false, true]) {
-  const r = await drive({ personaTenant: CHILD, memberships: [CHILD], kbRejects: true,
-    provider: ["private-text"], bodyExtras: { threadId: FOLD_THREAD },
-    tableExtras: { paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: late && providerCalls.length ? AGENCY : USER,
-      tenant_id: CHILD, message_count: 2, summary: "PRIVATE-RECALLED-SUMMARY", summary_through_seq: 0, title: "Existing" }] },
-  });
-  assert(`29 recall late owner change=${late}: summary use exercised`, r.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-RECALLED-SUMMARY")));
-  assert(`29 recall late owner change=${late}: response follows fresh binding`, r.responseText.includes("CHILD-PRIVATE-MARKER") === !late);
-  if (late) assert("29 recall revoked ownership: refusal is explicit", r.responseText.includes("active workspace changed"));
-}
-
-for (const phase of ["before", "after"]) {
-  let transcriptRead = false;
-  const r = await drive({ personaTenant: null, memberships: [], kbRejects: true, bodyExtras: { threadId: FOLD_THREAD },
-    rpcExtras: { is_platform_owner: { data: true, error: null } },
-    tableExtras: {
-      profiles: () => [{ active_tenant_id: phase === "before" ? (transcriptRead ? CHILD : null) : (providerCalls.some(isFold) ? CHILD : null) }],
-      paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: null, message_count: 24, summary_through_seq: 0, title: "Platform" }],
-      paige_chat_turns: () => { transcriptRead = true; return Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PLATFORM-PRIVATE-MARKER", seq: n + 1 })); },
-    },
-  });
-  assert(`29 platform raw workspace changes ${phase}: provider boundary`, r.providerCalls.filter(isFold).length === (phase === "before" ? 0 : 1));
-  assert(`29 platform raw workspace changes ${phase}: no stale write`, !r.rec.inserts.some((i) => i.table === "paige_chat_threads" && i.row.summary));
-  assert(`29 platform raw workspace changes ${phase}: parent remains usable`, r.status === 200 && r.responseText.includes("[DONE]"));
+  assert("29.5 every stream starts with `started` and has one terminal frame, ahead of its answer and [DONE]",
+    audited >= 50 && violations.length === 0, JSON.stringify({ audited, violations: violations.slice(0, 6) }));
+  assert("29.6 every turn stopped on a changed workspace — at the tool boundary or the final gate — ends INTERRUPTED, never FINAL",
+    interrupted >= 10 && violations.length === 0, JSON.stringify({ interrupted, withheld }));
+  assert("29.13 on every drive that saved an assistant turn, the answer a reader got up to [DONE] is exactly the saved text, and nothing follows [DONE]",
+    answersCompared >= 10 && answerMismatches.length === 0, JSON.stringify({ answersCompared, mismatches: answerMismatches.slice(0, 6) }));
 }
 
 group("30 Knowledge canonical tools on the actual Chat gate");
@@ -3841,18 +4158,18 @@ group("30 Knowledge canonical tools on the actual Chat gate");
   const doc={id:docId,tenant_id:CHILD,revision:2,title:"CHILD-PRIVATE-MARKER",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1,content:"CHILD-PRIVATE-MARKER"};
   for (const switchAfterRead of [false,true]) {
     let read=false;
-    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"knowledge_read",args:{document_id:docId}},"private-text"],rpcExtras:{
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"read_tenant_knowledge",args:{document_id:docId}},"private-text"],rpcExtras:{
       match_tenant_knowledge:{data:[],error:null},
       read_tenant_knowledge:()=>{read=true;return {data:{tenant_id:CHILD,documents:[doc]},error:null};},
     },tableExtras:{profiles:()=>[{active_tenant_id:switchAfterRead && read ? AGENCY : CHILD}]}});
     assert(`30 read ${switchAfterRead}: JWT canonical RPC`,r.rec.rpc.some(x=>x.name==="read_tenant_knowledge" && x.args.p_expected_tenant===CHILD && x.client==="jwt"));
-    assert(`30 read ${switchAfterRead}: late protected evidence`,r.logged.some(x=>x.msg.includes("tool:knowledge_read")));
+    assert(`30 read ${switchAfterRead}: late protected evidence`,r.logged.some(x=>x.msg.includes("tool:read_tenant_knowledge")));
     assert(`30 read ${switchAfterRead}: no stale next provider`,r.providerCalls.length===(switchAfterRead ? 1 : 2),r.providerCalls.length);
     assert(`30 read ${switchAfterRead}: response scope`,switchAfterRead ? !r.responseText.includes("CHILD-PRIVATE-MARKER") : r.responseText.includes("CHILD-PRIVATE-MARKER"));
     if(switchAfterRead) assert("30 read switch: no stale summary",!r.rec.inserts.some(x=>x.table==="paige_chat_threads" && x.row.summary));
   }
-  for(const tool of ["knowledge_read","knowledge_update","knowledge_delete"]) {
-    const args=tool==="knowledge_read" ? {} : {document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
+  for(const tool of ["read_tenant_knowledge","knowledge_update","knowledge_delete"]) {
+    const args=tool==="read_tenant_knowledge" ? {} : {document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
     const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{get_actor_access:{data:{tier:"client"},error:null},resolve_tool_autonomy:{data:"auto",error:null}}});
     assert(`30 ${tool}: client seat refused`,!r.rec.rpc.some(x=>["read_tenant_knowledge","update_tenant_knowledge_metadata","delete_tenant_knowledge"].includes(x.name)));
   }
@@ -3882,6 +4199,7 @@ group("30 Knowledge canonical tools on the actual Chat gate");
     assert(`30 ${outcome}: structured result reaches provider`,JSON.stringify(r.providerCalls).includes(outcome));
   }
 }
+
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -243,6 +243,19 @@ export type StudioDocBlock =
     }
   | { type: "cta"; headline: string; action: string; href?: string };
 
+/** What each document type is called on screen (the chat card and the Marketing library). */
+export const STUDIO_DOC_TYPE_LABEL: Record<StudioDocType, string> = {
+  guide: "Guide",
+  one_pager: "One-pager",
+  ebook: "eBook",
+  checklist: "Checklist",
+  worksheet: "Worksheet",
+  proposal: "Proposal",
+  offer_letter: "Offer letter",
+  sales_offer: "Sales offer",
+  agreement_draft: "Agreement draft",
+};
+
 /** A hydrated document ready to render — the parsed marketing_content body plus its id/title. */
 export interface StudioDocument {
   id: string;

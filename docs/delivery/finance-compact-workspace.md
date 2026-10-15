@@ -1,0 +1,9 @@
+# Finance compact workspace — owner-directed cleanup
+
+Owner instruction, 2026-10-10: remove the pictured introductory banners and the entire Finance Connections tab, then merge live on green for Solo. Preserve Finance immediately below Sales. The supplied screenshots approve this precise deletion; no replacement design is being proposed.
+
+Pre-edit routing: (1) owner reaches working financial content without promotional headings; (2) Finance owns these files, Integrations retains provider setup; (3) presentation only, no Harness change; (4) existing analytics.metric_read and sales_invoice.read unchanged; (5) no provider operation, existing QuickBooks proof owed, Plaid/QuickBooks intended sources; (6) owner-authorized reversible UI cleanup, no financial mutation or autonomy expansion; (7) no job/event; (8) rendered page and exact deployed source prove layout only, no execution receipt added; (9) Finance binding remains PROOF_OWED/PARTIAL, six work tabs; (10) authenticated multi-account acceptance remains UNVERIFIED without approved QA credentials.
+
+Affected flow: six-tab Finance browse, period selection, refresh, source inspection, Sales exit and PAIGE handoff. Legacy Connections URLs replace-navigate to canonical Settings Integrations with query preserved. No data adapter, authorization, source label, provider scope, money effect, shared shell placement or other-tier behavior changes.
+
+Proof: focused component/routing tests, production build, lint, Solo parity, independent source/visual review, fresh real-component local browser drive at required sizes/themes/PAIGE states with synthetic records. No synthetic check proves real-account finances. Release channel development then production upon exact-head green; routine unversioned UI refinement, no customer release name. Recovery: revert this isolated cleanup.

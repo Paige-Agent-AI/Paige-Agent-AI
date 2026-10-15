@@ -1,5 +1,26 @@
 # Governed Knowledge Chat binding
 
+> Current composition — 2026-10-15: the SOLO Parity BUG lead holds the owner-granted bounded restoration-binding lease. Existing PR1615 is reconciled onto main f633dbec2ab77ce9827f61ba2a0f0ea2a0953b4c. This section supersedes the earlier stacked-branch delivery state below; the earlier review is retained as historical evidence only.
+>
+> Development only; NOT MERGED / NOT DEPLOYED / NOT RESTORED. INT346 remains inactive. Independent security/source review and exact-head CI remain required. No customer acceptance or activation authority is inferred.
+
+## Current restoration composition
+
+- Retains knowledge.read/update/delete and canonical caller-JWT RPCs. The unshipped read tool is now `read_tenant_knowledge`, matching the native RPC and the current Kit read-schema contract. Global Kit types, constructor, lint, baselines and the four-tool degraded allowance remain byte-identical to main.
+- Preserves current main's workspace protections, compactor, other domain branches and deterministic stored-proposal approval resume. No older handler or summary dependency is transplanted.
+- Adds the existing Knowledge-only completed-unrecorded classifier opt-in to deterministic resume. Failing-first proof:1034 PASS/1 FAIL; the missing receipt was incorrectly shown as unknown. Final1035 PASS/0 FAIL. Actual canonical write still happens once; no duplicate Chat audit.
+- Final focused tests:3 files/61 tests PASS. Current real-handler Knowledge scope suite457 PASS/0 FAIL. Current approval/authorization handler1035 PASS/0 FAIL. These are local module-boundary fixtures, never authenticated product proof.
+- Real isolated PostgreSQL16.14: canonical metadata, delete, concurrent revision denial, record/receipt readback, role/scope denial and migration replay PASS. Additive native permission-catalogue composition preserves the later weekly extension, all predecessor rows, default confirm, anonymous denial, private predecessor ACL and existing off preference. Fixture cluster stopped afterward.
+- The obsolete full catalogue replacement is replaced by the same native additive wrapper pattern already used by the platform. Migration `20271101142134_knowledge_tool_catalogue.sql`; no tenant grant or runtime activation.
+- The normal browser-payload INT346 regression now includes12 held historical/Knowledge capabilities; all remain unoffered and produce no domain RPC, provider call, ingestion, approval proposal or business record while staged. Existing supported conversation/reads/recovery controls remain exercised.
+- Capability Kit lint PASS (288/296 debt entries, no new bypass); action-risk lint PASS (189 classified, zero unclassified writes). Spine registry check FAIL at its reviewed-source boundary because the handler and canonical risk source changed. Fingerprints, extractor, protected source metadata and allowances were not changed. No green/ready/merge claim.
+- CI now runs the three native Knowledge SQL scripts in its existing isolated PostgreSQL job. Exact-head hosted results are recorded on PR1615 after push.
+- No layout/component change; the already approved Knowledge flow and current Conversations controls are reused. Authenticated positive/negative SOLO drives, receipt persistence/reload/recovery, deployment identity, rendering and owner acceptance remain PROOF OWED.
+
+Shipped Delivery Log: N/A — this composition has not merged to main. Supabase worker-cessation support evidence is pending separately; no production settings changed.
+
+## Retained original implementation and review history
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: active workspace read -> existing approval -> exact revision metadata/delete RPC -> SQL verified result and receipt -> protected response.
 PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and protected-behavior/release modules applied to scope, refusal and evidence truth. Existing Chat controls and approved Knowledge UI unchanged; rendered proof remains separately owed.

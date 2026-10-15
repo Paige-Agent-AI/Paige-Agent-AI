@@ -1,0 +1,108 @@
+/* C3a — the status line on a PAIGE answer (approved prototype, §28 frozen:
+   docs/design-references/prototypes/paige-turn-states-c3.html "THE SIGNATURE: the status line").
+
+   A WATCH surface: it spends no gold (§11). Working is indigo (--primary), done is --success,
+   a failed step is --destructive, and a warning is ink plus a triangle (owner ruling 2026-10-05:
+   no decorative warning colour). Every colour is a theme token, so the [data-pg] light and dark
+   bridges carry it, and the shared --ring draws focus. Motion conveys state only — the sweep runs
+   while she works, stops when it is your move — and every effect has its own reduced-motion
+   fallback (§22): the sweep becomes a solid indigo rule, nothing ticks, nothing slides. */
+
+.ptl { margin: 0 0 8px; min-width: 0; }
+.ptl-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; min-height: 28px;
+  padding: 3px 2px; border: 0; border-radius: 6px; background: none; text-align: left;
+  color: var(--pg-ink-2, hsl(var(--foreground))); font-family: inherit; font-size: 12.5px;
+  font-weight: 500; line-height: 1.4;
+}
+button.ptl-row { cursor: pointer; }
+button.ptl-row:hover .ptl-text { color: hsl(var(--foreground)); }
+button.ptl-row:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.ptl-glyph { position: relative; width: 14px; height: 14px; flex: none; display: grid; place-items: center; }
+.ptl-glyph svg { width: 14px; height: 14px; stroke-width: 1.75; }
+.ptl-dot { width: 7px; height: 7px; border-radius: 999px; background: hsl(var(--primary)); }
+.ptl-text { min-width: 0; flex: 1; overflow-wrap: anywhere; animation: ptl-label-in 120ms ease-out; }
+@keyframes ptl-label-in { from { opacity: 0; } to { opacity: 1; } }
+.ptl-meta { flex: none; font-size: 11.5px; font-weight: 400; color: hsl(var(--muted-foreground)); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ptl-chev { flex: none; width: 14px; height: 14px; color: hsl(var(--muted-foreground)); transition: transform 200ms cubic-bezier(.16, 1, .3, 1); }
+.ptl-row[aria-expanded="true"] .ptl-chev { transform: rotate(90deg); }
+
+/* The hairline under the row carries the state. */
+.ptl-rule { position: relative; height: 1px; overflow: hidden; background: hsl(var(--border) / .6); }
+.ptl-sweep {
+  position: absolute; inset: 0 auto 0 0; width: 38%;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / .4), transparent);
+  animation: ptl-sweep 1.6s linear infinite; will-change: transform;
+}
+.ptl[data-paused="true"] .ptl-sweep { animation-play-state: paused; }
+@keyframes ptl-sweep { from { transform: translateX(-100%); } to { transform: translateX(270%); } }
+
+.ptl[data-kind="work"] .ptl-glyph, .ptl[data-kind="think"] .ptl-glyph { color: hsl(var(--primary)); }
+.ptl[data-kind="wait"] .ptl-row { color: hsl(var(--foreground)); font-weight: 600; }
+.ptl[data-kind="wait"] .ptl-rule { background: hsl(var(--border-strong, var(--border))); }
+.ptl[data-kind="wait"] .ptl-glyph { color: hsl(var(--foreground)); }
+.ptl[data-kind="done"] .ptl-row { color: hsl(var(--muted-foreground)); font-weight: 400; }
+.ptl[data-kind="done"] .ptl-glyph { color: hsl(var(--success)); }
+.ptl[data-kind="warn"] .ptl-row { color: hsl(var(--foreground)); }
+.ptl[data-kind="warn"] .ptl-glyph { color: var(--pg-ink-2, hsl(var(--foreground))); }
+.ptl[data-kind="warn"] .ptl-rule, .ptl[data-kind="bg"] .ptl-rule { background: hsl(var(--border)); }
+.ptl[data-kind="bg"] .ptl-glyph { color: hsl(var(--primary)); }
+.ptl[data-kind="stop"] .ptl-glyph, .ptl[data-kind="held"] .ptl-glyph, .ptl[data-kind="neutral"] .ptl-glyph { color: hsl(var(--muted-foreground)); }
+
+.ptl-settle { animation: ptl-settle 240ms cubic-bezier(.16, 1, .3, 1); }
+@keyframes ptl-settle { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* "What PAIGE did" — opened by grid rows, never a height animation. */
+.ptl-trace { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms cubic-bezier(.16, 1, .3, 1); }
+.ptl-trace[data-open="true"] { grid-template-rows: 1fr; }
+.ptl-trace-in { overflow: hidden; min-height: 0; }
+.ptl-trace[data-open="false"] .ptl-trace-in { visibility: hidden; transition: visibility 0s 220ms; }
+.ptl-steps { list-style: none; margin: 8px 0 6px 6px; padding: 0 0 0 15px; border-left: 1px solid hsl(var(--border)); display: grid; gap: 6px; }
+.ptl-step { display: flex; gap: 8px; align-items: flex-start; min-width: 0; font-size: 12.5px; line-height: 1.45; color: hsl(var(--muted-foreground)); }
+.ptl-step-glyph { width: 14px; height: 18px; flex: none; display: grid; place-items: center; }
+.ptl-step-glyph svg { width: 14px; height: 14px; stroke-width: 1.75; }
+.ptl-step-text { min-width: 0; overflow-wrap: anywhere; }
+/* Full muted-foreground, not a tint of it: at 11.5px the .9 tint measured 4.34:1 on the light
+   answer bubble — under AA. Solid it is 5.37:1 light / 7.57:1 dark. */
+.ptl-step-meta { display: block; font-size: 11.5px; color: hsl(var(--muted-foreground)); }
+.ptl-step[data-status="running"] { color: var(--pg-ink-2, hsl(var(--foreground))); font-weight: 500; }
+.ptl-step[data-status="running"] .ptl-step-glyph { color: hsl(var(--primary)); }
+.ptl-step[data-status="done"] .ptl-step-glyph { color: hsl(var(--success)); }
+.ptl-step[data-status="error"] .ptl-step-glyph { color: hsl(var(--destructive)); }
+.ptl-step[data-status="stopped"] .ptl-step-glyph { color: hsl(var(--muted-foreground)); }
+.ptl-showall {
+  margin: 2px 0 6px 22px; padding: 4px 0; border: 0; background: none; cursor: pointer;
+  color: hsl(var(--primary)); font-size: 12px; font-weight: 500; line-height: 1.4;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.ptl-showall:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; border-radius: 3px; }
+
+/* The outcome footer: what is true now, and the one way forward that exists. */
+.ptl-foot {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid hsl(var(--border) / .6); font-size: 12.5px; color: var(--pg-ink-2, hsl(var(--foreground)));
+}
+.ptl-foot:focus { outline: none; }
+.ptl-foot:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; border-radius: 4px; }
+.ptl-foot p { margin: 0; flex: 1 1 220px; min-width: 0; }
+
+/* Reduced motion: every effect has its own fallback. */
+.ptl[data-motion="reduce"] .ptl-trace, .ptl[data-motion="reduce"] .ptl-trace-in,
+.ptl[data-motion="reduce"] .ptl-chev { transition: none; }
+.ptl[data-motion="reduce"] .ptl-settle, .ptl[data-motion="reduce"] .ptl-text { animation: none; }
+.ptl[data-motion="reduce"][data-kind="work"] .ptl-rule,
+.ptl[data-motion="reduce"][data-kind="think"] .ptl-rule { background: hsl(var(--primary)); }
+@media (prefers-reduced-motion: reduce) {
+  .ptl-sweep { animation: none; display: none; }
+  .ptl-trace, .ptl-trace-in, .ptl-chev { transition: none; }
+  .ptl-settle, .ptl-text { animation: none; }
+}
+
+/* The phone sheet: the shell's own type, title left-aligned like every other PAIGE heading. */
+.ptl-sheet { font-family: var(--pg-font-ui, inherit); }
+.ptl-sheet .ptl-sheet-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.ptl-sheet .ptl-steps { margin-left: 0; }
+
+@media (max-width: 639px) {
+  .ptl-foot .ptl-foot-btn { min-height: 44px; }
+}

@@ -65,8 +65,8 @@ function legacyCatalog(provider: Exclude<MediaProviderName, "fal">): MediaModelI
 
 /**
  * Invoke the existing generate-image executor FORWARDING THE CALLER'S JWT
- * (compliance H4): generate-image authenticates a user (auth.getUser + role
- * gate + tenant membership) — the verified caller's own header passes it
+ * (compliance H4): generate-image authenticates a user (auth.getUser + the
+ * session workspace's owner/admin check) — the verified caller's own header passes it
  * natively; a service-key invoke could not. This adapter therefore runs only
  * inside the authenticated submit/approve request; the sweeper never dispatches
  * legacy providers.

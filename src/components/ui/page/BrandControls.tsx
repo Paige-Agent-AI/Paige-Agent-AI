@@ -1,6 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { UploadCloud, Loader2, Check, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
+import {
+  BRAND_FONTS, BRAND_FONT_CHARACTERS, PREVIEW_FONT_WEIGHTS, brandFontStack, lookupBrandFont, resolveBrandFontPair,
+  type BrandFontFace,
+} from "@/lib/brand-fonts";
 import { useToast } from "@/hooks/use-toast";
 import { contrastRatio, isValidHex } from "@/lib/brand/resolveBrand";
 import { cn } from "@/lib/utils";
@@ -15,7 +23,9 @@ import { cn } from "@/lib/utils";
  * gold reserved for the act moment upstream (these controls never wear gold).
  */
 
-/** Shared typeface options a tenant can pick for their brand. */
+/** The typeface options offered before the self-hosted library. Every family here (bar "System
+ *  default", stored as "") resolves in src/lib/brand-fonts.ts, so a value saved from this list keeps
+ *  working; the live picker is BrandFontPicker below. */
 export const FONT_OPTIONS = [
   "System default", "Inter", "Plus Jakarta Sans", "Poppins", "Montserrat",
   "Playfair Display", "Lora", "Source Serif 4", "DM Sans", "Space Grotesk",
@@ -160,6 +170,107 @@ export function ColorField({
           {contrastLabel} contrast {ratio.toFixed(1)}:1 {lowContrast ? "— may be hard to read" : "— AA pass"}
         </p>
       )}
+    </div>
+  );
+}
+
+const SYSTEM_DEFAULT = "System default";
+// The shared SelectItem highlights the active row with the accent fill, which is gold here; on this
+// surface a highlighted row is a resting state, not the act (§11), so it reads on the neutral layer.
+const FONT_ITEM = "focus:bg-muted focus:text-foreground";
+// Display faces differ widely in x-height (Libre Caslon Display's is small, Anton's is tall), so at one
+// font-size their names read at very different sizes. font-size-adjust scales each face to the same
+// x-height (0.52 of the em, close to the UI sans), so every option reads at a similar size.
+const optionStyle = (face: BrandFontFace): CSSProperties => ({ fontFamily: brandFontStack(face), fontSizeAdjust: "0.52" });
+
+/** One character group. Its faces (regular cut only) load when the group first scrolls into view inside
+ *  the open list, so opening the picker never downloads the whole library at once. */
+function FontGroup({ label, faces }: { label: string; faces: readonly BrandFontFace[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    // While the list is closed, Radix keeps its items in a detached fragment (so the trigger can show
+    // the selected label): not connected, never "seen", nothing loads.
+    if (!node || seen || !node.isConnected) return;
+    if (typeof IntersectionObserver === "undefined") { setSeen(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setSeen(true); io.disconnect(); }
+    });
+    io.observe(node);
+    return () => io.disconnect();
+  }, [seen]);
+  useBrandFontFaces(ref, seen ? faces : [], PREVIEW_FONT_WEIGHTS);
+  return (
+    <SelectGroup ref={ref}>
+      <SelectSeparator />
+      <SelectLabel className="text-xs font-medium text-muted-foreground">{label}</SelectLabel>
+      {faces.map((f) => (
+        <SelectItem key={f.slug} className={FONT_ITEM} value={f.family}>
+          <span style={optionStyle(f)}>{f.family}</span>
+        </SelectItem>
+      ))}
+    </SelectGroup>
+  );
+}
+
+/**
+ * The brand typeface picker (Operate surface). Offers the self-hosted library grouped by character,
+ * each option drawn in its own face, plus the classic picks. Stores ONLY the family name in the existing
+ * `brand.font` key ("" for System default) — the body face is derived from the library's pairing, so
+ * there is no second stored value. A stored value outside the library is shown as-is and kept until the
+ * owner picks something else; it is never turned into a font URL.
+ *
+ * Faces load lazily and only their regular cut: the selected face at mount, then each character group as
+ * it scrolls into view in the open list.
+ */
+export function BrandFontPicker({
+  id, value, onChange, disabled,
+}: {
+  id: string;
+  value: string;
+  onChange: (next: string) => void;
+  disabled?: boolean;
+}) {
+  const current = (value ?? "").trim();
+  const face = lookupBrandFont(current);
+  const unknown = current && !face ? current : null;
+  const pair = resolveBrandFontPair(current);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useBrandFontFaces(rootRef, face ? [face] : [], PREVIEW_FONT_WEIGHTS);
+
+  const selectValue = face ? face.family : unknown ?? SYSTEM_DEFAULT;
+  const hintId = `${id}-hint`;
+  const hint = pair
+    ? pair.display.slug === pair.body.slug
+      ? `Headings and body text use ${pair.display.family}.`
+      : `Headings use ${pair.display.family}; body text uses ${pair.body.family}.`
+    : unknown
+      ? `${unknown} isn't in the font library, so pages show it only where a visitor has it installed. Pick a library face to load it for everyone.`
+      : "Your pages use the visitor's system typeface.";
+
+  return (
+    <div ref={rootRef} className="space-y-1.5">
+      <Select
+        value={selectValue}
+        disabled={disabled}
+        onValueChange={(v) => onChange(v === SYSTEM_DEFAULT ? "" : v)}
+      >
+        <SelectTrigger id={id} aria-describedby={hintId}>
+          <SelectValue placeholder={SYSTEM_DEFAULT} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem className={FONT_ITEM} value={SYSTEM_DEFAULT}>{SYSTEM_DEFAULT}</SelectItem>
+          {unknown && (
+            <SelectItem className={FONT_ITEM} value={unknown}>{unknown}</SelectItem>
+          )}
+          {BRAND_FONT_CHARACTERS.map(({ key, label }) => {
+            const faces = BRAND_FONTS.filter((f) => f.character === key);
+            return faces.length ? <FontGroup key={key} label={label} faces={faces} /> : null;
+          })}
+        </SelectContent>
+      </Select>
+      <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }

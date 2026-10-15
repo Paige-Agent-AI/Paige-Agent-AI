@@ -118,9 +118,9 @@ export const SYSTEMS_CHECK_AREAS: AreaDefinition[] = [
   },
   {
     id: "campaigns",
-    name: "Campaigns, social and advertising",
+    name: "Marketing, social and advertising",
     scope: "What you have live, and where new enquiries come from.",
-    briefLabel: "Campaigns",
+    briefLabel: "Marketing",
     coveredBy: ["social_accounts_connected"],
   },
   {
@@ -222,7 +222,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
   sales_pipeline_configured: {
     title: "Your pipeline stages are set up",
     area: "sales",
-    label: "Campaigns › Pipeline",
+    label: "Marketing › Pipeline",
     path: (a) => `/solo/${acct(a)}/growth/pipeline`,
   },
   revenue_tracking_configured: {
@@ -230,7 +230,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     area: "sales",
     // Stages are authored on Pipeline, not Sales. Sales is where the revenue SHOWS; sending someone
     // there to add a closing stage sends them to the result rather than to the fix.
-    label: "Campaigns › Pipeline",
+    label: "Marketing › Pipeline",
     path: (a) => `/solo/${acct(a)}/growth/pipeline`,
     // NARROWED 2026-09-05, not removed, and the distinction is the whole point.
     //
@@ -249,13 +249,13 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
   payment_processor_connected: {
     title: "You can take payment",
     area: "sales",
-    label: "Campaigns › Sales",
+    label: "Marketing › Sales",
     path: (a) => `/solo/${acct(a)}/growth/sales`,
   },
   payment_method_options: {
     title: "The ways you accept payment are written down",
     area: "sales",
-    label: "Campaigns › Sales",
+    label: "Marketing › Sales",
     path: (a) => `/solo/${acct(a)}/growth/sales`,
   },
   comms_configured: {
@@ -269,7 +269,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
   social_accounts_connected: {
     title: "Your social accounts are on record",
     area: "campaigns",
-    label: "Campaigns › Social",
+    label: "Marketing › Social",
     path: (a) => `/solo/${acct(a)}/growth/social`,
     // The caveat that stood here until 2026-09-05 said this page "has no way to connect an account
     // yet, so this cannot be finished there today." It was true, and it is not any more: Campaigns

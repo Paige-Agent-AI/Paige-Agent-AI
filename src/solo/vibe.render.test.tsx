@@ -26,6 +26,23 @@ const harness = vi.hoisted(() => ({
 }));
 
 vi.mock("./useMediaJobs", () => ({ useMediaJobs: () => harness.media }));
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeTenant: { slug: "northwind-studio" } }),
+}));
+vi.mock("./studio/studio-data", async (orig) => ({
+  ...(await orig<typeof import("./studio/studio-data")>()),
+  listSessions: async () => [],
+  // Studio home also reads the brand on mount. This render harness has no stored
+  // brand; keep that seam explicit rather than catching a real backend failure.
+  loadBrand: async () => ({
+    floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
+    name: null,
+    logoUrl: null,
+  }),
+  createSession: async () => {
+    throw new Error("Unexpected Studio session mutation in media render harness");
+  },
+}));
 
 const { VibeStudio } = await import("./vibe");
 
@@ -33,7 +50,8 @@ let host: HTMLDivElement;
 let root: Root | null = null;
 let backCount = 0;
 
-function renderAt(media: Record<string, unknown>) {
+// The media tools live under "Images & video" in the Studio rail; the Studio opens on its home.
+function renderAt(media: Record<string, unknown>, view: "home" | "media" = "media") {
   harness.media = media;
   if (root) act(() => root!.unmount());
   host.remove();
@@ -43,6 +61,10 @@ function renderAt(media: Record<string, unknown>) {
   act(() => {
     root!.render(<VibeStudio onBack={() => { backCount++; }} />);
   });
+  if (view === "media") {
+    const tab = [...host.querySelectorAll("button")].find((b) => b.textContent === "Images & video");
+    act(() => { tab?.click(); });
+  }
 }
 afterEach(() => {
   if (root) act(() => root!.unmount());
@@ -94,6 +116,16 @@ const baseMedia = (over: Partial<Record<string, unknown>> = {}) => ({
     harness.decided.push([id, approve]);
     return true;
   },
+  approve: async (id: string) => {
+    harness.decided.push([id, true]);
+    return true;
+  },
+  decline: async (id: string) => {
+    harness.decided.push([id, false]);
+    return true;
+  },
+  // Owner ruling 2026-10-04: the requester approves. Default fixture: the viewer asked for it.
+  approvalFor: () => ({ requestedByYou: true, requesterName: null }),
   cancel: async (id: string) => {
     harness.cancelled.push(id);
     return true;
@@ -130,7 +162,7 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect((textarea as HTMLTextAreaElement).value).toContain("masterclass");
   });
 
-  it("states 5+6 — awaiting approval renders the boundary with the estimate and the exact commercial-use language", () => {
+  it("states 5+6 — awaiting approval renders the boundary with the estimate and the exact commercial-use language", async () => {
     renderAt(baseMedia({
       jobs: [{ id: "pj", mode: "image", provider: "fal", model: "fal-ai/nano-banana", params: { prompt: "hero visual" }, state: "blocked", approval_state: "pending", estimated_cost_usd: 0.039, actual_cost_usd: null, error: null, content_id: null, video_seconds: null, created_at: new Date().toISOString(), completed_at: null }],
     }));
@@ -138,10 +170,25 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(text()).toContain("≈$0.039");
     expect(text()).toContain("Commercial-use status depends on the applicable provider and model terms");
     const approve = [...host.querySelectorAll("button")].find((b) => b.textContent === "Approve & run");
+    await act(async () => { approve?.click(); });
     const decline = [...host.querySelectorAll("button")].find((b) => b.textContent === "Decline");
-    act(() => { approve?.click(); });
-    act(() => { decline?.click(); });
+    await act(async () => { decline?.click(); });
     expect(harness.decided).toEqual([["pj", true], ["pj", false]]);
+  });
+
+  it("states 5+6 for another admin — names who asked, offers Decline only, and never Approve", async () => {
+    renderAt(baseMedia({
+      jobs: [{ id: "pj", mode: "image", provider: "fal", model: "fal-ai/nano-banana", params: { prompt: "hero visual" }, state: "blocked", approval_state: "pending", estimated_cost_usd: 0.039, actual_cost_usd: null, error: null, content_id: null, video_seconds: null, created_at: new Date().toISOString(), completed_at: null }],
+      approvalFor: () => ({ requestedByYou: false, requesterName: "Dana Reyes" }),
+    }));
+    expect(text()).toContain("Waiting for Dana Reyes");
+    expect(text()).toContain("Waiting for Dana Reyes");
+    expect(text()).toContain("Only they can approve the cost. You can decline it.");
+    expect(text()).not.toContain("Needs your approval");
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "Approve & run")).toBe(false);
+    const decline = [...host.querySelectorAll("button")].find((b) => b.textContent === "Decline");
+    await act(async () => { decline?.click(); });
+    expect(harness.decided).toEqual([["pj", false]]);
   });
 
   it("states 10+11+18 — a finished job renders its asset, the review row, and the truthful DISABLED Social handoff", () => {
@@ -164,12 +211,27 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(text()).toContain("deferred from this release — no music provider is connected");
   });
 
-  it("Escape closes the overlay (the SoloApp mount contract)", () => {
+  it("Escape closes the overlay (the SoloApp mount contract), from Images & video and from Studio home", () => {
     renderAt(baseMedia());
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
     expect(backCount).toBe(1);
+    renderAt(baseMedia(), "home");
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(backCount).toBe(2);
+  });
+
+  it("opens on Studio home: one brief composer, no artifact-type picker, and Back to Marketing", () => {
+    renderAt(baseMedia(), "home");
+    expect(text()).toContain("What should Paige build?");
+    expect(text()).toContain("Back to Marketing");
+    expect(host.querySelector("#vs-brief")).toBeTruthy();
+    for (const tab of ["Page", "Form", "Funnel", "Copy"]) {
+      expect([...host.querySelectorAll("button")].some((b) => b.textContent === tab)).toBe(false);
+    }
   });
 
   it("empty state — no jobs yet renders guidance, not fake projects", () => {

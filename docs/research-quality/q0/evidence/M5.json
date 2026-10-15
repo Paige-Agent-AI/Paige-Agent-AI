@@ -1,0 +1,398 @@
+{
+  "case_id": "M5",
+  "split": "holdout",
+  "class": "multihop_comparison",
+  "answer_class": "answerable",
+  "question": "Compare Sweden vs Germany current parental leave: total weeks available per parent and the pay-replacement rate of the earnings-related component.",
+  "sub_questions": [
+    "Sweden weeks + pay rate",
+    "Germany weeks + pay rate"
+  ],
+  "freshness_days": 730,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T16:02:11.532Z",
+  "http_status": 200,
+  "wall_latency_ms": 69549,
+  "engine_result": {
+    "run_id": "afeac365-3d37-4a45-b1a6-f36ed2340d41",
+    "question": "Compare Sweden vs Germany current parental leave: total weeks available per parent and the pay-replacement rate of the earnings-related component.",
+    "findings": [
+      {
+        "text": "Sweden — Sweden's parental benefit totals 480 days of paid leave per child, shared between parents. (website: https://www.forsakringskassan.se/english/parents/when-the-child-is-born/parental-benefit · 480 days)",
+        "citations": [
+          1,
+          3,
+          11,
+          12
+        ],
+        "confidence": "high",
+        "name": "Sweden",
+        "website": "https://www.forsakringskassan.se/english/parents/when-the-child-is-born/parental-benefit",
+        "values": [
+          "480 days"
+        ]
+      },
+      {
+        "text": "Sweden — Of Sweden's 480 days, 390 days are wage-replaced at about 80% of the parent's wage, with the remaining 90 days compensated at a low flat rate (~15 euros per day); 90 of the wage-replaced days are earmarked to each parent. (390 days; 80 percent; 90 days; approximately 15 euros per day)",
+        "citations": [
+          6
+        ],
+        "confidence": "low",
+        "name": "Sweden",
+        "values": [
+          "390 days",
+          "80 percent",
+          "90 days",
+          "approximately 15 euros per day"
+        ]
+      },
+      {
+        "text": "Sweden — Sweden offers a 90-day 'mommy' and 'daddy' quota per parent, paid at 78 percent of earnings, within the 480-day total. (website: https://bipartisanpolicy.org/wp-content/uploads/2020/01/PFL6-FInal_.pdf · 480 days; 90-day; 78 percent)",
+        "citations": [
+          3
+        ],
+        "confidence": "low",
+        "name": "Sweden",
+        "website": "https://bipartisanpolicy.org/wp-content/uploads/2020/01/PFL6-FInal_.pdf",
+        "values": [
+          "480 days",
+          "90-day",
+          "78 percent"
+        ]
+      },
+      {
+        "text": "Germany — In Germany, each parent is entitled to take up to three years of parental leave (Elternzeit) per child. (website: https://handbookgermany.de/en/parental-leave · three years; 36 months)",
+        "citations": [
+          7,
+          8
+        ],
+        "confidence": "medium",
+        "name": "Germany",
+        "website": "https://handbookgermany.de/en/parental-leave",
+        "values": [
+          "three years",
+          "36 months"
+        ]
+      },
+      {
+        "text": "Germany — German statutory maternity leave (Mutterschutz) totals 14 weeks: 6 weeks before birth and 8 weeks after birth. (website: https://www.papayaglobal.com/blog/parental-leave-in-germany/ · 14 weeks; 6 weeks; 8 weeks)",
+        "citations": [
+          5,
+          13,
+          14
+        ],
+        "confidence": "medium",
+        "name": "Germany",
+        "website": "https://www.papayaglobal.com/blog/parental-leave-in-germany/",
+        "values": [
+          "14 weeks",
+          "6 weeks",
+          "8 weeks"
+        ]
+      },
+      {
+        "text": "No source among those fetched explicitly states a single percentage pay-replacement rate for Germany's earnings-related parental leave component (Elterngeld); only a euro-amount range (€300–€1,800) is given for Basiselterngeld over 12+2 months. (€300; €1,800; 12+2 months)",
+        "citations": [
+          4
+        ],
+        "confidence": "low",
+        "values": [
+          "€300",
+          "€1,800",
+          "12+2 months"
+        ]
+      },
+      {
+        "text": "On average across OECD countries, maternity leave benefits replace around 77% of previous earnings for a mother on average wages, according to OECD data (not country-specific to Sweden or Germany in the excerpt). (website: https://webfs.oecd.org/els-com/Family_Database/PF2_4_Parental_leave_replacement_rates.pdf · 77%)",
+        "citations": [
+          2
+        ],
+        "confidence": "high",
+        "website": "https://webfs.oecd.org/els-com/Family_Database/PF2_4_Parental_leave_replacement_rates.pdf",
+        "values": [
+          "77%"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://ysph.yale.edu/news-article/swedens-maternity-and-paternity-leave/",
+        "title": "Sweden's Maternity and Paternity Leave | Yale School of Public Health",
+        "snippet": "This is included in the 480 day paid parental leave, per child, that parents share. All payments are made by the Swedish Social Insurance Agency ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:27.433Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://webfs.oecd.org/els-com/Family_Database/PF2_4_Parental_leave_replacement_rates.pdf",
+        "title": "[PDF] PF2.4.A-PF2.4.C show gross payment rates across paid maternity ... - OECD",
+        "snippet": "On average across. OECD countries, maternity leave benefits replace around 77% of previous earnings for a mother on average wages, with 13 OECD countries ...",
+        "reliability_score": 0.76,
+        "tier": "T2",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:28.587Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://bipartisanpolicy.org/wp-content/uploads/2020/01/PFL6-FInal_.pdf",
+        "title": "[PDF] Paid Family Leave Across OECD Countries - Bipartisan Policy Center",
+        "snippet": "Sweden, for example, offers a total of 480 days of paid parental leave. Each parent gets a 90-day “mommy” and “daddy” quota paid at 78 percent of earnings.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:28.587Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://eige.europa.eu/sites/default/files/documents/20210519_mh0121037enn_pdf.pdf",
+        "title": "[PDF] Who is eligible for parental leave in Germany?",
+        "snippet": "The first one is Basiselterngeld, where parents are compensated during the entire leave period (12+2 months) between €300 and €1,800. The second option is ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:30.778Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://employsome.com/hire/germany/maternity-leave-germany/",
+        "title": "Maternity Leave in Germany 2026: Duration, Pay & Employer Costs",
+        "snippet": "Total employer cost for a 14-week Mutterschutz period typically runs €4,000 to €12,000 above the statutory benefit reimbursement, depending on ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:30.778Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://freepolicybriefs.org/2024/02/05/fathers-parental-leave-policy/",
+        "title": "What Is the Evidence on the Swedish “Paternity Leave” Policy?",
+        "snippet": "## Parental Leave in Sweden\nToday, the total allowance is 480 benefit days, of which 390 are wage-replaced (paid at about 80 percent of the parent’s wage), and the remaining 90 are compensated at a low flat rate (approximately 15 euros per day). 90 of the wage-replaced days are earmarked to each parent.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:28.587Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://handbookgermany.de/en/parental-leave",
+        "title": "Parental Leave (\"Elternzeit\") | Handbook Germany : Together",
+        "snippet": "Each parent can take up to three years of parental leave per child. the legally required six weeks before birth and eight weeks after birth, ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:29.624Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://parakar.eu/knowledge/de/maternity-paternity-leave-in-germany",
+        "title": "Maternity and Paternity Leave in Germany - Parakar Group",
+        "snippet": "Under Germany paternity leave rules, fathers can take up to 36 months of parental leave. This parental leave Germany system is flexible and can be spread over ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:29.624Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://sweden.se/work-business/working-in-sweden/work-life-balance",
+        "title": "Work-life balance in Sweden",
+        "snippet": "Employees are entitled to at least 25 days of holiday per year, excluding public holidays. These aren't company perks – Swedish law guarantees ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:27.433Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.diw.de/documents/publikationen/73/diw_01.c.554240.de/diw_sp0900.pdf",
+        "title": "[PDF] Maternal Employment Effects of Paid Parental Leave - DIW Berlin",
+        "snippet": "We study the short, medium, and longer run employment effects of a substantial change in the parental leave benefit program in Germany. In 2007, a means-tested ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:30.778Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.forsakringskassan.se/english/parents/when-the-child-is-born/parental-benefit",
+        "title": "Parental benefit - Försäkringskassan",
+        "snippet": "Parental benefit is paid out for 480 days (approximately 16 months) for one child. For the remaining 90 days, the compensation is set at SEK ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:27.433Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.norden.org/en/info-norden/parental-benefit-sweden",
+        "title": "Parental benefit in Sweden - The Nordic Co-operation",
+        "snippet": "Parental benefit is paid for 480 days for one child. For the remaining 90 days, the benefit is SEK 180 per day. You are entitled to 195 days at sickness ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:27.433Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.papayaglobal.com/blog/parental-leave-in-germany/",
+        "title": "Parental Leave In Germany | Supercharge Your Global Operations",
+        "snippet": "Maternity leave in Germany lasts 14 weeks in total: 6 weeks before birth and eight weeks after (it is extended to 12 weeks for premature or ...German employer obligations... · Employee rights and...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:29.624Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.welcome-center-germany.com/post/understanding-maternity-leave-in-germany",
+        "title": "Understanding Maternity Leave in Germany: A Comprehensive Guide ...",
+        "snippet": "In Germany, mothers are entitled to 14 weeks of maternity leave. This period can start up to six weeks before the expected date of birth and must start no later ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:29.624Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.reddit.com/r/AskAGerman/comments/1nbhb22/maternity_leave_and_benefits_in_germany/",
+        "title": "Maternity leave and benefits in Germany? : r/AskAGerman - Reddit",
+        "snippet": "Elternzeit afterwards: 12 months 2/3 of your net income ( up to 1800€) or 24 months 1/3 of your net income. There are much more variables, but ...Maternity leave in GermanyAbout German Low Birth Rate : r/germanyMore results from www.reddit.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:56.994Z",
+        "excluded": true
+      },
+      {
+        "index": 16,
+        "url": "https://www.reddit.com/r/germany/comments/18242yx/parental_leave_in_germany/",
+        "title": "Parental leave in Germany - Reddit",
+        "snippet": "Mother and father are allowed a combined total 36 months of parental leave (Elternzeit) until the child is age 3 (8). Of those, 12 (14) months ...Maternity leave in GermanyMaternity leave and benefits in Germany? : r/AskAGermanMore results from www.reddit.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:29.624Z",
+        "excluded": true
+      },
+      {
+        "index": 17,
+        "url": "https://www.reddit.com/r/Natalism/comments/1hp2obx/sweden_has_480_days_of_paid_parental_leave_free/",
+        "title": "Sweden has 480 days of paid parental leave, free college, and ... - Reddit",
+        "snippet": "480 days of paid parental leave, or 240 days per parent, and can be spread as once chooses. Free college and higher education tuition. Free ...How does maternity leave work in Sweden? : r/PrivatEkonomi - RedditTIL Sweden Offers 480 Days of Paid Maternity (and Paternity) LeaveMore results from www.reddit.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:27.433Z",
+        "excluded": true
+      },
+      {
+        "index": 18,
+        "url": "https://pub.norden.org/temanord2025-547/parental-leave-in-sweden-.html",
+        "title": "PARENTAL LEAVE IN SWEDEN",
+        "snippet": "# PARENTAL LEAVE IN SWEDEN\n## Leave use\n### Parental leave by origin\n|  |  |  |  |  |\n|-|-|-|-|-|\n| Sweden | 2.1 | 0.6 | 712 | 843 |\n| Oceania | 8.3 | 4.4 | 718 | 843 |",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:28.587Z",
+        "excluded": false
+      },
+      {
+        "index": 19,
+        "url": "https://www.facebook.com/dw.stories/posts/the-german-government-is-cutting-its-spending-one-cost-cutting-measure-its-propo/1481177344054638/",
+        "title": "The German government is cutting its spending. One cost ... - Facebook",
+        "snippet": "Parents in Germany who are employed and wish to take time off to care for their newborn can receive 65% of their net income as parental ...",
+        "reliability_score": 0.258,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:01:56.994Z",
+        "excluded": true
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 7 finding(s) across 15 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "51f5a447-e7c7-47d9-bc4c-9c50b735e074",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 265,
+      "tokens_out": 1000,
+      "cost_estimate_usd": 0.0158,
+      "latency_ms": 12821,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T16:01:15.184429+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 7,
+    "sources_retrieved": 19,
+    "sources_included": 15,
+    "sources_excluded": 4,
+    "sources_cited": 12,
+    "primary_ratio": 0.16666666666666666,
+    "citation_independence": 1,
+    "distinct_cited_hosts": 12,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 730,
+    "wall_latency_ms": 69549,
+    "trace_cost_usd": 0.0158,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

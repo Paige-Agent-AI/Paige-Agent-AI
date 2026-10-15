@@ -15,11 +15,17 @@ try:
  run(['-d',db,'-f','scripts/knowledge-service/fixture.sql'])
  run(['-d',db,'-c',"CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT active_tenant_id FROM profiles WHERE user_id=auth.uid() $$; CREATE TABLE tenant_tool_autonomy(tenant_id uuid,tool_key text,mode text,updated_at timestamptz);"])
  run(['-d',db,'-f','supabase/migrations/20270524000000_retire_program_enroll_catalogue.sql'])
+ # Compose with the actual later native catalogue extension, not only the old base.
+ weekly=(root/'supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql').read_text()
+ run(['-d',db,'-c',weekly[weekly.index('DO $$ BEGIN'):weekly.index('-- Preserve the incumbent activity display')]])
  run(['-d',db,'-c',"CREATE TABLE old_catalogue AS SELECT * FROM public.list_tool_autonomy('00000000-0000-0000-0000-000000000001');"])
- for _ in range(2): run(['-d',db,'-f','supabase/migrations/20270531800000_knowledge_tool_catalogue.sql'])
+ for _ in range(2): run(['-d',db,'-f','supabase/migrations/20271101142134_knowledge_tool_catalogue.sql'])
  run(['-d',db,'-c',"""
  SELECT public.test_assert(NOT EXISTS((SELECT * FROM old_catalogue EXCEPT SELECT * FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001'))),'all previous rows preserved');
+ SELECT public.test_assert((SELECT count(*)=1 FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001') WHERE tool_key='planning_weekly_commitment_check'),'later native catalogue extension preserved');
  SELECT public.test_assert((SELECT count(*)=2 FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001') WHERE tool_key IN ('knowledge_update','knowledge_delete') AND mode='confirm' AND is_default AND category='Knowledge'),'two visible default-confirm Knowledge rows');
+ SELECT public.test_assert(NOT has_function_privilege('authenticated','public._list_tool_autonomy_before_knowledge_chat(uuid)','EXECUTE'),'private predecessor not directly callable');
+ SELECT public.test_assert(NOT has_function_privilege('service_role','public._list_tool_autonomy_before_knowledge_chat(uuid)','EXECUTE'),'private predecessor not service callable');
  SELECT public.test_assert(NOT has_function_privilege('anon','public.list_tool_autonomy(uuid)','EXECUTE'),'anonymous execute denied');
  SELECT public.test_assert(has_function_privilege('authenticated','public.list_tool_autonomy(uuid)','EXECUTE'),'authenticated grant retained');
  SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false),set_config('test.owner','false',false);

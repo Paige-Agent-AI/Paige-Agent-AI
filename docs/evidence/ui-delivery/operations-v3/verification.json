@@ -1,0 +1,213 @@
+{
+  "boundary": "Isolated production-component render with explicitly synthetic test data; no authenticated or shell proof",
+  "imageLoaded": true,
+  "brokenFallback": true,
+  "inspection": true,
+  "filteredEmpty": true,
+  "timeline": true,
+  "empty": true,
+  "reflow": true,
+  "matrix": [
+    {
+      "name": "Overview-dark-1536",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-dark-1536",
+      "overflow": false,
+      "scrollHeight": 1099
+    },
+    {
+      "name": "Projects-dark-1536",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-dark-1536",
+      "overflow": false,
+      "scrollHeight": 770
+    },
+    {
+      "name": "Overview-dark-1366",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-dark-1366",
+      "overflow": false,
+      "scrollHeight": 1099
+    },
+    {
+      "name": "Projects-dark-1366",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-dark-1366",
+      "overflow": false,
+      "scrollHeight": 768
+    },
+    {
+      "name": "Overview-dark-1024",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-dark-1024",
+      "overflow": false,
+      "scrollHeight": 1125
+    },
+    {
+      "name": "Projects-dark-1024",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-dark-1024",
+      "overflow": false,
+      "scrollHeight": 768
+    },
+    {
+      "name": "Overview-dark-900",
+      "overflow": false,
+      "scrollHeight": 1423
+    },
+    {
+      "name": "Work-dark-900",
+      "overflow": false,
+      "scrollHeight": 1145
+    },
+    {
+      "name": "Projects-dark-900",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-dark-900",
+      "overflow": false,
+      "scrollHeight": 1000
+    },
+    {
+      "name": "Overview-dark-390",
+      "overflow": false,
+      "scrollHeight": 1835
+    },
+    {
+      "name": "Work-dark-390",
+      "overflow": false,
+      "scrollHeight": 1336
+    },
+    {
+      "name": "Projects-dark-390",
+      "overflow": false,
+      "scrollHeight": 1382
+    },
+    {
+      "name": "Capacity-dark-390",
+      "overflow": false,
+      "scrollHeight": 1100
+    },
+    {
+      "name": "Overview-light-1536",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-light-1536",
+      "overflow": false,
+      "scrollHeight": 1099
+    },
+    {
+      "name": "Projects-light-1536",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-light-1536",
+      "overflow": false,
+      "scrollHeight": 770
+    },
+    {
+      "name": "Overview-light-1366",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-light-1366",
+      "overflow": false,
+      "scrollHeight": 1099
+    },
+    {
+      "name": "Projects-light-1366",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-light-1366",
+      "overflow": false,
+      "scrollHeight": 768
+    },
+    {
+      "name": "Overview-light-1024",
+      "overflow": false,
+      "scrollHeight": 1217
+    },
+    {
+      "name": "Work-light-1024",
+      "overflow": false,
+      "scrollHeight": 1125
+    },
+    {
+      "name": "Projects-light-1024",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-light-1024",
+      "overflow": false,
+      "scrollHeight": 768
+    },
+    {
+      "name": "Overview-light-900",
+      "overflow": false,
+      "scrollHeight": 1423
+    },
+    {
+      "name": "Work-light-900",
+      "overflow": false,
+      "scrollHeight": 1145
+    },
+    {
+      "name": "Projects-light-900",
+      "overflow": false,
+      "scrollHeight": 1055
+    },
+    {
+      "name": "Capacity-light-900",
+      "overflow": false,
+      "scrollHeight": 1000
+    },
+    {
+      "name": "Overview-light-390",
+      "overflow": false,
+      "scrollHeight": 1835
+    },
+    {
+      "name": "Work-light-390",
+      "overflow": false,
+      "scrollHeight": 1336
+    },
+    {
+      "name": "Projects-light-390",
+      "overflow": false,
+      "scrollHeight": 1382
+    },
+    {
+      "name": "Capacity-light-390",
+      "overflow": false,
+      "scrollHeight": 1100
+    }
+  ],
+  "errors": []
+}

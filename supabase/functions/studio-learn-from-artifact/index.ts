@@ -14,12 +14,16 @@
 //   200 { ok:false, blocked:true, mode:"off", message }                 — tenant turned learning off
 //   200 { ok:false, error, message }                                    — nothing usable to learn / embed failed (§13 honest)
 //   4xx { error }                                                       — bad input / auth / not found
+//   403 { error, forbidden:true }   — JWT caller not signed in to the artifact's workspace, or not its
+//                                     owner/admin or managing agency
+//   500 { error }                   — also: the workspace/permission lookup failed (retryable)
 //
 // ── DOCTRINE ─────────────────────────────────────────────────────────────────
 //   §9  — the ingest tenant is resolved FROM THE PUBLISHED ARTIFACT ROW (growth_pages/growth_funnels
 //         .tenant_id), never the caller's active tenant or the request body. A JWT caller is then
-//         authorized AGAINST that tenant (role + they must be acting in that workspace) — this closes
-//         the agency-on-behalf leak (an agency publishing a sub-account's page must not poison the
+//         authorized AGAINST that tenant (they must be signed in to that workspace and be its
+//         owner/admin or managing agency; a platform-wide role grants nothing) — this closes the
+//         agency-on-behalf leak (an agency publishing a sub-account's page must not poison the
 //         agency's KB). This is the one place Slice B is NOT a copy of Slice A.
 //   §15 — NEVER silent. Gated by the existing tenant_tool_autonomy primitive (tool_key
 //         'studio_learn_from_publish'): default 'confirm' → Paige must propose and the tenant say yes
@@ -34,6 +38,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { ingestDoc } from "../_shared/kb-ingest-core.ts";
 import { flattenBlocks, flattenFormSchema } from "../_shared/studio-artifact-extract.ts";
+import { resolveStudioCallerForArtifact } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -64,7 +69,7 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json(401, { error: "A bearer token is required." });
@@ -101,8 +106,31 @@ serve(async (req: Request) => {
       .maybeSingle();
     if (aErr) return json(500, { error: `Could not read the ${artifactType}: ${aErr.message}` });
     if (!artifact) return json(404, { error: `That ${artifactType} doesn't exist.` });
-    const tenantId = str((artifact as Record<string, unknown>).tenant_id);
+    const tenantId = str((artifact as unknown as Record<string, unknown>).tenant_id);
     if (!UUID_RE.test(tenantId)) return json(500, { error: "Artifact has no valid tenant." });
+
+    // ── Authorize the caller against the ARTIFACT's tenant (§9 agency-leak guard) ──
+    // Before anything about the artifact (its publish state, its content) is reported back.
+    // A JWT caller must be signed in to the artifact's own workspace AND be its owner/admin or
+    // managing agency (resolveStudioCallerForArtifact — the shared Studio rule, asked of the
+    // artifact's tenant). An artifact from any other workspace is refused, never learned into the
+    // caller's current one: that blocks an agency from learning a sub-account's page into the
+    // agency's KB. A platform-wide user_roles admin/super_admin grants nothing — that table has no
+    // tenant. Service-role callers (the publish path) already resolved the tenant from the row.
+    let userId: string | null = null;
+    if (!isServiceRole) {
+      const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user }, error: uErr } = await authed.auth.getUser();
+      if (uErr || !user) return json(401, { error: uErr?.message || "Could not verify this session." });
+      userId = user.id;
+
+      const caller = await resolveStudioCallerForArtifact(authed, tenantId);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? json(403, { error: caller.error, forbidden: true })
+          : json(500, { error: caller.error });
+      }
+    }
 
     // Live-status gate applies ONLY to the publish-triggered kinds. A draft page/funnel is unfinished
     // thinking, not the practice's committed voice — learning from it would poison retrieval (§13/§15).
@@ -113,36 +141,11 @@ serve(async (req: Request) => {
     // housekeeping, not a live state).
     if (artifactType === "page" || artifactType === "funnel") {
       const liveStatus = artifactType === "page" ? "published" : "active";
-      if (str((artifact as Record<string, unknown>).status) !== liveStatus) {
+      if (str((artifact as unknown as Record<string, unknown>).status) !== liveStatus) {
         return json(200, {
           ok: false, error: "not_published",
           message: `Publish this ${artifactType} first — I only learn from work you've shipped, not drafts.`,
         });
-      }
-    }
-
-    // ── Authorize the caller against the ARTIFACT's tenant (§9 agency-leak guard) ──
-    let userId: string | null = null;
-    if (!isServiceRole) {
-      const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
-      const { data: { user }, error: uErr } = await authed.auth.getUser();
-      if (uErr || !user) return json(401, { error: uErr?.message || "Could not verify this session." });
-      userId = user.id;
-
-      const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
-        return json(403, { error: "Admin access required." });
-      }
-      // The caller must be acting IN the artifact's workspace — this blocks an agency from
-      // learning a sub-account's page into the agency's KB (resolve from artifact, authorize
-      // the caller against it). super_admin (platform owner) may act across tenants.
-      const isPlatformOwner = roles.includes("super_admin");
-      if (!isPlatformOwner) {
-        const { data: activeTenant } = await authed.rpc("current_user_tenant_id");
-        if (str(activeTenant) !== tenantId) {
-          return json(403, { error: "Switch into that workspace to teach its Paige from this artifact." });
-        }
       }
     }
 
@@ -166,7 +169,7 @@ serve(async (req: Request) => {
 
     // ── Extract the artifact's copy (§12 shared extractors) ────────────────────
     const fallbackTitle: Record<string, string> = { page: "Published page", funnel: "Funnel", form: "Form", image: "Image", copy: "Copy" };
-    const artifactTitle = str((artifact as Record<string, unknown>)[src.titleCol]).trim() || fallbackTitle[artifactType];
+    const artifactTitle = str((artifact as unknown as Record<string, unknown>)[src.titleCol]).trim() || fallbackTitle[artifactType];
     let content = "";
     if (artifactType === "page") {
       const { data: page } = await admin.from("growth_pages").select("blocks_json").eq("id", artifactId).maybeSingle();
@@ -215,6 +218,19 @@ serve(async (req: Request) => {
 
     // ── Ingest into the tenant's OWN KB (source='sync' + category='studio' provenance, private) ──
     const sourceUrl = `studio://${artifactType}/${artifactId}`;
+    // Snapshot predecessors with reconciled persisted chunks BEFORE ingest.
+    // Core inserts pending rows at count=0: never retire those in-flight saves.
+    // A positive count is not a claim of complete coverage (partial docs can also
+    // have chunks). Only a complete replacement may retire this captured set.
+    // A failed or capped snapshot permits no cleanup.
+    let priorIds: string[] | null = null;
+    try {
+      const prior = await admin.from("tenant_knowledge_docs").select("id", { count: "exact" })
+        .eq("tenant_id", tenantId).eq("source_url", sourceUrl).gt("chunk_count", 0);
+      if (!prior.error && Array.isArray(prior.data) && prior.count === prior.data.length) priorIds = prior.data.map((row) => row.id);
+    } catch { /* Leave replacement unverified; retain every predecessor. */ }
+    const truncated = content.length > 400_000;
+    ingestionStarted = true;
     const result = await ingestDoc(admin, {
       tenantId,
       title: `Studio — ${artifactTitle}`,
@@ -228,27 +244,38 @@ serve(async (req: Request) => {
     });
 
     if (!result.ok) {
-      return json(200, { ok: false, error: result.error, message: result.detail || "That couldn't be saved to your knowledge base." });
+      return json(200, { ...result, learned: false, message: result.detail || "The save could not be verified. Check your knowledge before retrying." });
     }
-
-    // ── Dedup AFTER a proven-good ingest (§5 idempotency, §13 honesty) ──────────
-    // Re-publishing REPLACES the prior Studio doc for this artifact — but only once the NEW doc
-    // is safely written. Delete-first would mean a re-publish during an embedding outage silently
-    // destroys the previously-learned copy and replaces it with nothing (ingestDoc deletes its own
-    // orphan and returns ok:false). Scoping the delete to source_url with id <> the new doc_id makes
-    // it a clean swap: the fresh doc survives, only stale duplicates for this artifact are removed.
-    await admin.from("tenant_knowledge_docs").delete()
-      .eq("tenant_id", tenantId).eq("source_url", sourceUrl).neq("id", result.doc_id);
+    if (!result.embedded || truncated) {
+      return json(200, { ...result, learned: false, partial: true, truncated,
+        message: `Only part of this ${artifactType} was indexed. Earlier knowledge was kept. Review your knowledge before retrying.` });
+    }
+    let replaced = priorIds !== null;
+    if (priorIds?.length) {
+      try {
+        const removed = await admin.from("tenant_knowledge_docs").delete()
+          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).gt("chunk_count", 0);
+        const remaining = await admin.from("tenant_knowledge_docs").select("id")
+          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).limit(1);
+        replaced = !removed.error && !remaining.error && Array.isArray(remaining.data) && remaining.data.length === 0;
+      } catch { replaced = false; }
+    }
+    if (!replaced) {
+      return json(200, { ...result, learned: false, error: "replacement_unverified",
+        message: `This ${artifactType} was indexed, but replacement of earlier knowledge could not be verified. Review your knowledge before retrying.` });
+    }
 
     return json(200, {
       ok: true,
       doc_id: result.doc_id,
       chunk_count: result.chunk_count,
+      embedded: result.embedded,
       learned: true,
-      message: `Saved this ${artifactType} to your Paige's knowledge — your next drafts will pull from it.`,
+      message: `Saved this ${artifactType} to your Paige's knowledge for use in future drafts.`,
     });
   } catch (e) {
     console.error("studio-learn-from-artifact: unhandled error:", e);
-    return json(500, { error: (e as Error)?.message || "Failed to learn from the artifact." });
+    return json(500, { ok: false, learned: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started",
+      message: ingestionStarted ? "Learning could not be verified. Check your knowledge before retrying." : "The artifact could not be read for learning. Nothing was indexed." });
   }
 });

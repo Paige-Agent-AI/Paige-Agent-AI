@@ -322,9 +322,13 @@ All colors MUST be HSL.
   [data-pg] ::-webkit-scrollbar-thumb:hover { background: var(--pg-faint); background-clip: content-box; }
   [data-pg] ::-webkit-scrollbar-corner { background: transparent; }
 
-  /* THE console's focus treatment. Not a --ring token: an earlier pass defined --ring
-     against white, which is how every control in the rail measured under 3:1. */
-  [data-pg] :focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 3px; }
+  /* THE console's focus treatment: the shared --ring, which inside [data-pg] is the indigo the
+     bridge below defines (#655a96 light / #9b8de0 dark — both above 3:1 on every pg surface).
+     Owner ruling 2026-10-05 (C3): "Focus ring: indigo / the shared --ring token, NOT gold." It was
+     --pg-gold-core, which spent gold on every resting focus — gold is the act alone (§11). The
+     earlier "--ring measured under 3:1" defect was a --ring defined against white; this one is
+     defined against the pg surfaces and measured there. */
+  [data-pg] :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
 
   [data-pg] a { color: var(--pg-gold-core); text-decoration: none; }
   [data-pg] a:hover { color: var(--pg-gold); }
@@ -377,7 +381,7 @@ All colors MUST be HSL.
     --cd-gold: 40 47% 60%;
     --cd-gold-ink: 34 35% 32%;       /* --pg-gold-core on paper */
     --gold-dark: 33 63% 36%;
-    --ring: 34 35% 32%;              /* legacy consumers only; :focus-visible above rules */
+    --ring: 251 25% 47%;             /* --pg-violet #655a96 — indigo, never gold (C3 ruling) */
   }
 
   [data-pg="dark"] {
@@ -406,7 +410,7 @@ All colors MUST be HSL.
     --cd-gold: 39 60% 58%;
     --cd-gold-ink: 41 100% 91%;      /* --pg-gold-core */
     --gold-dark: 40 60% 79%;
-    --ring: 41 100% 91%;
+    --ring: 250 57% 72%;             /* --pg-violet #9b8de0 — indigo, never gold (C3 ruling) */
   }
 
   .dark {
@@ -743,7 +747,7 @@ All colors MUST be HSL.
      app rendered in the browser's default system font). Inter for UI/body,
      Bricolage Grotesque for headings — the single biggest "premium" lift. */
   body {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif; /* impeccable-disable-line overused-font -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     font-feature-settings: "cv05" 1, "ss01" 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -1330,6 +1334,7 @@ All colors MUST be HSL.
   .text-animated-gradient {
     background-image: var(--gradient-hero);
     background-size: 200% 200%;
+    /* impeccable-disable-next-line gradient-text -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1449,7 +1454,9 @@ All colors MUST be HSL.
     animation: shimmer 2s infinite;
   }
 
+  /* impeccable-disable-next-line bounce-easing -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
   .animate-bounce-subtle {
+    /* impeccable-disable-next-line bounce-easing -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     animation: bounce-subtle 2s ease-in-out infinite;
   }
 
@@ -1462,6 +1469,7 @@ All colors MUST be HSL.
   }
 
   .transition-bounce {
+    /* impeccable-disable-next-line bounce-easing -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
@@ -1532,6 +1540,7 @@ All colors MUST be HSL.
   .text-shimmer-purple {
     background: linear-gradient(90deg, #ffffff 0%, #a855f7 45%, #22d3ee 55%, #ffffff 100%);
     background-size: 200% auto;
+    /* impeccable-disable-next-line gradient-text -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

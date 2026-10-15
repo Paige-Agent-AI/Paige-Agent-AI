@@ -14,7 +14,7 @@
 //
 // Run:  node smoke-ssrf.mjs   (or: npm run smoke:ssrf)
 // Exit: 0 = every DNS-free guard case returns the exact expected reason; non-zero = a gap.
-import { ipBlockReason, urlBlockReason, requestMethodBlockReason, isDenylisted, loadDenylist } from "./ssrf-guard.mjs";
+import { ipBlockReason, urlBlockReason, requestMethodBlockReason, requestEgressBlockReason, isDenylisted, loadDenylist } from "./ssrf-guard.mjs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -45,9 +45,19 @@ for (const [ip, want] of ipCases) eq(`ip ${ip}`, ipBlockReason(ip), want);
 
 // A read-only browser must gate the page's request method, not only its destination host.
 for (const method of ["GET", "HEAD"]) eq(`method ${method}`, requestMethodBlockReason(method), null);
-for (const method of ["POST", "PUT", "PATCH", "DELETE", "CONNECT", "TRACE"]) {
+for (const method of ["POST", "PUT", "PATCH", "DELETE", "CONNECT", "TRACE", "OPTIONS"]) {
   eq(`method ${method}`, requestMethodBlockReason(method), "method:not-read-only");
 }
+// INT-312: the request policy admits exactly one OPTIONS — a body-less CORS preflight announcing a read.
+const pf = (acr, hasBody = false) => ({ method: "OPTIONS", headers: acr ? { "access-control-request-method": acr } : {}, hasBody });
+eq("egress GET", requestEgressBlockReason({ method: "GET", headers: {} }), null);
+eq("egress preflight for GET", requestEgressBlockReason(pf("GET")), null);
+eq("egress preflight for HEAD", requestEgressBlockReason(pf("head")), null);
+eq("egress preflight for POST", requestEgressBlockReason(pf("POST")), "method:preflight-for-write");
+eq("egress preflight for DELETE", requestEgressBlockReason(pf("DELETE")), "method:preflight-for-write");
+eq("egress preflight for GET with a body", requestEgressBlockReason(pf("GET", true)), "method:preflight-for-write");
+eq("egress bare OPTIONS (script, no preflight header)", requestEgressBlockReason(pf(null)), "method:not-read-only");
+eq("egress POST", requestEgressBlockReason({ method: "POST", headers: {}, hasBody: true }), "method:not-read-only");
 
 // ── 2) urlBlockReason: schemes rejected ───────────────────────────────────────────────────────────
 for (const u of ["file:///etc/passwd", "javascript:alert(1)", "data:text/html,x", "about:blank", "ftp://h/x", "gopher://h", "chrome://net-internals", "view-source:http://x"]) {

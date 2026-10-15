@@ -1,0 +1,76 @@
+{
+  "fontDelayMs": 2500,
+  "samples": [
+    {
+      "ms": 321,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 578,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 832,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 1084,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 1338,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 1591,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 1845,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 2098,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 2352,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 2605,
+      "ready": "false",
+      "literataLatin": "unloaded/loading"
+    },
+    {
+      "ms": 2858,
+      "ready": "true",
+      "literataLatin": "unloaded/loaded"
+    },
+    {
+      "ms": 3112,
+      "ready": "true",
+      "literataLatin": "unloaded/loaded"
+    },
+    {
+      "ms": 3365,
+      "ready": "true",
+      "literataLatin": "unloaded/loaded"
+    },
+    {
+      "ms": 3618,
+      "ready": "true",
+      "literataLatin": "unloaded/loaded"
+    }
+  ],
+  "neverReadyBeforeLoaded": true
+}

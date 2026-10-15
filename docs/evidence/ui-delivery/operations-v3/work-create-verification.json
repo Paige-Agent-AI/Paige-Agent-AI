@@ -1,0 +1,312 @@
+{
+  "boundary": "Actual shared shell/product creator; explicit synthetic reads/role hints/RPC refusal. No authenticated account or saved task proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal; folded through real control before editing",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal; folded through real control before editing",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 390,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "side rail",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal; folded through real control before editing",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": true
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "paigeMode": "modal; folded through real control before editing",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 480,
+        "contained": true,
+        "canScroll": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "paigeMode": "closed",
+      "draftRetained": true,
+      "refusalShown": true,
+      "discardCancellationRetained": true,
+      "focusRestored": true,
+      "noPageOverflow": true,
+      "geometry": {
+        "width": 390,
+        "contained": true,
+        "canScroll": true
+      }
+    }
+  ],
+  "errors": []
+}

@@ -10,8 +10,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
+      { find: '@/components/admin/voice/DialPadTrigger', replacement: path.resolve(import.meta.dirname, '../marketplace-mount/shell-stubs.tsx') },
+      { find: '../useSalesInvoiceDrafts', replacement: path.join(import.meta.dirname, 'useSalesInvoiceDrafts-stub.ts') },
+      { find: './useInvoiceBillingSources', replacement: path.join(import.meta.dirname, 'useInvoiceBillingSources-stub.ts') },
+      { find: '../useSalesBillingDrafts', replacement: path.join(import.meta.dirname, 'useSalesBillingDrafts-stub.ts') },
+      { find: '../useSoloCommercialTerms', replacement: path.join(import.meta.dirname, 'useSoloCommercialTerms-stub.ts') },
+      { find: '../useCatalogOffers', replacement: path.join(import.meta.dirname, 'useCatalogOffers-stub.ts') },
       { find: "./useSoloSalesOps", replacement: path.join(import.meta.dirname, "useSoloSalesOps-stub.ts") },
-      { find: "./useSoloAgreements", replacement: path.join(import.meta.dirname, "useSoloAgreements-stub.ts") },
+      { find: "./useSoloCommercialTerms", replacement: path.join(import.meta.dirname, "useSoloCommercialTerms-stub.ts") },
       { find: "./useSoloAgreementSignings", replacement: path.join(import.meta.dirname, "useSoloAgreementSignings-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(import.meta.dirname, "useCatalogOffers-stub.ts") },
       { find: "./useSoloCampaigns", replacement: path.join(import.meta.dirname, "useSoloCampaigns-stub.ts") },

@@ -1,0 +1,95 @@
+{
+  "classification": "synthetic local components, not authenticated production",
+  "browser": "154.0.8037.95",
+  "errors": [],
+  "checks": [
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "horizontalOverflow": false,
+      "navReachable": true,
+      "bottom": true,
+      "activityVisible": true,
+      "partialVisible": true,
+      "namedException": true
+    }
+  ]
+}

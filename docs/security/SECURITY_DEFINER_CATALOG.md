@@ -35,28 +35,28 @@ Regression test: manual — POST with invalid token returns null; expired token 
 Re-review triggers: adds PII columns · token verification relaxed
 
 ### Function: public.record_communications_consent
-Grants: anon + authenticated
-Category: B — Public-flow with internal auth check
-Justification: GLBA/TCPA consent capture from public marketing forms (PublicSignup, AffiliateApply). Row is append-only and stamped with request context.
-Auth-check location: Body — writes to `communications_consents` with server-side `now()` and IP; no read/update surface.
-Regression test: manual — repeated calls create separate rows; cannot mutate existing consent.
-Re-review triggers: mutation path added · schema exposes prior consents
+Grants: service_role only (corrected 2026-10-13, #2087 — was anon + authenticated)
+Category: A — Server-only
+Justification: Records a contact PREFERENCE (never evidence: `consent_granted_at`/`disclosure_version`/`source_url` stay null, so no send gate trusts the row). Callers: `affiliate-application-confirm` (service role, bound to the stored application). The old browser callers (PublicSignup, AffiliateApply) are removed. The previous entry's "Category B" was wrong: the body checked nothing, and anyone could write any tenant's, contact's or phone's consent.
+Auth-check location: Body — allows only `auth.role()` = `service_role` or a direct SQL session; anything else raises `CONSENT_WRITE_FORBIDDEN` (§59; a later grant cannot reopen it).
+Regression test: `supabase/tests/security_consent_and_form_links.sql` (database-contract job).
+Re-review triggers: any grant to a browser role · writes evidence columns
 
 ### Function: public.has_email_marketing_consent
-Grants: anon + authenticated
-Category: B — Public-flow with internal auth check
-Justification: Boolean-only helper used by unsubscribe/preference landing pages before login. Returns TRUE/FALSE only; leaks no address or identifier the caller didn't already supply.
-Auth-check location: Body — key by supplied `_email` param; no enumeration.
-Regression test: manual — random emails return false, do not raise.
-Re-review triggers: signature adds enumeration surface
+Grants: service_role only (corrected 2026-10-13, #2087 — was anon + authenticated)
+Category: A — Server-only
+Justification: Platform-level email-marketing gate. It answers false: email is judged on email evidence (never a phone), and no platform path proves inbox ownership yet (signup auto-confirms addresses; no double opt-in, #2101). A business's consent to email its contacts is `paige_consent_events`, never this function. The previous entry's "unsubscribe landing pages" caller was not found in the repo; its anon grant only let anyone probe an address.
+Auth-check location: Grant (service role) + constant fail-closed body.
+Regression test: `supabase/tests/security_consent_and_form_links.sql`.
+Re-review triggers: any grant to a browser role · a double opt-in lands (then trust only confirmed rows)
 
 ### Function: public.has_sms_consent
-Grants: anon + authenticated
-Category: B — Public-flow with internal auth check
-Justification: Mirror of email consent for SMS opt-in checks on public STOP/HELP handlers.
-Auth-check location: Body — keyed by supplied `_phone`.
-Regression test: manual — unknown phones return false.
-Re-review triggers: signature broadens
+Grants: service_role only (corrected 2026-10-13, #2087 — was anon + authenticated)
+Category: A — Server-only
+Justification: Platform-level SMS gate over evidence only (as above) AND only when the evidence's own account has verified that number (`communication_preferences.sms_phone_verified`, set by `verify-sms-code`): signup evidence binds a typed number (#2094). Caller: `paige-operator-sms-send`. The STOP/HELP handlers do not call it. The anon grant was a probe.
+Auth-check location: Grant (service role) + body (answers only `service_role` or a direct SQL session) + evidence-and-verified-number predicate.
+Regression test: `supabase/tests/security_consent_and_form_links.sql`.
+Re-review triggers: any grant to a browser role · trusts a non-evidence row
 
 ---
 
@@ -155,7 +155,10 @@ Justification: Vector search RPCs. Internally scope by tenant. `match_paige_memo
 migration `20270304000000`, §53/§59) derives authority PER TARGET — cross-USER: self /
 `is_platform_operator`; staff cross-CONTACT via `can_access_contact` (per-contact tenant-correct) — with
 each data-branch gated on its own flag and search params bounded; `service_role` is trusted to pass
-server-resolved ids. anon/PUBLIC revoked.
+server-resolved ids. anon/PUBLIC revoked. INT-326 (migration `20270588326000`, #1760): now
+`match_paige_memory(vector, uuid, uuid, float8, int, int, uuid)` — a person's own rows only inside one
+workspace (`_target_tenant_id`; a JWT caller's own `current_user_tenant_id()`, a different one refused
+unless operator), never a client-keyed row, and the tenant-less chat-embedding branch removed.
 
 ### Function: public.get_approval_queue_counts / public.unassigned_queue_for_caller
 Grants: authenticated

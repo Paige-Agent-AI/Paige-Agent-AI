@@ -1,0 +1,81 @@
+[
+  {
+    "heading": "Setup",
+    "overflow": false,
+    "selected": "setup",
+    "tabs": [
+      "Setup",
+      "Platform",
+      "Automations"
+    ],
+    "view": "Setup"
+  },
+  {
+    "heading": "Team",
+    "overflow": false,
+    "selected": "team",
+    "tabs": [],
+    "view": "Team"
+  },
+  {
+    "heading": "Connections",
+    "overflow": false,
+    "selected": "connections",
+    "tabs": [
+      "Connections",
+      "Numbers"
+    ],
+    "view": "Connections"
+  },
+  {
+    "heading": "Integrations",
+    "overflow": false,
+    "selected": "integrations",
+    "tabs": [],
+    "view": "Integrations"
+  },
+  {
+    "heading": "Analytics",
+    "overflow": false,
+    "selected": "analytics",
+    "tabs": [
+      "Analytics",
+      "Alerts"
+    ],
+    "view": "Analytics"
+  },
+  {
+    "heading": "Security & data",
+    "overflow": false,
+    "selected": "security-data",
+    "tabs": [
+      "Governance & security",
+      "Capabilities"
+    ],
+    "view": "Governance"
+  },
+  {
+    "heading": "Vault",
+    "overflow": false,
+    "selected": "vault",
+    "tabs": [],
+    "view": "Vault"
+  },
+  {
+    "heading": "Billing",
+    "overflow": false,
+    "selected": "billing",
+    "tabs": [],
+    "view": "Billing"
+  },
+  {
+    "heading": "PAIGE Intelligence",
+    "overflow": false,
+    "selected": "paige-intelligence",
+    "tabs": [
+      "Overview",
+      "Mind"
+    ],
+    "view": "PAIGE Intelligence"
+  }
+]

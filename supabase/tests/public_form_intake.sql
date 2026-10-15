@@ -160,13 +160,17 @@ SELECT lives_ok(
          current_setting('intake.pa')),
   'the business''s owner routes leads into their own pipeline and sets an alert address');
 
-SELECT lives_ok(
+-- Since 20270537000000 a signed-in caller writes no form row directly: forms change through the
+-- Studio functions (growth_form_upsert / _publish / _set_intake), so publish state and the live
+-- copy can't be edited around them. That covers the alert address too.
+SELECT throws_ok(
   $$ UPDATE public.growth_forms SET name = 'Contact A (renamed)' WHERE id = 'f1a70000-0000-0000-0000-0000000f0a01' $$,
-  'control: the owner can edit the form row directly');
+  '42501', NULL,
+  'the owner cannot edit the form row directly either; forms change through Vibe Studio');
 SELECT throws_ok(
   $$ UPDATE public.growth_forms SET notify_email = 'someone-else@example.test' WHERE id = 'f1a70000-0000-0000-0000-0000000f0a01' $$,
   '42501', NULL,
-  'but the alert address cannot be changed around growth_form_set_intake');
+  'so the alert address cannot be changed around growth_form_set_intake');
 
 SELECT lives_ok(
   $$ SELECT public.growth_form_set_intake('f1a70000-0000-0000-0000-0000000f0a03', false, NULL, NULL, NULL) $$,

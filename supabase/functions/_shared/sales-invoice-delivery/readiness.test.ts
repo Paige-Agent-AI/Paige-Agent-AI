@@ -1,0 +1,8 @@
+import {describe,it,expect} from 'vitest';
+import {invoiceDeliveryReadiness,type ReadinessFacts} from './readiness.ts';
+const base:ReadinessFacts={channel:'email',tenantMatches:true,recipient:'billing@example.test',resendConfigured:true,googleConfigured:false,sender:{tenantMatches:true,active:true,provider:'resend',fromAddress:'tenant@example.test',credentialReferencePresent:false},preSend:{proceed:true,outcome:'proceed'}};
+describe('invoice delivery readiness',()=>{
+ it('refuses configured-looking sender without provider environment, cross-tenant identity or recipient-specific preferences',()=>{expect(invoiceDeliveryReadiness(base).eligible).toBe(true);for(const patch of [{resendConfigured:false},{tenantMatches:false},{sender:{...base.sender!,tenantMatches:false}},{preSend:undefined}])expect(invoiceDeliveryReadiness({...base,...patch}).eligible).toBe(false)});
+ it('requires SMS account, number, approved A2P and this recipients granted consent',()=>{const sms:ReadinessFacts={...base,channel:'sms',recipient:'+12025550123',sms:{credentialsPresent:true,numberPresent:true,a2pApproved:true}};expect(invoiceDeliveryReadiness(sms).eligible).toBe(true);for(const patch of [{sms:{...sms.sms!,a2pApproved:false}},{sms:{...sms.sms!,numberPresent:false}},{preSend:{proceed:false,outcome:'blocked_no_consent'}},{recipient:'5551234'}])expect(invoiceDeliveryReadiness({...sms,...patch}).eligible).toBe(false)});
+ it('keeps iMessage unavailable and exposes no private sender or recipient facts',()=>{expect(invoiceDeliveryReadiness({...base,channel:'imessage'}).state).toBe('unavailable');expect(JSON.stringify(invoiceDeliveryReadiness(base))).not.toContain('example.test')});
+});

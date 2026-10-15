@@ -1,0 +1,36 @@
+name: Migration F growth placeholder check
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270548000001_growth_placeholder_check_per_string.sql'
+      - 'supabase/migrations/20270537000000_vibe_studio_publish_lifecycle.sql'
+      - 'supabase/tests/migration_f_growth_placeholder_check.sql'
+      - '.github/workflows/migration-f-growth-placeholder-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-placeholder-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: migration_f_growth_placeholder_check_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: migration_f_growth_placeholder_check_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migration F — copy publishes, real placeholders refused, nothing else changed (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/migration_f_growth_placeholder_check.sql

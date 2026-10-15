@@ -1,0 +1,1036 @@
+[
+ {
+  "name": "R4.1 bare yes accepts PAIGE's single act offer",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.2 sounds good accepts the offer",
+  "utterance": "Sounds good",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.3 we may as well accepts the offer (the 2026-10-06 prod strand)",
+  "utterance": "We may as well",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.4 for sure accepts the offer",
+  "utterance": "For sure",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.5 go with that accepts a prose step that needs this workspace's data: operational reads",
+  "utterance": "Go with that",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "walk you through the three pricing options"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "prose",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "answer",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": true,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "answer",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.5b an accepted light prose step (a recap) may stay cheap",
+  "utterance": "Go with that",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "recap what we just agreed"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "prose",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "answer",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "answer",
+   "tools": "none",
+   "cognitive_class": "cheap"
+  }
+ },
+ {
+  "name": "R4.5c an accepted prose step with no classifier is operational",
+  "utterance": "Go with that",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "walk you through the three pricing options"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "prose",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": null
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "answer",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.6 the second option answers PAIGE's standing question",
+  "utterance": "The second option",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": true,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.95
+   }
+  },
+  "expect": {
+   "basis": "answers_question",
+   "intent": "choose",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.7 the second option against an offer that named alternatives: PAIGE asks which",
+  "utterance": "The second option",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "ambiguous",
+     "offer": "send the card or draft the invoice"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.95
+   }
+  },
+  "expect": {
+   "basis": "ambiguous_offer",
+   "intent": "clarify",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.8 the same yes with nothing standing is just a reply: cheap, no tools",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.95
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "converse",
+   "tools": "none",
+   "cognitive_class": "cheap"
+  }
+ },
+ {
+  "name": "R4.9 yes while a card stands never approves it and is not the cheap class",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "standing_wait"
+    },
+    "standingCard": true
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.95
+   }
+  },
+  "expect": {
+   "basis": "standing_card",
+   "intent": "converse",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "R4.10 an approval verified by fingerprint executes the stored act: no model",
+  "utterance": "(card approved)",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": true,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.95
+   }
+  },
+  "expect": {
+   "basis": "approved_card",
+   "intent": "act",
+   "tools": "none",
+   "cognitive_class": "deterministic"
+  }
+ },
+ {
+  "name": "F.1 a workspace lookup needs read tools, so operational",
+  "utterance": "What's Dana's email?",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "answer",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": true,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "answer",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.2 thanks is cheap and toolless",
+  "utterance": "Thanks!",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "converse",
+   "tools": "none",
+   "cognitive_class": "cheap"
+  }
+ },
+ {
+  "name": "F.3 general knowledge with no data stays cheap",
+  "utterance": "What's the capital of France?",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "answer",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "answer",
+   "tools": "none",
+   "cognitive_class": "cheap"
+  }
+ },
+ {
+  "name": "F.4 a platform step",
+  "utterance": "Add a task for Acme tomorrow",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.5 hard deep research escalates to frontier",
+  "utterance": "Compare the top three competitors across pricing, positioning and reviews",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "research",
+    "research": "deep_research",
+    "difficulty": "hard",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "research",
+   "tools": "read",
+   "cognitive_class": "frontier",
+   "research": "deep_research"
+  }
+ },
+ {
+  "name": "F.6 no classifier yet: the conservative default, never cheap",
+  "utterance": "Can you help with this?",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": null
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "answer",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.7 an unsure classifier lowers nothing",
+  "utterance": "ok",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.4
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "answer",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.8 Studio is a build surface",
+  "utterance": "make it bolder",
+  "facts": {
+   "surface": "studio",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": null
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "build",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.9 an attached document is read, never on the cheap class",
+  "utterance": "thanks",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": true,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "converse",
+   "tools": "read",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.10 an attached image needs vision",
+  "utterance": "what is this?",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": true
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "converse",
+   "tools": "none",
+   "cognitive_class": "operational",
+   "vision": true
+  }
+ },
+ {
+  "name": "F.11 make an image",
+  "utterance": "Make a hero image for the spring offer",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "build",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "generate",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "build",
+   "tools": "act",
+   "cognitive_class": "operational",
+   "image": "generate"
+  }
+ },
+ {
+  "name": "F.12 find an image is a read capability (search is R10)",
+  "utterance": "Find me a photo of a modern office",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "research",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "find",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "research",
+   "tools": "read",
+   "cognitive_class": "operational",
+   "image": "find"
+  }
+ },
+ {
+  "name": "F.13 a hard conversation is operational, and conversation never escalates to frontier",
+  "utterance": "philosophy chat",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "hard",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "converse",
+   "tools": "none",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.14 a hard accepted act escalates above its floor",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "hard",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "frontier"
+  }
+ },
+ {
+  "name": "F.15 an unsure classifier cannot touch an accepted offer",
+  "utterance": "yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.2
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.16 a site behind a login is the Secure Browser capability",
+  "utterance": "Check my supplier portal for the new price list",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "none",
+     "reason": "no_offer"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": null,
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "research",
+    "research": "secure_browser",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "fresh",
+   "intent": "research",
+   "tools": "read",
+   "cognitive_class": "operational",
+   "research": "secure_browser"
+  }
+ },
+ {
+  "name": "F.17 an unknown accepted offer kind is held like an act",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "unknown",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "act",
+    "research": "none",
+    "difficulty": "routine",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.9
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ },
+ {
+  "name": "F.18 a classifier that misreads an accepted act as small talk cannot make it cheap",
+  "utterance": "Yes",
+  "facts": {
+   "surface": "chat",
+   "approvedCard": false,
+   "answerBinding": false,
+   "foreground": {
+    "offer": {
+     "kind": "accepted",
+     "offer": "send Dana the approval card for the renewal"
+    },
+    "standingCard": false
+   },
+   "acceptedOfferKind": "act",
+   "attachments": {
+    "document": false,
+    "image": false
+   },
+   "classification": {
+    "intent": "converse",
+    "research": "none",
+    "difficulty": "trivial",
+    "image": "none",
+    "needs_workspace_data": false,
+    "confidence": 0.99
+   }
+  },
+  "expect": {
+   "basis": "accepted_offer",
+   "intent": "act",
+   "tools": "act",
+   "cognitive_class": "operational"
+  }
+ }
+]

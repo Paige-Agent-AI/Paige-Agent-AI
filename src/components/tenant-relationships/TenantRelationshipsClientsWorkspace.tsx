@@ -34,6 +34,8 @@ import {
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { PeopleContactEditor } from "./PeopleContactEditor";
 import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
+import { ClientStanding } from "./ClientStanding";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -99,6 +101,10 @@ export function TenantRelationshipsClientsWorkspace({
   const soloClientRoute = /^\/solo\/([^/]+)\/clients(?:\/|$)/.exec(location.pathname);
   const { activeTenantId, activeTenant, accountContextLoading, refresh } = useTenantContext();
   const variant = relationshipWorkspaceVariant(activeTenant?.account_type, activeTenant?.parent_tenant_id);
+  // Experience 04 E4-S3: where each client stands, on the rich Solo client record only. Declared per
+  // §60 (`client_standing`); the route's own account builds its links (same tree, same account).
+  const { has: hasTierFeature } = useTierFeatures();
+  const standing = routeTier === "solo" && hasTierFeature("client_standing") ? { account: soloClientRoute?.[1] ?? null } : null;
   const tabs = workspaceTabs(variant);
   const [routeTab, setRouteTab] = useSubtabRoute(routeTier, "clients", "people");
   const activeTab = tabs.some(({ id }) => id === routeTab) ? routeTab as WorkspaceTab : null;
@@ -124,7 +130,7 @@ export function TenantRelationshipsClientsWorkspace({
     if (!searchParams.has("person") && !clearSalesOrigin) return;
     const next = new URLSearchParams(searchParams);
     next.delete("person");
-    if (clearSalesOrigin) next.delete("origin");
+    if (clearSalesOrigin) { next.delete("origin"); next.delete("salesReturn"); }
     setSearchParams(next, { replace: true });
   }, [activeTenantId, searchParams, setSearchParams, routeTier]);
 
@@ -180,7 +186,7 @@ export function TenantRelationshipsClientsWorkspace({
     <section className={`trc-workspace${soloPeople ? " trc-workspace--people" : ""}${soloConversations ? " trc-workspace--conversations" : ""}${soloCalendar ? " trc-workspace--calendar" : ""}`} data-relationship-workspace data-variant={variant}>
       {routeTier === "solo" && soloClientRoute && !(previousTenantId.current && accountIsChanging) && searchParams.get("origin") === "sales" && (
         <div className="trc-sales-return" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,padding:"8px 18px",flexShrink:0,borderBottom:"1px solid var(--pg-line)"}}>
-          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/growth/sales?resume=terms`)}>Return to commercial terms</button>
+          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/${searchParams.get("salesReturn") === "department" ? "sales/agreements" : "growth/sales"}?resume=terms`)}>Return to commercial terms</button>
           <span>Create or choose a client here, then return to select them in Sales.</span>
         </div>
       )}
@@ -236,6 +242,7 @@ export function TenantRelationshipsClientsWorkspace({
                 deepLinkedContactId={deepLinkedContactId}
                 onSelectContact={selectSoloContact}
                 onClearContact={clearSoloContact}
+                standing={standing}
               />
             : <PeopleView key={activeTenantId} variant={variant} data={data} openPaige={openPaige} selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         )}
@@ -305,6 +312,7 @@ function SoloPeopleView({
   deepLinkedContactId,
   onSelectContact,
   onClearContact,
+  standing,
 }: {
   activeTenantId: string;
   data: ReturnType<typeof useTenantRelationshipsData>;
@@ -313,6 +321,7 @@ function SoloPeopleView({
   deepLinkedContactId: string | null;
   onSelectContact: (id: string) => void;
   onClearContact: () => void;
+  standing: { account: string | null } | null;
 }) {
   const [search, setSearch] = useState("");
   const [editorContact, setEditorContact] = useState<ReturnType<typeof useTenantRelationshipsData>["people"][number] | null>(null);
@@ -573,6 +582,7 @@ function SoloPeopleView({
               onBack={returnToList}
               openPaige={openPaige}
               onEdit={openEditContact}
+              standing={standing}
             />
           ) : (
             <div className="trc-record-empty">
@@ -595,12 +605,14 @@ function ClientRecord({
   onBack,
   openPaige,
   onEdit,
+  standing,
 }: {
   person: ReturnType<typeof useTenantRelationshipsData>["people"][number];
   backRef: (node: HTMLButtonElement | null) => void;
   onBack: () => void;
   openPaige: () => void;
   onEdit: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  standing: { account: string | null } | null;
 }) {
   const isBusiness = person.recordType === "business";
   return (
@@ -625,6 +637,7 @@ function ClientRecord({
       </header>
 
       <div className="trc-record-body">
+        {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">
@@ -669,7 +682,7 @@ function ClientRecord({
           <header><div><span>Owned capabilities</span><h3>Relationship connections</h3></div><ProofPill>Canonical handoffs</ProofPill></header>
           <div className="trc-capability-list">
             <article><div><strong>Conversations · PARTIAL</strong><span>The canonical Conversations owner remains the only inbox. Selected-client context handoff is not yet proven.</span></div></article>
-            <article><div><strong>Campaigns owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
+            <article><div><strong>Sales owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
             <article><div><strong>Portal access · PARTIAL</strong><span>Configuration and invitations remain in existing Portal owners; this record does not prove their role gates.</span></div></article>
             <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>
           </div>

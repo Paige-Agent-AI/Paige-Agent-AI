@@ -11,13 +11,24 @@
 //   4. §14 CACHE + SYNTH — for each attempt: key = SHA-256(provider:model:voice:text), path =
 //      <tenantId>/<hash>.mp3 in the PRIVATE, tenant-scoped `tts-cache` bucket (§9 — never cross-tenant,
 //      never cross-provider). HIT → return stored bytes (zero cost), meter cache_hit:true. MISS →
-//      ElevenLabs (buffered bytes) or OpenAI (streamed + tee); on that attempt's failure, LOUD-log and
-//      fall to the NEXT attempt (§32). The cache key + meter reflect the provider that ACTUALLY
-//      rendered — never the intended one (§13).
+//      RESERVE first (INT-324: every uncached attempt, whichever provider, reserves through the one
+//      reserve_paige_voice_cost_internal seam before any provider call; a refusal ends the request),
+//      then ElevenLabs (buffered bytes) or OpenAI (streamed + tee). Release ONLY on a typed
+//      pre-dispatch NeedsConfigError; commit once the provider answered OK (before streaming); a
+//      failed commit is 503 tts_cost_settlement_unavailable; any other failure stays reserved. On
+//      that attempt's failure, LOUD-log and fall to the NEXT attempt (§32). The cache key + meter
+//      reflect the provider that ACTUALLY rendered — never the intended one (§13).
 //   5. §17 METER — chars to platform_usage_events { event_type:"tts_char", unit:"char" }, service-role,
 //      with the true provider/voice/model + a fell_back flag (§13/§17 honest).
 //   6. §13 HONEST DEGRADE — NEITHER provider keyed → 503 { error:"tts_not_configured" }; every keyed
 //      attempt errored → 502 { error:"tts_synth_failed" }. NEVER a fake/empty audio body.
+//      A refused cost reservation returns the ONE code its semantic identity proves (INT-321,
+//      _shared/voice-cost-refusal.ts): 429 tts_tenant_cost_limit (+ reset_at only when the
+//      canonical function supplied it) · 503 tts_platform_cost_limit · 503 tts_emergency_disabled ·
+//      503 tts_workspace_voice_disabled · 503 tts_not_configured · 503 tts_voice_profile_changed
+//      (a profile-revision race; retryable) · else 503 tts_cost_limit_unavailable.
+//      A failed profile resolve is 503 tts_not_configured only when the resolver PROVED there is no
+//      usable profile; a resolver call that merely failed is 503 voice_profile_unavailable (retryable).
 //
 // verify_jwt=true (config.toml): a normal authenticated fetch from the chat UI. The Authorization
 // header carries the caller's session; the tenant is derived server-side from it.
@@ -31,6 +42,11 @@ import {
 } from "../_shared/tts-router.ts";
 import { elevenlabsTts } from "../_shared/elevenlabs.ts";
 import { NeedsConfigError } from "../_shared/provider-types.ts";
+import {
+  classifyVoiceCostRefusal,
+  classifyVoiceProfileFailure,
+  voiceCostRefusalBody,
+} from "../_shared/voice-cost-refusal.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -163,8 +179,12 @@ serve(async (req: Request) => {
       })
       : null;
     if (!resolvedVoice) {
-      console.error("[paige-tts] approved Paige Voice Profile unavailable", { code: profileError?.code });
-      return json({ error: "voice_profile_unavailable" }, 503);
+      // INT-321: a resolver that PROVED there is no usable profile is configuration
+      // (tts_not_configured, the client disables playback); a resolver call that merely failed is
+      // transient (voice_profile_unavailable, the client offers a retry). Never sticky on a blip.
+      const failure = classifyVoiceProfileFailure(profileError, profileRecord !== null);
+      console.error("[paige-tts] approved Paige Voice Profile unavailable", { sqlstate: profileError?.code ?? null, code: failure.code });
+      return json({ error: failure.code }, failure.status);
     }
     const voiceSource = `paige_profile:${resolvedVoice.profileRevision}`;
 
@@ -204,35 +224,60 @@ serve(async (req: Request) => {
         // Not cached — fall through to synth. Never fatal.
       }
 
-      if (attempt.provider === "elevenlabs") {
-        // Reserve a conservative cost upper bound atomically BEFORE transport. Cache hits above
-        // never reserve. Concurrent calls serialize on the readiness row, exact-cap is allowed,
-        // and provider failures release their reservation.
-        const requestRef = crypto.randomUUID();
-        const { data: reservation, error: reservationError } = await admin.rpc("reserve_paige_voice_cost_internal", {
-          _actor_user_id: user.id,
-          _tenant_id: meterTenantId,
-          _profile_revision: attempt.profileRevision,
-          _request_ref: requestRef,
-          _character_count: capped.length,
+      // ── INT-324: reserve BEFORE EITHER provider. Every uncached attempt — ElevenLabs or OpenAI —
+      // reserves a conservative cost upper bound atomically through the ONE canonical seam before
+      // transport. Cache hits above never reserve. Concurrent calls serialize on the platform row,
+      // exact-cap is allowed, and only a provably pre-dispatch failure releases its reservation. ──
+      const requestRef = crypto.randomUUID();
+      const { data: reservation, error: reservationError } = await admin.rpc("reserve_paige_voice_cost_internal", {
+        _actor_user_id: user.id,
+        _tenant_id: meterTenantId,
+        _profile_revision: attempt.profileRevision,
+        _request_ref: requestRef,
+        _character_count: capped.length,
+      });
+      const reservationId = reservation && typeof reservation === "object" && typeof (reservation as Record<string, unknown>).reservation_id === "string"
+        ? String((reservation as Record<string, unknown>).reservation_id) : null;
+      if (reservationError || !reservationId) {
+        // INT-321: name WHICH refusal by the function's semantic identity (tenant and platform
+        // caps share SQLSTATE 54000). Nothing after this returns audio or tries another
+        // provider: a refused reservation ends the request, so no path can spend past the cap.
+        const refusal = classifyVoiceCostRefusal(reservationError);
+        console.error("[paige-tts] provider cost reservation refused", {
+          provider: attempt.provider,
+          sqlstate: reservationError?.code ?? null,
+          identity: refusal.identity,
+          code: refusal.code,
+          reset_proven: refusal.resetAt !== null,
         });
-        const reservationId = reservation && typeof reservation === "object" && typeof (reservation as Record<string, unknown>).reservation_id === "string"
-          ? String((reservation as Record<string, unknown>).reservation_id) : null;
-        if (reservationError || !reservationId) {
-          console.error("[paige-tts] provider cost reservation refused", { code: reservationError?.code });
-          return json({ error: "tts_cost_limit_unavailable" }, 503);
+        return json(voiceCostRefusalBody(refusal), refusal.status);
+      }
+      // Only a typed missing-key failure is provably pre-dispatch: both adapters resolve the key
+      // before fetch (the ElevenLabs adapter, and openaiSpeech via openaiKey()). Every network, HTTP,
+      // body-read, or empty-audio failure is ambiguous after dispatch and must remain reserved so
+      // retries cannot exceed real provider spend.
+      const releaseIfPreDispatch = async (e: unknown) => {
+        if (e instanceof NeedsConfigError) {
+          await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "released" });
         }
+      };
+      // Commit once the provider answered OK. A failed commit leaves the reservation counting
+      // against the cap: failing safe may over-count, but can never permit unrecorded spend.
+      const commit = async (): Promise<boolean> => {
+        const { error: settleError } = await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "committed" });
+        if (settleError) {
+          console.error("[paige-tts] provider cost settlement failed closed", { provider: attempt.provider, code: settleError.code });
+          return false;
+        }
+        return true;
+      };
 
+      if (attempt.provider === "elevenlabs") {
         let res: Awaited<ReturnType<typeof elevenlabsTts>>;
         try {
           res = await elevenlabsTts({ text: capped, voiceId: attempt.voiceId, modelId: attempt.model });
         } catch (e) {
-          // Only a typed missing-key failure is provably pre-dispatch: elevenlabsTts resolves the
-          // key before fetch. Every network, HTTP, body-read, or empty-audio failure is ambiguous
-          // after dispatch and must remain reserved so retries cannot exceed real provider spend.
-          if (e instanceof NeedsConfigError) {
-            await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "released" });
-          }
+          await releaseIfPreDispatch(e);
           lastErr = (e as Error)?.message ?? "elevenlabs_error";
           console.error("[paige-tts] selected provider attempt failed:", lastErr);
           continue;
@@ -244,13 +289,7 @@ serve(async (req: Request) => {
           lastErr = "elevenlabs_empty_bytes";
           continue;
         }
-        const { error: settleError } = await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "committed" });
-        if (settleError) {
-          // Leave the reservation counting against the cap. Failing safe may over-count, but can
-          // never permit unrecorded provider spend.
-          console.error("[paige-tts] provider cost settlement failed closed", { code: settleError.code });
-          return json({ error: "tts_cost_settlement_unavailable" }, 503);
-        }
+        if (!(await commit())) return json({ error: "tts_cost_settlement_unavailable" }, 503);
         runAfter((async () => {
           const { error: upErr } = await admin.storage.from(CACHE_BUCKET).upload(cachePath, bytes, { contentType: "audio/mpeg", upsert: true });
           if (upErr) console.error("[paige-tts] EL cache upload failed", { message: upErr.message, scope: storagePrefix });
@@ -264,15 +303,24 @@ serve(async (req: Request) => {
       try {
         openaiResp = await synthesizeSpeechStream({ model: attempt.model, voice: attempt.voice }, capped);
       } catch (e) {
+        await releaseIfPreDispatch(e);
         lastErr = (e as Error)?.message ?? "openai_error";
         console.error("[paige-tts] OpenAI attempt failed:", lastErr);
         continue;
       }
       const srcBody = openaiResp.body;
       if (!srcBody) {
+        // Defensive only: openaiSpeech already rejects a body-less response. Keep the reservation
+        // counted because the request crossed the provider boundary.
         lastErr = "openai_no_body";
         console.error("[paige-tts] OpenAI returned no body");
         continue;
+      }
+      // The provider answered OK, so the spend happened: commit BEFORE streaming. A failed commit
+      // returns no audio and frees the provider connection (§13: never unrecorded spend).
+      if (!(await commit())) {
+        await srcBody.cancel().catch(() => {});
+        return json({ error: "tts_cost_settlement_unavailable" }, 503);
       }
 
       const [clientStream, cacheStream] = srcBody.tee();

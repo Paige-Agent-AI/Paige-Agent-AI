@@ -70,6 +70,10 @@ URL, publisher, checked-as-of date, applicable plan/edition/region, and re-verif
 cannot override verified Paige or tenant truth. This architecture decision changes no provider entry
 or state in `integration-capability-registry.json`.
 
+### Operator resource retirement
+
+PAIGE Archive and Delete do not require Twilio or n8n permission, availability or a provider-preparation screen. Archive revokes active access and pauses PAIGE execution. Confirmed Delete removes eligible PAIGE tenant data and exclusively tenant-owned credentials; shared identities and the separate platform connection survive. Minimal external obligations remain in the existing private archive journal and the interface warns that services/charges may continue. Optional external termination remains independent and **PROOF OWED**; database absence never proves it. Supported Storage cleanup executes within the same Delete confirmation through the existing API, with absence readback. Scope, recovery and proof boundary: [operator-account-lifecycle](../delivery/operator-account-lifecycle.md). No second provider or lifecycle system is introduced.
+
 ## The six delivery states (the task-mandated vocabulary)
 
 | State | Meaning |
@@ -204,7 +208,7 @@ correct stays a human §5/§39 responsibility.
   Marketplace** surface (install mechanics shipped) and the **inbound MCP door** (the governed decision
   is live — and it *refuses* every mutation). LIVE there is a delivery fact, not a Paige-autonomy fact.
 - The communications/scheduling/social/automation providers (Twilio, Google Calendar, Resend, Meta,
-  n8n, Zapier) are `PARTIAL` with named gaps; accounting/e-sign (QuickBooks, DocuSign) are
+  n8n, Zapier) are `PARTIAL` with named gaps; accounting/e-sign (QuickBooks, DocuSign) and SendGrid (PAIGE Email, 2026-10-13) are
   `PROOF_OWED`; Microsoft 365 is `DEFERRED`; HubSpot / Vapi are `UNAVAILABLE`; Browserbase is `PROPOSED` (owner-ruled 2026-09-07 as the replaceable bootstrap browser-worker runtime for the Paige-owned Secure Browser, behind a provider-neutral internal contract — desk review 2026-09-07 = **CONDITIONAL GO** with seven owner-side vendor gates before credentialed wiring; `BROWSERBASE_API_KEY` present as an Edge secret = infra readiness only, not wired, not live); the Vault
   OCR/DLP seam is `PROPOSED`.
 - **Coverage is honest, not complete.** The catalogued providers span all six taxonomy groups and all
@@ -242,15 +246,17 @@ longer exists).
 | Google Search Console | marketing/public presence | `UNAVAILABLE` | prohibited | platform OAuth + tenant verified-site source and authenticated read proof required |
 | Google Business Profile | marketing/public presence | `UNAVAILABLE` | prohibited | Google project approval + tenant consent/location selection + receipts/readback required |
 | Microsoft 365 / Outlook | productivity/documents | `DEFERRED` | prohibited | not wired; sequenced after Google parity |
-| Stripe | finance/accounting/payments | `PARTIAL` | confirm | §38 Connect direct-charge posture; bind safe billing status |
-| QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | catalogue real capability; governed read proof |
-| Plaid | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package + per-tenant Financial connection; safe-read boundary (§2/§194) |
+| Stripe | finance/accounting/payments | `PARTIAL` | confirm | four merchant Spine/Chat declarations reuse governed Express setup/resume and safe reads; authenticated merchant/TEST payment proof owed; deployed direct-charge substrate (#1769/#1779) and Billing remain separate |
+| PayPal | finance/accounting/payments | `UNAVAILABLE` | prohibited | visible disabled Finance tile and non-executing GET readback normalizer; approved partner seller onboarding/delegated transport absent; no connector or payment claim |
+| QuickBooks | finance/accounting/payments | `PROOF_OWED` | confirm | controlled consent/read contracts; legacy OAuth/token lifecycle contained; working company integration proof owed |
+| Plaid | finance/accounting/payments | `PARTIAL` | read | controlled company/account projection and item-wide read normalization; Settings activation/eligibility proof owed; separate Funding vertical preserved |
 | SmartCredit | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; dormant (0 producers); entitlement+connection fail-closed gate OWED (§2/§194) |
 | Nav.com (business credit) | finance/accounting/payments | `PROOF_OWED` | read | Funding & Coaching Tools package-gated; live producer (BusinessCreditAdmin) makes the OWED entitlement+connection gate load-bearing (§2/§194) |
 | Business verification (multi-source) | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package-gated; OpenCorporates/SEC direct + SoS via Firecrawl real; D&B/LexisNexis/TU/Array are inert stubs; package-entitlement gate OWED (§2/§194) |
 | Twilio | CRM/calendar/communications | `PARTIAL` | confirm | per-tenant A2P go-live; vanity/premium number search |
 | Google Calendar | CRM/calendar/communications | `PARTIAL` | confirm | FU-3 Rail contract; attribution truthfulness (#786) |
-| Resend | CRM/calendar/communications | `PARTIAL` | confirm | per-tenant sending identity; send receipt on Rail |
+| Resend | CRM/calendar/communications | `PARTIAL` | confirm | Platform Operator email under the 2026-10-13 owner policy; existing tenant Resend connectors kept, not converted; per-tenant sending identity; send receipt on Rail |
+| SendGrid (PAIGE Email) | CRM/calendar/communications | `PROOF_OWED` | confirm | tenant PAIGE Email (owner policy 2026-10-13); governed door + verified-domain gate + receipts built in Experience 03 S3 (not merged 2026-10-13); operator steps (key, domain authentication, verification facts, connector, Event Webhook) and the first owner-approved live send owed |
 | HubSpot | CRM/calendar/communications | `UNAVAILABLE` | prohibited | not wired; native CRM is default |
 | ElevenLabs (optional Paige voice I/O) | CRM/calendar/communications | `PROOF_OWED` | read | transport disabled; owner-only metadata inspection in development cannot substitute for account scopes, voice, retention, quota, concurrency and cost proof |
 | Vapi (voice AI telephony) | CRM/calendar/communications | `UNAVAILABLE` | prohibited | not wired; provider-hosted agents cannot own Paige reasoning or actions |
@@ -262,6 +268,27 @@ longer exists).
 | Paige MCP door | marketplace/MCP/automation | `LIVE` | read | #47 approval channel; 13 unscoped reads (#46) |
 | n8n | marketplace/MCP/automation | `PARTIAL` | confirm | decideGovernedExecution wiring; first Rail row |
 | Zapier (MCP) | marketplace/MCP/automation | `PARTIAL` | confirm | unify risk gate across regimes |
-| Custom remote MCP | marketplace/MCP/automation | `PARTIAL` | confirm | encrypted headers and shared form shipped; authenticated proof owed. Incoming-contact binding and approved owner drawer are draft-only: unchanged migration authorized, earlier migration order and authenticated owner/sender cutover proof still required before release; governed outbound execution still owed. See `../delivery/mcp-contact-binding.md`. |
+| Custom remote MCP | marketplace/MCP/automation | `PARTIAL` | confirm | encrypted headers and shared form shipped; authenticated proof owed. Incoming-contact binding/drawer merged in #1595; owner/sender proof remains owed. Candidate OAuth correction selects challenge scopes, then resource scopes, otherwise omits scope; never the authorization-server-wide catalogue. Provider acceptance and governed outbound execution remain unproven. See `../evidence/ui-delivery/mcp-oauth-resource-scopes.md` and `../delivery/mcp-contact-binding.md`. |
 | Browserbase | marketplace/MCP/automation | `PROPOSED` | prohibited | Secure Browser bootstrap browser-**worker** runtime (replaceable, behind a provider-neutral internal contract); review 2026-09-07 = **CONDITIONAL GO**, 7 vendor gates before wiring |
 | Paige browser + Firecrawl | marketplace/MCP/automation | `PARTIAL` | draft | G5/read-only egress deployed in #1042; DNS-rebinding + SSRF reconciliation and §32.c authenticated drive remain |
+
+### INT-311 Sales merchant connection boundary
+
+Stripe merchant status/refresh and setup/dashboard handoff use `sales_merchant.status`,
+`sales_merchant.refresh`, `sales_merchant.onboarding_start` and `sales_merchant.portal_link`.
+Their Chat tools are `read_sales_merchant_status`, `read_sales_merchant_refresh`,
+`sales_start_merchant_onboarding` and `sales_create_merchant_login_link`. The existing
+`tenant-stripe-connect` endpoint remains the sole approval consumer under shared high/confirm
+Trust, exact stored proposal binding and capability-run Rail. Current onboarding creates a new
+Stripe Express account; OAuth connection of an existing Stripe account is absent. The human
+finishes secure setup in Integrations. Hosted URLs never enter Chat or Rail; a handoff does not
+prove login completion or merchant readiness. Unknown creation uses bounded GET-only recovery,
+never a fresh creation retry. Local contract tests do not establish authenticated merchant or
+TEST payment acceptance: both remain PROOF OWED. Existing platform Billing and deployed Sales
+direct-charge substrate facts remain separate.
+
+PayPal is visible in the Finance filter with connection disabled and an unavailable explanation.
+Its GET-only readback normalizer is not delegated provider transport. Secure approved partner
+seller onboarding is absent; there is no fake connector, merchant activation or payment capability.
+
+Finance caller-bound source reader candidate: existing canonical company/account/liability/accounting/budget/scenario RPCs are consumed through caller-JWT scope and post-read authority fences. Declarations remain unregistered/UNAVAILABLE for Chat/Mind; provider listings do not activate a native company/account or establish ingestion/freshness. Settings Integrations stays the provider home. No new issuer, registry, ledger, UI or financial effect is introduced.

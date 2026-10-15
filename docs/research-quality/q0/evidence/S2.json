@@ -1,0 +1,580 @@
+{
+  "case_id": "S2",
+  "split": "dev",
+  "class": "insufficient",
+  "answer_class": "insufficient",
+  "question": "What is the exact number of employees at Cerebras Systems as of September 2026?",
+  "sub_questions": [
+    "exact current headcount"
+  ],
+  "freshness_days": 365,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T16:13:49.116Z",
+  "http_status": 200,
+  "wall_latency_ms": 33352,
+  "engine_result": {
+    "run_id": "84ba7e73-9575-4940-b241-b94ba55c8714",
+    "question": "What is the exact number of employees at Cerebras Systems as of September 2026?",
+    "findings": [
+      {
+        "text": "Cerebras Systems — Macrotrends reports Cerebras Systems total employee count in 2025 was 340, described as a 0% decline, with data ranging from 340 to 340. (website: https://www.macrotrends.net/stocks/charts/CBRS/cerebras-systems/number-of-employees · 340 (2025))",
+        "citations": [
+          18
+        ],
+        "confidence": "low",
+        "name": "Cerebras Systems",
+        "website": "https://www.macrotrends.net/stocks/charts/CBRS/cerebras-systems/number-of-employees",
+        "values": [
+          "340 (2025)"
+        ]
+      },
+      {
+        "text": "Cerebras Systems, Inc. — Revelio Labs quarterly employee count data shows Cerebras Systems had 779 employees in Q1 2026, up from 709 in Q4 2025, 699 in Q3 2025, 686 in Q2 2025, and 602 in Q1 2025. (website: https://www.reveliolabs.com/companies/cerebras-systems/employees · Q1 2026: 779; Q4 2025: 709; Q3 2025: 699; Q2 2025: 686; Q1 2025: 602)",
+        "citations": [
+          24
+        ],
+        "confidence": "low",
+        "name": "Cerebras Systems, Inc.",
+        "website": "https://www.reveliolabs.com/companies/cerebras-systems/employees",
+        "values": [
+          "Q1 2026: 779",
+          "Q4 2025: 709",
+          "Q3 2025: 699",
+          "Q2 2025: 686",
+          "Q1 2025: 602"
+        ]
+      },
+      {
+        "text": "Cerebras Systems — Unify GTM reports Cerebras Systems has 1,003 observed employee profiles in its July 2026 headcount snapshot, noting this coverage measure may differ from the company's actual reported headcount. (website: https://www.unifygtm.com/insights/headcount/cerebras-systems · 1,003 (July 2026 snapshot))",
+        "citations": [
+          30
+        ],
+        "confidence": "low",
+        "name": "Cerebras Systems",
+        "website": "https://www.unifygtm.com/insights/headcount/cerebras-systems",
+        "values": [
+          "1,003 (July 2026 snapshot)"
+        ]
+      },
+      {
+        "text": "No source among those fetched provides an exact, authoritative employee count for Cerebras Systems specifically dated to September 2026; available figures range from 340 to 1,046 across different sources and time periods, none of which is explicitly dated September 2026. (as listed on [10], verify directly — terms change.; as listed on [24], verify directly — terms change.)",
+        "citations": [
+          10,
+          18,
+          24,
+          30,
+          36
+        ],
+        "confidence": "medium",
+        "unverifiedFields": [
+          "value:as listed on [18], verify directly — terms change.",
+          "value:as listed on [30], verify directly — terms change.",
+          "value:as listed on [36], verify directly — terms change."
+        ],
+        "values": [
+          "as listed on [10], verify directly — terms change.",
+          "as listed on [24], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "Cerebras Systems Inc. — Cerebras Systems' S-1 registration statement was filed with the SEC on April 17, 2026, listing the company's principal executive offices at 1237 E. Arques Avenue, Sunnyvale, California 94085, with CEO Andrew D. Feldman named as signatory. (website: https://www.sec.gov/Archives/edgar/data/2021728/000162828026025762/cerebras-sx1april2026.htm · April 17, 2026)",
+        "citations": [
+          1
+        ],
+        "confidence": "high",
+        "unverifiedFields": [
+          "phone"
+        ],
+        "name": "Cerebras Systems Inc.",
+        "website": "https://www.sec.gov/Archives/edgar/data/2021728/000162828026025762/cerebras-sx1april2026.htm",
+        "values": [
+          "April 17, 2026"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://www.sec.gov/Archives/edgar/data/2021728/000162828026025762/cerebras-sx1april2026.htm",
+        "title": "Cerebras - S-1 (April 2026) - SEC.gov",
+        "snippet": "12 months, with 10% of U.S. employees reporting they used AI in their daily roles. The strong rate of AI adoption is driven by the simple fact that AI has ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:28.414Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://en.wikipedia.org/wiki/Cerebras_Systems",
+        "title": "Cerebras Systems - Wikipedia",
+        "snippet": "| Type | [Public](https://en.wikipedia.org/wiki/Public_company) |\n\n## History\n### Financing\nOn May 14, 2026, the company became a [public company](https://en.wikipedia.org/wiki/Public_company) via the largest U.S. technology [initial public offering](https://en.wikipedia.org/wiki/Initial_public_offering) since 2019, raising $5.55billion by selling 30 million shares at $185 each and opening on [Nasdaq](https://en.wikipedia.org/wiki/Nasdaq) at $350, valuing the company at $95 billion.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:24.797Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://forgeglobal.com/cerebras_ipo/",
+        "title": "Cerebras IPO Timeline and Financing Details - Forge Global",
+        "snippet": "Cerebras became a public company following its IPO on 05/14/2026 and is now traded on the NASDAQ under the ticker CBRS. To learn more about Cerebras potential ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:24.797Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://investors.cerebras.ai/news-releases/news-release-details/cerebras-systems-announces-strong-first-quarter-2026-results",
+        "title": "Cerebras Systems Announces Strong First Quarter 2026 Results",
+        "snippet": "## Cerebras Systems Announces Strong First Quarter 2026 Results\n|  |  |  |  |  |  |  |  |\n|-|-|-|-|-|-|-|-|\n|  |  | **2026** |  |  |  | **2025** |  |\n| Cloud and other services |  | 82,813 |  |  |  | 29,838 |  |\n| Hardware |  | 64,931 |  |  |  | 48,410 |  |\n| Cloud and other services |  | 42,299 |  |  |  | 9,498 |  |\n| Research and development |  | 75,495 |  |  |  | 52,751 |  |\n| Sales and marketing |  | 14,701 |  |  |  | 10,326 |  |\n| General and administrative |  | 11,017 |  |  |  | 6,997 |  |\n\n|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\n|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:25.850Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://ir.nasdaq.com/node/110756/pdf",
+        "title": "[PDF] Nasdaq Reports Second Quarter 2026 Results; $1.5 Billion in Net ...",
+        "snippet": "Nasdaq welcomed 7 of the top 10 largest operating company IPOs listed in the quarter, including Cerebras, the largest semiconductor IPO of all ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:39.611Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://www.cerebras.ai/blog/hiring-engineers-for-an-ai-native-world",
+        "title": "AI-Native Engineering Interviews at Cerebras",
+        "snippet": "# Hiring Engineers for an AI-Native World\nAI coding agents, including Codex-Spark and faster Cerebras-powered coding systems from Cognition, are rapidly changing how software engineers work, giving strong engineers new ways to move faster on implementation, debugging, testing, and exploration. At Cerebras, we’ve seen significant productivity gains as we adopt AI in our engineering organization, and that has shaped how we’ve adapted our technical interview process.\n\n### Software engineering has changed quickly\nOver the past several months, teams in the Cerebras engineering organization have bee",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:29.807Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://www.cerebras.ai/business-partner-code-of-conduct",
+        "title": "Business Partner Code of Conduct - Cerebras",
+        "snippet": "The Business Partners must provide equal opportunities for its employees, contractors, and suppliers, regardless of their race, ethnicity, nationality, social ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:28.414Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://www.cerebras.ai/press-release/cerebras-systems-announces-pricing-of-initial-public-offering",
+        "title": "Cerebras Announces IPO Pricing at $185 per Share",
+        "snippet": "Cerebras announced its initial public offering of 30 million Class A shares at $185 per share, at a public offering price of $185.00 per share. ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:24.797Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://www.clarity.com/browse-companies/cerebras-systems-stock",
+        "title": "Cerebras Systems Stock & IPO Data | Clarity - Hiive",
+        "snippet": "# Cerebras Systems\nIPOCerebras Systems went public on May 14, 2026.\n\nIPOCerebras Systems went public on May 14, 2026.\n\n## FAQ\nIs Cerebras Systems publicly traded?\n\nAs a public company, Cerebras Systems is valued by its market capitalization, which reflects the total market value of its outstanding shares.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:24.797Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.forbes.com/companies/cerebras-systems/",
+        "title": "Cerebras Systems | CBRS Stock Price, Company Overview & News - Forbes",
+        "snippet": "Headquarters: Sunnyvale, California ; Country/Territory: United States ; Chief Executive Officer: Andrew D. Feldman ; Employees: 708 ; Revenue. $510 ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:38.131Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.forbes.com/sites/carminegallo/2026/05/18/the-three-consistent-words-that-fueled-cerebras-blockbuster-ipo/",
+        "title": "The Three Consistent Words That Fueled Cerebras' Blockbuster IPO",
+        "snippet": "Andrew Feldman, the newly minted billionaire CEO of Cerebras, has had decades of experience translating complex ideas into simple terms and ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:38.131Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.forbes.com/sites/karlfreund/2026/01/15/cerebras-ai-lands-a-whale-as-it-prepares-to-go-public/",
+        "title": "Cerebras AI Lands A Whale As It Prepares To Go Public - Forbes",
+        "snippet": "Cerebras, famous for being the only AI company with a full wafer-scale chip, has landed OpenAI, its first major US-based hyperscaler.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:38.131Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.indeed.com/q-cerebras-systems-l-sunnyvale,-ca-jobs.html",
+        "title": "Now Hiring: 50 Cerebras Systems Jobs in Sunnyvale, CA | Indeed",
+        "snippet": "# cerebras systems jobs in Sunnyvale, CA\n- |     |\n| --- |\n| ### [Staff Business Systems Analyst](https://www.indeed.com/rc/clk?jk=055b7171cfcb86b5&bb=5MNehQZyMIrER76VMwC6P8NghPxHvlkcaqUQh_UC9pXUtHvptcIsjHfSEYMUbNfVyB8YZN2S0bYUw2Vk1iGx3ZI0ofV8owq87yQhOi7nt-ejxVy05nAgW8qSrB4GyNLGm0sWzu6mzNv8DK07yj_Ytxq5159V5ost34D3Q6NN0NyCls1OOrOXcA%3D%3D&xkcb=SoA267M2e3z4R9y4SB0ObzkdCdPP&fccid=64e8a1def3c9ba20&vjs=3)Cerebras SystemsHybrid work in Sunnyvale, CA  - Full-time |\n  - Strong **system** adoption, sustained business ownership, and reliable applications…\n\n# **Additional Information**\n#### Explore other",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:29.807Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.linkedin.com/news/story/cerebras-share-price-nearly-doubles-in-years-largest-ipo-8833018/",
+        "title": "Cerebras share price nearly doubles in year's largest IPO - LinkedIn",
+        "snippet": "The IPO raised over $5.5 billion for Cerebras Systems, marking one of the largest tech offerings in years as demand for AI chips surges.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:37.297Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.linkedin.com/posts/cyrus-a-weston-8b001037_cerebras-systems-inc-cbrs-should-you-dump-activity-7460388487935062016-pI9D",
+        "title": "Cerebras Systems IPO May 14 2026 | Cyrus A. Weston Sr. posted on ...",
+        "snippet": "Cerebras is raising its IPO range to $150-$160 per share (up from $115–$125), with the deal size increased to 30M shares. The company is expected to begin ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:37.297Z",
+        "excluded": false
+      },
+      {
+        "index": 16,
+        "url": "https://www.linkedin.com/posts/pm-insights_cerebras-ceo-confirms-ipo-plans-still-on-activity-7383878847844364288-Y8O9",
+        "title": "Cerebras Systems pauses S-1 filing, cites cloud capacity expansion",
+        "snippet": "Revenue projected +250% YoY to $750 million in 2026 on new hyperscaler contracts … for both employees and finance teams.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:37.297Z",
+        "excluded": false
+      },
+      {
+        "index": 17,
+        "url": "https://www.linkedin.com/pulse/cerebras-systems-financial-analysis-q1-2026-062326-0200-faisal-amjad-1e1gf",
+        "title": "Cerebras Systems Financial Analysis – Q1 2026 – 06/23/26 – 02:00 PM PT",
+        "snippet": "The company reported GAAP revenue of $193.4 million, representing 94% year-over-year growth, while core non-GAAP revenue reached $191.3 million ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:37.297Z",
+        "excluded": false
+      },
+      {
+        "index": 18,
+        "url": "https://www.macrotrends.net/stocks/charts/CBRS/cerebras-systems/number-of-employees",
+        "title": "Cerebras Systems: Number of Employees 2027-2026 | CBRS",
+        "snippet": "Cerebras Systems total employee count in 2025 was 340, a 0% decline from . Data ranges from 340 to 340.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:25.850Z",
+        "excluded": false
+      },
+      {
+        "index": 19,
+        "url": "https://www.nasdaq.com/press-release/amd-reports-second-quarter-2026-financial-results-2026-08-04",
+        "title": "AMD Reports Second Quarter 2026 Financial Results - Nasdaq",
+        "snippet": "Second quarter revenue was $11.5 billion, gross margin was 54%, operating income was $2.0 billion, Announced a collaboration with Cerebras to ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:39.611Z",
+        "excluded": false
+      },
+      {
+        "index": 20,
+        "url": "https://www.nasdaq.com/press-release/cerebras-and-compute-nordic-finland-announce-new-165-mw-ai-data-centre-mikkeli",
+        "title": "Cerebras and Compute Nordic Finland Announce New 165 MW AI ...",
+        "snippet": "at full 165 MW scale, supporting an estimated 80–250 direct permanent jobs and €0.8–2.5 million per year in property tax revenue.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:39.611Z",
+        "excluded": false
+      },
+      {
+        "index": 21,
+        "url": "https://www.nasdaq.com/press-release/cerebras-systems-announces-strong-first-quarter-2026-results-2026-06-23",
+        "title": "Cerebras Systems Announces Strong First Quarter 2026 Results | Nasdaq",
+        "snippet": "GAAP quarterly revenue of $193.4 million; record core revenue of $191.3 million, Total revenue 193,406 99,512 Cost of revenue Hardware 64,931 ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:39.611Z",
+        "excluded": false
+      },
+      {
+        "index": 22,
+        "url": "https://www.nasdaq.com/press-release/cerebras-systems-fast-inference-cloud-business-nearly-quadruples-second-quarter-2026",
+        "title": "Cerebras Systems Fast Inference Cloud Business Nearly Quadruples ...",
+        "snippet": "## Cerebras Systems Fast Inference Cloud Business Nearly Quadruples in Second Quarter 2026\n|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\n|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|\n| General and administrative |  | 95,672 |  |  |  | 10,285 |  |  |  | 106,689 |  |  |  | 17,282 |  |\n| Basic |  | 150,968 |  |  |  | 52,720 |  |  |  | 107,132 |  |  |  | 52,363 |  |",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:39.611Z",
+        "excluded": false
+      },
+      {
+        "index": 23,
+        "url": "https://www.nasdaqprivatemarket.com/company/cerebras/",
+        "title": "Cerebras IPO Overview & Pre-IPO History - Nasdaq Private Market",
+        "snippet": "### Cerebras Before IPO Share Price\nNow that Cerebras is a public company, Nasdaq Private Market does not actively track its performance.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:24.797Z",
+        "excluded": false
+      },
+      {
+        "index": 24,
+        "url": "https://www.reveliolabs.com/companies/cerebras-systems/employees",
+        "title": "Cerebras Systems Number of Employees 2026 - Revelio Labs",
+        "snippet": "# How many employees work at Cerebras Systems?\n## Cerebras Systems Annual Employee Count (2023-2026)\n### Cerebras Systems, Inc. quarterly employee count\n| Year | Qtr | Employees | YoY Change | YoY % |\n|-|-|-|-|-|\n| 2026 | Q1 | 779 | +177 | +3.8% |\n| 2025 | Q4 | 709 | +175 | +4.1% |\n| 2025 | Q3 | 699 | +206 | +5.3% |\n| 2025 | Q2 | 686 | +237 | +9.1% |\n| 2025 | Q1 | 602 | +203 | +6.7% |\n| 2024 | Q4 | 534 | +141 | +3.9% |\n| 2024 | Q3 | 493 | +111 | +3.8% |\n| 2024 | Q2 | 449 | +67 | +2.3% |\n| 2024 | Q1 | 399 | +14 | -0.5% |\n| 2023 | Q4 | 393 | -51 | -8.0% |\n| 2023 | Q3 | 382 | -69 | -8.8% |\n| 2023",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:25.850Z",
+        "excluded": false
+      },
+      {
+        "index": 25,
+        "url": "https://www.reveliolabs.com/companies/coming-soon/employees",
+        "title": "Coming Soon Number of Employees 2026 - Revelio Labs",
+        "snippet": "Coming Soon had 3,359 employees in 2026, a 1.1% increase (+589) from 2025. Coming Soon had 3,281 employees in 2025, a 4.7% increase (+710) from 2024.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:35.967Z",
+        "excluded": false
+      },
+      {
+        "index": 26,
+        "url": "https://www.reveliolabs.com/companies/figure/employees",
+        "title": "Figure Number of Employees 2026 | Employee Count & Headcount Data",
+        "snippet": "# How many employees work at Figure?\n## About Figure’s Workforce\nFigure Technologies LLC is an Information Technology Services company that employs **574** people worldwide as of March 2026.\n\nEmployees574\n\n## Figure Employee Count by Department (2026)\n### Figure employees by department\n[See Full Data](https://www.reveliolabs.com/demo)\n\n## Similar Companies\n### Similar Information Technology Services Companies by Employee Count\n|  |  |\n|-|-|\n| [Varo Money, Inc.](https://www.reveliolabs.com/companies/varo-money/employees) | [432](https://www.reveliolabs.com/companies/varo-money/employees) |\n| [O",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:35.967Z",
+        "excluded": false
+      },
+      {
+        "index": 27,
+        "url": "https://www.reveliolabs.com/companies/government-of-the-usa/employees",
+        "title": "Government of The USA Number of Employees 2026 - Revelio Labs",
+        "snippet": "Government of The USA Annual Employee Count (2023-2026) · Government of The USA had 3,911,367 employees in 2026, a 2.7% decline (-172,933) from 2025. · Government ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:35.967Z",
+        "excluded": false
+      },
+      {
+        "index": 28,
+        "url": "https://www.reveliolabs.com/companies/ltm-ltd-us/employees",
+        "title": "Employee Count & Headcount Data - LTM Ltd. (US) - Revelio Labs",
+        "snippet": "# How many employees work at LTM Ltd. (US)?\n## About LTM Ltd. (US)’s Workforce\n( **US**) is an IT Consulting Services company that employs **17,676** people worldwide as of March 2026.\n\nEmployees17,676\n\n## LTM Ltd. (US) Annual Employee Count (2023-2026)\n### LTM Ltd. (US) quarterly employee count\n| Year | Qtr | Employees | YoY Change | YoY % |\n|-|-|-|-|-|\n| 2026 | Q1 | 17,676 | +8,486 | +17.4% |\n\n## Similar Companies\n### Similar IT Consulting Services Companies by Employee Count\n|  |  |\n|-|-|\n| [Larsen & Toubro Infotech Ltd. (India)](https://www.reveliolabs.com/companies/larsen-toubro-infotech/",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:35.967Z",
+        "excluded": false
+      },
+      {
+        "index": 29,
+        "url": "https://www.reveliolabs.com/companies/wikipedia/employees",
+        "title": "Wikipedia Number of Employees 2026 - Revelio Labs",
+        "snippet": "Wikipedia's total workforce has declined from 559 employees in 2023 to 549 in 2026. Wikipedia's headcount peaked at 591 in 2024. Wikipedia, Inc. quarterly ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:35.967Z",
+        "excluded": false
+      },
+      {
+        "index": 30,
+        "url": "https://www.unifygtm.com/insights/headcount/cerebras-systems",
+        "title": "Cerebras Systems Headcount Insights & Observed Profile Trends | Unify",
+        "snippet": "Cerebras Systems has 1,003 observed employee profiles in the July 2026 headcount snapshot. This coverage measure may differ from the company's ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:25.850Z",
+        "excluded": false
+      },
+      {
+        "index": 31,
+        "url": "https://www.quora.com/What-is-it-like-to-work-at-Cerebras-Systems",
+        "title": "What is it like to work at Cerebras Systems? - Quora",
+        "snippet": "What is it like to work at Cerebras Systems? · PernixData is a fast growing company! · Project schedules and growth targets are aggressive. · You ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:29.807Z",
+        "excluded": true
+      },
+      {
+        "index": 32,
+        "url": "https://www.cerebras.ai/",
+        "title": "Cerebras Systems",
+        "snippet": "Cerebras powers the world's fastest AI inference on the biggest wafer chip. Cerebras CS-4 delivers up to 30x faster inference than GPUs.",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:28.414Z",
+        "excluded": false
+      },
+      {
+        "index": 33,
+        "url": "https://www.cerebras.ai/open-positions",
+        "title": "Cerebras Open Positions | AI Careers and Jobs",
+        "snippet": "Search open roles at Cerebras across AI inference software, semiconductor hardware, datacenter operations, product, security, and corporate teams.",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:29.807Z",
+        "excluded": false
+      },
+      {
+        "index": 34,
+        "url": "https://www.forbes.com/sites/shivaramrajgopal/2026/05/21/the-permabulls-blind-spot-what-the-cerebras-ipo-tells-us-about-the-super-ipo-season-ahead/",
+        "title": "The PermaBull's Blind Spot: What The Cerebras IPO Tells Us About The ...",
+        "snippet": "Cerebras raised $5.5 billion in a day. Its S-1 discloses two unremediated material weaknesses, 86% revenue concentration in two customers, ...",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:38.131Z",
+        "excluded": false
+      },
+      {
+        "index": 35,
+        "url": "https://www.forbes.com/sites/tiriasresearch/2021/08/24/cerebras-takes-hyperscaling-in-new-direction/",
+        "title": "Cerebras Takes Hyperscaling In New Direction - Forbes",
+        "snippet": "AI chip and system startup company Cerebras took a different approach by building one massive AI processor, a complete 300mm wafer full of cores ...",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:38.131Z",
+        "excluded": false
+      },
+      {
+        "index": 36,
+        "url": "https://www.linkedin.com/company/cerebras-systems",
+        "title": "Cerebras | LinkedIn",
+        "snippet": "View all 1,046 employees Overview Jobs … size 501-1,000 employees",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:13:25.850Z",
+        "excluded": false
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 5 finding(s) across 35 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "fca90cd8-a571-4e56-b52e-14ec51abe971",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 245,
+      "tokens_out": 424,
+      "cost_estimate_usd": 0.0071,
+      "latency_ms": 5470,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T16:13:21.721767+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 5,
+    "sources_retrieved": 36,
+    "sources_included": 35,
+    "sources_excluded": 1,
+    "sources_cited": 6,
+    "primary_ratio": 0.16666666666666666,
+    "citation_independence": 1,
+    "distinct_cited_hosts": 6,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 365,
+    "wall_latency_ms": 33352,
+    "trace_cost_usd": 0.0071,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

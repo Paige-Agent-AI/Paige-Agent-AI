@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
-import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Wrench, X } from "lucide-react";
+import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Telescope, Wrench, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PaigeAIChat, type ChatRailApi } from "@/components/dashboard/PaigeAIChat";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { ResearchView } from "@/solo/paige-research";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
@@ -11,13 +12,15 @@ import { useSoloSkills } from "./data/useSoloSkills";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
+import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
-type SoloPaigeTab = "chat" | "knowledge" | "helpers" | "capabilities";
+type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilities";
 
 const TABS: Array<{ id: SoloPaigeTab; label: string; icon: typeof Sparkles }> = [
   { id: "chat", label: "Chat", icon: Sparkles },
   { id: "knowledge", label: "Knowledge", icon: BookOpen },
+  { id: "research", label: "Research", icon: Telescope },
   { id: "helpers", label: "Helpers", icon: Bot },
   { id: "capabilities", label: "Capabilities", icon: Wrench },
 ];
@@ -233,22 +236,22 @@ function CapabilitiesView() {
   return (
     <div className="spw-management-view">
       <PanelHeader
-        eyebrow="Capability Registry"
-        title="What PAIGE can actually use"
-        description="Capabilities are skills, tools, connectors, and executable abilities. Marketplace acquisition remains separate and is not implemented here."
-        state={<TruthPill tone="live">Registry read</TruthPill>}
+        eyebrow="Skill catalogue"
+        title="Workspace capabilities"
+        description="Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them."
+        state={<TruthPill>Catalogue</TruthPill>}
       />
       <div className="spw-scroll">
         <section className="spw-capabilities" aria-label="Capabilities">
-          <div className="spw-cap-head"><span>Capability</span><span>Availability</span><span>Authority</span></div>
-          {capability.loading && <div className="spw-state" role="status">Loading available capabilities…</div>}
+          <div className="spw-cap-head"><span>Capability</span><span>Status</span><span>Access</span></div>
+          {capability.loading && <div className="spw-state" role="status">Loading this workspace’s skill catalogue…</div>}
           {capability.error && <div className="spw-state spw-state-error" role="alert"><strong>Capabilities could not be loaded.</strong><span>{capability.error}</span><button type="button" onClick={capability.refresh}><RotateCw aria-hidden size={14} /> Retry</button></div>}
-          {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No callable capabilities are available</strong><span>This is an honest empty registry state, not a permissions promise.</span></div>}
+          {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No skills are listed</strong><span>This workspace’s skill catalogue is empty.</span></div>}
           {rows.map((skill) => (
             <div className="spw-cap-row" key={skill.slug}>
               <div><strong>{skill.n}</strong><small>{skill.d || skill.cat || "Registry description unavailable"}</small></div>
-              <TruthPill tone={skill.on ? "live" : "unavailable"}>{skill.on ? "Available" : "Unavailable"}</TruthPill>
-              <span>{skill.ro ? "Read only" : "Ask first"}</span>
+              <TruthPill>{skill.on ? "Listed" : "Inactive"}</TruthPill>
+              <span>Unverified</span>
             </div>
           ))}
           {/* §13 — THIS ROW CONTRADICTED THE SURFACE IT DESCRIBES. It read "Partial / Not
@@ -378,10 +381,11 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div></div>}
+          conversationHeader={<div className="spw-chat-head"><div><strong>PAIGE</strong><span>Active Solo account · tenant-scoped</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={new URLSearchParams(location.search).get("onboarding") === "1"} />}</div>}
         />
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>
+      <section id="spw-panel-research" role="tabpanel" aria-labelledby="spw-tab-research" hidden={tab !== "research"} className="spw-panel">{tab === "research" && <ResearchView activeTenantId={activeTenantId} />}</section>
       <section id="spw-panel-helpers" role="tabpanel" aria-labelledby="spw-tab-helpers" hidden={tab !== "helpers"} className="spw-panel">{tab === "helpers" && <HelpersView />}</section>
       <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView />}</section>
       <span className="spw-sr" aria-live="polite">{TABS.find((item) => item.id === tab)?.label} view open</span>

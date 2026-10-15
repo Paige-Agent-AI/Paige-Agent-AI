@@ -124,3 +124,25 @@ corrected. Re-proof is the same CI boundary run (now 16 cases incl. the Finding-
 Exact merge SHA, `deploy-migrations.yml` run + `db-live` tag against the merge SHA (zero drift),
 `migration list` confirmation that `20270304000000` is recorded on prod, and the Shipped Delivery Log
 row — recorded after merge per §32.a (never hand-applied).
+
+## INT-326 addendum — workspace scope (2026-10-05, #1760, not merged when written)
+
+The function above keyed a person's own memory on `client_user_id` alone, so a row written in
+workspace A was recalled in workspace B. Migration `20270588326000_match_paige_memory_workspace_scope.sql`
+replaces it with a 7-argument signature (`_target_tenant_id`) and drops the 6-argument one. The same
+fixture now applies the chain (predecessor, then the replacement twice) and proves, in a block that
+runs first so each proof is the one that fails when its defect returns:
+
+| Proof | Assertion | Mutation that makes it fail |
+|---|---|---|
+| W-A | service role in A recalls `X-in-A` only | tenant predicate removed; chat branch reinstated |
+| W-B | in B recalls `X-in-B` only; Y (wrote only in A) gets 0 in B | tenant predicate removed |
+| W-C | no workspace → 0 rows, no error (service and operator at rest) | "null scope means every workspace" |
+| W-D | X separated by its own active workspace; naming another → `Unauthorized` | JWT may name any workspace |
+| W-E | a row written ABOUT a client by the caller never in their own recall; chat embeddings never returned | `client_id IS NULL` removed; chat branch reinstated |
+| C13 | the 6-argument signature no longer exists; grants on the 7-argument one | DROP removed (the 6-arg call becomes ambiguous) |
+
+Existing C1–C16 counts were re-derived for the new rules (the user branch needs a workspace; the chat
+branch is gone) and still pass. Run locally against an isolated `pgvector`-enabled Postgres 16; CI runs
+the same file in `.github/workflows/match-paige-memory-authz.yml` (path filter extended to the new
+migration). Production row re-confirm and an authenticated drive remain PROOF OWED.

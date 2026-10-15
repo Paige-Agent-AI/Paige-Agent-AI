@@ -28,11 +28,23 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GrowthHub } from "./growth2";
+import { GrowthHub, DetailDrawer } from "./growth2";
+import { SalesOps } from "./sales-ops";
+import { SalesWorkspace } from "./SalesWorkspace";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+// Marketing › Analytics' email row reads through its own adapter; its RPC contract is proven with the Email tab.
+// The pipeline funnel's empty state asks once whether the ads-intake functions are deployed; that read is
+// proven in marketing-ads.render.test.tsx. Here they are deployed and nothing leaves the test.
+vi.mock('./ads-intake-capability', () => ({ useAdsIntakeCapability: () => 'present', noteAdsIntakeAnswer: () => {}, resetAdsIntakeCapability: () => {} }));
+vi.mock('./marketing-analytics-email', () => ({ useEmailStats: () => ({ phase: 'ready', stats: { sent: 0, tracked: 0, opened: 0, clicked: 0 }, retry: () => {} }) }));
+vi.mock('./useCampaignAssets', async (importOriginal) => ({ ...(await importOriginal<typeof import('./useCampaignAssets')>()), useCampaignAssets: () => ({ phase: 'ready', canManage: false, links: [], available: [], retry: () => {}, attach: async () => ({ ok: false, message: '' }), detach: async () => ({ ok: false, message: '' }) }) }));
+vi.mock('./marketing-analytics-metrics', async (importOriginal) => ({ ...(await importOriginal<typeof import('./marketing-analytics-metrics')>()), useMarketingServerFigures: () => ({ phase: 'denied', current: null, previous: null }), useMarketingProcessingHealth: () => ({ phase: 'denied', health: null }) }));
+vi.mock('./useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
+vi.mock('./sales/useInvoiceBillingSources',()=>({useInvoiceBillingSources:()=>({tenantId:'test-tenant-billing',phase:'ready',customers:[],agreements:[]})}));
+vi.mock('./useSalesBillingDrafts', () => ({ useSalesBillingDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
 
 const ROUTED = {
   id: "submission-routed",
@@ -50,7 +62,13 @@ const UNROUTED = {
 };
 
 const harness = vi.hoisted(() => ({
-  state: {} as Record<string, unknown>,
+  state: {} as {
+    tenantId: string; phase: string;
+    campaigns: unknown[]; artifacts: unknown[];
+    submissions: Array<{ id: string; source: string; createdAt: string; contactId: string | null; dealId: string | null }>;
+    pipelineWorkspace: { canManage: boolean; folders: unknown[]; pipelines: unknown[]; stages: unknown[]; deals: unknown[] };
+    pipelineAction: () => Promise<{ ok: boolean; message: string }>; retry: () => void;
+  },
   offers: {} as Record<string, unknown>,
   sales: {} as Record<string, unknown>,
   agreements: {} as Record<string, unknown>,
@@ -72,6 +90,11 @@ vi.mock("./data/useSoloTrust", () => ({
   useSoloTrust: () => ({ loading: false, configured: true, departments: [], bySlug: {}, error: null }),
 }));
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
+// Audience, Content, Email and Ads read Supabase directly; this suite only needs them mounted, not reading.
+vi.mock("./marketing-content", () => ({ MarketingContent: () => <div data-planned-view="content"/> }));
+vi.mock("./marketing-ads", () => ({ MarketingAds: () => <div data-planned-view="ads"/>, adsViewOf: () => "overview" }));
+vi.mock("./marketing-email", () => ({ MarketingEmail: () => <div data-planned-view="email"/> }));
+vi.mock("./marketing-audience", () => ({ MarketingAudience: () => <div data-planned-view="audience"/> }));
 vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers }));
 // Overview (the Campaign Command Desk) reads owner briefs through its own tenant-scoped adapter;
 // this suite renders all six tabs, so stub the briefs read ready/empty (its own proof is in
@@ -91,9 +114,9 @@ vi.mock("./useSoloSalesOps", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./useSoloSalesOps")>();
   return { ...actual, useSoloSalesOps: () => harness.sales };
 });
-vi.mock("./useSoloAgreements", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./useSoloAgreements")>();
-  return { ...actual, useSoloAgreements: () => harness.agreements };
+vi.mock("./useSoloCommercialTerms", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./useSoloCommercialTerms")>();
+  return { ...actual, useSoloCommercialTerms: () => harness.agreements };
 });
 // Same split as the sales adapter above: this file proves the SURFACE. What the signings adapter
 // sends — the tenant filter, the refusal-only expected tenant, the "a promise without a token is
@@ -126,10 +149,15 @@ function LocationProbe() {
   return null;
 }
 
+function OperationsSubject() {
+  const navigate=useNavigate();
+  const [detail,setDetail]=React.useState(null);
+  return <div className="solo-campaigns"><nav className="campaigns-nav"/><div className="campaigns-scroll"><SalesOps setDetail={setDetail} deals={harness.state.pipelineWorkspace.deals} stages={harness.state.pipelineWorkspace.stages} dealsPhase={harness.state.phase} submissions={harness.state.submissions} submissionsPhase={harness.state.phase} submissionsRetry={harness.state.retry} onOpenCatalog={(resume=false)=>navigate(`/solo/42/sales/offers${resume ? "?resume=terms" : ""}`)} onOpenClients={(id)=>navigate(`/solo/42/clients/people?origin=sales&salesReturn=department${id ? `&person=${id}` : ""}`)} onOpenPipeline={()=>navigate("/solo/42/sales/pipeline")}/></div><DetailDrawer detail={detail} onClose={()=>setDetail(null)}/></div>;
+}
 const appAt = (path: string) => (
   <MemoryRouter initialEntries={[path]}>
     <LocationProbe />
-    <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
+    <Routes><Route path="/test-sales" element={<OperationsSubject/>}/><Route path="/solo/:account/*" element={path.includes("/growth/") ? <GrowthHub/> : <SalesWorkspace/>} /></Routes>
   </MemoryRouter>
 );
 
@@ -142,7 +170,8 @@ function renderAt(path: string) {
   act(() => root!.render(appAt(path)));
 }
 // Each Sales view is a Sales-local `?view=` param; command is the bare default.
-const salesPath = (view?: string) => `/solo/42/growth/sales${view ? `?view=${view}` : ""}`;
+// Surface-level regression subject: actual SalesOps and real drawer, independent of retired host.
+const salesPath = (view: string = "command") => `/test-sales${view ? `?view=${view}` : ""}`;
 const render = (view?: string) => renderAt(salesPath(view));
 
 beforeEach(() => {
@@ -217,6 +246,38 @@ function openQuickOffer() {
 }
 
 describe("§58 — behaviour that shipped on Sales and must survive the command-desk rebuild", () => {
+  it("reopens resumed terms with immediately-ready canonical sources", () => {
+    renderAt("/test-sales?resume=terms");
+    expect(host.querySelector(".so-agreement-editor")).not.toBeNull();
+    expect(lastLocation).toBe("/test-sales?view=terms");
+  });
+  it("waits for loading sources then opens the resumed terms editor", () => {
+    harness.agreements.phase="loading"; harness.offers.phase="loading";
+    renderAt("/test-sales?resume=terms");
+    expect(host.querySelector(".so-agreement-editor")).toBeNull();
+    expect(lastLocation).toContain("resume=terms");
+    harness.agreements.phase="ready"; harness.offers.phase="ready";
+    act(()=>root!.render(appAt("/test-sales?resume=terms")));
+    expect(host.querySelector(".so-agreement-editor")).not.toBeNull();
+    expect(lastLocation).toBe("/test-sales?view=terms");
+  });
+  it("clears a resumed editor on workspace switch without reopening consumed intent", () => {
+    renderAt("/test-sales?resume=terms");
+    expect(host.querySelector(".so-agreement-editor")).not.toBeNull();
+    for(const source of [harness.sales,harness.offers,harness.agreements,harness.signings])source.tenantId="tenant-2";
+    act(()=>root!.render(appAt("/test-sales?resume=terms")));
+    expect(host.querySelector(".so-agreement-editor")).toBeNull();
+    expect(lastLocation).not.toContain("resume=terms");
+  });
+  it("retains resume until commercial sources agree on the current workspace", () => {
+    harness.offers.tenantId="other-tenant";
+    renderAt("/test-sales?resume=terms");
+    expect(host.querySelector(".so-agreement-editor")).toBeNull();
+    expect(lastLocation).toContain("resume=terms");
+    harness.offers.tenantId="tenant-1";
+    act(()=>root!.render(appAt("/test-sales?resume=terms")));
+    expect(host.querySelector(".so-agreement-editor")).not.toBeNull();
+  });
   it("keeps the owner-placed client-billing boundary, verbatim (Revenue view)", () => {
     render("revenue");
     const text = host.textContent ?? "";
@@ -271,12 +332,14 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     expect(host.querySelector(".campaigns-skeleton")).not.toBeNull();
   });
 
-  it("keeps the six-tab strip in order, with Sales in place", () => {
-    render();
-    const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Campaigns views"] [role="tab"]')]
+  it("keeps the owner's seven-tab Marketing strip after commercial cutover (Ads is its own department)", () => {
+    // Campaigns became the Marketing department (owner ruling 2026-10-03). Sales stays reachable
+    // here, in the Sales lane's group, until its own top-level home ships.
+    renderAt("/solo/42/growth/overview");
+    const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Catalog", "Sales", "Pipeline", "Social", "Performance"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {
@@ -306,6 +369,17 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
 });
 
 describe("Sales Command — the operating desk (new)", () => {
+  it("uses the approved five primary billing tabs and preserves secondary operating tools", () => {
+    renderAt('/test-sales');
+    expect([...host.querySelectorAll('.so-subnav [role="tab"]')].map(tab => tab.textContent)).toEqual(['Overview', 'Payments', 'Invoices', 'Recurring', 'Agreements']);
+    const invoiceTab = [...host.querySelectorAll('.so-subnav [role="tab"]')].find(tab => tab.textContent === 'Invoices') as HTMLButtonElement;
+    act(() => invoiceTab.click());
+    expect(lastLocation).toContain('view=invoices');
+    expect(host.textContent).toContain('Start with a client and an offer');
+    expect(host.querySelector('[aria-label="Additional sales tools"]')).toBeNull();
+    renderAt('/test-sales?view=command');
+    expect(host.textContent).toContain('Turn agreed value into received value');
+  });
   it("opens on Sales Command with an evidence-classed pulse and no representative-data claim", () => {
     render();
     const text = host.textContent ?? "";
@@ -378,7 +452,7 @@ describe("Sales Command — the operating desk (new)", () => {
 
   it("deep-links each view through the Sales-local sub-nav", () => {
     render();
-    const toTerms = [...host.querySelectorAll('.so-subnav [role="tab"]')].find((b) => b.textContent === "Commercial Terms") as HTMLButtonElement;
+    const toTerms = [...host.querySelectorAll('.so-subnav [role="tab"]')].find((b) => b.textContent === "Agreements") as HTMLButtonElement;
     expect(toTerms).not.toBeUndefined();
     act(() => toTerms.click());
     expect(host.textContent).toContain("Agreements and terms");
@@ -808,17 +882,17 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
   });
 
   it("says the word Sales once on the command view, not three times down the page", () => {
-    render();
+    renderAt("/solo/42/sales/overview");
     const saying = [...host.querySelectorAll("*")]
       .filter((el) => el.children.length === 0 && el.textContent?.trim() === "Sales");
     expect(saying).toHaveLength(1);
-    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("Sales");
-    const headings = [...host.querySelectorAll("h1,h2,h3")].map((h) => h.textContent ?? "");
+    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("Overview");
+    const headings = [...host.querySelectorAll("h1:not(.campaigns-sr-only),h2,h3")].map((h) => h.textContent ?? "");
     expect(headings.some((h) => /Sales/.test(h))).toBe(false);
   });
 
-  it("renders no masthead above the work on any of the six tabs, and moves truth onto the desk", () => {
-    for (const slug of ["overview", "catalog", "sales", "pipeline", "social", "performance"]) {
+  it("renders no masthead above the work on any tab, and moves truth onto the desk", () => {
+    for (const slug of ["overview", "campaigns", "audience", "content", "social", "email", "lead-capture", "analytics", "catalog", "sales", "pipeline"]) {
       renderAt(`/solo/42/growth/${slug}`);
       expect(host.querySelector(".pg-hd"), `masthead returned on ${slug}`).toBeNull();
     }

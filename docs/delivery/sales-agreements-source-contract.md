@@ -38,7 +38,7 @@ row here has ever touched a payment provider. A row is a record of *what was agr
 business, for the business. Anything that reads it and implies otherwise has broken the money
 boundary regardless of how the data is shaped.
 
-The tenant's own surface reads it through `src/solo/useSoloAgreements.ts`. Anything Spine-side must
+The tenant's own surface reads it through `src/solo/useSoloCommercialTerms.ts`. Anything Spine-side must
 be a **second derivation over the same source, under its own workspace-wide authority gate** — never
 a re-projection of the caller's row-filtered read, for the reason set out in §4. It must never become
 a second source of truth.

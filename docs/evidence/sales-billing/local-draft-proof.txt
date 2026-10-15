@@ -1,0 +1,305 @@
+BEGIN
+DO
+CREATE SCHEMA
+CREATE TABLE
+CREATE FUNCTION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+GRANT
+GRANT
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE FUNCTION
+DROP TRIGGER
+psql:supabase/migrations/20260629204156_de73719f-ec4d-4fbe-a0f4-5855a64c1562.sql:68: NOTICE:  trigger "trg_paige_invoices_touch" for relation "public.paige_invoices" does not exist, skipping
+CREATE TRIGGER
+CREATE FUNCTION
+psql:supabase/migrations/20260629204156_de73719f-ec4d-4fbe-a0f4-5855a64c1562.sql:94: NOTICE:  trigger "trg_paige_invoices_number" for relation "public.paige_invoices" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE POLICY
+ALTER TABLE
+DROP POLICY
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:10: NOTICE:  policy "sales_draft_select_guard" for relation "public.paige_invoices" does not exist, skipping
+CREATE POLICY
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:18: NOTICE:  policy "sales_draft_insert_guard" for relation "public.paige_invoices" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:24: NOTICE:  policy "sales_draft_update_guard" for relation "public.paige_invoices" does not exist, skipping
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:33: NOTICE:  policy "sales_draft_delete_guard" for relation "public.paige_invoices" does not exist, skipping
+CREATE POLICY
+CREATE FUNCTION
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+DO
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:7: NOTICE:  column "billing_draft_version" of relation "paige_invoices" already exists, skipping
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:7: NOTICE:  column "billing_draft" of relation "paige_invoices" already exists, skipping
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:7: NOTICE:  column "billing_last_operation_id" of relation "paige_invoices" already exists, skipping
+psql:supabase/migrations/20270535000000_sales_billing_drafts.sql:7: NOTICE:  column "billing_last_request" of relation "paige_invoices" already exists, skipping
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+DROP POLICY
+CREATE POLICY
+CREATE FUNCTION
+REVOKE
+GRANT
+CREATE FUNCTION
+REVOKE
+GRANT
+DO
+GRANT
+GRANT
+INSERT 0 1
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 4
+INSERT 0 1
+CREATE FUNCTION
+CREATE FUNCTION
+              set_config              |              set_config              | set_config 
+--------------------------------------+--------------------------------------+------------
+ 10000000-0000-0000-0000-000000000001 | 20000000-0000-0000-0000-000000000001 | true
+(1 row)
+
+SET
+CREATE TABLE
+INSERT 0 1
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+psql:scripts/sql/sales-billing-drafts-proof.sql:75: NOTICE:  PASS: same-operation exact replay
+ proof_assert 
+--------------
+ 
+(1 row)
+
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:79: NOTICE:  PASS: integer round-half-up deposit invariant
+psql:scripts/sql/sales-billing-drafts-proof.sql:81: NOTICE:  PASS: canonical draft/version readback
+ proof_assert 
+--------------
+ 
+(1 row)
+
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:82: NOTICE:  PASS: legacy row unchanged
+psql:scripts/sql/sales-billing-drafts-proof.sql:83: NOTICE:  PASS: duplicate create conflicts (40001)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:84: NOTICE:  PASS: operation reuse refuses changed payload (22023)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+ proof_denied 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:86: NOTICE:  PASS: direct managed insert denied (42501)
+psql:scripts/sql/sales-billing-drafts-proof.sql:87: NOTICE:  PASS: legacy promotion denied (42501)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:93: NOTICE:  PASS: managed update invisible to direct writer
+DO
+psql:scripts/sql/sales-billing-drafts-proof.sql:93: NOTICE:  PASS: managed delete invisible to direct writer
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"client_id": "30000000-0000-0000-0000-000000000002"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"price_id": "50000000-0000-0000-0000-000000000002", "unit_minor": null} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"price_id": "50000000-0000-0000-0000-000000000004", "unit_minor": null} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"unit_minor": 0} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"unit_minor": -1} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"unit_minor": 1.5} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"quantity": 2, "unit_minor": 2147483647} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"quantity": 0} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"quantity": 1001} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"quantity": "3"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"deposit_basis_points": 10000} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"deposit_basis_points": 0} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"quantity": 1, "unit_minor": 1, "deposit_basis_points": 1} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"currency": "eur"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"provider": "unsupported"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"recipient_email": "invalid"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"memo": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"issued": true} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"kind": "recurring", "cadence": "weekly"} (22023)
+psql:scripts/sql/sales-billing-drafts-proof.sql:114: NOTICE:  PASS: invalid draft {"price_id": "50000000-0000-0000-0000-000000000001"} (22023)
+DO
+ set_config 
+------------
+ false
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:116: NOTICE:  PASS: wrong role list denied (42501)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:117: NOTICE:  PASS: wrong role save denied (42501)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:118: NOTICE:  PASS: wrong role direct select denied
+ set_config |              set_config              
+------------+--------------------------------------
+ true       | 20000000-0000-0000-0000-000000000002
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:120: NOTICE:  PASS: stale workspace list denied (42501)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:121: NOTICE:  PASS: other tenant list isolated
+psql:scripts/sql/sales-billing-drafts-proof.sql:122: NOTICE:  PASS: other workspace direct select isolated
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:123: NOTICE:  PASS: cross tenant draft id collision refused (22023)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+ set_config 
+psql:scripts/sql/sales-billing-drafts-proof.sql:125: NOTICE:  PASS: unauthenticated helper denied (42501)
+------------
+ 
+(1 row)
+
+ proof_denied 
+--------------
+ 
+(1 row)
+
+              set_config              |              set_config              
+--------------------------------------+--------------------------------------
+ 10000000-0000-0000-0000-000000000001 | 20000000-0000-0000-0000-000000000001
+(1 row)
+
+INSERT 0 1
+RESET
+UPDATE 1
+SET
+INSERT 0 1
+psql:scripts/sql/sales-billing-drafts-proof.sql:140: NOTICE:  PASS: catalogue changed retry returns original facts
+ proof_assert 
+--------------
+ 
+(1 row)
+
+INSERT 0 1
+psql:scripts/sql/sales-billing-drafts-proof.sql:145: NOTICE:  PASS: monthly canonical price snapshot
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:147: NOTICE:  PASS: bounded pagination has_more
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:148: NOTICE:  PASS: stable UUID descending cursor
+ proof_assert 
+--------------
+ 
+(1 row)
+
+ proof_assert 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:149: NOTICE:  PASS: keyset next page
+INSERT 0 1
+psql:scripts/sql/sales-billing-drafts-proof.sql:153: NOTICE:  PASS: successful CAS edit increments version
+ proof_assert 
+--------------
+ 
+(1 row)
+
+ proof_denied 
+--------------
+ 
+(1 row)
+
+psql:scripts/sql/sales-billing-drafts-proof.sql:154: NOTICE:  PASS: older retry after edit refuses stale version (40001)
+RESET
+psql:scripts/sql/sales-billing-drafts-proof.sql:156: NOTICE:  PASS: even privileged legacy writer cannot issue managed draft (23514)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+SET
+psql:scripts/sql/sales-billing-drafts-proof.sql:158: NOTICE:  PASS: anon RPC execute revoked (42501)
+ proof_denied 
+--------------
+ 
+(1 row)
+
+RESET
+ proof_assert 
+psql:scripts/sql/sales-billing-drafts-proof.sql:161: NOTICE:  PASS: no provider or issued facts
+--------------
+ 
+(1 row)
+
+ROLLBACK
+SALES BILLING DRAFT SQL PROOF PASS (local auth-helper stubs; hosted auth/provider UNVERIFIED)

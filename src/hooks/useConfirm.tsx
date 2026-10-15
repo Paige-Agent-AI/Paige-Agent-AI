@@ -24,6 +24,8 @@ export interface ConfirmOptions {
   cancelLabel?: string;
   /** When true the action button carries the destructive (red) treatment. */
   destructive?: boolean;
+  /** Optional connected control to restore after the dialog finishes closing. */
+  returnFocus?: () => HTMLElement | null;
 }
 
 interface ConfirmState extends ConfirmOptions {
@@ -71,7 +73,10 @@ export function useConfirm() {
         if (!next) settle(false);
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent onCloseAutoFocus={(event) => {
+        const target = state.returnFocus?.();
+        if (target?.isConnected) { event.preventDefault(); target.focus(); }
+      }}>
         <AlertDialogHeader>
           <AlertDialogTitle>{state.title}</AlertDialogTitle>
           {state.description ? (

@@ -9,6 +9,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { callClaude } from "../_shared/claude.ts";
+import { bindKnowledgeIngestScope, KnowledgeIngestScopeError } from "../_shared/knowledge-ingest-scope.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,7 +24,7 @@ const BodySchema = z.object({
   category: z.string().max(100).optional(),
   tags: z.array(z.string().max(60)).max(20).optional(),
   share_to_network: z.boolean().optional(),
-  tenant_id: z.string().uuid().optional(), // platform-owner override
+  tenant_id: z.string().uuid().optional(), // equality precondition against the selected workspace
 });
 
 // kb-ingest-doc caps content at 500k; stay comfortably under after extraction.
@@ -59,7 +60,8 @@ function imageMediaType(mime: string | undefined, ext: string): string {
 }
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const result = body && typeof body === "object" && "error" in body && !("ok" in body) ? { ...body, ingestion_started: false } : body;
+  return new Response(JSON.stringify(result), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -97,7 +99,7 @@ const EXTRACT_PROMPT =
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -107,8 +109,6 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: auth } } },
     );
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) return json({ error: "Invalid authentication token" }, 401);
 
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
@@ -119,6 +119,15 @@ serve(async (req) => {
     if (!cls) {
       return json({ error: "Unsupported file type. Upload a PDF, image (png/jpg/webp), or text/markdown file." }, 400);
     }
+
+    // Plain-function adapter for the shared scope port: relating supabase-js's generic
+    // from()/rpc() signatures to a structural caller trips TS2345 under deno check.
+    const scopeCaller = {
+      auth: supabase.auth,
+      readActiveTenant: (userId: string) => supabase.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle(),
+      rpc: (name: string, args?: Record<string, unknown>) => supabase.rpc(name, args as never),
+    };
+    const scope = await bindKnowledgeIngestScope(scopeCaller, tenant_id, path);
 
     // Download via the caller's JWT so bucket RLS enforces tenant ownership —
     // a caller can only read files under their own tenant's folder.
@@ -147,17 +156,26 @@ serve(async (req) => {
       const block = cls.kind === "pdf"
         ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } }
         : { type: "image", source: { type: "base64", media_type: imageMediaType(mime, ext), data: b64 } };
+      await scope.assert();
       let result;
       try {
         result = await callClaude({
           maxTokens: 32000,
           messages: [{ role: "user", content: [block, { type: "text", text: EXTRACT_PROMPT }] }],
-          trace: { tenant_id: tenant_id ?? null, agent_id: "kb-ingest-file", job_kind: "extract" },
+          trace: { tenant_id: scope.tenantId, agent_id: "kb-ingest-file", job_kind: "extract" },
+          // A long document's extraction legitimately runs minutes (32k-token envelope) — this
+          // caller carries its own deadline (~the edge wall clock) instead of the chat core's
+          // 120s floor, which would kill big files mid-read and report them as unreadable.
+          signal: AbortSignal.timeout(360_000),
         });
       } catch (e) {
-        // Don't leak the raw provider error to the tenant UI; log the detail.
+        // Don't leak the raw provider error to the tenant UI; log the detail. A deadline trip is
+        // NOT a bad file — say what actually happened so the tenant knows to retry or split it.
+        const timedOut = (e as Error)?.name === "TimeoutError" || /aborted/i.test(String((e as Error)?.message ?? ""));
         console.error("[kb-ingest-file] extraction failed:", (e as Error).message);
-        return json({ error: "Paige couldn't read that file. It may be corrupt, password-protected, or an unsupported format." }, 400);
+        return json(timedOut
+          ? { error: "That document was too long to read in one pass — the read timed out. Try splitting it into smaller sections." }
+          : { error: "Paige couldn't read that file. It may be corrupt, password-protected, or an unsupported format." }, 400);
       }
       content = (result.text || "").trim();
       // Honest truncation signal: if the model hit the output cap, we only have a
@@ -174,6 +192,8 @@ serve(async (req) => {
 
     // Hand off to kb-ingest-doc, forwarding the caller's JWT so the doc is
     // created + chunked + embedded under the SAME tenant via RLS.
+    await scope.assert();
+    ingestionStarted = true;
     const ingestRes = await fetch(
       `${Deno.env.get("SUPABASE_URL")!}/functions/v1/kb-ingest-doc`,
       {
@@ -191,18 +211,18 @@ serve(async (req) => {
           tags: tags ?? [],
           source: cls.source,
           share_to_network: share_to_network ?? false,
-          ...(tenant_id ? { tenant_id } : {}),
+          tenant_id: scope.tenantId,
         }),
       },
     );
-    const ingestBody = await ingestRes.json().catch(() => ({}));
-    if (!ingestRes.ok) {
-      return json({ error: (ingestBody as any)?.error ?? "Indexing failed" }, ingestRes.status);
-    }
-    return json({ ...ingestBody, source: cls.source, truncated }, 200);
+    const ingestBody = await ingestRes.json();
+    await scope.assert();
+    if (!ingestBody || typeof ingestBody !== "object" || Array.isArray(ingestBody)) throw new Error("Invalid ingestion response");
+    return json({ ...ingestBody, source: cls.source, truncated }, ingestRes.status);
   } catch (error) {
+    if (error instanceof KnowledgeIngestScopeError && !ingestionStarted) return json({ ok: false, error: error.message, ingestion_started: false }, error.status);
     // Never surface raw provider/internal error text to the tenant UI; log it.
     console.error("[kb-ingest-file] error:", error);
-    return json({ error: "Something went wrong reading that file. Please try again." }, 500);
+    return json({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Keep the uploaded file and check your knowledge before retrying." : "The file could not be read. Nothing was indexed." }, 500);
   }
 });

@@ -1,0 +1,198 @@
+{
+  "renders": [
+    {
+      "state": "absent",
+      "viewport": "1536x770",
+      "paige": "closed",
+      "file": "setup-card-absent-1536x770-paige-closed.png",
+      "copyOk": true,
+      "md5": "1cf4944394bb"
+    },
+    {
+      "state": "absent",
+      "viewport": "1536x770",
+      "paige": "open",
+      "file": "setup-card-absent-1536x770-paige-open.png",
+      "copyOk": true,
+      "md5": "851ddb5e4a84"
+    },
+    {
+      "state": "absent",
+      "viewport": "1366x768",
+      "paige": "closed",
+      "file": "setup-card-absent-1366x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "89b2be8dc186"
+    },
+    {
+      "state": "absent",
+      "viewport": "1366x768",
+      "paige": "open",
+      "file": "setup-card-absent-1366x768-paige-open.png",
+      "copyOk": true,
+      "md5": "a18e4454f61d"
+    },
+    {
+      "state": "absent",
+      "viewport": "1024x768",
+      "paige": "closed",
+      "file": "setup-card-absent-1024x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "47bce7efa1a1"
+    },
+    {
+      "state": "absent",
+      "viewport": "1024x768",
+      "paige": "open",
+      "file": "setup-card-absent-1024x768-paige-open.png",
+      "copyOk": true,
+      "md5": "aca77c6da1aa"
+    },
+    {
+      "state": "absent",
+      "viewport": "900x1000",
+      "paige": "closed",
+      "file": "setup-card-absent-900x1000-paige-closed.png",
+      "copyOk": true,
+      "md5": "8c72b1da63fd"
+    },
+    {
+      "state": "absent",
+      "viewport": "900x1000",
+      "paige": "open",
+      "file": "setup-card-absent-900x1000-paige-open.png",
+      "copyOk": true,
+      "md5": "de5ebef261f3"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1536x770",
+      "paige": "closed",
+      "file": "setup-card-noprim-1536x770-paige-closed.png",
+      "copyOk": true,
+      "md5": "524df40077ec"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1536x770",
+      "paige": "open",
+      "file": "setup-card-noprim-1536x770-paige-open.png",
+      "copyOk": true,
+      "md5": "4ff9d8b41b11"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1366x768",
+      "paige": "closed",
+      "file": "setup-card-noprim-1366x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "f07825440cda"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1366x768",
+      "paige": "open",
+      "file": "setup-card-noprim-1366x768-paige-open.png",
+      "copyOk": true,
+      "md5": "73855b3c7744"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1024x768",
+      "paige": "closed",
+      "file": "setup-card-noprim-1024x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "4e47ca20cbeb"
+    },
+    {
+      "state": "noprim",
+      "viewport": "1024x768",
+      "paige": "open",
+      "file": "setup-card-noprim-1024x768-paige-open.png",
+      "copyOk": true,
+      "md5": "49886d4b4a68"
+    },
+    {
+      "state": "noprim",
+      "viewport": "900x1000",
+      "paige": "closed",
+      "file": "setup-card-noprim-900x1000-paige-closed.png",
+      "copyOk": true,
+      "md5": "a2da2b44200c"
+    },
+    {
+      "state": "noprim",
+      "viewport": "900x1000",
+      "paige": "open",
+      "file": "setup-card-noprim-900x1000-paige-open.png",
+      "copyOk": true,
+      "md5": "0daafe3d2250"
+    },
+    {
+      "state": "ready",
+      "viewport": "1536x770",
+      "paige": "closed",
+      "file": "setup-card-ready-1536x770-paige-closed.png",
+      "copyOk": true,
+      "md5": "d778e2e6b4f2"
+    },
+    {
+      "state": "ready",
+      "viewport": "1536x770",
+      "paige": "open",
+      "file": "setup-card-ready-1536x770-paige-open.png",
+      "copyOk": true,
+      "md5": "384fdda2de1d"
+    },
+    {
+      "state": "ready",
+      "viewport": "1366x768",
+      "paige": "closed",
+      "file": "setup-card-ready-1366x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "7b4ed6a71627"
+    },
+    {
+      "state": "ready",
+      "viewport": "1366x768",
+      "paige": "open",
+      "file": "setup-card-ready-1366x768-paige-open.png",
+      "copyOk": true,
+      "md5": "3166596363a9"
+    },
+    {
+      "state": "ready",
+      "viewport": "1024x768",
+      "paige": "closed",
+      "file": "setup-card-ready-1024x768-paige-closed.png",
+      "copyOk": true,
+      "md5": "591e3116d2fc"
+    },
+    {
+      "state": "ready",
+      "viewport": "1024x768",
+      "paige": "open",
+      "file": "setup-card-ready-1024x768-paige-open.png",
+      "copyOk": true,
+      "md5": "101e2f1894bb"
+    },
+    {
+      "state": "ready",
+      "viewport": "900x1000",
+      "paige": "closed",
+      "file": "setup-card-ready-900x1000-paige-closed.png",
+      "copyOk": true,
+      "md5": "ddfa4678a50b"
+    },
+    {
+      "state": "ready",
+      "viewport": "900x1000",
+      "paige": "open",
+      "file": "setup-card-ready-900x1000-paige-open.png",
+      "copyOk": true,
+      "md5": "bbc2e08ed8d0"
+    }
+  ],
+  "failures": [],
+  "distinctCaptures": 24
+}

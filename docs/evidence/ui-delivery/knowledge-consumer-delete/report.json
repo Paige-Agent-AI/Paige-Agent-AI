@@ -1,0 +1,162 @@
+[
+  {
+    "surface": "admin",
+    "width": 1536,
+    "height": 770,
+    "state": "uncertain",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 1536,
+    "height": 770,
+    "state": "unrecorded",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 1366,
+    "height": 768,
+    "state": "uncertain",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 1366,
+    "height": 768,
+    "state": "unrecorded",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 1024,
+    "height": 768,
+    "state": "uncertain",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 1024,
+    "height": 768,
+    "state": "unrecorded",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 900,
+    "height": 1000,
+    "state": "uncertain",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "admin",
+    "width": 900,
+    "height": 1000,
+    "state": "unrecorded",
+    "cancelFocus": "BUTTON",
+    "overflow": false,
+    "focus": "H1",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1536,
+    "height": 770,
+    "state": "uncertain",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1536,
+    "height": 770,
+    "state": "unrecorded",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1366,
+    "height": 768,
+    "state": "uncertain",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1366,
+    "height": 768,
+    "state": "unrecorded",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1024,
+    "height": 768,
+    "state": "uncertain",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 1024,
+    "height": 768,
+    "state": "unrecorded",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 900,
+    "height": 1000,
+    "state": "uncertain",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  },
+  {
+    "surface": "panel",
+    "width": 900,
+    "height": 1000,
+    "state": "unrecorded",
+    "cancelFocus": "H3",
+    "overflow": false,
+    "focus": "H3",
+    "writes": 1
+  }
+]

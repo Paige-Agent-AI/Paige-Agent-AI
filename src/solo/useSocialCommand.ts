@@ -206,7 +206,7 @@ export function useSocialCommand(): SocialCommandState {
         canManage: memberRole === "owner" || memberRole === "admin",
         // A FAILED AUTHORITY READ IS NOT A CALLER WITHOUT AUTHORITY.
         //
-        // `useCatalogOffers`, `useSoloSalesOps` and `useSoloAgreements` all carry this flag; this
+        // `useCatalogOffers`, `useSoloSalesOps` and `useSoloCommercialTerms` all carry this flag; this
         // hook was the only one of the four without it (§18), and the gap became load-bearing the
         // moment the record button was made conditional on `canManage`: a blip in the membership
         // read now costs a genuine owner the one action this surface offers, and tells them

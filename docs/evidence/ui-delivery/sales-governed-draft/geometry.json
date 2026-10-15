@@ -1,0 +1,262 @@
+[
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "open": true,
+    "geometry": {
+      "width": 1536,
+      "scroll": 1536,
+      "bodyScroll": 1536
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "open": false,
+    "geometry": {
+      "width": 1536,
+      "scroll": 1536,
+      "bodyScroll": 1536
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "open": true,
+    "geometry": {
+      "width": 1536,
+      "scroll": 1536,
+      "bodyScroll": 1536
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "open": false,
+    "geometry": {
+      "width": 1536,
+      "scroll": 1536,
+      "bodyScroll": 1536
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "open": true,
+    "geometry": {
+      "width": 1366,
+      "scroll": 1366,
+      "bodyScroll": 1366
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "open": false,
+    "geometry": {
+      "width": 1366,
+      "scroll": 1366,
+      "bodyScroll": 1366
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "open": true,
+    "geometry": {
+      "width": 1366,
+      "scroll": 1366,
+      "bodyScroll": 1366
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "open": false,
+    "geometry": {
+      "width": 1366,
+      "scroll": 1366,
+      "bodyScroll": 1366
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "open": true,
+    "geometry": {
+      "width": 1024,
+      "scroll": 1024,
+      "bodyScroll": 1024
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "open": false,
+    "geometry": {
+      "width": 1024,
+      "scroll": 1024,
+      "bodyScroll": 1024
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "open": true,
+    "geometry": {
+      "width": 1024,
+      "scroll": 1024,
+      "bodyScroll": 1024
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "open": false,
+    "geometry": {
+      "width": 1024,
+      "scroll": 1024,
+      "bodyScroll": 1024
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "open": true,
+    "geometry": {
+      "width": 900,
+      "scroll": 900,
+      "bodyScroll": 900
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "open": false,
+    "geometry": {
+      "width": 900,
+      "scroll": 900,
+      "bodyScroll": 900
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "open": true,
+    "geometry": {
+      "width": 900,
+      "scroll": 900,
+      "bodyScroll": 900
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "open": false,
+    "geometry": {
+      "width": 900,
+      "scroll": 900,
+      "bodyScroll": 900
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "dark",
+    "open": true,
+    "geometry": {
+      "width": 390,
+      "scroll": 390,
+      "bodyScroll": 390
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "dark",
+    "open": false,
+    "geometry": {
+      "width": 390,
+      "scroll": 390,
+      "bodyScroll": 390
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "open": true,
+    "geometry": {
+      "width": 390,
+      "scroll": 390,
+      "bodyScroll": 390
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "open": false,
+    "geometry": {
+      "width": 390,
+      "scroll": 390,
+      "bodyScroll": 390
+    },
+    "errors": [],
+    "proof": "LOCAL component fixture, not authenticated Chat"
+  }
+]

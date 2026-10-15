@@ -16,7 +16,7 @@ const tenantHarness = vi.hoisted(() => ({
   activeTenantId: "account-a" as string | null,
   activeUserId: "user-a" as string | null,
   // Fields useTierFeatures reads (via useTenantContext) to resolve the tier. Default to a
-  // Solo standalone so every existing test keeps the full four-tab Command Center.
+  // Solo standalone so every existing test keeps the five-tab Command Center.
   activeTenant: { account_type: "standalone", parent_tenant_id: null } as
     | { account_type: string | null; parent_tenant_id: string | null }
     | null,
@@ -38,6 +38,10 @@ vi.mock("@/solo/SoloMindWorkspace", () => ({
 }));
 vi.mock("@/solo/SoloGamePlanWorkspace", () => ({
   SoloGamePlanWorkspace: () => <div>Canonical Solo Game Plan</div>,
+}));
+// These are route/tier contracts; each composed surface owns its data behavior tests.
+vi.mock("@/solo/ExecutiveOverview", () => ({
+  ExecutiveOverview: () => <div>Canonical Solo Executive</div>,
 }));
 
 import { CommandHub } from "@/solo/CommandCenter";
@@ -117,10 +121,10 @@ describe("tenant Command Center secondary tabs", () => {
     });
   });
 
-  it("keeps non-Solo owners unchanged while Solo leads with Business Game Plan, then Systems Check and Mind", () => {
+  it("preserves tenant owners and the owner-approved Fleet menu while Solo leads with Executive", () => {
     expect(OPERATOR_SLOTS.find((slot) => slot.id === "fleet")).toMatchObject({
       label: "Fleet",
-      views: ["Systems check", "Directory", "History"],
+      views: ["Systems check", "Directory", "History", "Mind"],
     });
 
     for (const tier of ["sub_account", "agency", "enterprise"] as const) {
@@ -135,16 +139,15 @@ describe("tenant Command Center secondary tabs", () => {
     }
 
     const solo = branchBySlug("solo", "command-center");
-    // Trust Compass became Command Center's third sub-tab (owner-ruled 2026-09-05):
-    // Business Game Plan → Systems Check → Trust Compass → Mind (Game Plan not built yet).
+    // E2-6 adds Executive first; the four incumbent surfaces keep their ruled order.
     expect(solo?.subtabs?.map((tab) => tab.label)).toEqual([
-      "Business Game Plan", "Systems Check", "Trust Compass", "Mind",
+      "Executive", "Business Game Plan", "Systems Check", "Trust Compass", "Mind",
     ]);
-    expect(solo?.subtabs?.[0]).toMatchObject({ slug: "business-game-plan", key: "plan" });
+    expect(solo?.subtabs?.[0]).toMatchObject({ slug: "executive", key: "exec" });
   });
 
   it.each([
-    ["src/solo/CommandCenter.tsx", ["Business Game Plan", "Systems Check", "Trust Compass", "Mind"]],
+    ["src/solo/CommandCenter.tsx", ["Executive", "Business Game Plan", "Systems Check", "Trust Compass", "Mind"]],
     ["src/agency/CommandCenter.tsx", ["Systems Check", "Directory", "History"]],
   ])("renders the ruled secondary labels in %s", (path, labels) => {
     const screen = source(path);
@@ -188,10 +191,10 @@ describe("tenant Command Center secondary tabs", () => {
     expect(html).not.toContain("Passing");
   });
 
-  it("makes the Solo root land on Business Game Plan while Agency keeps its Core owner", () => {
+  it("makes the Solo root land on Executive while Agency keeps its Core owner", () => {
     const solo = source("src/solo/CommandCenter.tsx");
     const agency = source("src/agency/CommandCenter.tsx");
-    expect(solo).toContain('useSubtabRoute("solo", "command-center", "plan")');
+    expect(solo).toContain('useSubtabRoute("solo", "command-center", "exec")');
     expect(solo).not.toContain('tab === "home"');
     expect(solo).not.toContain("SystemsCheckTile");
     expect(solo).toContain("SoloSystemsCheckWorkspace");
@@ -311,7 +314,7 @@ describe("tenant Command Center secondary tabs", () => {
   it.each([
     "/solo/7001001/command-center",
     "/solo/7001001/command-center/overview",
-  ])("resolves the Solo compatibility entry %s to the canonical Business Game Plan landing", (entry) => {
+  ])("resolves the Solo compatibility entry %s to the canonical Executive landing", (entry) => {
     const host = document.createElement("div");
     const root = createRoot(host);
     act(() => root.render(
@@ -324,9 +327,9 @@ describe("tenant Command Center secondary tabs", () => {
         </Routes>
       </MemoryRouter>,
     ));
-    expect(host.textContent).toContain("Canonical Solo Game Plan");
+    expect(host.textContent).toContain("Canonical Solo Executive");
     expect(host.querySelector("[data-location]")?.textContent).toBe(
-      "/solo/7001001/command-center/business-game-plan",
+      "/solo/7001001/command-center/executive",
     );
     act(() => root.unmount());
   });
@@ -350,7 +353,7 @@ describe("tenant Command Center secondary tabs", () => {
     act(() => root.unmount());
   });
 
-  it("HIDES the Trust Compass sub-tab for a sub-account and redirects its URL to the default landing (§60, owner ruling 2026-09-06)", () => {
+  it("HIDES Trust Compass for a sub-account and retains its Business Game Plan fallback (§60, owner ruling 2026-09-06)", () => {
     tenantHarness.activeTenant = { account_type: "sub_account", parent_tenant_id: "parent-x" };
     try {
       // 1) The tab is gone from the strip — but the shell and its other sub-tabs remain.

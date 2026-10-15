@@ -101,7 +101,7 @@ export interface TierTree {
 }
 
 /**
- * SOLO_BRANCHES — the Solo tree (13). Shared by `solo` AND `sub_account` (§11c/§60).
+ * SOLO_BRANCHES — the Solo tree (12). Shared by `solo` AND `sub_account` (§11c/§60).
  * Keys match `src/solo/SoloApp.tsx`'s `screens` registry.
  *
  * Sub-tabs verified screen-by-screen against the Solo screen SOURCE (47 across 9
@@ -123,7 +123,11 @@ export const SOLO_BRANCHES: Branch[] = [
     // order — but ONLY when its owner ships a real Command Center sub-tab. It is deliberately
     // NOT declared here as a dead/placeholder tab (owner ruling 2026-09-05; four-surfaces §4).
     subtabs: [
-      { slug: "business-game-plan", aliases: ["overview"], key: "plan", label: "Business Game Plan" },
+      // E2-6 (2026-10-13, ANT-138): Executive is the default Command Center landing — the AI
+      // Executive Command Center. The former `overview` compatibility alias moves HERE (the
+      // executive overview IS the overview); Business Game Plan keeps its own slug and position.
+      { slug: "executive", aliases: ["overview"], key: "exec", label: "Executive" },
+      { slug: "business-game-plan", key: "plan", label: "Business Game Plan" },
       { slug: "systems-check", key: "sys", label: "Systems Check" },
       // Trust Compass is the third Command Center surface (owner-ruled 2026-09-05):
       // Business Game Plan → Systems Check → Trust Compass → Mind.
@@ -132,12 +136,26 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
+    slug: "operations", key: "operations", label: "Operations", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "work", key: "work", label: "Work" },
+      { slug: "projects", key: "projects", label: "Projects" },
+      { slug: "delivery", key: "delivery", label: "Delivery" },
+      { slug: "playbooks", key: "playbooks", label: "Playbooks" },
+      { slug: "capacity", key: "capacity", label: "Capacity" },
+    ],
+  },
+  {
     slug: "paige", key: "paige", label: "Paige", group: "main",
     // Source: src/solo/SoloPaigeWorkspace.tsx. Solo intentionally exposes the
-    // customer-facing Chat, Knowledge, Helpers, and Capabilities contract only.
+    // customer-facing Chat, Knowledge, Deep Research, Helpers, and Capabilities
+    // contract only. Research (R2b, 2026-10-03; INT-303) is the evidence
+    // LIBRARY — the engine is invoked in Chat, runs land here.
     subtabs: [
       { slug: "chat", key: "chat", label: "Chat" },
       { slug: "knowledge", key: "knowledge", label: "Knowledge" },
+      { slug: "research", key: "research", label: "Research" },
       { slug: "helpers", key: "helpers", label: "Helpers" },
       { slug: "capabilities", key: "capabilities", label: "Capabilities" },
     ],
@@ -183,30 +201,73 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
-    slug: "growth", key: "growth", label: "Campaigns", group: "main",
-    // Campaigns owns six customer-facing reporting views. Vibe Studio remains the
-    // sole creative owner and opens through its existing side action. Retired
-    // creative slugs resolve to a Campaigns-owned compatibility landing, never a
-    // fabricated Vibe library or asset route.
+    slug: "growth", key: "growth", label: "Marketing", group: "main",
+    // Marketing is the department (owner ruling 2026-10-03, docs/product/solo-marketing-ia-proposal.md).
+    // Campaigns is one function inside it. Vibe Studio stays the only creative owner and opens
+    // through its existing side action; Overview measures how published Vibe work is USED.
+    // The slug stays `growth` until the canonical-URL slice (S5) so no copied link breaks.
+    //
+    // Commercial entries stay hidden for intent-preserving compatibility redirects into Sales.
+    // Retired creative slugs (and Lead capture) resolve to Overview with a moved notice.
     subtabs: [
-      { slug: "overview", aliases: ["active"], key: "ov", label: "Overview" },
-      { slug: "catalog", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "catalog", label: "Catalog" },
-      { slug: "sales", key: "sales", label: "Sales" },
-      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "campaigns", aliases: ["active"], key: "campaigns", label: "Campaigns" },
+      // The owner's Marketing list (2026-10-04), with Lead capture retired into Overview
+      // (INT-342, owner-approved 2026-10-10). Content stays a tab until Vibe Studio lists every
+      // saved piece (owner ruling 2026-10-10); then it retires the same way.
+      { slug: "audience", key: "audience", label: "Audience" },
+      { slug: "content", key: "content", label: "Content" },
       { slug: "social", key: "social", label: "Social" },
+      { slug: "email", key: "email", label: "Email" },
+      // Ads left this strip for its own department (owner, 2026-10-10, INT-342). The old
+      // `/growth/ads[?view=]` address is not a subtab any more: GrowthHub replaces it into the Ads
+      // branch below with the same view, before any Marketing reader mounts.
+      { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
+      // Retired as a tab (INT-342, owner-approved 2026-10-10). Kept addressable so every copied link
+      // still resolves: GrowthHub lands it on Overview with its intent (filter, form) and a line
+      // saying where the work lives now.
+      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture", hidden: true },
+      { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
+      { slug: "sales", key: "sales", label: "Sales", hidden: true },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
+    ],
+  },
+  {
+    slug: "ads", key: "ads", label: "Ads", group: "main",
+    // Ads is its own department, directly below Marketing (owner ruling 2026-10-10, INT-342; it was a
+    // Marketing tab until then). Marketing owns demand strategy and campaign briefs; Ads owns paid
+    // media. Source: src/solo/AdsWorkspace.tsx over the existing desk in src/solo/marketing-ads.tsx.
+    // The five views are the desk's own (it was `?view=` under Marketing; those links replace here).
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "campaigns", key: "campaigns", label: "Campaigns" },
+      { slug: "creative", key: "creative", label: "Creative" },
+      { slug: "audiences", key: "audiences", label: "Audiences" },
       { slug: "performance", key: "performance", label: "Performance" },
     ],
   },
   {
-    slug: "analytics", key: "analytics", label: "Analytics", group: "main",
-    // Source: src/solo/analytics2.tsx.
+    slug: "sales", key: "sales", label: "Sales", group: "main",
     subtabs: [
-      { slug: "brief", key: "brief", label: "Brief" },
-      { slug: "money", key: "money", label: "Sales funnel" },
-      { slug: "profitability", key: "profit", label: "Revenue & profit" },
-      { slug: "retention", key: "ret", label: "Retention" },
-      { slug: "market-watch", key: "mkt", label: "Acquisition" },
-      { slug: "decisions", key: "dec", label: "Decisions" },
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "opportunities", key: "opportunities", label: "Opportunities" },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
+      { slug: "offers", key: "offers", label: "Offers" },
+      { slug: "agreements", key: "agreements", label: "Terms & Agreements" },
+      { slug: "payments", key: "payments", label: "Payments" },
+      { slug: "performance", key: "performance", label: "Performance" },
+    ],
+  },
+  {
+    slug: "finance", key: "finance", label: "Finance", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "banking-cash", key: "banking", label: "Banking & Cash" },
+      { slug: "debt-credit", key: "debt", label: "Debt & Credit" },
+      { slug: "receivables", key: "receivables", label: "Receivables" },
+      { slug: "expenses-payables", key: "expenses", label: "Expenses & Payables" },
+      { slug: "profitability", key: "profitability", label: "Profitability" },
+      { slug: "budgeting-forecasting", key: "forecast", label: "Budgeting & Forecasting" },
     ],
   },
   {
@@ -229,6 +290,14 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "team", key: "team", label: "Team" },
       { slug: "connections", key: "connections", label: "Connections" },
       { slug: "integrations", key: "integrations", label: "Integrations" },
+      { slug: "analytics", key: "analytics", label: "Analytics", subtabs: [
+        { slug: "overview", key: "overview", label: "Overview" },
+        { slug: "business-health", key: "business-health", label: "Business Health" },
+        { slug: "operations", key: "operations", label: "Operations" },
+        { slug: "team", key: "team", label: "Team" },
+        { slug: "ai-usage", key: "ai-usage", label: "AI & Usage" },
+        { slug: "data-health", key: "data-health", label: "Data Health" },
+      ] },
       { slug: "security-data", key: "security-data", label: "Security & data" },
       { slug: "vault", key: "vault", label: "Vault" },
       { slug: "billing", key: "billing", label: "Billing" },
@@ -721,4 +790,3 @@ export function subtabPath(tier: RouteTierKey, account: string, branchSlug: stri
   if (tree.accountSegment === false) return `${tree.root}/${branchSlug}/${subSlug}`;
   return `${tree.root}/${account}/${branchSlug}/${subSlug}`;
 }
-

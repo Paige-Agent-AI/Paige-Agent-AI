@@ -265,6 +265,10 @@ export async function loadOwnerContextBlock(
   if (!userId) return null;
 
   // (1) OWNER IDENTITY / PREFS / PRIORITIES / PERMISSIONS — the owner-memory rows.
+  // INT-326: the briefing is the OPERATOR surface, and operator memory is TENANT-LESS. A row this
+  // same human holds in a Solo workspace (the platform owner dogfoods — same user_id, tenant_id
+  // set) must never become briefing content merely because the identity coincides: the read is
+  // restricted to `tenant_id IS NULL`. Tenant-owned rows belong to their Solo surfaces alone.
   let rows: OwnerMemoryRow[] = [];
   try {
     const { data, error } = await admin
@@ -272,6 +276,7 @@ export async function loadOwnerContextBlock(
       .select("memory_type, content, created_at")
       .eq("user_id", userId)
       .eq("is_active", true)
+      .is("tenant_id", null)
       .order("memory_type", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) throw error;

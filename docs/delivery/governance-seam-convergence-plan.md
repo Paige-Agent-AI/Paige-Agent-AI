@@ -128,6 +128,13 @@ dispatch chain (`:9950`), and three per-branch role checks (`:12359`, `:12466`, 
 descriptions saying "Admin/coach only" are prose to the model, not enforcement. `resolveOwnerOpsEligible`
 (`:4513`) resolves exactly the right role set and feeds **only the prompt block**.
 
+> **C0a note (2026-10-04, PR #1697).** `resolveOwnerOpsEligible` no longer exists: the owner ruled its
+> global-admin semantics wrong ("ADMIN IS A TENANT ROLE"). The owner-ops verdict now lives in
+> `_shared/workspace-authority.ts` as a per-call tenant-role verdict (`requiresWorkspaceAdmin` +
+> `authorityAdmits`), used by the dispatch gates, the early refusal and the capability projection.
+> What R2 still owes: reconciling it with the client-seat seal, and feeding it to the seam adapter's
+> `access` input.
+
 The adapter has two options and both are wrong. Omit `access` → every routed tool refuses. Pass
 `{allowed: true}` unconditionally → that is precisely the adapter failure the seam documents at
 `:210`–`:213`. **The honest fix is to give chat a real per-tool access verdict**, which is real
@@ -237,10 +244,10 @@ guards (`solo-parity-guard.mjs` plus a snapshot) to model it on.
 1. Delete the 14 dead dispatch branches. Smaller surface, zero risk.
 2. Declare the outcome channel per tool (R1). Chat already writes `paige_audit_log` for every
    executed tool; this names what already happens.
-3. Build the per-tool access verdict (R2) — the real line item. `resolveOwnerOpsEligible` already
-   computes the right answer for the owner-ops group and currently feeds only the prompt; the work
-   is extending that to a verdict every governed tool carries, and reconciling it with the
-   client-seat seal and the three per-branch role checks.
+3. Build the per-tool access verdict (R2) — the real line item. *C0a (2026-10-04) shipped the
+   owner-ops part as a tenant-role verdict in `_shared/workspace-authority.ts` (the per-branch role
+   checks now call it too); what remains is the client-seat seal reconciliation and passing it as
+   the seam adapter's `access` input.*
 4. Measure R5 on production: how many seats resolve a null tenant, and does any of them write?
 
 Phase 0 ships on its own and is independently valuable: it is honest inputs and dead-code removal

@@ -387,6 +387,21 @@ describe("TrustCompass — the governed surface runs, honest and accessible", ()
     expect(t).not.toMatch(/4s ago|Statewide Mutual|Harper/i);
   });
 
+  it("E4-S3: a person's recorded act reads as Person, PAIGE's as Paige, an unknown actor as Unattributed", () => {
+    gov.value = govValue([row("crm_add_note", "confirm")]);
+    const item = (id: string, over: Record<string, unknown>) => ({ id, title: `Act ${id}`, summary: null, byPaige: false, byPerson: false,
+      actorAgent: null, departmentSlug: "owner_ops", occurredAt: "2026-10-14T00:00:00Z", ...over });
+    feed.value = { items: [
+      item("p1", { title: "Business time zone changed", byPerson: true }),
+      item("p2", { title: "Checked your business time zone", byPaige: true }),
+      item("p3", { title: "Recorded activity" }),
+    ], loading: false, error: null, status: "ready", refresh: () => {} };
+    const t = draw(<TC accountEpoch="t1" />).textContent ?? "";
+    expect(t).toMatch(/Business time zone changed[^]*?owner_ops · Person · performed and logged/);
+    expect(t).toMatch(/Checked your business time zone[^]*?owner_ops · Paige · performed and logged/);
+    expect(t).toMatch(/Recorded activity[^]*?owner_ops · Unattributed · performed and logged/);
+  });
+
   it("survives an empty configured workspace without throwing", () => {
     gov.value = govValue([]);
     expect(() => draw(<TC accountEpoch="t1" />)).not.toThrow();

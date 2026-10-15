@@ -1,0 +1,82 @@
+{
+  "literata": {
+    "font": "Literata",
+    "ready": true,
+    "scope": null,
+    "h1": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "h2": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "body": null,
+    "statFigure": null,
+    "faces": [],
+    "injected": [],
+    "scrollWidth": 1440,
+    "fontRequests": [],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "before-page-literata.png",
+    "hero": "before-hero-literata.png"
+  },
+  "bodoni-moda": {
+    "font": "Bodoni Moda",
+    "ready": true,
+    "scope": null,
+    "h1": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "h2": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "body": null,
+    "statFigure": null,
+    "faces": [],
+    "injected": [],
+    "scrollWidth": 1440,
+    "fontRequests": [],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "before-page-bodoni-moda.png",
+    "hero": "before-hero-bodoni-moda.png"
+  },
+  "barlow-semi-condensed": {
+    "font": "Barlow Semi Condensed",
+    "ready": true,
+    "scope": null,
+    "h1": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "h2": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "body": null,
+    "statFigure": null,
+    "faces": [],
+    "injected": [],
+    "scrollWidth": 1440,
+    "fontRequests": [],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "before-page-barlow-semi-condensed.png",
+    "hero": "before-hero-barlow-semi-condensed.png"
+  },
+  "poppins-classic": {
+    "font": "Poppins",
+    "ready": true,
+    "scope": null,
+    "h1": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "h2": "\"Bricolage Grotesque\", Inter, system-ui, sans-serif",
+    "body": null,
+    "statFigure": null,
+    "faces": [],
+    "injected": [],
+    "scrollWidth": 1440,
+    "fontRequests": [],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "before-page-poppins-classic.png",
+    "hero": "before-hero-poppins-classic.png"
+  }
+}

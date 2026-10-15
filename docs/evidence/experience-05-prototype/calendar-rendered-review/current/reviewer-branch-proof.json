@@ -1,0 +1,637 @@
+{
+  "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+  "generatedAt": "2026-10-13T04:25:42.725Z",
+  "browser": "151.0.7922.34",
+  "summary": {
+    "checks": 15,
+    "passed": 15,
+    "failed": [],
+    "captures": 8
+  },
+  "checks": [
+    {
+      "name": "desktop approved 23:00 next instant has visible off-hours week marker",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "live",
+        "schedule_status": "scheduled",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "23:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments",
+          "authorized_revision": 2,
+          "authorized_by": "20000000-0000-4000-8000-000000000005",
+          "next_run_at": "2026-10-27T03:00:00.000Z"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "auto",
+          "would_run": true,
+          "dark": []
+        },
+        "execution_availability": "ready",
+        "execution_hold_reason": null,
+        "intended_next_run_at": "2026-10-27T03:00:00.000Z",
+        "next_run_at": "2026-10-27T03:00:00.000Z"
+      }
+    },
+    {
+      "name": "desktop off-hours week marker visibly names approved local weekday and date",
+      "status": "PASS",
+      "detail": "Outside displayed hoursMon, Oct 2623:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "desktop same off-hours instant stays visible in agenda",
+      "status": "PASS",
+      "detail": "Mon, Oct 26, 11:00 PM EDT23:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "desktop configured display-zone shift preserves instant and outside-hours marker",
+      "status": "PASS",
+      "detail": "Outside displayed hoursTue, Oct 2702:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "desktop shifted off-hours week marker visibly names business local weekday and date",
+      "status": "PASS",
+      "detail": "Outside displayed hoursTue, Oct 2702:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "desktop edit disarms future revision while original act stays running",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "10:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "running",
+          "event_state": "claimed",
+          "outcome": "running",
+          "observation": null,
+          "error": null,
+          "refusal_code": null,
+          "settled_at": null
+        },
+        "last_verified_run": {
+          "event_id": "50000000-0000-4000-8000-261019130000",
+          "act_id": "60000000-0000-4000-8000-261019130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-19",
+          "scheduled_for": "2026-10-19T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261019130000",
+            "act_id": "60000000-0000-4000-8000-261019130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-19T13:00:00Z",
+            "observed_at": "2026-10-19T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-19",
+            "receipt_id": "70000000-0000-4000-8000-261019130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-19T13:00:00Z"
+        },
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "draft",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "desktop original in-flight act receipt retains revision1 after edit creates revision2",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "10:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "last_verified_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "draft",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "mobile approved 23:00 next instant has visible off-hours week marker",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "live",
+        "schedule_status": "scheduled",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "23:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments",
+          "authorized_revision": 2,
+          "authorized_by": "20000000-0000-4000-8000-000000000005",
+          "next_run_at": "2026-10-27T03:00:00.000Z"
+        },
+        "last_run": null,
+        "last_verified_run": null,
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "auto",
+          "would_run": true,
+          "dark": []
+        },
+        "execution_availability": "ready",
+        "execution_hold_reason": null,
+        "intended_next_run_at": "2026-10-27T03:00:00.000Z",
+        "next_run_at": "2026-10-27T03:00:00.000Z"
+      }
+    },
+    {
+      "name": "mobile off-hours week marker visibly names approved local weekday and date",
+      "status": "PASS",
+      "detail": "Outside displayed hoursMon, Oct 2623:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "mobile same off-hours instant stays visible in agenda",
+      "status": "PASS",
+      "detail": "Mon, Oct 26, 11:00 PM EDT23:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "mobile configured display-zone shift preserves instant and outside-hours marker",
+      "status": "PASS",
+      "detail": "Outside displayed hoursTue, Oct 2702:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "mobile shifted off-hours week marker visibly names business local weekday and date",
+      "status": "PASS",
+      "detail": "Outside displayed hoursTue, Oct 2702:00 Weekly checkscheduled · point"
+    },
+    {
+      "name": "mobile edit disarms future revision while original act stays running",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "10:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "running",
+          "event_state": "claimed",
+          "outcome": "running",
+          "observation": null,
+          "error": null,
+          "refusal_code": null,
+          "settled_at": null
+        },
+        "last_verified_run": {
+          "event_id": "50000000-0000-4000-8000-261019130000",
+          "act_id": "60000000-0000-4000-8000-261019130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-19",
+          "scheduled_for": "2026-10-19T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261019130000",
+            "act_id": "60000000-0000-4000-8000-261019130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-19T13:00:00Z",
+            "observed_at": "2026-10-19T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-19",
+            "receipt_id": "70000000-0000-4000-8000-261019130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-19T13:00:00Z"
+        },
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "draft",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "mobile original in-flight act receipt retains revision1 after edit creates revision2",
+      "status": "PASS",
+      "detail": {
+        "automation_id": "30000000-0000-4000-8000-000000000005",
+        "name": "Weekly commitment check",
+        "state": "draft",
+        "schedule_status": "requested",
+        "revision": 2,
+        "schedule": {
+          "weekday": 1,
+          "local_time": "10:00",
+          "timezone": "America/New_York",
+          "revision": 2,
+          "request_id": "40000000-0000-4000-8000-000000000005",
+          "scope": "personal_planning_commitments"
+        },
+        "last_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "last_verified_run": {
+          "event_id": "50000000-0000-4000-8000-261026130000",
+          "act_id": "60000000-0000-4000-8000-261026130000",
+          "schedule_revision": 1,
+          "correlation_ref": "CORRELATION-2026-10-26",
+          "scheduled_for": "2026-10-26T13:00:00Z",
+          "status": "completed",
+          "event_state": "processed",
+          "outcome": "executed",
+          "observation": {
+            "version": 1,
+            "scope": "personal_planning_commitments",
+            "tenant_id": "10000000-0000-4000-8000-000000000005",
+            "authorized_by": "20000000-0000-4000-8000-000000000005",
+            "automation_id": "30000000-0000-4000-8000-000000000005",
+            "event_id": "50000000-0000-4000-8000-261026130000",
+            "act_id": "60000000-0000-4000-8000-261026130000",
+            "schedule_revision": 1,
+            "scheduled_for": "2026-10-26T13:00:00Z",
+            "observed_at": "2026-10-26T13:00:00Z",
+            "correlation_ref": "CORRELATION-2026-10-26",
+            "receipt_id": "70000000-0000-4000-8000-261026130000",
+            "source": "public.plan_items",
+            "open_count": 3,
+            "blocked_count": 1,
+            "overdue_count": 1,
+            "due_next_week_count": 1,
+            "undated_count": 1,
+            "truncated": false,
+            "items": [
+              {
+                "id": "PLAN-1",
+                "title": "Review service-delivery outline",
+                "status": "open"
+              },
+              {
+                "id": "PLAN-2",
+                "title": "Confirm next week’s capacity",
+                "status": "in_progress"
+              },
+              {
+                "id": "PLAN-3",
+                "title": "Finalize next month’s scope",
+                "status": "blocked"
+              }
+            ]
+          },
+          "error": null,
+          "refusal_code": null,
+          "settled_at": "2026-10-26T13:00:00Z"
+        },
+        "tool_lane": "auto",
+        "posture": {
+          "effective": "confirm",
+          "would_run": false,
+          "dark": []
+        },
+        "execution_availability": "held",
+        "execution_hold_reason": "draft",
+        "intended_next_run_at": null,
+        "next_run_at": null
+      }
+    },
+    {
+      "name": "reviewed bytes unchanged",
+      "status": "PASS",
+      "detail": {
+        "after": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090"
+      }
+    }
+  ],
+  "captures": [
+    {
+      "file": "desktop-off-hours-week-marker.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "desktop-off-hours-agenda.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "desktop-display-zone-shift-off-hours.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "desktop-in-flight-edit-historical-receipt.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "file": "mobile-off-hours-week-marker.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "mobile-off-hours-agenda.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "mobile-display-zone-shift-off-hours.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "file": "mobile-in-flight-edit-historical-receipt.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      }
+    }
+  ],
+  "scope": "Reviewer-directed off-hours and in-flight revision continuity; deterministic simulation only"
+}

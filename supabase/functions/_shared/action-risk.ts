@@ -82,6 +82,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["crm_delete_task", "high", "destroys a task with nothing left to restore it from"],
   ["comms_buy_number", "high", "commits the tenant to a recurring charge on a provider account"],
   ["comms_set_primary_number", "high", "changes the number every client sees when the tenant contacts them"],
+  // INT-345 K-3: free and idempotent, but it creates provider resources outside the
+  // platform — the rendered approval card, and autonomy clamps at confirm.
+  ["comms_setup_calling", "high", "connects the workspace's calling account on the provider (free, idempotent, deliberate)"],
   ["n8n_delete_workflow", "high", "permanently deletes an automation"],
   ["plan_remove_item", "high", "cancels a milestone, task or reminder"],
 
@@ -122,6 +125,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["n8n_run_workflow", "high", "fires an external automation with real effects"],
   ["n8n_archive_workflow", "high", "acts on the operator's provider account"],
   ["zapier_run_action", "high", "runs an action in a third-party app"],
+  ["ghl_run_action", "high", "runs a tool in the tenant's GoHighLevel CRM — reads contacts/conversations, writes can move real CRM records and send real messages"],
   ["calendar_book_meeting", "high", "books a real event with a real person"],
   ["social_connection_start", "high", "creates an external provider profile and begins authorization for a tenant Social identity"],
   ["social_connection_disconnect", "high", "revokes a tenant Social identity at the external provider"],
@@ -137,6 +141,17 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // ── high: becomes visible to a client, or goes public ─────────────────────────────────────
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
+  ["growth_form_publish", "high", "puts a form live at a public URL where strangers can submit to the workspace"],
+  // The rest of the Studio publish lifecycle (Migration E, 2026-10-04). These are door-only keys:
+  // the growth-publish-command door runs them for the Studio panel and the chat alike; no chat tool
+  // carries these names. Taking work offline is `high` for the same reason putting it live is — it
+  // changes what the public sees, and a visitor mid-way through a page or a link someone already
+  // shared stops working. The runtime clamp keeps every one of them ask-first.
+  ["growth_page_unpublish", "high", "takes a public page offline, so anyone with its address stops reaching it"],
+  ["growth_funnel_unpublish", "high", "takes a public sequence offline mid-visit for anyone working through it"],
+  ["growth_form_unpublish", "high", "takes a public form offline, so strangers can no longer submit to the workspace"],
+  ["studio_image_publish", "high", "puts an image in the Catalog where anyone with its link can see it"],
+  ["studio_image_unpublish", "high", "withdraws a published image from the Catalog that people may already be using"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It
@@ -200,8 +215,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // of billing, connections, provider actions and client-visible changes.
   ["comms_name_number", "ordinary", "renames a number in the workspace's own list"],
   ["comms_draft_registration", "ordinary", "drafts carrier copy; submitting it is a separate act"],
-  // `pipeline_create` / `pipeline_add_stage` were classified here and are NOT tools — they exist
-  // only in a label switch. The tool that exists is `pipeline_configure`, and it was omitted, so
+  // `pipeline_create` / `pipeline_add_stage` were classified here historically and are now fully
+  // retired (removed from the runtime surface). The tool that exists is `pipeline_configure`, and
+  // it was once omitted, so
   // deriving the gated set from this policy silently UNGATED a previously-gated write (§58). The
   // lint could not see it: `configure` was not a mutation verb, so the backstop read it as a query.
   // Both halves are fixed — the entry below, and `configure` added to MUTATION_VERB.
@@ -228,6 +244,25 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // owner sets, not evidence a campaign is running.
   ["campaign_brief_create", "ordinary", "saves a campaign PLANNING brief the operator can edit or archive; it launches, sends, and publishes nothing"],
   ["campaign_brief_revise", "ordinary", "edits a campaign PLANNING brief; nothing is launched, sent, or published"],
+  ["email_campaign_draft", "ordinary", "writes or changes an email campaign DRAFT in this business; nothing is sent, and a version awaiting approval, approved or sent is refused"],
+  ["email_campaign_request_approval", "ordinary", "freezes one draft and files the owner's single approval for it; PAIGE cannot approve, and nothing is sent until a person approves"],
+  ["email_series_draft", "ordinary", "writes or changes an email series DRAFT in this business (who enters, each email and its wait, when people leave); nothing is sent, a running series keeps its approved version, and a series awaiting approval or stopped is refused"],
+  ["email_series_request_approval", "ordinary", "freezes one series draft and files the owner's single approval for it; PAIGE cannot approve or start it, and nothing is sent until a person approves"],
+  // Ads showroom (2026-10-12). Marks one of the business's own library pictures/videos as featured
+  // (or not) in Ads › Overview through the same RPC the Ads desk calls; at most six, an archived item
+  // refused by the server. In-business and reversible by the same tool; it publishes, sends and spends
+  // nothing and touches no ad account — the same class as content_save.
+  // Campaign steps (INT-298 MBC 6c). Plan files one record-only step on the action list at `confirm` (approving
+  // it records it; nothing is drafted, sent, published or spent); record/judge store what the owner said
+  // happened and their verdict on a finished step. In-business statements — the same class as content_save.
+  ["campaign_step_plan", "ordinary", "plans one record-only campaign step on the action list, waiting for the owner's approval; nothing is drafted, sent, published or spent"],
+  ["campaign_step_record_result", "ordinary", "records what the owner said happened on a finished campaign step, as stated and never as a measured figure"],
+  ["campaign_step_judge", "ordinary", "records the owner's met / partly met / not met judgement of a campaign step's recorded result"],
+  // Process scope (MBC 6c). Chooses which form(s) or campaign start a form-started process. It never switches a
+  // process on, but re-scoping a LIVE process changes which submissions run it from now on — an automation's
+  // reach — so it is `high`: the risk clamp makes the chat ask every time, whatever autonomy is set.
+  ["process_scope_set", "high", "changes which form submissions start a form-started process; on a live process that changes what runs automatically from now on"],
+  ["set_ad_creative_featured", "ordinary", "features (or unfeatures) one of the business's own library pictures in its Ads showroom, at most six at once; reversible, and nothing is published, sent or spent"],
   // ── Calendar booking presets (E5, 2026-09-13). The SAME server-authorized RPCs the Settings ›
   // Connections › Calendars UI drives, adopted into Chat (no parallel model). Per-tool risk assumes
   // each tool's HIGHEST-impact use (the table is per-tool, not per-call): a tool that CAN change or
@@ -291,20 +326,36 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // passes CI and throws on import. Not filed as a tracked task; recorded at
   // `scripts/ci/capability-kit-lint.mjs`'s `direct-risk-entry` comment with its falsifying input.
   //
-  // So the entries below are landable whenever the agreements chat-tool work is sequenced. They are
-  // still absent because that wiring is its own slice, not because anything blocks it. The
-  // agreements engine already ships its RPC seams (§10 — Paige-callable).
+  // SEQUENCED, 2026-09-24; the send landed with the agreements PR. `agreement_draft` was the first
+  // production `defineCapability()` declaration in this repository, and `agreement_send` is now
+  // Spine-registered as an external_effect on public.issue_agreement_signing_link. The remaining
+  // three (add_signer, resend, void) stay absent for the same reason the READ half shipped first:
+  // each outward-facing key earns its own slice, its own confirm copy and its own proof.
+  //
+  // `agreement_draft` is `ordinary` on the reasoning already given above: a draft is visible to
+  // nobody outside the workspace, the RPC re-proves tenant and membership in its own body, and the
+  // tier trigger refuses a workspace whose plan does not carry agreement signing. It mints rather
+  // than converges, which is a truthfulness problem for its idempotency sentence and not a risk one —
+  // the confirm fingerprint is what stops a second draft, and that is stated where callers read it.
+  // OUTWARD-FACING AND TERMINAL-ADJACENT. A send puts a signable document in a named person's inbox
+  // and moves the agreement one way out of draft; the document it freezes becomes the integrity
+  // record of what that person was shown. `high` means the model's own "they said yes" channel is
+  // refused outright — only a fingerprint echoed from a rendered card runs it — which is the
+  // correct floor for the one action in this domain that reaches someone outside the workspace.
+  // Deliberately NOT accompanied by `agreement_resend` or `agreement_void`: each is its own slice.
+  ["agreement_send", "high", "emails a signable link for this agreement to its signers — outward-facing, and it reaches a real person outside the platform; the send freezes the document as the integrity record of what the signer was shown, moves the agreement one way out of draft, and cannot be recalled once delivered, so it never runs on the model's word alone"],
+  ["agreement_draft", "ordinary", "drafts or revises an agreement inside the workspace — nothing is sent, no signing link is minted, and nobody outside the tenant can see it; the RPC re-proves tenant and membership under the caller's own JWT, and a blind retry with no agreement id mints a second draft rather than converging, which the confirm card is what prevents"],
   ["calendar_link_send", "high", "sends a published calendar's public booking link to a real contact by email or SMS — outward-facing; the server refuses a non-public calendar and the comms seam refuses a cross-tenant, suppressed, or unconsented recipient, and it never posts to social or books a meeting"],
   ["deal_create", "ordinary", "adds an opportunity"],
   ["deal_move_stage", "ordinary", "moves a deal between stages"],
   // The client seat's ONLY write, and on the portal it is the client editing their own profile.
   // Reversible, in-tenant, and scoped to the client already in focus.
   ["update_client_data", "ordinary", "edits fields on the focused client's record"],
-  ["draft_marketing_content", "ordinary", "produces a draft nobody has sent"],
   ["generate_image", "ordinary", "produces an image nobody has published"],
   ["content_save", "ordinary", "saves to the workspace's own library"],
   ["growth_page_save", "ordinary", "saves a DRAFT; publishing is the separate high-risk act"],
   ["growth_funnel_build", "ordinary", "builds DRAFT rows; publishing is separate"],
+  ["growth_form_save", "ordinary", "saves a form DRAFT (a live form's edits wait in its working copy); publishing is separate"],
   // Produces the artefact; it does not hand it to anyone. "A client might be given this one day"
   // is true of most things the workspace holds, and classifying on what MIGHT later happen to an
   // artefact would put half the library in `high`. Giving it to a client is the separate act, and
@@ -401,12 +452,27 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],
   // send_btf_template_email, send_transactional_email, send_composed_email
   ["comms_send_email", "high", "puts an email in a real person's inbox"],
+  // #1140 two-mailbox pilot: reversible mailbox organization on the canonical mirror vs the real mailbox.
+  ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; the mailbox kinds are reversible, an unsubscribe proposal has no undo and its automatic sending is disabled, and permanent deletion is not expressible"],
   // cancel_workflow_run
   ["workflow_cancel_run", "high", "acts on the operator's provider account to stop a run"],
   // register_workflow
   ["workflow_register", "high", "defines a new automation and where firing it points"],
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
+  ["sales_update_invoice_settings", "high", "changes future invoice numbering and document preferences"],
+  ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
+  ["sales_create_payment_request", "high", "creates an exact tenant-merchant hosted customer payment request against a canonical invoice"],
+  ["sales_start_merchant_onboarding", "high", "creates or resumes a hosted Stripe merchant setup outside the workspace"],
+  ["sales_create_merchant_login_link", "high", "creates a credential-bearing hosted access link to the tenant merchant dashboard"],
+  ["sales_create_commercial_terms", "high", "creates a fixed client commercial obligation without an invoice, signature or payment"],
+  ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
+  ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],
+  ["sales_commit_collection_import", "high", "imports reviewed historical obligations and human-reported receipts into canonical customer records"],
+  ["sales_record_manual_payment", "high", "records a human-reported customer payment and changes the invoice balance"],
+  ["sales_reverse_manual_payment", "high", "reverses a recorded receipt while preserving the original financial history"],
+  ["sales_void_invoice", "high", "withdraws an issued customer invoice and revokes its customer access"],
+  ["sales_create_invoice_link", "high", "grants expiring access to a customer invoice document"],
   // run_skill
   ["skill_run", "high", "runs a recipe that can email, scrape and write on its own"],
   // verify_business
@@ -464,6 +530,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["platform_post_notification", "ordinary", "posts a notice on the operator's own alert surface"],
   // create_invoice
   ["billing_create_invoice", "ordinary", "raises a draft bill; sending it is the separate high-risk act"],
+  ["sales_revise_invoice_draft", "ordinary", "revises an unissued canonical draft; publication, delivery and collection remain separately governed acts"],
   // propose_client_update
   ["crm_propose_contact_update", "ordinary", "stages a change the operator approves before it applies"],
   // ingest_credit_scores
@@ -561,6 +628,10 @@ const REASON_BY_TOOL: ReadonlyMap<string, string> = new Map(
 const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([
   ["growth_page_generate", "drafts a page in memory and returns it; saving is growth_page_save"],
   ["growth_funnel_generate", "drafts a funnel in memory; building it is growth_funnel_build"],
+  // ADDED 2026-10-04 by owner ruling ("Drafts skip approval is a go"). content-draft returns copy and
+  // persists nothing; saving it is content_save, which stays gated. Production had one approval card
+  // for a draft, never answered: the gate asked the owner to approve being shown words.
+  ["draft_marketing_content", "drafts copy in memory and returns it; saving is content_save"],
   ["propose_action", "files a request for the operator's decision and sends nothing; the send it proposes is the gated act"],
   // ADDED 2026-09-02 with the Pipelines merge. It persists a row, so the verb backstop was right
   // to stop it — but the row is the archive's own binding: single-use, expiring, scoped to this

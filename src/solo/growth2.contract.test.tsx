@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 const source = readFileSync(resolve(process.cwd(), "src/solo/growth2.tsx"), "utf8");
 const commandDesk = readFileSync(resolve(process.cwd(), "src/solo/PipelineCommandDesk.tsx"), "utf8");
 const css = readFileSync(resolve(process.cwd(), "src/solo/solo-campaigns.css"), "utf8");
+// The detail drawer moved to its own module (INT-342 S1e) so Content can mount it too.
+const drawer = readFileSync(resolve(process.cwd(), "src/solo/detail-drawer.tsx"), "utf8");
 const adapter = readFileSync(resolve(process.cwd(), "src/solo/useSoloCampaigns.ts"), "utf8");
 const pipelineSettings = readFileSync(resolve(process.cwd(), "src/pages/admin/PipelineSettings.tsx"), "utf8");
 const closingStageMigration = readFileSync(resolve(process.cwd(), "supabase/migrations/20261205000000_a_stage_can_be_marked_closing.sql"), "utf8");
@@ -33,16 +35,26 @@ const paigeChatSurface = readFileSync(resolve(process.cwd(), "src/components/das
 const paigeMcp = readFileSync(resolve(process.cwd(), "supabase/functions/paige-mcp/index.ts"), "utf8");
 
 describe("Solo Campaigns approved contract", () => {
-  it("renders exactly the approved six tabs in order", () => {
+  it("renders the owner's seven Marketing tabs (Lead capture retired into Overview, Ads its own department, INT-342), with no Planned marker in the strip", () => {
+    // Owner ruling 2026-10-04: "these are the ones that I want dedicated to marketing". Audience,
+    // Content, Email and Ads carry no marker in the strip (owner, 2026-10-04: no redundant words).
     const tabBlock = /const tabs=\[([\s\S]*?)\];/.exec(source)?.[1] ?? "";
     expect([...tabBlock.matchAll(/\['([^']+)','([^']+)'/g)].map((match) => match.slice(1, 3))).toEqual([
-      ["ov", "Overview"],
-      ["catalog", "Catalog"],
-      ["sales", "Sales"],
-      ["pipeline", "Pipeline"],
+      ["overview", "Overview"],
+      ["campaigns", "Campaigns"],
+      ["audience", "Audience"],
+      ["content", "Content"],
       ["social", "Social"],
-      ["performance", "Performance"],
+      ["email", "Email"],
+      ["analytics", "Analytics"],
     ]);
+    // Ads left Marketing for its own department below it (owner ruling 2026-10-10): no tab, no desk here.
+    expect(tabBlock).not.toMatch(/'ads'/);
+    expect(source).not.toContain("<MarketingAds");
+    // Old `/growth/ads` links replace into the Ads department before any Marketing reader mounts.
+    expect(source).toMatch(/legacySalesRoute\([^)]*\)\?\?legacyAdsRoute\(/);
+    expect(tabBlock).not.toMatch(/'planned'/);
+    expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual([]);
     expect(tabBlock).not.toMatch(/Active|Brand Kit|Pages|Funnels|Forms|Builders/);
   });
 
@@ -58,9 +70,13 @@ describe("Solo Campaigns approved contract", () => {
     for (const slug of ["brand-kit", "pages", "funnels", "forms", "builders"]) {
       expect(source).toMatch(new RegExp(`(?:"${slug}"|\\b${slug}:)`));
     }
-    expect(source).toContain("This address moved");
-    expect(source).toContain("Return to Catalog");
-    expect(source).toContain("Your workspace and account stay selected");
+    // INT-342: every retired address lands on Overview with its intent and one line saying where
+    // the work lives now, never a dead end.
+    for (const moved of ["lead-capture", "catalog", "missing-form"]) {
+      expect(source).toMatch(new RegExp(`(?:"${moved}"|\\b${moved}:)`));
+    }
+    expect(source).toContain("Lead capture moved here.");
+    expect(source).toContain('className="mov-moved" role="status"');
   });
 
   it("does not render the retired Campaigns fixture data", () => {
@@ -71,8 +87,11 @@ describe("Solo Campaigns approved contract", () => {
     // Performance coverage is built on saying what can and cannot be reported — but in the
     // customer's words. RE-POINTED to guard the translation, so the release vocabulary cannot
     // drift back onto a surface a coach uses.
-    for (const plain of ["Available", "Partly available", "Planned", "Not available"]) expect(source).toContain(plain);
-    for (const internal of [">LIVE<", ">PARTIAL<", ">PROPOSED<", ">UNAVAILABLE<"]) expect(source).not.toContain(internal);
+    // INT-342 S1d (2026-10-10): the capability statements moved from growth2's Analytics into
+    // marketing-analytics.tsx, where each unavailable channel says so in plain words.
+    const analytics = readFileSync(resolve(process.cwd(), "src/solo/marketing-analytics.tsx"), "utf8");
+    for (const plain of ["Not available", "aren’t read", "aren’t counted here yet"]) expect(analytics).toContain(plain);
+    for (const file of [source, analytics]) for (const internal of [">LIVE<", ">PARTIAL<", ">PROPOSED<", ">UNAVAILABLE<"]) expect(file).not.toContain(internal);
   });
 
   it("fails closed on tenant identity and contains read-only tenant filters", () => {
@@ -95,10 +114,11 @@ describe("Solo Campaigns approved contract", () => {
   });
 
   it("contains keyboard, reduced-motion, forced-colors, and overflow safeguards", () => {
-    expect(source).toContain("event.key === \"Escape\"");
-    expect(source).toContain('role="dialog"');
-    expect(source).toContain('aria-modal="true"');
-    expect(source).toContain('setAttribute("inert", "")');
+    expect(drawer).toContain("event.key === \"Escape\"");
+    expect(drawer).toContain('role="dialog"');
+    expect(drawer).toContain('aria-modal="true"');
+    expect(drawer).toContain('setAttribute("inert", "")');
+    expect(source).toContain('import { DetailDrawer } from "./detail-drawer";');
     expect(css).toContain("prefers-reduced-motion");
     expect(css).toContain("forced-colors");
     expect(css).toContain("overflow-x: clip");
@@ -331,9 +351,14 @@ describe("Solo Campaigns approved contract", () => {
     expect(invariantMigration).toContain("pg_advisory_xact_lock(hashtextextended('pipeline-stage-order:'||new.pipeline_id::text,0))");
     expect(archiveMigration).toContain("for share");
     expect(archiveMigration).toContain("where id=_stage_id for update");
-    expect(submissionProcessor).toContain("deal_stage_update_failed");
-    expect(submissionProcessor).toContain("submission_deal_link_failed");
-    expect(submissionProcessor).toContain('.is("archived_at", null)');
+    // Admission now owns stage advance + durable binding in one transaction.
+    const admission = readFileSync(resolve(process.cwd(), "supabase/migrations/20270588326001_solo_form_deal_identity.sql"), "utf8");
+    expect(submissionProcessor).toContain('admin.rpc("growth_attach_submission_deal"');
+    expect(submissionProcessor).toContain('if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"}');
+    expect(admission).toContain("archived_at IS NULL FOR SHARE");
+    expect(admission).toContain("UPDATE public.deals SET stage_id=stage WHERE id=deal.id RETURNING * INTO deal");
+    expect(admission).toContain("UPDATE public.growth_form_submissions SET deal_id=deal.id WHERE id=sub.id");
+    expect(admission.indexOf("UPDATE public.deals SET stage_id=stage")).toBeLessThan(admission.indexOf("UPDATE public.growth_form_submissions SET deal_id=deal.id"));
     expect(visibilityMigration).toContain("_deal_admin or (_is_coach");
     expect(visibilityMigration).toContain("d.owner_user_id=_caller");
     expect(visibilityMigration).toContain("dc.assigned_coach_user_id=_caller");
@@ -356,7 +381,7 @@ describe("Solo Campaigns approved contract", () => {
     expect(pipelineSettings).toContain('rpc("set_default_pipeline" as never');
     expect(pipelineSettings).not.toContain("update({ is_default:");
     expect(defaultSetterMigration).toContain("pg_advisory_xact_lock(hashtextextended('pipeline-default:'||_tenant::text,0))");
-    expect(contactDeals).toContain('from("pipeline_stages").select("*").is("archived_at", null)');
+    expect(contactDeals).toContain('from("pipeline_stages").select("*").eq("tenant_id", activeTenantId).is("archived_at", null)');
     expect(stageAutomationRules).toContain('.eq("pipeline_id", pid).is("archived_at", null)');
     expect(paigeChat.match(/\.is\("archived_at", null\)/g)?.length).toBeGreaterThanOrEqual(2);
     expect(paigeMcp).toContain('.eq("tenant_id", tenantId)\n        .is("archived_at", null)');

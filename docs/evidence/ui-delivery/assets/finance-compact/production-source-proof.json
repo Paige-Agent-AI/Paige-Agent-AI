@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-10-10T14:08:29.636200+00:00",
+  "kind": "unauthenticated public production source readback; not authenticated acceptance",
+  "mergeSha": "794c24e92b8f045dda0994a7b9e8c053228300a9",
+  "reviewedHead": "de44ad59f9227d3f84067fba44c14f105be66659",
+  "deploymentId": "dpl_8tcVybSYafYjPCupa2jsMuEc7ZTb",
+  "deploymentState": "READY",
+  "assetUrl": "https://app.paigeagent.ai/assets/SoloEntry-WVMUJSod.js",
+  "assetSha256": "41b8b03ceb6abf6d413ca7a1aac81161e1ec507207ea6aaea35dd441c6865eae",
+  "textLength": 1953710,
+  "checks": {
+    "six_tab_navigation": true,
+    "old_overview_banner_absent": true,
+    "old_banking_banner_absent": true,
+    "old_expense_banner_absent": true,
+    "old_profit_banner_absent": true,
+    "old_forecast_banner_absent": true,
+    "integrations_redirect_present": true
+  },
+  "authenticatedRuntime": "UNVERIFIED"
+}

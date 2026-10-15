@@ -302,6 +302,44 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
   const bootingRef = useRef<Promise<Device | null> | null>(null);
   const mountedRef = useRef(true);
 
+  // INT-345 — the workspace the current Device lifecycle belongs to. The token,
+  // the `${tenantId}.${userId}` identity, the caller ID, and any live call are
+  // all scoped to the tenant they were minted under (§9). `activeTenantId` is
+  // read through this ref inside async boots so a mid-boot switch is detected
+  // when the boot completes.
+  const tenantRef = useRef<string | null>(activeTenantId);
+  tenantRef.current = activeTenantId;
+  const lastTenantRef = useRef<string | null>(activeTenantId);
+
+  // INT-345 — workspace-scope teardown. A switch that does NOT reload the app
+  // (the in-shell sub-account switch) must not carry the previous tenant's
+  // registered Device into the new workspace: no token reuse, no stale caller
+  // identity, no cross-tenant inbound/call state, no grace-held transcript
+  // topic, and no stale readiness/error copy from the old workspace. The state
+  // reset runs on EVERY switch (needs_config/error surfaces hold no refs, so a
+  // refs-only guard would let the old tenant's copy survive); the destruction
+  // calls are all null-safe no-ops when nothing is booted.
+  useEffect(() => {
+    if (lastTenantRef.current === activeTenantId) return;
+    lastTenantRef.current = activeTenantId;
+    try { callRef.current?.disconnect(); } catch { /* already gone */ }
+    try { incomingRef.current?.reject(); } catch { /* already gone */ }
+    try { deviceRef.current?.destroy(); } catch { /* already gone */ }
+    destroyDeferredVoiceDevice(expiredDeviceRef);
+    deviceRef.current = null;
+    callRef.current = null;
+    incomingRef.current = null;
+    callAcceptedRef.current = false;
+    callStartingRef.current = false;
+    clearGraceTimer();
+    setSubscribedTopic(null);
+    setActiveCall(null);
+    setIncomingCall(null);
+    setMuted(false);
+    setReason(null);
+    setStatus("idle");
+  }, [activeTenantId, clearGraceTimer]);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -322,7 +360,16 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       safeSet(setStatus, "connecting");
       safeSet(setReason, null);
 
+      // INT-345 — the workspace this boot is FOR. Captured before any await. If
+      // the workspace switched while ANY await below was pending, this boot's
+      // outcome belongs to the PREVIOUS tenant and must paint no state under
+      // the new one — not a Device (handled after register) and not a
+      // needs_config/error surface (checked at every early return).
+      const bootTenant = tenantRef.current;
+      const tenantSwitched = () => tenantRef.current !== bootTenant;
+
       const minted = await mintToken();
+      if (tenantSwitched()) return null;
       if (minted.kind === "needs_config") {
         safeSet(setStatus, "needs_config");
         safeSet(setReason, minted.message);
@@ -339,6 +386,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       try {
         ({ Device: DeviceCtor } = await import("@twilio/voice-sdk"));
       } catch {
+        if (tenantSwitched()) return null;
         safeSet(setStatus, "error");
         safeSet(setReason, "The calling module failed to load. Refresh and try again.");
         return null;
@@ -351,17 +399,24 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           closeProtection: true,
         });
       } catch {
+        if (tenantSwitched()) return null;
         safeSet(setStatus, "error");
         safeSet(setReason, "Couldn't start the calling device.");
         return null;
       }
 
       device.on("registered", () => {
-        // Don't stomp an in-progress call's status.
-        if (!callRef.current) safeSet(setStatus, "ready");
+        // Don't stomp an in-progress call's status, and don't paint "ready" if
+        // the workspace switched mid-register — this Device is about to be
+        // discarded by the boot guard and must not leave a liar state behind.
+        if (tenantRef.current === bootTenant && !callRef.current) safeSet(setStatus, "ready");
       });
 
       device.on("error", (err: TwilioError.TwilioError) => {
+        // INT-345 — a late error from a Device that is no longer current (torn
+        // down by a workspace switch, or replaced by a re-boot) must not paint
+        // or clear state under a workspace that never owned it.
+        if (deviceRef.current !== device) return;
         const preserveConnectedCall = !!callRef.current && callAcceptedRef.current;
         const expired = discardExpiredVoiceDevice(
           err,
@@ -430,8 +485,13 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
           } catch {
             /* ignore */
           }
-          if (deviceRef.current === device) deviceRef.current = null;
-          safeSet(setStatus, "idle");
+          // INT-345 — this handler belongs to the Device it was registered on.
+          // If that Device was already torn down by a workspace switch, a NEW
+          // tenant's Device may be live here — never demote its surface.
+          if (deviceRef.current === device) {
+            deviceRef.current = null;
+            safeSet(setStatus, "idle");
+          }
         }
       });
 
@@ -474,8 +534,22 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       try {
         await device.register();
       } catch {
+        if (tenantSwitched()) {
+          try { device.destroy(); } catch { /* already gone */ }
+          return null;
+        }
         safeSet(setStatus, "error");
         safeSet(setReason, "Couldn't register for calling. Try again in a moment.");
+        return null;
+      }
+
+      // INT-345 — mid-boot workspace switch: this Device was minted for the
+      // previous tenant. The switch effect may already have torn it down; if the
+      // switch landed while register() was pending it is destroyed HERE instead.
+      // Either way it is never retained under the new workspace, and no state is
+      // painted under the new one (the switch effect already reset the surface).
+      if (tenantRef.current !== bootTenant) {
+        try { device.destroy(); } catch { /* already gone */ }
         return null;
       }
 
@@ -553,6 +627,13 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       }
       if (!acquireCallStart(callStartingRef, !!callRef.current)) return;
 
+      // INT-345 — the workspace this dial belongs to. If the workspace switches
+      // while the mic probe or boot is pending, the call must not proceed: it
+      // would dial under the NEW tenant's identity/caller ID (or a destroyed
+      // Device). Paint no state under the new workspace — the switch effect
+      // owns the reset.
+      const callTenant = tenantRef.current;
+
       // Mic is required for outbound audio. Probe FIRST so a denial is a clear,
       // handled state (§13) instead of an opaque Device failure mid-connect.
       try {
@@ -560,6 +641,10 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
         // Release the probe track immediately; Twilio acquires its own.
         stream.getTracks().forEach((t) => t.stop());
       } catch {
+        if (tenantRef.current !== callTenant) {
+          callStartingRef.current = false;
+          return;
+        }
         safeSet(setStatus, "error");
         safeSet(
           setReason,
@@ -570,7 +655,7 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       }
 
       const device = await bootDevice();
-      if (!device) {
+      if (!device || tenantRef.current !== callTenant) {
         callStartingRef.current = false;
         return;
       }
@@ -580,8 +665,17 @@ export function VoiceDeviceProvider({ children }: { children: ReactNode }) {
       safeSet(setActiveCall, { number, startedAt: Date.now(), callSid: null });
       try {
         const outbound = await device.connect({ params: { To: number } });
+        // INT-345 — the connect await is a tenant resume point too: if the
+        // workspace switched while connecting, this call belongs to the OLD
+        // tenant identity — end it, wire nothing, paint nothing under the new
+        // workspace (the switch effect owns the reset).
+        if (tenantRef.current !== callTenant) {
+          try { outbound.disconnect(); } catch { /* already gone */ }
+          return;
+        }
         wireCall(outbound, number);
       } catch (error) {
+        if (tenantRef.current !== callTenant) return;
         const discarded = discardExpiredVoiceDevice(error, device, deviceRef);
         safeSet(setStatus, !discarded && deviceRef.current ? "ready" : "error");
         safeSet(setReason, providerCallErrorMessage(error));

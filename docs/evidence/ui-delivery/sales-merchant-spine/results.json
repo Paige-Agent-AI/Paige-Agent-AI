@@ -1,0 +1,392 @@
+{
+  "proofClass": "LOCAL_RENDER_SYNTHETIC_TRANSPORT",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "paige": "closed",
+      "geometry": {
+        "x": 1104,
+        "y": 0,
+        "width": 432,
+        "height": 770,
+        "viewport": 1536,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "paige": "open",
+      "geometry": {
+        "x": 1104,
+        "y": 0,
+        "width": 432,
+        "height": 770,
+        "viewport": 1536,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "paige": "closed",
+      "geometry": {
+        "x": 1104,
+        "y": 0,
+        "width": 432,
+        "height": 770,
+        "viewport": 1536,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "paige": "open",
+      "geometry": {
+        "x": 1104,
+        "y": 0,
+        "width": 432,
+        "height": 770,
+        "viewport": 1536,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "paige": "closed",
+      "geometry": {
+        "x": 934,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1366,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "paige": "open",
+      "geometry": {
+        "x": 934,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1366,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "paige": "closed",
+      "geometry": {
+        "x": 934,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1366,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "paige": "open",
+      "geometry": {
+        "x": 934,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1366,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "paige": "closed",
+      "geometry": {
+        "x": 592,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1024,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "paige": "open",
+      "geometry": {
+        "x": 592,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1024,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "paige": "closed",
+      "geometry": {
+        "x": 592,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1024,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "paige": "open",
+      "geometry": {
+        "x": 592,
+        "y": 0,
+        "width": 432,
+        "height": 768,
+        "viewport": 1024,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "paige": "closed",
+      "geometry": {
+        "x": 468,
+        "y": 0,
+        "width": 432,
+        "height": 1000,
+        "viewport": 900,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "paige": "open",
+      "geometry": {
+        "x": 468,
+        "y": 0,
+        "width": 432,
+        "height": 1000,
+        "viewport": 900,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "paige": "closed",
+      "geometry": {
+        "x": 468,
+        "y": 0,
+        "width": 432,
+        "height": 1000,
+        "viewport": 900,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "paige": "open",
+      "geometry": {
+        "x": 468,
+        "y": 0,
+        "width": 432,
+        "height": 1000,
+        "viewport": 900,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "paige": "closed",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844,
+        "viewport": 390,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "paige": "open",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844,
+        "viewport": 390,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "paige": "closed",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844,
+        "viewport": 390,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "paige": "open",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844,
+        "viewport": 390,
+        "horizontalOverflow": false,
+        "bodyOverflow": false,
+        "scrollOwner": "auto"
+      },
+      "escape": "PASS"
+    },
+    {
+      "paypal": "DISCOVERABLE / CONNECTION UNAVAILABLE",
+      "text": "PA\nPayPal\nCommerce\n\nPayPal customer payments require the platform’s approved seller-onboarding connection. That connection is not available yet. Your business will connect its own PayPal account here once secure seller authorization is enabled.\n\nSetting this up is not offered here yet, rather than offered and quietly not working.\n\nNo credentials or provider payloads are shown here."
+    },
+    {
+      "merchant": "incomplete",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nSetup incomplete\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nNot enabled\nPAYOUTS TO YOUR BUSINESS\nNot enabled\nBUSINESS DETAILS\nStill required\nSALES PAYMENT ACCESS\nNot enabled\nLAST PROVIDER CHECK\n10/6/2026, 10:54:01 PM\n\nContinue on Stripe to finish your business details, then return here and refresh status.\n\nContinue Stripe setup (TEST)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "restricted",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nPayments restricted\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nNot enabled\nPAYOUTS TO YOUR BUSINESS\nNot enabled\nBUSINESS DETAILS\nStill required\nSALES PAYMENT ACCESS\nNot enabled\nLAST PROVIDER CHECK\n10/6/2026, 10:54:03 PM\n\nStripe has not enabled customer payments. Continue setup on Stripe to review what is required.\n\nContinue Stripe setup (TEST)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "ready",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nReady for payment requests\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nEnabled\nPAYOUTS TO YOUR BUSINESS\nEnabled\nBUSINESS DETAILS\nSubmitted\nSALES PAYMENT ACCESS\nEnabled\nLAST PROVIDER CHECK\n10/6/2026, 10:54:06 PM\n\nStripe currently permits payment requests. Each invoice action still needs its own authorization; this is not proof that a payment has settled.\n\nContinue Stripe setup (TEST)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "live",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nReady for payment requests\nENVIRONMENT\nLIVE · real payments\nCUSTOMER PAYMENTS\nEnabled\nPAYOUTS TO YOUR BUSINESS\nEnabled\nBUSINESS DETAILS\nSubmitted\nSALES PAYMENT ACCESS\nEnabled\nLAST PROVIDER CHECK\n10/6/2026, 10:54:08 PM\n\nStripe currently permits payment requests. Each invoice action still needs its own authorization; this is not proof that a payment has settled.\n\nContinue Stripe setup (LIVE)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "unknown",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nThis setup creates a Stripe Express account for your business. Linking an existing Stripe account is not available yet.\n\nCONNECTION\nSetup needs reconciliation\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nNot verified\nPAYOUTS TO YOUR BUSINESS\nNot verified\nBUSINESS DETAILS\nNot verified\nSALES PAYMENT ACCESS\nNot verified\n\nWe could not confirm account setup yet. Refresh status to reconcile the existing attempt. Another account will not be created automatically.\n\nSet up Stripe (TEST)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "stale",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nStatus needs checking\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nNeeds checking\nPAYOUTS TO YOUR BUSINESS\nNeeds checking\nBUSINESS DETAILS\nNeeds checking\nSALES PAYMENT ACCESS\nNeeds checking\nLAST PROVIDER CHECK\n10/6/2026, 10:54:12 PM\n\nCheck Stripe again before relying on this connection.\n\nContinue Stripe setup (TEST)\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "error",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nThis setup creates a Stripe Express account for your business. Linking an existing Stripe account is not available yet.\n\nCONNECTION\nStatus needs checking\nENVIRONMENT\nNot verified\nCUSTOMER PAYMENTS\nNot verified\nPAYOUTS TO YOUR BUSINESS\nNot verified\nBUSINESS DETAILS\nNot verified\nSALES PAYMENT ACCESS\nNot verified\n\nCheck Stripe again before relying on this connection.\n\nConnection status is unavailable. Nothing is being claimed as ready. Refresh status before continuing.\n\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "merchant": "readonly",
+      "text": "Stripe · customer payments\n\nConnect the payment account your business uses to receive customer money.\n\nCONNECTION\nReady for payment requests\nENVIRONMENT\nTEST · no real money\nCUSTOMER PAYMENTS\nEnabled\nPAYOUTS TO YOUR BUSINESS\nEnabled\nBUSINESS DETAILS\nSubmitted\nSALES PAYMENT ACCESS\nEnabled\nLAST PROVIDER CHECK\n10/6/2026, 10:54:16 PM\n\nStripe currently permits payment requests. Each invoice action still needs its own authorization; this is not proof that a payment has settled.\n\nOnly a workspace owner or admin can manage this merchant connection.\n\nRefresh status\nCustomer money goes to your business. Your PAIGE subscription stays separate."
+    },
+    {
+      "keyboard": "PASS",
+      "openerRestoration": "PASS",
+      "zoom": "CSS 200% reflow, recovery control reachable",
+      "zoomBox": {
+        "x": 887.125,
+        "y": 607.875,
+        "width": 272.890625,
+        "height": 62
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,11 @@ import { cn } from "@/lib/utils";
 
 export type ConfirmActionState = "pending" | "working" | "done" | "failed" | "unconfirmed";
 
+// INT-328 — the email preview's type and the browser's gate on it live in ./confirmPreview (a plain
+// module, so this file exports components only).
+import type { ConfirmEmailPreview } from "./confirmPreview";
+export type { ConfirmEmailPreview } from "./confirmPreview";
+
 /** The card's own state. `mixed` exists only at card level: some actions ran and some did not. */
 type CardState = ConfirmActionState | "mixed";
 
@@ -57,7 +62,145 @@ export type ConfirmAction = {
   state?: ConfirmActionState;
   /** Why it failed, or what it produced. Shown verbatim; the server owns this sentence. */
   note?: string;
+  /**
+   * The email this action sends, when it sends one. Shown INSTEAD of the summary sentence — the
+   * envelope already says who, from where and about what, and saying it twice is noise.
+   */
+  preview?: ConfirmEmailPreview;
 };
+
+/** Eight lines of 20px body text (10rem): the clamp, and the threshold the pre-layout estimate uses. */
+const BODY_CLAMP_LINES = 8;
+
+/**
+ * Before layout (server render, the first paint) the card cannot measure, so it estimates from the
+ * text: more explicit lines than the clamp, or more characters than eight lines hold at side-panel
+ * width. Once laid out, the measurement decides.
+ */
+function likelyOverflows(text: string): boolean {
+  const lines = text.split("\n");
+  const wrapped = lines.reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 64)), 0);
+  return wrapped > BODY_CLAMP_LINES;
+}
+
+/**
+ * An address offers its natural break points — after the @ and before each dot — so a narrow card
+ * wraps it as `maya@` / `ortizlandscaping` / `.example` rather than mid-word. Text is unchanged.
+ */
+function Address({ value }: { value: string }) {
+  // No lookbehind: an older Safari would refuse to parse the whole module over one regex.
+  const parts: string[] = [];
+  let current = "";
+  for (const ch of value) {
+    if (ch === "." && current) { parts.push(current); current = ""; }
+    current += ch;
+    if (ch === "@") { parts.push(current); current = ""; }
+  }
+  if (current) parts.push(current);
+  return <>{parts.map((part, i) => <span key={i}>{i > 0 && <wbr />}{part}</span>)}</>;
+}
+
+/**
+ * The envelope: To, From, Subject, then the body. Not a box: hairlines on the card's own ground
+ * mark where the email starts, where its header ends and where it stops — a third bordered
+ * container inside the bubble and the card was the cards-in-cards tell. No shadow, no colour; the
+ * only gold on the card stays on Approve. Every address breaks where it must, so a long one never
+ * pushes the card wider than a 320px phone.
+ *
+ * `bleed`: below 480px a lone action's envelope steps out of the seal-icon gutter (24px icon +
+ * 10px gap) and takes the card's full width — at phone size that indent cost a fifth of the line.
+ */
+function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bleed?: boolean }) {
+  const bodyId = useId();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(() => likelyOverflows(email.body_text));
+
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el || expanded) return;
+    const measure = () => {
+      // No layout (jsdom, a hidden panel) reports zero height: keep the estimate rather than
+      // conclude there is nothing more to read.
+      if (el.clientHeight > 0) setOverflows(el.scrollHeight > el.clientHeight + 1);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [expanded, email.body_text]);
+
+  const clamped = overflows && !expanded;
+  const row = "flex flex-wrap gap-x-3";
+  const label = "w-14 shrink-0 text-muted-foreground";
+  const value = "min-w-[min(100%,11rem)] flex-1 [overflow-wrap:anywhere]";
+
+  return (
+    <div
+      data-confirm-preview="email"
+      className={cn("mt-2 border-y border-border/70", bleed && "max-[479px]:-ml-[34px]")}
+    >
+      {/* Each row is a label and its value side by side — until the card is too narrow for both,
+          when the value drops under its label instead of being squeezed into a sliver. */}
+      <dl className="space-y-1 py-2.5 text-[13px] leading-[18px]">
+        <div className={row}>
+          <dt className={label}>To</dt>
+          <dd className={value}>
+            {email.to_name ? (
+              <>
+                <span className="font-medium text-foreground">{email.to_name}</span>{" "}
+                <span className="text-muted-foreground"><Address value={email.to_address} /></span>
+              </>
+            ) : (
+              <span className="text-foreground"><Address value={email.to_address} /></span>
+            )}
+          </dd>
+        </div>
+        <div className={row}>
+          <dt className={label}>From</dt>
+          <dd className={cn(value, "text-foreground")}><Address value={email.from_address} /></dd>
+        </div>
+        <div className={row}>
+          <dt className={label}>Subject</dt>
+          <dd className={cn(value, "font-semibold tracking-[-0.006em] text-foreground")}>{email.subject}</dd>
+        </div>
+      </dl>
+      <div className="border-t border-border/70 py-2.5">
+        <div
+          id={bodyId}
+          ref={bodyRef}
+          data-clamped={clamped ? "true" : "false"}
+          // Open, it is a bounded region of its own: a long email scrolls inside the card instead
+          // of pushing Approve off the screen, and a keyboard can scroll it.
+          role={expanded ? "region" : undefined}
+          aria-label={expanded ? "Full email" : undefined}
+          tabIndex={expanded ? 0 : undefined}
+          className={cn(
+            "max-w-[68ch] whitespace-pre-line text-[13px] leading-5 text-foreground [overflow-wrap:anywhere]",
+            // A height clamp, not -webkit-line-clamp: an email's blank lines would otherwise end the
+            // clamp on a lone ellipsis. The fade says "there is more"; the words stay in the DOM.
+            clamped && "max-h-[10rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_70%,transparent)]",
+            expanded && "max-h-[min(22rem,55vh)] overflow-y-auto overscroll-contain rounded-sm pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]",
+          )}
+        >
+          {email.body_text}
+        </div>
+        {(overflows || expanded) && (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 rounded-sm text-[12.5px] font-medium leading-5 text-foreground underline decoration-border underline-offset-[3px] transition-colors hover:decoration-foreground motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
+          >
+            {expanded ? "Show less" : "Show full email"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Settled rows earn an icon because the icon carries the outcome. A PENDING row does not: repeating
@@ -210,7 +353,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
       data-state={cardState}
       data-card-mode={report ? "report" : "decide"}
       className={cn(
-        "mt-2 rounded-xl border p-3.5 transition-colors motion-reduce:transition-none",
+        "mt-2 rounded-xl border p-3.5 transition-colors motion-reduce:transition-none max-[479px]:p-3",
         report
           ? "duration-200 animate-in fade-in-0 slide-in-from-bottom-1 ease-out motion-reduce:animate-none"
           : "duration-300",
@@ -297,13 +440,20 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                     ))}
                   {/* A summary can carry a recipient's address, one unbroken word: it breaks rather
                       than running off the card at side-panel width. */}
-                  <span className="min-w-0 break-words">
+                  <span className={cn("min-w-0 break-words", action.preview && "flex-1")}>
+                    {action.preview ? (
+                      <>
+                        {multi && ROW_WORD[state] && <span className="sr-only">{ROW_WORD[state]}: </span>}
+                        <EmailPreview email={action.preview} bleed={!multi} />
+                      </>
+                    ) : (
                     <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")}>
                       {/* The icon beside a row is hidden from assistive tech, so its state is said
                           in words: in a mixed card the heading cannot tell which one ran. */}
                       {multi && ROW_WORD[state] && <span className="sr-only">{ROW_WORD[state]}: </span>}
                       {action.summary}
                     </span>
+                    )}
                     {action.note && (
                       <span
                         className={cn(

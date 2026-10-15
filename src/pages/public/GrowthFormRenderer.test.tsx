@@ -55,10 +55,10 @@ function type(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
-async function render() {
+async function render(entry = "/form/form-1") {
   await act(async () => {
     root.render(
-      <MemoryRouter initialEntries={["/form/form-1"]}>
+      <MemoryRouter initialEntries={[entry]}>
         <Routes><Route path="/form/:id" element={<GrowthFormPage />} /></Routes>
       </MemoryRouter>,
     );
@@ -107,8 +107,11 @@ describe("public form page", () => {
     await render();
     await fillAndSubmit();
 
-    expect(state.invoke).toHaveBeenCalledTimes(1);
-    const [name, opts] = state.invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    // The page records its own visit (MBC 7a) and sends the answers once; nothing else is called.
+    const calls = state.invoke.mock.calls as [string, { body: Record<string, unknown> }][];
+    expect(calls.map(([fn]) => fn).sort()).toEqual(["growth-public-submit", "growth-public-visit"]);
+    expect(calls.find(([fn]) => fn === "growth-public-visit")?.[1].body).toMatchObject({ kind: "form", target_id: "form-1", step: 0 });
+    const [name, opts] = calls.find(([fn]) => fn === "growth-public-submit")!;
     expect(name).toBe("growth-public-submit");
     expect(opts.body.form_id).toBe("form-1");
     expect(opts.body.answers).toEqual({ name: "Dana Reyes", email: "dana@example.com" });
@@ -162,7 +165,7 @@ describe("public form page", () => {
     type(container.querySelector("#gf-email") as HTMLInputElement, "dana@example.com");
     await act(async () => { submitButton().click(); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    const [, opts] = state.invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    const [, opts] = (state.invoke.mock.calls as [string, { body: Record<string, unknown> }][]).find(([fn]) => fn === "growth-public-submit")!;
     expect(opts.body.answers).toEqual({ name: "Dana Reyes", email: "dana@example.com" });
   });
 
@@ -228,5 +231,154 @@ describe("embedded form (landing pages and funnel steps)", () => {
     await act(async () => { await Promise.resolve(); });
     expect(onUnavailable).toHaveBeenCalledTimes(1);
     expect(text()).toBe("");
+  });
+});
+
+describe("stored success links (#2090)", () => {
+  const withSuccess = (success: Record<string, unknown>) =>
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks, Dana will reply today.", ...success } }], error: null });
+
+  it("never follows or renders a script redirect or download stored on the form", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "javascript:alert(document.cookie)", download_url: "data:text/html,<script>alert(1)</script>" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).not.toHaveBeenCalled();
+      expect(text()).toContain("Thanks, Dana will reply today.");
+      const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href") ?? "");
+      expect(hrefs.some((h) => /^(javascript|data):/i.test(h.trim()))).toBe(false);
+      expect(text()).not.toContain("Continue");
+      expect(text()).not.toContain("Download");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
+  it("never navigates to a script redirect when there is no download (the immediate-redirect branch)", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "javascript:alert(document.cookie)" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).not.toHaveBeenCalled();
+      expect(text()).toContain("Thanks, Dana will reply today.");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
+  it("follows a real https redirect straight away when there is no download", async () => {
+    const assign = vi.fn();
+    const loc = window.location;
+    Object.defineProperty(window, "location", { configurable: true, value: { ...loc, set href(v: string) { assign(v); }, get href() { return loc.href; } } });
+    try {
+      withSuccess({ redirect_url: "https://example.com/next" });
+      state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+      await render();
+      await fillAndSubmit();
+      expect(assign).toHaveBeenCalledWith("https://example.com/next");
+    } finally {
+      Object.defineProperty(window, "location", { configurable: true, value: loc });
+    }
+  });
+
+  it("still shows a real https download and continue link", async () => {
+    withSuccess({ redirect_url: "https://example.com/next", download_url: "https://cdn.example.com/guide.pdf" });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render();
+    await fillAndSubmit();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain("https://example.com/next");
+    expect(hrefs).toContain("https://cdn.example.com/guide.pdf");
+  });
+});
+
+// Experience 03: the same page, framed on a business's own website by public/embed.js (data-form).
+describe("public form page, embedded on a business's site", () => {
+  it("drops the full-page layout for a compact card and still reads and submits through the public seams", async () => {
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    expect(container.querySelector(".min-h-dvh")).toBeNull();
+    expect(container.querySelector("h1")?.textContent).toBe("Book a call");
+    await fillAndSubmit();
+    const submit = (state.invoke.mock.calls as [string, { body: Record<string, unknown> }][]).find(([fn]) => fn === "growth-public-submit")!;
+    expect(submit[1].body.form_id).toBe("form-1");
+    expect(submit[1].body).not.toHaveProperty("tenant_id");
+    expect(state.from).not.toHaveBeenCalled();
+    expect(text()).toContain("Thanks, Dana will reply today.");
+  });
+
+  it("says plainly when the form was taken offline, inside the card", async () => {
+    state.rpc.mockResolvedValue({ data: [], error: null });
+    await render("/form/form-1?embed=1");
+    expect(container.querySelector("[role=status]")?.textContent).toContain("This form isn't available right now");
+    expect(container.querySelector(".min-h-dvh")).toBeNull();
+  });
+
+  it("keeps the hosted page exactly as it was when not embedded", async () => {
+    await render("/form/form-1");
+    expect(container.querySelector(".min-h-dvh")).not.toBeNull();
+  });
+
+  it("sends a redirect's Continue link to the visitor's whole page, not the frame", async () => {
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks", redirect_url: "https://example.com/next", download_url: "https://example.com/f.pdf" } }], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    const link = Array.from(container.querySelectorAll("a")).find((a) => a.textContent === "Continue") as HTMLAnchorElement;
+    expect(link.getAttribute("target")).toBe("_top");
+  });
+});
+
+describe("a success redirect, embedded", () => {
+  const REDIRECT = { ...FORM, success_action_json: { message: "Thanks", redirect_url: "https://acme.example/thanks" } };
+  let parentDescriptor: PropertyDescriptor | undefined;
+  afterEach(() => { if (parentDescriptor) Object.defineProperty(window, "parent", parentDescriptor); vi.unstubAllGlobals(); });
+  const framed = (postMessage: (...args: unknown[]) => void) => {
+    // Framed, the page reports its height; jsdom has no ResizeObserver.
+    vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+    parentDescriptor = Object.getOwnPropertyDescriptor(window, "parent");
+    Object.defineProperty(window, "parent", { value: { postMessage }, configurable: true });
+  };
+
+  it("asks the loader to move the visitor's page to the form's thank-you page", async () => {
+    const postMessage = vi.fn();
+    framed(postMessage);
+    state.rpc.mockResolvedValue({ data: [REDIRECT], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    const redirect = postMessage.mock.calls.find(([m]) => (m as { type?: string }).type === "paige-form-redirect");
+    expect(redirect?.[0]).toEqual({ type: "paige-form-redirect", formId: "form-1", url: "https://acme.example/thanks" });
+    expect(text()).toContain("Thanks");
+  });
+
+  it("still shows the success card when the parent refuses the message (an opaque sandbox)", async () => {
+    framed(() => { throw new SyntaxError("Invalid target origin 'null'"); });
+    state.rpc.mockResolvedValue({ data: [REDIRECT], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render("/form/form-1?embed=1");
+    await fillAndSubmit();
+    expect(text()).toContain("Thanks");
+    const link = Array.from(container.querySelectorAll("a")).find((a) => a.textContent === "Continue") as HTMLAnchorElement;
+    expect(link.getAttribute("target")).toBe("_top");
+  });
+});
+
+describe("a form's redirect address", () => {
+  it("is never followed or linked unless it is a web address (a javascript: one would run on Paige's origin)", async () => {
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, success_action_json: { message: "Thanks", redirect_url: "javascript:alert(document.domain)" } }], error: null });
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    await render();
+    await fillAndSubmit();
+    expect(text()).toContain("Thanks");
+    expect(Array.from(container.querySelectorAll("a")).some((a) => /javascript:/i.test(a.getAttribute("href") ?? ""))).toBe(false);
   });
 });

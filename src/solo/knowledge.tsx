@@ -170,16 +170,17 @@ sel===3?'Every obligation here has a date. Two of them fall inside 30 days.':sel
 <div className="row" style={{gap:8,flexWrap:'wrap'}}>{['Talk to her instead','Import from Drive','Connect a data source'].map(x=>
 <button key={x} className="btn btn-s">{x}</button>)}</div></div>}</div>
 
-<div className="card"><div className="hd"><h3>Recently learned</h3><span className="pill pill-v"><Ic.spark size={11}/>Auto-filed</span></div>
-{kb.loading?<div>{[0,1,2].map(i=><div key={i} className="row" style={{padding:'11px 20px',borderTop:i?'1px solid var(--line-soft)':'0',gap:11}}>
+<div className="card"><div className="hd"><h3>Recently saved</h3><span className="pill pill-v"><Ic.spark size={11}/>Knowledge</span></div>
+{kb.error?<div role="status">{kb.error}<button className="btn btn-s" onClick={kb.refresh}>Reload Knowledge</button></div>:kb.loading?<div>{[0,1,2].map(i=><div key={i} className="row" style={{padding:'11px 20px',borderTop:i?'1px solid var(--line-soft)':'0',gap:11}}>
 <span style={{width:7,height:7,borderRadius:'50%',background:'var(--surface-sunk)',flex:'none'}}/>
 <span className="grow" style={{height:10,background:'var(--surface-sunk)',borderRadius:4}}/><span style={{width:80,height:9,background:'var(--surface-sunk)',borderRadius:4}}/></div>)}</div>
 :kb.recentlyLearned.length?<div>{kb.recentlyLearned.map((d,i)=>
 <div key={d.id} className="row" style={{padding:'11px 20px',borderTop:i?'1px solid var(--line-soft)':'0',gap:11}}>
 <span style={{width:7,height:7,borderRadius:'50%',background:d.color,flex:'none'}}/>
 <span className="grow trunc" style={{fontSize:12.9}}>{d.title}</span>{d.domain&&<span className="sub trunc" style={{maxWidth:120}}>{d.domain}</span>}<span className="mono sub" style={{fontSize:11}}>{d.when}</span></div>)}</div>
-:<div style={{padding:'26px 20px',textAlign:'center'}}><div className="sub" style={{maxWidth:300,margin:'0 auto'}}>Nothing indexed yet. Drop a document or paste a link and Paige files it here.</div></div>}</div></div></div>
+:<div style={{padding:'26px 20px',textAlign:'center'}}><div className="sub" style={{maxWidth:300,margin:'0 auto'}}>No Knowledge documents loaded.</div></div>}</div></div></div>
 
-<div className="g4">{[['Documents indexed',kb.loading?'…':String(kb.documentsIndexed),'in your knowledge base',false],['Citations this week','—','she shows her sources',true],['Gaps she flagged','—','what she wants taught',true],['Retrieval accuracy','—','on your own questions',true]].map(([k,v,d,pv],i)=>
+<div>{kb.hasMore&&<button className="btn btn-s" disabled={kb.loading} onClick={()=>void kb.loadMore()}>Load more knowledge</button>}</div>
+<div className="g4">{[['Sources with recorded chunks',kb.loading?'…':kb.error?'—':String(kb.documentsIndexed),'among loaded documents; coverage unverified',false],['Citations this week','—','she shows her sources',true],['Gaps she flagged','—','what she wants taught',true],['Retrieval accuracy','—','on your own questions',true]].map(([k,v,d,pv],i)=>
 <div key={i} className="card" style={{padding:'16px 18px'}}><div className="row" style={{gap:7,alignItems:'center'}}><div className="eyebrow">{k}</div>{pv&&<PreviewPill/>}</div>
 <div style={{fontSize:26,fontWeight:600,letterSpacing:'-.03em',marginTop:4}}>{v}</div><div className="sub" style={{marginTop:2}}>{d}</div></div>)}</div></div>};

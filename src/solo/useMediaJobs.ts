@@ -7,6 +7,12 @@
 // browser; every estimate, budget decision, and approval boundary lives
 // server-side in the seam.
 //
+// Approval (v2b, owner ruling 2026-10-04 — "Requester approves, any admin can
+// decline"): a job awaiting approval carries a server-issued proposal addressed
+// to the person who asked. The seam hands its fingerprint to that person only;
+// approving echoes it back in the request body. Everyone else sees who asked and
+// can decline.
+//
 // Truth rules (AGENTS.md): job states render exactly what the seam reports —
 // "succeeded" appears only when the server marked it, needs_config/budget
 // denials surface the server's own explanation, and nothing here fabricates
@@ -66,8 +72,24 @@ export interface MediaCapabilities {
   packs?: Array<{ id: string; priceUsd: number; credits: number; label: string }>;
 }
 
+/** What the seam says this viewer may do with a pending approval. The fingerprint is the requester's only. */
+export interface MediaApprovalInfo {
+  requested_by_you: boolean;
+  requester_name: string | null;
+  fingerprint?: string;
+  expires_at?: string;
+  summary?: string;
+}
+
+/** The approval as the surfaces read it. `requestedByYou` is null only until we know who is looking. */
+export interface MediaApprovalState {
+  requestedByYou: boolean | null;
+  requesterName: string | null;
+}
+
 export interface MediaJob {
   id: string;
+  actor_id?: string | null;
   mode: string;
   provider: string;
   model: string;
@@ -81,6 +103,7 @@ export interface MediaJob {
   video_seconds: number | null;
   created_at: string;
   completed_at: string | null;
+  approval?: MediaApprovalInfo;
 }
 
 export interface MediaAsset {
@@ -126,6 +149,8 @@ export function useMediaJobs() {
   const [assets, setAssets] = useState<Record<string, MediaAsset>>({});
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [approvals, setApprovals] = useState<Record<string, MediaApprovalInfo>>({});
+  const [userId, setUserId] = useState<string | null>(null);
   const tenantRef = useRef<string | null>(null);
   tenantRef.current = activeTenantId ?? null;
 
@@ -156,6 +181,40 @@ export function useMediaJobs() {
       .limit(30);
     if (!error && data) setJobs(data as MediaJob[]);
   }, []);
+
+  // Who is looking, so the requester's own approvals read as theirs even before the seam answers.
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getUser().then(({ data }) => { if (alive) setUserId(data?.user?.id ?? null); }, () => {});
+    return () => { alive = false; };
+  }, []);
+
+  // The approval facts come from the seam (the job rows are read under RLS and carry none): for
+  // the requester, the fingerprint the Approve control echoes back; for anyone else, who asked.
+  const refreshApprovals = useCallback(async () => {
+    try {
+      const data = await invoke<{ jobs?: MediaJob[] }>("list", { limit: 30 });
+      const next: Record<string, MediaApprovalInfo> = {};
+      for (const j of data?.jobs ?? []) if (j.approval) next[j.id] = j.approval;
+      setApprovals(next);
+    } catch {
+      // The surfaces fall back to who-asked from the row; Approve fetches its fingerprint itself.
+    }
+  }, [invoke]);
+  const pendingKey = useMemo(
+    () => jobs.filter((j) => j.state === "blocked" && j.approval_state === "pending").map((j) => j.id).sort().join(","),
+    [jobs],
+  );
+  useEffect(() => {
+    if (pendingKey) void refreshApprovals();
+  }, [pendingKey, refreshApprovals]);
+
+  const approvalFor = useCallback((job: MediaJob): MediaApprovalState => {
+    const info = approvals[job.id] ?? job.approval;
+    if (info) return { requestedByYou: info.requested_by_you, requesterName: info.requester_name ?? null };
+    if (userId && job.actor_id) return { requestedByYou: job.actor_id === userId, requesterName: null };
+    return { requestedByYou: null, requesterName: null };
+  }, [approvals, userId]);
 
   // Resolve finished-job asset previews from the ONE library (RLS-scoped read).
   const refreshAssets = useCallback(async (current: MediaJob[]) => {
@@ -230,7 +289,7 @@ export function useMediaJobs() {
     }): Promise<SubmitOutcome> => {
       setActionError(null);
       try {
-        const data = await invoke<{ job?: MediaJob; awaiting_approval?: boolean; error?: string; needs_config?: boolean; needs_ceiling?: boolean; budget_denied?: boolean; limit_reached?: boolean }>("submit", {
+        const data = await invoke<{ job?: MediaJob; awaiting_approval?: boolean; approval?: MediaApprovalInfo | null; error?: string; needs_config?: boolean; needs_ceiling?: boolean; budget_denied?: boolean; limit_reached?: boolean }>("submit", {
           prompt: input.prompt,
           model: input.model,
           aspect_ratio: input.aspectRatio,
@@ -248,6 +307,11 @@ export function useMediaJobs() {
             limitReached: data?.limit_reached,
           };
         }
+        if (data.approval) {
+          const approval = data.approval;
+          const jobId = data.job.id;
+          setApprovals((prev) => ({ ...prev, [jobId]: approval }));
+        }
         void refreshJobs();
         void refreshCapabilities();
         return { status: "ok", job: data.job, awaitingApproval: data.awaiting_approval };
@@ -260,20 +324,57 @@ export function useMediaJobs() {
     [invoke, refreshCapabilities, refreshJobs],
   );
 
-  const decide = useCallback(
-    async (jobId: string, approve: boolean): Promise<boolean> => {
+  // Approve sends the server-issued fingerprint back — the one proof the seam accepts. If this
+  // view has not got it yet (a reload, a job Paige started in chat), it asks the seam for it first.
+  const approve = useCallback(
+    async (jobId: string): Promise<boolean> => {
       setActionError(null);
       try {
-        await invoke(approve ? "approve" : "reject", { job_id: jobId });
+        let fingerprint = approvals[jobId]?.fingerprint;
+        if (!fingerprint) {
+          const status = await invoke<{ approval?: MediaApprovalInfo }>("status", { job_id: jobId });
+          if (status?.approval) {
+            const approval = status.approval;
+            setApprovals((prev) => ({ ...prev, [jobId]: approval }));
+          }
+          fingerprint = status?.approval?.fingerprint;
+        }
+        if (!fingerprint) {
+          setActionError("This approval isn't ready yet. Try again in a moment.");
+          return false;
+        }
+        await invoke("approve", { job_id: jobId, approved_fingerprint: fingerprint });
         void refreshJobs();
         void refreshCapabilities();
         return true;
       } catch (e) {
-        setActionError(e instanceof Error ? e.message : "The action failed.");
+        setActionError(e instanceof Error ? e.message : "The approval failed.");
+        void refreshApprovals();
+        return false;
+      }
+    },
+    [approvals, invoke, refreshApprovals, refreshCapabilities, refreshJobs],
+  );
+
+  const decline = useCallback(
+    async (jobId: string): Promise<boolean> => {
+      setActionError(null);
+      try {
+        await invoke("reject", { job_id: jobId });
+        void refreshJobs();
+        void refreshCapabilities();
+        return true;
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : "The decline failed.");
         return false;
       }
     },
     [invoke, refreshCapabilities, refreshJobs],
+  );
+
+  const decide = useCallback(
+    (jobId: string, yes: boolean): Promise<boolean> => (yes ? approve(jobId) : decline(jobId)),
+    [approve, decline],
   );
 
   const cancel = useCallback(
@@ -291,5 +392,5 @@ export function useMediaJobs() {
     [invoke, refreshJobs],
   );
 
-  return { capabilities, jobs, assets, loading, actionError, submit, decide, cancel, refreshCapabilities, isJobRow };
+  return { capabilities, jobs, assets, loading, actionError, submit, approve, decline, decide, approvalFor, cancel, refreshCapabilities, isJobRow };
 }

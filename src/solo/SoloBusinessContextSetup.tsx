@@ -56,7 +56,9 @@ import {
   type SoloSetupTab,
 } from "./settings-business-context-contract";
 import "./settings-setup.css";
+import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
+import { BusinessTimeZoneSetting } from "./setup-business-time-zone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
 import { PeopleEmailPreferences } from "./settings-people-email-preferences";
@@ -995,6 +997,23 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         ?.focus({ preventScroll: true });
     }
   }, [location.pathname, tab, data.loading]);
+  // Experience 04 E4-S3 — a link to one setting (the chat's "Open business time zone setting",
+  // …/business-profile#business-time-zone) lands ON that setting once its section has rendered, not at
+  // the top of the long form above it (the settings-analytics `#metric-` pattern). Only a Setup section
+  // is a target; the heading takes focus so a keyboard or screen-reader user arrives there too. Runs
+  // after the layout effect above, which resets the scroll on a tab change.
+  useEffect(() => {
+    if (data.loading || data.error || location.hash.length < 2) return;
+    let id = location.hash.slice(1);
+    try { id = decodeURIComponent(id); } catch { return; }
+    const target = document.getElementById(id);
+    if (!target?.matches("section.setup-section") || !formSurface.current?.contains(target)) return;
+    const reduce = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+    const headingId = target.getAttribute("aria-labelledby");
+    (headingId ? document.getElementById(headingId) : null)?.focus({ preventScroll: true });
+  }, [data.loading, data.error, tab, location.pathname, location.hash]);
   const switchTab = (value: SoloSetupTab) => {
     if (data.saving) return;
     reconcileMountedDraft();
@@ -1130,13 +1149,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         {!data.canEdit && (
           <div className="setup-notice" data-tone="bad">
             This workspace is read-only for Setup. Owner access is required for
-            legal, ownership, email, knowledge, and Paige voice context.
-          </div>
-        )}
-        {data.accessScope === "admin_operational" && (
-          <div className="setup-notice">
-            Admin editing is limited to the non-legal operating direction
-            supported by current policy.
+            legal, ownership, email, saved Setup references, and Paige voice context. Canonical Knowledge follows your workspace permissions.
           </div>
         )}
         {notice && (
@@ -1389,6 +1402,16 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                 onNaics={(value) => void chooseNaics(value)}
                 searchNaics={data.searchNaics}
               />
+            )}
+            {tab === "business-profile" && (
+              // Experience 04 E4-S2: its own store and its own save, outside the brief's edit cycle.
+              <section className="setup-section" id="business-time-zone" aria-labelledby="business-time-zone-title">
+                <header className="setup-section__head">
+                  <h2 id="business-time-zone-title" tabIndex={-1}>Business time zone</h2>
+                  <p>The calendar Paige uses to decide which payments are due and which are overdue. Saved on its own, the moment you confirm it.</p>
+                </header>
+                <BusinessTimeZoneSetting key={data.activeTenantId ?? "none"} tenantId={data.activeTenantId} />
+              </section>
             )}{" "}
             {tab === "public-presence" && (
               <SettingsPublicPresence
@@ -1493,6 +1516,17 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
               </>
             )}{" "}
             {tab === "knowledge-bucket" && (
+              <>
+              <KnowledgeLibrary tenantId={data.activeTenantId} account={account}
+                requestedDocumentId={new URLSearchParams(location.search).get("knowledge")}
+                onDocumentChange={(id) => {
+                  const search = new URLSearchParams(location.search);
+                  if (id) search.set("knowledge", id); else search.delete("knowledge");
+                  navigate({ pathname: location.pathname, search: search.toString() }, { replace: true, state: location.state });
+                }} />
+              <details className="setup-knowledge-references">
+              <summary>Saved Setup references ({sources.length})</summary>
+              <p>These references are separate from indexed documents. Adding a reference here does not ingest its content.</p>
               <KnowledgeBucket
                 sources={sources}
                 owner={owner}
@@ -1507,6 +1541,8 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   setSources((now) => now.filter((_, i) => i !== index))
                 }
               />
+              </details>
+              </>
             )}{" "}
             {tab === "direction" && (
               <Section

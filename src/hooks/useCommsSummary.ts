@@ -89,13 +89,19 @@ export function useCommsSummary() {
       const [draftsAwaiting, awaitingClientReply, wakingToday, scheduledSends] =
         await Promise.all([
           // (1) "N drafts awaiting you" — outbound messages Paige drafted, status='draft'.
+          //     INT-328: a governed send (an approved email or invoice delivery) is written as a
+          //     'draft' row before it leaves and stays one when its outcome is unconfirmed. It is
+          //     not awaiting approval, so it is excluded — the same rule the inbox applies
+          //     (pages/admin/conversations/governedSend.ts).
           headCount(() =>
             sb
               .from("messages")
               .select("id", { count: "exact", head: true })
               .eq("tenant_id", activeTenantId)
               .eq("direction", "outbound")
-              .eq("status", "draft"),
+              .eq("status", "draft")
+              .is("meta->comms_email_binding", null)
+              .is("meta->sales_invoice_binding", null),
           ),
           // (2) "M threads waiting on client reply >3 days" — active threads where WE
           //     spoke last (last_direction='outbound') and the last message is older

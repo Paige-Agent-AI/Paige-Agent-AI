@@ -7,6 +7,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TenantCommandCenterShell, TenantPaigeCommandField } from "./TenantCommandCenterShell";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
+// Load the mounted app as suite setup, before measuring any navigation assertion.
+import "@/solo/SoloApp";
 
 const themeMock = vi.hoisted(() => ({
   resolvedTheme: "light" as "light" | "dark",
@@ -34,12 +36,56 @@ vi.mock("@/integrations/supabase/client", async (importOriginal) => {
       get(target, prop, receiver) {
         if (prop === "channel") return () => channel;
         if (prop === "removeChannel") return async () => "ok" as const;
+        // Shell navigation mounts the real Campaigns reader. Its backend contents
+        // are outside this ownership proof; supply its explicit empty read here.
+        if (prop === "rpc") return (name: string, ...args: unknown[]) => {
+          if (name === "has_tenant_role") return Promise.resolve({ data: false, error: null });
+          if (name === "business_vault_access_status") return Promise.resolve({ data: { allowed: false }, error: null });
+          if (name === "get_campaign_briefs") return Promise.resolve({
+            data: { can_manage: false, archived_count: 0, briefs: [] }, error: null,
+          });
+          return Reflect.apply(target.rpc, target, [name, ...args]);
+        };
         return Reflect.get(target, prop, receiver);
       },
     }),
   };
 });
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
+// Preserve the real Campaigns launcher; its backend records are outside shell ownership.
+vi.mock("@/solo/useSoloCampaigns", () => ({
+  useSoloCampaigns: () => ({
+    tenantId: "tenant-42", phase: "ready", campaigns: [], artifacts: [], submissions: [], drafts: [],
+    pipelineWorkspace: { canManage: false, canArchiveFolders: false, folders: [], pipelines: [], stages: [], deals: [], automationRules: [] },
+    retry: vi.fn(),
+    pipelineAction: async () => { throw new Error("Unexpected pipeline mutation in shell ownership proof"); },
+  }),
+}));
+// Keep the real Studio navigation while its independently tested media seam is unavailable.
+// Marketing › Overview's server reads (MBC 2c): a refused seat, so it keeps its record counts and nothing leaves the test.
+vi.mock("@/solo/marketing-analytics-metrics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/solo/marketing-analytics-metrics")>()),
+  useMarketingServerFigures: () => ({ phase: "denied", current: null, previous: null, retry: () => {} }),
+  useMarketingProcessingHealth: () => ({ phase: "denied", health: null }),
+}));
+vi.mock("@/solo/useMediaJobs", () => ({
+  useMediaJobs: () => ({
+    capabilities: null, jobs: [], assets: {}, loading: false, actionError: null,
+    submit: vi.fn().mockRejectedValue(new Error("Unexpected media mutation in shell ownership proof")),
+    approve: vi.fn(), decline: vi.fn(), decide: vi.fn(), cancel: vi.fn(),
+    approvalFor: () => ({ requestedByYou: null, requesterName: null }),
+    refreshCapabilities: vi.fn(), isJobRow: () => false,
+  }),
+}));
+vi.mock("@/solo/studio/studio-data", async (original) => ({
+  ...(await original<typeof import("@/solo/studio/studio-data")>()),
+  listSessions: async () => [],
+  loadBrand: async () => ({
+    floor: (await import("@/components/growth/growth-theme")).buildGrowthBrandFloor(null),
+    name: null, logoUrl: null,
+  }),
+  createSession: async () => { throw new Error("Unexpected Studio mutation in shell ownership proof"); },
+}));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
 vi.mock("@/components/ui/paige", () => ({
   AgentPresenceProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -231,7 +277,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(affectedTenant.workspaceClaim).toBe("Owner workspace");
     expect(knownGoodTenant.workspaceClaim).toBe("Team workspace");
     expect(affectedTenant.destinations.map(([id]) => id)).toEqual([
-      "command", "clients", "campaigns", "marketplace", "analytics", "settings",
+      "command", "operations", "clients", "campaigns", "ads", "sales", "finance", "marketplace", "settings",
     ]);
     expect(affectedTenant.paigeWorkspaces).toBe(1);
     expect(affectedTenant.pipelineDomains).toBe(1);
@@ -409,12 +455,12 @@ describe("tenant shell owns one PAIGE surface", () => {
     const launcher = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.trim() === "Vibe Studio");
     await act(async () => launcher?.click());
-    expect(host.textContent).toContain("Back to Campaigns");
+    expect(host.textContent).toContain("Back to Marketing");
 
     const brandHome = host.querySelector<HTMLAnchorElement>('[aria-label="PAIGE Solo home"]');
     await act(async () => brandHome?.click());
 
-    expect(host.textContent).not.toContain("Back to Campaigns");
+    expect(host.textContent).not.toContain("Back to Marketing");
     expect(host.querySelector("[data-route-probe]")?.textContent).toBe("/solo/42/command-center");
     expect(host.querySelectorAll('[aria-label="PAIGE Solo home"]')).toHaveLength(1);
     expect(host.querySelectorAll("#tenant-paige-workspace")).toHaveLength(1);
@@ -435,17 +481,20 @@ describe("tenant shell owns one PAIGE surface", () => {
     const solo = source("src/solo/SoloApp.tsx");
     const campaigns = source("src/solo/growth2.tsx");
     const vibe = source("src/solo/vibe.tsx");
+    const studioHome = source("src/solo/studio/StudioHome.tsx");
 
     expect(campaigns).toContain("detail:{returnFocus:event.currentTarget}");
     expect(campaigns).toContain("data-solo-vibe-studio-launcher");
     expect(campaigns).toContain(">Vibe Studio</button>");
-    expect(campaigns).toContain('eyebrow="Campaigns"');
+    expect(campaigns).toContain('eyebrow="Marketing"');
     expect(campaigns).not.toContain('eyebrow="Growth & acquisition"');
     expect(solo).toContain("window.addEventListener('paige-studio',h)");
     expect(solo).toContain("<VibeStudio onBack={closeStudio}/>");
     expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
-    expect(vibe).toContain("Back to Campaigns");
-    expect(vibe).not.toContain("Back to Growth");
+    expect(vibe).toContain("<StudioRail");
+    expect(vibe).toContain("onBack={onBack}");
+    expect(studioHome).toContain("Back to Marketing");
+    expect(studioHome).not.toContain("Back to Growth");
   });
 
   it.each(["back", "escape"])("restores the real Campaigns Vibe Studio launcher after %s closes the mounted owner", async (exit) => {
@@ -472,7 +521,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     await act(async () => launcher?.click());
 
     const back = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
-      .find((button) => button.textContent?.includes("Back to Campaigns"));
+      .find((button) => button.textContent?.includes("Back to Marketing"));
     expect(back).toBeTruthy();
     back?.focus();
     expect(document.activeElement).toBe(back);
@@ -483,7 +532,7 @@ describe("tenant shell owns one PAIGE surface", () => {
       await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
     }
 
-    expect(host.textContent).not.toContain("Back to Campaigns");
+    expect(host.textContent).not.toContain("Back to Marketing");
     expect(document.activeElement).toBe(launcher);
     expect(host.querySelector("[data-route-probe]")?.textContent).toBe("/solo/42/growth");
 
@@ -550,7 +599,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(
       Array.from(host.querySelectorAll<HTMLElement>("[data-tenant-destination]"))
         .map((item) => item.textContent?.trim()),
-    ).toEqual(["Command Center", "Clients", "Campaigns", "Marketplace", "Analytics", "Settings"]);
+    ).toEqual(["Command Center", "Operations", "Clients", "Marketing", "Ads", "Sales", "Finance", "Marketplace", "Settings"]);
 
     await act(async () => root.unmount());
     host.remove();

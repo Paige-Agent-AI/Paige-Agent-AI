@@ -1,0 +1,113 @@
+{
+  "boundary": "Actual root and drawer components with explicitly mocked source ports; not authenticated or canonical-shell proof",
+  "focusRestored": true,
+  "states": [
+    {
+      "mode": "loading",
+      "present": true
+    },
+    {
+      "mode": "error",
+      "present": true
+    },
+    {
+      "mode": "refused",
+      "present": true
+    },
+    {
+      "mode": "partial",
+      "present": true
+    },
+    {
+      "mode": "empty",
+      "present": true
+    },
+    {
+      "mode": "populated",
+      "present": true
+    }
+  ],
+  "matrix": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "portalTheme": "dark",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "portalTheme": "dark",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "portalTheme": "dark",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "portalTheme": "dark",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "portalTheme": "dark",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "portalTheme": "light",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "portalTheme": "light",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "portalTheme": "light",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "portalTheme": "light",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "portalTheme": "light",
+      "reducedAnimation": true,
+      "overflow": false,
+      "reachable": true
+    }
+  ],
+  "errors": []
+}

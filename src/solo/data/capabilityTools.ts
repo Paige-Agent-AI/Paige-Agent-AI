@@ -31,10 +31,8 @@
  *   • owner_only — never performed from an assistant at any approval strength; this is the owner's
  *                  call in Settings, so the knob is read-only ("Your call").
  *
- * The two catalogue rows `pipeline_create` and `pipeline_add_stage` are DELIBERATELY UNMAPPED: they
- * are not real tools (they exist only in a label switch and are `unclassified` in the risk policy,
- * so the runtime refuses them, fail-closed). Mapping them would put a knob in front of an action
- * that can never run. The drift test asserts they stay out.
+ * The retired legacy pipeline tools (pipeline_create / pipeline_add_stage) stay unmapped: they
+ * are removed from the runtime surface entirely; the governed capability is pipeline_configure.
  */
 
 /** The three governed lanes, same literal union the backend uses. */
@@ -118,17 +116,26 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   comms_draft_registration: { capability: "comms", risk: "ordinary" },
   comms_buy_number: { capability: "comms", risk: "high" },
   comms_set_primary_number: { capability: "comms", risk: "high" },
+  comms_setup_calling: { capability: "comms", risk: "high" },
   calendar_book_meeting: { capability: "comms", risk: "high" },
 
   // ── Content & Studio ──────────────────────────────────────────────────────────────────────
-  draft_marketing_content: { capability: "content", risk: "ordinary" },
   generate_image: { capability: "content", risk: "ordinary" },
   content_save: { capability: "content", risk: "ordinary" },
   document_generate: { capability: "content", risk: "ordinary" },
   growth_page_save: { capability: "content", risk: "ordinary" },
   growth_page_publish: { capability: "content", risk: "high" },
+  growth_form_save: { capability: "content", risk: "ordinary" },
+  growth_form_publish: { capability: "content", risk: "high" },
   growth_funnel_build: { capability: "content", risk: "ordinary" },
   growth_funnel_publish: { capability: "content", risk: "high" },
+  // The rest of the Studio publish lifecycle (Migration E). Taking work offline changes what the
+  // public sees just as putting it live does, so all five are `high` and the knob caps at confirm.
+  growth_page_unpublish: { capability: "content", risk: "high" },
+  growth_form_unpublish: { capability: "content", risk: "high" },
+  growth_funnel_unpublish: { capability: "content", risk: "high" },
+  studio_image_publish: { capability: "content", risk: "high" },
+  studio_image_unpublish: { capability: "content", risk: "high" },
 
   // ── Automations & connected apps ──────────────────────────────────────────────────────────
   n8n_run_workflow: { capability: "autos", risk: "high" },
@@ -167,7 +174,6 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
 
 /**
  * Catalogue rows that are intentionally NOT governable knobs.
- * - `pipeline_create` / `pipeline_add_stage`: phantom/unclassified tools.
  * - `marketplace_install` / `marketplace_uninstall` / `n8n_delete_workflow`: containment TOMBSTONES —
  *   classified in the autonomy policy and lint-exempted (`action-risk-lint.mjs`) precisely because no
  *   runtime dispatches them (`20261020300000_tool_autonomy_catalogue_covers_the_gate.sql`). Governing
@@ -175,8 +181,6 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
  *   real dispatch path exists.
  */
 export const UNMAPPED_CATALOGUE_TOOLS: readonly string[] = [
-  "pipeline_create",
-  "pipeline_add_stage",
   "marketplace_install",
   "marketplace_uninstall",
   "n8n_delete_workflow",

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isMissingFunction } from "./ads-model";
 
 export type CampaignRecord = {
   id: string;
@@ -34,7 +35,58 @@ export type CampaignArtifact = {
   routingTargets: string[];
   recentDispatches: { succeeded: number; failed: number; other: number };
   dispatchStatuses: Record<string, number>;
+  /** The pipeline and stage a form's own intake route sends new leads to (forms only). */
+  intakePipelineId?: string | null;
+  /** The form emails each submission to an address (growth_forms.notify_email). */
+  intakeAlert?: boolean;
+  /** Where this form's leads go when it has no route of its own and is attached to exactly one campaign whose
+   *  pipeline can take them (get_form_campaign_routes, Experience 03 S1b). Its own route still comes first. */
+  campaignRoute?: CampaignRoute | null;
+  intakeStageId?: string | null;
 };
+
+/** A form's campaign pipeline, as the server's one rule (_growth_form_campaign_route) resolves it. */
+export type CampaignRoute = {
+  briefId: string;
+  briefName: string;
+  pipelineId: string;
+  pipelineName: string;
+  stageId: string;
+  stageLabel: string;
+};
+
+/** Reads get_form_campaign_routes; a malformed row is dropped rather than drawn as a destination. */
+export function readCampaignRoutes(data: unknown): Map<string, CampaignRoute> {
+  const routes = (data && typeof data === "object" ? (data as { routes?: unknown }).routes : null);
+  const text = (value: unknown) => (typeof value === "string" && value.trim() ? value : null);
+  const out = new Map<string, CampaignRoute>();
+  for (const raw of Array.isArray(routes) ? routes : []) {
+    const row = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const formId = text(row.form_id), briefId = text(row.brief_id), pipelineId = text(row.pipeline_id), stageId = text(row.stage_id);
+    if (!formId || !briefId || !pipelineId || !stageId) continue;
+    out.set(formId, {
+      briefId, pipelineId, stageId,
+      briefName: text(row.brief_name) ?? "Untitled campaign",
+      pipelineName: text(row.pipeline_name) ?? "Untitled pipeline",
+      stageLabel: text(row.stage_label) ?? "its first open stage",
+    });
+  }
+  return out;
+}
+
+/**
+ * A form is routed when either path sends its leads somewhere: an automation row, or its own intake
+ * route (create a deal in a pipeline), which growth-process-submission runs when no automation row
+ * exists. Before INT-342 only automation rows counted, so a form routed in the intake panel still
+ * showed "Not routed" (§13 correction, docs/product/int342-marketing-convergence.md §C).
+ */
+export function intakeRouted<T extends { routingConfigured: boolean; routingState: CampaignArtifact["routingState"] }>(
+  evidence: T,
+  row: { auto_create_deal: boolean | null; pipeline_id: string | null },
+): T {
+  if (evidence.routingConfigured || !(row.auto_create_deal && row.pipeline_id)) return evidence;
+  return { ...evidence, routingConfigured: true, routingState: "Active" };
+}
 
 export type CampaignSubmission = {
   id: string;
@@ -44,6 +96,23 @@ export type CampaignSubmission = {
   createdAt: string;
   contactId: string | null;
   dealId: string | null;
+  /** `utm_source` from the link the visitor arrived on. Null when the link carried no tag. */
+  trackingSource: string | null;
+  /** `utm_campaign` from that link. Null when untagged. Never inferred from anything else. */
+  trackingCampaign: string | null;
+  /** `utm_content` from that link: which ad (a library picture's id) the visitor came from. */
+  trackingContent?: string | null;
+};
+
+/**
+ * A page, funnel or form that exists in Vibe Studio but is not published. Read from the same rows
+ * as `artifacts` (no extra query); it collects nothing until it is published there.
+ */
+export type CampaignDraft = {
+  id: string;
+  type: "page" | "funnel" | "form";
+  name: string;
+  updatedAt: string;
 };
 
 export type SoloCampaignsState = {
@@ -52,6 +121,7 @@ export type SoloCampaignsState = {
   campaigns: CampaignRecord[];
   artifacts: CampaignArtifact[];
   submissions: CampaignSubmission[];
+  drafts: CampaignDraft[];
   pipelineWorkspace: PipelineWorkspace;
   pipelineAction: (action: PipelineAction) => Promise<{
     ok: boolean;
@@ -284,6 +354,12 @@ export type PipelineAction =
       expectedVersion: number;
     });
 
+/** One tracking tag from a submission's `utm_json`, trimmed; null when absent or not text. */
+function utmValue(utm: Record<string, unknown> | null, key: string): string | null {
+  const value = utm && typeof utm === "object" ? utm[key] : null;
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
+}
+
 type PageRow = {
   id: string;
   slug: string;
@@ -304,6 +380,13 @@ type FormRow = {
   name: string;
   status: string;
   updated_at: string;
+  // The form's own intake route, saved by growth_form_set_intake (the form panel and Vibe Studio's
+  // form settings). Automation rows are a second, richer way to route; either one routes the form.
+  auto_create_deal: boolean | null;
+  pipeline_id: string | null;
+  stage_id: string | null;
+  // growth-process-submission emails each submission here whatever else routes the form.
+  notify_email: string | null;
 };
 type SubmissionRow = {
   id: string;
@@ -313,6 +396,7 @@ type SubmissionRow = {
   created_at: string;
   contact_id: string | null;
   deal_id: string | null;
+  utm_json: Record<string, unknown> | null;
 };
 type RoutingEvidenceRow = {
   id: string;
@@ -418,10 +502,12 @@ const empty = {
   campaigns: [],
   artifacts: [],
   submissions: [],
+  drafts: [],
   pipelineWorkspace: emptyPipeline,
 };
 
-export function useSoloCampaigns(): SoloCampaignsState {
+export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" | "pipeline" } = {}): SoloCampaignsState {
+  const pipelineOnly = scope === "pipeline";
   const { activeTenantId, activeTenant, accountContextLoading } =
     useTenantContext();
   const deletionContext = useRef({
@@ -616,7 +702,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
     }
 
     setState((previous) =>
-      previous.tenantId === activeTenantId && previous.phase === "ready"
+      !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
         ? previous
         : { tenantId: activeTenantId, phase: "loading", ...empty },
     );
@@ -629,31 +715,32 @@ export function useSoloCampaigns(): SoloCampaignsState {
           submissionResponse,
           routingResponse,
           pipelineResponse,
+          campaignRouteResponse,
         ] = await Promise.all([
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_pages")
             .select("id,slug,title,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_funnels")
             .select("id,slug,name,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_forms")
-            .select("id,slug,name,status,updated_at")
+            .select("id,slug,name,status,updated_at,auto_create_deal,pipeline_id,stage_id,notify_email")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_form_submissions")
             .select(
-              "id,form_id,source,processing_state,created_at,contact_id,deal_id",
+              "id,form_id,source,processing_state,created_at,contact_id,deal_id,utm_json",
             )
             .eq("tenant_id", activeTenantId)
             .order("created_at", { ascending: false })
             .limit(200),
-          supabase.rpc(
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase.rpc(
             "get_pipeline_routing_evidence" as never,
             { _tenant_id: activeTenantId } as never,
           ),
@@ -661,7 +748,15 @@ export function useSoloCampaigns(): SoloCampaignsState {
             "get_pipeline_workspace" as never,
             { _tenant_id: activeTenantId } as never,
           ),
+          pipelineOnly ? Promise.resolve({ data: null, error: null }) : supabase.rpc(
+            "get_form_campaign_routes" as never,
+            { _tenant_id: activeTenantId } as never,
+          ),
         ]);
+        // Before its migration is applied the read does not exist (isMissingFunction: PGRST202, 42883), and neither does campaign
+        // routing on the server, so "no campaign routes" is then the truth. Any other failure fails the read.
+        const campaignRouteError = campaignRouteResponse.error && !isMissingFunction(campaignRouteResponse.error)
+          ? campaignRouteResponse.error : null;
         const firstError = [
           pageResponse.error,
           funnelResponse.error,
@@ -669,6 +764,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
           submissionResponse.error,
           routingResponse.error,
           pipelineResponse.error,
+          campaignRouteError,
         ].find(Boolean);
         if (firstError) throw firstError;
         if (!current) return;
@@ -690,6 +786,9 @@ export function useSoloCampaigns(): SoloCampaignsState {
           createdAt: row.created_at,
           contactId: row.contact_id,
           dealId: row.deal_id,
+          trackingSource: utmValue(row.utm_json, "utm_source"),
+          trackingCampaign: utmValue(row.utm_json, "utm_campaign"),
+          trackingContent: utmValue(row.utm_json, "utm_content"),
         }));
         const submissionCounts = submissions.reduce<Record<string, number>>(
           (counts, row) => {
@@ -698,6 +797,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
           },
           {},
         );
+        const campaignRoutes = readCampaignRoutes(campaignRouteError ? null : campaignRouteResponse.data);
         const routingPayload = (routingResponse.data ??
           {}) as unknown as RoutingEvidencePayload;
         const automations = routingPayload.routes ?? [];
@@ -731,7 +831,8 @@ export function useSoloCampaigns(): SoloCampaignsState {
             (automation) => automation.effective_autonomy_lane === "auto",
           );
           return {
-            routingConfigured: configured.length > 0,
+            // A disabled automation ("Draft route") routes nothing, so it does not count.
+            routingConfigured: enabled.length > 0,
             routingState:
               configured.length === 0
                 ? ("No route" as const)
@@ -823,7 +924,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
             pipelineId: row.pipeline_id,
             stageId: row.stage_id,
             clientId: row.client_id ?? null,
-            clientName: row.client_name || "Client not recorded",
+            clientName: row.client_id ? row.client_name || "Client name unavailable" : "Client unavailable or not linked",
             owner: row.owner_user_id ? "Assigned owner" : "Owner not recorded",
             status: row.status || "Not recorded",
             source: row.source || "Source not recorded",
@@ -893,8 +994,22 @@ export function useSoloCampaigns(): SoloCampaignsState {
               updatedAt: row.updated_at,
               publicHref: `/form/${row.id}`,
               recentSubmissions: submissionCounts[row.id] ?? 0,
-              ...routingEvidence(row.id),
+              ...intakeRouted(routingEvidence(row.id), row),
+              intakePipelineId: row.auto_create_deal && row.pipeline_id ? row.pipeline_id : null,
+              intakeStageId: row.auto_create_deal && row.pipeline_id ? row.stage_id : null,
+              intakeAlert: Boolean(row.notify_email?.trim()),
+              campaignRoute: campaignRoutes.get(row.id) ?? null,
             })),
+        ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        // Unpublished work, from the rows already read above. Archived work is neither live nor
+        // waiting, so it is left out of both lists.
+        const drafts: CampaignDraft[] = [
+          ...pages.filter((row) => row.status !== "published" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "page" as const, name: row.title, updatedAt: row.updated_at })),
+          ...funnels.filter((row) => row.status !== "active" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "funnel" as const, name: row.name, updatedAt: row.updated_at })),
+          ...forms.filter((row) => row.status !== "active" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "form" as const, name: row.name, updatedAt: row.updated_at })),
         ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         setState({
           tenantId: activeTenantId,
@@ -902,13 +1017,14 @@ export function useSoloCampaigns(): SoloCampaignsState {
           campaigns,
           artifacts,
           submissions,
+          drafts,
           pipelineWorkspace,
         });
       } catch (error) {
         console.error("[solo-campaigns] read failed", error);
         if (current)
           setState((previous) =>
-            previous.tenantId === activeTenantId && previous.phase === "ready"
+            !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
               ? previous
               : { tenantId: activeTenantId, phase: "error", ...empty },
           );
@@ -917,7 +1033,54 @@ export function useSoloCampaigns(): SoloCampaignsState {
     return () => {
       current = false;
     };
-  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey]);
+  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey, pipelineOnly]);
+
+  // Realtime pipeline board: one tenant-keyed subscription over the records the canonical
+  // load already reads. Events and (re)subscriptions resolve through `retry()` — a full
+  // reload of current truth under whatever tenant is active — so there is no second cache
+  // to drift, stale events cannot overwrite fresher state, and a late event from a previous
+  // workspace can only cause a refetch scoped to the current one. The effect re-runs on
+  // tenant change: the old channel is removed before a new one is opened.
+  useEffect(() => {
+    if (!activeTenantId || accountContextLoading) return;
+    let disposed = false;
+    // Coalesce event bursts: one bulk write over N deals fires N change events, and each must not
+    // trigger its own full reload. A short trailing window collapses a burst into one reload of
+    // current truth.
+    let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleReload = () => {
+      if (disposed) return;
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => { if (!disposed) retry(); }, 200);
+    };
+    const channel = supabase
+      .channel(`solo-pipeline-board:${activeTenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deals", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pipelines", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pipeline_stages", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .subscribe((status) => {
+        // A channel that (re)connects refetches once: recovery reads current truth instead
+        // of trusting the state left from before the disconnect.
+        if (status === "SUBSCRIBED" && !disposed) scheduleReload();
+      });
+    return () => {
+      disposed = true;
+      clearTimeout(reloadTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [activeTenantId, accountContextLoading, retry]);
 
   const synchronousTenantId = activeTenantId ?? null;
   const visibleState =

@@ -1,5 +1,5 @@
 /** Knowledge consumes the canonical caller-JWT RPCs. SQL alone records operation receipts. */
-export type KnowledgeTool = "knowledge_read" | "knowledge_update" | "knowledge_delete";
+export type KnowledgeTool = "read_tenant_knowledge" | "knowledge_update" | "knowledge_delete";
 export interface KnowledgeRpcPort { rpc(name: string, args: Record<string, unknown>): PromiseLike<{data: unknown; error: {message?: string; code?: string} | null}> }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -7,12 +7,12 @@ const validRevision = (v: unknown) => Number.isSafeInteger(v) && Number(v) > 0;
 const invalid = () => { throw new Error('KNOWLEDGE_ARGUMENTS_INVALID'); };
 export function normalizeKnowledgeArgs(tool: KnowledgeTool, raw: unknown): Record<string, unknown> {
   if (!object(raw)) return invalid();
-  const allowed = tool === 'knowledge_read' ? ['document_id','limit','offset'] : tool === 'knowledge_update' ? ['document_id','expected_revision','patch','confirm'] : ['document_id','expected_revision','confirm'];
+  const allowed = tool === 'read_tenant_knowledge' ? ['document_id','limit','offset'] : tool === 'knowledge_update' ? ['document_id','expected_revision','patch','confirm'] : ['document_id','expected_revision','confirm'];
   if (Object.keys(raw).some(k => !allowed.includes(k))) return invalid();
   const out = {...raw};
   if (out.document_id !== undefined && (typeof out.document_id !== 'string' || !uuid.test(out.document_id))) return invalid();
   if (typeof out.document_id === 'string') out.document_id = out.document_id.toLowerCase();
-  if (tool === 'knowledge_read') {
+  if (tool === 'read_tenant_knowledge') {
     if (out.limit !== undefined && (!Number.isSafeInteger(out.limit) || Number(out.limit) < 1 || Number(out.limit) > 20)) return invalid();
     if (out.offset !== undefined && (!Number.isSafeInteger(out.offset) || Number(out.offset) < 0)) return invalid();
     return out;
@@ -46,8 +46,8 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
   try { args=normalizeKnowledgeArgs(input.tool,input.args); } catch { return {...failure('KNOWLEDGE_ARGUMENTS_INVALID'),not_applied:true}; }
   if (!input.expectedTenantId || !uuid.test(input.expectedTenantId)) return {...failure('KNOWLEDGE_SCOPE_REQUIRED'),not_applied:true};
   const tenant=input.expectedTenantId;
-  const mutation=input.tool !== 'knowledge_read';
-  const rpc=input.tool === 'knowledge_read' ? 'read_tenant_knowledge' : input.tool === 'knowledge_update' ? 'update_tenant_knowledge_metadata' : 'delete_tenant_knowledge';
+  const mutation=input.tool !== 'read_tenant_knowledge';
+  const rpc=input.tool === 'read_tenant_knowledge' ? 'read_tenant_knowledge' : input.tool === 'knowledge_update' ? 'update_tenant_knowledge_metadata' : 'delete_tenant_knowledge';
   const params: Record<string, unknown>={p_expected_tenant:tenant,p_doc_id:args.document_id ?? null};
   if (!mutation) Object.assign(params,{p_limit:args.document_id ? 1 : args.limit ?? 20,p_offset:args.document_id ? 0 : args.offset ?? 0});
   else Object.assign(params,{p_expected_revision:args.expected_revision,...(input.tool === 'knowledge_update' ? {p_patch:args.patch} : {})});

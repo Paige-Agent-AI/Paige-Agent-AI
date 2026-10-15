@@ -1,0 +1,22 @@
+[
+  {
+    "focus": "Add documents",
+    "result": "PASS"
+  },
+  {
+    "sourceURL": "http://127.0.0.1:8773/?knowledge=test-document-a",
+    "reload": "same exact source"
+  },
+  {
+    "focus": "Edit details",
+    "result": "PASS"
+  },
+  {
+    "focus": "Remove document",
+    "result": "PASS"
+  },
+  {
+    "focus": "Knowledge",
+    "result": "PASS"
+  }
+]

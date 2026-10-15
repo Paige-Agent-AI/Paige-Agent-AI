@@ -9,10 +9,11 @@
 // generate-image executor (invoked with the CALLER'S JWT — compliance H4 — so
 // its auth/role/tenant/storage/library/memory tail runs unchanged).
 //
-// AUTH (compliance H2): the tenant is DERIVED SERVER-SIDE from the verified JWT
-// via resolveTenantForUser — a body-supplied tenant_id is ignored entirely
-// (§59: the auth subject is always auth.uid(); user_roles admin is
-// tenant-AGNOSTIC and never authorizes cross-tenant action).
+// AUTH (compliance H2): the tenant is DERIVED SERVER-SIDE from the verified JWT —
+// the caller's active workspace via current_user_tenant_id(), membership-checked —
+// and only that workspace's owner or an admin (is_tenant_admin) passes. A
+// body-supplied tenant_id is ignored entirely (§59: the auth subject is always
+// auth.uid(); a global user_roles admin is tenant-AGNOSTIC and authorizes nothing).
 //
 // FAIL-CLOSED LADDER (owner ruling): music → truthful unavailable; video →
 // flag + per-job approval + daily completed cap; fal → secret present AND the
@@ -26,10 +27,11 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { resolveTenantForUser } from "../_shared/tenant-for-user.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { getMediaAdapter, allMediaAdapters } from "../_shared/media-provider/registry.ts";
 import { falAdapter } from "../_shared/media-provider/fal.ts";
+import { selectMediaModel, type AutoSelectResult } from "../_shared/media-provider/auto-select.ts";
+import type { MediaModelInfo } from "../_shared/media-provider/mod.ts";
 import {
   loadMediaConfig,
   resolveMediaCeiling,
@@ -45,9 +47,22 @@ import {
 import {
   estimateCredits,
   holdMediaCredits,
+  releaseMediaCredits,
 } from "../_shared/media-provider/credits.ts";
 import { failMediaJob } from "../_shared/media-provider/complete.ts";
+import { linkStudioArtifact } from "../_shared/media-provider/studio-link.ts";
+// Provider result/error types are shared with the model router (_shared/provider-types.ts).
 import { NeedsConfigError } from "../_shared/provider-types.ts";
+import { stableRunId } from "../_shared/capability-record.ts";
+import {
+  claimMediaProposal,
+  issueMediaProposal,
+  mediaApprovalView,
+  REQUESTER_ONLY_MESSAGE,
+  retireMediaProposals,
+  type MediaApprovalJob,
+  type MediaApprovalView,
+} from "../_shared/media-provider/approval.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -65,6 +80,36 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Paige picks the model from the brief when the owner left it on "Auto" (owner ask 2026-10-03).
+// fal's catalog when fal is switched on; otherwise the first connected image provider.
+function resolveAutoModel(prompt: string, requested: string, hasReferences: boolean, videoAvailable: boolean): AutoSelectResult | null {
+  if (requested && requested !== "auto") return null;
+  if (falAdapter.isConfigured()) {
+    return selectMediaModel({ prompt, catalog: falAdapter.getCapabilities().models, hasReferences, videoAvailable });
+  }
+  for (const name of ["gemini", "openai", "ideogram", "replicate"] as const) {
+    if (getMediaAdapter(name)?.isConfigured()) {
+      return { model: `${name}:auto`, label: name, auto: true, reason: `Using ${name}, the image provider connected to this workspace.` };
+    }
+  }
+  // Nothing connected: there is no honest pick to make.
+  return null;
+}
+
+type LegacyProvider = "gemini" | "openai" | "replicate" | "ideogram";
+// Legacy image providers stay first-class (owner: preserve them). Their model field is
+// '<provider>:auto'; the executor picks the concrete model. One home for the entry, so the
+// estimate and the submit agree.
+function legacyEntry(model: string): { provider: LegacyProvider; configured: boolean; entry: MediaModelInfo } | null {
+  if (!/^(gemini|openai|replicate|ideogram):/.test(model)) return null;
+  const provider = model.split(":")[0] as LegacyProvider;
+  return {
+    provider,
+    configured: getMediaAdapter(provider)?.isConfigured() === true,
+    entry: { id: model, label: model, mode: "image", tier: "standard", estCostPerUnitUsd: provider === "replicate" ? 0.04 : 0.03, unit: "image" },
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -74,24 +119,101 @@ serve(async (req: Request) => {
     const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: uErr } = await authed.auth.getUser();
     if (uErr || !user) return json({ error: "Unauthorized" }, 401);
-    const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = (roleRows || []).map((r: { role: string }) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-      return json({ error: "Admin access required." }, 403);
+    // The workspace is the one the person is acting in (their active workspace, membership-checked
+    // server-side by current_user_tenant_id), and only its owner or an admin may use the Studio —
+    // never a global role, which is tenant-agnostic (§59).
+    const { data: activeTenant, error: tErr } = await authed.rpc("current_user_tenant_id");
+    if (tErr) return json({ error: "Couldn't confirm your workspace — try again." }, 500);
+    if (!activeTenant) {
+      return json({ error: "No active workspace for this account — open a workspace first." }, 403);
+    }
+    const tenantId = String(activeTenant);
+    const { data: isAdmin, error: aErr } = await authed.rpc("is_tenant_admin", { _tenant: tenantId });
+    if (aErr) return json({ error: "Couldn't confirm your access — try again." }, 500);
+    if (isAdmin !== true) {
+      return json({ error: "Only this workspace's owner or an admin can use the Studio.", forbidden: true }, 403);
     }
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);
-    const resolved = await resolveTenantForUser(admin, user.id);
-    if (!resolved.tenantId) {
-      return json({ error: "No active workspace for this account — open a workspace first." }, 403);
-    }
-    const tenantId = resolved.tenantId;
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? "");
 
     const config = await loadMediaConfig(admin);
     const ceilingUsd = await resolveMediaCeiling(admin, tenantId, config.dailyCeilingUsd);
+
+    // ── APPROVAL (v2b): the canonical proposal store, not a second channel ──
+    // A job that needs approval carries a server-issued proposal in paige_pending_confirmations,
+    // addressed to the person who asked (owner ruling 2026-10-04: "Requester approves, any admin
+    // can decline"). This nonce stamps any proposal THIS request issues, so this request can never
+    // redeem one it minted (docs/doctrine/one-approval-gate.md).
+    const requestNonce = crypto.randomUUID();
+
+    // What this caller may see about each pending approval: the requester gets the fingerprint
+    // (issued here if it is missing — a job from before v2b, or one whose earlier claim did not
+    // land), everyone else sees who asked. Never the fingerprint to anyone but the requester.
+    const approvalsFor = async (rows: Array<Record<string, unknown>>): Promise<Record<string, MediaApprovalView>> => {
+      const pending = rows.filter((j) => j.approval_state === "pending" && j.state === "blocked");
+      if (!pending.length) return {};
+      const others = [...new Set(pending.map((j) => j.actor_id as string | null).filter((id): id is string => !!id && id !== user.id))];
+      const names: Record<string, string> = {};
+      if (others.length) {
+        const { data: people } = await admin.from("profiles").select("user_id, full_name").in("user_id", others);
+        for (const p of (people ?? []) as Array<{ user_id: string; full_name: string | null }>) {
+          if (p.full_name && p.full_name.trim()) names[p.user_id] = p.full_name.trim();
+        }
+      }
+      const out: Record<string, MediaApprovalView> = {};
+      for (const j of pending) {
+        const job = j as unknown as MediaApprovalJob;
+        let proposal = null;
+        if (job.actor_id === user.id) {
+          const issued = await issueMediaProposal(admin, job, requestNonce);
+          if (issued.ok) proposal = issued.proposal;
+          else console.error("[paige-media] approval not issued", JSON.stringify({ job: job.id, reason: issued.reason }));
+        }
+        out[job.id] = mediaApprovalView(job, user.id, job.actor_id ? names[job.actor_id] ?? null : null, proposal);
+      }
+      return out;
+    };
+
+    // Decline a job that is awaiting approval — any owner or admin may (owner ruling). The job's
+    // guarded transition decides the race with an approval; the proposal is then retired so it can
+    // never be redeemed, and the decision is filed on the Rail once per job.
+    const declinePending = async (job: Record<string, unknown>): Promise<Record<string, unknown> | null | "failed"> => {
+      const { data: updated, error: declineErr } = await admin
+        .from("paige_media_jobs")
+        .update({ approval_state: "rejected", state: "cancelled", completed_at: new Date().toISOString(), lease_until: null })
+        .eq("id", String(job.id))
+        .eq("approval_state", "pending")
+        .eq("state", "blocked")
+        .select()
+        .maybeSingle();
+      if (declineErr) return "failed";
+      if (!updated) return null;
+      const approvalJob = job as unknown as MediaApprovalJob;
+      // A failed retire cannot reopen the spend: approve requires a pending job, and this one is
+      // cancelled. It is logged so the dangling row is visible, never silent.
+      if (!(await retireMediaProposals(admin, approvalJob))) {
+        console.error("[paige-media] declined job's approval was not retired", JSON.stringify({ job: approvalJob.id }));
+      }
+      await recordCapabilityRun(admin, {
+        tenantId,
+        actorId: user.id,
+        capabilityKey: approvalJob.mode === "video" ? "vibe_media_video" : "vibe_media_image",
+        outcome: "capability_refused",
+        runId: await stableRunId(["vibe-media-declined", tenantId, approvalJob.id]),
+        detail: {
+          declined_by_owner: true,
+          declined_by_requester: approvalJob.actor_id === user.id,
+          job_id: approvalJob.id,
+          mode: approvalJob.mode,
+          model: approvalJob.model,
+          estimated_cost_usd: approvalJob.estimated_cost_usd,
+        },
+      });
+      return updated;
+    };
 
     // ── capabilities: the truthful surface state (all 18 states' server side) ─
     if (action === "capabilities") {
@@ -165,9 +287,30 @@ serve(async (req: Request) => {
 
     // ── estimate: cost + approval preview WITHOUT creating a job ─────────────
     if (action === "estimate") {
-      const model = String(body?.model ?? "");
+      const picked = resolveAutoModel(String(body?.prompt ?? ""), String(body?.model ?? ""),
+        Array.isArray(body?.reference_content_ids) && body.reference_content_ids.length > 0, config.videoEnabled);
+      const requested = String(body?.model ?? "");
+      if ((!requested || requested === "auto") && !picked) {
+        return json({ error: "No image provider is connected to this workspace yet.", needs_config: true });
+      }
+      const model = picked?.model ?? requested;
       const adapter = falAdapter;
       const catalog = adapter.getCapabilities().models;
+      const legacy = legacyEntry(model);
+      if (legacy) {
+        if (!legacy.configured) return json({ error: `The ${legacy.provider} image provider isn't configured on this account.`, needs_config: true });
+        const policy = resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: legacy.entry.estCostPerUnitUsd, draftAllowanceUsd: config.draftAllowanceUsd });
+        return json({
+          model: legacy.entry.id,
+          model_choice: picked,
+          mode: "image",
+          tier: "standard",
+          estimated_cost_usd: legacy.entry.estCostPerUnitUsd,
+          basis: "flat per-image estimate for this provider",
+          approval: policy,
+          license: getMediaAdapter(legacy.provider)?.getLicenseClass() ?? adapter.getLicenseClass(),
+        });
+      }
       const entry = catalog.find((m) => m.id === model);
       if (!entry) return json({ error: `Unknown media model "${model}".` }, 400);
       const videoSeconds = typeof body?.video_seconds === "number" ? body.video_seconds : undefined;
@@ -181,6 +324,7 @@ serve(async (req: Request) => {
       });
       return json({
         model: entry.id,
+        model_choice: picked ?? { model: entry.id, label: entry.label, auto: false, reason: `Using ${entry.label}, as you chose.` },
         mode: entry.mode,
         tier: entry.tier,
         estimated_cost_usd: estimate.estimatedCostUsd,
@@ -194,7 +338,7 @@ serve(async (req: Request) => {
     if (action === "submit") {
       const prompt = String(body?.prompt ?? "").trim();
       if (prompt.length < 4) return json({ error: "Describe what you want to create." }, 400);
-      const model = String(body?.model ?? "");
+      const requestedModel = String(body?.model ?? "");
       const aspectRatio = ["1:1", "2:3", "3:2", "16:9", "9:16"].includes(String(body?.aspect_ratio))
         ? String(body.aspect_ratio)
         : undefined;
@@ -213,31 +357,28 @@ serve(async (req: Request) => {
         return json({ error: "Music generation is deferred from this release — no music provider is connected.", unavailable: "music" }, 403);
       }
 
+      // "Auto" (or no model): Paige picks from the brief and says why.
+      const picked = resolveAutoModel(prompt, requestedModel, referenceIds.length > 0, config.videoEnabled);
+      if (!requestedModel || requestedModel === "auto") {
+        if (!picked) return json({ error: "No image provider is connected to this workspace yet.", needs_config: true });
+      }
+      const model = picked?.model ?? requestedModel;
+
       // fal catalog drives mode derivation (§18: the model decides, not a picker).
       const catalog = falAdapter.getCapabilities().models;
       let entry = catalog.find((m) => m.id === model);
       let provider: "fal" | "gemini" | "openai" | "replicate" | "ideogram" = "fal";
 
-      // Legacy image providers stay first-class (owner: preserve them). Their
-      // model field is '<provider>:auto'; the executor picks the concrete model.
-      if (!entry && /^(gemini|openai|replicate|ideogram):/.test(model)) {
-        const legacyName = model.split(":")[0] as "gemini" | "openai" | "replicate" | "ideogram";
-        const legacy = getMediaAdapter(legacyName);
-        if (!legacy?.isConfigured()) {
+      const legacy = entry ? null : legacyEntry(model);
+      if (legacy) {
+        if (!legacy.configured) {
           return json({
-            error: `The ${legacyName} image provider isn't configured on this account.`,
+            error: `The ${legacy.provider} image provider isn't configured on this account.`,
             needs_config: true,
           });
         }
-        provider = legacyName;
-        entry = {
-          id: model,
-          label: model,
-          mode: "image",
-          tier: "standard",
-          estCostPerUnitUsd: legacyName === "replicate" ? 0.04 : 0.03,
-          unit: "image",
-        };
+        provider = legacy.provider;
+        entry = legacy.entry;
       }
       if (!entry) return json({ error: `Unknown media model "${model}".` }, 400);
 
@@ -319,6 +460,29 @@ serve(async (req: Request) => {
         if (!referenceUrls.length) return json({ error: "The reference assets couldn't be found in this workspace." }, 404);
       }
 
+      // A job started inside a Vibe Studio session is filed onto that session when it completes.
+      // The session must be this workspace's; anything else is refused, never silently dropped.
+      let studioSessionId: string | null = null;
+      if (typeof body?.studio_session_id === "string" && body.studio_session_id) {
+        const { data: sess, error: sessErr } = await admin
+          .from("studio_sessions").select("id").eq("id", body.studio_session_id).eq("tenant_id", tenantId).maybeSingle();
+        if (sessErr) return json({ error: "Couldn't confirm the Studio session." }, 500);
+        if (!sess) return json({ error: "That Studio session isn't in this workspace." }, 404);
+        studioSessionId = String(sess.id);
+      }
+
+      // A Studio refine stacks onto the image already on the canvas (one artifact, many versions),
+      // the way it did before images ran as jobs. Only an unpublished image of this workspace can
+      // take a new version; a published one is left as it is and the result is filed as a new image.
+      let reuseContentId: string | null = null;
+      if (studioSessionId && typeof body?.reuse_content_id === "string" && body.reuse_content_id) {
+        const { data: target, error: targetErr } = await admin
+          .from("marketing_content").select("id, status, kind")
+          .eq("id", body.reuse_content_id).eq("tenant_id", tenantId).maybeSingle();
+        if (targetErr) return json({ error: "Couldn't read the image to update." }, 500);
+        if (target && target.kind === "image" && target.status !== "published") reuseContentId = String(target.id);
+      }
+
       // Idempotency: caller-minted request id (stable across retries of ONE
       // intentional request; a fresh request mints a fresh id).
       const requestId = typeof body?.request_id === "string" && body.request_id.length >= 8
@@ -333,6 +497,10 @@ serve(async (req: Request) => {
         quality_tier: entry.tier,
         intent,
         reference_content_ids: referenceIds,
+        reference_urls: referenceUrls,
+        model_choice: picked ? { auto: picked.auto, label: picked.label, reason: picked.reason } : null,
+        studio_session_id: studioSessionId,
+        reuse_content_id: entry.mode === "video" ? null : reuseContentId,
         video_seconds: entry.mode === "video" ? (videoSeconds ?? 5) : undefined,
       };
 
@@ -343,7 +511,10 @@ serve(async (req: Request) => {
         .select("*")
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
-      if (existing) return json({ job: existing, idempotent_replay: true });
+      if (existing) {
+        const replayApproval = (await approvalsFor([existing]))[String(existing.id)];
+        return json({ job: existing, idempotent_replay: true, ...(replayApproval ? { awaiting_approval: true, approval: replayApproval } : {}) });
+      }
 
       const { data: job, error: insertErr } = await admin
         .from("paige_media_jobs")
@@ -373,34 +544,48 @@ serve(async (req: Request) => {
             .select("*")
             .eq("idempotency_key", idempotencyKey)
             .maybeSingle();
-          if (winner) return json({ job: winner, idempotent_replay: true });
+          if (winner) {
+            const replayApproval = (await approvalsFor([winner]))[String(winner.id)];
+            return json({ job: winner, idempotent_replay: true, ...(replayApproval ? { awaiting_approval: true, approval: replayApproval } : {}) });
+          }
         }
         return json({ error: "Couldn't create the media job." }, 500);
       }
 
       if (policy.approvalRequired) {
-        return json({ job, awaiting_approval: true, reason: policy.reason, estimate });
+        // The spend waits on a canonical proposal addressed to the requester. If the store cannot
+        // issue it right now the job still waits (it is blocked either way) and the next read
+        // issues it — the Approve control asks for it again rather than approving without one.
+        const approval = (await approvalsFor([job]))[String(job.id)] ?? null;
+        return json({ job, awaiting_approval: true, reason: policy.reason, estimate, model_choice: picked, approval, ...(approval?.fingerprint ? {} : { approval_unavailable: true }) });
       }
       return await dispatchJob(admin, job, { authHeader, webhookUrl: `${supabaseUrl}/functions/v1/paige-media-webhook` }, config);
     }
 
-    // ── approve / reject: the approval boundary is SERVER-HELD state ─────────
+    // ── approve / reject: decided through the canonical proposal (v2b) ───────
     if (action === "approve" || action === "reject") {
       const jobId = String(body?.job_id ?? "");
       if (!jobId) return json({ error: "job_id is required." }, 400);
       const { data: job } = await admin.from("paige_media_jobs").select("*").eq("id", jobId).maybeSingle();
       if (!job || job.tenant_id !== tenantId) return json({ error: "Job not found." }, 404);
-      if (job.approval_state !== "pending") return json({ error: "This job isn't awaiting approval." }, 409);
+      if (job.approval_state !== "pending" || job.state !== "blocked") return json({ error: "This job isn't awaiting approval." }, 409);
 
       if (action === "reject") {
-        const { data: updated } = await admin
-          .from("paige_media_jobs")
-          .update({ approval_state: "rejected", state: "cancelled", completed_at: new Date().toISOString() })
-          .eq("id", jobId)
-          .eq("approval_state", "pending")
-          .select()
-          .single();
-        return json({ job: updated });
+        const declined = await declinePending(job);
+        if (declined === "failed") return json({ error: "Couldn't decline the job — try again." }, 500);
+        if (!declined) return json({ error: "This job was already decided." }, 409);
+        return json({ job: declined, declined: true });
+      }
+
+      // Only the person who asked can approve the spend (owner ruling 2026-10-04). Anyone else
+      // with access can still decline it.
+      if (job.actor_id !== user.id) {
+        return json({ error: REQUESTER_ONLY_MESSAGE(String(job.mode)), requester_only: true }, 403);
+      }
+      // The proof is the server-issued fingerprint echoed back in the request body — never a flag.
+      const approvedFingerprint = typeof body?.approved_fingerprint === "string" ? body.approved_fingerprint : "";
+      if (!/^[0-9a-f]{16}$/.test(approvedFingerprint)) {
+        return json({ error: "This approval didn't come from the approval card. Open it again and approve from there.", approval_required: true }, 400);
       }
 
       // Approve: re-check the daily video cap at approval time (M6) and the
@@ -420,6 +605,20 @@ serve(async (req: Request) => {
         estimatedCostUsd: job.estimated_cost_usd ?? 0,
       });
       if (budget.verdict === "deny") return json({ error: budget.explanation, budget_denied: true, gate: budget.gate }, 429);
+
+      // Redeem the proposal ONCE — after the rechecks, so a limit or budget refusal does not spend
+      // the person's approval. Bound to the caller, the tenant, this job and its estimate.
+      const claim = await claimMediaProposal(admin, {
+        job: job as unknown as MediaApprovalJob,
+        callerId: user.id,
+        tenantId,
+        fingerprint: approvedFingerprint,
+        requestNonce,
+      });
+      if (claim === "unavailable") return json({ error: "Couldn't record your approval — try again." }, 503);
+      if (claim === "not_claimable") {
+        return json({ error: "That approval is no longer valid. Reload the Studio and approve it again.", approval_stale: true }, 409);
+      }
 
       const { data: updated, error: upErr } = await admin
         .from("paige_media_jobs")
@@ -441,6 +640,13 @@ serve(async (req: Request) => {
       if (["succeeded", "failed", "cancelled"].includes(job.state)) {
         return json({ job, already_terminal: true });
       }
+      // Cancelling a job that is still awaiting approval IS a decline (any owner or admin): it
+      // retires the proposal and is filed once. If an approval won the race, cancel as usual below.
+      if (job.approval_state === "pending" && job.state === "blocked") {
+        const declined = await declinePending(job);
+        if (declined === "failed") return json({ error: "Couldn't cancel the job." }, 500);
+        if (declined) return json({ job: declined, declined: true });
+      }
       // Terminal-bound guarded transition wins exactly once.
       const { data: updated, error: upErr } = await admin
         .from("paige_media_jobs")
@@ -452,7 +658,6 @@ serve(async (req: Request) => {
       if (upErr || !updated) return json({ error: "Couldn't cancel the job." }, 500);
 
       // The reservation returns to the workspace's pool on cancel (idempotent).
-      const { releaseMediaCredits } = await import("../_shared/media-provider/credits.ts");
       await releaseMediaCredits(
         (n: string, a: Record<string, unknown>) => admin.rpc(n, a),
         tenantId,
@@ -477,7 +682,8 @@ serve(async (req: Request) => {
       const jobId = String(body?.job_id ?? "");
       const { data: job } = await admin.from("paige_media_jobs").select("*").eq("id", jobId).maybeSingle();
       if (!job || job.tenant_id !== tenantId) return json({ error: "Job not found." }, 404);
-      return json({ job });
+      const approval = (await approvalsFor([job]))[String(job.id)];
+      return json({ job, ...(approval ? { approval } : {}) });
     }
     if (action === "list") {
       const limit = Math.max(1, Math.min(50, Number(body?.limit) || 20));
@@ -488,7 +694,8 @@ serve(async (req: Request) => {
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) return json({ error: "Couldn't list media jobs." }, 500);
-      return json({ jobs });
+      const approvals = await approvalsFor(jobs ?? []);
+      return json({ jobs: (jobs ?? []).map((j: Record<string, unknown>) => approvals[String(j.id)] ? { ...j, approval: approvals[String(j.id)] } : j) });
     }
 
     return json({ error: "unknown_action" }, 400);
@@ -667,6 +874,7 @@ async function dispatchJob(
       outcome: "capability_succeeded",
       detail: { provider, model: result.model, mode: job.mode, estimated_cost_usd: job.estimated_cost_usd, content_id: result.contentId },
     });
+    await linkStudioArtifact(admin, job, result.contentId);
     return json({ job: updated ?? { ...job, state: "succeeded", content_id: result.contentId }, asset_url: result.artifactUrl, dispatched: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "generation failed";

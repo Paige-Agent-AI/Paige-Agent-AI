@@ -1,0 +1,422 @@
+{
+  "case_id": "F2",
+  "split": "dev",
+  "class": "fresh_fact",
+  "answer_class": "answerable",
+  "question": "What is the current price of a US Postal Service First-Class Mail 1-ounce letter stamp as of late 2026?",
+  "sub_questions": [
+    "current stamp price"
+  ],
+  "freshness_days": 365,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T15:54:37.738Z",
+  "http_status": 200,
+  "wall_latency_ms": 52182,
+  "engine_result": {
+    "run_id": "b48f68e1-32ef-4e50-8cf9-f5a86aba516d",
+    "question": "What is the current price of a US Postal Service First-Class Mail 1-ounce letter stamp as of late 2026?",
+    "findings": [
+      {
+        "text": "USPS official site states First-Class Mail Forever stamps cost $0.82 (the current 1 oz price) and will never expire even if postage rates go up. (website: https://www.usps.com/ship/first-class-mail.htm · $0.82)",
+        "citations": [
+          16
+        ],
+        "confidence": "low",
+        "website": "https://www.usps.com/ship/first-class-mail.htm",
+        "values": [
+          "$0.82"
+        ]
+      },
+      {
+        "text": "USPS Postage Rates & Prices page lists First-Class Mail at $0.82 at the Post Office, or from $0.621 for Commercial Pricing. (website: https://www.usps.com/business/prices.htm · $0.82; $0.621)",
+        "citations": [
+          15
+        ],
+        "confidence": "low",
+        "website": "https://www.usps.com/business/prices.htm",
+        "values": [
+          "$0.82",
+          "$0.621"
+        ]
+      },
+      {
+        "text": "USPS Newsroom announcement (dated April 9, 2026) states USPS recommended new prices for July including a 4-cent increase in the price of a First-Class Mail Forever stamp from 78 cents to 82 cents. (website: https://about.usps.com/newsroom/national-releases/2026/0409-usps-recommends-new-prices-for-july.htm · 78 cents; 82 cents)",
+        "citations": [
+          2
+        ],
+        "confidence": "low",
+        "website": "https://about.usps.com/newsroom/national-releases/2026/0409-usps-recommends-new-prices-for-july.htm",
+        "values": [
+          "78 cents",
+          "82 cents"
+        ]
+      },
+      {
+        "text": "MPA guide reports confirmed July 12, 2026 USPS rate changes per Notice 123, listing First-Class postcard retail single piece at $0.65 (up from $0.61) and First-Class presort letters automation 1 oz ranging $0.621 to $0.707. (website: https://www.mailpro.org/post/usps-postage-rates-2026/ · $0.65; $0.61; $0.621; $0.707; $0.453; $0.478; $0.495)",
+        "citations": [
+          13
+        ],
+        "confidence": "low",
+        "website": "https://www.mailpro.org/post/usps-postage-rates-2026/",
+        "values": [
+          "$0.65",
+          "$0.61",
+          "$0.621",
+          "$0.707",
+          "$0.453",
+          "$0.478",
+          "$0.495"
+        ]
+      },
+      {
+        "text": "Stamps.com help article notes standard Post Office retail stamps increased to $0.82, while printing 1 oz First-Class postage through Stamps.com qualifies for the Metered Letter rate of $0.78. (website: https://help.stamps.com/hc/en-us/articles/20820467721371-USPS-Rate-Changes-2026 · $0.82; $0.78)",
+        "citations": [
+          8
+        ],
+        "confidence": "low",
+        "website": "https://help.stamps.com/hc/en-us/articles/20820467721371-USPS-Rate-Changes-2026",
+        "values": [
+          "$0.82",
+          "$0.78"
+        ]
+      },
+      {
+        "text": "USPS FAQ page states that for the January 2026 price change, the price of a stamp to mail a 1-ounce single-piece First-Class letter will not increase, as USPS decided to forgo a price change for First-Class Mail postage and other Market Dominant services at that time. (website: https://faq.usps.com/s/article/2026-Postage-Price-Change)",
+        "citations": [
+          6
+        ],
+        "confidence": "low",
+        "website": "https://faq.usps.com/s/article/2026-Postage-Price-Change"
+      },
+      {
+        "text": "National Postal Museum historical table of U.S. domestic letter rates lists rate increases through June (table cut off), with the last fully shown rate being 34 cents effective January 7, 2001. (website: https://postalmuseum.si.edu/us-domestic-letter-rates · 34 cents)",
+        "citations": [
+          1
+        ],
+        "confidence": "high",
+        "website": "https://postalmuseum.si.edu/us-domestic-letter-rates",
+        "values": [
+          "34 cents"
+        ]
+      },
+      {
+        "text": "USPS 'Rates for Domestic Letters Since 1863' historical table lists postage per ounce as 34 cents (Jan 7, 2001), 63 cents (Jan 22, 2023), and 66 cents (July 9, 2023), with a surcharge for non-standard envelope sizes since July 15, 1979. (website: https://about.usps.com/who/profile/history/domestic-letter-rates-since-1863.htm · 34; 63; 66)",
+        "citations": [
+          4
+        ],
+        "confidence": "low",
+        "website": "https://about.usps.com/who/profile/history/domestic-letter-rates-since-1863.htm",
+        "values": [
+          "34",
+          "63",
+          "66"
+        ]
+      },
+      {
+        "text": "Postal Explorer Notice 123 PDF lists various domestic fees, including Address Correction Service fees such as $1.00 per manual notice issued and $0.22 per electronic notice for First-Class Mail. (website: https://pe.usps.com/cpim/ftp/manuals/dmm300/notice123.pdf · $1.00; 0.22; 0.50; 0.17)",
+        "citations": [
+          9
+        ],
+        "confidence": "low",
+        "website": "https://pe.usps.com/cpim/ftp/manuals/dmm300/notice123.pdf",
+        "values": [
+          "$1.00",
+          "0.22",
+          "0.50",
+          "0.17"
+        ]
+      },
+      {
+        "text": "Postal Explorer page indicates a 'Time-Limited 2026 Price Change' Notice 123 PDF finalized 09/18/2026 and corresponding SKU Price Files finalized 08/25/2026. (website: https://pe.usps.com/PriceChange · 09/18/2026; 08/25/2026)",
+        "citations": [
+          10
+        ],
+        "confidence": "low",
+        "website": "https://pe.usps.com/PriceChange",
+        "values": [
+          "09/18/2026",
+          "08/25/2026"
+        ]
+      },
+      {
+        "text": "USPS Newsroom announced a temporary price change for the 2026 holiday shipping season, including a $0.50 increase for Zones 1-4, 0-3 lbs and a $0.80 increase (service unspecified in excerpt). (website: https://about.usps.com/newsroom/national-releases/2026/0825-usps-announces-temporary-price-change-for-2026-holiday-shipping-season.htm · $0.50; $0.80)",
+        "citations": [
+          3
+        ],
+        "confidence": "low",
+        "website": "https://about.usps.com/newsroom/national-releases/2026/0825-usps-announces-temporary-price-change-for-2026-holiday-shipping-season.htm",
+        "values": [
+          "$0.50",
+          "$0.80"
+        ]
+      },
+      {
+        "text": "Pitney Bowes USPS rate change overview page lists a First-Class Mail figure of $1.75 (context/service not specified in excerpt). (website: https://www.pitneybowes.com/us/postal-information/usps-rate-change-overview.html · $1.75)",
+        "citations": [
+          14
+        ],
+        "confidence": "low",
+        "website": "https://www.pitneybowes.com/us/postal-information/usps-rate-change-overview.html",
+        "values": [
+          "$1.75"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://postalmuseum.si.edu/us-domestic-letter-rates",
+        "title": "U.S. Domestic Letter Rates | National Postal Museum",
+        "snippet": "# U.S. Domestic Letter Rates\n| Effective Date | Weight & Distance | Cost |\n|-|-|-|\n| December 31, 1975 | All U.S., 1st oz. | 13 cents |\n| May 29, 1978 | All U.S., 1st oz. | 15 cents |\n| March 22, 1981 | All U.S., 1st oz. | 18 cents |\n| November 1, 1981 | All U.S., 1st oz. | 20 cents |\n| February 17, 1985 | All U.S., 1st oz. | 22 cents |\n| April 3, 1988 | All U.S., 1st oz. | 25 cents |\n| February 3, 1991 | All U.S., 1st oz. | 29 cents |\n| January 1, 1995 | All U.S., 1st oz. | 32 cents |\n| January 10, 1999 | All U.S., 1st oz. | 33 cents |\n| January 7, 2001 | All U.S., 1st oz. | 34 cents |\n| June",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:03.656Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://about.usps.com/newsroom/national-releases/2026/0409-usps-recommends-new-prices-for-july.htm",
+        "title": "U.S. Postal Service Recommends New Prices for July - Newsroom",
+        "snippet": "April 9, 2026\n\n# U.S. Postal Service Recommends New Prices for July\nThe new rates include a 4-cent increase in the price of a First-Class Mail Forever stamp from 78 cents to 82 cents.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:04.874Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://about.usps.com/newsroom/national-releases/2026/0825-usps-announces-temporary-price-change-for-2026-holiday-shipping-season.htm",
+        "title": "U.S. Postal Service Announces Temporary Price Change for 2026 ...",
+        "snippet": "U.S. Postal Service Announces Temporary Price Change for 2026 Holiday Shipping Season · $0.50 increase for Zones 1-4, 0-3 lbs. · $0.80 increase ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:07.348Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://about.usps.com/who/profile/history/domestic-letter-rates-since-1863.htm",
+        "title": "Rates for Domestic Letters Since 1863 - Who we are - About.usps.com",
+        "snippet": "# Rates for Domestic Letters Since 1863\n| **Effective Date** | **Postage in Cents, per ½ Ounce** |\n|-|-|\n| July 1, 1863 | 3 |\n\n| **Effective Date** | **Postage in Cents, per Ounce**[[1]](https://about.usps.com/who/profile/history/domestic-letter-rates-since-1863.htm#_ftn1) |\n|-|-|\n| January 7, 2001 | 34 |\n| January 22, 2023 | 63 |\n| July 9, 2023 | 66 |\n\nSince July 15, 1979, a surcharge has been added for non-standard envelope sizes.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:04.874Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://en.wikipedia.org/wiki/History_of_United_States_postage_rates",
+        "title": "History of United States postage rates - Wikipedia",
+        "snippet": "Historical and current postage rates ; May 31, 2015 .49, 2.54 (3 oz) ; April 10, 2016 .47 · 2.54 (3 oz) ; January 22, 2017 .49 · 2.67 (3 oz) ; January 21, 2018 .50 ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:03.656Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://faq.usps.com/s/article/2026-Postage-Price-Change",
+        "title": "2026 Postage Price Change - FAQ | USPS",
+        "snippet": "## April 2026 Transportation-Related, Time-Limited Price Change\n### Press Release for the Time-Limited Price Change Notice Filing\nPending favorable review by the PRC, the price change would go into effect at midnight Central Time on April 26 and would remain in place until midnight Central Time on Jan.\n\n## January 2026 Price Change\n### Mailing Services Price Changes\nThe price of a stamp to mail a 1-once single-piece First-Class letter will not increase in early 2026.\n\n\"We have therefore decided at this time to forgo a price change for First-Class Mail postage and other Market Dominant services",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:22.437Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://grayhairsoftware.com/whats-in-store-for-postage-rates-in-january-2026/",
+        "title": "What's in store for postage rates in January 2026? - GrayHair Software",
+        "snippet": "The Forecast: The USPS expects to have about a 1.2% rate authority available for a January price change. We'll know the final number after the ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:07.348Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://help.stamps.com/hc/en-us/articles/20820467721371-USPS-Rate-Changes-2026",
+        "title": "USPS Rate Changes 2026 - Stamps",
+        "snippet": "While standard Post Office retail stamps increased to $0.82, printing 1 oz First-Class postage through Stamps.com qualifies for the Metered Letter rate of $0.78 ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:21.050Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://pe.usps.com/cpim/ftp/manuals/dmm300/notice123.pdf",
+        "title": "[PDF] Notice 123 - Postal Explorer - USPS",
+        "snippet": "## Postal Explorer ® pe.usps.com\nFirst-Class Mail International $ 43 $ First-Class Package International Service $ 43 $\n\n## Domestic-Other Services and Fees\\\n  \n**Address Correction Service**  \n  \n| Address Correction Service | Fee |  \n| --- | --- |  \n| Per manual notice issued | $1.00 |  \n| Per electronic notice (or manual notice for electronic option customers issued) |  |  \n| First-Class Mail | 0.22 |  \n| USPS Ground Advantage–Retail | 0.22 |  \n| Other than First-Class Mail | 0.50 |  \n| Per automated notice issued |  |  \n| First-Class Mail letters (first two notices) | 0.17 |  \n| First-Clas",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:06.358Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://pe.usps.com/PriceChange",
+        "title": "Time-Limited 2026 Price Change - Postal Explorer - USPS",
+        "snippet": "Time-Limited 2026 Price Change - Notice 123 PDF, Final, 09/18/2026 ; USPS SKU Price Files ; Time-Limited 2026 - SKU Price Files - Excel, Final, 08/25/2026 ; Time- ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:07.348Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://support.shippingeasy.com/hc/en-us/articles/4407007211035-USPS-Rate-Changes-2026",
+        "title": "USPS Rate Changes 2026 - ShippingEasy",
+        "snippet": "USPS Ground Advantage®: Commercial rates will increase by $0.40–$7.70, depending on package weight, shipping zone, and cubic tier. Priority Mail®: Commercial ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:07.348Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.fp-usa.com/usps-rate-change-effective-july-14-2024",
+        "title": "USPS Rate Change Effective July 14th, 2024 - FP Mailing Solutions",
+        "snippet": "*Note: Cost per additional ounce on First-Class Large Envelopes will range between 27 cents – 30 cents depending on the weight of the envelope.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:06.358Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.mailpro.org/post/usps-postage-rates-2026/",
+        "title": "USPS Postage Rates 2026: Complete Guide to Every Mail Class | MPA",
+        "snippet": "## July 12, 2026 Rate Changes (Confirmed)\n### Confirmed July 12, 2026 Rates at a Glance (USPS Notice 123)\n| Category | July 2026 Rate | Notes |\n|-|-|-|\n| First-Class postcard (retail single piece) | $0.65 | Up from $0.61 |\n| First-Class presort letters (automation, 1 oz) | $0.621 to $0.707 | 5-Digit $0.621, 3-Digit $0.672, Mixed $0.707 |\n| First-Class presort postcards (automation) | $0.453 to $0.495 | 5-Digit $0.453, 3-Digit $0.478, Mixed $0.495 |",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:22.437Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.pitneybowes.com/us/postal-information/usps-rate-change-overview.html",
+        "title": "USPS® postage rate change overview - Pitney Bowes",
+        "snippet": "# USPS® shipping and mailing price changes\n## **First-Class Mail**\n|  | $1.75 |",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:03.656Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.usps.com/business/prices.htm",
+        "title": "Postage Rates & Prices - USPS",
+        "snippet": "# Mailing & Shipping Prices\n## Prices\n### Domestic Prices\n| [Service](https://www.usps.com/business/prices.htm#) | [Prices](https://www.usps.com/business/prices.htm#) |\n|-|-|\n| [First-Class Mail®](https://www.usps.com/ship/first-class-mail.htm) | From [$0.82](http://pe.usps.com/text/dmm300/Notice123.htm#_c037) at the Post OfficeFrom [$0.621](http://pe.usps.com/text/dmm300/Notice123.htm#_c096) for Commercial Pricing |\n\n### International Prices\n| [Service](https://www.usps.com/business/prices.htm#) | [Prices](https://www.usps.com/business/prices.htm#) |\n|-|-|\n| [First-Class Mail International®](",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:03.656Z",
+        "excluded": false
+      },
+      {
+        "index": 16,
+        "url": "https://www.usps.com/ship/first-class-mail.htm",
+        "title": "First-Class Mail & Postage - USPS",
+        "snippet": "# First-Class Mail\n## Mail in 1–5 Days\nFirst-Class Mail Forever® stamps cost $0.82 (the current 1 oz price) and will never expire, even if the First-Class™ postage rate goes up.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:03.656Z",
+        "excluded": false
+      },
+      {
+        "index": 17,
+        "url": "https://www.facebook.com/100064800066348/posts/-usps-price-update-alerteffective-july-12-2026-first-class-mail-and-forever-stam/1468662525303736/",
+        "title": "USPS price increase for First-Class Mail and Forever stamps - Facebook",
+        "snippet": "Starting July 12, 2026, the price of a First-Class Mail Forever stamp will increase by 4 cents, bringing the cost from 78 cents to 82 cents.",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:54:23.621Z",
+        "excluded": true
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 12 finding(s) across 16 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "e50a0e3a-0d63-4637-87b8-93e3b26ccd6d",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 258,
+      "tokens_out": 898,
+      "cost_estimate_usd": 0.0142,
+      "latency_ms": 10461,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T15:53:56.455474+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 12,
+    "sources_retrieved": 17,
+    "sources_included": 16,
+    "sources_excluded": 1,
+    "sources_cited": 12,
+    "primary_ratio": 0.75,
+    "citation_independence": 0.417,
+    "distinct_cited_hosts": 5,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 365,
+    "wall_latency_ms": 52182,
+    "trace_cost_usd": 0.0142,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

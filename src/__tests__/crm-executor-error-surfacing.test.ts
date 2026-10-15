@@ -265,7 +265,9 @@ describe("the executor error that reaches Paige", () => {
    * §37, THE CONSUMER SIDE — the half a request-producer inventory does not cover.
    *
    * The only runtime caller of `crm-command` is `paige-ai-chat`, and on failure it builds the
-   * tool result as `{ success: false, ...crmBody, error: crmBody.message ?? crmBody.code ?? … }`.
+   * tool result as `{ success: false, ...crmBody, error: crmBody.message ?? crmBody.code ?? … }`
+   * (since C4b assigned to `crmContent`, which is what the tool result serialises — a carried-forward
+   * approval may first be settled against it).
    * That SPREAD is what carries `code`, `detail` and `note` into the model's context. If a later
    * change replaced it with a hand-picked subset — an entirely reasonable-looking tidy-up — the
    * parser would keep passing every test above while Paige silently went back to being handed a
@@ -274,8 +276,10 @@ describe("the executor error that reaches Paige", () => {
    */
   it("forwards the whole failure body to the model, not a hand-picked subset", () => {
     expect(CHAT).toContain(
-      'JSON.stringify({ success: false, ...crmBody,\n              error: crmBody.message ?? crmBody.code ??',
+      'crmContent = { success: false, ...crmBody,\n              error: crmBody.message ?? crmBody.code ??',
     );
+    // …and that object is what reaches the model, serialised whole.
+    expect(CHAT).toContain('toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(crmContent) });');
   });
 
   /**

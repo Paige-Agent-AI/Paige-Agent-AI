@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 // Guest self-serve: view / cancel / reschedule a booking via a signed link.
 // No login — the link carries an HMAC token (signed with the service-role key)
 // that resolves to exactly one booking. Slot logic lives in one shared place
@@ -611,6 +612,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!(await commsProviderExecutionAllowed(admin, { tenantId: b.tenant_id }))) {
+      return json({ ok: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
+    }
     if (b.status !== "scheduled") return json({ error: "This booking can no longer be changed." }, 409);
 
     const bookingCtx: BookingCtx = {

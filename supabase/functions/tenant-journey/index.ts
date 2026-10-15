@@ -2,7 +2,6 @@
 // Verbs: get_journey, set_journey_stage, auto_compute_stage
 // Returns a graceful stub when PAIGE_OS_BRIDGE_URL/KEY are not configured so the
 // Paige UI can render its shell.
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

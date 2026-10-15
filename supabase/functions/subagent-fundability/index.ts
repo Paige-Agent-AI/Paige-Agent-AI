@@ -4,6 +4,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -38,6 +39,11 @@ function ok(data: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // INT-310 C0 — internal-only specialist. It reads canonical client data with the SERVICE ROLE, so
+  // the gateway's verify_jwt (which the public anon key and any user JWT pass) is not authority.
+  // Only the canonical internal caller (exact service-role bearer or a verified cron token, e.g. the
+  // orchestrator's invokeLocal) may reach the lookup below.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) return ok({ ok: false, error: "unauthorized" }, 401);
 
   let payload: { input?: Input; context?: { contact_id?: string } } = {};
   try {
@@ -56,12 +62,18 @@ Deno.serve(async (req) => {
     });
   }
 
+  // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
+  // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
+  // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+  const trustedTenant = (payload.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+  if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
   const { data: client, error: clientErr } = await supabase
     .from("clients")
     .select(
       "id,first_name,last_name,entity_name,entity_type,funding_goal,linked_user_id,street_address,city,state,zip_code,onboarding_stage,agreement_signed_at,journey_stage_id,tier,primary_offer",
     )
     .eq("id", contactId)
+    .eq("tenant_id", trustedTenant)
     .maybeSingle();
   if (clientErr) return ok({ ok: false, error: clientErr.message }, 500);
   if (!client) return ok({ ok: false, error: `Client ${contactId} not found` }, 404);

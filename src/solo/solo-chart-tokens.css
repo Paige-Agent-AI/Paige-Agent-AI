@@ -1,0 +1,5 @@
+/* Solo chart colours. One fixed categorical order, validated with the dataviz palette checker for
+   colour-blind and normal-vision separation on each theme's surface: violet, aqua, orange, blue.
+   The two greys are reserved for "other" and "untagged" slices. Gold is never a chart colour (§11). */
+.paige-solo{--chart-1:#5B3FD6;--chart-2:#1BAF7A;--chart-3:#EB6834;--chart-4:#2A78D6;--chart-other:#7E7995;--chart-untagged:#CFCADB}
+.paige-solo[data-theme="dark"]{--chart-1:#8A72F5;--chart-2:#199E70;--chart-3:#D95926;--chart-4:#3987E5;--chart-other:#7D779A;--chart-untagged:#3A3460}

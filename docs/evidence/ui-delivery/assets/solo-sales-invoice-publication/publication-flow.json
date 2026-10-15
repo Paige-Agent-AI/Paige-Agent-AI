@@ -1,0 +1,108 @@
+{
+  "boundary": "Production components; local saved-row/approval and public document network fixture. No authenticated/provider proof.",
+  "errors": [],
+  "observations": [
+    {
+      "width": 1366,
+      "documentWidth": 1366,
+      "dialog": {
+        "x": 427,
+        "y": 262.8125,
+        "width": 512,
+        "height": 242.375,
+        "top": 262.8125,
+        "right": 939,
+        "bottom": 505.1875,
+        "left": 427
+      },
+      "buttons": [
+        {
+          "text": "Approve action",
+          "height": 44,
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(91, 63, 214)"
+        },
+        {
+          "text": "Cancel",
+          "height": 44,
+          "color": "rgb(23, 19, 49)",
+          "background": "rgb(255, 255, 255)"
+        },
+        {
+          "text": "Close",
+          "height": 44,
+          "color": "rgb(23, 19, 49)",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "dialog": {
+        "x": 8,
+        "y": 306.8125,
+        "width": 374,
+        "height": 230.375,
+        "top": 306.8125,
+        "right": 382,
+        "bottom": 537.1875,
+        "left": 8
+      },
+      "buttons": [
+        {
+          "text": "Approve action",
+          "height": 44,
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(138, 114, 245)"
+        },
+        {
+          "text": "Cancel",
+          "height": 44,
+          "color": "rgb(239, 236, 250)",
+          "background": "rgb(20, 17, 41)"
+        },
+        {
+          "text": "Close",
+          "height": 44,
+          "color": "rgb(239, 236, 250)",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "documentWidth": 1024,
+      "dialog": {
+        "x": 256,
+        "y": 262.8125,
+        "width": 512,
+        "height": 242.375,
+        "top": 262.8125,
+        "right": 768,
+        "bottom": 505.1875,
+        "left": 256
+      },
+      "buttons": [
+        {
+          "text": "Approve action",
+          "height": 44,
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(138, 114, 245)"
+        },
+        {
+          "text": "Cancel",
+          "height": 44,
+          "color": "rgb(239, 236, 250)",
+          "background": "rgb(20, 17, 41)"
+        },
+        {
+          "text": "Close",
+          "height": 44,
+          "color": "rgb(239, 236, 250)",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ]
+    }
+  ]
+}

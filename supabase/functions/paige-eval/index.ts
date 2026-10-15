@@ -35,6 +35,7 @@
 //         construction — a quality JUDGMENT never runs on an open model. judge_model is logged per result.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+// The judge's Claude model id resolves through _shared/claude-models.ts, the one place it is chosen (INT-329).
 import { runEval, type EvalCase } from "../_shared/eval/gate.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

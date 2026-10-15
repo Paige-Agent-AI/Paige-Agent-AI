@@ -1,0 +1,12 @@
+[
+  {
+    "phase": "negative_control",
+    "exit": 1,
+    "output": "\n RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-09/paige-agent-ai-finance-agent-new/work/repo\n\n \u276f src/solo/finance/sourceLabels.test.ts (6 tests | 1 failed) 13ms\n     \u00d7 refuses prototype-like names as unrecognized provider types 5ms\n\n Test Files  1 failed (1)\n      Tests  1 failed | 5 passed (6)\n   Start at  19:35:10\n   Duration  3.14s (transform 125ms, setup 119ms, import 28ms, tests 13ms, environment 2.39s)\n\n(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:\n  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead\nSet `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.\n7:35:08 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by \"vite:react-swc\" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af Failed Tests 1 \u23af\u23af\u23af\u23af\u23af\u23af\u23af\n\n FAIL  src/solo/finance/sourceLabels.test.ts > Finance source terminology > refuses prototype-like names as unrecognized provider types\nAssertionError: expected [Function Object] to be null // Object.is equality\n\n- Expected:\nnull\n\n+ Received:\n[Function Object]\n\n \u276f src/solo/finance/sourceLabels.test.ts:9:214\n\n\n\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/1]\u23af\n\n"
+  },
+  {
+    "phase": "restored",
+    "exit": 0,
+    "output": "\n RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-09/paige-agent-ai-finance-agent-new/work/repo\n\n\n Test Files  1 passed (1)\n      Tests  6 passed (6)\n   Start at  19:35:14\n   Duration  2.28s (transform 101ms, setup 99ms, import 33ms, tests 19ms, environment 1.86s)\n\n(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:\n  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead\nSet `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.\n7:35:14 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by \"vite:react-swc\" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.\n"
+  }
+]

@@ -2,7 +2,7 @@
 import React from "react";
 import { WorkspaceExitControl } from "@/components/auth/WorkspaceExitControl";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Blocks, Building2, CircleDollarSign, FileLock2, Link2, ShieldCheck, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import { performSignOut } from "@/lib/auth/signOut";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
@@ -23,15 +23,20 @@ import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relatio
 import { isLegacyRelationshipOwner } from "@/components/tenant-relationships/workspaceModel";
 import { ClientsHub } from "./conversations";
 import { GrowthHub } from "./growth2";
+import { AdsWorkspace } from "./AdsWorkspace";
+import { SalesWorkspace } from "./SalesWorkspace";
+import { FinanceWorkspace } from "./finance/FinanceWorkspace";
+import { OperationsRoute } from "./operations/OperationsRoute";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
-import { Analytics2 } from "./analytics2";
+import { soloAnalyticsCompatibility } from "./analytics-routing";
 import { Marketplace } from "./marketplace";
 import { SoloSettings } from "./settings";
 import { SOLO_SETTINGS_DESTINATIONS } from "./settings-contract";
 import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault";
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
-import { resolveTenantAccountContext } from "@/components/tenant-shell/tenantShellRoutes";
+import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -42,10 +47,10 @@ import { LiveTranscriptPanel } from "@/components/admin/voice/LiveTranscriptPane
 // (owner-ruled 2026-09-05). The legacy `/solo/{account}/trust-compass` address redirects into it.
 // (Merge: keep the compass OUT of the top nav — this PR moved it into Command Center — while taking
 // main's NAV2, which relocated Business Vault out of the second rail; do not resurrect it, §58.)
-const NAV=[['home','Command Center',()=><Ic.grid/>],['paige','Paige',()=><Ic.spark/>],['auto','Automations',()=><Ic.bolt/>],['clients','Clients',()=><Ic.users/>],['growth','Growth',()=><Ic.trend/>],['analytics','Analytics',()=><Ic.chart/>]];
+const NAV=[['home','Command Center',()=><Ic.grid/>],['operations','Operations',()=><Ic.grid/>],['paige','Paige',()=><Ic.spark/>],['auto','Automations',()=><Ic.bolt/>],['clients','Clients',()=><Ic.users/>],['growth','Growth',()=><Ic.trend/>]];
 const NAV2=[['market','Marketplace',()=><Ic.store/>],['integrations','Integrations',()=><Ic.bolt/>],['team','Team',()=><Ic.users/>],['setup','Setup',()=><Ic.gear/>]];
 const LEGACY_SETTINGS={setup:'setup',team:'team',integrations:'integrations','business-vault':'vault'};
-const SETTINGS_ICONS={setup:Building2,team:Users,connections:Link2,integrations:Blocks,'security-data':ShieldCheck,vault:FileLock2,billing:CircleDollarSign};
+const SETTINGS_ICONS={setup:Building2,team:Users,connections:Link2,integrations:Blocks,analytics:BarChart3,'security-data':ShieldCheck,vault:FileLock2,billing:CircleDollarSign};
 
 const SoloClientsRoute=({openPaige})=>{const[tab]=useSubtabRoute("solo","clients","people");return isLegacyRelationshipOwner("solo",tab)?<ClientsHub openPaige={openPaige}/>:<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={openPaige}/>};
 
@@ -58,7 +63,8 @@ onMouseEnter={e=>{if(!on)e.currentTarget.style.background='rgba(255,255,255,.05)
 <span style={{display:'flex',color:on?'var(--gold-bright)':'inherit'}}>{Icn()}</span>
 {!collapsed&&<span className="grow trunc" style={{fontSize:13.4,fontWeight:on?600:450,textAlign:'left'}}>{label}</span>}
 {!collapsed&&k==='home'&&homeCount>0&&<span className="pill" style={{background:'var(--gold-bright)',color:'#2A1C00',height:19,padding:'0 7px'}}>{homeCount}</span>}</button>};
-return <nav style={{width:w,flex:'none',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',transition:'width .22s',overflowX:'hidden',overflowY:'auto'}}>
+return <div style={{flex:'none',display:'grid',gridTemplateColumns:w,transition:'grid-template-columns .22s'}}>
+<nav style={{width:'100%',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',overflowX:'hidden',overflowY:'auto'}}>
 <div className="row" style={{gap:10,padding:collapsed?'0 0 18px':'2px 4px 18px',justifyContent:collapsed?'center':'flex-start'}}>
 <Logo size={collapsed?24:26}/>{!collapsed&&<div className="grow" style={{minWidth:0}}>
 <div style={{color:'#fff',fontWeight:600,fontSize:14.5,letterSpacing:'-.02em'}}>Paige Agent AI</div>
@@ -74,7 +80,7 @@ copy with no backend seam, so it is stripped rather than replaced. "Solo plan" i
 tier-accurate on this shell and stays. */}
 <div className="row" style={{gap:7,color:'var(--gold-bright)',fontSize:12,fontWeight:600}}><Ic.bolt size={13}/>Solo plan</div></div>}
 <button onClick={()=>setCollapsed(!collapsed)} className="row" style={{width:'100%',justifyContent:'center',padding:9,borderRadius:10,color:'var(--rail-text)'}}>
-<span style={{display:'flex',transform:collapsed?'':'rotate(180deg)',transition:'.2s'}}><Ic.chev size={15}/></span></button></div></nav>};
+ <span style={{display:'flex',transform:collapsed?'':'rotate(180deg)',transition:'.2s'}}><Ic.chev size={15}/></span></button></div></nav></div>};
 
 const TopBar=({theme,setTheme,openPaige,route,go})=>{const title=[...NAV,...NAV2].find(n=>n[0]===route)?.[1]||'';
 const[menu,setMenu]=React.useState(false);
@@ -152,7 +158,7 @@ const route = urlDriven ? (legacySettingsDestination?'settings':branchBySlug("so
 // Own instance (unique realtime topic via the hook's useId); scope:'all' matches
 // the Command Center's own read so the badge and the queue agree.
 const{items:railApprovals}=usePendingApprovals({scope:'all'});
-// Setup renders the shell's OWN designed Setup (setup.tsx) IN-SHELL — never the
+// Setup renders the shell's OWN Setup (settings.tsx, SoloSettings) IN-SHELL — never the
 // old /admin/setup view (owner directive 2026-08-16). Every nav item drives the shell.
 const go = (k) => {
   if (urlDriven) {
@@ -256,6 +262,11 @@ React.useEffect(() => {
     navigate(branchPath("solo", urlAccount, defaultBranchSlug("solo")), { replace: true });
     return;
   }
+  const analyticsDestination = soloAnalyticsCompatibility(urlAccount, urlSplat, location.search);
+  if (analyticsDestination) {
+    navigate(analyticsDestination, { replace: true });
+    return;
+  }
   // The standalone Automations page was a fixture-backed surface: it claimed
   // active rules, run counts, success rates and repair actions that no substrate
   // ever produced. It is retired. The one real Automations home is the
@@ -308,9 +319,10 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // and nothing more; the rail is navigation, never a panel trigger.
 const openPaige=()=>expandRail();
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
-// on Pipeline dispatched into nothing. This is that listener. It does two separable
-// things and neither depends on the other: it opens the fold, and — when the event
-// names one — it records which client the surface pointed PAIGE at. The scope is UI
+// on Pipeline dispatched into nothing. This is that listener. It does three separable
+// things and none depends on another: it opens the fold, it hands the surface's drafted
+// question to the composer, and — when the event names one — it records which client
+// the surface pointed PAIGE at. The scope is UI
 // context only; the server re-resolves tenant, authorization and client scope on every
 // request that carries it. An event that names no client clears nothing and simply
 // opens the fold, which is what the two existing prompt-only dispatches expect.
@@ -318,6 +330,8 @@ React.useEffect(()=>{const h=(event:Event)=>{
   const detail=(event as CustomEvent)?.detail;
   const scope=readPaigeOpenScope(detail,activeTenantId);
   if(scope){clearPaigePublicPresenceScope();setPaigeClientScope(scope);}
+  // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
+  handOffPaigePrompt(detail?.prompt);
   expandRail();
 };window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,expandRail]);
 // An account switch invalidates a client scope outright: the client belonged to the
@@ -336,10 +350,12 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 // is short enough to fit. Off this list the screen host is `overflow:auto` and
 // becomes the one deliberate vertical scroll owner, which is what every other
 // document-flow route in this shell already does.
-const full=route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='analytics'||route==='market';
+const full=route==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
-const screens={home:<CommandHub accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+// Ads (its own department below Marketing) reads the active workspace like every Marketing screen.
+const adsScreen=<AdsWorkspace key={accountEpochKey} tenantId={activeTenantId??null} businessName={accountContext.accountName}/>;
+const screens={operations:<OperationsRoute key={accountEpochKey} openPaige={openPaige}/>,finance:<FinanceWorkspace key={accountEpochKey} epoch={activeTenantId}/>,home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,ads:adsScreen,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

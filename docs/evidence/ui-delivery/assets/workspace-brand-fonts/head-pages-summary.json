@@ -1,0 +1,139 @@
+{
+  "literata": {
+    "font": "Literata",
+    "ready": true,
+    "scope": "brand",
+    "h1": "brand-literata, Literata, Georgia, \"Times New Roman\", serif",
+    "h2": "brand-literata, Literata, Georgia, \"Times New Roman\", serif",
+    "body": "brand-public-sans, \"Public Sans\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "statFigure": "brand-literata, Literata, Georgia, \"Times New Roman\", serif",
+    "faces": [
+      "brand-literata 200 900 unloaded",
+      "brand-literata 200 900 loaded",
+      "brand-public-sans 100 900 unloaded",
+      "brand-public-sans 100 900 loaded"
+    ],
+    "injected": [
+      "literata",
+      "public-sans"
+    ],
+    "scrollWidth": 1440,
+    "fontRequests": [
+      "/fonts/brand/literata/literata-latin-normal-200-900.woff2",
+      "/fonts/brand/public-sans/public-sans-latin-normal-100-900.woff2"
+    ],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "head-page-literata.png",
+    "hero": "head-hero-literata.png"
+  },
+  "bodoni-moda": {
+    "font": "Bodoni Moda",
+    "ready": true,
+    "scope": "brand",
+    "h1": "brand-bodoni-moda, \"Bodoni Moda\", Georgia, \"Times New Roman\", serif",
+    "h2": "brand-bodoni-moda, \"Bodoni Moda\", Georgia, \"Times New Roman\", serif",
+    "body": "brand-source-sans-3, \"Source Sans 3\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "statFigure": "brand-bodoni-moda, \"Bodoni Moda\", Georgia, \"Times New Roman\", serif",
+    "faces": [
+      "brand-bodoni-moda 400 900 unloaded",
+      "brand-bodoni-moda 400 900 loaded",
+      "brand-source-sans-3 200 900 unloaded",
+      "brand-source-sans-3 200 900 loaded"
+    ],
+    "injected": [
+      "bodoni-moda",
+      "source-sans-3"
+    ],
+    "scrollWidth": 1440,
+    "fontRequests": [
+      "/fonts/brand/bodoni-moda/bodoni-moda-latin-normal-400-900.woff2",
+      "/fonts/brand/source-sans-3/source-sans-3-latin-normal-200-900.woff2"
+    ],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "head-page-bodoni-moda.png",
+    "hero": "head-hero-bodoni-moda.png"
+  },
+  "barlow-semi-condensed": {
+    "font": "Barlow Semi Condensed",
+    "ready": true,
+    "scope": "brand",
+    "h1": "brand-barlow-semi-condensed, \"Barlow Semi Condensed\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "h2": "brand-barlow-semi-condensed, \"Barlow Semi Condensed\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "body": "brand-public-sans, \"Public Sans\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "statFigure": "brand-barlow-semi-condensed, \"Barlow Semi Condensed\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "faces": [
+      "brand-barlow-semi-condensed 400 unloaded",
+      "brand-barlow-semi-condensed 400 loaded",
+      "brand-barlow-semi-condensed 500 unloaded",
+      "brand-barlow-semi-condensed 500 unloaded",
+      "brand-barlow-semi-condensed 600 unloaded",
+      "brand-barlow-semi-condensed 600 loaded",
+      "brand-barlow-semi-condensed 700 unloaded",
+      "brand-barlow-semi-condensed 700 unloaded",
+      "brand-barlow-semi-condensed 800 unloaded",
+      "brand-barlow-semi-condensed 800 unloaded",
+      "brand-public-sans 100 900 unloaded",
+      "brand-public-sans 100 900 loaded"
+    ],
+    "injected": [
+      "barlow-semi-condensed",
+      "public-sans"
+    ],
+    "scrollWidth": 1440,
+    "fontRequests": [
+      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-latin-normal-400.woff2",
+      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-latin-normal-600.woff2",
+      "/fonts/brand/public-sans/public-sans-latin-normal-100-900.woff2"
+    ],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "head-page-barlow-semi-condensed.png",
+    "hero": "head-hero-barlow-semi-condensed.png"
+  },
+  "poppins-classic": {
+    "font": "Poppins",
+    "ready": true,
+    "scope": "brand",
+    "h1": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "h2": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "body": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "statFigure": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+    "faces": [
+      "brand-poppins 400 unloaded",
+      "brand-poppins 400 loaded",
+      "brand-poppins 500 unloaded",
+      "brand-poppins 500 loaded",
+      "brand-poppins 600 unloaded",
+      "brand-poppins 600 loaded",
+      "brand-poppins 700 unloaded",
+      "brand-poppins 700 unloaded"
+    ],
+    "injected": [
+      "poppins"
+    ],
+    "scrollWidth": 1440,
+    "fontRequests": [
+      "/fonts/brand/poppins/poppins-latin-normal-400.woff2",
+      "/fonts/brand/poppins/poppins-latin-normal-600.woff2",
+      "/fonts/brand/poppins/poppins-latin-normal-500.woff2"
+    ],
+    "abortedHosts": [
+      "fonts.googleapis.com",
+      "api.fontshare.com"
+    ],
+    "errors": [],
+    "file": "head-page-poppins-classic.png",
+    "hero": "head-hero-poppins-classic.png"
+  }
+}

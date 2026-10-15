@@ -1,0 +1,78 @@
+import React from 'react';import{createRoot}from'react-dom/client';import{PipelineCommandDesk}from '@/solo/PipelineCommandDesk';import '@/index.css';import '@/solo/solo-tokens.css';import '@/solo/solo-campaigns.css';const vi={fn:(f=()=>{})=>f};
+const stage = (id, label, stageType = "open", movePolicy = "direct") => ({
+  id,
+  pipelineId: "p1",
+  label,
+  description: "",
+  orderIndex: id === "s1" ? 1 : 2,
+  archivedAt: null,
+  movePolicy,
+  stageType,
+  version: 1,
+});
+const deal = {
+  id: "d1",
+  title: "Jordan Lee",
+  pipelineId: "p1",
+  stageId: "s1",
+  clientId: null,
+  clientName: "Lumen House",
+  owner: "Assigned owner",
+  status: "open",
+  source: "owner_entered",
+  nextAction: "Review brief",
+  tags: ["priority"],
+  notes: "Keep context",
+  createdAt: "2026-09-01T12:00:00Z",
+  actualCloseDate: null,
+  lostReason: null,
+  outcomes: [],
+  updatedAt: new Date().toISOString(),
+  version: 1,
+  history: [],
+};
+const makeData = () => ({
+  tenantId: "t1",
+  phase: "ready",
+  retry: vi.fn(),
+  artifacts: [],
+  pipelineAction: vi.fn(async (_action: Record<string, unknown>) => ({
+    ok: true,
+    message: "Saved",
+  })),
+  pipelineWorkspace: {
+    canManage: true,
+    canArchiveFolders: true,
+    canDelete: true,
+    folders: [],
+    pipelines: [
+      {
+        id: "p1",
+        shortRef: "PPL-TEST",
+        folderId: null,
+        folderName: null,
+        name: "Custom client journey",
+        description: "",
+        isDefault: true,
+        lifecycleStatus: "active",
+        version: 1,
+        createdAt: "2026-09-01T12:00:00Z",
+        updatedAt: "2026-09-01T12:00:00Z",
+        createdThrough: "owner",
+        createdByName: "Owner",
+        requestedByName: null,
+        stageCount: 3,
+        dealCount: 1,
+      },
+    ],
+    stages: [
+      stage("s1", "Invited"),
+      stage("s2", "Decision"),
+      stage("s3", "Celebrated", "won"),
+    ],
+    deals: [deal],
+    automationRules: [],
+  },
+});
+
+const q=new URLSearchParams(location.search),theme=q.get('theme')||'light';document.documentElement.dataset.pg=theme;document.documentElement.classList.toggle('dark',theme==='dark');const data=makeData();createRoot(document.getElementById('root')!).render(<main className="paige-solo solo-campaigns" data-theme={theme} style={{height:'100dvh',padding:12,overflow:'auto'}}><PipelineCommandDesk data={data} selectedId="p1" setSelectedId={()=>{}} folderFilter="all" setFolderFilter={()=>{}} onCreatePipeline={()=>{}} onManage={()=>{}} onFolders={()=>{}}/></main>);

@@ -1,0 +1,22 @@
+{
+  "url": "/",
+  "viewport": "1440x900 full page, reducedMotion reduce, 4s settle",
+  "baseVsBase": {
+    "sameSize": true,
+    "size": [
+      1440,
+      11245
+    ],
+    "differingPixels": 30892,
+    "total": 16192800
+  },
+  "baseVsHead": {
+    "sameSize": true,
+    "size": [
+      1440,
+      11245
+    ],
+    "differingPixels": 0,
+    "total": 16192800
+  }
+}

@@ -304,6 +304,31 @@ export default function SpineConversation({ trust, turns = [], presence }: Spine
               </div>
             ) : null}
 
+            {/* WHAT the act covers, one line each. Not a pack block — see `actItems` in
+                spineContract.ts for why this exists and why it borrows the ask row's type spec
+                (hairline-topped, label weight) so it reads as one system with the block above. */}
+            {t.actItems?.length ? (
+              <ul className="mt-[9px] flex flex-col gap-px">
+                {t.actItems.map((line, i) => (
+                  <li
+                    key={`${t.id}-item-${i}`}
+                    className="flex min-w-0 gap-[9px] py-2 text-[var(--pg-ink)] [text-wrap:pretty]"
+                    style={{
+                      // Inline, not `border-t`, for the reason the ask row states above: a
+                      // one-sided hairline must not depend on Tailwind's utility emission order.
+                      borderTop: "1px solid var(--pg-line-soft)",
+                      fontSize: "var(--pg-t-body)",
+                      fontWeight: 500,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <span aria-hidden className="flex-none text-[var(--pg-faint)]">·</span>
+                    <span className="min-w-0">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
             {/* the act a turn carries · L4120–L4125 */}
             {t.act ? (
               <div className="mt-[11px] flex flex-wrap gap-1.5">

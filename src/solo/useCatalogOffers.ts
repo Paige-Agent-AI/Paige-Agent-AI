@@ -56,6 +56,7 @@ export type OfferPrice = {
   readonly unitAmount: number | null;
   readonly currency: string | null;
   readonly billingInterval: string | null;
+  readonly intervalCount?: number | null;
   readonly kind: OfferPlanKind | null;
   /** Number of instalments when `kind === "installment"`. `unitAmount` is then PER INSTALMENT. */
   readonly installmentsTotal: number | null;
@@ -210,6 +211,35 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
   });
   const retry = useCallback(() => setRefreshKey((key) => key + 1), []);
 
+  // Notifications invalidate; only the canonical tenant-scoped query supplies offer facts.
+  useEffect(() => {
+    if (!activeTenantId || accountContextLoading) return;
+    const changed = (event: Event) => {
+      if ((event as CustomEvent<{ tenantId?: unknown }>).detail?.tenantId === activeTenantId) retry();
+    };
+    const visible = () => { if (document.visibilityState === "visible") retry(); };
+    const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("paige-catalog-offers") : null;
+    if (channel) channel.onmessage = event => { if (event.data?.tenantId === activeTenantId) retry(); };
+    const realtime = typeof supabase.channel === "function"
+      ? supabase.channel("catalog-offers:" + crypto.randomUUID())
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "tenant_products", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tenant_products", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "tenant_prices", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tenant_prices", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .subscribe()
+      : null;
+    window.addEventListener("paige:catalog-offers-changed", changed);
+    window.addEventListener("focus", retry);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      window.removeEventListener("paige:catalog-offers-changed", changed);
+      window.removeEventListener("focus", retry);
+      document.removeEventListener("visibilitychange", visible);
+      channel?.close();
+      if (realtime) void supabase.removeChannel(realtime);
+    };
+  }, [activeTenantId, accountContextLoading, retry]);
+
   // WHY THE MUTATIONS LIVE HERE AND NOT IN THE COMPONENT. Every write has to refresh the read that
   // rendered the form, and the read's tenant is resolved here. Putting the write in the component
   // would give it a second opinion about which workspace it is in — which is precisely the class of
@@ -244,7 +274,12 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
         stale: error.code === "40001",
       };
     }
-    setRefreshKey((key) => key + 1);
+    window.dispatchEvent(new CustomEvent("paige:catalog-offers-changed", { detail: { tenantId: activeTenantId } }));
+    if (typeof BroadcastChannel !== "undefined") {
+      const channel = new BroadcastChannel("paige-catalog-offers");
+      channel.postMessage({ tenantId: activeTenantId });
+      channel.close();
+    }
     return { ok: true, result: (data ?? null) as OfferWriteResult["result"] };
   }, [activeTenantId]);
 
@@ -372,7 +407,7 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
         const readPrices = () => {
           if (bounded && productIds.length === 0) return Promise.resolve({ data: [], error: null });
           let query = supabase.from("tenant_prices")
-            .select("id,product_id,nickname,unit_amount,currency,billing_interval,kind,installments_total,active,sort_order")
+            .select("id,product_id,nickname,unit_amount,currency,billing_interval,interval_count,kind,installments_total,active,sort_order")
             .eq("tenant_id", activeTenantId).order("sort_order", { ascending: true });
           if (bounded) query = query.in("product_id", productIds);
           return query;
@@ -414,6 +449,7 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
             unitAmount: typeof row.unit_amount === "number" ? row.unit_amount : null,
             currency: typeof row.currency === "string" ? row.currency : null,
             billingInterval: typeof row.billing_interval === "string" ? row.billing_interval : null,
+            intervalCount: typeof row.interval_count === "number" ? row.interval_count : null,
             kind: narrow(row.kind, PLAN_KINDS),
             installmentsTotal: typeof row.installments_total === "number" ? row.installments_total : null,
             active: row.active !== false,

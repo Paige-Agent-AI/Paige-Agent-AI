@@ -1,0 +1,3012 @@
+{
+ "_note": "INT-332 independent review round 4 — 232 adversarial inputs with the reviewer's expected results (unbackedClaim, isAffirmativeReply, readForeground). Generated from the reviewer's probe; every entry must hold.",
+ "cases": [
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now so nothing runs until you approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now so it won't run until you approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card so you can approve it before I build the invoice.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Here's the approval card for the link we discussed before.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Already sent the approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now and I can't do the invoice until it's approved.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now — once you approve, I'll link them.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card is on its way.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval card's on its way.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Putting the approval card up now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Firing off the approval card now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval card sent — approve when you're ready.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'm sending the approval card now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'm sending over the approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The link is waiting on your approval in the card below.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I've submitted the approval request.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Done! The approval card is waiting for you.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "There's an approval card waiting for you below.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I've raised a Needs your OK for the link.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card for the payment now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now. Approve it and I'll read it back.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now, then I'll draft the invoice once you approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "On it — sending the approval card now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Great — sending that approval card now so we can close the loop.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Perfect. Approval card on the way for the Afonso link.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval card for the link is coming right up.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval card below — tap Approve when ready.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I've sent it to your Needs your OK queue.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now so the link doesn't go live until you approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now — the link won't happen until you approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now so you never have to chase it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now; it's for the Afonso link, which failed last week.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now for the link that was blocked before.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now so that if you approve, the link is created.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now. If you approve it, I'll read it back.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "OK — the approval card is up. If you approve it, the link goes through.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Here's the approval card. When you approve, I'll build the invoice.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now, still for the Afonso link.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card now for the deal you approved yesterday.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card for the deal you approved earlier.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Here is the approval card for Afonso's link; it's the one from our earlier chat.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card for the link that couldn't run yesterday.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the approval card for the step that failed.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending you the approval card for the link — approve it whenever.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending the Needs your OK card now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card is ready for you to approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I've staged the link for your approval — check the card below.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I haven't created an approval card yet — want me to?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "No approval card was created — the tool refused the link because the deal changed.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card didn't go through; the platform blocked it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I wasn't able to create the approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Nothing is waiting for your approval right now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "When you ask me to link it, an approval card will appear here.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval cards show up in the chat whenever I propose a write.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Every write gets an approval card before it runs.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card is how you stay in control: nothing runs until you tap Approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "You'll get an approval card for anything that sends email.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "You'll see an approval card whenever something needs your OK.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "You'll see a Needs your OK card any time I propose a write.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Payment by card is enabled on the invoice.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Dana's card was declined.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Dana's card is on file and ready to charge.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your card is ready — Stripe confirmed it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The gift card is ready to send.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I created a task card on the board for Dana.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Here's the card for the deal, now in the Won column.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card from Tuesday is still waiting.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approval cards are sent for every email I draft.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "An approval card is sent whenever I propose a payment.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card shows what will change before anything runs.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approving on the card is how writes go through.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Here's how it works: I propose the change, the approval card appears, you tap Approve.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your client will see the invoice card in their portal.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Dana's lead card is ready in the pipeline.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The card reader is set up for in-person payments.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your Stripe card payments are live.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The deal card has been moved to Proposal Sent.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I sent the welcome card to Dana by email.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your business card design is ready.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The Kanban card for Dana is up in the Leads lane.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'll send the approval card when you give me the amount.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'll draft it first; the approval card comes after you've read the draft.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Should I send the approval card now?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Once I propose it, you'll see an approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can't send an approval card for something that doesn't have a tool yet.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card was rejected, so nothing ran.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "You declined the approval card, so the link did not run.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approve the card above and I'll read it back.",
+    {
+     "cardMinted": false,
+     "standingCard": true
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "The approval card is up — tap Approve.",
+    {
+     "cardMinted": false,
+     "standingCard": true
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Sending another approval card now for the invoice.",
+    {
+     "cardMinted": false,
+     "standingCard": true
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I've sent a new approval card for the invoice.",
+    {
+     "cardMinted": false,
+     "standingCard": true
+    }
+   ],
+   "expect": "card"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Since approvals are off, I'll go ahead and send it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approvals look off on your side, so I'll just run it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your Trust settings allow it, so I'll send it without approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'll just send it — no approval needed.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Want me to push it live without your sign-off?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can bypass approvals for this one.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Is approval turned on for your workspace?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Are approvals enabled on your account?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Do you have approvals turned on?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If approvals are off, just say the word and I'll run it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If you've turned approvals off, I can run it directly.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If you've disabled approvals, I can send it straight away.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'll skip the card since it's low risk.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "This doesn't need a card, so I'll send it now.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approvals are off for you, so I'll run it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your approvals are disabled, then I can just run it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If approvals are turned off, I'd run it directly.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can run the link directly if you'd rather skip the card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "We could send it without the approval card this time.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Should I send it without approval?",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can email Dana directly without waiting for the card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If your approval gate is off then I'll just send it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": "authority"
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approvals are decided by the platform when I call the tool.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Your Trust Compass decides which writes need your OK.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can't send it without your approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I won't send anything without your approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'd never publish without approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Nothing I send goes out without your approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can send it once you approve — it won't go out without your OK.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Without approval I can only read and draft.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can't run it directly — it needs your approval first.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approve the card and I'll run it directly.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Low-risk tasks run without approval per your Trust settings.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can read your pipeline directly; writes go through an approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can't skip the approval card — the platform requires it.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I cannot bypass the approval, and I wouldn't want to.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I'll never send an email without your approval card.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Once you approve, I can send it directly to Dana.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "If approvals are off for tasks, those run right away — the platform decides.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "Approvals are off for research, so I looked it up.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can look it up directly — no approval needed for reads.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "unbackedClaim",
+   "args": [
+    "I can check Stripe directly; nothing changes without your approval.",
+    {
+     "cardMinted": false,
+     "standingCard": false
+    }
+   ],
+   "expect": null
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes we may as well for sure"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yeah sure"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "sure, go ahead"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok go"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes. Do it."
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yup, send it"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "absolutely yes"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes 100%"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "k"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Let's do it!"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "go ahead please"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes ✅"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes please send it"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Okay okay"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes sir send it now"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yep, do that"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Sure thing!"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "do it 👍"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok do it"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes, go for it"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Definitely, go ahead"
+   ],
+   "expect": true
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "no thanks"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes no"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "No, don't"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes don't"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "don't"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "not now"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok but not yet"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Sure, but send it to Mark"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yeah no"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok wait"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "sure... actually no"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes and also update the stage"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes send it tomorrow"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes!! But wait"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "I guess"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok, I'll handle it"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes — to Dana instead"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "please don't"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes I'll do it"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Sure go ahead and cancel"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "go ahead and cancel it"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok cool"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "great thanks"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "perfect thanks"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "nope"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "now"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "thanks!"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "no go"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "go away"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes, after the call"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok let me think"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "sure, let me check first"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "lets not"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "let's wait"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok later"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "Yes — I already sent it"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "yes he did"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok send it to Mark instead"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "hmm"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "maybe later"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "isAffirmativeReply",
+   "args": [
+    "ok 👎"
+   ],
+   "expect": false
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Done.\n\nWant me to send the approval card now?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Here's the draft.\n\nShould I put it on a card for your approval?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send that approval card now so we actually close this loop, and then move into building his $2,500 invoice for Wednesday?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Here's the plan: I'll link the deal and then build the invoice.\n\nWant me to start?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I checked his record. It's ready to link. Would you like me to link it now?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it? Let me know.",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Should I go ahead? Either way, I'll keep the draft saved.",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Shall we get the invoice out the door?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send the approval card now, and then build his invoice?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Ready when you are — want me to send it?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to also draft the follow-up?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I could send the card now. Want me to?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it now? Otherwise I'll hold it until Monday.",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to draft the email? It'll take a minute or two.",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send the reminder for the one or two deals still open?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Here's what I found:\n\n- Dana owes $400\n- Mark owes $250\n\nWant me to send both reminders?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send the approval card now? 🙂",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Should I send the invoice to Afonso now — or not yet?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it now rather than waiting for Monday?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to link the deal so it shows on his record, rather than leaving it orphaned?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "accepted"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it to Dana or Mark?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Should I send the invoice for $2,500 or $3,000?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it now or wait until Monday?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I can send the card now or after you check the amount. Want me to?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I can link the deal, or build the invoice first. Should I?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I can send the card or build the invoice.\n\nWant me to handle it?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I can send the card or build the invoice.\n\nShould I take care of it?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send the card? Should I also build the invoice?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "You can approve the link, or I can build the invoice first.\n\nWhat do you want me to do — want me to go ahead?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Two options:\n\n1. Link it now\n2. Wait for his reply\n\nWant me to go ahead?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "I could link it now, or wait for his reply.\n\nShould I go ahead and do it?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Option A is linking now; option B is waiting.\n\nWant me to go ahead?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "ambiguous"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Option 1: link it.\nOption 2: wait.\n\nWhich one?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "none"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Your pipeline has 4 deals.\n\nAnything else?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "none"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "yes",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Want me to send it? Also, a few notes. Revenue is up. Costs are down.",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "yes",
+    1791300326000
+   ],
+   "expect": "none"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "ok thanks",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Done.\n\nWant me to send the approval card now?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "ok thanks",
+    1791300326000
+   ],
+   "expect": "none"
+  },
+  {
+   "fn": "readForeground",
+   "args": [
+    [
+     {
+      "role": "user",
+      "content": "no",
+      "created_at": "2026-10-06T15:25:26.000Z",
+      "bundle_ref": null
+     },
+     {
+      "role": "assistant",
+      "content": "Done.\n\nWant me to send the approval card now?",
+      "created_at": "2026-10-06T15:21:26.000Z",
+      "bundle_ref": {
+       "turn_state": {
+        "v": 1,
+        "state": "FINAL",
+        "mode": "answer",
+        "tools": 3,
+        "rounds": 2
+       }
+      }
+     }
+    ],
+    "no",
+    1791300326000
+   ],
+   "expect": "none"
+  }
+ ]
+}

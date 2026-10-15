@@ -1,0 +1,868 @@
+{
+  "boundary": "Actual Solo/InvoiceAppearanceWorkspace/InvoiceCommandReview/document renderer with deterministic RPC and approval doubles. Authenticated hosted saves, real uploads and provider sending UNVERIFIED.",
+  "errors": [],
+  "observations": [
+    {
+      "name": "1536-770-light-closed",
+      "appearance": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 858,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 858,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1536-770-light-open",
+      "appearance": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 703.765625,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 703.765625,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1366-768-light-closed",
+      "appearance": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 688,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 688,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1366-768-light-open",
+      "appearance": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 528,
+            "scrollHeight": 1931,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 591.5625,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 528,
+            "scrollHeight": 1931,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 591.5625,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1024-768-light-closed",
+      "appearance": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1024-768-light-open",
+      "appearance": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "900-1000-light-closed",
+      "appearance": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "900-1000-light-open",
+      "appearance": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "390-844-light-closed",
+      "appearance": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 317,
+            "scrollHeight": 317,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "390-844-light-open",
+      "appearance": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 317,
+            "scrollHeight": 317,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1536-770-dark-closed",
+      "appearance": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 858,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 858,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1536-770-dark-open",
+      "appearance": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 703.765625,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1536,
+        "documentWidth": 1536,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 570,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 703.765625,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1366-768-dark-closed",
+      "appearance": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 688,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 688,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1366-768-dark-open",
+      "appearance": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 528,
+            "scrollHeight": 1931,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 591.5625,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1366,
+        "documentWidth": 1366,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 528,
+            "scrollHeight": 1931,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 591.5625,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1024-768-dark-closed",
+      "appearance": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "1024-768-dark-open",
+      "appearance": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 1024,
+        "documentWidth": 1024,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 568,
+            "scrollHeight": 1430,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 490,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "900-1000-dark-closed",
+      "appearance": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "900-1000-dark-open",
+      "appearance": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 900,
+        "documentWidth": 900,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 800,
+            "scrollHeight": 1893,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 287,
+            "scrollHeight": 287,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 734,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "390-844-dark-closed",
+      "appearance": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 317,
+            "scrollHeight": 317,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    },
+    {
+      "name": "390-844-dark-open",
+      "appearance": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Print",
+        "controlMinHeight": 34
+      },
+      "review": {
+        "width": 390,
+        "documentWidth": 390,
+        "scrollOwners": [
+          {
+            "className": "ia-workspace",
+            "height": 491,
+            "scrollHeight": 2850,
+            "overflow": "auto"
+          },
+          {
+            "className": "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-h-[calc(100dvh-2rem)] overflow-y-auto paige-solo sb-command-dialog",
+            "height": 317,
+            "scrollHeight": 317,
+            "overflow": "auto"
+          }
+        ],
+        "iframeWidth": 248,
+        "focus": "Approve action",
+        "controlMinHeight": 34
+      },
+      "focusInside": true,
+      "mobileDocumentOverflow": false,
+      "fixtureReadback": true,
+      "cancelPreserves": true
+    }
+  ],
+  "readonly": true,
+  "refusalPreservesInput": true
+}

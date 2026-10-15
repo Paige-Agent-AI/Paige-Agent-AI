@@ -14,6 +14,8 @@ type Analytics2Props = {
   accountContext?: TenantAccountContext | null;
   accountEpoch?: string | null;
   openPaige?: () => void;
+  controlledView?: LensKey;
+  hideNavigation?: boolean;
 };
 
 type TruthState = AnalyticsTruthState | "NOT CONNECTED";
@@ -251,8 +253,9 @@ const formatBoundary = (value: string) => new Intl.DateTimeFormat(undefined, {
   timeZoneName: "short",
 }).format(new Date(value));
 
-export function Analytics2({ accountContext, accountEpoch = null, openPaige }: Analytics2Props) {
-  const [view, setView] = useSubtabRoute("solo", "analytics", "brief");
+export function Analytics2({ accountContext, accountEpoch = null, openPaige, controlledView, hideNavigation = false }: Analytics2Props) {
+  const [routeView, setView] = useSubtabRoute("solo", "analytics", "brief");
+  const view = controlledView ?? routeView;
   const tabs = [
     ["brief", "Brief"],
     ["money", "Sales funnel"],
@@ -366,7 +369,7 @@ export function Analytics2({ accountContext, accountEpoch = null, openPaige }: A
     <h1 id="analytics-title" className="anr-sr-only">Analytics</h1>
     <div ref={pageContentRef} className="anr-page-content" aria-hidden={inspectorOpen ? "true" : undefined}>
       <header className="anr-commandbar">
-        <div className="anr-tabs" role="tablist" aria-label="Analytics workspaces">
+        {!hideNavigation && <div className="anr-tabs" role="tablist" aria-label="Analytics workspaces">
           {tabs.map(([route, label], index) => <button
             type="button"
             role="tab"
@@ -377,7 +380,7 @@ export function Analytics2({ accountContext, accountEpoch = null, openPaige }: A
             onClick={() => setView(route)}
             onKeyDown={(event) => onTabKeyDown(event, index)}
           >{label}</button>)}
-        </div>
+        </div>}
         <div className="anr-command-actions">
           <span className="anr-account-context">Account <strong data-tenant-account-name>{account.accountName}</strong></span>
           <button type="button" className="anr-secondary" onClick={openPaige} disabled={!openPaige}>{openPaige ? "Open PAIGE workspace" : "PAIGE unavailable"}</button>

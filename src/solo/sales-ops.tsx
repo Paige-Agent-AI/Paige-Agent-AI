@@ -29,6 +29,7 @@
 // and an order does not name a campaign — `utm_campaign` lives on `analytics_events` and
 // `referral_clicks`, never on the order — so send → click → order does not join. Attribution
 // therefore is not shown at all, rather than shown badly (§13).
+import { AGREEMENT_STATE, SIGNATURE_STATE } from "./sales/agreementVocabulary";
 import React from "react";
 import { Ic } from "./_shared";
 import { useCatalogOffers } from "./useCatalogOffers";
@@ -38,10 +39,11 @@ import {
   DECLARED_PROCESSORS,
   DECLARED_METHODS,
 } from "./useSoloSalesOps";
-import { useSoloAgreements } from "./useSoloAgreements";
+import { useSoloCommercialTerms } from "./useSoloCommercialTerms";
 import { useSoloAgreementSignings, TRAIL_LIMIT } from "./useSoloAgreementSignings";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import "./sales-ops.css";
+import { SalesBillingWorkspace } from "./sales/SalesBillingWorkspace";
 import { SalesDialogPortal, useSalesDraftExit } from "./sales-dialog";
 import { useLocation, useNavigate } from "react-router-dom";
 import { deriveSalesCommand } from "./sales/deriveSalesCommand";
@@ -68,48 +70,7 @@ const CADENCE_LABEL = {
   year: "yearly",
 };
 
-/**
- * Five states and a sixth READING. There is no `paid`, `invoiced` or `delivered`, because this
- * record can observe none of them — it holds what was agreed, never what happened afterwards.
- *
- * This is the ENGAGEMENT's state: whether the work is running, paused or finished. It is NOT the
- * signature's state, and since the owner's 2026-09-22 ruling the two are kept apart on purpose —
- * see `SIGNATURE_STATE` below.
- */
-const AGREEMENT_STATE = {
-  draft: { label: "Draft", tone: "opportunity" },
-  active: { label: "Active", tone: "ok" },
-  paused: { label: "Paused", tone: "warn" },
-  completed: { label: "Completed", tone: "n" },
-  cancelled: { label: "Cancelled", tone: "n" },
-  unrecognised: { label: "Not readable", tone: "n" },
-};
-
-/**
- * The SIGNATURE's state — a different fact from the engagement's, and the owner ruled they must
- * never be merged: a document can be signed while the work has not started, and the work can be
- * running under a document nobody ever countersigned.
- *
- * There is no `Signed` separate from `Completed`. With one signer the two cannot be told apart, so
- * carrying both would put a word on the screen that nothing in the record could distinguish (§13).
- * `Expired` is DERIVED by the adapter from the state plus the clock, because nothing in this build
- * walks the table to flip it — see `useSoloAgreementSignings.displayState`.
- *
- * `none` is not a stored value either: it is what a commercial record with no document says, and
- * saying "Draft" there would claim a document exists.
- */
-const SIGNATURE_STATE = {
-  none: { label: "No document", tone: "n" },
-  draft: { label: "Not sent", tone: "opportunity" },
-  sent: { label: "Sent", tone: "warn" },
-  viewed: { label: "Opened", tone: "warn" },
-  partially_signed: { label: "Partly signed", tone: "warn" },
-  completed: { label: "Completed", tone: "ok" },
-  declined: { label: "Declined", tone: "bad" },
-  voided: { label: "Stopped", tone: "n" },
-  expired: { label: "Link expired", tone: "bad" },
-  unrecognised: { label: "Not readable", tone: "n" },
-};
+// The engagement and signature words live in one module (E4-S3 PR-0); see ./sales/agreementVocabulary.
 
 /** The life `agreement-send` gives a signing token, mirrored from `SIGNING_TOKEN_TTL_DAYS` in
  * `_shared/agreements/token.ts`. Stated rather than chosen: the send endpoint takes no duration,
@@ -785,7 +746,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   return (
     <SalesDialogPortal>
       <button className="so-editor-scrim" tabIndex={-1} aria-label="Close" onClick={close} />
-      <aside ref={panelRef} className="so-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
+      <aside ref={panelRef} className="so-editor so-agreement-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-agr-title">{existing ? "Change these terms" : "New agreement"}</h2>
@@ -1383,13 +1344,15 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
  * from the Campaigns snapshot rather than a fifth tenant read.
  */
 // ── Sales Command Desk — presentational helpers (file-local) ─────────────────────────────────
-// The four Sales views. IDs are the `?view=` values; the shell six-tab nav is untouched.
+// Approved billing destinations. Legacy operating views remain secondary; outer six tabs stay.
 const SALES_VIEWS = [
-  ["command", "Sales Command"],
-  ["terms", "Commercial Terms"],
-  ["revenue", "Revenue & Collections"],
-  ["scenarios", "Sales Scenarios"],
+  ["overview", "Overview"],
+  ["payments", "Payments"],
+  ["invoices", "Invoices"],
+  ["recurring", "Recurring"],
+  ["terms", "Agreements"],
 ];
+const LEGACY_SALES_VIEWS = ["command", "revenue", "scenarios"];
 const EC_LABEL = { actual: "Actual", contracted: "Contracted", dated: "Dated", open: "Open", modeled: "Modeled", unknown: "Unknown" };
 // The evidence class of a FIGURE — separate from the surface TRUTH label. Never gold (§11).
 /* ── 5 · COMPLETED ────────────────────────────────────────────────────────────────────────────
@@ -1716,9 +1679,9 @@ function ScenarioLab({ offers, deals, stages, onAskPaige }) {
   );
 }
 
-export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth }) {
+export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false, invoiceAccountEpoch = null }) {
   const sales = useSoloSalesOps();
-  const agreements = useSoloAgreements();
+  const agreements = useSoloCommercialTerms();
   const signings = useSoloAgreementSignings();
   // §60 — the feature DECLARES its tiers in the one home and this reads the answer, never an inline
   // `account_type` compare. The Growth hub around this surface already requires `growth`, so this
@@ -1742,32 +1705,43 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const location = useLocation();
   const navigate = useNavigate();
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
-  // and it never touches the shell's `useSubtabRoute` growth-subtab registry. `command` is the bare
-  // default, so the desk opens on the operating view with no query.
+  // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
+  // default; existing command/revenue/scenarios deep links remain supported.
   const rawView = new URLSearchParams(location.search).get("view");
-  const view = SALES_VIEWS.some(([id]) => id === rawView) ? rawView : "command";
+  const focusInvoiceIds = new URLSearchParams(location.search).getAll("invoice");
+  const clearInvoiceFocus = () => {
+    const proceed = () => {
+      const query = new URLSearchParams(location.search);
+      query.delete("invoice");
+      navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+    };
+    const event = new CustomEvent('paige:sales-before-navigation', { cancelable: true, detail: { proceed } });
+    if (window.dispatchEvent(event)) proceed();
+  };
+  const view = controlledView ?? (SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview");
   const setView = React.useCallback((next) => {
+    if (onViewChange) { onViewChange(next); return; }
     const q = new URLSearchParams(location.search);
-    if (next === "command") q.delete("view"); else q.set("view", next);
+    if (next === "overview") q.delete("view"); else q.set("view", next);
     q.delete("resume");
     const search = q.toString();
     navigate({ pathname: location.pathname, search: search ? `?${search}` : "" });
-  }, [navigate, location.pathname, location.search]);
+  }, [navigate, location.pathname, location.search, onViewChange]);
+  // A workspace switch clears anything half-typed. Without this, a draft opened against one
+  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
+  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
+  // client name bound to a negotiated amount.
+  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+
   React.useEffect(() => {
-    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready") {
+    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready" && agreements.tenantId && agreements.tenantId === offers.tenantId && agreements.tenantId === sales.tenantId) {
       setEditor("agreement");
       // Land on Commercial Terms so the editor opens over its own view, and strip the one-shot param.
       const q = new URLSearchParams(location.search);
       q.delete("resume"); q.set("view", "terms");
       navigate({ pathname: location.pathname, search: `?${q.toString()}` }, { replace: true });
     }
-  }, [location.search, agreements.phase, offers.phase, navigate, location.pathname]);
-
-  // A workspace switch clears anything half-typed. Without this, a draft opened against one
-  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
-  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
-  // client name bound to a negotiated amount.
-  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+  }, [location.search, agreements.phase, offers.phase, agreements.tenantId, offers.tenantId, sales.tenantId, navigate, location.pathname]);
 
   // Hooks must run in the same order while the production adapters advance from loading to ready.
   // Keeping this memo above every phase return prevents React from aborting the Sales route on the
@@ -2043,7 +2017,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const contractedCurrency = model?.facts.contractedCurrency || "usd";
 
   return (
-    <div className="so">
+    <div className={view === "terms" ? "so so-billing so-agreements" : LEGACY_SALES_VIEWS.includes(view) ? "so" : "so so-billing"}>
       {success && <div className="so-success" role="status">{success}<button className="btn btn-p" onClick={() => onOpenCatalog()}>Continue setup in Catalog</button></div>}
       {editor === "payment" && sales.canManage ? <PaymentEditor data={sales} onClose={() => setEditor(null)} /> : null}
       {editor === "offer" && offers.canManage ? (
@@ -2097,9 +2071,10 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         />
       ) : null}
 
-      <SubNav view={view} setView={setView} />
-      <div id="sales-view-panel" role="tabpanel" aria-labelledby={`sales-view-${view}`} className="so-view">
+      {!hideNavigation && <SubNav view={view} setView={setView} />}
+      <div id="sales-view-panel" role={hideNavigation ? undefined : "tabpanel"} aria-labelledby={hideNavigation || LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
+      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} focusInvoiceIds={focusInvoiceIds} onClearInvoiceFocus={clearInvoiceFocus} accountEpoch={`${location.pathname.split("/").slice(0, 3).join("/")}:${invoiceAccountEpoch ?? ""}`} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
       {view === "command" && (
         <div className="so-cmd">
           <header className="so-cmd-head">

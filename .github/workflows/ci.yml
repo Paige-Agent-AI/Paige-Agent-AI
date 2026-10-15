@@ -37,6 +37,64 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  comms-provider-boundary:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest from ECR Public.
+        # Avoid shared-runner Docker Hub anonymous pull throttling before proof starts.
+        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Controlled actual Communications handlers and strict server floor
+        run: >-
+          node --test
+          supabase/functions/_shared/comms-provider-boundary.test.ts
+          supabase/functions/_shared/tenant-consent.test.ts
+          supabase/functions/_shared/comms-email-provider-boundary.test.mjs
+          supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
+          supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/_shared/operator-retirement-handler.test.mjs
+      - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
+      - name: Communications executor coverage includes subsequently introduced mailbox paths
+        run: node scripts/ci/comms-provider-boundary-wiring.mjs
+      - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
+        run: node scripts/proof/operator-account-archive.mjs --postgres
+      - name: Operator provider retirement SQL proof
+        run: node scripts/proof/operator-provider-retirement.mjs --postgres
+      - name: Operator provider-independent Archive and Delete in disposable PostgreSQL
+        run: node scripts/proof/operator-provider-retirement.mjs --postgres --cached-audio --generated-media --platform-independent
+      - name: Operator cached-audio retirement, Storage boundary and partial recovery proof
+        run: |
+          node --test supabase/functions/_shared/operator-storage-retirement.test.mjs supabase/functions/_shared/operator-storage-handler.test.mjs
+          node scripts/proof/operator-cached-audio-retirement.mjs --postgres 5432
+      - name: Operator Intelligence eval metadata, real caller guards and audit refusal in disposable PostgreSQL
+        run: node scripts/proof/operator-intelligence-eval.mjs --postgres
+      - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
+        run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
+        run: node scripts/proof/int280-trajectory-projection.mjs --postgres
+      - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof
+        run: node scripts/proof/operator-generated-media-retirement.mjs --postgres 5432
+      - name: Install locked source-contract parser dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Weekly internal commitment check authority, receipt and recovery proof in disposable PostgreSQL
+        run: node scripts/proof/weekly-commitment-check.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -146,6 +204,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:definer-fns
 
+      # Two migrations sharing a version means production applies only one of them: the
+      # deploy-migrations push refuses or skips the other, and its objects never exist. Two PRs can
+      # each pass alone and collide only once both are on main (2026-10-04: #1679 and #1680 both
+      # merged 20270539000000), so this runs on every push to main as well as every PR.
+      - name: Migration version collision guard (two files may never share a version)
+        if: ${{ !cancelled() }}
+        run: npm run lint:migration-versions
+
+      - name: Migration version collision guard self-test
+        if: ${{ !cancelled() }}
+        run: npm run lint:migration-versions:test
+
       - name: Raw-Rail browser-grant guard (§9/§58 #746 — the browser reads the Rail via resolvers, never the table)
         if: ${{ !cancelled() }}
         run: npm run lint:rail-grants
@@ -185,6 +255,29 @@ jobs:
       - name: Secure Browser hostile-page egress proof (reads pass; writes, beacon, WebSockets, service workers stop)
         if: ${{ !cancelled() }}
         run: npm run smoke:secure-browser-egress
+
+      # paige-browser /render (§33 screenshots): the REAL render.mjs against real Chromium, plus the
+      # real server.js refusal paths over HTTP. express is a service-only dependency, so it is
+      # installed into the service folder here (no lockfile written) — without it the HTTP leg would
+      # print SKIP, never pass silently.
+      - name: paige-browser /render capture proof (slices, payload isolation, honest failures, refusals)
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm install --prefix services/paige-browser --omit=dev --no-audit --no-fund --no-package-lock
+          npm run smoke:paige-browser-render
+          node services/paige-browser/smoke-pdf.mjs
+
+      # PC-1 — the per-request context isolation proof (cross-request/cross-tenant state, with the
+      # storageState counterfactual proving the probe bites) and the connect-time egress proxy proof
+      # (#138 DNS-rebinding closure: private/mixed/denylisted targets refused over real sockets,
+      # loopback-only bind). Same Chromium the hostile-page proof installed.
+      - name: paige-browser PC-1 isolation + egress-proxy proofs
+        if: ${{ !cancelled() }}
+        run: |
+          node services/paige-browser/smoke-isolation.mjs
+          node services/paige-browser/smoke-egress-proxy.mjs
 
       - name: Tier-feature guard (§60 — render gates must not hardcode a tier; use useTierFeatures)
         if: ${{ !cancelled() }}
@@ -538,7 +631,10 @@ jobs:
       # so CI fetches it through npx at the pinned version.
       - name: Impeccable — UI anti-patterns (changed src)
         if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.changed.outputs.ui_count != '0' }}
-        run: xargs -r -a changed_ui.txt npx --yes impeccable@4.1.0 detect
+        run: |
+          node --test scripts/ci/check-source-utf8.test.mjs
+          xargs -r -a changed_ui.txt node scripts/ci/check-source-utf8.mjs
+          xargs -r -a changed_ui.txt npx --yes impeccable@4.1.0 detect
 
       # --- Edge functions: the gap this closes (task #142) ---------------------------------
       # NOTHING compiled an edge function before it deployed. `tsc` covers src/ only (edge fns
@@ -632,6 +728,14 @@ jobs:
       #
       # No continue-on-error, no `exit 0`, no advisory green, no per-PR exception. Both legs are
       # uploaded as evidence so a reviewer can read what each actually produced.
+      - name: Webhook signature suites (Svix + SendGrid ES256)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: SendGrid webhook-admin broker (mocked provider IO)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
+      - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
+        run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
+      - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
+        run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)
         # `count != ''` as well as `!= '0'`: an empty count means the resolve step did not run or
         # produced no output, and an unbounded run is a configuration error, not a no-op pass.
@@ -724,6 +828,20 @@ jobs:
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts
+          # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
+          # contracts. Same deny-all sandbox; the modules under test are pure by design.
+          deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/inbox-intelligence/policy.test.ts \
+            supabase/functions/_shared/inbox-intelligence/classify.test.ts \
+            supabase/functions/_shared/inbox-intelligence/sync.test.ts \
+            supabase/functions/_shared/inbox-intelligence/organize.test.ts
+          # Owner addendum 6088460092: source-level boundary tests read the door's real
+          # source, so this one line grants read (repo tree only); every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # The two-mailbox pilot's edge functions must at least TYPE-check.
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/gmail-mailbox-sync/index.ts \
+            supabase/functions/comms-mailbox-command/index.ts
           # The edge functions must at least TYPE-check; none is exercised by the tests above.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/sign-agreement/index.ts \
@@ -732,6 +850,134 @@ jobs:
           # The integrity proof stands up its own throwaway Postgres cluster and asserts the exact
           # SQLSTATE of every refusal, plus positive controls. It needs no credentials.
           ./scripts/agreements/run-integrity-proof.sh
+
+      - name: Commercial terms — every refusal announces itself with a code (Sales)
+        if: ${{ !cancelled() }}
+        run: |
+          # `tenant_client_agreements` had zero rows in production and nobody could say why: 30 of
+          # the 38 refusals in its two writers were bare RAISE EXCEPTION, defaulting to P0001, which
+          # the surface maps to nothing. This drives the real functions on a throwaway cluster and
+          # asserts the SQLSTATE each refusal class must carry, plus the raise-site clamp on the
+          # values they echo back. It needs no credentials.
+          ./scripts/sales/commercial-terms-refusal-proof.sh
+
+      - name: INT-328 comms email — real two-session concurrency proof (throwaway cluster)
+        if: ${{ !cancelled() }}
+        run: |
+          # The governed business email's claim/finalize must hold under REAL concurrent sessions: one
+          # dispatch per operation, one admission per identical content, no "Not sent" over a claimed
+          # send. This stands up its own throwaway Postgres cluster (the same pattern as the two proofs
+          # above), applies the migration verbatim over a local dependency stub, and races separate
+          # psql backends. It needs no credentials and touches no real database. The 81+ assertion
+          # rollback proof (scripts/sql/comms-email-send-proof.sql) needs the production schema, so it
+          # is run against production in BEGIN..ROLLBACK, not here.
+          PGBIN=""
+          for c in /usr/lib/postgresql/*/bin /usr/pgsql-*/bin; do [ -x "$c/initdb" ] && PGBIN="$c"; done
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — no PostgreSQL server binaries. Deliberately NOT skipped: a skipped proof reads exactly like a passing one."; exit 2; }
+          WORK="$(mktemp -d)"; PORT=55461
+          trap '"$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
+          "$PGBIN/initdb" -D "$WORK/d" -U p --auth=trust >/dev/null
+          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
+          for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
+          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
+
+      - name: C0b — incumbent adapter authority bindings
+        run: |
+          node --test scripts/ci/c0b-*.test.mjs
+          node --test scripts/proof/int304-authenticated-observation.test.mjs
+
+      - name: INT-336 — typed supersession and canonical settlement
+        if: ${{ !cancelled() }}
+        run: |
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/interactive.test.ts \
+            supabase/functions/_shared/paige-turn/interactive-approval.test.ts
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
+          INT336_ERROR_KIND=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
+          INT336_UNKNOWN_TOOL=plan_create node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          INT336_UNKNOWN_TOOL=plan_list node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-long-settlement-check.mjs
+
+      - name: INT-336 — real PostgreSQL canonical thread fence
+        if: ${{ !cancelled() }}
+        run: |
+          PGBIN=""
+          for c in /usr/lib/postgresql/*/bin /usr/pgsql-*/bin; do [ -x "$c/initdb" ] && PGBIN="$c"; done
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries missing"; exit 2; }
+          WORK="$(mktemp -d)"; PORT=55462
+          trap '"$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
+          "$PGBIN/initdb" -D "$WORK/d" -U postgres --auth=trust >/dev/null
+          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-conversational-db-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/c4e-research-preparation-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-durable-observation-check.mjs
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int304-continuation-read-check.mjs
+          python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
+          python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
+          python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
+
+      - name: C4a/C4b — an approval resumes the same objective (the pure resume model)
+        if: ${{ !cancelled() }}
+        run: |
+          # The pure half of the server-carried approval resume (docs/delivery/paige-conversational-loop-c4.md):
+          # the act is rebuilt from its stored row only, its call id is deterministic and provider-safe,
+          # only general-gate writes are carried forward by the general gate, a door proposal is handed
+          # back to its door only in a shape the door accepts and only for this workspace (C4b), the
+          # outcome reads the act's own result, and the saved record is closed enums read defensively.
+          # The handler is driven end to end by test:client-memory-authz (groups 39 and 40).
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/resume.test.ts
+
+      - name: INT-332 — an accepted offer is the task, and a card is never narrated into being (the pure half)
+        if: ${{ !cancelled() }}
+        run: |
+          # Action continuity (supabase/functions/_shared/paige-turn/continuity.ts): an affirmative continues
+          # ONE fresh offer PAIGE just made — never a standing card/question/work, a stale offer, a choice
+          # between actions, or a reply that hedges or changes it — and a reply may not claim an approval card
+          # no tool created, or decide approval itself. Fixtures are the 2026-10-06 prod strand's own turns.
+          # The handler and the real crm-command door are driven end to end by test:client-memory-authz (group 43).
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/continuity.test.ts
+
+      - name: INT-334 R3 — the Turn Route (state before words, class before model) and the finished-round tool gate
+        if: ${{ !cancelled() }}
+        run: |
+          # The Turn Route (supabase/functions/_shared/paige-turn/route.ts): thread state sets a floor no
+          # classifier lowers; cheap never carries tools; a route carries no authority; Sol/Astra lead,
+          # Sonnet 5.5 is second; fallback only on recognised provider-health failures, never after output.
+          # The round gate (round.ts): a tool call runs only from a round that reached a normal tool-use stop.
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/paige-turn/route.test.ts supabase/functions/_shared/paige-turn/round.test.ts \
+            supabase/functions/_shared/paige-turn/classify.test.ts \
+            supabase/functions/_shared/paige-turn/exposure.test.ts \
+            supabase/functions/_shared/provider-failure.test.ts
+          # The same gate through BOTH real stream converters (Anthropic and OpenAI), provider-native events.
+          npm run -s test:round-gate
+          # R5 — the streaming Model Fabric through its real transports: OpenAI off for chat until the Sol
+          # canary passes; the owner's order per class; fallback only on a proven health failure before
+          # the stream opened; one chat shape to the round gate whatever served.
+          npm run -s test:model-fabric
+          # ANT-37 — the Model Discovery Watch core: source-backed registry, deterministic diff
+          # (new family / retirement / price / capability / context / stale / contradiction /
+          # dedupe), cost-per-completed-task comparator, and the authority-isolation pin
+          # (the fabric imports no discovery module; detection advances no lifecycle).
+          npm run -s test:model-discovery
 
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}
@@ -767,7 +1013,15 @@ jobs:
 
       - name: Test
         if: ${{ !cancelled() }}
-        run: npm run test
+        run: npm run test -- --reporter=default --reporter=json --outputFile=unit-results.json
+
+      - name: Sales provider operation, account binding and recovery contract tests
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config supabase/functions/_shared/sales-payments/vitest.config.ts
+
+      - name: Invoice delivery authority and transient-link tests
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config vitest.sales-invoice-delivery.config.ts
 
       # Provider-free relay proof: fake ears/runtime/mouth + UsageSink, plus
       # atomic one-use ticket and pre-upgrade auth boundary. No vendor call.
@@ -846,6 +1100,19 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:trace-wiring
 
+      # INT-329 — the Claude reasoning tier is ONE constant. This drives the real claude.ts /
+      # model-router seams with a recording fake Anthropic and fails if any path stops resolving
+      # through CLAUDE_REASONING, if a request body drifts from the frozen pre-switch snapshot in
+      # anything but `model`, if a field the reasoning model rejects leaves the seam, or if a trace
+      # names anything but the model that served (or rejected) the call.
+      - name: Smoke — Claude reasoning tier (one seam, frozen request shapes, truthful trace model)
+        if: ${{ !cancelled() }}
+        run: npm run test:reasoning-tier
+
+      - name: Smoke — OpenAI Responses adapter (governed function tools only, chat-shaped SSE, truthful trace)
+        if: ${{ !cancelled() }}
+        run: npm run test:openai-responses
+
       - name: Smoke — active-account Knowledge scope (§9 tenant KB fail-closed)
         if: ${{ !cancelled() }}
         run: npm run test:knowledge-scope
@@ -857,6 +1124,14 @@ jobs:
       - name: Smoke — approving a proposal writes only what was offered, once, as the caller
         if: ${{ !cancelled() }}
         run: npm run test:apply-extraction
+
+      - name: Smoke — the shared credit-profile writer reports writes truthfully (#734)
+        if: ${{ !cancelled() }}
+        run: npm run test:sync-credit-report-data
+
+      - name: Regression — historical fault fails, current handler passes, reintroduced fault fails (INT-280)
+        if: ${{ !cancelled() }}
+        run: npm run test:int280-regression
 
       - name: Smoke — a durable write that did not land says so (postgrest resolves, it does not throw)
         if: ${{ !cancelled() }}
@@ -965,6 +1240,56 @@ jobs:
       - name: Public form intake (only the platform's origins, no bots, only the form's own fields)
         if: ${{ !cancelled() }}
         run: npm run test:growth-intake
+
+      # Add diagnostics to this gate; its original exit code remains authoritative.
+      # Append steps so historical failing-step ordinals retain their meaning.
+      - name: Unit isolation and failure attribution contract
+        if: ${{ !cancelled() }}
+        run: node --test scripts/ci/__tests__/unit-network-guard.test.mjs scripts/ci/__tests__/unit-failure-attribution.test.mjs
+
+      - name: Attribute unit failures (diagnostic evidence)
+        if: ${{ always() }}
+        env:
+          CI_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          export CI_EXECUTED_SHA="$(git rev-parse HEAD)"
+          node scripts/ci/unit-failure-attribution.mjs unit-results.json unit-failure-attribution.json
+
+      - name: Upload unit failure attribution
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-failure-attribution-${{ github.run_id }}-${{ github.run_attempt }}
+          path: unit-failure-attribution.json
+          if-no-files-found: error
+
+      # Experience 03 · S3 "PAIGE works your leads" — the lead-reply edge tests. They sit beside
+      # their functions, which the root vitest config (src/** only) never runs, so each is named here.
+      # Same invocation style as "Public form intake" above; appended at the end of the job so the
+      # historical failing-step ordinals keep their meaning.
+      - name: Lead reply filing (opt-in form, business account, one email sender, caps, one draft per submission)
+        if: ${{ !cancelled() }}
+        run: npm run test:lead-reply
+
+      - name: Lead reply drafting (form content is data, plain-text body, never a recipient from the model)
+        if: ${{ !cancelled() }}
+        run: npm run test:lead-reply-draft
+
+      - name: Approve door refuses every outbound-message approval (no send, no false completion)
+        if: ${{ !cancelled() }}
+        run: npm run test:execute-approval
+
+      - name: Lead reply composer prompt (submission quoted as untrusted data, never instructions)
+        if: ${{ !cancelled() }}
+        run: npm run test:email-composer-prompt
+
+      - name: Governed email door binds a lead reply approval to one send (verified PAIGE Email sender only)
+        if: ${{ !cancelled() }}
+        run: npm run test:comms-lead-reply-approval
+
+      - name: SendGrid webhook door (signed events only, acceptance is never delivery)
+        if: ${{ !cancelled() }}
+        run: npm run test:sendgrid-webhook
 
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real

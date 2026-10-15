@@ -214,25 +214,22 @@ function looksLikeCredential(value: string): boolean {
  * `_` are ALPHABET here, not word breaks, and 63.8% of real invite tokens contain one. Instead:
  *   · EXACTLY 32 characters. 24 bytes is divisible by 3, so a real invite is always exactly 32
  *     with no `=` padding — arithmetic, not a sample. Pinning the width rather than using `>= 32`
- *     costs 1.3% of campaign names instead of 11.8%, measured, for identical escape.
- *   · MIXED CASE. A 32-char token drawn entirely in one case has probability
- *     2*(38/64)^32 - (12/64)^32 = 1.1e-7, about 1 in 8.8 million. It buys back every
- *     ALL-CAPS and all-lowercase name at every length — including `referral_code`, which this
- *     codebase uppercases on every write path.
+ *     bounds the attribution collision to this width instead of every long label.
+ *   · CASE-INDEPENDENT. Real random mints can be entirely uppercase or lowercase.
+ *     Owner privacy-first policy deliberately hides ambiguous opaque32 campaign/referral codes
+ *     rather than exempting a possible credential. Shorter and separated non-mint labels remain.
  *   · THE SPACE FORM TOO. `URLSearchParams.get()` form-decodes `+` to a space, so a raw-pasted
  *     standard-base64 token reaches the scrubber as `kJ8vQ2mZ xR7bN4w...` and fails every base64
  *     charset test. 39.6% of standard-base64 tokens contain a `+`.
  *
- * Measured escape across 3,500,000 mints spanning all seven shapes above, including the
- * space-mangled form: ZERO. The residual is a FUTURE mint of a non-hex width other than 32 — the
+ * Randomized escape gates remain at ZERO and deterministic single-case regressions supplement
+ * them. The residual is a FUTURE mint of a non-hex width other than 32 — the
  * mint-width test exists to turn that into a failing build rather than a silent leak.
  */
 function isMintWidthBase64(value: string): boolean {
   return (
     value.length === 32 &&
-    /^[A-Za-z0-9+/=_-]+$/.test(value) &&
-    /[a-z]/.test(value) &&
-    /[A-Z]/.test(value)
+    /^[A-Za-z0-9+/=_-]+$/.test(value)
   );
 }
 
@@ -257,26 +254,15 @@ export function looksLikeMintedCredential(value: string): boolean {
  * sales` rejoins to 22 characters of `[A-Za-z0-9/]` and would score three classes, so the ordinary
  * rule would redact half the product's routes.
  *
- * THE MIXED-CASE REQUIREMENT IS THE WHOLE DISCRIMINATOR. DO NOT RELAX IT — it is not incidental
- * tidying, and removing it is not a loosening, it is a removal. Two facts make it work, and they
- * are the only two:
- *
- *   · This platform's routes are LOWERCASE SLUGS. `/solo/3855/growth/sales`,
- *     `/clients/people`, `/signup` — verified against all 79 `path=` entries in `src/App.tsx`,
- *     none of which this predicate touches.
- *   · A 32-character token drawn from the 64-symbol base64 alphabet contains an uppercase letter
- *     with probability 1 - (38/64)^32 ≈ 1 - 5.7e-8. That rounds to certainty at this width.
- *
- * So requiring BOTH cases costs essentially no coverage against a real token and buys back every
- * lowercase route. Drop the uppercase requirement and the rule immediately starts eating ordinary
- * paths; drop the lowercase one and it stops distinguishing anything. If a future token scheme
- * mints in a single case, this predicate is blind to it — widen it then, deliberately, with a
- * fresh measurement, rather than by loosening this clause in passing.
+ * Exact mint-width runs are privacy-sensitive regardless of case. Longer runs retain the
+ * existing mixed-case heuristic to preserve ordinary lowercase navigation. Route and
+ * attribution preservation are covered separately by the real-route corpus.
+
  */
 function looksLikeSplitCredential(rejoined: string): boolean {
   if (rejoined.length < 28) return false;
   if (!/^[A-Za-z0-9+/=]+$/.test(rejoined)) return false;
-  return /[a-z]/.test(rejoined) && /[A-Z]/.test(rejoined);
+  return isMintWidthBase64(rejoined) || (/[a-z]/.test(rejoined) && /[A-Z]/.test(rejoined));
 }
 
 /** Redact a credential-bearing PATHNAME. Returns a stable shape so analytics can still group it. */
@@ -293,7 +279,11 @@ export function redactSecretPath(pathname: string): string {
   const out: string[] = [];
   for (let i = 0; i < segments.length; i++) {
     // Whole-run check FIRST: a token split by its own `/` is only visible once rejoined.
-    if (i > 0 && looksLikeSplitCredential(segments.slice(i).join("/"))) {
+    const remaining = segments.slice(i).map(safeDecode);
+    const hasMintWidthRun = remaining.some((_segment, end) =>
+      isMintWidthBase64(remaining.slice(0, end + 1).join("/")),
+    );
+    if (i > 0 && (hasMintWidthRun || looksLikeSplitCredential(remaining.join("/")))) {
       out.push(REDACTED);
       return out.join("/");
     }
@@ -630,11 +620,12 @@ export async function trackEvent(
 /**
  * Mount once near the top of the tree to fire `page_view` on every route change.
  */
-export function usePageView(): void {
+export function usePageView(enabled = true): void {
   const location = useLocation();
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const path = location.pathname + location.search;
     if (lastPathRef.current === path) return;
     lastPathRef.current = path;
@@ -644,7 +635,7 @@ export function usePageView(): void {
       // `/unsubscribe?token=<t>` and `?ct=<t>` are live token-bearing surfaces.
       search: location.search ? redactSecretSearch(location.search) : null,
     });
-  }, [location.pathname, location.search]);
+  }, [enabled, location.pathname, location.search]);
 }
 
 /**

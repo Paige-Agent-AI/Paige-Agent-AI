@@ -1,10 +1,11 @@
+import { catalogueDeclarations } from "../../../../scripts/ci/tool-catalogue-lint.mjs";
 /**
  * `settings · Capabilities` — the clamp arithmetic and the governed-but-invisible gap.
  *
  * This surface is WIRED, so most of what matters is behaviour rather than authored strings: what
  * the Trust Compass does to a mode, what the schema forbids, and whether a failed read is honest.
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import { clampMode } from "@/operator/data/useToolAutonomy";
@@ -127,18 +128,7 @@ describe("what the surface says about the gap is the measured number", () => {
     // gap. Prove the subject was found before measuring it.
     expect(gate.size).toBeGreaterThan(40);
 
-    const dir = resolve(process.cwd(), "supabase/migrations");
-    let catalogue = new Set<string>();
-    for (const f of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
-      const sql = readFileSync(resolve(dir, f), "utf8");
-      if (!sql.includes("FUNCTION public.list_tool_autonomy")) continue;
-      const from = sql.indexOf("WITH catalog(tool_key");
-      catalogue = new Set(
-        [...sql.slice(from, sql.indexOf("SELECT", from)).matchAll(/\('([a-z0-9_]+)',/g)].map(
-          (m) => m[1],
-        ),
-      );
-    }
+    const catalogue = catalogueDeclarations().at(-1)!.keys;
 
     const invisible = [...gate].filter((k) => !catalogue.has(k));
 

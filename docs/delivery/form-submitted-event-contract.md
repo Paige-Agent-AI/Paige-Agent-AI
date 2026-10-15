@@ -1,0 +1,96 @@
+# INT-298 / INT-342 MBC 4a — `form.submitted` on the native event bus
+
+SHELL: SOLO. Coordinator command "Marketing Backend Completion & Analytics Ownership" (owner-authorized
+2026-10-11; INT-298, INT-342, Linear ANT-15), slice 4 of 6. Plan: `docs/product/int342-marketing-convergence.md`
+§L.4 ("A `form.submitted` native event and §67 trigger"); `docs/delivery/harness-completion-map.md` (forms, next
+phase: "promote the forms on-submit spine onto the `paige_native_events` bus as a `form_submitted` producer").
+
+## Why
+
+Before this slice the native event bus had one producer, `contact.created` (20270119000000). A form's own
+on-submit automations ran through `growth-process-submission` and its own dispatch ledger, separate from the bus,
+so a §67 process could not start from "someone fills in my form". Production's trigger catalogue held five keys
+(`contact.created`, `conversation.call_ended`, `manual.run_now`, `pipeline.stage_changed`,
+`record.lifecycle_moved`); searched migrations, functions and `src/` for `form.submitted` and `form_submitted`:
+no producer, no row.
+
+## The event
+
+Migration `20271020000030_int298_form_submitted_native_event.sql`:
+
+- **Catalogue row:** `form.submitted`, "Someone fills in a form", category `forms`, live. Paige's
+  `automation_triggers_list` reads the catalogue, so it offers this trigger as soon as the row exists.
+- **When it fires:** once per submission, when the submission is matched to a contact. That is either on
+  insert with a contact (external intake) or when `growth-process-submission` pins one in its `contact_upsert`
+  step (a form's own "create contact" intake and the legacy `auto_create_contact` fallback both run through
+  that step). A submission that never names a person fires nothing, because a process has nobody to act on.
+- **Producer:** `trg_growth_submission_emit_form_submitted`, `AFTER INSERT OR UPDATE OF contact_id` on
+  `growth_form_submissions`. SECURITY DEFINER with a fixed search path; no app role may execute it.
+- **Subject:** the contact (`clients`), as for `contact.created`, so the existing dispatcher, its subject-tenant
+  integrity check and the act engine run unchanged.
+- **Workspace check:** a contact that is not in the submission's workspace fires nothing.
+- **Paused or archived workspace:** no event, and the submission is kept. Such a workspace runs no processes, and
+  the event table's own guard (`a01_archived_tenant_work`) would otherwise refuse the write and roll back the
+  submission with it. A submission received while paused starts nothing later.
+- **Payload:** `submission_id`, `form_id`, `contact_id`, `source`, `utm_source`, `utm_campaign`, `submitted_at`.
+  Never the form's answers, consent, IP, user agent, referrer or the funnel session token (a bearer key for the
+  funnel's own advance call). A process reads more by id, inside the workspace.
+- **Once only:** the dedup key is `form.submitted:<submission id>`. No writer re-pins a submission today; if one
+  ever does, it is the same submission and never a second event.
+- **Outbox:** the event row is written in the same statement as the insert or the pin, and a failure is not
+  swallowed. On the processor's route the pin then fails and the submission retries. External intake
+  (`growth-inbound`) inserts with the contact; a failure there fails that insert. Only the dispatch HTTP fire is
+  best-effort, with the sweeper as its backstop (as `contact.created`).
+- **Who may set a submission's contact (§37):** external intake on insert and the processor's pin, both as the
+  service role. `authenticated` still holds UPDATE on the table and its policy admits any member of the
+  business, so a member could otherwise pin a contact of their choosing and start the business's processes. A
+  browser-role (`authenticated`/`anon`) change of `contact_id` is refused (42501) by
+  `growth_submission_guard_contact`, the same pattern as `growth_forms_guard_notify_email`. No browser code
+  writes this table.
+- **Alongside `contact.created`:** a brand-new lead from a form that creates its contact produces both events. A
+  business with processes on both triggers runs both.
+
+The update guard (`OLD.contact_id IS NOT NULL`) and the null-contact guard are cheap early exits. The dedup key
+and the workspace check already enforce the same outcomes, so removing either guard alone does not change the
+result; the proof was run against both mutants and records this.
+
+## What a process can do with it
+
+- A tenant asks Paige for a process starting on "Someone fills in a form"; it is filed at `confirm` like any
+  other (§67).
+- The dispatcher evaluates a process's `conditions` against the payload, so `{field: "payload.form_id", op:
+  "eq", value: <form id>}` would limit a process to one form, and `payload.utm_campaign` to one campaign tag.
+- **Since MBC 6a (migration `20271022100000`):** the payload also carries `campaign_brief_ids`, the live
+  campaigns the form is attached to, and a process on this trigger cannot go live until it names one form,
+  several forms or one campaign (`configure_process_scope`; `docs/delivery/process-scope-contract.md`). Before
+  6a a process here would have run for every form; production held no processes when 6a shipped.
+
+## Not in this slice
+
+- Funnel session events and a public page-view producer (S4 later parts).
+- Moving a form's own on-submit automations onto the bus. They keep running through `growth-process-submission`;
+  this event is an addition, never a replacement, so no existing form changes behaviour.
+- Nothing is sent by this migration. With no live process on the trigger, the dispatcher records the event as
+  having no subscriber.
+
+## Proof
+
+`supabase/tests/form_submitted_native_event.sql`, in the `database-contract` job on the production-schema clone,
+rolled back:
+
+1. A submission inserted with its contact fires exactly once; the subject is that contact in its workspace; the
+   payload carries the ids, source and both tags, and neither the answer text nor the email.
+2. A submission with no contact fires nothing; pinning the contact fires once; a later state update and a re-pin
+   to another contact never fire again.
+3. A contact from another workspace fires nothing.
+4. A member of the business, who can see the submission, is refused when pinning a contact directly; the row and
+   the event table are unchanged.
+5. A paused workspace keeps a submission that arrives with its contact, and gets no event.
+
+Run locally against a stub schema with each guard mutated: removing the workspace check, dropping the update
+event, adding the answers or the funnel token to the payload, dropping the campaign tag, keying dedup per contact,
+removing the browser guard, or removing the paused-workspace skip each fails the proof. The two early-exit guards survive alone, as above.
+
+`src/__tests__/form-submitted-native-event.test.ts` keeps the static contract: the catalogue row, the trigger
+events, the dedup key, the workspace check, the payload allowlist, no swallowed write, the revoke, the
+processor's single pin, and the CI step.

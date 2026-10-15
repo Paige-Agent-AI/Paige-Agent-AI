@@ -80,8 +80,6 @@
   },
   "phantomRows": [
     "crm_delete_contact",
-    "pipeline_add_stage",
-    "pipeline_create",
     "social_post"
   ]
 }

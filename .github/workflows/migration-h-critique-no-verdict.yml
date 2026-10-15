@@ -1,0 +1,37 @@
+name: Migration H critique NO_VERDICT
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270556000000_studio_visual_critique_no_verdict.sql'
+      - 'supabase/migrations/20260719140000_studio_visual_critique_log.sql'
+      - 'supabase/tests/migration_h_critique_no_verdict.sql'
+      - '.github/workflows/migration-h-critique-no-verdict.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-no-verdict-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: migration_h_critique_no_verdict_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: migration_h_critique_no_verdict_contract
+    steps:
+      - uses: actions/checkout@v4
+      # Runs from the repository root: the suite reads the migration text there for its mutation proofs.
+      - name: Migration H — old verdicts survive, NO_VERDICT accepted, everything else refused, NOT NULL and RLS unchanged (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/migration_h_critique_no_verdict.sql

@@ -1,0 +1,21 @@
+-- INT-309: the research persistence grants the canonical engine was always owed.
+--
+-- ROOT CAUSE (production logs 2026-10-04T20:18:53Z / 20:20:00Z, paige-deep-research v84):
+--   [paige-deep-research] persist run failed: permission denied for table research_runs
+-- Live role_table_grants proved BOTH research tables carried privileges for postgres ONLY —
+-- service_role had NO table privilege. Service-role RLS bypass does not imply SQL table
+-- privileges (pg_class row security is a different layer from aclitem), so the engine's
+-- service-role INSERTs failed at the TABLE PRIVILEGE layer, and every chat-started run
+-- returned saved:false (the honest R2b readback verdict) with research_runs/research_sources
+-- at 0 rows.
+--
+-- MINIMAL REPAIR — the exact privilege the write path needs, nothing more:
+--   paige-deep-research persistRun does admin.from("research_runs").insert({...}) and
+--   admin.from("research_sources").insert(rows) — plain PostgREST POSTs with
+--   Prefer: return=minimal (no .select()/upsert/update/delete anywhere in persistRun),
+--   so INSERT on each table is the complete required set. No SELECT/UPDATE/DELETE is
+--   granted: nothing in the engine reads these base tables directly (reads go through
+--   the M0 governed RPCs), and the browser roles keep ZERO base-table privileges —
+--   the M0 lineage contract and the governed read authority are untouched.
+GRANT INSERT ON public.research_runs TO service_role;
+GRANT INSERT ON public.research_sources TO service_role;

@@ -1,0 +1,2085 @@
+{
+  "kind": "actual source components; synthetic RPC fixtures; not authenticated",
+  "frames": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 1371,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 578,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 753,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 603,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1536-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 1387,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 584,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 775,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 625,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1366-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 595,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 583,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 1371,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 576,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 753,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 583,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-1024-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1640,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 867,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 808,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 877,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1055,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 866,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1640,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 867,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 808,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 877,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1055,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 866,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-900-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 2335,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1087,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1035,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1036,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1225,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1077,
+        "paige": "closed",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 2335,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1087,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1035,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1036,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1225,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1077,
+        "paige": "open",
+        "theme": "dark"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-dark-390-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 1464,
+        "panelScroll": 578,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 1371,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 578,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 753,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1536,
+        "viewport": 1536,
+        "panelWidth": 942,
+        "panelScroll": 603,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1536-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 1294,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 1387,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 584,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 775,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1366,
+        "viewport": 1366,
+        "panelWidth": 830,
+        "panelScroll": 625,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1366-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 1371,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 576,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 651,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 595,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 753,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 583,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 1371,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 576,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 651,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 595,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 753,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 1024,
+        "viewport": 1024,
+        "panelWidth": 952,
+        "panelScroll": 583,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-1024-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1640,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 867,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 808,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 877,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1055,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 866,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1640,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 867,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 808,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 877,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 1055,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 900,
+        "viewport": 900,
+        "panelWidth": 828,
+        "panelScroll": 866,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-900-open-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 2335,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1087,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1035,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1036,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1225,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1077,
+        "paige": "closed",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-closed-5.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Overview",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 2335,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-0.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Banking & Cash",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1087,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-1.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Receivables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1035,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-2.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Expenses & Payables",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1036,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-3.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Profitability",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1225,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-4.png",
+      "bannerCount": 0
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "open",
+      "label": "Budgeting & Forecasting",
+      "geometry": {
+        "bodyWidth": 390,
+        "viewport": 390,
+        "panelWidth": 318,
+        "panelScroll": 1077,
+        "paige": "open",
+        "theme": "light"
+      },
+      "file": "docs/evidence/ui-delivery/assets/finance-compact/finance-runtime-light-390-open-5.png",
+      "bannerCount": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "search retains focus",
+      "pass": true
+    },
+    {
+      "name": "original invoice line wording",
+      "pass": true
+    },
+    {
+      "name": "drawer Escape recovery",
+      "pass": true
+    },
+    {
+      "name": "refresh rereads canonical sources",
+      "pass": true
+    },
+    {
+      "name": "empty",
+      "pass": true
+    },
+    {
+      "name": "partial",
+      "pass": true
+    },
+    {
+      "name": "error",
+      "pass": true
+    },
+    {
+      "name": "denied",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "codeCommit": "5e39e97a9e591dcab976e367f8bff90bc7b5aea0",
+  "sourceHashes": {
+    "src/solo/finance/FinanceWorkspace.tsx": "6823ee371ad6e4ec5ec37d53753cd573c81622b409439130efb0eae5e90b52fd",
+    "src/solo/finance/finance.css": "3dde61233d047c76f5a0c15b257c9a389be3a73b289ce3c7e48996b79a13fc2e"
+  }
+}

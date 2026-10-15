@@ -1,3 +1,5 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
+import { lookupMcpCapability } from "../_shared/paige-mcp/capability-policy.ts";
 // Paige MCP Server — Phase 2 (API-key auth, 30 tools across CRM/Workflows/BTF/Admin).
 // Hosted at https://<project>/functions/v1/paige-mcp (custom domain mcp.paigeagent.ai later).
 // Auth: Bearer PAIGE_MCP_PLATFORM_KEY in Authorization header.
@@ -2440,7 +2442,7 @@ mcp.tool("cancel_workflow_run", {
 // ---------- register_workflow ----------
 mcp.tool("register_workflow", {
   description:
-    "Register a new workflow in the caller's tenant's registry. Master tenant can use any provider; sub-tenants are restricted to provider='webhook_external' or 'direct_edge_function'. Doctrine §118 + §119.",
+    "Register a new workflow in the caller's tenant's registry. Master tenant can use any provider; sub-tenants are restricted to provider='webhook_external' or 'direct_edge_function'. A 'direct_edge_function' row runs only when a person triggers it with their own sign-in (trigger-workflow); `run_workflow`, the action bus and the scheduler will refuse it unless the target is on the service-dispatch allowlist (currently empty). Doctrine §118 + §119.",
   inputSchema: z.object({
     key: z.string().describe("snake_case, unique per tenant"),
     label: z.string(),
@@ -2691,7 +2693,7 @@ mcp.tool("create_invoice", {
       due_date: dueDate,
       memo: args.memo ?? null,
       payment_plan_key: args.payment_plan_key ?? null,
-      hosted_invoice_url: null, // populated when send_invoice runs (Stripe Connect or fallback)
+      hosted_invoice_url: null, // the legacy send_invoice that filled this is retired (#2072); governed delivery is sales-invoice-delivery
       created_by: createdBy,
     }).select("id, invoice_number, status, amount_total_cents, hosted_invoice_url").single();
     if (error) return err(error.message);
@@ -2711,88 +2713,19 @@ mcp.tool("create_invoice", {
 // ---------- send_invoice ----------
 mcp.tool("send_invoice", {
   description:
-    "Deliver a previously-created draft invoice. Emails the contact with the hosted invoice link and marks status='sent'. Separate from create_invoice so callers can review the draft first.",
+    "Retired. Invoices are delivered only through Paige's governed Sales invoice delivery (issue the invoice, then send it from Sales or ask Paige in chat), which checks the workspace, the sending identity, the recipient's consent and the owner's approval before anything is emailed. This tool sends nothing.",
   inputSchema: z.object({
     invoice_id: z.string(),
     custom_message: z.string().optional(),
   }),
   annotations: { destructiveHint: false },
-  handler: async (args) => {
-    const { data: inv, error: iErr } = await admin
-      .from("paige_invoices")
-      .select("id, tenant_id, contact_id, status, invoice_number, amount_total_cents, currency, hosted_invoice_url, memo")
-      .eq("id", args.invoice_id).maybeSingle();
-    if (iErr) return err(iErr.message);
-    if (!inv) return err("invoice_not_found");
-    if (inv.status !== "draft") return err(`invoice_not_draft:${inv.status}`);
-
-    // The invoice goes to the contact's PRIMARY email, whichever of their addresses that is.
-    const { data: contactRow } = await admin
-      .from("clients").select(`first_name, last_name, ${CONTACT_METHOD_SELECT}`).eq("id", inv.contact_id).maybeSingle();
-    const contact = contactRow ? withPrimaryAddressFields(contactRow) : null;
-    if (!contact?.email) return err("contact_email_missing");
-
-    // Stripe Connect hosted URL — placeholder fallback (BYPASS_STRIPE_CONNECT) when not configured.
-    let hostedUrl = inv.hosted_invoice_url
-      ?? `${Deno.env.get("PAIGE_APP_ORIGIN") ?? "https://paigeagent.ai"}/i/${inv.invoice_number}`;
-
-    if (!RESEND_API_KEY) return err("resend_not_configured");
-    const { data: idn } = await admin.rpc("tenant_sender_identity", { _tenant_id: inv.tenant_id });
-    const fromAddress = (idn as any)?.from_address as string | undefined;
-    const fromName = (idn as any)?.from_name as string | undefined;
-    if (!fromAddress) return err("from_address_not_resolved");
-    const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
-
-    const amountFmt = `$${(inv.amount_total_cents / 100).toFixed(2)} ${inv.currency}`;
-    const greeting = contact.first_name ? `Hi ${contact.first_name},` : "Hi,";
-    const intro = args.custom_message ? `<p>${args.custom_message}</p>` : "";
-    const html = `<!doctype html><html><body style="font-family:Inter,Arial,sans-serif;color:#111">
-      <p>${greeting}</p>${intro}
-      <p>Your invoice <strong>${inv.invoice_number}</strong> for <strong>${amountFmt}</strong> is ready.</p>
-      <p><a href="${hostedUrl}" style="display:inline-block;padding:12px 20px;background:#CFAE70;color:#000;text-decoration:none;border-radius:6px;font-weight:600">View & Pay Invoice</a></p>
-      ${inv.memo ? `<p style="color:#555;font-size:14px">${inv.memo}</p>` : ""}
-      <p>Thanks!</p>
-    </body></html>`;
-
-    const send_id = crypto.randomUUID();
-    let resendErr: string | null = null;
-    try {
-      const r = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: fromHeader,
-          to: [contact.email],
-          subject: `Invoice ${inv.invoice_number} — ${amountFmt}`,
-          html,
-          headers: { "X-Paige-Send-Id": send_id },
-        }),
-      });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({} as any));
-        resendErr = (j as any)?.message ?? `resend_${r.status}`;
-      }
-    } catch (e) {
-      resendErr = (e as Error).message.slice(0, 300);
-    }
-    if (resendErr) return err(`email_send_failed: ${resendErr}`);
-
-    await admin.from("paige_invoices").update({
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      sent_to_email: contact.email,
-      hosted_invoice_url: hostedUrl,
-    }).eq("id", inv.id);
-    await audit("send_invoice", "invoice", inv.id, { to: contact.email, send_id });
-
-    return ok({
-      invoice_id: inv.id,
-      status: "sent",
-      sent_to_email: contact.email,
-      send_id,
-      hosted_invoice_url: hostedUrl,
-    });
-  },
+  // Contained under #2072 (Experience 04): the legacy path read the invoice by id alone with the
+  // service role (no workspace check), wrote caller text unescaped into the email, skipped the
+  // provider floor and the pre-send consent/suppression gate, could link to a route that does not
+  // exist, and marked the invoice 'sent' outside the invoice lifecycle. It now refuses BEFORE any
+  // read, provider call or write, so nothing about the caller's request reaches a customer.
+  // The governed door is sales-invoice-delivery (Spine sales_invoice.email_send).
+  handler: async () => err("legacy_invoice_send_retired: use the governed Sales invoice delivery"),
 });
 
 
@@ -3521,6 +3454,12 @@ mcp.tool("delegate_to_subagent", {
     const r = await callOrchestrator({
       action: "tool_invoke",
       slug,
+      // INT-310 C1: a contact selector is bound by the orchestrator to this SERVER-RESOLVED workspace
+      // (the actor's active tenant), never to a tool argument; null fails closed. Sent only when a
+      // contact is selected, so contact-free delegation keeps its prior (tenant-less) behaviour.
+      ...((contact_id || parsedInput.contact_id || parsedInput.client_id)
+        ? { tenant_id: await actorTenantId() }
+        : {}),
       input: parsedInput,
       context: { contact_id, conversation_id, user_id: actor.user_id ?? undefined },
     });
@@ -3555,6 +3494,8 @@ mcp.tool("compose_email", {
     const r = await callOrchestrator({
       action: "tool_invoke",
       slug: "email-composer",
+      // INT-310 C1: the workspace a selected contact is bound to (only sent when one is selected).
+      ...(args.contact_id ? { tenant_id: await actorTenantId() } : {}),
       input: args,
       context: { contact_id: args.contact_id, user_id: currentActor().user_id ?? undefined },
     });
@@ -5723,6 +5664,13 @@ async function governMcpToolCall(
     tenantId = await actorStore.run(actor, () => actorTenantId());
   } catch (e) {
     console.error("[paige-mcp] governed door: tenant resolution failed", (e as Error)?.message);
+  }
+
+  // Reuse the verified canonical effect/category mapping.
+  const capability = lookupMcpCapability(toolName);
+  if (capability && ["external_send", "provider", "access"].includes(capability.category) &&
+      !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: actor.user_id })) {
+    return { ok: false, status: 403, code: COMMS_PROVIDER_EXECUTION_DISABLED, message: "Provider execution is unavailable in this workspace." };
   }
 
   const { outcome, audit: record } = decideMcpToolCall({

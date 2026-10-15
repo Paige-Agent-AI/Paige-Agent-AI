@@ -196,7 +196,7 @@ describe("the frame says each reason once", () => {
 });
 
 describe("every sentence is one the operator can act on", () => {
-  const keys: Array<Parameters<typeof classifyUnspentApproval>[0]> = ["ambiguous", "unclaimable", "lookup_failed", undefined];
+  const keys: Array<Parameters<typeof classifyUnspentApproval>[0]> = ["ambiguous", "unclaimable", "lookup_failed", "expired", undefined];
   const spent = [{ needs_confirm: true }, { refused_before_run: true }, { success: false, error: "internal_text_in_draft" }, { success: false, not_applied: true }, { outcome_unknown: true }, { ok: true, started: true }];
   const notes = [
     ...[1, 2].map((n) => buildApprovalOutcome(Array.from({ length: n }, (_, i) => ({ fingerprint: `k${i}`, ...classifySpentApproval(r({ success:false, verified:true, railRecorded:false, outcome:"capability_completed_unrecorded" }), { reportsKnowledge:true }) }))).note),

@@ -1,3 +1,4 @@
+import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 // Exchanges the Gmail OAuth authorization code for tokens, stores the refresh token
 // in VAULT (never a column, never a log), and provisions the tenant's Gmail
 // channel_connectors row so send-message can send as this address (#141b).
@@ -151,6 +152,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resolve the tenant SERVER-SIDE from the state's user id (§9 — never body).
+    // `admin` (service-role) was created above for the has_role gate; reuse it.
+    //
+    // This used to read `profiles.tenant_id` keyed on `profiles.id`. That column
+    // does not exist and that key is a surrogate, so it returned null for every
+    // user and this endpoint could never succeed — see `_shared/tenant-for-user.ts`.
+    // `parsed.w` is the workspace the person was standing in, carried inside the
+    // SIGNED state, and it is honoured only after an active-membership check.
+    // (`t` is already the state's timestamp — see the expiry check above.)
+    const resolved = await resolveTenantForUser(admin, parsed.u, parsed.w ?? null);
+    const tenantId = resolved.tenantId;
+    if (!tenantId) {
+      return new Response(JSON.stringify({ error: "no_tenant_for_user", detail: resolved.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Store the refresh token ONLY in Vault (§9/§34) — never a column, never a log. ──
+    if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
+      return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const redirectUri = `${gmailRedirectOrigin(String(origin))}/auth/gmail/callback`;
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -201,25 +225,6 @@ Deno.serve(async (req) => {
     const gmailAddr = googleEmail.toLowerCase();
     const accountId = googleSub ?? gmailAddr;
 
-    // Resolve the tenant SERVER-SIDE from the state's user id (§9 — never body).
-    // `admin` (service-role) was created above for the has_role gate; reuse it.
-    //
-    // This used to read `profiles.tenant_id` keyed on `profiles.id`. That column
-    // does not exist and that key is a surrogate, so it returned null for every
-    // user and this endpoint could never succeed — see `_shared/tenant-for-user.ts`.
-    // `parsed.w` is the workspace the person was standing in, carried inside the
-    // SIGNED state, and it is honoured only after an active-membership check.
-    // (`t` is already the state's timestamp — see the expiry check above.)
-    const resolved = await resolveTenantForUser(admin, parsed.u, parsed.w ?? null);
-    const tenantId = resolved.tenantId;
-    if (!tenantId) {
-      return new Response(JSON.stringify({ error: "no_tenant_for_user", detail: resolved.error }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Store the refresh token ONLY in Vault (§9/§34) — never a column, never a log. ──
     const ref = gmailVaultRef(tenantId, accountId);
     const { error: vaultErr } = await admin.rpc("write_channel_secret", {
       _ref: ref,
@@ -239,6 +244,13 @@ Deno.serve(async (req) => {
     //    express the partial-index + tenant WHERE the SQL trigger uses, so we do it
     //    explicitly: (1) reconnect our OWN row if present; (2) else honestly reject a
     //    cross-tenant collision; (3) else insert. ──
+    //    #1140: a purpose=inbox consent is the PERSONAL mailbox policy — the granting
+    //    user is bound as the mailbox owner and the scopes Google actually granted are
+    //    recorded, so read/organize gates refuse by column when consent narrows.
+    const purpose = parsed.p === "inbox" ? "inbox" : "send";
+    const grantedScopes: string[] = typeof tokenJson.scope === "string"
+      ? tokenJson.scope.split(" ").filter((scope: string) => scope.startsWith("https://"))
+      : [];
     const connectorFields = {
       channel_type: "email",
       provider: "gmail",
@@ -250,6 +262,11 @@ Deno.serve(async (req) => {
       credentials_vault_ref: ref,
       status: "active",
       active: true,
+      ...(purpose === "inbox" ? {
+        mailbox_class: "personal" as const,
+        mailbox_owner_user_id: user.id,
+        mailbox_scopes: grantedScopes,
+      } : {}),
     };
 
     // (1) Our tenant's existing Gmail connector for this address → reconnect (update).
@@ -263,6 +280,28 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (ownRow?.id) {
+      // #1140: an inbox consent must NEVER silently privatize a connector that is
+      // currently the tenant's SHARED support mailbox — every other staff seat would
+      // lose the shared history the moment the row flips to personal. Reconnecting
+      // one's own personal mailbox (already personal) stays allowed.
+      if (purpose === "inbox") {
+        const { data: existingMailbox } = await admin
+          .from("channel_connectors")
+          .select("mailbox_class,mailbox_owner_user_id")
+          .eq("id", ownRow.id)
+          .maybeSingle();
+        if (existingMailbox?.mailbox_class === "personal" && existingMailbox.mailbox_owner_user_id !== user.id) {
+          return new Response(JSON.stringify({ error: "gmail_already_personal_to_another_user", detail: "This address is already a teammate's private inbox. One mailbox belongs to one person — it cannot be re-owned from a different account." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (existingMailbox?.mailbox_class === "shared_support") {
+          return new Response(JSON.stringify({ error: "gmail_shared_connector_conflict", detail: "This address is the workspace's shared support mailbox. Connecting it as a personal inbox would hide it from the rest of the team — connect a different address, or ask the workspace owner to move the shared mailbox first." }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       const { error: updErr } = await admin
         .from("channel_connectors")
         .update({ ...connectorFields, updated_at: new Date().toISOString() })
@@ -342,8 +381,11 @@ Deno.serve(async (req) => {
         provider: "gmail",
         reconnected: Boolean(ownRow?.id),
         // The scope actually granted, so the record cannot later be read as
-        // broader than it was. This connection asks to SEND only.
-        scope: "gmail.send",
+        // broader than it was. The send flow asks to SEND only; the #1140 inbox
+        // consent records the read/organize set Google actually returned.
+        scope: purpose === "inbox" ? (grantedScopes.join(" ") || "gmail.modify gmail.labels") : "gmail.send",
+        purpose,
+        mailbox_class: purpose === "inbox" ? "personal" : "shared_support",
       },
     });
     if (auditErr) console.error("[gmail-oauth-callback] audit write failed:", auditErr.message);

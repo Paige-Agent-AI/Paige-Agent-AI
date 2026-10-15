@@ -19,7 +19,12 @@ import { runReasoning, type ReasoningVerdict } from "./reasoning/engine.ts";
 
 export interface CritiqueResult {
   ok: boolean;
-  verdict?: "SHIP" | "ITERATE" | "BLOCK";
+  // NO_VERDICT (ok:false, with `reason`) = the critique was attempted but produced no review — the
+  // screenshot, the render or the critic failed. The loop treats it as "no review": it keeps the
+  // current artifact and never regenerates from it. `status:"disabled"|"throttled"` = never attempted.
+  verdict?: "SHIP" | "ITERATE" | "BLOCK" | "NO_VERDICT";
+  reason?: string;
+  status?: string;
   summary?: string;
   blockers?: string[];
   should_fix?: string[];
@@ -94,7 +99,9 @@ export async function critiqueImageAndIterate<T extends { url?: string }>(opts: 
       }
       const c = (data ?? null) as CritiqueResult | null;
       lastCritique = c; // the old loop assigned `critique` right after a successful invoke, even on !ok
-      if (!c || !c.ok) return null; // needs_config / degrade — engine breaks, accept what we have (§13)
+      // NO_VERDICT / disabled / throttled / needs_config: no review — the engine stops and the caller
+      // keeps the artifact it already has; nothing is regenerated from a review that did not happen (§13).
+      if (!c || !c.ok || c.verdict === "NO_VERDICT") return null;
       return {
         verdict: c.verdict ?? "ITERATE",
         refinedInstruction: c.refined_prompt,

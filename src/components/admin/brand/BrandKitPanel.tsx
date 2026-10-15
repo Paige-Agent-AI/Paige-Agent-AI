@@ -3,11 +3,10 @@ import { Image as ImageIcon, Palette, Type, Mail, Loader2 } from "lucide-react";
 import { SectionCard } from "@/components/ui/page/SectionCard";
 import { StatePill } from "@/components/ui/page/StatePill";
 import { EmptyState } from "@/components/ui/page/EmptyState";
-import { ColorField, LogoUploader, FONT_OPTIONS } from "@/components/ui/page/BrandControls";
+import { ColorField, LogoUploader, BrandFontPicker } from "@/components/ui/page/BrandControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useBrandKit } from "@/hooks/useBrandKit";
@@ -171,14 +170,12 @@ export function BrandKitPanel() {
                   onChange={(e) => setForm((f) => ({ ...f, product_name: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <span className="text-sm font-medium text-foreground">Typeface</span>
-                <Select value={form.font || "System default"}
-                  onValueChange={(v) => setForm((f) => ({ ...f, font: v === "System default" ? "" : v }))}>
-                  <SelectTrigger><SelectValue placeholder="System default" /></SelectTrigger>
-                  <SelectContent>
-                    {FONT_OPTIONS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <label htmlFor="brand-kit-typeface" className="text-sm font-medium text-foreground">Typeface</label>
+                <BrandFontPicker
+                  id="brand-kit-typeface"
+                  value={form.font}
+                  onChange={(v) => setForm((f) => ({ ...f, font: v }))}
+                />
               </div>
             </div>
             <div className="space-y-1.5">

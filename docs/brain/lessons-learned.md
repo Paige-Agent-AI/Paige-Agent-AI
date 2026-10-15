@@ -6,6 +6,115 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### "Approved" was a category string match, and no test asserted a send happened (2026-10-13, Experience 03 S3)
+
+**Symptom.** On production, six `client.followup` approvals read `approved` and their actions read `done`, between 2026-09-15 and 2026-10-07. Nothing was sent for any of them. Each row's own metadata said so (`executed:false`, "acknowledged — no automated executor for this category yet"), and nothing read that field.
+
+**Root cause.** `execute-approval` picked its branch by matching the approval's category text against "email" and "sms". `client.followup` matched neither, so it fell through to a generic acknowledge branch. That branch marked the approval approved, and the approval→action sync trigger then marked the action done. Before S3, `execute-approval` had no behavioural test of its own (its `index.test.ts` and vitest config are new in S3); the tests that read it checked its source text. No test asserted that an approved outbound-message approval had produced a send, a provider receipt, or anything at all.
+
+**The class of proof that missed it.** A status transition was treated as evidence of the effect the status names. A test that checks a row reached `approved` passes exactly as well when the work was skipped.
+
+**Rule.**
+- For any kind whose job is an external effect (a send, a payment, a publish), the terminal "done" state must REQUIRE the effect's canonical receipt. Enforce that at the write, not in the caller. S3 does it with a guard on `paige_pending_approvals` that demands a provider-accepted governed send for the same business and person, prepared for that approval (round 4), and refuses every other send kind outright.
+- The test suite must include the negative: approve the thing with no effect, and assert the row does NOT become approved.
+- A fall-through "acknowledge" branch is a default that silently claims completion. When a door meets a kind it cannot execute, it must refuse by default. **Where S3 stands (§13):** it applies this to send kinds only. `execute-approval` still acknowledges approvals of categories that are not send kinds (`index.ts:286-305`, `executed:false`, nothing sent); production had 0 of those in the 90 days to 2026-10-13.
+- Reading `executed:false` in production is cheap. Count it before trusting an "approved" metric.
+- **Bind the receipt to the request, not to the person (review round 4).** The first S3 guard accepted any provider-accepted governed email to the same business and person. An unrelated email to that lead (from chat or support) would therefore have satisfied a reply approval, and a legacy `client.followup` could be completed by citing one. The fix stores the approval id on the send when it is prepared and requires that exact id at approval, at recording and at history. A proof of effect must name the request it answers.
+
+### Small functional history does not prove recurring-status read performance (2026-10-13, #2112)
+
+**Symptom → root cause → rule.** The weekly status getter passed functional, receipt, privacy and execution proofs, but its added per-process historical result lookup had no predicate/recency index. Fifty outer process rows did not bound each process's accumulated event/receipt scan. A post-merge P2 correctly identified that missing proof.
+
+**Rule:** measure the actual owner RPC over accumulated owner and foreign history, inspect its natural `EXPLAIN (ANALYZE, BUFFERS)` plan and keep the correlation/security negatives. Index both the recency predicate and the existing receipt string comparisons; never weaken evidence validation to improve latency. Report timeouts as censored lower bounds. Applied migrations stay immutable: a new forward migration repairs access paths without turning a dark recurring trigger, calendar entry or capability declaration into execution authority. The bounded repair/proof and its exact deployment boundary are recorded in `../delivery/experience-05-weekly-history-performance-repair.md`.
+
+### A migration that deadlocked against a schema dump, and the header that said it would half-apply (2026-10-13, #2099)
+
+**Symptom → root cause → rule.** The #2099 migration passed every proof and CI. Its first production
+apply then died with `deadlock detected` at statement 12. A Supavisor schema-dump session was reading
+functions one by one, holding `communication_preferences` and then wanting `communications_consents`.
+The migration takes those two tables in the opposite order. A second applier session was also running
+the same file at the same time.
+
+**The trap is in what you assume next.** The workflow's header says `db push` does not wrap a file in
+a transaction, so a failure mid-file leaves earlier statements committed. Production said otherwise:
+read-only checks showed the statements before the failure (the recorder's new body and its grants)
+had NOT persisted. The file rolled back as a whole.
+
+**Rule:**
+- After a failed apply, read production before acting. Check the migration row, the objects the file
+  creates, and the bodies and grants it replaces. Neither "half-applied" nor "nothing happened" is
+  safe to assume.
+- Retry only once nothing holds or waits on the tables involved (`pg_stat_activity`,
+  `pg_blocking_pids`), and retry only once.
+- A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
+  reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
+  `lock_timeout`, narrows the window but does not close it.
+
+### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Subject invalidation must clear every prior actor status/error and scope its presentation to the corresponding current view; in-flight cancellation tests alone missed a settled-failure transition. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct. Post-merge #2096 review exposed a separate timing gap: verification late in polling exhausted canonical readback time. Budget sequential bounded phases independently and test a verified response both near and beyond the polling deadline; fast fulfillment alone misses that class. Current forward fix and evidence are in `docs/delivery/experience-01-admission-readback-window.md`.
+
+### A per-person field is not a business setting (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The first E4-S1b draft took "the business owner's time zone" from
+the owner's `profiles.coach_timezone`. The proof passed and so did the tests. The independent
+reviewer then traced who can write that field: any tenant admin can write it for any active member
+through `set_coach_fields`, including the admin of another workspace the owner also belongs to.
+That admin could have moved a different business's overdue dates. **Rule:** before a value decides
+money, answer "who can write it, and from which workspace?" by reading its writers. If anyone other
+than the person the ruling names can write it, it is not the authority; give it a home only they
+can write.
+
+### A green proof over a ledger the writer cannot produce (2026-10-12, Experience 04)
+
+**Symptom → root cause → rule.** The E4-S1 client-status proof passed 34/34 and its parity check agreed
+with hand-worked numbers, yet on real data the composer would have reported a whole $3,000 contract
+balance as past due when $200 was. The fixture inserted three instalment-sized invoices naming the
+$3,500 terms, with writer triggers bypassed. The Sales writer refuses that shape
+(`_sales_validate_invoice_terms_reference`): a bound invoice carries the whole agreed amount. The
+proof tested a world that cannot exist. **Rule:** when a fixture bypasses writer guards
+(`session_replication_role=replica`), assert inside the proof that each guarded row passes the
+writer's own validator, and that the shape you are NOT using is refused. Bypass the side effects,
+never the shape.
+
+### A tool's own policy entry described the defect, and nothing read it as one (2026-10-12, #2072)
+
+**Symptom → root cause → rule.** The legacy MCP `send_invoice` read an invoice by id alone with the
+service-role client, with no workspace check. It wrote caller text unescaped into a customer email,
+skipped the provider floor and the consent gate, and marked the row `sent` outside the invoice
+lifecycle. Its capability-policy entry had recorded the read-and-send evidence line by line for
+months, and its own test asserted the legacy send *succeeds*.
+**What missed it:** every guard here checks a classification (governed door, destructive confirm,
+receipt coverage). None checks that a service-role read is scoped to the caller's tenant, and the
+test pinned the behaviour instead of questioning it.
+**Rule:** when you touch or classify a service-role handler, read its first query for the tenant
+predicate before trusting any lint that passed over it. A test that asserts a legacy path
+"retains success" is a record of behaviour, not evidence that the behaviour is safe.
+
+### A pure helper tested on plain objects, called on a frozen one (2026-10-05, C4b rebase)
+
+**Symptom → root cause → rule.** Every crm-command request naming a contact by `client_ref` threw
+`Cannot assign to read only property 'client_ref'` on `main` from 2026-10-01 until the C4b fix. Two PRs merged the
+same day: one froze the canonical command (`markCanonicalCrmCommand`), the other added a resolver that
+fills references IN PLACE. Each was green — the resolver's unit tests passed plain object literals, and
+the door's only test of the call site was a source-string order check. Nothing drove the real door with
+a `client_ref` until C4b's harness did. **Rule:** a helper whose contract is "mutates its argument" is
+tested against the object its real caller passes (here, the canonical command), and a door that composes
+two such seams is driven end to end with the shape Paige actually sends.
+
+---
+
+### Merged before the final review returned (2026-10-04, INT-312 / DEL-093)
+
+**Symptom → root cause → rule.** #1712 merged five minutes before its requested Codex review landed a
+P1, and #1713 merged six minutes before its review flagged the `LIVE` claim it was making. Waiting for
+the review you asked for is part of the gate, not a courtesy — a merge that outruns it turns findings
+into follow-up PRs and lets a docs PR certify what the review would have stopped. And a review's
+reading of code is a hypothesis too: the P1 was right about the fence's policy but, measured, wrong
+about its effect (Playwright 1.62.1 answers CORS preflights itself), so run it before repairing it.
+
+---
+
 ### "Handled by another path" is a claim — name the path, or the case is open (2026-09-26)
 
 **Symptom.** #1458's first head refused a shortened id before it could become an approval card, and
@@ -3271,3 +3380,89 @@ commit status, and production kept serving the last build for about 20 hours (20
 `main` with **no** Vercel status at all (not a failed one); the API answers "The provided GitHub repository
 can't be found." The fix is granting Vercel's GitHub app access to the new organisation and relinking the
 project. After any repository transfer, check that the next merge produces a Vercel deployment.
+
+## 2026-10-06 — The conductor committed a crew's working tree mid-run and shipped a mutation
+
+During PAIGE Operating Fabric F1, the conductor committed and pushed the builder's in-progress files three
+times to satisfy a "working tree is dirty" stop hook. One of those commits (`9e315a16e`) was taken in the
+middle of the builder's §71.4 mutation run, so the branch briefly carried a deliberately broken guard
+(`owners.length > 99` in place of `> 1`: two adapters for one domain silently ran the first). CI did not
+catch it. That commit's `verify` run was **cancelled** by the workflow's concurrency group when the next
+push superseded it, so the suite never ran on it. The root vitest job does run the file: the next head's
+log shows `operating-snapshot.test.ts (68 tests)`. The broken guard was reverted by the next commit, but
+only because the timing happened to line up.
+
+- **A crew's working tree is not the conductor's to commit while the crew runs.** Commit only when the
+  workflow has returned, or when its files are known to be quiescent, and run the slice's own tests
+  first. A failing or half-mutated state is never pushed to satisfy a hook.
+- **The tell:** a commit whose message does not describe its diff. `d6defd750` was titled "partial
+  coverage without a note is refused" but contained only the duplicate-adapter guard — evidence the
+  conductor was committing a moving target.
+- **A superseded run is not a green run.** With `cancel-in-progress` concurrency, rapid pushes cancel the
+  earlier commits' runs. Only the head's own completed run is evidence, so read its conclusion, not
+  the absence of a red one.
+
+## 2026-10-12 — A proof run only as the superuser passed a hole any member could use (Experience 03 S1, #2068)
+
+The campaign stamp on a lead (`growth_form_submissions.campaign_brief_id`) was meant to be fixed after
+capture. The trigger let a NULL through so that `ON DELETE SET NULL` could clear it when a campaign is
+deleted. The table's tenant update policy does not check role, so any workspace member could also set it
+to NULL and silently drop a lead out of its campaign. The author's proof was green: every immutability
+case ran as the superuser and only tried changing the campaign to another one. An independent reviewer
+ran the clear as the member under `SET ROLE authenticated` and it went through.
+
+- **A guard that relaxes for a system path must be proven from the browser role through the table's own
+  policies.** And the relaxation must key on a fact the browser cannot produce: the fix accepts the NULL
+  only once the campaign row no longer exists.
+- **A SQL test helper whose parameter shares a column's name matches every row.** `WHERE id = id::uuid`
+  compares the column with itself. The helper returned an arbitrary row and the first run "failed" for the
+  wrong reason. Name parameters `p_*`.
+- **A text assertion can be satisfied by unrelated copy.** "the member sees `A lead`" passed with names
+  leaking, because the footer begins "A lead is credited…". Only mutating the code exposed it. Assert on
+  the element that carries the value, and mutate every privacy assertion until it fails.
+
+## 2026-10-12 — `var(--ring, …)` as an outline colour removes the focus ring it means to draw
+
+`--ring` holds bare HSL components (`258 70% 50%`), read as `hsl(var(--ring))`. As a plain colour it is
+invalid at computed-value time, so `outline: 2px solid var(--ring, var(--violet))` computes to
+`outline-style: none`. Because such a rule is more specific than the working global
+`[data-pg] :focus-visible`, it actively removes the ring. Found by a keyboard drive that asserted the
+computed outline, not by reading the CSS (it looks correct). Four shipped Campaigns rules carry it: #2070.
+
+- **Use `var(--violet)` (or `hsl(var(--ring))`) for focus outlines in the Solo shell.**
+- **Measure focus after transitions settle.** `.paige-solo .btn` transitions every property for 150 ms,
+  outline included; a reading taken at once shows width 0 even when the rule is right.
+
+- 2026-10-12 (Experience 03 S1b): **When a stated value starts depending on a new input, every write path to that
+  input must refresh the readers.** S1b made a form's stated destination depend on its campaign link and the
+  campaign's pipeline. The screens, tests and drive were all correct at load, but nothing re-read the shared
+  Marketing read after attaching a form in the dossier, so the screens went stale until reload. It was caught only
+  by an independent review that asked "what writes this input?" Also: the realtime channel that seemed to cover it
+  never fires on production (no table is published, #2079). Check the publication before relying on a subscription.
+- **2026-10-12 · Exp 03 S1b — some `_shared` edge files are pinned to a reviewed fingerprint; a wording edit
+  turns `contract` red.** `scripts/ci/c0b-incumbent-resource-binding.mjs` pins the canonical AST hash of reviewed
+  sources (among them `_shared/action-risk.ts`), and `paige-spine-registry-lint.mjs --self-test` fails with
+  "`<capability>: binding positive failed`" when any pinned file changes — the message names a capability, not the
+  file. Run `node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test` locally before
+  pushing any `_shared` change. Re-pinning is a review decision, not a fix: S1b reverted its rationale wording
+  instead and carried the disclosure in an unpinned file (`paige-spine/domains/campaigns.ts`).
+
+## 2026-10-13 — `REVOKE … FROM PUBLIC` left the public consent writer open to `anon` for months (#2087)
+
+`record_communications_consent`, `has_sms_consent` and `has_email_marketing_consent` were written with
+`REVOKE ALL … FROM PUBLIC; GRANT EXECUTE … TO authenticated, service_role`, and the repo's own consent test
+asserted anon held nothing on the table. Production disagreed on both: Supabase's default privileges grant
+`anon` and `authenticated` EXECUTE on every new function and full DML on every new table explicitly, not
+through PUBLIC, so revoking PUBLIC removes nothing. The test that would have caught it never ran in CI.
+
+- **Revoke from `anon` and `authenticated` by name**, and grant back exactly what is meant. `FROM PUBLIC`
+  alone is not a revocation on Supabase.
+- **A grant assertion proves only the database it ran on.** Prove grants in the database-contract job, which
+  reproduces production's grants before applying the change; a local-only test can pass against a schema
+  production does not have.
+- **An RLS policy is a write path.** The "self insert" policy let any signed-in user write complete
+  platform SMS evidence for any number. Inventory policies alongside functions when asking "who can write
+  this?" (§37).
+- **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
+  grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
+

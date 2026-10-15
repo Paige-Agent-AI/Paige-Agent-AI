@@ -1,0 +1,20 @@
+-- Test identity and vector implementation are models, not deployed Supabase proof.
+ALTER TABLE public.tenant_knowledge_docs ADD COLUMN network_reviewed_at timestamptz, ADD COLUMN network_reviewed_by uuid, ADD COLUMN promoted_to_canon_id uuid, ADD COLUMN token_count integer;
+GRANT USAGE ON SCHEMA auth TO authenticated;
+GRANT SELECT ON public.test_members TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.tenant_knowledge_docs,public.tenant_knowledge_chunks TO authenticated;
+ALTER TABLE public.tenant_knowledge_docs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenant_knowledge_chunks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY legacy_docs ON public.tenant_knowledge_docs FOR ALL TO authenticated USING (public.is_platform_owner() OR public.is_tenant_member(tenant_id)) WITH CHECK (public.is_platform_owner() OR public.is_tenant_member(tenant_id));
+CREATE POLICY legacy_chunks ON public.tenant_knowledge_chunks FOR ALL TO authenticated USING (public.is_platform_owner() OR public.is_tenant_member(tenant_id)) WITH CHECK (public.is_platform_owner() OR public.is_tenant_member(tenant_id));
+CREATE SCHEMA extensions;
+CREATE DOMAIN extensions.vector AS double precision[];
+CREATE FUNCTION extensions.test_distance(extensions.vector,extensions.vector) RETURNS double precision LANGUAGE sql IMMUTABLE AS $$SELECT 0.25::double precision$$;
+CREATE OPERATOR extensions.<=> (LEFTARG=extensions.vector,RIGHTARG=extensions.vector,FUNCTION=extensions.test_distance);
+ALTER TABLE public.tenant_knowledge_chunks ADD COLUMN embedding extensions.vector DEFAULT ARRAY[1.0]::double precision[];
+CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT active_tenant_id FROM public.profiles WHERE user_id=auth.uid()$$;
+CREATE FUNCTION public.is_platform_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT coalesce(public.is_platform_owner(),false)$$;
+GRANT USAGE ON SCHEMA extensions TO authenticated,service_role;
+GRANT ALL ON public.tenant_knowledge_docs,public.tenant_knowledge_chunks TO service_role;
+CREATE POLICY service_docs ON public.tenant_knowledge_docs FOR ALL TO service_role USING(true) WITH CHECK(true);
+CREATE POLICY service_chunks ON public.tenant_knowledge_chunks FOR ALL TO service_role USING(true) WITH CHECK(true);

@@ -51,7 +51,7 @@ interface AnalyticsEvidenceResponse {
 
 const METRIC_ID = "sales_funnel.created_deals_by_current_stage" as const;
 const REF_PATTERN = /^aneb_v1_[0-9a-f]{64}$/;
-const issueEvidenceRpc = supabase.rpc as unknown as (
+const issueEvidenceRpc = supabase.rpc.bind(supabase) as unknown as (
   functionName: string,
   args: Record<string, unknown>,
 ) => PromiseLike<{ data: unknown; error: unknown }>;

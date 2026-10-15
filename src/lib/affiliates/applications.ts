@@ -38,8 +38,16 @@ export interface NewAffiliateApplication {
   user_id?: string | null;
 }
 
+/** The applicant's optional contact preferences, recorded by the server against this application. */
+export interface ApplicantPreferences {
+  emailMarketing: boolean;
+  smsMarketing: boolean;
+  smsTransactional: boolean;
+}
+
 export async function submitAffiliateApplication(
   input: NewAffiliateApplication,
+  preferences?: ApplicantPreferences,
 ): Promise<AffiliateApplication> {
   const { data, error } = await supabase
     .from("affiliate_applications")
@@ -59,10 +67,11 @@ export async function submitAffiliateApplication(
   if (error) throw error;
   const app = data as AffiliateApplication;
 
-  // Confirmation email (non-blocking). The server sends it to the address on this application —
-  // the browser only names which application was just submitted.
+  // Confirmation email and contact preferences (non-blocking). The server sends to, and records against,
+  // the address and phone stored on this application; the browser only names which application was just
+  // submitted and what the applicant ticked. Consent is never written from the browser (#2087).
   void supabase.functions.invoke("affiliate-application-confirm", {
-    body: { applicationId: app.id },
+    body: { applicationId: app.id, consent: preferences ?? null },
   }).catch((e) => console.warn("application received email failed", e));
 
   return app;

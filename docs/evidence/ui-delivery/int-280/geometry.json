@@ -1,0 +1,1286 @@
+[
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "The evidence available today",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Decisions to prepare",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Operational quality coverage",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(155, 141, 224)",
+        "label": "UNVERIFIED",
+        "ratio": 6.37
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Existing intelligence departments",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Discuss with PAIGE",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2048,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "executive"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(155, 141, 224)",
+        "label": "Inspect the operational evidence",
+        "ratio": 6.37
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(155, 141, 224)",
+        "label": "Call evidence",
+        "ratio": 6.37
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(237, 193, 127)",
+        "label": "PARTIAL",
+        "ratio": 10.97
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(155, 141, 224)",
+        "label": "Discuss with PAIGE",
+        "ratio": 6.37
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 1641,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "forensic"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 209, 174)",
+        "label": "Evaluation and regression evidence",
+        "ratio": 10.42
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 209, 174)",
+        "label": "Controlled improvement path",
+        "ratio": 10.42
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Read contracts exist",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session draft only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 209, 174)",
+        "label": "Prepare an improvement recommendation",
+        "ratio": 10.42
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2286,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "studio"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 169, 196)",
+        "label": "Models observed in call evidence",
+        "ratio": 7.56
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 169, 196)",
+        "label": "Hosted versus local comparison",
+        "ratio": 7.56
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Existing eval substrate",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(237, 193, 127)",
+        "label": "PARTIAL",
+        "ratio": 10.97
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(143, 169, 196)",
+        "label": "PLANNED",
+        "ratio": 7.56
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 1540,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "lab"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Operator supplied",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session dossier only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Discuss with PAIGE",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2106,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(32, 30, 35)",
+        "label": "The evidence available today",
+        "ratio": 15.05
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(32, 30, 35)",
+        "label": "Decisions to prepare",
+        "ratio": 15.05
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(32, 30, 35)",
+        "label": "Operational quality coverage",
+        "ratio": 15.05
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(101, 90, 150)",
+        "label": "UNVERIFIED",
+        "ratio": 5.53
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(32, 30, 35)",
+        "label": "Existing intelligence departments",
+        "ratio": 15.05
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(32, 30, 35)",
+        "label": "Discuss with PAIGE",
+        "ratio": 15.05
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2048,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "light",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "executive"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(101, 90, 150)",
+        "label": "Inspect the operational evidence",
+        "ratio": 5.53
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(101, 90, 150)",
+        "label": "Call evidence",
+        "ratio": 5.53
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(152, 99, 34)",
+        "label": "PARTIAL",
+        "ratio": 4.62
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(101, 90, 150)",
+        "label": "Discuss with PAIGE",
+        "ratio": 5.53
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 1641,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "light",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "forensic"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(50, 116, 88)",
+        "label": "Evaluation and regression evidence",
+        "ratio": 5.07
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(50, 116, 88)",
+        "label": "Controlled improvement path",
+        "ratio": 5.07
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Read contracts exist",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Session draft only",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Submission unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(50, 116, 88)",
+        "label": "Prepare an improvement recommendation",
+        "ratio": 5.07
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2286,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "light",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "studio"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(77, 111, 146)",
+        "label": "Models observed in call evidence",
+        "ratio": 4.78
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(77, 111, 146)",
+        "label": "Hosted versus local comparison",
+        "ratio": 4.78
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Existing eval substrate",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(152, 99, 34)",
+        "label": "PARTIAL",
+        "ratio": 4.62
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(77, 111, 146)",
+        "label": "PLANNED",
+        "ratio": 4.78
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 1540,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "light",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "lab"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(141, 95, 124)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 4.71
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Operator supplied",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Session dossier only",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Handoff unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Handoff unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(61, 57, 65)",
+        "label": "Submission unavailable",
+        "ratio": 10.28
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(141, 95, 124)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 4.71
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(141, 95, 124)",
+        "label": "Discuss with PAIGE",
+        "ratio": 4.71
+      },
+      {
+        "background": "rgb(247, 244, 238)",
+        "color": "rgb(103, 97, 107)",
+        "label": "UNAVAILABLE",
+        "ratio": 5.47
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 648,
+      "scrollHeight": 2106,
+      "scrollTop": 0,
+      "width": 911
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "light",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1536,
+      770
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Operator supplied",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session dossier only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Discuss with PAIGE",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 646,
+      "scrollHeight": 2140,
+      "scrollTop": 0,
+      "width": 786
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1366,
+      768
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Operator supplied",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session dossier only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Discuss with PAIGE",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 646,
+      "scrollHeight": 2140,
+      "scrollTop": 0,
+      "width": 798
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      1024,
+      768
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Operator supplied",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session dossier only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Discuss with PAIGE",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 882,
+      "scrollHeight": 2123,
+      "scrollTop": 0,
+      "width": 818
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      900,
+      1000
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Product Opportunity Dossiers",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Operator supplied",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Session dossier only",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Handoff unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(214, 208, 201)",
+        "label": "Submission unavailable",
+        "ratio": 12.02
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Prepare a Product Opportunity Dossier",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(194, 163, 184)",
+        "label": "Discuss with PAIGE",
+        "ratio": 8.08
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 710,
+      "scrollHeight": 4086,
+      "scrollTop": 0,
+      "width": 309
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      390,
+      844
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "radar"
+  },
+  {
+    "bodySize": "14px",
+    "contrasts": [
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "The evidence available today",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Decisions to prepare",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Operational quality coverage",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(155, 141, 224)",
+        "label": "UNVERIFIED",
+        "ratio": 6.37
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Existing intelligence departments",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(246, 242, 234)",
+        "label": "Discuss with PAIGE",
+        "ratio": 16.47
+      },
+      {
+        "background": "rgb(22, 19, 26)",
+        "color": "rgb(172, 166, 157)",
+        "label": "UNAVAILABLE",
+        "ratio": 7.61
+      }
+    ],
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "main": {
+      "height": 710,
+      "scrollHeight": 3807,
+      "scrollTop": 0,
+      "width": 309
+    },
+    "rootHorizontalOverflow": false,
+    "scrollOwners": [
+      {
+        "class": "relative col-start-1 row-start-2 min-h-0 min-w-0 overflow-auto bg-[var(--pg-workspace)]",
+        "label": null,
+        "tag": "MAIN"
+      }
+    ],
+    "theme": "dark",
+    "unlabeledInputs": 0,
+    "viewport": [
+      390,
+      844
+    ],
+    "visibleDuplicateTitles": 0,
+    "workspace": "executive"
+  }
+]

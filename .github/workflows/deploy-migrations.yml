@@ -90,7 +90,7 @@ jobs:
           if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${before}^{commit}" 2>/dev/null; then
             before="$(git rev-parse "${after}^" 2>/dev/null || echo "$after")"
           fi
-          git diff --name-only --diff-filter=AM "$before" "$after" -- 'supabase/migrations/*.sql' \
+          git diff --name-only --diff-filter=AMR "$before" "$after" -- 'supabase/migrations/*.sql' \
             | tee changed_migrations.txt
           echo "count=$(grep -c . changed_migrations.txt || true)" >> "$GITHUB_OUTPUT"
 
@@ -98,6 +98,12 @@ jobs:
         if: steps.changed.outputs.count != '0'
         run: |
           xargs -a changed_migrations.txt python3 .github/scripts/lint_migrations.py
+
+      # Two files sharing a version means production applies only one of them (2026-10-04: #1679 and
+      # #1680 both merged 20270539000000 and Migration A never ran). Checked here, before the push,
+      # so a duplicate on main blocks the deploy with its name instead of a bare CLI failure.
+      - name: Migration version collision guard
+        run: BASE_REF=HEAD node scripts/ci/migration-version-collision-lint.mjs
 
       - name: No migration changes
         if: steps.changed.outputs.count == '0'

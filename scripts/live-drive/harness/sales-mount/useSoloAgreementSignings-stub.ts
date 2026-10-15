@@ -1,6 +1,6 @@
 // The agreement-signings read, stubbed at the NETWORK boundary only.
 //
-// Same contract as `useSoloAgreements-stub.ts` beside it: everything above this line renders
+// Same contract as `useSoloCommercialTerms-stub.ts` beside it: everything above this line renders
 // unchanged — the band, the Signature column, the document step, the send drawer, every token.
 // What is replaced is the one thing a local harness cannot have: a tenant-scoped round trip to
 // PostgREST. That is also the honest limit of any frame taken from here. It is a RENDER, never an

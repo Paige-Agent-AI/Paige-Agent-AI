@@ -49,6 +49,13 @@ export type TenantEmailProviderConfig = {
 
 // ---------- Providers ----------
 
+// SendGrid (PAIGE Email) is deliberately NOT an adapter here. A business's SendGrid email goes out
+// ONLY through the governed one-to-one email door (comms-email-command → send-message, which refuses a
+// SendGrid send that is not the door's prepared operation), so the sender's domain verification, the
+// approval binding and the receipts all apply. An adapter here would read the platform SendGrid key on a
+// tenant-controlled `email_provider` with no domain check (Experience 03 round-4 security LOW-3), so
+// buildProvider() resolves "sendgrid" to a provider that refuses to send (see below).
+
 class ResendProvider implements EmailProvider {
   readonly key = "resend";
   #apiKey: string;
@@ -127,6 +134,10 @@ export function buildProvider(config?: TenantEmailProviderConfig | null): EmailP
       // Wiring point for bring-your-own providers. Implement the class above
       // and swap this line for `return new XProvider(config)`.
       return new UnimplementedProvider(provider);
+    case "sendgrid":
+      // Never sends from this seam, and never falls back to another provider: PAIGE Email (SendGrid)
+      // goes out only through the governed email door (see the note above ResendProvider).
+      return new UnimplementedProvider("sendgrid");
     default:
       // Unknown provider string → fail safe to platform Resend.
       return new ResendProvider(platformResendKey);

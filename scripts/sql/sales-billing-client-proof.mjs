@@ -1,0 +1,40 @@
+// Disposable local PostgreSQL only. Builds on the rolled-back role/RLS proof.
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { strict as assert } from 'node:assert';
+import ts from 'typescript';
+const [binary, port, user] = process.argv.slice(2);
+if (!binary || !/^\d+$/.test(port ?? '') || !user) throw new Error('Usage: node scripts/sql/sales-billing-client-proof.mjs <psql-path> <disposable-port> <local-user>');
+const directory = fileURLToPath(new URL('.', import.meta.url));
+const source = readFileSync(new URL('../../src/solo/sales/billingDrafts.ts', import.meta.url), 'utf8');
+const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
+const api = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`);
+const proof = readFileSync(new URL('sales-billing-drafts-proof.sql', import.meta.url), 'utf8');
+const tenant = '20000000-0000-0000-0000-000000000001';
+const invoice = '60000000-0000-0000-0000-000000000002';
+function run(extra) {
+  const sql = proof.replace('ROLLBACK;', `\n\\pset tuples_only on\n\\pset format unaligned\n${extra}\nROLLBACK;`);
+  const child = spawnSync(binary, ['-h', '127.0.0.1', '-p', port, '-U', user, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], { cwd: directory, input: sql, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+  if (child.status !== 0) throw new Error(`Disposable SQL proof failed: ${child.stderr}`);
+  const line = child.stdout.split(/\r?\n/).find(value => value.startsWith('{"client_roundtrip":'));
+  if (!line) throw new Error('No actual SQL response captured');
+  return JSON.parse(line).client_roundtrip;
+}
+const created = run("SELECT jsonb_build_object('client_roundtrip', (SELECT result FROM proof_results WHERE label='catalogue'));");
+const row = api.readBillingDraft(created.row, tenant);
+assert(row, 'actual nullable SQL/catalog response must decode');
+const draft = api.billingDraftEditInput({ ...row.facts, memo: 'Client roundtrip edit' });
+assert.equal(draft.unit_minor, null);
+const literal = JSON.stringify(draft).replaceAll("'", "''");
+const save = `public.save_sales_billing_draft('${tenant}','${invoice}',1,'70000000-0000-0000-0000-000000000005','${literal}'::jsonb)`;
+const result = run(`UPDATE tenant_prices SET active=true,unit_amount=2500 WHERE id='50000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+CREATE TEMP TABLE client_roundtrip_result AS SELECT ${save} AS result;
+SELECT proof_assert((SELECT result FROM client_roundtrip_result)=${save},'client catalog edit replay identical');
+SELECT jsonb_build_object('client_roundtrip',(SELECT result FROM client_roundtrip_result));`);
+const saved = await api.saveBillingDraft(async () => ({ data: result, error: null }), { openedTenantId: tenant, invoiceId: invoice, expectedVersion: 1, operationId: '70000000-0000-0000-0000-000000000005', draft });
+assert.equal(saved.ok, true, 'actual edited SQL response must pass save decoder');
+assert.equal(saved.value.version, 2);
+assert.equal(saved.value.facts.memo, 'Client roundtrip edit');
+console.log('PASS: actual SQL catalog create -> client decode -> edit conversion -> SQL save/replay -> client decode; both transactions rolled back. Auth helpers remain local stubs.');

@@ -67,7 +67,7 @@ export { DataTableShell, type Column } from "./DataTableShell";
 export { EmptyState } from "./EmptyState";
 export { Toolbar, FilterChip } from "./Toolbar";
 export { StatePill, type PillState } from "./StatePill";
-export { ColorField, LogoUploader, BRAND_IMG_TYPES, FONT_OPTIONS } from "./BrandControls";
+export { ColorField, LogoUploader, BrandFontPicker, BRAND_IMG_TYPES, FONT_OPTIONS } from "./BrandControls";
 export * from "./PresenceDot";
 export {
   PaigeAttribution,

@@ -524,6 +524,36 @@ export function createAnchoredTranscriptScroll({
       restore(source);
     },
     isAtBottom: pinned,
+    /**
+     * The person acted on something inside a message (C3a: opened "What PAIGE did") and that
+     * message is about to grow. Hold the message where it is now — the same anchor a scroll by
+     * the person would record — so the growth extends below it instead of pushing it up out of
+     * view while the transcript follows the bottom. It is an owner action, so following the bottom
+     * stops exactly as it would after an owner scroll; "jump to latest" brings it back.
+     */
+    holdMessageAt(node: HTMLElement) {
+      if (!element || !hasVisibleGeometry() || !element.contains(node)) return;
+      const item = node.closest<HTMLElement>(MESSAGE_SELECTOR);
+      if (!item || !element.contains(item) || !item.dataset.paigeMessageId) return;
+      cancelProgrammaticMovement();
+      intentionalBottom = false;
+      pendingContextDomSignature = null;
+      const items = Array.from(element.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR));
+      const index = items.indexOf(item);
+      position = {
+        kind: "anchor",
+        messageId: item.dataset.paigeMessageId,
+        semanticKey: item.dataset.paigeMessageAnchorKey,
+        indexFromStart: index,
+        indexFromEnd: items.length - 1 - index,
+        offsetPx: item.getBoundingClientRect().top - element.getBoundingClientRect().top,
+      };
+      persist();
+      lastScrollTop = element.scrollTop;
+      snapshotGestureGeometry();
+      trace("owner-pointer", "capture");
+      announcePinned();
+    },
     jumpToBottom(behavior: ScrollBehavior = "auto") {
       if (!element || !hasVisibleGeometry()) return;
       cancelProgrammaticMovement();

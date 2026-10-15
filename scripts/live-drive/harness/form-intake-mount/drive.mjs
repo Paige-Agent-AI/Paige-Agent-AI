@@ -21,7 +21,12 @@ async function open(query, w, h, opts = {}) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, reducedMotion: opts.reducedMotion ?? "no-preference" });
   page.on("pageerror", (e) => errors.push(`${query}: ${e}`));
   await page.goto(`${base}?${query}`);
-  await page.getByRole("button", { name: "Details" }).first().click();
+  // The form's routing and submissions open in the one form panel from its capture-point card on
+  // Marketing › Overview (INT-342). Below 1080px PAIGE is an overlay over the right of the column,
+  // so the drive opens it the way a keyboard user would, which works regardless.
+  const routing = page.locator("button.mov-cp", { hasText: "Discovery call request" }).first();
+  await routing.focus();
+  await page.keyboard.press("Enter");
   await page.waitForSelector(".campaigns-drawer .intake-section");
   return page;
 }

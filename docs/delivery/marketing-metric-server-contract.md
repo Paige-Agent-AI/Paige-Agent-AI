@@ -1,0 +1,103 @@
+# INT-298 / INT-342 S2 — Marketing metric server contract
+
+SHELL: SOLO. Coordinator command "Marketing Backend Completion & Analytics Ownership" (owner-authorized
+2026-10-11; INT-298, INT-342, Linear ANT-15), slice 2 of 6. Plan: `docs/product/int342-marketing-convergence.md` §H.
+
+## Scope and shared-owner coordination
+
+Marketing owns its analytics producers and presentation (`docs/delivery/int340-shared-metric-consumer-contract.md`).
+INT-340 owns the shared issuer, resolver, reference registry, dispatcher and frontend validator; Platform Reach owns
+Spine/Chat/Live access. This slice follows the Sales precedent (`sales-performance-server-contract.md`):
+
+- **Marketing's own:** the private `_marketing_metric_bundle` producer and its proof `supabase/tests/marketing_metric_producer.sql`.
+- **INT-340's dispatcher, touched once:** migration `20270602000503_int298_marketing_metric_producer.sql` re-creates
+  `_analytics_metric_produce` with the eleven `marketing.*` keys and one `marketing.%` branch; every other line is as
+  `20270601000006` wrote it. Coordination is recorded on Linear ANT-23 (INT-340). Nothing else in the shared seam changes.
+- **Not in this slice:** the Chat/Live key list (`supabase/functions/_shared/analytics-metrics/read.ts`, Platform Reach,
+  MBC slice 6). No KPI value is stored; the issuer persists only
+  an opaque reference that expires after 15 minutes.
+
+## Private entry and authority
+
+`_marketing_metric_bundle(tenant, key, version, start, end, as_of, dimensions)` is STABLE, SECURITY DEFINER, pinned empty
+search path and UTC, with no EXECUTE grant to PUBLIC, anon, authenticated or service_role. It rechecks `auth.uid()`, the
+current workspace, the profile's active workspace, an active owner/admin seat, a live user and an eligible tenant
+lifecycle. Only version 1.0.0 and the keys below are admitted; ranges are finite, ordered, half-open, at most ten years
+and end at or before as-of. No dimensions in this version.
+
+## Metric definitions — version 1.0.0
+
+A **lead** is a form submission. Nothing here judges lead quality: "qualified leads" have no definition and no producer.
+
+| Key | Cohort / formula | Value | Exclusions |
+|---|---|---|---|
+| `marketing.leads.received` | Submissions with `created_at` in [start,end), every form in the workspace | count | none |
+| `marketing.leads.daily` | Same, one point per UTC day the range touches (zeros kept); range may touch at most 366 days | series | none |
+| `marketing.leads.by_utm_source` | Same, grouped by `lower(btrim(utm_source))` when a string (control characters become spaces), as item `src:<tag>`; no tag → item `_untagged` ("No source tag"); beyond 98 tags → `_other` (so at most 100 items) | distribution | none (untagged is an item, never dropped) |
+| `marketing.leads.by_campaign_tag` | Same, `utm_campaign` matched case-insensitively to this workspace's `campaign_briefs.short_ref`: one match → `brief:<id>` labelled with the brief's name; no match → `tag:<tag>`; no tag → `_untagged` | distribution | `campaign_tag_matches_several_briefs` (never guessed) |
+| `marketing.leads.converted_to_opportunity` | Same; count those whose `deal_id` resolves to a deal in this workspace. Denominator = contributing leads | count | `opportunity_record_missing` (a `deal_id` with no deal here) |
+| `marketing.capture_points.published_current` | Forms with `status = active` now (pages and funnels capture through the forms they embed) | count, snapshot | none |
+| `marketing.forms.unrouted_current` | Live forms whose leads reach no pipeline as `growth-process-submission` runs them: no enabled automation whose target executor is `pipeline_attach`, no intake route (`auto_create_deal` with a `pipeline_id`) that applies because the form has no enabled automation, and (since 20271021042001) no default pipeline that can take the lead — a non-archived `is_default` pipeline with a non-archived open stage, into which an unrouted form's leads are filed. Denominator = live forms | count, snapshot | none |
+| `marketing.submissions.failed_current` | Now, any age: `processing_state = error` (failed) and `pending`/`claimed` more than 15 minutes after arriving (stalled; the processor retries after 5) | distribution, snapshot | none |
+| `marketing.email.sent` | Recipients with `sent_at` in range, any route | count | none |
+| `marketing.email.opened` / `.clicked` | Of the managed-route sends in range, those opened / clicked since. Denominator = tracked sends | count | `not_tracked_own_mail` (sends through the business's own mail) |
+
+Every tag, reference and brief name that becomes a key or label passes `_marketing_metric_text`. That function:
+- replaces characters outside the Basic Multilingual Plane with U+FFFD, so a character limit is also a UTF-16 limit;
+- turns control characters and every Unicode space into one space;
+- trims the ends;
+- treats an empty result as no value.
+
+This keeps every answer inside the shared validator's key and label rules, whatever an anonymous form submission carried.
+Ordering and the 98-tag cutoff use the `"C"` collation, so results are the same on every database.
+
+Truth state follows the shared rule: excluded candidates make a reading PARTIAL; candidates with none contributing make
+it UNAVAILABLE (the dispatcher then nulls values). A reading with no candidates is a true zero, LIVE.
+
+**Not produced, unavailable at the reader:** visits and page conversion, funnel step-through, social reach, ad spend,
+CPL, CAC, ROAS (Ads department), revenue (Sales), qualified leads.
+
+## Known limits
+
+- Each read builds the range's rows as one JSON array, and the shared resolver runs the producer again on every readback.
+  - Sized for today's volumes: hundreds of submissions per workspace.
+  - Past tens of thousands per range, move the counting into SQL aggregates and keep the digest over row identities.
+- Failed and stalled submissions are read through the partial index `growth_form_submissions_tenant_unfinished`.
+- When every candidate is excluded, the shared dispatcher's UNAVAILABLE rewrite replaces the specific reason with its generic one. That behaviour is INT-340's.
+
+## Proof
+
+- `supabase/tests/marketing_metric_producer.sql`, run in the `database-contract` job on a production-schema clone,
+  through the real issuer and resolver. It covers:
+  - every key's value against fixtures, including email over managed and connector routes, and intake routing losing to an enabled automation;
+  - 120 tags folding to exactly 100 items, and emoji or Unicode-space tags staying valid labels;
+  - tenant isolation, including another workspace's brief, deal and leads;
+  - an unknown key, a dimension and an over-long daily range refused;
+  - the private producer, a foreign epoch and a member refused;
+  - a new lead invalidating an issued reference;
+  - other domains still dispatching.
+- Slice 2b consumes four keys on Marketing › Analytics (`src/solo/marketing-analytics-metrics.ts`):
+  - `marketing.leads.received`, `.by_utm_source`, `.by_campaign_tag` and `.converted_to_opportunity`, read for the range
+    [start of the first local day, now − 1 s) and the same number of local days before it;
+  - every answer passes `parseMetricResult` with the expected key, version, epoch, range and dimensions, and must be
+    owned by `marketing`, before anything is drawn;
+  - "traced to a source" = named source tags + the folded rest; "campaign tagged" = brief and unmatched tags + the
+    ambiguous exclusion; "matched" = brief rows only;
+  - 42501 is a member: the page keeps its own counts. Any other failure is logged and the page keeps its own counts.
+  - Tests: `src/solo/marketing-analytics-metrics.test.tsx` (shapes against the real validator, the eight issued reads,
+    refusal, a foreign epoch) and `src/solo/growth2.render.test.tsx` (owner, member).
+- Slice 2c consumes the same four keys on Marketing › Overview for its 30 days only (`previous: false`: Overview shows
+  no comparison, so it issues four reads, not eight), plus `marketing.submissions.failed_current` once
+  (`useMarketingProcessingHealth`):
+  - leads, opportunities and the source mix become the server's (`withServerOverview`); the daily chart, each form's
+    recent submissions and the latest leads stay on the records, and when those are a floor the chart says so;
+  - processing health is stated under Needs you ("Across every submission: …"): failures older than the records hold
+    and submissions still waiting more than 15 minutes. They have no form to open from Overview, so they are a
+    statement, not an item to act on. The range for this current-state key is the period start to five minutes before
+    now, so a device clock ahead of the server's is not refused;
+  - a member (42501), no session (28000) or a failed read keeps the record counts; with no health read, "nothing has
+    failed" is claimed only of the latest 200 submissions;
+  - Tests: `src/solo/marketing-overview-model.test.ts` (the overlay, the shared period start),
+    `src/solo/marketing-analytics-metrics.test.tsx` (the health answer; both hooks against the real validator: the
+    current-only read, the health read's arguments and five-minute end, a member, another department's answer, a
+    foreign epoch) and `src/solo/growth2.render.test.tsx` (owner on a full read, older and waiting submissions, a member).

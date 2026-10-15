@@ -10,6 +10,7 @@ import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 import { decideSubagentAuthority } from "../_shared/subagent-authority.ts";
 import { isJobKind, DEFAULT_SUBAGENT_JOB_KIND } from "../_shared/model-router.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -497,6 +498,15 @@ async function actionDisable(body: Record<string, unknown>, caller: Caller) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // INT-313 — X-Orchestrator-Call is a SIGNAL any client can set, never authority. Agent-origin
+  // semantics (a body tenant_id + actor_user_id honoured below) belong only to the canonical internal
+  // caller (exact service-role bearer / verified cron token: paige-ai-chat's forge_subagent, paige-mcp).
+  // A caller that claims agent origin without being one is refused before anything is read or written.
+  const claimsAgentOrigin = req.headers.get("X-Orchestrator-Call") === "1";
+  if (claimsAgentOrigin && !(await isAuthorizedInternalCaller(req, adminClient()))) {
+    return fail("Agent-origin calls must come from a trusted internal caller.", 403);
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json() as Record<string, unknown>; }
   catch { return fail("Invalid JSON", 400); }

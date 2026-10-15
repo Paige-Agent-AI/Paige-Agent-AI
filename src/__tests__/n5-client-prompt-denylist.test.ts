@@ -5,6 +5,7 @@
 // (the ungated userContext injected "❌ NO CREDIT REPORT UPLOADED YET…" into every
 // tenant's prompt) — that failure is the point.
 import { describe, expect, it } from "vitest";
+import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import {
   buildFundingProgramVocab,
   buildLaneGuardSection,
@@ -26,6 +27,9 @@ import { PAIGE_VOICE_BLOCK } from "../../supabase/functions/_shared/paige-voice.
 import * as voice from "../../supabase/functions/_shared/paige-voice.ts";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
+import { attachTurnRecord, createTurnTracker, NO_TOOLS } from "../../supabase/functions/_shared/paige-turn/reducer";
+import { turnFrameLine } from "../../supabase/functions/_shared/paige-turn/contract";
+import { executableToolCalls, readModelRound } from "../../supabase/functions/_shared/paige-turn/round";
 
 describe("INT-104 Live final-answer streaming preserves the canonical tool gate", () => {
   const code = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
@@ -35,8 +39,29 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const visit = (node: ts.Node) => { if (found) return; if (predicate(node)) found = node; else ts.forEachChild(node, visit); };
     visit(source); if (!found) throw new Error("Production seam not found"); return found;
   };
-  const js = (body: string) => ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  // These extracted seams exercise Live, which does not opt into the typed executor.
+  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const initializer = (name: string) => (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === name) as ts.VariableDeclaration).initializer!.getText(source);
+  // paige-turn — the PRODUCTION terminal seam, read out of index.ts (emitTurnTerminal with its
+  // exactly-once guard, and emitTurnTerminalBeforeAnswer), closed over a real reducer. So the guard these
+  // tests exercise is the one that ships, not a fake that always enqueues. The turn is a Live turn
+  // that decided to answer (one round, a natural stop), as it is when the closing call starts.
+  const terminalSeam = (protectedTurn: boolean) => {
+    const turnTracker = createTurnTracker(NO_TOOLS);
+    turnTracker.roundStarted(); turnTracker.naturalStop();
+    const seam = new Function("turnTracker", "turnFrameLine", "turnCarriesProtectedContent",
+      js(`const enc=new TextEncoder();let turnTerminalSent=false;const emitTurnTerminal=${initializer("emitTurnTerminal")};const emitTurnTerminalBeforeAnswer=${initializer("emitTurnTerminalBeforeAnswer")};return {emitTurnTerminal,emitTurnTerminalBeforeAnswer};`),
+    )(turnTracker, turnFrameLine, () => protectedTurn) as {
+      emitTurnTerminal: (controller: unknown, outcome?: string) => void;
+      emitTurnTerminalBeforeAnswer: (controller: unknown) => void;
+    };
+    return { turnTracker, ...seam };
+  };
+  const FINAL_TERMINAL = 'data: {"paige_turn":{"v":1,"event":"completed","state":"FINAL","mode":"fast_answer"}}\n\n';
+  // The first line `_shared/claude.ts`'s stream translator sends on EVERY stream, before any provider
+  // event: a role-only delta with no text. The fakes below start with it, as the real stream does.
+  const ROLE_LINE = 'data: {"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}\n\n';
+  const FINISH_LINE = 'data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n';
   it("uses a private decision instruction only on verified non-document Live rounds", () => {
     const messages = [{ role: "user", content: "Hello" }];
     const make = new Function("liveRuntimeScope", "attachedDocument", js(`return ${initializer("liveDecisionMessages")};`));
@@ -46,9 +71,10 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(decision).toHaveLength(2);
     expect(decision[1].content).toContain("Do not draft the user-facing answer here");
     expect(messages).toHaveLength(1);
-    const start = code.indexOf('finalStreamResponse = await gatewayCompat');
+    const start = code.indexOf('finalStreamResponse = noteFabric(');
+    expect(start).toBeGreaterThan(-1);
     const closing = code.slice(start, code.indexOf('traceFor(', start));
-    expect(closing.includes('messages: convo, stream: true')).toBe(true);
+    expect(closing.includes('{ messages: convo }')).toBe(true);
     expect(/tools:|tool_choice:/.test(closing)).toBe(false);
   });
   it("does not replay decision-round prose for a verified Live turn", () => {
@@ -59,7 +85,7 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(code.match(/!finalChunks && \(forcedTermination \|\| liveAnswerPending\) && !tenantKnowledgeScopeInvalidated/g)).toHaveLength(2);
   });
   it("does not mistake early prose followed by a late tool call for an answer", async () => {
-    const consume = new Function(js(`return ${initializer("consumeRound")};`))();
+    const consume = new Function("executableToolCalls", "readModelRound", js(`return ${initializer("consumeRound")};`))(executableToolCalls, readModelRound);
     let upstream!: ReadableStreamDefaultController<Uint8Array>;
     const stream = new ReadableStream<Uint8Array>({ start(c) { upstream = c; } });
     let completed = false;
@@ -71,6 +97,20 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call","function":{"name":"governed_write","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}\n\ndata: [DONE]\n\n'));
     upstream.close();
     expect((await result).hasToolCall).toBe(true);
+    expect((await result).finished).toBe(true);
+    expect((await result).runnable).toBe(true); // INT-334 (R7): a finished tool round may run its calls
+  });
+  it("reports a round the provider never finished (no finish_reason before the translator's [DONE])", async () => {
+    const consume = new Function("executableToolCalls", "readModelRound", js(`return ${initializer("consumeRound")};`))(executableToolCalls, readModelRound);
+    const enc = new TextEncoder();
+    const round = (body: string) => consume(new Response(new ReadableStream<Uint8Array>({ start(c) { c.enqueue(enc.encode(body)); c.close(); } })));
+    const cut = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"content":"Half an"}}]}\n\ndata: [DONE]\n\n`);
+    expect(cut).toMatchObject({ content: "Half an", hasToolCall: false, finished: false });
+    // INT-334 (R7): a tool round the provider never finished shows its call and may run none of it.
+    const cutTool = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c","function":{"name":"governed_write","arguments":"{}"}}]}}]}\n\ndata: [DONE]\n\n`);
+    expect(cutTool).toMatchObject({ hasToolCall: true, finished: false, runnable: false });
+    const whole = await round(`${ROLE_LINE}data: {"choices":[{"delta":{"content":"Whole."}}]}\n\n${FINISH_LINE}data: [DONE]\n\n`);
+    expect(whole).toMatchObject({ content: "Whole.", hasToolCall: false, finished: true });
   });
   it.each([false, true])("streams only the tools-free final answer, preserving protected hold=%s", async (protectedTurn) => {
     const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;
@@ -79,37 +119,91 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const emit = new Function("turnCarriesProtectedContent", "heldContent", js(`return ${initializer("emitContent")};`))(() => protectedTurn, heldContent);
     let upstream!: ReadableStreamDefaultController<Uint8Array>;
     const response = new Response(new ReadableStream<Uint8Array>({ start(c) { upstream = c; } }));
-    const run = new Function("finalStreamResponse", "controller", "emitContent", js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={};${body};return finalAssistantText;})();`));
-    const answer = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } }, emit);
+    const seam = terminalSeam(protectedTurn);
+    const run = new Function("finalStreamResponse", "controller", "emitContent", "emitTurnTerminalBeforeAnswer", "turnTracker", js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={};${body};return finalAssistantText;})();`));
+    const answer = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } }, emit, seam.emitTurnTerminalBeforeAnswer, seam.turnTracker);
     const enc = new TextEncoder();
+    const decoded = () => emitted.map((c) => new TextDecoder().decode(c));
+    // The translator's role-only first line is NOT an answer: nothing goes out for it — not the
+    // terminal, not the line — on either kind of turn.
+    upstream.enqueue(enc.encode(ROLE_LINE));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(emitted).toEqual([]);
+    expect(heldContent).toEqual([]);
     upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"content":"First sentence."}}]}\n\n'));
     await new Promise((r) => setTimeout(r, 0));
-    expect(emitted.length).toBe(protectedTurn ? 0 : 1);
-    expect(heldContent.length).toBe(protectedTurn ? 1 : 0);
-    upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"content":" Next sentence."}}]}\n\ndata: [DONE]\n\ndata: {"choices":[{"delta":{"content":" must be ignored"}}]}\n\n'));
+    // An ordinary Live turn: its one terminal goes out just ahead of the first answer TEXT, then the
+    // held role line, then that text — the same bytes, in the same order, only later. A protected
+    // turn sends nothing yet: everything waits for the release point.
+    expect(emitted.length).toBe(protectedTurn ? 0 : 3);
+    if (!protectedTurn) expect(decoded()).toEqual([FINAL_TERMINAL, ROLE_LINE, 'data: {"choices":[{"delta":{"content":"First sentence."}}]}\n\n']);
+    expect(heldContent.length).toBe(protectedTurn ? 2 : 0);
+    upstream.enqueue(enc.encode(`data: {"choices":[{"delta":{"content":" Next sentence."}}]}\n\n${FINISH_LINE}data: [DONE]\n\ndata: {"choices":[{"delta":{"content":" must be ignored"}}]}\n\n`));
     upstream.close();
     expect(await answer).toBe("First sentence. Next sentence.");
     if (protectedTurn) expect(emitted).toEqual([]);
+    // The provider finished this answer (finish_reason before [DONE]), so the record stays FINAL.
+    expect(seam.turnTracker.state).toBe("FINAL");
+  });
+  it.each([false, true])("records a Live answer the provider never finished as INTERRUPTED, protected=%s", async (protectedTurn) => {
+    // The translator ends a broken stream with the same clean [DONE]; without a finish_reason the
+    // answer was cut off. It is still spoken as before (that is a Live decision); the record says so.
+    const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;
+    const body = (branch.thenStatement as ts.Block).statements.map((n) => n.getText(source)).join("\n");
+    const heldContent: Uint8Array[] = [];
+    const emit = new Function("turnCarriesProtectedContent", "heldContent", js(`return ${initializer("emitContent")};`))(() => protectedTurn, heldContent);
+    const enc = new TextEncoder();
+    const response = new Response(new ReadableStream<Uint8Array>({ start(c) {
+      c.enqueue(enc.encode(`${ROLE_LINE}data: {"choices":[{"delta":{"content":"Half an answer"}}]}\n\ndata: [DONE]\n\n`)); c.close();
+    } }));
+    const seam = terminalSeam(protectedTurn);
+    const run = new Function("finalStreamResponse", "controller", "emitContent", "emitTurnTerminalBeforeAnswer", "turnTracker", js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={};${body};return finalAssistantText;})();`));
+    expect(await run(response, { enqueue() {} }, emit, seam.emitTurnTerminalBeforeAnswer, seam.turnTracker)).toBe("Half an answer");
+    expect(seam.turnTracker.state).toBe("INTERRUPTED");
   });
   it.each(["First sentence.", ""])("keeps already-issued safe cards when Live fails with text=%j", async (text) => {
     const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes('[paige] live reasoning stream failed:')) as ts.CatchClause;
     const meta = { surfaces: ["client"], bundleRef: { approval_queued: [{ id: "approval" }], paige_confirm: [{ tool: "governed_write" }], paige_crm_result: [{ outcome: "success", receipt_recorded: true }] } };
     const persisted: unknown[] = [];
     // The catch also reports what became of the turn's approvals (emitApprovalOutcome); a no-op here.
-    const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console",
+    // paige-turn — and it closes the turn frame as INTERRUPTED (emitTurnTerminal) and records the turn at the
+    // persist call (withTurnRecord). Both are driven through the real reducer, so the persisted record
+    // is the one production writes.
+    // E4-S3 — `readLinkTrace` is the turn's read references; the Live-interrupted path clears it before
+    // building the metadata (its frames were discarded), so no links-only row is saved.
+    const readLinkTrace: unknown[] = [];
+    const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console", "emitTurnTerminal", "withTurnRecord", "readLinkTrace",
       js(`return (async()=>{const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),controller={enqueue(){}},discardContent=()=>{},emitApprovalOutcome=async()=>{};try{throw Error('fixture')}catch(e)${caught.block.getText(source)}})();`));
-    await run(text, () => meta, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} });
-    expect(persisted).toEqual([{ content: text, metadata: meta }]);
+    const turnOf = () => {
+      const tracker = createTurnTracker(NO_TOOLS);
+      const outcomes: unknown[] = [];
+      return {
+        outcomes,
+        emitTurnTerminal: (_controller: unknown, outcome?: string) => { outcomes.push(outcome); if (outcome === "interrupted") tracker.interrupted(); },
+        withTurnRecord: (t: string, m: { bundleRef?: unknown }) => attachTurnRecord(tracker, t, m),
+      };
+    };
+    const turn = turnOf();
+    readLinkTrace.push({ destination: "business_time_zone", record_id: null });
+    let linksAtMetadata = -1;
+    await run(text, () => { linksAtMetadata = readLinkTrace.length; return meta; }, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} }, turn.emitTurnTerminal, turn.withTurnRecord, readLinkTrace);
+    expect(linksAtMetadata).toBe(0); // cleared BEFORE the metadata is built
+    // The same cards, now beside the turn record — which says the turn was interrupted.
+    expect(persisted).toEqual([{ content: text, metadata: { ...meta, bundleRef: { ...meta.bundleRef, turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } } } }]);
+    expect(turn.outcomes).toEqual(["interrupted"]);
     for (const [protectedTurn, validScope] of [[true, true], [false, false]]) {
       persisted.length = 0;
-      await run(text, () => meta, async (content: string) => persisted.push(content), () => protectedTurn, async () => validScope, { error() {} });
+      const again = turnOf();
+      await run(text, () => meta, async (content: string) => persisted.push(content), () => protectedTurn, async () => validScope, { error() {} }, again.emitTurnTerminal, again.withTurnRecord, []);
       expect(persisted).toEqual([]);
     }
   });
   it("writes a receipt-only assistant turn without inventing spoken text", async () => {
     const writes: unknown[] = [];
-    const make = new Function("payloadThreadId", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", { rpc: async (_name: string, args: unknown) => { writes.push(args); }, from() { throw Error("no title in fixture"); } }, async () => {}, { error() {} });
+    const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
+    const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async () => {}, { error() {} });
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);
@@ -118,11 +212,22 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(writes).toHaveLength(1);
   });
   it("shares the success projection and drops CRM readback and locator from history", () => {
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", js(`return ${initializer("assistantTurnMetadata")};`));
+    // R2b: assistantTurnMetadata's bundleRef now also spreads the run REFERENCE from
+    // researchTrace (the crmResultTrace pattern) — the harness supplies the new seam
+    // variable like every other one; an empty array must project to no research key.
+    // E4-S3: the read-link trace is one more seam variable (empty here, so it projects to no key) and
+    // its sanitiser `readRecordLinks` is the shared one the handler imports.
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result]);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
-    expect(code).toContain("persistAssistantTurn(finalAssistantText, assistantTurnMetadata())");
+    // E4-S3: a turn whose only card is a read link still persists, as references only — never an address.
+    const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
+    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks);
+    expect(linksOnly()).toEqual({ surfaces: [], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [],
+      paige_record_links: [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null }] } });
+    // The success persist goes through this same projection, with the turn record added at the call site.
+    expect(code).toContain("persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()))");
   });
   it.each([false, true].flatMap((protectedTurn) => ["reject", "eof", "error-frame", "enqueue-reject", "non-ok", "bodyless", "empty-done", "whitespace-done"].map((ending) => ({ protectedTurn, ending }))))("settles an interrupted Live stream without success or transcript loss, %j", async ({ protectedTurn, ending }) => {
     const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;
@@ -137,15 +242,19 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // An interrupted Live answer still says what became of the turn's approvals, before the error
     // frame the Live client settles on (paige_approval_outcome, _shared/approval-outcome.ts).
     const outcomeReports: string[] = [];
-    const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata", "emitApprovalOutcome",
-      js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder();try{${body}}catch(e)${caught.block.getText(source)}})();`));
+    const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata", "emitApprovalOutcome", "emitTurnTerminal", "emitTurnTerminalBeforeAnswer", "withTurnRecord", "turnTracker",
+      js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),readLinkTrace=[];try{${body}}catch(e)${caught.block.getText(source)}})();`));
+    // paige-turn — the production terminal seam (exactly-once guard included), over a real reducer.
+    const seam = terminalSeam(protectedTurn);
     const settled = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } },
       ending === "enqueue-reject" ? () => { throw new Error("fixture-enqueue-rejected"); } : emit, () => protectedTurn,
       () => { heldContent.length = 0; }, async (text: string) => { persisted.push(text); }, async () => true, { error() {} }, () => ({ surfaces: [], bundleRef: null }),
-      async () => { outcomeReports.push(emitted.map((c) => new TextDecoder().decode(c)).join("")); });
+      async () => { outcomeReports.push(emitted.map((c) => new TextDecoder().decode(c)).join("")); },
+      seam.emitTurnTerminal, seam.emitTurnTerminalBeforeAnswer, (_t: string, m: unknown) => m, seam.turnTracker);
     if (hasStream) {
       const content = ending === "empty-done" ? "" : ending === "whitespace-done" ? "   " : "First sentence.";
-      upstream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
+      // The translator's role-only first line, then the first content line, as the real stream sends.
+      upstream.enqueue(new TextEncoder().encode(`${ROLE_LINE}data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
       await new Promise((r) => setTimeout(r, 0));
       if (ending === "reject") upstream.error(new Error("fixture-stream-interrupted"));
       else {
@@ -160,9 +269,75 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(persisted).toEqual(protectedTurn || !hasStream || ending === "enqueue-reject" || ending.endsWith("-done") ? [] : ["First sentence."]);
     expect(heldContent).toEqual([]);
     expect(wire.includes('paige_live_error')).toBe(true);
+    // Exactly ONE terminal reaches the wire, before the error frame the Live client settles on, and the
+    // record says INTERRUPTED whatever the wire said.
+    //  - A protected turn, a closing call that never produced a line (non-ok, no body), or one whose
+    //    only lines carried no text (the role-only line and an empty delta — `empty-done`): nothing
+    //    went out before the failure, so the catch's terminal is the one, and it says INTERRUPTED.
+    //  - An ordinary turn whose first answer TEXT was already forwarded: its terminal went out just
+    //    ahead of it, saying FINAL, and the catch adds NOTHING new to the wire — that terminal was
+    //    provisional and the paige_live_error after it supersedes it (contract.ts).
+    const answeredFirst = !protectedTurn && hasStream && ending !== "empty-done";
+    expect(wire.split('"paige_turn"').length - 1).toBe(1);
+    expect(wire.includes(answeredFirst ? '"FINAL"' : '"INTERRUPTED"')).toBe(true);
+    expect(wire.includes(answeredFirst ? '"INTERRUPTED"' : '"FINAL"')).toBe(false);
+    expect(wire.indexOf('"paige_turn"')).toBeLessThan(wire.indexOf("paige_live_error"));
+    if (answeredFirst) expect(wire.startsWith(FINAL_TERMINAL)).toBe(true);
+    expect(seam.turnTracker.state).toBe("INTERRUPTED");
     // Once, and before the error frame: the card that asked is answered before the answer ends.
     expect(outcomeReports).toHaveLength(1);
     expect(outcomeReports[0].includes('paige_live_error')).toBe(false);
+  });
+});
+
+describe("paige-turn — the document stream's catch closes the wire with its one terminal", () => {
+  // No harness seam reaches a throw BEFORE the document path's release point: every awaited call in its
+  // close-out catches its own failure (scope revalidation, persistence, extraction, analytics), and the
+  // provider stream it reads never errors (_shared/claude.ts's translator catches and ends with [DONE]).
+  // So the PRODUCTION catch block and the PRODUCTION `emitDocTurnTerminal` are read out of index.ts and
+  // run over a real reducer, as the Live seams above are.
+  const code = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
+  const source = ts.createSourceFile("chat.ts", code, ts.ScriptTarget.Latest, true);
+  const find = (predicate: (node: ts.Node) => boolean): ts.Node => {
+    let found: ts.Node | undefined;
+    const visit = (node: ts.Node) => { if (found) return; if (predicate(node)) found = node; else ts.forEachChild(node, visit); };
+    visit(source); if (!found) throw new Error("Production seam not found"); return found;
+  };
+  const js = (body: string) => ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  const emitDocTurnTerminalSrc = (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === "emitDocTurnTerminal") as ts.VariableDeclaration).initializer!.getText(source);
+  const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes("[paige] document stream failed")) as ts.CatchClause;
+  const drive = async (alreadySent: boolean, closed = false) => {
+    const docTurn = createTurnTracker(NO_TOOLS);
+    docTurn.roundStarted();
+    const wire: string[] = [];
+    let state: "open" | "closed" | "errored" = "open";
+    const controller = {
+      enqueue(c: Uint8Array) { if (closed || state !== "open") throw new TypeError("stream closed"); wire.push(new TextDecoder().decode(c)); },
+      close() { state = "closed"; },
+      error() { state = "errored"; },
+    };
+    const logged: string[] = [];
+    await new Function("docTurn", "turnFrameLine", "controller", "console", "alreadySent",
+      js(`return (async()=>{const interactive=undefined;class InteractiveSuperseded extends Error {}let docTurnTerminalSent=false;const emitDocTurnTerminal=${emitDocTurnTerminalSrc};if(alreadySent)emitDocTurnTerminal(controller);try{throw new Error('fixture: provider read rejected')}catch(error)${caught.block.getText(source)}})();`),
+    )(docTurn, turnFrameLine, controller, { error: (m: string) => logged.push(m) }, alreadySent);
+    return { wire, state, docTurn, logged };
+  };
+  it("a throw before the release point ends the stream INTERRUPTED, then [DONE], and says why", async () => {
+    const r = await drive(false);
+    expect(r.wire).toEqual([turnFrameLine({ v: 1, event: "completed", state: "INTERRUPTED", mode: "fast_answer" }), "data: [DONE]\n\n"]);
+    expect(r.state).toBe("closed");
+    expect(r.docTurn.state).toBe("INTERRUPTED");
+    expect(r.logged).toEqual(["[paige] document stream failed:"]);
+  });
+  it("a throw after the terminal went out adds no second terminal, and the tracker says INTERRUPTED", async () => {
+    const r = await drive(true);
+    expect(r.wire).toEqual([turnFrameLine({ v: 1, event: "completed", state: "FINAL", mode: "fast_answer" }), "data: [DONE]\n\n"]);
+    expect(r.docTurn.state).toBe("INTERRUPTED");
+  });
+  it("a stream the client already closed is errored, not left hanging", async () => {
+    const r = await drive(false, true);
+    expect(r.wire).toEqual([]);
+    expect(r.state).toBe("errored");
   });
 });
 
@@ -242,7 +417,7 @@ const NEUTRAL_CTX = (userContext: string, clientContext: string) =>
     // prompt section from the very scan that exists to catch vertical language reaching a
     // coaching-generic tenant.
     operatingMemoryBlock:
-      "\n\n=== WHAT YOU ARE CARRYING (from the record, not from this conversation) ===\n" +
+      "\n\n=== WHAT YOU ARE CARRYING (from earlier work, not from this conversation) ===\n" +
       "You owe them:\n- Send the recap (task, open, due 2026-09-03)\n=== END ===\n",
     sessionDocContext: "",
     userContext,

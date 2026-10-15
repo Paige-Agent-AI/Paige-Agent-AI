@@ -32,13 +32,28 @@ const buy = (result: unknown) => classifyCommsRun({ capability: "comms_buy_numbe
 const threw = (capability: string, thrown: unknown) => classifyCommsRun({ capability, thrown, threw: true });
 
 describe("Communications capability runs — what the Rail is told", () => {
-  it("covers the four acts that change something, and no read", () => {
+  it("covers the acts that change something, and no read", () => {
     expect([...COMMS_WRITE_CAPABILITIES].sort()).toEqual([
       "comms_buy_number", "comms_draft_registration", "comms_name_number", "comms_set_primary_number",
+      "comms_setup_calling",
     ]);
     for (const read of ["comms_list_numbers", "comms_search_numbers", "comms_registration_status", "comms_overview"]) {
       expect(classifyCommsRun({ capability: read, result: { success: true } })).toBeNull();
     }
+  });
+
+  it("records the governed calling-setup act truthfully (INT-345 K-3)", () => {
+    const setup = (result: unknown) => classifyCommsRun({ capability: "comms_setup_calling", result });
+    // A real connection is an act — recorded.
+    expect(setup({ success: true, outcome: "provisioned" })).toBe("capability_succeeded");
+    expect(setup({ success: true, outcome: "adopted" })).toBe("capability_succeeded");
+    // The idempotent no-op performed no act and moved no money — no row (same
+    // precedent as an already-owned number).
+    expect(setup({ success: true, outcome: "skipped_existing" })).toBeNull();
+    // Master creds absent: the precondition said no before anything was attempted.
+    expect(setup({ success: false, error: "twilio_master_not_configured" })).toBe("capability_refused");
+    // An unrecognized provider failure may have half-happened — never "nothing changed".
+    expect(setup({ success: false, error: "twilio_create_subaccount_failed" })).toBe("capability_outcome_unknown");
   });
 
   it("records a real purchase as done", () => {

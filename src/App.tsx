@@ -30,10 +30,11 @@ const lazyWithReload = <T extends React.ComponentType<any>>(
     }
   });
 import { ThemeProvider } from "next-themes";
+import { embeddedFormTheme, isFormOnBusinessSite } from "@/hooks/useEmbedHeight";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 // Vercel Speed Insights — Core Web Vitals from real visitors. This is a Vite +
 // React SPA, so we use the framework-agnostic /react entry (NOT /next).
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -52,6 +53,8 @@ import { PlatformUpdateBanner } from "./components/PlatformUpdateBanner";
 
 // Eagerly load only the public landing + auth pages (likely first-paint)
 import Auth from "./pages/Auth";
+import InvoiceDocument from "./pages/InvoiceDocument";
+import PaymentReturn from "./pages/PaymentReturn";
 const OperatorEntry = lazyWithReload(() => import("@/operator/OperatorEntry"));
 const JoinPlatform = lazyWithReload(() => import("./pages/JoinPlatform"));
 const McpOAuthCallback = lazyWithReload(() => import("./pages/McpOAuthCallback"));
@@ -183,10 +186,16 @@ const PageSuspense = ({ children }: { children: React.ReactNode }) => (
 // (docs/product/public-product-guide-contract.md). The regression guard in
 // src/__tests__/no-floating-platform-chat.test.ts fails if any floating Paige chat is re-mounted.
 
+function LegacyIntelligenceRedirect() {
+  const route = useLocation();
+  return <Navigate to={{ pathname: "/operator/settings/paige-intelligence", search: route.search, hash: route.hash }} replace />;
+}
+
 const AppInner = () => {
   useHostRouting();
   useReferralTracking();
-  usePageView();
+  // Not on a form shown on a business's own website: those visitors are the business's (Experience 03).
+  usePageView(!isFormOnBusinessSite());
   return <GlobalAuthSessionManager />;
 };
 
@@ -194,8 +203,15 @@ function SignupRedirect() {
   return <Navigate to="/auth?mode=signup&plan=solo&billing=monthly" replace />;
 }
 
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+// /render-frame — the DB-free page paige-browser screenshots for the §33 critique loop. Like /invoice it
+// short-circuits BEFORE every provider: no auth, tenant context, router, analytics or Supabase reads.
+const RenderFrame = lazyWithReload(() => import("./pages/public/RenderFrame"));
+const isRenderFramePath = (pathname: string) => /^\/render-frame\/?$/i.test(pathname);
+
+const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <PaymentReturn /> : /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (
+  <React.Suspense fallback={null}><RenderFrame /></React.Suspense>
+) : (
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange forcedTheme={embeddedFormTheme()}>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       {/* One shared tenant-scope context for the whole app (operator/tenant mode +
@@ -215,7 +231,7 @@ const App = () => (
         <PlatformUpdateBanner />
         <BrowserRouter>
           <AppInner />
-          <MetaPixel />
+          {!isFormOnBusinessSite() && <MetaPixel />}
           <SpeedInsights />
           <ClientOnlyRouteGuard />
           <Routes>
@@ -232,6 +248,8 @@ const App = () => (
                 root would ship undetected); `:section/*` is the console behind ONE guard. */}
             <Route path="/tenant-redesign" element={<PageSuspense><TenantRedesign /></PageSuspense>} />
             <Route path="/operator/*" element={<PageSuspense><OperatorEntry /></PageSuspense>} />
+            {/* INT-280: restore the old Intelligence bookmark to the guarded Settings home. */}
+            <Route path="/admin/platform/intelligence" element={<LegacyIntelligenceRedirect />} />
             <Route path="/join-platform" element={<PageSuspense><JoinPlatform /></PageSuspense>} />
             {/* Where a provider's consent lands. The path is registered with the provider
                 and compared by it on every exchange, so it is fixed rather than derived

@@ -12,6 +12,12 @@ vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: harness.tenantId }),
 }));
 
+// The drawer-boundary test owns Vault data, not the connected-accounts flag RPC.
+// Keep that unrelated capability disabled without contacting a backend.
+vi.mock("@/hooks/useTenantFeature", () => ({
+  useTenantFeature: () => ({ enabled: false, loading: false }),
+}));
+
 vi.mock("./useBusinessVault", () => ({
   useBusinessVault: () => ({
     state: "allowed",

@@ -49,6 +49,10 @@ type CatItem = {
   g: string;
   d: string;
   auth?: "bearer" | "header";
+  /** canonical provider identity: the create routes to this provider's descriptor, not generic-remote */
+  pk?: string;
+  /** header names the provider requires on the connection (mirrors mcp_providers.required_custom_headers) */
+  req?: string[];
   net?: string;
   url?: string;
   pop?: boolean;
@@ -84,7 +88,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Instagram · Facebook · LinkedIn · TikTok · YouTube", c: "Social", m: "zapier", g: "◎", d: "No official direct path — post through Buffer, Metricool or Hootsuite.", legacy: "social" },
   { n: "WhatsApp Business", c: "Social", m: "zapier", g: "W", d: "Business Tools MCP announced; not verified yet. Bridge via Zapier." },
   // CRM & Sales
-  { n: "HighLevel", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/anthropic/v2" },
+  { n: "HighLevel", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
   { n: "HubSpot", c: "CRM & Sales", m: "zapier", g: "HS", d: "CRM records, activities, pipelines. No direct path for Paige yet — bridge via Zapier." },
   { n: "Close", c: "CRM & Sales", m: "connect", g: "C", d: "Leads, contacts, opportunities; read and write scopes.", pop: true, r: 13, url: "https://mcp.close.com/mcp" },
   { n: "Attio", c: "CRM & Sales", m: "connect", g: "A", d: "Records, lists, notes, tasks.", url: "https://mcp.attio.com/mcp" },
@@ -413,8 +417,12 @@ function GatewayDrawer({
   );
 }
 
-/* Shared owner-chosen configuration; no provider-name authentication routing. */
-type AddPreset = { label?: string; url?: string };
+/* Shared owner-chosen configuration; no provider-name authentication routing. A catalogue
+ * preset MAY carry a provider identity and its proven contract: providerKey routes the
+ * create to the canonical provider descriptor (not generic-remote), requiredHeaders are
+ * header names the provider declares the connection must carry (mcp_providers.
+ * required_custom_headers mirrors them server-side), and auth preselects the proven mode. */
+type AddPreset = { label?: string; url?: string; providerKey?: string; auth?: AuthenticationChoice; requiredHeaders?: string[] };
 type AuthenticationChoice = "oauth" | "bearer" | "headers" | "none";
 const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }> = [
   { value: "oauth", label: "OAuth" },
@@ -440,7 +448,7 @@ function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSave
   const initialAuth: AuthenticationChoice | null = tool
     ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
       ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
-    : null;
+    : preset.auth ?? null;
   const [auth, setAuth] = useState<AuthenticationChoice | null>(initialAuth);
   const [token, setToken] = useState("");
   const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
@@ -515,6 +523,11 @@ function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSave
       extra[name] = header.value;
     }
     if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
+    if (preset.requiredHeaders?.length) {
+      const have = new Set(Object.keys(extra).map((k) => k.toLowerCase()));
+      const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));
+      if (missing.length) errors.headers = `${label || "This provider"} requires the ${missing.join(", ")} header${missing.length > 1 ? "s" : ""} on the connection.`;
+    }
     setValidation(errors); setMessage(null);
     if (Object.keys(errors).length || !auth) return;
     pending.current = true; setBusy(true);
@@ -525,7 +538,7 @@ function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSave
         : auth === "headers" && primaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
       const result = tool
         ? await gw.rekeyMcp(tool.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
-        : await gw.createMcp({ providerKey: "generic-remote", label: label.trim(), serverUrl: url.trim(),
+        : await gw.createMcp({ providerKey: preset.providerKey ?? "generic-remote", label: label.trim(), serverUrl: url.trim(),
           authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? primaryHeader.trim() : null, customHeaders: extra });
       if (!alive.current) return;
       if (!result.ok || !result.connectionId) {
@@ -646,7 +659,7 @@ function Catalogue({
    *  already holds drops out of it — it is still in its own category section, marked as theirs.
    *  Without this the merge is only half done: the group shows one Zapier and the catalogue two. */
   const popular = useMemo(
-    () => CATALOGUE.filter((p) => p.pop && !connectionForProvider(tools, { providerKey: p.legacy && p.legacy !== "social" ? p.legacy : null, url: p.url ?? null }))
+    () => CATALOGUE.filter((p) => p.pop && !connectionForProvider(tools, { providerKey: p.pk ?? (p.legacy && p.legacy !== "social" ? p.legacy : null), url: p.url ?? null }))
       .slice().sort((a, b) => (a.r ?? 99) - (b.r ?? 99)),
     [tools],
   );
@@ -656,7 +669,7 @@ function Catalogue({
    *  other entry falls through to its address. A tile never probes by NAME — see
    *  `connectionForProvider` for why a tenant-editable label cannot decide provider identity. */
   const probe = (p: CatItem): ProviderProbe => ({
-    providerKey: p.legacy && p.legacy !== "social" ? p.legacy : null,
+    providerKey: p.pk ?? (p.legacy && p.legacy !== "social" ? p.legacy : null),
     url: p.url ?? null,
   });
   const held = (p: CatItem) => (p.manual ? null : connectionForProvider(tools, probe(p)));
@@ -1575,7 +1588,14 @@ function ScopedIntegrationsGatewaySection({
           footer={<span>Give Paige an outside tool to work with. She can use it once you’ve verified it and approved what it may do.</span>}
         >
           <Catalogue
-            onPick={(item) => setDrawer({ kind: "add", preset: { label: item.manual ? undefined : item.n, url: item.url } })}
+            onPick={(item) => setDrawer({ kind: "add", preset: {
+              label: item.manual ? undefined : item.n,
+              url: item.url,
+              providerKey: item.pk,
+              // A preset with required headers is a Token + headers contract by definition.
+              auth: item.pk && item.req?.length ? "headers" : undefined,
+              requiredHeaders: item.req,
+            } })}
             onSetup={(item) => setDrawer({ kind: "stop", item, via: "setup" })}
             onZapier={(item) => setDrawer({ kind: "stop", item, via: "zapier" })}
             onLegacy={openLegacy}

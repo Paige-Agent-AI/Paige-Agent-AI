@@ -71,7 +71,7 @@ describe("dictation composer scope and send contract", () => {
     const paigeAiChat = read("src/components/dashboard/PaigeAIChat.tsx");
     const paigeChat = read("src/components/app/PaigeChat.tsx");
     const conversations = read("src/pages/admin/conversations/shell/ConversationsRichComposer.tsx");
-    expect(paigeAiChat).toContain("const composerSendBlocked = composerBlocked || dictationActive;");
+    expect(paigeAiChat).toContain("const composerSendBlocked = composerBlocked || dictationActive");
     expect(paigeAiChat).toContain("if (dictationActive || !originDraft) { voiceSink?.failed(); return; }");
     expect(paigeChat).toContain("if (dictationActive) return;");
     expect(paigeChat).toContain("disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)}");
@@ -93,7 +93,7 @@ describe("dictation composer scope and send contract", () => {
     expect(paigeAiChat).toContain("&& composerScope.writable\n    && !dictationActive;");
     expect(paigeAiChat).toContain("const pickCommand = (c: QuickChip) => {\n    if (dictationActive || !composerScope.writable) return;");
     expect(composerTextarea).toContain("disabled={composerBlocked}");
-    expect(liveConversation).toContain("disabled={composerBlocked || dictationActive}");
+    expect(liveConversation).toContain("disabled={composerBlocked || dictationActive || isLoading || interactiveAuthorityPending}");
     expect(paigeLiveConversation).toContain("disabled={working || Boolean(disabled)}");
     expect(paigeAiChat).toContain("disabled={composerSendBlocked}");
     expect(paigeAiChat).toContain("disabled={!composerScope.writable || dictationActive}");

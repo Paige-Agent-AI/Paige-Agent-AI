@@ -25,6 +25,9 @@ const calls: Call[] = [];
 let results: Record<string, { data: unknown; error: unknown }> = {};
 let tenant: { activeTenantId: string | null; accountContextLoading: boolean };
 let currentUserId: string | null;
+let mutationResult: {data:unknown;error:{message:string;code?:string}|null}={data:{},error:null};
+const subscriptions: Array<{filter:string;table:string;event:string;callback:()=>void}>=[];
+const removedChannels: unknown[]=[];
 let options: import("./useCatalogOffers").CatalogOffersOptions | undefined;
 let respond: ((call: Call) => unknown) | null = null;
 
@@ -50,6 +53,9 @@ function makeChain(table: string) {
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: (table: string) => makeChain(table),
+    rpc: async()=>mutationResult,
+    channel:()=>{const channel={on:(_kind:string,config:{filter:string;table:string;event:string},callback:()=>void)=>{subscriptions.push({...config,callback});return channel},subscribe:()=>channel};return channel},
+    removeChannel:async(channel:unknown)=>{removedChannels.push(channel)},
     auth: { getUser: async () => ({ data: { user: currentUserId ? { id: currentUserId } : null } }) },
   },
 }));
@@ -86,6 +92,7 @@ const call = (table: string) => calls.find((c) => c.table === table);
 
 beforeEach(() => {
   options = undefined;
+  subscriptions.length=0;removedChannels.length=0;mutationResult={data:{},error:null};
   respond = null;
   calls.length = 0;
   renders.length = 0;
@@ -426,4 +433,43 @@ it("searches a literal asterisk without PostgREST wildcard expansion or regex in
   expect(query.filter).toEqual(["name","imatch",String.raw`A\*\(B\)\+\[C\]\.\?`]);
   expect(query.range).toEqual([0,5]);
   expect(query.eq).toContainEqual(["tenant_id","tenant-1"]);
+});
+
+describe('useCatalogOffers — shared freshness',()=>{
+  it('revalidates an already mounted reader when its tenant Catalog changes',async()=>{
+    await run();const before=calls.filter(c=>c.table==='tenant_products').length;
+    await act(async()=>{window.dispatchEvent(new CustomEvent('paige:catalog-offers-changed',{detail:{tenantId:'tenant-1'}}));await Promise.resolve();});
+    expect(calls.filter(c=>c.table==='tenant_products').length).toBeGreaterThan(before);
+  });
+  it('ignores a different workspace invalidation',async()=>{
+    await run();const before=calls.filter(c=>c.table==='tenant_products').length;
+    await act(async()=>{window.dispatchEvent(new CustomEvent('paige:catalog-offers-changed',{detail:{tenantId:'tenant-2'}}));await Promise.resolve();});
+    expect(calls.filter(c=>c.table==='tenant_products').length).toBe(before);
+  });
+  it('revalidates on window focus without replacing the query scope',async()=>{
+    options={search:'Service',page:0,pageSize:5};await run();const before=calls.filter(c=>c.table==='tenant_products').length;
+    await act(async()=>{window.dispatchEvent(new Event('focus'));await Promise.resolve();});
+    expect(calls.filter(c=>c.table==='tenant_products').length).toBeGreaterThan(before);
+    expect(calls.filter(c=>c.table==='tenant_products').every(c=>c.eq.some(([key,value])=>key==='tenant_id'&&value==='tenant-1'))).toBe(true);
+  });
+});
+
+
+describe('useCatalogOffers — mutation and subscription freshness',()=>{
+  it('successful writer refreshes both mounted canonical readers',async()=>{
+    function Pair(){latest=useCatalogOffers();useCatalogOffers({pageSize:5});return null}
+    await run();await act(async()=>{root.render(<Pair/>)});const before=calls.filter(c=>c.table==='tenant_products').length;
+    await act(async()=>{await latest!.setOfferStatus('offer-id','active',null)});
+    expect(calls.filter(c=>c.table==='tenant_products').length).toBeGreaterThanOrEqual(before+2);
+  });
+  it('failed mutation does not broadcast a false Catalog update',async()=>{
+    await run();mutationResult={data:null,error:{message:'Save refused'}};const before=calls.filter(c=>c.table==='tenant_products').length;
+    const log=vi.spyOn(console,'error').mockImplementation(()=>{});
+    try{await act(async()=>{const result=await latest!.setOfferStatus('offer-id','active',null);expect(result.ok).toBe(false)});expect(calls.filter(c=>c.table==='tenant_products').length).toBe(before)}finally{log.mockRestore()}
+  });
+  it('subscribes narrowly and refetches canonical facts rather than event payloads',async()=>{
+    await run();expect(subscriptions).toHaveLength(4);expect(subscriptions.every(s=>s.filter==='tenant_id=eq.tenant-1')).toBe(true);expect(subscriptions.map(s=>s.table)).toEqual(['tenant_products','tenant_products','tenant_prices','tenant_prices']);
+    const before=calls.filter(c=>c.table==='tenant_products').length;await act(async()=>{subscriptions[0].callback();await Promise.resolve()});expect(calls.filter(c=>c.table==='tenant_products').length).toBeGreaterThan(before);
+    tenant={activeTenantId:'tenant-2',accountContextLoading:false};await act(async()=>{root.render(<Probe/>)});expect(removedChannels.length).toBeGreaterThan(0);expect(subscriptions.slice(-4).every(s=>s.filter==='tenant_id=eq.tenant-2')).toBe(true);
+  });
 });

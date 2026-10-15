@@ -15,6 +15,8 @@ export interface KnowledgeDocument {
   chunk_count: number;
   created_at: string;
   updated_at: string;
+  share_to_network: boolean;
+  network_review_status: 'none' | 'pending' | 'approved' | 'rejected';
   content?: string;
 }
 export type KnowledgeMetadataPatch = Partial<Pick<KnowledgeDocument, 'title' | 'summary' | 'category'>> & {tags?: string[]};
@@ -32,6 +34,8 @@ function document(value: unknown, tenant: string): KnowledgeDocument {
     || !['source','created_at','updated_at'].every(key => typeof value[key] === 'string')
     || !(value.tags === null || (Array.isArray(value.tags) && value.tags.every(tag => typeof tag === 'string')))
     || !Number.isInteger(value.chunk_count) || Number(value.chunk_count) < 0
+    || typeof value.share_to_network !== 'boolean'
+    || typeof value.network_review_status !== 'string' || !['none','pending','approved','rejected'].includes(value.network_review_status)
     || (value.content !== undefined && typeof value.content !== 'string')) {
     throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'Knowledge response did not match the requested workspace.');
   }
@@ -71,7 +75,7 @@ export interface KnowledgeDeleteResult {
   deleted_revision: number;
   document_absent: true;
   chunks_absent: true;
-  source_cleanup: {status: 'not_attempted'; reason: 'canonical_source_binding_unavailable'};
+  source_cleanup: {status: 'not_attempted'; reason: 'canonical_source_binding_unavailable' | 'retained_by_policy'};
   outcome: 'capability_succeeded' | 'capability_completed_unrecorded';
   run_id: string;
 }
@@ -91,8 +95,42 @@ export async function deleteKnowledge(
     || (data.outcome !== 'capability_succeeded' && data.outcome !== 'capability_completed_unrecorded')
     || typeof data.run_id !== 'string' || !data.run_id.trim()
     || !object(data.source_cleanup) || data.source_cleanup.status !== 'not_attempted'
-    || data.source_cleanup.reason !== 'canonical_source_binding_unavailable') {
+    || (data.source_cleanup.reason !== 'canonical_source_binding_unavailable'
+      && data.source_cleanup.reason !== 'retained_by_policy')) {
     throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The deletion could not be verified.');
   }
   return data as unknown as KnowledgeDeleteResult;
+}
+
+export interface KnowledgePublicationSubmission {
+  work_id: string;
+  document_id: string;
+  status: string;
+  replayed: boolean;
+  revision?: number;
+}
+
+/** Submits the SAVED exact review for atomic publication (the worker drives embedding).
+ * The response carries no tenant envelope — the document echo is the scope anchor — and a
+ * creation must echo the frozen revision. Exact intent replay is the SAME publication, not
+ * a second one; a lost acknowledgement is reconciled by recovery, never by a new intent.
+ */
+export async function submitKnowledgePublication(
+  client: KnowledgeRpcClient, tenant: string, documentId: string, extractionWorkId: string,
+  expectedRevision: number, intentId: string, reviewHash: string,
+): Promise<KnowledgePublicationSubmission> {
+  if (!tenant) throw new KnowledgeServiceError('KNOWLEDGE_SCOPE_REQUIRED', 'Select a workspace first.');
+  const {data, error} = await client.rpc('submit_tenant_knowledge_publication', {
+    p_expected_tenant: tenant, p_doc_id: documentId, p_work_id: extractionWorkId,
+    p_expected_revision: expectedRevision, p_intent_id: intentId, p_review_hash: reviewHash,
+  });
+  if (error) throw new KnowledgeServiceError(error.code ?? 'KNOWLEDGE_REQUEST_FAILED', error.message);
+  if (!object(data) || data.document_id !== documentId
+    || typeof data.work_id !== 'string' || !data.work_id
+    || typeof data.status !== 'string' || !data.status
+    || typeof data.replayed !== 'boolean'
+    || (data.replayed === false && (data.status !== 'claimed' || data.revision !== expectedRevision))) {
+    throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The publication submission could not be verified.');
+  }
+  return data as unknown as KnowledgePublicationSubmission;
 }

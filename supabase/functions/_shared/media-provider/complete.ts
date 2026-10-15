@@ -25,6 +25,7 @@ import { recordCapabilityRun } from "../capability-record.ts";
 import { idempotencyKey } from "../durable-job/mod.ts";
 import { COMMERCIAL_USE_DISCLOSURE, MEDIA_NON_TERMINAL_STATES as NON_TERMINAL_STATES, MEDIA_TERMINAL_STATES } from "./mod.ts";
 import { consumeMediaCredits, estimateCredits, releaseMediaCredits } from "./credits.ts";
+import { linkStudioArtifact } from "./studio-link.ts";
 
 export interface CompletableJob {
   id: string;
@@ -161,7 +162,8 @@ export async function completeMediaJob(
       publish_note: "Social publishing becomes available after this account's Social connection and publishing path are verified.",
     };
     const title = prompt.slice(0, 60) + (prompt.length > 60 ? "…" : "") || "Generated media";
-    const { data: contentId, error: saveErr } = await admin.rpc("save_marketing_content", {
+    const reuseId = typeof job.params?.reuse_content_id === "string" ? job.params.reuse_content_id : null;
+    const saveArgs = {
       p_kind: job.mode === "video" ? "video" : "image",
       p_title: title,
       p_image_url: publicUrl,
@@ -169,9 +171,15 @@ export async function completeMediaJob(
       p_size: typeof job.params?.aspect_ratio === "string" ? job.params.aspect_ratio : null,
       p_brief: prompt.slice(0, 500),
       p_meta: meta,
-      p_id: null,
       p_tenant_id: job.tenant_id,
-    });
+    };
+    // A Studio refine names the canvas image (verified at submit): the result becomes its next
+    // version instead of a separate image. If that image was published or deleted while the job ran,
+    // the paid-for result is filed as a new image rather than lost to a retry loop.
+    let { data: contentId, error: saveErr } = await admin.rpc("save_marketing_content", { ...saveArgs, p_id: reuseId });
+    if (saveErr && reuseId && /CONTENT_NOT_FOUND|GROWTH_PUBLISH_STATE_GUARDED/.test(saveErr.message)) {
+      ({ data: contentId, error: saveErr } = await admin.rpc("save_marketing_content", { ...saveArgs, p_id: null }));
+    }
     if (saveErr) throw new Error(`library save failed: ${saveErr.message}`);
 
     // Verified write BEFORE "done": the asset is in OUR storage and the job row
@@ -206,6 +214,8 @@ export async function completeMediaJob(
         content_id: (contentId as string) ?? null,
       },
     });
+
+    await linkStudioArtifact(admin, job, (contentId as string) ?? null);
 
     // CREDIT RECONCILIATION: convert the hold into a consume for the actual
     // draw (idempotent per job; a low estimate is clamped honestly by the RPC).

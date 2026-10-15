@@ -113,6 +113,119 @@ export class UnrenderableDocumentError extends Error {
  * Called at SEND and again immediately before a signature is committed, so a counterparty can never
  * bind themselves to an agreement that then can never be sealed.
  */
+/**
+ * Can this uploaded file actually be presented AND SEALED?
+ *
+ * Magic bytes are not enough, and the gap matters: `sealAgreementPdf` does `PDFDocument.load` on
+ * the presented bytes, so a PDF pdf-lib cannot open fails at SEAL time — after the counterparty
+ * has already signed. Encrypted PDFs are the realistic case, and not only password-protected ones:
+ * a document saved with permissions restrictions is encrypted too, which is exactly what a business
+ * "protects" a contract with.
+ *
+ * So the load is attempted HERE, at send, where the only cost of refusing is a clear message. If
+ * this returns ok, the seal can open the same bytes later. Nothing is presented that cannot be
+ * completed. (§32: proving it parses is not proving it runs.)
+ */
+export async function inspectUploadedPdf(
+  bytes: Uint8Array,
+): Promise<{ ok: true; pages: number } | { ok: false; reason: "not_pdf" | "unreadable" | "empty" }> {
+  if (!looksLikePdf(bytes)) return { ok: false, reason: "not_pdf" };
+  try {
+    // Loaded through the same dynamic specifier the seal uses, so this proves the seal's own
+    // loader accepts these bytes rather than proving some other parser does.
+    const { PDFDocument } = await import(PDFLIB_SPEC);
+    // Deliberately NOT `ignoreEncryption` — accepting an encrypted document here would move the
+    // failure to the seal, which is the thing this exists to prevent.
+    const pdf = await PDFDocument.load(bytes);
+    const pages = pdf.getPageCount();
+    if (pages < 1) return { ok: false, reason: "empty" };
+    return { ok: true, pages };
+  } catch {
+    return { ok: false, reason: "unreadable" };
+  }
+}
+
+/**
+ * Does this storage path belong to this workspace, canonically?
+ *
+ * CHECKING THE FIRST SEGMENT IS NOT ENOUGH, and the reason is demonstrable rather than theoretical.
+ * The path is interpolated into a request URL, and a URL parser resolves dot segments BEFORE the
+ * request is made — including percent-encoded ones:
+ *
+ *   new URL("aaa/%2e%2e/bbb/source/x.pdf", "https://h/storage/v1/object/").pathname
+ *     => "/storage/v1/object/bbb/source/x.pdf"
+ *
+ * The `aaa/` prefix a naive check validates is simply gone by the time the service role fetches.
+ * So the predicate validates the path as WRITTEN and refuses anything that could be rewritten in
+ * transit: every segment must be literally canonical. Percent-encoding is rejected outright rather
+ * than decoded and re-checked — decoding invites the same question one layer down, and a key this
+ * system produces never needs it. Legitimate keys are built as
+ * `${tenantId}/source/${Date.now()}-${safe}` with `safe` already stripped to `[\w.-]`
+ * (useSoloAgreementSignings.ts:432-436), so this accepts exactly what we mint and nothing else.
+ */
+export function isOwnedByTenant(path: string, tenantId: string | null): boolean {
+  if (!path || !tenantId) return false;
+  // No percent-encoding, no backslashes, no control characters — nothing a parser could rewrite.
+  if (/[%\\]/.test(path) || /[\u0000-\u001f\u007f]/.test(path)) return false;
+  const segments = path.split("/");
+  if (segments.length < 2) return false;
+  if (segments[0] !== tenantId) return false;
+  // Every segment literally canonical: non-empty, not a dot segment, and drawn from the alphabet
+  // the upload side can actually produce.
+  return segments.every((segment) => segment !== "." && segment !== ".." && /^[A-Za-z0-9._-]+$/.test(segment));
+}
+
+/**
+ * WHICH BYTES DO WE PRESENT FOR SIGNATURE?
+ *
+ * Pure, and separated from the send handler on purpose. This decision shipped wrong and nothing
+ * caught it, because the edge function is only type-checked in CI and never exercised — its own
+ * workflow step says so. A rule that decides what a counterparty is asked to sign belongs
+ * somewhere a test can reach.
+ *
+ * The rule itself is one line of intent: **a tenant's uploaded document is never rendered.** It is
+ * presented as the tenant supplied it. Rendering one produces a document nobody wrote, because
+ * `paige_agreements` CHECKs `body_markdown IS NULL` for this source, and a null body renders as a
+ * title with no content rather than as an error.
+ */
+export type PresentationPlan =
+  | { kind: "render" }
+  | { kind: "uploaded"; path: string }
+  | { kind: "refuse"; reason: "missing_document" };
+
+export function planPresentedDocument(
+  bodySource: string | null | undefined,
+  documentPath: string | null | undefined,
+): PresentationPlan {
+  if (bodySource !== "tenant_upload") return { kind: "render" };
+  const path = typeof documentPath === "string" ? documentPath.trim() : "";
+  // A tenant_upload with no file is a broken row, not something to paper over by rendering: the
+  // CHECK that forbids it (document_path IS NOT NULL) is the same one that nulls the body, so a row
+  // that reaches here without a path has already escaped the constraint and must not be presented.
+  if (!path) return { kind: "refuse", reason: "missing_document" };
+  return { kind: "uploaded", path };
+}
+
+/**
+ * Is this actually a PDF?
+ *
+ * Checked by MAGIC BYTES rather than by the filename or the upload's declared content type, both
+ * of which the browser supplies and neither of which survives a rename. The header is required at
+ * offset 0, as the specification states it: every producer a tenant is realistically using — Word,
+ * Acrobat, Pages, a browser print — writes it there, and leading bytes before it mean a damaged
+ * file, which is not something to present for signature on a guess.
+ *
+ * This exists because the upload control accepts `.doc/.docx/.rtf/.txt/.md` alongside PDF, while
+ * the presented-document bucket accepts `application/pdf` only and the seal stamps signatures INTO
+ * the document. A non-PDF cannot be presented and cannot be sealed, so it is refused at send.
+ */
+export function looksLikePdf(bytes: Uint8Array): boolean {
+  // "%PDF-"
+  const MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d];
+  if (bytes.length < MAGIC.length) return false;
+  return MAGIC.every((b, i) => bytes[i] === b);
+}
+
 export function assertDocumentIsRenderable(title: string, bodyMarkdown: string | null): void {
   const badTitle = wouldLoseCharacters(String(title ?? ""));
   const badBody = wouldLoseCharacters(String(bodyMarkdown ?? ""));

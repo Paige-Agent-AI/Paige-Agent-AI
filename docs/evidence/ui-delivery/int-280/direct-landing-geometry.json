@@ -1,0 +1,380 @@
+{
+  "environment": "LOCAL SYNTHETIC",
+  "geometry": [
+    {
+      "banner": false,
+      "height": 770,
+      "outerTabs": false,
+      "rootScrollWidth": 1536,
+      "selected": "Executive Flight Deck",
+      "tabs": [
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 264,
+            "right": 442.83750915527344,
+            "top": 134,
+            "width": 178.83750915527344,
+            "x": 264,
+            "y": 134
+          },
+          "name": "Executive Flight Deck"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 446.8374938964844,
+            "right": 626.3999938964844,
+            "top": 134,
+            "width": 179.5625,
+            "x": 446.8374938964844,
+            "y": 134
+          },
+          "name": "Forensic Observatory"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 630.4000244140625,
+            "right": 802.6625213623047,
+            "top": 134,
+            "width": 172.2624969482422,
+            "x": 630.4000244140625,
+            "y": 134
+          },
+          "name": "Improvement Studio"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 806.6625366210938,
+            "right": 954.0375366210938,
+            "top": 134,
+            "width": 147.375,
+            "x": 806.6625366210938,
+            "y": 134
+          },
+          "name": "Local Model Lab"
+        },
+        {
+          "bounds": {
+            "bottom": 226,
+            "height": 44,
+            "left": 264,
+            "right": 425.1000061035156,
+            "top": 182,
+            "width": 161.10000610351562,
+            "x": 264,
+            "y": 182
+          },
+          "name": "Opportunity Radar"
+        }
+      ],
+      "width": 1536
+    },
+    {
+      "banner": false,
+      "height": 768,
+      "outerTabs": false,
+      "rootScrollWidth": 1366,
+      "selected": "Executive Flight Deck",
+      "tabs": [
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 260.9875183105469,
+            "right": 439.8250274658203,
+            "top": 134,
+            "width": 178.83750915527344,
+            "x": 260.9875183105469,
+            "y": 134
+          },
+          "name": "Executive Flight Deck"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 443.8250122070313,
+            "right": 623.3875122070312,
+            "top": 134,
+            "width": 179.5625,
+            "x": 443.8250122070313,
+            "y": 134
+          },
+          "name": "Forensic Observatory"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 627.3875122070312,
+            "right": 799.6500091552734,
+            "top": 134,
+            "width": 172.2624969482422,
+            "x": 627.3875122070312,
+            "y": 134
+          },
+          "name": "Improvement Studio"
+        },
+        {
+          "bounds": {
+            "bottom": 226,
+            "height": 44,
+            "left": 260.9875183105469,
+            "right": 408.3625183105469,
+            "top": 182,
+            "width": 147.375,
+            "x": 260.9875183105469,
+            "y": 182
+          },
+          "name": "Local Model Lab"
+        },
+        {
+          "bounds": {
+            "bottom": 226,
+            "height": 44,
+            "left": 412.3625183105469,
+            "right": 573.4625244140625,
+            "top": 182,
+            "width": 161.10000610351562,
+            "x": 412.3625183105469,
+            "y": 182
+          },
+          "name": "Opportunity Radar"
+        }
+      ],
+      "width": 1366
+    },
+    {
+      "banner": false,
+      "height": 768,
+      "outerTabs": false,
+      "rootScrollWidth": 1024,
+      "selected": "Executive Flight Deck",
+      "tabs": [
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 250.71250915527344,
+            "right": 429.5500183105469,
+            "top": 134,
+            "width": 178.83750915527344,
+            "x": 250.71250915527344,
+            "y": 134
+          },
+          "name": "Executive Flight Deck"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 433.5500183105469,
+            "right": 613.1125183105469,
+            "top": 134,
+            "width": 179.5625,
+            "x": 433.5500183105469,
+            "y": 134
+          },
+          "name": "Forensic Observatory"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 617.1124877929688,
+            "right": 789.3749847412109,
+            "top": 134,
+            "width": 172.2624969482422,
+            "x": 617.1124877929688,
+            "y": 134
+          },
+          "name": "Improvement Studio"
+        },
+        {
+          "bounds": {
+            "bottom": 178,
+            "height": 44,
+            "left": 793.375,
+            "right": 940.75,
+            "top": 134,
+            "width": 147.375,
+            "x": 793.375,
+            "y": 134
+          },
+          "name": "Local Model Lab"
+        },
+        {
+          "bounds": {
+            "bottom": 226,
+            "height": 44,
+            "left": 250.71250915527344,
+            "right": 411.81251525878906,
+            "top": 182,
+            "width": 161.10000610351562,
+            "x": 250.71250915527344,
+            "y": 182
+          },
+          "name": "Opportunity Radar"
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "banner": false,
+      "height": 1000,
+      "outerTabs": false,
+      "rootScrollWidth": 900,
+      "selected": "Executive Flight Deck",
+      "tabs": [
+        {
+          "bounds": {
+            "bottom": 174,
+            "height": 44,
+            "left": 103,
+            "right": 281.83750915527344,
+            "top": 130,
+            "width": 178.83750915527344,
+            "x": 103,
+            "y": 130
+          },
+          "name": "Executive Flight Deck"
+        },
+        {
+          "bounds": {
+            "bottom": 174,
+            "height": 44,
+            "left": 285.8374938964844,
+            "right": 465.3999938964844,
+            "top": 130,
+            "width": 179.5625,
+            "x": 285.8374938964844,
+            "y": 130
+          },
+          "name": "Forensic Observatory"
+        },
+        {
+          "bounds": {
+            "bottom": 174,
+            "height": 44,
+            "left": 469.3999938964844,
+            "right": 641.6624908447266,
+            "top": 130,
+            "width": 172.2624969482422,
+            "x": 469.3999938964844,
+            "y": 130
+          },
+          "name": "Improvement Studio"
+        },
+        {
+          "bounds": {
+            "bottom": 174,
+            "height": 44,
+            "left": 645.6625366210938,
+            "right": 793.0375366210938,
+            "top": 130,
+            "width": 147.375,
+            "x": 645.6625366210938,
+            "y": 130
+          },
+          "name": "Local Model Lab"
+        },
+        {
+          "bounds": {
+            "bottom": 222,
+            "height": 44,
+            "left": 103,
+            "right": 264.1000061035156,
+            "top": 178,
+            "width": 161.10000610351562,
+            "x": 103,
+            "y": 178
+          },
+          "name": "Opportunity Radar"
+        }
+      ],
+      "width": 900
+    },
+    {
+      "banner": false,
+      "height": 844,
+      "outerTabs": false,
+      "rootScrollWidth": 390,
+      "selected": "Executive Flight Deck",
+      "tabs": [
+        {
+          "bounds": {
+            "bottom": 174,
+            "height": 44,
+            "left": 100,
+            "right": 278.83750915527344,
+            "top": 130,
+            "width": 178.83750915527344,
+            "x": 100,
+            "y": 130
+          },
+          "name": "Executive Flight Deck"
+        },
+        {
+          "bounds": {
+            "bottom": 222,
+            "height": 44,
+            "left": 100,
+            "right": 279.5625,
+            "top": 178,
+            "width": 179.5625,
+            "x": 100,
+            "y": 178
+          },
+          "name": "Forensic Observatory"
+        },
+        {
+          "bounds": {
+            "bottom": 270,
+            "height": 44,
+            "left": 100,
+            "right": 272.2624969482422,
+            "top": 226,
+            "width": 172.2624969482422,
+            "x": 100,
+            "y": 226
+          },
+          "name": "Improvement Studio"
+        },
+        {
+          "bounds": {
+            "bottom": 318,
+            "height": 44,
+            "left": 100,
+            "right": 247.375,
+            "top": 274,
+            "width": 147.375,
+            "x": 100,
+            "y": 274
+          },
+          "name": "Local Model Lab"
+        },
+        {
+          "bounds": {
+            "bottom": 366,
+            "height": 44,
+            "left": 100,
+            "right": 261.1000061035156,
+            "top": 322,
+            "width": 161.10000610351562,
+            "x": 100,
+            "y": 322
+          },
+          "name": "Opportunity Radar"
+        }
+      ],
+      "width": 390
+    }
+  ]
+}

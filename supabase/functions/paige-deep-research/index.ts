@@ -14,16 +14,33 @@
 //   • search  → POST ${SUPABASE_URL}/functions/v1/paige-web-search   (Firecrawl; honours its
 //               own `configured:false` path — we propagate it, never fabricate).
 //   • read    → POST ${SUPABASE_URL}/functions/v1/fetch-url-content  (SSRF-guarded fetch).
-//   • models  → _shared/model-router.ts routedChatCompletion(jobKind):
-//               "extract" (PLAN/GAP-CHECK, cheap) · "score" (tie-breaks, cheap) ·
-//               "doc_draft" (the ONE final synthesis → Claude reasoning tier = claude-sonnet-5).
+//   • models  → ./fabric.ts researchCompletion(phase, declared class, body, ctx) — the
+//               R6-B consumer adapter. DORMANT: while RESEARCH_FABRIC_ENABLED is false it
+//               forwards byte-parity to _shared/model-router.ts routedChatCompletion(jobKind)
+//               — "extract" (PLAN/GAP-CHECK/unit planning, cheap) · "doc_draft" (unit
+//               synthesis + entity dossier → Claude reasoning tier). Enabled, it rides the
+//               shared Model Fabric class seam (fabricCompletion, INT-334) and projects the
+//               served-route evidence into dossier telemetry. Research never names a provider.
 //
-// Persistence is via the SERVICE-ROLE client into research_runs + research_sources
-// (RLS declared for direct client reads; the service role is the write boundary).
+// Persistence is via the SERVICE-ROLE client into research_runs + research_sources —
+// the service role is the write boundary. (CORRECTION 2026-10-03, M0: this header used to
+// claim persistence is "RLS declared for direct client reads"; production grants prove
+// direct client reads were never usable — table grants are owner-only and the canonical
+// read path is the governed RPC pair added by migration 20270545000000. History preserved;
+// claim corrected.)
+//
+// TENANT LINEAGE (M0, owner ruling 2026-10-03): every PERSISTED run carries the exact
+// resolved workspace, and sources inherit it verbatim. Lineage is strict for persistence:
+// user JWT → current_user_tenant_id; service-role caller → profiles.active_tenant_id of the
+// validated acting user — and NO first-membership fallback (too ambiguous: the platform must
+// not persist a run under guessed ownership). Ambiguous lineage SKIPS persistence with an
+// honest log while the research itself still runs and returns. An optional
+// body.expected_tenant_id is a CROSS-CHECK only (a mismatch skips persistence); it is never
+// the persisted value and never authority.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { routedChatCompletion } from "../_shared/model-router.ts";
+import { researchCompletion, type RunRequestCtx } from "./fabric.ts";
 import { strategizeBeforeReasoning } from "../_shared/reasoning/strategize.ts";
 
 const corsHeaders = {
@@ -88,6 +105,10 @@ interface DeepResearchRequest {
   max_hops?: number;
   freshness_days?: number;
   persist?: boolean;
+  /** Optional CROSS-CHECK (never authority): when provided and ≠ the server-resolved
+   *  lineage tenant, persistence is SKIPPED — an upstream context disagreement is treated
+   *  as ambiguous, not resolved in the caller's favor. */
+  expected_tenant_id?: string;
   strict?: boolean;
   caller?: string;   // opaque provenance tag (e.g. "chat" | "manual" | an opted-in caller)
   // A7 — caller-supplied flavor facets. An opt-in vertical surface may inject its
@@ -457,6 +478,7 @@ async function planHop(
   hop: number,
   evidence: Array<{ index: number; title: string; snippet: string }>,
   strategyHint = "", // §34 L4: optional pre-reasoning steer, appended like domainHint (hop-0, non-degraded only)
+  ctx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<PlanOut> {
   const sys =
     "You are a research planner. Break a research goal into orthogonal, specific web-search " +
@@ -476,12 +498,12 @@ async function planHop(
     `HOP: ${hop}\n\nEVIDENCE SO FAR:\n${evidenceBlock}`;
 
   try {
-    const resp = await routedChatCompletion("extract", {
+    const { resp } = await researchCompletion("hop_query_planner", RESEARCH_COGNITIVE_CLASSES.hop_query_planner, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.2,
       max_tokens: 700,
-    });
+    }, ctx);
     const parsed = parseJsonLoose<PlanOut>(llmContent(resp));
     if (!parsed) return { done: false, queries: hop === 0 ? [question] : [] };
     const queries = Array.isArray(parsed.queries)
@@ -730,7 +752,7 @@ function planEntityHop(
 }
 
 // ── SYNTHESIS (A3d/A5) — the ONE Claude reasoning call ──────────────────────
-// jobKind "doc_draft" resolves to the Claude reasoning tier (claude-sonnet-5) and is NEVER
+// jobKind "doc_draft" resolves to the Claude reasoning tier (CLAUDE_REASONING) and is NEVER
 // routed to an open model (only CHEAP_KINDS are). This is the single sensitive call.
 interface RawFinding {
   summary: string;
@@ -775,6 +797,7 @@ async function synthesize(
   domainHint: string,
   citable: SourceRec[],
   entityTarget: EntityTarget | null,
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
 ): Promise<SynthOut | null> {
   // Sources passed exactly as subagent-financial-research's `[n] title\nsnippet\nurl` block,
   // generalised: include the fetched body excerpt when we have it.
@@ -835,19 +858,342 @@ async function synthesize(
     (entityTarget ? " Also emit the atomic dossier records per the rules above." : "");
 
   try {
-    const resp = await routedChatCompletion("doc_draft", {
+    const { resp, route } = await researchCompletion("dossier_synthesis", RESEARCH_COGNITIVE_CLASSES.dossier_synthesis, {
       messages: [{ role: "system", content: sys }, { role: "user", content: user }],
       response_format: { type: "json_object" },
       temperature: 0.1,
       max_tokens: entityTarget ? 3200 : 2400,
-    });
+    }, runCtx);
     const parsed = parseJsonLoose<SynthOut>(llmContent(resp));
     if (!parsed || !Array.isArray(parsed.findings)) return { findings: [] };
-    return parsed;
+    // R6-B: the fabric's closed served-route evidence rides the result for dossier telemetry
+    // (null on the dormant flag-off path — exactly the pre-R6-B diagnostics).
+    return route ? ({ ...parsed, __served_route: route } as SynthOut) : parsed;
   } catch (e) {
     console.warn("[paige-deep-research] synthesis error:", (e as Error)?.message);
     return null;
   }
+}
+
+// ── R6-A — THE COGNITIVE-CLASS CONTRACT (declarations ONLY; no routing here) ──
+// Deep Research is a CAPABILITY consuming the platform Model Fabric (owner routing
+// direction 2026-10-07): this map is DATA each research phase carries into telemetry and
+// (in R6-B, after the shared class seam lands) into class-bearing route requests. It is
+// deliberately NOT a route table: nothing here names a provider or model, nothing here is
+// consumed by pickRoute, and no call site changes behavior because of it.
+type ResearchCognitiveClass = "deterministic" | "cheap" | "operational" | "frontier" | "frozen_evaluator";
+
+const RESEARCH_COGNITIVE_CLASSES: Record<string, ResearchCognitiveClass> = {
+  entity_planner: "deterministic", // planEntityHop/facets — pure code, never an LLM
+  rank_and_validate: "deterministic", // rankSources + validateAndBind + dedupe + typed outcomes
+  hop_query_planner: "cheap", // planHop (extract) — never a frontier model for search queries
+  unit_planner: "cheap", // planSynthesisUnits (extract)
+  unit_synthesis: "operational", // synthesizeUnit — R6-B target Sol via the shared fabric; Astra only via the inert gate below
+  dossier_synthesis: "operational", // entity-mode synthesize (per-field citation gates stay the authority)
+  strategist: "operational", // strategizeBeforeReasoning — Astra is not the strategist
+  retrieval: "deterministic", // Firecrawl search + fetch reads — provider tools, not LLM reasoning
+};
+
+// ── R6-A — the evidence-gated FRONTIER escalation predicate (INERT until R6-B) ──
+// The owner's invariant: frontier is a deliberate, bounded, evidence-backed escalation —
+// Astra is NOT the default definition of Deep Research. These five conditions are the
+// complete, named gate R6-B will consult; nothing in this file calls it today.
+interface EscalationInputs {
+  unitKind: string; // the failing/suffering unit's coverage kind
+  evidenceSufficient: boolean; // sources gathered and read succeeded for this obligation
+  sourceCount: number;
+  priorOutcome: UnitOutcome | null; // the operational attempt's typed outcome
+  ambiguityUnresolved: boolean; // the operational attempt could NOT reconcile the material
+}
+const shouldEscalateToFrontier = (x: EscalationInputs): { escalate: boolean; reason: string | null } => {
+  if (!x.evidenceSufficient || x.sourceCount < 2) return { escalate: false, reason: null }; // no evidence => honest insufficiency, not "try harder"
+  if (x.priorOutcome === "insufficient") return { escalate: false, reason: null }; // typed insufficiency NEVER escalates
+  if (x.priorOutcome === "truncated") return { escalate: true, reason: "typed_truncation_with_sufficient_evidence" };
+  if (x.priorOutcome === "ok" && x.ambiguityUnresolved) return { escalate: true, reason: "hard_reconciliation_unresolved_after_operational_attempt" };
+  return { escalate: false, reason: null };
+};
+// R6-A: the gate exists, is unit-tested, and is called by NOTHING in this file. R6-B arms
+// it at exactly one call site, records the reason, and caps escalation at one per unit.
+
+// ── R4 — DECOMPOSED CLAIM FORMATION (bounded synthesis units) ────────────────
+// The R3-measured defect: the single monolithic doc_draft call returns an EMPTY findings
+// array on 18/27 dev runs — exactly on comparisons, multi-part regulatory, and contested
+// questions — while retrieval stays healthy and the validator accepts 92% of whatever
+// candidates DO appear. R4 changes ONLY claim formation: the question is decomposed into
+// bounded ANSWER-COVERAGE units (not the planner's search queries — those are retrieval
+// artifacts), each unit synthesizes independently against the SAME citable set on the SAME
+// governed route, candidates are aggregated + deduped deterministically, and the UNCHANGED
+// validateAndBind gates the result. Retrieval, ranking, thresholds, budgets, and the
+// validator are untouched so the before/after stays causal.
+
+// Bounded R4 constants (deliberately tight; the ruling forbids "keep trying until answered").
+const R4_MAX_UNITS = 6; // one overall + up to five coverage obligations
+const R4_MAX_SYNTH_CALLS = 7; // hard call ceiling for the whole run (incl. any fallback)
+// R5: 900→2400 for EVERY unit kind. The Judge-v2 token analysis proved the 900 ceiling
+// binding on 43/55 calls across ALL kinds (median tokens_out = 900 exactly) — the class-C
+// "silent empty" was largely truncation, not refusal. A ceiling is not spend: output only
+// grows as the model actually writes. The 7-call hard ceiling and the phase deadline
+// unchanged, so total work stays bounded.
+const R4_UNIT_MAX_TOKENS = 2400; // per-unit output budget (was 900; R5 evidence-raised)
+const R4_UNIT_CONCURRENCY = 3; // units run in bounded parallel lanes
+
+type UnitCoverageKind =
+  | "overall" // the question as a whole (simple factual questions live here)
+  | "side" // ONE side of a comparison (A facts / B facts)
+  | "relation" // the comparison/difference itself
+  | "facet" // one sub-question of a multi-part question
+  | "position" // ONE position in a materially contested question
+  | "insufficiency"; // the explicit "can this be established?" obligation
+
+interface SynthUnit {
+  unit_id: string; // stable run-local id "u1".. — rides the dossier
+  objective: string; // the answer obligation in question terms
+  coverage_kind: UnitCoverageKind;
+  source_refs: number[]; // citable indexes presented to this unit
+  status: "pending" | "synthesized" | "insufficient" | "failed";
+}
+
+type UnitOutcome = "ok" | "insufficient" | "truncated" | "failed";
+
+interface UnitSynthOut {
+  findings: RawFinding[];
+  insufficient?: boolean; // the unit itself concludes its obligation cannot be met (TYPED — never a fabricated negative finding)
+  outcome?: UnitOutcome; // R5: the normalized state — a successful call may never silently resolve to nothing
+  truncated?: boolean; // R5: the provider stop reason said the output was cut at the cap
+}
+
+// The unit PLANNER: one cheap extraction-tier call that turns the QUESTION (not the search
+// plan) into answer-coverage obligations. Deterministic fallbacks keep the seam universal:
+// any parse failure degrades to the single overall unit = the pre-R4 shape exactly.
+async function planSynthesisUnits(
+  question: string,
+  domainHint: string,
+  citable: SourceRec[],
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
+): Promise<SynthUnit[]> {
+  const titles = citable.slice(0, 14).map((s) => `[${s.index}] ${s.title}`).join("\n");
+  const sys =
+    "You decompose a RESEARCH QUESTION into the bounded set of ANSWER COVERAGE obligations — " +
+    "what must be separately established for the question to be answered. These are NOT search " +
+    "queries. Rules:\n" +
+    "• A simple factual question is ONE unit with kind \"overall\".\n" +
+    "• A comparison (X vs Y) becomes one \"side\" unit per side PLUS one \"relation\" unit for the " +
+    "comparison/difference itself. Never only one side.\n" +
+    "• A multi-part question (several distinct asks) becomes one \"facet\" unit per distinct ask, " +
+    "up to five.\n" +
+    "• A CONTESTED question (credible sources materially disagree) becomes one \"position\" unit " +
+    "per position the evidence actually expresses (max 3) — do NOT manufacture consensus.\n" +
+    "• If the question plausibly cannot be established from public sources, include one " +
+    "\"insufficiency\" unit for that determination.\n" +
+    "• Total units (excluding overall): at most " + (R4_MAX_UNITS - 1) + ". If the question is " +
+    "simple, fewer is correct.\n" +
+    'Return ONLY JSON: {"units":[{"objective":string,"coverage_kind":"overall"|"side"|"relation"|"facet"|"position"|"insufficiency"}]}. ' +
+    "Objectives are written in the question's own terms. No prose.";
+  const user =
+    `RESEARCH QUESTION: ${question}\n` +
+    (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    `\nGATHERED SOURCE TITLES (context only — units follow the QUESTION, not these titles):\n${titles}`;
+  try {
+    const { resp } = await researchCompletion("unit_planner", RESEARCH_COGNITIVE_CLASSES.unit_planner, {
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 700,
+    }, runCtx);
+    const parsed = parseJsonLoose<{ units?: Array<{ objective?: string; coverage_kind?: string }> }>(llmContent(resp));
+    const kinds = new Set(["overall", "side", "relation", "facet", "position", "insufficiency"]);
+    const units: SynthUnit[] = [];
+    for (const u of parsed?.units ?? []) {
+      if (units.length >= R4_MAX_UNITS) break;
+      const objective = typeof u?.objective === "string" ? u.objective.trim().slice(0, 240) : "";
+      const kind = typeof u?.coverage_kind === "string" && kinds.has(u.coverage_kind) ? u.coverage_kind as UnitCoverageKind : "facet";
+      if (objective.length >= 8) units.push({ unit_id: `u${units.length + 1}`, objective, coverage_kind: kind, source_refs: [], status: "pending" });
+    }
+    // R4 review P2: deterministic post-plan guard — a comparison that planned only ONE
+    // side, or a contested plan with a single position and no relation/insufficiency,
+    // degrades to the single overall unit (prompt enforcement is not a guarantee).
+    if (units.length) {
+      const sides = units.filter((u) => u.coverage_kind === "side");
+      const positions = units.filter((u) => u.coverage_kind === "position");
+      const hasRelationOrInsuff = units.some((u) => u.coverage_kind === "relation" || u.coverage_kind === "insufficiency");
+      const oneSided = sides.length === 1 && !hasRelationOrInsuff;
+      const singlePosition = positions.length === 1 && !hasRelationOrInsuff;
+      if (!oneSided && !singlePosition) return units;
+      console.warn("[paige-deep-research] R4 unit plan degenerate (one-sided/single-position); degrading to overall");
+    }
+  } catch (e) {
+    console.warn("[paige-deep-research] unit planning failed (degrade to overall):", (e as Error)?.message);
+  }
+  // Degraded shape = the pre-R4 contract exactly: one unit, the whole question.
+  return [{ unit_id: "u1", objective: question.slice(0, 240), coverage_kind: "overall", source_refs: [], status: "pending" }];
+}
+
+// Per-unit synthesis: the SAME grounding system prompt as the monolithic path (word for
+// word except the goal is the UNIT's obligation), the SAME route/model class, a tighter
+// per-unit token budget, and an explicit insufficient flag so a unit can bow out honestly
+// without zeroing its siblings.
+async function synthesizeUnit(
+  unit: SynthUnit,
+  question: string,
+  domainHint: string,
+  citable: SourceRec[],
+  cognitiveClass?: string, // R6-A: carried for telemetry; NEVER consulted for routing
+  runCtx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
+): Promise<UnitSynthOut | null> {
+  const ctx = citable.map((s) => {
+    const body = s.content ? `\n${s.content.slice(0, 1500)}` : "";
+    return `[${s.index}] ${s.title}\n${s.snippet}${body}\n${s.url}`;
+  }).join("\n\n");
+  const sys =
+    "You are a rigorous research synthesizer. State a fact ONLY if it appears in the fetched " +
+    "text of a specific SOURCE, and tag that fact with the source's [n]. Use NO prior " +
+    "knowledge, memory, or assumptions. A factual claim is any name, phone number, website/URL, " +
+    "figure, threshold, date, or statistic. If a field is not present in a source, set it to " +
+    "null — never invent it. Never emit a name that does not appear verbatim in a cited source. " +
+    "For any figure or requirement, append \"as listed on [n], verify directly — terms change.\" " +
+    "If the SOURCES available to you contain MATERIALLY CONFLICTING positions on your objective, " +
+    "emit SEPARATE findings for each position the sources actually state, each with its own " +
+    "citations — never collapse them, never manufacture consensus. If the sources genuinely " +
+    "cannot establish your objective, set \"insufficient\" to true and emit an empty findings " +
+    "array — that is a correct answer, not a failure. " +
+    'Output ONLY JSON: {"insufficient":boolean,"findings":[{"summary":string,"citations":number[],' +
+    '"name":string|null,"website":string|null,"phone":string|null,"values":string[]}]}. `citations` ' +
+    "must list the [n] indices that support the finding and must be non-empty. `name`/`website`/" +
+    "`phone` are for entity findings (leave null for prose findings). `values` holds any " +
+    "figures/thresholds/dates quoted verbatim from a cited source. No prose outside the JSON.";
+  const user =
+    `RESEARCH GOAL (answer obligation): ${unit.objective}\nFULL QUESTION FOR CONTEXT: ${question}\n` +
+    (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    `\nSOURCES:\n${ctx}\n\nWrite grounded findings for THIS obligation only. Every finding MUST carry at least one [n] citation.`;
+  try {
+    const { resp, route } = await researchCompletion("unit_synthesis", cognitiveClass ?? RESEARCH_COGNITIVE_CLASSES.unit_synthesis, {
+      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: R4_UNIT_MAX_TOKENS,
+    }, runCtx);
+    // R5 — truncation is a first-class outcome, never a silent empty: the provider's own
+    // stop reason is the authority (max_tokens = cut off mid-output); a missing/invalid
+    // JSON body after an OK call is treated as truncation-class too (the parse fallback
+    // of R4 conflated it with true-empty and threw the work away unreported).
+    const r5resp = resp as { choices?: Array<{ finish_reason?: string }>; paige_stop?: { stop_reason?: string }; model?: string; provider?: string };
+    // R6-A telemetry: record the model the SHARED ROUTER reports it served (readback, not choice)
+    (unit as { __served_model?: string | null }).__served_model =
+      typeof r5resp?.model === "string" && r5resp.model
+        ? r5resp.model
+        : null;
+    // R6-B telemetry: the fabric's CLOSED served-route projection (null on the dormant
+    // flag-off path — diagnostics keep exactly the pre-R6-B shape until activation).
+    (unit as { __served_route?: unknown }).__served_route = route;
+    const stopReason = r5resp?.paige_stop?.stop_reason ?? r5resp?.choices?.[0]?.finish_reason ?? null;
+    const truncated = stopReason === "max_tokens" || stopReason === "length"; // Anthropic native + OpenAI-compat vocabularies
+    const parsed = parseJsonLoose<UnitSynthOut>(llmContent(resp));
+    if (!parsed || !Array.isArray(parsed.findings)) {
+      // R5 review: parse-failure after an OK call is truncation-CLASS (the output was
+      // cut or malformed before it could parse) — typed, never a silent empty. The
+      // `truncated` flag itself stays provider-authoritative (may be false here).
+      return { findings: [], outcome: "truncated" } as never;
+    }
+    if (truncated) {
+      // The JSON parsed but the provider says it hit the cap — the tail may be silently
+      // missing findings. Keep what parsed, but TYPE the unit so diagnostics can see it.
+      return { ...parsed, outcome: "truncated", truncated: true } as never;
+    }
+    if (parsed.insufficient === true) return { ...parsed, outcome: "insufficient" } as never;
+    if (parsed.findings.length === 0) return { ...parsed, outcome: "insufficient" } as never; // true-empty normalizes to typed insufficiency — never silent
+    return { ...parsed, outcome: "ok" } as never;
+  } catch (e) {
+    console.warn(`[paige-deep-research] unit ${unit.unit_id} synthesis error:`, (e as Error)?.message);
+    return null; // transport/throw class — the caller records failed
+  }
+}
+
+// Deterministic aggregation + dedupe across units. Two candidates are duplicates when their
+// summaries are token-set near-identical (>= 0.8 Jaccard on content tokens); the union keeps
+// the FIRST occurrence's summary and MERGES citation lists — the validator re-checks every
+// citation, so union can only ever ADD a citation the kept claim must still survive. A
+// CONFLICT never dedupes: two candidates with materially different token sets (a genuine
+// disagreement) stay separate findings, each with its own citations.
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const t of a) if (b.has(t)) inter++;
+  return inter / (a.size + b.size - inter);
+}
+// R4 review P1: the content-token set drops digit runs and short tokens, so figure-only
+// disagreements ("7.25 vs 15 dollars") and short-source disputes dedupe away — manufactured
+// consensus. The dedupe key therefore ALSO compares numeric fingerprints and quoted values:
+// two candidates whose numbers or non-empty `values` differ are NEVER duplicates.
+function numericTokens(text: string): Set<string> {
+  return new Set((text.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")));
+}
+function sameClaim(rfA: { summary?: string; values?: string[] }, rfB: { summary?: string; values?: string[] }): boolean {
+  const tokA = new Set(tokens(`${rfA.summary ?? ""}`));
+  const tokB = new Set(tokens(`${rfB.summary ?? ""}`));
+  if (jaccard(tokA, tokB) < 0.8) return false;
+  const numA = numericTokens(`${rfA.summary ?? ""} ${(rfA.values ?? []).join(" ")}`);
+  const numB = numericTokens(`${rfB.summary ?? ""} ${(rfB.values ?? []).join(" ")}`);
+  // differing numeric fingerprints => different facts (even in near-identical prose)
+  const numInter = new Set([...numA].filter((n) => numB.has(n)));
+  if (numA.size > 0 && numB.size > 0 && (numInter.size < numA.size || numInter.size < numB.size)) return false;
+  const valsA = new Set((rfA.values ?? []).map((v) => v.trim()).filter(Boolean));
+  const valsB = new Set((rfB.values ?? []).map((v) => v.trim()).filter(Boolean));
+  if (valsA.size > 0 && valsB.size > 0) {
+    let allIn = true;
+    for (const v of valsA) if (!valsB.has(v)) { allIn = false; break; }
+    if (!allIn) return false;
+  }
+  return true;
+}
+function aggregateUnits(
+  perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }>,
+): { findings: RawFinding[]; unitDiagnostics: Array<Record<string, unknown>> } {
+  const kept: Array<{ rf: RawFinding; tokens: Set<string> }> = [];
+  const unitDiagnostics: Array<Record<string, unknown>> = [];
+  for (const { unit, out } of perUnit) {
+    const emitted = out && Array.isArray(out.findings) ? out.findings : [];
+    let aggregated = 0;
+    let dedupedAway = 0;
+    for (const rf of emitted) {
+      const toks = new Set(tokens(`${rf.summary ?? ""}`));
+      let merged = false;
+      for (const k of kept) {
+        if (sameClaim(k.rf, rf)) {
+          const unionCites = new Set([...(k.rf.citations ?? []), ...(rf.citations ?? [])]);
+          k.rf.citations = Array.from(unionCites);
+          merged = true;
+          dedupedAway++;
+          break;
+        }
+      }
+      if (!merged) { kept.push({ rf, tokens: toks }); aggregated++; }
+    }
+    // R5: the normalized outcome is the unit's OWN resolution — ok / insufficient /
+    // truncated / failed — and a successful unit may never silently resolve to nothing.
+    const outcome: UnitOutcome = out === null ? "failed" : (out.outcome ?? (out.insufficient === true ? "insufficient" : emitted.length ? "ok" : "insufficient"));
+    unit.status = outcome === "failed" ? "failed" : outcome === "insufficient" ? "insufficient" : "synthesized";
+    unitDiagnostics.push({
+      unit_id: unit.unit_id, objective: unit.objective.slice(0, 160), coverage_kind: unit.coverage_kind,
+      // R6-A telemetry readback: the SHARED ROUTER's own served-model report for this unit's
+      // synthesis call (provider/model from the routed response) + the declared cognitive
+      // class. Research never picks the model; it records what the fabric served.
+      cognitive_class: RESEARCH_COGNITIVE_CLASSES.unit_synthesis,
+      served_model: (unit as { __served_model?: string | null }).__served_model ?? null,
+      // R6-B: the fabric's closed served-route projection (class carrier, served provider/
+      // model as the FABRIC reported them, fallback flag, closed reason). NULL while the
+      // fabric path is dormant — the key itself ships now (one additive null-valued field on
+      // these structured records so post-activation rows differ only in VALUE, never in
+      // shape); dossier.synthesis.served_route below is the sparse-object form (absent until
+      // truthy) — the two forms are deliberately different record styles, not drift.
+      served_route: (unit as { __served_route?: unknown }).__served_route ?? null,
+      source_refs: unit.source_refs.slice(0, 14),
+      synthesis_returned: out !== null, insufficient: outcome === "insufficient",
+      truncated: out?.outcome === "truncated",
+      outcome,
+      candidates_emitted: emitted.length, aggregated, deduped_away: dedupedAway,
+    });
+  }
+  return { findings: kept.map((k) => k.rf), unitDiagnostics };
 }
 
 // ── Field-level verification helpers (A5) ───────────────────────────────────
@@ -859,19 +1205,71 @@ function digitsOnly(s: string): string { return s.replace(/\D/g, ""); }
 
 // ── Deterministic post-validation + bind (A5) ───────────────────────────────
 // Runs AFTER ranking. `citable` = non-excluded sources with their final `index`.
+// R3 — the canonical drop-reason taxonomy, DERIVED FROM validateAndBind's actual branches
+// (not invented): the citation guard collapses three distinct causes the dossier must
+// distinguish, the name check is a whole-record drop, and the strict entity-contact rule
+// is a drop only in strict mode.
+type CandidateDropReason =
+  | "citation_missing" // synthesis emitted no citations field at all
+  | "citation_empty" // citations array present but empty
+  | "citation_unresolvable" // refs exist but none resolve to a citable source
+  | "name_token_mismatch" // entity name not grounded in any cited source
+  | "contact_unverified_strict"; // strict mode: name ok but every claimed contact vector failed
+
+interface CandidateDiag {
+  cid: string;
+  summary: string;
+  citations_emitted: number[];
+  resolved: number[];
+  unresolved: Array<{ ref: number; reason: "index_out_of_range" | "source_excluded" }>;
+  name: string | null;
+  checks: {
+    name_grounded: boolean | null;
+    website: "pass" | "nulled" | "n/a";
+    phone: "pass" | "nulled" | "n/a";
+    values_grounded: number;
+    values_dropped: number;
+  };
+  outcome: "accepted" | "dropped";
+  drop_reason: CandidateDropReason | null;
+}
+
 function validateAndBind(
   synth: SynthOut,
   citable: SourceRec[],
   strict: boolean,
+  diag?: CandidateDiag[], // R3: OPTIONAL collector — the return value is byte-identical with or without it
 ): Finding[] {
   const byIndex = new Map<number, SourceRec>();
   for (const s of citable) byIndex.set(s.index, s);
 
   const out: Finding[] = [];
+  let cidN = 0;
   for (const rf of synth.findings ?? []) {
+    // R3 dossier row (bounded): candidate identity + citation-resolution detail.
+    const emitted = Array.isArray(rf.citations) ? rf.citations.filter((c) => typeof c === "number") : [];
+    const resolvedRefs = Array.from(new Set((rf.citations ?? []).filter((c) => byIndex.has(c))));
+    const row: CandidateDiag = {
+      cid: `c${++cidN}`,
+      summary: String(rf.summary ?? "").slice(0, 240),
+      citations_emitted: emitted.slice(0, 12),
+      resolved: resolvedRefs.slice(0, 12),
+      unresolved: emitted.filter((c) => !byIndex.has(c)).slice(0, 8)
+        .map((c) => ({ ref: c, reason: "index_out_of_range" as const })),
+      name: (rf.name ?? "").trim().slice(0, 120) || null,
+      checks: { name_grounded: null, website: "n/a", phone: "n/a", values_grounded: 0, values_dropped: 0 },
+      outcome: "dropped",
+      drop_reason: null,
+    };
+    const collect = (reason: CandidateDropReason) => { row.drop_reason = reason; diag?.push(row); };
+
     // Resolve citations to real, non-excluded sources; drop the rest.
     const cites = Array.from(new Set((rf.citations ?? []).filter((c) => byIndex.has(c))));
-    if (cites.length === 0) continue; // empty/unresolvable citations are ILLEGAL → drop
+    if (cites.length === 0) {
+      // R3: distinguish the three citation-guard causes the original collapse hid.
+      collect(!Array.isArray(rf.citations) ? "citation_missing" : rf.citations.length === 0 ? "citation_empty" : "citation_unresolvable");
+      continue; // empty/unresolvable citations are ILLEGAL → drop
+    }
 
     const cited = cites.map((c) => byIndex.get(c)!);
     const citedText = cited.map((s) => `${s.snippet}\n${s.content}`).join("\n").toLowerCase();
@@ -884,7 +1282,8 @@ function validateAndBind(
       const nameTokens = tokens(name);
       const present = nameTokens.length > 0 &&
         nameTokens.every((t) => citedText.includes(t));
-      if (!present) continue; // name not grounded anywhere it was cited → drop whole record
+      row.checks.name_grounded = present;
+      if (!present) { collect("name_token_mismatch"); continue; } // name not grounded anywhere it was cited → drop whole record
     }
 
     // (2) Website check — emitted host must equal/subdomain a cited host (URL or body link).
@@ -892,6 +1291,7 @@ function validateAndBind(
     if (website) {
       const wHost = hostOf(website.startsWith("http") ? website : `https://${website}`);
       const vouched = !!wHost && (citedHosts.has(wHost) || citedText.includes(wHost));
+      row.checks.website = vouched ? "pass" : "nulled";
       if (!vouched) { website = null; unverified.push("website"); }
     }
 
@@ -901,6 +1301,7 @@ function validateAndBind(
       const want = digitsOnly(phone);
       const pool = phonesIn(citedText);
       const matched = want.length >= 10 && pool.some((p) => p.endsWith(want.slice(-10)));
+      row.checks.phone = matched ? "pass" : "nulled";
       if (!matched) { phone = null; unverified.push("phone"); } // highest-harm error — never surface
     }
 
@@ -914,8 +1315,8 @@ function validateAndBind(
       const grounded = nums.length === 0
         ? citedText.includes(vs.toLowerCase())
         : nums.every((n) => citedText.includes(n.toLowerCase()));
-      if (grounded) keptValues.push(vs);
-      else unverified.push(`value:${vs}`); // ungrounded figure dropped, never a bare fabricated range
+      if (grounded) { keptValues.push(vs); row.checks.values_grounded++; }
+      else { row.checks.values_dropped++; unverified.push(`value:${vs}`); } // ungrounded figure dropped, never a bare fabricated range
     }
 
     // Emit rule: an ENTITY record (has a name) survives only if name passed AND, when a contact
@@ -924,13 +1325,15 @@ function validateAndBind(
     const claimedContact = !!((rf.website ?? "").trim() || (rf.phone ?? "").trim());
     const survivingContact = !!(website || phone);
     if (name && claimedContact && !survivingContact) {
-      if (strict) continue; // drop records where everything-but-name failed
+      if (strict) { collect("contact_unverified_strict"); continue; } // drop records where everything-but-name failed
       unverified.push("contact");
     }
 
     // Confidence derived deterministically from the surviving cites (A5).
     const confidence = deriveConfidence(cited);
 
+    row.outcome = "accepted";
+    diag?.push(row);
     out.push({
       text: composeText(rf.summary, name, website, phone, keptValues),
       citations: cites,
@@ -1438,13 +1841,25 @@ async function persistRun(
   runId: string,
   req: DeepResearchRequest,
   result: DeepResearchResult,
+  tenantId: string | null,
+  dossier?: unknown, // R3: bounded diagnostics; NULL on pre-R3 callers
 ): Promise<void> {
+  // M0 FAIL-CLOSED FOR PERSISTENCE: without unambiguous tenant lineage the run is NOT
+  // stored — the research result still returns to the caller, but the platform never
+  // persists a run under guessed ownership (owner ruling 2026-10-03).
+  if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    console.warn(
+      "[paige-deep-research] persistence skipped: tenant lineage unresolved/ambiguous (M0 fail-closed; the run's result is still returned)",
+    );
+    return;
+  }
   try {
     const admin = createClient(serviceUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const { error: runErr } = await admin.from("research_runs").insert({
       id: runId,
+      tenant_id: tenantId,
       user_id: req.user_id,
       client_user_id: req.client_user_id ?? null,
       question: req.question,
@@ -1456,12 +1871,15 @@ async function persistRun(
       configured: result.coverage.configured,
       // B2 — nullable dossier profile; null on the general path (back-compat).
       entity_profile: result.entity_profile ?? null,
+      dossier: (dossier ?? null) as never, // R3: bounded diagnostics on the canonical record
     });
     if (runErr) { console.error("[paige-deep-research] persist run failed:", runErr.message); return; }
 
     if (result.sources.length) {
+      // Sources inherit the parent run's lineage VERBATIM — never independently resolved.
       const rows = result.sources.map((s) => ({
         run_id: runId,
+        tenant_id: tenantId,
         user_id: req.user_id,
         source_index: s.index,
         url: s.url,
@@ -1496,6 +1914,32 @@ serve(async (req) => {
     body = await req.json();
   } catch {
     return json({ error: "Invalid JSON" }, 400);
+  }
+
+  // ── INT-305: delegated-specialist envelope normalization ────────────────────
+  // The orchestrator's invokeLocal contract posts { input, context } to every local
+  // sub-agent's edge function. When THIS engine is the invoked function, the canonical
+  // top-level contract (question/user_id) is absent and the run would die at the two
+  // guards below. Normalize the envelope at the door instead: input.question |
+  // input.query → question, context.user_id → user_id, caller:"subagent" (unless the
+  // envelope names one). Envelope fields only ever FILL a missing canonical field —
+  // an explicit top-level value always wins, so chat/eval/manual callers are
+  // byte-identical to before. Lineage is untouched: the tenant is still resolved
+  // SERVER-SIDE from user_id (§9 below); no caller-supplied tenant is ever trusted.
+  {
+    const raw = body as unknown as Record<string, unknown>;
+    const missingCanonical = typeof raw.question !== "string" || typeof raw.user_id !== "string";
+    const env = typeof raw.input === "object" && raw.input !== null ? raw.input as Record<string, unknown> : null;
+    if (missingCanonical && env) {
+      const ctx = typeof raw.context === "object" && raw.context !== null ? raw.context as Record<string, unknown> : null;
+      if (typeof raw.question !== "string") {
+        const q = typeof env.question === "string" ? env.question : typeof env.query === "string" ? env.query : undefined;
+        if (q !== undefined) raw.question = q;
+      }
+      if (typeof raw.user_id !== "string" && ctx && typeof ctx.user_id === "string") raw.user_id = ctx.user_id;
+      if (typeof raw.caller !== "string") raw.caller = "subagent";
+      body = raw as unknown as DeepResearchRequest;
+    }
   }
 
   const question = typeof body.question === "string" ? body.question.trim() : "";
@@ -1550,17 +1994,28 @@ serve(async (req) => {
   // gets no memory anchors and writes a platform-null trace — §13 honest-degrade).
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let resolvedTenantId: string | null = null;
+  // M0: the STRICT lineage used ONLY for persistence (see the auth block below). Null ⇒
+  // ambiguous ⇒ persistence is skipped, never guessed.
+  let lineageTenantId: string | null = null;
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     if (bearer && bearer === SERVICE_KEY) {
-      // Trusted service-role caller → derive tenant from the (trusted) body.user_id.
+      // Trusted service-role caller → derive tenant from the (trusted) body.user_id).
+      // TWO resolutions with different strictness (M0):
+      //   resolvedTenantId — for strategize/tracing: active_tenant_id, else first active
+      //     membership (honest-degrade context only; nothing persisted under it).
+      //   lineageTenantId — for PERSISTENCE: active_tenant_id ONLY. A user whose active
+      //     workspace is unset has AMBIGUOUS ownership and the run is NOT persisted
+      //     (fail-closed per the owner ruling — never a guessed membership).
       const userId = typeof body.user_id === "string" ? body.user_id : "";
       if (userId) {
         const { data: prof } = await admin
           .from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle();
-        let tid = (prof?.active_tenant_id as string | null) ?? null;
+        const activeTid = (prof?.active_tenant_id as string | null) ?? null;
+        lineageTenantId = activeTid && UUID_RE.test(activeTid) ? activeTid : null;
+        let tid: string | null = activeTid;
         if (!tid) {
           const { data: memberRows } = await admin
             .from("tenant_members").select("tenant_id")
@@ -1579,11 +2034,27 @@ serve(async (req) => {
       if (user) {
         const { data: activeTenant } = await anon.rpc("current_user_tenant_id");
         resolvedTenantId = typeof activeTenant === "string" && UUID_RE.test(activeTenant) ? activeTenant : null;
+        // The JWT path is exact by construction (RLS-pinned resolver) — lineage = resolved.
+        lineageTenantId = resolvedTenantId;
       }
     }
   } catch (e) {
     console.warn("[paige-deep-research] tenant resolution failed (non-fatal):", (e as Error)?.message);
     resolvedTenantId = null;
+    lineageTenantId = null;
+  }
+
+  // M0 CROSS-CHECK: an upstream expected_tenant_id is honored only when it AGREES with the
+  // server-resolved lineage. A disagreement is ambiguity — persistence is skipped, the
+  // caller's value is never persisted and never granted authority.
+  const expectedTenant = typeof body.expected_tenant_id === "string" && UUID_RE.test(body.expected_tenant_id)
+    ? (body.expected_tenant_id as string).toLowerCase()
+    : null;
+  if (expectedTenant && lineageTenantId && expectedTenant !== lineageTenantId) {
+    console.warn(
+      "[paige-deep-research] persistence skipped: upstream expected_tenant_id disagrees with the server-resolved lineage (treated as ambiguous, §9/M0)",
+    );
+    lineageTenantId = null;
   }
 
   try {
@@ -1604,6 +2075,20 @@ serve(async (req) => {
   // §32 correctness: reset the wall-clock baseline AFTER strategize so pre-reasoning latency is NOT
   // billed against the gathering budget. The three WALL_CLOCK_MS comparisons below all read this t0.
   t0 = Date.now();
+
+  // ── R3 — the inspectable dossier (diagnostics ONLY; nothing downstream reads it) ──
+  // Bounded by the engine's own hop/query/read caps plus explicit candidate caps below.
+  const dossier: {
+    v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number; served_route?: unknown };
+    candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
+    units?: Array<Record<string, unknown>>;
+  } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
+  let unresolvedUnits: Array<{ objective: string; outcome: string }> = []; // R5: typed meta-state, not findings
+  const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
+  // R6-B: the SERVER-resolved run context every model phase threads to the consumer adapter.
+  // resolvedTenantId is the M0 honest-degrade context (JWT-pinned or active-tenant; NULL stays
+  // NULL — the adapter never invents a tenant); runId correlates the fabric's trace rows.
+  const fabricCtx: RunRequestCtx = { tenantId: resolvedTenantId, runId };
 
   // ── Bounded PLAN → SEARCH → READ → GAP-CHECK loop (A3) ────────────────────
   outer:
@@ -1639,7 +2124,7 @@ serve(async (req) => {
             ? `\nKEY SUB-GOALS:\n${strategy.decomposition.slice(0, 3).map((d) => `- ${d}`).join("\n")}`
             : "")
         : "";
-      const plan = await planHop(question, domainHint, hop, evidence, strategyHint);
+      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx);
       if (plan.done && hop > 0) { stop = "answered"; break; }
       queries = plan.queries.slice(0, BND.MAX_QUERIES_PER_HOP);
       if (queries.length === 0) {
@@ -1649,29 +2134,49 @@ serve(async (req) => {
     }
 
     // (b) SEARCH — Firecrawl fan-out
+    const searchesRun: string[] = [];
+    const sourcesBeforeSearch = sources.length;
     for (const q of queries) {
       if (searches >= BND.MAX_TOTAL_SEARCHES) break;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q);
       if (!r.configured) { configured = false; stop = "unconfigured"; break outer; } // §13 — never fabricate
       searches++;
+      searchesRun.push(q.slice(0, 160));
       costUSD += COST.search;
       for (const hit of r.results) upsertSource(sources, hit);
     }
 
     // (c) READ — top-ranked unread sources' full body
     const ranked = rankSources(sources, freshnessDays);
+    const readsSelected: number[] = [];
+    const readsContentOk: number[] = [];
+    const readsEmpty: number[] = [];
     for (const s of ranked) {
       if (reads >= BND.MAX_READS) break;
       if (s.read || s.excluded) continue;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       const live = sources.find((x) => x.url === s.url)!;
+      readsSelected.push(sources.indexOf(live)); // R3: run-local source position (canonical indexes are stamped by rankSources)
       const content = await fetchUrl(SUPABASE_URL, SERVICE_KEY, s.url);
       live.read = true;
       reads++;
       costUSD += COST.read;
-      if (content) live.content = content;
+      if (content) { live.content = content; readsContentOk.push(sources.indexOf(live)); }
+      else readsEmpty.push(sources.indexOf(live));
     }
+    // R3: the hop record (bounded by the engine's own per-hop caps).
+    dossier.hops.push({
+      hop,
+      planner: entityTarget ? "entity" : "llm",
+      planned_queries: queries.slice(0, BND.MAX_QUERIES_PER_HOP),
+      searches_run: searchesRun.slice(0, BND.MAX_QUERIES_PER_HOP),
+      search_hits_added: sources.length - sourcesBeforeSearch,
+      reads_selected: readsSelected.slice(0, BND.MAX_READS),
+      reads_content_ok: readsContentOk.slice(0, BND.MAX_READS),
+      reads_empty: readsEmpty.slice(0, BND.MAX_READS),
+      budget: hopBudget(),
+    });
 
     if (searches >= BND.MAX_TOTAL_SEARCHES && reads >= BND.MAX_READS) { stop = "budget"; break; }
     if (hop + 1 >= effectiveMaxHops) stop = "max_hops";
@@ -1720,7 +2225,7 @@ serve(async (req) => {
         ? "Search ran but returned no results. No verifiable sources, so no findings — nothing was fabricated."
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
     return json(result);
   }
 
@@ -1728,15 +2233,65 @@ serve(async (req) => {
   // In dossier mode the SAME call additionally emits the atomic per-field-cited
   // profile records; there is never a second model round-trip.
   costUSD += COST.synthesis;
-  const synth = await synthesize(question, domainHint, citable, entityTarget);
-  if (!synth) {
-    const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
-    return json(result);
+  // ── R4 — decomposed claim formation (general path only; dossier mode keeps its own
+  // single specialized call by design — entity profiles are already atomic per field).
+  let synth: SynthOut;
+  if (entityTarget) {
+    const mono = await synthesize(question, domainHint, citable, entityTarget, fabricCtx);
+    if (!mono) {
+      const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      return json(result);
+    }
+    // R6-B: the fabric's closed served-route projection on the dossier record (absent on
+    // the dormant flag-off path).
+    const monoRoute = (mono as { __served_route?: unknown }).__served_route;
+    if (monoRoute) dossier.synthesis.served_route = monoRoute;
+    synth = mono;
+  } else {
+    const units = await planSynthesisUnits(question, domainHint, citable, fabricCtx);
+    for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
+    costUSD += COST.cheapLLM; // the unit planner's extract call
+    // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
+    const perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }> = [];
+    let callsMade = 0;
+    // R4 review P2: a phase deadline anchored on the run clock — a lane that cannot start
+    // in time is skipped (its units aggregate as pending/failed), so the unit phase can
+    // never blow the edge wall clock worst case (per-call deadline x lanes).
+    const synthDeadline = t0 + BND.WALL_CLOCK_MS + 110_000; // gathering budget + bounded unit headroom
+    for (let i = 0; i < units.length; i += R4_UNIT_CONCURRENCY) {
+      if (Date.now() > synthDeadline) {
+        console.warn("[paige-deep-research] R4 unit-phase deadline reached; aggregating completed units only");
+        for (const skipped of units.slice(i)) perUnit.push({ unit: skipped, out: null });
+        break;
+      }
+      const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
+      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, fabricCtx); }));
+      lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
+    }
+    const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);
+    dossier.units = unitDiagnostics;
+    // R5 §2/§3B — typed insufficiency at the RESULT layer: units that searched but could
+    // not establish their obligation surface as honest meta-state on coverage (with unit
+    // provenance), NEVER as a fabricated citation-backed negative finding. Grounded
+    // source-positive non-disclosure findings already flow as normal findings with
+    // citations — the validator judges them like any other claim.
+    unresolvedUnits = unitDiagnostics.filter((d) => d.outcome === "insufficient" || d.outcome === "truncated" || d.outcome === "failed")
+      .map((d) => ({ objective: String(d.objective), outcome: String(d.outcome) }));
+    synth = { findings: unitFindings };
+    // all units failed at the transport level = the monolithic failure class (honest error)
+    if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
+      const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      return json(result);
+    }
   }
+  dossier.synthesis.returned = true;
+  dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;
 
   // ── POST-VALIDATION gate ──────────────────────────────────────────────────
-  const findings = validateAndBind(synth, citable, strict);
+  const findings = validateAndBind(synth, citable, strict, dossier.candidates);
+  if (dossier.candidates.length > 64) { dossier.candidates = dossier.candidates.slice(0, 64); dossier.caps_applied.candidates_truncated = true; } // R3 cap
 
   // ── DOSSIER profile gate (Section C) — runs AFTER validateAndBind, over the
   // same non-excluded ranked sources. Emitted only if ≥1 typed item survived.
@@ -1747,20 +2302,28 @@ serve(async (req) => {
   const finalStop = (findings.length > 0 || entityProfile)
     ? (stop === "unconfigured" ? "answered" : stop)
     : "no_results";
-  const note = findings.length > 0
+  let note = findings.length > 0
     ? `Verified ${findings.length} finding(s) across ${citable.length} citable source(s).`
     : (entityProfile
         ? "Structured entity profile assembled from cited sources; see entity_profile for the verified intel and its unverified gaps."
         : "The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact.");
 
+  // R5 — typed insufficiency rides coverage as meta-state (never through validateAndBind).
+  if (unresolvedUnits.length && findings.length === 0) {
+    // the WHOLE answer is unresolved: keep the honest no-results note, name what was attempted
+    note = `${note} Could not establish: ${unresolvedUnits.slice(0, 3).map((u) => u.objective).join("; ")}.`;
+  }
   const result = buildResult(findings, finalStop, note);
+  if (unresolvedUnits.length) {
+    (result.coverage as Record<string, unknown>).unresolved = unresolvedUnits.slice(0, 8);
+  }
   if (entityProfile) {
     result.entity_profile = entityProfile;
     // Mirror the canonical honesty trail into coverage for consumers that read
     // only `coverage` (B1). entity_profile.unverified_notes stays canonical.
     result.coverage.unverified_notes = entityProfile.unverified_notes;
   }
-  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
+  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
   return json(result);
   } catch (e) {
     // §13 — any unexpected failure returns a STRUCTURED honest error, never a

@@ -1,0 +1,253 @@
+{
+  "case_id": "H5",
+  "split": "holdout",
+  "class": "high_stakes",
+  "answer_class": "answerable",
+  "question": "What is the current USCIS H-1B registration fee per beneficiary for the FY2027 cap season, and what are the key dates of the registration process?",
+  "sub_questions": [
+    "registration fee",
+    "key dates"
+  ],
+  "freshness_days": 365,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T16:07:23.053Z",
+  "http_status": 200,
+  "wall_latency_ms": 56338,
+  "engine_result": {
+    "run_id": "9ba73cd9-f4d8-4471-9793-da2fd14cea8a",
+    "question": "What is the current USCIS H-1B registration fee per beneficiary for the FY2027 cap season, and what are the key dates of the registration process?",
+    "findings": [],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://www.federalregister.gov/documents/2026/08/25/2026-17324/fee-for-certain-h-1b-petitions",
+        "title": "Fee for Certain H-1B Petitions - Federal Register",
+        "snippet": "DHS proposes to include the following changes: a $103,265 additional fee imposed on all H-1B cap-subject petitions filed, including those ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:49.843Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://www.uscis.gov/newsroom/alerts/fy-2027-h-1b-cap-initial-registration-period-opens-on-march-4",
+        "title": "FY 2027 H-1B Cap Initial Registration Period Opens on March 4 | USCIS",
+        "snippet": "# FY 2027 H-1B Cap Initial Registration Period Opens on March 4\nDuring this period, prospective H-1B cap-subject petitioners and representatives must use a [USCIS online account](https://myaccount.uscis.gov/sign-in) to register each beneficiary electronically for the selection process and pay the associated $215 H-1B registration fee for each registration.",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:47.650Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://www.uscis.gov/working-in-the-united-states/temporary-workers/h-1b-specialty-occupations/h-1b-cap-season",
+        "title": "H-1B Cap Season - USCIS",
+        "snippet": "# H-1B Cap Season\n## The H-1B Program\n### Get Updates by Email\n#### Required Fees\nThe fee for each registration is $215.",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:47.650Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://www.uscis.gov/working-in-the-united-states/temporary-workers/h-1b-specialty-occupations/h-1b-electronic-registration-process",
+        "title": "H-1B Electronic Registration Process - USCIS",
+        "snippet": "# H-1B Electronic Registration Process\n#### Required Fees\nThe fee for each registration is $215 for the FY 2027 H-1B cap.",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:47.650Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://goimmigrationlaw.com/h-1b-registration-2027/",
+        "title": "H-1B Registration Is Now Open for FY 2027: Key Dates, Lottery Updates ...",
+        "snippet": "The H-1B cap registration period runs for just over two weeks. Registration Opened: March 4, 2026 at 12:00 p.m. ET Registration Closes: March ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:07:04.141Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://ogletree.com/insights-resources/blog-posts/uscis-announces-h-1b-cap-registration-period-for-fy-2027/",
+        "title": "USCIS Announces H-1B Cap Registration Period for FY 2027",
+        "snippet": "The registration period will open at noon (ET) on March 4, 2026, and will close at noon (ET) on March 19, 2026. The cap registration fee remains unchanged from ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:07:05.618Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://ogletree.com/insights-resources/blog-posts/uscis-reaches-fy-2027-h-1b-cap/",
+        "title": "USCIS Reaches FY 2027 H-1B Cap - Ogletree",
+        "snippet": "## On July 17, 2026, U.S. Citizenship and Immigration Services (USCIS) [announced](https://www.uscis.gov/newsroom/alerts/uscis-reaches-fiscal-year-2027-h-1b-cap) that it had received enough petitions to meet the congressionally mandated H-1B visa cap for fiscal year (FY) 2027. This includes both regular cap petitions and advanced degree exemption, or “master’s cap,” petitions.\n![](https://ogletree.com/app/uploads/Insights/immigration/Immigration_GettyImages-119117011-scaled.jpg)\n\n[Listen to “USCIS Reaches FY 2027 H-1B Cap”](https://ogletree.com/app/uploads/text-to-speech/90545-tts.mp3)\n\n00:00\n",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:07:06.650Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://wolfsdorf.com/h-1b-cap-fy2027-lottery-results-next-steps/",
+        "title": "H-1B Cap Reached: What This Means for Employers and What Options ...",
+        "snippet": "1. The FY 2027 H-1B Cap Is Officially Closed · 2. There Will Be No Second Lottery · 3. The New Wage-Weighted Lottery Changed the Landscape · 4.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:07:05.618Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://www.aila.org/library/featured-issue-fy2027-h-1b-cap-season",
+        "title": "Featured Issue: FY2027 H-1B Cap Season",
+        "snippet": "# Featured Issue: FY2027 H-1B Cap Season\nKey changes for FY2027 H‑1B cap filings include a shift to **wage-weighted selection** instead of a random lottery, requiring detailed registration with SOC codes and wage levels. Additionally, a **new $100,000 fee** applies to certain petitions, impacting employer strategies this season.\n\n[New $100,000 H-1B Fee](https://www.aila.org/library/practice-alert-guidance-on-the-100-000-h-1b-proclamation-fee)",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:49.843Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.bakerdonelson.com/h-1b-cap-alert-key-dates-and-updates-to-the-fy-2027-h-1b-registration-process",
+        "title": "H-1B CAP Alert: Key Dates and Updates to the FY 2027 H-1B ...",
+        "snippet": "Mark your calendars: the H-1B CAP lottery opens March 4, 2026, at 12:00 p.m. ET, and will run through March 19, 2026, at 12:00 p.m. ET!",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:51.090Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.fredlaw.com/alert-fy-2027-h-1b-cap-initial-registration-period-opens-march-4",
+        "title": "FY 2027 H-1B Cap Initial Registration Period Opens March 4",
+        "snippet": "register each beneficiary pay the associated $215 H-1B registration fee. pay an additional $100,000 fee before filing the H-1B petition",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:47.650Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.niwus.com/resources/fy-2027-h-1b-cap-registration-changes",
+        "title": "USCIS Announces FY 2027 H-1B Cap Registration - LPY Law Group",
+        "snippet": "FY 2027 H-1B cap registration dates, a $215 fee, pay the $215 registration fee per beneficiary.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:47.650Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.vorys.com/publication-fy-2027-h-1b-visa-lottery-updates-wage-based-weighted-selection-process-and-100-000-fee",
+        "title": "FY 2027 H-1B Visa Lottery Updates: Wage-Based Weighted Selection ...",
+        "snippet": "# FY 2027 H-1B Visa Lottery Updates: Wage-Based Weighted Selection Process and $100,000 Fee\nThe H-1B cap season for fiscal year 2027 will see major changes, including the introduction of a wage-based weighted selection system and the continued $100,000 visa fee to be imposed on certain H-1B petitions.\n\nThe non-refundable fee for entering the FY 2027 lottery remains $215 per registration.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:49.843Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.bhlawpllc.com/fy-2027-h-1b-lottery-important-dates-and-changes/",
+        "title": "FY 2027 H-1B Lottery: Important Dates and Changes",
+        "snippet": "If selected, USCIS permits an H-1B start date on or after October 1, provided it is within six months of the petition filing date. Potential ...",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:48.803Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.fisherphillips.com/en/insights/insights/are-you-ready-for-the-h-1b-visa-lottery",
+        "title": "Are You Ready for the H-1B Visa Lottery? A Quick Guide for ...",
+        "snippet": "Employers have a month to prepare for the FY 2027 H-1B cap lottery to open – and you should be aware of upcoming deadlines and significant ...",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:06:51.090Z",
+        "excluded": false
+      }
+    ],
+    "coverage": {
+      "stop_reason": "no_results",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact.",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "84f64696-2c9e-4d64-a591-56aad306a162",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 266,
+      "tokens_out": 1000,
+      "cost_estimate_usd": 0.0158,
+      "latency_ms": 11462,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T16:06:38.419515+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "no_results",
+    "configured": true,
+    "findings_count": 0,
+    "sources_retrieved": 15,
+    "sources_included": 15,
+    "sources_excluded": 0,
+    "sources_cited": 0,
+    "primary_ratio": null,
+    "citation_independence": null,
+    "distinct_cited_hosts": 0,
+    "findings_with_citations": null,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 365,
+    "wall_latency_ms": 56338,
+    "trace_cost_usd": 0.0158,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": true
+  }
+}

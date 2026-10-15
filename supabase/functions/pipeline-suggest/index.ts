@@ -1,6 +1,6 @@
 // pipeline-suggest — Paige reads a tenant's program and proposes a sales/delivery
 // pipeline with ordered stages tailored to it. Read/propose only; the actual
-// create happens through create_pipeline_with_stages on the tenant's approval
+// create happens through the governed pipeline_configure command on the tenant's approval
 // (§8 propose→confirm). Tenant-generic: no funding/credit framing unless the
 // tenant's OWN program is explicitly about it (§2/§9).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";

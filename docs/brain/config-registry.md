@@ -73,6 +73,23 @@ rollback proofs structurally could not catch (they run as owner, not service_rol
 Five seeded signals; **`migrations.drift` ships `is_readable = false` on purpose** — an edge function
 cannot read git, so a rule bound to it must report "never evaluated", never a pass.
 
+**Marketing email dispatcher** (E1, migration `20270549000000` + edge function `email-campaign-worker`,
+2026-10-04). A `pg_cron` job **`email-campaign-worker`** on `* * * * *` pokes the function via `net.http_post`
+with `public.cron_token_header()` (same poke shape as `comms-scheduled-drain`); `verify_jwt = false` in
+`config.toml`, failing closed in-function to a service-role bearer or `x-cron-token`. Sends go through
+`send-message` with the service-role bearer and `marketing: true`. Constants live in SQL: daily cap
+`email_campaign_daily_cap()` = 500 per business, cost estimate `email_campaign_unit_cost_usd()` = $0.0004 per
+managed send (an estimate, metered as `platform_metered_events` `L3_tenant_passthrough` / `marketing_email_sent`).
+Durable-work capability `marketing.email_campaign` / kind `email_campaign_dispatch`; Rail capability key
+`marketing_email_campaign`. Session flag `paige.email_campaign_approve` is set only by `email_campaign_approve`
+and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending_approvals`; a second trigger,
+`_email_campaign_approval_withdrawn`, returns a campaign to draft when its approval is rejected anywhere. Before each
+send the worker calls `email_campaign_dispatch_begin` (service role only); a recipient held by quiet hours is
+recorded `deferred` (back to planned with `not_before`, 1 minute to 24 hours). No new secret.
+E2 (migration `20270560000000`) adds three reads for the Email tab, owner/admin of the caller's business only:
+`read_email_marketing_dashboard(p_days 7|30|90, p_tz IANA zone)`, `read_email_campaign(p_campaign_id)` and
+`read_email_rule_choices()`. No new secret, cron or function.
+
 **Platform alerting evaluator** (A2, migration `20260923000000` + edge function `alerting-evaluate`,
 2026-08-20 — ✅ §32.b rollback-proved on prod pre-merge). Adds `paige_alert_rule.condition_met_since`
 (episode bookkeeping — what makes `for_minutes` meaningful and firing edge-triggered, at most once per
@@ -194,8 +211,7 @@ relying on either. (Secret **values** intentionally not recorded.)
 
 ## Signup / onboarding / provisioning (✅ code + migration-verified 2026-08-09)
 
-- **Signup verification = EMAIL only.** `src/pages/PublicSignup.tsx` uses email verification
-  (`CommunicationsConsent … showSms={false}`, "click it to verify your account"). **SMS/phone
+- **Signup verification = EMAIL only.** Current mounted public route (2026-10-12): `App.tsx` SignupRedirect → `Auth.tsx` → `signUpWithReferral` → ordinary `supabase.auth.signUp` and verification redirect/UI. Historical2026-08-09 pointer `PublicSignup.tsx` is unmounted; preserve it as history, not current routing authority. **SMS/phone
   verification is NOT wired into the signup flow** — the `input-otp` primitive exists and OTP is used
   for Auth/MFA, but signup doesn't use it. **SMS phone-verify itself DOES exist** for notification
   opt-in: `send-sms-verification` + `verify-sms-code` edge fns + `sms_verifications` table, wired in
@@ -449,6 +465,13 @@ Repo: **`Paige-Agent-AI/Paige-Agent-AI`** (✅ this is the accessible repo for G
 Grouped by domain; these are the env-var **names**, evidence the integration exists in the edge layer.
 Values intentionally omitted.
 
+- **Claude model ids (not secrets):** `supabase/functions/_shared/claude-models.ts` is the ONE place a Claude
+  model id is chosen: `CLAUDE_REASONING` (reasoning tier) and `CLAUDE_CLASSIFICATION`. `claude.ts` re-exports them,
+  and the allow-list derives from them. Never hard-code an id elsewhere. What production actually runs is what
+  `paige_llm_trace.model` records (the served id), not what a branch says. INT-329 part 2 moved
+  reasoning from `claude-sonnet-5` to `claude-sonnet-5-5` by owner ruling (2026-10-06), which superseded the A/B gate.
+  `PAIGE_ANTHROPIC_AB_KEY` is not required by that ruling (the owner declined to add it). The `model-ab` workflow stays only as an optional tool.
+- **OpenAI reasoning (INT-334):** `OPENAI_API_KEY` (set and rotated by the owner 2026-10-06; the stray `OPEN_AI_API_KEY` was deleted — name only, value never read here) feeds `_shared/openai-responses.ts` (Responses API, `store:false`). GPT-6 ids are chosen in `_shared/openai-models.ts` only.
 - **LLM / model router (§14/§34):** `ANTHROPIC_API_KEY`, `OPENAI_BASE_URL`, `GROQ_BASE_URL`,
   `FEATHERLESS_API_KEY`, `FEATHERLESS_BASE_URL`, `FEATHERLESS_DEFAULT_MODEL` (primary open-flexible
   slug override; back-compat alias `FEATHERLESS_CHEAP_MODEL`), `FEATHERLESS_MODEL_<KIND>` (per-job-kind
@@ -482,18 +505,52 @@ Values intentionally omitted.
   LONGER reference Lovable (purged in #442 — they always ran on direct-Anthropic via `gatewayCompat`). Do
   NOT assume the chat touches Lovable (§10 corrections log 2026-08-10). Removing these is a launch-critical
   email-provider migration (owner-set replacement secret + §32 live-email verify) — see task #112.
-- **Visual critique (§33):** `VISUAL_RENDERER_URL`, `VISUAL_RENDERER_SECRET`,
-  `STUDIO_VISUAL_CRITIQUE_ENABLED`, `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD`.
+- **Visual critique (§33):** `STUDIO_VISUAL_CRITIQUE_ENABLED` (unset = the loop is OFF in the product
+  flow AND studio-visual-critique answers `status:"disabled"` on BOTH paths — render and `image_url` —
+  without calling paige-browser or the model, and writes no row; its per-tenant throttle is not atomic under
+  concurrency, so an advisory-locked reservation is a required prerequisite before this is ever turned on), `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD` (both enforced on
+  server-derived loop state from the log rows), `STUDIO_CRITIQUE_MAX_SLICES` (default 4 — slices asked
+  for and sent per critique), `STUDIO_CRITIQUE_THROTTLE_WINDOW_MIN` (10) + `STUDIO_CRITIQUE_THROTTLE_MAX`
+  (12 — per-tenant attempts per window, counted on the log), `STUDIO_CRITIQUE_LOOP_WINDOW_MIN` (60 — how
+  far back a deliverable/session's loop rows count). Landing pages (not funnels or forms) render through
+  paige-browser `/render` using the SAME edge secrets `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` below
+  (PR #1712, merged and deployed 2026-10-04; the authenticated production capture is UNPROVEN — DEL-093, INT-312 in PR #1717).
+  **RETIRED:** `VISUAL_RENDERER_URL` / `VISUAL_RENDERER_SECRET` (edge) and `FLY_RENDERER_SHARED_SECRET`
+  (Fly) — they pointed at `paige-visual-renderer`, a Fly app that was never deployed (NXDOMAIN); no code
+  reads them after this change. If either edge secret exists on prod it is dead and may be unset.
 - **Paige browser — self-hosted headless browser (Task #126, §32.c self-verify + §17 public-web browse):**
   edge secret NAMES `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` (skill-runner → the Fly host's
-  `/self-verify` and `/browse-public-url`; unset → honest `needs_config`, §13). Fly-side (on the
+  `/self-verify` and `/browse-public-url`; studio-visual-critique → `/render`; unset → honest
+  `needs_config` / `renderer_not_configured`, §13). Fly-side (on the
   `paige-browser` app, NOT edge): `PAIGE_BROWSER_SHARED_SECRET` (must equal the edge `PAIGE_BROWSER_SECRET`),
   `PAIGE_BROWSER_WILDCARD_ENABLED` (`true` = wildcard public browsing ON, owner-flipped 2026-08-13),
-  `PAIGE_BROWSER_MAX_CONTENT_BYTES` (default 500000). Audit rail: `paige_browser_usage` (written by the
+  `PAIGE_BROWSER_MAX_CONTENT_BYTES` (default 500000). `/render` knobs, ALL optional with safe defaults
+  (no new Fly secret needed): `PAIGE_RENDER_ALLOWED_ORIGINS` (default
+  `https://paigeagent.ai,https://app.paigeagent.ai`), `PAIGE_APP_ORIGIN` (default `https://paigeagent.ai`,
+  where `/render-frame` is opened), `PAIGE_RENDER_MAX_PAYLOAD_BYTES` (1000000), `PAIGE_RENDER_SLICE_HEIGHT`
+  (1600), `PAIGE_RENDER_MAX_SLICES` (8), `PAIGE_RENDER_JPEG_QUALITY` (80), `PAIGE_RENDER_READY_TIMEOUT_MS`
+  (12000, and always shortened to fit the run deadline), `PAIGE_RENDER_MAX_SLICE_BYTES` (3500000). Audit rail: `paige_browser_usage` (written by the
   CALLER edge fn via service_role; the Fly host is DB-free, §9/§34).
 - **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
   `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
   `PLATFORM_SUPPORT_EMAIL`.
+- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
+  - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
+    - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
+    - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation; anything else is refused before any provider call (`paige_email_requires_governed_send`);
+    - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
+    - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
+    - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
+    - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
+  - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name.
+  - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
+  - **Database facts, not secrets (`20271031000100`):**
+    - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);
+    - a `channel_connectors` row with `provider='sendgrid'`, which only the service role or a non-JWT database session may create or change (`guard_channel_connector_sendgrid_writer`, `20271031000250`); anyone signed in may only switch one off;
+    - unique indexes `tenant_email_domains_sendgrid_verified_domain` (one SendGrid-verified claim per domain across businesses) and `tenant_email_domains_sendgrid_domain_id` (one row per SendGrid domain id), both `20271031000250`;
+    - receipt journal `sendgrid_receipt_processing`, written by `ingest_sendgrid_receipt` (10-argument form, `20271031000200`; SECURITY DEFINER, refuses any caller with `auth.uid()` set; correlation `correlated` | `uncorrelated` | `apply_failed`). The applier it calls is not executable by `service_role`.
+
+    On 2026-10-13, production had 0 `sendgrid` connectors and 0 journal rows. The operator steps to go live are in master §5.
 - **Calendars / meetings:** Google (`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`, `CALENDAR_ENCRYPTION_KEY`,
   `CALENDAR_OAUTH_REDIRECT_ORIGIN`, `GOOGLE_DRIVE_API_KEY`), Cal.com (`CAL_API_KEY`, `CAL_BASE_URL`,
   `CAL_WEBHOOK_SECRET`), Zoom (`ZOOM_CLIENT_ID`/`_SECRET`, `ZOOM_OAUTH_REDIRECT_URL`).
@@ -606,3 +663,19 @@ Owner direction authorizes implementation through green-gated release for reusab
 The first repair closes a confirmed A2P workspace-switch defect. The editor is keyed by workspace, delayed responses are fenced, handlers pass a captured-workspace precondition, prompt context is explicitly tenant-scoped, and the save/insert trigger rejects a changed tenant rather than redirecting the write. Ordinary Solo owners/admins gain the same captured-tenant preparation authority using is_tenant_admin_as and a current-workspace SELECT policy. Carrier submission is still absent; this repair does not make SMS registration ready.
 
 Automated evidence: UI and actual-handler tests with injected database/model ports; isolated PostgreSQL role, replay and lock-wait race tests. Independent adversarial source review passed after two additional races were corrected. Authenticated production owner-flow proof remains owed. No real customer record, workflow, campaign, carrier submission or sender identity was changed to produce proof.
+
+### Canonical remote MCP OAuth scope wiring — 2026-09-30 (candidate)
+
+The explicit OAuth entry in `supabase/functions/_shared/mcp-gateway/oauth.ts` selects the current
+Bearer challenge's scope, otherwise the protected resource's `scopes_supported`, otherwise no
+scope parameter. It does not request the authorization server's global scope catalogue. The same
+set goes into client registration, consent and the existing encrypted PKCE transaction. An existing
+scope query on an authorization endpoint cannot defeat omission. Discovery validates resource
+identity and uses the existing SSRF guard; its header-only probe aborts an unused SSE body instead
+of waiting for EOF. Specialized n8n resource-only discovery does not gain this probe.
+
+No environment variable, secret store, schema, migration, tenant authority or execution gate is
+added. The connection remains PARTIAL: this corrects client scope selection, not provider-side
+scope registration, consent or outbound execution. Automated and synthetic-browser evidence,
+independent review, and the exact remaining proof boundary are in
+`../evidence/ui-delivery/mcp-oauth-resource-scopes.md`.

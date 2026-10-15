@@ -1,0 +1,37 @@
+name: Migration G studio publish door only
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270554000000_studio_publish_door_only.sql'
+      - 'supabase/migrations/20270548000001_growth_placeholder_check_per_string.sql'
+      - 'supabase/migrations/20270537000000_vibe_studio_publish_lifecycle.sql'
+      - 'supabase/tests/migration_g_studio_publish_door_only.sql'
+      - '.github/workflows/migration-g-studio-publish-door-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-door-only-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: migration_g_studio_publish_door_only_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: migration_g_studio_publish_door_only_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migration G — only the server runs the eight, with a named workspace and person; every guard unchanged (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/migration_g_studio_publish_door_only.sql

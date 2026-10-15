@@ -43,6 +43,13 @@
 .co-filter b { font: 400 10.5px/1 var(--mono); color: var(--ink-3); }
 .co-filter[aria-pressed="true"] b { color: color-mix(in srgb, var(--gold) 45%, var(--ink) 55%); }
 .co-filter:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-radius: 999px; }
+.co-search { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12.5px; color: var(--ink); }
+.co-search input { width: 200px; min-width: 0; max-width: 100%; min-height: 34px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--surface); color: var(--ink); font: inherit; caret-color: var(--violet); }
+.co-search input::placeholder { color: var(--ink-2); }
+.co-search input:hover { border-color: var(--violet); }
+.co-search input:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+.co-search-empty { margin: 0; color: var(--ink-2); font-size: 13px; }
+@media (max-width: 520px) { .co-search { width: 100%; } .co-search input { flex: 1; width: auto; } }
 
 /* The list itself carries the second, cooler wash — a restrained layered canvas instead of a flat
    fill, so the offer cards sit on a surface that reads as a workspace rather than a blank page. */

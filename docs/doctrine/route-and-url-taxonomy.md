@@ -423,7 +423,7 @@ owner's stated sequencing).
 | `setup` | Setup | `setup` | `Setup` |
 
 **§13 honest gaps vs the agency set:** Solo has **no top-level Client Support, Billing, or Settings tab** —
-Billing + Settings live inside the state-driven `Setup` surface's sub-tabs (`src/solo/setup.tsx`). Bringing
+Billing + Settings live inside the state-driven `Setup` surface's sub-tabs (`src/solo/settings.tsx`; the former `src/solo/setup.tsx` was deleted 2026-10-03). Bringing
 Solo to full parity (adding Client Support + surfacing Billing) is a §60 parity question flagged for the
 Solo slice, not silently assumed.
 

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "persistent_data": false,
+  "scope": "INT-311 manual commercial conditions UI; synthetic local transport only",
+  "commands": [
+    {"name":"tests","argv":["node","node_modules/vitest/vitest.mjs","run","src/solo/sales/InvoiceDraftEditor.test.tsx","src/solo/sales/InvoiceCommercialConditions.test.tsx","src/solo/sales/CommercialPackageInspection.test.tsx","src/solo/sales/invoiceDraftApi.test.ts","src/__tests__/sales-commercial-package-read.test.ts","src/__tests__/sales-package-chat-read.test.ts"],"definition_file":"package.json"},
+    {"name":"types","argv":["node","scripts/ci/tsc-ratchet.mjs"],"definition_file":"scripts/ci/tsc-ratchet.mjs"},
+    {"name":"build","argv":["node","node_modules/vite/bin/vite.js","build"],"definition_file":"package.json"},
+    {"name":"runtime-proof","argv":["node","scripts/live-drive/sales-commercial-conditions-smoke.mjs"],"definition_file":"scripts/live-drive/sales-commercial-conditions-smoke.mjs"}
+  ],
+  "evidence": [
+    {"path":"docs/evidence/ui-delivery/assets/sales-commercial-conditions/rendered-proof.json","produced_by":"runtime-proof","kind":"runtime","max_age_hours":24}
+  ],
+  "environment": "Local harness must be served with the existing sales-invoice-lifecycle Vite config; SALES_CONDITIONS_HARNESS_URL selects its loopback origin. No provider or production write is part of these commands.",
+  "unverified": ["Authenticated owner/admin persistence","Stripe TEST transaction","Historical signed economics","Consequential Chat continuation"]
+}

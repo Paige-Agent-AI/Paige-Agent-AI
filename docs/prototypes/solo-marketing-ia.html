@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solo Marketing IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════════════════════════════
+   FLOW PROTOTYPE — Solo: Campaigns becomes Marketing (a department), Sales leaves, Analytics retires.
+   Throwaway · read-only · zero production mutation · every value below is labelled by its source.
+
+   PALETTE PROVENANCE — nothing visual here is authored for this prototype:
+     .paige-solo tokens ......... src/solo/solo-tokens.css L2-L25 (Mineral / Obsidian), verbatim
+     --pg-canvas ................ src/index.css L245 / L291, verbatim
+     .mk-nav / tab strip ........ src/solo/solo-campaigns.css L2-L5 (campaigns-nav / campaigns-tabs)
+     rail ....................... TenantCommandCenterShell rail tokens (--rail, --rail-2, --rail-text)
+     PAIGE column geometry ...... TenantCommandCenterShell.tsx:483 — docked minmax(440px,34vw),
+                                  expanded minmax(620px,52vw), overlay below 1080px, rail 72px.
+
+   DATA-SOURCE LEGEND (every value carries one):
+     LIVE READ    a real tenant-scoped read exists today (named table/RPC)
+     OWNER BRIEF  the owner wrote it on a campaign brief; no system fact is claimed
+     UNAVAILABLE  no substrate exists; the prototype refuses to show a number
+     MOCK         fictional prototype data standing in for a LIVE READ (fictional business, §63)
+
+   The review harness uses its own --rv-* slate, deliberately OUTSIDE the product palette, so
+   harness chrome can never be mistaken for product surface (house rule from offer-catalog.html).
+   ════════════════════════════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box}
+:root{--rv-bg:#eceef1;--rv-panel:#f7f8fa;--rv-edge:#ccd2da;--rv-ink:#1b2027;--rv-ink-2:#48525f;--rv-faint:#6d7885;--rv-focus:#2f6fd0;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--rv-bg:#14171c;--rv-panel:#1b1f26;--rv-edge:#2e353f;--rv-ink:#eef1f5;--rv-ink-2:#b3bcc7;--rv-faint:#8b95a2;--rv-focus:#7aa9ee;color-scheme:dark}}
+:root[data-theme="dark"]{--rv-bg:#14171c;--rv-panel:#1b1f26;--rv-edge:#2e353f;--rv-ink:#eef1f5;--rv-ink-2:#b3bcc7;--rv-faint:#8b95a2;--rv-focus:#7aa9ee;color-scheme:dark}
+html,body{margin:0;min-height:100%}
+body{background:var(--rv-bg);color:var(--rv-ink);font:400 13px/1.5 "Geist","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ── harness ─────────────────────────────────────────────────────────────── */
+.rv-bar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 16px;background:var(--rv-panel);border-bottom:1px solid var(--rv-edge)}
+.rv-title{flex:1 1 260px;min-width:0}
+.rv-title b{display:block;font-size:13px}
+.rv-title span{color:var(--rv-faint);font-size:11.5px}
+.rv-ctl{display:grid;gap:3px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--rv-faint)}
+.rv-seg{display:inline-flex;border:1px solid var(--rv-edge);border-radius:7px;overflow:hidden}
+.rv-seg button{border:0;background:transparent;color:var(--rv-ink-2);font:500 11.5px/1 inherit;font-family:inherit;padding:6px 9px;cursor:pointer;white-space:nowrap}
+.rv-seg button+button{border-left:1px solid var(--rv-edge)}
+.rv-seg button[aria-pressed="true"]{background:var(--rv-ink);color:var(--rv-panel)}
+.rv-seg button:focus-visible,.rv-link:focus-visible{outline:2px solid var(--rv-focus);outline-offset:1px}
+.rv-note{padding:10px 16px;color:var(--rv-ink-2);font-size:12px;max-width:1400px}
+.rv-note code{font:11.5px "Geist Mono",monospace}
+.rv-stagewrap{padding:4px 16px 18px;overflow:auto}
+.rv-stage{margin:0 auto;border:1px solid var(--rv-edge);border-radius:6px;overflow:hidden;box-shadow:0 18px 50px -24px rgba(0,0,0,.4);position:relative}
+.rv-geo{font:11px "Geist Mono",monospace;color:var(--rv-faint);text-align:center;padding:6px 0 0}
+.rv-map{max-width:1240px;margin:0 auto;padding:6px 16px 40px;color:var(--rv-ink)}
+.rv-map h2{font-size:16px;margin:22px 0 8px}
+.rv-map table{width:100%;border-collapse:collapse;font-size:12px;background:var(--rv-panel);border:1px solid var(--rv-edge)}
+.rv-map th,.rv-map td{border-bottom:1px solid var(--rv-edge);padding:7px 9px;text-align:left;vertical-align:top}
+.rv-map th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rv-faint)}
+.rv-map code{font:11.5px "Geist Mono",monospace}
+.rv-flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 4px}
+.rv-flow span{padding:6px 10px;border:1px solid var(--rv-edge);border-radius:999px;background:var(--rv-panel);font-weight:600}
+.rv-flow i{color:var(--rv-faint);font-style:normal}
+.rv-toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(560px,calc(100% - 32px));padding:10px 14px;border-radius:8px;background:var(--rv-ink);color:var(--rv-panel);font-size:12.5px;z-index:90;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+
+/* ── product tokens: src/solo/solo-tokens.css, verbatim ─────────────────── */
+.paige-solo{
+--font:'Geist','Söhne',-apple-system,'Segoe UI',sans-serif;--mono:'Geist Mono',ui-monospace,monospace;
+--canvas:#F6F5F1;--surface:#FFFFFF;--surface-2:#FBFAF7;--surface-sunk:#F0EEE8;
+--line:#E5E1D8;--line-soft:#EFECE4;
+--ink:#171331;--ink-2:#4A4566;--ink-3:#7E7995;--ink-inv:#FBFAF7;
+--rail:#171331;--rail-2:#221C46;--rail-line:#332C5E;--rail-text:#C9C4E0;
+--gold:#C9860C;--gold-bright:#E9A83A;--gold-tint:#FBF1DE;--gold-line:#EFDCB4;
+--violet:#5B3FD6;--violet-2:#7A62E8;--violet-tint:#EEEAFD;--violet-line:#DAD1FA;
+--ok:#1B7A52;--ok-tint:#E4F2EB;--warn:#B4700A;--warn-tint:#FBF0DD;--bad:#B93E37;--bad-tint:#FAE9E7;
+--r-s:8px;--r-m:12px;--r-l:18px;--r-xl:26px;
+--sh-1:0 1px 2px rgba(23,19,49,.05);--sh-2:0 2px 4px rgba(23,19,49,.04),0 12px 28px -12px rgba(23,19,49,.14);
+--pg-canvas:#fbf9f5;
+}
+.paige-solo[data-theme="dark"]{
+--canvas:#0C0A1B;--surface:#141129;--surface-2:#191637;--surface-sunk:#100D24;
+--line:#282348;--line-soft:#221D3E;
+--ink:#EFECFA;--ink-2:#B0AACB;--ink-3:#7D779A;--ink-inv:#141129;
+--rail:#100D24;--rail-2:#1B1738;--rail-line:#282348;--rail-text:#B0AACB;
+--gold:#E9A83A;--gold-bright:#F5C266;--gold-tint:#2C2211;--gold-line:#4A3A17;
+--violet:#8A72F5;--violet-2:#A692FF;--violet-tint:#221C4A;--violet-line:#352C68;
+--ok:#4CC48C;--ok-tint:#12301F;--warn:#E3A63C;--warn-tint:#2E2311;--bad:#EE7A72;--bad-tint:#331817;
+--sh-1:0 1px 2px rgba(0,0,0,.3);--sh-2:0 2px 4px rgba(0,0,0,.25),0 12px 28px -12px rgba(0,0,0,.5);
+--pg-canvas:#100e14;
+}
+.paige-solo{background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;text-wrap:pretty;height:100%}
+.paige-solo button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.paige-solo h1,.paige-solo h2,.paige-solo h3{margin:0;font-weight:600;letter-spacing:-.02em;color:var(--ink)}
+.paige-solo p{margin:0}
+.paige-solo .eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.paige-solo .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.paige-solo .btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);white-space:nowrap;flex:none;transition:background .15s}
+.paige-solo .btn:hover{background:var(--surface-sunk)}
+.paige-solo .btn-g{background:var(--gold-tint);border-color:var(--gold-line);color:var(--gold)}
+.paige-solo .btn-g:hover{background:var(--gold-line)}
+.paige-solo .btn-s{height:28px;padding:0 10px;font-size:12px;border-radius:8px}
+.paige-solo .btn[disabled]{opacity:.55;cursor:not-allowed}
+.paige-solo .pill{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap;flex:none}
+.paige-solo .pill-ok{background:var(--ok-tint);color:var(--ok)}
+.paige-solo .pill-warn{background:var(--warn-tint);color:var(--warn)}
+.paige-solo .pill-bad{background:var(--bad-tint);color:var(--bad)}
+.paige-solo .pill-v{background:var(--violet-tint);color:var(--violet)}
+.paige-solo .pill-n{background:var(--surface-sunk);color:var(--ink-3)}
+.paige-solo :focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:6px}
+
+/* ── shell ──────────────────────────────────────────────────────────────── */
+.sh{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr) var(--paige-w);height:100%;min-height:0}
+.sh-rail{background:var(--rail);color:var(--rail-text);display:flex;flex-direction:column;padding:14px 10px;gap:4px;min-width:0;border-right:1px solid var(--rail-line)}
+.sh-brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px;color:#fff;font-weight:600;font-size:14px}
+.sh-brand i{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--violet),var(--violet-2));display:grid;place-items:center;font-style:normal;font-size:13px}
+.sh-group{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--rail-text);opacity:.6;padding:10px 10px 4px}
+.sh-item{display:flex;align-items:center;gap:10px;width:100%;height:38px;padding:0 10px;border-radius:9px;color:var(--rail-text);font-size:13px;font-weight:500;text-align:left;position:relative}
+.paige-solo .sh-item:hover{background:var(--rail-2);color:#fff}
+.paige-solo .sh-item[aria-current="page"]{background:var(--rail-2);color:#fff}
+.paige-solo .sh-item[aria-current="page"]::before{content:"";position:absolute;left:-10px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--gold)}
+.sh-item svg{width:17px;height:17px;flex:none}
+.sh-item small{margin-left:auto;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border:1px solid var(--rail-line);border-radius:99px;opacity:.85}
+.sh-retired{font-size:11px;line-height:1.4;color:var(--rail-text);opacity:.7;padding:10px;border:1px dashed var(--rail-line);border-radius:9px;margin-top:auto}
+.sh[data-compact="true"] .sh-item span,.sh[data-compact="true"] .sh-item small,.sh[data-compact="true"] .sh-group,.sh[data-compact="true"] .sh-brand b,.sh[data-compact="true"] .sh-retired{display:none}
+.sh[data-compact="true"] .sh-item{justify-content:center;padding:0}
+.sh-main{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--pg-canvas);position:relative;container-type:inline-size}
+.sh-paige{min-width:0;border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column}
+.sh-paige[data-mode="overlay"]{position:absolute;right:0;top:0;bottom:0;width:min(440px,92%);z-index:20;box-shadow:var(--sh-2)}
+.pg-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.pg-head b{font-size:13.5px}
+.pg-orb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--violet-2),var(--violet));flex:none}
+.pg-body{flex:1;min-height:0;overflow:auto;padding:14px;display:grid;align-content:start;gap:10px}
+.pg-msg{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-2)}
+.pg-compose{margin:10px 14px 14px;height:40px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;padding:0 12px;color:var(--ink-3);font-size:12.5px}
+
+/* ── marketing department (ported from solo-campaigns.css) ─────────────── */
+.mk-nav{min-height:48px;display:flex;align-items:stretch;gap:14px;padding:0 22px;border-bottom:1px solid var(--line);background:var(--pg-canvas);flex:none;min-width:0}
+.mk-tabs{display:flex;align-items:stretch;gap:20px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:1 1 auto;min-width:0}
+.mk-tabs button{display:flex;align-items:center;gap:7px;flex:none;padding:0 1px;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--ink-3);font-size:13px;font-weight:500;white-space:nowrap}
+.mk-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold);font-weight:650}
+.mk-tabs button[data-candidate="true"]{font-style:italic}
+.mk-tabs button[data-candidate="true"]::after{content:"proposed";font:600 8.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 5px;border-radius:99px;background:var(--surface-sunk);color:var(--ink-3);font-style:normal}
+.mk-side{align-self:center;flex:none}
+.mk-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px 22px 32px}
+.mk-inner{max-width:1240px;margin:0 auto;display:grid;gap:14px}
+.mk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.mk-head h1{font-size:20px}
+.mk-head p{color:var(--ink-2);font-size:13px;max-width:720px;margin-top:3px}
+.mk-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--sh-1);min-width:0;overflow:hidden}
+.mk-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+.mk-card>header h2{font-size:14.5px}
+.mk-card>header p{font-size:12px;color:var(--ink-3);margin-top:1px}
+.mk-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@container (max-width:980px){.mk-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:380px){.mk-tiles{grid-template-columns:minmax(0,1fr)}}
+.mk-tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:14px 15px;display:grid;gap:5px;min-width:0}
+.mk-tile b{font-size:24px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.mk-tile b.none{font-size:15px;color:var(--ink-3);font-weight:500;letter-spacing:0}
+.mk-tile p{font-size:12px;color:var(--ink-2)}
+.src{display:inline-flex;align-items:center;gap:4px;font:500 9.5px/1 "Geist Mono",monospace;letter-spacing:.04em;padding:3px 6px;border:1px dashed #8b95a2;border-radius:4px;background:rgba(139,149,162,.10);color:var(--ink-3);flex:none;max-width:100%;overflow-wrap:anywhere;line-height:1.25;justify-self:start}
+.paige-solo[data-annot="off"] .src{display:none}
+.src::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.src-live{color:var(--ok)}.src-owner{color:var(--violet)}.src-none{color:var(--ink-3)}.src-mock{color:var(--warn)}
+.mk-two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+@container (max-width:860px){.mk-two{grid-template-columns:minmax(0,1fr)}}
+.mk-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line-soft);min-width:0}
+.mk-row:last-child{border-bottom:0}
+.mk-row .grow{flex:1;min-width:0}
+.mk-row .t{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-row .s{font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-row .meta{display:flex;align-items:center;gap:8px;flex:none}
+@container (max-width:720px){.mk-row:not(.mk-row--bar){flex-wrap:wrap}.mk-row:not(.mk-row--bar) .grow{flex-basis:calc(100% - 120px)}.mk-row .meta{width:100%;justify-content:flex-start;flex-wrap:wrap;padding-left:0}}
+.mk-bar{height:8px;border-radius:99px;background:var(--surface-sunk);overflow:hidden}
+.mk-bar i{display:block;height:100%;background:var(--violet);border-radius:99px}
+.mk-empty{padding:28px 20px;display:grid;justify-items:start;gap:8px}
+.mk-empty h3{font-size:15px}
+.mk-empty p{color:var(--ink-2);font-size:13px;max-width:620px}
+.mk-steps{display:grid;gap:8px;margin:6px 0 4px;padding:0;list-style:none;counter-reset:s}
+.mk-steps li{counter-increment:s;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink-2)}
+.mk-steps li::before{content:counter(s);width:20px;height:20px;border-radius:50%;background:var(--surface-sunk);color:var(--ink-2);font:600 11px/20px var(--mono);text-align:center;flex:none}
+.mk-unavail{padding:22px 20px;display:grid;gap:10px}
+.mk-unavail h3{font-size:15px}
+.mk-unavail p{color:var(--ink-2);font-size:13px;max-width:700px}
+.mk-unavail dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;margin:4px 0 0;font-size:12.5px}
+.mk-unavail dt{color:var(--ink-3)}
+.mk-unavail dd{margin:0;color:var(--ink-2)}
+.mk-skel{display:grid;gap:10px;padding:16px}
+.mk-skel span{height:54px;border-radius:10px;background:linear-gradient(90deg,var(--surface-sunk),var(--surface-2),var(--surface-sunk));background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.mk-alert{display:flex;gap:12px;align-items:flex-start;padding:14px 18px;border:1px solid var(--bad);border-radius:var(--r-m);background:var(--bad-tint);color:var(--ink)}
+.mk-alert p{font-size:13px;color:var(--ink-2)}
+.mk-ro{font-size:12px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.mk-handoff{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--surface-2);border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-2)}
+.mk-handoff a,.mk-link{color:var(--violet);font-weight:600;text-decoration:none;cursor:pointer}
+.mk-cal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line-soft)}
+.mk-cal div{padding:12px;border-right:1px solid var(--line-soft);min-height:120px;display:grid;align-content:start;gap:6px;min-width:0}
+.mk-cal div:last-child{border-right:0}
+.mk-cal span{font-size:11px;color:var(--ink-3);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.mk-cal em{font-style:normal;font-size:12px;padding:6px 8px;border-radius:8px;background:var(--violet-tint);color:var(--violet);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container (max-width:620px){.mk-cal{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mk-seg{display:inline-flex;background:var(--surface-sunk);border-radius:10px;padding:3px;gap:2px}
+.mk-seg button{height:28px;padding:0 12px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--ink-3)}
+.mk-seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
+.fade{animation:fd .22s ease both}
+@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade,.mk-skel span{animation:none}.paige-solo *{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="rv-bar" role="region" aria-label="Review controls (not product)">
+  <div class="rv-title"><b>Solo · Marketing department — information architecture prototype</b>
+    <span>Review harness, not product. Read-only; nothing writes. Dashed grey tags are review notes naming each value's source; they are not product UI. MOCK values are fictional.</span></div>
+  <div class="rv-ctl">View<div class="rv-seg" data-ctl="page"><button data-v="product" aria-pressed="true">Product</button><button data-v="map">Ownership map</button></div></div>
+  <div class="rv-ctl">Tab set<div class="rv-seg" data-ctl="set"><button data-v="rec" aria-pressed="true">Recommended (5)</button><button data-v="full">Full candidate (9)</button></div></div>
+  <div class="rv-ctl">State<div class="rv-seg" data-ctl="state"><button data-v="pop" aria-pressed="true">Populated</button><button data-v="first">First use</button><button data-v="load">Loading</button><button data-v="err">Read error</button><button data-v="ro">Read-only member</button></div></div>
+  <div class="rv-ctl">Viewport<div class="rv-seg" data-ctl="vp"><button data-v="1536x770" aria-pressed="true">1536×770</button><button data-v="1366x768">1366×768</button><button data-v="1024x768">1024×768</button><button data-v="900x1000">900×1000</button></div></div>
+  <div class="rv-ctl">PAIGE<div class="rv-seg" data-ctl="paige"><button data-v="closed" aria-pressed="true">Closed</button><button data-v="docked">Docked</button><button data-v="expanded">Expanded</button></div></div>
+  <div class="rv-ctl">Source notes<div class="rv-seg" data-ctl="annot"><button data-v="on" aria-pressed="true">Shown</button><button data-v="off">Hidden</button></div></div>
+  <div class="rv-ctl">Theme<div class="rv-seg" data-ctl="theme"><button data-v="light" aria-pressed="true">Mineral</button><button data-v="dark">Obsidian</button></div></div>
+</div>
+<div id="rv-product">
+  <p class="rv-note">The main menu shows the proposed Solo order: <b>Command Center · Clients · Marketing · Sales · Marketplace · Settings</b>. Analytics leaves the rail. Sales is a destination owned by the Sales lane; it is shown here only as the handoff target, and this lane does not build it. <b>Recommended (5)</b> shows only tabs backed by data that exists today. <b>Full candidate (9)</b> adds the four tabs from the handoff, each showing its honest state, so you can judge whether they belong.</p>
+  <div class="rv-stagewrap"><div class="rv-stage" id="stage"></div><div class="rv-geo" id="geo"></div></div>
+</div>
+<div id="rv-mapview" hidden></div>
+<div class="rv-toast" id="rv-toast" role="status" hidden></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const S={annot:"on",page:"product",set:"rec",state:"pop",vp:"1536x770",paige:"closed",theme:"light",tab:"overview",cal:"list"};
+let toastT;function note(m){const t=$("#rv-toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3600)}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const src=(k,t)=>`<span class="src src-${k}">${t}</span>`;
+const LIVE=t=>src("live","Live read · "+t), OWNER=t=>src("owner","Owner brief · "+t), NONE=t=>src("none","Unavailable · "+t), MOCK=t=>src("mock","Mock · "+t);
+const I={
+ cmd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>',
+ users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5 6-5s5.4 1.6 6 5"/><path d="M16 4.5a3 3 0 010 6M18 15c1.6.6 2.6 2.2 3 5"/></svg>',
+ mega:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M17 9a4 4 0 010 6"/></svg>',
+ sales:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18l5-6 4 3 7-8"/><path d="M15 7h5v5"/></svg>',
+ store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9l1.5-4h13L20 9M4 9h16v10H4z"/><path d="M9 19v-5h6v5"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>'
+};
+const RAIL=[["command","Command Center",I.cmd],["clients","Clients",I.users],["marketing","Marketing",I.mega],["sales","Sales",I.sales,"Sales lane"],["market","Marketplace",I.store],["settings","Settings",I.gear]];
+const TABS_REC=[["overview","Overview"],["campaigns","Campaigns"],["capture","Lead capture"],["social","Social"],["analytics","Analytics"]];
+const TABS_FULL=[["overview","Overview"],["campaigns","Campaigns"],["audience","Audience",1],["content","Content",1],["social","Social"],["email","Email",1],["ads","Ads",1],["capture","Lead capture"],["analytics","Analytics"]];
+
+/* MOCK data — a fictional business; shapes mirror the real reads named in each label. */
+const BRIEFS=[
+ {name:"Spring advisory intake",obj:"Book 8 discovery calls from past webinar attendees",offer:"Strategy Intensive",aud:"Past webinar attendees who never booked",ch:["Email","LinkedIn"],phase:"Live",pc:"ok",timing:"Weeks 1–4 of April",next:"Publish the follow-up form",blocker:"",wk:0},
+ {name:"Q2 retainer upgrade",obj:"Move 3 project clients onto a monthly retainer",offer:"Monthly Advisory Retainer",aud:"Clients finishing a project this quarter",ch:["Email"],phase:"Planned",pc:"v",timing:"Mid-May",next:"Draft the upgrade page in Vibe Studio",blocker:"",wk:1},
+ {name:"Podcast guest series",obj:"Grow the list with three guest appearances",offer:"Free scorecard",aud:"Founders running 5–20 person teams",ch:["Podcast","Instagram"],phase:"Blocked",pc:"bad",timing:"June",next:"Decide the lead magnet",blocker:"No capture form chosen",wk:2}
+];
+const CAPTURE=[
+ {name:"Discovery call request",kind:"Form",state:"Published",sub:14,route:"Advisory pipeline → New inquiry",last:"2 days ago",src:{"Webinar email":9,"LinkedIn":3,"Direct":2}},
+ {name:"Scorecard landing page",kind:"Page",state:"Published",sub:6,route:"Uses form: Scorecard opt-in",last:"5 days ago",src:{"Instagram":4,"Direct":2}},
+ {name:"Retainer upgrade page",kind:"Page",state:"Draft",sub:0,route:"No form attached",last:"—",src:{}}
+];
+
+function tabsFor(){return S.set==="full"?TABS_FULL:TABS_REC}
+function geom(){
+ const [W,H]=S.vp.split("x").map(Number);
+ const overlay=W<1080, rail=overlay?72:232;
+ let pw=0, mode="none";
+ if(S.paige!=="closed"){ if(overlay){mode="overlay"} else {mode="dock"; pw=S.paige==="docked"?Math.max(440,.34*W):Math.max(620,.52*W);} }
+ return {W,H,rail,pw:Math.round(pw),mode,overlay,col:Math.round(W-rail-pw)};
+}
+
+function render(){
+ $("#rv-product").hidden=S.page!=="product"; $("#rv-mapview").hidden=S.page!=="map";
+ if(S.page==="map"){renderMap();return}
+ if(!tabsFor().some(t=>t[0]===S.tab))S.tab="overview";
+ const g=geom(), stage=$("#stage");
+ stage.style.width=g.W+"px"; stage.style.height=g.H+"px";
+ stage.innerHTML=`<div class="paige-solo" data-theme="${S.theme}" data-annot="${S.annot}" style="height:100%">
+  <div class="sh" data-compact="${g.overlay}" style="--rail-w:${g.rail}px;--paige-w:${g.mode==="dock"?g.pw+"px":"0px"}">
+   <nav class="sh-rail" aria-label="Main menu">
+     <div class="sh-brand"><i>P</i><b>Harbor &amp; Pine</b></div>
+     <div class="sh-group">Business</div>
+     ${RAIL.map(r=>`<button class="sh-item" ${r[0]==="marketing"?'aria-current="page"':""} title="${r[1]}" data-rail="${r[0]}">${r[2]}<span>${r[1]}</span>${r[3]?`<small>${r[3]}</small>`:""}</button>`).join("")}
+     <div class="sh-retired"><b>Analytics</b> is no longer in the menu. Its lenses moved to their owners; old links still resolve.</div>
+   </nav>
+   <main class="sh-main" aria-label="Marketing">
+     <div class="mk-nav">
+       <div class="mk-tabs" role="tablist" aria-label="Marketing views">${tabsFor().map(t=>`<button role="tab" id="tab-${t[0]}" aria-controls="mk-panel" aria-selected="${S.tab===t[0]}" tabindex="${S.tab===t[0]?0:-1}" data-tab="${t[0]}" ${t[2]?'data-candidate="true"':""}>${t[1]}</button>`).join("")}</div>
+       <button class="btn btn-s mk-side" data-act="vibe" title="Vibe Studio creates pages, forms, funnels and images">Open Vibe Studio</button>
+     </div>
+     <div class="mk-scroll" id="mk-panel" role="tabpanel" aria-labelledby="tab-${S.tab}" tabindex="0"><div class="mk-inner fade">${view()}</div></div>
+     ${g.mode==="overlay"?paigePanel("overlay"):""}
+   </main>
+   ${g.mode==="dock"?paigePanel("dock"):`<div></div>`}
+  </div></div>`;
+ $("#geo").textContent=`${g.W}×${g.H} · rail ${g.rail}px · ${g.mode==="dock"?"PAIGE docked "+g.pw+"px · ":g.mode==="overlay"?"PAIGE overlay (no column reflow) · ":""}content column ${g.col}px`;
+ const sel=$(`#tab-${S.tab}`); sel&&sel.scrollIntoView&&sel.scrollIntoView({block:"nearest",inline:"nearest"});
+}
+function paigePanel(mode){return `<aside class="sh-paige" data-mode="${mode}" aria-label="PAIGE"><div class="pg-head"><span class="pg-orb"></span><b>PAIGE</b><span style="margin-left:auto" class="pill pill-n">Marketing context</span></div>
+ <div class="pg-body"><div class="pg-msg">PAIGE has the Marketing view you're on as context. She can draft a brief, build a capture form in Vibe Studio, or explain where a lead came from. Every send, spend or publish still needs your approval.</div>
+ ${S.state==="pop"?`<div class="pg-msg">“The podcast series is blocked: no capture form chosen. Want me to draft a scorecard opt-in form?”<br>${MOCK("illustrative")}</div>`:S.state==="first"?`<div class="pg-msg">“Tell me what you sell and who it's for, and I'll draft your first campaign brief.”<br>${MOCK("illustrative")}</div>`:""}</div>
+ <div class="pg-compose">Ask PAIGE about your marketing…</div></aside>`}
+
+/* ── views ── */
+function guard(body){
+ if(S.state==="load")return `<div class="mk-card"><div class="mk-skel" aria-busy="true" aria-label="Loading"><span></span><span></span><span></span></div></div>`;
+ if(S.state==="err")return `<div class="mk-alert" role="alert"><div><b>We couldn't read your marketing records.</b><p>Nothing is shown as zero. Your briefs and forms are unchanged; this view just couldn't load them. </p></div><button class="btn btn-s" style="margin-left:auto">Try again</button></div>`;
+ return body();
+}
+const roNote=()=>S.state==="ro"?`<span class="mk-ro">View only. The workspace owner or an admin can create and change briefs.</span>`:"";
+const primary=(label,inBody)=>S.state==="ro"?roNote():(S.state==="first"&&!inBody)?"":`<button class="btn btn-g">${label}</button>`;
+function view(){
+ const t=S.tab;
+ return ({overview:vOverview,campaigns:vCampaigns,capture:vCapture,social:vSocial,analytics:vAnalytics,audience:vAudience,content:vContent,email:vEmail,ads:vAds})[t]();
+}
+function head(title,sub,act){return `<div class="mk-head"><div><h1>${title}</h1><p>${sub}</p></div>${act||""}</div>`}
+
+function vOverview(){
+ return head("Marketing","What is running, what is stuck, and what came in.",primary("New campaign brief"))+guard(()=>{
+ if(S.state==="first")return `<div class="mk-card"><div class="mk-empty"><span class="eyebrow">Start here</span><h3>Nothing is being marketed yet.</h3><p>Marketing starts with one campaign brief: who you want to reach, with which offer, and where they land. PAIGE can draft it with you.</p>
+  <ol class="mk-steps"><li>Name what you sell. Offers live in Sales and are referenced here.</li><li>Write a campaign brief: objective, audience and channels.</li><li>Give it somewhere to land: build a form or page in Vibe Studio and publish it.</li><li>Choose where submissions go. They hand off to Sales as new opportunities.</li></ol>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">${primary("Write your first brief",1)}<button class="btn">Draft it with PAIGE</button></div></div></div>`;
+ return `<div class="mk-tiles">
+  <div class="mk-tile">${OWNER("campaign_briefs")}<b>2 <span style="font-size:13px;color:var(--ink-3);font-weight:500">running · 1 blocked</span></b><p>3 briefs in total</p></div>
+  <div class="mk-tile">${LIVE("growth_forms · growth_pages")}<b>2 <span style="font-size:13px;color:var(--ink-3);font-weight:500">live capture points</span></b><p>1 draft that is not published</p></div>
+  <div class="mk-tile">${LIVE("growth_form_submissions")}<b>20 <span style="font-size:13px;color:var(--ink-3);font-weight:500">leads · 30 days</span></b><p>18 carry a source</p></div>
+  <div class="mk-tile">${NONE("no spend source")}<b class="none">Cost per lead —</b><p>Needs a connected ad or spend source</p></div>
+ </div>
+ <div class="mk-two">
+  <section class="mk-card"><header><div><h2>Needs attention</h2><p>From your briefs and capture points</p></div></header>
+   <div class="mk-row"><span class="pill pill-bad">Blocked</span><div class="grow"><div class="t">Podcast guest series</div><div class="s">No capture form chosen</div></div><div class="meta">${OWNER("blocker")}<button class="btn btn-s">Open brief</button></div></div>
+   <div class="mk-row"><span class="pill pill-warn">Not live</span><div class="grow"><div class="t">Retainer upgrade page</div><div class="s">Draft page with no form attached</div></div><div class="meta">${LIVE("growth_pages")}<button class="btn btn-s" data-act="vibe">Edit in Vibe</button></div></div>
+   <div class="mk-row"><span class="pill pill-v">Next</span><div class="grow"><div class="t">Spring advisory intake</div><div class="s">Publish the follow-up form</div></div><div class="meta">${OWNER("next move")}</div></div>
+  </section>
+  <section class="mk-card"><header><div><h2>Channels</h2><p>What Marketing can actually reach today</p></div></header>
+   <div class="mk-row"><div class="grow"><div class="t">Forms &amp; pages</div><div class="s">2 published</div></div>${LIVE("Vibe outputs")}</div>
+   <div class="mk-row"><div class="grow"><div class="t">Social</div><div class="s">3 accounts recorded · publishing not connected</div></div>${LIVE("social handles")}</div>
+   <div class="mk-row"><div class="grow"><div class="t">Email broadcasts</div><div class="s">No marketing-email sending yet</div></div>${NONE("")}</div>
+   <div class="mk-row"><div class="grow"><div class="t">Paid ads</div><div class="s">No ad account connection</div></div>${NONE("")}</div>
+  </section>
+ </div>
+ <section class="mk-card"><header><div><h2>Upcoming launches</h2><p>Timing as written on each brief. These are not scheduled dates.</p></div></header>
+  ${BRIEFS.map(b=>`<div class="mk-row"><div class="grow"><div class="t">${esc(b.name)}</div><div class="s">${esc(b.timing)}</div></div><span class="pill pill-${b.pc}">${b.phase}</span></div>`).join("")}
+  <div class="mk-handoff">↳ <span><b>Handoff to Sales:</b> 11 submissions became new opportunities. What happens next is tracked in Sales.</span><a class="mk-link" data-rail="sales" style="margin-left:auto">Open in Sales →</a></div>
+ </section>`});
+}
+function vCampaigns(){
+ return head("Campaigns","Each campaign is one initiative: objective, audience, offer, channels and where people land.",primary("New campaign brief"))+guard(()=>{
+ if(S.state==="first")return `<div class="mk-card"><div class="mk-empty"><h3>No campaign briefs yet.</h3><p>A brief is the plan for one initiative. PAIGE can draft it from a sentence.</p><div style="display:flex;gap:8px">${primary("Write a brief",1)}<button class="btn">Draft with PAIGE</button></div></div></div>`;
+ const seg=`<div class="mk-seg" role="group" aria-label="Campaign layout"><button data-cal="list" aria-pressed="${S.cal==="list"}">Portfolio</button><button data-cal="cal" aria-pressed="${S.cal==="cal"}">Calendar</button></div>`;
+ if(S.cal==="cal")return `<section class="mk-card"><header><div><h2>Campaign calendar</h2><p>Placed by the timing written on each brief. Real dates arrive when briefs carry a start date.</p></div>${seg}</header>
+  <div class="mk-cal">${["April","May","June","July"].map((m,i)=>`<div><span>${m}</span>${BRIEFS.filter(b=>b.wk===i).map(b=>`<em>${esc(b.name)}</em>`).join("")}</div>`).join("")}</div>
+  <div class="mk-handoff">${OWNER("timing")} <span>Content requirements and Vibe assets attach to each brief, so a separate Content tab isn't needed.</span></div></section>`;
+ return `<section class="mk-card"><header><div><h2>Portfolio</h2><p>3 briefs · Campaign Command Desk, carried over unchanged</p></div>${seg}</header>
+  ${BRIEFS.map(b=>`<div class="mk-row"><span class="pill pill-${b.pc}">${b.phase}</span><div class="grow"><div class="t">${esc(b.name)}</div><div class="s">${esc(b.obj)}</div></div>
+   <div class="meta" style="flex-direction:column;align-items:flex-end;gap:3px"><span style="font-size:12px;color:var(--ink-2)">Offer: <a class="mk-link" data-rail="sales">${esc(b.offer)}</a></span><span style="font-size:11.5px;color:var(--ink-3)">${b.ch.join(" · ")}</span></div></div>`).join("")}
+  <div class="mk-handoff">${OWNER("campaign_briefs")} <span>Offers are defined in Sales; a brief only points at one. Assets are made in Vibe Studio.</span></div></section>
+  <section class="mk-card"><header><div><h2>Campaign loop · Spring advisory intake</h2><p>Each step routes to the place that owns it</p></div></header>
+  ${[["Offer","Strategy Intensive","Sales","live"],["Audience","Past webinar attendees who never booked","This brief","owner"],["Assets","Discovery call request form","Vibe Studio","live"],["Distribution","Email · LinkedIn","Marketing › Social","owner"],["Capture","14 submissions","Marketing › Lead capture","live"],["Opportunities","9 opened","Sales","live"],["Outcome","Tracked in Sales","Sales","none"]].map(r=>`<div class="mk-row"><div style="width:112px;flex:none" class="eyebrow">${r[0]}</div><div class="grow"><div class="t" style="font-weight:500">${esc(r[1])}</div></div><div class="meta"><span style="font-size:11.5px;color:var(--ink-3)">${r[2]}</span>${r[3]==="live"?LIVE(""):r[3]==="owner"?OWNER(""):NONE("")}</div></div>`).join("")}</section>`});
+}
+function vCapture(){
+ return head("Lead capture","Every form, page and funnel that collects people, and where submissions go next.",S.state==="ro"?roNote():S.state==="first"?"":`<button class="btn btn-g" data-act="vibe">Build a capture form</button>`)+guard(()=>{
+ if(S.state==="first")return `<div class="mk-card"><div class="mk-empty"><h3>Nothing is capturing leads yet.</h3><p>Build a form or landing page in Vibe Studio and publish it. It shows up here with its submissions and routing.</p>${S.state==="ro"?"":`<button class="btn btn-g" data-act="vibe">Build a capture form</button>`}</div></div>`;
+ return `<section class="mk-card"><header><div><h2>Capture points</h2><p>Created and published in Vibe Studio. Their use is measured here.</p></div>${LIVE("growth_forms · growth_pages · growth_funnels")}</header>
+ ${CAPTURE.map(c=>`<div class="mk-row"><span class="pill ${c.state==="Published"?"pill-ok":"pill-n"}">${c.state}</span><div class="grow"><div class="t">${esc(c.name)} <span style="font-weight:500;color:var(--ink-3);font-size:12px">· ${c.kind}</span></div><div class="s">${esc(c.route)}</div></div>
+   <div class="meta">${c.state==="Published"?`<span class="mono" style="font-size:13px">${c.sub}</span><span style="font-size:11.5px;color:var(--ink-3)">submissions · last ${c.last}</span>`:`<span style="font-size:11.5px;color:var(--ink-3)">Not collecting until published</span>`}${S.state==="ro"||c.kind!=="Form"?"":`<button class="btn btn-s">Routing</button>`}<button class="btn btn-s" data-act="vibe">${c.state==="Published"?"Edit in Vibe":"Finish in Vibe"}</button></div></div>`).join("")}
+ <div class="mk-handoff">↳ <span>“Routing” opens the existing intake settings: pipeline, stage and notify email. A new opportunity belongs to <b>Sales</b>.</span></div></section>
+ <section class="mk-card"><header><div><h2>Recent submissions</h2><p>Last 30 days</p></div>${MOCK("growth_form_submissions")}</header>
+ ${[["Dana R.","Discovery call request","Webinar email","Opportunity opened"],["Marcus T.","Scorecard landing page","Instagram","Added to Clients"],["Priya K.","Discovery call request","LinkedIn","Opportunity opened"]].map(r=>`<div class="mk-row"><div class="grow"><div class="t">${r[0]}</div><div class="s">${r[1]} · source: ${r[2]}</div></div><span class="pill pill-v">${r[3]}</span></div>`).join("")}</section>`});
+}
+function vSocial(){
+ return head("Social","The accounts you post from, and what's ready to publish.",S.state==="ro"?roNote():`<button class="btn btn-g">Record an account</button>`)+guard(()=>`<section class="mk-card"><div class="mk-unavail"><span class="eyebrow">Carried over as it is</span><h3>The existing Social Command moves here unchanged.</h3>
+ <p>Social already has an approved design (Social Mission Control). This IA change only moves it: the tab is renamed in place, and the component, data reads and states stay the same.</p>
+ <dl><dt>Live today</dt><dd>Recorded social handles (<code>record_social_handles</code>), published Vibe outputs, pending PAIGE actions</dd><dt>Unavailable</dt><dd>Publishing, scheduling and post analytics: no provider connection is live (<code>paige_social_connections</code> has 0 rows)</dd><dt>Connections</dt><dd>Stay in Settings › Integrations. One owner; Social links there.</dd></dl></div></section>`);
+}
+function vAnalytics(){
+ return head("Marketing analytics","Where leads come from, and how much of that we can actually prove.","")+guard(()=>{
+ if(S.state==="first")return `<div class="mk-card"><div class="mk-empty"><h3>No leads to measure yet.</h3><p>Once a published form collects a submission, its source appears here: the referrer and any campaign tracking tags on the link.</p></div></div>`;
+ const tot=20, rows=[["Webinar email",9],["Instagram",4],["LinkedIn",3],["Direct / unknown",4]];
+ return `<div class="mk-tiles">
+  <div class="mk-tile">${LIVE("submissions.source · utm_json")}<b>18<span style="font-size:13px;color:var(--ink-3);font-weight:500"> of ${tot}</span></b><p>Leads with a known source. That's the coverage everything below rests on.</p></div>
+  <div class="mk-tile">${LIVE("submissions.deal_id")}<b>11</b><p>Became opportunities in Sales</p></div>
+  <div class="mk-tile">${NONE("no page-view tracking")}<b class="none">Form conversion —</b><p>Needs visit counts on published pages</p></div>
+  <div class="mk-tile">${NONE("no spend source")}<b class="none">CPL · CAC —</b><p>Needs ad spend or a recorded budget actual</p></div>
+ </div>
+ <div class="mk-two"><section class="mk-card"><header><div><h2>Leads by source</h2><p>Last 30 days · first touch only</p></div>${MOCK("shape of a live read")}</header>
+  ${rows.map(r=>`<div class="mk-row mk-row--bar"><div style="width:120px;flex:none" class="t">${r[0]}</div><div class="grow"><div class="mk-bar" aria-hidden="true"><i style="width:${Math.round(r[1]/tot*100)}%"></i></div></div><span class="mono" style="width:28px;text-align:right">${r[1]}</span></div>`).join("")}
+  <div class="mk-handoff">First touch is the only model the data supports today. Assisted and last-touch need a visit history we don't record.</div></section>
+  <section class="mk-card"><header><div><h2>By campaign</h2><p>Matched when a link carries the campaign's tracking tag</p></div>${src("owner","Partial")}</header>
+   <div class="mk-row"><div class="grow"><div class="t">Spring advisory intake</div><div class="s">12 leads tagged</div></div></div>
+   <div class="mk-row"><div class="grow"><div class="t">Podcast guest series</div><div class="s">No tagged leads yet</div></div></div>
+   <div class="mk-handoff">Revenue from these leads is shown in <a class="mk-link" data-rail="sales">Sales performance →</a>, read-only here.</div></section></div>`});
+}
+function cand(title,owner,why,need,stop){return head(title,"Proposed tab. It is shown so you can judge it; it is not recommended for the first release.","")+`<section class="mk-card"><div class="mk-unavail"><span class="eyebrow">Recommendation</span><h3>${owner}</h3><p>${why}</p><dl><dt>Data that exists</dt><dd>${need}</dd><dt>To make it real</dt><dd>${stop}</dd></dl></div></section>`}
+function vAudience(){return cand("Audience","Reusable segments should live with Clients. Marketing uses them.","In every CRM-backed product we checked (HubSpot, HighLevel, ActiveCampaign, Kajabi), segments live under Contacts/CRM and Marketing borrows them. Paige's people records already live in Clients, so a second audience store here would split them.","Free-text audience on each campaign brief (<code>campaign_briefs.audience</code>); <code>clients.source / tags / lifecycle_stage</code>. There is no segment table, and Agency's Segments tab is fixture-only.","A segment definition table + RPC, owned by Clients. That is a <b>backend change</b>, so this lane stops there and names it.")}
+function vContent(){return cand("Content","Fold it into Campaigns (calendar view) and Vibe Studio (assets).","The market separates Content (the website or asset library) from Social, and puts the marketing calendar on the campaign object. Paige's asset library is Vibe Studio, and a calendar belongs to Campaigns.","Brief timing and content needs (<code>campaign_briefs.timing, content_needs</code>); published Vibe outputs.","Dated briefs (a start date on <code>campaign_briefs</code>) make the Campaigns calendar exact. A backend change, small.")}
+function vEmail(){return cand("Email","Not yet. There is no marketing-email substrate to show.","Paige's email tables are transactional: platform templates (<code>email_templates</code>) and a send log (<code>email_send_log</code>). Broadcasts, newsletters and nurture sequences have no record, no audience, and no send path.","Sending identity (<code>tenant_email_identities</code>) and unsubscribe/suppression (<code>email_unsubscribe_tokens</code>, <code>suppressed_emails</code>) already exist and would be reused.","A broadcast/sequence record + an approval-gated send seam. <b>Backend change</b>, and sending spends money: owner decision.")}
+function vAds(){return cand("Ads","Not yet. Ads can't be shown honestly without a connected account.","There is no tenant ad-account connection, campaign or spend record. Showing an Ads tab now would be a dead tab.","None for tenants.","A tenant ad-account connection (Meta / Google) + spend ingestion. <b>Backend change and a provider choice.</b> Spend data is also what unlocks CPL/CAC in Analytics.")}
+
+/* ── ownership map ── */
+function renderMap(){
+ const rows=[
+ ["Campaigns › Overview (Campaign Command Desk)","campaign_briefs · get_campaign_briefs / configure_campaign_brief","Marketing","Marketing › Campaigns (portfolio + calendar); a new department Overview reads the same sources","growth/overview, growth/active","—"],
+ ["Campaigns › Catalog › Offers","tenant_products · save_solo_offer","Sales","Sales (offer definition); Campaigns references an offer by id","growth/catalog → Sales offers","Sales PR #1668 edits catalog-offers.tsx"],
+ ["Campaigns › Catalog › Published assets","growth_pages / growth_funnels / growth_forms (Vibe-authored)","Vibe creates · Marketing measures","Marketing › Lead capture","growth/catalog?type=page|funnel|form, growth/pages|funnels|forms|builders|brand-kit","Vibe UI 'layout C' is the next Vibe PR"],
+ ["Catalog › Form intake drawer","growth_form_set_intake","Marketing (routing) → Sales (the deal)","Marketing › Lead capture › Routing","—","public-form intake 3/3 not on main"],
+ ["Campaigns › Sales","tenant_client_agreements, paige_invoices drafts, tenant_orders","Sales","Top-level Sales (Sales lane builds it)","growth/sales[?view=…]","Active Sales lane"],
+ ["Campaigns › Pipeline","deals / pipelines · get_pipeline_workspace","Sales","Top-level Sales › Pipeline","growth/pipeline[?deal=], clients/pipeline","Active Sales lane"],
+ ["Campaigns › Social","get_social_presence_evidence · record_social_handles","Marketing","Marketing › Social (unchanged)","growth/social","—"],
+ ["Campaigns › Performance","static cards","Marketing","Marketing › Analytics","growth/performance","—"],
+ ["Analytics › Sales funnel (the one LIVE lens)","issue_analytics_evidence_bundle (sales_funnel.*)","Sales","Sales performance (Sales lane mounts the existing evidence client)","analytics/money","Sales lane must accept"],
+ ["Analytics › Acquisition","none (static)","Marketing","Marketing › Analytics","analytics/market-watch","—"],
+ ["Analytics › Revenue & profit","none (static)","Future Finance / BI","Retired; no destination yet","analytics/profitability → Command Center","—"],
+ ["Analytics › Retention","none (static)","Clients / future BI","Retired","analytics/retention → Clients","—"],
+ ["Analytics › Brief, Decisions","none (static)","Command Center / PAIGE","Retired","analytics, analytics/brief, analytics/decisions → Command Center","—"],
+ ["Operator Analytics","OPERATOR_BRANCHES analytics (10 views)","Platform operator","Untouched","/operator/analytics/* (no /admin/platform/analytics route exists)","—"]];
+ $("#rv-mapview").innerHTML=`<div class="rv-map"><h2>North-star flow</h2>
+ <div class="rv-flow"><span>Vibe Studio creates</span><i>→</i><span>Marketing distributes &amp; captures</span><i>→</i><span>Sales converts</span><i>→</i><span>Clients retain</span><i>→</i><span>Finance records</span><i>→</i><span>Command Center interprets</span></div>
+ <p>One owner per capability. Marketing never writes a Sales object: it passes source and campaign attribution forward, and reads Sales outcomes back read-only.</p>
+ <h2>Main menu</h2><table><tr><th>Today</th><th>Proposed</th></tr><tr><td>Command Center · Clients · Campaigns · Marketplace · Analytics · Settings</td><td>Command Center · Clients · <b>Marketing</b> · <b>Sales</b> · Marketplace · Settings</td></tr></table>
+ <h2>Ownership: every current function, its owner and destination</h2>
+ <table><tr><th>Current surface</th><th>Underlying source</th><th>Canonical owner</th><th>New destination</th><th>Addresses to keep alive</th><th>Active lane collision</th></tr>
+ ${rows.map(r=>`<tr>${r.map((c,i)=>`<td>${i===1||i===4?`<code>${esc(c)}</code>`:esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>`;
+}
+
+/* ── wiring ── */
+document.querySelectorAll(".rv-seg").forEach(seg=>seg.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;S[seg.dataset.ctl]=b.dataset.v;seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()}));
+document.addEventListener("click",e=>{
+ const t=e.target.closest("[data-tab]");if(t){S.tab=t.dataset.tab;render();$(`#tab-${S.tab}`).focus();return}
+ const c=e.target.closest("[data-cal]");if(c){S.cal=c.dataset.cal;render();return}
+ const r=e.target.closest("[data-rail]");if(r&&r.dataset.rail!=="marketing"){note(r.dataset.rail==="sales"?"Sales is built by the Sales lane. This prototype only shows that Marketing hands off to it.":"Outside this prototype.");return}
+ if(e.target.closest('[data-act="vibe"]'))note("Opens the existing Vibe Studio overlay. Vibe stays the only creator; Marketing never copies its controls.");
+});
+document.addEventListener("keydown",e=>{
+ const tab=e.target.closest&&e.target.closest('[role="tab"]');if(!tab||!["ArrowRight","ArrowLeft","Home","End"].includes(e.key))return;
+ e.preventDefault();const ts=tabsFor(),i=ts.findIndex(x=>x[0]===S.tab);
+ const n=e.key==="Home"?0:e.key==="End"?ts.length-1:(i+(e.key==="ArrowRight"?1:-1)+ts.length)%ts.length;
+ S.tab=ts[n][0];render();$(`#tab-${S.tab}`).focus();
+});
+render();
+</script>
+</body>
+</html>

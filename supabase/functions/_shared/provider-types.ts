@@ -59,4 +59,6 @@ export interface ProviderCallResult {
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
   latency_ms: number;
+  /** Why the provider stopped (stop_reason / stop_category), when it said — trace metadata only. */
+  stop?: { stop_reason?: string; stop_category?: string };
 }

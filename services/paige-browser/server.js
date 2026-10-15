@@ -5,10 +5,9 @@
 // a screenshot. Deployed to Fly.io (shared-cpu-1x); one warm browser so a verify loop isn't paying
 // cold-start each call (the reason we don't use Vercel serverless Chromium).
 //
-// §18 — this is a NEW home ON PURPOSE, distinct from BOTH existing browser seams:
-//   • services/visual-renderer = a STATELESS screenshot-ONE-thing service (url/html -> PNG). This
-//     service is the OPPOSITE shape: it DRIVES and OBSERVES, returning a structured JSON observation
-//     (title, final_url, http_status, text excerpt, per-step results) — not a bare image.
+// §18 — this is a NEW home ON PURPOSE, distinct from the other browser seam:
+//   • (history) services/visual-renderer was a separate screenshot-one-thing Fly app; it was never
+//     deployed and is deleted — screenshots are now this host's /render capability (2026-10-04).
 //   • supabase/functions/browser-use = a Browserbase (3rd-party, edge-can't-drive-Playwright)
 //     stateful stub. paige-browser is SELF-HOSTED real Playwright (§34 moat — tenant session tokens
 //     will eventually flow through this host in a later slice, so it must NOT be a 3rd party).
@@ -28,6 +27,12 @@
 //   GET  /healthz                                                         -> 200 "ok"
 //   POST /self-verify  (requires X-Browser-Secret == PAIGE_BROWSER_SHARED_SECRET, timing-safe)
 //        body: { url, viewport?, waitForSelector?, waitMs?, steps? }      -> 200 JSON observation
+//   POST /render       (same secret, rate limit and concurrency cap)
+//        body: { url } | { page }, viewport?: "desktop"|"tablet"|"mobile", waitForSelector?, maxSlices?
+//        -> 200 { ok, width, full_height, slices:[{ y, height, jpeg_base64 }], truncated }
+//        url = an allowlisted Paige app origin only; page = a draft rendered DB-free at /render-frame.
+//        Screenshots are a capability of THIS host — the separate visual-renderer Fly app was never
+//        deployed and is deleted (owner direction 2026-10-04, §18 one browser host).
 //
 // §13 SSRF — every request the browser makes (the top-level url AND any sub-resource) is filtered
 // against private/link-local/cloud-metadata ranges via a page.route interceptor; the final_url is
@@ -38,6 +43,15 @@ import crypto from "node:crypto";
 // SSRF egress guard + two-layer content denylist — extracted to a shared module (§18 one home) so the
 // smoke test exercises the SAME real code the server runs (§32), not a mirror that can drift.
 import { urlBlockReason, assertPublicUrl, installReadOnlyBrowserEgress, loadDenylist } from "./ssrf-guard.mjs";
+// PC-1 — the per-request isolated context factory (one home, proven by smoke-isolation.mjs).
+import { createIsolatedBrowseContext } from "./browse-context.mjs";
+// PC-1 — the connect-time egress proxy: browse contexts dial ONLY guard-validated, pinned addresses
+// (#138 DNS-rebinding closure). Started at boot below; /browse-public-url fails closed without it.
+import { startEgressProxy } from "./egress-proxy.mjs";
+// /render — screenshot capture of Paige's own pages for the §33 critique loop. The capture logic lives
+// in ./render.mjs (§18 one home) so smoke-render.mjs exercises the code the server runs (§32).
+import { renderConfig, validateRenderRequest, renderCapture } from "./render.mjs";
+import { validatePdfRequest, renderPdf } from "./pdf.mjs";
 
 const PORT = process.env.PORT || 8080;
 const SECRET = process.env.PAIGE_BROWSER_SHARED_SECRET || "";
@@ -314,8 +328,14 @@ async function browsePublic({ url, viewport, waitForSelector, waitMs, maxContent
   const browser = await getBrowser();
   let ctx = null, page = null;
   try {
-    ctx = await browser.newContext({ viewport: clampVp(viewport), userAgent: PAIGE_UA, serviceWorkers: "block" });
-    await installReadOnlyBrowserEgress(ctx);
+    // PC-1 — fresh isolated context per request via the ONE factory (cross-request/cross-tenant
+    // state isolation, smoke-isolation.mjs), with every dial pinned through the egress proxy
+    // (#138 closure). Fenced by installReadOnlyBrowserEgress inside the factory.
+    ctx = await createIsolatedBrowseContext(browser, {
+      viewport: clampVp(viewport),
+      userAgent: PAIGE_UA,
+      proxy: egressProxy ? { server: egressProxy.serverUrl } : null,
+    });
     page = await ctx.newPage();
     page.setDefaultTimeout(STEP_TIMEOUT_MS);
 
@@ -461,6 +481,13 @@ app.post("/browse-public-url", rateLimit, async (req, res) => { // codeql[js/mis
     return res.status(403).json({ ok: false, url, error: "capability_disabled", reason: "wildcard browsing not yet enabled", blocked_reason: "wildcard:disabled" });
   }
 
+  // PC-1 fail-closed: without the connect-time egress proxy the browse path MUST NOT run — unpinned
+  // dials would reopen the #138 DNS-rebinding window the proxy exists to close. /pdf, /render and
+  // /self-verify are NOT gated by this (their targets are local HTML, Paige origins, paigeagent.ai).
+  if (!egressProxy) {
+    return res.status(503).json({ ok: false, url, error: "egress_proxy_unavailable", reason: "connect-time egress proxy is not running; browse fails closed", blocked_reason: "egress:proxy-unavailable" });
+  }
+
   // Resolve-first SSRF + denylist pre-check (reason-coded) BEFORE the browser ever touches the URL.
   const blocked = await urlBlockReason(url);
   if (blocked) {
@@ -481,4 +508,64 @@ app.post("/browse-public-url", rateLimit, async (req, res) => { // codeql[js/mis
   }
 });
 
+// ── /render — full-page JPEG slices of Paige's OWN pages for the §33 visual-critique loop ─────────
+// Same three gates as the routes above (per-IP rateLimit, timing-safe auth, MAX_CONCURRENT). It never
+// renders an arbitrary URL: `url` must sit on an allowlisted Paige app origin (exact match) AND pass the
+// SSRF guard; `page` renders a draft at ${PAIGE_APP_ORIGIN}/render-frame with the payload injected. The
+// browser context carries the same read-only egress fence. A run failure is 200 ok:false with a reason
+// (the caller always gets the structured shape); a refused request is 4xx with a reason. Never a fake image.
+// CodeQL js/missing-rate-limiting is a FALSE POSITIVE here for the same reason as /browse-public-url.
+const RENDER_CFG = renderConfig();
+app.post("/render", rateLimit, async (req, res) => { // codeql[js/missing-rate-limiting]
+  if (!auth(req, res)) return;
+  const v = await validateRenderRequest(req.body, RENDER_CFG);
+  if (!v.ok) return res.status(v.status).json({ ok: false, reason: v.reason, error: v.error });
+
+  if (inFlight >= MAX_CONCURRENT) return res.status(429).json({ ok: false, reason: "busy", error: "busy, retry" });
+  inFlight++;
+  const start = Date.now();
+  try {
+    const browser = await getBrowser();
+    // renderCapture owns the deadline: it sizes its waits to finish inside it and CLOSES its browser
+    // context when it passes, so the run stops using the browser before this slot is released. The
+    // deadline sits 1.5s inside RUN_CAP_MS; withHardCap stays only as the last-resort backstop.
+    const deadline = start + Math.max(5000, RUN_CAP_MS - 1500);
+    const result = await withHardCap(
+      renderCapture(browser, v, RENDER_CFG, { navTimeout: NAV_TIMEOUT_MS, stepTimeout: STEP_TIMEOUT_MS, deadline }),
+      RUN_CAP_MS, v.target, start,
+    );
+    // withHardCap's backstop result has no reason code; give it one so callers can log it honestly.
+    if (!result.ok && !result.reason) result.reason = "run_cap_exceeded";
+    return res.status(200).json(result);
+  } catch (e) {
+    console.error("[paige-browser] /render unexpected error for", v.target + ":", e?.message || e);
+    return res.status(200).json({ ok: false, reason: "browser_unavailable", error: String(e?.message || e), duration_ms: Date.now() - start });
+  } finally {
+    inFlight--;
+  }
+});
+
+app.post('/pdf', rateLimit, async (req, res) => {
+  if (!auth(req, res)) return;
+  if (!validatePdfRequest(req.body)) return res.status(400).json({ error: 'invalid_pdf_input' });
+  if (inFlight >= MAX_CONCURRENT) return res.status(429).json({ error: 'busy' });
+  inFlight++;
+  try {
+    const bytes = await renderPdf(await getBrowser(), req.body.html);
+    return res.type('application/pdf').set('Cache-Control', 'no-store').send(bytes);
+  } catch { return res.status(503).json({ error: 'pdf_unavailable' }); }
+  finally { inFlight--; }
+});
+// PC-1 — boot the loopback egress proxy before listening. A boot failure (or an explicit
+// PAIGE_BROWSER_EGRESS_PROXY=off) keeps the server UP for /pdf, /render and /self-verify but
+// leaves /browse-public-url 503 fail-closed — the proxy is mandatory for untrusted browsing.
+let egressProxy = null;
+const EGRESS_PROXY_DISABLED = ["off", "false", "0"].includes(String(process.env.PAIGE_BROWSER_EGRESS_PROXY || "").toLowerCase());
+if (EGRESS_PROXY_DISABLED) {
+  console.error("[paige-browser] egress proxy disabled by env (PAIGE_BROWSER_EGRESS_PROXY) — /browse-public-url will fail closed");
+} else {
+  startEgressProxy()
+    .then((p) => { egressProxy = p; p.unref(); console.log(`[paige-browser] egress proxy listening on ${p.serverUrl}`); })
+    .catch((e) => console.error("[paige-browser] egress proxy FAILED to start — /browse-public-url will fail closed:", e?.message || e));
+}
 app.listen(PORT, () => console.log(`[paige-browser] listening on :${PORT}`));

@@ -14,11 +14,14 @@
  *     unconfirmed, consumes nothing.
  * The Gateway availability resolver is injected (test-only; production always uses the canonical Gateway).
  */
+import { stableRunId } from "../../supabase/functions/_shared/capability-record.ts";
+import { actReceiptRunSeed } from "../../supabase/functions/_shared/paige-orchestration/outcomes.ts";
 import { describe, it, expect } from "vitest";
 import {
   executeApprovedLayerCAct,
   type ApproveExecutorDb,
   type ApproveExecInput,
+  approvalRefusalMessage,
 } from "../../supabase/functions/_shared/paige-orchestration/approve-executor.ts";
 
 // ── A chainable, thenable mock of the supabase-js surface the executor + native adapter use. ────────────
@@ -82,7 +85,10 @@ const baseCfg = (over: Partial<Cfg["rows"]> = {}, rpcOver: Partial<Cfg["rpc"]> =
     ...over,
   },
   rpc: {
+    // the process's CURRENT posture, re-read at approval (§68): live + confirm by default
+    resolve_automation_autonomy: () => ({ data: { found: true, state: "live", effective: "confirm" }, error: null }),
     paige_approve_act_execution: () => ({ data: { outcome: "accepted_for_execution" }, error: null }),
+    paige_claim_act_dispatch: () => ({ data: { id: "exec1" }, error: null }),
     set_journey_stage: () => ({ data: { unchanged: false }, error: null }), // changed → reconcile by correlation
     paige_record_act_execution: (a: Record<string, unknown>) => ({ data: { id: "row1", outcome: a._outcome }, error: null }),
     ...rpcOver,
@@ -91,6 +97,83 @@ const baseCfg = (over: Partial<Cfg["rows"]> = {}, rpcOver: Partial<Cfg["rpc"]> =
 
 const run = (cfg: Cfg, over: Record<string, unknown> = {}) =>
   executeApprovedLayerCAct({ db: mockDb(cfg), eventId: "e1", actId: "act1", approverUserId: "u1", expectedTenantId: "t1", resolveAvailability: liveAvailability as unknown as ApproveExecInput["resolveAvailability"], ...over });
+
+describe("approve-executor — the process is re-read at approval (§68, INT-179)", () => {
+  const posture = (p: Record<string, unknown> | null, error: unknown = null) =>
+    ({ resolve_automation_autonomy: () => ({ data: p, error }) });
+  const refusedWith = async (rpcOver: Record<string, unknown>, reason: string) => {
+    const cfg = baseCfg({}, rpcOver as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res.executed).toBe(false);
+    expect(res.reason).toBe(reason);
+    expect(res.outcome).toBe("approval_pending");                 // nothing redeemed; stays reclaimable
+    const fns = cfg.calls.rpc.map((c) => c.fn);
+    expect(fns).not.toContain("paige_approve_act_execution");
+    expect(fns).not.toContain("set_journey_stage");
+    expect(fns).not.toContain("paige_record_act_execution");
+  };
+
+  it("a paused process does not run on approval", () =>
+    refusedWith(posture({ found: true, state: "paused", effective: "confirm" }), "process_not_live"));
+  it("a process turned off does not run on approval", () =>
+    refusedWith(posture({ found: true, state: "live", effective: "off" }), "process_lane_off"));
+  it("a step switched off (an act floor) does not run on approval, and is named as the step", () =>
+    refusedWith(posture({ found: true, state: "live", effective: "off", capped_by: "floor" }), "process_step_off"));
+  it("a trust ceiling of 0 (Observe) does not run on approval", () =>
+    refusedWith(posture({ found: true, state: "live", effective: "off", capped_by: "ceiling", rung: 0 }), "platform_observe_only"));
+  it("a deleted process does not run on approval", () =>
+    refusedWith(posture({ found: false }), "process_not_found"));
+  it("a posture read failure fails closed", () =>
+    refusedWith(posture(null, { message: "boom" }), "process_posture_read_error"));
+  it("an auto process still runs on approval", async () => {
+    const cfg = baseCfg({}, posture({ found: true, state: "live", effective: "auto" }) as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res.outcome).toBe("executed");
+  });
+  it("tells the owner what happened, and says it waits only while it really does", () => {
+    expect(approvalRefusalMessage("process_not_live", "approval_pending")).toMatch(/isn't running right now.*stays here/);
+    expect(approvalRefusalMessage("process_lane_off", "approval_pending")).toMatch(/switched off.*stays here/);
+    expect(approvalRefusalMessage("process_step_off", "approval_pending")).toMatch(/steps is switched off/);
+    expect(approvalRefusalMessage("platform_observe_only", "approval_pending")).toMatch(/observe only.*once that lifts/);
+    expect(approvalRefusalMessage("governed_capability_not_for_tier", "approval_pending")).toBe("You can't approve this step from this account.");
+    // A redeemed resume can be settled by the reconciler, so it never promises the row will wait.
+    expect(approvalRefusalMessage("process_not_live", "accepted_for_execution")).not.toMatch(/stays here/);
+    for (const r of ["process_not_live", "process_lane_off", "process_step_off", "platform_observe_only", "something_new", undefined]) {
+      expect(approvalRefusalMessage(r, "approval_pending")).not.toMatch(/_/);   // no snake_case code reaches the owner
+    }
+  });
+  it("never says nothing changed when the dispatch may have landed", () => {
+    const unconfirmed = /couldn't confirm whether this already ran.*won't run it twice/;
+    expect(approvalRefusalMessage(undefined, "ambiguous")).toMatch(unconfirmed);                 // fresh dispatch threw
+    expect(approvalRefusalMessage("ledger_write_failed", "accepted_for_execution")).toMatch(unconfirmed);
+    expect(approvalRefusalMessage("reconcile_unconfirmed", "ambiguous")).toMatch(unconfirmed);
+    for (const r of ["ledger_write_failed", "something_new", undefined]) {
+      for (const o of ["ambiguous", "accepted_for_execution", "unknown", "absent", undefined]) {
+        expect(approvalRefusalMessage(r, o)).not.toMatch(/nothing (was )?changed/i);
+      }
+    }
+  });
+  it("re-reads the posture of the held act's OWN process", async () => {
+    const cfg = baseCfg();
+    await run(cfg);
+    const call = cfg.calls.rpc.find((c) => c.fn === "resolve_automation_autonomy")!;
+    expect(call.args._automation_id).toBe("a1");
+  });
+  it("an accepted-but-never-landed resume is gated too", async () => {
+    const cfg = baseCfg({
+      paige_act_executions: [{
+        outcome: "accepted_for_execution", capability_key: "crm.advance_journey_stage",
+        correlation_ref: "corr-1", idempotency_key: "corr-1", tenant_id: "t1", automation_id: "a1", act_position: 1,
+        detail: { snapshot_args: { stage_slug: "engaged" } },
+      }],
+      paige_journey_stage_transitions: [], // never landed
+    }, posture({ found: true, state: "paused", effective: "confirm" }) as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res.reason).toBe("process_not_live");
+    expect(res.outcome).toBe("accepted_for_execution");
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+  });
+});
 
 describe("approve-executor — happy path: a held native act is redeemed, dispatched, and executed", () => {
   it("redeems via the approve RPC, dispatches the native adapter, advances the ledger to executed", async () => {
@@ -105,6 +188,26 @@ describe("approve-executor — happy path: a held native act is redeemed, dispat
     const finalWrite = cfg.calls.rpc.filter((c) => c.fn === "paige_record_act_execution").at(-1)!;
     expect(finalWrite.args._outcome).toBe("executed");    // ledger advanced to executed
     expect(finalWrite.args._settled_at).toBeTruthy();
+  });
+
+  it("files the capability receipt under the governed capability id, not the ledger's dotted action-kind", async () => {
+    // record_capability_run accepts only ^[a-z][a-z0-9_]{1,63}$ (20270107000000:116). The ledger snapshots the
+    // dotted action-bus slug (crm.advance_journey_stage); a receipt filed under it is refused and, being
+    // best-effort, silently lost. The engine's auto path files under capability.id; the approve path must too.
+    const cfg = baseCfg();
+    const res = await run(cfg);
+    expect(res.outcome).toBe("executed");
+    const receipt = cfg.calls.rpc.find((c) => c.fn === "record_capability_run");
+    expect(receipt).toBeTruthy();
+    expect(receipt!.args._capability_key).toBe("crm_advance_journey_stage");
+    expect(String(receipt!.args._capability_key)).toMatch(/^[a-z][a-z0-9_]{1,63}$/);
+    // the ledger keeps its own immutable action-kind snapshot
+    const finalWrite = cfg.calls.rpc.filter((c) => c.fn === "paige_record_act_execution").at(-1)!;
+    expect(finalWrite.args._capability_key).toBe("crm.advance_journey_stage");
+    // one receipt per act: the same run id the engine's auto path derives for this (event, act)
+    expect(receipt!.args._run_id).toBe(await stableRunId(actReceiptRunSeed("e1", "act1")));
+    // The seed itself is pinned: changing it would orphan receipt dedup against run ids already filed.
+    expect(actReceiptRunSeed("e1", "act1")).toEqual(["paige-cap", "e1", "act1"]);
   });
 
   it("dispatches the IMMUTABLE ledger snapshot args, NOT a mutated live act config (§P1)", async () => {
@@ -264,6 +367,14 @@ describe("approve-executor — RESUME (recovery): a redeemed-but-unadvanced / un
     expect(cfg.calls.rpc.filter((c) => c.fn === "paige_record_act_execution").at(-1)!.args._outcome).toBe("executed");
   });
 
+  it("accepted + NO landed transition, but another caller holds the dispatch claim → does NOT re-dispatch", async () => {
+    const cfg = accepted({ paige_journey_stage_transitions: [] }, { paige_claim_act_dispatch: () => ({ data: null, error: null }) });
+    const res = await run(cfg);
+    expect(res.reason).toBe("dispatch_in_progress");
+    expect(res.outcome).toBe("accepted_for_execution");
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+  });
+
   it("accepted_for_execution + NO landed transition → RE-DISPATCHES (idempotent), never re-redeems", async () => {
     const cfg = accepted({ paige_journey_stage_transitions: [] }, { set_journey_stage: () => ({ data: { unchanged: true }, error: null }) });
     const res = await run(cfg);
@@ -315,5 +426,30 @@ describe("approve-executor — RESUME (recovery): a redeemed-but-unadvanced / un
     const fns = cfg.calls.rpc.map((c) => c.fn);
     expect(fns).not.toContain("paige_approve_act_execution");
     expect(fns).not.toContain("set_journey_stage");
+  });
+});
+
+describe("approve-executor — at most once (INT-179 Slice 2b)", () => {
+  it("a fresh approval dispatches only after taking the claim", async () => {
+    const cfg = baseCfg();
+    const res = await run(cfg);
+    expect(res.outcome).toBe("executed");
+    const fns = cfg.calls.rpc.map((c) => c.fn);
+    expect(fns.indexOf("paige_approve_act_execution")).toBeLessThan(fns.indexOf("paige_claim_act_dispatch"));
+    expect(fns.indexOf("paige_claim_act_dispatch")).toBeLessThan(fns.indexOf("set_journey_stage"));
+  });
+  it("redeemed, but another caller holds the claim → reports it and dispatches nothing", async () => {
+    const cfg = baseCfg({}, { paige_claim_act_dispatch: () => ({ data: null, error: null }) } as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res).toMatchObject({ ok: false, executed: false, outcome: "accepted_for_execution", reason: "dispatch_in_progress" });
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+    expect(approvalRefusalMessage(res.reason, res.outcome)).toMatch(/may already be running this step.*approve it again/);
+  });
+  it("the claim cannot be taken (infra) → dispatches nothing and makes no claim about what changed", async () => {
+    const cfg = baseCfg({}, { paige_claim_act_dispatch: () => ({ data: null, error: { message: "boom" } }) } as Partial<Cfg["rpc"]>);
+    const res = await run(cfg);
+    expect(res).toMatchObject({ ok: false, executed: false, outcome: "accepted_for_execution", reason: "dispatch_claim_error" });
+    expect(cfg.calls.rpc.map((c) => c.fn)).not.toContain("set_journey_stage");
+    expect(approvalRefusalMessage(res.reason, res.outcome)).toBe("PAIGE couldn't complete that action.");
   });
 });

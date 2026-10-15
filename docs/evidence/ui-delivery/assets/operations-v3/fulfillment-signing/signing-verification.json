@@ -1,0 +1,294 @@
+{
+  "boundary": "Synthetic shared-shell fixture. No customer login, saved handoff, acceptance or provider effects. Normal viewport only, not native zoom.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paigeInitiallyOpen": true,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paigeInitiallyOpen": false,
+      "version": true,
+      "sourceReview": true,
+      "noAcceptanceClaim": true,
+      "focusRestored": true,
+      "reducedMotion": true,
+      "geometry": {
+        "contained": true,
+        "scrollTop": 0,
+        "scrollable": false
+      }
+    }
+  ],
+  "errors": []
+}

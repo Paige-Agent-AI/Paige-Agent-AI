@@ -1,0 +1,1764 @@
+<!doctype html>
+<html lang="en" data-pg="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engagement Panel Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------------------------------
+   Tokens: copied verbatim from src/index.css [data-pg="dark"] / [data-pg="light"] (L244–318)
+   so this prototype is the same product. Only additions are marked "proto".
+   ------------------------------------------------------------------------------------------ */
+[data-pg] {
+  --pg-font-display: "Schibsted Grotesk", "Segoe UI Variable Display", "SF Pro Display", system-ui, sans-serif;
+  --pg-font-ui: "Schibsted Grotesk", "Segoe UI Variable Text", "SF Pro Text", system-ui, sans-serif;
+  --pg-font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --pg-t-label: 11px; --pg-t-body: 13px; --pg-t-lead: 16px; --pg-t-title: 21px;
+  --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-seal: 11px; --pg-r-pill: 999px;
+  --pg-r-panel: var(--pg-r-plate); /* src/solo/settings.css:15 */
+}
+[data-pg="dark"] {
+  color-scheme: dark;
+  --pg-env: #08070b; --pg-nav: #0d0b11; --pg-canvas: #100e14; --pg-spine: #121017;
+  --pg-workspace: #16131a; --pg-surface: #19161e; --pg-raised: #211d27;
+  --pg-line-soft: rgba(244,237,222,.115); --pg-line: rgba(244,237,222,.195);
+  --pg-line-strong: rgba(244,237,222,.30);
+  --pg-ink: #f6f2ea; --pg-ink-2: #d6d0c9; --pg-muted: #aca69d; --pg-faint: #969089;
+  --pg-gold-core: #fff0cf; --pg-gold: #ead5aa; --pg-gold-deep: #c7a978; --pg-gold-fill: #d4a752;
+  --pg-violet: #9b8de0; --pg-positive: #8fd1ae; --pg-warning: #edc17f; --pg-negative: #eda093;
+  --pg-e1: inset 0 1px rgba(255,255,255,.025);
+  --pg-e3: -20px 0 60px rgba(0,0,0,.22);
+  --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.055), 0 1px 1px rgba(0,0,0,.3), 0 4px 12px -4px rgba(0,0,0,.42);
+  --pg-lift-3: inset 0 1px 0 rgba(255,255,255,.085), 0 6px 12px rgba(0,0,0,.36), 0 36px 72px -20px rgba(0,0,0,.62);
+  --pg-inset: inset 0 1px 2px rgba(0,0,0,.42), inset 0 -1px 0 rgba(255,255,255,.035);
+  --ring-c: #9b8de0; /* src/index.css:413 — indigo, never gold */
+  --scrim: rgba(4,3,6,.62); /* proto */
+  --well: #17141b; /* proto: a recessed well one step below --pg-raised in dark */
+}
+[data-pg="light"] {
+  color-scheme: light;
+  --pg-env: #e8e5df; --pg-nav: #f4f1eb; --pg-canvas: #fbf9f5; --pg-spine: #f1eee8;
+  --pg-workspace: #f7f4ee; --pg-surface: #f5f2ec; --pg-raised: #fffdf8;
+  --pg-line-soft: rgba(45,40,50,.105); --pg-line: rgba(45,40,50,.185);
+  --pg-line-strong: rgba(45,40,50,.28);
+  --pg-ink: #201e23; --pg-ink-2: #3d3941; --pg-muted: #67616b; --pg-faint: #6a646e;
+  --pg-gold-core: #6f5636; --pg-gold: #8b7049; --pg-gold-deep: #7a5c2e; --pg-gold-fill: #c9a96a;
+  --pg-violet: #655a96; --pg-positive: #327458; --pg-warning: #986322; --pg-negative: #a5483d;
+  --pg-e1: inset 0 1px rgba(255,255,255,.7);
+  --pg-e3: -20px 0 60px rgba(45,40,50,.08);
+  --pg-lift-1: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 1px rgba(45,40,50,.055), 0 4px 10px -4px rgba(45,40,50,.12);
+  --pg-lift-3: inset 0 1px 0 #fff, 0 6px 12px rgba(45,40,50,.09), 0 32px 64px -20px rgba(45,40,50,.22);
+  --pg-inset: inset 0 1px 2px rgba(45,40,50,.1), inset 0 -1px 0 rgba(255,255,255,.85);
+  --ring-c: #655a96; /* src/index.css:384 */
+  --scrim: rgba(32,30,35,.34);
+  --well: #f5f2ec; /* = --pg-surface */
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--pg-font-ui); font-size: 14px; line-height: 1.55; letter-spacing: -0.002em;
+  color: var(--pg-ink); background: var(--pg-env); font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: color-mix(in srgb, var(--pg-violet) 28%, transparent); color: var(--pg-ink); }
+:focus-visible { outline: 2px solid var(--ring-c); outline-offset: 3px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--pg-line-strong); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+/* Tabular figures ONLY in aligned money columns. In Schibsted Grotesk the tabular comma takes a
+   full digit width ("$2 ,400", "Aug 28 , 2026") — the defect src/index.css L192–209 records. */
+.num { font-variant-numeric: normal; }
+.table td.r, .ledger dd, .inv-amt { font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------------- Reviewer toolbar (not part of the design) ---------------- */
+.review {
+  position: fixed; z-index: 50; inset: 0 0 auto 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  min-height: 44px; padding: 6px 14px; font: 500 12px/1.3 var(--pg-font-ui);
+  color: #e9e6f0; background: #1b1830; border-bottom: 1px solid #3a3560;
+}
+.review b { font-weight: 600; color: #fff; margin-right: 4px; }
+.review fieldset { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; border: 0; }
+.review legend { float: left; margin-right: 6px; color: #b8b2d6; }
+.review button { min-height: 28px; padding: 0 9px; border: 1px solid #4a4478; border-radius: 6px; color: #e9e6f0; background: #25213f; cursor: pointer; }
+.review button[aria-pressed="true"] { color: #1b1830; background: #cfc8f6; border-color: #cfc8f6; }
+.review button:focus-visible { outline: 2px solid #cfc8f6; outline-offset: 2px; }
+.review .note { margin-left: auto; color: #b8b2d6; }
+body.bare .review { display: none; }
+.stage { position: fixed; inset: 44px 0 0 0; display: grid; place-items: center; overflow: auto; }
+body.bare .stage { inset: 0; }
+body[data-viewport="desktop"] .frame { width: 100%; height: 100%; }
+body[data-viewport="mobile"] .frame { width: 390px; height: min(844px, 100%); border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 1px #3a3560, 0 30px 80px rgba(0,0,0,.4); }
+body.bare[data-viewport="mobile"] .frame { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+
+/* ---------------- The app frame ---------------- */
+.frame { position: relative; overflow: hidden; container: app / inline-size; background: var(--pg-workspace); }
+
+/* Background: the Clients workspace the drawer opens over (kept deliberately simple). */
+.clients { position: absolute; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.clients > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 28px 14px; border-bottom: 1px solid var(--pg-line-soft); background: var(--pg-workspace); }
+.clients h1 { margin: 0; font: 600 var(--pg-t-title)/1.2 var(--pg-font-display); letter-spacing: -.02em; }
+.clients header p { margin: 2px 0 0; color: var(--pg-muted); font-size: var(--pg-t-body); }
+.client-list { margin: 16px 28px; max-width: 720px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-panel); background: var(--pg-surface); box-shadow: var(--pg-e1); overflow: hidden; align-self: start; }
+.client-row { display: grid; width: 100%; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--pg-line-soft); background: transparent; text-align: left; cursor: pointer; }
+.client-row:last-child { border-bottom: 0; }
+.client-row:hover { background: color-mix(in srgb, var(--pg-ink) 3%, transparent); }
+.client-row[aria-current="true"] { background: color-mix(in srgb, var(--pg-violet) 9%, var(--pg-surface)); }
+.client-row .av { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--pg-line); border-radius: 50%; color: var(--pg-ink-2); background: var(--pg-raised); font: 600 12px var(--pg-font-ui); }
+.client-row strong { display: block; font-weight: 600; font-size: 14px; }
+.client-row small { color: var(--pg-muted); font-size: var(--pg-t-label); }
+.client-row > span:last-child { color: var(--pg-muted); font-size: var(--pg-t-label); }
+
+.scrim { position: absolute; inset: 0; border: 0; padding: 0; background: var(--scrim); opacity: 1; transition: opacity 200ms cubic-bezier(.2,.8,.2,1); cursor: default; }
+.frame[data-open="false"] .scrim { opacity: 0; pointer-events: none; }
+
+/* ---------------- Drawer ---------------- */
+.drawer {
+  position: absolute; z-index: 5; inset: 0 0 0 auto; width: min(608px, 100%);
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  background: var(--pg-raised); border-left: 1px solid var(--pg-line);
+  box-shadow: var(--pg-lift-3), var(--pg-e3);
+  transform: translateX(0); transition: transform 240ms cubic-bezier(.16,1,.3,1);
+}
+.frame[data-open="false"] .drawer { transform: translateX(104%); visibility: hidden; transition: transform 200ms cubic-bezier(.4,0,1,1), visibility 0s 200ms; }
+@container app (max-width: 640px) {
+  .drawer { width: 100%; border-left: 0; }
+  .frame[data-open="false"] .drawer { transform: translateY(100%); }
+}
+
+.d-head { position: relative; z-index: 2; display: grid; gap: 12px; padding: 18px 24px 16px; border-bottom: 1px solid var(--pg-line); background: var(--pg-raised); }
+.d-top { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
+.d-title { min-width: 0; }
+.d-title h2 { margin: 0; font: 600 var(--pg-t-title)/1.2 var(--pg-font-display); letter-spacing: -.022em; overflow-wrap: anywhere; }
+.d-title p { margin: 3px 0 0; color: var(--pg-muted); font-size: var(--pg-t-body); }
+.d-actions { display: flex; align-items: center; gap: 6px; }
+.btn { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--pg-line-strong); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-raised); font: 500 var(--pg-t-body)/1 var(--pg-font-ui); text-decoration: none; cursor: pointer; box-shadow: var(--pg-lift-1); transition: background-color 160ms ease-out, border-color 160ms ease-out; white-space: nowrap; }
+.btn:hover { background: color-mix(in srgb, var(--pg-ink) 4%, var(--pg-raised)); border-color: var(--pg-line-strong); }
+.btn:active { background: color-mix(in srgb, var(--pg-ink) 8%, var(--pg-raised)); }
+.btn svg.i { width: 15px; height: 15px; }
+.btn-icon { width: 36px; padding: 0; }
+.summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin: 0; padding: 0; list-style: none; font-size: var(--pg-t-body); color: var(--pg-ink-2); }
+.summary li { display: inline-flex; align-items: center; gap: 6px; }
+.summary .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot[data-tone="negative"] { background: var(--pg-negative); }
+.dot[data-tone="warning"] { background: var(--pg-warning); }
+.dot[data-tone="positive"] { background: var(--pg-positive); }
+.dot[data-tone="quiet"] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--pg-faint); }
+
+/* Stage track — five stages in order; each is a jump link into the drawer body. */
+.track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 2px 0 0; padding: 0; list-style: none; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); background: var(--well); box-shadow: var(--pg-inset); overflow: hidden; }
+.track li { min-width: 0; }
+.track li + li { border-left: 1px solid var(--pg-line-soft); }
+.track a { display: grid; gap: 1px; min-height: 52px; padding: 8px 10px 8px 11px; color: inherit; text-decoration: none; border-radius: 0; }
+.track a:hover { background: color-mix(in srgb, var(--pg-ink) 4%, transparent); }
+.track a:focus-visible { outline-offset: -3px; }
+.track .stage-name { display: flex; align-items: center; gap: 6px; color: var(--pg-muted); font-size: var(--pg-t-label); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track .stage-state { font-size: var(--pg-t-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track [data-tone="positive"] .stage-state { color: var(--pg-positive); }
+.track [data-tone="warning"] .stage-state { color: var(--pg-warning); }
+.track [data-tone="negative"] .stage-state { color: var(--pg-negative); }
+.track [data-tone="quiet"] .stage-state { color: var(--pg-faint); font-weight: 500; }
+
+.d-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth; }
+.d-body-inner { display: grid; gap: 0; padding: 4px 24px 28px; }
+
+/* Attention */
+.attention { margin: 18px 0 4px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-panel); background: var(--pg-raised); box-shadow: var(--pg-lift-1); overflow: hidden; }
+.attention > h3 { display: flex; align-items: baseline; justify-content: space-between; margin: 0; padding: 12px 16px 10px; font: 600 var(--pg-t-body)/1.3 var(--pg-font-ui); }
+.attention > h3 span { color: var(--pg-muted); font-weight: 500; font-size: var(--pg-t-label); }
+.attention ul { margin: 0; padding: 0; list-style: none; }
+.attention li { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 11px 16px 12px; border-top: 1px solid var(--pg-line-soft); }
+.attention li svg.i { margin-top: 2px; }
+.attention li[data-tone="negative"] svg.i { color: var(--pg-negative); }
+.attention li[data-tone="warning"] svg.i { color: var(--pg-warning); }
+.attention strong { display: block; font-weight: 600; font-size: 14px; line-height: 1.35; }
+.attention p { margin: 2px 0 0; color: var(--pg-muted); font-size: var(--pg-t-body); line-height: 1.45; }
+.attention .jump { align-self: center; color: var(--pg-muted); font-size: var(--pg-t-label); text-decoration: none; white-space: nowrap; padding: 4px 6px; border-radius: 6px; }
+.attention .jump:hover { color: var(--pg-ink); background: color-mix(in srgb, var(--pg-ink) 5%, transparent); }
+
+/* Sections */
+.sec { padding: 26px 0 6px; scroll-margin-top: 8px; }
+.sec + .sec { border-top: 1px solid var(--pg-line-soft); margin-top: 18px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sec-head h3 { display: flex; align-items: center; gap: 8px; margin: 0; font: 600 var(--pg-t-lead)/1.25 var(--pg-font-display); letter-spacing: -.012em; }
+.sec-head h3 svg.i { color: var(--pg-muted); }
+.sec-state { font-size: var(--pg-t-body); font-weight: 600; white-space: nowrap; }
+.sec-state[data-tone="positive"] { color: var(--pg-positive); }
+.sec-state[data-tone="warning"] { color: var(--pg-warning); }
+.sec-state[data-tone="negative"] { color: var(--pg-negative); }
+.sec-state[data-tone="quiet"] { color: var(--pg-faint); font-weight: 500; }
+.lede { margin: 0 0 12px; color: var(--pg-ink-2); font-size: 14px; max-width: 62ch; }
+.lede strong { color: var(--pg-ink); font-weight: 600; }
+.fine { margin: 10px 0 0; color: var(--pg-muted); font-size: var(--pg-t-label); line-height: 1.5; display: flex; gap: 6px; align-items: flex-start; }
+.fine svg.i { width: 13px; height: 13px; margin-top: 2px; }
+.more { display: inline-flex; min-height: 32px; align-items: center; margin-top: 4px; padding: 0 2px; border: 0; background: none; color: var(--pg-violet); font: 600 var(--pg-t-label)/1.2 var(--pg-font-ui); cursor: pointer; }
+.more:hover span { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Agreement facts */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); margin: 0; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); overflow: hidden; }
+.facts > div { min-width: 0; padding: 10px 12px; }
+.facts > div + div { border-left: 1px solid var(--pg-line-soft); }
+.facts dt { color: var(--pg-muted); font-size: var(--pg-t-label); }
+.facts dd { margin: 2px 0 0; font-size: var(--pg-t-body); font-weight: 500; overflow-wrap: anywhere; }
+
+/* Progress against the agreement */
+.plan { margin: 0 0 16px; }
+.plan-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 30px; font-size: var(--pg-t-body); color: var(--pg-muted); }
+.plan-line strong { color: var(--pg-ink); font-weight: 600; font-size: 14px; }
+.bar-wrap { position: relative; }
+.bar { position: relative; display: flex; height: 12px; border-radius: 4px; background: var(--well); box-shadow: inset 0 0 0 1px var(--pg-line); overflow: hidden; }
+.bar > span { height: 100%; min-width: 0; }
+.bar > span + span { box-shadow: -1px 0 0 var(--pg-raised); }
+.seg-verified { background: var(--pg-positive); }
+.seg-recorded { background: repeating-linear-gradient(135deg, var(--pg-positive) 0 3px, color-mix(in srgb, var(--pg-positive) 55%, var(--pg-raised)) 3px 6px); }
+.seg-billed { background: var(--pg-violet); } /* full token: a 62% tint measured 2.44:1 against the track in light */
+.tick { position: absolute; top: -22px; bottom: -5px; width: 0; border-left: 1.5px solid var(--pg-ink); }
+.tick span { position: absolute; bottom: calc(100% - 15px); left: 6px; font-size: var(--pg-t-label); font-weight: 600; color: var(--pg-ink); white-space: nowrap; }
+.tick[data-flip="true"] span { left: auto; right: 6px; }
+.legend { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 20px; margin: 14px 0 0; padding: 0; list-style: none; }
+.legend li { display: grid; grid-template-columns: 12px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--pg-line-soft); font-size: var(--pg-t-body); color: var(--pg-ink-2); }
+.legend li b { font-weight: 600; color: var(--pg-ink); }
+.sw { width: 12px; height: 12px; border-radius: 3px; }
+.sw-track { background: var(--well); box-shadow: inset 0 0 0 1px var(--pg-line-strong); }
+
+/* Money ledger */
+.ledger { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin: 18px 0 0; }
+.ledger section { min-width: 0; padding: 12px 14px 8px; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); background: var(--well); }
+.ledger h4 { margin: 0 0 4px; font: 600 var(--pg-t-body)/1.3 var(--pg-font-ui); }
+.ledger dl { margin: 0; }
+.ledger .row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: baseline; padding: 6px 0; }
+.ledger .row + .row { border-top: 1px solid var(--pg-line-soft); }
+.ledger dt { font-size: var(--pg-t-body); color: var(--pg-ink-2); }
+.ledger dt small { display: block; color: var(--pg-muted); font-size: var(--pg-t-label); line-height: 1.4; }
+.ledger dd { margin: 0; font-size: var(--pg-t-lead); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
+.ledger dd[data-tone="negative"] { color: var(--pg-negative); }
+.ledger .row.lead dd { font-size: var(--pg-t-title); letter-spacing: -.02em; }
+
+.test-money { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: center; margin: 12px 0 0; padding: 10px 14px; border: 1px dashed var(--pg-line-strong); border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: var(--pg-t-body); }
+.test-money strong { color: var(--pg-ink); font-weight: 600; }
+.test-money .amt { color: var(--pg-muted); font-weight: 600; text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* Sub-blocks: schedule + invoices */
+.sub { margin-top: 22px; }
+.sub > h4 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; font: 600 14px/1.3 var(--pg-font-ui); }
+.sub > h4 span { color: var(--pg-muted); font-weight: 500; font-size: var(--pg-t-label); }
+.table { width: 100%; border-collapse: collapse; font-size: var(--pg-t-body); }
+.table caption { text-align: left; }
+.table th { padding: 0 10px 6px; color: var(--pg-muted); font-size: var(--pg-t-label); font-weight: 500; text-align: left; }
+.table th:last-child, .table td.r { text-align: right; }
+.table td { padding: 7px 10px; border-top: 1px solid var(--pg-line-soft); vertical-align: middle; }
+.table td:first-child, .table th:first-child { padding-left: 0; }
+.table td:last-child, .table th:last-child { padding-right: 0; }
+.table .group td { padding-top: 12px; padding-bottom: 4px; border-top: 0; color: var(--pg-muted); font-size: var(--pg-t-label); font-weight: 600; }
+.table .group td b { color: var(--pg-ink-2); }
+.table tr.due td { color: var(--pg-ink); }
+.table tr.upcoming td { color: var(--pg-ink-2); }
+.seq { color: var(--pg-muted); width: 2.4em; }
+
+.chip { display: inline-flex; align-items: center; gap: 5px; min-height: 22px; padding: 1px 8px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-pill); font-size: var(--pg-t-label); font-weight: 600; line-height: 1.2; color: var(--pg-ink-2); background: var(--pg-raised); white-space: nowrap; }
+.chip svg.i { width: 12px; height: 12px; }
+.chip[data-tone="positive"] { color: var(--pg-positive); border-color: color-mix(in srgb, var(--pg-positive) 45%, var(--pg-line)); background: color-mix(in srgb, var(--pg-positive) 9%, var(--pg-raised)); }
+.chip[data-tone="warning"] { color: var(--pg-warning); border-color: color-mix(in srgb, var(--pg-warning) 45%, var(--pg-line)); background: color-mix(in srgb, var(--pg-warning) 6%, var(--pg-raised)); } /* 10% measured 4.40:1 in light */
+.chip[data-tone="negative"] { color: var(--pg-negative); border-color: color-mix(in srgb, var(--pg-negative) 45%, var(--pg-line)); background: color-mix(in srgb, var(--pg-negative) 9%, var(--pg-raised)); }
+.chip[data-tone="info"] { color: var(--pg-violet); border-color: color-mix(in srgb, var(--pg-violet) 45%, var(--pg-line)); background: color-mix(in srgb, var(--pg-violet) 9%, var(--pg-raised)); }
+.chip[data-tone="quiet"] { color: var(--pg-muted); background: transparent; }
+.chip[data-tone="test"] { color: var(--pg-ink-2); border-style: dashed; border-color: var(--pg-line-strong); background: transparent; }
+
+.invoices { margin: 0; padding: 0; list-style: none; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); overflow: hidden; }
+.inv { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 11px 14px; }
+.inv + .inv { border-top: 1px solid var(--pg-line-soft); }
+.inv-id { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.inv-id code { font: 500 12px var(--pg-font-data); color: var(--pg-ink); letter-spacing: 0; }
+.inv-id span { color: var(--pg-muted); font-size: var(--pg-t-body); }
+.inv-amt { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14px; }
+.inv-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+.inv-note { grid-column: 1 / -1; margin: 0; color: var(--pg-muted); font-size: var(--pg-t-body); line-height: 1.45; }
+.inv[data-muted="true"] .inv-id code, .inv[data-muted="true"] .inv-amt { color: var(--pg-muted); }
+.inv[data-muted="true"] .inv-amt { font-weight: 500; text-decoration: line-through; text-decoration-thickness: 1px; }
+.inv-group { padding: 8px 14px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); font-size: var(--pg-t-label); font-weight: 600; background: var(--well); }
+
+/* Delivery */
+.work { margin: 0; padding: 0; list-style: none; }
+.work li { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; border-top: 1px solid var(--pg-line-soft); }
+.work li:first-child { border-top: 0; }
+.work .k { color: var(--pg-muted); margin-top: 2px; }
+.work li[data-done="true"] .k { color: var(--pg-positive); }
+.work strong { display: block; font-weight: 600; font-size: 14px; line-height: 1.35; }
+.work li[data-done="true"] strong { color: var(--pg-ink-2); font-weight: 500; }
+.work small { display: block; margin-top: 1px; color: var(--pg-muted); font-size: var(--pg-t-body); }
+.meter { display: flex; gap: 3px; margin: 0 0 14px; }
+.meter span { flex: 1; height: 6px; border-radius: 2px; background: var(--well); box-shadow: inset 0 0 0 1px var(--pg-line); }
+.meter span[data-s="done"] { background: var(--pg-positive); box-shadow: none; }
+.meter span[data-s="overdue"] { background: var(--pg-negative); box-shadow: none; }
+
+/* Honest "not built yet" stages */
+.absent { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 10px; padding: 12px 14px; border: 1px dashed var(--pg-line-strong); border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: var(--pg-t-body); }
+.absent svg.i { color: var(--pg-faint); margin-top: 1px; }
+.absent strong { display: block; color: var(--pg-ink); font-weight: 600; font-size: 14px; }
+.absent p { margin: 2px 0 0; color: var(--pg-muted); line-height: 1.45; }
+
+.d-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); font-size: var(--pg-t-label); }
+
+/* States: empty / error / refused */
+.state { display: grid; justify-items: start; gap: 6px; margin: 26px 0 0; padding: 22px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-panel); background: var(--well); }
+.state > svg.i { width: 22px; height: 22px; color: var(--pg-muted); margin-bottom: 4px; }
+.state h3 { margin: 0; font: 600 var(--pg-t-lead)/1.3 var(--pg-font-display); letter-spacing: -.01em; }
+.state p { margin: 0; max-width: 52ch; color: var(--pg-ink-2); font-size: 14px; }
+.state .btn { margin-top: 10px; }
+.state[data-tone="negative"] > svg.i { color: var(--pg-negative); }
+.preview-stages { margin: 22px 0 0; padding: 0; list-style: none; }
+.preview-stages li { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--pg-line-soft); font-size: var(--pg-t-body); color: var(--pg-muted); }
+.preview-stages li strong { display: block; color: var(--pg-ink); font-weight: 600; font-size: 14px; }
+.preview-stages svg.i { color: var(--pg-faint); margin-top: 2px; }
+
+/* Skeleton */
+.sk { display: block; border-radius: 6px; background: color-mix(in srgb, var(--pg-ink) 7%, transparent); position: relative; overflow: hidden; }
+.sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pg-raised) 70%, transparent), transparent); animation: shimmer 1.3s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+/* Toast (prototype-only feedback for "Open in Sales") */
+.toast { position: absolute; z-index: 9; left: 50%; bottom: 20px; transform: translate(-50%, 12px); padding: 9px 14px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); background: var(--pg-raised); box-shadow: var(--pg-lift-3); font-size: var(--pg-t-body); opacity: 0; pointer-events: none; transition: opacity 180ms ease-out, transform 180ms ease-out; }
+.toast[data-show="true"] { opacity: 1; transform: translate(-50%, 0); }
+
+/* Narrow (mobile sheet) */
+@container app (max-width: 640px) {
+  .clients > header { padding: 14px 16px 12px; }
+  .client-list { margin: 12px 16px; }
+  .d-head { padding: 14px 16px 12px; gap: 10px; }
+  .d-body-inner { padding: 2px 16px 24px; }
+  .btn-sales-label { display: none; }
+  .btn-sales { width: 36px; padding: 0; }
+  .track { grid-template-columns: repeat(5, auto); }
+  .track a { min-height: 54px; align-content: start; padding: 7px 5px 8px 7px; }
+  .track .stage-name svg.i { display: none; }
+  .track .stage-name { letter-spacing: -.01em; }
+  .track .stage-state { font-size: 12px; line-height: 1.25; white-space: normal; overflow: visible; text-overflow: clip; }
+  .facts { grid-template-columns: 1fr 1fr; }
+  .facts > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--pg-line-soft); }
+  .legend { grid-template-columns: 1fr; }
+  .ledger { grid-template-columns: 1fr; }
+  .attention li { grid-template-columns: 20px minmax(0,1fr); }
+  .attention .jump { display: none; }
+  .table .hide-n { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer, .frame[data-open="false"] .drawer, .scrim, .toast, .btn { transition: none !important; }
+  .d-body { scroll-behavior: auto; }
+  .sk::after { animation: none; display: none; }
+}
+body.no-motion .drawer, body.no-motion .scrim { transition: none !important; }
+body.no-motion .sk::after { animation: none; display: none; }
+</style>
+</head>
+<body data-viewport="desktop">
+
+<div class="review" role="toolbar" aria-label="Prototype review controls">
+  <b>Review prototype · Engagement panel</b>
+  <fieldset><legend>State</legend><span id="rv-state"></span></fieldset>
+  <fieldset><legend>Theme</legend><span id="rv-theme"></span></fieldset>
+  <fieldset><legend>View</legend><span id="rv-view"></span></fieldset>
+  <span class="note">Esc closes the panel · click a client to reopen</span>
+</div>
+
+<div class="stage">
+  <div class="frame" id="frame" data-open="true">
+    <div class="clients" id="clients" aria-hidden="false">
+      <header><div><h1>Clients</h1><p>Everyone you're working with right now.</p></div></header>
+      <div class="client-list" role="list" id="client-list"></div>
+    </div>
+    <button class="scrim" id="scrim" tabindex="-1" aria-label="Close client status"></button>
+    <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title"></aside>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+const STATES = {
+  "populated": {
+    "client": {
+      "id": "e4000000-0000-4000-8000-0000000c0001",
+      "name": "Test Consulting Client"
+    },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
+    "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
+    "agreement": {
+      "state": "signed",
+      "signing_id": "e4000000-0000-4000-8000-0000000a0001",
+      "title": "Test consulting agreement",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
+      "completed_at": "2026-09-01T23:50:11.185285+00:00",
+      "sealed": true,
+      "bound_to_terms": true,
+      "effective": "not_recorded"
+    },
+    "terms": {
+      "id": "e4000000-0000-4000-8000-0000000d0001",
+      "status": "active",
+      "version": 1,
+      "offer_name": "Test consulting engagement",
+      "title": "Test consulting engagement",
+      "currency": "usd",
+      "agreed_minor": 350000,
+      "state": "current",
+      "kind": "custom",
+      "recurring": false,
+      "schedule": [
+        {
+          "sequence": 1,
+          "due_date": "2026-09-02",
+          "amount_minor": 50000,
+          "due": true,
+          "label": "Deposit"
+        },
+        {
+          "sequence": 2,
+          "due_date": "2026-10-02",
+          "amount_minor": 30000,
+          "due": true,
+          "label": null
+        },
+        {
+          "sequence": 3,
+          "due_date": "2026-11-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 4,
+          "due_date": "2026-12-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 5,
+          "due_date": "2027-01-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 6,
+          "due_date": "2027-02-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 7,
+          "due_date": "2027-03-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 8,
+          "due_date": "2027-04-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 9,
+          "due_date": "2027-05-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 10,
+          "due_date": "2027-06-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 11,
+          "due_date": "2027-07-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        }
+      ],
+      "schedule_has_more": false
+    },
+    "money": {
+      "currency": "usd",
+      "mixed_currency": false,
+      "contracted_minor": 350000,
+      "due_to_date_minor": 80000,
+      "invoiced_minor": 362000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000
+      },
+      "not_yet_invoiced_minor": 0,
+      "received": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000
+      },
+      "outstanding_minor": 302000,
+      "overdue_minor": 32000,
+      "awaiting_confirmation_minor": 20000,
+      "outcome_unknown_count": 1,
+      "failed_request_count": 1,
+      "behind_schedule_minor": 20000,
+      "reversal_count": 1,
+      "disputes": "not_recorded"
+    },
+    "invoices": [
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0003",
+        "number": "E4-0003",
+        "status": "draft",
+        "payment_state": "draft",
+        "amount_minor": 99900,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0002",
+        "number": "E4-0002",
+        "status": "issued",
+        "payment_state": "outcome_unknown",
+        "amount_minor": 12000,
+        "outstanding_minor": 12000,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 12000,
+        "due_date": "2026-10-02",
+        "overdue": true,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0004",
+        "number": "E4-0004",
+        "status": "void",
+        "payment_state": "void",
+        "amount_minor": 77700,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0001",
+        "number": "E4-0001",
+        "status": "issued",
+        "payment_state": "awaiting_confirmation",
+        "amount_minor": 350000,
+        "outstanding_minor": 290000,
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000,
+        "past_due_minor": 20000,
+        "due_date": "2026-09-02",
+        "overdue": true,
+        "bound_to_terms": true,
+        "legacy_status": false
+      }
+    ],
+    "work": {
+      "state": "behind",
+      "total": 3,
+      "done": 1,
+      "open": 2,
+      "overdue": 1,
+      "blocked": 0,
+      "next": {
+        "title": "Draft discovery report",
+        "due_at": "2026-10-10T23:50:11.185285+00:00",
+        "item_type": "task"
+      },
+      "items": [
+        {
+          "id": "e4000000-0000-4000-8000-000000090002",
+          "title": "Draft discovery report",
+          "due_at": "2026-10-10T23:50:11.185285+00:00",
+          "status": "in_progress",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "task",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090003",
+          "title": "Strategy review",
+          "due_at": "2026-10-26T23:50:11.185285+00:00",
+          "status": "open",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": false,
+          "item_type": "milestone",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090001",
+          "title": "Kickoff workshop",
+          "due_at": "2026-09-12T23:50:11.185285+00:00",
+          "status": "done",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "milestone",
+          "completed_at": "2026-09-13T23:50:11.185285+00:00"
+        }
+      ]
+    },
+    "attention": [
+      "payment_overdue",
+      "behind_schedule",
+      "payment_outcome_unknown",
+      "payment_request_failed",
+      "work_overdue"
+    ],
+    "not_recorded": [
+      "payment_disputes",
+      "provider_refunds",
+      "terms_effective_transition",
+      "installment_allocation"
+    ],
+    "truncated": {
+      "terms": false,
+      "signings": false,
+      "invoices": false,
+      "work": false
+    },
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
+  },
+  "early": {
+    "client": {
+      "id": "e4000000-0000-4000-8000-0000000c0001",
+      "name": "Test Consulting Client"
+    },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
+    "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
+    "agreement": {
+      "state": "sent",
+      "signing_id": "e4000000-0000-4000-8000-0000000a0001",
+      "title": "Test consulting agreement",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
+      "completed_at": null,
+      "sealed": false,
+      "bound_to_terms": true,
+      "effective": "not_recorded"
+    },
+    "terms": {
+      "id": "e4000000-0000-4000-8000-0000000d0001",
+      "status": "active",
+      "version": 1,
+      "offer_name": "Test consulting engagement",
+      "title": "Test consulting engagement",
+      "currency": "usd",
+      "agreed_minor": 350000,
+      "state": "current",
+      "kind": "custom",
+      "recurring": false,
+      "schedule": [
+        {
+          "sequence": 1,
+          "due_date": "2026-09-02",
+          "amount_minor": 50000,
+          "due": true,
+          "label": "Deposit"
+        },
+        {
+          "sequence": 2,
+          "due_date": "2026-10-02",
+          "amount_minor": 30000,
+          "due": true,
+          "label": null
+        },
+        {
+          "sequence": 3,
+          "due_date": "2026-11-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 4,
+          "due_date": "2026-12-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 5,
+          "due_date": "2027-01-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 6,
+          "due_date": "2027-02-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 7,
+          "due_date": "2027-03-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 8,
+          "due_date": "2027-04-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 9,
+          "due_date": "2027-05-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 10,
+          "due_date": "2027-06-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        },
+        {
+          "sequence": 11,
+          "due_date": "2027-07-02",
+          "amount_minor": 30000,
+          "due": false,
+          "label": null
+        }
+      ],
+      "schedule_has_more": false
+    },
+    "money": {
+      "currency": "usd",
+      "mixed_currency": false,
+      "contracted_minor": 350000,
+      "due_to_date_minor": 80000,
+      "invoiced_minor": 350000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
+      "not_yet_invoiced_minor": 0,
+      "received": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0
+      },
+      "outstanding_minor": 350000,
+      "overdue_minor": 80000,
+      "awaiting_confirmation_minor": 0,
+      "outcome_unknown_count": 0,
+      "failed_request_count": 0,
+      "behind_schedule_minor": 80000,
+      "reversal_count": 0,
+      "disputes": "not_recorded"
+    },
+    "invoices": [
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0001",
+        "number": "E4-0001",
+        "status": "issued",
+        "payment_state": "unpaid",
+        "amount_minor": 350000,
+        "outstanding_minor": 350000,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 80000,
+        "due_date": "2026-09-02",
+        "overdue": true,
+        "bound_to_terms": true,
+        "legacy_status": false
+      }
+    ],
+    "work": {
+      "state": "none",
+      "total": 0,
+      "done": 0,
+      "open": 0,
+      "overdue": 0,
+      "blocked": 0,
+      "next": null,
+      "items": []
+    },
+    "attention": [
+      "agreement_not_signed",
+      "payment_overdue",
+      "behind_schedule"
+    ],
+    "not_recorded": [
+      "payment_disputes",
+      "provider_refunds",
+      "terms_effective_transition",
+      "installment_allocation"
+    ],
+    "truncated": {
+      "terms": false,
+      "signings": false,
+      "invoices": false,
+      "work": false
+    },
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
+  },
+  "nozone": {
+    "client": {
+      "id": "e4000000-0000-4000-8000-0000000c0001",
+      "name": "Test Consulting Client"
+    },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
+    "as_of_date": null,
+    "time_zone": {
+      "state": "missing",
+      "zone": null
+    },
+    "agreement": {
+      "state": "signed",
+      "signing_id": "e4000000-0000-4000-8000-0000000a0001",
+      "title": "Test consulting agreement",
+      "sent_at": "2026-08-28T23:50:11.185285+00:00",
+      "completed_at": "2026-09-01T23:50:11.185285+00:00",
+      "sealed": true,
+      "bound_to_terms": true,
+      "effective": "not_recorded"
+    },
+    "terms": {
+      "id": "e4000000-0000-4000-8000-0000000d0001",
+      "status": "active",
+      "version": 1,
+      "offer_name": "Test consulting engagement",
+      "title": "Test consulting engagement",
+      "currency": "usd",
+      "agreed_minor": 350000,
+      "state": "current",
+      "kind": "custom",
+      "recurring": false,
+      "schedule": [
+        {
+          "sequence": 1,
+          "due_date": "2026-09-02",
+          "amount_minor": 50000,
+          "due": null,
+          "label": "Deposit"
+        },
+        {
+          "sequence": 2,
+          "due_date": "2026-10-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 3,
+          "due_date": "2026-11-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 4,
+          "due_date": "2026-12-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 5,
+          "due_date": "2027-01-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 6,
+          "due_date": "2027-02-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 7,
+          "due_date": "2027-03-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 8,
+          "due_date": "2027-04-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 9,
+          "due_date": "2027-05-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 10,
+          "due_date": "2027-06-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        },
+        {
+          "sequence": 11,
+          "due_date": "2027-07-02",
+          "amount_minor": 30000,
+          "due": null,
+          "label": null
+        }
+      ],
+      "schedule_has_more": false
+    },
+    "money": {
+      "currency": "usd",
+      "mixed_currency": false,
+      "contracted_minor": 350000,
+      "due_to_date_minor": null,
+      "invoiced_minor": 362000,
+      "invoiced_against_terms_minor": 350000,
+      "received_against_terms": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000
+      },
+      "not_yet_invoiced_minor": 0,
+      "received": {
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000
+      },
+      "outstanding_minor": 302000,
+      "overdue_minor": null,
+      "awaiting_confirmation_minor": 20000,
+      "outcome_unknown_count": 1,
+      "failed_request_count": 1,
+      "behind_schedule_minor": null,
+      "reversal_count": 1,
+      "disputes": "not_recorded"
+    },
+    "invoices": [
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0003",
+        "number": "E4-0003",
+        "status": "draft",
+        "payment_state": "draft",
+        "amount_minor": 99900,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0002",
+        "number": "E4-0002",
+        "status": "issued",
+        "payment_state": "outcome_unknown",
+        "amount_minor": 12000,
+        "outstanding_minor": 12000,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": null,
+        "due_date": "2026-10-02",
+        "overdue": null,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0004",
+        "number": "E4-0004",
+        "status": "void",
+        "payment_state": "void",
+        "amount_minor": 77700,
+        "outstanding_minor": 0,
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0,
+        "past_due_minor": 0,
+        "due_date": null,
+        "overdue": false,
+        "bound_to_terms": false,
+        "legacy_status": false
+      },
+      {
+        "id": "e4000000-0000-4000-8000-0000000e0001",
+        "number": "E4-0001",
+        "status": "issued",
+        "payment_state": "awaiting_confirmation",
+        "amount_minor": 350000,
+        "outstanding_minor": 290000,
+        "verified_minor": 10000,
+        "recorded_by_owner_minor": 50000,
+        "test_environment_minor": 30000,
+        "past_due_minor": null,
+        "due_date": "2026-09-02",
+        "overdue": null,
+        "bound_to_terms": true,
+        "legacy_status": false
+      }
+    ],
+    "work": {
+      "state": "behind",
+      "total": 3,
+      "done": 1,
+      "open": 2,
+      "overdue": 1,
+      "blocked": 0,
+      "next": {
+        "title": "Draft discovery report",
+        "due_at": "2026-10-10T23:50:11.185285+00:00",
+        "item_type": "task"
+      },
+      "items": [
+        {
+          "id": "e4000000-0000-4000-8000-000000090002",
+          "title": "Draft discovery report",
+          "due_at": "2026-10-10T23:50:11.185285+00:00",
+          "status": "in_progress",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "task",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090003",
+          "title": "Strategy review",
+          "due_at": "2026-10-26T23:50:11.185285+00:00",
+          "status": "open",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": false,
+          "item_type": "milestone",
+          "completed_at": null
+        },
+        {
+          "id": "e4000000-0000-4000-8000-000000090001",
+          "title": "Kickoff workshop",
+          "due_at": "2026-09-12T23:50:11.185285+00:00",
+          "status": "done",
+          "plan_id": "e4000000-0000-4000-8000-000000080001",
+          "assigned": true,
+          "item_type": "milestone",
+          "completed_at": "2026-09-13T23:50:11.185285+00:00"
+        }
+      ]
+    },
+    "attention": [
+      "payment_outcome_unknown",
+      "payment_request_failed",
+      "business_time_zone_unset",
+      "work_overdue"
+    ],
+    "not_recorded": [
+      "payment_disputes",
+      "provider_refunds",
+      "terms_effective_transition",
+      "installment_allocation"
+    ],
+    "truncated": {
+      "terms": false,
+      "signings": false,
+      "invoices": false,
+      "work": false
+    },
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
+  },
+  "empty": {
+    "client": {
+      "id": "e4000000-0000-4000-8000-0000000c0001",
+      "name": "Test Empty Client"
+    },
+    "read_at": "2026-10-12T23:50:11.47193+00:00",
+    "as_of_date": "2026-10-12",
+    "time_zone": {
+      "state": "configured",
+      "zone": "America/New_York"
+    },
+    "agreement": {
+      "state": "none",
+      "signing_id": null,
+      "title": null,
+      "sent_at": null,
+      "completed_at": null,
+      "sealed": false,
+      "bound_to_terms": false,
+      "effective": "not_recorded"
+    },
+    "terms": null,
+    "money": {
+      "currency": null,
+      "mixed_currency": false,
+      "contracted_minor": null,
+      "due_to_date_minor": null,
+      "invoiced_minor": 0,
+      "invoiced_against_terms_minor": 0,
+      "received_against_terms": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0
+      },
+      "not_yet_invoiced_minor": null,
+      "received": {
+        "verified_minor": 0,
+        "recorded_by_owner_minor": 0,
+        "test_environment_minor": 0
+      },
+      "outstanding_minor": 0,
+      "overdue_minor": 0,
+      "awaiting_confirmation_minor": 0,
+      "outcome_unknown_count": 0,
+      "failed_request_count": 0,
+      "behind_schedule_minor": null,
+      "reversal_count": 0,
+      "disputes": "not_recorded"
+    },
+    "invoices": [],
+    "work": {
+      "state": "none",
+      "total": 0,
+      "done": 0,
+      "open": 0,
+      "overdue": 0,
+      "blocked": 0,
+      "next": null,
+      "items": []
+    },
+    "attention": [],
+    "not_recorded": [
+      "payment_disputes",
+      "provider_refunds",
+      "terms_effective_transition",
+      "installment_allocation"
+    ],
+    "truncated": {
+      "terms": false,
+      "signings": false,
+      "invoices": false,
+      "work": false
+    },
+    "receipt_id": "a8c03ae2-31e0-4da9-ab0c-a3336068a77b"
+  }
+};
+
+/* ------------------------------------------------------------------ icons (lucide geometry) */
+const ICON = {
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  out: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-4.9"/>',
+  alert: '<path d="M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-3 2.5-3 4.3"/><path d="M12 17.5h.01"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/>',
+  dashed: '<path d="M10.1 2.2a10 10 0 0 1 3.8 0"/><path d="M17.6 3.7a10 10 0 0 1 2.7 2.7"/><path d="M21.8 10.1a10 10 0 0 1 0 3.8"/><path d="M20.3 17.6a10 10 0 0 1-2.7 2.7"/><path d="M13.9 21.8a10 10 0 0 1-3.8 0"/><path d="M6.4 20.3a10 10 0 0 1-2.7-2.7"/><path d="M2.2 13.9a10 10 0 0 1 0-3.8"/><path d="M3.7 6.4a10 10 0 0 1 2.7-2.7"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/>',
+  card: '<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/>',
+  door: '<path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.2a1 1 0 0 1-1.2 1L5 19.8V5.6a2 2 0 0 1 1.6-2l5.2-1a1 1 0 0 1 1.2 1Z"/>',
+  list: '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  retry: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/>',
+  flag: '<path d="M4 22V4"/><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1"/>',
+  task: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  circle: '<circle cx="12" cy="12" r="8.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  flask: '<path d="M9 3h6"/><path d="M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3"/><path d="M7.5 15h9"/>',
+  unplug: '<path d="m19 5 3-3"/><path d="m2 22 3-3"/><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m12 6 6 6 2.3-2.3a2.4 2.4 0 0 0 0-3.4l-2.6-2.6a2.4 2.4 0 0 0-3.4 0Z"/>',
+};
+const ic = (name, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[name]}</svg>`;
+
+/* ------------------------------------------------------------------ formatting */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function money(minor, currency = 'usd') {
+  if (minor === null || minor === undefined) return '—';
+  const cents = Math.abs(minor) % 100 !== 0;
+  const v = (minor / 100).toLocaleString('en-US', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: 2 });
+  return currency && currency.toLowerCase() === 'usd' ? `$${v}` : `${v} ${String(currency || '').toUpperCase()}`;
+}
+let AS_OF_YEAR = '2026';
+// Instants (sent_at, due_at …) are shown on the business owner's calendar; plain contract dates
+// (YYYY-MM-DD) are shown exactly as agreed. Without an owner zone, instants fall back to UTC labels.
+let DISPLAY_ZONE = 'UTC';
+function day(iso, forceYear = false) {
+  if (!iso) return '—';
+  const instant = iso.length > 10;
+  const d = instant ? new Date(iso) : new Date(iso.slice(0, 10) + 'T00:00:00Z');
+  const zone = instant ? DISPLAY_ZONE : 'UTC';
+  const y = new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric' }).format(d);
+  return d.toLocaleDateString('en-US', { timeZone: zone, month: 'short', day: 'numeric', ...(forceYear || y !== AS_OF_YEAR ? { year: 'numeric' } : {}) });
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/* ------------------------------------------------------------------ derivations (display only) */
+// Everything below reads the composed status as-is. Money received against the agreed terms comes
+// from the composer (received_against_terms) and is asserted equal to due_to_date − behind_schedule.
+function receivedOnTerms(s) {
+  const r = s.money.received_against_terms;
+  const fromInvoices = (r.verified_minor ?? 0) + (r.recorded_by_owner_minor ?? 0);
+  const m = s.money;
+  if (m.due_to_date_minor !== null && m.behind_schedule_minor !== null) {
+    const fromEnvelope = m.due_to_date_minor - m.behind_schedule_minor;
+    if (fromEnvelope !== fromInvoices) console.error('receivedOnTerms mismatch', fromEnvelope, fromInvoices);
+  }
+  return fromInvoices;
+}
+function verifiedOnTerms(s) { return s.money.received_against_terms.verified_minor; }
+function recordedOnTerms(s) { return s.money.received_against_terms.recorded_by_owner_minor; }
+const isOpenItem = it => it.status !== 'done' && it.status !== 'cancelled';
+// A task is late when its due instant is before the moment of the read — the same rule as the read's
+// own overdue count, so the cards and the list always agree, with or without an owner zone.
+const isLate = (it, readAt) => isOpenItem(it) && Boolean(it.due_at) && Date.parse(it.due_at) < Date.parse(readAt);
+const zoneUnset = s => s.as_of_date === null;
+
+/* Agreement words */
+const AGREEMENT = {
+  none: { word: 'None', tone: 'quiet' }, draft: { word: 'Draft', tone: 'quiet' },
+  sent: { word: 'Not signed', tone: 'warning' }, viewed: { word: 'Not signed', tone: 'warning' },
+  partially_signed: { word: 'Part signed', tone: 'warning' }, signed: { word: 'Signed', tone: 'positive' },
+  declined: { word: 'Declined', tone: 'negative' }, voided: { word: 'Voided', tone: 'quiet' }, expired: { word: 'Expired', tone: 'warning' },
+};
+
+function stageModel(s) {
+  const m = s.money, w = s.work;
+  const ag = AGREEMENT[s.agreement.state] || { word: s.agreement.state, tone: 'quiet' };
+  let pay;
+  if (!s.terms && !s.invoices.length) pay = { word: 'None yet', tone: 'quiet' };
+  else if (zoneUnset(s)) pay = { word: 'Set time zone', tone: 'warning' };
+  else if (m.behind_schedule_minor > 0) pay = { word: `Behind ${money(m.behind_schedule_minor, m.currency)}`, tone: 'warning' };
+  else if (m.overdue_minor > 0) pay = { word: `${money(m.overdue_minor, m.currency)} late`, tone: 'warning' };
+  else pay = { word: 'On schedule', tone: 'positive' };
+  const work = w.state === 'none' ? { word: 'None yet', tone: 'quiet' }
+    : w.state === 'behind' ? { word: `${w.overdue} overdue`, tone: 'warning' }
+    : w.state === 'complete' ? { word: 'All done', tone: 'positive' }
+    : w.state === 'undated' ? { word: 'No dates', tone: 'quiet' }
+    : { word: 'On track', tone: 'positive' };
+  return [
+    { id: 'agreement', name: 'Agreement', icon: 'pen', ...ag },
+    { id: 'payments', name: 'Payments', icon: 'card', ...pay },
+    { id: 'onboarding', name: 'Onboarding', icon: 'door', word: 'Not tracked', tone: 'quiet' },
+    { id: 'delivery', name: 'Delivery', icon: 'list', ...work },
+    { id: 'followups', name: 'Follow-ups', icon: 'bell', word: 'None set up', tone: 'quiet' },
+  ];
+}
+
+function summaryParts(s) {
+  const m = s.money, c = m.currency, parts = [];
+  if (!s.terms && !s.invoices.length && s.agreement.state === 'none' && s.work.total === 0)
+    return [{ tone: 'quiet', text: 'No agreement, payments or work yet' }];
+  if (s.attention.includes('agreement_not_signed')) parts.push({ tone: 'warning', text: 'Agreement not signed' });
+  if (zoneUnset(s)) parts.push({ tone: 'warning', text: 'Due dates on hold until your time zone is set' });
+  if (m.behind_schedule_minor > 0) parts.push({ tone: 'warning', text: `Behind by ${money(m.behind_schedule_minor, c)}` });
+  if (m.overdue_minor > 0) parts.push({ tone: 'negative', text: `${money(m.overdue_minor, c)} past due` });
+  // Only an unknown outcome needs checking; a failed request collected nothing and is named on its own.
+  if (m.outcome_unknown_count > 0) parts.push({ tone: 'warning', text: `${plural(m.outcome_unknown_count, 'payment', 'payments')} to check` });
+  if (s.work.overdue > 0) parts.push({ tone: 'warning', text: `${plural(s.work.overdue, 'task', 'tasks')} overdue` });
+  if (!parts.length) parts.push({ tone: 'positive', text: 'Paid up and on track' });
+  return parts;
+}
+
+/* Attention: plain language, never an internal code. */
+function attentionItems(s) {
+  const m = s.money, c = m.currency, out = [];
+  const overdueInv = s.invoices.filter(i => i.overdue);
+  const unknownInv = s.invoices.filter(i => i.payment_state === 'outcome_unknown');
+  const late = s.work.items.filter(it => isLate(it, s.read_at));
+  for (const code of s.attention) {
+    switch (code) {
+      case 'agreement_not_signed':
+        out.push({ tone: 'warning', icon: 'pen', to: 'agreement', title: 'The agreement isn’t signed yet',
+          body: s.agreement.sent_at ? `Sent ${day(s.agreement.sent_at)}. The client hasn’t signed it.` : 'It hasn’t been sent for signature.' });
+        break;
+      case 'payment_overdue':
+        out.push({ tone: 'negative', icon: 'clock', to: 'payments', title: `${money(m.overdue_minor, c)} is past due`,
+          body: overdueInv.length === 1
+            ? (overdueInv[0].bound_to_terms ? `On invoice ${overdueInv[0].number}, from payments in your terms that fell due before today.` : `Invoice ${overdueInv[0].number} was due ${day(overdueInv[0].due_date)}.`)
+            : `Across ${overdueInv.length} invoices: ${overdueInv.map(i => `${i.number} (${money(i.past_due_minor, c)} past due)`).join(', ')}.` });
+        break;
+      case 'behind_schedule': {
+        // Verified and owner-recorded money are named separately — never one "paid" total.
+        const got = receivedOnTerms(s), ver = verifiedOnTerms(s), rec = recordedOnTerms(s);
+        const paid = [ver ? `${money(ver, c)} is confirmed by your payment provider` : '', rec ? `${money(rec, c)} is recorded by you` : ''].filter(Boolean).join(' and ');
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: `${s.agreement.state === 'signed' ? 'Behind the agreed schedule' : 'Behind the schedule in your terms'} by ${money(m.behind_schedule_minor, c)}`,
+          body: `${money(m.due_to_date_minor, c)} was due by today. ${got > 0 ? `Against this agreement, ${paid}.` : 'Nothing has been paid against this agreement.'}` });
+        break; }
+      case 'payment_outcome_unknown':
+        out.push({ tone: 'warning', icon: 'help', to: 'payments', title: `${plural(m.outcome_unknown_count, 'payment needs', 'payments need')} checking`,
+          body: `${unknownInv.length ? `On invoice ${unknownInv.map(i => i.number).join(', ')}, a` : 'A'} payment was started but we never heard whether it went through. It is not counted as paid.` });
+        break;
+      case 'payment_request_failed':
+        out.push({ tone: 'negative', icon: 'ban', to: 'payments', title: `${plural(m.failed_request_count, 'payment request', 'payment requests')} failed`,
+          body: 'Nothing was collected from it.' });
+        break;
+      case 'work_overdue':
+        out.push({ tone: 'warning', icon: 'list', to: 'delivery', title: `${plural(s.work.overdue, 'delivery task is', 'delivery tasks are')} overdue`,
+          body: late.length ? late.map(it => `${esc(it.title)} was due ${day(it.due_at)}`).join('; ') + '.' : '' });
+        break;
+      case 'work_blocked':
+        out.push({ tone: 'warning', icon: 'list', to: 'delivery', title: `${plural(s.work.blocked, 'task is', 'tasks are')} blocked`, body: '' });
+        break;
+      case 'terms_stale':
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'The payment schedule no longer matches the agreed total', body: 'Totals are hidden until the terms are updated in Sales.' });
+        break;
+      case 'terms_unreadable':
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'The payment schedule couldn’t be read', body: 'Totals are hidden until it’s fixed in Sales.' });
+        break;
+      case 'mixed_currency':
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'Invoices use more than one currency', body: 'Totals are hidden rather than added across currencies.' });
+        break;
+      case 'business_time_zone_unset':
+        out.push({ tone: 'warning', icon: 'clock', to: 'payments', title: 'Set your business time zone',
+          body: 'What is due and what is late is worked out on your calendar, in your time zone. Until you set it, those are left blank rather than guessed. Amounts and payments are unaffected.' });
+        break;
+      case 'list_truncated':
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'This client has more records than this panel can show', body: 'Totals are hidden because they would be incomplete.' });
+        break;
+      default:
+        out.push({ tone: 'warning', icon: 'alert', to: 'payments', title: 'Something needs a look', body: '' });
+    }
+  }
+  return out;
+}
+
+/* Invoice payment states → owner words. */
+function invoiceChips(i, c) {
+  const chips = [];
+  const map = {
+    paid: ['Paid', 'positive', 'check'], partially_paid: ['Part paid', 'warning', null], unpaid: ['Unpaid', 'quiet', null],
+    awaiting_confirmation: ['Payment in progress', 'info', 'clock'], outcome_unknown: ['Needs checking', 'warning', 'help'],
+    draft: ['Draft · not issued', 'quiet', null], void: ['Voided', 'quiet', null], written_off: ['Written off', 'quiet', null],
+  };
+  const [label, tone, icon] = map[i.payment_state] || [i.payment_state, 'quiet', null];
+  chips.push(`<span class="chip" data-tone="${tone}">${icon ? ic(icon) : ''}${label}</span>`);
+  if (i.overdue) chips.push(`<span class="chip" data-tone="negative">${ic('clock')}Past due</span>`);
+  if (i.test_environment_minor > 0) chips.push(`<span class="chip" data-tone="test">${ic('flask')}Test payment — not real money · ${money(i.test_environment_minor, c)}</span>`);
+  return chips.join('');
+}
+function invoiceNote(i, c) {
+  const bits = [];
+  if (i.verified_minor > 0) bits.push(`${money(i.verified_minor, c)} confirmed by your provider`);
+  if (i.recorded_by_owner_minor > 0) bits.push(`${money(i.recorded_by_owner_minor, c)} recorded by you`);
+  if (i.payment_state === 'awaiting_confirmation') bits.push('a payment is in progress — not received yet');
+  if (i.outstanding_minor > 0 && i.payment_state !== 'outcome_unknown') bits.push(`${money(i.outstanding_minor, c)} still owed`);
+  if (i.bound_to_terms && i.past_due_minor > 0) bits.push(`${money(i.past_due_minor, c)} of it past due`);
+  if (i.bound_to_terms && i.outstanding_minor > 0) bits.push('the rest follows your schedule');
+  if (i.payment_state === 'outcome_unknown') bits.push(`${money(i.outstanding_minor, c)} counted as owed until the payment is confirmed`);
+  if (!i.bound_to_terms && !['draft', 'void'].includes(i.payment_state)) bits.push('not part of the agreed terms');
+  return bits.join(' · ');
+}
+
+/* ------------------------------------------------------------------ rendering */
+function header(s, { loading = false, clientName, bare = false } = {}) {
+  const name = clientName ?? s?.client?.name ?? 'Client';
+  const offer = s?.terms ? `${esc(s.terms.offer_name || s.terms.title)} · ${money(s.terms.agreed_minor, s.terms.currency)} agreed` : (s ? 'No engagement set up' : '');
+  const summary = s && !bare ? summaryParts(s).map(p => `<li><span class="dot" data-tone="${p.tone}" aria-hidden="true"></span>${esc(p.text)}</li>`).join('') : '';
+  const stages = s && !bare ? stageModel(s) : null;
+  return `<header class="d-head">
+    <div class="d-top">
+      <div class="d-title">
+        <h2 id="d-title" tabindex="-1">${esc(name)}</h2>
+        ${loading ? '<p><span class="sk" style="width:220px;height:13px;margin-top:6px"></span></p>' : offer ? `<p>${offer}</p>` : ''}
+      </div>
+      <div class="d-actions">
+        ${s && !loading && !bare ? `<a class="btn btn-sales" href="#sales" data-act="sales" title="Open in Sales">${ic('out')}<span class="btn-sales-label">Open in Sales</span></a>` : ''}
+        <button class="btn btn-icon" data-act="close" aria-label="Close client status">${ic('x')}</button>
+      </div>
+    </div>
+    ${loading ? '<span class="sk" style="width:70%;height:14px"></span>' : summary ? `<ul class="summary" aria-label="Status summary">${summary}</ul>` : ''}
+    ${stages ? `<ol class="track" aria-label="Engagement stages">${stages.map(st => `<li data-tone="${st.tone}"><a href="#sec-${st.id}" data-jump="${st.id}"><span class="stage-name">${ic(st.icon)}${st.name}</span><span class="stage-state">${esc(st.word)}</span></a></li>`).join('')}</ol>` : ''}
+    ${loading ? `<div class="track" aria-hidden="true" style="grid-template-columns:repeat(5,1fr)">${'<div style="padding:10px 11px;display:grid;gap:6px"><span class="sk" style="width:60%;height:10px"></span><span class="sk" style="width:80%;height:13px"></span></div>'.repeat(5)}</div>` : ''}
+  </header>`;
+}
+
+function agreementSection(s) {
+  const a = s.agreement, st = AGREEMENT[a.state];
+  let body;
+  if (a.state === 'none') {
+    body = `<p class="lede">No agreement has been sent to this client.</p>`;
+  } else {
+    const lede = a.state === 'signed'
+      ? `<strong>Signed ${day(a.completed_at, true)}.</strong> ${a.bound_to_terms ? 'It covers the payment terms below.' : 'It isn’t tied to the payment terms below.'}`
+      : a.state === 'sent' || a.state === 'viewed'
+        ? `<strong>Sent ${day(a.sent_at, true)} — waiting for the client to sign.</strong> ${a.bound_to_terms ? 'It covers the payment terms below.' : ''}`
+        : `<strong>${st.word}.</strong>`;
+    body = `<p class="lede">${lede}</p>
+      <dl class="facts">
+        <div><dt>Document</dt><dd>${esc(a.title)}</dd></div>
+        <div><dt>Sent</dt><dd class="num">${day(a.sent_at, true)}</dd></div>
+        <div><dt>${a.state === 'signed' ? 'Signed copy' : 'Signed'}</dt><dd>${a.state === 'signed' ? (a.sealed ? 'Sealed and on file' : 'Not sealed') : 'Not yet'}</dd></div>
+      </dl>
+      <p class="fine">${ic('info')}<span>When the agreement takes effect isn’t tracked yet, so signing and the payment terms are shown separately.</span></p>`;
+  }
+  return section('agreement', 'Agreement', 'pen', st, body);
+}
+
+function paymentsSection(s) {
+  const m = s.money, c = m.currency, t = s.terms;
+  const stage = stageModel(s)[1];
+  if (!t && !s.invoices.length) {
+    return section('payments', 'Payments', 'card', stage, `<p class="lede">No payment terms or invoices yet.</p>`);
+  }
+  let plan = '';
+  if (t && m.contracted_minor) {
+    const total = m.contracted_minor;
+    const ver = verifiedOnTerms(s), rec = recordedOnTerms(s);
+    // Measured against the agreed schedule: what has been paid, what fell due and is unpaid, and what
+    // is not due yet. An invoice bound to the terms carries the whole amount, so it is not the measure.
+    const dueUnpaid = Math.max(0, m.behind_schedule_minor ?? 0);
+    const notDue = Math.max(0, total - ver - rec - dueUnpaid);
+    const notInv = m.not_yet_invoiced_minor ?? 0;
+    const pct = v => (v / total * 100).toFixed(3) + '%';
+    const tick = m.due_to_date_minor !== null ? m.due_to_date_minor / total * 100 : null;
+    const got = ver + rec;
+    plan = `<div class="plan">
+      <div class="plan-line"><span>${got > 0 ? `Against <strong>${money(total, c)} agreed</strong>: ${[ver ? `<strong>${money(ver, c)}</strong> confirmed by your provider` : '', rec ? `<strong>${money(rec, c)}</strong> recorded by you` : ''].filter(Boolean).join(' and ')}` : `<strong>${money(total, c)} agreed</strong> — nothing paid against it yet`}</span></div>
+      <div class="bar-wrap">
+        <div class="bar" role="img" aria-label="${esc(zoneUnset(s) ? `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(total - ver - rec, c)} not paid yet. What is due waits for your business time zone.` : `${money(ver, c)} confirmed by your payment provider, ${money(rec, c)} recorded by you, ${money(dueUnpaid, c)} due and unpaid, ${money(notDue, c)} not due yet. ${money(m.due_to_date_minor, c)} was due by today.`)}">
+          ${ver ? `<span class="seg-verified" style="width:${pct(ver)}"></span>` : ''}${rec ? `<span class="seg-recorded" style="width:${pct(rec)}"></span>` : ''}${dueUnpaid ? `<span class="seg-billed" style="width:${pct(dueUnpaid)}"></span>` : ''}
+        </div>
+        ${tick !== null ? `<div class="tick" style="left:${tick}%" data-flip="${tick > 70}"><span>Due by today · ${money(m.due_to_date_minor, c)}</span></div>` : ''}
+      </div>
+      <ul class="legend">
+        <li><span class="sw seg-verified"></span><span>Paid — confirmed by your provider</span><b class="num">${money(ver, c)}</b></li>
+        <li><span class="sw seg-recorded"></span><span>Paid — recorded by you</span><b class="num">${money(rec, c)}</b></li>
+        ${zoneUnset(s)
+          ? `<li><span class="sw sw-track"></span><span>Not paid yet · what is due waits for your time zone</span><b class="num">${money(total - ver - rec, c)}</b></li>`
+          : `<li><span class="sw seg-billed"></span><span>Due by today, not paid</span><b class="num">${money(dueUnpaid, c)}</b></li>
+        <li><span class="sw sw-track"></span><span>Not due yet</span><b class="num">${money(notDue, c)}</b></li>`}
+      </ul>
+      ${notInv > 0 ? `<p class="fine">${ic('info')}<span>${money(notInv, c)} of this agreement isn’t on an invoice yet.</span></p>` : ''}
+    </div>`;
+  } else if (t) {
+    plan = `<p class="lede">Totals are hidden for these terms — see what needs your attention above.</p>`;
+  }
+
+  const paidNothing = m.received.verified_minor === 0 && m.received.recorded_by_owner_minor === 0;
+  const ledger = `<div class="ledger">
+    <section aria-labelledby="lg-paid"><h4 id="lg-paid">Paid</h4><dl>
+      <div class="row"><dt>Confirmed by your provider<small>Your payment provider confirmed the money arrived</small></dt><dd class="num">${money(m.received.verified_minor, c)}</dd></div>
+      <div class="row"><dt>Recorded by you<small>Entered by hand — not checked by a payment provider</small></dt><dd class="num">${money(m.received.recorded_by_owner_minor, c)}</dd></div>
+    </dl></section>
+    <section aria-labelledby="lg-owed"><h4 id="lg-owed">Still owed</h4><dl>
+      <div class="row lead"><dt>On issued invoices<small>Includes payments in your terms that aren’t due yet</small></dt><dd class="num">${money(m.outstanding_minor, c)}</dd></div>
+      <div class="row"><dt>Past due</dt><dd class="num" ${m.overdue_minor > 0 ? 'data-tone="negative"' : ''}>${money(m.overdue_minor, c)}</dd></div>
+      ${m.awaiting_confirmation_minor > 0 ? `<div class="row"><dt>Payment in progress<small>Not received until your provider confirms</small></dt><dd class="num">${money(m.awaiting_confirmation_minor, c)}</dd></div>` : ''}
+    </dl></section>
+  </div>
+  ${paidNothing ? '' : '<p class="fine">' + ic('info') + '<span>The two paid figures are kept apart on purpose and never added together.</span></p>'}
+  ${m.invoiced_minor !== m.invoiced_against_terms_minor ? '<p class="fine">' + ic('info') + '<span>Still owed covers every issued invoice for this client, including ones outside this agreement.</span></p>' : ''}`;
+
+  const testMoney = m.received.test_environment_minor > 0
+    ? `<div class="test-money" role="note">${ic('flask')}<span><strong>Test payment — not real money.</strong> Made in your payment provider’s test mode. It isn’t counted anywhere on this page.</span><span class="amt num" aria-label="${money(m.received.test_environment_minor, c)} in test mode">${money(m.received.test_environment_minor, c)}</span></div>` : '';
+
+  // Schedule — rows carry only what the data supports: due by today, or upcoming.
+  let schedule = '';
+  if (t && t.schedule.length) {
+    // A row whose due status is unknown (no business time zone) is never shown as upcoming.
+    const unknown = t.schedule.some(r => r.due === null);
+    const due = t.schedule.filter(r => r.due === true), up = unknown ? t.schedule : t.schedule.filter(r => r.due === false);
+    const sum = rows => rows.reduce((a, r) => a + r.amount_minor, 0);
+    // The group label already says due or upcoming, so rows carry no repeated chip.
+    const row = (r, kind) => `<tr class="${kind}"><td class="seq num">${r.sequence}</td><td class="num">${day(r.due_date)}</td><td class="hide-n">${r.label ? esc(r.label) : 'Instalment'}</td><td class="r num">${money(r.amount_minor, t.currency)}</td></tr>`;
+    // Only the next upcoming payment is shown; the rest fold behind one line so the panel stays short.
+    const [next, ...later] = up;
+    schedule = `<div class="sub">
+      <h4>Agreed schedule <span>${plural(t.schedule.length, 'payment', 'payments')} · ${money(t.agreed_minor, t.currency)}</span></h4>
+      <table class="table"><caption class="sr-only">Agreed payment schedule</caption>
+        <thead><tr><th scope="col"><span class="sr-only">Number</span></th><th scope="col">Due</th><th scope="col" class="hide-n">For</th><th scope="col" class="r" style="text-align:right">Amount</th></tr></thead>
+        <tbody>
+          ${due.length ? `<tr class="group"><td colspan="4">Due so far · <b class="num">${money(sum(due), t.currency)}</b></td></tr>${due.map(r => row(r, 'due')).join('')}` : ''}
+          ${next ? `<tr class="group"><td colspan="4">${unknown ? 'Payment dates · not judged until your time zone is set' : 'Still to come'} · <b class="num">${money(sum(up), t.currency)}</b></td></tr>${row(next, 'upcoming')}` : ''}
+        </tbody>
+        ${later.length ? `<tbody class="later" id="sched-later" hidden>${later.map(r => row(r, 'upcoming')).join('')}</tbody>` : ''}
+      </table>
+      ${later.length ? `<button type="button" class="more" aria-expanded="false" aria-controls="sched-later" onclick="const b=document.getElementById('sched-later');b.hidden=!b.hidden;this.setAttribute('aria-expanded',String(!b.hidden));this.firstElementChild.textContent=b.hidden?'Show ${later.length} more · ${money(sum(later), t.currency)}':'Show less'"><span>Show ${later.length} more · ${money(sum(later), t.currency)}</span></button>` : ''}
+      <p class="fine">${ic('info')}<span>Payments aren’t matched to individual instalments yet. What has actually been paid is on the invoices below.</span></p>
+    </div>`;
+  }
+
+  // Invoices — billed first by due date, then not-billed.
+  let invoices = '';
+  if (s.invoices.length) {
+    const billed = s.invoices.filter(i => !['draft', 'void'].includes(i.payment_state)).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+    const other = s.invoices.filter(i => ['draft', 'void'].includes(i.payment_state));
+    const li = (i, muted) => `<li class="inv" data-muted="${muted}">
+        <div class="inv-id"><code>${esc(i.number)}</code><span>${i.bound_to_terms ? 'Paid over your agreed schedule' : i.due_date ? `Due ${day(i.due_date)}` : 'No due date'}</span></div>
+        <div class="inv-amt">${money(i.amount_minor, c)}</div>
+        <div class="inv-chips">${invoiceChips(i, c)}</div>
+        ${invoiceNote(i, c) ? `<p class="inv-note">${invoiceNote(i, c)}</p>` : ''}
+        ${i.payment_state === 'outcome_unknown' ? '<p class="inv-note">A payment was started but we never heard whether it went through.</p>' : ''}
+      </li>`;
+    invoices = `<div class="sub">
+      <h4>Invoices <span>${plural(billed.length, 'issued', 'issued')} · ${money(m.invoiced_minor, c)} billed</span></h4>
+      <ul class="invoices">${billed.map(i => li(i, false)).join('')}
+        ${other.length ? `<li class="inv-group">Not billed — not counted</li>${other.map(i => li(i, true)).join('')}` : ''}
+      </ul>
+    </div>`;
+  }
+
+  const notTracked = `<p class="fine">${ic('info')}<span>Disputes and refunds aren’t tracked yet, so they aren’t reflected here.${m.reversal_count > 0 ? ` ${plural(m.reversal_count, 'payment record was', 'payment records were')} reversed and is already left out of the figures above.` : ''}</span></p>`;
+
+  return section('payments', 'Payments', 'card', stage, plan + ledger + testMoney + schedule + invoices + notTracked);
+}
+
+function onboardingSection() {
+  return section('onboarding', 'Onboarding', 'door', { word: 'Not tracked', tone: 'quiet' },
+    `<div class="absent">${ic('dashed')}<div><strong>Not tracked yet — coming in a later release</strong><p>Onboarding steps for this client will show here once they’re built. Nothing is assumed in the meantime.</p></div></div>`);
+}
+
+function deliverySection(s) {
+  const w = s.work, st = stageModel(s)[3];
+  if (w.state === 'none') {
+    return section('delivery', 'Delivery', 'list', st, `<p class="lede">No milestones or tasks for this client yet.</p>`);
+  }
+  const items = [...w.items].sort((a, b) => {
+    const ad = a.status === 'done', bd = b.status === 'done';
+    if (ad !== bd) return ad ? 1 : -1;
+    return String(a.due_at).localeCompare(String(b.due_at));
+  });
+  const meter = items.slice().sort((a, b) => (a.status === 'done' ? -1 : 0) - (b.status === 'done' ? -1 : 0))
+    .map(it => `<span data-s="${it.status === 'done' ? 'done' : isLate(it, s.read_at) ? 'overdue' : 'open'}"></span>`).join('');
+  const next = w.next ? `<p class="lede"><strong>${w.done} of ${w.total} done.</strong> Next up: ${esc(w.next.title)}, ${isLate({ status: 'open', due_at: w.next.due_at }, s.read_at) ? `<strong style="color:var(--pg-negative)">was due ${day(w.next.due_at)}</strong>` : `due ${day(w.next.due_at)}`}.</p>` : `<p class="lede"><strong>${w.done} of ${w.total} done.</strong></p>`;
+  const rows = items.map(it => {
+    const done = it.status === 'done', late = isLate(it, s.read_at);
+    const kind = it.item_type === 'milestone' ? 'Milestone' : 'Task';
+    const meta = done ? `${kind} · done ${day(it.completed_at)}`
+      : `${kind} · ${it.status === 'in_progress' ? 'in progress' : it.status === 'blocked' ? 'blocked' : 'not started'}${it.assigned ? '' : ' · no one assigned'}`;
+    const chip = done ? '<span class="chip" data-tone="positive">Done</span>'
+      : late ? `<span class="chip" data-tone="negative">${ic('clock')}Overdue · ${day(it.due_at)}</span>`
+      : it.due_at ? `<span class="chip" data-tone="quiet">Due ${day(it.due_at)}</span>` : '<span class="chip" data-tone="quiet">No date</span>';
+    return `<li data-done="${done}"><span class="k">${ic(done ? 'check' : it.item_type === 'milestone' ? 'flag' : 'circle')}</span><div><strong>${esc(it.title)}</strong><small>${meta}</small></div>${chip}</li>`;
+  }).join('');
+  return section('delivery', 'Delivery', 'list', st, `${next}<div class="meter" aria-hidden="true">${meter}</div><ul class="work">${rows}</ul>`);
+}
+
+function followupsSection() {
+  return section('followups', 'Follow-ups', 'bell', { word: 'None set up', tone: 'quiet' },
+    `<div class="absent">${ic('dashed')}<div><strong>No follow-ups are set up yet</strong><p>Payment reminders aren’t built yet. When they are, nothing goes to your client without your yes.</p></div></div>`);
+}
+
+function section(id, title, icon, st, body) {
+  return `<section class="sec" id="sec-${id}" aria-labelledby="h-${id}">
+    <div class="sec-head"><h3 id="h-${id}">${ic(icon)}${title}</h3>${st ? `<span class="sec-state" data-tone="${st.tone}">${esc(st.word)}</span>` : ''}</div>
+    ${body}
+  </section>`;
+}
+
+function attentionBlock(s) {
+  const items = attentionItems(s);
+  if (!items.length) return '';
+  return `<section class="attention" aria-labelledby="att-h">
+    <h3 id="att-h">Needs your attention <span>${plural(items.length, 'item', 'items')}</span></h3>
+    <ul>${items.map(it => `<li data-tone="${it.tone}">${ic(it.icon)}<div><strong>${esc(it.title)}</strong>${it.body ? `<p>${it.body}</p>` : ''}</div><a class="jump" href="#sec-${it.to}" data-jump="${it.to}">View<span class="sr-only"> ${it.to}</span></a></li>`).join('')}</ul>
+  </section>`;
+}
+
+function renderPopulated(s) {
+  if (s.as_of_date) AS_OF_YEAR = s.as_of_date.slice(0, 4);
+  DISPLAY_ZONE = s.time_zone?.zone || 'UTC';
+  const isEmpty = !s.terms && !s.invoices.length && s.agreement.state === 'none' && s.work.total === 0;
+  if (isEmpty) return renderEmpty(s);
+  return header(s) + `<div class="d-body" id="d-body"><div class="d-body-inner">
+    ${attentionBlock(s)}
+    ${agreementSection(s)}
+    ${paymentsSection(s)}
+    ${onboardingSection()}
+    ${deliverySection(s)}
+    ${followupsSection()}
+    <div class="d-foot"><span>${s.as_of_date ? `As of ${day(s.as_of_date, true)}` : 'As of now · business time zone not set'}</span><span>Read-only — changes are made in Sales</span></div>
+  </div></div>`;
+}
+
+function renderEmpty(s) {
+  const n = esc(s.client.name);
+  return header(s, { bare: true }) + `<div class="d-body" id="d-body"><div class="d-body-inner">
+    <div class="state">${ic('pen')}<h3>Nothing’s set up for ${n} yet</h3>
+      <p>Once you send an agreement and a payment schedule from Sales, this panel shows what ${n} has signed, paid and still owes — and whether the work is on schedule.</p>
+      <a class="btn" href="#sales" data-act="sales">${ic('out')}Open in Sales</a>
+    </div>
+    <ol class="preview-stages" aria-label="What this panel will show">
+      <li>${ic('pen')}<div><strong>Agreement</strong>Sent, signed, and the terms it covers.</div></li>
+      <li>${ic('card')}<div><strong>Payments</strong>Paid — confirmed by your payment provider or recorded by you — what’s still owed, and what’s past due.</div></li>
+      <li>${ic('door')}<div><strong>Onboarding</strong>Not tracked yet — coming in a later release.</div></li>
+      <li>${ic('list')}<div><strong>Delivery</strong>Milestones and tasks, and what’s overdue.</div></li>
+      <li>${ic('bell')}<div><strong>Follow-ups</strong>Not built yet. Nothing will go out without your yes.</div></li>
+    </ol>
+    <div class="d-foot"><span>As of ${day(s.as_of_date, true)}</span></div>
+  </div></div>`;
+}
+
+function renderLoading() {
+  const block = (h) => `<div style="padding:26px 0 6px;border-top:1px solid var(--pg-line-soft);margin-top:18px;display:grid;gap:10px"><span class="sk" style="width:120px;height:16px"></span>${h}</div>`;
+  return header(null, { loading: true, clientName: STATES.populated.client.name }) + `<div class="d-body" id="d-body" aria-busy="true"><div class="d-body-inner">
+    <span class="sr-only" role="status">Reading this client’s status…</span>
+    <div style="margin-top:18px;display:grid;gap:8px;padding:14px 16px;border:1px solid var(--pg-line);border-radius:13px"><span class="sk" style="width:160px;height:13px"></span><span class="sk" style="width:90%;height:13px"></span><span class="sk" style="width:75%;height:13px"></span></div>
+    ${block('<span class="sk" style="width:85%;height:13px"></span><span class="sk" style="width:100%;height:44px"></span>')}
+    ${block('<span class="sk" style="width:100%;height:12px;margin-top:20px"></span><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><span class="sk" style="height:96px"></span><span class="sk" style="height:96px"></span></div>')}
+    ${block('<span class="sk" style="width:100%;height:40px"></span>')}
+  </div></div>`;
+}
+
+function renderError() {
+  return header(null, { clientName: STATES.populated.client.name }) + `<div class="d-body" id="d-body"><div class="d-body-inner">
+    <div class="state" data-tone="negative" role="alert">${ic('unplug')}<h3>This client’s status could not be read.</h3>
+      <p>Nothing has changed for this client. It’s safe to try again — if it keeps failing, their invoices and agreement are still in Sales.</p>
+      <button class="btn" data-act="retry">${ic('retry')}Try again</button>
+    </div>
+  </div></div>`;
+}
+
+function renderRefused() {
+  return header(null, { clientName: STATES.populated.client.name }) + `<div class="d-body" id="d-body"><div class="d-body-inner">
+    <div class="state">${ic('lock')}<h3>Only the business owner or an admin can see payments for this client.</h3>
+      <p>Ask the owner of this business if you need access.</p>
+    </div>
+  </div></div>`;
+}
+
+/* ------------------------------------------------------------------ app state + behaviour */
+const params = new URLSearchParams(location.search);
+const ui = {
+  state: params.get('state') || 'populated',
+  theme: params.get('theme') || 'light',
+  view: params.get('view') || 'desktop',
+  open: true,
+};
+if (params.get('bare') === '1') document.body.classList.add('bare');
+if (params.get('motion') === '0') document.body.classList.add('no-motion');
+
+const frame = document.getElementById('frame');
+const drawer = document.getElementById('drawer');
+const clients = document.getElementById('clients');
+let lastOpener = null, retryTimer = null;
+
+function currentClientName() {
+  return ui.state === 'empty' ? STATES.empty.client.name : STATES.populated.client.name;
+}
+
+function renderClients() {
+  const rows = [
+    { name: STATES.populated.client.name, sub: STATES.populated.terms.offer_name, key: 'consulting' },
+    { name: STATES.empty.client.name, sub: 'No engagement yet', key: 'empty' },
+  ];
+  document.getElementById('client-list').innerHTML = rows.map(r => {
+    const current = (r.key === 'empty') === (ui.state === 'empty');
+    const initials = r.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('');
+    return `<button class="client-row" role="listitem" data-client="${r.key}" aria-current="${current}"><span class="av" aria-hidden="true">${esc(initials)}</span><span><strong>${esc(r.name)}</strong><small>${esc(r.sub)}</small></span><span>View status</span></button>`;
+  }).join('');
+}
+
+function render() {
+  document.documentElement.setAttribute('data-pg', ui.theme);
+  document.body.setAttribute('data-viewport', ui.view);
+  frame.dataset.open = String(ui.open);
+  clients.toggleAttribute('inert', ui.open);
+  clients.setAttribute('aria-hidden', String(ui.open));
+  renderClients();
+  const s = ui.state;
+  drawer.innerHTML = s === 'loading' ? renderLoading() : s === 'error' ? renderError() : s === 'refused' ? renderRefused()
+    : renderPopulated(STATES[s]);
+  renderToolbar();
+}
+
+function renderToolbar() {
+  const group = (el, key, opts) => { document.getElementById(el).innerHTML = opts.map(([v, l]) => `<button type="button" data-rv="${key}" data-v="${v}" aria-pressed="${ui[key] === v}">${l}</button>`).join(''); };
+  group('rv-state', 'state', [['populated', 'Populated'], ['early', 'Early'], ['empty', 'Empty'], ['loading', 'Loading'], ['error', 'Error'], ['refused', 'No access'], ['nozone', 'No time zone']]);
+  group('rv-theme', 'theme', [['light', 'Light'], ['dark', 'Dark']]);
+  group('rv-view', 'view', [['desktop', 'Desktop drawer'], ['mobile', 'Mobile sheet']]);
+}
+
+function openDrawer(opener) {
+  lastOpener = opener || null;
+  ui.open = true; render();
+  requestAnimationFrame(() => drawer.querySelector('[data-act="close"]')?.focus({ preventScroll: true }));
+}
+function closeDrawer() {
+  ui.open = false; render();
+  const target = lastOpener && document.contains(lastOpener) ? lastOpener : document.querySelector('.client-row[aria-current="true"]');
+  target?.focus({ preventScroll: true });
+}
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.dataset.show = 'true';
+  clearTimeout(toast._t); toast._t = setTimeout(() => (t.dataset.show = 'false'), 2200);
+}
+
+document.addEventListener('click', e => {
+  const rv = e.target.closest('[data-rv]');
+  if (rv) { clearTimeout(retryTimer); ui[rv.dataset.rv] = rv.dataset.v; if (rv.dataset.rv === 'state') ui.open = true; render(); return; }
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    e.preventDefault();
+    if (act.dataset.act === 'close') closeDrawer();
+    if (act.dataset.act === 'sales') toast('Prototype: this would open the client in Sales.');
+    if (act.dataset.act === 'retry') { ui.state = 'loading'; render(); retryTimer = setTimeout(() => { ui.state = 'populated'; render(); drawer.querySelector('#d-title')?.focus(); }, 900); }
+    return;
+  }
+  const jump = e.target.closest('[data-jump]');
+  if (jump) {
+    e.preventDefault();
+    const sec = document.getElementById('sec-' + jump.dataset.jump);
+    if (sec) { sec.scrollIntoView({ block: 'start' }); sec.querySelector('h3')?.setAttribute('tabindex', '-1'); sec.querySelector('h3')?.focus({ preventScroll: true }); }
+    return;
+  }
+  const row = e.target.closest('.client-row');
+  if (row) { clearTimeout(retryTimer); ui.state = row.dataset.client === 'empty' ? 'empty' : (ui.state === 'empty' ? 'populated' : ui.state); openDrawer(row); return; }
+  if (e.target.id === 'scrim') closeDrawer();
+});
+
+document.addEventListener('keydown', e => {
+  if (!ui.open) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeDrawer(); return; }
+  if (e.key !== 'Tab' || !drawer.contains(document.activeElement)) return;
+  const f = [...drawer.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]')].filter(el => el.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+render();
+</script>
+</body>
+</html>

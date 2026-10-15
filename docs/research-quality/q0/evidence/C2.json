@@ -1,0 +1,521 @@
+{
+  "case_id": "C2",
+  "split": "dev",
+  "class": "contested",
+  "answer_class": "contested",
+  "question": "How many people have died in space, above the Karman line, in the history of spaceflight? Credible sources give different counts - report the disagreement and its cause.",
+  "sub_questions": [
+    "the counts offered",
+    "the boundary/definition cause of the disagreement"
+  ],
+  "freshness_days": 3650,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T16:09:29.354Z",
+  "http_status": 200,
+  "wall_latency_ms": 68721,
+  "engine_result": {
+    "run_id": "ce1c7a5b-08c5-47bd-b74b-26a63af69287",
+    "question": "How many people have died in space, above the Karman line, in the history of spaceflight? Credible sources give different counts - report the disagreement and its cause.",
+    "findings": [
+      {
+        "text": "Wikipedia's List of spaceflight-related accidents and incidents states that 19 people have died during spaceflights, while more than 188 people have died in spaceflight-related incidents overall (as of April 2026); it also notes a separate count specifically for 'Spaceflight fatalities above the Kármán line.' (website: https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents · 19 people have died during spaceflights, as listed on [6], verify directly — terms change.; more than 188 people have died in spaceflight-related incidents, as listed on [6], verify directly — terms change.)",
+        "citations": [
+          6
+        ],
+        "confidence": "low",
+        "website": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents",
+        "values": [
+          "19 people have died during spaceflights, as listed on [6], verify directly — terms change.",
+          "more than 188 people have died in spaceflight-related incidents, as listed on [6], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "Georgy Dobrovolsky, Victor Patsayev, Vladislav Volkov — BBC Sky at Night Magazine reports that the only three deaths ever recorded in space were Russian cosmonauts Georgy Dobrovolsky, Victor Patsayev and Vladislav Volkov. (website: https://www.skyatnightmagazine.com/space-missions/how-many-people-have-died-in-space)",
+        "citations": [
+          16
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:three deaths, as listed on [16], verify directly — terms change."
+        ],
+        "name": "Georgy Dobrovolsky, Victor Patsayev, Vladislav Volkov",
+        "website": "https://www.skyatnightmagazine.com/space-missions/how-many-people-have-died-in-space"
+      },
+      {
+        "text": "Astronomy.com states that in the last half-century, about 30 astronauts and cosmonauts have died while training for or attempting dangerous space missions, implying most deaths occurred during training/preparation rather than in space itself. (website: https://www.astronomy.com/space-exploration/how-many-astronauts-have-died-in-space/)",
+        "citations": [
+          11
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:about 30 astronauts and cosmonauts, as listed on [11], verify directly — terms change."
+        ],
+        "website": "https://www.astronomy.com/space-exploration/how-many-astronauts-have-died-in-space/"
+      },
+      {
+        "text": "A study abstract on sixty years of manned spaceflight reports a current statistical fatality rate of 5.8% (deaths per spaceflight), with the highest fatality rate in the 1960s at 0.013 deaths per day spent in space. (website: https://ui.adsabs.harvard.edu/abs/2022Aeros...9..675S/abstract)",
+        "citations": [
+          4
+        ],
+        "confidence": "high",
+        "unverifiedFields": [
+          "value:5.8% (deaths per spaceflight), as listed on [4], verify directly — terms change.",
+          "value:0.013 deaths/day spent in space (1960s), as listed on [4], verify directly — terms change."
+        ],
+        "website": "https://ui.adsabs.harvard.edu/abs/2022Aeros...9..675S/abstract"
+      },
+      {
+        "text": "A fatality risk comparison study states approximately 1.2% of all missions had fatal outcomes, and 3.6% of US spaceflight crew (astronauts, cosmonauts, mission specialists, and others) died while on a mission. (website: https://www.amjmed.com/article/S0002-9343(14)00121-1/fulltext)",
+        "citations": [
+          10
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:1.2% of all missions had fatal outcomes, as listed on [10], verify directly — terms change.",
+          "value:3.6% of US spaceflight crew died while on a mission, as listed on [10], verify directly — terms change."
+        ],
+        "website": "https://www.amjmed.com/article/S0002-9343(14)00121-1/fulltext"
+      },
+      {
+        "text": "The Kármán line is cited by Astronomy.com as marking where space begins, some 62 miles (100 kilometers) above Earth's surface, which is relevant to defining which deaths count as 'in space.' (website: https://www.astronomy.com/space-exploration/the-karman-line-where-does-space-begin/)",
+        "citations": [
+          12
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:62 miles (100 kilometers), as listed on [12], verify directly — terms change."
+        ],
+        "website": "https://www.astronomy.com/space-exploration/the-karman-line-where-does-space-begin/"
+      },
+      {
+        "text": "The FAI (Fédération Aéronautique Internationale) states the 100-km altitude boundary, named the 'Kármán Line,' was established as the boundary separating Aeronautics and Astronautics, a definitional point that affects which fatalities are counted as having occurred 'in space.' (website: https://www.fai.org/page/icare-boundary)",
+        "citations": [
+          14
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:100-Km altitude, as listed on [14], verify directly — terms change."
+        ],
+        "website": "https://www.fai.org/page/icare-boundary"
+      },
+      {
+        "text": "Wikipedia's article on the Kármán line notes that the 100-kilometer threshold is considered the boundary of astronautics, and that elliptical orbits with perigees at 100 km can survive for long periods, which complicates strict definitions of 'space' used in death counts. (website: https://en.wikipedia.org/wiki/K%C3%A1rm%C3%A1n_line)",
+        "citations": [
+          25
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:100-kilometer threshold, as listed on [25], verify directly — terms change."
+        ],
+        "website": "https://en.wikipedia.org/wiki/K%C3%A1rm%C3%A1n_line"
+      },
+      {
+        "text": "Britannica lists seven accidents and disasters in spaceflight history, a curated list format that differs from broader statistical databases and may contribute to differing public counts of spaceflight deaths. (website: https://www.britannica.com/story/7-accidents-and-disasters-in-spaceflight-history)",
+        "citations": [
+          13
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:seven accidents, as listed on [13], verify directly — terms change."
+        ],
+        "website": "https://www.britannica.com/story/7-accidents-and-disasters-in-spaceflight-history"
+      },
+      {
+        "text": "Vladimir Komarov — A YouTube video on 'The Worst Astronaut Deaths Ever' covers specific named incidents including Vladimir Komarov (Soyuz 1), the Soyuz 11 Crew, the Challenger Disaster (STS-51-L), the Columbia Disaster (STS-107), and X-15 related deaths, illustrating that different sources include different mission types (e.g., sub-orbital X-15 flights) in their death tallies, which is a cause of disagreement in counts.",
+        "citations": [
+          26
+        ],
+        "confidence": "low",
+        "name": "Vladimir Komarov"
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6717835/",
+        "title": "Exploring the Contributory Factors of Confined Space Accidents Using ...",
+        "snippet": "A review of 4,756 deaths reported in the OSHA database over the period of 1984–1986 showed 146 deaths in confined spaces because of asphyxiation and poisoning",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:57.311Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9818606/",
+        "title": "Human Health during Space Travel: State-of-the-Art Review - PMC",
+        "snippet": "Prolonged exposure to microgravity does cause unloading of the cardiovascular system ・ resulting in cardiac atrophy. are common due to microgravity exposure ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:15.191Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://stacks.cdc.gov/view/cdc/228931",
+        "title": "Confined Space Awareness: Preventing Deaths and Injuries to ...",
+        "snippet": "An average of 100 confined space related deaths occur each year in workplaces in the United States. The main cause of the fatalities is workers entering ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:57.311Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://ui.adsabs.harvard.edu/abs/2022Aeros...9..675S/abstract",
+        "title": "Sixty Years of Manned Spaceflight—Incidents and Accidents Involving ...",
+        "snippet": "The current statistical fatality rate is 5.8% (deaths per spaceflight) with the highest fatality rate in the 1960s (0.013 deaths/day spent in space), and the ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:12.623Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://www.bls.gov/iif/factsheets/fatal-occupational-injuries-confined-spaces-2011-19.htm",
+        "title": "Fatal occupational injuries involving confined spaces",
+        "snippet": "From 2011 to 2018, 1,030 workers died from occupational injuries involving a confined space. The annual figures range from a low of 88 in 2012 ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:57.311Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://en.wikipedia.org/wiki/List_of_spaceflight-related_accidents_and_incidents",
+        "title": "List of spaceflight-related accidents and incidents - Wikipedia",
+        "snippet": "19 people have died during spaceflights. As of April 2026, more than 188 people have died in spaceflight-related incidents. Spaceflight fatalities above the Ká ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:55.695Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://onlinecpdacademy.co.uk/blog/confined-space-accident-statistics-uk",
+        "title": "Confined Space Accident Statistics UK: Deaths and Case Studies",
+        "snippet": "An HSE leaflet first published in 1997 estimated that confined-space work killed 15 people a year in the UK. Its current replacement gives no ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:57.311Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://rocorescue.com/rescue-talk/confined-space-fatalities-an-updated-look-at-the-numbers/",
+        "title": "Confined Space Fatalities...an updated look at the numbers",
+        "snippet": "The 2011 to 2018 average was 128 deaths per year, up from 96 in 2005-2009, and the trend was a consistent increase from 2013 through 2017. Only ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:57.311Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://search.proquest.com/openview/fa5ff99e92626c1123982b54f4feb032/1?pq-origsite=gscholar&cbl=18750&diss=y",
+        "title": "Lessons for Future Human Spaceflight Mishap Investigators and ...",
+        "snippet": "This study is an in-depth analysis and case study of human spaceflight fatalities, studying the forensic data, engineering data, and spaceflight environment ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:12.623Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.amjmed.com/article/S0002-9343(14)00121-1/fulltext",
+        "title": "Fatality Risks on the Road and in Space",
+        "snippet": "Approximately 1.2% of all missions had fatal outcomes, and 3.6% of US spaceflight crew (astronauts, cosmonauts, mission specialists, and others) died while on a ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:12.623Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.astronomy.com/space-exploration/how-many-astronauts-have-died-in-space/",
+        "title": "How many astronauts have died in space? - Astronomy.com",
+        "snippet": "In the last half-century, about 30 astronauts and cosmonauts have died while training for or attempting dangerous space missions. But the vast ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:56.424Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.astronomy.com/space-exploration/the-karman-line-where-does-space-begin/",
+        "title": "The Kármán Line: Where space begins - Astronomy.com",
+        "snippet": "Earth ends and outer space starts at the Kármán line, some 62 miles (100 kilometers) above the planet's surface.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:58.337Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.britannica.com/story/7-accidents-and-disasters-in-spaceflight-history",
+        "title": "7 Accidents and Disasters in Spaceflight History | Britannica",
+        "snippet": "This Encyclopedia Britannica Technology and Science list features seven accidents that occurred on spacecraft in the history of outer space ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:13.571Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.fai.org/page/icare-boundary",
+        "title": "100km Altitude Boundary for Astronautics - FAI.org",
+        "snippet": "The 100-Km altitude, ever since named the “Karman Line”, came thus into existence as the boundary separating Aeronautics and Astronautics. c) ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:58.337Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.sciencedirect.com/science/article/am/pii/S0002934320305210",
+        "title": "[PDF] An Analysis of Spaceflight Fatalities and Comparison to Other Modes of ...",
+        "snippet": "We break down the fatality rates of human spaceflight and compare them to those of several terrestrial transportation modes. We created a database of human ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:12.623Z",
+        "excluded": false
+      },
+      {
+        "index": 16,
+        "url": "https://www.skyatnightmagazine.com/space-missions/how-many-people-have-died-in-space",
+        "title": "How many people have died in space? | BBC Sky at Night Magazine",
+        "snippet": "the only three deaths ever recorded were those of Russian cosmonauts Georgy Dobrovolsky, Victor Patsayev and Vladislav Volkov.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:55.695Z",
+        "excluded": false
+      },
+      {
+        "index": 17,
+        "url": "https://www.facebook.com/groups/828178678983076/posts/1519959236471680/",
+        "title": "Soyuz 11 cosmonauts die in space vacuum - Facebook",
+        "snippet": "On this date (Jun. 30) in 1971, the Soviet Soyuz 11 mission ended in disaster when all three cosmonauts died aboard their capsule after it ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:56.424Z",
+        "excluded": true
+      },
+      {
+        "index": 18,
+        "url": "https://www.facebook.com/groups/spacehipsters/posts/25980136368271234/",
+        "title": "Remembering astronauts who died in space exploration - Facebook",
+        "snippet": "As of November 2023, 19 people have died in space or while preparing for space flight, which is a fatality rate of 2.8%. astronauts died in the ...Astronauts' lives lost in space shuttle disastersSpace shuttle disasters in historyMore results from www.facebook.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:11.647Z",
+        "excluded": true
+      },
+      {
+        "index": 19,
+        "url": "https://www.facebook.com/groups/SpaceLaunchSchedule/posts/603459327361195/",
+        "title": "Remembering astronauts who died for space travel advancement",
+        "snippet": "As of November 2023, 19 people have died in space or while preparing for space flight, which is a fatality rate of 2.8%. These deaths have ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:55.695Z",
+        "excluded": true
+      },
+      {
+        "index": 20,
+        "url": "https://www.facebook.com/groups/spaceXverse/posts/2597066077265068/",
+        "title": "Suborbital space travel above Karman line - Facebook",
+        "snippet": "Compared with the definition of 100 kilometers, the threshold is 20 kilometers lower. As for why this line is called the \"Karman Line\"? The ...Where begins space? I know that the Karman line lies at an altitude of ...What is special about the Karmen line and why is it 62? - FacebookMore results from www.facebook.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:58.337Z",
+        "excluded": true
+      },
+      {
+        "index": 21,
+        "url": "https://www.facebook.com/SeekerMedia/videos/this-is-how-many-people-have-died-in-space/10155542310703387/",
+        "title": "How many people have died in space? | Seeker Media - Facebook",
+        "snippet": "Well, only three confirmed men have died in space. There were reports back during the early days of the space race of people listening into ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:11.647Z",
+        "excluded": true
+      },
+      {
+        "index": 22,
+        "url": "https://www.reddit.com/r/space/comments/be2pp0/has_anyone_died_in_space/",
+        "title": "Has Anyone Died In Space? - Reddit",
+        "snippet": "all three cosmonauts were killed on the soyuz 11 mission when the re-entry module of their spacecraft depressurized.Has anyone actually ever died from exposure to the vacuum of space?Has there ever been an astronaut drifting away in the vacuum ... - RedditMore results from www.reddit.com",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:56.424Z",
+        "excluded": true
+      },
+      {
+        "index": 23,
+        "url": "https://www.reddit.com/r/space/comments/dfi2up/nearly_550_people_have_ventured_into_space_but/",
+        "title": "Nearly 550 people have ventured into space, but only 3 have technically ...",
+        "snippet": "TIL: There has been a total of 18 astronaut fatalities during spaceflight: 13 American, 4 Soviets, and 1 Israeli. However, only 3 of these ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:55.695Z",
+        "excluded": true
+      },
+      {
+        "index": 24,
+        "url": "https://www.reddit.com/r/todayilearned/comments/1s3n22w/til_of_the_k%C3%A1rm%C3%A1n_line_a_widely_accepted_line100/",
+        "title": "TIL of the Kármán line, a widely accepted “line”100 km above the ...",
+        "snippet": "TIL that the Karman Line - lying 62 miles/100km above mean sea level and commonly accepted as the boundary between Earth's atmosphere and outer ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:58.337Z",
+        "excluded": true
+      },
+      {
+        "index": 25,
+        "url": "https://en.wikipedia.org/wiki/K%C3%A1rm%C3%A1n_line",
+        "title": "Kármán line - Wikipedia",
+        "snippet": "100-kilometer threshold is considered astronautics. elliptical orbits with perigees at 100 km can survive for long periods.",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:58.337Z",
+        "excluded": false
+      },
+      {
+        "index": 26,
+        "url": "https://www.youtube.com/watch?v=V-yY8hGPXM0",
+        "title": "The Worst Astronaut Deaths Ever - YouTube",
+        "snippet": "00:00 Vladimir Komarov - Soyuz 1 ; 03:40 Soyuz 11 Crew ; 07:22 Challenger Disaster - STS-51-L ; 10:40 Columbia Disaster - STS-107 ; 14:27 X-15 ...",
+        "reliability_score": 0.348,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:08:55.695Z",
+        "excluded": false
+      },
+      {
+        "index": 27,
+        "url": "https://www.facebook.com/StarTalk/posts/what-are-the-risks-of-death-in-space-exploration-today/1207548211004236/",
+        "title": "What Are The Risks Of Death In Space Exploration Today - Facebook",
+        "snippet": "During Desert Storm 100 accidental deaths of ￼military soldiers happened even before one shot was fired. 1y · 1 like. Wendy Kerr. How many ...",
+        "reliability_score": 0.258,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:15.191Z",
+        "excluded": true
+      },
+      {
+        "index": 28,
+        "url": "https://www.reddit.com/r/SpaceXLounge/comments/15091ew/the_first_space_disaster_of_the_privatespace_era/",
+        "title": "The first space disaster of the private-space era is arguably a ...",
+        "snippet": "Same with airlines, people die in a crash, usually only that model plane is grounded (if any at all). Investigation is made, fixes implemented, ...",
+        "reliability_score": 0.258,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T16:09:13.571Z",
+        "excluded": true
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 10 finding(s) across 18 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "e9eab03d-570c-4a2d-8337-22573d547da0",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 266,
+      "tokens_out": 1000,
+      "cost_estimate_usd": 0.0158,
+      "latency_ms": 11394,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T16:08:32.522041+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 10,
+    "sources_retrieved": 28,
+    "sources_included": 18,
+    "sources_excluded": 10,
+    "sources_cited": 10,
+    "primary_ratio": 0.1,
+    "citation_independence": 0.8,
+    "distinct_cited_hosts": 8,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 3650,
+    "wall_latency_ms": 68721,
+    "trace_cost_usd": 0.0158,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

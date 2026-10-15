@@ -68,7 +68,21 @@ globalThis.fetch = async (input, init) => {
     });
   }
   if (href === "https://api.anthropic.com/v1/messages") {
-    providerCalls.push(JSON.parse(String(init?.body ?? "{}")));
+    const sent = JSON.parse(String(init?.body ?? "{}"));
+    // INT-334 R4 — the turn classifier is a separate, tool-free call before the chat dispatch. It is
+    // answered here and kept out of `providerCalls`, which counts the chat request whose tool manifest
+    // this check is about.
+    if (String(sent.system ?? "").startsWith("You label one message sent to PAIGE")) {
+      // INT-334 R5b — this check grades the FULL governed manifest (all 32 CRM command tools must
+      // remain emitted), so its turn must route `act`. The classifier here answers like a FAILED
+      // classifier (unparseable text): the route's conservative default is act with the full
+      // manifest — the behavior this check was written against, before exposures applied.
+      return new Response(JSON.stringify({ content: [{ type: "text", text: "not json" }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    providerCalls.push(sent);
     if (providerMode === "contract-400") {
       const providerError = JSON.stringify({
         type: "error",

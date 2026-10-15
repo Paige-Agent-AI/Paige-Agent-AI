@@ -104,8 +104,12 @@ describe("Solo Beta dynamic payment methods and verified welcome", () => {
     expect(special).toContain(
       "const destination = publicSite + '/solo/' + claim.account_number + '/command-center'",
     );
-    expect(special).not.toContain("recipientEmail");
-    expect(special).not.toContain("tenantId");
+    // The refusal floor receives only the verified claim, never request-authored scope.
+    const withoutClaimBoundScope = special
+      .replace(/recipientEmail:\s*claim\.recipient_email/g, "")
+      .replace(/tenantId:\s*claim\.tenant_id/g, "");
+    expect(withoutClaimBoundScope).not.toContain("recipientEmail");
+    expect(withoutClaimBoundScope).not.toContain("tenantId");
   });
 
   it("sends only after fulfillment and retries completed Stripe events idempotently", () => {

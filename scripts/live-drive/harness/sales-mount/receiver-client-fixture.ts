@@ -1,0 +1,4 @@
+// Actual SDK/reader, synthetic network responses only. No hosted data/provider actions.
+import {createClient} from '@supabase/supabase-js';
+export const supabase=createClient('https://receiver.fixture.invalid','fixture-key',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:async(input)=>{const url=new URL(String(input));if(url.pathname.startsWith('/rest/v1/')){if(url.searchParams.get('tenant_id')!=='eq.11111111-1111-4111-8111-111111111111')throw Error('Missing fixture tenant filter');return new Response('[]',{status:200,headers:{'Content-Type':'application/json'}});}return new Response('{}',{status:200,headers:{'Content-Type':'application/json'}});}}});
+if(new URLSearchParams(location.search).has('construction-error'))supabase.from=()=>{throw Error('injected query construction failure');};

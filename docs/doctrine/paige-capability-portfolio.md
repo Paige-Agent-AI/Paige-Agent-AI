@@ -98,7 +98,7 @@ is itself the finding.
 | 1 | **Shared Harness / execution / proof** | **No ledger row.** Layers: A `PARTIAL (#1157)` · B `PARTIAL/ABSENT (#1157)` · C **`ABSENT at the act boundary — THE KEYSTONE`** · D `PARTIAL — substrate, not wired` · E `PARTIAL` · F `PARTIAL — read seams only` · G `PARTIAL — blocked on one owner action` | Harness / CC | — it *is* the dependency | Harness Completion Map; Master §3 | Layer C executing a real act end-to-end, then the Layer G authenticated lane discharging the `PROOF_OWED` it leaves |
 | 2 | **Chat + Command Center** | Paige workspace `PARTIAL` · Business Game Plan `PARTIAL` · Systems Check `UNAVAILABLE` · Mind tab `UNAVAILABLE` · Trust Compass `PARTIAL` | Chat / CC (cockpit) | Layers A/B; approval gate; Rail | Ledger rows; Spine; Master §4.0 | Authenticated owner drive of the actual conversation → act → receipt, not a rendered panel |
 | 3 | **Agents, skills, browser, sandbox, research** | **No ledger row, no §5.x assessment.** Layer D `PARTIAL — substrate, not wired`. Providers: `paige-browser-research` `PARTIAL` · `browserbase` `PROPOSED` · `paige-mcp-door` `LIVE` · `zapier-mcp` `PARTIAL` | Harness (Layer D) | Layer A kernel — a specialist **re-checks** authority when it acts (§14) | Integration Registry; Harness map; a ledger row **once owner-visible** | A specialist dispatched *by a process*, re-resolving authority, leaving a receipt |
-| 4 | **CRM · Sales · Clients · Campaigns** | Clients→People `UNAVAILABLE` (Conversations → see family 13) · Pipeline `PROOF_OWED` · Campaign Brief `PARTIAL` · Catalog/Sales/Overview/Performance `UNAVAILABLE` | Solo CRM / Campaigns | `contact.created` bus; approval gate; Rail | Ledger rows; Spine (`campaign.*`, `pipeline.*`, `contact.event_status`); §4.0 | Authenticated create→readback→receipt, from a genuinely empty state |
+| 4 | **CRM · Sales · Clients · Campaigns** | Clients→People `UNAVAILABLE` (Conversations → see family 13) · Pipeline `PROOF_OWED` · Campaign Brief `PARTIAL` · Catalog/Sales/Overview/Performance `UNAVAILABLE` · Marketing campaign steps `PROOF_OWED` — PAIGE reads, plans, records and judges a campaign's steps and sets which form starts a process (`marketing_actions.*`, over the dossier's own functions, behind the one approval gate; code and automated proof only, authenticated drive owed) · Ads department `PROOF_OWED` — PAIGE reads the lead funnel (`ads.lead_funnel`, own leads and deals only, no ad-provider data) and features showroom pictures behind the one approval gate (`ads.creative_feature`); code and automated proof only, authenticated drive owed | Solo CRM / Campaigns / Ads | `contact.created` bus; approval gate; Rail | Ledger rows; Spine (`campaign.*`, `pipeline.*`, `contact.event_status`, `ads.*`); §4.0 | Authenticated create→readback→receipt, from a genuinely empty state |
 | 5 | **Calendar** | `Clients -> Calendar / Bookings` **`UNAVAILABLE`** | Solo Clients | Provider connection; approval gate | Ledger row; Integration Registry (`google-calendar` `PARTIAL`); Spine (**no `calendar.*` key exists**) | A real booking written and read back on a connected tenant calendar |
 | 6 | **Social** | `Campaigns -> Social` **`PROOF_OWED`**; publication **server-side contained** (PR #1164) | Social workstream | Provider auth; containment seam; Rail | Ledger row; Integration Registry; Spine (`social.presence`) | A tenant-authorized publish with a provider receipt — **blocked while containment stands** |
 | 7 | **Vibe / creative** | `Campaigns -> Vibe Studio` **`UNAVAILABLE`**; media seam config-gated **OFF** | Vibe workstream | Media provider layer; budget; approval | Ledger row; **Integration Registry**; Spine (**no `vibe.*` key**) | Ledger next_slice is **"None in this program"** — deliberately out of binding scope, NOT a queued completion. If it is later scoped: a governed generation with budget accounted and a provider receipt |
@@ -106,7 +106,7 @@ is itself the finding.
 | 9 | **Vault** | `Settings -> Vault` **`INTENTIONALLY_ISOLATED`** | Solo Settings | **Isolation is the contract** — content must not enter Paige/Mind/Memory | Ledger row (isolation_note required) | Proof of *non-reach*: the isolation holds. Do not "complete" this into Paige access |
 | 10 | **Marketplace + integrations** | Marketplace `UNAVAILABLE` ("most blocked") · `Settings -> Integrations` `PARTIAL` · `Settings -> Connections` `UNAVAILABLE` | Marketplace / Integrations | Registry; MCP door; tier eligibility (§60/§61) | **Integration Registry (mandatory)**; ledger rows; Spine (`integrations.*`, 15 keys) | Install→chat-reachable→metered, with the provider entry updated in the same commit |
 | 11 | **Billing + usage** | `Settings -> Billing` **`PARTIAL`**; public Solo Beta acquisition **`PARTIAL`**; Billing P0 authenticated owner setup **FAIL** (brain README) | Billing | Stripe (`PARTIAL`); §38 money boundary; M1 metering | Ledger rows; Integration Registry; `../brain/config-registry.md`; §4.0 | Authenticated owner setup and test-provider Solo enrollment succeeding — and **M1**: `paige_llm_trace → platform_metered_events` |
-| 12 | **Analytics + intelligence** | `Analytics` **`UNAVAILABLE`** | Analytics | Read adapter over canonical records; Mind boundary | Ledger row; Spine (**no `analytics.*` key**) | A real figure traced to its canonical source — never a fixture, never an estimate shown as fact |
+| 12 | **Analytics + intelligence** | `Settings → Analytics` **`PARTIAL`** for PAIGE binding; completed Settings UI remains separate | Analytics / Platform Reach | Canonical issuer/resolver; bounded current-turn context; Mind signal boundary preserved | Ledger row; Spine (`analytics.metric_read`); #1837 | A real figure traced to canonical evidence through authenticated Chat/Live — automated wiring is not production acceptance |
 | 13 | **Communications** | `Clients -> Conversations` `UNAVAILABLE`; operator SMS works, **tenant SMS hard-blocked** | Comms | Twilio (`PARTIAL`); A2P registration; approval gate | Ledger row; Integration Registry; Spine (`comms.messages_read`) | A tenant-scoped send with a provider receipt and a Rail outcome (R8) |
 | 14 | **Team / people** | `Settings -> Team / Roles & Access` **`PROOF_OWED`** | Solo Settings | Role stores; §53 operator tiers; §51 tier matrix | Ledger row; Spine (`team.authority`); `../brain/roles-permissions.md`; **tier matrix (§66)** | Authenticated role change proven across tiers — including a tier you did not build on (§51) |
 | 15 | **Platform Operator · Agency · future scale** | `Operator / Platform console` **`UNAVAILABLE`** (intentionally separate) | Platform Operator | §9/§53 seam; §57 God-tier source of truth; §60/§61 tier framework | Ledger row; tier matrix; `../architecture/platform-operator-tenant-200.md` | Operator action proven without crossing the tenant seam; §57 derivation intact |
@@ -126,7 +126,12 @@ This is a mirror, not a claim, and not a score: **zero of these are `LIVE`.**
 
 <!-- LEDGER-SNAPSHOT:BEGIN (generated from surface-binding-ledger.json; verified by scripts/ci/binding-ledger-lint.mjs) -->
 ```
+operations.department = PROOF_OWED
+sales.department = PROOF_OWED
+ads.department = PROOF_OWED
+finance.department = PROOF_OWED
 paige.workspace = PARTIAL
+command-center.executive = PARTIAL
 command-center.business-game-plan = PARTIAL
 command-center.systems-check = UNAVAILABLE
 command-center.mind = UNAVAILABLE
@@ -151,7 +156,7 @@ settings.integrations = PARTIAL
 settings.vault = INTENTIONALLY_ISOLATED
 settings.billing = PARTIAL
 settings.security-data = INTENTIONALLY_ISOLATED
-analytics = UNAVAILABLE
+analytics = PARTIAL
 marketplace = UNAVAILABLE
 operator.platform = PARTIAL
 platform.promotional-solo-access = PARTIAL

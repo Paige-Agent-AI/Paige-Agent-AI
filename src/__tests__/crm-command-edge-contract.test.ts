@@ -10,7 +10,9 @@ describe("canonical CRM action door", () => {
   it("accepts no tenant, actor, role, or account identity from the request", () => {
     expect(edge).toContain("bodySchema");
     expect(edge).toContain("}).strict()");
-    expect(edge).not.toMatch(/tenant_id:\s*z\./);
+    expect(edge).not.toMatch(/\btenant_id:\s*z\./);
+    expect(edge).toContain("expected_tenant_id");
+    expect(edge).toContain("CRM_ACTIVE_ACCOUNT_CHANGED");
     expect(edge).not.toMatch(/actor_id:\s*z\./);
     expect(edge).not.toMatch(/actor_role:\s*z\./);
     expect(edge).toContain("owner_user_id: z.string().uuid().nullable().optional()");

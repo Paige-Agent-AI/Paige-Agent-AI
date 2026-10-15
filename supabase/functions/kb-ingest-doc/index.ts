@@ -9,6 +9,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { ingestDoc } from "../_shared/kb-ingest-core.ts";
+import { bindKnowledgeIngestScope, KnowledgeIngestScopeError } from "../_shared/knowledge-ingest-scope.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,16 +25,16 @@ const BodySchema = z.object({
   source: z.enum(["upload", "url", "paste", "sync", "scan"]).optional(),
   source_url: z.string().url().max(2000).optional(),
   share_to_network: z.boolean().optional(),
-  tenant_id: z.string().uuid().optional(), // platform-owner override
+  tenant_id: z.string().uuid().optional(), // equality precondition against the selected workspace
 });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", ingestion_started: false }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -48,38 +49,27 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const token = auth.replace("Bearer ", "");
-    const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const userId = claims.claims.sub as string;
-
     const body = BodySchema.safeParse(await req.json());
     if (!body.success) {
-      return new Response(JSON.stringify({ error: body.error.flatten() }), {
+      return new Response(JSON.stringify({ error: body.error.flatten(), ingestion_started: false }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Resolve tenant_id: explicit param (platform owner only) → caller's active tenant.
-    let tenantId = body.data.tenant_id ?? null;
-    if (!tenantId) {
-      const { data: prof } = await admin
-        .from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle();
-      tenantId = prof?.active_tenant_id ?? null;
-    }
-    if (!tenantId) {
-      return new Response(JSON.stringify({ error: "No active tenant for this user" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Plain-function adapter for the shared scope port: relating supabase-js's generic
+    // from()/rpc() signatures to a structural caller trips TS2345 under deno check.
+    const scopeCaller = {
+      auth: supabase.auth,
+      readActiveTenant: (userId: string) => supabase.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle(),
+      rpc: (name: string, args?: Record<string, unknown>) => supabase.rpc(name, args as never),
+    };
+    const scope = await bindKnowledgeIngestScope(scopeCaller, body.data.tenant_id);
+    const { tenantId, userId } = scope;
 
     // Full chunk→embed→write pipeline (shared, §12). docClient = the user-scoped client so the
     // doc-row INSERT is RLS-enforced (the caller can only write into a tenant they belong to);
     // chunks/cleanup/reconcile run on admin exactly as before.
+    ingestionStarted = true;
     const result = await ingestDoc(admin, {
       tenantId,
       title: body.data.title,
@@ -91,32 +81,23 @@ serve(async (req) => {
       source_url: body.data.source_url ?? null,
       share_to_network: body.data.share_to_network ?? false,
       created_by: userId,
-    }, { docClient: supabase });
+    }, { docClient: supabase, authorize: scope.assert });
 
-    // HONESTY (§13): nothing embedded → not a real save. Preserve the original 200-with-guidance
-    // response so the UI/Paige can tell the truth (root cause is usually a missing VOYAGE_API_KEY).
-    if (!result.ok && result.error === "embedding_failed") {
-      return new Response(JSON.stringify({
-        ok: false,
-        error: "embedding_failed",
-        detail: result.detail ?? "The entry could not be embedded, so it wouldn't be searchable — nothing was saved.",
-      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (!result.ok) {
-      return new Response(JSON.stringify({ error: result.error ?? "insert failed", detail: result.detail }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    await scope.assert();
+    // Preserve every core outcome field, including the document to inspect when
+    // persistence is uncertain. Keep the legacy embedding-failure HTTP status.
+    return new Response(JSON.stringify(result), {
+      status: result.ok || result.error === "embedding_failed" ? 200 : 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    if (e instanceof KnowledgeIngestScopeError && !ingestionStarted) {
+      return new Response(JSON.stringify({ ok: false, error: e.message, ingestion_started: false }), {
+        status: e.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    return new Response(JSON.stringify({
-      ok: true,
-      doc_id: result.doc_id,
-      chunk_count: result.chunk_count,
-      embedded: result.embedded,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (e) {
     console.error("[kb-ingest] error:", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Check your knowledge before retrying." : "The request could not be read. Nothing was indexed." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

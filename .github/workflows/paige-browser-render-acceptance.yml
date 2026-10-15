@@ -1,0 +1,136 @@
+# paige-browser-render-acceptance — the PRODUCTION acceptance for paige-browser /render (DEL-093).
+#
+# WHAT IT PROVES, when it passes: a secret-authenticated /render on the deployed paige-browser machine
+# returns bounded JPEG slices — for the bundled sample page (page mode, via the app's /render-frame) and,
+# when a URL is given, for a real published branded page (url mode, /p/<tenant>/<page>). That is the
+# owner's acceptance bar: "a secret-authenticated production /render returning bounded JPEG slices and
+# a real published branded-page URL capture."
+#
+# HOW, and why this shape (§13 secret handling):
+#   - The shared secret lives ONLY in Fly (PAIGE_BROWSER_SHARED_SECRET) and Supabase edge secrets. It
+#     is NOT a GitHub secret and this workflow never sees it.
+#   - The job uses FLY_API_TOKEN (the same repo secret deploy-fly-services.yml uses) to run
+#     `flyctl ssh console -C` on the paige-browser machine. The command it runs is a fixed `node -e`
+#     that decodes and evals .github/scripts/paige-browser-render-acceptance.cjs (shipped base64, so no
+#     shell or JS quoting can break it). That script reads the secret from the machine's own
+#     environment, POSTs to http://127.0.0.1:<PORT>/render with the X-Browser-Secret header, and prints
+#     ONLY metadata: ok, reason, width, full_height, slice count, each slice's byte size, the JPEG
+#     magic check (base64 "/9j/"), each slice's sha256, duration and final_url. No image bytes, no
+#     secret, no environment dump.
+#   - The job fails unless the script's last line is ACCEPTANCE_RESULT=PASS (so it does not rely on
+#     flyctl propagating the remote exit status).
+#
+# HONEST STATUS (§13/§32): UNPROVEN UNTIL DISPATCHED. It has never run at the time it was written. It
+# depends on (1) FLY_API_TOKEN permitting `ssh console` on paige-browser — a deploy-scoped token may
+# not; if so the SSH step fails loudly and the token needs ssh rights (or an org token) — and (2) the
+# machine being reachable (it scales to zero; the job wakes it through /healthz first, and with more
+# than one machine `ssh console` attaches to a started one, which may not be the one /healthz woke —
+# a re-run is the remedy if the SSH step reports no started machine). Page mode also
+# depends on the production app actually serving /render-frame (the frontend deployment identity is
+# itself part of what DEL-093 has not yet proven). A PASS here is the evidence; until then the
+# authenticated production readback is UNVERIFIED.
+name: paige-browser-render-acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "page = bundled sample via /render-frame; url = a real published page; both"
+        required: true
+        default: "page"
+        type: choice
+        options: [page, url, both]
+      url:
+        description: "Published page URL for url/both mode — https://paigeagent.ai/p/<tenant>/<page> or https://app.paigeagent.ai/p/<tenant>/<page>"
+        required: false
+        default: ""
+        type: string
+      viewports:
+        description: "Comma-separated viewports"
+        required: false
+        default: "desktop,mobile"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paige-browser-render-acceptance
+  cancel-in-progress: false
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate inputs
+        env:
+          MODE: ${{ github.event.inputs.mode }}
+          TARGET_URL: ${{ github.event.inputs.url }}
+          VIEWPORTS: ${{ github.event.inputs.viewports }}
+        run: |
+          set -euo pipefail
+          case "$MODE" in page|url|both) ;; *) echo "::error::mode must be page, url or both"; exit 1 ;; esac
+          if [ "$MODE" != "page" ]; then
+            if ! printf '%s' "$TARGET_URL" | grep -Eq '^https://(app\.)?paigeagent\.ai/p/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/?$'; then
+              echo "::error::url must be https://paigeagent.ai/p/<tenant>/<page> or https://app.paigeagent.ai/p/<tenant>/<page> (no query, no fragment)"
+              exit 1
+            fi
+          fi
+          if ! printf '%s' "$VIEWPORTS" | grep -Eq '^(desktop|tablet|mobile)(,(desktop|tablet|mobile))*$'; then
+            echo "::error::viewports must be a comma-separated list of desktop, tablet, mobile"
+            exit 1
+          fi
+
+      - name: Fail fast if FLY_API_TOKEN is missing
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "${FLY_API_TOKEN:-}" ]; then
+            echo "::error::FLY_API_TOKEN secret is not set — cannot reach the paige-browser machine."
+            exit 1
+          fi
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Wake the machine (it scales to zero)
+        run: curl -fsS --retry 6 --retry-delay 5 --retry-all-errors --max-time 30 https://paige-browser.fly.dev/healthz
+
+      - name: Run /render on the machine (metadata only)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          MODE: ${{ github.event.inputs.mode }}
+          TARGET_URL: ${{ github.event.inputs.url }}
+          VIEWPORTS: ${{ github.event.inputs.viewports }}
+        run: |
+          set -euo pipefail
+          # The inputs are already validated; jq builds the JSON so no input can break out of it, and
+          # the whole program travels base64 so nothing in it is parsed by any shell.
+          input_json="$(jq -cn --arg mode "$MODE" --arg url "$TARGET_URL" --arg viewports "$VIEWPORTS" '{mode:$mode,url:$url,viewports:$viewports}')"
+          program="$( { printf 'const INPUT = %s;\n' "$input_json"; cat .github/scripts/paige-browser-render-acceptance.cjs; } | base64 -w0 )"
+          # flyctl splits -C shell-words style: the single-quoted node program reaches node intact
+          # (base64 contains no single quote).
+          set +e
+          flyctl ssh console --app paige-browser -C "node -e 'eval(Buffer.from(\"${program}\",\"base64\").toString(\"utf8\"))'" 2>&1 | tee acceptance.log
+          ssh_status=${PIPESTATUS[0]}
+          set -e
+          {
+            echo "### paige-browser /render acceptance"
+            echo "- mode: \`$MODE\` · viewports: \`$VIEWPORTS\`"
+            [ "$MODE" != "page" ] && echo "- url: \`$TARGET_URL\`"
+            echo '```'
+            grep -E '^\{|^ACCEPTANCE_RESULT=' acceptance.log || echo "(no result lines — see the log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Also as annotations, so the metadata is readable from the API (job logs live on a separate
+          # host). The lines carry metadata only — no secret, no image bytes.
+          tr -d '\r' < acceptance.log | grep -E '^\{|^ACCEPTANCE_RESULT=' | sed 's/%/%25/g' | while IFS= read -r line; do
+            echo "::notice title=render acceptance::${line}"
+          done || true
+          if ! grep -qx 'ACCEPTANCE_RESULT=PASS' <(tr -d '\r' < acceptance.log); then
+            echo "::error::paige-browser /render acceptance did not pass (flyctl exit $ssh_status). See the result lines above."
+            exit 1
+          fi
+          echo "✓ paige-browser /render acceptance passed"

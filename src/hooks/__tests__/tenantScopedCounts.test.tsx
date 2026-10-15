@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   activeTenantId: null as string | null,
+  knowledgeCalls: [] as Array<{ name: string; args: Record<string, unknown> }>,
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
   // When set, each knowledge read waits here until the test resolves it, so replies can be
   // made to arrive out of order.
@@ -41,7 +42,16 @@ vi.mock("@/integrations/supabase/client", () => {
     };
     return chain;
   };
-  return { supabase: { from: (table: string) => builder(table) } };
+  return { supabase: {
+    from: (table: string) => builder(table),
+    rpc: (name: string, args: Record<string, unknown>) => {
+      h.knowledgeCalls.push({ name, args });
+      const tenant = args.p_expected_tenant;
+      const reply = (documents: unknown[]) => ({ data: { tenant_id: tenant, documents }, error: null });
+      if (h.held) return new Promise<unknown[]>((resolve) => h.held!.push({ tenant, resolve })).then(reply);
+      return Promise.resolve(reply([]));
+    },
+  } };
 });
 
 import { useSoloKnowledge } from "@/solo/data/useSoloKnowledge";
@@ -76,6 +86,7 @@ const tenantFilters = (table: string) =>
 
 afterEach(() => {
   h.filters.length = 0;
+  h.knowledgeCalls.length = 0;
   h.activeTenantId = null;
   h.held = null;
 });
@@ -84,7 +95,10 @@ describe("reads that RLS alone would widen", () => {
   it("binds knowledge documents to the active workspace", async () => {
     h.activeTenantId = "tenant-a";
     const root = await mount(<KnowledgeProbe />);
-    expect(tenantFilters("tenant_knowledge_docs")).toEqual(["tenant-a"]);
+    expect(h.knowledgeCalls).toEqual([{ name: "read_tenant_knowledge", args: {
+      p_expected_tenant: "tenant-a", p_doc_id: null, p_limit: 100, p_offset: 0,
+    } }]);
+    expect(tenantFilters("tenant_knowledge_docs")).toEqual([]);
     root.unmount();
   });
 
@@ -101,6 +115,7 @@ describe("reads that RLS alone would widen", () => {
     const b = await mount(<DeptProbe />);
     expect(tenantFilters("tenant_knowledge_docs")).toEqual([]);
     expect(tenantFilters("paige_actions")).toEqual([]);
+    expect(h.knowledgeCalls).toEqual([]);
     a.unmount();
     b.unmount();
   });
@@ -118,9 +133,13 @@ describe("reads that RLS alone would widen", () => {
     const [forA, forB] = h.held;
     expect(forA.tenant).toBe("tenant-a");
     expect(forB.tenant).toBe("tenant-b");
-    const doc = (id: string, title: string) => ({ id, title, created_at: "2026-09-28T00:00:00Z" });
-    await act(async () => { forB.resolve([doc("b1", "B doc")]); await Promise.resolve(); });
-    await act(async () => { forA.resolve([doc("a1", "A doc")]); await Promise.resolve(); });
+    const doc = (id: string, title: string, tenant_id: string) => ({
+      id, title, tenant_id, revision: 1, summary: null, category: null, tags: [],
+      source: "note", source_url: null, chunk_count: 1, share_to_network: false,
+      network_review_status: "none", created_at: "2026-09-28T00:00:00Z", updated_at: "2026-09-28T00:00:00Z",
+    });
+    await act(async () => { forB.resolve([doc("b1", "B doc", "tenant-b")]); await Promise.resolve(); });
+    await act(async () => { forA.resolve([doc("a1", "A doc", "tenant-a")]); await Promise.resolve(); });
     expect(host.querySelector("output")?.textContent).toBe("B doc");
     root.unmount();
   });

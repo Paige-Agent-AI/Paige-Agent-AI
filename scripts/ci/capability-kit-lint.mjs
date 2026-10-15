@@ -44,6 +44,71 @@ const KIT_FILES = [
   "scripts/fixtures/capability-kit/type-contract.fixture.ts",
 ];
 
+// Exact human/PAIGE merchant read door. This is not a generic edge-read exception:
+// only the two scoped, GET-only reader declarations may project their exact input.
+const MERCHANT_READ_DECLARATIONS = new Map([
+  ['sales_merchant.status',['read_sales_merchant_status','MERCHANT_STATUS_READ_CAPABILITY']],
+  ['sales_merchant.refresh',['read_sales_merchant_refresh','MERCHANT_REFRESH_READ_CAPABILITY']],
+]);
+function merchantReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  const aggregate=read('supabase/functions/_shared/sales-invoice-chat.ts');
+  const adapter=read('supabase/functions/_shared/sales-payments/merchant-chat.ts');
+  const edge=read('supabase/functions/tenant-stripe-connect/index.ts');
+  return /from\s*['"]\.\.\/_shared\/sales-invoice-chat\.ts['"]/.test(chat)
+    && chat.includes('toolDefs.push(...SALES_INVOICE_TOOLS')
+    && chat.includes('await dispatchSales({')
+    && chat.includes('SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat')
+    && /from\s*['"]\.\/sales-payments\/merchant-chat\.ts['"]/.test(aggregate)
+    && aggregate.includes('...SALES_MERCHANT_TOOLS')
+    && aggregate.includes('if(SALES_MERCHANT_TOOL_NAMES.has(ctx.toolName))return dispatchMerchantChat(ctx,deps,')
+    && adapter.includes("deps.caller.functions.invoke('tenant-stripe-connect',{body})")
+    && adapter.includes("const read=action==='merchant.status'||action==='merchant.refresh_status'")
+    && edge.includes("if(action==='status'){await scope();return json(200,{...output(),ok:true,outcome:'available'});}")
+    && edge.includes("row=await recoverPendingMerchant(action,row,")
+    && edge.includes("const facts=await around('account_readback',()=>readStripeMerchant(")
+    && edge.includes("admin.rpc('_sales_invoice_actor',")
+    && edge.includes("admin.rpc('record_sales_merchant_onboarding_readback',");
+}
+
+// Exact Ads lead-funnel read door (2026-10-12). The deployed function is get_pipeline_lead_funnel, not
+// read_*, and it is not renamed or wrapped to satisfy the naming heuristic. Only this declaration in this
+// file may project its exact input, and only while the adapter reads it on the caller's own session with
+// the active-business check and Chat mounts that adapter with the caller-JWT client. Never clears risk debt.
+const ADS_FUNNEL_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/ads.ts';
+const ADS_FUNNEL_ADAPTER_FILE='supabase/functions/_shared/ads-funnel-chat.ts';
+function adsFunnelReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const adapter=read(ADS_FUNNEL_ADAPTER_FILE);
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  return adapter.includes("deps.caller.rpc('get_pipeline_lead_funnel',")
+    && adapter.includes("deps.caller.rpc('current_user_tenant_id')")
+    && adapter.includes('parameters:ADS_LEAD_FUNNEL_READ_CAPABILITY.input')
+    && chat.includes('toolDefs.push(...ADS_FUNNEL_TOOLS')
+    && chat.includes('dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient })');
+}
+
+// Exact business-operating-snapshot read door (E2-1, 2026-10-12). Same shape as the Ads carve-out: the
+// executor is the INT-340 issuer (issue_analytics_evidence_bundle), not a read_* symbol, and the issuer is
+// deliberately not renamed, wrapped or duplicated to satisfy the naming heuristic. Only this declaration in
+// this file may project its exact input, and only while the adapter composes through the fabric's own
+// composer on the caller's own session and Chat mounts that adapter with the caller-JWT client. Never
+// clears risk debt.
+const BUSINESS_SNAPSHOT_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/business-review.ts';
+const BUSINESS_SNAPSHOT_ADAPTER_FILE='supabase/functions/_shared/paige-context/business-review-chat.ts';
+function businessSnapshotReadDoorBound(resolver) {
+  const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
+  const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
+  const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  return adapter.includes('parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input')
+    && adapter.includes('composeBusinessReview(deps.caller')
+    && chat.includes('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS')
+    && chat.includes('dispatchBusinessSnapshotChat(')
+    // Pin the caller-JWT client AT the mount, not just the call's existence (the review's P3).
+    && chat.includes('caller: supabaseClient')
+}
+
 /**
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
@@ -51,40 +116,11 @@ const KIT_FILES = [
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
-  const readToolNames = new Set();
-  const spineReadTools = new Set();
-  /** One read binding, read from a declaration object literal through the SAME last-wins
-   * property map every other reader uses — so duplicate keys cannot diverge the readers. */
-  const readBindingOf = (argument, sourceFile) => {
-    const root = objectProperties(argument, sourceFile);
-    if (literalProperty(root, "effect") !== "read") return null;
-    const identity = nestedProperties(root, "identity", sourceFile);
-    const chatTool = identity ? literalProperty(identity, "chatTool") : null;
-    const governance = nestedProperties(root, "governance", sourceFile);
-    if (chatTool === null || governance === null || !isLiteralNull(governance, "actionRiskKey")) return null;
-    return chatTool;
-  };
+  const readTools = new Map();
   for (const file of files) {
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) continue;
-    // The registry leg reads ONLY the Spine's own source modules — the files
-    // paige-spine-registry-lint validates and the registry composes from. A literal anywhere
-    // else (src/, an edge function, a never-imported decoy) mints nothing: that was a real
-    // hole, reproduced by review — any object literal with an `action` block cleared it.
-    const isSpineSource = relative(file).startsWith("supabase/functions/_shared/paige-spine/");
     const visit = (node) => {
-      // A DECLARATION WRITTEN AS A TYPED CONST, read by the same predicate the inline-call
-      // half uses. Fail-closed before; now the repo's own canonical declaration style clears
-      // a read the same way an inline one does.
-      if (ts.isVariableDeclaration(node) && node.type && node.initializer) {
-        if (/\bCapabilityDefinition\b/.test(node.type.getText(sourceFile))) {
-          const initializer = unwrapExpression(node.initializer);
-          if (initializer && ts.isObjectLiteralExpression(initializer)) {
-            const binding = readBindingOf(initializer, sourceFile);
-            if (binding !== null) readToolNames.add(binding);
-          }
-        }
-      }
       if (ts.isCallExpression(node) && calledMember(node, sourceFile) === "defineCapability") {
         // Same unwrap the strict completeness rule uses — deliberately the SAME helper, so a cast
         // can never hide a declaration from one reader while registering it with the other.
@@ -92,55 +128,84 @@ function collectDeclaredCapabilityNames(files, resolver) {
         // (see HEURISTIC LIMITS at the top) and will read as undeclared — which fails CLOSED.
         const argument = unwrapExpression(node.arguments[0]);
         if (argument && ts.isObjectLiteralExpression(argument)) {
-          // Read governance through the LAST-WINS property map, not the raw property list.
-          // Duplicate `governance` keys used to diverge the readers: the raw iteration
-          // registered the first key's actionRiskKey while every check read the last one —
-          // a shape tsc rejects (TS1117) minted clearance here. Found by independent review.
-          const governance = nestedProperties(objectProperties(argument, sourceFile), "governance", sourceFile);
-          const actionRiskNode = governance ? governance.get("actionRiskKey") : undefined;
-          if (actionRiskNode && ts.isPropertyAssignment(actionRiskNode) &&
-            ts.isStringLiteralLike(actionRiskNode.initializer)) {
-            // ONLY `governance.actionRiskKey` counts, and `identity.id` deliberately does NOT.
-            //
-            // Letting `identity.id` clear the tool schema was tried and REJECTED: it opened a
-            // real hole, reproduced before it shipped. A destructive tool named `widget_purge`
-            // could declare itself a READ capability (`effect: "read"` requires
-            // `actionRiskKey: null` by contract) and clear this guard — while `purge` is absent
-            // from `MUTATION_VERB`, so `unclassifiedWriteReason()` reads it as a query,
-            // `action-risk-lint` never sees a write, and `mutatingTools()` does not contain it.
-            // The per-tool rule below is the ONLY catch for a write whose verb that regex misses,
-            // and `MUTATION_VERB` has genuinely missed one twice already in production (`decide`
-            // and `configure` — see the notes in action-risk.ts). So the only thing that clears a
-            // tool schema is a key classified as a mutation in the canonical policy, which forces
-            // it through `classifyAction()` and into the runtime gate.
-            //
-            // READS are the one deliberate exception, and they buy their way in through a
-            // SECOND REVIEWED contract rather than a looser first one: `identity.chatTool` names
-            // the tool, `effect` must be the literal "read", `governance.actionRiskKey` must be
-            // the literal null — and the per-tool rule additionally requires a Spine REGISTRY
-            // entry (collected only from _shared/paige-spine/ — a directory scope, which the
-            // COMPOSED registry does not exactly bound: a stray uncomposed file there still mints,
-            // held downstream by capability-declaration-lint's baseline; harvesting from the
-            // composed registry array is the tracked follow-up) classifying that same tool name
-            // as a read, while every write heuristic
-            // stays silent. The runtime chat dispatch is hand-wired, so this is a STATIC
-            // two-contract agreement plus the verb floor — never claim it routes execution.
-            riskKeys.add(actionRiskNode.initializer.text);
-            toolNames.add(actionRiskNode.initializer.text);
+          // A read never clears a mutation risk entry. Admit only an explicit read tuple whose
+          // literal public.read_* executor equals its tool name, and remember the declaration
+          // symbol so the tool must use THAT input schema rather than a hand-written payload.
+          // Aliased/dynamic declarations remain outside this narrow static boundary, fail closed.
+          const sections = objectProperties(argument, sourceFile);
+          const governance = sections.get("governance")?.initializer;
+          const binding = sections.get("providerBinding")?.initializer;
+          const input = sections.get("input")?.initializer;
+          const owner = node.parent;
+          if (literalProperty(sections, "effect") === "read" &&
+              governance && ts.isObjectLiteralExpression(governance) &&
+              binding && ts.isObjectLiteralExpression(binding) &&
+              input && ts.isCallExpression(input) && calledMember(input, sourceFile) === "objectInputSchema" &&
+              ts.isVariableDeclaration(owner) && ts.isIdentifier(owner.name)) {
+            const gov = objectProperties(governance, sourceFile);
+            const operation = literalProperty(objectProperties(binding, sourceFile), "operation");
+            if (gov.get("actionRiskKey")?.initializer?.kind === ts.SyntaxKind.NullKeyword &&
+                literalProperty(gov, "risk") === "read_only" && literalProperty(gov, "approval") === "none" &&
+                operation) {
+              if(/^public\.read_[a-z0-9_]+$/.test(operation))readTools.set(operation.slice(7), owner.name.text);
+              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)==='supabase/functions/_shared/analytics-metrics/read.ts'){
+                // The existing issuer is deliberately not renamed or duplicated to satisfy a
+                // read_* naming heuristic. Admit this exact read tuple and schema only when
+                // the actual caller-JWT door and resolver are bound; never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const chat=resolver.sourceFile(path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'))?.text??'';
+                if(identity&&literalProperty(identity,'id')==='analytics.metric_read'&&owner.name.text==='BUSINESS_METRIC_READ'
+                  && sourceFile.text.includes("caller.rpc('issue_analytics_evidence_bundle'")
+                  && sourceFile.text.includes("caller.rpc('resolve_analytics_evidence_reference'")
+                  && sourceFile.text.includes("caller.rpc('current_user_tenant_id')")
+                  && chat.includes('toolDefs.push(...BUSINESS_METRIC_TOOLS)')
+                  && chat.includes('readBusinessMetric(supabaseClient,'))readTools.set('read_business_metric',owner.name.text);
+              }
+              else if(operation==='public.get_pipeline_lead_funnel'&&relative(file)===ADS_FUNNEL_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='ads.lead_funnel'&&owner.name.text==='ADS_LEAD_FUNNEL_READ_CAPABILITY'
+                  && adsFunnelReadDoorBound(resolver))readTools.set('get_pipeline_lead_funnel',owner.name.text);
+              }
+              else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
+                  && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);
+              }
+              else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                const id=identity&&literalProperty(identity,'id');
+                const exact=MERCHANT_READ_DECLARATIONS.get(id);
+                if(exact&&exact[1]===owner.name.text&&merchantReadDoorBound(resolver))readTools.set(exact[0],owner.name.text);
+              }
+            }
           }
-          const binding = readBindingOf(argument, sourceFile);
-          if (binding !== null) readToolNames.add(binding);
-        }
-      }
-      // The Spine registry half of the read contract, scoped to the registry's own source.
-      if (isSpineSource && ts.isObjectLiteralExpression(node)) {
-        const action = nestedProperties(objectProperties(node, sourceFile), "action", sourceFile);
-        if (action) {
-          const classification = literalProperty(action, "classification");
-          const chatTool = literalProperty(action, "chatTool");
-          const executor = literalProperty(action, "executor");
-          if (classification === "read" && chatTool !== null && executor !== null) {
-            spineReadTools.add(chatTool);
+          for (const property of argument.properties) {
+            if (!ts.isPropertyAssignment(property)) continue;
+            const section = propertyName(property.name, sourceFile);
+            if (section !== "governance") continue;
+            if (!ts.isObjectLiteralExpression(property.initializer)) continue;
+            for (const field of property.initializer.properties) {
+              if (!ts.isPropertyAssignment(field)) continue;
+              const name = propertyName(field.name, sourceFile);
+              if (!ts.isStringLiteralLike(field.initializer)) continue;
+              // ONLY `governance.actionRiskKey` counts, and `identity.id` deliberately does NOT.
+              //
+              // Letting `identity.id` clear the tool schema was tried and REJECTED: it opened a
+              // real hole, reproduced before it shipped. A destructive tool named `widget_purge`
+              // could declare itself a READ capability (`effect: "read"` requires
+              // `actionRiskKey: null` by contract) and clear this guard — while `purge` is absent
+              // from `MUTATION_VERB`, so `unclassifiedWriteReason()` reads it as a query,
+              // `action-risk-lint` never sees a write, and `mutatingTools()` does not contain it.
+              // The per-tool rule below is the ONLY catch for a write whose verb that regex misses,
+              // and `MUTATION_VERB` has genuinely missed one twice already in production (`decide`
+              // and `configure` — see the notes in action-risk.ts). So the only thing that clears a
+              // tool schema is a key classified as a mutation in the canonical policy, which forces
+              // it through `classifyAction()` and into the runtime gate.
+              if (section === "governance" && name === "actionRiskKey") {
+                riskKeys.add(field.initializer.text);
+                toolNames.add(field.initializer.text);
+              }
+            }
           }
         }
       }
@@ -148,7 +213,7 @@ function collectDeclaredCapabilityNames(files, resolver) {
     };
     visit(sourceFile);
   }
-  return { riskKeys, toolNames, readToolNames, spineReadTools };
+  return { riskKeys, toolNames, readTools };
 }
 
 /**
@@ -159,31 +224,6 @@ function collectDeclaredCapabilityNames(files, resolver) {
  * this lint is dependency-free `.mjs` and `action-risk.ts` is TypeScript; parsing is what the file
  * already does, so this adds a column rather than a mechanism.
  */
-/**
- * The MUTATION_VERB fail-safe floor, read from the same file for the same reason. The read-tool
- * clearance consults it so a write-shaped tool name can never clear through a read declaration,
- * whatever its declarations claim.
- */
-function collectMutationVerb(files, resolver) {
-  for (const file of files) {
-    if (relative(file) !== "supabase/functions/_shared/action-risk.ts") continue;
-    const sourceFile = resolver.sourceFile(file);
-    if (!sourceFile) continue;
-    for (const statement of sourceFile.statements) {
-      if (!ts.isVariableStatement(statement)) continue;
-      for (const declaration of statement.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name) || declaration.name.text !== "MUTATION_VERB" || !declaration.initializer) continue;
-        if (!ts.isRegularExpressionLiteral(declaration.initializer)) continue;
-        const match = /^\/(.*)\/([a-z]*)$/s.exec(declaration.initializer.getText(sourceFile));
-        if (match) {
-          try { return new RegExp(match[1], match[2]); } catch { return null; }
-        }
-      }
-    }
-  }
-  return null;
-}
-
 function collectRiskPolicy(files, resolver) {
   const policy = new Map();
   for (const file of files) {
@@ -290,8 +330,6 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
   const approval = governance ? literalProperty(governance, "approval") : null;
   const actionRiskKey = governance ? literalProperty(governance, "actionRiskKey") : null;
   const actionRiskKeyIsNull = governance ? isLiteralNull(governance, "actionRiskKey") : false;
-  const identity = nestedProperties(root, "identity", sourceFile);
-  const chatTool = identity ? literalProperty(identity, "chatTool") : null;
 
   if (risk !== null && !RISK_CLASSES.has(risk)) flag(`governance.risk "${risk}" is not a risk class`);
 
@@ -310,11 +348,6 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
     const mode = idem ? literalProperty(idem, "mode") : null;
     if (mode !== null && mode !== "not_applicable") {
       flag(`a read declares idempotency.mode "${mode}" — a read must declare not_applicable`);
-    }
-    // defineCapability.ts — a read has no action-risk key for the anti-bypass rule to match on,
-    // so it must bind the chat tool it clears by exact name instead.
-    if (chatTool === null) {
-      flag("a read does not bind identity.chatTool — a read must name the chat tool it clears");
     }
   } else {
     // defineCapability.ts:131-152
@@ -335,26 +368,6 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
       }
     }
     if (risk === "read_only") flag(`a ${effect} declares governance.risk read_only — only a read may`);
-    if (identity && !identity.has("chatTool")) {
-      flag(`a ${effect} omits identity.chatTool — the constructor's exact-keys check throws at module load unless it is an explicit null`);
-    }
-    // The key may also be PRESENT with a non-literal value (`chatTool: undefined` passes the
-    // presence check above while the constructor throws at defineCapability's null check) —
-    // only a string literal or the literal null keyword constructs.
-    if (identity) {
-      const chatToolNode = identity.get("chatTool");
-      if (chatToolNode && ts.isPropertyAssignment(chatToolNode)) {
-        const init = chatToolNode.initializer;
-        const isString = ts.isStringLiteralLike(init);
-        const isNull = init.kind === ts.SyntaxKind.NullKeyword;
-        if (!isString && !isNull) {
-          flag(`a ${effect} declares identity.chatTool as a non-literal — only a string name or the literal null constructs`);
-        }
-      }
-    }
-    if (chatTool !== null) {
-      flag(`a ${effect} binds identity.chatTool "${chatTool}" — only a read may; a mutation clears through its canonical action-risk key`);
-    }
     if (effect === "external_effect" && risk !== null && risk !== "high") {
       flag(`an external_effect declares governance.risk "${risk}" — an external effect must be high`);
     }
@@ -755,9 +768,7 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
   const strictOnly = options.strictOnly === true;
   const declaredRiskKeys = options.declaredRiskKeys ?? new Set();
   const declaredToolNames = options.declaredToolNames ?? new Set();
-  const readToolNames = options.readToolNames ?? new Set();
-  const spineReadTools = options.spineReadTools ?? new Set();
-  const mutationVerb = options.mutationVerb ?? null;
+  const declaredReadTools = options.declaredReadTools ?? new Map();
   // Absent (a bare scanSource call, e.g. the self-test) means the policy-membership and
   // class-agreement predicates cannot run. They are SKIPPED rather than guessed — fewer checks
   // without the policy, never a false accusation with it.
@@ -855,26 +866,16 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
         // the risk rule left the deadlock half-standing. A tool whose name carries a governed
         // declaration is declared, not hand-rolled; one without a declaration still fails.
         //
-        // HONEST LIMIT, REVISED (reads bought in through a second REVIEWED contract): a MUTATION
-        // still clears only through `governance.actionRiskKey`, because only that forces
-        // `classifyAction()` and the runtime approval gate. A READ clears through a STRICTER
-        // combination than any mutation needs: a kit declaration whose `identity.chatTool` names
-        // this tool with `effect:"read"` and a literal-null action-risk key, AND a Spine registry
-        // entry — collected ONLY from _shared/paige-spine/ (a directory scope, not exactly the
-        // composed registry: see the collector's note and the tracked follow-up) classifying
-        // this same tool name as a read, while every write heuristic
-        // stays silent (no canonical action-risk key of this name, no MUTATION_VERB spelling).
-        // The runtime chat dispatch is HAND-WIRED by tool name, so this is a static two-contract
-        // agreement plus the verb floor, not an execution-routing guarantee: a reviewer must
-        // still check what the chat handler for a cleared tool actually executes. The
-        // widget_purge hijack fails because its decoy literal outside the registry mints
-        // nothing and its verb/name still trips a heuristic — not because the Spine routes it.
+        // Mutations clear only through governance.actionRiskKey; genuine reads must use the
+        // exact schema of a read/read_only/none/null declaration and matching public.read_* executor.
+        // A classified mutation cannot use that read path; dynamic and unrelated schemas still fail.
+        // The negative self-tests pin each element of that narrow read construction boundary.
         const toolName = literalProperty(props, "name") ?? "<dynamic>";
-        const readCleared = readToolNames.has(toolName) && spineReadTools.has(toolName)
-          && !declaredRiskKeys.has(toolName)
-          && !(riskPolicy && riskPolicy.has(toolName))
-          && !(mutationVerb && mutationVerb.test(toolName));
-        if (!declaredToolNames.has(toolName) && !readCleared) {
+        const readDeclaration = declaredReadTools.get(toolName);
+        const parameters = props.get("parameters")?.initializer;
+        const boundReadSchema = !riskPolicy?.has(toolName) && readDeclaration && parameters && ts.isPropertyAccessExpression(parameters) &&
+          ts.isIdentifier(parameters.expression) && parameters.expression.text === readDeclaration && parameters.name.text === "input";
+        if (!declaredToolNames.has(toolName) && !boundReadSchema) {
           findings.push(violation("direct-tool-definition", normalized, toolName));
         }
       }
@@ -988,21 +989,14 @@ function scanRepository() {
   const files = SCAN_ROOTS.flatMap((root) => walk(path.join(ROOT, root)))
     .filter((file) => !relative(file).startsWith(MCP_GATEWAY_EXEMPT));
   const resolver = createAstResolver(files);
-  const {
-    riskKeys: declaredRiskKeys, toolNames: declaredToolNames,
-    readToolNames, spineReadTools,
-  } = collectDeclaredCapabilityNames(files, resolver);
+  const { riskKeys: declaredRiskKeys, toolNames: declaredToolNames, readTools: declaredReadTools } = collectDeclaredCapabilityNames(files, resolver);
   const riskPolicy = collectRiskPolicy(files, resolver);
-  const mutationVerb = collectMutationVerb(files, resolver);
   for (const file of files) {
     const rel = relative(file);
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) throw new Error(`TypeScript did not load ${rel}.`);
     if (!rel.startsWith(KIT_DIR)) {
-      const shared = {
-        sourceFile, resolver, declaredRiskKeys, declaredToolNames, riskPolicy,
-        readToolNames, spineReadTools, mutationVerb,
-      };
+      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames, declaredReadTools, riskPolicy };
       strictFindings.push(...scanSource(sourceFile.text, rel, { ...shared, strictOnly: true }));
       debtFindings.push(...scanSource(sourceFile.text, rel, shared));
     }
@@ -1070,6 +1064,23 @@ function runSelfTest() {
       "declaration-contradicts-constructor"],
   ];
   let failed = 0;
+  const merchantFiles=['supabase/functions/_shared/sales-payments/merchant-capability.ts','supabase/functions/paige-ai-chat/index.ts','supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-payments/merchant-chat.ts','supabase/functions/tenant-stripe-connect/index.ts'];
+  const merchantText=new Map(merchantFiles.map(p=>[path.join(ROOT,p),fs.readFileSync(path.join(ROOT,p),'utf8')]));
+  const merchantReads=text=>collectDeclaredCapabilityNames([path.join(ROOT,merchantFiles[0])],{sourceFile:p=>text.has(p)?ts.createSourceFile(p,text.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined}).readTools;
+  if(merchantReads(merchantText).size!==2){failed++;console.error('  FAIL exact mounted merchant reads not discovered');}
+  for(const [index,before,after]of [
+    [0,"id:'sales_merchant.status'","id:'sales_merchant.unknown'"],
+    [0,"operation:'edge.tenant-stripe-connect'","operation:'edge.other'"],
+    [1,'toolDefs.push(...SALES_INVOICE_TOOLS','toolDefs.push(...OTHER_TOOLS'],
+    [2,'...SALES_MERCHANT_TOOLS','...OTHER_TOOLS'],
+    [2,'return dispatchMerchantChat(ctx,deps,','return missingDispatch(ctx,deps,'],
+    [3,"invoke('tenant-stripe-connect'","invoke('other-edge'"],
+    [4,"const facts=await around('account_readback',()=>readStripeMerchant(","const facts=await missingReadback("],
+  ]){
+    const key=path.join(ROOT,merchantFiles[index]);if(!merchantText.get(key).includes(before))throw Error(`merchant read negative target absent: ${before}`);
+    const broken=new Map(merchantText);broken.set(key,broken.get(key).replaceAll(before,after));
+    if(merchantReads(broken).has('read_sales_merchant_status')){failed++;console.error(`  FAIL merchant read accepted missing/foreign binding ${before}`);}else console.log(`  ok   merchant read refuses ${before}`);
+  }
   for (const [name, source, expected] of cases) {
     const actual = scanSource(source, "fixture.ts").map((item) => item.rule);
     if (!actual.includes(expected)) {
@@ -1167,141 +1178,73 @@ function runSelfTest() {
     failed += 1;
     console.error("  FAIL direct-tool-definition still fired for a tool the collector read as declared");
   } else console.log("  ok   direct-tool-definition clears through the same collected declaration");
-
-  // READ-TOOL CLEARANCE — the two-contract policy, driven through the REAL collector exactly as
-  // scanRepository() drives it. A read has no action-risk key, so it clears ONLY when its kit
-  // declaration binds the tool by exact name AND the Spine registry classifies that same name as
-  // a read, with every write heuristic silent. Each case below removes or poisons one leg.
-  const readDeclarationFile = "supabase/functions/probe/read-declaration.ts";
-  const readRegistryFile = "supabase/functions/_shared/paige-spine/domains/probe.ts";
-  const readDeclarationSource = `
-    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "read",
-      identity: { chatTool: "widget_inspect" },
-      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
-    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "read",
-      identity: { chatTool: "widget_send" },
-      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
-  `;
-  const readRegistrySource = `
-    const CAPABILITY = { key: "widget.inspect", action: { classification: "read", chatTool: "widget_inspect", executor: "public.read_tenant_widget" } } as const;
-    const EVASION = { key: "widget.evasion", action: { classification: "read", chatTool: "widget_send", executor: "public.read_tenant_widget" } } as const;
-  `;
-  const readFiles = [readDeclarationFile, readRegistryFile];
-  const readResolver = {
-    sourceFile: (file) => file === readDeclarationFile
-      ? ts.createSourceFile(file, readDeclarationSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-      : file === readRegistryFile
-        ? ts.createSourceFile(file, readRegistrySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-        : null,
-  };
-  const readCollected = collectDeclaredCapabilityNames(readFiles, readResolver);
-  const verbFloor = /(^|_)(send|create|update|delete)(_|$)/;
-  const readToolFixture = (name) => `const t = { name: "${name}", description: "x", parameters: { type: "object" } };`;
-  const readOptions = (extra = {}) => ({
-    readToolNames: readCollected.readToolNames,
-    spineReadTools: readCollected.spineReadTools,
-    mutationVerb: verbFloor,
-    ...extra,
-  });
-  const readCleared = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions())
-    .filter((item) => item.rule === "direct-tool-definition");
-  if (readCleared.length !== 0) {
-    failed += 1;
-    console.error("  FAIL direct-tool-definition fired for a read cleared by both the kit binding and the Spine registry");
-  } else console.log("  ok   a read clears through kit binding + Spine registry agreement");
-  const readNoSpine = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions({ spineReadTools: new Set() }))
-    .filter((item) => item.rule === "direct-tool-definition");
-  if (readNoSpine.some((item) => item.rule === "direct-tool-definition") === false) {
-    failed += 1;
-    console.error("  FAIL direct-tool-definition cleared a read with no Spine registry agreement — the second contract was optional");
-  } else console.log("  ok   a read without Spine registry agreement still lands on the ledger");
-  const readNoKit = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions({ readToolNames: new Set() }));
-  if (readNoKit.some((item) => item.rule === "direct-tool-definition") === false) {
-    failed += 1;
-    console.error("  FAIL direct-tool-definition cleared a read with no kit chatTool binding — the first contract was optional");
-  } else console.log("  ok   a read without a kit chatTool binding still lands on the ledger");
-  const writeShapedEvader = scanSource(readToolFixture("widget_send"), "src/probe.ts", readOptions())
-    .filter((item) => item.rule === "direct-tool-definition");
-  if (writeShapedEvader.length === 0) {
-    failed += 1;
-    console.error("  FAIL direct-tool-definition CLEARED widget_send despite lying read declarations — the verb floor was bypassed");
-  } else console.log("  ok   a write-shaped tool name cannot clear through lying read declarations");
-
-  // REVIEW REPAIRS — each case is one independently-reproduced hole, now pinned.
-  // (1) The P1: a decoy `action` literal OUTSIDE the Spine's own source mints nothing. Before
-  // the scoping, the kit binding + a same-file decoy cleared a destructive tool end-to-end —
-  // this is that exact shape, decoy and declaration in ONE non-spine file.
-  const hijackFile = "supabase/functions/probe/hijack.ts";
-  const hijackSource = `
-    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "read",
-      identity: { chatTool: "widget_purge" },
-      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
-    const DECOY = { key: "widget.purge", action: { classification: "read", chatTool: "widget_purge", executor: "public.read_tenant_widget" } } as const;
-  `;
-  const hijackCollected = collectDeclaredCapabilityNames([hijackFile], {
-    sourceFile: (file) => file === hijackFile
-      ? ts.createSourceFile(file, hijackSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-      : null,
-  });
-  const decoyOutsideRegistry = scanSource(readToolFixture("widget_purge"), "src/probe.ts", {
-    readToolNames: hijackCollected.readToolNames,
-    spineReadTools: hijackCollected.spineReadTools,
-    mutationVerb: verbFloor,
-  }).filter((item) => item.rule === "direct-tool-definition");
-  if (decoyOutsideRegistry.length === 0) {
-    failed += 1;
-    console.error("  FAIL direct-tool-definition CLEARED a tool whose only registry evidence is a non-spine decoy literal");
-  } else console.log("  ok   a decoy literal outside _shared/paige-spine mints no registry clearance");
-  // (2) Duplicate governance keys must not diverge the readers: the LAST governance block wins,
-  // so a first-block actionRiskKey string can no longer mint declaredToolNames.
-  const duplicateGovernanceSource = `
-    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "mutation",
-      governance: { actionRiskKey: "widget_purge", risk: "high", approval: "confirm" },
-      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
-  `;
-  const duplicateFile = "supabase/functions/probe/duplicate-governance.ts";
-  const duplicateCollected = collectDeclaredCapabilityNames([duplicateFile], {
-    sourceFile: (file) => file === duplicateFile
-      ? ts.createSourceFile(file, duplicateGovernanceSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
-      : null,
-  });
-  if (duplicateCollected.toolNames.has("widget_purge") || duplicateCollected.riskKeys.has("widget_purge")) {
-    failed += 1;
-    console.error("  FAIL a duplicate governance block minted declaredToolNames from its first (shadowed) key");
-  } else console.log("  ok   duplicate governance keys read last-wins in the collector too");
-  // (3) The canonical-policy leg of readCleared must bite on its own: a read+registry-cleared
-  // tool whose name IS a classified action key still lands on the ledger.
-  const policyNamedTool = scanSource(readToolFixture("widget_inspect"), "src/probe.ts",
-    readOptions({ riskPolicy: new Map([["widget_inspect", "ordinary"]]) }))
-    .filter((item) => item.rule === "direct-tool-definition");
-  if (policyNamedTool.length === 0) {
-    failed += 1;
-    console.error("  FAIL a tool named in the canonical action-risk policy cleared through read declarations");
-  } else console.log("  ok   a canonical-policy tool name cannot clear through read declarations");
-  // (4) A read declared as a typed const (the repo's canonical declaration style) clears the
-  // same way an inline one does — the collector visits CapabilityDefinition-annotated variables.
-  const typedConstSource = `
-    const declared: CapabilityDefinition = { idempotency: {}, receipt: {}, outcome: {}, effect: "read",
-      identity: { chatTool: "widget_audit" },
-      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } };
-  `;
-  const typedConstFile = "supabase/functions/probe/typed-const.ts";
-  const typedCollected = collectDeclaredCapabilityNames([typedConstFile, readRegistryFile], {
-    sourceFile: (file) => {
-      if (file === typedConstFile) return ts.createSourceFile(file, typedConstSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-      if (file === readRegistryFile) return ts.createSourceFile(file, readRegistrySource + `\n    const TYPED = { key: "widget.audit", action: { classification: "read", chatTool: "widget_audit", executor: "public.read_tenant_widget" } } as const;\n`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-      return null;
-    },
-  });
-  const typedConstCleared = scanSource(readToolFixture("widget_audit"), "src/probe.ts", {
-    readToolNames: typedCollected.readToolNames,
-    spineReadTools: typedCollected.spineReadTools,
-    mutationVerb: verbFloor,
-  }).filter((item) => item.rule === "direct-tool-definition");
-  if (typedConstCleared.length !== 0) {
-    failed += 1;
-    console.error("  FAIL a typed-const read declaration did not clear its chat tool");
-  } else console.log("  ok   a CapabilityDefinition-annotated read clears like an inline one");
+  const readSource = `const READ_CAP = defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},providerBinding:{kind:"internal",operation:"public.read_probe",connectionResolver:null},input:objectInputSchema({properties:{id:{type:"string",format:"uuid"}},required:["id"]})});`;
+  const readTool = `const tool={name:"read_probe",description:"Read only",parameters:READ_CAP.input};`;
+  const readCases = [
+    ["read tuple + exact schema",readSource,readTool,false],
+    ["read with unrelated payload",readSource,readTool.replace('READ_CAP.input','{type:"object"}'),true],
+    ["read name mismatches executor",readSource,readTool.replace('read_probe','read_other'),true],
+    ["mutation cannot masquerade as read",readSource.replace('effect:"read"','effect:"mutation"'),readTool,true],
+    ["high cannot masquerade as read",readSource.replace('risk:"read_only"','risk:"high"'),readTool,true],
+    ["confirmed cannot masquerade as read",readSource.replace('approval:"none"','approval:"confirm"'),readTool,true],
+    ["nonnull action cannot masquerade as read",readSource.replace('actionRiskKey:null','actionRiskKey:"widget_purge"'),readTool,true],
+    ["destructive nonread name never clears",readSource.replace('public.read_probe','public.widget_purge'),readTool.replace('read_probe','widget_purge'),true],
+  ];
+  for(const [name,source,tool,expected] of readCases){
+    const ast=ts.createSourceFile(declarationFile,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const reads=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>ast});
+    const found=scanSource(tool,"src/read-probe.ts",{declaredReadTools:reads.readTools}).some(item=>item.rule==="direct-tool-definition");
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const readAst=ts.createSourceFile(declarationFile,readSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const metricPath=path.join(ROOT,'supabase/functions/_shared/analytics-metrics/read.ts');
+  const metricSource=readSource.replace('READ_CAP','BUSINESS_METRIC_READ').replace('public.read_probe','public.issue_analytics_evidence_bundle').replace('effect:"read"','identity:{id:"analytics.metric_read"},effect:"read"')
+    + `;caller.rpc('issue_analytics_evidence_bundle');caller.rpc('resolve_analytics_evidence_reference');caller.rpc('current_user_tenant_id');`;
+  const metricTool=readTool.replace('READ_CAP','BUSINESS_METRIC_READ').replace('read_probe','read_business_metric');
+  const metricChat='toolDefs.push(...BUSINESS_METRIC_TOOLS);readBusinessMetric(supabaseClient, scope, input);';
+  for(const [name,source,chat,file,expected] of [
+    ['metric exact existing read door',metricSource,metricChat,metricPath,false],
+    ['metric wrong declaration',metricSource.replace('analytics.metric_read','analytics.other'),metricChat,metricPath,true],
+    ['metric missing resolver',metricSource.replace('resolve_analytics_evidence_reference','other'),metricChat,metricPath,true],
+    ['metric missing scope',metricSource.replace('current_user_tenant_id','other'),metricChat,metricPath,true],
+    ['metric missing caller JWT binding',metricSource,metricChat.replace('supabaseClient','admin'),metricPath,true],
+    ['metric wrong source path',metricSource,metricChat,declarationFile,true],
+    ['metric mutation cannot clear',metricSource.replace('effect:"read"','effect:"mutation"'),metricChat,metricPath,true],
+  ]){
+    const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:ts.createSourceFile(p,chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS)});
+    const found=scanSource(metricTool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  // The Ads lead-funnel door: the exact declaration in its own file, its caller-session adapter and the
+  // Chat mount are all required; any one missing, or a mutation, leaves the tool schema a bypass.
+  const adsPath=path.join(ROOT,ADS_FUNNEL_DECLARATION_FILE);
+  const adsAdapterPath=path.join(ROOT,ADS_FUNNEL_ADAPTER_FILE);
+  const adsSource=readSource.replace('READ_CAP','ADS_LEAD_FUNNEL_READ_CAPABILITY').replace('public.read_probe','public.get_pipeline_lead_funnel').replace('effect:"read"','identity:{id:"ads.lead_funnel"},effect:"read"');
+  const adsAdapter="deps.caller.rpc('current_user_tenant_id');deps.caller.rpc('get_pipeline_lead_funnel', {});const t={parameters:ADS_LEAD_FUNNEL_READ_CAPABILITY.input};";
+  const adsChat='toolDefs.push(...ADS_FUNNEL_TOOLS as any);dispatchAdsFunnelChat({ tenantId: tid, toolName: tc.function.name, args: adsArgs }, { caller: supabaseClient });';
+  const adsTool=readTool.replace('READ_CAP','ADS_LEAD_FUNNEL_READ_CAPABILITY').replace('read_probe','get_pipeline_lead_funnel');
+  for(const [name,source,adapter,chat,file,tool,expected] of [
+    ['ads funnel exact read door',adsSource,adsAdapter,adsChat,adsPath,adsTool,false],
+    ['ads funnel wrong declaration id',adsSource.replace('ads.lead_funnel','ads.other'),adsAdapter,adsChat,adsPath,adsTool,true],
+    ['ads funnel wrong declaration symbol',adsSource.replace(/ADS_LEAD_FUNNEL_READ_CAPABILITY/g,'OTHER_CAP'),adsAdapter,adsChat,adsPath,adsTool.replace('ADS_LEAD_FUNNEL_READ_CAPABILITY','OTHER_CAP'),true],
+    ['ads funnel wrong source path',adsSource,adsAdapter,adsChat,declarationFile,adsTool,true],
+    ['ads funnel missing caller rpc',adsSource,adsAdapter.replace("rpc('get_pipeline_lead_funnel'","rpc('other'"),adsChat,adsPath,adsTool,true],
+    ['ads funnel missing scope check',adsSource,adsAdapter.replace('current_user_tenant_id','other'),adsChat,adsPath,adsTool,true],
+    ['ads funnel unmounted',adsSource,adsAdapter,adsChat.replace('ADS_FUNNEL_TOOLS','OTHER_TOOLS'),adsPath,adsTool,true],
+    ['ads funnel missing caller JWT binding',adsSource,adsAdapter,adsChat.replace('supabaseClient','supabase'),adsPath,adsTool,true],
+    ['ads funnel unrelated payload',adsSource,adsAdapter,adsChat,adsPath,adsTool.replace('ADS_LEAD_FUNNEL_READ_CAPABILITY.input','{type:"object"}'),true],
+    ['ads funnel name mismatches door',adsSource,adsAdapter,adsChat,adsPath,adsTool.replace('get_pipeline_lead_funnel','get_other_funnel'),true],
+    ['ads funnel mutation cannot clear',adsSource.replace('effect:"read"','effect:"mutation"'),adsAdapter,adsChat,adsPath,adsTool,true],
+  ]){
+    const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const texts=new Map([[adsAdapterPath,adapter],[path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'),chat]]);
+    const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:texts.has(p)?ts.createSourceFile(p,texts.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});
+  if(readNames.riskKeys.size || scanSource(readTool,"src/read-probe.ts",{declaredReadTools:readNames.readTools,riskPolicy:new Map([["read_probe","high"]])}).every(item=>item.rule!=="direct-tool-definition")){failed++;console.error("  FAIL read declaration cleared a classified mutation");}else console.log("  ok   read declaration never clears risk debt or classified mutation");
   // A cast must not hide an incomplete declaration from the strict rule. Before the shared
   // unwrap, `as any` escaped this check entirely — and once a collector read through casts, that
   // escape also minted governance clearance for the tool name.
@@ -1332,7 +1275,7 @@ function runSelfTest() {
     console.error("  FAIL shrink-only baseline admitted a duplicate occurrence");
   } else console.log("  ok   shrink-only baseline preserves occurrence counts");
   if (failed) process.exit(1);
-  console.log(`\n✓ capability-kit lint self-test passed — ${cases.length + aliasCases.length + 13} cases.`);
+  console.log(`\n✓ capability-kit lint self-test passed — ${cases.length + aliasCases.length + readCases.length + 10} cases.`);
 }
 
 if (process.argv.includes("--self-test")) {

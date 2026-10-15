@@ -24,7 +24,7 @@
 //     independent record sources, not one opportunity threaded across six stages. The header copy
 //     says this; the derivation never pretends a col-1 deal "becomes" a col-3 term.
 
-import type { ClientAgreement, AgreementClient } from "../useSoloAgreements";
+import type { ClientAgreement, AgreementClient } from "../useSoloCommercialTerms";
 import type { CommercialEvent, DeclaredProcessor } from "../useSoloSalesOps";
 import type { CatalogOffer } from "../useCatalogOffers";
 import type { PipelineDeal, PipelineStage } from "../useSoloCampaigns";

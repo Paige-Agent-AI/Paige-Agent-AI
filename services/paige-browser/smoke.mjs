@@ -38,7 +38,7 @@ const HTML = `<!doctype html><html><body style="margin:0;background:#0b0b14;colo
 
 // Mirror observe()'s read-only helpers so the smoke exercises the SAME logic the server runs
 // (server.js starts an HTTP listener on import, so we replicate the pure observation path here —
-// the same precedent as services/visual-renderer/smoke.mjs).
+// the same precedent smoke-render.mjs avoids by importing ./render.mjs directly).
 async function extractText(page) {
   const raw = await page.evaluate(() => (document.body ? document.body.innerText : ""));
   return String(raw || "").replace(/\s+/g, " ").trim().slice(0, 2000);

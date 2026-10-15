@@ -4,9 +4,15 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { initObservability } from "./lib/observability";
+import { isFormOnBusinessSite } from "./hooks/useEmbedHeight";
+import { SandboxedFormNotice } from "./pages/public/SandboxedFormNotice";
 
 // Initialize Sentry + PostHog as early as possible (no-ops when env keys missing).
-initObservability();
+// /render-frame is a machine surface (paige-browser screenshots of draft pages): no visitor to observe,
+// and a draft's content must not leave the frame through analytics. Plausible, the one third-party
+// script index.html loads, is skipped on the same route by its loader there.
+// A form on a business's own website (Experience 03) keeps error reporting but not product analytics.
+if (!/^\/(?:invoice|render-frame)\/?$/i.test(window.location.pathname)) initObservability({ productAnalytics: !isFormOnBusinessSite() });
 
 
 
@@ -105,7 +111,12 @@ window.addEventListener("load", () => {
   try { sessionStorage.removeItem("__chunk_reload__"); } catch { /* ignore */ }
 });
 
-createRoot(document.getElementById("root")!).render(
+// A form page in a sandbox that hides its origin: framed in a business's site builder block, or a tab opened from one
+// (which inherits the sandbox). The app can't run there (every provider reads storage the browser refuses it, and the
+// intake refuses an address-less origin), so the visitor gets the form's address to open instead of a blank page.
+const sandboxedForm = /^\/form\//.test(window.location.pathname) && String(window.origin) === "null";
+
+createRoot(document.getElementById("root")!).render(sandboxedForm ? <SandboxedFormNotice /> : (
   <React.StrictMode>
     <HelmetProvider>
       <App />
@@ -121,7 +132,7 @@ createRoot(document.getElementById("root")!).render(
       <div data-app-ready hidden aria-hidden="true" />
     </HelmetProvider>
   </React.StrictMode>
-);
+));
 
 // ---------------------------------------------------------------------------
 // Cinematic splash dismissal

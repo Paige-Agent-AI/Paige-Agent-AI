@@ -49,6 +49,12 @@ const SURFACES = [
   "src/solo/data/useSoloChat.ts",
   "supabase/functions/paige-mcp/index.ts",
   "supabase/functions/_shared/paige-mcp/governed-adapter.ts",
+  "supabase/functions/sales-invoice-command/index.ts",
+  "supabase/functions/_shared/sales-invoice-chat.ts",
+  "supabase/functions/_shared/sales-invoice-delivery/adapter.ts",
+  // INT-328: the governed one-recipient business email door reuses the same canonical claim.
+  "supabase/functions/comms-email-command/index.ts",
+  "supabase/functions/_shared/comms-email/adapter.ts",
 ];
 const ESCAPE = "approval-channel-exempt:";
 

@@ -748,15 +748,42 @@ describe("Adding a tool", () => {
     expect((fieldFor(host, "Name") as HTMLInputElement).value).toBe("Scheduling tool");
   });
 
-  it("a preset does not infer OAuth or contact a provider", async () => {
+  it("a plain preset does not infer OAuth or contact a provider", async () => {
     world();
     const { host } = await render();
     await openCatalogue(host);
-    await click(host.querySelector<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]'));
+    // A tile with NO provider contract — the first Social connect tile, not the Popular
+    // row's HighLevel (whose provider-declared required headers legitimately preselect
+    // Token + headers; the companion test below pins that behavior).
+    await click([...host.querySelectorAll<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]')]
+      .find(b => b.textContent?.includes("Metricool")));
     expect(dialog(host)?.querySelectorAll('[aria-label="Authentication"] button')).toHaveLength(4);
     expect(dialog(host)?.querySelector('[aria-pressed="true"]')).toBeNull();
     expect(edgeCalls("oauth_begin")).toHaveLength(0);
     expect(edgeCalls("create")).toHaveLength(0);
+  });
+
+  it("the HighLevel preset carries its provider contract: gohighlevel identity, Token + headers preselected, locationId required", async () => {
+    world();
+    const { host } = await render();
+    await openCatalogue(host);
+    await click([...host.querySelectorAll<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]')]
+      .find(b => b.textContent?.includes("HighLevel")));
+    // The provider contract preselects the only mode that can satisfy required headers.
+    const pressed = dialog(host)?.querySelector('[aria-pressed="true"]');
+    expect(pressed?.textContent).toBe("Token + headers");
+    // Saving without the locationId header is refused in the product's own words.
+    await type(fieldFor(host, "Token"), "pit-token-value-0123456789");
+    await click(byText(host, "Save configuration"));
+    expect(dialog(host)?.textContent).toMatch(/requires the locationId header/i);
+    // With the header present, the create carries the provider identity and the header.
+    await click(byText(host, "Add header"));
+    await type(fieldFor(host, "Header 1 name"), "locationId");
+    await type(fieldFor(host, "Header 1 value"), "loc-123");
+    invoke.mockResolvedValueOnce({ data: { connection_id: "conn-ghl", config_generation: 1 }, error: null });
+    await click(byText(host, "Save configuration"));
+    const call = edgeCalls("create")[0];
+    expect(call[1].body).toMatchObject({ provider_key: "gohighlevel", auth_kind: "bearer", custom_headers: { locationId: "loc-123" } });
   });
 
   it.each(["oauth_begin_failed", "unmapped_refusal"])("keeps Saved distinct from an authorization failure: %s", async (code) => {

@@ -3,7 +3,7 @@
 // EXTRACTED to its OWN module (§18 one home) so BOTH server.js AND the smoke test import the SAME
 // real code — a security guard must be tested as-shipped, never as a hand-copied mirror that can drift
 // (§32: a green build is not a working guard). It is also the consolidation seam for #138 (the guard
-// is currently duplicated verbatim in services/visual-renderer; that service can import this next).
+// was once duplicated in services/visual-renderer — that service is deleted; render.mjs imports this).
 //
 // Every function returns a REASON CODE (null = allowed) so the response + the paige_browser_usage
 // audit rail carry the SPECIFIC block cause (§13 honest reporting), never a generic "blocked".
@@ -109,13 +109,23 @@ export function ipBlockReason(ip) {
 }
 
 const _dnsCache = new Map(); // host -> {reason:string|null, at:number}
-// Returns a "ssrf:*" / "denylist:*" reason for a blocked host, or null if allowed. Fail-closed on any
-// resolution failure (unresolvable host -> "ssrf:unresolved").
-export async function hostBlockReason(host) {
+// PC-1 — the DNS-INDEPENDENT part of the host rules (literal/suffix/denylist shape), split out so
+// the connect-time egress proxy applies the SAME hostname rules without the 30s allow-cache: the
+// proxy must see a fresh answer for every dial it pins (§18 one home for the rules themselves).
+export function hostnameShapeBlockReason(host) {
   const h = String(host).replace(/^\[|\]$/g, "").toLowerCase();
   if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return "ssrf:loopback";
   if (isDenylisted(h)) return "denylist:stevenblack";
   if (net.isIP(h)) { const r = ipBlockReason(h); return r ? `ssrf:${r}` : null; }
+  return null;
+}
+
+// Returns a "ssrf:*" / "denylist:*" reason for a blocked host, or null if allowed. Fail-closed on any
+// resolution failure (unresolvable host -> "ssrf:unresolved").
+export async function hostBlockReason(host) {
+  const h = String(host).replace(/^\[|\]$/g, "").toLowerCase();
+  const shapeReason = hostnameShapeBlockReason(h);
+  if (shapeReason) return shapeReason;
   const hit = _dnsCache.get(h);
   if (hit && Date.now() - hit.at < 30_000) return hit.reason;
   let reason = "ssrf:unresolved"; // fail-closed if we can't resolve
@@ -154,9 +164,53 @@ export async function assertPublicUrl(raw) {
 
 // A read-only page is an egress policy, not merely a navigation policy. Page JavaScript may issue
 // writes to an otherwise-public host, so only safe retrieval methods are allowed through Chromium.
+// (A bare method cannot tell a CORS preflight from a script's own OPTIONS, so OPTIONS is refused HERE;
+// requestEgressBlockReason below adds the one narrow, header-proven preflight exception.)
 export function requestMethodBlockReason(method) {
   const normalized = String(method || "").toUpperCase();
   return normalized === "GET" || normalized === "HEAD" ? null : "method:not-read-only";
+}
+
+const READ_METHODS = new Set(["GET", "HEAD"]);
+
+// INT-312 — the browser-level request policy: a method check PLUS one narrow exception, a CORS
+// preflight for a READ.
+//
+// A published workspace page loads its rows with supabase-js, whose GETs carry `apikey` /
+// `authorization` / `x-client-info` headers, so the browser sends an OPTIONS preflight before each one.
+// An OPTIONS that IS that preflight is allowed through (to a host that still passes the public-host /
+// private-range / metadata / DNS guard below — never a private host): a preflight carries no body and
+// asks the server a question; it cannot mutate anything.
+//
+// "Is a preflight" is decided by headers page script CANNOT forge. `Access-Control-Request-Method` is a
+// forbidden request-header name in the Fetch standard, so only the browser's own CORS machinery can set
+// it; a script's own `fetch(url, { method: "OPTIONS", body })` lacks it and stays blocked, body or not.
+// The preflight is allowed only when the request it announces is itself a read (GET/HEAD): a preflight
+// for a POST/PUT/PATCH/DELETE is refused, so a write's server never even sees its preflight — and the
+// write itself would be refused by the method rule anyway.
+//
+// HONEST NOTE (§13, measured 2026-10-04 on Playwright 1.62.1 / Chromium): with any route installed,
+// Playwright's Chromium driver answers a CORS preflight ITSELF (a permissive 204) before user route
+// handlers run, so in this version real preflights never reach this policy and were never aborted by
+// it. This rule is the explicit contract for the day the driver stops doing that, not a repair of a
+// failure that reproduces today. See smoke-render.mjs (published-page data contract).
+export function requestEgressBlockReason(request) {
+  const method = String(request?.method || "").toUpperCase();
+  if (READ_METHODS.has(method)) return null;
+  if (method === "OPTIONS") {
+    const headers = request.headers || {};
+    const announced = String(headers["access-control-request-method"] || "").toUpperCase();
+    const hasBody = request.hasBody === true;
+    if (announced && READ_METHODS.has(announced) && !hasBody) return null;
+    return announced ? "method:preflight-for-write" : "method:not-read-only";
+  }
+  return "method:not-read-only";
+}
+
+function routeRequestShape(req) {
+  let body = null;
+  try { body = req.postDataBuffer(); } catch { body = null; }
+  return { method: req.method(), headers: req.headers(), hasBody: !!(body && body.length) };
 }
 
 // Install the actual browser egress fence on the BrowserContext before any page exists. Context-level
@@ -166,7 +220,9 @@ export async function installReadOnlyBrowserEgress(context) {
   await context.routeWebSocket("**/*", (ws) => ws.close());
   await context.route("**/*", async (route) => {
     try {
-      if (requestMethodBlockReason(route.request().method())) return route.abort("blockedbyclient");
+      // Method first (read, or a read's preflight), THEN the destination host — the preflight exception
+      // never skips the private-host / metadata / DNS guard.
+      if (requestEgressBlockReason(routeRequestShape(route.request()))) return route.abort("blockedbyclient");
       const host = new URL(route.request().url()).hostname;
       if (await hostIsPrivate(host)) return route.abort("blockedbyclient");
       return route.fallback();

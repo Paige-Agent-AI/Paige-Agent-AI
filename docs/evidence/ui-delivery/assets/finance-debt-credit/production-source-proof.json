@@ -1,0 +1,54 @@
+{
+  "kind": "Unauthenticated public production source identity only; not owner/provider acceptance",
+  "observedAt": "2026-10-10T15:49:04.797352+00:00",
+  "mainCommit": "7dfb00fba7caa889fa81fbfc35903117ed3cb6a9",
+  "deploymentId": "dpl_UgUnGnVcGbwLRnBFVoV5esyN4DGg",
+  "environment": "production",
+  "indexUrl": "https://app.paigeagent.ai/",
+  "indexStatus": 200,
+  "entryChain": [
+    "https://app.paigeagent.ai/assets/main-Mppr4a5F.js",
+    "https://app.paigeagent.ai/assets/main-CsNbZAsA.js"
+  ],
+  "soloAssetUrl": "https://app.paigeagent.ai/assets/SoloEntry-BgEPvT6y.js",
+  "assetStatus": 200,
+  "assetSha256": "533974ec1252ef6c1b08ae2c6bab4293d61fefbb06df91038dc2cde448bb980a",
+  "textLength": 1969781,
+  "present": {
+    "Debt & Credit": true,
+    "debt-credit": true,
+    "Recorded next payments": true,
+    "Original account label": true,
+    "Historical statement fact": true,
+    "Current operational fact": true,
+    "Company financing sources needed": true,
+    "settings/integrations": true,
+    "dc-evidence-overlay": true
+  },
+  "absent": {
+    "SYNTHETIC COMPANY & SOURCE ADAPTER": true,
+    "synthetic-evidence-0": true,
+    "Travel & supplier card": true,
+    "Harbor Capital Bank": true,
+    "Your financial picture": true,
+    "See the cash behind the books": true,
+    "Know what the business owes": true,
+    "Understand what the company earned": true,
+    "Shape the cash ahead": true,
+    "finance-advisor": true,
+    "dc-advisor": true
+  },
+  "authenticated": "UNVERIFIED: OWNER_LOGIN_HOLD",
+  "debtSource": "UNAVAILABLE",
+  "migrations": "NOT_APPLICABLE",
+  "edge": "NOT_APPLICABLE",
+  "deploymentVerification": {
+    "state": "READY",
+    "githubCommitSha": "7dfb00fba7caa889fa81fbfc35903117ed3cb6a9",
+    "canonicalAliases": [
+      "paigeagent.ai",
+      "app.paigeagent.ai"
+    ],
+    "verifiedVia": "Vercel get_deployment withGitRepoInfo=true"
+  }
+}

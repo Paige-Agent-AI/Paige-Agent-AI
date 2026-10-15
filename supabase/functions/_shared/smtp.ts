@@ -318,7 +318,9 @@ export async function resolveSmtpCreds(
 // Send — SSRF-guard, connect (STARTTLS/implicit TLS), AUTH, send, close.
 // -----------------------------------------------------------------------------
 
+import type {EmailAttachment} from './email-attachments.ts';
 export interface SmtpSendInput {
+  attachments?: EmailAttachment[];
   host: string;
   port: number;
   /** true = implicit TLS (465). false/undefined = STARTTLS (587/25/2525). */
@@ -333,6 +335,8 @@ export interface SmtpSendInput {
   text?: string | null;
   /** RFC 5322 In-Reply-To (a provider message-id) when replying in a thread. */
   inReplyTo?: string | null;
+  /** Extra headers (e.g. List-Unsubscribe). Names must be RFC 5322 tokens; values are CRLF-stripped. */
+  headers?: Record<string, string> | null;
 }
 
 /**
@@ -384,7 +388,11 @@ export async function smtpSend(
       subject,
       content,
       html,
+      attachments: input.attachments?.map(a=>({...a,encoding:'base64' as const})),
       inReplyTo: input.inReplyTo ? sanitizeHeaderValue(input.inReplyTo) : undefined,
+      headers: Object.fromEntries(Object.entries(input.headers ?? {})
+        .filter(([name]) => /^[A-Za-z0-9-]{1,64}$/.test(name))
+        .map(([name, value]) => [name, sanitizeHeaderValue(String(value))])),
     });
     // §13: no durable id from the protocol — honestly null, never fabricated.
     return { ok: true, status: 200, error: null, data: { messageId: null } };

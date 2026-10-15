@@ -388,7 +388,7 @@ shape** each time: the guard was written for the case that already worked.
 - `ChannelTelemetryPanel` branches on the superset first; the access branch stays because it says
   something more specific and true.
 - `authorityUnknown` joins the three sibling Solo hooks that already carry it (`useCatalogOffers`,
-  `useSoloSalesOps`, `useSoloAgreements`) — this was the only one of four without it (§18). An
+  `useSoloSalesOps`, `useSoloCommercialTerms`) — this was the only one of four without it (§18). An
   unknown authority renders a **Retry access** control and a sentence that assumes no permission
   either way, not a verdict. `canManage` now filters `status='active'`, matching `is_tenant_admin`.
 - The recovery instruction is restored, and the false claim about the neighbouring panel is gone

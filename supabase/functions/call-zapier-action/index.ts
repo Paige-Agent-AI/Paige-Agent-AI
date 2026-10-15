@@ -219,6 +219,10 @@ Deno.serve(async (req) => {
       approved_count: projected.approved.length,
       // Stated rather than hidden, so "no actions" is distinguishable from "none approved".
       unapproved_count: projected.unapproved_count,
+      // The unapproved NAMES (identifier-shaped, validated in the projection) so the
+      // operator can be told exactly which actions are waiting on their approval — the
+      // 2026-10-02 gap was a count the operator could not act on.
+      unapproved: projected.unapproved,
     });
   }
 

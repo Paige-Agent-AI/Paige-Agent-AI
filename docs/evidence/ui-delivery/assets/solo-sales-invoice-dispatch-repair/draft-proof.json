@@ -1,0 +1,341 @@
+{
+  "boundary": "Actual shared Solo components with synthetic local auth/RPC. No live tenant publication, provider send or payment.",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "bodyWidth": 1438,
+        "bodyScroll": 1438
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "bodyWidth": 1438,
+        "bodyScroll": 1438
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "bodyWidth": 1438,
+        "bodyScroll": 1438
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "bodyWidth": 1438,
+        "bodyScroll": 1438
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "bodyWidth": 1316,
+        "bodyScroll": 1316
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "bodyWidth": 1316,
+        "bodyScroll": 1316
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "bodyWidth": 1316,
+        "bodyScroll": 1316
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "bodyWidth": 1316,
+        "bodyScroll": 1316
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "bodyWidth": 974,
+        "bodyScroll": 974
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "bodyWidth": 974,
+        "bodyScroll": 974
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "bodyWidth": 974,
+        "bodyScroll": 974
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "bodyWidth": 974,
+        "bodyScroll": 974
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "bodyWidth": 850,
+        "bodyScroll": 850
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "bodyWidth": 850,
+        "bodyScroll": 850
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "bodyWidth": 850,
+        "bodyScroll": 850
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "bodyWidth": 850,
+        "bodyScroll": 850
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "bodyWidth": 388,
+        "bodyScroll": 388
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "bodyWidth": 388,
+        "bodyScroll": 388
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "bodyWidth": 388,
+        "bodyScroll": 388
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "bodyWidth": 388,
+        "bodyScroll": 388
+      }
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "bodyWidth": 428,
+        "bodyScroll": 428
+      }
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "bodyWidth": 428,
+        "bodyScroll": 428
+      }
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "dock": "closed",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "bodyWidth": 428,
+        "bodyScroll": 428
+      }
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "dock": "open",
+      "documentRequests": 0,
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "bodyWidth": 428,
+        "bodyScroll": 428
+      }
+    }
+  ]
+}

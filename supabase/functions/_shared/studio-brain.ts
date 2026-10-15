@@ -110,6 +110,8 @@ export async function retrieveTenantKnowledge(
         const { data: docs } = await admin
           .from("tenant_knowledge_docs")
           .select("id, category, source_url")
+          .eq("record_state", "canonical")
+          .eq("tenant_id", tenantId)
           .in("id", docIds);
         const studioDocs = new Set(
           (Array.isArray(docs) ? docs : [])

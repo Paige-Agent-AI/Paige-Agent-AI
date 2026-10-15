@@ -18,6 +18,8 @@ on:
     paths:
       - "supabase/functions/_shared/paige-spine/**"
       - "supabase/migrations/**"
+      - "supabase/tests/research_tenant_lineage.sql"
+      - "supabase/tests/research_persist_service_grants.sql"
       - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
       - "supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql"
       - "supabase/tests/mcp_gateway_url_auth_configured.sql"
@@ -32,6 +34,8 @@ on:
       - "supabase/tests/record_capability_run_single_overload.sql"
       - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
       - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
+      - "supabase/tests/s5_owner_memory_backfill.sql"
+      - "supabase/tests/int345_calling_readiness_mirror.sql"
       - "supabase/migrations/20270412090000_a_tenant_can_read_its_own_tool_catalog.sql"
       - "supabase/migrations/20270411090000_one_record_capability_run_not_two.sql"
       - "scripts/proof/mcp-gateway-endpoint-consent-race.mjs"
@@ -48,6 +52,14 @@ on:
       - "supabase/tests/user_address_readers.sql"
       - "supabase/tests/contact_methods_concurrency.sql"
       - "scripts/proof/contact-methods-add-race.mjs"
+      - "scripts/proof/chat-answer-claim-race.mjs"
+      - "scripts/proof/layer-c-native-vertical.mjs"
+      - "scripts/proof/operator-postgres-fixture.mjs"
+      - "scripts/proof/operations-review-discovery-concurrency.mjs"
+      - "supabase/functions/paige-native-event-dispatch/**"
+      - "supabase/functions/_shared/capability-record.ts"
+      - "supabase/functions/_shared/railAutomation.ts"
+      - "supabase/functions/_shared/paige-capability-status/**"
       - "supabase/tests/contact_create_with_methods.sql"
       - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
@@ -80,15 +92,26 @@ on:
       - "supabase/tests/promotional_solo_grant.sql"
       # Layer C · C5 slice 2 — companion-minting + cancellation-sync + direct-approve guard + reconciler.
       - "supabase/tests/paige_orchestration_companion_minting.sql"
+      # INT-179 Slice 2b — the ledger's in-flight guard and the at-most-once dispatch claim.
+      - "supabase/tests/paige_act_dispatch_claim.sql"
+      # INT-298 MBC 7a — public visit evidence.
+      - "supabase/tests/public_visits.sql"
+      - "supabase/migrations/20271023000000_paige_act_dispatch_claim.sql"
+      - "supabase/migrations/20271023000200_paige_act_dispatch_claim_stale_parse.sql"
+      # INT-179 Slice 2b milestone 2 — crash recovery for a dispatcher that dies after claiming.
+      - "supabase/tests/paige_dispatch_crash_recovery.sql"
+      - "supabase/migrations/20271025000100_paige_dispatch_crash_recovery.sql"
       - "supabase/functions/_shared/paige-orchestration/**"
       - "supabase/functions/execute-approval/**"
       - "scripts/proof/resend-receipt-concurrency.mjs"
+      - "scripts/proof/secure-browser-browse-budget-concurrency.mjs"
       - "scripts/proof/business-mission-concurrency.mjs"
       - "src/__tests__/paige-spine-*.test.ts"
       - "src/__tests__/paige-orchestration-approve-executor.test.ts"
       - "src/solo/paigeClientScope.ts"
       - "src/solo/paigeClientScope.test.ts"
       - "scripts/ci/paige-spine-registry-lint.mjs"
+      - "scripts/ci/c0b-*.mjs"
       - "scripts/ci/chat-tool-registry-lint.mjs"
       - "scripts/proof/paige-spine-local-proof.sql"
       # Everything the database-contract job runs must trigger it (18 files it ran were missing).
@@ -97,6 +120,29 @@ on:
       - "scripts/ci/reproduce-production-grants.*"
       - "scripts/ci/grant-ordering-proof.sh"
       - "scripts/proof/mcp-gateway-tools-action.mjs"
+      # Experience 04 E4-S1 — where this client stands (source read + composer parity).
+      - "supabase/tests/exp04_client_engagement_status.sql"
+      - "scripts/proof/exp04-client-status-parity.mjs"
+      - "supabase/functions/_shared/client-engagement/**"
+      # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
+      # contract it pins (the drafter, the filer; the approve door is listed above).
+      - "supabase/tests/exp03_lead_reply_draft.sql"
+      - "supabase/migrations/20271031000000_exp03_lead_reply_once_per_submission.sql"
+      - "supabase/functions/paige-action-worker/**"
+      - "supabase/functions/growth-process-submission/**"
+      # Experience 03 S3 — the PAIGE Email (SendGrid) governed door, its receipts/history and sender
+      # integrity: the three rollback proofs and the migrations they pin.
+      - "supabase/tests/paige_email_sendgrid_door.sql"
+      - "supabase/tests/paige_email_sendgrid_receipts.sql"
+      - "supabase/tests/paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql"
+      - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
+      - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
+      - "supabase/tests/tenant_email_domain_normalization.sql"
+      - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
+      - "supabase/functions/comms-email-command/**"
+      - "supabase/functions/send-message/**"
+      - "supabase/functions/handle-sendgrid-webhook/**"
 
 permissions:
   contents: read
@@ -156,6 +202,13 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
+      # INT-309: the research persistence grants — runs on the FRESH-BUILT database, where
+      # every tree migration (including this change's GRANT) is ambiently applied. Later,
+      # the reproduce/reconcile machinery re-derives grant state from production — which
+      # lacks this migration until it deploys — and that interplay is grant-ordering-proof.sh's
+      # own subject; proving the matrix here keeps this proof independent of that ordering.
+      - run: supabase test db supabase/tests/research_persist_service_grants.sql
+        if: ${{ !cancelled() }}
       # Production's grants are reproduced on the schema production actually has, and only then is
       # the change under review applied on top — so its own grants and revokes, dynamic SQL,
       # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing
@@ -164,11 +217,219 @@ jobs:
       - name: Reproduce production's grants, then apply the change under review
         run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
 
+      # INT-339: actual stored Analytics and scoped evidence contracts. Use this
+      # existing rebuilt database after production grants and the candidate apply;
+      # the disabled #574 premerge workflow is deliberately left untouched.
+      - name: Analytics privacy and evidence authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          for proof in analytics_storage_minimization analytics_referral_authorization analytics_evidence_authorization settings_analytics_metric_producers shared_metric_evidence marketing_metric_producer; do
+            psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f "supabase/tests/$proof.sql"
+          done
+
+      # INT-298 MBC 3a: campaign ↔ asset links through the real writer and read, on this rebuilt
+      # database after the candidate apply (tenant, archive and member-visibility negatives).
+      - name: Marketing campaign asset links (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_asset_links.sql
+
+      # INT-298 MBC 4a: form.submitted fires once per matched submission through the real trigger,
+      # with ids and tags only, and never for another workspace's contact.
+      - name: Marketing form.submitted event (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/form_submitted_native_event.sql
+
+      # INT-298 MBC 5: the Marketing Action contract through the real writer, the bus's own file_action
+      # and the read's derived lifecycle (planning waits at confirm, outcomes only after a finish).
+      - name: Marketing campaign actions (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_brief_actions.sql
+
+      # INT-298 MBC 6a: a form-started process runs only for its form or campaign, and a campaign step's
+      # outcome only stands on a proven finish (real triggers, writers and reads; rolled back).
+      - name: Marketing process scope and action truth (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/process_scope_and_action_truth.sql
+      - name: Marketing campaign steps and process scope from chat (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_steps_chat_tools.sql
+
+      - name: Public visits — recorded for the page's own business, read only by it (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/public_visits.sql
+
+      - name: Experience 03 — a lead carries its campaign; the campaign reads its leads (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_lead_attribution.sql
+
+      - name: Experience 03 S1b — an unrouted form files its leads into its campaign's pipeline (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/campaign_pipeline_routing.sql
+
+      - name: Security #2087/#2090 — consent cannot be forged from a browser; stored form and booking links are web addresses (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/security_consent_and_form_links.sql
+
+      # ANT-38 (#1140): mailbox authority is tenant-scoped — an ordinary Solo owner
+      # (tenant owner, global 'user' role) reads their business inbox; member/foreign/
+      # wrong-workspace/private-mailbox/agency-member-standing negatives all refuse.
+      # Runs on this rebuilt database AFTER the candidate migration apply.
+      - name: Mailbox Solo-owner authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mailbox_solo_owner_authorization.sql
+
+      # ANT-40: messages is engine-written only — direct authenticated INSERT/UPDATE
+      # (owner, admin, mailbox owner, member) is denied by RLS while the SECURITY
+      # DEFINER engines and all reads keep working.
+      - name: Messages engine-only writes (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/messages_engine_only_writes.sql
+
+      # ANT-43/S7 slice 2: SendGrid receipt journal — validate, dedup (replay-safe),
+      # append-once into the one truth table; journal invisible to anon/authenticated.
+      - name: SendGrid receipt ingest (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sendgrid_receipt_ingest.sql
+
+      - name: Operations scoped manual work authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_plan_update.sql
+
+      - name: Operations versioned manual work authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_versioned_work_update.sql
+
+      - name: Operations scoped task creation authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
+
+      - name: Operations priority and bounded activity authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_priority_activity.sql
+      - name: Operations scoped project and milestone creation authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_project_creation.sql
+
+      - name: Operations project lifecycle authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_project_lifecycle.sql
+
+      - name: Operations native CRM work caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_native_crm_work_read.sql
+
+      - name: Operations signed engagement evidence caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_evidence_read.sql
+      - name: Operations delivery submission and review contracts
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_submissions.sql
+
+      - name: Operations Delivery current item authorization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_item_authority.sql
+
+      - name: Operations reviewer recovery and immutable source (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_reviewer_recovery.sql
+
+      - name: Operations exact submitted artifact authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_artifact_read.sql
+
+      - name: Operations nominated reviewer discovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_review_discovery.sql
+
+      - name: Operations reviewer discovery real source-change races
+        env:
+          OPERATIONS_DISCOVERY_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/proof/operations-review-discovery-concurrency.mjs
+
+      - name: Operations explicit client review and acceptance (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_review.sql
+
+      - name: Operations client released-work discovery (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_discovery.sql
+
+      - name: Operations native competing client decisions
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/operations-client-decision-concurrency.mjs
+
+      - name: Sales commercial and signing agreement row contracts (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sales_agreement_trigger_contracts.sql
+      - name: Operations accepted engagement handoff authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_handoff.sql
+
+      - name: Operations native concurrent engagement handoff
+        if: ${{ !cancelled() }}
+        run: node scripts/proof/operations-handoff-concurrency.mjs
+
+      # Experience 04 E4-S1: one client's terms, signing, invoice balances by evidence class,
+      # open payment requests and delivery work — owner/admin only, foreign scope refused — then the
+      # shared composer over that exact read, asserted against the hand-worked fixture ledger.
+      - name: Experience 04 client status read, scope refusals and ledger parity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp04_client_engagement_status.sql
+      - uses: actions/setup-node@v4
+        if: ${{ !cancelled() }}
+        with:
+          node-version: 24
+      - name: Experience 04 client status composer parity over the real read
+        if: ${{ !cancelled() }}
+        run: node --experimental-strip-types scripts/proof/exp04-client-status-parity.mjs postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+      # Experience 03 S3 "PAIGE works your leads": one reply draft per submission; the per-form
+      # opt-in set only through growth_form_set_intake (both signatures); no outbound-message approval
+      # (a reply, or a legacy client.followup) marked approved/sent without a provider-accepted governed
+      # send of the same business and person; lead_reply_record_send scope and every send state —
+      # driven through the governed email door's real prepare/claim/finalize.
+      - name: Experience 03 lead reply draft, opt-in and governed-send guard (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp03_lead_reply_draft.sql
+
+      # Experience 03 S3 — PAIGE Email (SendGrid). The migrations 20271031000000 → 000100 → 000200 →
+      # 000250 are already applied in filename order by the "apply the change under review" step
+      # (`supabase migration up --include-all`); each proof also re-applies the migration it pins
+      # inside its own BEGIN..ROLLBACK (\ir), which proves that migration is idempotent. Each proof
+      # ends by RAISING when any assertion failed, so ON_ERROR_STOP turns a FAIL into a red step.
+      # Door: SendGrid verification facts are service-only, a SendGrid sender is admitted only with
+      # its own business's verified domain, an 'unknown' outcome is never re-dispatched, and one live
+      # send per drafted reply.
+      - name: Experience 03 PAIGE Email governed door (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_door.sql
+      # Receipts: acceptance is never delivery, receipts land once, one connected history.
+      - name: Experience 03 PAIGE Email receipts and history (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_receipts.sql
+      # Sender integrity: the rollback proof for 20271031000250 (the PAIGE Email sender a send is bound to).
+      - name: Experience 03 PAIGE Email sender integrity (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_sender_integrity.sql
+      # One spelling of a sending domain (#2133): stored as lower(btrim(domain)), so the readiness read
+      # and _comms_email_sendgrid_sender_verified agree; the backfill refuses rather than merging.
+      - name: Experience 03 sending-domain normalization (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/tenant_email_domain_normalization.sql
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql
       - run: supabase test db supabase/tests/paige_live_runtime_claim.sql
       - run: supabase test db supabase/tests/paige_live_session_transition.sql
+      # M0 (Deep Research, 2026-10-03): research tenant lineage — the matrix's database halves
+      # (cross-tenant refusal by role, active-workspace scope switching, fail-closed persistence,
+      # no-tenant-parameter RPCs, policy shapes). The engine-side lineage logic is pinned by
+      # src/__tests__/deep-research-m0-contract.test.ts.
+      - run: supabase test db supabase/tests/research_tenant_lineage.sql
+      - run: supabase test db supabase/tests/s5_owner_memory_backfill.sql
+      - run: supabase test db supabase/tests/int345_calling_readiness_mirror.sql
+        if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql
         # Its fixtures write addresses as contact methods (20270519010000's lane); like the proofs
@@ -272,6 +533,14 @@ jobs:
       # durable reconciler (landed correlation → executed; >24h unconfirmed → failed; fresh/recent left as-is;
       # §59 in-body JWT-caller refusal). Rides this replayed DB for the same §24 reason as the proofs above.
       - run: supabase test db supabase/tests/paige_orchestration_companion_minting.sql
+      # INT-179 Slice 2b: a decision never overwrites an act in flight, detail is merged, and the dispatch claim
+      # goes to exactly one claimant (never on a held, settled or ambiguous act; stale claims re-takeable above a
+      # floor; service role only). The eight-session race on real rows runs in the Layer C proof below (case F).
+      - run: supabase test db supabase/tests/paige_act_dispatch_claim.sql
+      # Slice 2b milestone 2: a dispatcher that dies after claiming is recovered (automatic acts re-driven, bounded;
+      # approved acts handed back to the approver; unprovable outcomes recorded ambiguous, never replayed). The real-
+      # drainer crash cases run in the Layer C proof below (cases G and H).
+      - run: supabase test db supabase/tests/paige_dispatch_crash_recovery.sql
       - run: supabase test db supabase/tests/resend_receipt_reliability.sql
       - run: node scripts/proof/resend-receipt-concurrency.mjs
         env:
@@ -282,6 +551,11 @@ jobs:
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
       - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
+      # PC-1 — concurrent budget enforcement: 12 racing service-role callers against a day
+      # budget that admits 4; the gate's FOR UPDATE reservation must refuse the other 8.
+      - run: node scripts/proof/secure-browser-browse-budget-concurrency.mjs
+        env:
+          RECEIPT_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # The team.authority contract. Its load-bearing fixture is a caller who is the legal owner of
       # ANOTHER workspace while holding a plain member seat in their active one — the one shape that
       # makes a dropped is_tenant_owner() tenant argument, and a collapsed permission field, fail
@@ -360,6 +634,46 @@ jobs:
       # and only the platform owner can mark a workspace as company-owned (owner ruling 2026-09-29).
       - run: supabase test db supabase/tests/operator_company_workspace_authority.sql
         if: ${{ !cancelled() }}
+      # Vibe Studio publish lifecycle: new work starts unpublished, Publish/Unpublish are the only
+      # way across, pages and funnels publish what they need, only the workspace's owner or admin
+      # acts, and a signed-out visitor cannot read studio history (owner rulings 2026-09-30/10-03).
+      - run: supabase test db supabase/tests/vibe_studio_publish_lifecycle.sql
+        if: ${{ !cancelled() }}
+      # C4c — one answer per question (20270596000000): the partial unique index on the transcript
+      # refuses a second answer turn for the same question with 23505 (directly and through
+      # paige_chat_turn_append as the owner), never constrains assistant turns, another thread, or a
+      # turn with no key; then two COMMITTED sessions race the same answer and exactly one wins.
+      - run: supabase test db supabase/tests/chat_turn_answer_claim_unique.sql
+        if: ${{ !cancelled() }}
+      - run: node scripts/proof/chat-answer-claim-race.mjs
+        if: ${{ !cancelled() }}
+        timeout-minutes: 2
+        env:
+          CI: "true"
+      # INT-179 Layer C end-to-end: the PRODUCTION native-event drainer and execute-approval files run
+      # unmodified under Deno against this rebuilt database (production's grants reproduced above), with
+      # synthetic SOLO workspaces only: auto lane executes once with its transition, canonical re-read,
+      # receipt and Rail; replay, re-drive and concurrent delivery write no second effect; confirm holds
+      # and only the workspace owner's approval runs it (foreign owner and plain member refused); off
+      # holds; a forged cross-workspace subject fails closed. No production or provider contact.
+      - uses: denoland/setup-deno@v2
+        id: deno
+        if: ${{ !cancelled() }}
+        with:
+          deno-version: v2.9.6
+      # Fetch both functions' remote modules once, with one retry, so a transient esm.sh blip is not
+      # mistaken for a proof failure. The proof itself only runs when Deno and its modules are in place.
+      - name: Cache the Layer C proof's Deno modules
+        id: deno_modules
+        if: ${{ !cancelled() && steps.deno.outcome == 'success' }}
+        run: |
+          deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts \
+            || (sleep 10 && deno cache supabase/functions/paige-native-event-dispatch/index.ts supabase/functions/execute-approval/index.ts)
+      - run: node scripts/proof/layer-c-native-vertical.mjs
+        if: ${{ !cancelled() && steps.deno_modules.outcome == 'success' }}
+        timeout-minutes: 6
+        env:
+          CI: "true"
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read
@@ -499,3 +813,5 @@ jobs:
         run: |
           node scripts/ci/reproduce-production-grants.mjs --self-test
           scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"
+
+

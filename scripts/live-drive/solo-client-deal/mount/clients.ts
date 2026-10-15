@@ -1,0 +1,1 @@
+export const useSoloDealClients=()=>({phase:'ready',clients:[{id:'client-a',name:'Avery Brooks',primaryEmail:'avery@example.test'},{id:'client-b',name:'Avery Brooks',primaryEmail:'second@example.test'}],retry:()=>{},loadMore:()=>{},hasMore:false});

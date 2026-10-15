@@ -18,8 +18,11 @@ describe("PAIGE interactive turn budget", () => {
     expect(clientBudget).toBe(360_000);
     expect(serverBudget).toBe(360_000);
     expect(clientBudget).toBe(serverBudget);
-    expect(client).toContain("<PaigeThinkingIndicator");
-    expect(client).toContain("active={isLoading}");
+    // C3a (declared change): the working signal is the answer's own living status line, which the
+    // six-minute window settles honestly ("Stopped listening at six minutes"), never as Done.
+    expect(client).toContain("<PaigeLiveTurnStatus");
+    expect(client).toContain('settleLiveTurn("timeout", assistantId);');
+    expect(client).not.toContain("<PaigeThinkingIndicator");
     expect(client).toContain("when the six-minute interactive window ended");
     expect(client).toContain("I can't confirm whether that work finished or was saved");
     expect(client).not.toContain("did not respond before the local timeout");

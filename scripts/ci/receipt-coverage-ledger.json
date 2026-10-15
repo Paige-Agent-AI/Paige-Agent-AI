@@ -15,7 +15,7 @@
     "                       could be installed without 147 guesses about existing behaviour.",
     "",
     "Honest scope: `emits` here is asserted only for the nine tools named in the three declarative",
-    "*_WRITE_CAPABILITIES sets, which are exact. It is NOT a claim that the other 147 emit nothing \u2014",
+    "*_WRITE_CAPABILITIES sets, which are exact. It is NOT a claim that the other 147 emit nothing —",
     "several demonstrably do (missions, campaign briefs, calendar presets, social, orchestration).",
     "Their posture was simply never written down, and a detector that guessed would be wrong often",
     "enough to get this guard switched off. Converting seeded_undeclared -> emits/exempt is ordinary",
@@ -104,7 +104,6 @@
     "deal_create",
     "delegate_to_subagent",
     "document_generate",
-    "draft_marketing_content",
     "forge_subagent",
     "generate_image",
     "growth_funnel_build",
@@ -175,13 +174,13 @@
       "tool": "knowledge_update",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "public.update_tenant_knowledge_metadata in 20270525000000_knowledge_canonical_metadata.sql records revision-bound capability receipt; Chat suppresses duplicate audit; completed_unrecorded is preserved."
+      "evidence": "public.update_tenant_knowledge_metadata in 20270531100000_knowledge_canonical_metadata.sql records revision-bound capability receipt; Chat suppresses duplicate audit; completed_unrecorded is preserved."
     },
     {
       "tool": "knowledge_delete",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "public.delete_tenant_knowledge in 20270526000000_knowledge_canonical_delete.sql records verified absence receipt; Chat suppresses duplicate audit; source cleanup is not attempted."
+      "evidence": "public.delete_tenant_knowledge in 20270531200000_knowledge_canonical_delete.sql records verified absence receipt; Chat suppresses duplicate audit; source cleanup is not attempted."
     },
     {
       "tool": "action_advance",
@@ -207,6 +206,18 @@
       "tool": "agency_exit_subaccount",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "agreement_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via the agreements chat-write seam's recordRun -> recordCapabilityRun (capability_succeeded / failed / refused by outcome)"
+    },
+    {
+      "tool": "agreement_send",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run through the exhaustive AgreementSendFailure outcome switch -> recordCapabilityRun (succeeded / capability_failed incl. not_delivered / capability_refused incl. stale_document)"
     },
     {
       "tool": "approval_claim",
@@ -266,7 +277,8 @@
     {
       "tool": "billing_create_invoice",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "seeded_undeclared",
+      "evidence": "New governed Sales Chat/UI command binding atomically records canonical Rail in execute_sales_invoice_draft_command (20270582000000). Overall seeded posture retained: legacy MCP create_invoice remains LEGACY / SHOULD CONVERGE and does not establish equivalent coverage."
     },
     {
       "tool": "billing_send_invoice",
@@ -390,7 +402,8 @@
     {
       "tool": "comms_send_email",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "seeded_undeclared",
+      "evidence": "PARTIAL - not every producer of this key emits, so it is not declared `emits`. EMITS: the INT-328 governed door comms-email-command - public.finalize_comms_email_send (migration 20270597000000_comms_email_send.sql), called by send-message for the bound row, PERFORMs public.record_capability_run(tenant, actor, 'comms_send_email', capability_succeeded | capability_failed | capability_refused | capability_outcome_unknown, operation_id) on every terminal outcome. DOES NOT EMIT: the paige-mcp tools send_composed_email and send_transactional_email (canonical comms_send_email in _shared/paige-mcp/capability-policy.ts) call Resend directly and write only email_send_log + audit, no record_capability_run. Flip to `emits` only when those two route through comms-email-command or record their own run."
     },
     {
       "tool": "comms_send_email_choosing_the_sender",
@@ -416,7 +429,8 @@
     {
       "tool": "content_save",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "crm_add_note",
@@ -633,11 +647,6 @@
       "receipt": "seeded_undeclared"
     },
     {
-      "tool": "draft_marketing_content",
-      "risk": "ordinary",
-      "receipt": "seeded_undeclared"
-    },
-    {
       "tool": "forge_subagent",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"
@@ -645,27 +654,116 @@
     {
       "tool": "generate_image",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "outside a Studio project paige-ai-chat records it via recordStudioRun under capability key vibe_media_image (_shared/studio-run-outcome.ts); inside a project paige-media files the receipt once a job exists (render success or failure in _shared/media-provider/complete.ts) and for a budget refusal, and the chat files every other outcome there (synchronous refusal, lost answer) via recordStudioRun"
+    },
+    {
+      "tool": "growth_form_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "email_campaign_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_CAMPAIGN_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-campaign-chat.ts) returns: capability_succeeded only when a fresh read_email_campaigns readback shows the intended draft or the version frozen with its approval pending, capability_refused for a database-named refusal, capability_outcome_unknown otherwise; runId is stableRunId(tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "email_campaign_request_approval",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_CAMPAIGN_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-campaign-chat.ts) returns: capability_succeeded only when a fresh read_email_campaigns readback shows the intended draft or the version frozen with its approval pending, capability_refused for a database-named refusal, capability_outcome_unknown otherwise; runId is stableRunId(tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "email_series_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_SERIES_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-series-chat.ts) returns: capability_succeeded only when a fresh read_email_series readback shows the draft with every email, wait and rule as written, or the version frozen with its approval pending; capability_refused for a database-named refusal; capability_outcome_unknown otherwise. A link, price or fill-in nobody gave is refused before any write and is not recorded (nothing reached the business); runId is stableRunId(tool, tenant, result or thread:tool-call)"
+    },
+    {
+      "tool": "email_series_request_approval",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_SERIES_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-series-chat.ts) returns: capability_succeeded only when a fresh read_email_series readback shows the draft with every email, wait and rule as written, or the version frozen with its approval pending; capability_refused for a database-named refusal; capability_outcome_unknown otherwise. A link, price or fill-in nobody gave is refused before any write and is not recorded (nothing reached the business); runId is stableRunId(tool, tenant, result or thread:tool-call)"
+    },
+    {
+      "tool": "campaign_step_plan",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "campaign_step_record_result",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "campaign_step_judge",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "process_scope_set",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "set_ad_creative_featured",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the ADS_FUNNEL_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/ads-funnel-chat.ts) returns: capability_succeeded only when a fresh caller-session read of the picture shows meta.ads_featured in the asked-for state, capability_refused for a named refusal (limit of 6, archived, not a picture, not in this business, not owner/admin, active business changed), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a read that failed before any write, or a picture already in the asked-for state (no write) records nothing; runId is stableRunId(tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "growth_form_save",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_form_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_funnel_build",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_funnel_publish",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "growth_funnel_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_publish",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_save",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_page_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "improvement_decide",
@@ -868,6 +966,18 @@
       "receipt": "seeded_undeclared"
     },
     {
+      "tool": "studio_image_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "studio_image_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
       "tool": "subagent_approve_proposal",
       "risk": "high",
       "receipt": "seeded_undeclared"
@@ -956,6 +1066,108 @@
       "tool": "zapier_run_action",
       "risk": "high",
       "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ghl_run_action",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "the canonical mcp-gateway's execute action files the canonical Rail receipt (record_capability_run) for every dispatched outcome — the run body carries recorded:true/false/null honestly (supabase/functions/_shared/mcp-gateway/rail-receipt.ts; the M1 contract pins the wiring)"
+    },
+    {
+      "tool": "sales_update_invoice_settings",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command settings branch in supabase/migrations/20270553000000_sales_invoice_preferences.sql atomically updates tenants.brand.invoice_preferences, calls canonical public.record_capability_run and persists existing invoice operation result. Isolated SQL proves receipt failure rollback and exact replay."
+    },
+    {
+      "tool": "sales_publish_invoice",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_record_manual_payment",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_reverse_manual_payment",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_void_invoice",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_create_invoice_link",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_create_commercial_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "_create_sales_commercial_terms_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270587000000_sales_governed_commercial_create.sql; scripts/sql/sales-commercial-create-proof.mjs verifies exactly-once replay and receipt-failure rollback."
+    },
+    {
+      "tool": "sales_save_collection_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_stage_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_commit_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_revise_invoice_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_draft_command in 20270582000000 atomically calls canonical record_capability_run, reads the same draft and stores its immutable invoice operation. Actual SQL proves receipt rollback and once-only concurrent replay."
+    },
+    {
+      "tool": "sales_create_payment_request",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "prepare_sales_invoice_payment_request and allocate_verified_sales_invoice_payment in 20270597000001_sales_invoice_provider_operations.sql atomically record existing public.record_capability_run and canonical Rail with provider operation, actor and tenant. Real PostgreSQL proof verifies receipt failure rolls allocation back."
+    },
+    {
+      "tool": "sales_start_merchant_onboarding",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "tenant-stripe-connect/index.ts calls canonical recordCapabilityRun using the admitted operation UUID, tenant and actor before releasing the hosted handoff. Existing merchant reservation/readback RPCs record canonical Rail transactionally; merchant-endpoint.test.ts refuses hosted success on receipt failure. No hosted URL or credential is persisted in receipt detail."
+    },
+    {
+      "tool": "sales_create_merchant_login_link",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "tenant-stripe-connect/index.ts records the exact admitted portal-link act through canonical recordCapabilityRun before releasing the hosted URL, with tenant/actor/operation identity and closed result facts. merchant-endpoint.test.ts proves single-use approval and unrecorded failure behavior; canonical fresh merchant readback persists through the existing Rail RPC."
+    },
+    {
+      "tool": "comms_setup_calling",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat recordCommsRun -> classifyCommsRun -> record_capability_run (the comms truth table: provisioned/adopted recorded; skipped_existing is a no-act and records nothing)"
+    },
+    {
+      "tool": "gmail_organize",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "comms-mailbox-command/index.ts records the executed organize act through canonical recordCapabilityRun after the provider round answers and the canonical mirror lands (governance payload carries actor/tenant/tool/approval channel), so every approved mailbox change has a Rail receipt; the door refuses before dispatch when the receipt cannot be written."
     }
   ]
 }

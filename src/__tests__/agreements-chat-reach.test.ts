@@ -18,7 +18,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { PAIGE_SPINE_CAPABILITIES, validateSpineRegistry, getSpineCapability } from "@/../supabase/functions/_shared/paige-spine/registry.ts";
-import { AGREEMENT_TOOLS } from "@/../supabase/functions/_shared/paige-spine/domains/agreement.ts";
+import { AGREEMENT_DRAFT_CAPABILITY, AGREEMENT_SEND_CAPABILITY, AGREEMENT_TOOLS } from "@/../supabase/functions/_shared/paige-spine/domains/agreement.ts";
 import { readAgreements, AGREEMENT_STATUSES } from "@/../supabase/functions/_shared/agreements/chat-read.ts";
 
 /** A caller-JWT rpc port double. Records every call so the arguments can be asserted. */
@@ -93,18 +93,106 @@ describe("INT-178 · agreements are reachable from the Spine", () => {
     }
   });
 
-  it("exposes exactly two chat tools, both named for reading and neither for sending", () => {
+  /**
+   * THIS ASSERTION CHANGED ON 2026-09-24, DELIBERATELY AND WITH ITS INTENT KEPT (§58).
+   *
+   * It used to read "exactly two chat tools, both named for reading and neither for sending" and
+   * it fired the moment `agreement_draft` landed — correctly, because it was guarding a real
+   * boundary. What it was actually protecting is NOT "every tool is a read". It is "nothing here
+   * reaches the client", and that is unchanged and still asserted below for every tool including
+   * the write. A draft is invisible outside the workspace and mints no signing link.
+   *
+   * The list stays EXACT rather than becoming a `toContain`, because the whole value of this test
+   * is that a fourth tool — a send, a resend, a void — cannot appear here without a human reading
+   * this comment first.
+   */
+  it("exposes four chat tools, and exactly ONE of them reaches outside the workspace", () => {
     const names = AGREEMENT_TOOLS.map((t) => t.function.name);
-    expect(names).toEqual(["agreement_list", "agreement_status"]);
+    expect(names).toEqual(["agreement_list", "agreement_status", "agreement_draft", "agreement_send"]);
     // The registered chatTool and the model-facing schema must be the same string, or the model
     // calls a name the dispatcher does not answer to and the capability is registered-but-dead.
+    // All four Spine-registered chatTools must agree with their schemas. `agreement_send` IS
+    // registered — and registered STRONGER than the original design, which left it undeclared
+    // because its orchestrator is an edge function and the validator demands a public symbol.
+    // This PR ships that symbol: the durable server-side act of the send is
+    // public.issue_agreement_signing_link (redefined here with the provenance test), and the
+    // capability declares the send as an external_effect under high risk, which is the class the
+    // declaration guard requires for a mutating tool that emails real people.
     expect(names).toEqual(
-      ["agreement.list", "agreement.status"].map((k) => getSpineCapability(k)?.action?.chatTool),
+      ["agreement.list", "agreement.status", "agreement.draft", "agreement.send"].map(
+        (k) => getSpineCapability(k)?.action?.chatTool,
+      ),
     );
-    for (const tool of AGREEMENT_TOOLS) {
+    const sendCapability = getSpineCapability("agreement.send");
+    expect(sendCapability?.action?.classification).toBe("external_effect");
+    expect(sendCapability?.action?.executor).toBe("public.issue_agreement_signing_link");
+    expect(sendCapability?.action?.riskPolicyKey).toBe("high");
+
+    const reads = AGREEMENT_TOOLS.filter(
+      (t) => t.function.name === "agreement_list" || t.function.name === "agreement_status",
+    );
+    expect(reads).toHaveLength(2);
+    for (const tool of reads) {
       expect(tool.function.description).toMatch(/READ-ONLY/);
       expect(tool.function.description).toMatch(/never sends/i);
     }
+
+    // THE WRITE CARRIES ITS OWN BOUNDARY, in the words a model actually reads. It must say it
+    // writes — a write that reads as a read is how a model reports work it never did — and it must
+    // say plainly that it does not send.
+    const draft = AGREEMENT_TOOLS.find((t) => t.function.name === "agreement_draft")!;
+    expect(draft.function.description).toMatch(/It WRITES/);
+    expect(draft.function.description).toMatch(/does NOT send/);
+    expect(draft.function.description).not.toMatch(/READ-ONLY/);
+
+    // EXACTLY ONE MUTATION among the agreement capabilities, and it is this one. A send or a void
+    // arriving later trips this line rather than slipping in beside the draft.
+    const mutations = ["agreement.list", "agreement.status", "agreement.draft"]
+      .map((k) => getSpineCapability(k))
+      .filter((c) => c?.action?.classification === "mutate");
+    expect(mutations.map((c) => c?.key)).toEqual(["agreement.draft"]);
+    expect(mutations[0]?.action?.approvalAuthority).toBe("chat-canonical");
+
+    // THE OUTWARD-FACING ONE, AND IT IS ONE. This is the assertion that must keep firing: a second
+    // tool that reaches a real person — a resend, a reminder — trips this rather than joining it.
+    const send = AGREEMENT_TOOLS.find((t) => t.function.name === "agreement_send")!;
+    expect(send.function.description).toMatch(/THIS REACHES A REAL PERSON/);
+    expect(send.function.description).toMatch(/cannot be recalled/);
+    // It must tell the model a typed yes will not do, because for a `high` action that is true:
+    // the server refuses the model-asserted channel outright and only an echoed fingerprint runs.
+    expect(send.function.description).toMatch(/typed yes is not enough/);
+    const outward = AGREEMENT_TOOLS.filter((t) => /REACHES A REAL PERSON/i.test(t.function.description));
+    expect(outward.map((t) => t.function.name)).toEqual(["agreement_send"]);
+  });
+
+  /**
+   * The send's governed declaration, executed at import for the same reason the draft's is. This
+   * one additionally pins the effect: `external_effect` is what forces `high` inside the kit, so a
+   * later edit that softened the effect would also soften the class, and the two must move together.
+   */
+  it("declares the send as an external effect, which is what forces its high class", () => {
+    expect(AGREEMENT_SEND_CAPABILITY.identity.id).toBe("agreement.send");
+    expect(AGREEMENT_SEND_CAPABILITY.effect).toBe("external_effect");
+    expect(AGREEMENT_SEND_CAPABILITY.governance.risk).toBe("high");
+    expect(AGREEMENT_SEND_CAPABILITY.governance.actionRiskKey).toBe("agreement_send");
+  });
+
+  /**
+   * THE DECLARATION IS ONLY A GUARD IF IT RUNS. `capability-kit-lint` reads `governance.actionRiskKey`
+   * and never `governance.risk`, so a declaration whose class contradicts the canonical policy passes
+   * CI and throws at the first cold start — measured: with `risk` flipped to "high", the lint exits 0
+   * while importing the module throws "Capability risk must match the canonical action-risk policy."
+   *
+   * The thing that closes that gap is this file IMPORTING the module at all, which executes the
+   * declaration under vitest. Asserting on the constructed object keeps that import load-bearing, so
+   * nobody later "tidies" it into a type-only import and silently reopens the hole.
+   */
+  it("constructs its governed declaration at import, which is what catches a risk that contradicts the policy", () => {
+    expect(AGREEMENT_DRAFT_CAPABILITY.identity.id).toBe("agreement.draft");
+    expect(AGREEMENT_DRAFT_CAPABILITY.governance.actionRiskKey).toBe("agreement_draft");
+    expect(AGREEMENT_DRAFT_CAPABILITY.governance.risk).toBe("ordinary");
+    // The kit derives approval from the canonical class rather than taking the declaration's word.
+    expect(AGREEMENT_DRAFT_CAPABILITY.governance.approval).toBe("confirm");
   });
 });
 

@@ -57,13 +57,16 @@ const DOMAIN_ICON: Record<MindDomainKey, string> = {
 };
 
 type Props = {
+  account?: string;
   accountContext?: { accountName?: string | null; accountType?: string | null } | null;
   openPaige?: () => void;
   preferenceScope?: MindOrbitPreferenceScope | null;
+  requestedKnowledgeId?: string | null;
 };
 
-export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope }: Props) {
-  const knowledge = useSoloKnowledge();
+export function SoloMindWorkspace({ account, accountContext, openPaige, preferenceScope, requestedKnowledgeId }: Props) {
+  const knowledge = useSoloKnowledge(requestedKnowledgeId);
+  const handledLink = useRef<string | null>(null);
   const command = useCommandCenter();
   const n8n = useN8nSpineReadiness();
 
@@ -193,6 +196,20 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope }
   useEffect(() => {
     setSelected((cur) => (cur ? records.find((r) => r.id === cur.id) ?? null : cur));
   }, [records]);
+
+  useEffect(() => {
+    if (requestedKnowledgeId && knowledge.requestedDocumentState !== 'available') {
+      setSelected(null);
+      handledLink.current = null;
+      return;
+    }
+    if (knowledge.loading) { handledLink.current = null; return; }
+    if (!requestedKnowledgeId || handledLink.current === requestedKnowledgeId) return;
+    handledLink.current = requestedKnowledgeId;
+    const record = records.find(r => r.id === `knowledge:${requestedKnowledgeId}`);
+    setSelected(record ?? null);
+    if (record) setDomainFilter('knowledge');
+  }, [knowledge.loading, knowledge.requestedDocumentState, requestedKnowledgeId, records]);
 
   // Restore focus to whatever opened the drawer. If that element was removed while the drawer was
   // open (the canvas re-mounting on a background data refresh detaches the stored `.mind-canvas`
@@ -453,9 +470,11 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope }
                         ? "You've cleared every card from the activity list. The records still live in the orb — restore them below."
                         : `${MIND_DOMAINS.find((d) => d.key === domainFilter)?.name}: every card here is cleared. The records still live in the orb — restore them below.`)
                     : (domainFilter === "all"
-                        ? "Nothing durable is indexed here yet. No sample records or invented relationships are substituted."
+                        ? "No records are loaded here yet. No sample records or invented relationships are substituted."
                         : `${MIND_DOMAINS.find((d) => d.key === domainFilter)?.name}: ${domains.find((d) => d.def.key === domainFilter)?.empty?.body ?? "Nothing on file yet."}`)
                 }</p>}
+                {requestedKnowledgeId && !knowledge.loading && ['missing', 'error'].includes(knowledge.requestedDocumentState) && <p role="status">{knowledge.requestedDocumentState === 'error' ? 'This Knowledge source could not be read. Refresh to try again.' : 'This Knowledge source was not found in the active workspace.'}</p>}
+                {knowledge.hasMore && <button type="button" className="mind-records-restore" disabled={knowledge.loading} onClick={() => void knowledge.loadMore()}>Load more knowledge</button>}
                 {dismissedCount > 0 && (
                   <button type="button" className="mind-records-restore" onClick={restoreDismissed}>
                     <RotateCcw size={12} />Restore {dismissedCount} dismissed
@@ -483,7 +502,7 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope }
             <section><h3>Record contract</h3><p>{selected.summary}</p></section>
             <section><h3>Source and provenance</h3><dl><dt>Current owner</dt><dd>{selected.owner}</dd><dt>Source</dt><dd>{selected.source}</dd><dt>Signal</dt><dd>{SIGNAL_LABEL[selected.state]}</dd><dt>Evidence</dt><dd>{selected.evidence}</dd><dt>Recorded</dt><dd>{selected.when}</dd></dl></section>
             <section><h3>Honesty boundary</h3><p>Mind indexes this attributable record. It does not infer private reasoning, causal relationships, or unavailable history.</p></section>
-            <section><h3>Next safe action</h3><button type="button" className="mind-button" onClick={closeInspector}><ChevronLeft size={14} />Back to the orb</button><button type="button" className="mind-button mind-button--paige" onClick={openExistingPaige}><ExternalLink size={14} />Open PAIGE · PARTIAL</button></section>
+            <section><h3>Next safe action</h3>{account && selected.id.startsWith("knowledge:") && <a className="mind-button" href={`/solo/${encodeURIComponent(account)}/settings/setup/knowledge-bucket?knowledge=${encodeURIComponent(selected.id.slice("knowledge:".length))}`}>Open source in Settings</a>}<button type="button" className="mind-button" onClick={closeInspector}><ChevronLeft size={14} />Back to the orb</button><button type="button" className="mind-button mind-button--paige" onClick={openExistingPaige}><ExternalLink size={14} />Open PAIGE · PARTIAL</button></section>
           </div>
         </aside>
       )}

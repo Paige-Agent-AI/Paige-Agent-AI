@@ -1,0 +1,6290 @@
+{
+ "c4c-matrix-c2-page-light-1536x770": {
+  "name": "c4c-matrix-c2-page-light-1536x770",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 1536,
+  "h": 770,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-dark-1536x770": {
+  "name": "c4c-matrix-c2-page-dark-1536x770",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1536,
+  "h": 770,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-light-1536x770": {
+  "name": "c4c-matrix-c2-drawer-light-1536x770",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1536,
+  "h": 770,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-dark-1536x770": {
+  "name": "c4c-matrix-c2-drawer-dark-1536x770",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1536,
+  "h": 770,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-light-1366x768": {
+  "name": "c4c-matrix-c2-page-light-1366x768",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-dark-1366x768": {
+  "name": "c4c-matrix-c2-page-dark-1366x768",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-light-1366x768": {
+  "name": "c4c-matrix-c2-drawer-light-1366x768",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-dark-1366x768": {
+  "name": "c4c-matrix-c2-drawer-dark-1366x768",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-light-1024x768": {
+  "name": "c4c-matrix-c2-page-light-1024x768",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 1024,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-dark-1024x768": {
+  "name": "c4c-matrix-c2-page-dark-1024x768",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1024,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-light-1024x768": {
+  "name": "c4c-matrix-c2-drawer-light-1024x768",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1024,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-dark-1024x768": {
+  "name": "c4c-matrix-c2-drawer-dark-1024x768",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1024,
+  "h": 768,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-light-900x1000": {
+  "name": "c4c-matrix-c2-page-light-900x1000",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 900,
+  "h": 1000,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-page-dark-900x1000": {
+  "name": "c4c-matrix-c2-page-dark-900x1000",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 900,
+  "h": 1000,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-light-900x1000": {
+  "name": "c4c-matrix-c2-drawer-light-900x1000",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 900,
+  "h": 1000,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-matrix-c2-drawer-dark-900x1000": {
+  "name": "c4c-matrix-c2-drawer-dark-900x1000",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 900,
+  "h": 1000,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c1-looking-before-asking-page-light": {
+  "name": "c4c-c1-looking-before-asking-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "hold": 2,
+  "untilLine": "Reading The Kestrel Group's agreement",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Reading The Kestrel Group's agreement",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-asks-your-call-page-light": {
+  "name": "c4c-c2-asks-your-call-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-picked-page-light": {
+  "name": "c4c-c2-picked-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 15.55,
+    "ring": [
+     {
+      "color": "rgb(33, 30, 36)",
+      "ratio": 14.83
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "true",
+     "false"
+    ],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-free-form-page-light": {
+  "name": "c4c-c2-free-form-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Type your answer…",
+    "contrast": [
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-answered-working-page-light": {
+  "name": "c4c-c3-answered-working-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "followHold": 3,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "work",
+     "text": "Creating the intake form",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-answered-done-page-light": {
+  "name": "c4c-c4-answered-done-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond",
+   "useThis",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-typed-answer-done-page-light": {
+  "name": "c4c-c4-typed-answer-done-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c5-asked-something-else-page-light": {
+  "name": "c4c-c5-asked-something-else-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "askElse"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "neutral",
+     "text": "Question not answered",
+     "textRatio": 10.1,
+     "metaRatio": null,
+     "glyphRatio": 5.37
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Not answered",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c6-skipped-page-light": {
+  "name": "c4c-c6-skipped-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "skip"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 14.72,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "You let PAIGE choose",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-then-approval-page-light": {
+  "name": "c4c-c3-then-approval-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "answerFollow": "card",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "wait",
+     "text": "Waiting for your OK",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Approve"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "mt-2 rounded-xl border p-3.5 transition-colors motion-reduce",
+    "outline": "rgb(101, 90, 150)",
+    "outlineStyle": "solid",
+    "ratio": 5.47,
+    "ring": []
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [
+    "pending"
+   ],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-open-page-light": {
+  "name": "c4c-reload-open-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 19.84,
+    "ring": [
+     {
+      "color": "rgb(251, 248, 244)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(101, 90, 150)",
+      "ratio": 5.47
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-answered-page-light": {
+  "name": "c4c-reload-answered-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-answered",
+  "noSend": true,
+  "after": [
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c1-looking-before-asking-drawer-light": {
+  "name": "c4c-c1-looking-before-asking-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "hold": 2,
+  "untilLine": "Reading The Kestrel Group's agreement",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Reading The Kestrel Group's agreement",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-asks-your-call-drawer-light": {
+  "name": "c4c-c2-asks-your-call-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-picked-drawer-light": {
+  "name": "c4c-c2-picked-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgb(33, 30, 36)",
+    "outlineStyle": "none",
+    "ratio": 15.55,
+    "ring": [
+     {
+      "color": "rgb(33, 30, 36)",
+      "ratio": 14.83
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "true",
+     "false"
+    ],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-free-form-drawer-light": {
+  "name": "c4c-c2-free-form-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Type your answer…",
+    "contrast": [
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-answered-working-drawer-light": {
+  "name": "c4c-c3-answered-working-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "followHold": 3,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "work",
+     "text": "Creating the intake form",
+     "textRatio": 10.1,
+     "metaRatio": 5.37,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-answered-done-drawer-light": {
+  "name": "c4c-c4-answered-done-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond",
+   "useThis",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-typed-answer-done-drawer-light": {
+  "name": "c4c-c4-typed-answer-done-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c5-asked-something-else-drawer-light": {
+  "name": "c4c-c5-asked-something-else-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "askElse"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "neutral",
+     "text": "Question not answered",
+     "textRatio": 10.1,
+     "metaRatio": null,
+     "glyphRatio": 5.37
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Not answered",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c6-skipped-drawer-light": {
+  "name": "c4c-c6-skipped-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "skip"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "You let PAIGE choose",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-then-approval-drawer-light": {
+  "name": "c4c-c3-then-approval-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "answerFollow": "card",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "wait",
+     "text": "Waiting for your OK",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Approve"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [
+    "pending"
+   ],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-open-drawer-light": {
+  "name": "c4c-reload-open-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-answered-drawer-light": {
+  "name": "c4c-reload-answered-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-answered",
+  "noSend": true,
+  "after": [
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(103, 97, 107)",
+    "outlineStyle": "none",
+    "ratio": 5.37,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 5.37,
+     "metaRatio": 5.37
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c1-looking-before-asking-page-dark": {
+  "name": "c4c-c1-looking-before-asking-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "hold": 2,
+  "untilLine": "Reading The Kestrel Group's agreement",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Reading The Kestrel Group's agreement",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-asks-your-call-page-dark": {
+  "name": "c4c-c2-asks-your-call-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-picked-page-dark": {
+  "name": "c4c-c2-picked-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgb(246, 242, 234)",
+    "outlineStyle": "none",
+    "ratio": 17.05,
+    "ring": [
+     {
+      "color": "rgb(246, 242, 234)",
+      "ratio": 16.29
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "true",
+     "false"
+    ],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-free-form-page-dark": {
+  "name": "c4c-c2-free-form-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Type your answer…",
+    "contrast": [
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-answered-working-page-dark": {
+  "name": "c4c-c3-answered-working-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "followHold": 3,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "work",
+     "text": "Creating the intake form",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-answered-done-page-dark": {
+  "name": "c4c-c4-answered-done-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond",
+   "useThis",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-typed-answer-done-page-dark": {
+  "name": "c4c-c4-typed-answer-done-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c5-asked-something-else-page-dark": {
+  "name": "c4c-c5-asked-something-else-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "askElse"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "neutral",
+     "text": "Question not answered",
+     "textRatio": 11.81,
+     "metaRatio": null,
+     "glyphRatio": 7.57
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Not answered",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c6-skipped-page-dark": {
+  "name": "c4c-c6-skipped-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "skip"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 16.18,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "You let PAIGE choose",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-then-approval-page-dark": {
+  "name": "c4c-c3-then-approval-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "answerFollow": "card",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "wait",
+     "text": "Waiting for your OK",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Approve"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "div",
+    "cls": "mt-2 rounded-xl border p-3.5 transition-colors motion-reduce",
+    "outline": "rgb(156, 143, 224)",
+    "outlineStyle": "solid",
+    "ratio": 6.43,
+    "ring": []
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [
+    "pending"
+   ],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-open-page-dark": {
+  "name": "c4c-reload-open-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 1.1,
+    "ring": [
+     {
+      "color": "rgb(17, 15, 21)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(156, 143, 224)",
+      "ratio": 6.43
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-answered-page-dark": {
+  "name": "c4c-reload-answered-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-answered",
+  "noSend": true,
+  "after": [
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c1-looking-before-asking-drawer-dark": {
+  "name": "c4c-c1-looking-before-asking-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "hold": 2,
+  "untilLine": "Reading The Kestrel Group's agreement",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "work",
+     "text": "Reading The Kestrel Group's agreement",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-asks-your-call-drawer-dark": {
+  "name": "c4c-c2-asks-your-call-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-picked-drawer-dark": {
+  "name": "c4c-c2-picked-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgb(246, 242, 234)",
+    "outlineStyle": "none",
+    "ratio": 17.05,
+    "ring": [
+     {
+      "color": "rgb(246, 242, 234)",
+      "ratio": 16.29
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "true",
+     "false"
+    ],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c2-free-form-drawer-dark": {
+  "name": "c4c-c2-free-form-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Type your answer…",
+    "contrast": [
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-answered-working-drawer-dark": {
+  "name": "c4c-c3-answered-working-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "followHold": 3,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "work",
+     "text": "Creating the intake form",
+     "textRatio": 11.81,
+     "metaRatio": 7.57,
+     "glyphRatio": 6.38
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [
+    "ptl-sweep"
+   ],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-answered-done-drawer-dark": {
+  "name": "c4c-c4-answered-done-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "pickSecond",
+   "useThis",
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c4-typed-answer-done-drawer-dark": {
+  "name": "c4c-c4-typed-answer-done-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c5-asked-something-else-drawer-dark": {
+  "name": "c4c-c5-asked-something-else-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "askElse"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "neutral",
+     "text": "Question not answered",
+     "textRatio": 11.81,
+     "metaRatio": null,
+     "glyphRatio": 7.57
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Not answered",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c6-skipped-drawer-dark": {
+  "name": "c4c-c6-skipped-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "ask",
+  "after": [
+   "skip"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "You let PAIGE choose",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-c3-then-approval-drawer-dark": {
+  "name": "c4c-c3-then-approval-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askfree",
+  "answerFollow": "card",
+  "after": [
+   "typeAnswer"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "wait",
+     "text": "Waiting for your OK",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Approve"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [
+    "pending"
+   ],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-open-drawer-dark": {
+  "name": "c4c-reload-open-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-answered-drawer-dark": {
+  "name": "c4c-reload-answered-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-answered",
+  "noSend": true,
+  "after": [
+   "openFirstTrace"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "ptl-row",
+    "outline": "rgb(173, 167, 159)",
+    "outlineStyle": "none",
+    "ratio": 7.57,
+    "ring": []
+   },
+   "steps": [
+    {
+     "status": "done",
+     "textRatio": 7.57,
+     "metaRatio": 7.57
+    }
+   ],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-rm-c3-reduced-motion-page-light": {
+  "name": "c4c-rm-c3-reduced-motion-page-light",
+  "scenario": "ask",
+  "followHold": 3,
+  "reduce": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": 5.37,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "work",
+     "text": "Creating the intake form",
+     "textRatio": 10.1,
+     "metaRatio": null,
+     "glyphRatio": 5.43
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Cancel PAIGE response"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     5.37
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-kbd-c2-option-focus-page-dark": {
+  "name": "c4c-kbd-c2-option-focus-page-dark",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "after": [
+   "kbdPick"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 1.1,
+    "ring": [
+     {
+      "color": "rgb(17, 15, 21)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(156, 143, 224)",
+      "ratio": 6.43
+     },
+     {
+      "color": "rgb(246, 242, 234)",
+      "ratio": 16.29
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "true",
+     "false"
+    ],
+    "submitDisabled": null,
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-zoom200-c2-page-light": {
+  "name": "c4c-zoom200-c2-page-light",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 683,
+  "h": 384,
+  "dpr": 2,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reflow320-c2-drawer-dark": {
+  "name": "c4c-reflow320-c2-drawer-dark",
+  "scenario": "ask",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 320,
+  "h": 720,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reflow320-c2-page-light": {
+  "name": "c4c-reflow320-c2-page-light",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "light",
+  "w": 320,
+  "h": 720,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-phone390-c4-page-dark": {
+  "name": "c4c-phone390-c4-page-dark",
+  "scenario": "ask",
+  "layout": "page",
+  "theme": "dark",
+  "w": 390,
+  "h": 844,
+  "after": [
+   "pickSecond",
+   "useThis"
+  ],
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 2 steps",
+     "textRatio": 16.18,
+     "metaRatio": 7.57,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [
+    "PAIGE is working",
+    "PAIGE has a question for you",
+    "PAIGE is working",
+    "Done"
+   ],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": null,
+    "hint": null,
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     7.57
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-reopened-page-light": {
+  "name": "c4c-reload-reopened-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-reopened",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 19.84,
+    "ring": [
+     {
+      "color": "rgb(251, 248, 244)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(101, 90, 150)",
+      "ratio": 5.47
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": "Answered below",
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     5.37,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-open-with-file-page-light": {
+  "name": "c4c-open-with-file-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "doc": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 19.84,
+    "ring": [
+     {
+      "color": "rgb(251, 248, 244)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(101, 90, 150)",
+      "ratio": 5.47
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "new",
+    "hint": "Your file goes as a new message — her question stays unanswered",
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-reopened-drawer-light": {
+  "name": "c4c-reload-reopened-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-reopened",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    },
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": "Answered below",
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     5.37,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-open-with-file-drawer-light": {
+  "name": "c4c-open-with-file-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "doc": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 14.72,
+     "metaRatio": null,
+     "glyphRatio": 14.72
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "new",
+    "hint": "Your file goes as a new message — her question stays unanswered",
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.67,
+     15.55,
+     5.32
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-reopened-page-dark": {
+  "name": "c4c-reload-reopened-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-reopened",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 1.1,
+    "ring": [
+     {
+      "color": "rgb(17, 15, 21)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(156, 143, 224)",
+      "ratio": 6.43
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": "Answered below",
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     7.57,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-open-with-file-page-dark": {
+  "name": "c4c-open-with-file-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "doc": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": {
+    "tag": "button",
+    "cls": "flex min-h-11 w-full items-start gap-2.5 rounded-[10px] bord",
+    "outline": "rgba(0, 0, 0, 0)",
+    "outlineStyle": "solid",
+    "ratio": 1.1,
+    "ring": [
+     {
+      "color": "rgb(17, 15, 21)",
+      "ratio": 1.05
+     },
+     {
+      "color": "rgb(156, 143, 224)",
+      "ratio": 6.43
+     }
+    ]
+   },
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "new",
+    "hint": "Your file goes as a new message — her question stays unanswered",
+    "hintButtons": 0,
+    "placeholder": "Talk while she works…",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-reopened-drawer-dark": {
+  "name": "c4c-reload-reopened-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-reopened",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    },
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 2,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": "Answered below",
+    "answering": "answer",
+    "hint": "PAIGE is waiting on your answer above",
+    "hintButtons": 1,
+    "placeholder": "Or type your own answer…",
+    "contrast": [
+     7.57,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-open-with-file-drawer-dark": {
+  "name": "c4c-open-with-file-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload",
+  "noSend": true,
+  "doc": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "wait",
+     "text": "Your call",
+     "textRatio": 16.18,
+     "metaRatio": null,
+     "glyphRatio": 16.18
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 3,
+    "checked": [
+     "false",
+     "false",
+     "false"
+    ],
+    "submitDisabled": "true",
+    "record": null,
+    "answering": "new",
+    "hint": "Your file goes as a new message — her question stays unanswered",
+    "hintButtons": 0,
+    "placeholder": "Message PAIGE — type / for commands",
+    "contrast": [
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.98,
+     17.05,
+     7.52
+    ],
+    "answerBubbles": 1
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-claimed-page-light": {
+  "name": "c4c-reload-claimed-page-light",
+  "layout": "page",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-claimed",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": "claimed",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
+    "hintButtons": 1,
+    "placeholder": "Send your answer again…",
+    "contrast": [
+     5.37,
+     5.32
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-claimed-drawer-light": {
+  "name": "c4c-reload-claimed-drawer-light",
+  "layout": "drawer",
+  "theme": "light",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-claimed",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": "claimed",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
+    "hintButtons": 1,
+    "placeholder": "Send your answer again…",
+    "contrast": [
+     5.37,
+     5.32
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-claimed-page-dark": {
+  "name": "c4c-reload-claimed-page-dark",
+  "layout": "page",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-claimed",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": "claimed",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
+    "hintButtons": 1,
+    "placeholder": "Send your answer again…",
+    "contrast": [
+     7.57,
+     7.52
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reload-claimed-drawer-dark": {
+  "name": "c4c-reload-claimed-drawer-dark",
+  "layout": "drawer",
+  "theme": "dark",
+  "w": 1366,
+  "h": 768,
+  "scenario": "askreload-claimed",
+  "noSend": true,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 7.57,
+     "metaRatio": null,
+     "glyphRatio": 10.24
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": "claimed",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
+    "hintButtons": 1,
+    "placeholder": "Send your answer again…",
+    "contrast": [
+     7.57,
+     7.52
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ },
+ "c4c-reflow320-reload-claimed-page-light": {
+  "name": "c4c-reflow320-reload-claimed-page-light",
+  "scenario": "askreload-claimed",
+  "noSend": true,
+  "layout": "page",
+  "theme": "light",
+  "w": 320,
+  "h": 720,
+  "measured": {
+   "overflow": {
+    "doc": false,
+    "transcript": false
+   },
+   "lines": [
+    {
+     "kind": "done",
+     "text": "What PAIGE did · 1 step",
+     "textRatio": 5.37,
+     "metaRatio": null,
+     "glyphRatio": 4.85
+    }
+   ],
+   "gold": [
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "New chat"
+    },
+    {
+     "prop": "bgimage",
+     "value": "rgb(247, 200, 100)",
+     "tag": "button",
+     "label": "Send message"
+    }
+   ],
+   "sweeps": [],
+   "focus": null,
+   "steps": [],
+   "footer": null,
+   "cardResult": null,
+   "announcer": [],
+   "cot": false,
+   "c4Language": false,
+   "syntheticBubble": false,
+   "resumedSeams": 0,
+   "lineCount": 1,
+   "reportCard": [],
+   "ask": {
+    "options": 0,
+    "checked": [],
+    "submitDisabled": null,
+    "record": "Answered below",
+    "answering": "claimed",
+    "hint": "PAIGE has your answer. No reply within 10 minutes? Send it again and she'll ask again.",
+    "hintButtons": 1,
+    "placeholder": "Send your answer again…",
+    "contrast": [
+     5.37,
+     5.32
+    ],
+    "answerBubbles": 2
+   },
+   "pageErrors": [],
+   "toggleInView": null
+  }
+ }
+}

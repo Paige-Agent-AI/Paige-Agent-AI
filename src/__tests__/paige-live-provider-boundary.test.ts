@@ -40,11 +40,29 @@ describe("Paige voice provider boundary", () => {
   it("reserves before provider entry, releases only typed pre-dispatch failures, and keeps ambiguous failures counted", () => {
     const reserve = tts.indexOf('rpc("reserve_paige_voice_cost_internal"');
     const provider = tts.indexOf("elevenlabsTts({");
+    // INT-324: OpenAI message playback reserves through the same seam before its provider call.
+    const openaiProvider = tts.indexOf("synthesizeSpeechStream(");
+    const providerBranch = tts.indexOf('if (attempt.provider === "elevenlabs")');
     const cache = tts.indexOf("download(cachePath)");
     expect(cache).toBeGreaterThan(-1);
     expect(cache).toBeLessThan(reserve);
     expect(reserve).toBeGreaterThan(-1);
     expect(reserve).toBeLessThan(provider);
+    expect(openaiProvider).toBeGreaterThan(-1);
+    expect(reserve).toBeLessThan(openaiProvider);
+    // One reservation call site, outside (before) the provider branch — not one copy per provider.
+    expect(tts.match(/rpc\("reserve_paige_voice_cost_internal"/g)).toHaveLength(1);
+    expect(reserve).toBeLessThan(providerBranch);
+    // Exactly one release, and only behind the typed pre-dispatch check; both providers route
+    // their failures through it.
+    expect(tts.match(/_outcome: "released"/g)).toHaveLength(1);
+    expect(tts).toMatch(/if \(e instanceof NeedsConfigError\) \{\s*await admin\.rpc\("settle_paige_voice_cost_internal", \{[^}]*_outcome: "released"/);
+    expect(tts.match(/await releaseIfPreDispatch\(e\);/g)).toHaveLength(2);
+    // OpenAI commits once the provider answered, BEFORE the stream is handed to the client.
+    const openaiCommit = tts.indexOf("if (!(await commit())) {", openaiProvider);
+    expect(openaiCommit).toBeGreaterThan(openaiProvider);
+    expect(openaiCommit).toBeLessThan(tts.indexOf("srcBody.tee()"));
+    expect(tts).not.toMatch(/if \(!srcBody\) \{[\s\S]{0,300}(_outcome: "released"|releaseIfPreDispatch)/);
     expect(tts).toContain("e instanceof NeedsConfigError");
     expect(tts).toContain('_outcome: "released"');
     expect(tts).toContain('_outcome: "committed"');

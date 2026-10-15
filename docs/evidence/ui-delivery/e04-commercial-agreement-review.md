@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: an authorized managing owner can inspect full propose
 FLOW_PROTOTYPE: PASS: local ten-state walkthrough exercised at 1366 and 390 widths before implementation; owner full-delivery instruction authorizes routine UX decisions, not final product acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: managing owner reviews the saved client, services, economics, dated obligations and conditions in the invoice's existing commercial inspection.
 VISUAL_DIRECTION: PASS: existing typography, themed body portal, bounded reader and two accessible exits; no new workspace or navigation system.
-AUTOMATED_EVIDENCE: PASS: affected Vitest 54 tests; agreement Deno 82 tests and 16 steps; scoped lint clean; production build completed in 1m21s. App tsc retains ten known baseline diagnostics, zero in edited files.
+AUTOMATED_EVIDENCE: PASS: affected Vitest 54 tests, current-main composition batch 55 including shared agreement; agreement Deno 82 tests and 16 steps; scoped lint clean; final product build completed in 1m4s. App tsc retains ten known baseline diagnostics, zero in edited files.
 STATIC_EVIDENCE: PASS: exact source/account identity, existing authenticated reader and permission floor, shared canonical schedule/hash/composer; no writes or financial recalculation.
 RENDERED_EVIDENCE: PASS: seventeen isolated actual-source browser cases, twelve exact viewport PNGs in assets/e04-commercial-agreement-review; synthetic transport, no hosted identity.
 BEHAVIORAL_EVIDENCE: PASS: isolated mounted package inspection opens full proposal; close/Escape restores focus, pending completion and account retirement cannot restore stale content; missing/refused/error and long wording exercised.
@@ -27,7 +27,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: authenticated Solo with PAIGE open not dri
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: isolated reader frame is not the full authenticated Solo shell.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: authenticated Solo with PAIGE open not driven.
 UNVERIFIED: independent non-author source/finish review, exact-head hosted CI, deployment, signing integration, effective terms, obligations, actual provider settlement and owner acceptance.
-INTERNAL_BUILD_IDENTITY: implementation=ce7f2bc1a2ae83152460e7998ead451bdb21b40b; deployment=UNVERIFIED; environment=local development browser and source runners; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
+INTERNAL_BUILD_IDENTITY: implementation=a2cbc70d0fb564bb37d45af430a7c20998a99b41; deployment=UNVERIFIED; environment=local development browser and source runners; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record
 RELEASE_CHANNEL: development: local implementation only, no production activation.
 RELEASE_CLASSIFICATION: internal-only: incomplete O1 review integration supporting the full twelve-outcome E04 delivery.
 CUSTOMER_RELEASE_IDENTITY: none: full E04 remains incomplete.
@@ -54,3 +54,9 @@ The SQL package projection intentionally omits payment-row labels. An initial fi
 Impeccable context, hardening and craft passes were applied using the installed skill (upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md). Its detector exited successfully without emitting findings; no numerical score or independent finish review is invented. Review is self-reviewed, lower assurance. Required independent review remains owed; no other agent was assigned.
 
 ANT-51 retains the twelve-outcome matrix; ANT-52 retains protected acceptance. All twelve outcomes remain mandatory and incomplete. These local fixtures establish no authenticated acceptance, deployment, immutable signing or payment result. Shipped Delivery Log: N/A, this child has not reached main.
+
+## Current-main composition and inset regression
+
+This child retains main299a44b6f9e408ce2cdc907efa45e7cb22f64b8c and the exact-signing parent87b68fd969a552667760f5b5d2a313184f21dab9, including its byte-identical forward migration renames. The child itself adds no migration or Edge handler. The shared Dialog is byte-identical to that parent.
+
+Fresh actual-source inspection found a different, concrete defect from the older capture-framing artifact: Solo's root reset overrode Dialog padding, leaving wording against its border. A browser computed-inset regression failed on the old style. The scoped two-class selector now gives this reader its own responsive inset and automatic height without changing shared tokens or primitives. All seventeen browser cases then passed, and the regenerated exact viewport images were inspected together at phone and desktop. No further visual iteration followed. The final source build passed in1m4s; scoped lint and the1302-migration version collision scan passed. Impeccable detection exited0 with no emitted findings; this remains author review, lower assurance.

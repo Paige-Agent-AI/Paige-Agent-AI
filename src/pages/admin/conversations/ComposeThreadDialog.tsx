@@ -34,10 +34,11 @@ import type { FocusedClient } from "@/components/paige/commandCenterTypes";
 import {
   type ChannelType, type EmailTemplate, CHANNEL_ICON, CHANNEL_LABEL,
   canonicalThreadKey, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  useCommsAttachments,
+  useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
 } from "./inbox-shared";
 import { AttachmentChip } from "./AttachmentChip";
 import { selectComposeConnector } from "./connectorRouting";
+import { createAccountEpochGuard } from "./solo/soloConversationModel";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // Structural subset of the page's Connector — only what the channel picker needs.
@@ -84,6 +85,14 @@ export function ComposeThreadDialog({
    *  and open the new/merged thread (§36 proactive surfacing). */
   onSent: (threadKey: string) => void;
 }) {
+  // Undo outlives the dialog in a toast. A closed dialog in the same workspace is valid;
+  // switching workspace (including A-B-A) or unmounting must invalidate that old action.
+  const cancellationEpochRef = useRef(createAccountEpochGuard(tenantId));
+  useEffect(() => {
+    const guard = cancellationEpochRef.current;
+    guard.advance(tenantId);
+    return () => { guard.advance(null); };
+  }, [tenantId]);
   // send-message's contract is email|sms today — never offer a channel it can't send.
   const sendable = activeConnectors.filter(
     (c) => c.channel_type === "email" || c.channel_type === "sms",
@@ -378,6 +387,7 @@ export function ComposeThreadDialog({
       ? canonicalThreadKey(channel, tenantId, toAddress, client.id)
       : `${channel}:${toAddress}`; // fallback only if tenant unresolved (should not happen)
 
+    const cancellationEpoch = cancellationEpochRef.current.capture();
     setSending(true);
     try {
       // Default = undo-send: queue 30s out so the toast's Undo can cancel before delivery
@@ -413,15 +423,12 @@ export function ComposeThreadDialog({
           toast("Sending…", {
             action: {
               label: "Undo",
-              onClick: () => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                void (supabase as any).rpc("cancel_scheduled_message", { _id: id }).then(
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ({ data: ok, error: e }: any) => {
-                    if (e || ok === false) toast.error("Too late — Paige already sent it.");
-                    else toast.success("Undone.");
-                  },
-                );
+              onClick: async () => {
+                if (!cancellationEpochRef.current.accept(cancellationEpoch)) return;
+                const confirmed = await requestScheduledCancellation(id);
+                if (!cancellationEpochRef.current.accept(cancellationEpoch)) return;
+                if (!confirmed) toast.error(CANCELLATION_UNCONFIRMED_COPY);
+                else toast.success("Undone.");
               },
             },
             duration: UNDO_WINDOW_MS,

@@ -34,7 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  useCommsAttachments,
+  useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
@@ -422,7 +422,8 @@ export default function ClientsConversations() {
   // still carries an explicit epoch. A late response from account A can therefore never paint
   // into account B even if it resolves during the remount/route transition gap.
   useEffect(() => {
-    accountEpochRef.current.advance(activeTenantId);
+    const guard = accountEpochRef.current;
+    guard.advance(activeTenantId);
     tenantIdRef.current = null;
     setRows([]); setConnectors([]); setLoading(true); setRetrying(false); setMessageLoadFailure(null); setThreadLoadFailure(null); setConnectorReadReported(true); setSelectedKey(null);
     pendingSelectRef.current = null; contactSeekHandledRef.current = null;
@@ -434,6 +435,7 @@ export default function ClientsConversations() {
     setAppendSignature(true); setDragOver(false); setUndo(null);
     setHandlingMode("human"); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
     setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); setLeadReplyApprovalId(null); suppReqRef.current += 1;
+    return () => { guard.advance(null); };
   }, [activeTenantId, resetAttachments]);
 
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
@@ -940,10 +942,9 @@ export default function ClientsConversations() {
   // Cancel a queued scheduled send (R3) — routed through the any handle (typed-RPC ratchet).
   const cancelScheduled = async (id: string) => {
     const epoch = accountEpochRef.current.capture();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: id });
+    const confirmed = await requestScheduledCancellation(id);
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
+    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
     toast.success("Canceled — back to your draft."); void load(); void loadThreads();
   };
 
@@ -1096,11 +1097,9 @@ export default function ClientsConversations() {
 
   const cancelUndo = useCallback(async (messageId: string) => {
     const epoch = accountEpochRef.current.capture();
-    // R4: cancel through the any handle so the typed-RPC ratchet doesn't break tsc.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: messageId });
+    const confirmed = await requestScheduledCancellation(messageId);
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
+    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
     toast.success("Undone — back to your draft.");
     setUndo(null); void load();
   }, [load]);

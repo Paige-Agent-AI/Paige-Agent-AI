@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import ClientsConversations from "@/pages/admin/ClientsConversations";
 import { fixtureLog } from "./supabase-stub";
 import "@/index.css";
@@ -19,6 +20,7 @@ function Harness() {
       {paige?<aside style={{width:"min(34vw,420px)",flexShrink:0,padding:16,borderLeft:"1px solid var(--pg-line)"}}>PAIGE panel width fixture. The existing production panel is unchanged.</aside>:null}
     </div>
     <output aria-label="Simulated boundary calls" style={{fontSize:11,padding:"3px 12px"}}>{fixtureLog.join(" · ") || "No boundary calls"}</output>
+    <Toaster />
   </div>;
 }
 createRoot(document.getElementById("root")!).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><BrowserRouter><Harness /></BrowserRouter></QueryClientProvider>);

@@ -427,6 +427,22 @@ export function useCommsAttachments(getTenantId: () => string | null): CommsAtta
  *  Undo can cancel it before delivery (owner-set 30s). */
 export const UNDO_WINDOW_MS = 30_000;
 
+export const CANCELLATION_UNCONFIRMED_COPY = "Couldn't confirm cancellation. Check this conversation's status before trying again.";
+
+/** Reads the existing cancellation RPC's receipt; it grants no authority and never sends.
+ * False may mean not found, refused or a lost claim race. None proves delivery.
+ * Missing/malformed/transport responses must not become an invented Undo success. */
+export async function requestScheduledCancellation(messageId: string): Promise<boolean> {
+  try {
+    // The canonical RPC is not yet in the generated client types (same typed-RPC ratchet).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const receipt: unknown = await (supabase as any).rpc("cancel_scheduled_message", { _id: messageId });
+    if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) return false;
+    const result = receipt as { data?: unknown; error?: unknown };
+    return result.error === null && result.data === true;
+  } catch { return false; }
+}
+
 export interface SendResult {
   outcome: string;          // sent | queued | queued_scheduled | blocked_* | failed
   reason: string | null;

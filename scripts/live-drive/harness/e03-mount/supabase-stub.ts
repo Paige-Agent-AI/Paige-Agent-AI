@@ -7,12 +7,14 @@ const key = `contact:${tenantId}:${contactId}`;
 const now = new Date().toISOString();
 const contact = { id: contactId, first_name: "Test", last_name: "Lead", entity_name: null, status: "active", lifecycle_stage: "new_lead", source: "paige_form", tags: [], created_at: now, created_by_channel_type: "form", dnd_active: false, client_contact_methods: [{ kind: "email", value: "lead@example.test", is_primary: true, position: 0 }] };
 const messages: Record<string, unknown>[] = [{ id: "55555555-5555-4555-8555-555555555555", tenant_id: tenantId, thread_key: key, contact_id: contactId, connector_id: null, channel_type: "form", direction: "inbound", status: "received", sender: { address: "lead@example.test", display_name: "Test Lead" }, recipients: [], subject: "Form inquiry: Website inquiry", body_text: "Website form inquiry. The visitor's identity has not been verified.\n\nQuestion: Could we arrange an introductory call?", attachments: [], sent_at: now, created_at: now, clients: contact }];
+const scenario = new URLSearchParams(location.search).get("case");
+if (scenario?.startsWith("cancel-")) messages.push({ id:"88888888-8888-4888-8888-888888888888",tenant_id:tenantId,thread_key:key,contact_id:contactId,connector_id:connectorId,channel_type:"email",direction:"outbound",status:"queued",sender:{address:"hello@business.example"},recipients:[{address:"lead@example.test"}],subject:"Scheduled introductory reply",body_text:"Thanks for your inquiry. We can arrange an introductory call.",attachments:[],scheduled_for:new Date(Date.now()+300000).toISOString(),created_at:now,clients:contact });
 const connector = { id: connectorId, tenant_id: tenantId, channel_type: "email", provider: "sendgrid", display_name: "PAIGE email", from_address: "hello@business.example", status: "active", active: true };
 let resolved = false;
 export const fixtureLog: string[] = [];
 const log = (entry: string) => { fixtureLog.push(entry); window.dispatchEvent(new Event("e03-fixture-log")); };
 function from(table: string) {
-  let filters: Array<[string, unknown]> = []; let head = false;
+  const filters: Array<[string, unknown]> = []; let head = false;
   const result = () => {
     let rows: Record<string, unknown>[] = table === "messages" ? messages
       : table === "threads" ? [{ id: "66666666-6666-4666-8666-666666666666", tenant_id: tenantId, thread_key: key, contact_id: contactId, archived_at: null, snoozed_until: null, labels: [], unread_count: 1, last_message_at: now, last_direction: "inbound", clients: contact }]
@@ -34,10 +36,18 @@ function from(table: string) {
 }
 export const supabase = {
   from,
-  rpc: async (name: string) => ({ data: name === "current_user_tenant_id" ? tenantId : name === "is_tenant_admin" ? true : null, error: null }),
+  rpc: async (name: string) => {
+    if (name === "cancel_scheduled_message") {
+      log("SIMULATED cancellation receipt; no provider call");
+      const confirmed = scenario === "cancel-confirmed";
+      if (confirmed) { const queued=messages.find(m=>m.status==="queued"); if (queued) {queued.status="draft";queued.scheduled_for=null;} }
+      return {data:confirmed?true:null,error:null};
+    }
+    return { data: name === "current_user_tenant_id" ? tenantId : name === "is_tenant_admin" ? true : null, error: null };
+  },
   channel: () => { const channel = { on: () => channel, subscribe: () => channel }; return channel; }, removeChannel: () => {},
   auth: { getUser: async () => ({ data: { user: { id: "77777777-7777-4777-8777-777777777777" } }, error: null }), getSession: async () => ({ data: { session: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
-  functions: { invoke: async (name: string, options: { body: Record<string, any> }) => {
+  functions: { invoke: async (name: string, options: { body: { operation_id: string; approved_fingerprint?: string; command: { subject: string; body: string } } }) => {
     if (name !== "comms-email-command") return { data: null, error: { message: "Fixture refuses unimplemented invocation" } };
     const call = options.body;
     log(call.approved_fingerprint ? "SIMULATED exact approval; no provider call" : "SIMULATED prepare; no send");

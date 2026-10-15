@@ -18,7 +18,7 @@ function visit(node: ts.Node) {
 visit(ast);
 if (!branch) throw new Error('Canonical Planning dispatch missing');
 const compiled = ts.transpileModule(`async function dispatch(tc, personaCtx, supabaseClient, toolResults,
-  databaseAnswered, OUTCOME_UNKNOWN_NOTE, user, recordCapabilityRun, supabase, planningExecutionState) ${branch.getText(ast)}`,
+  databaseAnswered, OUTCOME_UNKNOWN_NOTE, user, recordCapabilityRun, supabase, requestExecutionState) ${branch.getText(ast)}`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
 const dispatch = new Function(`${compiled}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -136,7 +136,7 @@ describe('canonical Planning Chat execution and recovery', () => {
     expect(result).toMatchObject({ success: false, outcome_unknown: true });
   });
   it('holds subsequent writes after missing evidence, but not after an answered refusal', async () => {
-    expect(source).toContain('MUTATING_TOOLS.has(tc.function.name) && (planningExecutionState.needsReview || interactive &&');
+    expect(source).toContain('MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&');
     const uncertain = await drive({ readback: null });
     expect(uncertain.result.outcome_unknown).toBe(true);
     expect(uncertain.executionState.needsReview).toBe(true);
@@ -164,5 +164,8 @@ describe('canonical Planning Chat execution and recovery', () => {
     }
     expect(resolver.resolveWriteTargetId({ item_id: item }, { outcome_unknown: true }, 'plan_update_item')).toBe(item);
     expect(resolver.resolveWriteTargetId({}, { contact_id: item }, 'crm_create_contact')).toBe(item);
+    expect(resolver.WRITE_TARGET.save_to_knowledge_base).toBe('tenant_knowledge_docs');
+    expect(resolver.resolveWriteTargetId({}, { knowledge_doc_id: item }, 'save_to_knowledge_base')).toBe(item);
+    expect(resolver.resolveWriteTargetId({ doc_id: item, plan_id: plan }, {}, 'save_to_knowledge_base')).toBeNull();
   });
 });

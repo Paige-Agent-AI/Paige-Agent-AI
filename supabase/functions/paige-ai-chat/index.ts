@@ -5438,9 +5438,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const autonomyModeCache = new Map<string, string>();
     // A lost Knowledge acknowledgement is never retried by the model in this turn.
     const uncertainKnowledgeDocuments = new Set<string>();
-    // A Planning RPC can commit before its acknowledgement/readback is lost.
+    // A native write can commit before its acknowledgement/readback is lost.
     // Hold this request's later writes; persisted interactive effects hold successors.
-    const planningExecutionState = { needsReview: false };
+    const requestExecutionState = { needsReview: false };
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
       let mode = "confirm"; // safe default — never assume autopilot
@@ -10512,7 +10512,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         callerOwnTenantMemo = null;
         const resultsBeforeThisCall = toolResults.length;
         try {
-        if (MUTATING_TOOLS.has(tc.function.name) && (planningExecutionState.needsReview || interactive &&
+        if (MUTATING_TOOLS.has(tc.function.name) && (requestExecutionState.needsReview || interactive &&
             (interactiveReceiptScanSaturated || interactiveUnresolvedEffects.some((effect) => MUTATING_TOOLS.has(effect.tool))))) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
             error: "prior_effect_reconciliation_required",
@@ -15528,34 +15528,58 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else if (tc.function.name === "save_to_knowledge_base") {
           // Grow the tenant's brain (§15). Calls kb-ingest-doc with the CALLER's JWT
           // so the entry is embedded + tenant-scoped via RLS (never cross-tenant).
+          let knowledgeRequestStarted = false;
+          const knowledgeUnknown = (docId?: unknown) => {
+            requestExecutionState.needsReview = true;
+            return { success: false, ok: false, outcome_unknown: true,
+              ...(typeof docId === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(docId) ? { doc_id: docId, knowledge_doc_id: docId } : {}),
+              error: "The knowledge save could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
+          };
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
+            const knowledgeTenant = personaCtx?.tenant_id;
+            if (typeof knowledgeTenant !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(knowledgeTenant)) throw new Error("knowledge_workspace_unresolved");
+            knowledgeRequestStarted = true;
             const kbResp = await fetch(`${supabaseUrl}/functions/v1/kb-ingest-doc`, {
               method: "POST",
               headers: { Authorization: authHeader, "Content-Type": "application/json" },
               body: JSON.stringify({
                 title: args.title, content: args.content, summary: args.summary,
-                category: args.category, tags: args.tags, source: "paste",
+                category: args.category, tags: args.tags, source: "paste", tenant_id: knowledgeTenant, share_to_network: false,
               }),
             });
             const kbText = await kbResp.text();
-            let kbData: any; try { kbData = JSON.parse(kbText); } catch { kbData = { raw: kbText }; }
+            let kbData: Record<string, unknown> = {};
+            try { const parsed = JSON.parse(kbText); if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) kbData = parsed; } catch { /* An HTML/gateway response is not native evidence. */ }
             // Saved ONLY if the transport succeeded AND the doc actually embedded
             // (kb-ingest-doc returns 200 + ok:false when the embedder is down; a doc
             // with 0 vectors is not searchable, so it is NOT a real save).
-            const kbOk = kbResp.ok && kbData?.ok !== false && kbData?.error == null && kbData?.chunk_count !== 0;
+            const kbOk = kbResp.ok && kbData.ok === true && kbData.error == null
+              && typeof kbData.doc_id === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(kbData.doc_id)
+              && Number.isSafeInteger(kbData.chunk_count) && (kbData.chunk_count as number) > 0 && typeof kbData.embedded === "boolean"
+              && kbData.not_applied !== true && kbData.ingestion_started !== false;
             // §13: DECLARE the binding. The only `result` in this handler is the CRM-operator
             // `let result` (declared inside the try that opens at the `crm_*` branch and closes
             // long before this branch), so a bare `result =` here is an assignment to an
             // undeclared identifier — a ReferenceError under ESM implicit strict mode, swallowed
             // by this branch's own catch. Paige then reported "it did NOT save" on every save,
             // including the ones kb-ingest-doc had genuinely completed.
+            const notApplied = kbData.ok !== true && kbData.error !== "persistence_unverified" && !kbData.doc_id
+              && kbData.embedded !== true && (kbData.chunk_count === undefined || kbData.chunk_count === 0)
+              && (kbData.not_applied === true || kbData.ingestion_started === false);
             const result = kbOk
-              ? { success: true, ...kbData, note: "Saved to the knowledge base and embedded — it's searchable now. Tell the operator it's stored; never mention internal table/function names." }
-              : { success: false, ...kbData, note: "It did NOT save — the entry couldn't be embedded/stored (the knowledge service may be down). Tell the operator plainly that it did not save and you'll retry once it's back. Do NOT say it's saved or 'in memory'." };
+              ? { success: true, ok: true, doc_id: kbData.doc_id, knowledge_doc_id: kbData.doc_id, chunk_count: kbData.chunk_count, embedded: kbData.embedded,
+                partial: kbData.embedded !== true,
+                note: kbData.embedded === true
+                  ? "The knowledge entry and its indexed chunks are saved and verified by the knowledge service."
+                  : "The entry is saved, but indexing is incomplete. Only part of its content is searchable; inspect the saved entry before making another change." }
+              : notApplied ? { success: false, ok: false, not_applied: true,
+                error: "The knowledge service refused the save or verified removal of the incomplete new entry. Nothing was saved." }
+              : knowledgeUnknown(kbData.doc_id);
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
-          } catch (e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "kb_error" }) });
+          } catch {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(knowledgeRequestStarted ? knowledgeUnknown()
+              : { success: false, ok: false, not_applied: true, error: "The current workspace or request could not be verified. Nothing was saved." }) });
           }
         } else if (tc.function.name === "propose_action") {
           // Propose→confirm: draft a consequential outbound action and FILE it as a
@@ -16281,7 +16305,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let planningWriteAttempted = false;
           let planningRecordReference: Record<string, string> = {};
           const planningUnknown = () => {
-            planningExecutionState.needsReview = true;
+            requestExecutionState.needsReview = true;
             return { ...planningRecordReference, success: false, outcome_unknown: true,
               error: "The planning change could not be confirmed.", note: OUTCOME_UNKNOWN_NOTE };
           };
@@ -16586,7 +16610,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         zapier_run_action: "external_provider",
         ghl_run_action: "external_provider",
         forge_subagent: "paige_subagents", delegate_to_subagent: "paige_subagents",
-        save_to_knowledge_base: "knowledge_base",
+        save_to_knowledge_base: "tenant_knowledge_docs",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
         email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
@@ -16733,6 +16757,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const resolveWriteTargetId = (args: any, out: any, tool?: string): string | null => {
+        if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // A Planning item's parent plan/contact/action is not the record changed.
         if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item"].includes(tool)) {
           const locator = out?.record_locator;
@@ -18227,7 +18252,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (liveRuntimeScope) throw new Error("live_answer_unavailable");
             // Couldn't finish. Show the fallback AND persist it, so a reload
             // shows the same thing the user saw (not a question with no reply).
-            const fallback = planningExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+            const fallback = requestExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
               ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
               : "I gathered what I could but couldn't finish that — mind trying again?";
             finalAssistantText = fallback;
@@ -18422,7 +18447,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // The live loop or final stream failed mid-flight. Never leave the client
            // with a truncated stream — emit a clean fallback reply and a [DONE].
            console.error("[paige] live reasoning stream failed:", (e as Error)?.message);
-           const snag = planningExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
+           const snag = requestExecutionState.needsReview || interactiveEffects.some(effect => effect.outcome === "outcome_unknown")
              ? "I couldn't confirm whether the change went through. Check the original record before asking again so it doesn't happen twice."
              : "I hit a snag finishing that — mind trying again?";
            // Before the invitation to try again: the card says what already ran, so trying again is

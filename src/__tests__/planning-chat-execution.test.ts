@@ -8,8 +8,11 @@ import { interactiveEffect } from '../../supabase/functions/_shared/paige-turn/i
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
+let reconciliationGuard: ts.IfStatement | undefined;
 const named = new Map<string, ts.VariableDeclaration>();
 function visit(node: ts.Node) {
+  if (ts.isIfStatement(node) && node.expression.getText(ast).includes('MUTATING_TOOLS.has(tc.function.name)')
+    && node.thenStatement.getText(ast).includes('prior_effect_reconciliation_required')) reconciliationGuard = node;
   if (ts.isIfStatement(node) && node.expression.getText(ast).includes('tc.function.name === "plan_set_reminder"')
     && node.expression.getText(ast).includes('tc.function.name === "plan_list"')) branch = node.thenStatement;
   if (ts.isVariableDeclaration(node)) named.set(node.name.getText(ast), node);
@@ -52,6 +55,42 @@ async function drive(options: { tool?: string; args?: object; reply?: unknown; t
   return { result: JSON.parse(outputs[0].content), calls, reads, receipts, executionState };
 }
 describe('canonical Planning Chat execution and recovery', () => {
+  it.each(['request', 'prior-turn', 'saturated'] as const)('reports a %s reconciliation-blocked successor as never run', async heldBy => {
+    if (!reconciliationGuard) throw new Error('Canonical reconciliation guard missing');
+    const stateName = reconciliationGuard.expression.getText(ast).includes('requestExecutionState') ? 'requestExecutionState' : 'planningExecutionState';
+    const run = new Function('MUTATING_TOOLS', stateName, 'interactive', 'interactiveReceiptScanSaturated',
+      'interactiveUnresolvedEffects', 'tc', `const toolResults=[]; let dispatches=0; for(let i=0;i<1;i++) {
+      ${reconciliationGuard.getText(ast)} dispatches++; } return { toolResults, dispatches };`);
+    const prior = await drive({ readback: null });
+    const observed = run(new Set(['plan_create']), heldBy === 'request' ? prior.executionState : { needsReview: false },
+      heldBy !== 'request', heldBy === 'saturated', heldBy === 'prior-turn' ? [{ tool: 'plan_create' }] : [],
+      { id: 'blocked-successor', function: { name: 'plan_create', arguments: '{}' } });
+    expect(observed.dispatches).toBe(0);
+    const result = JSON.parse(observed.toolResults[0].content);
+    expect(result).toMatchObject({ success: false, not_applied: true, refused_before_run: true });
+    expect(classifySpentApproval(JSON.stringify(result)).outcome).toBe('not_run');
+    expect(interactiveEffect('plan_create', result)).toBeNull();
+    expect(interactiveEffect('plan_set_reminder', prior.result)?.outcome).toBe('outcome_unknown');
+  });
+  it('does not make delivery guarantees in reminder instructions or tool/channel metadata', () => {
+    const header = source.split('\n').find(line => line.startsWith('PLANNING & REMINDERS'));
+    expect(header).toBeDefined(); expect(header).not.toMatch(/reminders that FIRE/i);
+    let reminder: ts.ObjectLiteralExpression | undefined;
+    const find = (node: ts.Node) => {
+      if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p)
+        && p.name.getText(ast) === 'name' && p.initializer.getText(ast) === '"plan_set_reminder"')) reminder = node;
+      ts.forEachChild(node, find);
+    };
+    find(ast); if (!reminder) throw new Error('Native reminder tool declaration missing');
+    expect(reminder.getText(ast)).not.toMatch(/ACTUALLY FIRES|always lands|otherwise still pings/);
+    expect(reminder.getText(ast)).toMatch(/Scheduling does not (?:confirm|prove) delivery/);
+  });
+  it('retains contradictory success and native/durable identities instead of hiding an effect', () => {
+    const refused = { success: false, not_applied: true, refused_before_run: true };
+    expect(interactiveEffect('plan_create', { ...refused, success: true })?.outcome).toBe('reported_success');
+    expect(interactiveEffect('plan_create', { ...refused, plan_id: plan })?.record_refs).toEqual([{ kind: 'plan', id: plan }]);
+    expect(interactiveEffect('document_generate', { ...refused, accepted: true, work_id: item })?.outcome).toBe('durable_accepted');
+  });
   it('retains lost-write uncertainty for model, approval and persisted interactive recovery', async () => {
     const { result, calls } = await drive({ thrown: new TypeError('Failed to fetch') });
     expect(result).toMatchObject({ success: false, outcome_unknown: true });

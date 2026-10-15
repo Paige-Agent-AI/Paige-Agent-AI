@@ -94,7 +94,7 @@ if(researchMode){
  const bundle=receipts[0].bundle_ref,effect=bundle.interactive.effects.find(e=>e.tool==='deep_research');
  assert.equal(effect.outcome,researchMode==='unconfirmed'?'outcome_unknown':'reported_success');
  if(researchMode!=='unconfirmed'){
-  assert.ok(effect.record_refs.some(r=>r.kind==='research_run'&&r.id===id(11)));
+  assert.equal((effect.record_refs??[]).some(r=>r.kind==='research_run'&&r.id===id(11)),researchMode==='success','durable record identity requires complete native readback');
   assert.equal(bundle.paige_research[0].saved,researchMode==='success','library availability needs matching run and sources');
   assert.equal(bundle.paige_research[0].run_id,id(11));assert.ok(!('sources' in bundle.paige_research[0]),'durable reference only');
  }
@@ -126,6 +126,10 @@ if(knowledgeMode){
  const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='save_to_knowledge_base');
  assert.equal(effect.outcome,knowledgeMode==='uncertain'?'outcome_unknown':knowledgeMode==='refused'?'reported_failure':'reported_success');
  if(knowledgeMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='knowledge_document'&&r.id===id(9)));
+ if(knowledgeMode==='uncertain'){
+  assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an executed effect');
+  assert.equal(rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create').length,0,'blocked successor has no write attribution');
+ }
  console.log(`PASS actual handler Knowledge ${knowledgeMode}: caller/workspace/private binding, native truth, durable document reference and correct successor brake`);
  process.exit(0);
 }
@@ -134,7 +138,13 @@ if(recoveryMode){
  assert.equal(receipts.length,1,'one canonical terminal receipt');
  assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,recoveryMode==='refused'?'reported_failure':'outcome_unknown');
  assert.equal(modelCalls,2,'normal explanation remains possible after refusal/uncertainty');
- if(recoveryMode!=='refused')assert.ok(receipts[0].bundle_ref.interactive.effects.every(e=>e.outcome!=='reported_success'));
+ if(recoveryMode!=='refused'){
+  assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an execution effect');
+  assert.equal(receipts[0].bundle_ref.interactive.effects[0].outcome,'outcome_unknown');
+  const audit=rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create');
+  assert.equal(audit.length,1,'never attribute a blocked successor as an attempted write');
+  assert.equal(audit[0].row.payload.outcome,'outcome_unknown');
+ }
  console.log(`PASS actual handler Planning ${recoveryMode}: original write once, subsequent writes held only for uncertainty, truthful durable effect`);
  process.exit(0);
 }

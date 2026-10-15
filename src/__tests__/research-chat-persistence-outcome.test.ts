@@ -20,15 +20,19 @@ const sources=[{ index:1,url:'https://example.com/source',title:'Fixture source'
 const findings=[{text:'Fixture cited finding',citations:[1],confidence:'high'}];
 const native={run_id:run,question,findings,sources,coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:''}};
 const saved={id:run,question,domain:'general',caller:'chat',configured:true,stop_reason:'answered',findings,sources,coverage:native.coverage};
-async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean }={}) {
+async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean; scopeErrorAt?:number }={}) {
   const calls:Array<{body:Record<string,unknown>;headers:Record<string,string>}>=[];
   const outputs:Array<{content:string}>=[];
   const rpcs:Array<{name:string;args:unknown}>=[];
   let scopeReads=0;
   const caller={rpc:async(name:string,args:unknown)=>{
     rpcs.push({name,args});
-    return name==='current_user_tenant_id'?{data:options.scopes?.[scopeReads++]??tenant,error:null}
-      :{data:'readback' in options?options.readback:saved,error:options.readError??null};
+    if(name==='current_user_tenant_id'){
+      const index=scopeReads++;
+      if(options.scopeErrorAt===index)throw new TypeError('Scope response unavailable');
+      return {data:options.scopes?.[index]??tenant,error:null};
+    }
+    return {data:'readback' in options?options.readback:saved,error:options.readError??null};
   }};
   await dispatch({id:'research-fixture',function:{name:'deep_research',arguments:JSON.stringify({question,expected_tenant_id:id(99),user_id:id(98)})}},
     caller,{tenant_id:'tenant' in options?options.tenant:tenant},{id:actor},outputs,{},()=>{},
@@ -48,10 +52,24 @@ describe('Research Chat native invocation and durable library proof',()=>{
     expect(interactiveEffect('deep_research',result)).toMatchObject({outcome:'reported_success',record_refs:[{kind:'research_run',id:run}]});
   });
   it.each([[],{},null,{...saved,id:id(99)},{...saved,findings:[]},{...saved,sources:[]}].map(readback=>[readback]))('never treats incomplete or different library data as saved: %j',async readback=>{
-    expect((await drive({readback})).result.saved).toBe(false);
+    const {result}=await drive({readback});
+    expect(result.saved).toBe(false); expect(result.research_run_id).toBeUndefined();
+    expect(interactiveEffect('deep_research',result)?.record_refs??[]).not.toContainEqual({kind:'research_run',id:run});
   });
   it('an error alongside stale data is not saved proof',async()=>{
-    expect((await drive({readError:{code:'42501'}})).result.saved).toBe(false);
+    const {result}=await drive({readError:{code:'42501'}});
+    expect(result.saved).toBe(false); expect(result.research_run_id).toBeUndefined();
+  });
+  it('keeps an unconfigured unsaved invocation separate from a durable Research record',async()=>{
+    const {result}=await drive({native:{...native,findings:[],sources:[],coverage:{...native.coverage,configured:false,stop_reason:'unconfigured'}},readback:null});
+    expect(result.saved).toBe(false); expect(result.research_run_id).toBeUndefined();
+    expect(interactiveEffect('deep_research',result)?.record_refs??[]).toEqual([]);
+  });
+  it.each([0,1])('withholds research identity when current workspace read %i throws',async scopeErrorAt=>{
+    const {result,calls}=await drive({scopeErrorAt});
+    expect(calls).toHaveLength(scopeErrorAt===0?0:1);
+    expect(result.saved).toBe(false); expect(result.run_id).toBeUndefined(); expect(result.research_run_id).toBeUndefined();
+    expect(result.findings).toBeUndefined();
   });
   it('accepts native timestamp normalization without dropping matching source evidence',async()=>{
     expect((await drive({readback:{...saved,sources:[{...sources[0],fetched_at:'2026-10-15T16:00:00+00:00'}]}})).result.saved).toBe(true);

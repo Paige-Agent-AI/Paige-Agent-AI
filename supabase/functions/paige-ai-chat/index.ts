@@ -10979,6 +10979,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ? "The CRM action's answer never arrived, so whether it completed is not known."
                 : "The CRM action could not be completed. Nothing should be claimed as changed."),
               not_applied: notApplied,
+              ...(notApplied ? {} : { refused_before_run: false }),
               ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) };
           } else {
             crmContent = { success: true, ...crmBody,

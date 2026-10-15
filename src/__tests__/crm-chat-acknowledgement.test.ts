@@ -36,11 +36,12 @@ describe('CRM Chat requires an explicit native execution acknowledgement', () =>
     const native = { ok: true, outcome: 'executed', record_id: 'fixture-record', receipt_id: 'fixture-receipt', replayed: false };
     expect(await map(native, null, action)).toEqual({ success: true, ...native });
   });
-  it.each([null, undefined, {}, [], 'ok', 0, { ok: 'true' }, { success: true }, { ok: null }, { success: true, not_applied: true }])('does not claim execution or non-application for malformed native response %j', async data => {
+  it.each([null, undefined, {}, [], 'ok', 0, { ok: 'true' }, { success: true }, { ok: null }, { success: true, not_applied: true }, { ok: 'true', refused_before_run: true }])('does not claim execution or non-application for malformed native response %j', async data => {
     const out = await map(data);
     expect(out.success).toBe(false);
     expect(out.outcome_unknown).toBe(true);
     expect(out.not_applied).not.toBe(true);
+    expect(out.refused_before_run).not.toBe(true);
     expect(out.note).toBe(OUTCOME_UNKNOWN_NOTE);
   });
   it('does not treat an error carrying contradictory ok=true as non-application', async () => {

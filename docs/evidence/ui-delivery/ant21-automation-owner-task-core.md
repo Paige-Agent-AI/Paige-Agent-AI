@@ -1,5 +1,40 @@
 # Internal CRM task automation core — native proof checkpoint
 
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Existing internal-task restoration outcome traced through native event, Gateway, C5, canonical approval, CRM writer, receipt and reconciler in this record.
+PAIGE_UI_DESIGN: PASS: Existing approval and SOLO shell contracts retained; backend repair introduces no new container, layout, design tokens or presentation implementation.
+MATERIAL_FLOW_CHANGE: NO: Restore the existing owner approval and task outcome through its original interfaces; no new customer navigation or interaction shape.
+FLOW_PROTOTYPE: NOT_REQUIRED: Corrective backend binding of the existing approved flow; no new interface or interaction design is proposed.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An eligible current-workspace owner approves one held internal task and receives the actual canonical result.
+VISUAL_DIRECTION: PASS: Existing SOLO approval and task surfaces remain the design authority; no visual override or geometry change.
+AUTOMATED_EVIDENCE: PASS: Native66 and engine43 controls; focused Gateway118; endpoint67, series4, send39 and dispatch12; boundaries explained below.
+STATIC_EVIDENCE: PASS: Scoped ESLint, binding guard and whitespace pass; local endpoint Deno import resolution is separately UNVERIFIED.
+RENDERED_EVIDENCE: UNVERIFIED: This native source increment has no fresh automation approval screenshots; it cannot establish rendered production fit.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Protected actual-handler and native-database proofs do not establish the ordinary browser automation journey.
+AUTHENTICATED_RUNTIME: UNVERIFIED: This native task increment has not been deployed or exercised by an ordinary authenticated SOLO owner.
+KEYBOARD_FOCUS: UNVERIFIED: Existing approval keyboard and focus behavior has not been freshly exercised for this native task result.
+ZOOM_REFLOW: UNVERIFIED: Existing approval and task layouts have not been driven at zoom or alternate viewport sizes for this increment.
+REDUCED_MOTION: UNVERIFIED: No motion is introduced; existing reduced-motion behavior has not been freshly driven for this outcome.
+STATE_COVERAGE: PASS: Protected tests cover exact approval, current role and workspace, duplicate claims, revoked context, uncertain receipt, replay and recovery; browser coverage remains separate.
+TRUTHFUL_STATE_LABELS: PASS: Source/native proof is separated from customer execution, provider authority, activation, Live and owner acceptance throughout this record.
+SOLO_UI: YES: Existing SOLO approval, task and conversational automation surfaces.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive at this viewport.
+UNVERIFIED: Final source composition, full-schema replay, hosted CI, production deployment, ordinary owner execution, Chat arming, Live and product acceptance remain separate proof obligations.
+INTERNAL_BUILD_IDENTITY: e77c8d6a8f2bf474666aada9f42b515aa36a5f95; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271108210000_owner_task_native_bridge.sql); edge=NOT_DEPLOYED(execute-approval,paige-native-event-dispatch); evidence=this record and private exact-head proof packets.
+RELEASE_CHANNEL: development: Isolated native and protected-handler proof only; no hosted activation.
+RELEASE_CLASSIFICATION: internal-only: Governed internal task restoration candidate awaiting complete technical release evidence.
+CUSTOMER_RELEASE_IDENTITY: none: No customer version or publication decision is asserted by this source increment.
+RELEASE_NOTE_REQUIRED: no: Internal development checkpoint; an actual owner-visible release requires observed production evidence.
+RELEASE_TRUTH_BOUNDARY: PARTIAL source/native implementation; PROOF OWED ordinary customer execution, deployment, activation and Live.
+RELEASE_RECOVERY: position=Hold activation until final reviewed composition and required CI; reference=existing native ledger/readback/reconciler and release policy, preserving original source checkpoints.
+
 ## Current bounded continuation — 2026-10-16
 
 ### Root integration checkpoint — native Gateway and required CI

@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: no layout or visual component change.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
 STATE_COVERAGE: PASS: native deal linkage, direct-contact Planning linkage, company/assignee non-attribution, foreign tenant/parent/contact, missing/legacy versions, missing contact/reference, role/workspace refusal, mid-read scope change, child-query errors and bounded/truncated results.
 TRUTHFUL_STATE_LABELS: PASS: errors refuse the summary instead of returning successful empty work; has-more flags name truncation; direct native CRM contact linking stays unavailable; Planning visibility is caller_rls.
-SOLO_UI: NO: backend contact-summary tool result only; no SOLO interface or layout changes.
+SOLO_UI: YES: the composed CRM outcome also corrects the existing SOLO People and confirmation card; the summary read itself changes no geometry
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated composed-candidate viewport certification
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated composed-candidate viewport certification
 UNVERIFIED: native PostgREST join and caller-RLS runtime, authenticated Planning creation/readback, paired production Chat/Live, deployment, full 18/50 dispositions and owner acceptance.
 OWNER_INTENT: restore actual contact-related business work through existing CRM/Planning architecture for every eligible current and future SOLO account.
 MUST_NOT_HAPPEN: equating business IDs with contact IDs, inventing company-to-contact attribution, using service-role Planning reads, collapsing two native identities, claiming empty/success after a failed query, or creating replacement records/stores.

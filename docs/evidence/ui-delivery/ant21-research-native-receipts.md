@@ -2,11 +2,11 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ordinary or delegated verified actor -> current active workspace/member -> incumbent bounded Research engine -> exact native run/source readback -> existing workspace recorder -> separate report/receipt acknowledgement
-PAIGE_UI_DESIGN: NOT_APPLICABLE: native endpoint repair; existing Conversations card and Research Home layout unchanged
+PAIGE_UI_DESIGN: PASS: native-only source boundary; src/components/paige/chat/PaigeResearchCard.tsx and src/solo/paige-research.tsx presentation preserved without JSX, CSS or control changes
 MATERIAL_FLOW_CHANGE: NO: repairs existing authority and receipt boundaries without adding an engine, destination, approval or interaction
 FLOW_PROTOTYPE: NOT_REQUIRED: no new visible interface or customer flow is implemented in this native-only candidate
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible current and future SOLO customers receive correctly attributed research and truthful saved-report/receipt evidence
-VISUAL_DIRECTION: UNCHANGED: incumbent Conversations and Research Home surfaces retained
+VISUAL_DIRECTION: NOT_APPLICABLE: native endpoint repair preserves incumbent Conversations and Research Home surfaces
 AUTOMATED_EVIDENCE: PASS: original native handler31FAIL/2PASS before product repair; final14 focused suites274PASS, including36 native handler/persistence cases;4 changed test files lint0
 STATIC_EVIDENCE: PASS: scoped diff/whitespace; endpoint lint8 inherited/0 new via exact before/after rule comparison; global reviewed source fingerprint renewal and CI remain owed
 RENDERED_EVIDENCE: UNVERIFIED: no browser or production visual claim in this native endpoint slice
@@ -22,7 +22,7 @@ UNVERIFIED: Independent Review, exact-head CI, global source guards, composed de
 OWNER_INTENT: all18 historical capabilities/all50 parity rows remain in scope; this slice does not close full Research restoration
 EXPERIENCE_CONTRACT: PASS: reuse existing engine, domain records and recorder; no provider, flag, economic route or approval policy change
 PROTECTED_SEAMS: PASS: native verified actor/current membership, exact run/source tenant filters, sanitized receipts and inspect-before-repeat semantics; no credentials, grants, history or migration changes
-INTERNAL_BUILD_IDENTITY: base016727365e7f7dca79b6a6a1e24438bee02a49aa; candidate commit reported by lead; environment=local protected fixtures; deployment=NOT_RUN; migrations=NONE; edge=PROOF_OWED
+INTERNAL_BUILD_IDENTITY: fd44bfc572e4ecbed8dda4cfec1d5d7994208a4f product/test source freeze; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed composed native and Chat release); evidence=docs/evidence/ui-delivery/ant21-research-native-receipts.md
 RELEASE_CHANNEL: development: source and local protected fixtures only
 RELEASE_CLASSIFICATION: internal-only: native Research repair candidate awaiting distinct review and shared consumer integration
 CUSTOMER_RELEASE_IDENTITY: none: no production release or customer acceptance claimed
@@ -56,6 +56,7 @@ Failing-first protected native-handler/persistence tests cover complete findings
 - Final focused command: `npx --no-install vitest run` for native receipt, current Chat readback, M0, inline, language, limit persistence, Fabric, INT305, dossier, units, typed outcomes, class declarations, continuation and Research Home:14 suites/274 assertions PASS. Log SHA256 `6643f5f765aea625e0ff97f1449ccd8cd220e503cb2bd250fd0d544ef43860a6`.
 - Three older static expectations named the now-repaired actor-resolution comments/call shape. Replaced with stronger verified-actor/active-membership/no-first-membership/guarded-four-persistence checks. All existing behavioral assertions remain.
 - Deno2.9.6 actual compiler: exact016 baseline3 inherited errors and candidate3 identical errors/0 new. The compiler found and prompted correction of one new source-index typing error before freeze; the corrected native/M0 suites reran52/52. Source/test ESLint and whitespace checked separately; no inherited diagnostics are waived by this evidence.
+- The full application TypeScript command returned8 diagnostics in7 unchanged non-Research files, with none in this candidate's changed tests/native endpoint. This is not a green full application check; its baseline comparison/hosted release ratchet remains the lead's required gate.
 - Existing unchanged extractor finds29/29 dispatch fingerprints unchanged,95/96 dependency digests unchanged. Only native endpoint canonical AST digest changes from `d03ca42ebd2da2ec293319167840d9750182308c7307bdcc991abf436f954023` to `7639bb9f3667d4d53d7862134a6b7b35a18546097f3f3d22e56d20271e93eeef`. No fingerprint is renewed here; the lead must bind any renewal to distinct source/security review.
 - Explicitly no database migration/native pgTAP replay, provider readiness check, provider request, paid activation, hosted CI, served-source comparison, ordinary authenticated account test, Live claim or owner acceptance. Receipt dedupe uses the existing recorder contract and a protected SDK port; it is not new database exactly-once proof.
 - Existing general60s/dossier90s bounds are gathering clocks, not a guaranteed total request deadline: unit synthesis retains existing110s phase headroom. Existing soft estimated ceilings are not a strict per-tenant spend limit; disabled Fabric keeps the old tenantless router route. These economics remain separate, unchanged dependencies.

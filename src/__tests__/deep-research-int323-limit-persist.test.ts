@@ -141,12 +141,38 @@ describe("INT-323 — both sites (research + empty prose → the copy rides the 
     expect(site2).toContain("finalAssistantText = limited;");
   });
 
-  it("proofs 2/3 (persist half): the ONE persist site is unchanged and saves the SAME variable with the reference", () => {
-    const guard = "if (payloadThreadId && finalAssistantText.trim()) {";
+  it("proofs 2/3 (persist half): the ONE ordinary persist site saves the SAME variable and excludes an already-recorded approval pause", () => {
+    const guard = "if (!durableApprovalPause && payloadThreadId && finalAssistantText.trim()) {";
     expect(core).toContain(guard);
     const site = core.indexOf(guard);
     const persistCall = core.slice(site, core.indexOf("} catch", site));
     expect(persistCall).toContain("persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()))");
+    const source = ts.createSourceFile("chat.ts", core, ts.ScriptTarget.Latest, true);
+    const sites: ts.IfStatement[] = [];
+    const calls: ts.CallExpression[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isIfStatement(node) && node.expression.getText(source) === "!durableApprovalPause && payloadThreadId && finalAssistantText.trim()") sites.push(node);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(sites).toHaveLength(1);
+    const collectCalls = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && node.expression.getText(source) === "persistAssistantTurn") calls.push(node);
+      ts.forEachChild(node, collectCalls);
+    };
+    collectCalls(sites[0].thenStatement);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].arguments.map((arg) => arg.getText(source))).toEqual([
+      "finalAssistantText", "withTurnRecord(finalAssistantText, assistantTurnMetadata())",
+    ]);
+    // Evaluate the production predicate: ordinary research still persists, but a
+    // pause already saved through canonical settlement cannot be persisted twice.
+    const shouldPersist = new Function("durableApprovalPause", "payloadThreadId", "finalAssistantText",
+      js(`return (${sites[0].expression.getText(source)});`));
+    expect(shouldPersist(false, "thread", "Research limit reached.")).toBeTruthy();
+    expect(shouldPersist(true, "thread", "Research limit reached.")).toBeFalsy();
+    expect(shouldPersist(false, null, "Research limit reached.")).toBeFalsy();
+    expect(shouldPersist(false, "thread", "   ")).toBeFalsy();
   });
 
   it("proof 5 — ordinary FINAL research turns (prose present) can never enter either site", () => {

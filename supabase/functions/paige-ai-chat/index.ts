@@ -38,10 +38,10 @@ import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
-import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
+import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
-import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
+import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
@@ -838,7 +838,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1271,6 +1271,15 @@ serve(async (req) => {
         return data;
       };
       if (validatedData.interactive.kind === "status") {
+        if (validatedData.interactive.approvalTurnId) {
+          const approval_recovery = protocolActive ? await readPendingApprovalRecovery({
+            actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+            intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+            caller: supabaseClient as unknown as ApprovalRecoveryDb, service: supabase as unknown as ApprovalRecoveryDb,
+          }) : { v: 1, status: "unavailable" };
+          return new Response(JSON.stringify({ approval_recovery }), { headers: { ...corsHeaders,
+            "Content-Type": "application/json", "Cache-Control": "no-store" } });
+        }
         const originalScope = { threadId: validatedData.threadId!,
           intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
         const status = await readInteractiveOutcomeStatus({
@@ -3473,13 +3482,10 @@ JSON:`;
     //
     // SCOPE OF THAT CLAIM, STATED EXACTLY (§13). "Every provider boundary" means every one on
     // the CHAT TURN's own path: initial egress, each loop continuation, the closing call, tool
-    // dispatch, response emission, and the durable telemetry write. It does NOT cover
-    // `foldThreadSummary` (the rolling-summary compactor, defined below and also invoked
-    // post-turn via `maybeRefreshSummary`). That makes its own `gatewayCompat` call carrying the
-    // thread transcript — text DERIVED from prior-account Knowledge, though not the chunks
-    // themselves — with no revalidation on either invocation. It is a real gap in the general
-    // claim and it is tracked rather than silently widened into this change, because the
-    // compactor is a separate subsystem with its own post-turn/waitUntil lifecycle.
+    // dispatch, response emission, and the durable telemetry write. The rolling-summary
+    // compactor forces this same resolver before transcript reads, provider dispatch and
+    // persistence, including post-turn work. Its refusal remains local to that maintenance
+    // task; consuming its summary also keeps the caller-owned thread binding live below.
     //
     // ONCE REFUSED, ALWAYS REFUSED — and this flag is what makes that true.
     //
@@ -3510,7 +3516,8 @@ JSON:`;
     // exactly how document-derived content escaped the check. A protected turn always has a
     // scope; whether the KB matched is a separate question.
     const turnScopeTenantId: string | null = personaCtx.tenant_id ?? null;
-    const revalidateTenantKnowledgeScope = async (required = false): Promise<boolean> => {
+    let revalidateSummaryBinding: (() => Promise<boolean>) | null = null;
+    const revalidateTenantKnowledgeScope = async (required = false, summaryMaintenance = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
       // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
       // is what keeps live streaming free of added latency. A client seat's turn is held so its
@@ -3558,7 +3565,8 @@ JSON:`;
             typeof declaredProfile?.active_tenant_id === "string" &&
             declaredProfile.active_tenant_id === turnScopeTenantId;
         }
-        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches) return true;
+        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches &&
+            (summaryMaintenance || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         console.error(
           "[paige] active account changed after Knowledge retrieval — provider dispatch cancelled",
           JSON.stringify({ retrieved_tenant_id: tenantKbScopeTenantId, current_tenant_id: currentTenantId, code: (error as any)?.code ?? null }),
@@ -3566,6 +3574,8 @@ JSON:`;
       } catch (error) {
         console.error("[paige] active-account Knowledge revalidation failed — provider dispatch cancelled", (error as Error)?.message);
       }
+      // A background fold cannot retroactively change the parent turn's evidence latch.
+      if (summaryMaintenance) return false;
       tenantKnowledgeScopeRevoked = true;
       tenantKbContext = "";
       tenantKbScopeTenantId = null;
@@ -5856,9 +5866,34 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // makes a thread of long turns compact BEFORE its live context overflows, not only on count cadence.
     //
     // `emit` (pre-flight only) is an OPTIONAL progress sink; when absent (the post-turn fallback) the
-    // fold is byte-for-byte the prior silent behavior. Returns a status the pre-flight uses to decide
+    // fold remains silent. Returns a status the pre-flight uses to decide
     // what it streamed. NEVER dead-ends (§13): any fold error emits {state:"skipped"} and the caller
     // continues the turn UNCOMPACTED.
+    // One caller-JWT thread binding for both fold paths and subsequent recall. Never
+    // treat a broad RLS policy, an id-only result or first-membership fallback as scope.
+    let summaryScopeRefused = false;
+    const readSummaryThread = async (threadId: string, checkWorkspace = true) => {
+      if (summaryScopeRefused) return null;
+      try {
+        let query = supabaseClient.from("paige_chat_threads")
+          .select("id, caller_user_id, tenant_id, message_count, summary, summary_through_seq, last_compacted_at, studio_session_id, last_image_content_id, last_image_anchor_at")
+          .eq("id", threadId).eq("caller_user_id", user.id);
+        query = turnScopeTenantId === null ? query.is("tenant_id", null) : query.eq("tenant_id", turnScopeTenantId);
+        const { data: row, error } = await query.maybeSingle();
+        if (error || !row || row.id !== threadId || row.caller_user_id !== user.id || row.tenant_id !== turnScopeTenantId)
+          throw new Error("Summary thread binding unavailable");
+        if (row.tenant_id === null) {
+          const { data: owner, error: ownerError } = await supabaseClient.rpc("is_platform_owner");
+          if (ownerError || owner !== true) throw new Error("Platform thread authority unavailable");
+        }
+        if (checkWorkspace && !(await revalidateTenantKnowledgeScope(true, true))) throw new Error("Summary workspace unavailable");
+        return row;
+      } catch (error) {
+        summaryScopeRefused = true;
+        console.warn("[paige] summary scope refused:", (error as Error).message);
+        return null;
+      }
+    };
     const foldThreadSummary = async (
       threadId: string,
       opts?: { emit?: (payload: Record<string, unknown>) => void },
@@ -5879,9 +5914,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       const KEEP = 12, EVERY = 8, TAIL_TOKEN_BUDGET = 6000, KEEP_FLOOR = 5, MIN_COMPACTION_INTERVAL = 4;
       const APPROACH_RATIO = 0.8;
       try {
-        const { data: th } = await supabaseClient.from("paige_chat_threads")
-          .select("message_count, summary, summary_through_seq, last_compacted_at").eq("id", threadId).maybeSingle();
-        if (!th || th.message_count <= KEEP) return "not_needed";
+        const th = await readSummaryThread(threadId);
+        if (!th) { emit?.({ state: "skipped" }); return "skipped"; }
+        if (th.message_count <= KEEP) return "not_needed";
         // The un-summarized verbatim tail (seq past the watermark) is exactly what loads into the
         // model context, so weigh only that — fetch it via the (thread_id, seq) index and estimate.
         // created_at rides along ONLY for the min-interval guard below.
@@ -5928,23 +5963,34 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const cutoffSeq = toFold[toFold.length - 1].seq;
         const transcript = toFold.map((t: any) => `${t.role === "user" ? "Owner" : "Paige"}: ${t.content}`).join("\n").slice(0, 12000);
         const prompt = `Maintain a rolling memory of a long working chat between a business owner and their assistant Paige. Update the summary so nothing important is lost as older turns scroll off. PRESERVE explicitly: the owner's name & preferences, decisions made, tasks/actions Paige took or QUEUED, any PENDING approvals still open, names of clients/contacts, dates, numbers, and open loops. ATTRIBUTE what was only said: when the owner describes plans, upcoming features or what a team is building, write it as theirs ("the owner said…"), never as established fact. Record as done only what Paige actually did or queued — never record a promise to pass something on to a person or team as an action taken. 4-8 tight sentences, flowing prose, no bullets.\n\nPRIOR SUMMARY:\n${th.summary ?? "(none)"}\n\nOLDER TURNS TO FOLD IN:\n${transcript}\n\nUPDATED SUMMARY:`;
-        emit?.({ state: "progress", pct: 35 }); // cheap-model summarizer call dispatched
-        const resp = await gatewayCompat("anthropic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: [{ role: "user", content: prompt }] }),
-        }, traceFor("thread-summary-fold"));
+        if (!(await readSummaryThread(threadId))) { emit?.({ state: "skipped" }); return "skipped"; }
+        emit?.({ state: "progress", pct: 35 }); // summarizer dispatched through the existing Fabric
+        const resp = await fabricCompletion({
+          // The incumbent gateway applied the reasoning-band hard budget stop even
+          // to its legacy flash label. Operational preserves that contract.
+          cognitive_class: "operational", job: "thread_summary_fold", max_tokens: 2048,
+          messages: [{ role: "user", content: prompt }],
+        }, { trace: traceFor("thread-summary-fold"), signal: AbortSignal.timeout(120_000),
+          beforeProviderAttempt: async () => !!(await readSummaryThread(threadId)) });
         if (!resp.ok) { emit?.({ state: "skipped" }); return "skipped"; }
         emit?.({ state: "progress", pct: 80 }); // summarizer returned
-        const summary = (await resp.json())?.choices?.[0]?.message?.content?.trim();
+        const rawSummary = (resp.response?.choices as Array<{ message?: { content?: unknown } }> | undefined)?.[0]?.message?.content;
+        const summary = typeof rawSummary === "string" ? rawSummary.trim() : "";
         if (summary) {
           // "compacted" is a CLAIM ABOUT A STORED ROW, so it is only made when the row stored.
           // Reporting compaction for a summary that was rejected would leave the thread believing
           // its history is folded when the next turn will re-send all of it — a silent regression
           // in both cost and behaviour, and invisible because postgrest resolves rather than throws.
-          const stored = await recordWrite("paige_chat_threads:summary", supabaseClient.from("paige_chat_threads")
-            .update({ summary, summary_through_seq: cutoffSeq, last_compacted_at: new Date().toISOString() }).eq("id", threadId));
-          if (!stored) { emit?.({ state: "skipped" }); return "skipped"; }
+          if (!(await readSummaryThread(threadId))) { emit?.({ state: "skipped" }); return "skipped"; }
+          let update = supabaseClient.from("paige_chat_threads")
+            .update({ summary, summary_through_seq: cutoffSeq, last_compacted_at: new Date().toISOString() })
+            .eq("id", threadId).eq("caller_user_id", user.id).eq("summary_through_seq", th.summary_through_seq);
+          update = th.tenant_id === null ? update.is("tenant_id", null) : update.eq("tenant_id", th.tenant_id);
+          const result = await update.select("id");
+          const stored = await recordWrite("paige_chat_threads:summary", Promise.resolve(result));
+          if (!stored || result.data?.length !== 1 || result.data[0].id !== threadId || !(await readSummaryThread(threadId))) {
+            emit?.({ state: "skipped" }); return "skipped";
+          }
           emit?.({ state: "progress", pct: 100 });
           emit?.({ state: "done" });
           return "compacted";
@@ -6098,8 +6144,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // `thread-summary-fold` rows under two different agent ids, contradicting the very comment
       // that says to keep them in step. Found by an independent reviewer driving a Studio turn.
       {
-        const { data: pre } = await supabaseClient
-          .from("paige_chat_threads").select("studio_session_id").eq("id", payloadThreadId).maybeSingle();
+        const pre = await readSummaryThread(payloadThreadId);
         if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
         preStudioSessionId = pre?.studio_session_id ? String(pre.studio_session_id) : null;
       }
@@ -6108,9 +6153,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       });
 
       try {
-        const { data: th, error: thErr } = await supabaseClient
-          .from("paige_chat_threads").select("summary, studio_session_id, last_image_content_id, last_image_anchor_at").eq("id", payloadThreadId).maybeSingle();
-        if (thErr && preStudioSessionId && !studioSessionId) {
+        const th = await readSummaryThread(payloadThreadId);
+        if (!th && preStudioSessionId && !studioSessionId) {
           // A Studio thread whose second read failed: keep it a Studio turn, with no scope read yet
           // (studioScope stays null, which every enforcement point treats as the fail-closed set).
           studioSessionId = preStudioSessionId;
@@ -6221,7 +6265,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             content: `LAST IMAGE — you generated an image earlier in this conversation (content id ${refineImageAnchor.id}). If the user is refining, adjusting, or regenerating THAT image (e.g. "make it brighter", "change the background"), pass target_content_id:"${refineImageAnchor.id}" to generate_image so it updates in place and keeps its version history. If they want a brand-new/additional image, OMIT target_content_id so it's created as a separate asset.`,
           });
         }
-        if (th?.summary) {
+        if (th?.summary && await readSummaryThread(payloadThreadId)) {
+          // Recheck selected workspace AFTER the awaited binding row read. The reader's
+          // maintenance scope check bypasses this callback, so this does not recurse.
+          revalidateSummaryBinding = async () => !!(await readSummaryThread(payloadThreadId));
           // THE ROLLING SUMMARY IS PROTECTED, and it is the strongest case of the lot. This
           // branch's own close-out comment says a persisted reply is folded into it by
           // `maybeRefreshSummary` — so it carries forward, verbatim and durably, exactly the
@@ -6253,7 +6300,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const writeAssistant = async () => await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
-          p_model: meta.model ?? "google/gemini-2.5-flash", p_tokens_used: null, p_latency_ms: null,
+          p_model: meta.model ?? null, p_tokens_used: null, p_latency_ms: null,
           p_bundle_ref: (interactive ? { ...((meta.bundleRef ?? {}) as Record<string, unknown>),
             interactive: { ...(((meta.bundleRef as any)?.interactive ?? {}) as Record<string, unknown>), request_intent_id: payloadRequestIntentId } }
             : (meta.bundleRef ?? null)) as any, p_tool_calls: null,
@@ -7870,13 +7917,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_list",
-              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; admins/coaches see all. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Filter by horizon, a single plan, status, assignee, or a date window. Read-only.",
+              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; native permissions govern access. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Cancelled items are excluded by default; request include_cancelled:true or status:cancelled to inspect their saved history. A missing item alone does not prove cancellation. Read-only.",
               parameters: {
                 type: "object",
                 properties: {
                   horizon: { type: "string", enum: ["week", "month", "quarter", "semiannual", "year", "custom"], description: "Only plans on this horizon." },
                   plan_id: { type: "string", description: "Drill into one plan's items." },
                   status: { type: "string", description: "Filter items by status." },
+                  include_cancelled: { type: "boolean", description: "Include authorized cancelled Planning history; default false. This reads records and never reopens or repeats work." },
                   assigned_to_user_id: { type: "string", description: "Only items assigned to this teammate." },
                   from: { type: "string", description: "ISO date lower bound (plan window / item due)." },
                   to: { type: "string", description: "ISO date upper bound." },
@@ -10181,11 +10229,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
         // "studio-design-agent" at the Studio-session branch above, which runs before this line.
         trace: traceFor("chat"),
+        beforeProviderAttempt: () => revalidateTenantKnowledgeScope(),
         // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
         anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
       }));
 
     if (response && !response.ok) {
+      if (response.attempts.at(-1)?.failure === "caller_refused") {
+        const refused = new Response(
+          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+        return afterAnswerClaimFailure ? afterAnswerClaimFailure(refused) : refused;
+      }
       const errorId = crypto.randomUUID();
       const status = response.status;
       // C4c — an answer claimed for this turn is not stranded by the refusal: the question is asked again.
@@ -16578,7 +16634,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 break;
               case "plan_list":
                 rpcName = "plan_list";
-                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
+                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid,
+                  p_contact_id: null, p_by_item_date: false, p_include_cancelled: args.include_cancelled === true || args.status === "cancelled" };
                 break;
             }
             planningWriteAttempted = planningIsWrite;
@@ -16614,6 +16671,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else {
               let verifiedRecord: Record<string, unknown> | null = null;
               let recordLocator: { table: string; id: string } | null = null;
+              if (!planningIsWrite) {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                if (!tid || scope.error || scope.data !== tid) throw new Error("planning_read_scope_changed");
+              }
               if (planningIsWrite) {
                 const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
                 const table = tc.function.name === "plan_create" ? "plans" : "plan_items";
@@ -17936,7 +17997,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -18026,7 +18087,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // turn escalates here too: the manifest the correction round was sent and the manifest
               // its calls are graded against stay the same set.
               escalateTurn("claim correction");
-              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -18073,7 +18134,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // operational class with the full set: a cheap misread never keeps the turn's tools
                 // narrowed once the turn is KNOWN to be action work.
                 escalateTurn("action-intent continuation");
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -18220,7 +18281,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME

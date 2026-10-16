@@ -21669,6 +21669,7 @@ export type Database = {
           p_contact_id?: string
           p_from?: string
           p_horizon?: string
+          p_include_cancelled?: boolean
           p_limit?: number
           p_plan_id?: string
           p_status?: string
@@ -21679,6 +21680,21 @@ export type Database = {
       }
       plan_remove_item: {
         Args: { p_item_id: string; p_tenant_id?: string }
+        Returns: Json
+      }
+      plan_remove_item_versioned: {
+        Args: { p_item_id: string; p_expected_actor_id: string; p_expected_tenant_id: string; p_expected_updated_at: string }
+        Returns: Json
+      }
+      plan_reschedule_reminder_versioned: {
+        Args: { p_item_id: string; p_expected_actor_id: string; p_expected_tenant_id: string;
+          p_expected_updated_at: string; p_remind_at: string }
+        Returns: Json
+      }
+      plan_list_operations_scoped: {
+        Args: { p_expected_actor_id: string; p_expected_tenant_id: string; p_from?: string; p_to?: string;
+          p_status?: string; p_limit?: number; p_contact_id?: string; p_by_item_date?: boolean;
+          p_assigned_to_user_id?: string; p_include_cancelled?: boolean }
         Returns: Json
       }
       plan_set_reminder: {

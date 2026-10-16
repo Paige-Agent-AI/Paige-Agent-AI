@@ -243,7 +243,7 @@ export interface PaigeAIChatProps {
   businessMissionId?: string | null;
   /** Prose describing the focused customer — added to the chat POST body. */
   clientContext?: string;
-  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" };
+  surfaceContext?: { kind: "public_presence"; step: "confirm_facts" | "verify_website" | "connect_venues" | "compare_facts" | "set_authority" | "maintain_presence"; intendedAction: "review" | "plan" | "prepare_connection" | "resolve_mismatch" } | { kind: "solo_business_interview" };
   /** The chat is telling the surface that OWNS focus to let it go. Two reasons, both cases where
    *  continuing to assert a focus would make the UI say something untrue:
    *
@@ -2980,7 +2980,7 @@ const PaigeAIChatInner = ({
               />
             ))}
         <div
-          className={enableHistory ? "flex flex-col h-full min-w-0 flex-1" : "contents"}
+          className={enableHistory ? "flex flex-col h-full min-h-0 min-w-0 flex-1" : "contents"}
         >
         {!hideHeader && (
           <div className="mb-6">
@@ -3058,6 +3058,7 @@ const PaigeAIChatInner = ({
               <div
                 key={message.id}
                 data-paige-message-id={message.id}
+                data-paige-opening-greeting={!activeThreadId && messages.length === 1 && message.role === "assistant" && message.content === openingGreeting ? "true" : undefined}
                 data-paige-message-anchor-key={messageScrollAnchorKey(message.role, message.content)}
                 data-paige-continues={resumedHere ? "resumed" : continues ? "approval" : undefined}
                 className={cn(

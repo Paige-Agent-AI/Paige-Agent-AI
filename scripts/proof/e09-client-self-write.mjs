@@ -24,8 +24,12 @@ const migPath='supabase/migrations/20271102130000_e09_client_self_profile_write.
 const baseline=process.argv.includes('--baseline');
 const intakeBaseline=process.argv.includes('--intake-baseline');
 assert(!(baseline&&intakeBaseline),'Choose one baseline');
+const welcomeBaseline=process.argv.includes('--welcome-baseline');
+const welcome=welcomeBaseline||process.argv.includes('--welcome');
+assert(!welcome||(!baseline&&!intakeBaseline),'Welcome control retains its existing profile/intake prerequisites');
 const intakePath='supabase/migrations/20271106130000_e09_client_intake_table_authority.sql';
-const reportStem=baseline?'baseline':intakeBaseline?'intake-baseline':'candidate';
+const welcomePath='supabase/migrations/20271107110000_e09_client_welcome_atomic.sql';
+const reportStem=welcome?(welcomeBaseline?'welcome-baseline':'welcome-candidate'):baseline?'baseline':intakeBaseline?'intake-baseline':'candidate';
 let started=false,migration='',intakeMigration='';
 try{run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start']);started=true;
 sql(`CREATE ROLE authenticated NOLOGIN;CREATE ROLE anon NOLOGIN;CREATE ROLE service_role NOLOGIN;CREATE SCHEMA auth;
@@ -81,5 +85,6 @@ check('Postal null clears only the provided postal fields',()=>{call({street_add
 check('Promoting existing phone preserves prior phone as secondary',()=>{const p=call({phone:'+12025550110'});assert.equal(p.phone,'+12025550110');assert(p.contact_methods.some(m=>m.value==='+12025550111'&&!m.is_primary))});
 check('Internal contact-method helpers remain unavailable to customer',()=>assert.equal(sql("SELECT has_function_privilege('authenticated','_replace_client_contact_methods_checked(uuid,uuid,jsonb,jsonb)','EXECUTE')"),'f'));
 if(!baseline){const v=version();const asyncCall=input=>new Promise(resolve=>{const child=spawn(exe('psql'),args,{windowsHide:true});let stdout='',stderr='';child.stdout.on('data',d=>stdout+=d);child.stderr.on('data',d=>stderr+=d);child.on('close',exit=>{transcripts.push({name:'concurrent-psql',exit,stdout,stderr});resolve({exit,stderr})});child.stdin.end(input)});const pair=await Promise.all([asyncCall(callText({first_name:'Concurrent A'},v)),asyncCall(callText({first_name:'Concurrent B'},v))]);check('Concurrent same-version writes accept exactly one',()=>{assert.equal(pair.filter(r=>r.exit===0).length,1);assert(pair.find(r=>r.exit!==0).stderr.includes('40001'))})}
-const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,reportStem+'.json'),JSON.stringify({mode:reportStem,evidence:'synthetic-native-postgresql',managedSupabase:'UNVERIFIED',authenticatedQA:'NOT_RUN',migrationSHA256:migration?createHash('sha256').update(migration).digest('hex'):null,intakeMigrationSHA256:intakeMigration?createHash('sha256').update(intakeMigration).digest('hex'):null,results},null,2));console.log(JSON.stringify({pass:results.length-failed.length,fail:failed.length,failures:failed,out}));if(failed.length)process.exitCode=1;
+if(welcome){const {runWelcomeCases}=await import('./e09-client-welcome-cases.mjs');await runWelcomeCases({sql,check,ids,lit,root,exe,args,baseline:welcomeBaseline})}
+const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,reportStem+'.json'),JSON.stringify({mode:reportStem,evidence:'synthetic-native-postgresql',managedSupabase:'UNVERIFIED',authenticatedQA:'NOT_RUN',migrationSHA256:migration?createHash('sha256').update(migration).digest('hex'):null,intakeMigrationSHA256:intakeMigration?createHash('sha256').update(intakeMigration).digest('hex'):null,welcomeMigrationSHA256:welcome&&!welcomeBaseline?createHash('sha256').update(fs.readFileSync(path.join(root,welcomePath))).digest('hex'):null,results},null,2));console.log(JSON.stringify({pass:results.length-failed.length,fail:failed.length,failures:failed,out}));if(failed.length)process.exitCode=1;
 }finally{if(started)run('pg_ctl',['-D',cluster,'-w','stop','-m','fast']);fs.writeFileSync(path.join(out,reportStem+'-transcript.json'),JSON.stringify(transcripts,null,2))}

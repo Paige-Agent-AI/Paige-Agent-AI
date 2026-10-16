@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext, type TenantSummary } from "@/hooks/useTenantContext";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
+import { isSoloSetupComplete } from "@/components/auth/RequireSetupComplete";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30000;
@@ -53,8 +54,13 @@ export default function Welcome() {
     // Provider state must have React-committed, not merely resolved its Promise.
     settled.current = true;
     setView("verified");
-    navigate(handoff.destination, { replace: true });
-  }, [context, handoff, navigate]);
+    // Navigation only, AFTER the original server enrollment and React-committed
+    // owner workspace checks. Setup readiness never grants or blocks access.
+    const destination = checkout === "success" && !isSoloSetupComplete(context.activeTenant?.features)
+      ? `/solo/${context.activeTenant!.account_number}/paige/chat?onboarding=1`
+      : handoff.destination;
+    navigate(destination, { replace: true });
+  }, [context, handoff, navigate, checkout]);
 
   useEffect(() => {
     if (checkout !== "success" && checkout !== "recovery") return;

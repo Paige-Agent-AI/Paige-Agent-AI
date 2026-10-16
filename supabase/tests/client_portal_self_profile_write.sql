@@ -74,5 +74,152 @@ DROP TRIGGER e09_fail_audit ON public.audit_logs;
 SELECT is(pg_temp.e09_write('{"phone":"+12025550110","street_address":null}',pg_temp.e09_version())->>'phone','+12025550110','existing secondary can become primary');
 SELECT is(pg_temp.e09_write('{"street_address":"1 Test Road"}',pg_temp.e09_version())->>'city','Test City','omitted fields stay unchanged');
 SELECT ok(NOT has_function_privilege('authenticated','public._replace_client_contact_methods_checked(uuid,uuid,jsonb,jsonb)','EXECUTE'),'internal helper never granted to customer');
+-- Welcome uses the same actual hosted schema, roles, audit/contact triggers and
+-- rolled-back fixtures. No separate CI runner or production business operation.
+SELECT ok(EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.clients'::regclass
+ AND tgname='update_clients_updated_at' AND NOT tgisinternal),'real clients now() trigger remains installed');
+SELECT ok(EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.paige_client_intake_submissions'::regclass
+ AND tgname='trg_intake_updated_at' AND NOT tgisinternal),'real intake now() trigger remains installed');
+SELECT ok(NOT has_function_privilege('anon','public.client_portal_welcome_state()','EXECUTE'),'anonymous cannot execute Welcome reader');
+SELECT ok(NOT has_function_privilege('anon','public.client_portal_save_welcome(text,jsonb,jsonb)','EXECUTE'),'anonymous cannot execute Welcome writer');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_welcome_fields(jsonb)','EXECUTE'),'schema validator is private');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_welcome_answers(jsonb,jsonb)','EXECUTE'),'answer validator is private');
+UPDATE public.tenants SET features=jsonb_build_object('playbook_config',jsonb_build_object(
+ 'slug','test-welcome','name','Test Welcome','persona','{}'::jsonb,'journey','[]'::jsonb,
+ 'portal','{"modules":[]}'::jsonb,'intake','[{"key":"goal","label":"Goal","type":"text","required":true},{"key":"notes","label":"Notes","type":"longtext"},{"key":"email","label":"Contact","type":"text"}]'::jsonb),
+ 'private_fixture','NOT PUBLIC') WHERE id='e0922000-0000-0000-0000-000000000001';
+INSERT INTO public.paige_client_intake_submissions(client_id,section,payload)
+ VALUES('e0932000-0000-0000-0000-000000000001','playbook_intake','{"unseen_history":"keep historical","email":"historical@tests.invalid"}');
+CREATE FUNCTION pg_temp.e09_welcome(_save boolean,_token text DEFAULT NULL,
+ _profile jsonb DEFAULT NULL,_answers jsonb DEFAULT NULL,
+ _actor uuid DEFAULT 'e0912000-0000-0000-0000-000000000001',_role text DEFAULT 'authenticated')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _result jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
+ IF _role='anon' THEN SET LOCAL ROLE anon;
+ ELSIF _role='service_role' THEN SET LOCAL ROLE service_role;
+ ELSE SET LOCAL ROLE authenticated; END IF;
+ IF _save THEN SELECT public.client_portal_save_welcome(_token,_profile,_answers) INTO _result;
+ ELSE SELECT public.client_portal_welcome_state() INTO _result; END IF;
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);RETURN _result;
+END;$$;
+CREATE FUNCTION pg_temp.e09_welcome_snapshot() RETURNS jsonb LANGUAGE sql AS $$
+ SELECT jsonb_build_object('profile',pg_temp.e09_snapshot(),
+ 'intake',(SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM public.paige_client_intake_submissions i
+  WHERE client_id IN('e0932000-0000-0000-0000-000000000001','e0932000-0000-0000-0000-000000000002')),
+ 'stage_audit',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM public.paige_audit_log a
+  WHERE target_id='e0932000-0000-0000-0000-000000000001'))
+$$;
+CREATE TEMP TABLE e09_welcome_loaded AS SELECT pg_temp.e09_welcome(false) AS state;
+SELECT is((SELECT state->>'status' FROM e09_welcome_loaded),'ready','auth actual caller gets authored sponsoring Welcome');
+SELECT is((SELECT jsonb_array_length(state->'fields') FROM e09_welcome_loaded),2,'contact question removed from authored fields');
+SELECT is((SELECT state->'answers' FROM e09_welcome_loaded),'{}'::jsonb,'unseen historical keys are not projected');
+SELECT ok(NOT (SELECT state::text LIKE '%NOT PUBLIC%' FROM e09_welcome_loaded),'tenant features remain private');
+CREATE TEMP TABLE e09_welcome_saved AS SELECT pg_temp.e09_welcome(true,
+ (SELECT state->>'expected_token' FROM e09_welcome_loaded),
+ '{"first_name":"Welcome Native","phone":"+12025550131","city":"Canonical City"}',
+ '{"goal":"Hosted synthetic answer","notes":"Optional synthetic note"}') AS state;
+SELECT is((SELECT state FROM e09_welcome_saved),pg_temp.e09_welcome(false),'save response equals final canonical reload after all triggers');
+SELECT is((SELECT state#>>'{profile,phone}' FROM e09_welcome_saved),'+12025550131','Welcome phone actually persists');
+SELECT is((SELECT state#>>'{profile,onboarding_stage}' FROM e09_welcome_saved),'signing_agreement','native forward stage persists');
+SELECT is((SELECT state->>'intake_updated_at' FROM e09_welcome_saved),
+ (SELECT to_jsonb(i)->>'updated_at' FROM public.paige_client_intake_submissions i
+ WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake'),'actual now() intake version is returned');
+SELECT is((SELECT payload->>'unseen_history' FROM public.paige_client_intake_submissions
+ WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake'),'keep historical','unseen history retained server-side');
+SELECT ok(EXISTS(SELECT 1 FROM public.audit_logs WHERE action='welcome_saved'
+ AND entity_id='e0932000-0000-0000-0000-000000000001' AND user_id='e0912000-0000-0000-0000-000000000001'
+ AND data->>'tenant_id'='e0922000-0000-0000-0000-000000000001'),'existing audit attributes actual customer Welcome action');
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.audit_logs WHERE entity_id='e0932000-0000-0000-0000-000000000001'
+ AND (data::text LIKE '%Hosted synthetic answer%' OR data::text LIKE '%Welcome Native%')),'Welcome audit omits personal answers');
+CREATE FUNCTION pg_temp.e09_legacy_welcome_number(_legacy text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _state jsonb;
+BEGIN
+ BEGIN
+  UPDATE public.tenants SET features=jsonb_set(features,'{playbook_config,intake}',
+   (features#>'{playbook_config,intake}')||'[{"key":"count","label":"Count","type":"number"}]'::jsonb)
+   WHERE id='e0922000-0000-0000-0000-000000000001';
+  UPDATE public.paige_client_intake_submissions SET payload=payload||jsonb_build_object('count',_legacy)
+   WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+  _state := pg_temp.e09_welcome(false);
+  _state := pg_temp.e09_welcome(true,_state->>'expected_token','{"phone":"+12025550131"}',_state->'answers');
+  IF _state IS DISTINCT FROM pg_temp.e09_welcome(false) THEN RAISE EXCEPTION 'legacy save reload mismatch'; END IF;
+  RAISE SQLSTATE 'ZX009' USING MESSAGE='TEST_FIXTURE_ROLLBACK';
+ EXCEPTION WHEN SQLSTATE 'ZX009' THEN NULL;
+ END;
+ RETURN _state;
+END;$$;
+CREATE TEMP TABLE e09_legacy_welcome_before AS SELECT pg_temp.e09_welcome_snapshot() AS state;
+SELECT is(pg_temp.e09_legacy_welcome_number('3')#>'{answers,count}','3'::jsonb,'untouched legacy numeric string saves as canonical number');
+SELECT is(pg_temp.e09_legacy_welcome_number('0')#>'{answers,count}','0'::jsonb,'legacy zero remains a real numeric answer');
+SELECT is(pg_temp.e09_legacy_welcome_number('3.5')#>'{answers,count}','3.5'::jsonb,'legacy decimal resumes without re-entry');
+SELECT is(pg_temp.e09_legacy_welcome_number('3e1')#>'{answers,count}','30'::jsonb,'legacy finite exponent resumes as canonical number');
+SELECT is(pg_temp.e09_legacy_welcome_number('')#>'{answers,count}','null'::jsonb,'optional legacy blank has explicit null representation');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('NaN')$$,'22023',NULL,'invalid legacy numeric text remains refused');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('0x10')$$,'22023',NULL,'hex text receives no permissive numeric coercion');
+SELECT throws_ok($$SELECT pg_temp.e09_legacy_welcome_number('1e999')$$,'22023',NULL,'out-of-range legacy exponent remains refused');
+SELECT is(pg_temp.e09_welcome_snapshot(),(SELECT state FROM e09_legacy_welcome_before),'legacy compatibility fixtures roll back every canonical row and audit');
+CREATE TEMP TABLE e09_welcome_before AS SELECT pg_temp.e09_welcome_snapshot() AS state;
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(SELECT state->>'expected_token' FROM e09_welcome_loaded),'{"first_name":"No"}','{"goal":"No"}')$$,
+ '40001','Welcome information changed; reload before saving','prior token conflicts even within same now() transaction');
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(false,NULL,NULL,NULL,NULL)$$,'42501','customer authentication required','subjectless actual role refuses Welcome');
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(SELECT state->>'expected_token' FROM e09_welcome_saved),'{"first_name":"No"}','{"goal":"No"}','e0912000-0000-0000-0000-000000000002')$$,
+ '55000','published intake configuration required','foreign caller never borrows first customer schema or token');
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"No"}','{"goal":"No","email":"override@tests.invalid"}')$$,
+ '22023','intake answer is not permitted','answer cannot override canonical contact');
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"No"}','{}')$$,
+ '22023','required intake answer is missing','published required answer enforced');
+SELECT is(pg_temp.e09_welcome_snapshot(),(SELECT state FROM e09_welcome_before),'denials preserve all canonical rows and audits');
+-- Raw API controls use actual caller roles. Capture row counts before rollback;
+-- no relaxed policy, hand-built authorization or alternate writer is used.
+CREATE FUNCTION pg_temp.e09_raw_intake(_operation text) RETURNS bigint LANGUAGE plpgsql AS $$
+DECLARE _count bigint;
+BEGIN
+ PERFORM set_config('request.jwt.claims','{"sub":"e0912000-0000-0000-0000-000000000001","role":"authenticated"}',true);
+ SET LOCAL ROLE authenticated;
+ IF _operation='update' THEN
+  UPDATE public.paige_client_intake_submissions SET payload='{"goal":"raw"}'
+   WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+ ELSIF _operation='out' THEN
+  UPDATE public.paige_client_intake_submissions SET section='business'
+   WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+ ELSIF _operation='insert' THEN
+  INSERT INTO public.paige_client_intake_submissions(client_id,section,payload)
+   VALUES('e0932000-0000-0000-0000-000000000001','playbook_intake','{}');
+ ELSIF _operation='into' THEN
+  UPDATE public.paige_client_intake_submissions SET section='playbook_intake'
+   WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='about_you';
+ END IF;
+ GET DIAGNOSTICS _count=ROW_COUNT;
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);RETURN _count;
+END;$$;
+SELECT is(pg_temp.e09_raw_intake('update'),0::bigint,'raw protected update affects no rows');
+SELECT is(pg_temp.e09_raw_intake('out'),0::bigint,'raw section reassignment out affects no rows');
+CREATE TEMP TABLE e09_held_intake AS SELECT * FROM public.paige_client_intake_submissions
+ WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+DELETE FROM public.paige_client_intake_submissions WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake';
+INSERT INTO public.paige_client_intake_submissions(client_id,section,payload)
+ VALUES('e0932000-0000-0000-0000-000000000001','about_you','{}');
+SELECT throws_ok($$SELECT pg_temp.e09_raw_intake('insert')$$,'42501',NULL,'raw protected insert refused before uniqueness can mask policy');
+SELECT throws_ok($$SELECT pg_temp.e09_raw_intake('into')$$,'42501',NULL,'raw reassignment into protected section refused');
+DELETE FROM public.paige_client_intake_submissions
+ WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='about_you';
+INSERT INTO public.paige_client_intake_submissions SELECT * FROM e09_held_intake;
+-- Real native late-stage audit failure must roll back the earlier CRM/phone/intake.
+UPDATE public.clients SET onboarding_stage='invited' WHERE id='e0932000-0000-0000-0000-000000000001';
+CREATE TEMP TABLE e09_welcome_rollback AS SELECT pg_temp.e09_welcome_snapshot() AS state;
+CREATE FUNCTION pg_temp.e09_fail_welcome_stage() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'E09_TEST_STAGE_FAILURE';END;$$;
+CREATE TRIGGER e09_fail_welcome_stage BEFORE INSERT ON public.paige_audit_log
+ FOR EACH ROW EXECUTE FUNCTION pg_temp.e09_fail_welcome_stage();
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"Must Roll Back","phone":"+12025550132"}','{"goal":"Must roll back"}')$$,
+ 'P0001','E09_TEST_STAGE_FAILURE','late native stage audit failure refuses whole Welcome save');
+SELECT is(pg_temp.e09_welcome_snapshot(),(SELECT state FROM e09_welcome_rollback),'late failure rolls back contact/intake/stage and existing audit streams');
+DROP TRIGGER e09_fail_welcome_stage ON public.paige_audit_log;
+-- Optional visible omission removes that answer while preserving unseen history.
+SELECT is(pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"Welcome Native"}',
+ '{"goal":"Next canonical answer"}')->'answers','{"goal":"Next canonical answer"}'::jsonb,'optional omitted answer is cleared');
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.paige_client_intake_submissions
+ WHERE client_id='e0932000-0000-0000-0000-000000000001' AND section='playbook_intake' AND payload ? 'notes'),'optional clear persisted in same canonical row');
 SELECT * FROM finish();
 ROLLBACK;

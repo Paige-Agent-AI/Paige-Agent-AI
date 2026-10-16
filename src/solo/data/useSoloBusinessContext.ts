@@ -139,8 +139,20 @@ export type BusinessContextSaveInput = {
 };
 
 export type BusinessContextSaveResult =
-  | { ok: true; kind: "saved" }
-  | { ok: false; kind: "failed" | "conflict" | "stale"; error: string };
+  | {
+      ok: true;
+      kind: "saved";
+      /** Caller-facing Setup readback, not a receipt or a model-context grant.
+       * Never use the submitted draft as evidence that a fact was stored. */
+      readback: {
+        tenantId: string;
+        brief: SoloSetupBrief;
+        contextRevision: number | null;
+      };
+    }
+  | { ok: false; kind: "failed" | "conflict" | "stale" | "unknown"; error: string };
+
+const UNKNOWN_SAVE = "We couldn't verify whether Setup was saved. Check the stored version before saving again.";
 
 export function useSoloBusinessContext() {
   const { activeTenantId, refresh: refreshTenant } = useTenantContext();
@@ -152,6 +164,11 @@ export function useSoloBusinessContext() {
   activeTenantRef.current = activeTenantId;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const unknownSaveTenant = useRef<string | null>(null);
+  const [unknownTenant, setUnknownTenant] = useState<string | null>(null);
+  const reconciliationBusy = useRef(false);
+  const reconciliationTicket = useRef(0);
+  const [reconciling, setReconciling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessScope, setAccessScope] = useState<SetupAccessScope>("read_only");
   const [resolvedTenantId, setResolvedTenantId] = useState<string | null>(null);
@@ -217,8 +234,8 @@ export function useSoloBusinessContext() {
     setResolvedTenantId(row.tenantId ?? null);
   }, []);
 
-  const load = useCallback(async () => {
-    if (mutation.current?.tenantId === activeTenantId) return;
+  const load = useCallback(async (): Promise<ContextRow | null> => {
+    if (mutation.current?.tenantId === activeTenantId) return null;
     const token = gate.current.begin();
     saveEpoch.current += 1;
     mutation.current = null;
@@ -243,7 +260,7 @@ export function useSoloBusinessContext() {
     if (!activeTenantId) {
       setError("Choose a Solo workspace to open Setup.");
       setLoading(false);
-      return;
+      return null;
     }
     try {
       // Generated types refresh after the migration is applied.
@@ -251,22 +268,29 @@ export function useSoloBusinessContext() {
       const { data, error: loadError } = await setupRpc(
         "get_solo_business_context",
       );
-      if (!gate.current.isCurrent(token)) return;
+      if (!gate.current.isCurrent(token) || activeTenantRef.current !== activeTenantId) return null;
       if (loadError) throw loadError;
       const row = (Array.isArray(data) ? data[0] : data) as ContextRow | null;
-      if (!row)
+      if (!row || !Number.isSafeInteger(row.contextRevision) || Number(row.contextRevision) < 0)
         throw new Error("The active workspace could not be resolved safely.");
       accept(row, activeTenantId);
+      return row;
     } catch (caught) {
       if (gate.current.isCurrent(token))
         setError(errorMessage(caught, "Couldn't load this business context."));
     } finally {
       if (gate.current.isCurrent(token)) setLoading(false);
     }
+    return null;
   }, [accept, activeTenantId]);
 
   useEffect(() => {
     const activeGate = gate.current;
+    unknownSaveTenant.current = null;
+    setUnknownTenant(null);
+    reconciliationBusy.current = false;
+    reconciliationTicket.current += 1;
+    setReconciling(false);
     void load();
     return () => {
       activeGate.clear();
@@ -285,11 +309,13 @@ export function useSoloBusinessContext() {
       next: BusinessContextSaveInput,
     ): Promise<BusinessContextSaveResult> => {
       const tenantAtStart = activeTenantId;
+      if (tenantAtStart && unknownSaveTenant.current === tenantAtStart)
+        return { ok: false, kind: "unknown", error: UNKNOWN_SAVE };
       if (
         !tenantAtStart ||
         !canEdit ||
         activeTenantRef.current !== tenantAtStart ||
-        mutation.current
+        mutation.current || reconciliationBusy.current
       )
         return {
           ok: false,
@@ -334,10 +360,8 @@ export function useSoloBusinessContext() {
               "The account changed before this save response returned. Its result was not shown here.",
           };
         const row = (Array.isArray(data) ? data[0] : data) as ContextRow | null;
-        if (!row)
-          throw new Error(
-            "The save completed without a readable workspace record.",
-          );
+        if (!row || row.tenantId !== tenantAtStart || !Number.isSafeInteger(row.contextRevision) || Number(row.contextRevision) < 0)
+          throw new Error("The saved record could not be verified.");
         accept(row, tenantAtStart);
         // #826: a successful save is the canonical setup journey's completion —
         // the trigger wrote features.solo_setup_complete in the same commit.
@@ -348,7 +372,17 @@ export function useSoloBusinessContext() {
         if (typeof refreshTenant === "function") {
           void Promise.resolve(refreshTenant()).catch(() => {});
         }
-        return { ok: true, kind: "saved" };
+        return {
+          ok: true,
+          kind: "saved",
+          readback: {
+            tenantId: tenantAtStart,
+            brief: cleanSoloSetupBrief(row.brief, row.tenantName ?? ""),
+            contextRevision: Number.isSafeInteger(row.contextRevision) && Number(row.contextRevision) >= 0
+              ? Number(row.contextRevision)
+              : null,
+          },
+        };
       } catch (caught) {
         if (
           epoch !== saveEpoch.current ||
@@ -360,6 +394,15 @@ export function useSoloBusinessContext() {
             error:
               "The account changed before this save response returned. Its result was not shown here.",
           };
+        // Connection loss or completion-unknown SQLSTATEs do not establish rollback.
+        // Lost transport, HTTP/proxy errors or an unreadable success payload do not.
+        const code = String(objectOf(caught).code ?? "");
+        if (code.startsWith("08") || code === "40003" ||
+            !/^(?:[0-9]{2}|0[A-Z]|2[BDF]|3[BDF]|F0|HV|P0|XX)[0-9A-Z]{3}$/.test(code)) {
+          unknownSaveTenant.current = tenantAtStart;
+          setUnknownTenant(tenantAtStart);
+          return { ok: false, kind: "unknown", error: UNKNOWN_SAVE };
+        }
         return {
           ok: false,
           kind: isConflict(caught) ? "conflict" : "failed",
@@ -378,8 +421,37 @@ export function useSoloBusinessContext() {
       contextRevision,
       accessScope,
       primaryBusinessEmail,
+      refreshTenant,
     ],
   );
+
+  const reconcileSave = useCallback(async () => {
+    const tenantAtStart = activeTenantId;
+    if (!tenantAtStart || activeTenantRef.current !== tenantAtStart ||
+        unknownSaveTenant.current !== tenantAtStart || mutation.current || reconciliationBusy.current)
+      return { ok: false as const, error: "Check the stored version in the current workspace before continuing." };
+    reconciliationBusy.current = true;
+    const ticket = ++reconciliationTicket.current;
+    setReconciling(true);
+    const expectedEpoch = saveEpoch.current + 1;
+    try {
+      const row = await load();
+      if (!row || activeTenantRef.current !== tenantAtStart || saveEpoch.current !== expectedEpoch ||
+          unknownSaveTenant.current !== tenantAtStart || row.tenantId !== tenantAtStart)
+        return { ok: false as const, error: "The stored version could not be verified. No save was retried." };
+      unknownSaveTenant.current = null;
+      setUnknownTenant(null);
+      return { ok: true as const, kind: "reconciled" as const, readback: {
+        tenantId: tenantAtStart, brief: cleanSoloSetupBrief(row.brief, row.tenantName ?? ""),
+        contextRevision: Number(row.contextRevision),
+      } };
+    } finally {
+      if (reconciliationTicket.current === ticket && activeTenantRef.current === tenantAtStart) {
+        reconciliationBusy.current = false;
+        setReconciling(false);
+      }
+    }
+  }, [activeTenantId, load]);
 
   const checkManagedEmail = useCallback(
     async (localPart: string) => {
@@ -389,6 +461,7 @@ export function useSoloBusinessContext() {
         !tenantAtStart ||
         !canEdit ||
         accessScope !== "owner_full" ||
+        unknownSaveTenant.current === tenantAtStart ||
         mutation.current ||
         activeTenantRef.current !== tenantAtStart
       )
@@ -417,6 +490,7 @@ export function useSoloBusinessContext() {
         !tenantAtStart ||
         !canEdit ||
         accessScope !== "owner_full" ||
+        unknownSaveTenant.current === tenantAtStart ||
         mutation.current ||
         activeTenantRef.current !== tenantAtStart
       )
@@ -528,6 +602,7 @@ export function useSoloBusinessContext() {
       if (
         !canEdit ||
         !tenantAtStart ||
+        unknownSaveTenant.current === tenantAtStart ||
         mutation.current ||
         activeTenantRef.current !== tenantAtStart
       )
@@ -571,11 +646,15 @@ export function useSoloBusinessContext() {
     loading,
     error,
     saving,
+    saveOutcomeUnknown: Boolean(activeTenantId) && unknownTenant === activeTenantId,
+    reconciling,
+    reconcileSave,
     accessScope,
     canEdit,
     canEditLegal: canEdit && accessScope === "owner_full",
     activeTenantId,
     resolvedTenantId,
+    contextRevision: tenantResolved ? contextRevision : null,
     brief: tenantResolved ? brief : EMPTY_BRIEF,
     businessOwners: tenantResolved ? businessOwners : EMPTY_OWNERS,
     primaryBusinessEmail: tenantResolved ? primaryBusinessEmail : "",

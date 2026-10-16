@@ -64,7 +64,7 @@ const LEGACY_PATH_ALIASES: Record<string, string> = {
 export default function OnboardLayout() {
   const retryButton = useRef<HTMLButtonElement>(null);
   const restoreRetryFocus = useRef(false);
-  const { loading, error, client, userEmail, refresh } = useOnboardingClient();
+  const { loading, error, client, userEmail, refresh, acceptSavedProfile } = useOnboardingClient();
   const retryRead = () => { restoreRetryFocus.current = true; void refresh(); };
   useEffect(() => {
     if (loading) return;
@@ -235,10 +235,10 @@ export default function OnboardLayout() {
                 {(brand.tenant_name || "?").charAt(0).toUpperCase()}
               </span>
             )}
-            <span className="text-lg font-semibold" style={{ color: "#081428" }}>{brand.tenant_name}</span>
+            <span className="text-lg font-semibold" style={{ color: "inherit" }}>{brand.tenant_name}</span>
           </div>
         )}
-        <Outlet context={{ client, refresh, brand }} />
+        <Outlet context={{ client, refresh, brand, acceptSavedProfile }} />
       </div>
     </div>
   );

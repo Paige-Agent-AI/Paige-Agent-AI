@@ -14,6 +14,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { describe, expect, it, vi } from "vitest";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
 
+const reloadHarness = vi.hoisted(() => ({ threads: [] as Array<Record<string, unknown>>, turns: [] as Array<Record<string, unknown>>, recovery: null as unknown }));
+
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: "account-a", activeTenant: { account_number: "3855" } }),
@@ -34,8 +36,9 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/hooks/usePaigeThreads", () => ({
   usePaigeThreads: () => ({
-    threads: [], isLoading: false, isFetched: true,
-    loadTurns: vi.fn(async () => []), ensureThread: vi.fn(async () => "thread-a"),
+    threads: reloadHarness.threads, isLoading: false, isFetched: true,
+    loadTurns: vi.fn(async () => reloadHarness.turns), ensureThread: vi.fn(async () => "thread-a"),
+    loadApprovalRecovery: vi.fn(async () => reloadHarness.recovery),
     onTurnPersisted: vi.fn(), renameThread: vi.fn(), archiveThread: vi.fn(), deleteThread: vi.fn(),
   }),
 }));
@@ -91,9 +94,17 @@ type Scene = {
   /** What the approval turn returns; undefined leaves the card live, a pending promise leaves it running. */
   answer?: unknown;
   decline?: boolean;
+  reload?: "available" | "unavailable" | "interrupted";
 };
 
 const SCENES: Scene[] = [
+  ...(["available", "unavailable", "interrupted"] as const).map(reload => ({
+    label: `Reload — ${reload}`,
+    note: reload === "available" ? "Synthetic canonical WAIT_APPROVAL and a fresh server-issued native projection. No action runs on reload."
+      : reload === "unavailable" ? "A canonical proposal failed its fresh check. Historical context stays; approval controls do not."
+      : "An interrupted historical proposal has no WAIT_APPROVAL terminal. It cannot be recovered by this reader.",
+    ask: "", offer: "Review the proposed changes before approving.", proposal: CONTACT, reload,
+  })),
   {
     label: "Needs your OK",
     note: "Unchanged. Gold is spent on Approve and nowhere else.",
@@ -213,6 +224,20 @@ const SCENES: Scene[] = [
 ];
 
 async function capture(scene: Scene): Promise<string> {
+  reloadHarness.threads = []; reloadHarness.turns = []; reloadHarness.recovery = null;
+  if (scene.reload) {
+    const threadId = "00000000-0000-4000-8000-000000000003", turnId = "00000000-0000-4000-8000-000000000005", intentId = "00000000-0000-4000-8000-000000000004";
+    const card = {...CONTACT[0], command: {action: "contact.create", patch: {first_name: "Maya", last_name: "Ortiz"}}, idempotency_key: "fixture-original-key"};
+    reloadHarness.threads = [{id: threadId, title: "Fixture pending work", updated_at: new Date().toISOString()}];
+    reloadHarness.turns = [
+      {id: "fixture-user", role: "user", content: "Add the new contact.", bundle_ref: null},
+      {id: turnId, role: "assistant", content: scene.offer, interactive_intent_id: intentId,
+        interactive_terminal_state: scene.reload === "interrupted" ? "INTERRUPTED" : "WAIT_APPROVAL",
+        bundle_ref: {paige_confirm: [card], turn_state: {v: 1, state: scene.reload === "interrupted" ? "INTERRUPTED" : "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1}}},
+    ];
+    reloadHarness.recovery = scene.reload === "available" ? {v: 1, status: "available", thread_id: threadId, turn_id: turnId, intent_id: intentId,
+      tenant_id: "account-a", expires_at: new Date(Date.now() + 300000).toISOString(), confirmations: [card]} : null;
+  }
   let turn = 0;
   vi.stubGlobal("fetch", vi.fn(async () => {
     turn += 1;
@@ -229,6 +254,14 @@ async function capture(scene: Scene): Promise<string> {
       root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety greeting="What are we moving?" />);
       await flush();
     });
+    if (scene.reload) {
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); await flush(); });
+      const transcript = host.querySelector("#solo-paige-transcript")!;
+      const approve = Array.from(transcript.querySelectorAll("button")).some(button => /^Approve/.test(button.textContent ?? ""));
+      expect(approve).toBe(scene.reload === "available");
+      expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+      return Array.from(transcript.querySelectorAll("[data-paige-message-id]")).map(message => message.outerHTML).join("\n");
+    }
     const textarea = host.querySelector("textarea")!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, scene.ask);
@@ -291,7 +324,7 @@ describe("approval recovery render harness", () => {
   it.skipIf(!existsSync("dist/assets"))("drives the real surface into every state and writes the pages", async () => {
     const captured: Array<{ scene: Scene; html: string }> = [];
     for (const scene of SCENES) captured.push({ scene, html: await capture(scene) });
-    const dir = "docs/evidence/ui-delivery/solo-approval-recovery";
+    const dir = process.env.APPROVAL_RECOVERY_RENDER_DIR || "docs/evidence/ui-delivery/solo-approval-recovery";
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/approval-recovery.light.html`, page("light", captured), "utf8");
     writeFileSync(`${dir}/approval-recovery.dark.html`, page("dark", captured), "utf8");

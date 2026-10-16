@@ -56,3 +56,24 @@ The fixture uses only neutral synthetic actors/tenants and no secrets. No accoun
 Distinct in-project CRM reviewer inspected immutablea294aa4e2dd6e0004913ea5531a4f7815f9d89cc: NON-AUTHOR PASS/no material findings, independently running15 actual-handler cases and26 unchanged read-binding/mutant controls. NativeSQL remains explicitly NOT_RUN locally. The predecessor static expectation correction from3a6649014943f55427749c44ba87e94dfb2f5e6a is retained in this branch; its22-test file passed in the lead checkout without changing runtime.
 
 The lead adds the new handler script to the existing INT336 CI step and renews only29 reviewed fingerprint scalars plus explanatory comments. The unchanged extractor includes the full outer-handler ancestry, so the three reviewed task-reader lines affect all29 digests; metadata, helpers, extraction and negative controls remain unchanged. All59 incumbent restrictive controls,15 task-handler cases and214-capability Spine registry guard pass after this bounded renewal. An initial invocation of a nonexistent lint filename was corrected to the actual existing registry lint; no missing-file run counts as proof. Final immutable composition review, exact-head CI/nativeSQL, merge/deployment, ordinary authenticated action/reload and owner acceptance remain required.
+
+## Coherent task-management integration
+
+Actual ordinary production creation under released #2234 exposed two task-result defects: an approval
+summary reading the wrong title shape and the obsolete task address opening the booking calendar.
+The separately reviewed task-title0ee4378 and locatorb1d80a7 repairs are integrated into this same
+task-management PR. Both distinct NON-AUTHOR source reviews passed. Existing exact stored arguments,
+approvals, native writers, tenant authority and uncertain-outcome handling remain unchanged.
+
+The merged source retains all29 task-reader adapter digests and adds only the one independently
+reviewed canonical URL dependency digest. The combined15 task-reader cases,87 tests across the four
+changed contract/router suites and59 restrictive controls PASS. The isolated locator review also
+passed24 actual native-handler checks and167 tests across12 suites. One local Vitest invocation
+used an unsupported older CLI flag and ran no tests; the corrected command used this installed
+version's documented options and passed. No failing invocation is counted as proof.
+
+The normal dependency resolver identifies16 affected Edge functions, including Chat, CRM and the
+native notification/link consumers. Stripe Connect is not affected; its verified13 deployment and
+security configuration remain preserved. Shared URL tests keep non-SOLO destinations unchanged.
+This composition owes exact final-head CI, eight native SQL assertions, controlled release,
+ordinary authenticated title/update/completion/navigation/readback/reload and separately proven Live.

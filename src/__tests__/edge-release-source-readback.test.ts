@@ -13,6 +13,6 @@ test("Edge release certifies exact downloaded source and rejects false success",
   expect(result.error, "Fixture runner must actually start").toBeUndefined();
   expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
   const executed = Number(result.stderr.match(/Ran (\d+) tests/)?.[1] ?? 0);
-  expect(executed, "The protected fixture suite must actually be collected").toBeGreaterThanOrEqual(41);
+  expect(executed, "The protected fixture suite must actually be collected").toBeGreaterThanOrEqual(54);
   expect(result.stderr).not.toContain("skipped=");
 }, 125_000);

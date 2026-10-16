@@ -57,6 +57,84 @@ def commit_file(repo, commit, relative):
     return content
 
 
+def changed_function_configuration(repo, before, commit):
+    """Supplement the incumbent source graph with only changed function options."""
+    if (not re.fullmatch(r'[0-9a-f]{40}', before or '') or
+            not re.fullmatch(r'[0-9a-f]{40}', commit) or
+            git(repo, 'rev-parse', 'HEAD').decode().strip() != commit):
+        raise ReadbackError('invalid_configuration_baseline')
+    previous = tomllib.loads(git(repo, 'show', f'{before}:supabase/config.toml').decode('utf-8'))
+    current = tomllib.loads(commit_file(repo, commit, 'supabase/config.toml').decode('utf-8'))
+    for config in (previous, current):
+        if not isinstance(config.get('project_id'), str) or not re.fullmatch(r'[a-zA-Z0-9_-]+', config['project_id']):
+            raise ReadbackError('invalid_project_configuration')
+    if previous['project_id'] != current['project_id']:
+        # A tag certified for one project is no evidence about another project.
+        # Do not turn this into an implicit all-function migration/deployment.
+        raise ReadbackError('project_change_requires_separate_release')
+    old_options, new_options = previous.get('functions', {}), current.get('functions', {})
+    if not isinstance(old_options, dict) or not isinstance(new_options, dict):
+        raise ReadbackError('invalid_function_configuration')
+    directories = {}
+    for revision in (before, commit):
+        directories[revision] = set(git(repo, 'ls-tree', '-d', '--name-only',
+                                       f'{revision}:supabase/functions').decode().splitlines())
+    changed = set()
+    for name in old_options.keys() | new_options.keys():
+        if (not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]*', name) or
+                not isinstance(old_options.get(name, {}), dict) or
+                not isinstance(new_options.get(name, {}), dict)):
+            raise ReadbackError('invalid_function_configuration')
+        if old_options.get(name, {}) == new_options.get(name, {}):
+            continue
+        if name in directories[commit]:
+            if new_options.get(name, {}).get('enabled', True) is not True:
+                raise ReadbackError('disabled_function_requires_separate_release')
+            changed.add(name)
+        elif name not in directories[before]:
+            raise ReadbackError('configuration_function_source_missing')
+        # A removed source directory follows the incumbent retired-functions path.
+        # It must never be reintroduced into the deploy/readback set.
+    return changed
+
+
+def configuration_selection(repo, before, commit, names, require_coverage=False):
+    if len(names) != len(set(names)) or any(not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]*', n) for n in names):
+        raise ReadbackError('invalid_selected_functions')
+    changed = changed_function_configuration(repo, before, commit)
+    if require_coverage and not changed.issubset(names):
+        raise ReadbackError('function_configuration_not_verified')
+    return sorted(set(names) | changed)
+
+
+def runtime_closure(graph, entry):
+    # Keep the incumbent graph and resolver, but do not require files reachable
+    # solely through explicit erased declarations. The anchored, restricted
+    # clause cannot span a semicolon/string into a later runtime import. All
+    # ambiguous syntax and comment lookalikes remain conservative requirements.
+    type_declaration = re.compile(
+        r'''(?m)^[ \t]*(?:import|export)\s+type\s+'''
+        r'''(?:[A-Za-z_$][\w$]*|\{[^{};'"`]*\}|\*(?:\s+as\s+[A-Za-z_$][\w$]*)?)'''
+        r'''\s+from\s*(['"])[^'"\r\n]+\1''')
+    cache, pending = {}, [entry]
+    while pending:
+        filename = pending.pop()
+        if filename in cache:
+            continue
+        source = Path(filename).read_text(encoding='utf-8')
+        erased = [(match.start(), match.end()) for match in type_declaration.finditer(source)]
+        dependencies = []
+        for match in graph.IMPORT_RE.finditer(source):
+            if any(start <= match.start() < end for start, end in erased):
+                continue
+            resolved = graph.resolve_specifier(filename, match.group(1))
+            if resolved:
+                dependencies.append(resolved)
+        cache[filename] = dependencies
+        pending.extend(dependencies)
+    return graph.bundle_closure([entry], cache)
+
+
 def expected_release(repo, commit, names):
     if not re.fullmatch(r'[0-9a-f]{40}', commit) or git(repo, 'rev-parse', 'HEAD').decode().strip() != commit:
         raise ReadbackError('wrong_checkout_commit')
@@ -87,7 +165,7 @@ def expected_release(repo, commit, names):
             raise ReadbackError('invalid_jwt_configuration')
         if options.get('static_files'):
             raise ReadbackError('unsupported_static_file_proof')
-        closure = graph.bundle_closure([str(entry)], {})
+        closure = runtime_closure(graph, str(entry))
         import_map = options.get('import_map')
         if import_map is None:
             # Pinned CLI's normal discovery order, then its deprecated fallback.
@@ -277,8 +355,26 @@ def main(argv=None):
     parser.add_argument('--repo', type=Path, default=ROOT)
     parser.add_argument('--expected-commit', required=True)
     parser.add_argument('--functions', type=Path, required=True)
-    parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--report', type=Path)
+    parser.add_argument('--baseline-commit')
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--select-config', action='store_true')
+    modes.add_argument('--require-config-coverage', action='store_true')
     args = parser.parse_args(argv)
+    if args.select_config or args.require_config_coverage:
+        try:
+            names = args.functions.read_text(encoding='utf-8').splitlines()
+            selected = configuration_selection(args.repo.resolve(), args.baseline_commit, args.expected_commit,
+                                               names, args.require_config_coverage)
+            if args.select_config:
+                args.functions.write_text(''.join(name + '\n' for name in selected), encoding='utf-8')
+            return 0
+        except (ReadbackError, ValueError, OSError) as error:
+            reason = str(error) if isinstance(error, ReadbackError) else 'invalid_configuration_input'
+            print(f'::error::Edge configuration coverage refused: {reason}')
+            return 1
+    if args.report is None:
+        parser.error('--report is required for deployed-source verification')
     try:
         names = args.functions.read_text(encoding='utf-8').splitlines()
         report = verify(args.repo.resolve(), args.expected_commit, names)

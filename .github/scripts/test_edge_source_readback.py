@@ -114,6 +114,9 @@ class ReleaseFixtures(unittest.TestCase):
                  (name == 'paige-ai-chat' and p.startswith('supabase/functions/_shared/'))}
         if self.mode == 'missing-dependency':
             files.pop('supabase/functions/_shared/authority.ts', None)
+        if self.mode == 'pruned-type-only':
+            for path in ['supabase/functions/_shared/types-only.ts', 'supabase/functions/_shared/types-child.ts']:
+                files.pop(path, None)
         if self.mode == 'empty-download':
             files = {}
         if self.mode == 'wrong-entry-bytes' and name == 'paige-ai-chat':
@@ -392,11 +395,164 @@ class ReleaseFixtures(unittest.TestCase):
         record = workflow.split('- name: Record deployed commit', 1)[1]
         script = textwrap.dedent(record.split('run: |', 1)[1].split('git tag -f edge-live', 1)[0])
         script = script.replace('${{ steps.baseline.outputs.before }}', before)
+        script = script.replace('${{ github.sha }}', self.commit)
+        selected = self.repo / 'affected.txt'
+        if not selected.exists():
+            selected.write_text(''.join(name + '\n' for name in self.names), encoding='utf-8')
+        executable = Path(os.sys.executable).as_posix()
+        helper = (ROOT / '.github/scripts/edge-source-readback.py').as_posix()
+        script = script.replace('python3 .github/scripts/edge-source-readback.py',
+                                f'"{executable}" "{helper}" --repo .')
         bash = shutil.which('bash')
         if not bash and os.name == 'nt':
             bash = r'C:\Program Files\Git\bin\bash.exe'
         self.assertTrue(bash and Path(bash).is_file(), 'Actual tag-guard fixture requires existing Bash')
         return subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True, timeout=15)
+
+    def select_as_workflow(self, before):
+        """Run the incumbent graph, then the config supplement only if wired in the workflow."""
+        spec = importlib.util.spec_from_file_location('fixture_edge_graph', ROOT / '.github/scripts/edge-affected.py')
+        graph = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(graph)
+        graph.REPO_ROOT = str(self.repo)
+        graph.FUNCTIONS_DIR = str(self.repo / 'supabase/functions')
+        changed = self.git('diff', '--name-only', before, self.commit, '--', 'supabase/functions/**')
+        output = io.StringIO()
+        with patch.object(graph.sys, 'stdin', io.StringIO(changed)), contextlib.redirect_stdout(output):
+            self.assertEqual(graph.main(), 0)
+        selected = self.repo / 'affected.txt'
+        selected.write_text(output.getvalue(), encoding='utf-8')
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        affected = workflow.split('- name: Resolve affected functions', 1)[1].split('- name: Setup Supabase CLI', 1)[0]
+        if '--select-config' in affected:
+            with contextlib.redirect_stdout(io.StringIO()):
+                code = readback.main(['--repo', str(self.repo), '--expected-commit', self.commit,
+                                      '--baseline-commit', before, '--functions', str(selected), '--select-config'])
+            if code:
+                raise readback.ReadbackError('configuration_selection_refused')
+        return selected.read_text(encoding='utf-8').splitlines()
+
+    def test_manual_config_only_change_selects_the_exact_function(self):
+        before = self.commit
+        self.git('tag', 'edge-live', before)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
+        self.recommit()
+        self.assertEqual(self.select_as_workflow(before), ['crm-command'])
+
+    def test_manual_config_and_unrelated_source_both_require_readback(self):
+        before = self.commit
+        self.git('tag', 'edge-live', before)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
+        self.recommit()
+        self.files['supabase/functions/paige-ai-chat/index.ts'] += '// unrelated source change\n'
+        self.recommit()
+        self.names = self.select_as_workflow(before)
+        self.assertEqual(set(self.names), {'crm-command', 'paige-ai-chat'})
+        self.assert_failed(self.verify(), 'jwt_configuration_mismatch', 'crm-command')
+        self.rows[1]['verify_jwt'] = True
+        self.assertTrue(self.verify()['all_pass'])
+
+    def test_project_change_cannot_inherit_prior_project_certification(self):
+        before = self.commit
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('test-project', 'different-test-project')
+        self.recommit()
+        with self.assertRaises(readback.ReadbackError):
+            self.select_as_workflow(before)
+        self.assertEqual(self.calls, [])
+
+    def test_manual_tag_guard_refuses_omitted_config_change(self):
+        before = self.commit
+        self.git('tag', 'edge-live', before)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
+        self.recommit()
+        (self.repo / 'affected.txt').write_text('paige-ai-chat\n', encoding='utf-8')
+        self.assertNotEqual(self.run_actual_tag_guard(before).returncode, 0,
+                            'Manual baseline=edge-live must not hide a configuration-only gap')
+
+    def test_explicit_type_only_parent_and_child_are_not_runtime_requirements(self):
+        self.files['supabase/functions/paige-ai-chat/index.ts'] += (
+            'import type { OnlyType } from "../_shared/types-only.ts";\n'
+            'export type { OnlyType } from "../_shared/types-only.ts";\n')
+        self.files['supabase/functions/_shared/types-only.ts'] = (
+            'export type OnlyType = import("./types-child.ts").Child;\n')
+        self.files['supabase/functions/_shared/types-child.ts'] = 'export type Child = string;\n'
+        self.recommit()
+        self.mode = 'pruned-type-only'
+        report = self.verify()
+        self.assertTrue(report['all_pass'], report)
+        self.assertEqual(len(report['functions'][0]['files']), 3)
+
+    def test_runtime_import_of_a_type_only_target_is_still_required(self):
+        for statement in ['import "../_shared/types-only.ts";',
+                          'import { runtime } from "../_shared/types-only.ts";',
+                          'export { runtime } from "../_shared/types-only.ts";',
+                          'const runtime = import("../_shared/types-only.ts");']:
+            with self.subTest(statement=statement):
+                self.files['supabase/functions/paige-ai-chat/index.ts'] = (
+                    'import type { OnlyType } from "../_shared/types-only.ts";\n' + statement + '\n')
+                self.files['supabase/functions/_shared/types-only.ts'] = 'export type OnlyType = string; export const runtime = true;\n'
+                self.recommit()
+                self.mode = 'pruned-type-only'
+                self.assert_failed(self.verify(), 'download_missing_dependency')
+
+    def test_mixed_type_and_value_import_remains_a_runtime_requirement(self):
+        self.files['supabase/functions/paige-ai-chat/index.ts'] += (
+            'import { type OnlyType, runtime } from "../_shared/types-only.ts";\n')
+        self.files['supabase/functions/_shared/types-only.ts'] = 'export type OnlyType = string; export const runtime = true;\n'
+        self.recommit()
+        self.mode = 'pruned-type-only'
+        self.assert_failed(self.verify(), 'download_missing_dependency')
+
+    def test_comment_lookalike_is_conservative_not_an_ignored_runtime_edge(self):
+        self.files['supabase/functions/paige-ai-chat/index.ts'] += (
+            '// import type { OnlyType } from "../_shared/types-only.ts";\n'
+            'const real = import("../_shared/types-only.ts");\n')
+        self.files['supabase/functions/_shared/types-only.ts'] = 'export const runtime = true;\n'
+        self.recommit()
+        self.mode = 'pruned-type-only'
+        self.assert_failed(self.verify(), 'download_missing_dependency')
+
+    def test_config_comment_or_unrelated_settings_do_not_select_all_functions(self):
+        before = self.commit
+        self.files['supabase/config.toml'] += '# presentation-only comment\n[auth]\nenabled = true\n'
+        self.recommit()
+        self.assertEqual(self.select_as_workflow(before), [])
+
+    def test_removed_explicit_options_restore_defaults_through_selected_readback(self):
+        before = self.commit
+        self.files['supabase/config.toml'] = 'project_id = "test-project"\n'
+        self.recommit()
+        self.names = self.select_as_workflow(before)
+        self.assertEqual(self.names, ['crm-command'])
+        self.assert_failed(self.verify(), 'jwt_configuration_mismatch', 'crm-command')
+        self.rows[1]['verify_jwt'] = True
+        self.assertTrue(self.verify()['all_pass'])
+
+    def test_project_change_is_refused_by_actual_tag_guard(self):
+        before = self.commit
+        self.git('tag', 'edge-live', before)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('test-project', 'different-test-project')
+        self.recommit()
+        self.assertNotEqual(self.run_actual_tag_guard(before).returncode, 0)
+
+    def test_config_only_manual_recovery_passes_guard_after_exact_selection(self):
+        before = self.commit
+        self.git('tag', 'edge-live', before)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
+        self.recommit()
+        self.assertEqual(self.select_as_workflow(before), ['crm-command'])
+        self.rows[1]['verify_jwt'] = True
+        self.names = ['crm-command']
+        self.assertTrue(self.verify()['all_pass'])
+        self.assertEqual(self.run_actual_tag_guard(before).returncode, 0)
+
+    def test_configuration_selection_cannot_reactivate_a_disabled_function(self):
+        before = self.commit
+        self.files['supabase/config.toml'] += 'enabled = false\n'
+        self.recommit()
+        with self.assertRaisesRegex(readback.ReadbackError, 'configuration_selection_refused'):
+            self.select_as_workflow(before)
+        self.assertEqual(self.calls, [])
 
     def test_prior_unverified_source_cannot_be_skipped_by_a_later_push(self):
         self.git('tag', 'edge-live', self.commit)
@@ -411,6 +567,7 @@ class ReleaseFixtures(unittest.TestCase):
         self.git('add', '.')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'Frontend fixture')
         before = self.git('rev-parse', 'HEAD').strip()
+        self.commit = before
         self.assertEqual(self.run_actual_tag_guard(before).returncode, 0)
 
     def test_existing_manual_recovery_baseline_passes_tag_guard(self):

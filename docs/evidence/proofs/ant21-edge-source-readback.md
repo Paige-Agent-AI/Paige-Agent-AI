@@ -140,3 +140,70 @@ This candidate has not been pushed or deployed and makes no customer release
 announcement. Current Chat421/CRM106, governed activation, prior releases and
 Stripe Connect13 are preserved. Recovery is a reviewed workflow forward fix;
 never re-enable a vulnerable executor or fabricate a source proof to move a tag.
+
+## Independent-review corrections: configuration recovery and erased type edges
+
+Original candidate `e834d4becc7c8faba4e4b15777bcdcb25b523bbf` is retained unchanged in
+Git history. Review found that source-only affected selection could omit a
+configuration-only function change. A manual dispatch's `before` equals
+`edge-live`, so the prior predecessor comparison alone could not detect this.
+Four new fixtures failed first on that source: configuration-only recovery
+selected nothing; CRM JWT configuration plus unrelated Chat source selected
+only Chat; a project change inherited the old baseline; and the actual manual
+tag guard accepted an omitted configuration change.
+
+The unchanged incumbent source graph still selects source dependencies. A
+local-only mode in the same verification helper supplements that set with
+exact function names whose committed configuration tables changed. It does
+not deploy every function or treat unrelated Auth settings/comments as function
+changes. The existing workflow now also runs for `supabase/config.toml`.
+Configuration removal selects the existing function so default JWT settings
+must be read back. A changed project ID is refused before provider operations:
+another project's certification cannot be inherited, and project migration is
+outside this release. A new disabled-function configuration is also refused
+rather than implicitly reactivating it. Removed function source stays on the
+incumbent retirement path and is never added back to the deploy set.
+
+Before moving the tag, a second local coverage check compares the actual
+certified `edge-live` configuration with the target commit. Every changed
+remaining function must be in the selected, successfully read-back set. This
+check is not vacuous during manual recovery. The prior-source-gap guard stays
+intact; the configuration-specific comparison now permits unrelated settings
+and comments without falsely holding the next release. Protected fixtures
+exercise actual graph selection, helper main, verifier and tag-step shell.
+
+The initial conservative import regex also treated explicit `import type` and
+`export type` declarations as runtime dependencies. A protected type-only
+parent/child fixture first failed with `download_missing_dependency`. The
+verifier now reuses the incumbent resolver and closure with only unambiguous
+explicit erased declaration edges removed. Real static, side-effect, re-export,
+dynamic and mixed type/value imports remain mandatory even if the same target
+also has a type-only edge. No missing file is blindly waived. Ambiguous syntax
+and comment-only regex matches remain conservative requirements; this is not
+a complete TypeScript parser or a claim about provider bundler internals.
+
+Source-backed current Chat paths are `calendar-link-tenant-brain.ts:35-36` and
+`tenant-consent.ts:10` (explicit type imports of `twilio.ts` and
+`channel-adapters.ts`); `channel-adapters.ts:140` reaches `email-attachments.ts`
+only through a type-position import. Recomputing the immutable local source
+manifests requires Chat225, CRM13, Knowledge6 and business-mission-action9 files.
+The original228/14 counts above describe the earlier conservative graph. This
+is local-source proof; no new authenticated download, deployment, provider
+behavior or business execution is certified here. See Deno's official
+[TypeScript support](https://docs.deno.com/runtime/fundamentals/typescript/)
+and [statically analyzable dynamic-import documentation](https://docs.deno.com/runtime/reference/cli/compile/).
+
+Final correction checks and immutable source review are recorded with the
+candidate handback. Existing source, deployment, activation, authenticated
+customer QA, Live and owner-acceptance truth boundaries remain unchanged.
+
+Correction validation: **PASS54** protected stdlib fixtures through the actual
+existing-unit-job Vitest wrapper (**1/1**, minimum54 collected and zero skips;
+99.56seconds total). The initial intermediate53-fixture run had one failure
+because the old frontend-only shell fixture retained its initial target SHA
+after making a new commit; correcting the fixture to use the actual workflow
+target resolved it. This was not a product bypass. Focused wrapper ESLint,
+Python syntax, workflow YAML, all10 Bash-block syntax checks and whitespace
+PASS. The added configuration and type-edge negative controls are included;
+the old conservative affected-graph file remains byte-identical. No provider
+command, authenticated download, production mutation or deploy was invoked.

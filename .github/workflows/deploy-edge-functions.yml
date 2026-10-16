@@ -20,6 +20,7 @@ on:
     branches: [main]
     paths:
       - "supabase/functions/**"
+      - "supabase/config.toml"
       - ".github/workflows/deploy-edge-functions.yml"
       - ".github/scripts/edge-source-readback.py"
   # A credential rotation or a stranded retirement must not wait for the next
@@ -114,6 +115,13 @@ jobs:
         id: affected
         run: |
           python3 .github/scripts/edge-affected.py < changed.txt | tee affected.txt
+          # Source-only graph selection cannot see JWT, entrypoint or import-map
+          # changes. Add only functions whose immutable options changed; a project
+          # change cannot inherit this project's certification or deploy authority.
+          python3 .github/scripts/edge-source-readback.py --select-config \
+            --baseline-commit "${{ steps.baseline.outputs.before }}" \
+            --expected-commit "${{ github.sha }}" --functions affected.txt
+          cat affected.txt
           echo "count=$(grep -c . affected.txt || true)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Supabase CLI
@@ -248,9 +256,15 @@ jobs:
           # commits are fine. Existing workflow_dispatch reconciles a real gap
           # from edge-live without changing deploy/retirement behavior here.
           verified_before="$(git rev-parse --verify refs/tags/edge-live)"
-          if ! git diff --quiet "$verified_before" "${{ steps.baseline.outputs.before }}" -- supabase/functions supabase/config.toml; then
+          if ! git diff --quiet "$verified_before" "${{ steps.baseline.outputs.before }}" -- supabase/functions; then
             echo "::error::Prior Edge source is unverified; use the existing workflow_dispatch recovery before advancing edge-live. Successful selected deployments remain live."
             exit 1
           fi
+          # Compare actual certified tag -> target, not manual before -> edge-live
+          # (the same commit). Every changed live function configuration must have
+          # been selected for this job's successful deployed-source readback.
+          python3 .github/scripts/edge-source-readback.py --require-config-coverage \
+            --baseline-commit "$verified_before" \
+            --expected-commit "${{ github.sha }}" --functions affected.txt
           git tag -f edge-live "${{ github.sha }}"
           git push -f origin edge-live

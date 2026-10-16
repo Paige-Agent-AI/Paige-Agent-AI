@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ type FileRow = {
   visibility: Visibility;
   description: string | null;
   created_at: string;
+  upload_state?: "pending" | "ready";
 };
 
 const LABEL: Record<Visibility, string> = {
@@ -42,14 +43,14 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
   const [busy, setBusy] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data } = await supabase
       .from("client_files")
       .select("*")
       .eq("contact_id", contactId)
       .order("created_at", { ascending: false });
     setFiles((data as FileRow[]) || []);
-  };
+  }, [contactId]);
 
   useEffect(() => {
     load();
@@ -58,14 +59,14 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
       .on("postgres_changes", { event: "*", schema: "public", table: "client_files", filter: `contact_id=eq.${contactId}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [contactId]);
+  }, [contactId, load]);
 
   const upload = async (file: File, visibility: Visibility) => {
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("not signed in");
-      const safe = file.name.replace(/[^\w.\-]/g, "_");
+      const safe = file.name.replace(/[^\w.-]/g, "_");
       const t = tenantId || "default";
       const path = `${t}/${contactId}/${visibility}/${Date.now()}_${safe}`;
 
@@ -84,14 +85,15 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
       });
       if (insErr) throw insErr;
       toast.success(`Uploaded to ${LABEL[visibility]}`);
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e: unknown) {
+      toast.error(e && typeof e === "object" && "message" in e && typeof e.message === "string" ? e.message : "Upload failed");
     } finally {
       setBusy(false);
     }
   };
 
   const download = async (f: FileRow) => {
+    if (f.upload_state === "pending") return;
     const { data, error } = await supabase.storage.from("client-files").createSignedUrl(f.storage_path, 300);
     if (error || !data) return toast.error(error?.message || "Download failed");
     window.open(data.signedUrl, "_blank");
@@ -172,12 +174,12 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
                       <div className="min-w-0">
                         <div className="truncate font-medium">{f.original_filename}</div>
                         <div className="text-xs text-muted-foreground">
-                          {f.mime_type || "file"} · {f.size_bytes ? `${(f.size_bytes / 1024).toFixed(1)} KB` : ""} · {formatDistanceToNow(new Date(f.created_at), { addSuffix: true })}
+                          {f.upload_state === "pending" ? "Upload incomplete" : f.mime_type || "file"} · {f.size_bytes ? `${(f.size_bytes / 1024).toFixed(1)} KB` : ""} · {formatDistanceToNow(new Date(f.created_at), { addSuffix: true })}
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7" onClick={() => download(f)}>
+                      <Button variant="ghost" size="sm" className="h-7" disabled={f.upload_state === "pending"} aria-label={`Download ${f.original_filename}`} onClick={() => download(f)}>
                         <Download className="h-3.5 w-3.5" />
                       </Button>
                       {f.visibility !== "client_upload" && (

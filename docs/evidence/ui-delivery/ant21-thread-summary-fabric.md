@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restores existing summary maintenance and intended pro
 FLOW_PROTOTYPE: NOT_REQUIRED: existing compaction lifecycle and human workflow remain unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible owner can continue a long working conversation without losing attributed earlier context or allowing another workspace/thread into its summary.
 VISUAL_DIRECTION: PASS: incumbent Chat/Live surfaces, design tokens and compaction presentation preserved without frontend edits.
-AUTOMATED_EVIDENCE: PASS:31 actual-handler fold/recall/stream-budget cases;4 metadata controls (2 actual handler and2 exact private closure);171 Fabric assertions including all146 original incumbents;1103 client-memory assertions;462 Knowledge scope assertions;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. Successor results, rejected predecessor and prior-only bounds are distinguished below. All provider/database ports here are synthetic.
+AUTOMATED_EVIDENCE: PASS:31 actual-handler fold/recall/stream-budget cases;4 metadata controls (2 actual handler and2 exact private closure);171 Fabric assertions including all146 original incumbents;1103 client-memory assertions;462 Knowledge scope assertions;64 canonical approval recovery variants;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. Combined results, rejected predecessor and prior-only bounds are distinguished below. All provider/database ports here are synthetic.
 STATIC_EVIDENCE: PASS: source parses through the incumbent real-handler loader; shared Fabric ESLint0, Chat baseline403/current403 with no introduced diagnostic signatures, Node fixture syntax and whitespace pass. Native Deno typecheck remains UNVERIFIED because the exact remote SDK import is not cached/resolvable.
 RENDERED_EVIDENCE: UNVERIFIED: no browser session or new geometry rendering; frontend files are unchanged.
 BEHAVIORAL_EVIDENCE: PASS: real handler plus real Fabric/adapters/budget execute against recording transport and protected SDK ports; positive primary/fallback and negative authority/CAS/error paths are observed. This is not real provider or native-RLS acceptance.
@@ -31,7 +31,7 @@ MUST_NOT_HAPPEN: no foreign/changed-workspace transcript egress, stale-owner sum
 MUST_PRESERVE: existing attribution prompt, both fold callers, 12-turn cadence tail/5-turn floor/token hysteresis, canonical watermark CAS, failed-write truth, Studio/anchor fields and restrictions, P0 WAIT_APPROVAL durable pause, native action writers, actor JWT, tenantless native owner standing and current-main Portal/Task/Social source.
 ACCEPTANCE_CRITERIA: a valid scoped fold uses operational OpenAI with2048 output cap; a proven pre-response health failure may use Anthropic only after fresh caller authority; refused or uncertain scope sends/writes nothing further; only one matching native row with the original watermark can acknowledge compaction. Real provider-backed customer acceptance remains owed.
 PROTECTED_SEAMS: affected and tested: actor/thread/workspace binding, canonical summary CAS/readback, Memory attribution, protected-content egress, provider/budget/fallback, Chat transcript maintenance. Existing approval/Spine/native effect writers are preserved and18 P0 modes regress them. Auth/JWT cryptography and native RLS remain unverified. Entitlement/signup/paywall/billing/provisioning, Rail business receipts, Live state machine, Secure Browser/Vault/credential storage, provider status/real sends, durable jobs/schedulers, shell geometry, scroll/focus/accessibility source are unchanged.
-INTERNAL_BUILD_IDENTITY: base=086d1d8f4d16a11df2a011fc31d0b162dfa0995c; branch=fix/ant21-chat-model-egress-scope; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
+INTERNAL_BUILD_IDENTITY: base=205c81ce9ccffe8f9e46fd8361d4d9db3a321cae; branch=fix/ant21-chat-model-recovery-composition; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
 RELEASE_CHANNEL: development: source candidate only; no provider activation or rollout change.
 RELEASE_CLASSIFICATION: internal-only: scoped provider-routing and maintenance correctness repair.
 CUSTOMER_RELEASE_IDENTITY: none: no released or owner-accepted outcome claimed.
@@ -293,3 +293,41 @@ extractor/metadata/refusal tests and P0 interactive88d238 digest preserved. The 
 proposal must include29 dispatch values and TWO source digests, model-fabric.ts and claude.ts;
 the other95 dependencies match. No pins are renewed in this branch. Distinct exact successor
 review, hosted gates, native/provider/browser/authenticated acceptance and deployment remain owed.
+
+## Reviewed recovery composition
+
+Only after the lead received exact391de0430d35678a170efd6df58d0b0f4dbd7f71 NON-AUTHOR
+PASS, this owned successor cleanly merged reviewed recovery205c81ce9ccffe8f9e46fd8361d4d9db3a321cae.
+The rejected cc892 and reviewed391 refs remain frozen. There were no merge conflicts or new runtime
+edits: shared Chat and existing CI changes are the exact bidirectional delta union. Initial merge
+82ceb6ef retained17 non-overlap recovery blobs byte-for-byte, including recovery UI/helper/native
+CI tests, CRM2250 source, source guard and the current Master41f record. All10 non-overlap model
+blobs initially matched391 exactly. All migrations, versions and reserved identities remain untouched;
+no further Master closeout is added. Model CI retains its two commands beside recovery's native
+disposable-Postgres invocation, in the same incumbent required steps.
+
+Fresh combined31 summary/4 metadata/171 Fabric/462 Knowledge/64 actual status-handler variants and
+all18 P0 modes PASS. The64 recovery cases use protected database ports; the optional ten actual native
+publication-SQL controls are NOT_RUN here, and prior native evidence is not relabeled as this run.
+Full client-memory initially reported1096 PASS/7 FAIL on the clean union. All seven exposed obsolete
+group40 expectations of a new proposal after native CRM's failed explicit approval claim. Pure
+reviewed2250 dba14cb52dd0d6a1df245b7b5f5957601174680f independently reproduced the same1096/7.
+
+The lead assigned a separately cherry-pickable test-only correction, frozen at
+2f3754de2e1a633af8e32f263a04a669a44bbff6 directly on dba14. Its only file changes seven group40
+assertions/comments, with no model fixture binding or native source changes. Used/repeated/expired
+claims now assert acknowledged CRM_APPROVAL_UNAVAILABLE/not_run and no fresh row. Claim-read
+errors assert CRM_APPROVAL_UNCONFIRMED/not_run while the original card remains live. Consumed
+history retains all timestamps with zero new rows, and model re-emission observes the native refusal
+plus already_handled_this_reply, with exactly one door call and no execution/card. No committed-result,
+role/version, original-result or uncertain-readback protection is removed. Pure2250 returns1103/0;
+only that test commit is included here. Final combined client-memory1103/0 PASS. The separate test
+delta and final whole composition still require the lead's distinct review; source tests do not prove
+production/provider readiness or clear an interrupted request.
+
+The98-entry physical source contract remains exactly recovery205, including P0 interactive
+88d238f65d488277112b87d131ad122e4b28d534b43ca5803df97569a2c54ba5 and canonical recovery helper
+95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c. Final read-only pin proposal
+contains29 dispatch scalars and only the two reviewed Fabric/Claude dependencies;96 other entries,
+extractor, metadata and refusal controls stay unchanged. No physical renewal, SQL, push, provider
+activation, deployment, new rendered proof or authenticated customer acceptance is performed here.

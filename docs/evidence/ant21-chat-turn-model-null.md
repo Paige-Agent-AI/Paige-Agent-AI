@@ -72,3 +72,9 @@ existing trusted callback at the streaming Fabric and internal Anthropic budget 
 metadata runtime expression stays exact. Focused metadata4 and its imported31 actual-handler
 controls PASS on that successor. The original four metadata claims and their native proof limits
 are unchanged; see the shared summary evidence for rejected-head history and final review gates.
+
+After exact391 NON-AUTHOR PASS, the owned successor cleanly composes reviewed recovery205c81ce.
+The metadata expression and focused4 controls remain exact, and the imported31 handler cases PASS.
+Recovery UI, canonical helper, native CRM and SQL bytes are preserved. A separately isolated pure2250
+test-only correction2f3754de fixes seven obsolete group40 replacement-proposal expectations; it adds
+no metadata/runtime changes. Final composition review and physical pin renewal remain with the lead.

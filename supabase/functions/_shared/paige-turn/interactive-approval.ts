@@ -82,7 +82,7 @@ export async function readPendingApprovalRecovery(input: {
         .select("id,tenant_id,caller_user_id,is_archived,interactive_latest_intent,interactive_executor_intent")
         .eq("id", threadId).eq("caller_user_id", actorId).eq("tenant_id", tenantId).maybeSingle();
       const declared = await caller.from("profiles").select("active_tenant_id").eq("user_id", actorId).maybeSingle();
-      // Current server-resolved workspace is the last awaited authority read.
+      // Preliminary scope observation; the final native context read follows below.
       const current = await caller.rpc("current_user_tenant_id");
       return !current.error && current.data === tenantId && !declared.error && object(declared.data)
         && declared.data.active_tenant_id === tenantId && !membership.error && object(membership.data)
@@ -113,6 +113,14 @@ export async function readPendingApprovalRecovery(input: {
     const seen = new Set<string>();
     const confirmations: Array<{tool: string; summary: string; fingerprint: string; command: Record<string, unknown>; idempotency_key: string}> = [];
     const originals: Array<Record<string, unknown>> = [];
+    const revisions: Array<{ table: string; id: string; expected: string; coalesceCreated: boolean }> = [];
+    const versionHolds = async (revision: typeof revisions[number]) => {
+      const current = await service.from(revision.table).select("id,tenant_id,updated_at,created_at")
+        .eq("id", revision.id).eq("tenant_id", tenantId).maybeSingle();
+      return !current.error && object(current.data) && current.data.id === revision.id && current.data.tenant_id === tenantId
+        && sameRevision(revision.coalesceCreated ? current.data.updated_at ?? current.data.created_at : current.data.updated_at,
+          revision.expected);
+    };
     const pending = async (tool: string, fingerprint: string) => {
       const read = await service.from("paige_pending_confirmations")
         .select("id,user_id,tenant_id,thread_id,scoped_client_id,tool_name,args,fingerprint,summary,issued_in_request,server_issued_at,created_at,expires_at,consumed_at")
@@ -157,25 +165,35 @@ export async function readPendingApprovalRecovery(input: {
         : action.startsWith("company.") && action !== "company.create" ? ["businesses", command.company_id]
         : action.startsWith("task.") && action !== "task.create" ? ["tasks", command.task_id] : null;
       if (record) {
-        if (!uuid(record[1]) || !Number.isFinite(time(command.expected_updated_at))) return unavailable();
-        const current = await service.from(String(record[0])).select("id,tenant_id,updated_at,created_at")
-          .eq("id", record[1]).eq("tenant_id", tenantId).maybeSingle();
-        if (current.error || !object(current.data) || current.data.id !== record[1] || current.data.tenant_id !== tenantId
-          || !sameRevision(action.startsWith("contact.") ? current.data.updated_at : current.data.updated_at ?? current.data.created_at,
-            command.expected_updated_at)) return unavailable();
+        if (!uuid(record[1]) || typeof command.expected_updated_at !== "string"
+          || !Number.isFinite(time(command.expected_updated_at))) return unavailable();
+        const revision = { table: String(record[0]), id: record[1], expected: command.expected_updated_at,
+          coalesceCreated: !action.startsWith("contact.") };
+        if (!await versionHolds(revision)) return unavailable();
+        revisions.push(revision);
       }
       originals.push(row);
       confirmations.push({tool: card.tool, summary: card.summary, fingerprint: card.fingerprint,
         command: card.command, idempotency_key: card.idempotency_key});
     }
-    // Re-read consumption/expiry/issuance after every awaited record lookup, then
-    // revalidate current workspace, membership and latest settled intent again.
+    if (!await scopeHolds()) return unavailable();
+    const finalReceipt = await readReceipt();
+    if (finalReceipt.error || stable(finalReceipt.data) !== stable(turn)) return unavailable();
+    // Observe revisions again after the awaited scope/receipt checks, then native
+    // proposal consumption/expiry/issuance after every record read. These reads
+    // are not a transaction or a lease; exact claim/CAS still governs execution.
+    for (const revision of revisions) if (!await versionHolds(revision)) return unavailable();
     for (const original of originals) {
       const row = await pending(String(original.tool_name), String(original.fingerprint));
       if (!row || !live(row, String(original.tool_name), String(original.fingerprint)) || stable(row) !== stable(original)) return unavailable();
     }
-    const finalReceipt = await readReceipt();
-    if (finalReceipt.error || stable(finalReceipt.data) !== stable(turn) || !await scopeHolds()
+    // LAST awaited boundary: one incumbent native snapshot for this caller's
+    // owned scope/current workspace/latest intent/released canonical terminal.
+    // It establishes publication context, never proposal or effect authority.
+    const publication = await caller.rpc("paige_chat_interactive_publication_context_v2", {
+      p_thread: threadId, p_intent: intentId,
+    });
+    if (publication.error || publication.data !== true
       || !originals.every(row => live(row, String(row.tool_name), String(row.fingerprint)))) return unavailable();
     return { v: 1 as const, status: "available" as const, thread_id: threadId, turn_id: turnId, intent_id: intentId,
       tenant_id: tenantId!, expires_at: new Date(Math.min(...originals.map(row => time(row.expires_at)))).toISOString(), confirmations };

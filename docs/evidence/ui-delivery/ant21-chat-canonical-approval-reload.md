@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: a reloaded canonical WAIT_APPROVAL can regain its exi
 FLOW_PROTOTYPE: PASS: incumbent real-component approval-recovery fixture extends the approved existing flow with deterministic available, unavailable and interrupted reload scenes; the October 16 bounded task authorization specifies the terminal/native guard and forbids execution on reload.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO customers can deliberately decide a still-valid proposal after reopening their own conversation.
 VISUAL_DIRECTION: PASS: incumbent PAIGE Chat hierarchy and native confirmation card; inline status uses established text tokens, with no new screen, style system or motion.
-AUTOMATED_EVIDENCE: PASS: 49 actual status-handler cases; 72 tests in four component/hook/render suites; seven actual Chat-to-native-CRM scope controls; eight incumbent durable-pause modes. These use protected test ports, not a hosted database.
-STATIC_EVIDENCE: PASS: scoped ESLint clean; Deno 2.9.6 checks the recovery helper without remote imports; production build passes; whitespace clean. Full Edge typechecking is blocked by missing local remote-import cache.
+AUTOMATED_EVIDENCE: PASS: 64 actual status-handler cases; 52 incumbent native publication-context SQL assertions; ten actual status-handler-to-native-SQL controls; actual CRM-door consumption/version-race controls; 72 tests in four component/hook/render suites. Proposal/domain SDK ports remain synthetic; this is not hosted schema/JWT proof.
+STATIC_EVIDENCE: PASS: scoped ESLint clean; Deno 2.9.6 checks the recovery helper without remote imports; whitespace clean. The original UI candidate's production build passed; the composed build and full Edge typechecking remain owed, with missing local remote-import cache preventing the latter.
 RENDERED_EVIDENCE: PASS: isolated Edge static captures of the real component with compiled CSS cover three reload states, 518px and 320px widths, light/dark themes; representative PNGs and twelve measurements are linked below. This is not the full authenticated SOLO shell.
 BEHAVIORAL_EVIDENCE: PASS: component tests drive checking, explicit approval, unavailable, expired, non-SOLO, late response, newer request and workspace change; status-handler ports record no business execution, admission, settlement or executor release. Local browser checks native keyboard order and clipping on serialized real-component output.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary customer session, provider call, production mutation, deployment or live recovery was performed.
@@ -26,14 +26,14 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: complete shell was not exercised; local 
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: complete shell was not exercised; local transcript captures do not substitute for this field.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: complete shell was not exercised; the isolated browser viewport was 900x1000 with a transcript fixture only.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: complete shell was not exercised; the isolated browser viewport was 900x1000 with a transcript fixture only.
-UNVERIFIED: non-author review; reviewed source-pin coverage/renewal; composition with the later P0 post-persist authority fix; exact-head CI; hosted native database/schema proof; production source/readback; two legitimate ordinary SOLO cohorts; authenticated approval/reload acceptance; separate Live proof. The original orphan remains held and excluded.
+UNVERIFIED: non-author review of this recovery successor; reviewed source-pin coverage/renewal; exact-head CI; full hosted native database/schema proof; production source/readback; two legitimate ordinary SOLO cohorts; authenticated approval/reload acceptance; separate Live proof. The original orphan remains held and excluded.
 OWNER_INTENT: restore an intentional decision after reload only when an immutable canonical WAIT_APPROVAL and exact live native proposal prove that the controls remain legitimate.
 MUST_NOT_HAPPEN: no token manufacture, authority from history JSON, automatic approval/replay, forced settlement, executor release, time-based recovery of unknown work, or recovery of a request without a canonical terminal.
 MUST_PRESERVE: exact native single-use claim and writers, current actor/tenant/member ownership, protected content, approval arguments/keys/fingerprints, expiry/version checks, denial fencing, prior-unknown brake and existing navigation.
 ACCEPTANCE_CRITERIA: an owned terminal/native proposal restores controls without an effect; explicit Approve sends a new governed request carrying only the server-returned fingerprint; every failed authority/freshness check leaves a non-actionable historical card.
 MOTION_PURPOSE: NONE: retain existing card motion and focus behavior; asynchronous recovery does not steal composer focus.
-PROTECTED_SEAMS: extend existing authenticated interactive status and approval helper only; native CRM handler/SQL, canonical settlement, executor lifetime, domain writers, approval policy and provider budget are unchanged. Status retains its incumbent rate limiter.
-INTERNAL_BUILD_IDENTITY: base=a2f42ba43e5a40e44df8fbfb301fb50ff191e1ec; candidate=commit containing this record; branch=fix/ant21-chat-approval-recovery; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed composed deployment/readback); evidence=docs/evidence/ui-delivery/ant21-chat-canonical-approval-reload.md
+PROTECTED_SEAMS: extend existing authenticated interactive status and approval helper only; canonical settlement, executor lifetime, domain writers, approval policy and provider budget are unchanged. The separately reviewed explicit CRM-claim refusal is an exact composed dependency, not a new recovery writer. Status retains its incumbent rate limiter.
+INTERNAL_BUILD_IDENTITY: original_base=a2f42ba43e5a40e44df8fbfb301fb50ff191e1ec; original_candidate=cabf5b7ea224d17e0b15f2c62c60a192c2623bbe; composed_P0=086d1d8f4d16a11df2a011fc31d0b162dfa0995c; composed_CRM=d36579e70208ded9e79183e3ecda59c54a191376; candidate=commit containing this record; branch=fix/ant21-chat-approval-recovery; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(existing reviewed P0 20271108123000 publication-context dependency); edge=PROOF_OWED(reviewed composed deployment/readback); evidence=docs/evidence/ui-delivery/ant21-chat-canonical-approval-reload.md
 RELEASE_CHANNEL: development: isolated source candidate, with no production action.
 RELEASE_CLASSIFICATION: patch: restore the existing approval handoff after verified canonical reload.
 CUSTOMER_RELEASE_IDENTITY: none: not a production release or customer acceptance record.
@@ -57,9 +57,12 @@ supported commands, while a member role is refused. No account identifier or fix
 implementation. The provisioning path, entitlement rules and provider flags are unchanged. Platform
 and non-SOLO mounts retain historical-only behavior. Existing 18/50 registers are untouched.
 
-The isolated worktree starts at the reviewed P0 base above. Research, Planning, P0 post-persist race
-repair and other agents' branches remain separate. The lead owns their subsequent composition,
-source-pin renewal and review. No applied migration or native SQL source is changed.
+The isolated worktree preserves the original candidate and composes the reviewed P0 publication
+context successor `086d1d8f4d16a11df2a011fc31d0b162dfa0995c`, including current-main Portal's
+122000 migration and P0's byte-identical renamed 123000 migration. The separately reviewed CRM
+refusal dependency `d36579e70208ded9e79183e3ecda59c54a191376` is composed without runtime edits.
+Research, Planning and other writers' branches remain separate. The lead owns source-pin renewal
+and release review. This recovery successor adds no SQL or migration changes.
 
 Flow-by-Flow, Paige UI Design, Flow Prototype and
 [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md)
@@ -100,11 +103,19 @@ approval subject and recomputed fingerprint. PostgreSQL's six fractional timesta
 for issuance order and record CAS. Contact revision uses updated_at exactly; company/task use native
 coalesce(updated_at, created_at). Native single-use claim rechecks execution authority independently.
 
-After all awaited command/version work the reader re-reads pending identity/consumption/issuance and
-the immutable receipt, then rechecks membership, owned active thread, latest intent, absent executor,
-declared workspace and server-resolved current tenant. Current tenant is the last awaited authority
-read; expiry is checked again synchronously before projection. This does not claim an atomic snapshot
-across all reads or authorization for a future write. Native claim/CAS remain mandatory.
+After initial command/version work the reader repeats scope and immutable-receipt checks, then
+re-reads every record version and exact pending identity/consumption/issuance. Its LAST awaited
+boundary is the caller-JWT `paige_chat_interactive_publication_context_v2` read, which observes
+current actor/workspace/member, owned thread, latest intent, released executor and canonical terminal
+in the existing native snapshot. Only strict boolean true succeeds; error/null/object-shaped output
+refuses. Expiry is checked again synchronously, with no await after the context proof.
+
+Pending rows and record versions are separate optimistic reads, not atomically leased with the
+publication context. A row may legitimately become consumed or a business record may change during
+that final read; an available projection never promises execution. The later native claim/CAS must
+refuse consumed/stale work truthfully, without creating another proposal or blindly retrying. The
+actual CRM-door consumption test covers this refusal; its version fault uses an explicit native-RPC
+port and is not proof of PostgreSQL CAS. No future authorization lease is claimed.
 
 Supported first slice: exact native contact/company/task create and versioned non-preview command
 shapes. Destructive-preview commands, deal version contracts and non-native/scoped-token confirmation
@@ -114,21 +125,27 @@ whole. No alternate family, privileged grant or guessed version contract is adde
 Existing native SQL inspection establishes the protected terminal/issuance and service-only authority
 contracts in `20270601000008_int346_server_issued_interactive_receipts.sql` and
 `20261201000400_canonical_proposal_integrity.sql`. The tests execute the actual Chat HTTP handler over
-recording SDK/database ports. They do not execute these migrations or a full native schema locally.
+recording SDK/database ports. An optional credential-free disposable loopback fixture installs the
+unchanged canonical publication SQL and calls that real function from the final actual-handler RPC
+seam. Synthetic Auth GUCs and proposal/domain ports do not prove hosted JWT cryptography, complete
+RLS/schema or native business CAS.
 
 ## Failure-first and final checks
 
 - Before the server edit, the new actual-handler positive failed: expected `approval_recovery.status=available`, received only the incumbent executor status response. Log: private `work/failing-first-recovery.log`.
 - Before the UI edit, the six reload cases produced five failures and one passing interrupted-history negative. A first default-fork run stalled during import and was interrupted; only the subsequent threads-pool run is counted. Log: private `work/failing-first-ui-threads.log`.
-- Final actual status handler: 49 cases, including missing terminal, JSON-only, wrong actor/tenant/intent, archived/foreign thread, member refusal/revocation, supersession, held executor, paused protocol, expiry/consumption races, missing/newer issuance including microseconds, exact arguments/fingerprint, duplicates, native create shapes, contact-reference resolution/refusal, current/stale contact/company/task versions and unsupported preview/activity.
+- Before the final-context edit, the new actual-handler positive failed because no native publication-context RPC was called. The original CRM dependency also failed the later consumed-race assertion by creating a new proposal; the independently reviewed deny-only CRM repair resolves that separate defect.
+- Final actual status handler: 64 cases, including all original 49 controls plus scope/record/pending races before the final read, strict native-context transport/output refusals, current actor/member/workspace/latest/released/canonical-proof failures and synchronous expiry after the final RPC.
+- Actual loopback PostgreSQL: 52 incumbent publication-context assertions plus ten actual HTTP status-handler-to-native-function controls pass. Actual CRM HTTP replay twice after consumption refuses without execution or reproposal; a version-conflict port refuses the first attempt and the consumed retry. Private final log: `work/recovery-native-context-final.log`; the local server is stopped after the run.
 - Final component/hook/render run: 72 tests, four suites. Approval uses a fresh request identity and only the server projection's fingerprint; stored JSON key/fingerprint are absent. No fetch or native execution occurs on reload.
-- Seven incumbent `CRM_SCOPE_TEST` modes pass through actual Chat and native CRM handlers; all eight `CRM_APPROVAL_PAUSE_TEST` modes pass. Native SQL calls remain fixture ports.
-- Scoped ESLint, Deno helper check, production build, SOLO parity guard and mutation controls, and whitespace checks pass. Full Chat Deno typechecking is UNVERIFIED because external imports are absent from the local cache; no dependency download was installed.
+- Seven incumbent `CRM_SCOPE_TEST` modes and all eighteen current P0 `CRM_APPROVAL_PAUSE_TEST` modes pass through actual Chat and CRM handlers after composition. Those domain SQL calls remain fixture ports.
+- Scoped ESLint, Deno helper check and whitespace checks pass. The original rendered candidate passed its build and SOLO parity checks; the current UI/hook sources are byte-identical, but this composed build remains owed. Full Chat Deno typechecking is UNVERIFIED because external imports are absent from the local cache; no dependency download was installed.
 
 Reproduction commands (installed Node/Deno paths are local runner configuration):
 
 ```text
 node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+APPROVAL_RECOVERY_DATABASE_URL=postgresql://postgres@127.0.0.1:<fixture-port>/int336_test_<fresh-db> PSQL_BIN=<installed-psql> node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
 vitest run src/components/dashboard/PaigeAIChat.turnStates.test.tsx src/components/dashboard/PaigeAIChat.approvalRecovery.test.tsx src/hooks/usePaigeThreads.approvalRecovery.test.tsx src/solo/__render__/approval-recovery.render.test.tsx --pool=threads --maxWorkers=1 --no-file-parallelism
 deno check --cached-only --no-remote supabase/functions/_shared/paige-turn/interactive-approval.ts
 vite build
@@ -151,13 +168,22 @@ authenticated two-cohort evidence remain UNVERIFIED.
 
 ## Review boundary and open work
 
-No release, activation, ordinary customer success or native SQL PASS is claimed. The original held
+No release, activation, ordinary customer success or full hosted native schema PASS is claimed. The original held
 request without a canonical terminal cannot become actionable through this reader. Mixed-unknown
 narration/metadata suppression and broader native confirmation families remain separate open work.
-The later P0 post-persist authority successor must be composed and reviewed before release.
+The reviewed P0 post-persist authority successor is composed; this successor still needs its distinct
+review and exact-head release checks. Impeccable's inherited DESIGN sidecar drift remains outside this
+bounded source repair; the UI/hook implementation is byte-identical to the original rendered candidate.
 
 Global dispatch/dependency pins, extractor and metadata are untouched. The lead must review and renew
 affected whole-handler fingerprints; the extended existing `interactive-approval.ts` helper is not
 currently listed among explicit guard dependencies and needs a reviewed coverage decision. No
 automatic snapshot acceptance is proposed. Independent review, exact-head CI and all production
 delivery/acceptance gates remain with the integration lead.
+
+The private final local native/handler log has SHA-256
+`7fa4e0410ae4dba10d4a8d9cc53d2780373a045825310528b6d6309c75c17ee1`.
+The unchanged extractor reports all 29 dispatch scalar differences against reviewed P0; none has
+been renewed. The proposed full recovery-helper TypeScript AST digest is
+`95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c`.
+These are review inputs only, never evidence of production execution or automatic approval.

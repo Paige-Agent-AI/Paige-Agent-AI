@@ -2,6 +2,56 @@
 
 ## Current bounded continuation — 2026-10-16
 
+### Root integration checkpoint — native Gateway and required CI
+
+The distinct successor review of `b53eb5211df1bfd1a8820054fc7202640f3cfa17`
+passed all66 native PostgreSQL controls and43 engine/C5 tests. The earlier d4 finding and
+failed evidence below remain historical; the exact approval-display mismatch is resolved
+in the reviewed successor. No hosted migration or customer activation follows from that proof.
+
+Root commit `2af9cd379c974b2605c2753fca7e1e5d6cbbd8d5` adds the missing native
+`owner.task` binding through the existing Gateway, using classified `crm_create_task`.
+The original actor must hold an active owner/admin seat and satisfy the canonical tenant
+authority and tier checks. Automatic tool permission retains per-act approval; off refuses;
+an unrecognized or unreadable lane stays unresolved. No separate capability engine or
+availability assertion is added to the native adapter. Existing journey and weekly bindings
+retain their behavior. This path requires no external provider and makes no external send.
+
+Failing-first Gateway proof was11 FAIL/50 PASS. Final focused proof is118 PASS across the
+native Gateway, signal, governed-decision, dispatch-claim and weekly suites. The incumbent
+native/Gateway registry-equality assertion now passes without weakening it. Scoped ESLint,
+binding guard and whitespace checks pass. These protected-port tests are not native
+concurrency, authenticated customer execution, full-schema replay or Live proof.
+
+The existing required Communications/PostgreSQL job now invokes the incumbent native
+proof's `--owner-task-native --postgres` mode against its disposable loopback service.
+The isolated database, real66 native controls and actual43 engine/C5 cases remain the
+same; no production URL, provider credential, new QA engine or activation is introduced.
+Hosted execution, complete release composition, endpoint source review, Chat arming,
+ordinary authenticated QA and owner acceptance remain **UNVERIFIED**.
+
+Gateway Independent Review: a distinct non-author inspected exact `2af9cd379` and
+independently ran both changed suites,79 PASS, with no material findings. Root separately
+reviewed exact endpoint successor `e77c8d6a8f2bf474666aada9f42b515aa36a5f95`
+as NON-AUTHOR. It admits ordinary workspace seats only for the actual unique native
+owner-task companion, binds physical source and ledger coordinates before claim and
+delegation, preserves all send-kind refusals and existing unrelated admission, and
+uses the existing claim/reviewer compare-and-set for release and terminal stamping.
+Read failures and uncertain receipts remain unconfirmed; no second executor is created.
+No material endpoint source finding remains from that pass. Its actual protected-handler
+proof is67 PASS, series4 PASS, existing send39 PASS and dispatch12 PASS. The initial
+observed red18/29 was not retained as a transcript; a separately labeled post-fix
+counterfactual against exact b53 endpoint text is27 FAIL/40 PASS and is not described
+as the original transcript. Endpoint Deno compilation is **UNVERIFIED** because the
+incumbent remote Supabase SDK import could not resolve in the local runner.
+
+The added two-line CI invocation and this evidence update receive a separate
+`AUTHOR-REVIEW / LOWER ASSURANCE` source pass by the lead; the declared command runs
+the existing inspected proof against the job's isolated service and preserves the
+normal required gate. Hosted native proof, full-schema migration replay, final exact-head
+CI and reviewed source composition remain required before release. Chat/Live execution,
+customer activation and product acceptance are not established by these source reviews.
+
 Continuation base: `ee23c3365987be52b36f52605137eb4af01a4e38`. All prior WIP and the original
 blocked checkpoint below are retained. The domain bridge is prepared in the existing native
 adapter and the forward migration `20271108210000_owner_task_native_bridge.sql`; it has not

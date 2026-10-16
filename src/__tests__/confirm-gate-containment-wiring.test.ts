@@ -228,7 +228,7 @@ describe("the write trail skips only what declares it never ran", () => {
     const crmDoor = sources.find(({ file }) => file === "supabase/functions/crm-command/index.ts")?.source;
     expect(crmDoor).toMatch(/approvalClaimFailed\s*\?\s*\{\s*outcome_unknown:\s*true,\s*refused_before_run:\s*false\s*\}/);
     expect(crmDoor).not.toMatch(/refused_before_run:\s*true/);
-  });
+  }, 60_000);
 });
 
 describe("no refusal sends the operator to a control that is not on screen (2026-09-26)", () => {

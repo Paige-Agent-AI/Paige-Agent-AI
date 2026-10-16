@@ -66,6 +66,7 @@ interface ClientRow {
   primary_offer: string | null;
   current_notes: string | null;
   assigned_coach_user_id: string | null;
+  lead_owner_user_id?: string | null;
   last_contacted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -80,7 +81,7 @@ const clientName = (row: ClientRow, primaryEmail: string | null) => {
 
 // Widened to string on purpose: the generated types do not know the contact-methods embed yet,
 // and a literal select string makes the client's type parser recurse past its limit.
-const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,last_contacted_at,created_at,updated_at`;
+const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at`;
 const ROSTER_PERSON_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED},linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at`;
 
 const trimOrNull = (value: string | null | undefined) => value?.trim() || null;
@@ -91,7 +92,7 @@ const recordType = (row: ClientRow): RelationshipPerson["recordType"] => {
   return hasBusinessEvidence ? "business" : "person";
 };
 
-const mapClient = (row: ClientRow): RelationshipPerson => {
+const mapClient = (row: ClientRow, soloPeople = false): RelationshipPerson => {
   const contactMethods = orderContactMethods(row.client_contact_methods);
   const email = primaryValue(contactMethods, "email");
   return {
@@ -124,7 +125,8 @@ const mapClient = (row: ClientRow): RelationshipPerson => {
   primaryOffer: trimOrNull(row.primary_offer),
   notes: trimOrNull(row.current_notes),
   assignedCoachUserId: row.assigned_coach_user_id,
-  owner: row.assigned_coach_user_id ? "Assigned owner" : "Unassigned",
+  // SOLO contact ownership is independent of coaching; retain the legacy roster's projection.
+  owner: (soloPeople ? row.lead_owner_user_id : row.assigned_coach_user_id) ? "Assigned owner" : "Unassigned",
   lastTouch: row.last_contacted_at,
   createdAt: row.created_at ?? null,
   updatedAt: row.updated_at ?? null,
@@ -162,7 +164,7 @@ export function useTenantRelationshipsData({
         .order("created_at", { ascending: false })
         .limit(250);
       if (error) throw error;
-      return ((data ?? []) as unknown as ClientRow[]).map(mapClient);
+      return ((data ?? []) as unknown as ClientRow[]).map((row) => mapClient(row, soloPeople));
     },
   });
 
@@ -179,7 +181,7 @@ export function useTenantRelationshipsData({
         .eq("id", deepLinkedContactId)
         .maybeSingle();
       if (error) throw error;
-      return data ? mapClient(data as unknown as ClientRow) : null;
+      return data ? mapClient(data as unknown as ClientRow, true) : null;
     },
   });
 

@@ -82,6 +82,15 @@ no authenticated acceptance row is closed by these fixtures.
 
 ## Remaining integration gates
 
+Distinct in-project NON-AUTHOR review of immutable b1d80a775d2969f8d8847268ba25e75db3199d67
+passed with no material findings. The reviewer independently reran24 actual-handler checks and167
+focused tests. Integration renews only the reviewed canonical-app-url source AST digest scalar;
+extractor, contracts, metadata and negative controls remain unchanged. The actual-handler command
+is added to the existing INT336 CI step. These integrated changes require a final composition
+review and exact-head green CI; no production or authenticated navigation result is inferred.
+Fresh integrated59 restrictive incumbent controls and214-capability Spine guard PASS. Only the
+one reviewed dependency digest scalar changed; no adapter fingerprint, extractor or metadata edit.
+
 Independent Review of the immutable candidate, exact integrated-head CI, reviewed source/dependency
 proof renewal, merge, web/Edge deployment and authoritative readback, ordinary authenticated
 task/receipt/reload/navigation QA, required responsive checks, Live verification and owner acceptance.

@@ -497,7 +497,7 @@ const SOURCES = {
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "cb4236ff9fec37be4043a7b2fa6a91e68b63c1c049f351f3d7f7ed51b8366c11",
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
-  "supabase/functions/_shared/canonical-app-url.ts": "f84b0e18b08ad71e4bb88140b6fda50273c56a123f16dcbb7c0e700a768827c7",
+  "supabase/functions/_shared/canonical-app-url.ts": "c7f954bf6633321515b7a091adb286a4050dfa7b2b0069ba059177df115e14d1",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",

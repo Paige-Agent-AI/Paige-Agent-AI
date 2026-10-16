@@ -128,7 +128,7 @@ export interface FabricAttempt {
   provider: FabricProvider;
   model: string;
   /** Present when this candidate did not serve the round. */
-  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled" | "unsupported_document" | "aborted";
+  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled" | "unsupported_document" | "aborted" | "caller_refused";
   status?: number;
 }
 
@@ -377,11 +377,15 @@ export interface FabricCompletionResult {
   /** Chat-shaped (choices[0].message, model, usage, paige_stop) — the shape consumers already parse. */
   response?: Record<string, unknown>;
   /** The closed failure class of the last failed attempt; provider text is never kept. */
-  error?: { failure: ProviderFailureClass | "budget_exceeded" | "unsupported_document" | "aborted" };
+  error?: { failure: ProviderFailureClass | "budget_exceeded" | "unsupported_document" | "aborted" | "caller_refused" };
 }
 
 export interface FabricCompletionOpts {
   trace?: TraceCtx;
+  /** Trusted in-process caller authority, never model/request JSON. Checked after
+   * budget awaits before EACH provider leg, including fallback. Only true admits;
+   * false or throw stops here, never enters provider failure/fallback policy. */
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
   /** A caller deadline. Threads to the Anthropic leg's fetch; the OpenAI leg is bounded by the
    * caller's own race until the OpenAI-path slice adds native cancellation there. */
   signal?: AbortSignal;
@@ -477,6 +481,16 @@ export async function fabricCompletion(
       continue;
     }
 
+    if (opts.beforeProviderAttempt) {
+      let current = false;
+      try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+      if (!current || opts.signal?.aborted) {
+        const failure = opts.signal?.aborted ? "aborted" as const : "caller_refused" as const;
+        attempts.push({ provider: c.provider, model: c.model ?? "", failure, status: 0 });
+        clearRoute();
+        return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure } };
+      }
+    }
     const anthropicTier: ClaudeTier | null = c.provider === "anthropic" ? (c.model === CLAUDE_REASONING ? "reasoning" : "classification") : null;
     // #1856 — the projected route rides the ctx BEFORE the leg, so the leg's own trace row (the
     // OpenAI self-trace, or the streamed drain) carries it via its spread; the seam's Anthropic rows

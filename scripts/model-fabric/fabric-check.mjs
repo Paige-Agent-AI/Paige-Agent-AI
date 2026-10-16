@@ -813,5 +813,28 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
 
   setScenario({});
 }
+// Trusted in-process authority must be current after budget reads and before
+// every provider leg. Refusal/throw is not a provider failure or fallback reason.
+{
+  setScenario({}); openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
+  const request = { cognitive_class: "operational", job: "thread_summary_fold", max_tokens: 2048, messages: [{ role: "user", content: "fold" }] };
+  for (const [name, gate] of [["false", async () => false], ["throw", () => { throw new Error("synthetic authority unavailable"); }], ["rejection", async () => { throw new Error("synthetic rejected authority"); }]]) {
+    calls.length = 0;
+    const trace = { agent_id: "fabric-scope-check" };
+    const r = await fabric.fabricCompletion(request, { ...ON, openaiFetch, trace, beforeProviderAttempt: gate });
+    ok(!r.ok && r.error?.failure === "caller_refused" && calls.length === 0 && r.route.served === null,
+      `H1 authority ${name} prevents every provider leg, never falls back`);
+    ok(trace.fabric_route === null && r.route.reason === "failed", `H1 authority ${name} clears stale route projection`);
+  }
+  let gates = 0; calls.length = 0; openaiPlan = { status: 429, type: "rate_limit_error" };
+  const refusedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => ++gates === 1 });
+  ok(!refusedFallback.ok && refusedFallback.error?.failure === "caller_refused" && gates === 2
+    && calls.length === 1 && calls[0].provider === "openai", "H2 changed authority after primary failure prevents the fallback leg");
+  gates = 0; calls.length = 0;
+  const allowedFallback = await fabric.fabricCompletion(request, { ...ON, openaiFetch, beforeProviderAttempt: async () => { gates++; return true; } });
+  ok(allowedFallback.ok && gates === 2 && calls.length === 2 && allowedFallback.route.served?.provider === "anthropic",
+    "H2 unchanged authority allows existing health fallback with one check per provider leg");
+  openaiPlan = { status: 200 };
+}
 console.log(`fabric-check: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

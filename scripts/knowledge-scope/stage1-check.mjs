@@ -481,8 +481,9 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       // scenario that scripts `tenant_id` (including null) keeps exactly what it wrote.
       ...(typeof tableExtras.paige_chat_threads === "function" ? {
         paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
-          row && typeof row === "object" && !("tenant_id" in row)
-            ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null, ...row } : row),
+          row && typeof row === "object"
+            ? { id: bodyExtras.threadId, caller_user_id: USER,
+              ...(!("tenant_id" in row) ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null } : {}), ...row } : row),
       } : {}),
     },
   });
@@ -1949,6 +1950,13 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
   return true;
 });
 const personaCallsOf = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+// A thread now also checks scope in optional post-turn maintenance. Calibrate
+// publication refusals at the actual assistant-write boundary, not that later call.
+const personaCallsBeforeAssistantWrite = (r) => {
+  const write = r.rec.rpc.findIndex(c => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  if (write < 0) throw new Error("positive publication control did not persist its assistant turn");
+  return r.rec.rpc.slice(0, write).filter(c => c.name === "get_paige_persona_context").length;
+};
 
 group("safety-first streaming: protected turns buffer, ordinary turns stream");
 {
@@ -2446,7 +2454,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     choiceFrames(choiceClean.responseText).join("").includes("CHILD-PRIVATE-MARKER"),
     choiceFrames(choiceClean.responseText).join("").slice(0, 300),
   );
-  const choiceTotal = personaCallsOf(choiceClean);
+  const choiceTotal = personaCallsBeforeAssistantWrite(choiceClean);
   const choiceAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(choiceTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -2553,7 +2561,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     artifactFrames(studioClean.responseText).length === 0,
     studioClean.responseText.slice(0, 500),
   );
-  const studioTotal = personaCallsOf(studioClean);
+  const studioTotal = personaCallsBeforeAssistantWrite(studioClean);
   const studioAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(studioTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -3052,7 +3060,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     sumClean.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-SUMMARY-MARKER")),
     JSON.stringify(sumClean.providerCalls).slice(0, 200),
   );
-  const sumTotal = personaCallsOf(sumClean);
+  const sumTotal = personaCallsBeforeAssistantWrite(sumClean);
   assert(
     "21.s CONTROL — and a summary-bearing turn is protected",
     sumTotal >= 2,
@@ -3400,7 +3408,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     assistantAppends(persistClean).length > 0,
     JSON.stringify(persistClean.rec.rpc.map((c) => c.name)),
   );
-  const persistTotal = personaCallsOf(persistClean);
+  const persistTotal = personaCallsBeforeAssistantWrite(persistClean);
   const persistAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(persistTotal - 1).fill(CHILD).concat([AGENCY]),

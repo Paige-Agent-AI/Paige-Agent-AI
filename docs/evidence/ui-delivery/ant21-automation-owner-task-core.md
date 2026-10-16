@@ -332,3 +332,108 @@ racing source pause/edit/contact revision and claim/replay, original actor revok
 same exact task/key across a different retrying reviewer, committed-lost-ack readback, native
 receipt rollback, service-only ACL, and reconciler adoption/no false journey evidence. Full
 schema/ordinary customer activation and owner acceptance remain separate **UNVERIFIED** legs.
+
+## Forward native human control — bounded development continuation
+
+Internal build base: `efa158b8739120a388a3f3fd6c6fd9213858ea01`. This is an
+**internal development candidate**, not a production release, activation, ordinary customer
+acceptance or Live claim. The source freeze and distinct review receipt belong to the lead's
+integration record. Root-owned UI, Chat, Spine, Gateway, CI and source pins are outside this
+native writer lease. The existing human-control work packet remains the lead's responsibility.
+
+The incumbent Supabase CLI created the forward migration scaffold, which was non-destructively
+renumbered to `20271108220000_owner_task_human_control.sql`. Original210000 remains byte-identical:
+SHA256 `af70e2a6b5aaa39a6c77c3531743c33fcbfddb3c6dec229cc01e24ea594995f4`.
+No production project, provider, real account, credential or activation was touched.
+
+### Canonical configuration contract
+
+`control_owner_task_automation(_automation_id uuid, _action text,
+_expected_updated_at timestamptz, _expected_process jsonb, _expected_acts jsonb) returns jsonb`
+is a human-only domain writer for an **existing** contact-created internal-task process.
+It accepts `arm` or `pause`; it accepts no caller actor, tenant, command, assignee or grant.
+It derives `auth.uid()` and the existing `current_user_tenant_id()`, requires an authenticated
+caller JWT, exact active profile/workspace and ordinary active owner/admin seat, and rejects a
+deleted/banned Auth identity. Service, operator or agency privilege alone is insufficient.
+Tenant, profile, membership and Auth identity locks precede complete ordered act-set and parent
+locks; NOWAIT avoids waiting cycles with the native writer and act-change trigger.
+
+The reviewed process JSON contains exactly `id`, `tenant_id`, `name`, `category`, `trigger_key`,
+`trigger_config`, `conditions`, `created_by`, `state`, `granted_lane`, `owner_task_armed_at`.
+The complete acts are ordered by position/id and contain exactly `id`, `position`, `action_kind`,
+`tool_key`, `config`. Native `updated_at` precision is retained; a one-microsecond mismatch or any
+changed/incomplete/extra review content returns `OWNER_TASK_CONTROL_STALE` / SQLSTATE40001.
+The caller must re-read the actual configuration rather than silently replay an old review.
+
+Arming supports exactly one position1 native `owner.task` act, literal title/optional description,
+empty trigger config and conditions, eligible current tenant and a known creator. Unsupported
+assignment, external, dynamic, malformed, bare-tool and multistep configurations refuse. The
+grant is always **confirm**, preserving the existing exact per-occurrence approval. The same
+ordinary owner/admin can pause an exact reviewed owner-task process even when its configuration
+or tenant execution eligibility is now unsupported. Fresh exact arm/pause replays are no-ops;
+stale pre-control snapshots refuse. No old events, tasks, emails or provider effects run here.
+
+Configuration changes use the incumbent `audit_logs` pattern (`owner_task_automation.arm` /
+`.pause`) with derived actor/tenant and truthful `execution_started:false`. They do not invent a
+Rail family or claim that arming is a completed task. Actual downstream canonical tasks, command
+results and receipts continue through the existing CRM/native/Rail implementation.
+
+### Activation and compatibility
+
+The existing process timestamp is unsuitable as activation authority: older parent writes can
+retain/provide it, while act fingerprint bookkeeping also changes it. A nullable server-managed
+`owner_task_armed_at` is therefore added to the **existing process row**, using the incumbent
+weekly-control INVOKER-guard pattern. Direct authenticated/service writes cannot mint or rewrite
+it or directly restore a live owner-task process. A directly inserted live shell cannot acquire an
+owner-task step and bypass arming. Semantic process/act changes revoke activation; exact no-op
+fingerprint/bookkeeping refreshes preserve it. Safe direct pause remains available. Other process
+families and approval editing contracts retain their previous behavior.
+
+The one existing `_owner_task_source_snapshot` implementation now requires genuine activation,
+rejects contact events whose native occurrence or creation predates it, and captures activation
+in the new immutable held semantic snapshot. Browser JSON is never a cutoff authority. There is
+**no legacy backfill**: a legacy live owner-task process requires genuine human pause/re-arm, and
+old pending holds are not reconstructed or re-approved into new authority. Already-landed
+canonical results remain readable/recoverable before current source eligibility is considered.
+This is semantic/current-activation equality, not a claim to detect every historical edit-away
+and-back sequence. All eligible existing/future tenants use these same shared contracts.
+
+### Actual proof and honest boundaries
+
+- Counterfactual baseline: the same native proof against the incumbent schema without220000
+  fails on the absent five-argument domain writer. Preserved privately as
+  `work/human-control-baseline-native.log`; this is a controlled post-implementation baseline,
+  not an invented original failing-first transcript. The earlier relocated harness import error
+  and first helper-qualification failure are retained as unsuccessful attempts, not PASS evidence.
+- Final command: `FORCE_COLOR=1 OWNER_TASK_PG_PORT=65471 node
+  scripts/proof/layer-c-native-vertical.mjs --owner-task-human-control` using existing bundled
+  Node24.19/PostgreSQL16 and a disposable owned loopback cluster. **118 named native controls
+  PASS**, retaining all original66 and adding52 control/ABI obligations. The nested actual
+  engine/C5 suite is **43 PASS, zero skipped/failed**. Its optional SQL case uses the actual
+  authenticated human-control RPC whenever installed, preserving the original43 test cases and
+  negatives. Original core-only mode retains its explicitly older arming fixture.
+- Actual native evidence includes the canonical contact trigger/event, immutable held snapshot,
+  companion approval, redemption/claim, existing CRM task writer, result/receipt and reconciler;
+  current owner/admin positives, member/revoked/switched/deleted/banned/operator-only/agency-only
+  negatives; complete stale config/native microsecond checks; unsupported-config refusal with
+  safe pause; direct-write isolation; old/fresh events and unchanged held context; actual
+  pre220000 landed-result readback and pending-hold refusal; audit/transaction rollback; genuine
+  fresh task execution once and receipt-backed replay. Five **two-session** authority/context
+  lock families refuse before control/audit and succeed after release. Eight actual simultaneous
+  owner controls produce exactly one activation/audit; losers are stale or NOWAIT-refused.
+- Exact final private packet: `work/owner-task-native-proof/run-zCN5i1/{result.json,
+  human-control-result.json,engine-c5-native.log}` and `work/human-control-final.log`. The cluster
+  was stopped. Scoped ESLint, JavaScript syntax and whitespace checks PASS. The lead's reviewed
+  `ab282e538f06a6ff25827b4709b76a8e5bdea1ad` ANSI-parser delta is composed unchanged: preserve raw
+  report, strip terminal controls, require at least43 actual passes and no failures/skips.
+
+The production current-tenant resolver body and base process RLS are installed unchanged in this
+selected-function native proof. Auth/agency/operator/helper/display/Realtime ports remain explicit
+fixtures. The new trial-tenant case is a synthetic account-shape/isolation regression, **not** a
+claim to have exercised complete canonical provisioning. This is not full-schema Supabase replay,
+HTTP JWT authentication, customer login, ordinary browser interaction, provider or production
+proof. Those remain **UNVERIFIED / PROOF OWED**, along with distinct final review and exact-head
+required CI. The lead must compose the existing UI/data binding, use the new human-control proof
+mode in its existing required disposable CI job, release migration-before-caller safely, and verify
+ordinary authenticated behavior. No arming tool is exposed to the model and no protected
+owner-only activation policy or native unknown/replay control is weakened by this increment.

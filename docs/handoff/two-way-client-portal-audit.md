@@ -1,5 +1,9 @@
 # Two-way smart client portal — repository reconciliation
 
+## 2026-10-16 assigned-work restoration candidate — not production acceptance
+
+The existing `/app/actions` reader is restored through `client_portal_self_profile` and exact tenant/contact action filters, preserving the raw-CRM privacy boundary. Existing `customer_respond_to_action` is extended with a required viewed `updated_at`, locked active/unmerged customer/business and open/unexpired work checks before the incumbent response/status/notification/audit/linked-action/Rail body. The old three-argument ABI refuses with `VERSION_REQUIRED`; the new page confirms only an independently reloaded exact own response and holds uncertain writes for read-only reconciliation. No provider or consumer Chat/Live activation, parallel action system or shared Conversation history is added. [Evidence](../evidence/ui-delivery/e09-customer-action-scope.md) separates32 focused,53 native and16 offline browser checks from still-required full-schema CI and genuine customer acceptance. This is a development candidate, bounded to100 recent native action records; the approved customer frame, complete program history, multi-business membership and all seven pillars remain `PARTIAL`/proof owed. Shared Chat/Spine, communications, booking and commercial sources are preserved.
+
 ## 2026-09-08 current-main correction and collision assessment
 
 **Decision:** the Tenant Client Portal is a competitive, launch-blocking MVP capability inside the

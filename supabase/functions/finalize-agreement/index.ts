@@ -21,6 +21,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import { clientServiceAgreementMatches } from "../_shared/client-service-agreement-validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -160,15 +161,17 @@ Deno.serve(async (req) => {
   const agreement_version: string = body?.agreement_version ?? "";
   const agreement_text_snapshot: string = body?.agreement_text_snapshot ?? "";
   const signature = body?.signature ?? {};
-  const typed_name: string = (signature?.typed_name ?? "").trim();
+  const typed_name: string = typeof signature?.typed_name === "string" ? signature.typed_name.trim() : "";
   const signature_image_base64: string = signature?.signature_image_base64 ?? "";
-  const e_sign_consent = !!signature?.e_sign_consent;
-  const read_consent = !!signature?.read_consent;
+  const e_sign_consent = signature?.e_sign_consent === true;
+  const read_consent = signature?.read_consent === true;
 
-  if (!client_id || !agreement_template_key || !agreement_version || !agreement_text_snapshot) {
+  if (![client_id, agreement_template_key, agreement_version, agreement_text_snapshot].every(v => typeof v === "string" && v.length > 0)
+    || agreement_text_snapshot.length > 262144 || agreement_version.length > 100 || agreement_template_key.length > 100
+    || typeof signature_image_base64 !== "string" || signature_image_base64.length > 1048576) {
     return err(400, "MISSING_FIELDS", "client_id, agreement_template_key, agreement_version, and agreement_text_snapshot are required");
   }
-  if (!typed_name) return err(400, "MISSING_NAME", "Typed legal name required");
+  if (!typed_name || typed_name.length > 200) return err(400, "MISSING_NAME", "Typed legal name required (up to 200 characters)");
   if (!e_sign_consent || !read_consent) return err(400, "CONSENT_REQUIRED", "Both consent checkboxes must be accepted");
 
   // Authorize: must be the linked owner of this client record.
@@ -209,6 +212,25 @@ Deno.serve(async (req) => {
   // for genuine signers and reachable only by someone who had no business there.
   if (client.linked_user_id !== userId) {
     return err(403, "FORBIDDEN", "You may only sign your own agreement");
+  }
+
+  // Reuse the actual customer's safe native projection and tenant's configured
+  // service agreement. The browser's route, template label and text grant no
+  // authority. Validate exact current content/version BEFORE any PDF or write.
+  const caller = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    auth: { persistSession: false }, global: { headers: { Authorization: authHeader } },
+  });
+  const [{ data: profile, error: profileError }, { data: sourceRows, error: sourceError }] = await Promise.all([
+    caller.rpc("client_portal_self_profile"), caller.rpc("get_client_service_agreement"),
+  ]);
+  const agreementSource = Array.isArray(sourceRows) ? sourceRows[0] : sourceRows;
+  if (profileError || sourceError || !profile || profile.id !== client_id || profile.linked_user_id !== userId) {
+    return err(403, "FORBIDDEN", "Your current customer relationship could not be verified");
+  }
+  if (!agreementSource || !clientServiceAgreementMatches(profile, agreementSource, {
+    client_id, agreement_template_key, agreement_version, agreement_text_snapshot,
+  })) {
+    return err(409, "AGREEMENT_CHANGED", "The agreement changed or could not be verified. Reload and review it before signing.");
   }
 
   // Build & upload PDF.

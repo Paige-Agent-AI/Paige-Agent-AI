@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { ContextualConsentDialog } from "@/components/legal/ContextualConsentDialog";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { readableTextOn } from "@/lib/brand/contrast";
+import { ConsumerInvitation } from "./ConsumerInvitation";
 
 interface PeekRow {
   tenant_id: string;
@@ -208,6 +209,10 @@ export default function JoinWorkspace() {
   // is only a pre-load defensive default (§11 token floor, never off-palette).
   const brandColor = info?.brand?.primary_color || "#150C31";
   const btnStyle = { backgroundColor: brandColor, color: readableTextOn(brandColor) };
+
+  // Consumer signup/confirmation/acceptance has its own recipient-bound flow.
+  // Keep the existing staff, agency and sub-account entry contracts unchanged.
+  if (info?.kind === "consumer") return <ConsumerInvitation key={token} token={token} info={info} />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">

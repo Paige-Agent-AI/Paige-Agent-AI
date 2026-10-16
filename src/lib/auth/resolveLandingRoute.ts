@@ -192,11 +192,9 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
   try {
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase
-        .from("clients")
-        .select("id, onboarding_stage")
-        .eq("linked_user_id", userId)
-        .maybeSingle(),
+      // Customer entry must not depend on permission to read an internal CRM row.
+      Promise.resolve(supabase.rpc("client_portal_self_profile"))
+        .catch(() => ({ data: null, error: { message: "Customer relationship unavailable" } })),
       supabase.from("tenants").select("id, account_type, parent_tenant_id, account_number").eq("owner_user_id", userId).limit(1).maybeSingle(),
       supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle(),
       // Agency-team invitees don't get a tenant_members row — they live in
@@ -255,7 +253,9 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
       return "/broker/app";
     }
 
-    let clientRow = clientRes.data;
+    if (clientRes.error) return LANDING_ROUTE_RETRY;
+    let clientRow = clientRes.data as { id?: string; linked_user_id?: string; onboarding_stage?: string | null } | null;
+    if (clientRow && clientRow.linked_user_id !== userId) return LANDING_ROUTE_RETRY;
 
     // Self-heal: linked client without the `client` role, or with a missing
     // onboarding stage. Backfills both via SECURITY DEFINER RPC.

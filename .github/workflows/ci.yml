@@ -894,6 +894,8 @@ jobs:
         run: |
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs
           node --import ./scripts/client-memory-authz/register.mjs scripts/crm-contact-work-summary-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/thread-summary-fabric-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/chat-turn-model-metadata-check.mjs
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts

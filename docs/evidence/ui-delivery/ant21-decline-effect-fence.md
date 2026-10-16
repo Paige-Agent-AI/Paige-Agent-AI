@@ -39,7 +39,7 @@ RELEASE_CLASSIFICATION: patch: request-local mutation refusal after an owner dec
 CUSTOMER_RELEASE_IDENTITY: none: no release, activation, authenticated outcome or owner acceptance claimed.
 RELEASE_NOTE_REQUIRED: no: isolated source candidate; customer release wording must follow actual integrated production behavior.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: live provider wording, native production records/receipts and paired authenticated Chat/Live outcomes; source/model/SDK fixtures do not close customer acceptance.
-RELEASE_RECOVERY: position=reviewed forward-fix; reverting reopens the demonstrated vulnerability; reference=runtime700e0d52ad54de802e6f368de75971cc43aa201d against mergedcfeeb5461acad4eaab9afb99af75e559d6aa6433.
+RELEASE_RECOVERY: position=reviewed forward fix because reverting reopens the demonstrated vulnerability; reference=runtime 700e0d52ad54de802e6f368de75971cc43aa201d against merged cfeeb5461acad4eaab9afb99af75e559d6aa6433.
 
 ## 2026-10-16 P1 forward fix: a decline-bearing turn grants no new mutation authority
 

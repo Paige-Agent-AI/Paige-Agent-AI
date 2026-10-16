@@ -66,7 +66,10 @@ export default function PortalGateway() {
       // resolves only the actual caller's current active customer relationship.
       const { data, error } = await boundedGateway(supabase.rpc("get_client_portal_brand"));
       const ownBrand = Array.isArray(data) ? data[0] : data;
-      if (error || ownBrand?.tenant_slug !== tenantSlug) {
+      // Match the public reader's lower(trim(_slug)) lookup. Its public DTO
+      // deliberately omits tenant IDs; membership still comes from this reader.
+      if (error || typeof ownBrand?.tenant_slug !== "string"
+        || ownBrand.tenant_slug.trim().toLowerCase() !== tenantSlug.trim().toLowerCase()) {
         throw new Error("This login does not have access to this business’s portal. Use the portal link from your provider.");
       }
     }

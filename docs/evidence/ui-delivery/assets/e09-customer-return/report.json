@@ -60,7 +60,7 @@
   "hashes": [
     {
       "path": "src/pages/PortalGateway.tsx",
-      "sha256": "a49004f8460487be70e95cfe053d46e4d53b5471ff5e1af0b57996d5019be3b9"
+      "sha256": "bf64b46b6b6aaf0134808fda3747fd8e67cae5928dd5c2a01d53fba8178f1162"
     },
     {
       "path": "src/pages/ConsumerInvitation.css",

@@ -99,7 +99,7 @@ MUST_PRESERVE: native arguments/fingerprints/claims/writer/readback/roles/worksp
 ACCEPTANCE_CRITERIA: new proposals state the native target/default truthfully; ordinary explicit-unassigned Chat asks for clarification before any proposal; authenticated proof remains owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: approval display affected and tested; tenant/actor/role/execution/replay regression tested. Native writes/readback/receipts/audit semantics, auth/account choice, billing/provisioning, Memory, Chat transcript/stream/hydration, Live, Browser/Vault, providers, jobs, shell geometry, accessibility mechanics and secrets unchanged.
-INTERNAL_BUILD_IDENTITY: bea2c2023a2234f9ad764c0ce21b46ff1f83ba86; deployment=NO; environment=local synthetic; migrations=NOT_APPLICABLE; edge=NOT_APPLIED; evidence=this record.
+INTERNAL_BUILD_IDENTITY: bea2c2023a2234f9ad764c0ce21b46ff1f83ba86; deployment=NO; environment=local synthetic; migrations=NOT_APPLICABLE; edge=PROOF_OWED(exact crm-command deployment and served-source readback); evidence=this record.
 RELEASE_CHANNEL: development: isolated source candidate, no customer activation.
 RELEASE_CLASSIFICATION: patch: existing task consequence-copy correction.
 CUSTOMER_RELEASE_IDENTITY: none: root owns integration, review, CI and any release decision.
@@ -120,5 +120,7 @@ rendered finish claim. Context reported the existing DESIGN.md sidecar stale; it
 outside this lease. Canonical skill source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
 
 ## Root integration before release
+
+RELEASE_RECOVERY: position=reviewed forward copy correction or revert of the task guidance and approval summary only; reference=supabase/functions/crm-command/index.ts and supabase/functions/_shared/crm-command/catalog.ts, preserving native task records and all command authorization/receipt contracts.
 
 The bounded source bea2c2023a2234f9ad764c0ce21b46ff1f83ba86 received distinct Independent Review PASS from approval_postcommit_review. The exact reviewed model/recovery head28555691e3d5d3fdb80969babe1255c6127c26a3 was merged cleanly at2beeb1b0fd9c9bb26dfd334d12f1a952be20a59b, adding only the two independently reviewed P0 Research/Live fixture corrections froma2a0e1feb1c1ab1282a2152f96130b3723062aed. Runtime, approved arguments, SQL, source bindings and assignment authority are unchanged by that merge. Final documentation/composition review, exact-head CI and ordinary production clarification/card proof remain owed. Production release and owner acceptance are separate from these local test results.

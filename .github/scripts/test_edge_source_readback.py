@@ -48,6 +48,8 @@ class WorkflowContract(unittest.TestCase):
         self.assertNotIn('if:', affected, 'An empty selected set must still produce count=0')
         self.assertIn('edge-affected.py < changed.txt', affected)
         self.assertIn('set -euo pipefail', affected, 'Rejected local configuration must stop selection before success/count outputs')
+        self.assertIn("refs/tags/edge-live^{commit}", affected, 'The project trust anchor is the certified release, never a failed event predecessor')
+        self.assertIn('--baseline-commit "$certified_before"', affected)
         for name in ['Setup Supabase CLI', 'Preflight — the provider accepts the credential',
                      'Delete retired functions at the provider', 'Deploy affected functions', 'Verify deployed source']:
             step = workflow.split(f'- name: {name}', 1)[1].split('\n      - name:', 1)[0]
@@ -75,6 +77,7 @@ class ReleaseFixtures(unittest.TestCase):
         self.git('add', '.')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'Protected release fixture')
         self.commit = self.git('rev-parse', 'HEAD').strip()
+        self.git('tag', '-f', 'edge-live', self.commit)
         self.names = ['paige-ai-chat', 'crm-command']
         self.rows = [self.row(name) for name in self.names]
         self.calls = []
@@ -417,38 +420,37 @@ class ReleaseFixtures(unittest.TestCase):
         return subprocess.run([bash, '-e', '-c', script], cwd=self.repo, capture_output=True, text=True, timeout=15)
 
     def select_as_workflow(self, before):
-        """Run the incumbent graph, then the config supplement only if wired in the workflow."""
-        spec = importlib.util.spec_from_file_location('fixture_edge_graph', ROOT / '.github/scripts/edge-affected.py')
-        graph = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(graph)
-        graph.REPO_ROOT = str(self.repo)
-        graph.FUNCTIONS_DIR = str(self.repo / 'supabase/functions')
-        changed = self.git('diff', '--name-only', before, self.commit, '--', 'supabase/functions/**')
-        output = io.StringIO()
-        with patch.object(graph.sys, 'stdin', io.StringIO(changed)), contextlib.redirect_stdout(output):
-            self.assertEqual(graph.main(), 0)
-        selected = self.repo / 'affected.txt'
-        selected.write_text(output.getvalue(), encoding='utf-8')
+        """Execute the actual selection shell, graph and helper; never invokes a provider."""
         workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
         affected = workflow.split('- name: Resolve affected functions', 1)[1].split('- name: Setup Supabase CLI', 1)[0]
-        if '--select-config' in affected:
-            with contextlib.redirect_stdout(io.StringIO()):
-                code = readback.main(['--repo', str(self.repo), '--expected-commit', self.commit,
-                                      '--baseline-commit', before, '--functions', str(selected), '--select-config'])
-            if code:
-                raise readback.ReadbackError('configuration_selection_refused')
-        return selected.read_text(encoding='utf-8').splitlines()
+        tools = self.repo / '.github/scripts'
+        tools.mkdir(parents=True, exist_ok=True)
+        for name in ['edge-affected.py', 'edge-source-readback.py']:
+            shutil.copyfile(ROOT / '.github/scripts' / name, tools / name)
+        changed = self.git('diff', '--name-only', before, self.commit, '--', 'supabase/functions/**')
+        (self.repo / 'changed.txt').write_text(changed, encoding='utf-8', newline='\n')
+        script = textwrap.dedent(affected.split('run: |', 1)[1])
+        script = script.replace('${{ steps.baseline.outputs.before }}', before).replace('${{ github.sha }}', self.commit)
+        executable = Path(os.sys.executable).as_posix()
+        stub = f'python3() {{ "{executable}" "$@"; }};\n'
+        bash = shutil.which('bash') or (r'C:\Program Files\Git\bin\bash.exe' if os.name == 'nt' else None)
+        self.assertTrue(bash and Path(bash).is_file())
+        result = subprocess.run([bash, '-e', '-c', stub + script], cwd=self.repo, capture_output=True, text=True,
+                                timeout=30, env={**os.environ, 'GITHUB_OUTPUT': 'selection-output.txt', 'PYTHONDONTWRITEBYTECODE': '1'})
+        if result.returncode:
+            raise readback.ReadbackError('configuration_selection_refused')
+        return (self.repo / 'affected.txt').read_text(encoding='utf-8').splitlines()
 
     def test_manual_config_only_change_selects_the_exact_function(self):
         before = self.commit
-        self.git('tag', 'edge-live', before)
+        self.git('tag', '-f', 'edge-live', before)
         self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
         self.recommit()
         self.assertEqual(self.select_as_workflow(before), ['crm-command'])
 
     def test_manual_config_and_unrelated_source_both_require_readback(self):
         before = self.commit
-        self.git('tag', 'edge-live', before)
+        self.git('tag', '-f', 'edge-live', before)
         self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
         self.recommit()
         self.files['supabase/functions/paige-ai-chat/index.ts'] += '// unrelated source change\n'
@@ -469,7 +471,7 @@ class ReleaseFixtures(unittest.TestCase):
 
     def test_manual_tag_guard_refuses_omitted_config_change(self):
         before = self.commit
-        self.git('tag', 'edge-live', before)
+        self.git('tag', '-f', 'edge-live', before)
         self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
         self.recommit()
         (self.repo / 'affected.txt').write_text('paige-ai-chat\n', encoding='utf-8')
@@ -537,14 +539,14 @@ class ReleaseFixtures(unittest.TestCase):
 
     def test_project_change_is_refused_by_actual_tag_guard(self):
         before = self.commit
-        self.git('tag', 'edge-live', before)
+        self.git('tag', '-f', 'edge-live', before)
         self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('test-project', 'different-test-project')
         self.recommit()
         self.assertNotEqual(self.run_actual_tag_guard(before).returncode, 0)
 
     def test_config_only_manual_recovery_passes_guard_after_exact_selection(self):
         before = self.commit
-        self.git('tag', 'edge-live', before)
+        self.git('tag', '-f', 'edge-live', before)
         self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
         self.recommit()
         self.assertEqual(self.select_as_workflow(before), ['crm-command'])
@@ -561,11 +563,16 @@ class ReleaseFixtures(unittest.TestCase):
             self.select_as_workflow(before)
         self.assertEqual(self.calls, [])
 
-    def prepare_retirement(self, configuration_change=None):
+    def prepare_retirement(self, configuration_change=None, frontend_between=False):
         source = 'supabase/functions/retired-fixture/index.ts'
         self.files[source] = 'export const retired = true;\n'
         self.recommit()
         before = self.commit
+        self.git('tag', '-f', 'edge-live', before)
+        if frontend_between:
+            self.files['presentation.txt'] = 'An unrelated presentation-only push\n'
+            self.recommit()
+            before = self.commit
         self.files.pop(source)
         (self.repo / source).unlink()
         (self.repo / source).parent.rmdir()
@@ -638,15 +645,81 @@ class ReleaseFixtures(unittest.TestCase):
             self.assertIsNone(result, f'Unverified step outcomes must suppress deletion; got {calls}')
             self.assertEqual(calls, [])
 
+    def test_failed_project_switch_cannot_be_laundered_by_the_next_push(self):
+        source = 'supabase/functions/retired-fixture/index.ts'
+        self.files[source] = 'export const retired = true;\n'
+        self.recommit()
+        anchor = self.commit
+        self.git('tag', '-f', 'edge-live', anchor)
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('test-project', 'different-test-project')
+        self.recommit()
+        failed_push = self.commit
+        with self.assertRaisesRegex(readback.ReadbackError, 'configuration_selection_refused'):
+            self.select_as_workflow(anchor)
+        self.files.pop(source)
+        (self.repo / source).unlink()
+        (self.repo / source).parent.rmdir()
+        self.recommit()
+        (self.repo / 'retired.txt').write_text('retired-fixture\n', encoding='utf-8', newline='\n')
+        selection = 'success'
+        try:
+            self.select_as_workflow(failed_push)
+        except readback.ReadbackError:
+            selection = 'failure'
+        result, calls = self.run_actual_provider_step('Delete retired functions at the provider', selection=selection)
+        self.assertIsNone(result, f'A failed predecessor is no project authority; sink calls={calls}')
+        self.assertEqual(selection, 'failure')
+        self.assertEqual(calls, [])
+
+    def test_unverified_configuration_is_selected_again_after_a_new_source_push(self):
+        anchor = self.commit
+        self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('verify_jwt = false', 'verify_jwt = true')
+        self.recommit()
+        unverified = self.commit
+        self.names = self.select_as_workflow(anchor)
+        self.assert_failed(self.verify(), 'jwt_configuration_mismatch', 'crm-command')
+        self.files['supabase/functions/paige-ai-chat/index.ts'] += '// next unrelated source push\n'
+        self.recommit()
+        self.names = self.select_as_workflow(unverified)
+        self.assertEqual(set(self.names), {'crm-command', 'paige-ai-chat'})
+        self.rows[1]['verify_jwt'] = True
+        self.assertTrue(self.verify()['all_pass'])
+
+    def test_same_project_frontend_push_preserves_authorized_retirement(self):
+        before = self.prepare_retirement(frontend_between=True)
+        self.assertEqual(self.select_as_workflow(before), [])
+        result, calls = self.run_actual_provider_step('Delete retired functions at the provider', job_success=False)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls, ['functions delete retired-fixture --project-ref test-project --yes'])
+
+    def test_missing_or_noncommit_certified_anchor_refuses_before_provider_mutation(self):
+        before = self.prepare_retirement()
+        blob = self.git('rev-parse', f'{before}:supabase/config.toml').strip()
+        for anchor in [None, blob]:
+            if anchor is None:
+                self.git('tag', '-d', 'edge-live')
+            else:
+                self.git('update-ref', 'refs/tags/edge-live', anchor)
+            selection = 'success'
+            try:
+                self.select_as_workflow(before)
+            except readback.ReadbackError:
+                selection = 'failure'
+            result, calls = self.run_actual_provider_step('Delete retired functions at the provider', selection=selection)
+            self.assertIsNone(result, f'Unprovable release anchor cannot authorize a provider mutation: {calls}')
+            self.assertEqual(selection, 'failure')
+            self.assertEqual(calls, [])
+
     def test_prior_unverified_source_cannot_be_skipped_by_a_later_push(self):
-        self.git('tag', 'edge-live', self.commit)
+        self.git('tag', '-f', 'edge-live', self.commit)
         self.files['supabase/functions/_shared/authority.ts'] += '// prior source not verified\n'
         self.recommit()
         result = self.run_actual_tag_guard(self.commit)
         self.assertNotEqual(result.returncode, 0, 'Later selected-set success cannot certify an older skipped source gap')
 
     def test_frontend_only_commits_do_not_hold_valid_source_tag(self):
-        self.git('tag', 'edge-live', self.commit)
+        self.git('tag', '-f', 'edge-live', self.commit)
         (self.repo / 'presentation.txt').write_text('Unrelated presentation fixture\n')
         self.git('add', '.')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'Frontend fixture')
@@ -655,7 +728,7 @@ class ReleaseFixtures(unittest.TestCase):
         self.assertEqual(self.run_actual_tag_guard(before).returncode, 0)
 
     def test_existing_manual_recovery_baseline_passes_tag_guard(self):
-        self.git('tag', 'edge-live', self.commit)
+        self.git('tag', '-f', 'edge-live', self.commit)
         before = self.commit
         self.files['supabase/functions/_shared/authority.ts'] += '// recovery source\n'
         self.recommit()

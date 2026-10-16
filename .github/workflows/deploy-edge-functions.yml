@@ -119,8 +119,14 @@ jobs:
           # Source-only graph selection cannot see JWT, entrypoint or import-map
           # changes. Add only functions whose immutable options changed; a project
           # change cannot inherit this project's certification or deploy authority.
+          # event.before may itself be a failed/unverified push. Bind target
+          # configuration to the actual certified release before ANY provider step.
+          if ! certified_before="$(git rev-parse --verify 'refs/tags/edge-live^{commit}' 2>/dev/null)"; then
+            echo "::error::Missing or unprovable edge-live commit; no provider operation is authorized by this release. Restore the existing certified baseline before recovery."
+            exit 1
+          fi
           python3 .github/scripts/edge-source-readback.py --select-config \
-            --baseline-commit "${{ steps.baseline.outputs.before }}" \
+            --baseline-commit "$certified_before" \
             --expected-commit "${{ github.sha }}" --functions affected.txt
           cat affected.txt
           echo "count=$(grep -c . affected.txt || true)" >> "$GITHUB_OUTPUT"

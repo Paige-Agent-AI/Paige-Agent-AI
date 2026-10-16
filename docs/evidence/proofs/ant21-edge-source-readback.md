@@ -253,3 +253,49 @@ graph, product runtime, provider/project configuration, credentials, global
 fingerprints and generic CI workflow remain byte-identical to `1d2398`.
 Independent exact-candidate review, hosted CI and authoritative production
 source readback remain separate obligations. No push, PR or deployment occurred.
+
+## Certified project anchor before every provider boundary
+
+Review of `685286d5b6484b8c8855192fbabbb51486c2fecf` found a two-push variant.
+Push1 changed the fixture project and was correctly refused without advancing
+`edge-live`. Push2 retained that different project and removed a function. Its
+event predecessor already contained the refused project, so comparing only
+`event.before` with the target let selection succeed; the actual delete shell
+reached the wrong-project local stub before the final tag guard refused.
+The first successful-outcome guard did not establish the correct trust anchor.
+
+Selection now resolves the existing `refs/tags/edge-live^{commit}` as an immutable
+commit before any provider-facing step. The same existing configuration helper
+compares that committed project's configuration with the target, independent of
+a failed event predecessor. Missing, noncommit or otherwise unprovable baseline
+refuses before provider access under the incumbent manual-recovery boundary;
+there is no fabricated baseline, new project allowlist or secret. Source-change
+selection and retired-set computation keep their existing event-relative inputs.
+Configuration-only changes still awaiting verification are selected again from
+the certified baseline, including when a later push changes unrelated source.
+Unrelated settings, frontend pushes and legitimate same-project manual recovery
+retain their existing behavior. All provider-outcome guards remain in place.
+
+The stronger fixture now executes the actual selection Bash, unchanged source
+graph and existing configuration helper rather than reconstructing selection in
+Python. New tests continue through the actual provider-step condition and actual
+delete shell with only the local Supabase stub. Before the correction, the
+two-push wrong-project case, lost prior configuration and missing-anchor cases
+failed while same-project/frontend retirement passed. After correction all four
+pass, including a noncommit tag object and absence of any provider mutation.
+Existing manual-recovery, partial-success, type-edge and source checks remain.
+
+The wrapper's minimum collection increases to62; its existing180second budget
+is retained. This correction changes no verification helper, product runtime,
+project/provider configuration, credentials, source graph, fingerprints or generic
+CI job. No provider command, authenticated download or production mutation runs
+in the worker. Exact-head Independent Review and actual release proof remain owed.
+
+Trust-anchor validation: **PASS62** protected fixtures through the actual
+existing CI Vitest wrapper (**1/1**, minimum62, zero skips;103.25seconds total).
+The four focused controls also pass independently in12.615seconds after the
+failing-first reproduction. Focused ESLint, Python syntax, workflow YAML,
+all10 Bash-block syntax checks and whitespace PASS. The production delta from
+`685286d5` is only the pre-provider certified-baseline resolution/argument; all
+other changes are the stronger protected fixture seam, tests and evidence.
+Prior candidates remain immutable in history. No push, PR or deployment occurred.

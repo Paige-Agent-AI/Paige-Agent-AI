@@ -341,6 +341,8 @@ function SoloPeopleView({
   const [search, setSearch] = useState("");
   const [editorContact, setEditorContact] = useState<ReturnType<typeof useTenantRelationshipsData>["people"][number] | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const pendingTurnReadback = useRef(false);
+  const refreshPeopleAfterTurn = data.refreshPeopleAfterTurn;
   const [recordLayout, setRecordLayout] = useState<"docked" | "overlay">("docked");
   const workspaceRef = useRef<HTMLElement | null>(null);
   const listRef = useRef<HTMLElement | null>(null);
@@ -367,6 +369,18 @@ function SoloPeopleView({
     editorOriginRef.current = null;
     restoreEditorOriginRef.current = null;
   }, [activeTenantId]);
+
+  useEffect(() => {
+    const readAgain = () => {
+      if (editorOpen) { pendingTurnReadback.current = true; return; }
+      pendingTurnReadback.current = false;
+      // The hook owns scoped query cancellation and readback; this event grants no write authority.
+      void refreshPeopleAfterTurn().catch(() => { /* query errors remain owned by the reader */ });
+    };
+    window.addEventListener("paige:turn-settled", readAgain);
+    if (!editorOpen && pendingTurnReadback.current) readAgain();
+    return () => window.removeEventListener("paige:turn-settled", readAgain);
+  }, [activeTenantId, editorOpen, refreshPeopleAfterTurn]);
 
   const query = search.trim().toLowerCase();
   const people = useMemo(() => {
@@ -460,10 +474,6 @@ function SoloPeopleView({
     onClearContact();
   };
 
-  if (!data.peopleAvailable) return <BoundedState eyebrow="People · UNAVAILABLE" title="People are not connected" detail="A server-authorized People contract is required before records can appear." kind="unavailable" />;
-  if (data.peopleLoading) return <BoundedState eyebrow="People · LIVE" title="Loading the authorized book" detail="The previous account and selected record are cleared while this account resolves." kind="loading" />;
-  if (data.peopleError) return <BoundedState eyebrow="People · UNAVAILABLE" title="We couldn't load People" detail="No count, record, or relationship state is inferred from a failed read." kind="error" onRetry={() => void data.retryPeople()} />;
-  const staleDeepLink = Boolean(deepLinkedContactId && !selected && !data.deepLinkLoading);
   const openNewContact = (event: React.MouseEvent<HTMLButtonElement>) => {
     editorOriginRef.current = event.currentTarget.dataset.contactEditorOrigin ?? null;
     setEditorContact(null);
@@ -509,6 +519,10 @@ function SoloPeopleView({
     );
   }
 
+  if (!data.peopleAvailable) return <BoundedState eyebrow="People · UNAVAILABLE" title="People are not connected" detail="A server-authorized People contract is required before records can appear." kind="unavailable" />;
+  if (data.peopleLoading) return <BoundedState eyebrow="People · LIVE" title="Loading the authorized book" detail="The previous account and selected record are cleared while this account resolves." kind="loading" />;
+  if (data.peopleError) return <BoundedState eyebrow="People · UNAVAILABLE" title="We couldn't load People" detail="No count, record, or relationship state is inferred from a failed read." kind="error" onRetry={() => void data.retryPeople()} />;
+  const staleDeepLink = Boolean(deepLinkedContactId && !selected && !data.deepLinkLoading);
   return (
     <section
       ref={workspaceRef}

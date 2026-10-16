@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalConfig } from "@/hooks/usePortalConfig";
 import { CLIENT_CONTACT_METHODS_EMBED, orderContactMethods, primaryValue, type ContactMethod, type ContactMethodRow } from "@/lib/contact-methods";
@@ -149,8 +150,21 @@ export function useTenantRelationshipsData({
   soloPeople?: boolean;
   deepLinkedContactId?: string | null;
 }) {
+  const queryClient = useQueryClient();
+  const peopleKey = useMemo(() => ["tenant-relationships", "people", activeTenantId, soloPeople ? "solo-enriched" : "legacy"] as const, [activeTenantId, soloPeople]);
+  const personKey = useMemo(() => ["tenant-relationships", "person", activeTenantId, deepLinkedContactId] as const, [activeTenantId, deepLinkedContactId]);
+  const scope = useMemo(() => ({ activeTenantId, variant, soloPeople }), [activeTenantId, variant, soloPeople]);
+  const latestScope = useRef(scope);
+  latestScope.current = scope;
+  const lifetime = useRef({ mounted: false, generation: 0 });
+  useEffect(() => {
+    const mounted = lifetime.current;
+    mounted.mounted = true;
+    mounted.generation++;
+    return () => { mounted.mounted = false; mounted.generation++; };
+  }, []);
   const peopleQuery = useQuery({
-    queryKey: ["tenant-relationships", "people", activeTenantId, soloPeople ? "solo-enriched" : "legacy"],
+    queryKey: peopleKey,
     enabled: variant === "clients" && !!activeTenantId,
     staleTime: 30_000,
     queryFn: async (): Promise<RelationshipPerson[]> => {
@@ -169,7 +183,7 @@ export function useTenantRelationshipsData({
   });
 
   const deepLinkQuery = useQuery({
-    queryKey: ["tenant-relationships", "person", activeTenantId, deepLinkedContactId],
+    queryKey: personKey,
     enabled: soloPeople && !!activeTenantId && !!deepLinkedContactId,
     staleTime: 30_000,
     queryFn: async (): Promise<RelationshipPerson | null> => {
@@ -187,11 +201,28 @@ export function useTenantRelationshipsData({
 
   const portal = usePortalConfig(variant === "clients" ? activeTenantId : null);
 
+  // The existing Chat event means "look again", never that a mutation succeeded. Cancel first:
+  // an initial fetch otherwise shares its pre-turn promise even when explicitly refetched.
+  const refreshPeopleAfterTurn = useCallback(async () => {
+    const generation = lifetime.current.generation;
+    const current = () => lifetime.current.mounted && lifetime.current.generation === generation && latestScope.current === scope;
+    if (!current() || !scope.activeTenantId || scope.variant !== "clients" || !scope.soloPeople) return;
+    const keys = deepLinkedContactId ? [peopleKey, personKey] : [peopleKey];
+    const retiring = keys.map((queryKey) => queryClient.cancelQueries({ queryKey, exact: true }));
+    // Cancellation reverts query state. Mark stale after that, without a read, so leaving during
+    // its await cannot make this pre-turn cache look fresh when the person returns.
+    for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey, exact: true, refetchType: "none" });
+    await Promise.all(retiring);
+    if (!current()) return;
+    await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true, refetchType: "active" })));
+  }, [queryClient, scope, peopleKey, personKey, deepLinkedContactId]);
+
   return {
     people: peopleQuery.data ?? [],
     peopleLoading: variant === "clients" && peopleQuery.isLoading,
     peopleError: variant === "clients" && peopleQuery.isError,
     retryPeople: peopleQuery.refetch,
+    refreshPeopleAfterTurn,
     peopleAvailable: variant === "clients",
     deepLinkedPerson: deepLinkQuery.data ?? null,
     deepLinkLoading: deepLinkQuery.isLoading && deepLinkQuery.fetchStatus === "fetching",

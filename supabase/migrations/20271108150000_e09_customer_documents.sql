@@ -33,7 +33,7 @@ END $$;
 
 -- Browser file creation uses the checked reservation/finalization writer below.
 -- Staff's existing direct metadata producer and its permission arms are retained.
-ALTER POLICY "Clients upload own" ON public.client_files WITH CHECK (false);
+DROP POLICY IF EXISTS "Clients upload own" ON public.client_files;
 
 -- Historic schema replays contain these weaker path/role-only Storage arms;
 -- production may not. Replace their intended bucket contract in both classes.

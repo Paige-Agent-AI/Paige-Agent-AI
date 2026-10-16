@@ -1,5 +1,13 @@
 # UI delivery evidence: retain the SOLO shell after a screen import fails
 
+## Production closeout — 2026-10-15
+
+PR #2211 merged after exact-head green checks at reviewed `feb4972917b6973534166ea3ee392da7c0c0e0e0` as main `cf666de1e92ebb7ae40c930c1d69f97810833a29`. Reviews5542234896/5542252538 are separate sequential `AUTHOR-REVIEW / LOWER ASSURANCE`, not non-author review. All10 successful check runs, the legitimate no-SQL Preview skip and both Vercel statuses were read before the expected-head merge. Production deployment `dpl_E1HpJF62GC3wj9CF4XiiXpDLvSfe` is READY at that exact merge; public `/version.json` returned build `cf666de1e92ebb7ae40c930c1d69f97810833a29-mvad1ser` and `customerUpdate:null`. The3 reviewed product files match merged main exactly. Channel production; migrations and Edge deployment NOT_APPLICABLE. No customer release identity or publication.
+
+Focused ordinary-session verification covers the existing authorized two SOLO cohorts: both reload into their native shell with one `tenant-shell-main` and native navigation. A temporary, tab-local network block of the observed released Conversations chunk reproduces the failed screen in one ordinary session: the new fallback, native navigation and PAIGE remain visible. The block and cache override were removed, network instrumentation disabled and ordinary Conversations restored after reload. The initial attempt targeted a historical chunk name and did not cause failure; it is not a passing failure test. Live-region announcements disappear after navigation and were not used as final shell authority. Raw authenticated images and account identifiers remain in private QA custody, outside committed artifacts. No Chat send, customer record write or provider operation occurred.
+
+This is bounded production screen-recovery evidence, not complete Chat restoration,50-row acceptance or owner product acceptance. Current-version ordinary loading is not evidence of a new-version banner; actual-source guarded-reload/unsent-draft and32-render proof below retain their synthetic scope. Broad Safari/Firefox/device/physical4K and desktop200% certification remain UNVERIFIED. The owner tests the released product next under Build → Ship → Owner Test → Improve; ordinary release was not held for that acceptance. A reviewed revert or forward correction can restore the prior source without altering business data.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: bounded failure -> existing navigation exit or canonical explicit update Reload; shared SOLO presentation only, no capability execution
 PAIGE_UI_DESIGN: PASS: installed project UI skill and routed protected-behavior/design references read before design; same EmptyState, shell tokens and sole update banner reused

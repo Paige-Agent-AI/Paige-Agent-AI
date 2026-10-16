@@ -902,6 +902,10 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          # Actual handler/native-door pause, abrupt termination, and receipt failure controls.
+          for mode in normal kill prior-success following-unknown protected-flip settle-fails commit-lost-ack disconnect; do
+            CRM_APPROVAL_PAUSE_TEST="$mode" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          done
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-crm-task-read-check.mjs
           PLANNING_RECOVERY=lost node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           PLANNING_RECOVERY=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs

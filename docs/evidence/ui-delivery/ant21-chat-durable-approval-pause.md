@@ -159,3 +159,21 @@ extractor captures whole-handler ancestry. The 96 dependency entries, guard meta
 extractor remain unchanged. Pin renewal, composed exact-head CI, hosted native/runtime checks,
 deployment/source readback and ordinary paired authenticated approval/reload QA remain with the
 integration lead. Shipped Delivery Log closeout is N/A: this candidate has not reached main.
+
+## Reviewed release composition
+
+Distinct NON-AUTHOR review of exact00b5aed5edc4b788e1ad619cefe18b5fdc26b362 is PASS;
+canonical security report20261016T161146Z_yxtmap3s records no concrete finding in this bounded
+change. The reviewer independently ran eight handler modes,43 UI tests,lifetime controls and
+a post-proposal supersession probe;all29 proposed dispatch digests match and96 dependencies
+are unchanged. Root independently reran the eight modes on the composed source,PASS.
+Root's first run could not start without local dependencies;the existing workspace dependency
+junction was then supplied and the full batch passed.No installation/provider call occurred.
+Composition preserves main e766d2d,Task6c8fa9b2,CI113ba97b and mechanical Master closeout32cc5e68.
+The shared Chat source and original tests remain exactly00b5. Four additive lines in the existing
+INT336 CI step run all eight modes,with all previous checks retained. The same distinct reviewer
+inspected that wiring and immutable source composition before renewal. Root renewed only29
+reviewed fingerprint scalars;guard metadata/extraction and all96 dependencies remain unchanged.
+Exact composed-head review/CI,guarded merge and actual production source/customer proof remain
+owed. This record does not close the original orphan,reload-reader seam,mixed-unknown suppression,
+full18/50 restoration,Live or owner acceptance.

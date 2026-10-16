@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,14 +43,14 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
   const [busy, setBusy] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data } = await supabase
       .from("client_files")
       .select("*")
       .eq("contact_id", contactId)
       .order("created_at", { ascending: false });
     setFiles((data as FileRow[]) || []);
-  };
+  }, [contactId]);
 
   useEffect(() => {
     load();
@@ -59,14 +59,14 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
       .on("postgres_changes", { event: "*", schema: "public", table: "client_files", filter: `contact_id=eq.${contactId}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [contactId]);
+  }, [contactId, load]);
 
   const upload = async (file: File, visibility: Visibility) => {
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("not signed in");
-      const safe = file.name.replace(/[^\w.\-]/g, "_");
+      const safe = file.name.replace(/[^\w.-]/g, "_");
       const t = tenantId || "default";
       const path = `${t}/${contactId}/${visibility}/${Date.now()}_${safe}`;
 
@@ -85,8 +85,8 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
       });
       if (insErr) throw insErr;
       toast.success(`Uploaded to ${LABEL[visibility]}`);
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
+    } catch (e: unknown) {
+      toast.error(e && typeof e === "object" && "message" in e && typeof e.message === "string" ? e.message : "Upload failed");
     } finally {
       setBusy(false);
     }

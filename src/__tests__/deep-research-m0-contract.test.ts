@@ -3,9 +3,9 @@
  * corrections). The SQL-side proof (matrix A–J's database halves) lives in
  * supabase/tests/research_tenant_lineage.sql; THIS suite pins the ENGINE-side lineage logic
  * and the migration's load-bearing shape against the real source:
- *  - persistence lineage is STRICT: the JWT path pins via current_user_tenant_id; the
- *    service-role path uses profiles.active_tenant_id ONLY for lineage (the first-membership
- *    fallback remains for strategize CONTEXT but NEVER persists);
+ *  - lineage is STRICT: the JWT actor matches the asserted actor and its active workspace;
+ *    the service-role path verifies the acting identity and active membership.
+ *    Neither path guesses a first membership, including strategize context;
  *  - ambiguous lineage FAILS CLOSED FOR PERSISTENCE (the run's result still returns);
  *  - the optional expected_tenant_id is a CROSS-CHECK (a mismatch skips persistence) — never
  *    the persisted value, never authority;
@@ -24,22 +24,24 @@ const root = join(__dirname, "..", "..");
 const engine = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
 const migration = readFileSync(join(root, "supabase/migrations/20270545000000_research_tenant_lineage.sql"), "utf8");
 const pgTAP = readFileSync(join(root, "supabase/tests/research_tenant_lineage.sql"), "utf8");
+const scopeMigration = readFileSync(join(root, "supabase/migrations/20271108180000_research_current_scope.sql"), "utf8");
 
 describe("the engine's persistence lineage is strict (fail-closed)", () => {
-  it("two resolutions with different strictness are declared", () => {
-    expect(engine).toContain("// TWO resolutions with different strictness (M0):");
+  it("actor and explicitly selected workspace are bound before provider effects", () => {
+    expect(engine).toContain("const assertResearchScope = async (): Promise<void> =>");
     expect(engine).toContain("let lineageTenantId: string | null = null;");
+    expect(engine.indexOf("try { await assertResearchScope(); }")).toBeLessThan(engine.indexOf("task: question,"));
+    expect(engine).toContain("actor !== body.user_id");
   });
 
   it("the service path derives lineage from active_tenant_id ONLY — no first-membership fallback", () => {
-    expect(engine).toContain("const activeTid = (prof?.active_tenant_id as string | null) ?? null;");
-    expect(engine).toContain("lineageTenantId = activeTid && UUID_RE.test(activeTid) ? activeTid : null;");
-    // The first-membership fallback follows the lineage assignment and feeds ONLY the
-    // strategize/tracing resolution, never persistence.
-    const lineageIdx = engine.indexOf("lineageTenantId = activeTid && UUID_RE.test(activeTid)");
-    const fallbackIdx = engine.indexOf("if (!tid) {", lineageIdx);
-    expect(fallbackIdx).toBeGreaterThan(lineageIdx);
-    expect(engine).toContain("AMBIGUOUS ownership and the run is NOT persisted");
+    expect(engine).toContain('const active = scope.data?.tenant_id;');
+    expect(engine).toContain("lineageTenantId = active;");
+    expect(engine).toContain('rpc("research_assert_current_scope", {');
+    expect(scopeMigration).toContain('select p.active_tenant_id into v_tenant from public.profiles p');
+    expect(scopeMigration).toMatch(/if v_role='service_role' then[\s\S]*m\.user_id=_expected_actor_id[\s\S]*m\.tenant_id=v_tenant and m\.status='active'/);
+    expect(scopeMigration).not.toMatch(/order\s+by\s+joined_at/i);
+    expect(engine).not.toContain('.order("joined_at", { ascending: true }).limit(1)');
   });
 
   it("persistRun refuses ambiguous lineage — the honest skip, result still returned", () => {
@@ -55,19 +57,25 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
 
   it("all three persist call sites carry the lineage argument", () => {
     // R3: the trailing dossier arg is optional diagnostics — the lineage contract is the 6 required args.
-    expect(engine.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId(?:, dossier)?\)/g)?.length).toBeGreaterThanOrEqual(3); // R4 adds decomposed-path sites; the lineage contract requires >=3
+    expect(engine.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope\)/g)?.length).toBeGreaterThanOrEqual(3); // Every native persistence path retains the actor/tenant checkpoint.
     expect(engine).not.toContain("persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);");
   });
 
   it("the JWT path is exact by construction (lineage = the RLS-pinned resolver)", () => {
-    expect(engine).toContain("// The JWT path is exact by construction (RLS-pinned resolver) — lineage = resolved.");
+    expect(engine).toContain('scopeCaller.auth.getUser()');
+    expect(engine).toContain('scope.data?.actor_id !== actor');
+    expect(scopeMigration).toContain("auth.uid() is distinct from _expected_actor_id");
+    expect(scopeMigration).toContain('public.current_user_tenant_id() is distinct from v_tenant');
+    expect(scopeMigration).toContain('public.is_tenant_member(v_tenant) is distinct from true');
   });
 });
 
 describe("the expected_tenant_id cross-check never grants authority", () => {
-  it("a disagreement is treated as ambiguity — persistence skipped, never resolved in the caller's favor", () => {
-    expect(engine).toContain("M0 CROSS-CHECK: an upstream expected_tenant_id is honored only when it AGREES");
-    expect(engine).toContain("persistence skipped: upstream expected_tenant_id disagrees with the server-resolved lineage");
+  it("a disagreement is refused before providers as well as persistence, never resolved in the caller's favor", () => {
+    expect(engine).toContain("expectedTenantId !== undefined && expectedTenantId !== active");
+    expect(engine).toContain('UUID_RE.test(body.expected_tenant_id)');
+    expect(engine).toContain('body.expected_tenant_id.toLowerCase()');
+    expect(engine).toContain("No first-membership fallback, role grant or caller-selected tenant can authorize a run.");
     expect(engine).toContain("the persisted value and never authority");
   });
 

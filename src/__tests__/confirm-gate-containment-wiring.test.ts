@@ -11,8 +11,7 @@
  * a source-assertion: the refusal of an id the executor cannot address is EXECUTED on the real
  * handler in CI by scripts/client-memory-authz (checks 18.ID1–ID8).
  */
-import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 
 const HANDLER = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
@@ -20,6 +19,19 @@ const HANDLER = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8"
 // runs ~8346–8560; slice generously by characters so every assertion lands inside it.
 const gateStart = HANDLER.indexOf('if (autoMode === "confirm") {');
 const gate = HANDLER.slice(gateStart, gateStart + 26000);
+
+// Equivalent to the original recursive *.ts scan, without a POSIX-shell/GNU
+// grep dependency in the Windows engineering environment. Keep repo-relative
+// forward slashes so the exact reviewed sets are identical on every runner.
+function typescriptSources(directory: string): { file: string; source: string }[] {
+  const sources: { file: string; source: string }[] = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const file = `${directory}/${entry.name}`;
+    if (entry.isDirectory()) sources.push(...typescriptSources(file));
+    else if (entry.isFile() && file.endsWith(".ts")) sources.push({ file, source: readFileSync(file, "utf8") });
+  }
+  return sources;
+}
 
 describe("FIX A — a batch is disambiguated by the stable subject id, WITHIN the approved set", () => {
   it("imports the batch-disambiguation primitives from the one home (§18)", () => {
@@ -187,8 +199,8 @@ describe("the write trail skips only what declares it never ran", () => {
   });
 
   it("only reviewed pre-dispatch refusals produce the marker", () => {
-    // Three producers, all refusals before anything ran; everything else that names it only reads
-    // it: the audit skip, the approval card's outcome (approval-outcome.ts, which reports such a
+    // Three TRUE producers, all refusals before anything ran. The other consumers are
+    // the audit skip, the approval card's outcome (approval-outcome.ts, which reports such a
     // call as not run), and the turn record (paige-turn/reducer.ts, which does not count such a call
     // as a tool that ran). C4a added the second producer: the approval resume's three refusals
     // (paige-turn/resume.ts — an approval another request used, a check that could not run, an act
@@ -197,11 +209,12 @@ describe("the write trail skips only what declares it never ran", () => {
     // ANT-21 adds the canonical Chat reconciliation guard: it continues before any executor,
     // explicitly reports not_applied, and has actual-guard/handler approval+audit negatives.
     // The receipt projection consumes both flags but preserves contradictory effect evidence.
-    const producers = execSync("grep -rlE 'refused_before_run: ?true' supabase/functions --include=*.ts", { encoding: "utf8" })
-      .trim().split("\n").sort();
+    // Native CRM also explicitly carries FALSE for an uncertain failed claim: a competing
+    // original action might still commit. It must never become a fourth never-ran producer.
+    const sources = typescriptSources("supabase/functions");
+    const producers = sources.filter(({ source }) => /refused_before_run: ?true/.test(source)).map(({ file }) => file).sort();
     expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts", "supabase/functions/_shared/paige-turn/resume.ts", "supabase/functions/paige-ai-chat/index.ts"]);
-    const mentions = execSync("grep -rl 'refused_before_run' supabase/functions --include=*.ts", { encoding: "utf8" })
-      .trim().split("\n").sort();
+    const mentions = sources.filter(({ source }) => source.includes("refused_before_run")).map(({ file }) => file).sort();
     expect(mentions).toEqual([
       "supabase/functions/_shared/approval-outcome.ts",
       "supabase/functions/_shared/confirm-fingerprint.ts",
@@ -209,8 +222,12 @@ describe("the write trail skips only what declares it never ran", () => {
       "supabase/functions/_shared/paige-turn/reducer.ts",
       "supabase/functions/_shared/paige-turn/resume.test.ts",
       "supabase/functions/_shared/paige-turn/resume.ts",
+      "supabase/functions/crm-command/index.ts",
       "supabase/functions/paige-ai-chat/index.ts",
     ]);
+    const crmDoor = sources.find(({ file }) => file === "supabase/functions/crm-command/index.ts")?.source;
+    expect(crmDoor).toMatch(/approvalClaimFailed\s*\?\s*\{\s*outcome_unknown:\s*true,\s*refused_before_run:\s*false\s*\}/);
+    expect(crmDoor).not.toMatch(/refused_before_run:\s*true/);
   });
 });
 

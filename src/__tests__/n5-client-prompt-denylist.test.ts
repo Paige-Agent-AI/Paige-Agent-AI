@@ -40,7 +40,9 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     visit(source); if (!found) throw new Error("Production seam not found"); return found;
   };
   // These extracted seams exercise Live, which does not opt into the typed executor.
-  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  // Bind its pause state from the production initializers, rather than leaving
+  // the new closure variables undefined. The invariants below keep this valid.
+  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];const durableApprovalPause=${initializer("durableApprovalPause")},approvalPauseRecorded=${initializer("approvalPauseRecorded")};class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const initializer = (name: string) => (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === name) as ts.VariableDeclaration).initializer!.getText(source);
   // paige-turn — the PRODUCTION terminal seam, read out of index.ts (emitTurnTerminal with its
   // exactly-once guard, and emitTurnTerminalBeforeAnswer), closed over a real reducer. So the guard these
@@ -63,6 +65,26 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
   const ROLE_LINE = 'data: {"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}\n\n';
   const FINISH_LINE = 'data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n';
   it("uses a private decision instruction only on verified non-document Live rounds", () => {
+    expect(initializer("interactive")).toBe("null");
+    expect(initializer("durableApprovalPause")).toBe("false");
+    expect(initializer("approvalPauseRecorded")).toBe("false");
+    const pauseAssignments: ts.BinaryExpression[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken
+          && node.left.getText(source) === "durableApprovalPause") pauseAssignments.push(node);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(pauseAssignments).toHaveLength(1);
+    expect(pauseAssignments[0].right.getText(source)).toBe("true");
+    let pauseGuard: ts.Node | undefined = pauseAssignments[0].parent;
+    while (pauseGuard && !ts.isIfStatement(pauseGuard)) pauseGuard = pauseGuard.parent;
+    expect(pauseGuard && ts.isIfStatement(pauseGuard) && pauseGuard.expression.getText(source)).toMatch(/^interactive && /);
+    const scopeGuard = find((node) => ts.isIfStatement(node) && ts.isReturnStatement(node.thenStatement)
+      && node.thenStatement.getText(source).includes('error: "Invalid interactive scope"')) as ts.IfStatement;
+    const rejectsInteractiveScope = new Function("validatedData", js(`return (${scopeGuard.expression.getText(source)});`));
+    expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent", liveRuntimeChallenge: "signed-fixture" })).toBeTruthy();
+    expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent" })).toBeFalsy();
     const messages = [{ role: "user", content: "Hello" }];
     const make = new Function("liveRuntimeScope", "attachedDocument", js(`return ${initializer("liveDecisionMessages")};`));
     expect(make(null, null)(messages)).toBe(messages);

@@ -26,7 +26,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no authenticated connection viewport dri
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no authenticated connection viewport drive.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated connection viewport drive.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated connection viewport drive.
-UNVERIFIED: Independent Review, exact-head hosted CI/full-schema Preview, deployed SQL/Edge parity, Google readiness/consent, paired ordinary customer QA, provider outcome, Live and owner acceptance.
+UNVERIFIED: final composed documentation review, exact-head hosted CI/full-schema Preview, deployed SQL/Edge parity, Google readiness/consent, paired ordinary customer QA, provider outcome, Live and owner acceptance. Runtime/native source 36c has the distinct NON-AUTHOR review recorded below; this does not assert review of subsequent documentation edits.
 OWNER_INTENT: restore complete governed Communications for eligible SOLO accounts using existing domain systems, truthful readiness and tenant isolation.
 MUST_NOT_HAPPEN: no global title instead of tenant authority; no silent workspace fallback, stale consent URL, private credential overwrite, role fix, new scope, secret exposure, provider activation or send.
 MUST_PRESERVE: canonical tenant-admin RPC/company exception; signed OAuth identity/workspace/origin/time/nonce; Google single-use code; existing Vault/connector/private-mailbox/provider-floor/audit contracts; full18/50 restoration scope.
@@ -108,9 +108,10 @@ exercise response/lifecycle behavior; they do not substitute for rendered viewpo
 real provider or authenticated customer evidence. `settings.connections` remains the incumbent
 Binding Ledger surface. This is its existing explicit person-driven OAuth plumbing, not a new Chat
 capability; governed email still uses `comms.email_send`. The current integration registry's
-`google-workspace` entry describes Drive/Docs/Calendar, not a proven Gmail connection. A precise
-Gmail connection/readiness anchor update in that existing registry remains a release-documentation
-dependency for the lead; this slice does not invent or duplicate a provider registry.
+`google-workspace` entry describes Drive/Docs/Calendar, not a proven Gmail connection. The separate
+`gmail` entry in that same existing registry now records the real connection/transport anchors,
+scopes, native-first release dependency and PROOF_OWED provider boundary; its README and operating
+report carry matching summaries. No provider registry is duplicated and no status becomes LIVE.
 
 Legacy callers omitting expected tenant retain server-derived scope; SOLO supplies it explicitly.
 Backend inbox consent already exists; this does not activate its missing UI binding. Apple/iCloud
@@ -119,3 +120,24 @@ A2P/provider acceptance remain separate. Multiple existing Gmail connectors stil
 selection in the current UI/native preview; an ambiguous read fails closed. No capability/50-row
 closure, new-account manual drive, Live completion, owner acceptance, provider send or production
 credential change is claimed.
+
+## Independent runtime/native source review
+
+The distinct `gmail_native_review` agent inspected the complete twelve-file change at exact
+`36c24022f6c311226a677fc5177bea73c46e1388` against base
+`5590651737a50fe4cbea6572e228d9b9bcc73efa`: **NON-AUTHOR Review PASS, no material findings**.
+Freshly reran the five focused suites above (**150/150 PASS**) and the actual PostgreSQL proof
+on a new owned loopback cluster on port 65466 (**34/34 PASS**), including real two-session collisions and
+revocation, service-only ACLs, rollback, stable credential identity and stale disconnect versions.
+The first Windows launcher was cancelled before native tests ran; the corrected launch ran the
+proof and stopped that exact cluster, with `pg_ctl status` confirming no server running. No failed
+attempt is counted as PASS. Vault cryptography remains a stand-in; no hosted schema, Google call,
+credential, ordinary-account consent or provider outcome was exercised. Full-app typecheck and
+hosted release checks are not certified by this review.
+
+The same reviewer subsequently authored only the existing integration registry/README/operating
+report and this evidence correction. Those documentation edits need their own final composed
+review; they do not inherit NON-AUTHOR assurance from the runtime/native review above. Registry
+validation checks 33 providers/all six taxonomy groups/117 resolving anchors; its existing 42
+honesty/structure mutation controls and dead-anchor/glob controls pass. Other provider entries,
+their eligibility/authority and pricing facts are preserved; no production state is changed.

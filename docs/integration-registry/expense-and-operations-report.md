@@ -85,6 +85,7 @@ becomes merchant of record for these (§38).
 |---|---|---|---|---|---|---|
 | **Google Workspace** (Drive/Docs) | Read context + create native docs in the tenant's Drive | free_quota | api_calls · storage | No | PARTIAL | developers.google.com/drive…/limits (unverified) |
 | **Google Calendar** | Availability + booking on the tenant's calendar | free_quota | api_calls | No | PARTIAL | developers.google.com/calendar…/quota (unverified) |
+| **Gmail** | Explicit tenant mailbox connection; governed sending and separately consented private inbox paths | unknown | api_calls · messages | No (no purchase or customer-money movement) | PROOF_OWED | developers.google.com/gmail/api/reference/quota (unverified) |
 | **QuickBooks** | Accounting/bookkeeping | fixed_subscription | api_calls · transactions | **Yes** (M1 real-money — obligations) | PROOF_OWED | quickbooks.intuit.com/pricing (unverified) |
 | **DocuSign** | E-signature / contracts | per_seat | documents · seats | **Yes** (M1 real-money — obligations + envelope fee) | PROOF_OWED | docusign.com/pricing (unverified) |
 | **Meta** (FB + IG) | Social presence + ads | per_action | ad_spend · api_calls | **Yes** (M1 real-money for ad spend) | PARTIAL | developers.facebook.com…/rate-limiting (unverified) |
@@ -94,6 +95,29 @@ becomes merchant of record for these (§38).
 | **HubSpot** | External CRM (not wired) | unknown | api_calls · seats | No | UNAVAILABLE | hubspot.com/pricing (unverified) |
 
 ---
+
+### Gmail operating and proof boundary (2026-10-16)
+
+The tenant owns its mailbox/subscription; the platform operates the shared Google OAuth application
+and quota project. This source-only update verifies no current fee, free entitlement or quota
+headroom; the JSON keeps `pricing_checked_as_of=null` and `pricing_model=unknown`. No purchase,
+credential, scope or billing arrangement changes. Gmail is separate from Drive/Docs and Calendar.
+
+Connection-authority candidate `36c24022f6c311226a677fc5177bea73c46e1388` has independent
+150 focused / 34 actual local PostgreSQL checks; Vault cryptography is a fixture stand-in. Apply
+native migration `20271108200000_gmail_connection_authority` before the three endpoint updates,
+then verify hosted CI/full-schema compatibility, actual SQL/Edge identities and authorized ordinary
+Google consent. None of those deployment/provider/customer claims is established by the local
+tests. Default sending consent and separate inbox consent remain distinct, with no new inbox UI
+binding or activation. Google revocation is external and separately acknowledged; local connector
+absence does not prove external grant retirement. Unknown outcomes require inspection, not an
+automatic retry. Native connection audit, business-action Rail and Gmail message acceptance are
+different facts; acceptance is not delivery.
+
+This does not change separate platform/tenant SendGrid authority or convert existing Resend
+connections. Generic SMTP sending does not establish Apple/iCloud inbox management. See the
+[Gmail registry boundary](README.md#gmail-connection-authority-proof-boundary-2026-10-16) and the
+existing [source evidence](../evidence/ui-delivery/ant21-gmail-workspace-authority.md).
 
 ## 3. Future Agency / Enterprise capabilities
 

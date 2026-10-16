@@ -1,10 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
+import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 // Pre-portal onboarding is now just two gates: welcome + agreement.
 // Anything beyond signing_agreement lands the client directly in /workspace,
 // where Paige takes over the intake/docs conversation.
 const STAGE_TO_PATH: Record<string, string> = {
+  pre_invite: "/onboard/welcome",
   invited: "/onboard/welcome",
   signing_agreement: "/onboard/agreement",
 };
@@ -188,15 +190,13 @@ type LandingTenant = {
  */
 export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
-export async function resolveLandingRoute(userId: string): Promise<string> {
+export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean } = {}): Promise<string> {
   try {
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase
-        .from("clients")
-        .select("id, onboarding_stage")
-        .eq("linked_user_id", userId)
-        .maybeSingle(),
+      // Customer entry must not depend on permission to read an internal CRM row.
+      Promise.resolve(supabase.rpc("client_portal_self_profile"))
+        .catch(() => ({ data: null, error: { message: "Customer relationship unavailable" } })),
       supabase.from("tenants").select("id, account_type, parent_tenant_id, account_number").eq("owner_user_id", userId).limit(1).maybeSingle(),
       supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle(),
       // Agency-team invitees don't get a tenant_members row — they live in
@@ -245,6 +245,18 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     if (roles.includes("super_admin") || roles.includes("platform_admin")) {
       return "/choose-account";
     }
+    // /app is the existing customer surface. A person who also runs a business
+    // may deliberately open their OWN customer relationship here. This is route
+    // intent only: the native subject-bound active relationship supplies authority.
+    // Fresh ordinary staff login and operator account choice stay unchanged.
+    if (options.customerPortal) {
+      if (clientRes.error) return LANDING_ROUTE_RETRY;
+      if (clientRes.data !== null) {
+        const profile = readClientPortalSelfProfile(clientRes.data, userId);
+        if (!profile) return LANDING_ROUTE_RETRY;
+        return STAGE_TO_PATH[profile.onboarding_stage ?? "invited"] ?? "/app";
+      }
+    }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.
     if (roles.includes("admin")) {
@@ -255,7 +267,9 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
       return "/broker/app";
     }
 
-    let clientRow = clientRes.data;
+    if (clientRes.error) return LANDING_ROUTE_RETRY;
+    let clientRow = clientRes.data as { id?: string; linked_user_id?: string; onboarding_stage?: string | null } | null;
+    if (clientRow && clientRow.linked_user_id !== userId) return LANDING_ROUTE_RETRY;
 
     // Self-heal: linked client without the `client` role, or with a missing
     // onboarding stage. Backfills both via SECURITY DEFINER RPC.

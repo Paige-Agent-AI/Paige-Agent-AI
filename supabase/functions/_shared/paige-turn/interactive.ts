@@ -1,3 +1,5 @@
+import { isKnowledgeCompletedUnrecorded } from "../approval-outcome.ts";
+
 /** INT-336: a lease over the canonical thread, never a second turn queue. */
 export class InteractiveSuperseded extends Error {
   constructor() { super("INTERACTIVE_SUPERSEDED"); }
@@ -33,6 +35,11 @@ export function interactiveEffect(tool: string, result: unknown): InteractiveEff
   const outcome = uncertain || r.outcome_unknown === true ? "outcome_unknown"
     : r.accepted === true && typeof r.work_id === "string" && UUID.test(r.work_id) ? "durable_accepted"
     : r.needs_confirm === true || r.queued === true ? "approval_required"
+    // The canonical Knowledge contract verifies the business change separately from Rail.
+    // Preserve actual completion in this closed effect vocabulary; the tool/card retain
+    // the unconfirmed-receipt outcome. Never generalize this opt-in to other capabilities.
+    : ["save_to_knowledge_base", "knowledge_update", "knowledge_delete"].includes(tool)
+      && isKnowledgeCompletedUnrecorded(r) ? "reported_success"
     : r.success === true || r.ok === true || r.outcome === "succeeded" ? "reported_success"
     : r.success === false || r.outcome === "failed" || r.outcome === "refused" ? "reported_failure" : "outcome_unknown";
   return { tool, outcome,

@@ -69,7 +69,7 @@ describe('governed Knowledge adapter',()=>{
   expect(JSON.parse(content).outcome_unknown).not.toBe(true);
   const classified=classifySpentApproval(content,{reportsKnowledge:true});
   expect(classified).toEqual({outcome:'ran',reason:'completed_unrecorded'});
-  expect(buildApprovalOutcome([{fingerprint:'test',...classified}]).note).toContain('activity record is missing');
+  expect(buildApprovalOutcome([{fingerprint:'test',...classified}]).note).toContain('activity record could not be confirmed');
  });
  it('known canonical SQL rollback stays not-run after spent approval',async()=>{
   const result=await executeKnowledgeTool({caller:port(null,{code:'40001',message:'KNOWLEDGE_REVISION_CONFLICT'}),expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});

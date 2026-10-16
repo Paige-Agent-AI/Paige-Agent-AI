@@ -9805,7 +9805,7 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
  const THREAD="cccccccc-cccc-4ccc-8ccc-cccccccccccc", id="55555555-5555-4555-8555-555555555555";
  const doc={id,tenant_id:CALLER_TENANT,revision:3,title:"Guide",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1};
  const cases=[
-  {name:"unrecorded",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:{tenant_id:CALLER_TENANT,document:doc,outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record is missing. Do not repeat it."},
+  {name:"unrecorded",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:{tenant_id:CALLER_TENANT,document:doc,outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record could not be confirmed. Do not repeat it."},
   {name:"conflict",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}},outcome:"not_run",note:"It didn't go through."},
   {name:"forbidden",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:null,error:{code:"42501",message:"KNOWLEDGE_FORBIDDEN"}},outcome:"not_run",note:"It didn't go through."},
   {name:"transport",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{message:"network lost"}},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},

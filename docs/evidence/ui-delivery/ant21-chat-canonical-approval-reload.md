@@ -158,6 +158,24 @@ historical evidence output. Isolated headless Edge initially failed sandbox star
 fresh local profile then succeeded with all HTTP(S) requests blocked and local font bytes supplied.
 No ordinary browser profile or customer session was used. Browser and profile were closed afterward.
 
+## Reviewed integration guard and required native regression
+
+Distinct `approval_postcommit_review` reviewed exact source `15deb2d17f456c5eebd859352d23b8bd0799a8a8`:
+64 actual status cases, 52 native SQL controls, ten HTTP-to-native-SQL controls, the real CRM
+consumed-approval refusal/replay controls and 72 UI/hook/render tests independently PASS. The reviewed
+P0 `086d1d8f4d16a11df2a011fc31d0b162dfa0995c` and CRM `d36579e70208ded9e79183e3ecda59c54a191376`
+dependencies are preserved byte-for-byte. Version conflict remains an executor-port test, not hosted CAS.
+
+Following that review, the integration lead renews only the 29 reviewed dispatch digest scalars and
+adds the restrictive full-file ancestry entry for the status reader:
+`95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c`.
+All 97 prior dependency digests, extractor and capability metadata remain unchanged. This is a reviewed
+source contract, not runtime authorization or customer proof. The existing required native PostgreSQL
+CI step also runs the actual status-handler/native-function controls in its own fresh disposable
+database; the incumbent handler and unit steps already exercise the SDK and UI negatives. No test is
+made optional and no separate workflow, engine or database is introduced. Final exact-head review,
+hosted CI, release and authenticated reload proof remain separate.
+
 Representative captures: [light 320px available](chat-approval-reload/light-320-available.png),
 [dark 518px unavailable](chat-approval-reload/dark-518-unavailable.png).
 [Twelve render measurements](chat-approval-reload/render-results.json) cover three states, two widths

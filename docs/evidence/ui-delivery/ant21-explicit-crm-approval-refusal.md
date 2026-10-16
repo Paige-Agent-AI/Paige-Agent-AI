@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: no geometry changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion changed
 STATE_COVERAGE: PASS: actual-handler controls cover absent, consumed, expired, unissued, foreign actor/tenant and forged approval in confirm/auto; acknowledgement fault, role refusal, original success and result-readback fault
 TRUTHFUL_STATE_LABELS: PASS: unavailable or unconfirmed approval means inspect the original record/result and request fresh review; it never reports execution or automatically creates another proposal
-SOLO_UI: NO: shared native CRM door for all eligible tenants; no account selector or private implementation
+SOLO_UI: YES: the restoration composition includes SOLO Work UI; this shared CRM refusal seam preserves the existing approval surface for all eligible tenants
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no viewport proof for this CRM refusal seam
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no viewport proof for this CRM refusal seam
 UNVERIFIED: distinct source/security review, exact-head CI, deployment/source readback, authenticated stale/fresh approval and reload QA, actual concurrent native CAS, broader role/Live/new-account/owner acceptance
 OWNER_INTENT: deliberate approvals must execute only through their still-valid native authority; expired or consumed approvals must not silently become fresh proposals or standing-autonomy instructions
 MUST_NOT_HAPPEN: no failed native claim may run an effect, mint replacement approval, manufacture a role, or bypass original-result recovery

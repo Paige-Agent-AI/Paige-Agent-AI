@@ -61,7 +61,7 @@ export const CRM_PATCH_FIELDS: Readonly<Record<string, readonly CrmPatchFieldSpe
   "task.create": Object.freeze([
     { name: "title", description: "The person's job title on a contact; the short name of the record on a task." },
     { name: "description", description: "Longer body text for the task." },
-    { name: "assignee_user_id", description: "Exact active member UUID to own the task." },
+    { name: "assignee_user_id", description: "Exact authorized user UUID to own the task. On creation, omitted, null or empty assigns to the requester. Tasks cannot be unassigned; clarify explicit unassigned intent before proposing." },
     { name: "contact_id" },
     { name: "company_id" },
     { name: "deal_id" },

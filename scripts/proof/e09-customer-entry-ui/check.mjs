@@ -8,7 +8,7 @@ if(process.argv.includes('--actions')){
  await import('./actions-check.mjs');
 }else{
 const gateway=process.argv.includes('--gateway');
-const root=process.cwd(),output=path.join(root,'docs/evidence/ui-delivery/assets',gateway?'e09-customer-return':'e09-customer-entry');
+const root=process.cwd(),output=path.join(root,'docs/evidence/ui-delivery/assets',gateway?'e09-customer-return':'e09-customer-direct-entry');
 await fs.mkdir(output,{recursive:true});
 const bundle=await build({entryPoints:[`scripts/proof/e09-customer-entry-ui/${gateway?'gateway-source':'source'}.tsx`],bundle:true,write:false,format:'iife',jsx:'automatic',loader:{'.css':'empty'},define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'explicit-offline-sdk',setup(api){api.onResolve({filter:/^@\/integrations\/supabase\/client$/},()=>({path:path.join(root,`scripts/proof/e09-customer-entry-ui/${gateway?'gateway-adapter':'adapter'}.ts`)}));}}]});
 const styles=(await fs.readdir('dist/assets')).filter(n=>/^main-.*\.css$/.test(n));assert.equal(styles.length,1);
@@ -39,21 +39,21 @@ try{
   if(state==='choice'){
    await page.getByRole('button',{name:'Create your account',exact:true}).click();
    await page.getByLabel('Password',{exact:true}).fill('synthetic-password-123');await page.getByRole('checkbox').check();
-   await page.getByRole('button',{name:'Create account',exact:true}).scrollIntoViewIfNeeded();
+   await page.getByRole('button',{name:'Create account and join',exact:true}).scrollIntoViewIfNeeded();
    const geometry=await page.getByLabel('Password',{exact:true}).evaluate(e=>({fontSize:getComputedStyle(e).fontSize,height:e.getBoundingClientRect().height}));
    assert(parseFloat(geometry.fontSize)>=16);assert(geometry.height>=44);
    await page.screenshot({path:path.join(output,`${width}-create-${context}.png`),fullPage:true});
-   await page.getByRole('button',{name:'Create account',exact:true}).click();
+   await page.getByRole('button',{name:'Create account and join',exact:true}).click();
    await page.getByRole('heading',{name:'Check your email',exact:true}).waitFor();
    assert.equal(await page.getByLabel('Password',{exact:true}).count(),0);
    assert(!(await page.evaluate(()=>window.entryProof.calls())).includes('accept_tenant_invite'));
    await page.evaluate(()=>window.entryProof.confirmed());
-   await page.getByRole('button',{name:'Accept invitation',exact:true}).click();
-   await page.getByRole('button',{name:'Continue to your portal',exact:true}).waitFor();
+   await page.getByRole('heading',{name:'Verified portal test destination',exact:true}).waitFor();
    assert.equal((await page.evaluate(()=>window.entryProof.calls())).filter(x=>x==='accept_tenant_invite').length,1);
   }else{
-   const expected={ready:'Accept invitation',accepted:'Continue to your portal',wrong:'Sign out of this session',error:'Try again'}[state];
-   if(expected)await page.getByRole('button',{name:expected,exact:true}).waitFor();else await page.getByText('Ask the business for a new invitation.',{exact:false}).waitFor();
+   const expected={ready:'Open your portal',wrong:'Sign out of this session',error:'Try again'}[state];
+   if(state==='accepted')await page.getByRole('heading',{name:'Verified portal test destination',exact:true}).waitFor();
+   else if(expected)await page.getByRole('button',{name:expected,exact:true}).waitFor();else await page.getByText('Ask the business for a new invitation.',{exact:false}).waitFor();
    await page.screenshot({path:path.join(output,`${width}-${state}-${context}.png`),fullPage:true});
   }
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');

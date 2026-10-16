@@ -1,0 +1,112 @@
+{
+  "engine": "isolated Chromium",
+  "authenticated": "NOT_RUN",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "choice",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "state": "choice",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "state": "choice",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "choice",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "choice",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "choice",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "accepted",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "wrong",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "invalid",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "error",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline"
+    }
+  ],
+  "hashes": [
+    {
+      "path": "src/pages/JoinWorkspace.tsx",
+      "sha256": "719a8b3cfb8a05e6fab221f770e81396a55553630da73dd481300a2c0c688e8e"
+    },
+    {
+      "path": "src/pages/ConsumerInvitation.tsx",
+      "sha256": "7813a58115156d3081902bbe7854df5ac7541cd1e31d3cd4c2dd921ef27e3608"
+    },
+    {
+      "path": "src/pages/ConsumerInvitation.css",
+      "sha256": "c1671a2c3cf08d78702cd71a6da5ab86444c58706aa5cee0871f87fc6bf45dbb"
+    },
+    {
+      "path": "dist/assets/main-BiB6dTG7.css",
+      "sha256": "2e9669ccd00e1bdc9ff0f349fbbdea28da883d780dc19379d19a8a9d0e8a16d2"
+    }
+  ]
+}

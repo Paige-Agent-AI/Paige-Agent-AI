@@ -17,6 +17,7 @@ export const supabase={
   if(name==="peek_tenant_invite")return{data:[{tenant_id:tenant,tenant_name:seed.context==="a"?"Test Service Studio":"Second Test Business with a Longer Name",kind:"consumer",is_valid:seed.state!=="invalid"&&seed.state!=="accepted",invited_email:"recipient@tests.invalid",brand:{primary_color:seed.context==="a"?"#26483e":"#694b38"}}],error:null};
   if(seed.state==="error")return{data:null,error:{code:"08006"}};
   if(name==="client_portal_invite_status")return{data:accepted?receipt():null,error:null};
+  if(name==="client_portal_self_profile")return{data:{id:receipt().client_id,tenant_id:tenant,linked_user_id:subject,first_name:"Test",last_name:"Customer",entity_name:null,street_address:null,city:null,state:null,zip_code:null,onboarding_stage:"invited",is_signup_contact:false,paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,updated_at:null,email:"recipient@tests.invalid",phone:null,contact_methods:[]},error:null};
   if(name==="accept_tenant_invite"){accepted=true;if(seed.state==="unknown")throw Error("synthetic lost response");return{data:tenant,error:null};}
   throw Error("Unapproved synthetic contract");
  },from:()=>{throw Error("Customer entry must not access raw CRM/provisioning");},

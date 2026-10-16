@@ -221,7 +221,7 @@ const AppShell = () => {
     (async () => {
       try {
         const target = await Promise.race<string>([
-          resolveLandingRoute(user.id),
+          resolveLandingRoute(user.id, { customerPortal: true }),
           new Promise<string>((resolve) => setTimeout(() => resolve("/app"), 4000)),
         ]);
         if (cancelled) return;

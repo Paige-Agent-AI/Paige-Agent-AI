@@ -1,0 +1,7 @@
+/* Local physical form sizes: the incumbent document base is 14px. Keep iPhone
+   inputs at 16px and controls at 44px without changing the shared design system. */
+.customer-entry { font-size: 16px; }
+.customer-entry .text-sm { font-size: 14px; }
+.customer-entry input { font-size: 16px; min-height: 44px; }
+.customer-entry button:not([role="checkbox"]) { min-height: 44px; }
+.customer-entry [role="checkbox"] { min-width: 24px; min-height: 24px; }

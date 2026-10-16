@@ -122,6 +122,12 @@ export async function runWelcomeCases(ctx) {
     INSERT INTO public.paige_client_intake_submissions(client_id,section,payload) VALUES(${lit(ids.cb)},'playbook_intake','{"foreign_secret":"foreign synthetic answer"}');`);
   const oldFunctions=sql("SELECT coalesce(jsonb_agg(oid),'[]') FROM pg_proc WHERE pronamespace='public'::regnamespace");
   if(!baseline)sql(fs.readFileSync(migrationFile,'utf8'));
+  const entry=process.argv.includes('--entry');
+  if(entry){
+    const entrySource=source('20271108120000_e09_customer_invitation_entry.sql');
+    const defaultPatch=entrySource.match(/DO \$welcome_default\$[\s\S]*?\$welcome_default\$;/)?.[0];
+    assert(defaultPatch,'Actual entry default patch required');sql(defaultPatch);sql(defaultPatch);
+  }
 
   check('Welcome exposes only the frozen subject-bound RPC signatures and ACLs',()=>{
     assert.equal(sql("SELECT to_regprocedure('public.client_portal_welcome_state()') IS NOT NULL AND to_regprocedure('public.client_portal_save_welcome(text,jsonb,jsonb)') IS NOT NULL"),'t');
@@ -316,11 +322,24 @@ export async function runWelcomeCases(ctx) {
   ])deny('Welcome rejects '+name,p,a);
   for(const token of [null,'','not-a-token'])check('Welcome rejects malformed token '+String(token),()=>unchangedRefusal(()=>save(token),'22023'));
 
-  check('Missing published playbook_config is configuration_required',()=>{
+  check(entry?'No custom questions saves the existing basic contact form atomically':'Missing published playbook_config is configuration_required',()=>{
     try{sql(`UPDATE public.tenants SET features='{}' WHERE id=${lit(ids.ta)}`);
-      const loaded=state();assert.equal(loaded.status,'configuration_required');assert.equal(loaded.expected_token,null);
-      unchangedRefusal(()=>save(null),'55000');
+      const loaded=state();
+      if(entry){assert.equal(loaded.status,'ready');assert.deepEqual(loaded.fields,[]);
+        const saved=row(sql(rollbackTransaction(`SELECT public.client_portal_save_welcome(${lit(loaded.expected_token)},${json(profile)},'{}'::jsonb)`)));
+        assert.equal(saved.profile.id,ids.ca);assert.equal(saved.profile.first_name,profile.first_name);assert.deepEqual(saved.answers,{});
+      }else{assert.equal(loaded.status,'configuration_required');assert.equal(loaded.expected_token,null);unchangedRefusal(()=>save(null),'55000');}
     }finally{setConfig(config);}
+  });
+  if(entry)for(const useForeignVersion of [true,false])check(useForeignVersion?
+    'Unconfigured foreign customer cannot borrow another customer version token':
+    'Unconfigured foreign customer cannot borrow another business question with its own version',()=>{
+    const prior=row(sql(`SELECT features FROM public.tenants WHERE id=${lit(ids.tb)}`));
+    try{sql(`UPDATE public.tenants SET features='{}' WHERE id=${lit(ids.tb)}`);
+      const own=state(ids.b);assert.equal(own.profile.id,ids.cb);assert.deepEqual(own.fields,[]);
+      const token=useForeignVersion?state().expected_token:own.expected_token;
+      unchangedRefusal(()=>save(token,profile,{goal:'Foreign question must not be accepted'},ids.b),useForeignVersion?'40001':'22023');
+    }finally{sql(`UPDATE public.tenants SET features=${json(prior)} WHERE id=${lit(ids.tb)}`);}
   });
   for(const [name,value]of [
     ['null authored config',null],['slug-only authored config',{slug:'test-welcome'}],

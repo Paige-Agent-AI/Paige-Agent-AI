@@ -9,23 +9,23 @@ import type { SpineCapability } from "../contracts.ts";
 export const PLANNING_WRITE_CAPABILITIES = [
   {
     key: "planning.set_reminder", tool: "plan_set_reminder", selfDescribe: true,
-    idempotency: "Not idempotent: each call inserts a new reminder. No request key or deduplication receipt; a blind retry can create another reminder. Existing SQL restricts team/other reminders to staff.",
+    idempotency: "Not idempotent: each call inserts a new reminder. Its native audit/receipt identity is not a request key; a blind retry can create another reminder. Existing SQL restricts team/other reminders to staff.",
   },
   {
     key: "planning.create", tool: "plan_create", selfDescribe: true,
-    idempotency: "Not idempotent: each call inserts a new plan. No request key or deduplication receipt; a blind retry can create another plan. Existing SQL restricts team/other-owner plans to staff.",
+    idempotency: "Not idempotent: each call inserts a new plan. Its native audit/receipt identity is not a request key; a blind retry can create another plan. Existing SQL restricts team/other-owner plans to staff.",
   },
   {
     key: "planning.add_milestone", tool: "plan_add_milestone", selfDescribe: true,
-    idempotency: "Not idempotent: each call inserts a new milestone. No request key or deduplication receipt; a blind retry can create another milestone. Existing SQL requires admin, super_admin or coach.",
+    idempotency: "Not idempotent: each call inserts a new milestone. Its native audit/receipt identity is not a request key; a blind retry can create another milestone. Existing SQL retains its current native staff checks.",
   },
   {
     key: "planning.assign_task", tool: "plan_assign_task", selfDescribe: true,
-    idempotency: "Not idempotent: each call inserts a new task and may file a linked record-only action. No request key or deduplication receipt; a blind retry can duplicate work. Existing SQL restricts assignment to others to staff.",
+    idempotency: "Not idempotent: each call inserts a new task and may file a linked record-only action. Its native audit/receipt identity is not a request key; a blind retry can duplicate work. Existing SQL restricts assignment to others to staff.",
   },
   {
     key: "planning.update_item", tool: "plan_update_item", selfDescribe: false,
-    idempotency: "Not idempotent as a full operation: the item id is stable but updates write audit rows and completion timestamps, and moving a reminder can re-arm dispatch. No operation receipt or expected-version guard. Existing SQL retains creator/assignee/staff and staff-only reassignment rules.",
+    idempotency: "Not idempotent as a full operation: the item id is stable but updates write native audit/receipt rows and completion timestamps, and moving a reminder can re-arm dispatch. A receipt is not an expected-version or replay guard. Existing SQL retains creator/assignee/staff and staff-only reassignment rules.",
   },
 ].map(({ key, tool, selfDescribe, idempotency }) => ({
   key, domain: "planning", owner: "paige-planning", humanSurface: "PAIGE workspace",

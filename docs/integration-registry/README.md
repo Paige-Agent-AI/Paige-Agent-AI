@@ -292,3 +292,5 @@ Its GET-only readback normalizer is not delegated provider transport. Secure app
 seller onboarding is absent; there is no fake connector, merchant activation or payment capability.
 
 Finance caller-bound source reader candidate: existing canonical company/account/liability/accounting/budget/scenario RPCs are consumed through caller-JWT scope and post-read authority fences. Declarations remain unregistered/UNAVAILABLE for Chat/Mind; provider listings do not activate a native company/account or establish ingestion/freshness. Settings Integrations stays the provider home. No new issuer, registry, ledger, UI or financial effect is introduced.
+
+Finance controlled obligation readers preserve QuickBooks Bill/Purchase facts and selected-account Plaid card/LOC/loan terms. They make no network, company authority, complete-coverage, freshness, settlement or recognition claim. The Bill/Purchase migration anchor belongs to QuickBooks; applied SQL is unchanged. Real consent, supported products, atomic ingestion and authenticated/provider acceptance remain owed.

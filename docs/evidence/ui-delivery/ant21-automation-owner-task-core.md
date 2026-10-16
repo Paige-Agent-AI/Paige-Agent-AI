@@ -27,12 +27,12 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: No fresh automation approval browser drive at this viewport.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: No fresh automation approval browser drive at this viewport.
 UNVERIFIED: Final source composition, full-schema replay, hosted CI, production deployment, ordinary owner execution, Chat arming, Live and product acceptance remain separate proof obligations.
-INTERNAL_BUILD_IDENTITY: e77c8d6a8f2bf474666aada9f42b515aa36a5f95; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED(20271108210000_owner_task_native_bridge.sql); edge=NOT_DEPLOYED(execute-approval,paige-native-event-dispatch); evidence=this record and private exact-head proof packets.
+INTERNAL_BUILD_IDENTITY: e77c8d6a8f2bf474666aada9f42b515aa36a5f95; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271108210000_owner_task_native_bridge.sql has not been deployed); edge=PROOF_OWED(execute-approval and paige-native-event-dispatch have not been deployed); evidence=this record and private exact-head proof packets.
 RELEASE_CHANNEL: development: Isolated native and protected-handler proof only; no hosted activation.
 RELEASE_CLASSIFICATION: internal-only: Governed internal task restoration candidate awaiting complete technical release evidence.
 CUSTOMER_RELEASE_IDENTITY: none: No customer version or publication decision is asserted by this source increment.
 RELEASE_NOTE_REQUIRED: no: Internal development checkpoint; an actual owner-visible release requires observed production evidence.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source/native implementation; PROOF OWED ordinary customer execution, deployment, activation and Live.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Source/native implementation; PROOF OWED ordinary customer execution, deployment, activation and Live.
 RELEASE_RECOVERY: position=Hold activation until final reviewed composition and required CI; reference=existing native ledger/readback/reconciler and release policy, preserving original source checkpoints.
 
 ## Current bounded continuation — 2026-10-16

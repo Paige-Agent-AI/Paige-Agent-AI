@@ -384,7 +384,7 @@ export const CRM_ACTION_LABEL: Record<CrmAction, string> = {
   "task.create":"create a task; company and deal links are supported, while contact linking remains unavailable until the canonical task model owns that relationship", "task.update":"edit a task", "task.assign":"assign a task", "task.reschedule":"reschedule a task",
   "task.complete":"complete a task", "task.reopen":"reopen a task", "task.cancel":"cancel a task while retaining its history", "task.delete":"permanently delete a task",
   "activity.log":"log an internal CRM activity; this never sends email or SMS and never places a call",
-  "deal.create":"create a deal; persist the resolved canonical client_ref, or explicitly state unlinked prospect intent. Ask when a named client is unresolved or ambiguous", "deal.update":"edit reversible deal fields", "deal.assign_owner":"change a deal's owner",
+  "deal.create":"create a deal; persist the resolved canonical client_ref, or explicitly state unlinked prospect intent. Ask when a named client is unresolved or ambiguous. A separately governed deal owner assignment uses crm_assign_deal_owner after creation, with the saved deal ID and current version; never report that assignment complete from creation alone", "deal.update":"edit reversible deal fields", "deal.assign_owner":"change a deal's owner",
   "deal.assign_contact":"change a deal's contact", "deal.move":"move a deal stage", "deal.close":"close a deal",
   "deal.reopen":"reopen a deal", "deal.delete":"permanently delete a deal",
 };
@@ -434,7 +434,9 @@ export const CRM_COMMAND_TOOLS = (Object.entries(CRM_ACTION_CAPABILITY) as [CrmA
     parameters: {
       type: "object",
       properties: {
-        ...properties,
+        // The native create command rejects owner_user_id: ownership uses its own
+        // governed action after the new deal has an authoritative ID and version.
+        ...Object.fromEntries(Object.entries(properties).filter(([field]) => action !== "deal.create" || field !== "owner_user_id")),
         patch: action === "contact.create" ? contactCreatePatchSchema() : patchSchemaFor(action),
         confirm: {
           type: "boolean",

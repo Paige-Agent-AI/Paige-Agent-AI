@@ -109,6 +109,7 @@ const baseData = {
   peopleLoading: false,
   peopleError: false,
   retryPeople: vi.fn(),
+  refreshPeopleAfterTurn: vi.fn(async () => {}),
   peopleAvailable: true,
   portalConfig: { welcome: { headline: "Welcome" } },
   portalLoading: false,
@@ -134,6 +135,7 @@ describe("tenant Relationships / Clients workspace", () => {
     useTenantContext.mockReset();
     useSubtabRoute.mockReset();
     useTenantRelationshipsData.mockReset();
+    baseData.refreshPeopleAfterTurn.mockReset().mockResolvedValue(undefined);
     editorHarness.rpc.mockClear();
     editorHarness.portalPermission.mockReset().mockResolvedValue({ data: true, error: null });
     editorHarness.upsert.mockReset();
@@ -254,6 +256,72 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("New contact");
     expect(html).toContain("0 clients · Tenant read · LIVE");
     expect(html).not.toContain("Create remains in its existing legacy owner");
+  });
+
+  it("uses the existing settled-turn event to read People again and cleans up on unmount", async () => {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1);
+    act(() => root.unmount());
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1);
+    host.remove();
+  });
+
+  it("coalesces turn readbacks while editing, preserves a draft/focus through a background error, and reads after close", async () => {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const tree = () => <MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>;
+    await act(async () => root.render(tree()));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="toolbar-new"]')?.click());
+    const field = Array.from(host.querySelectorAll<HTMLInputElement>("input")).find((input) => input.previousElementSibling?.textContent === "First name")!;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "Keep this draft"); field.dispatchEvent(new Event("input", { bubbles: true })); });
+    field.focus();
+    await act(async () => { for (let n = 0; n < 3; n++) window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    expect(field.value).toBe("Keep this draft");
+    expect(document.activeElement).toBe(field);
+    // A read started before the editor opened may fail later; it must not unmount the draft.
+    useTenantRelationshipsData.mockReturnValue({ ...baseData, peopleError: true });
+    await act(async () => root.render(tree()));
+    expect(host.querySelector("[data-contact-editor]")).not.toBeNull();
+    expect(field.value).toBe("Keep this draft");
+    expect(document.activeElement).toBe(field);
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Cancel")!.click());
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Discard and return")!.click());
+    await vi.waitFor(() => expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1));
+    act(() => root.unmount()); host.remove();
+  });
+
+  it("drops an old account's deferred readback when the People workspace changes", async () => {
+    const seen: string[] = [];
+    useTenantRelationshipsData.mockImplementation(({ activeTenantId }: { activeTenantId: string }) => ({ ...baseData, refreshPeopleAfterTurn: async () => { seen.push(activeTenantId); } }));
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const tree = () => <MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>;
+    await act(async () => root.render(tree()));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="toolbar-new"]')?.click());
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(seen).toEqual([]);
+    useTenantContext.mockReturnValue({ activeTenantId: "tenant-b", activeTenant: { id: "tenant-b", name: "Other workspace", account_type: "standalone" }, accountContextLoading: false });
+    await act(async () => root.render(tree()));
+    expect(host.querySelector("[data-contact-editor]")).toBeNull();
+    expect(seen).toEqual([]);
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(seen).toEqual(["tenant-b"]);
+    act(() => root.unmount()); host.remove();
+  });
+
+  it("does not refresh hidden People or the legacy roster from a settled Chat turn", async () => {
+    const host = document.createElement("div"); const root = createRoot(host);
+    useSubtabRoute.mockReturnValue(["conversations", vi.fn()]);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/conversations"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    useSubtabRoute.mockReturnValue(["people", vi.fn()]);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/sub_account/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    act(() => root.unmount());
   });
 
   it("runs the approved three-step editor in-place, retains the draft, and restores the exact entry action", async () => {

@@ -55,3 +55,14 @@ source-pin/extractor/metadata-policy renewal or paid request. The integration le
 review, resulting-head CI and eventual release. Source review/fingerprint renewal remains owed;
 no existing metadata is treated as evidence of a provider route. Multi-pass answer attribution is
 explicitly excluded, as directed. This is AUTHOR-REVIEW / LOWER ASSURANCE only.
+
+## Composition disposition
+
+The later owned integration in work/chat-model-integration starts at current-P0 base086d1d8f,
+and combines this unchanged one-expression runtime delta with9034 plus its separately reviewed
+6e0a5695 post-row recall repair. The non-author restoration-boundary reviewer passed the98d
+metadata delta and the6e0 repair; the original9034 race is therefore corrected in this composition,
+not waived by the metadata tests. Fresh metadata4 and the composed21 summary cases pass, along
+with Fabric154/client-memory1103/Knowledge457 and all18 P0 approval-pause modes. Both focused
+commands are wired into the existing required INT336 step. Final composed-head review, actual
+pin renewal, hosted CI, release and authenticated acceptance remain owed; no history is backfilled.

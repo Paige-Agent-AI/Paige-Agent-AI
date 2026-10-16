@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restores existing summary maintenance and intended pro
 FLOW_PROTOTYPE: NOT_REQUIRED: existing compaction lifecycle and human workflow remain unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible owner can continue a long working conversation without losing attributed earlier context or allowing another workspace/thread into its summary.
 VISUAL_DIRECTION: PASS: incumbent Chat/Live surfaces, design tokens and compaction presentation preserved without frontend edits.
-AUTOMATED_EVIDENCE: PASS:18 actual-handler fold cases;154 Fabric assertions including all146 incumbents;1103 client-memory assertions;457 Knowledge scope assertions;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. All provider/database ports here are synthetic.
+AUTOMATED_EVIDENCE: PASS:21 actual-handler fold/recall cases;4 metadata controls (2 actual handler and2 exact private closure);154 Fabric assertions including all146 incumbents;1103 client-memory assertions;457 Knowledge scope assertions;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. Fresh integration results and prior-only bounds are distinguished below. All provider/database ports here are synthetic.
 STATIC_EVIDENCE: PASS: source parses through the incumbent real-handler loader; shared Fabric ESLint0, Chat baseline403/current403 with no introduced diagnostic signatures, Node fixture syntax and whitespace pass. Native Deno typecheck remains UNVERIFIED because the exact remote SDK import is not cached/resolvable.
 RENDERED_EVIDENCE: UNVERIFIED: no browser session or new geometry rendering; frontend files are unchanged.
 BEHAVIORAL_EVIDENCE: PASS: real handler plus real Fabric/adapters/budget execute against recording transport and protected SDK ports; positive primary/fallback and negative authority/CAS/error paths are observed. This is not real provider or native-RLS acceptance.
@@ -31,7 +31,7 @@ MUST_NOT_HAPPEN: no foreign/changed-workspace transcript egress, stale-owner sum
 MUST_PRESERVE: existing attribution prompt, both fold callers, 12-turn cadence tail/5-turn floor/token hysteresis, canonical watermark CAS, failed-write truth, Studio/anchor fields and restrictions, P0 WAIT_APPROVAL durable pause, native action writers, actor JWT, tenantless native owner standing and current-main Portal/Task/Social source.
 ACCEPTANCE_CRITERIA: a valid scoped fold uses operational OpenAI with2048 output cap; a proven pre-response health failure may use Anthropic only after fresh caller authority; refused or uncertain scope sends/writes nothing further; only one matching native row with the original watermark can acknowledge compaction. Real provider-backed customer acceptance remains owed.
 PROTECTED_SEAMS: affected and tested: actor/thread/workspace binding, canonical summary CAS/readback, Memory attribution, protected-content egress, provider/budget/fallback, Chat transcript maintenance. Existing approval/Spine/native effect writers are preserved and18 P0 modes regress them. Auth/JWT cryptography and native RLS remain unverified. Entitlement/signup/paywall/billing/provisioning, Rail business receipts, Live state machine, Secure Browser/Vault/credential storage, provider status/real sends, durable jobs/schedulers, shell geometry, scroll/focus/accessibility source are unchanged.
-INTERNAL_BUILD_IDENTITY: base=f14e5081336c08d68e766e7c8a7f4861b42c124a; branch=fix/ant21-chat-summary-fabric; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
+INTERNAL_BUILD_IDENTITY: base=086d1d8f4d16a11df2a011fc31d0b162dfa0995c; branch=fix/ant21-chat-model-integration; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
 RELEASE_CHANNEL: development: source candidate only; no provider activation or rollout change.
 RELEASE_CLASSIFICATION: internal-only: scoped provider-routing and maintenance correctness repair.
 CUSTOMER_RELEASE_IDENTITY: none: no released or owner-accepted outcome claimed.
@@ -196,3 +196,39 @@ No source pins or CI were renewed here. Distinct exact-head re-review, then the 
 remain owed. Original held interrupted requests and their canonical receipts remain untouched.
 This correction's implementation check is AUTHOR-REVIEW / LOWER ASSURANCE; the separate reviewer
 who supplied the counterexample must recheck the frozen successor before release.
+
+## Current-P0 source composition checkpoint
+
+This integration starts at exact086d1d8f4d16a11df2a011fc31d0b162dfa0995c in the owned
+work/chat-model-integration worktree. It composes the original9034 summary source,6e0a5695
+post-row recall repair and separately frozen98d460a4 missing-model metadata correction.
+The non-author restoration-boundary reviewer independently reproduced the original read-six
+counterexample, then passed its original positive/read-five/read-six probe on6e0 and independently
+passed the official21 cases. Its final source-fix receipt reports no remaining material finding
+in that delta. The same reviewer passed the separate98d metadata delta with its inherited9034
+race caveat; this composition includes6e0, rather than treating uncorrected9034 as releasable.
+Exact composed-head independent review and hosted CI remain owed to the integration lead.
+
+All runtime hunks cherry-picked cleanly. The sole conflict was in the shared test fixture:
+resolution keeps both the race suite's request-body/read-count capture and the metadata suite's
+route selection/provider recording/exported drive. No assertion or negative control is dropped.
+The existing required INT336 typed-supersession/canonical-settlement step adds exactly the two
+Node commands for the21-case summary script and4-case metadata script. The latter also executes
+the21 incumbent summary cases on import. No new workflow, loader or test engine is introduced.
+
+Fresh on this composition:summary21, metadata4 (2 actual handler/2 exact private closure),
+Fabric154, client-memory1103, Knowledge457 and all18 actual Chat/native-door approval-pause modes
+PASS. Node syntax, whitespace, evidence-record, SOLO parity and release-governance checks PASS. The9 anchor
+guards, compaction smoke and prior Deno typecheck limit above are prior-slice evidence, not fresh
+integration execution. No real provider/JWT/native SQL/browser acceptance is claimed.
+
+Read-only preservation checks retain every migration and domain endpoint byte from086d, including
+Portal122000, P0 publication123000, CRM/Task/Knowledge and existing Research source. The protected
+interactive helper and its88d238f65d488277112b87d131ad122e4b28d534b43ca5803df97569a2c54ba5
+AST digest are unchanged. The physical source contract is byte-identical to086d with all97
+dependency/ancestry entries, metadata, extractor and refusal controls retained. Its expected stale
+Fabric/dispatch refusals remain active. A read-only calculation proposes exactly29 dispatch scalar
+changes plus the one model-fabric SOURCE digest; the other96 dependency digests match. Applying
+only those values in memory gives29 tools and zero findings, without writing the guard. Actual
+reviewed renewal belongs to the lead after exact composition review. Source/CI preparation is not
+a green required-CI, merged, deployed, activated or customer-accepted result.

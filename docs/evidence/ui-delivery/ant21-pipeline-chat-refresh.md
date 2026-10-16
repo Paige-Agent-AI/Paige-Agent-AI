@@ -11,13 +11,21 @@ AUTOMATED_EVIDENCE: PASS: actual-hook failing-first 2 PASS / 3 FAIL; corrected 5
 STATIC_EVIDENCE: PASS: reuse existing paige:turn-settled producer and get_pipeline_workspace reader; scoped event listener is retired with the existing tenant-keyed effect
 RENDERED_EVIDENCE: UNVERIFIED: no new visual rendering or viewport claim; existing route tests exercise unchanged Sales rendering
 BEHAVIORAL_EVIDENCE: PASS: completion without realtime, burst coalescing, canonical contact readback, old-workspace event/timer retirement, no selected/resolving identity, unmount cleanup and refused current read
-AUTHENTICATED_RUNTIME: PROOF_OWED: source correction not deployed; protected ordinary production QA proved native association and receipt while the board stayed stale until reload, then showed the correct association
+AUTHENTICATED_RUNTIME: UNVERIFIED: source correction not deployed; protected ordinary production QA proved native association and receipt while the board stayed stale until reload, then showed the correct association
 KEYBOARD_FOCUS: NOT_APPLICABLE: no control/focus changes
 ZOOM_REFLOW: NOT_APPLICABLE: no geometry changes
 REDUCED_MOTION: NOT_APPLICABLE: no animation changes
 STATE_COVERAGE: PASS: ready, completion, delayed/coalesced read, workspace change, resolving/missing identity, read refusal and teardown; no optimistic success projection
 TRUTHFUL_STATE_LABELS: PASS: the notification triggers a canonical authorized read only; its payload cannot select a workspace, write data, grant access or certify an action
-SOLO_UI: NO: shared data-hook correction only, no account-specific behavior or visual alteration
+SOLO_UI: YES: recognized Solo data-hook path; no account-specific behavior or visual alteration
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no viewport proof claimed; listener-only correction preserves existing geometry
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: production reproduction and reload observed at this size; corrected no-reload build is not deployed
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: this viewport was not exercised for the listener-only correction
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: this viewport was not exercised for the listener-only correction
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: this viewport was not exercised for the listener-only correction
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: this viewport was not exercised for the listener-only correction
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: this viewport was not exercised for the listener-only correction
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: this viewport was not exercised for the listener-only correction
 UNVERIFIED: distinct final review, exact-head hosted CI, production web identity, ordinary no-reload positive/negative QA, cross-device realtime restoration, Live and owner acceptance
 OWNER_INTENT: after PAIGE changes a deal in Chat, Sales must show the actual saved result without requiring the owner to refresh the browser
 MUST_NOT_HAPPEN: stale previous-tenant data, effect execution from an event, duplicated business writes, a second cache/event bus/poller, or a claimed successful update when its canonical read is refused
@@ -47,3 +55,5 @@ The incumbent actual-hook Sales-scope fixture was extended, retaining its origin
 The tests exercise real React effects and the unchanged data-hook code with protected tenant-context/Supabase ports. They prove no production Auth/JWT/RLS, native business effect, cross-device delivery or UI viewport claim. The QA reproduction and saved association remain protected evidence; no actual customer identities or raw account records enter committed fixtures.
 
 Independent final review, required exact-head CI, web deployment/aliases and ordinary same-session no-reload verification follow. The existing Master Shipped Delivery Log receives the observed release identity in its normal closeout; no duplicate registry or customer announcement is created.
+
+The first hosted evidence check rejected the original record's unrecognized runtime-state prefix and missing recognized-Solo viewport fields. This record corrects those declarations without turning untested viewports into proof. Runtime and all regression-test bytes remain unchanged; the new exact-head evidence check and required CI must pass before merge.

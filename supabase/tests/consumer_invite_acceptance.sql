@@ -120,7 +120,7 @@ INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,cre
  UNION ALL SELECT empty_id,'e0901000-0000-0000-0000-000000000001'::uuid,'test-history-'||empty_id,'consumer','member'::public.tenant_role,owner_id,now()+interval '1 day',NULL FROM e09_history_fixture
  UNION ALL SELECT foreign_id,'e0901000-0000-0000-0000-000000000002'::uuid,'test-history-'||foreign_id,'consumer','member'::public.tenant_role,owner_id,now()+interval '1 day','foreign-history@tests.invalid' FROM e09_history_fixture;
 INSERT INTO public.email_send_log(tenant_id,template_name,recipient_email,status,message_id,metadata,created_at)
- SELECT 'e0901000-0000-0000-0000-000000000001','portal_invite',' HISTORY-CLIENT@tests.invalid ','sent','PRIVATE_PROVIDER_ID',
+ SELECT 'e0901000-0000-0000-0000-000000000001'::uuid,'portal_invite',' HISTORY-CLIENT@tests.invalid ','sent','PRIVATE_PROVIDER_ID',
  jsonb_build_object('invite_id',invite_id,'kind','consumer','token','PRIVATE_TOKEN','body','PRIVATE_BODY','join_url','PRIVATE_URL'),now()-interval '2 seconds' FROM e09_history_fixture
  UNION ALL SELECT 'e0901000-0000-0000-0000-000000000001','portal_invite','history-client@tests.invalid','failed',NULL,
  jsonb_build_object('invite_id',invite_id,'reason','transport','detail','PRIVATE_ERROR'),now()-interval '1 second' FROM e09_history_fixture
@@ -187,12 +187,13 @@ SELECT ok(NOT EXISTS(SELECT 1 FROM e09_history_truncated CROSS JOIN LATERAL json
 
 -- Consumer authority compatibility: actual complete-schema predicates, never Team's predicate.
 -- All principals/tenants are neutral synthetic fixtures; no effectful mint/send is invoked.
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.is_platform_owner()'::regprocedure),
- '08ff6983c07e71b7c4bec3b8b4fcae28','actual consumer platform-owner overload matches reviewed native body');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.is_tenant_admin(uuid)'::regprocedure),
- '7d393ee77b2ebbc42791f0dce8dbcca5','actual consumer tenant-admin overload matches reviewed native body');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.agency_can_manage_child(uuid,uuid)'::regprocedure),
- 'b1f1bb620eae26744519c1ff7700e28d','actual explicit-actor agency overload matches reviewed native body');
+CREATE FUNCTION pg_temp.e09_consumer_authority_snapshot() RETURNS jsonb LANGUAGE sql AS $$
+ SELECT jsonb_agg(jsonb_build_object('identity',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid))
+ ORDER BY p.oid::regprocedure::text) FROM pg_proc p
+ WHERE p.oid IN('public.is_platform_owner()'::regprocedure,'public.is_tenant_admin(uuid)'::regprocedure,
+ 'public.agency_can_manage_child(uuid,uuid)'::regprocedure)
+$$;
+CREATE TEMP TABLE e09_consumer_authority_before AS SELECT pg_temp.e09_consumer_authority_snapshot() AS state;
 UPDATE public.tenant_members SET role='admin' WHERE user_id=(SELECT owner_id FROM e09_history_fixture);
 SELECT is(pg_temp.e09_history_call((SELECT owner_id FROM e09_history_fixture),(SELECT owner_id FROM e09_history_fixture),
  'e0901000-0000-0000-0000-000000000001')->>'tenant_id','e0901000-0000-0000-0000-000000000001','active direct admin retains consumer history');
@@ -251,6 +252,8 @@ SELECT throws_ok($$SELECT pg_temp.e09_history_call(company_operator,company_oper
 SELECT throws_ok($$SELECT pg_temp.e09_history_call(platform_owner,platform_owner,'e0901000-0000-0000-0000-000000000003') FROM e09_history_authority$$,'42501',NULL,'pure agency target still refused for platform owner');
 SELECT throws_ok($$SELECT pg_temp.e09_history_call(platform_owner,platform_owner,'e0901000-0000-0000-0000-000000000099') FROM e09_history_authority$$,'42501',NULL,'even platform authority requires an existing exact named tenant');
 SELECT throws_ok($$SELECT pg_temp.e09_history_call(platform_owner,platform_owner,NULL) FROM e09_history_authority$$,'42501',NULL,'no authority may infer an omitted target');
+SELECT is(pg_temp.e09_consumer_authority_snapshot(),(SELECT state FROM e09_consumer_authority_before),
+ 'consumer authority behavior proof preserves the incumbent helper identities and definitions');
 
 SELECT * FROM finish();
 ROLLBACK;

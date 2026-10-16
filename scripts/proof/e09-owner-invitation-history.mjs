@@ -27,6 +27,11 @@ const ids={a:'e0918000-0000-0000-0000-000000000001',b:'e0918000-0000-0000-0000-0
 const migrationFile='supabase/migrations/20271107120000_e09_owner_invitation_history.sql';
 const migration=fs.readFileSync(path.join(root,migrationFile),'utf8'),hash=s=>createHash('sha256').update(s).digest('hex');
 const proofScriptSHA256=hash(fs.readFileSync(path.join(root,'scripts/proof/e09-owner-invitation-history.mjs')));
+const hostedTestFile='supabase/tests/consumer_invite_acceptance.sql';
+const hostedTest=fs.readFileSync(path.join(root,hostedTestFile),'utf8');
+// Execute the exact hosted fixture, not a second handwritten copy of its UNION.
+const hostedEmailInsert=hostedTest.match(/INSERT INTO public\.email_send_log\([\s\S]*?FROM e09_history_fixture;/)?.[0];
+assert(hostedEmailInsert,'exact hosted email fixture INSERT not found');
 function actual(header,file){const source=fs.readFileSync(path.join(root,'supabase/migrations',file),'utf8').replaceAll('\r\n','\n');
  const start=source.indexOf('CREATE OR REPLACE FUNCTION public.'+header),tail=source.slice(start);
  const tag=tail.match(/\bAS\s+(\$[a-zA-Z_0-9]*\$)/i)?.[1];assert(start>=0&&tag,'actual native body not found: '+header);
@@ -96,6 +101,25 @@ try{
  sql('REVOKE ALL ON FUNCTION agency_can_manage_child(uuid,uuid) FROM PUBLIC,anon,authenticated;GRANT EXECUTE ON FUNCTION agency_can_manage_child(uuid,uuid) TO service_role;');
  if(!baseline){sql(migration);const once=sql("SELECT pg_get_functiondef('client_portal_owner_invitations(uuid,uuid)'::regprocedure)");sql(migration);
  check('Migration repeat preserves exact reader definition',()=>assert.equal(sql("SELECT pg_get_functiondef('client_portal_owner_invitations(uuid,uuid)'::regprocedure)"),once));}
+ check('Exact hosted UNION fixture executes; omitted first UUID cast reproduces CI42804',()=>{
+ const before=snapshot(),setup=`BEGIN;
+ CREATE TEMP TABLE e09_history_fixture AS SELECT '${ids.i}'::uuid AS invite_id;
+ INSERT INTO public.tenants(id,account_type) VALUES
+ ('e0901000-0000-0000-0000-000000000001','standalone'),('e0901000-0000-0000-0000-000000000002','standalone');
+ -- Match the actual used email columns, defaults, FK, CHECK and sent-id uniqueness.
+ -- This remains a synthetic shape proof; full-schema triggers/pgTAP execute only in CI.
+ ALTER TABLE public.email_send_log ALTER COLUMN id SET DEFAULT gen_random_uuid(),
+ ALTER COLUMN template_name SET NOT NULL,ALTER COLUMN recipient_email SET NOT NULL,
+ ALTER COLUMN status SET NOT NULL,ALTER COLUMN created_at SET NOT NULL,
+ ADD CONSTRAINT e09_hosted_tenant_fk FOREIGN KEY(tenant_id) REFERENCES public.tenants(id) ON DELETE SET NULL,
+ ADD CONSTRAINT e09_hosted_status_check CHECK(status IN('pending','sent','suppressed','failed','bounced','complained','dlq','delivered','delivery_delayed','opened','clicked','dropped'));
+ CREATE UNIQUE INDEX e09_hosted_sent_id_unique ON public.email_send_log(message_id) WHERE status='sent';`;
+ const raw=sql(setup+hostedEmailInsert+"SELECT jsonb_build_object('rows',count(*),'null_tenant',count(*)FILTER(WHERE tenant_id IS NULL))FROM public.email_send_log;ROLLBACK;");
+ assert.deepEqual(JSON.parse(raw.split(/\r?\n/).find(line=>line.startsWith('{'))),{rows:9,null_tenant:1});
+ const broken=hostedEmailInsert.replace("SELECT 'e0901000-0000-0000-0000-000000000001'::uuid,","SELECT 'e0901000-0000-0000-0000-000000000001',");
+ assert.notEqual(broken,hostedEmailInsert);assert.throws(()=>sql(setup+broken+'ROLLBACK;'),e=>e.message.includes('42804')&&e.message.includes('UNION types text and uuid cannot be matched'));
+ assert.equal(snapshot(),before);
+ });
  const statuses=['pending','sent','delivered','delivery_delayed','opened','clicked','bounced','complained','suppressed','failed','dlq','dropped','future_status'];
  statuses.forEach((status,index)=>event(index+1,status,index));
  event(20,'failed',20,{metadata:{reason:'transport'}});event(21,'sent',21,{message:null});event(22,'sent',22,{message:' '});
@@ -190,6 +214,7 @@ try{
  SELECT ('e0958000-0000-0000-0000-'||lpad(n::text,12,'0'))::uuid,'${ids.ta}','consumer','cap@tests.invalid','2026-10-16','2026-11-16' FROM generate_series(1,1002)n`);
  const r=call();assert.equal(r.invitations.length,1001);assert.equal(r.invitations[0].id,'e0958000-0000-0000-0000-000000001002');assert.equal(r.invitations.at(-1).id,'e0958000-0000-0000-0000-000000000002');});
  const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({evidence:'synthetic-native-postgresql',baseline,proofScriptSHA256,migrationFile,migrationSHA256:baseline?null:hash(migration),
+ hostedTestFile,hostedTestSHA256:hash(hostedTest),hostedEmailInsertSHA256:hash(hostedEmailInsert),
  authority:'actual consumer-mint trio and actual lower helper bodies',helperCatalog,
  standIns:['auth.uid() from transaction-local test.actor GUC','tenants/tenant_members/agency_team_members/user_roles narrow synthetic tables (no production triggers)','tenant_role/app_role minimal enum members used by actual helpers','tenant_invite_tokens/email_send_log narrow synthetic tables','NO authority or lower-helper predicate stand-in in nominal tests; NULL helpers only in explicit rollback perturbation'],
  managedSupabase:'UNVERIFIED',authenticatedQA:'NOT_RUN',results},null,2));

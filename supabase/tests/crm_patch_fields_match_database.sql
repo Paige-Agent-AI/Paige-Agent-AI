@@ -92,7 +92,7 @@ SELECT is(
          pg_get_functiondef(p.oid), 'k not in \(([^)]*)\)', 'g') WITH ORDINALITY AS t(arr, ord)
      ) s
      WHERE n.nspname = 'public' AND p.prokind = 'f' AND p.proname = 'execute_crm_command_reversible' AND s.ord = 4),
-  ARRAY['title', 'description', 'track', 'metadata']::text[],
+  ARRAY['title', 'description', 'track', 'metadata', 'status']::text[],
   'task.update patch fields match the schema Paige is shown'
 );
 

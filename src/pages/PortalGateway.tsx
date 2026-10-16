@@ -10,8 +10,8 @@
  * Sign-in only. A tenant's customers are created by invite (/join/:token), so
  * there is no self-serve signup here — just email + password back into /app.
  */
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { cachePortalSlug } from "@/lib/auth/signOut";
+import "./ConsumerInvitation.css";
 
 interface PortalBrand {
   tenant_name: string;
@@ -31,7 +32,15 @@ interface PortalBrand {
   primary_color: string | null;
 }
 
+async function boundedGateway<T>(request: PromiseLike<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  try { return await Promise.race([Promise.resolve(request), new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Your portal could not be reached. Check your connection and try again.")), 20_000);
+  })]); } finally { clearTimeout(timer!); }
+}
+
 export default function PortalGateway() {
+  const navigate = useNavigate();
   const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
   const [brand, setBrand] = useState<PortalBrand | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,23 +54,48 @@ export default function PortalGateway() {
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const attempt = useRef({sequence: 0});
+
+  const customerTarget = useCallback(async (subject: string) => {
+    const target = await boundedGateway(resolveLandingRoute(subject, { customerPortal: true }));
+    if (target === "/pricing" || target === "/onboarding") {
+      throw new Error("No active customer access was found. Ask your provider for a current invitation.");
+    }
+    if (target === "/app" || target.startsWith("/onboard/")) {
+      // The public slug is presentation, never membership. The native reader
+      // resolves only the actual caller's current active customer relationship.
+      const { data, error } = await boundedGateway(supabase.rpc("get_client_portal_brand"));
+      const ownBrand = Array.isArray(data) ? data[0] : data;
+      // Match the public reader's lower(trim(_slug)) lookup. Its public DTO
+      // deliberately omits tenant IDs; membership still comes from this reader.
+      if (error || typeof ownBrand?.tenant_slug !== "string"
+        || ownBrand.tenant_slug.trim().toLowerCase() !== tenantSlug.trim().toLowerCase()) {
+        throw new Error("This login does not have access to this business’s portal. Use the portal link from your provider.");
+      }
+    }
+    const { data, error } = await boundedGateway(supabase.auth.getUser());
+    if (error || data.user?.id !== subject) throw new Error("Your session changed. Sign in again to continue.");
+    return target;
+  }, [tenantSlug]);
 
   // If a customer is already signed in, don't show a login wall — route them in.
   // Keep the spinner up until this settles so an authed visitor never sees a
   // flash of the sign-in form on their bookmarked gateway.
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getUser().then(async ({ data }) => {
+    const lifetime = attempt.current;
+    ++lifetime.sequence;
+    boundedGateway(supabase.auth.getUser()).then(async ({ data }) => {
       if (cancelled) return;
       if (data.user) {
-        const target = await resolveLandingRoute(data.user.id);
-        if (!cancelled) window.location.replace(target);
+        const target = await customerTarget(data.user.id);
+        if (!cancelled) navigate(target, { replace: true });
         return; // leave checkingAuth true — we're navigating away
       }
       setCheckingAuth(false);
-    }).catch(() => { if (!cancelled) setCheckingAuth(false); });
-    return () => { cancelled = true; };
-  }, []);
+    }).catch((error) => { if (!cancelled) { toast.error(error instanceof Error ? error.message : "Your portal could not be verified. Try again."); setCheckingAuth(false); } });
+    return () => { cancelled = true; ++lifetime.sequence; };
+  }, [customerTarget, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +104,7 @@ export default function PortalGateway() {
     setNotFound(false);
     (async () => {
       try {
-        const { data, error } = await supabase.rpc("peek_tenant_portal_brand", { _slug: tenantSlug });
+        const { data, error } = await boundedGateway(supabase.rpc("peek_tenant_portal_brand", { _slug: tenantSlug }));
         if (cancelled) return;
         if (error) throw error;
         const row = Array.isArray(data) ? (data[0] as PortalBrand | undefined) : (data as PortalBrand | null);
@@ -103,14 +137,19 @@ export default function PortalGateway() {
     const em = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return toast.error("Enter a valid email address");
     if (!password) return toast.error("Enter your password");
+    const currentAttempt = ++attempt.current.sequence;
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: em, password });
+      const { data, error } = await boundedGateway(supabase.auth.signInWithPassword({ email: em, password }));
+      if (currentAttempt !== attempt.current.sequence) return;
       if (error) throw error;
       if (!data.user) throw new Error("Could not sign you in — please try again.");
-      const target = await resolveLandingRoute(data.user.id);
-      window.location.assign(target);
+      setPassword("");
+      const target = await customerTarget(data.user.id);
+      if (currentAttempt !== attempt.current.sequence) return;
+      navigate(target, { replace: true });
     } catch (err) {
+      if (currentAttempt !== attempt.current.sequence) return;
       toast.error(err instanceof Error ? err.message : "Could not sign in");
       setSubmitting(false);
     }
@@ -151,7 +190,7 @@ export default function PortalGateway() {
         : "Sign in to open your private client portal.";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="customer-entry min-h-screen flex items-center justify-center bg-background px-4 py-12">
       <Helmet>
         <title>{brand ? `${brand.tenant_name} — Client Portal` : "Client Portal"}</title>
         <meta name="robots" content="noindex,nofollow" />
@@ -206,14 +245,14 @@ export default function PortalGateway() {
                     placeholder="••••••••"
                     disabled={submitting}
                     autoComplete="current-password"
-                    className="pr-10"
+                    className="pr-[48px]"
                     onKeyDown={(e) => { if (e.key === "Enter") signIn(); }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPw((s) => !s)}
                     aria-label={showPw ? "Hide password" : "Show password"}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-muted-foreground"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[44px] flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground"
                   >
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>

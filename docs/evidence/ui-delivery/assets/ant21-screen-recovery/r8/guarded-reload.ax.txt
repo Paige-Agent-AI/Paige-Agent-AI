@@ -1,0 +1,4 @@
+Browser tab: 170265244, Title: "Isolated source recovery proof", URL: "http://127.0.0.1:5298/".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~				55 text An update is ready Finish or save your current work before reloading.
+The focused UI element is 56 button Reload

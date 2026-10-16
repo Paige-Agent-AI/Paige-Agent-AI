@@ -1,0 +1,31 @@
+{
+  "account": [
+    "TEST STUDIO A"
+  ],
+  "fallback": "This page couldn’t openYou can keep working from the navigation.",
+  "focused": {
+    "label": "Direct PAIGE",
+    "tag": "BUTTON",
+    "text": "Direct PAIGE, or press ⌘\\⌘\\"
+  },
+  "navLinks": [
+    "Command Center",
+    "Operations",
+    "Clients",
+    "Marketing",
+    "Ads",
+    "Sales",
+    "Finance",
+    "Marketplace",
+    "Settings"
+  ],
+  "panel": "closed",
+  "scrollWidth": 900,
+  "theme": "light",
+  "viewport": {
+    "dpr": 1.0000000149011612,
+    "height": 1000,
+    "scale": 1,
+    "width": 900
+  }
+}

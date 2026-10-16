@@ -40,6 +40,9 @@ export function documentProof({sql,check,assert,fs,root,path}) {
  ALTER TABLE paige_client_events ADD id uuid DEFAULT gen_random_uuid(),ADD event_kind text,ADD surface text,ADD actor_type text,ADD actor_user_id uuid,
  ADD from_department text,ADD to_department text,ADD title text,ADD summary text,ADD payload jsonb,ADD ref_table text,ADD ref_id uuid,
  ADD occurred_at timestamptz,ADD actor_agent_slug text,ADD actor_agent_label text;
+ ALTER TABLE paige_client_events ENABLE ROW LEVEL SECURITY;GRANT SELECT ON paige_client_events TO authenticated;
+ CREATE POLICY proof_staff_rail_read ON paige_client_events FOR SELECT TO authenticated
+ USING(tenant_id=current_user_tenant_id() AND is_tenant_admin(tenant_id));
  CREATE TABLE paige_subagents(slug text,tenant_id uuid,rail_display_name text);
  CREATE FUNCTION proof_document_profile() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN INSERT INTO profiles(user_id) VALUES(NEW.id) ON CONFLICT DO NOTHING;RETURN NEW;END$$;
  CREATE TRIGGER proof_document_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION proof_document_profile();

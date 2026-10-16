@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "providerRequests": 0,
+  "fetches": 2,
+  "eof": false,
+  "cancelled": false,
+  "mse": true,
+  "prefixBytes": 64000,
+  "firstPlayingMs": 64,
+  "state": {
+    "activeId": "synthetic-progressive",
+    "status": "playing",
+    "needsConfig": false
+  },
+  "audioReady": 4,
+  "currentTime": 0
+}

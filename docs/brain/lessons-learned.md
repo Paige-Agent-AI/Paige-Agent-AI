@@ -6,6 +6,11 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### Detach shared audio; do not load an empty URL (2026-10-16, E01)
+
+A progressive decoder fixture started correctly, but restarting after Stop went idle before playback. Clearing the shared element with an empty-string src can initiate a failing resource selection and deliver stale events into the next owner. Remove the source/load the detached element, fence media callbacks and play promises by the existing owner generation, and verify Stop followed by a real native restart. Preserve same-response fallback and request identity; mocks alone missed this. Synthetic decoder startup is not provider latency or an approved-voice audition.
+
+
 ### SOLO guidance must be reachable, and native pixels need compositor evidence (2026-10-16, E01)
 
 **Symptom → cause → rule.** Passing a shared Chat `chips` prop did not expose the intended questions in the ordinary SOLO interface: that branch uses its existing slash menu. Inspect the actual rendered consumer rather than assuming a shared prop creates a usable control. E01 extends its existing expanded profile with explicit questions and reuses `handOffPaigePrompt` to append an unsent draft and focus the incumbent composer; never auto-send or create a parallel conversation control.

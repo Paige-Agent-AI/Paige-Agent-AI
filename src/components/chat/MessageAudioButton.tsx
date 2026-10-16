@@ -24,16 +24,17 @@ interface MessageAudioButtonProps {
 
 /**
  * Fetch the synthesized mp3 for `content` from paige-tts. Uses a direct authenticated fetch (not
- * supabase.functions.invoke) so we get the raw streaming Response and a real Blob — invoke's binary
+ * supabase.functions.invoke) so the existing controller can consume the raw streaming Response — invoke's binary
  * handling is unreliable. On a non-2xx we read the honest `{ error }` code (the resolveFunctionError
  * philosophy) and mark a `needs_config` for the tts_not_configured / tts_tier_reserved degrades.
  */
-async function fetchMessageAudio(content: string, requestId: string): Promise<Blob> {
+async function fetchMessageAudio(content: string, requestId: string, signal: AbortSignal): Promise<Response> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw { needsConfig: false, message: "Please sign in." } as TtsFetchError;
 
   const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-tts`, {
     method: "POST",
+    signal,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
@@ -60,7 +61,7 @@ async function fetchMessageAudio(content: string, requestId: string): Promise<Bl
       message: feedback.message,
     } as TtsFetchError;
   }
-  return await resp.blob();
+  return resp;
 }
 
 export function MessageAudioButton({ messageId, content, className }: MessageAudioButtonProps) {
@@ -79,7 +80,7 @@ export function MessageAudioButton({ messageId, content, className }: MessageAud
     const requestId = crypto.randomUUID();
     void messageTts.toggle(
       messageId,
-      () => fetchMessageAudio(trimmed, requestId),
+      signal => fetchMessageAudio(trimmed, requestId, signal),
       (e: TtsFetchError) => {
         // needsConfig is reflected by the disabled state below — don't scream a red error (§13/§36).
         if (e.needsConfig) return;
@@ -110,14 +111,13 @@ export function MessageAudioButton({ messageId, content, className }: MessageAud
     );
   }
 
-  const label = playing ? "Stop playback" : loading ? "Loading voice" : "Play message aloud";
+  const label = playing ? "Stop playback" : loading ? "Stop loading voice" : "Play message aloud";
   return (
     <Button
       variant="ghost"
       size="icon"
       className="h-6 w-6"
       onClick={onClick}
-      disabled={loading}
       aria-label={label}
       aria-pressed={playing}
       title={label}

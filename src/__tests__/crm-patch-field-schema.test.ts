@@ -97,6 +97,9 @@ describe("CRM patch schema is generated from the database allowlist", () => {
     // task.create takes six fields task.update rejects.
     expect(validate("crm_create_task", { title: "Call back", assignee_user_id: "x", due_date: "2026-10-01" }).ok).toBe(true);
     expect(validate("crm_update_task", { title: "Call back", assignee_user_id: "x" }).ok).toBe(false);
+    expect(validate("crm_update_task", { status: "in_progress" }).ok).toBe(true);
+    expect(validate("crm_create_task", { title: "Call back", status: "in_progress" }).ok).toBe(false);
+    expect(patchSchema("crm_update_task").properties.status.description).toContain("in_progress");
 
     expect(CRM_PATCH_FIELDS["contact.create"].map((f) => f.name))
       .not.toEqual(CRM_PATCH_FIELDS["contact.update"].map((f) => f.name));

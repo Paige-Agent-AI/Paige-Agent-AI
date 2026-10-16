@@ -58,7 +58,7 @@ export function OperationsCrmStageReview({ operation: requested, refresh, onClos
   const changed=!matches();
   const stage="targetStatus" in operation;
   const assignmentId=!stage&&operation.target.kind==="assignment"?operation.target.assigneeId:null;
-  const summary=stage?`Move this task to ${operation.targetStatus === "pending" ? "Ready" : "Completed"}. Internal completion does not record client acceptance.`:
+  const summary=stage?(operation.targetStatus==="in_progress"?"Move this task to In progress.":`Move this task to ${operation.targetStatus === "pending" ? "Ready" : "Completed"}. Internal completion does not record client acceptance.`):
     operation.target.kind==="assignment"?"Change the responsible person for this task.":
     operation.target.dueAt===null?"Remove the recorded due date from this task.":`Set this task’s due date to ${new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(new Date(operation.target.dueAt))}.`;
   return <section className="ops-work-editor" aria-busy={phase==="busy"} aria-label={stage?"Review task stage change":"Review task assignment or due date"}>

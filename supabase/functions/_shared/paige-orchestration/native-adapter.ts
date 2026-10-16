@@ -157,12 +157,104 @@ const journeyStageExecutor: NativeExecutor = {
   },
 };
 
+// owner.task is an internal task, not a generic tool invocation. The event/act
+// ledger supplies the native actor, exact reviewed args and occurrence identity.
+// Even an automatic process cannot use this vertical without native redemption.
+type Row = Record<string, unknown>;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const plain = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
+async function taskRow(input: DispatchInput, table: string, filters: Record<string, unknown>, before?: string): Promise<Row | null> {
+  let q = input.db.from(table).select("*");
+  for (const [key, value] of Object.entries(filters)) q = q.eq(key, value);
+  if (before) q = q.lte("updated_at", before); // native timestamptz comparison, including microseconds
+  const { data, error } = await q.limit(2);
+  if (error) throw new Error("owner_task_context_read_failed");
+  return Array.isArray(data) && data.length === 1 ? data[0] : null;
+}
+async function ownerTaskCall(input: DispatchInput, readback: boolean): Promise<DispatchResult> {
+  const uncertain = (reason: string): DispatchResult => ({ outcome: "ambiguous", detail: { reason, proven_absent: false } });
+  const refused = (reason: string): DispatchResult => readback ? uncertain(reason) : ({ outcome: "failed", error: reason, detail: {} });
+  try {
+    if (input.subjectTable !== "clients" || !UUID.test(input.subjectId) || !UUID.test(input.tenantId)
+      || !UUID.test(input.eventId ?? "") || !UUID.test(input.actId ?? "") || !UUID.test(input.correlationRef)) {
+      return refused("owner_task_invalid_occurrence");
+    }
+    const ledger = await taskRow(input, "paige_act_executions", { event_id: input.eventId, act_id: input.actId, tenant_id: input.tenantId });
+    const detail = ledger?.detail;
+    if (!ledger || ledger.capability_key !== "owner.task" || ledger.effective_lane !== "confirm"
+      || ledger.correlation_ref !== input.correlationRef || ledger.idempotency_key !== input.correlationRef
+      || typeof ledger.outcome !== "string" || !["accepted_for_execution", "retrying", "ambiguous"].includes(ledger.outcome)
+      || !plain(detail) || !UUID.test(String(detail.approved_by ?? ""))
+      || typeof detail.approved_at !== "string" || !Number.isFinite(Date.parse(detail.approved_at))
+      || typeof ledger.created_at !== "string" || !Number.isFinite(Date.parse(ledger.created_at))) {
+      return refused("owner_task_native_approval_required");
+    }
+    const args = detail.snapshot_args;
+    // The first bounded internal-task shape has no template evaluation, alternate
+    // actor/subject, external destination, expiry or arbitrary native command fields.
+    if (!plain(args) || typeof args.title !== "string" || !args.title.trim()
+      || (args.description !== undefined && typeof args.description !== "string")
+      || Object.keys(args).some(key => key !== "title" && key !== "description")) {
+      return refused("owner_task_configuration_unsupported");
+    }
+    const event = await taskRow(input, "paige_native_events", { id: input.eventId, tenant_id: input.tenantId });
+    if (!event || event.event_key !== "contact.created" || event.subject_table !== "clients"
+      || event.subject_id !== input.subjectId || event.dedup_key !== `contact.created:${input.subjectId}`
+      || !plain(event.payload) || event.payload.contact_id !== input.subjectId) return refused("owner_task_contact_event_required");
+    const command = { action: "task.create", approval_channel: "operator_card", patch: args };
+    const rpcArgs = { _tenant_id: input.tenantId, _actor_id: detail.approved_by,
+      _command: command, _idempotency_key: ledger.idempotency_key };
+
+    if (!readback) {
+      // Fresh writes require the same live, reviewed process and still-current
+      // contact. Readback of an already-landed result remains possible after edits.
+      const process = await taskRow(input, "paige_automations", { id: ledger.automation_id, tenant_id: input.tenantId, state: "live", granted_lane: "confirm" }, ledger.created_at);
+      const contact = await taskRow(input, "clients", { id: input.subjectId, tenant_id: input.tenantId }, ledger.created_at);
+      const act = await taskRow(input, "paige_automation_acts", { id: input.actId, automation_id: ledger.automation_id, action_kind: "owner.task" });
+      const liveArgs = act?.config;
+      if (!process || !contact || !act || act.tool_key != null || !plain(liveArgs)
+        || Object.keys(liveArgs).length !== Object.keys(args).length
+        || Object.keys(args).some(key => liveArgs[key] !== args[key])) {
+        return refused("owner_task_reviewed_context_changed");
+      }
+    }
+    // These are the existing service-only canonical CRM ports. They recheck the
+    // ORIGINAL actor's active workspace/seat and bind the immutable command hash
+    // to tenant+actor+idempotency key; another retrying approver is never substituted.
+    const { data, error } = await input.db.rpc(readback ? "read_crm_command_result" : "execute_crm_command", rpcArgs);
+    if (error) {
+      const code = typeof error.code === "string" ? error.code : "";
+      return !readback && /^(22|23|42|P0)/.test(code)
+        ? { outcome: "failed", error: "owner_task_native_rejected", detail: { reason: "canonical_rejection" } }
+        : uncertain("owner_task_native_outcome_unconfirmed");
+    }
+    if (readback && data === null) return { outcome: "ambiguous", detail: { reason: "owner_task_not_recorded", proven_absent: true } };
+    const task = data?.readback;
+    if (data?.ok !== true || data.action !== "task.create" || data.outcome !== "succeeded" || data.receipt_recorded !== true
+      || !plain(task) || !UUID.test(String(task.id ?? "")) || task.assignee_user_id !== detail.approved_by
+      || task.external_effect !== false || task.notification_sent !== false || task.title !== args.title.trim()
+      || (task.description ?? null) !== (typeof args.description === "string" ? args.description.trim() || null : null)) {
+      return uncertain("owner_task_readback_unconfirmed");
+    }
+    return { outcome: "executed", providerRef: null, detail: { confirmed_via: "crm_command_result", task_id: task.id,
+      native_actor_id: detail.approved_by, correlation_ref: input.correlationRef } };
+  } catch {
+    return uncertain("owner_task_context_unconfirmed");
+  }
+}
+const ownerTaskExecutor: NativeExecutor = {
+  capability: { id: "crm_create_task", effect: "mutate", outcomeChannel: "paige_act_executions" },
+  dispatch: input => ownerTaskCall(input, false),
+  readback: (_providerRef, input) => ownerTaskCall(input, true),
+};
+
 // Keyed by the act's `action_kind` — the DOTTED action-bus slug (FK to paige_action_kinds), matching the
 // capability-status manifest key. The executor's capability.id below stays the UNDERSCORE tool/risk key
 // (crm_advance_journey_stage) that action-risk + the receipt use — the standard dotted-kind ↔ underscore-tool seam.
 const NATIVE_EXECUTORS: Readonly<Record<string, NativeExecutor>> = {
   "crm.advance_journey_stage": journeyStageExecutor,
   "planning.weekly_commitment_check": weeklyCommitmentExecutor,
+  "owner.task": ownerTaskExecutor,
 };
 
 /** True when an action_kind has a registered native executor (adapters.ts routes these to "native"). */

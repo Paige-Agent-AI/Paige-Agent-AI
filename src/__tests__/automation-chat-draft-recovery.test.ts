@@ -1,9 +1,14 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { env } from 'node:process';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { databaseAnswered, OUTCOME_UNKNOWN_NOTE } from '../../supabase/functions/_shared/approval-outcome';
 import { interactiveEffect, interactiveReceiptContext } from '../../supabase/functions/_shared/paige-turn/interactive';
+import { runEventActs, type EngineDb } from '../../supabase/functions/_shared/paige-orchestration/engine';
+import { executeApprovedLayerCAct, type ApproveExecutorDb } from '../../supabase/functions/_shared/paige-orchestration/approve-executor';
+import { nativeAdapter } from '../../supabase/functions/_shared/paige-orchestration/native-adapter';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
@@ -167,5 +172,190 @@ describe('automation draft exact configuration and recovery', () => {
   ])('rejects malformed or unapproved configuration before writing: %j', async args => {
     const { state, result } = await drive('', args);
     expect(state.writes).toHaveLength(0); expect(result).toMatchObject({ success: false, not_applied: true });
+  });
+});
+
+// The SAME saved Chat process/acts enter the real engine and C5 executor. Only the
+// database/CRM transport is synthetic here; the native SQL companion proof is separate.
+async function ownerTask(fault = '') {
+  const saved = await drive('', { name: 'Internal contact review', trigger_key: 'contact.created',
+    steps: [fault === 'bare-tool' ? { tool_key: 'crm_create_task', config: { title: 'Review new contact' } }
+      : { action_kind: 'owner.task', config: { title: 'Review new contact', description: 'Review the new CRM record.' } }] });
+  const eventId = id(10), actId = id(11), contact = id(12), approval = id(13), task = id(14), other = id(15);
+  saved.state.processes[0].state = 'live'; // owner arming is outside this core proof
+  saved.state.acts[0].id = actId;
+  const tables: Record<string, Row[]> = { paige_automations: saved.state.processes, paige_automation_acts: saved.state.acts,
+    paige_act_executions: [], paige_native_events: [{ id: eventId, tenant_id: tenant, event_key: 'contact.created',
+      subject_table: 'clients', subject_id: contact, dedup_key: `contact.created:${contact}`, payload: { contact_id: contact } }],
+    clients: [{ id: contact, tenant_id: tenant, updated_at: version }], paige_pending_approvals: [] };
+  const calls: Array<{ fn: string; args: Row }> = [], effects: Row[] = [], results: Row[] = [];
+  let revoked = false, lost = fault === 'lost-ack', readError = false;
+  const db = { from(table: string) {
+    const filters: Array<[string, unknown, string]> = [];
+    const q = { select() { return q; }, eq(k: string, v: unknown) { filters.push([k, v, 'eq']); return q; },
+      lte(k: string, v: unknown) { filters.push([k, v, 'lte']); return q; }, order() { return q; }, limit() { return q; },
+      then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+        return Promise.resolve({ data: (tables[table] ?? []).filter(row => filters.every(([k, v, op]) =>
+          op === 'lte' ? String(row[k]) <= String(v) : row[k] === v)), error: null }).then(resolve, reject);
+      } }; return q;
+  }, async rpc(fn: string, args: Row = {}) {
+    calls.push({ fn, args });
+    if (fn === 'resolve_automation_autonomy') return { data: { found: true, state: fault === 'paused' ? 'paused' : 'live', effective: 'confirm' }, error: null };
+    if (fn === 'paige_record_act_execution') {
+      let row = tables.paige_act_executions[0];
+      if (!row) {
+        row = { id: id(16), event_id: eventId, act_id: actId, automation_id: process, tenant_id: tenant,
+          act_position: 1, created_at: new Date().toISOString(), capability_key: args._capability_key,
+          effective_lane: args._effective_lane, idempotency_key: args._idempotency_key,
+          correlation_ref: args._correlation_ref, outcome: args._outcome, detail: args._detail };
+        tables.paige_act_executions.push(row);
+        tables.paige_pending_approvals.push({ id: approval, tenant_id: tenant, source: 'paige_orchestration', status: 'pending',
+          metadata: { event_id: eventId, act_id: actId, act_execution_id: row.id } });
+      } else if (['accepted_for_execution', 'ambiguous', 'retrying'].includes(String(row.outcome))) {
+        row.outcome = args._outcome; row.detail = { ...(row.detail as Row), ...(args._detail as Row) };
+      }
+      return { data: { ...row }, error: null };
+    }
+    if (fn === 'paige_approve_act_execution') {
+      const row = tables.paige_act_executions[0];
+      if (row.outcome === 'approval_pending') { row.outcome = 'accepted_for_execution';
+        row.detail = { ...(row.detail as Row), approved_by: args._approver_user_id, approved_at: new Date().toISOString() }; }
+      return { data: { ...row }, error: null };
+    }
+    if (fn === 'paige_claim_act_dispatch') return { data: { id: id(16) }, error: null };
+    if (fn === 'execute_crm_command' || fn === 'read_crm_command_result') {
+      if (fault === 'native-sql') {
+        const command = JSON.stringify(args._command).replaceAll("'", "''");
+        const output = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';
+          select public.${fn}('${args._tenant_id}','${args._actor_id}','${command}'::jsonb,'${args._idempotency_key}')::text;`);
+        const data = output ? JSON.parse(output) : null;
+        if (fn === 'execute_crm_command') { effects.push(args); if (data) results.push(data); }
+        return { data, error: null };
+      }
+      if (fn === 'execute_crm_command' && fault === 'changed-at-command') tables.paige_automations[0].state = 'paused';
+      if (revoked || args._actor_id !== actor || args._tenant_id !== tenant) return { data: null, error: { code: '42501', message: 'CRM_FORBIDDEN' } };
+      if (readError) return { data: null, error: { code: '', message: 'response lost' } };
+      let value = results[0];
+      if (fn === 'execute_crm_command' && !value) {
+        const command = args._command as Row, patch = command.patch as Row;
+        effects.push({ ...args }); value = { ok: true, action: 'task.create', outcome: 'succeeded', receipt_recorded: true,
+          readback: { id: task, assignee_user_id: actor, title: patch.title, description: patch.description, status: 'pending', external_effect: false, notification_sent: false } };
+        results.push(value);
+        if (fault === 'empty-ack') return { data: null, error: null };
+        if (fault === 'bad-receipt') value.receipt_recorded = false;
+        if (lost) { lost = false; return { data: null, error: { code: '', message: 'lost after commit' } }; }
+      }
+      return { data: value ?? null, error: null };
+    }
+    return { data: null, error: null };
+  } };
+  const event = { event_id: eventId, event_key: 'contact.created', tenant_id: tenant, subject_table: 'clients', subject_id: contact, payload: { contact_id: contact } };
+  const engine = await runEventActs(db as unknown as EngineDb, event, saved.state.processes as never);
+  const held = structuredClone(tables.paige_act_executions[0]);
+  if (fault === 'foreign-subject') tables.clients[0].tenant_id = other;
+  if (fault === 'foreign-event') tables.paige_native_events[0].tenant_id = other;
+  if (fault === 'wrong-event') tables.paige_native_events[0].event_key = 'manual.run_now';
+  if (fault === 'process-changed') tables.paige_automations[0].updated_at = '2099-01-01T00:00:00Z';
+  if (fault === 'contact-changed') tables.clients[0].updated_at = '2099-01-01T00:00:00Z';
+  if (fault === 'malformed') (tables.paige_act_executions[0].detail as Row).snapshot_args = { title: 'Review', expires_at: '2099-01-01' };
+  if (fault === 'revoked') revoked = true;
+  const approve = (who = actor, expectedTenant = tenant) => executeApprovedLayerCAct({ db: db as unknown as ApproveExecutorDb,
+    eventId, actId, approverUserId: who, expectedTenantId: expectedTenant,
+    resolveAvailability: async () => ({ ok: true, status: { availability: 'live' } }) as never });
+  return { ...saved, tables, calls, effects, results, engine, held, approve, actor, other,
+    revoke: () => { revoked = true; }, uncertainRead: () => { readError = true; },
+    direct: () => nativeAdapter.dispatch!({ db, tenantId: tenant, actionKind: 'owner.task', args: { title: 'forged' },
+      correlationRef: String(held.correlation_ref), subjectTable: 'clients', subjectId: contact, eventId, actId }) };
+}
+
+// Optional native port, using ONLY a separately prepared disposable localhost DB.
+// The ordinary fixture remains provider/network free; no production URL is accepted.
+function nativeSql(sql: string) {
+  const value = env.OWNER_TASK_NATIVE_DB;
+  if (!value) throw new Error('OWNER_TASK_NATIVE_DB is required');
+  const url = new URL(value);
+  if (!['127.0.0.1', 'localhost'].includes(url.hostname) || !url.pathname.startsWith('/int336_test')) throw new Error('Isolated localhost test DB only');
+  const run = spawnSync(env.PSQL_BIN ?? 'psql', ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', value],
+    { input: sql, encoding: 'utf8', windowsHide: true, timeout: 30000 });
+  if (run.status !== 0) throw new Error(run.stderr || 'Native SQL port failed');
+  return run.stdout.trim();
+}
+
+describe('saved contact-created owner.task native core', () => {
+  it.skipIf(!env.OWNER_TASK_NATIVE_DB)('carries the saved draft through actual engine/C5 and the real native CRM SQL writer', async () => {
+    const f = await ownerTask('native-sql');
+    expect((await f.approve()).executed).toBe(true);
+    expect((await f.approve()).executed).toBe(true);
+    expect(f.effects).toHaveLength(1);
+    const result = f.results[0];
+    expect(result).toMatchObject({ action: 'task.create', receipt_recorded: true,
+      readback: { assignee_user_id: actor, title: 'Review new contact', external_effect: false, notification_sent: false } });
+    expect(nativeSql(`select count(*) from public.tasks where tenant_id='${tenant}' and title='Review new contact';`)).toBe('1');
+    expect(nativeSql(`select count(*) from public.crm_command_results where tenant_id='${tenant}' and idempotency_key='${f.held.idempotency_key}';`)).toBe('1');
+  });
+  it('holds the same saved draft, then writes one canonical task through the existing command port; replay writes zero', async () => {
+    const f = await ownerTask();
+    expect(f.result).toMatchObject({ state: 'draft', granted: 'confirm', execution_started: false });
+    expect(f.held).toMatchObject({ capability_key: 'owner.task', outcome: 'approval_pending' });
+    expect(f.effects).toHaveLength(0);
+    expect(await f.approve()).toMatchObject({ executed: true, outcome: 'executed' });
+    expect(await f.approve()).toMatchObject({ executed: true, reason: 'not_pending_approval' });
+    expect(f.effects).toHaveLength(1);
+    expect(f.effects[0]).toMatchObject({ _actor_id: actor, _tenant_id: tenant,
+      _idempotency_key: f.held.idempotency_key, _command: { action: 'task.create', approval_channel: 'operator_card',
+        patch: { title: 'Review new contact', description: 'Review the new CRM record.' } } });
+    expect(f.calls.some(c => c.fn === 'record_rail_event')).toBe(true);
+  });
+  it('cannot dispatch without the protected native approval even with fabricated args', async () => {
+    const f = await ownerTask(); expect((await f.direct()).outcome).not.toBe('executed'); expect(f.effects).toHaveLength(0);
+  });
+  it('refuses a process revoked at the native command boundary', async () => {
+    const f = await ownerTask('changed-at-command');
+    expect((await f.approve()).executed).toBe(false); expect(f.effects).toHaveLength(0);
+  });
+  it('keeps historical bare tool drafts unsupported', async () => {
+    const f = await ownerTask('bare-tool'); expect((await f.approve()).reason).toBe('not_supported_in_slice'); expect(f.effects).toHaveLength(0);
+  });
+  it.each(['foreign-subject', 'foreign-event', 'wrong-event', 'process-changed', 'contact-changed', 'malformed', 'revoked', 'paused'])('%s cannot produce a task', async fault => {
+    const f = await ownerTask(fault); expect((await f.approve()).executed).toBe(false); expect(f.effects).toHaveLength(0);
+  });
+  it('rejects a foreign caller tenant before redemption or disclosure', async () => {
+    const f = await ownerTask(); expect((await f.approve(actor, f.other)).reason).toBe('tenant_authorization_mismatch');
+    expect(f.calls.some(c => c.fn === 'paige_approve_act_execution')).toBe(false); expect(f.effects).toHaveLength(0);
+  });
+  it('adopts a committed lost acknowledgement using the original actor even when another reviewer retries', async () => {
+    const f = await ownerTask('lost-ack'); expect((await f.approve()).outcome).toBe('ambiguous');
+    expect((await f.approve(f.other)).executed).toBe(true); expect(f.effects).toHaveLength(1);
+    expect((f.tables.paige_act_executions[0].detail as Row).approved_by).toBe(actor);
+    expect(f.calls.filter(c => c.fn === 'read_crm_command_result').every(c => c.args._actor_id === actor)).toBe(true);
+  });
+  it('does not treat an empty success response or missing native receipt as task completion', async () => {
+    for (const fault of ['empty-ack', 'bad-receipt']) {
+      const f = await ownerTask(fault);
+      expect((await f.approve()).outcome).toBe('ambiguous'); expect(f.effects).toHaveLength(1);
+      if (fault === 'empty-ack') expect((await f.approve(f.other)).executed).toBe(true);
+      else expect((await f.approve(f.other)).executed).toBe(false);
+      expect(f.effects).toHaveLength(1);
+    }
+  });
+  it('does not authorize a new native actor or accept a missing original actor on resume', async () => {
+    const f = await ownerTask(); expect((await f.approve(f.other)).executed).toBe(false); expect(f.effects).toHaveLength(0);
+    const g = await ownerTask(); g.tables.paige_act_executions[0].outcome = 'accepted_for_execution';
+    expect((await g.approve()).reason).toBe('native_approval_actor_missing'); expect(g.effects).toHaveLength(0);
+  });
+  it('uses only the held immutable args when the browser or a later live act attempts substitution', async () => {
+    const f = await ownerTask(); f.tables.paige_automation_acts[0].config = { title: 'Substituted title' };
+    expect((await f.approve()).executed).toBe(false); expect(f.effects).toHaveLength(0);
+    const g = await ownerTask(); g.tables.paige_act_executions[0].outcome = 'accepted_for_execution';
+    g.tables.paige_act_executions[0].detail = { ...(g.tables.paige_act_executions[0].detail as Row), approved_by: actor, approved_at: new Date().toISOString() };
+    expect((await g.direct()).outcome).toBe('executed');
+    expect(g.effects[0]).toMatchObject({ _command: { patch: { title: 'Review new contact' } } });
+  });
+  it('never substitutes a new reviewer for revoked original authority or replays an uncertain read', async () => {
+    const f = await ownerTask('lost-ack'); await f.approve(); f.revoke();
+    expect((await f.approve(f.other)).executed).toBe(false); expect(f.effects).toHaveLength(1);
+    const g = await ownerTask(); const row = g.tables.paige_act_executions[0]; row.outcome = 'accepted_for_execution';
+    row.detail = { ...(row.detail as Row), approved_by: actor, approved_at: new Date().toISOString() }; g.uncertainRead();
+    expect((await g.approve(g.other)).executed).toBe(false); expect(g.effects).toHaveLength(0);
   });
 });

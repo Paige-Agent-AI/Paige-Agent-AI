@@ -409,7 +409,8 @@ BEGIN
  INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,linked_user_id)
  VALUES(_contact,_tenant,_owner,'Test','Document client','active',_actor),(_survivor,_tenant,_owner,'Test','Survivor','active',NULL);
  IF _options?'hybrid' THEN
-  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES(_foreign,_actor,'member','active',false,now());
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES(_foreign,_actor,'admin','active',false,now());
+  INSERT INTO public.user_roles(user_id,role) VALUES(_actor,'admin'::public.app_role) ON CONFLICT DO NOTHING;
   UPDATE public.profiles SET active_tenant_id=_foreign WHERE user_id=_actor;
  END IF;
  PERFORM set_config('test.actor',_actor::text,true);

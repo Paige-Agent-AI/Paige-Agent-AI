@@ -560,7 +560,9 @@ serve(async (req) => {
     const unconfirmed = decision.code === "CRM_APPROVAL_UNCONFIRMED";
     return response(unconfirmed ? 503 : 403,
       { ok: false, outcome: "refused", code: decision.code, message: decision.message, audit_recorded: !auditError,
-        ...(unconfirmed ? { outcome_unknown: true, refused_before_run: false } : {}) });
+        // A preserved Gateway denial cannot establish that another claimant
+        // has not already begun the original action.
+        ...(approvalClaimFailed ? { outcome_unknown: true, refused_before_run: false } : {}) });
   }
   if (auditError) {
     return response(503, { ok: false, outcome: "refused", code: "CRM_DECISION_RECEIPT_FAILED" });

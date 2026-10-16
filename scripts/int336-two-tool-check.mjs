@@ -15,6 +15,9 @@ const bookingMode=process.env.BOOKING_READBACK_TEST;
 if(bookingMode){assert.ok(['success','missing-id','missing-row','foreign-row','transport','refused','no-approval','role-denied'].includes(bookingMode));assert.ok(!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmScopeMode=process.env.CRM_SCOPE_TEST;
 if(crmScopeMode){assert.ok(['normal-flip','pinned-flip','normal-same','pinned-same','null-scope','member-refused','native-no-tenant'].includes(crmScopeMode));assert.ok(!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+const crmPauseMode=process.env.CRM_APPROVAL_PAUSE_TEST;
+if(crmPauseMode){assert.ok(['normal','kill','prior-success','following-unknown','protected-flip','settle-fails','commit-lost-ack','disconnect'].includes(crmPauseMode));assert.ok(!crmScopeMode&&!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+const pauseRows=[];
 const crmScopePinned=crmScopeMode?.startsWith('pinned-');
 const crmScopeModelBodies=[];
 const bookingArgs={title:'Fixture appointment',start_at:'2026-11-10T15:00:00Z',end_at:'2026-11-10T15:30:00Z',timezone:'UTC'};
@@ -40,15 +43,21 @@ globalThis.fetch=async(url,opts)=>{
  }
  if(!String(url).includes('api.anthropic.com')) return new Response('{}',{status:503});
  const body=JSON.parse(opts.body);
- if(body.system?.startsWith('You label one message sent to PAIGE'))return Response.json({content:[{type:'text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}],usage:{input_tokens:1,output_tokens:1}});
+ if(body.system?.startsWith('You label one message sent to PAIGE'))return Response.json({content:[{type:'text',text:JSON.stringify({intent:crmPauseMode?'act':'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.9})}],usage:{input_tokens:1,output_tokens:1}});
  modelCalls++;
+ if(crmPauseMode==='kill'&&modelCalls>1){
+  console.error(JSON.stringify({boundary:'native proposal -> next provider',pending:pauseRows.length,canonicalTerminals:receipts.length,executorHeld:executor===intent}));
+  // Deliberately terminate the actual handler process: a throw would run its catch/finally.
+  // The parent command records this exit. This is not a hosted CPU-limit/native-SQL proof.
+  process.exit(86);
+ }
  if(crmScopeMode)crmScopeModelBodies.push(body);
  if(modelCalls>1||crmScopePinned)return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Readback is required."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\n');
  const events=[{type:'message_start',message:{usage:{input_tokens:1}}}];
- for(let i=0;i<(crmScopeMode||bookingMode&&bookingMode!=='no-approval'?1:2);i++){
-  const name=i===0&&bookingMode==='no-approval'?'calendar_book_meeting':i===0&&(crmMode||crmScopeMode)?'crm_create_task':i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
+ for(let i=0;i<(crmPauseMode?(['prior-success','following-unknown'].includes(crmPauseMode)?2:1):crmScopeMode||bookingMode&&bookingMode!=='no-approval'?1:2);i++){
+  const name=crmPauseMode?(crmPauseMode==='prior-success'&&i===0||crmPauseMode==='following-unknown'&&i===1?'plan_create':'crm_create_task'):i===0&&bookingMode==='no-approval'?'calendar_book_meeting':i===0&&(crmMode||crmScopeMode)?'crm_create_task':i===0&&researchMode?'deep_research':i===0&&automationMode?'automation_draft':i===0&&knowledgeMode?'save_to_knowledge_base':'plan_create';
   const args=name==='calendar_book_meeting'?bookingArgs
-   :name==='crm_create_task'?(crmScopeMode?{patch:{title:'Protected CRM fixture'}}:{title:'Protected CRM fixture'}):name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
+   :name==='crm_create_task'?(crmScopeMode||crmPauseMode?{patch:{title:'Protected CRM fixture'}}:{title:'Protected CRM fixture'}):name==='deep_research'?{question:'Fixture public question',expected_tenant_id:'ignored-model-scope'}
    :name==='automation_draft'?{...draftArgs,...(automationMode==='refused'?{steps:Array.from({length:21},()=>draftArgs.steps[0])}:{})}
    :name==='save_to_knowledge_base'?{title:'Fixture reference',content:'Private fixture content'}
    :{title:`Plan ${knowledgeMode||automationMode||researchMode||crmMode||bookingMode?0:i}`,horizon:'week',starts_on:'2026-10-06',ends_on:'2026-10-12'};
@@ -62,7 +71,7 @@ await import('../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const chatHandler=capturedHandler();
 let crmHandler;
-if(crmScopeMode){await import('../supabase/functions/crm-command/index.ts');crmHandler=capturedHandler();assert.notEqual(crmHandler,chatHandler,'the scope fixture invokes the actual native CRM handler');}
+if(crmScopeMode||crmPauseMode){await import('../supabase/functions/crm-command/index.ts');crmHandler=capturedHandler();assert.notEqual(crmHandler,chatHandler,'the fixture invokes the actual native CRM handler');}
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1),tenant=id(2),thread=id(3),intent=id(4);let latest=intent,executor=null;const receipts=[];
 // Booking is high-risk: exercise the incumbent stored-argument approval resume,
@@ -80,6 +89,16 @@ const crmScopeTurns=crmScopePinned?[{id:id(17),role:'assistant',content:'Approve
 const crmScopeAnswers=[];
 // Honour the native door's real claim filters over this one stored approval; no alternate executor.
 const crmScopeTable=filters=>{
+ if(crmPauseMode){
+  const op=rec.from.at(-1)?.op;
+  if(op==='insert'){
+   const inserted=rec.inserts.filter(r=>r.table==='paige_pending_confirmations'&&!r.update).at(-1)?.row;
+   if(inserted&&!pauseRows.some(row=>row.fingerprint===inserted.fingerprint))pauseRows.push({id:id(30),expires_at:'2099-01-01T00:00:00Z',consumed_at:null,...inserted});
+  }
+  return pauseRows.filter(row=>filters.every(([op,col,value])=>op==='eq'?row[col]===value:op==='neq'?row[col]!=null&&row[col]!==value
+   :op==='is'?value===null?row[col]==null:row[col]===value:op==='not'&&value==='is'?row[col]!=null
+   :op==='gt'?row[col]>value:op==='lte'?row[col]<=value:op==='in'?value.includes(row[col]):true));
+ }
  if(!crmScopePinned)return [];
  const hit=filters.every(([op,col,value])=>op==='eq'?crmScopeRow[col]===value:op==='neq'?crmScopeRow[col]!=null&&crmScopeRow[col]!==value
   :op==='is'?value===null?crmScopeRow[col]==null:crmScopeRow[col]===value:op==='not'&&value==='is'?crmScopeRow[col]!=null
@@ -96,9 +115,9 @@ const bookingTurns=bookingApproved?[{id:id(14),role:'user',content:'Book the exa
  {id:id(15),role:'assistant',content:'Approval is needed.',bundle_ref:{paige_confirm:[{tool:'calendar_book_meeting',fingerprint:bookingFp,...bookingArgs}],turn_state:{state:'WAIT_APPROVAL'}}}]:[];
 const project=(row,filters)=>{const columns=filters.find(f=>f[0]==='select')?.[1];return columns&&columns!=='*'?Object.fromEntries(columns.split(',').map(k=>[k,row[k]])):row;};
 const rec=fake.setScenario({authUser:{id:actor},tables:{
- profiles:()=>[{active_tenant_id:crmScopeMode?crmActiveTenant:tenant}],tenant_members:crmScopeMode?filters=>[tenant,id(18)].map(tenant_id=>({tenant_id,user_id:actor,role:crmScopeMode==='member-refused'?'member':'owner',status:'active'})).filter(row=>filters.every(([op,col,value])=>op!=='eq'||row[col]===value)):[{tenant_id:tenant,...(bookingMode?{role:bookingMode==='role-denied'?'member':'owner',status:'active'}:{})}],
- tenants:crmScopeMode?[{account_number:1001,account_type:'standalone',parent_tenant_id:null}]:[],
- paige_pending_confirmations:crmScopeMode?crmScopeTable:bookingApproved?[bookingDoor]:[],
+ profiles:()=>[{active_tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant}],tenant_members:crmScopeMode||crmPauseMode?filters=>[tenant,id(18)].map(tenant_id=>({tenant_id,user_id:actor,role:crmScopeMode==='member-refused'?'member':'owner',status:'active'})).filter(row=>filters.every(([op,col,value])=>op!=='eq'||row[col]===value)):[{tenant_id:tenant,...(bookingMode?{role:bookingMode==='role-denied'?'member':'owner',status:'active'}:{})}],
+ tenants:crmScopeMode||crmPauseMode?[{account_number:1001,account_type:'standalone',parent_tenant_id:null}]:[],
+ paige_pending_confirmations:crmScopeMode||crmPauseMode?crmScopeTable:bookingApproved?[bookingDoor]:[],
  internal_bookings:bookingMode==='missing-row'?[]:[{id:id(12),tenant_id:bookingMode==='foreign-row'?id(13):tenant,host_user_id:actor,contact_id:null,
   title:'Fixture appointment',start_at:'2026-11-10T15:00:00+00:00',end_at:'2026-11-10T15:30:00+00:00',timezone:'UTC',status:'scheduled',notes:null,location:null,guest_name:null,guest_email:null}],
  plans:recoveryMode==='missing-readback'?[]:[{id:id(7),tenant_id:tenant,created_by:actor,owner_user_id:actor,
@@ -113,20 +132,21 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  },
  paige_automation_acts:filters=>automationMode==='uncertain'?[]:(rec.inserts.find(r=>r.table==='paige_automation_acts')?.row??[]).map(r=>project(r,filters)),
 },functions:{'crm-command':async options=>{
- if(crmScopeMode){
+ if(crmScopeMode||crmPauseMode){
   // Switch only AFTER Chat has finished every pre-dispatch check and handed off its request.
-  if(crmScopeMode.endsWith('-flip'))crmActiveTenant=id(18);
+  if(crmScopeMode?.endsWith('-flip'))crmActiveTenant=id(18);
   if(crmScopeMode==='native-no-tenant')crmActiveTenant=null;
   const nativeReads=rec.from.length,nativeWrites=rec.inserts.length;
   const native=await crmHandler(new Request('https://test.supabase.co/functions/v1/crm-command',{method:'POST',headers:{'Content-Type':'application/json',...options.headers},body:JSON.stringify(options.body)}));
   const answer=await native.json();crmScopeAnswers.push({status:native.status,body:answer,membershipReads:rec.from.slice(nativeReads).filter(r=>r.table==='tenant_members').length,confirmationWrites:rec.inserts.slice(nativeWrites).filter(r=>r.table==='paige_pending_confirmations').length});
+  if(crmPauseMode==='protected-flip')crmActiveTenant=id(18);
   return native.ok?{data:answer,error:null}:{data:null,error:{name:'FunctionsHttpError',context:{status:native.status,json:async()=>answer}}};
  }
  return crmMode==='contradictory'
  ?{data:null,error:{name:'FunctionsHttpError',context:{status:500,json:async()=>({ok:true,outcome:'executed'})}}}
  :{data:crmMode==='malformed'?{success:true,not_applied:true,refused_before_run:true}:crmMode==='refused'?{ok:false,code:'CRM_FORBIDDEN'}:{ok:true,outcome:'executed'},error:null};
 }},rpcs:{
- current_user_tenant_id:()=>({data:crmScopeMode?crmActiveTenant:tenant,error:null}),
+ current_user_tenant_id:()=>({data:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,error:null}),
  read_crm_command_result:{data:null,error:null},
  execute_crm_command:{data:{ok:true,outcome:'succeeded',readback:{id:id(19)}},error:null},
  is_tenant_admin_as:{data:!!bookingMode&&bookingMode!=='role-denied',error:null},agency_can_manage_child:{data:false,error:null},
@@ -136,26 +156,52 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
   return {data:bookingMode==='missing-id'?null:id(12),error:null};
  },
  paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},check_rate_limit:{data:true,error:null},
- resolve_tool_autonomy:{data:crmScopePinned?'confirm':'auto',error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
+ resolve_tool_autonomy:a=>({data:crmScopePinned||crmPauseMode&&JSON.stringify(a).includes('crm_')?'confirm':'auto',error:null}),resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},
  resolve_tool_autonomy_many:{data:[{tool_key:"plan_create",mode:"auto",ceiling_allows_auto:true}],error:null},
  resolve_automation_autonomy:{data:{found:true,effective:'confirm',dark:[],state:'draft',granted:'confirm',would_run:false},error:null},
  get_workspace_research_run:()=>{const r=researchFixture();return {data:{id:r.run_id,question:r.question,domain:'general',caller:'chat',
   configured:true,stop_reason:'answered',coverage:r.coverage,findings:r.findings,sources:researchMode==='partial-library'?[]:r.sources},error:null};},
  get_actor_access:{data:{tier:'tenant'},error:null},
- get_paige_persona_context:()=>({data:[{tenant_id:crmScopeMode?crmActiveTenant:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null}),
+ get_paige_persona_context:()=>({data:[{tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null}),
  paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},
- paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release')executor=null;return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
+ paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release'){if(crmPauseMode)assert.ok(receipts.length,'native release requires a canonical terminal');executor=null;}return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
  plan_create:()=>{
-  if(recoveryMode==='lost')throw new TypeError('Failed to fetch after commit');
+  if(recoveryMode==='lost'||crmPauseMode==='following-unknown')throw new TypeError('Failed to fetch after commit');
   if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
   if(recoveryMode==='refused')return {data:null,error:{code:'42501',message:'PLAN_FORBIDDEN'}};
-  if(!recoveryMode&&!automationMode&&!researchMode&&!crmMode&&!bookingMode&&!crmScopeMode)latest=id(6);
+  if(!recoveryMode&&!automationMode&&!researchMode&&!crmMode&&!bookingMode&&!crmScopeMode&&!crmPauseMode)latest=id(6);
   return {data:{ok:true,plan_id:id(7)},error:null};
  },
- paige_chat_interactive_settle:a=>{receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return {data:id(8),error:null};}
+ paige_chat_interactive_settle:a=>{if(crmPauseMode==='settle-fails')return {data:null,error:{code:'08006',message:'fixture settlement unavailable'}};receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return crmPauseMode==='commit-lost-ack'?{data:null,error:{code:'08006',message:'fixture committed acknowledgement lost'}}:{data:id(8),error:null};}
 }});
 const response=await chatHandler(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:crmScopePinned?'Approve the exact stored task':bookingApproved?'Approve the exact stored appointment':'Create two individual plans'}],...(crmScopeMode==='null-scope'?{}:{threadId:thread,requestIntentId:intent,interactive:{kind:'message'}}),...(bookingApproved?{approvedConfirmations:[bookingFp]}:{}),...(crmScopePinned?{approvedConfirmations:[crmScopeFp]}:{}),...(crmScopeMode?{sessionDocumentContext:[{fileName:'scope-fixture.txt',summary:'Private originating-workspace fixture'}]}:{})})}));
-const wire=await response.text();
+let wire='';
+if(crmPauseMode){
+ if(crmPauseMode==='disconnect'){
+  const reader=response.body.getReader();await reader.read();await reader.cancel();
+  const deadline=Date.now()+2000;while(executor!==null&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,10));
+ }else try{for await(const chunk of response.body){const text=new TextDecoder().decode(chunk);wire+=text;if(crmPauseMode!=='following-unknown'&&text.includes('"paige_confirm"')){assert.equal(receipts[0]?.bundle_ref.turn_state.state,'WAIT_APPROVAL','canonical WAIT_APPROVAL must precede the first approval frame');assert.equal(executor,null,'canonical pause must release before publishing approval');}}}
+ catch(error){if(crmPauseMode!=='settle-fails')throw error;}
+ assert.equal(pauseRows.length,1,`one real native proposal: ${JSON.stringify({modelCalls,native:crmScopeAnswers,calls:rec.functions,wire})}`);assert.equal(pauseRows[0].consumed_at,null,'a proposal never consumes approval');
+ assert.equal(rec.rpc.filter(c=>c.name==='execute_crm_command').length,0,'requesting approval executes no CRM command');
+ if(crmPauseMode==='settle-fails'){assert.equal(receipts.length,0);assert.equal(executor,intent);assert.ok(!wire.includes('"paige_confirm"'),'no actionable card without durable settlement');}
+ else if(crmPauseMode==='protected-flip'){assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');assert.ok(!wire.includes('"paige_confirm"'),'scope change withholds the card');}
+ else if(crmPauseMode==='following-unknown'){
+  assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED','an uncertain write must not settle as an ordinary approval pause');
+  assert.ok(receipts[0].bundle_ref.interactive.effects.some(e=>e.outcome==='outcome_unknown'));
+  assert.equal(rec.rpc.filter(c=>c.name==='plan_create').length,1,'uncertain work is not repeated');
+  assert.equal(receipts.length,1,'the uncertain effect has one canonical settlement');
+  assert.equal(executor,null,'existing native lifetime closes only after that settlement');
+ }
+ else{
+  assert.equal(modelCalls,1,'native proposal must pause before another provider continuation');assert.equal(receipts.length,1);assert.equal(executor,null);
+  const saved=receipts[0].bundle_ref;assert.equal(saved.turn_state.state,'WAIT_APPROVAL');assert.equal(saved.paige_confirm.length,1);
+  assert.equal(saved.paige_confirm[0].fingerprint,pauseRows[0].fingerprint);assert.deepEqual(saved.paige_confirm[0].command,pauseRows[0].args.command);assert.equal(saved.paige_confirm[0].idempotency_key,pauseRows[0].args.idempotency_key);
+  assert.ok(saved.interactive.effects.some(e=>e.outcome==='approval_required'));
+  if(crmPauseMode==='prior-success')assert.ok(saved.interactive.effects.some(e=>e.outcome==='reported_success'&&e.record_refs?.some(r=>r.id===id(7))),'pause retains completed native work references');
+ }
+ console.log(`PASS actual Chat -> actual CRM durable approval pause ${crmPauseMode}; native SQL port synthetic; no provider/production proof`);process.exit(0);
+}else wire=await response.text();
 if(crmScopeMode){
  const calls=rec.functions.filter(c=>c.name==='crm-command'),executions=rec.rpc.filter(c=>c.name==='execute_crm_command');
  if(crmScopeMode==='null-scope'){

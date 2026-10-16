@@ -6238,7 +6238,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // Persist Paige's reply after the stream (via EdgeRuntime.waitUntil so a closed
     // tab still saves it), then auto-title a new thread and refresh the summary.
     // bundle_ref stores the queued/confirm cards so the UI reconstructs them on reload.
-    const persistAssistantTurn = async (finalText: string, meta: { surfaces?: string[] | null; bundleRef?: unknown; model?: string }) => {
+    const persistAssistantTurn = async (finalText: string, meta: { surfaces?: string[] | null; bundleRef?: unknown; model?: string }, receiptOnly = false) => {
       // A receipt-only interrupted turn has real cards but no spoken prose.
       // The canonical turn RPC accepts empty content; never invent an answer.
       if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
@@ -6252,6 +6252,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             : (meta.bundleRef ?? null)) as any, p_tool_calls: null,
         });
         if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant); else await writeAssistant();
+        // A governed approval pause must hand off after its receipt, before
+        // optional title/summary work can spend another provider/runtime budget.
+        if (receiptOnly) return;
         try {
           const { data: th } = await supabaseClient.from("paige_chat_threads")
             .select("title, message_count").eq("id", payloadThreadId).maybeSingle();
@@ -17161,6 +17164,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string; preview?: Record<string, unknown> }> = [];
+      // A native proposal already supplies the exact approval. Do not spend another
+      // model round before recording that pause, or publish a card before its receipt.
+      let durableApprovalPause = false;
+      let approvalPauseRecorded = false;
       const crmResultTrace: Array<Record<string, unknown>> = [];
       // E4-S3 — the records this turn's available reads drew on, as REFERENCES (destination, a client's
       // id and name). Streamed once as a paige_record_links frame and persisted as such; the address is
@@ -17451,7 +17458,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // most likely to take.
       const heldContent: Uint8Array[] = [];
       const emitContent = (controller: ReadableStreamDefaultController, chunk: Uint8Array) => {
-        if (turnCarriesProtectedContent()) heldContent.push(chunk);
+        if (turnCarriesProtectedContent() || durableApprovalPause) heldContent.push(chunk);
         else controller.enqueue(chunk);
       };
       const releaseContent = (controller: ReadableStreamDefaultController) => {
@@ -17488,7 +17495,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { controller.enqueue(enc.encode(turnFrameLine(turnTracker.terminalFrame()))); } catch { /* client hung up */ }
       };
       const emitTurnTerminalBeforeAnswer = (controller: ReadableStreamDefaultController) => {
-        if (!turnCarriesProtectedContent()) emitTurnTerminal(controller);
+        if (!turnCarriesProtectedContent() && !durableApprovalPause) emitTurnTerminal(controller);
       };
       // The turn record rides bundle_ref at each persist call site, never inside
       // `assistantTurnMetadata` (its output is pinned by n5; #1701 extended it). The persist gate is
@@ -17901,6 +17908,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             convo.push(...toolResults);
             // Observe/audit/persist prior tool truth before terminating a partial batch.
             if (interactiveError) throw interactiveError;
+            if (interactive && confirmTrace.length > 0 && turnTracker.state === "WAIT_APPROVAL"
+                && !requestExecutionState.needsReview && !interactiveEffects.some((effect) => effect.outcome === "outcome_unknown")) {
+              // The whole dispatched batch has finished and its effects are accounted
+              // for. The existing final scope/client checks still decide whether any
+              // card may be saved or released; no provider prose is needed to ask.
+              durableApprovalPause = true;
+              forcedTermination = true;
+              finalAssistantText = "Review the proposed changes before approving.";
+              finalChunks = [
+                enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: finalAssistantText } }] })}\n\n`),
+                enc.encode("data: [DONE]\n\n"),
+              ];
+              break;
+            }
             if (overCap || overTime || lastRound) { turnTracker.budgetStop(); forcedTermination = true; break; }
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
@@ -18382,7 +18403,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // #11 — mark the transition into the ANSWER: the loop's reasoning (paige_step "thought"
           // frames) is done and the reply text begins now. The client also derives "writing" from
           // the first delta.content, so this is a lightweight explicit confirmation, not a dependency.
-          controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
+          // A native pause has a fixed notice, not another model writing phase.
+          // Avoid a closed reader aborting its still-needed canonical settlement.
+          if (!durableApprovalPause) controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
           if (finalChunks) {
             await interactive?.check();
             for (const c of finalChunks) emitContent(controller, c);
@@ -18606,6 +18629,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
             return;
           }
+          if (durableApprovalPause) {
+            // Reuse the server-issued settlement and its closed effect/card metadata.
+            // Receipt failure leaves authority held and no actionable card on the wire.
+            // Release follows that receipt before publishing, so a disconnected reader
+            // cannot strand an otherwise completed approval pause.
+            await persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()), true);
+            approvalPauseRecorded = true;
+            await interactiveLifetime?.streamFinished();
+          }
           // Past both gates: a protected turn's terminal goes out here, ahead of the answer it releases
           // (a no-op on an ordinary turn, which already sent it before its answer).
           emitTurnTerminal(controller);
@@ -18624,7 +18656,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the asymmetry that used to justify persisting an already-streamed reply on a lapsed
           // scope: the transcript and the wire now always agree, because neither happens unless
           // the check holds.
-          if (payloadThreadId && finalAssistantText.trim()) {
+          if (!durableApprovalPause && payloadThreadId && finalAssistantText.trim()) {
             try {
               const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
@@ -18632,6 +18664,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
+           // Delivery can fail after the canonical pause committed. Its WAIT_APPROVAL
+           // record remains the truth; do not replace it or run post-turn maintenance.
+           if (approvalPauseRecorded) return;
            if (e instanceof InteractiveSuperseded || interactive?.superseded) {
              turnTracker.interrupted();
              discardContent();

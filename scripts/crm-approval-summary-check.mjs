@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { setScenario } from "./knowledge-scope/fake-supabase.mjs";
+import { setScenario, createClient } from "./knowledge-scope/fake-supabase.mjs";
 import { capturedHandler } from "./knowledge-scope/stub-serve.mjs";
 
 // Run the unchanged served CRM handler through the existing Deno/Supabase module-boundary
@@ -17,6 +17,15 @@ const { CRM_ACTION_CAPABILITY, crmApprovalSubject } = await import("../supabase/
 
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const actor = id(1), tenant = id(2);
+let claimReadError=false;
+const queryPrototype=Object.getPrototypeOf(createClient('https://test.supabase.co','test-service').from('paige_pending_confirmations'));
+const originalSingle=queryPrototype.maybeSingle;
+queryPrototype.maybeSingle=function(){
+ if(claimReadError&&this._table==='paige_pending_confirmations'&&this._filters.some(([op,columns])=>op==='select'&&columns==='args')){
+  this._record(true);return Promise.resolve({data:null,error:{message:'fixture claim acknowledgement unavailable'}});
+ }
+ return originalSingle.call(this);
+};
 const task = title => ({ action: "task.create", patch: { title, assignee_user_id: actor } });
 const deal = title => ({ action: "deal.create", title, pipeline_id: id(4), stage_id: id(5), unlinked_reason: "anonymous_prospect" });
 const proposals = rec => rec.inserts.filter(row => row.table === "paige_pending_confirmations" && !row.update);
@@ -33,7 +42,8 @@ function matches(row, filters) {
 }
 
 function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "confirm", stored, cached = false,
-  accountType = "standalone", parentTenantId = null } = {}) {
+  accountType = "standalone", parentTenantId = null, claimError = false, cachedError = null } = {}) {
+  claimReadError = claimError;
   let rec;
   rec = setScenario({
     authUser: { id: userId },
@@ -54,7 +64,7 @@ function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "
     },
     rpcs: {
       current_user_tenant_id: { data: workspace, error: null },
-      read_crm_command_result: { data: cached ? { ok: true, outcome: "succeeded", readback: { id: id(6) } } : null, error: null },
+      read_crm_command_result: { data: cached ? { ok: true, outcome: "succeeded", readback: { id: id(6) } } : null, error: cachedError },
       resolve_tool_autonomy: { data: lane, error: null },
       execute_crm_command: { data: { ok: true, outcome: "succeeded", readback: { id: id(6) } }, error: null },
     },
@@ -175,16 +185,52 @@ for (const options of [
     expectedTenant: options.workspace ?? tenant, fingerprint: stored.fingerprint,
     options: { ...options, stored: options.userId || options.workspace ? freshStored() : stored },
   });
-  assert.equal(denied.status, 202);
-  assert.equal(denied.body.revalidate, true);
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.code, "CRM_APPROVAL_UNAVAILABLE");
+  assert.equal(proposals(denied.rec).length, 0);
   assert.equal(executions(denied.rec).length, 0);
   checks++;
 }
 const forged = await request(task("Unapproved replacement"), { fingerprint: "0123456789abcdef", options: { stored: freshStored() } });
-assert.equal(forged.status, 202);
-assert.equal(forged.body.revalidate, true);
+assert.equal(forged.status, 403);
+assert.equal(forged.body.code, "CRM_APPROVAL_UNAVAILABLE");
+assert.equal(proposals(forged.rec).length, 0);
 assert.equal(executions(forged.rec).length, 0);
 checks++;
+
+// A supplied approval is a deliberate claim, not permission to fall back to
+// either fresh proposal or standing autonomy when the native claim is unavailable.
+for(const lane of ['confirm','auto']){
+ for(const state of ['missing','consumed','expired','unissued','unrequested','foreign-actor','foreign-tenant','forged']){
+  const pending=freshStored();
+  if(state==='consumed')pending.consumed_at=new Date().toISOString();
+  if(state==='expired')pending.expires_at=new Date(Date.now()-1000).toISOString();
+  if(state==='unissued')pending.server_issued_at=null;
+  if(state==='unrequested')pending.issued_in_request=null;
+  if(state==='foreign-actor')pending.user_id=id(99);
+  if(state==='foreign-tenant')pending.tenant_id=id(99);
+  const result=await request(first.proposal.args.command,{fingerprint:state==='forged'?'0123456789abcdef':pending.fingerprint,options:{lane,stored:state==='missing'?null:pending}});
+  assert.equal(result.status,403,`failed explicit claim ${state}/${lane}`);
+  assert.equal(result.body.code,'CRM_APPROVAL_UNAVAILABLE');
+  assert.equal(result.body.outcome,'refused');assert.match(result.body.message,/original|record/i);
+  assert.equal(executions(result.rec).length,0);assert.equal(proposals(result.rec).length,0);
+  const audit=result.rec.inserts.find(row=>row.table==='paige_audit_log');assert.equal(audit.row.payload.decision,'refuse');
+  checks++;
+ }
+ const uncertain=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{lane,stored:freshStored(),claimError:true}});
+ assert.equal(uncertain.status,503);assert.equal(uncertain.body.code,'CRM_APPROVAL_UNCONFIRMED');
+ assert.equal(executions(uncertain.rec).length,0);assert.equal(proposals(uncertain.rec).length,0);checks++;
+}
+const validAuto=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{lane:'auto',stored:freshStored()}});
+assert.equal(validAuto.status,200);assert.equal(executions(validAuto.rec).length,1);assert.equal(proposals(validAuto.rec).length,0);checks++;
+const deniedRoleApproval=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{role:'staff',stored:freshStored()}});
+assert.equal(deniedRoleApproval.status,403);assert.equal(deniedRoleApproval.body.code,'access_denied');assert.equal(executions(deniedRoleApproval.rec).length,0);assert.equal(proposals(deniedRoleApproval.rec).length,0);checks++;
+const exactReplay=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{stored,cached:true}});
+assert.equal(exactReplay.status,200);assert.equal(executions(exactReplay.rec).length,0);assert.equal(proposals(exactReplay.rec).length,0);
+assert.equal(exactReplay.rec.from.some(row=>row.table==='paige_pending_confirmations'),false,'exact original result precedes a second claim');checks++;
+const uncertainOriginal=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{stored:freshStored(),cachedError:{message:'fixture original result unavailable'}}});
+assert.equal(uncertainOriginal.status,503);assert.equal(executions(uncertainOriginal.rec).length,0);assert.equal(proposals(uncertainOriginal.rec).length,0);
+assert.equal(uncertainOriginal.rec.from.some(row=>row.table==='paige_pending_confirmations'),false,'uncertain original readback never consumes or retries');checks++;
 
 for (const [command, options, status, code] of [
   [{ action: "task.create", title: "Top-level title alone" }, {}, 400, "CRM_COMMAND_INVALID"],
@@ -200,4 +246,5 @@ for (const [command, options, status, code] of [
   assert.equal(refused.body.record_locator, undefined);
   checks++;
 }
+queryPrototype.maybeSingle=originalSingle;
 console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);

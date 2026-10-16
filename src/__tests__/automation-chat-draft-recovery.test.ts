@@ -181,7 +181,8 @@ async function ownerTask(fault = '') {
   const saved = await drive('', { name: 'Internal contact review', trigger_key: 'contact.created',
     steps: [fault === 'bare-tool' ? { tool_key: 'crm_create_task', config: { title: 'Review new contact' } }
       : { action_kind: 'owner.task', config: { title: 'Review new contact', description: 'Review the new CRM record.' } }] });
-  const eventId = id(10), actId = id(11), contact = id(12), approval = id(13), task = id(14), other = id(15);
+  let eventId = id(10);
+  const actId = id(11), contact = id(12), approval = id(13), task = id(14), other = id(15);
   saved.state.processes[0].state = 'live'; // owner arming is outside this core proof
   saved.state.acts[0].id = actId;
   const tables: Record<string, Row[]> = { paige_automations: saved.state.processes, paige_automation_acts: saved.state.acts,
@@ -189,17 +190,45 @@ async function ownerTask(fault = '') {
       subject_table: 'clients', subject_id: contact, dedup_key: `contact.created:${contact}`, payload: { contact_id: contact } }],
     clients: [{ id: contact, tenant_id: tenant, updated_at: version }], paige_pending_approvals: [] };
   const calls: Array<{ fn: string; args: Row }> = [], effects: Row[] = [], results: Row[] = [];
+  if (fault === 'native-sql') {
+    nativeSql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)
+      values('${process}','${tenant}','Internal contact review','contact.created','${actor}','confirm','live');
+      insert into paige_automation_acts(id,automation_id,position,action_kind,config)
+      values('${actId}','${process}',1,'owner.task','${JSON.stringify(saved.state.acts[0].config)}'::jsonb);
+      insert into clients(id,tenant_id,first_name,last_name,account_number,source)
+      values('${contact}','${tenant}','Synthetic','Engine native','engine-native','test');`);
+    eventId = nativeSql(`select id from paige_native_events where subject_id='${contact}';`);
+  }
+  const sourceSnapshot = () => JSON.stringify({ process: { name: tables.paige_automations[0].name,
+    conditions: tables.paige_automations[0].conditions, state: tables.paige_automations[0].state, granted_lane: tables.paige_automations[0].granted_lane },
+    acts: tables.paige_automation_acts, event: tables.paige_native_events, contact: tables.clients });
   let revoked = false, lost = fault === 'lost-ack', readError = false;
   const db = { from(table: string) {
     const filters: Array<[string, unknown, string]> = [];
     const q = { select() { return q; }, eq(k: string, v: unknown) { filters.push([k, v, 'eq']); return q; },
       lte(k: string, v: unknown) { filters.push([k, v, 'lte']); return q; }, order() { return q; }, limit() { return q; },
       then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+        if (fault === 'native-sql') {
+          const where = filters.map(([k, v, op]) => k + (op === 'lte' ? '<=' : '=') + "'" + String(v).replaceAll("'", "''") + "'").join(' and ') || 'true';
+          const data = JSON.parse(nativeSql(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb)::text from public.${table} t where ${where};`));
+          return Promise.resolve({ data, error: null }).then(resolve, reject);
+        }
         return Promise.resolve({ data: (tables[table] ?? []).filter(row => filters.every(([k, v, op]) =>
           op === 'lte' ? String(row[k]) <= String(v) : row[k] === v)), error: null }).then(resolve, reject);
       } }; return q;
   }, async rpc(fn: string, args: Row = {}) {
     calls.push({ fn, args });
+    if (fault === 'native-sql' && ['resolve_automation_autonomy', 'paige_record_act_execution', 'paige_approve_act_execution',
+      'paige_claim_act_dispatch', 'execute_owner_task_act', 'read_owner_task_act'].includes(fn)) {
+      const value = (v: unknown) => v == null ? 'null' : typeof v === 'object'
+        ? "'" + JSON.stringify(v).replaceAll("'", "''") + "'::jsonb"
+        : typeof v === 'boolean' || typeof v === 'number' ? String(v) : "'" + String(v).replaceAll("'", "''") + "'";
+      const named = Object.entries(args).map(([key, v]) => key + '=>' + value(v)).join(',');
+      const output = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';select to_jsonb(public.${fn}(${named}))::text;`);
+      const data = output ? JSON.parse(output) : null;
+      if (fn === 'execute_owner_task_act') { effects.push(args); if (data?.result) results.push(data.result); }
+      return { data, error: null };
+    }
     if (fn === 'resolve_automation_autonomy') return { data: { found: true, state: fault === 'paused' ? 'paused' : 'live', effective: 'confirm' }, error: null };
     if (fn === 'paige_record_act_execution') {
       let row = tables.paige_act_executions[0];
@@ -208,6 +237,7 @@ async function ownerTask(fault = '') {
           act_position: 1, created_at: new Date().toISOString(), capability_key: args._capability_key,
           effective_lane: args._effective_lane, idempotency_key: args._idempotency_key,
           correlation_ref: args._correlation_ref, outcome: args._outcome, detail: args._detail };
+        row.detail = { ...(row.detail as Row), owner_task_source: sourceSnapshot() };
         tables.paige_act_executions.push(row);
         tables.paige_pending_approvals.push({ id: approval, tenant_id: tenant, source: 'paige_orchestration', status: 'pending',
           metadata: { event_id: eventId, act_id: actId, act_execution_id: row.id } });
@@ -223,6 +253,31 @@ async function ownerTask(fault = '') {
       return { data: { ...row }, error: null };
     }
     if (fn === 'paige_claim_act_dispatch') return { data: { id: id(16) }, error: null };
+    if (fn === 'execute_owner_task_act' || fn === 'read_owner_task_act') {
+      const row = tables.paige_act_executions[0], detail = row.detail as Row;
+      if (fault === 'native-sql') {
+        const data = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';
+          select public.${fn}('${args._event_id}','${args._act_id}','${args._correlation}')::text;`);
+        return { data: data ? JSON.parse(data) : null, error: null };
+      }
+      const failure = () => ({ data: { outcome: 'failed' }, error: null });
+      if (!detail.owner_task_source || !detail.approved_by || !detail.approved_at) return failure();
+      const nativeArgs = { _tenant_id: row.tenant_id, _actor_id: detail.approved_by, _idempotency_key: row.idempotency_key,
+        _command: { action: 'task.create', approval_channel: 'operator_card', patch: detail.snapshot_args } };
+      const prior = await db.rpc('read_crm_command_result', nativeArgs);
+      if (prior.error) return { data: { state: 'unknown' }, error: null };
+      if (prior.data) return { data: { state: 'found', result: prior.data, actor_id: detail.approved_by }, error: null };
+      if (fn === 'read_owner_task_act') return { data: { state: 'absent' }, error: null };
+      if (fault === 'changed-at-command') tables.paige_automations[0].state = 'paused';
+      if (fault === 'context-locked') return { data: { outcome: 'accepted_for_execution', proven_no_effect: true }, error: null };
+      const patch = detail.snapshot_args as Row;
+      if (sourceSnapshot() !== detail.owner_task_source || tables.paige_automation_acts.length !== 1
+        || tables.paige_native_events[0].event_key !== 'contact.created' || tables.clients[0].tenant_id !== tenant
+        || Object.keys(patch).some(k => k !== 'title' && k !== 'description')) return failure();
+      const response = await db.rpc('execute_crm_command', nativeArgs);
+      return { data: response.error || !response.data ? { state: 'unknown' }
+        : { state: 'found', result: response.data, actor_id: detail.approved_by }, error: null };
+    }
     if (fn === 'execute_crm_command' || fn === 'read_crm_command_result') {
       if (fault === 'native-sql') {
         const command = JSON.stringify(args._command).replaceAll("'", "''");
@@ -232,7 +287,6 @@ async function ownerTask(fault = '') {
         if (fn === 'execute_crm_command') { effects.push(args); if (data) results.push(data); }
         return { data, error: null };
       }
-      if (fn === 'execute_crm_command' && fault === 'changed-at-command') tables.paige_automations[0].state = 'paused';
       if (revoked || args._actor_id !== actor || args._tenant_id !== tenant) return { data: null, error: { code: '42501', message: 'CRM_FORBIDDEN' } };
       if (readError) return { data: null, error: { code: '', message: 'response lost' } };
       let value = results[0];
@@ -251,11 +305,12 @@ async function ownerTask(fault = '') {
   } };
   const event = { event_id: eventId, event_key: 'contact.created', tenant_id: tenant, subject_table: 'clients', subject_id: contact, payload: { contact_id: contact } };
   const engine = await runEventActs(db as unknown as EngineDb, event, saved.state.processes as never);
+  if (fault === 'native-sql') tables.paige_act_executions = JSON.parse(nativeSql(`select jsonb_agg(to_jsonb(x))::text from paige_act_executions x where event_id='${eventId}' and act_id='${actId}';`));
   const held = structuredClone(tables.paige_act_executions[0]);
   if (fault === 'foreign-subject') tables.clients[0].tenant_id = other;
   if (fault === 'foreign-event') tables.paige_native_events[0].tenant_id = other;
   if (fault === 'wrong-event') tables.paige_native_events[0].event_key = 'manual.run_now';
-  if (fault === 'process-changed') tables.paige_automations[0].updated_at = '2099-01-01T00:00:00Z';
+  if (fault === 'process-changed') tables.paige_automations[0].conditions = [{ field: 'source', op: 'eq', value: 'changed' }];
   if (fault === 'contact-changed') tables.clients[0].updated_at = '2099-01-01T00:00:00Z';
   if (fault === 'malformed') (tables.paige_act_executions[0].detail as Row).snapshot_args = { title: 'Review', expires_at: '2099-01-01' };
   if (fault === 'revoked') revoked = true;
@@ -312,6 +367,10 @@ describe('saved contact-created owner.task native core', () => {
   it('refuses a process revoked at the native command boundary', async () => {
     const f = await ownerTask('changed-at-command');
     expect((await f.approve()).executed).toBe(false); expect(f.effects).toHaveLength(0);
+  });
+  it('retains proved pre-effect lock refusal as accepted and resumable, never unknown', async () => {
+    const f = await ownerTask('context-locked'); expect((await f.approve()).outcome).toBe('accepted_for_execution');
+    expect((await f.approve()).outcome).toBe('accepted_for_execution'); expect(f.effects).toHaveLength(0);
   });
   it('keeps historical bare tool drafts unsupported', async () => {
     const f = await ownerTask('bare-tool'); expect((await f.approve()).reason).toBe('not_supported_in_slice'); expect(f.effects).toHaveLength(0);

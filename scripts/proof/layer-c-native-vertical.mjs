@@ -58,9 +58,349 @@ import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+if (process.argv.includes("--owner-task-native")) {
+  await ownerTaskNativeProof();
+  process.exit(0);
+}
+
+// A second mode of the incumbent native proof, not a second runtime/test engine.
+// Real recorder/mint/approve/claim/bridge/CRM/readback/reconciler functions run
+// against disposable PostgreSQL. Auth, display/realtime and unrelated weekly work
+// are explicit fixture ports; this is NOT a full Supabase schema replay.
+async function ownerTaskNativeProof() {
+  const ci = process.argv.includes("--postgres");
+  assert.ok(!ci || process.env.CI === "true", "--postgres requires the disposable CI service");
+  assert.ok(!ci || !process.env.PGHOST || ["localhost", "127.0.0.1"].includes(process.env.PGHOST), "loopback only");
+  const directory = resolve(root, "work/owner-task-native-proof"); mkdirSync(directory, { recursive: true });
+  const scratch = mkdtempSync(resolve(directory, "run-"));
+  const bin = process.env.OWNER_TASK_PG_BIN ?? (process.platform === "win32" ? "C:/Program Files/PostgreSQL/16/bin" : "");
+  const exe = name => bin ? resolve(bin, name + (process.platform === "win32" ? ".exe" : "")) : name;
+  const port = ci ? 5432 : Number(process.env.OWNER_TASK_PG_PORT ?? 65455);
+  const database = `int336_test_owner_task_${process.pid}`;
+  const data = resolve(scratch, "data"); assert.ok(data.startsWith(scratch + (process.platform === "win32" ? "\\" : "/")));
+  const args = db => ["-X", "-q", "-h", "127.0.0.1", "-p", String(port), "-U", "postgres", "-d", db, "-A", "-t", "-v", "ON_ERROR_STOP=1"];
+  const call = (name, argv, options = {}) => execFileSync(exe(name), argv, { encoding: "utf8", windowsHide: true, timeout: 30000, ...options });
+  const sql = (text, db = database) => call("psql", args(db), { input: text }).trim();
+  const text = file => readFileSync(resolve(root, file), "utf8");
+  const migration = text("supabase/migrations/20271108210000_owner_task_native_bridge.sql");
+  const fn = (file, name, acl = false) => {
+    const source = text("supabase/migrations/" + file);
+    const match = source.match(new RegExp("create(?: or replace)? function public\\." + name + "\\s*\\([\\s\\S]*?\\bas\\s+(\\$[a-z_0-9]*\\$)[\\s\\S]*?\\1;", "i"));
+    assert.ok(match, "actual native function " + name);
+    return match[0] + (acl ? [...source.matchAll(new RegExp("(?:revoke|grant)[^;]*on function public\\." + name + "\\([^;]*;", "gi"))].map(m => m[0]).join("\n") : "");
+  };
+  const table = (file, name) => {
+    const match = text("supabase/migrations/" + file).match(new RegExp("create table if not exists public\\." + name + " \\([\\s\\S]*?\\n\\);", "i"));
+    assert.ok(match, "actual native table " + name); return match[0];
+  };
+  const literal = value => value === null ? "NULL" : "'" + String(value).replaceAll("'", "''") + "'";
+  const json = value => literal(JSON.stringify(value)) + "::jsonb";
+  const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const actor = id(1), tenant = id(2), other = id(9);
+  const service = "set role service_role;set request.jwt.claims='{\"role\":\"service_role\"}';";
+  const native = (name, values) => JSON.parse(sql(service + "select to_jsonb(public." + name + "(" + values.join(",") + "))::text;"));
+  const cases = [];
+  const check = (name, callback) => { callback(); cases.push(name); console.log("PASS " + name); };
+  const refuses = (statement, code) => assert.throws(() => sql(statement), new RegExp(code));
+  let started = false;
+  try {
+    if (!ci) {
+      const probe = createServer(); await new Promise((yes, no) => { probe.once("error", no); probe.listen(port, "127.0.0.1", yes); });
+      await new Promise(yes => probe.close(yes));
+      call("initdb", ["-D", data, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8", "--no-sync"]);
+      call("pg_ctl", ["-D", data, "-l", resolve(scratch, "server.log"), "-o", `-h 127.0.0.1 -p ${port} -F`, "-w", "-t", "30", "start"], { stdio: "ignore" });
+      started = true;
+    }
+    sql("create database " + database, "postgres");
+    sql(`do $$begin
+      if not exists(select 1 from pg_roles where rolname='anon')then create role anon;end if;
+      if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated;end if;
+      if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role bypassrls;end if;end$$;
+      create schema auth;create schema extensions;create extension pgcrypto with schema extensions;
+      create function auth.jwt()returns jsonb language sql as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
+      create function auth.uid()returns uuid language sql as $$select nullif(auth.jwt()->>'sub','')::uuid$$;
+      create function is_platform_owner()returns boolean language sql as $$select false$$;
+      create function current_user_tenant_id()returns uuid language sql as $$select nullif(current_setting('test.tenant',true),'')::uuid$$;
+      create function trust_effective_rung()returns int language sql as $$select 3$$;
+      create function resolve_tool_autonomy(uuid,text)returns text language sql as $$select 'confirm'::text$$;
+      create function is_tenant_member(uuid)returns boolean language sql as $$select false$$;
+      create table tenants(id uuid primary key,status text,archived_at timestamptz,lifecycle_execution_paused boolean default false);
+      create table profiles(user_id uuid primary key,active_tenant_id uuid);
+      create table tenant_members(tenant_id uuid,user_id uuid,role text,status text);
+      create table tenant_tool_autonomy(tenant_id uuid,tool_key text,mode text);
+      create table clients(id uuid primary key,tenant_id uuid,linked_user_id uuid,assigned_coach_user_id uuid,primary_business_id uuid,
+        account_number text,first_name text,last_name text,lifecycle_stage text,source text,status text default 'active',updated_at timestamptz default clock_timestamp());
+      create table businesses(id uuid,tenant_id uuid,owner_user_id uuid);create table client_notes(id uuid);create table deals(id uuid,tenant_id uuid);
+      create table tasks(id uuid primary key default gen_random_uuid(),tenant_id uuid,user_id uuid not null,title text,description text,status text,
+        created_at timestamptz default clock_timestamp(),updated_at timestamptz,biz_id uuid,deal_id uuid,due_date timestamptz,track text,metadata jsonb);
+      create table crm_command_results(tenant_id uuid,idempotency_key text,command_hash text,actor_user_id uuid,action text,result jsonb,unique(tenant_id,actor_user_id,idempotency_key));
+      create table crm_command_previews(tenant_id uuid,actor_user_id uuid,preview_key text,command_hash text,result jsonb);
+      create table paige_workspace_events(id uuid default gen_random_uuid(),occurred_at timestamptz default clock_timestamp(),tenant_id uuid,actor_id uuid,
+        source_kind text,source_id uuid,source_revision bigint,outcome text,actor_agent_slug text,actor_agent_label text,capability_key text,
+        job_attempt_id text,llm_trace_id uuid,release_id text,detail jsonb,unique(tenant_id,source_kind,source_id,source_revision,outcome));
+      create function _workspace_event_display(text,text,text)returns jsonb language sql as $$select '{}'::jsonb$$;
+      create schema realtime;create function realtime.send(jsonb,text,text,boolean)returns void language sql as $$select$$;
+      create table paige_pending_approvals(id uuid primary key default gen_random_uuid(),type text,draft_content jsonb,summary text,category text,
+        contact_id uuid,conversation_id uuid,tenant_id uuid,source text,status text,risk_level text,submitted_by_user_id uuid,metadata jsonb,
+        claimed_at timestamptz,reviewed_at timestamptz);
+      create unique index approval_occurrence on paige_pending_approvals((metadata->>'event_id'),(metadata->>'act_id'))where source='paige_orchestration';
+      create table paige_journey_stage_transitions(id uuid,contact_id uuid,source_event text);
+      create table paige_departments(slug text primary key);insert into paige_departments values('owner_ops');
+      create table paige_subagents(slug text primary key);
+      create function paige_fire_event_processor(uuid,uuid)returns void language sql as $$select$$;
+      create function paige_reconcile_weekly_commitment_acts()returns int language sql as $$select 0$$;
+      set check_function_bodies=off;` +
+      table("20260711140000_action_bus.sql", "paige_action_kinds") +
+      table("20261022000000_automations_the_process_record.sql", "paige_automation_triggers") +
+      table("20261022000000_automations_the_process_record.sql", "paige_automations") +
+      table("20261022000000_automations_the_process_record.sql", "paige_automation_acts") +
+      table("20270119000000_contact_created_native_event.sql", "paige_native_events"));
+    sql(text("supabase/migrations/20270126000000_paige_act_execution_ledger.sql") +
+      text("supabase/migrations/20271023000000_paige_act_dispatch_claim.sql") +
+      fn("20271025000100_paige_dispatch_crash_recovery.sql", "paige_claim_act_dispatch", true) +
+      fn("20270202000000_paige_approve_act_execution.sql", "paige_approve_act_execution", true) +
+      fn("20270306000000_paige_orchestration_companion_minting_hardening.sql", "paige_orchestration_approval_content") +
+      fn("20270306000000_paige_orchestration_companion_minting_hardening.sql", "paige_mint_orchestration_approval") +
+      fn("20270317000000_paige_orchestration_guard_insert.sql", "paige_guard_orchestration_direct_approve") +
+      fn("20270119000000_contact_created_native_event.sql", "trg_clients_emit_contact_created") +
+      fn("20261022000000_automations_the_process_record.sql", "paige_automation_acts_fingerprint") +
+      fn("20261022000000_automations_the_process_record.sql", "paige_automation_acts_changed") +
+      fn("20261024000000_resolve_automation_autonomy.sql", "autonomy_lane_rank") +
+      fn("20261024000000_resolve_automation_autonomy.sql", "autonomy_lane_of_rank") +
+      fn("20261024000000_resolve_automation_autonomy.sql", "resolve_automation_autonomy") +
+      fn("20271028000000_experience05_weekly_commitment_check.sql", "paige_reconcile_orchestration_acts", true) +
+      `create trigger mint after insert or update on paige_act_executions for each row when(new.outcome='approval_pending')execute function paige_mint_orchestration_approval();
+       create trigger approval_guard before insert or update on paige_pending_approvals for each row execute function paige_guard_orchestration_direct_approve();
+       create trigger contact_source after insert on clients for each row execute function trg_clients_emit_contact_created();
+       create trigger act_fingerprint after insert or update or delete on paige_automation_acts for each row execute function paige_automation_acts_changed();`);
+    sql("set check_function_bodies=off;" +
+      fn("20270516000000_crm_commands_speak_contact_methods.sql", "execute_crm_command_reversible") +
+      fn("20270516000000_crm_commands_speak_contact_methods.sql", "execute_crm_command") +
+      fn("20270204000000_governed_crm_contact_company_commands.sql", "read_crm_command_result") +
+      fn("20270204000000_governed_crm_contact_company_commands.sql", "crm_actor_can_access_record") +
+      fn("20270204000000_governed_crm_contact_company_commands.sql", "crm_tags_are_valid") +
+      fn("20270107000000_receipt_correlation_and_detail.sql", "_record_workspace_rail_event") +
+      fn("20270107000000_receipt_correlation_and_detail.sql", "record_capability_run") +
+      text("supabase/migrations/20270523000000_crm_contact_name_idempotency.sql") +
+      text("supabase/migrations/20271108121000_task_progress_contract.sql"));
+    sql(`revoke all on function read_crm_command_result(uuid,uuid,jsonb,text)from public,anon,authenticated;grant execute on function read_crm_command_result(uuid,uuid,jsonb,text)to service_role;
+      grant usage on schema public,auth to service_role,authenticated,anon;grant all on all tables in schema public to service_role;
+      insert into tenants(id,status)values('${tenant}','active');insert into profiles values('${actor}','${tenant}'),('${other}','${tenant}');
+      insert into tenant_members values('${tenant}','${actor}','owner','active'),('${tenant}','${other}','admin','active');
+      insert into paige_action_kinds(slug,label,description,default_from_department,default_to_department,executor,requires_approval,default_autonomy_lane)
+      values('owner.task','Internal task','Internal task for the owner team','owner_ops','owner_ops','record_only',false,'auto');
+      insert into paige_automation_triggers(key,label,category,description,is_live)values('contact.created','Contact','records','Real native insert',true);`);
+    const metadata = () => JSON.parse(sql("select json_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef,'body',prosrc)from pg_proc where oid='public.read_crm_command_result(uuid,uuid,jsonb,text)'::regprocedure;"));
+    const original = metadata();
+    const fixtures = [];
+    function held(number) {
+      const process = id(number), act = id(number + 1), contact = id(number + 2);
+      sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)values('${process}','${tenant}','Native task ${number}','contact.created','${actor}','confirm','live');
+        insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task','{"title":"Native internal task"}');
+        insert into clients(id,tenant_id,first_name,last_name,account_number,source)values('${contact}','${tenant}','Synthetic','Contact','fixture-${number}','test');`);
+      const event = sql(`select id from paige_native_events where subject_id='${contact}';`), correlation = id(number + 3);
+      const row = native("paige_record_act_execution", [literal(event), literal(process), literal(act), "1", literal(tenant), "'native'", "'owner.task'", "'confirm'", "'approval_pending'", "null", literal(correlation), literal(correlation), "null", json({ snapshot_args: { title: "Native internal task" } }), "null", "null", "null"]);
+      const f = { process, act, contact, event, correlation, row }; fixtures.push(f); return f;
+    }
+    const legacy = held(800); // Actual native recorder/companion before the new capture trigger exists.
+    sql(migration); const after = metadata();
+    check("public reader ABI/owner/ACL/config/definer preserved", () => { for (const key of ["oid", "owner", "acl", "config", "definer"]) assert.deepEqual(after[key], original[key], key); });
+    check("private reader retains the installed authorization/hash body", () => {
+      const body = JSON.parse(sql("select to_jsonb(prosrc)::text from pg_proc where oid='public._read_crm_command_result_scoped(uuid,uuid,jsonb,text)'::regprocedure;"));
+      assert.equal(body, original.body.replace("if coalesce(auth.jwt()->>'role','')<>'service_role' or auth.uid() is not null", "if auth.uid() is not null"));
+      assert.match(after.body, /auth\.jwt\(\)->>'role'/);
+      assert.equal(sql("select has_function_privilege('service_role','public._read_crm_command_result_scoped(uuid,uuid,jsonb,text)','EXECUTE');"), "f");
+    });
+    check("reapplying the extraction fails closed instead of replacing the shared reader with recursion", () => {
+      refuses(migration, "OWNER_TASK_READER_SOURCE_DRIFT");
+      assert.deepEqual(metadata(), after);
+    });
+    const approve = (f, who = actor) => native("paige_approve_act_execution", [literal(f.event), literal(f.act), literal(who)]);
+    const claim = f => native("paige_claim_act_dispatch", [literal(f.event), literal(f.act), literal(randomUUID()), "interval '10 minutes'", "true"]);
+    const bridge = (f, read = false) => native(read ? "read_owner_task_act" : "execute_owner_task_act", [literal(f.event), literal(f.act), literal(f.correlation)]);
+    const resultCount = f => sql(`select count(*)from crm_command_results where idempotency_key='${f.correlation}';`);
+    const age = f => sql(`alter table paige_act_executions disable trigger trg_paige_act_executions_touch;
+      update paige_act_executions set updated_at=now()-interval '3 days',dispatched_at=now()-interval '3 days'where id='${f.row.id}';
+      alter table paige_act_executions enable trigger trg_paige_act_executions_touch;`);
+    check("legacy held rows without DB-authored source evidence refuse and cannot be backfilled", () => {
+      assert.equal(legacy.row.detail.owner_task_source, undefined); approve(legacy); claim(legacy);
+      assert.equal(bridge(legacy).outcome, "failed"); assert.equal(bridge(legacy, true).state, "unknown");
+      refuses(`update paige_act_executions set detail=jsonb_set(detail,'{owner_task_source}','{}')where id='${legacy.row.id}';`, "OWNER_TASK_LEGACY_CONTEXT_UNAVAILABLE");
+      assert.equal(resultCount(legacy), "0");
+    });
+    const f = held(100);
+    check("real native hold captures minimized context and mints one bound companion", () => {
+      assert.equal(f.row.detail.owner_task_source.acts.length, 1); assert.equal(f.row.detail.owner_task_source.contact.id, f.contact);
+      assert.equal(sql(`select count(*)from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}';`), "1");
+      assert.ok(!JSON.stringify(f.row.detail.owner_task_source.contact).includes("Synthetic"));
+    });
+    check("native held evidence and args cannot be replaced", () => {
+      refuses(`update paige_act_executions set detail=jsonb_set(detail,'{owner_task_source}','{}')where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+      refuses(`update paige_act_executions set detail=jsonb_set(detail,'{snapshot_args}','{}')where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+      refuses(`update paige_act_executions set adapter_kind='n8n'where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+      refuses(`update paige_act_executions set act_position=2 where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+    });
+    check("approval is redeemed once; later reviewer cannot replace original native actor", () => {
+      assert.equal(approve(f).detail.approved_by, actor); assert.equal(approve(f, other).detail.approved_by, actor); assert.ok(claim(f).id);
+      refuses(`update paige_act_executions set detail=jsonb_set(detail,'{approved_by}',${json(other)})where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+    });
+    check("canonical task/result/receipt written once and native replay is zero effect", () => {
+      const r = bridge(f); assert.equal(r.state, "found"); assert.equal(r.result.readback.assignee_user_id, actor); assert.equal(r.result.receipt_recorded, true);
+      assert.equal(bridge(f).result.readback.id, r.result.readback.id);
+      assert.equal(sql(`select count(*)from crm_command_results where idempotency_key='${f.correlation}';`), "1");
+      assert.equal(sql(`select count(*)from tasks where id='${r.result.readback.id}';`), "1");
+    });
+    check("public JWT guard and private-core/bridge ACL remain closed", () => {
+      refuses(`select read_crm_command_result('${tenant}','${actor}','{}','x');`, "CRM_INTERNAL_EXECUTOR_REQUIRED");
+      for (const name of ["read_owner_task_act", "execute_owner_task_act"]) {
+        assert.equal(sql(`select has_function_privilege('authenticated','public.${name}(uuid,uuid,text)','EXECUTE');`), "f");
+        refuses(`set role service_role;select ${name}('${f.event}','${f.act}','${f.correlation}');`, "OWNER_TASK_INTERNAL_ONLY");
+        refuses(`set role service_role;set request.jwt.claims='{"role":"service_role","sub":"${actor}"}';select ${name}('${f.event}','${f.act}','${f.correlation}');`, "OWNER_TASK_INTERNAL_ONLY");
+      }
+      for(const name of ["_owner_task_source_snapshot(uuid,uuid)","_read_owner_task_act(uuid,uuid,text)","_read_crm_command_result_scoped(uuid,uuid,jsonb,text)"])
+        for(const role of ["anon","authenticated","service_role"])
+          assert.equal(sql(`select has_function_privilege('${role}','public.${name}','EXECUTE');`), "f");
+    });
+    check("lost ack is adopted by existing JWT-less cron without a journey transition", () => {
+      sql(`update paige_act_executions set updated_at=now()-interval '2 days',dispatched_at=now()-interval '2 days'where id='${f.row.id}';
+        alter table paige_act_executions disable trigger trg_paige_act_executions_touch;
+        update paige_act_executions set updated_at=now()-interval '2 days'where id='${f.row.id}';
+        alter table paige_act_executions enable trigger trg_paige_act_executions_touch;
+        select paige_reconcile_orchestration_acts();`);
+      assert.equal(sql(`select outcome from paige_act_executions where id='${f.row.id}';`), "executed");
+      assert.equal(sql(`select status from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}';`), "approved");
+    });
+    const g = held(200); approve(g); claim(g);
+    check("semantic edits with unchanged timestamp are refused", () => {
+      sql(`update paige_automations set conditions='[{"field":"source","op":"eq","value":"different"}]'where id='${g.process}';`);
+      assert.equal(bridge(g).outcome, "failed"); assert.equal(sql(`select count(*)from crm_command_results where idempotency_key='${g.correlation}';`), "0");
+    });
+    const h = held(300); approve(h); claim(h);
+    check("revoked original authority is unknown to recovery, never substituted or aged to absence", () => {
+      sql(`update tenant_members set status='suspended'where user_id='${actor}';`);
+      assert.equal(bridge(h, true).state, "unknown"); assert.equal(bridge(h).state, "unknown");
+      sql(`alter table paige_act_executions disable trigger trg_paige_act_executions_touch;update paige_act_executions set updated_at=now()-interval '3 days',dispatched_at=now()-interval '3 days'where id='${h.row.id}';alter table paige_act_executions enable trigger trg_paige_act_executions_touch;select paige_reconcile_orchestration_acts();`);
+      assert.equal(sql(`select outcome from paige_act_executions where id='${h.row.id}';`), "accepted_for_execution");
+      sql(`update tenant_members set status='active'where user_id='${actor}';`);
+    });
+    let fixtureNumber=1000;
+    for(const [label, mutation] of [
+      ["sibling added to the reviewed act set", x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${id(fixtureNumber+8)}','${x.process}',2,'owner.task','{"title":"Unreviewed sibling"}');`],
+      ["live act config changed", x=>`update paige_automation_acts set config='{"title":"Unreviewed title"}'where id='${x.act}';`],
+      ["act substituted with historical bare tool", x=>`update paige_automation_acts set action_kind=null,tool_key='crm_create_task'where id='${x.act}';`],
+      ["process trigger parameters changed", x=>`update paige_automations set trigger_config='{"scope":"different"}'where id='${x.process}';`],
+      ["contact revision changed", x=>`update clients set updated_at=updated_at+interval '1 microsecond'where id='${x.contact}';`],
+      ["event contact identity changed", x=>`update paige_native_events set payload='{"contact_id":"${other}"}'where id='${x.event}';`],
+      ["companion no longer pending", x=>`update paige_pending_approvals set status='rejected'where metadata->>'act_execution_id'='${x.row.id}';`],
+    ]) {
+      const x=held(fixtureNumber);approve(x);claim(x);sql(mutation(x));
+      check(label+" refuses without task or canonical result",()=>{assert.equal(bridge(x).outcome,"failed");assert.equal(resultCount(x),"0");});
+      fixtureNumber+=20;
+    }
+    const switched=held(1200);approve(switched);claim(switched);
+    check("original actor workspace switch never substitutes the retrying reviewer",()=>{
+      sql(`update profiles set active_tenant_id='${other}'where user_id='${actor}';`);
+      assert.equal(bridge(switched,true).state,"unknown");assert.equal(bridge(switched).state,"unknown");assert.equal(resultCount(switched),"0");
+      sql(`update profiles set active_tenant_id='${tenant}'where user_id='${actor}';`);
+    });
+    const absent=held(1300);approve(absent);claim(absent);
+    check("aged ambiguous task with unrelated journey evidence remains unresolved and never auto-executes",()=>{
+      sql(`update paige_act_executions set outcome='ambiguous'where id='${absent.row.id}';
+        insert into paige_journey_stage_transitions values(gen_random_uuid(),'${absent.contact}','${absent.correlation}');`);
+      age(absent);sql("select paige_reconcile_orchestration_acts();");
+      assert.equal(bridge(absent,true).state,"absent");assert.equal(resultCount(absent),"0");
+      assert.equal(sql(`select outcome||':'||(detail->>'owner_task_readback')from paige_act_executions where id='${absent.row.id}';`),"ambiguous:absent");
+    });
+    const receiptFault=held(1400);approve(receiptFault);claim(receiptFault);
+    check("native receipt failure rolls task and canonical result back atomically",()=>{
+      const before=sql("select count(*)from tasks;");
+      sql(`create function owner_task_fixture_receipt_refusal()returns trigger language plpgsql as $$begin raise exception 'fixture receipt refused' using errcode='23514';end$$;
+        create trigger owner_task_fixture_receipt_refusal before insert on paige_workspace_events for each row execute function owner_task_fixture_receipt_refusal();`);
+      try{assert.equal(bridge(receiptFault).state,"unknown");assert.equal(resultCount(receiptFault),"0");assert.equal(sql("select count(*)from tasks;"),before);}
+      finally{sql("drop trigger owner_task_fixture_receipt_refusal on paige_workspace_events;drop function owner_task_fixture_receipt_refusal();");}
+    });
+    const malformed=held(1500);approve(malformed);claim(malformed);const malformedResult=bridge(malformed);
+    check("malformed or unreceipted cached task result remains unknown after the recovery age bound",()=>{
+      assert.equal(malformedResult.state,"found");
+      sql(`update crm_command_results set result=jsonb_set(result,'{receipt_recorded}','false')where idempotency_key='${malformed.correlation}';`);
+      assert.equal(bridge(malformed,true).state,"unknown");age(malformed);sql("select paige_reconcile_orchestration_acts();");
+      assert.equal(sql(`select outcome||':'||(detail->>'owner_task_readback')from paige_act_executions where id='${malformed.row.id}';`),"accepted_for_execution:unknown");
+      assert.equal(resultCount(malformed),"1");
+    });
+    const lock = held(400); approve(lock); claim(lock);
+    const session = spawn(exe("psql"), args(database), { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    let ready = "", errors = ""; session.stdout.on("data", d => { ready += d; }); session.stderr.on("data", d => { errors += d; });
+    session.stdin.write(`begin;update paige_automations set state='paused'where id='${lock.process}';select 'LOCKED';\n`);
+    for (let i = 0; !ready.includes("LOCKED") && i < 100; i++) await new Promise(yes => setTimeout(yes, 20));
+    assert.ok(ready.includes("LOCKED"), errors);
+    check("two sessions: pause lock yields proved pre-effect accepted retry, zero task", () => {
+      const result = bridge(lock); assert.equal(result.outcome, "accepted_for_execution"); assert.equal(result.proven_no_effect, true);
+      assert.equal(sql(`select count(*)from crm_command_results where idempotency_key='${lock.correlation}';`), "0");
+    });
+    session.stdin.end("commit;\n"); await new Promise((yes, no) => { session.on("error", no); session.on("exit", code => code === 0 ? yes() : no(Error(errors))); });
+    check("committed pause is refused; no timestamp/version invention", () => assert.equal(bridge(lock).outcome, "failed"));
+    let lockNumber=1600;
+    for(const [label, statement]of [
+      ["tenant",x=>`select 1 from tenants where id='${tenant}'for update;`],
+      ["original actor profile",x=>`select 1 from profiles where user_id='${actor}'for update;`],
+      ["original actor membership",x=>`select 1 from tenant_members where tenant_id='${tenant}'and user_id='${actor}'for update;`],
+      ["approval companion",x=>`select 1 from paige_pending_approvals where metadata->>'act_execution_id'='${x.row.id}'for update;`],
+      ["held ledger",x=>`select 1 from paige_act_executions where id='${x.row.id}'for update;`],
+      ["reviewed act",x=>`select 1 from paige_automation_acts where id='${x.act}'for update;`],
+      ["contact source",x=>`select 1 from clients where id='${x.contact}'for update;`],
+    ]) {
+      const x=held(lockNumber);approve(x);claim(x);lockNumber+=20;
+      const peer=spawn(exe("psql"),args(database),{windowsHide:true,stdio:["pipe","pipe","pipe"]});
+      let heldOutput="",heldError="";peer.stdout.on("data",d=>{heldOutput+=d;});peer.stderr.on("data",d=>{heldError+=d;});
+      const closed=new Promise((yes,no)=>{peer.on("error",no);peer.on("exit",code=>code===0?yes():no(Error(heldError)));});
+      try {
+        peer.stdin.write(`begin;${statement(x)}select 'LOCKED';\n`);
+        for(let i=0;!heldOutput.includes("LOCKED")&&i<150;i++)await new Promise(yes=>setTimeout(yes,20));
+        assert.ok(heldOutput.includes("LOCKED"),heldError);
+        check(`two sessions: ${label} NOWAIT contention is accepted/proven-no-effect, not terminal or uncertain`,()=>{
+          const r=bridge(x);assert.equal(r.outcome,"accepted_for_execution");assert.equal(r.proven_no_effect,true);
+          assert.equal(r.reason,"context_locked");assert.equal(resultCount(x),"0");
+        });
+      } finally {peer.stdin.end("rollback;\n");await closed;}
+      check(`released ${label} contention permits only the original canonical task`,()=>{
+        assert.equal(bridge(x).state,"found");assert.equal(bridge(x).state,"found");assert.equal(resultCount(x),"1");
+      });
+    }
+    const competing=held(1800);approve(competing);
+    const claims=await Promise.all(Array.from({length:8},()=>new Promise((yes,no)=>{
+      const p=spawn(exe("psql"),[...args(database),"-c",service+`select to_jsonb(paige_claim_act_dispatch('${competing.event}','${competing.act}','${randomUUID()}','10 minutes',true))::text;`],{windowsHide:true,stdio:["ignore","pipe","pipe"]});
+      let out="",err="";const timer=setTimeout(()=>p.kill(),30000);
+      p.stdout.on("data",d=>{out+=d;});p.stderr.on("data",d=>{err+=d;});p.on("error",no);
+      p.on("exit",code=>{clearTimeout(timer);if(code!==0)no(Error(err));else yes(JSON.parse(out.trim()||"null"));});
+    })));
+    check("eight native database claim sessions yield one dispatch owner and no claim-time task effect",()=>{
+      assert.equal(claims.filter(x=>x?.id).length,1);assert.equal(resultCount(competing),"0");
+      assert.equal(sql(`select outcome from paige_act_executions where id='${competing.row.id}';`),"accepted_for_execution");
+      assert.equal(bridge(competing).state,"found");assert.equal(bridge(competing).state,"found");assert.equal(resultCount(competing),"1");
+    });
+    check("saved draft drives actual engine/C5 and native recorder/claim/CRM SQL, including receipt-backed replay", () => {
+      const log = execFileSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run",
+        "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2"], {
+        cwd: root, encoding: "utf8", windowsHide: true, timeout: 120000,
+        env: { ...process.env, OWNER_TASK_NATIVE_DB: `postgresql://postgres@127.0.0.1:${port}/${database}`,
+          PSQL_BIN: exe("psql"), TEMP: scratch, TMP: scratch },
+      });
+      writeFileSync(resolve(scratch, "engine-c5-native.log"), log);
+      assert.match(log, /Tests\s+\d+ passed/);
+      assert.doesNotMatch(log, /\d+ (?:failed|skipped)/, "the optional native SQL case must actually execute");
+    });
+    writeFileSync(resolve(scratch, "result.json"), JSON.stringify({ passed: cases.length, cases, database, port,
+      evidence: "isolated-native-postgresql-selected-real-functions", fullSchema: "NOT_RUN", authenticatedQA: "NOT_RUN" }, null, 2));
+    console.log(`PASS ${cases.length} native owner.task controls; evidence ${scratch}`);
+  } finally {
+    if (started) { call("pg_ctl", ["-D", data, "-m", "fast", "-w", "-t", "30", "stop"]); console.log("PASS stopped only owned disposable PostgreSQL server"); }
+  }
+}
 const dbUrl = new URL(process.env.LAYER_C_E2E_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
 assert.ok(
   (process.env.CI === "true" && dbUrl.hostname === "127.0.0.1" && dbUrl.port === "54322" && dbUrl.pathname === "/postgres")

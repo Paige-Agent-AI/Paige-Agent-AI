@@ -1,4 +1,90 @@
-# Internal CRM task automation core — blocked source checkpoint
+# Internal CRM task automation core — native proof checkpoint
+
+## Current bounded continuation — 2026-10-16
+
+Continuation base: `ee23c3365987be52b36f52605137eb4af01a4e38`. All prior WIP and the original
+blocked checkpoint below are retained. The domain bridge is prepared in the existing native
+adapter and the forward migration `20271108210000_owner_task_native_bridge.sql`; it has not
+been applied to a hosted database. This is **not a releasable or activated customer automation**.
+
+The intended human outcome is one existing, eligible SOLO business approving a held new-contact
+review and receiving one real internal CRM task with canonical readback and receipt. Portfolio
+ownership remains CRM plus the shared Harness/Layer-C orchestration path. The exact native kind
+is `owner.task`, the existing effect/risk tool is `crm_create_task`, and the missing Gateway
+binding remains **UNAVAILABLE / root integration required**. No Spine or Gateway availability
+is asserted by the adapter. No provider or connection is required for this internal-only task.
+The existing process grant, C5 approval, dispatch claim, canonical CRM writer and result store,
+capability receipt and Rail remain the only homes. Existing owner-only Chat arming/grant gates
+remain dark; there is no replacement permission system, executor, store, scheduler or nonce.
+
+### Source correction
+
+- A database trigger captures the semantic process, complete reviewed act set and minimized
+  event/contact source at the first `approval_pending` insert, before the existing companion
+  is minted. Supplied source JSON is removed. Legacy rows lacking that database-authored evidence
+  cannot reconstruct it at approval or acquire a backfill.
+- The held source, exact args, occurrence coordinates, adapter, act position and first native
+  approver/time are immutable. Current semantic context must match before an effect. This
+  detects a current difference, not every edit-away-and-back without a native revision history.
+- The service-only execution bridge accepts only event ID, act ID and correlation. It derives
+  tenant, original approver, command and key from the protected ledger. It takes tenant,
+  original-actor profile, membership, companion, ledger, ordered act-set, process and event/contact
+  locks in that order, with NOWAIT at the context boundary. Native CRM authorization and
+  idempotency remain authoritative. No actor, tenant or command JSON is accepted from the caller.
+- A rolled-back pre-effect lock refusal remains `accepted_for_execution` with
+  `proven_no_effect=true`. Unknown responses remain ambiguous; they never authorize blind replay.
+- JWT-less cron uses an owner-only internal core of the installed canonical CRM result reader.
+  The public reader's ABI, OID, owner, ACL, safe search path and service-JWT guard are preserved.
+  No JWT or `auth.uid()` is fabricated. Reapplying the extraction fails closed rather than
+  replacing the internal core with a recursive delegating wrapper.
+- The incumbent reconciler gains an exact task arm: found receipt-backed result, proven absence,
+  or unknown. Task recovery never uses journey-transition evidence, infers absence from an error,
+  changes the original actor or declares a task failed merely because it aged.
+
+### Fresh executed proof
+
+`node scripts/proof/layer-c-native-vertical.mjs --owner-task-native` passes **41 native
+PostgreSQL controls**. It starts and stops only its owned disposable loopback cluster. The
+selected installed native table/function bodies, contact-created trigger, recorder, companion
+mint/guard, redemption, dispatch claim, canonical CRM task writer/result/receipt and reconciler
+actually execute. Two-session contention covers tenant, original profile/membership, companion,
+ledger, act, process pause and contact; all lock refusals create no task and remain retryable.
+Eight separate native claim sessions produce one dispatch owner and no claim-time task effect.
+The proof also covers legacy refusal, immutable evidence, semantic/sibling changes, original
+authority revocation/switch, JWT/ACL negatives, native receipt rollback, delayed result recovery,
+and no false journey or age-based settlement.
+
+The same native proof runs `automation-chat-draft-recovery.test.ts` with its disposable SQL port
+enabled: **43/43 tests pass, no skip**. The saved draft reaches the actual engine and C5 through
+real native recorder/companion/redemption/claim/task/receipt SQL; duplicate approval reads back
+the same task. Gateway availability is an explicit protected fixture in that isolated test,
+not production evidence. Unrelated Auth/display/realtime/weekly ports are also fixtures. This
+is selected-function native PostgreSQL proof, **not full-schema Supabase replay, HTTP/Auth/RLS,
+customer QA or provider evidence**.
+
+Final native output: `work/native-proof-final.log`; native result and engine transcript:
+`work/owner-task-native-proof/run-x8en3y/result.json` and `engine-c5-native.log`.
+Deno native-adapter compilation and scoped ESLint pass (`work/core-deno-final.log`,
+`work/core-lint-final.log`). The nine-suite attempt is **NOT PASS**: 144 assertions passed,
+the existing whole-edge-tree static scan timed out at 30 seconds, and two fork workers failed
+to start. The three affected suites were rerun sequentially without changing assertions or
+repository CI: **71 PASS / 1 FAIL across72 tests**, no runner errors. The sole assertion failure
+is the unchanged native/Gateway registry-equality guard: `owner.task` has no Gateway binding.
+The static dispatch-seam scan and both formerly unstarted suites execute in that rerun.
+See `work/core-three-rerun.log`; neither campaign is described as fully green.
+
+### Root-owned completion boundaries
+
+The lead must integrate the existing Gateway/Spine capability binding, shared approval endpoint
+and ordinary-owner authority, usable process inspection/arming against `paige_automations`,
+current Chat bindings, source fingerprints and required CI command. The existing registry-equality
+test remains intact to identify the missing binding. Independent Review, full-schema migration
+ordering/replay, exact-head green CI, production deployment/readback, authorized customer action,
+recovery/reload/isolation, equivalent SOLO cohorts, future-account behavior and owner acceptance
+remain **UNVERIFIED**. Nothing in this checkpoint changes production, grants autonomy, sends a
+communication or enables a provider.
+
+## Retained historical blocked checkpoint
 
 Base: reviewed Task `07d25ecbe122af7c233ff66d04842027b79284c4`.
 This is a bounded, **non-releasable implementation checkpoint** in the existing restoration.

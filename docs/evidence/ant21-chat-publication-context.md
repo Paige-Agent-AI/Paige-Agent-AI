@@ -118,6 +118,17 @@ default origin/main comparison in
 this older isolated ancestry reported two unchanged Portal migrations through an ambiguous merge
 base; those applied files were not edited or renumbered. The lead owns final composed-main checking.
 
+## Forward-only release ordering correction — 2026-10-16
+
+Production now records Portal migration `20271108150000` from main
+`5dfb5156785681ebb8fbad7237793a0bf0f9c92e`. The publication migration remains unpublished and is
+therefore forward-named `20271108170000_int336_publication_context_v2.sql`; its SQL bytes are unchanged.
+The native fixture reads that exact path. Earlier names above are retained as historical evidence.
+Research is reserved at `20271108180000` and Planning at `20271108190000`. No applied migration,
+authorization contract, source fingerprint, or runtime code changes in this ordering correction.
+Normal exact-head CI, Independent Review, deployment and production readback remain required;
+`--include-all` and migration-history repair are not used.
+
 ## Runtime bounds and handoff
 
 Native proof used a new task-owned PostgreSQL 16 cluster on checked loopback-only port 65453. Initial

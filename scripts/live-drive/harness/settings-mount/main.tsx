@@ -32,7 +32,7 @@
  *
  *   /solo/1971670/settings/vault?theme=dark
  */
-import { Component, StrictMode, useEffect, useReducer, type ReactNode } from "react";
+import { Component, StrictMode, useEffect, useReducer, useState, type ComponentProps, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
@@ -111,6 +111,7 @@ const SETTINGS_ICONS = {
 
 function Shell() {
   const [, refresh] = useReducer((value: number) => value + 1, 0);
+  const [paigeTab, setPaigeTab] = useState<NonNullable<ComponentProps<typeof SoloPaigeWorkspace>["dockedTab"]>>("chat");
   useEffect(() => {
     // Test-only equivalent of SoloApp rerendering after a tenant-context refresh.
     const onRefresh = () => flushSync(refresh);
@@ -140,7 +141,7 @@ function Shell() {
     accountType="standalone"
     userRole="admin"
     contextualNavigation={contextualNavigation}
-    soloPaigeWorkspace={<SoloPaigeWorkspace full={paigeFullMode} dockedTab="chat" onDockedTabChange={() => undefined} />}
+    soloPaigeWorkspace={<SoloPaigeWorkspace full={paigeFullMode} dockedTab={paigeTab} onDockedTabChange={setPaigeTab} />}
     paigeFull={paigeFullMode}
     brandHomeHref={`/solo/${account}/command-center`}
     onSignOut={() => {}}

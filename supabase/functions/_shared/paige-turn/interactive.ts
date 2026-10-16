@@ -186,6 +186,14 @@ export function createInteractiveExecution(intent: string, store: InteractiveSto
       if (state.latest !== intent || state.executor !== intent) stopped = true;
       if (stopped) throw new InteractiveSuperseded();
     },
+    // Publication after a canonical release owns no executor and authorizes no act.
+    // Keep check() strict for every dispatch/read; only this completed lifecycle
+    // may publish if its original intent is still latest.
+    async checkReleasedPublication() {
+      const state = await store.state();
+      if (!released || state.latest !== intent) stopped = true;
+      if (stopped) throw new InteractiveSuperseded();
+    },
     // Isolated proposed-liveness-check proved a real 20s predecessor settles before
     // this accepted successor acquires. A bounded timeout never steals its token.
     async acquire(waitMs = 240000) {

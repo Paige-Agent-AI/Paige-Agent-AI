@@ -16,7 +16,7 @@ if(bookingMode){assert.ok(['success','missing-id','missing-row','foreign-row','t
 const crmScopeMode=process.env.CRM_SCOPE_TEST;
 if(crmScopeMode){assert.ok(['normal-flip','pinned-flip','normal-same','pinned-same','null-scope','member-refused','native-no-tenant'].includes(crmScopeMode));assert.ok(!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmPauseMode=process.env.CRM_APPROVAL_PAUSE_TEST;
-if(crmPauseMode){assert.ok(['normal','kill','prior-success','following-unknown','protected-flip','settle-fails','commit-lost-ack','disconnect'].includes(crmPauseMode));assert.ok(!crmScopeMode&&!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+if(crmPauseMode){assert.ok(['normal','kill','prior-success','following-unknown','protected-flip','settle-fails','commit-lost-ack','disconnect','settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded'].includes(crmPauseMode));assert.ok(!crmScopeMode&&!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const pauseRows=[];
 const crmScopePinned=crmScopeMode?.startsWith('pinned-');
 const crmScopeModelBodies=[];
@@ -164,7 +164,7 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  get_actor_access:{data:{tier:'tenant'},error:null},
  get_paige_persona_context:()=>({data:[{tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null}),
  paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},
- paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release'){if(crmPauseMode)assert.ok(receipts.length,'native release requires a canonical terminal');executor=null;}return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
+ paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release'){if(crmPauseMode)assert.ok(receipts.length,'native release requires a canonical terminal');executor=null;if(crmPauseMode==='release-superseded')latest=id(6);if(crmPauseMode==='release-scope-flip')crmActiveTenant=id(18);}return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
  plan_create:()=>{
   if(recoveryMode==='lost'||crmPauseMode==='following-unknown')throw new TypeError('Failed to fetch after commit');
   if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
@@ -172,7 +172,7 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
   if(!recoveryMode&&!automationMode&&!researchMode&&!crmMode&&!bookingMode&&!crmScopeMode&&!crmPauseMode)latest=id(6);
   return {data:{ok:true,plan_id:id(7)},error:null};
  },
- paige_chat_interactive_settle:a=>{if(crmPauseMode==='settle-fails')return {data:null,error:{code:'08006',message:'fixture settlement unavailable'}};receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});return crmPauseMode==='commit-lost-ack'?{data:null,error:{code:'08006',message:'fixture committed acknowledgement lost'}}:{data:id(8),error:null};}
+ paige_chat_interactive_settle:a=>{if(crmPauseMode==='settle-fails')return {data:null,error:{code:'08006',message:'fixture settlement unavailable'}};receipts.push({role:"assistant",content:a.p_content,bundle_ref:a.p_bundle_ref});if(['settle-superseded','commit-lost-ack-superseded'].includes(crmPauseMode))latest=id(6);if(crmPauseMode==='settle-stopped')latest=null;if(crmPauseMode==='settle-scope-flip')crmActiveTenant=id(18);return ['commit-lost-ack','commit-lost-ack-superseded'].includes(crmPauseMode)?{data:null,error:{code:'08006',message:'fixture committed acknowledgement lost'}}:{data:id(8),error:null};}
 }});
 const response=await chatHandler(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:crmScopePinned?'Approve the exact stored task':bookingApproved?'Approve the exact stored appointment':'Create two individual plans'}],...(crmScopeMode==='null-scope'?{}:{threadId:thread,requestIntentId:intent,interactive:{kind:'message'}}),...(bookingApproved?{approvedConfirmations:[bookingFp]}:{}),...(crmScopePinned?{approvedConfirmations:[crmScopeFp]}:{}),...(crmScopeMode?{sessionDocumentContext:[{fileName:'scope-fixture.txt',summary:'Private originating-workspace fixture'}]}:{})})}));
 let wire='';
@@ -186,6 +186,16 @@ if(crmPauseMode){
  assert.equal(rec.rpc.filter(c=>c.name==='execute_crm_command').length,0,'requesting approval executes no CRM command');
  if(crmPauseMode==='settle-fails'){assert.equal(receipts.length,0);assert.equal(executor,intent);assert.ok(!wire.includes('"paige_confirm"'),'no actionable card without durable settlement');}
  else if(crmPauseMode==='protected-flip'){assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');assert.ok(!wire.includes('"paige_confirm"'),'scope change withholds the card');}
+ else if(['settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded'].includes(crmPauseMode)){
+  assert.equal(modelCalls,1);assert.equal(receipts.length,1,'late revocation retains one immutable original receipt');
+  assert.equal(receipts[0].bundle_ref.turn_state.state,'WAIT_APPROVAL','a committed pause is not rewritten as interrupted');
+  assert.equal(receipts[0].bundle_ref.paige_confirm[0].fingerprint,pauseRows[0].fingerprint);
+  assert.equal(executor,null,'canonical completion releases the original executor without authorizing delivery');
+  assert.equal(rec.rpc.filter(c=>c.name==='paige_chat_interactive_executor_v2'&&c.args.p_operation==='release').length,1,'release remains exactly once');
+  assert.ok(!wire.includes('"paige_confirm"'),'late authority change must withhold the actionable card');
+  assert.ok(!wire.includes('"state":"WAIT_APPROVAL"'),'late authority change must not publish an obsolete waiting terminal');
+  assert.ok(!wire.includes('Protected CRM fixture'),'late authority change must withhold private approval content');
+ }
  else if(crmPauseMode==='following-unknown'){
   assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED','an uncertain write must not settle as an ordinary approval pause');
   assert.ok(receipts[0].bundle_ref.interactive.effects.some(e=>e.outcome==='outcome_unknown'));

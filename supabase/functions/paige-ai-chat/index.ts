@@ -3503,12 +3503,12 @@ JSON:`;
     // exactly how document-derived content escaped the check. A protected turn always has a
     // scope; whether the KB matched is a separate question.
     const turnScopeTenantId: string | null = personaCtx.tenant_id ?? null;
-    const revalidateTenantKnowledgeScope = async (): Promise<boolean> => {
+    const revalidateTenantKnowledgeScope = async (required = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
       // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
       // is what keeps live streaming free of added latency. A client seat's turn is held so its
       // answer can be read (R3), but holding is not evidence.
-      if (!turnCarriesEvidence()) return true;
+      if (!required && !turnCarriesEvidence()) return true;
       try {
         const { data, error } = await supabaseClient.rpc("get_paige_persona_context");
         const row = Array.isArray(data) ? data[0] : data;
@@ -18637,6 +18637,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()), true);
             approvalPauseRecorded = true;
             await interactiveLifetime?.streamFinished();
+            // Settlement/release may finish after a newer instruction or account
+            // switch. Retain that immutable receipt, but never publish its old card.
+            if (!(await revalidateTenantKnowledgeScope(true))) {
+              discardContent();
+              pendingTenantKbTelemetry = null;
+              return;
+            }
+            await interactive?.checkReleasedPublication();
           }
           // Past both gates: a protected turn's terminal goes out here, ahead of the answer it releases
           // (a no-op on an ordinary turn, which already sent it before its answer).
@@ -18666,7 +18674,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          } catch (e) {
            // Delivery can fail after the canonical pause committed. Its WAIT_APPROVAL
            // record remains the truth; do not replace it or run post-turn maintenance.
-           if (approvalPauseRecorded) return;
+           if (approvalPauseRecorded) { discardContent(); return; }
            if (e instanceof InteractiveSuperseded || interactive?.superseded) {
              turnTracker.interrupted();
              discardContent();

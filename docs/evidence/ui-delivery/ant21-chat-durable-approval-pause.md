@@ -32,7 +32,7 @@ MUST_NOT_HAPPEN: no automatic approval, repeated effect, manufactured token, aut
 MUST_PRESERVE: exact native proposal/approval binding, frozen server scope, caller roles, denial fencing, prior-unknown brake, effect references, protected-content checks and server-only canonical settlement.
 ACCEPTANCE_CRITERIA: a successful proposal settles WAIT_APPROVAL before another decision-model call or actionable card publication, releases through the native lifetime, and remains truthfully visible after incomplete delivery.
 MOTION_PURPOSE: NONE: no motion change.
-PROTECTED_SEAMS: shared Chat post-tool accounting/close only; actual native CRM door and native SQL protocol are reused unchanged; action-risk, SQL, grants, browser token stripping, providers, global pins and CI are untouched.
+PROTECTED_SEAMS: shared Chat post-tool accounting/close and existing interactive lifetime helper; actual native CRM door and native SQL protocol are reused unchanged; action-risk, SQL, grants, historical non-actionable display and providers preserved. Reviewed source renewal and expanded existing CI controls are recorded in the release composition below.
 INTERNAL_BUILD_IDENTITY: base=016727365e7f7dca79b6a6a1e24438bee02a49aa; branch=fix/ant21-chat-durable-approval-pause; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed composed source deployment and readback); evidence=docs/evidence/ui-delivery/ant21-chat-durable-approval-pause.md
 RELEASE_CHANNEL: development: isolated source candidate only.
 RELEASE_CLASSIFICATION: patch: restore the existing governed approval pause and its canonical receipt.
@@ -123,7 +123,7 @@ and stalled-model interruption.
 `PaigeAIChat.turnStates.test.tsx` and `PaigeAIChat.approvalRecovery.test.tsx` pass 43 tests in two
 suites. New real-component controls cover a native card received before EOF and EOF before the
 card followed by canonical reload. No approval or blind Retry is dispatched automatically.
-Reload retains the existing historical summary and strips live confirmation tokens; the test
+Reload retains the existing historical summary and marks it resolved/non-actionable; the test
 does not turn `bundle_ref` into an approval source. There are no UI runtime/layout edits.
 
 ## Recovery boundary and remaining work
@@ -177,3 +177,15 @@ reviewed fingerprint scalars;guard metadata/extraction and all96 dependencies re
 Exact composed-head review/CI,guarded merge and actual production source/customer proof remain
 owed. This record does not close the original orphan,reload-reader seam,mixed-unknown suppression,
 full18/50 restoration,Live or owner acceptance.
+
+## Post-commit publication review correction
+
+Later exact-head review found a real stale-publication window on a2/7eb: the original latest/workspace checks preceded awaited canonical persistence and native release. The distinct read-only security-boundary investigator confirmed that newer intent, Stop or active-workspace changes during those awaits could still publish an obsolete approval/card. This is publication/privacy evidence, not proof of an unauthorized CRM write; the native CRM claim/role/tenant protections remain controlling. Settlement intentionally permits an older effectful holder to record its immutable outcome and must not be changed to manufacture a cancellation.
+
+Six failing-first actual Chat/native-door modes on unchanged7eb reproduce the stale card after settlement supersession, Stop, scope change, release supersession/scope change and committed-but-lost-acknowledgement supersession. All six fail the no-actionable-card assertion. The successor keeps the canonical WAIT_APPROVAL and native release, then revalidates current workspace and latest intent immediately before synchronous terminal/card publication. Existing strict execution/read ownership checks are unchanged. A separate read-only check on the incumbent execution object is valid only after its own completed release; it grants no effect authority. Scope validation is required for approval publication even if an incidental evidence latch is absent. Any failure discards held content without replacing the committed receipt.
+
+Actual handler successor controls:14/14 PASS, including all eight original modes and six new late-revocation cases. The committed revocation cases keep exactly one WAIT_APPROVAL, original native fingerprint and exactly one executor release, with no actionable card/waiting terminal/private approval content on the wire. No proposal case consumes approval or executes a CRM command. Seven actual Deno helper/approval tests PASS543ms, including strict post-release execution denial, valid released publication, supersession, pre-release and null-latest refusal. The initial cached-only Deno attempt could not resolve the pinned assertion dependency; importing that exact dependency then running with test network/environment/file/process capabilities denied passed. Existing Node lifetime/latest/no-timeout-theft control also passes. Protected before/after record SHA256`d3868adca327d28e5980f8d8c9bbbe1ccf0407fc08cac9671b1f7f4551335844` retains proof boundaries.
+
+Correction of earlier reload wording: historical bundle_ref projection retains the fingerprint/command/idempotency fields; the UI marks the old card resolved/non-actionable. It does not literally strip tokens. No browser JSON becomes execution authority, and this slice does not implement the separate server-issued actionable-reload reader.
+
+Current successor source review, reviewed fingerprint/dependency renewal, fresh exact-head CI and production proof remain owed. Existing post-tool unknown handling, SQL/roles/permissions/provider configuration and request-lifetime release remain intact. Expanded existing CI controls execute all14 handler modes; no check is removed or bypassed. This is not an atomic distributed-protocol guarantee, old-orphan settlement, full reload recovery, Live completion or owner acceptance.

@@ -1,14 +1,16 @@
 import type { RelationshipPerson } from "./useTenantRelationshipsData";
+import type { PortalInvitationDelivery } from "./portalInvitationEvidence";
 
 /** Read-only projection of canonical invitation records. Never fetch the bearer token. */
 export interface PortalInvitation {
   id: string;
-  contact_id: string;
+  contact_id: string | null;
   email: string | null;
   created_at: string;
   expires_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  delivery?: PortalInvitationDelivery;
 }
 
 export type PortalAccessState =
@@ -22,7 +24,7 @@ export type PortalAccessState =
 export const accessLabels: Record<PortalAccessState, string> = {
   linked: "Account linked",
   accepted: "Invitation accepted",
-  invited: "Invited",
+  invited: "Invitation pending",
   expired: "Invite expired",
   canceled: "Invite canceled",
   "not-invited": "Not invited",

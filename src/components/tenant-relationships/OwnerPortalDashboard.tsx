@@ -35,6 +35,8 @@ import {
 } from "./portalDashboardModel";
 import { usePortalInvitations } from "./usePortalInvitations";
 import { PortalInvitationManager, type PortalInvitationActionLock } from "./PortalInvitationManager";
+import { PortalInvitationHistory } from "./PortalInvitationHistory";
+import { invitationDeliveryText } from "./portalInvitationEvidence";
 import "./owner-portal-dashboard.css";
 
 const PortalStudio = lazy(() => import("@/pages/admin/PortalStudio"));
@@ -406,6 +408,9 @@ export function OwnerPortalDashboard({
                       <span className="opd-access-state" data-state={access}>
                         {accessLabels[access]}
                       </span>
+                      {invitationRows?.find(row => row.contact_id === person.id) && <small className="opd-delivery-state">
+                        {invitationDeliveryText(invitationRows.find(row => row.contact_id === person.id)?.delivery?.history.slice(-1)[0]).label}
+                      </small>}
                     </td>
                   </tr>
                 ),
@@ -699,6 +704,7 @@ export function OwnerPortalDashboard({
                         onReadback={() => invitations.invalidate()}
                         actionLock={invitationActionLock}
                       />
+                      <PortalInvitationHistory invitations={invitationRows} contactId={selected.id} />
                     </PortalConfigurationGate>
                   )}
                   {selected && !invitationRows && (
@@ -902,6 +908,7 @@ export function OwnerPortalDashboard({
                     onReadback={() => invitations.invalidate()}
                     actionLock={invitationActionLock}
                   />
+                  <PortalInvitationHistory invitations={invitationRows} contactId={selected.id} />
                 </PortalConfigurationGate>
               ) : selected ? (
                 <Status

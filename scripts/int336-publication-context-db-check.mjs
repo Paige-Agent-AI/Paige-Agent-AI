@@ -48,7 +48,7 @@ create or replace function auth.uid() returns uuid language sql stable as $$sele
  +migration('20270602000301_int346_conversational_admission.sql')+'\n'+migration('20271108110000_int346_database_executor_isolation.sql')+`\ncommit;
 -- Fixture-only rollout state, not native activation/retirement proof.
 update public.paige_chat_interactive_rollout set active=true,edge_head=repeat('a',40),drain_evidence_sha256=repeat('b',64);`);
-const candidate=fs.readFileSync(path.join(root,'supabase/migrations/20271108122000_int336_publication_context_v2.sql'),'utf8');
+const candidate=fs.readFileSync(path.join(root,'supabase/migrations/20271108123000_int336_publication_context_v2.sql'),'utf8');
 const authorityDefinitions=()=>run("select md5(string_agg(pg_get_functiondef(p.oid)||coalesce(p.proacl::text,''),E'\\n' order by p.oid::regprocedure::text)) from pg_proc p where p.pronamespace='public'::regnamespace and p.proname<>'paige_chat_interactive_publication_context_v2';");
 const authorityBefore=authorityDefinitions();
 run(candidate);run(candidate); // additive/replayable function installation

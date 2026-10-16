@@ -221,17 +221,31 @@ RETURNS jsonb LANGUAGE sql AS $$
   'patch',_patch),_key)
 $$;
 CREATE TEMP TABLE task_progress_before AS SELECT count(*)::integer receipts FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111';
-CREATE TEMP TABLE task_progress_result AS SELECT pg_temp.task_progress_call('{"status":"in_progress"}','task-progress-start-1') result;
+-- Retain the exact first command, including its original timestamp spelling.
+-- A replay never rebuilds that identity from a later read or another encoding.
+CREATE TEMP TABLE task_progress_start_command AS SELECT jsonb_build_object(
+ 'approval_channel','operator_card','action','task.update',
+ 'task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),
+ 'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_progress_fixture),
+ 'patch',jsonb_build_object('status','in_progress')) command;
+CREATE TEMP TABLE task_progress_result AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT command FROM task_progress_start_command),'task-progress-start-1') result;
 SELECT is((SELECT result->'readback'->>'status' FROM task_progress_result),'in_progress','pending work enters In progress through native task.update');
 SELECT is((SELECT status FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture)),'in_progress','native progress readback matches the persisted task');
 SELECT ok((SELECT (result->>'receipt_recorded')::boolean AND result->'readback'->>'external_effect'='false' AND result->'readback'->>'notification_sent'='false' FROM task_progress_result),'progress records its durable receipt and no external or notification effect');
 SELECT is((SELECT count(*)::integer FROM task_notification_spy),0,'progress invokes no legacy outbound team notification');
 SELECT is((SELECT count(*)::integer FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts+1 FROM task_progress_before),'progress emits one native Rail event');
-CREATE TEMP TABLE task_progress_replay AS SELECT pg_temp.task_progress_call('{"status":"in_progress"}','task-progress-start-1',_version=>(SELECT result->'readback'->>'updated_at' FROM task_progress_fixture)) result;
+CREATE TEMP TABLE task_progress_replay AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT command FROM task_progress_start_command),'task-progress-start-1') result;
 SELECT is((SELECT (result->>'replayed')::boolean FROM task_progress_replay),true,'same progress key and original version replay the original result');
 SELECT is((SELECT result->'readback' FROM task_progress_replay),(SELECT result->'readback' FROM task_progress_result),'progress replay preserves the original exact readback');
 SELECT is((SELECT count(*)::integer FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts+1 FROM task_progress_before),'progress replay emits no second receipt');
-SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress","description":"Different payload"}','task-progress-start-1')$$,'22023','CRM_IDEMPOTENCY_REUSE','a changed progress payload cannot reuse the original key');
+SELECT throws_ok($$SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT jsonb_set(command,'{patch,description}','"Different payload"'::jsonb) FROM task_progress_start_command),
+ 'task-progress-start-1')$$,'22023','CRM_IDEMPOTENCY_REUSE','a changed progress payload cannot reuse the original key');
 SELECT throws_ok(format('SELECT pg_temp.task_progress_call(%L::jsonb,%L,_version=>%L)','{"status":"in_progress"}','task-progress-stale-1',(SELECT result->'readback'->>'updated_at' FROM task_progress_fixture)),'40001','CRM_VERSION_CONFLICT','a fresh progress key cannot use a stale version');
 SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),'patch',jsonb_build_object('status','in_progress'))::text,'task-progress-no-version-1'),'22023','CRM_EXPECTED_VERSION_REQUIRED','progress requires an exact native version');
 SELECT throws_ok(format('SELECT pg_temp.task_progress_call(%L::jsonb,%L)',jsonb_build_object('status',value)::text,'task-progress-invalid-'||ordinal),'22023','CRM_TASK_STATUS_INVALID','task.update refuses unsupported or malformed status '||ordinal)

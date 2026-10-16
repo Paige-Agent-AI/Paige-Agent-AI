@@ -3,6 +3,7 @@ import {createRoot,type Root} from "react-dom/client";
 import {afterEach,beforeEach,expect,it,vi} from "vitest";
 import {mkdirSync,readFileSync,writeFileSync} from "node:fs";
 import {join} from "node:path";
+import ts from "typescript";
 const mocks=vi.hoisted(()=>({context:{accountContextStatus:"ready",activeUserId:"actor",activeTenantId:"workspace"},submit:vi.fn()}));
 vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>mocks.context}));
 vi.mock("./operations-crm-work-command",async importOriginal=>({...await importOriginal<typeof import("./operations-crm-work-command")>(),submitCrmWorkStageOperation:mocks.submit}));
@@ -10,6 +11,10 @@ import {OperationsCrmStageReview} from "./OperationsCrmStageReview";
 import {buildCrmWorkStageOperation,type CrmWorkOperation} from "./operations-crm-work-command";
 import {buildCrmWorkEditOperation} from "./operations-crm-work-edit";
 import type {CrmWorkRecord} from "./operations-native-work";
+// Execute the actual authoritative server function, not a handwritten proposal.
+const serverSource=ts.createSourceFile("crm.ts",readFileSync("supabase/functions/crm-command/index.ts","utf8"),ts.ScriptTarget.Latest,true);
+const serverFunctions=["object","summaryFor"].map(name=>serverSource.statements.find(statement=>ts.isFunctionDeclaration(statement)&&statement.name?.text===name)!.getText(serverSource)).join("\n");
+const serverSummary=new Function(ts.transpileModule(serverFunctions,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText+";return summaryFor;")() as (command:CrmWorkOperation["command"])=>string;
 const task={id:"original-task",tenant_id:"workspace",status:"pending",updated_at:"2026-10-10T12:00:00Z"} as CrmWorkRecord;
 const original=buildCrmWorkStageOperation(task,"done","actor","workspace","original-key")!;
 let node:HTMLDivElement,root:Root;
@@ -40,10 +45,11 @@ it("prototypes the existing progress review, exact approval and independently ve
  // This initially failed using a protected progress input; after the contract extension
  // the same native fixture now exercises the real builder, with synthetic I/O ports.
  const progress=buildCrmWorkStageOperation(task,"in_progress","actor","workspace","progress-key")!;
- mocks.submit.mockResolvedValueOnce({kind:"approval",fingerprint:"progress-fingerprint",summary:"Move this task to In progress."}).mockResolvedValueOnce({kind:"acknowledged"});
+ mocks.submit.mockResolvedValueOnce({kind:"approval",fingerprint:"progress-fingerprint",summary:serverSummary(progress.command)}).mockResolvedValueOnce({kind:"acknowledged"});
  refresh.mockResolvedValue([{...task,status:"in_progress",updated_at:"2026-10-10T12:01:00Z"}]);
  await render(progress);capture("progress-review");expect(node.textContent).toContain("Move this task to In progress.");expect(node.textContent).not.toContain("Completed");
  expect(mocks.submit).not.toHaveBeenCalled();await click("Confirm stage change");capture("progress-approval");expect(verified).not.toHaveBeenCalled();
+ expect(node.textContent).toContain("Move task original-task to In progress.");
  await click("Approve exact change");expect(mocks.submit.mock.calls[1]).toEqual([progress,"progress-fingerprint"]);expect(verified).toHaveBeenCalledExactlyOnceWith(task.id);
  capture("progress-readback-confirmed");
 });

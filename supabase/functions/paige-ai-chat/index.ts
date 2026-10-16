@@ -257,7 +257,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
-import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
+import { answerClaim, answerClaimBound, answerTurnsAfterAdmission, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
 import { executableToolCalls, LIVE_ROUND_NOT_FINISHED_NOTE, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
@@ -5971,7 +5971,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // a new id (`afterAnswerClaimFailure`) — one question never ends with zero continuations.
     // An answer grants nothing: it only shapes the prompt (`answerTurnNote`); every act PAIGE proposes
     // after it still meets the gate.
-    let answerBinding: { turnId: string; ask: AskRecord; skipped: boolean; content: string } | null = null;
+    let answerBinding: { turnId: string; ask: AskRecord; skipped: boolean; content: string; tenantId: string | null; admissionMarkerId: string | null } | null = null;
     let answerResume: { askId: string; turnId: string; ask: AskRecord; skipped: boolean } | null = null;
     // What happened to the answer — and only that. Where the person's words now are (still in the
     // composer, or a choice made on the card) is the client's to say: it is the one that put them back.
@@ -6033,10 +6033,14 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       const latest = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       if (typeof latest !== "string" || !latest.trim()) return notOpen("empty_answer");
       const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
-        .select("id,role,bundle_ref,created_at").eq("thread_id", payloadThreadId)
+        .select("id,role,content,bundle_ref,created_at,interactive_intent_id,interactive_actor_id,interactive_tenant_id,interactive_terminal_state,interactive_supersedes_id").eq("thread_id", payloadThreadId)
         .order("seq", { ascending: false }).limit(25);
       if (recentError) return refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "turn_read_failed");
-      const live = resolveAskLiveness((recent ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown; created_at?: unknown }>, validatedData.resume.ask_id);
+      await interactive?.check();
+      const answerHistory = answerTurnsAfterAdmission(recent ?? [], { actorId: user.id, tenantId: turnTenant,
+        askId: validatedData.resume.ask_id, ...(interactive && payloadRequestIntentId && validatedData.interactive?.supersedesIntentId
+          ? { admission: { intentId: payloadRequestIntentId, supersedesIntentId: validatedData.interactive.supersedesIntentId } } : {}) });
+      const live = resolveAskLiveness(answerHistory.turns, validatedData.resume.ask_id);
       if (live.state === "answered") return refuseAnswer(409, "ASK_ALREADY_ANSWERED", ANSWER_REASON.ASK_ALREADY_ANSWERED, "already_answered");
       if (live.state === "reopened") return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "already_reopened", { ask_reopened: askFrame(live.ask) });
       if (live.state === "pending") {
@@ -6051,7 +6055,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "claim_stranded", { ask_reopened: askFrame(again) });
       }
       if (live.state !== "live") return notOpen(live.reason);
-      answerBinding = { turnId: live.turnId, ask: live.ask, skipped: validatedData.resume.skipped === true, content: latest };
+      answerBinding = { turnId: live.turnId, ask: live.ask, skipped: validatedData.resume.skipped === true, content: latest, tenantId: turnTenant,
+        admissionMarkerId: answerHistory.ownAdmissionMarkerId };
     }
 
     if (payloadThreadId) {
@@ -10060,14 +10065,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // not called; the claim stays in the transcript as what it is — a reply to a question already
       // moved past (`resolveAskLiveness` reads it as superseded, never as an answer).
       const { data: after, error: afterError } = await supabaseClient.from("paige_chat_turns")
-        .select("id,role,bundle_ref").eq("thread_id", payloadThreadId)
+        .select("id,role,content,bundle_ref,interactive_intent_id,interactive_actor_id,interactive_tenant_id,interactive_terminal_state,interactive_supersedes_id").eq("thread_id", payloadThreadId)
         .order("seq", { ascending: false }).limit(25);
       // A read that fails here leaves the claim written and unverified: the question is asked again
       // (the same exit as any failure after the claim), never left with an answer and nothing after it.
       if (afterError || typeof claimTurnId !== "string") {
         return afterAnswerClaimFailure(refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "claim_unverified"));
       }
-      if (!answerClaimBound((after ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown }>, askId, claimTurnId)) {
+      await interactive?.check();
+      const boundHistory = answerTurnsAfterAdmission(after ?? [], { actorId: user.id, tenantId: binding.tenantId, askId,
+        ...(interactive && binding.admissionMarkerId && payloadRequestIntentId && validatedData.interactive?.supersedesIntentId
+          ? { admission: { intentId: payloadRequestIntentId, supersedesIntentId: validatedData.interactive.supersedesIntentId,
+            markerId: binding.admissionMarkerId } } : {}) });
+      if (!answerClaimBound(boundHistory.turns, askId, claimTurnId)) {
         afterAnswerClaimFailure = null;
         return refuseAnswer(409, "ASK_NOT_OPEN", ANSWER_REASON.ASK_ANSWER_SUPERSEDED, "superseded_at_claim", { answer_kept: true });
       }

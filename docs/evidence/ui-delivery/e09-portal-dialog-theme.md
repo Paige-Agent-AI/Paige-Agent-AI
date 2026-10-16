@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: existing close/row fallback unit regressions and actual na
 ZOOM_REFLOW: UNVERIFIED: actual browser zoom/OS scaling/physical devices untested. Bounded 320CSS-pixel reflow plus390x844 and768x385 fit and scroll assertions pass; not iPhone/Safari acceptance.
 REDUCED_MOTION: PASS: reduced-motion enabled in source proof; no animation added or altered.
 STATE_COVERAGE: PASS: pending invitation, truthful provider-history states, long recipient/history, history refusal, both themes, unresolved-theme fallback, live theme change, native modal assistant ownership and close recovery.
-TRUTHFUL_STATE_LABELS: PASS: invitation pending, provider handoff/delivery evidence, acceptance and visits remain distinct; no capability or status upgrade from this presentation repair.
+TRUTHFUL_STATE_LABELS: PASS: unaccepted invitation, provider handoff/delivery reports, acceptance and visits remain distinct; no capability or status upgrade from this presentation repair.
 SOLO_UI: YES: same shared owner dashboard for all eligible existing/future SOLO accounts; no account special cases or provisioning change.
 SOLO_1536X770_PAIGE_CLOSED: PASS: light/dark native invitation entry/history captures and geometry in the manifest; synthetic transport only.
 SOLO_1536X770_PAIGE_OPEN: PASS: light/dark invitation entry/history captures over the existing non-modal wide assistant; no Chat execution claim.
@@ -36,10 +36,10 @@ MOTION_PURPOSE: NONE: no motion change; existing reduced-motion behavior retaine
 PROTECTED_SEAMS: NONE_AFFECTED: runtime patch only forwards resolved theme to two local body-portal roots. Existing identity/Trust/Harness/Spine/Rail/booking/sender and staff constraints are unchanged.
 INTERNAL_BUILD_IDENTITY: 97839fd2e61243bf82915d69483465dec99cd04a; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-portal-dialog-theme/result.json; exact final review/release identities recorded in PR receipts.
 RELEASE_CHANNEL: development: ordinary production repair pending review, required exact-head CI and normal merge/deploy/readback; no staged cohort.
-RELEASE_CLASSIFICATION: internal patch: restore approved owner dialog legibility, no new customer capability or provider activation.
+RELEASE_CLASSIFICATION: internal-only: restore approved owner dialog legibility, no new customer capability or provider activation.
 CUSTOMER_RELEASE_IDENTITY: none: internal prelaunch repair without announcement.
 RELEASE_NOTE_REQUIRED: no: routine correction, no customer release identity/publication.
-RELEASE_TRUTH_BOUNDARY: clients.portal remains PARTIAL; source/dialog repair proven, authenticated production repair readback owed; new customer signup and full seven pillars are not complete.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: clients.portal remains incomplete; source/dialog repair proven, authenticated production repair readback owed; new customer signup and full seven pillars are not complete.
 RELEASE_RECOVERY: position=bounded forward correction or reviewed UI revert; reference=this record and existing canonical data/authorization remain unchanged.
 
 ## Scope, routing and proof boundary

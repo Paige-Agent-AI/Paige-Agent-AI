@@ -15,6 +15,19 @@ describe("server-resolved SOLO interview projection", () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: true });
     expect(await buildSoloBusinessInterviewContextBlock({ rpc }, "tenant-a", "foreign-thread")).toContain("could not be verified"); expect(rpc).toHaveBeenCalledTimes(1);
   });
+  it("curates through the existing server projection and secure handoffs without issuing extra reads or actions", async () => {
+    const rpc = vi.fn().mockResolvedValueOnce({ data: null, error: null }).mockResolvedValueOnce({ data: context, error: null });
+    const block = await buildSoloBusinessInterviewContextBlock({ rpc }, "tenant-a", "thread-a");
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(block).toContain("three or four relevant options ONLY from the current server-resolved capability projection");
+    expect(block).toContain("If fewer than three options are evidenced, say so rather than inventing the rest");
+    expect(block).toContain("partial read does NOT prove that no providers are connected");
+    expect(block).toContain("do not invent OAuth scopes");
+    expect(block).toContain("NOT a receipt for a separate business action");
+    expect(block).toContain("never blindly repeat a non-idempotent action");
+    expect(block).toContain("exact tenant-scoped canonical record readback");
+    expect(block).not.toContain("PRIVATE");
+  });
   it("refuses foreign tenant readback and forged checkpoint shape", async () => {
     const rpc = vi.fn().mockResolvedValueOnce({ data: null, error: null }).mockResolvedValueOnce({ data: { ...context, tenantId: "tenant-b" }, error: null });
     expect(await buildSoloBusinessInterviewContextBlock({ rpc }, "tenant-a", "thread-a")).not.toContain("Design");

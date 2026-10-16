@@ -9,10 +9,11 @@ import { createHash } from 'node:crypto';
 import { isProofDescendant } from './e09-proof-path.mjs';
 
 const baselineOnly = process.argv.includes('--baseline');
+const documents = process.argv.includes('--documents');
 const actions = process.argv.includes('--actions') || process.argv.includes('--actions-baseline');
 const actionsBaseline = process.argv.includes('--actions-baseline');
 const actionPredecessors=[];
-const entry = process.argv.includes('--entry') || actions;
+const entry = process.argv.includes('--entry') || actions || documents;
 const entryBaseline = process.argv.includes('--entry-baseline');
 const root = process.cwd();
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
@@ -304,8 +305,9 @@ try {
      const before=sql('SELECT proof_action_snapshot()');assert.throws(()=>response(f));assert.equal(sql('SELECT proof_action_snapshot()'),before);sql('DROP TRIGGER proof_response_audit ON paige_audit_log;DROP FUNCTION proof_reject_response_audit();');
    });
  }
+ if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
- const report={mode:actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
+ const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

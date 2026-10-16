@@ -6502,6 +6502,53 @@ try {
             cards: cardsOf(sibling.bodyText), native: sibling.rec.rpc.filter((c) => /configure_tenant_pipeline|assign_contact/.test(c.name)) }));
       }
     }
+    // These existing tools are exempt from the business-mutation risk gate, but persist
+    // a new approval or confirmation artifact. A decline must stop that decision work too.
+    const decisionWriters = [
+      { name: "propose_action", args: { action_type: "email", contact_id: OWN,
+        subject: "Your next session", body: "Confirming Tuesday at 3pm.", summary: "Email Dana about booking" } },
+      { name: "pipeline_archive_preview", args: { pipeline_ref: "PPL-QA123" } },
+      { name: "pipeline_folder_archive_preview", args: { folder_id: OWN } },
+    ];
+    for (const autonomy of ["confirm", "auto"]) for (const call of decisionWriters) {
+      for (const state of ["matched", "unmatched", "recording_failed"]) {
+        const decisionStore = makeConfirmStore(); const decisionDb = crmDb();
+        const decisionCard = await proposeVia(decisionStore, decisionDb, CONTACT);
+        const stopped = await declineVia(decisionStore, decisionDb, decisionCard, { autonomy,
+          ...(state === "unmatched" ? { token: "0000000000000000" } : {}),
+          ...(state === "recording_failed" ? { tableErrors: {
+            paige_pending_confirmations: ({ op }) => op === "update" ? { code: "42501", message: "fixture recording denied" } : null,
+          } } : {}), streamScript: [call, call, DECLINE_REPLY] });
+        const terminal = stopped.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        const resultMessages = replyRequests(stopped).flatMap((r) => (r.messages ?? []).filter((m) => m.role === "tool").map((m) => m.content)).join("\n");
+        assert(`40.4b16 ${autonomy} ${call.name} ${state}: decline cannot file a new decision or mint a confirmation binding in any model round`,
+          stopped.status === 200 && decisionStore.rows[0].consumed === (state === "matched")
+            && decisionStore.rows.length === 1 && cardsOf(stopped.bodyText).length === 0
+            && !(stopped.rec.inserts ?? []).some((i) => i.table === "paige_pending_approvals")
+            && !stopped.rec.rpc.some((c) => ["prepare_pipeline_archive_as_paige", "prepare_pipeline_folder_archive_as_paige"].includes(c.name))
+            && !framesOf(stopped.bodyText).some((f) => f.approval_queued?.length)
+            && !(terminal?.approval_queued?.length) && !terminal?.paige_resume && resumedFrames(stopped.bodyText).length === 0
+            && !/"confirmation_token"\s*:/.test(resultMessages) && replyRequests(stopped).length >= 3
+            && toldModel(stopped).includes(state === "recording_failed" ? "confirmation_context_unavailable" : "declined_turn_requires_new_instruction"),
+          JSON.stringify({ tool: call.name, autonomy, state, inserts: stopped.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+            previewCalls: stopped.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)),
+            queued: terminal?.approval_queued, rounds: replyRequests(stopped).length }));
+      }
+    }
+    for (const call of decisionWriters) {
+      const positiveStore = makeConfirmStore(); const positiveDb = crmDb();
+      const positive = await crmDrive(positiveStore, positiveDb, { toolCall: call,
+        extraService: { paige_pending_approvals: () => [{ id: OWN }] },
+        extraRpc: { prepare_pipeline_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null },
+          prepare_pipeline_folder_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null } } });
+      assert(`40.4b17 fresh ${call.name}: ordinary authorized decision preparation remains available without a decline`,
+        positive.status === 200 && (call.name === "propose_action"
+          ? (positive.rec.inserts ?? []).filter((i) => i.table === "paige_pending_approvals").length === 1
+          : positive.rec.rpc.filter((c) => c.name === (call.name === "pipeline_archive_preview" ? "prepare_pipeline_archive_as_paige" : "prepare_pipeline_folder_archive_as_paige")).length === 1)
+          && !toldModel(positive).includes("declined_turn_requires_new_instruction"),
+        JSON.stringify({ tool: call.name, inserts: positive.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+          previewCalls: positive.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)) }));
+    }
     for (const tokenKind of ["bare", "scoped", "same"]) {
       const mixedStore = makeConfirmStore(); const mixedDb = crmDb();
       const declinedCard = await proposeVia(mixedStore, mixedDb, CONTACT);

@@ -10551,9 +10551,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
 
         // Not now grants no new mutation authority for this request, including later model rounds.
-        // Use the existing authoritative mutator classification before any native door or proposal;
-        // reads remain available. Failed recording retains its existing uncertainty error.
-        if (declinedConfirmations.length > 0 && MUTATING_TOOLS.has(tc.function.name)) {
+        // Keep the existing mutator classification and also stop its three exempt persisted
+        // decision writers. Reads and in-memory drafts remain available; no global risk changes.
+        // Failed recording retains its existing uncertainty error.
+        if (declinedConfirmations.length > 0 && (MUTATING_TOOLS.has(tc.function.name)
+            || tc.function.name === "propose_action" || tc.function.name === "pipeline_archive_preview"
+            || tc.function.name === "pipeline_folder_archive_preview")) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false, not_applied: true, refused_before_run: true,
             error: cancellationsRecorded ? "declined_turn_requires_new_instruction" : "confirmation_context_unavailable",

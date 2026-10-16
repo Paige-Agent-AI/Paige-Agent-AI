@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restore the existing decline instruction at shared dis
 FLOW_PROTOTYPE: NOT_REQUIRED: existing Not now interaction repaired without introducing controls or workflow states.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO customers decline an approval once and receive a reply that recognizes their choice.
 VISUAL_DIRECTION: PASS: existing Chat/card presentation retained; no rendered visual change claimed.
-AUTOMATED_EVIDENCE: PASS: current decline-effect-fence checkpoint passes 1082 actual-handler assertions and 195 focused tests across seven suites; the successful-decline escape and its distinct failing-first result are recorded below.
+AUTOMATED_EVIDENCE: PASS: current decision-artifact correction passes 1103 actual-handler assertions; prior 195 focused tests across seven suites remain predecessor evidence. Both failing-first results and their exact scope are recorded below.
 STATIC_EVIDENCE: PASS: bounded source diff, syntax and whitespace checks, focused harness ESLint and offline actual Deno comparison: base/head each nine inherited diagnostics, no new/increased diagnostic. Protected fingerprints, extractors, metadata and CI remain untouched for lead review/renewal.
 RENDERED_EVIDENCE: UNVERIFIED: isolated server repair; no production browser, provider-generated reply or viewport proof collected here.
 BEHAVIORAL_EVIDENCE: PASS: actual ordinary interactive Request with server-loaded prior approval history, actual Gateway/Chat/CRM handlers, original confirmation-store comparisons and native terminal call exercised at the recording SDK/model boundary.
@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport observation in
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated viewport observation in this isolated repair.
 UNVERIFIED: production behavior, live provider wording, authenticated paired accounts, Live-specific behavior, full 18/50 disposition and final owner acceptance.
 OWNER_INTENT: restore usable governed business actions for every eligible current and future SOLO business while respecting a person's decision not to proceed.
-MUST_NOT_HAPPEN: asking the person to make the same decline again, treating cancellation-pass success as matched native evidence, or dispatching/proposing any classified mutation on a decline-bearing turn regardless of cancellation persistence or model/AUTO arguments.
+MUST_NOT_HAPPEN: asking the person to make the same decline again, treating cancellation-pass success as matched native evidence, or dispatching a classified mutation or persisted decision-artifact writer on a decline-bearing turn regardless of cancellation persistence or model/AUTO arguments.
 MUST_PRESERVE: canonical confirmation selection/consumption, exact stored approval, actor/tenant scope, INT-346 admission/execution/settlement, native writers, duplicate prevention, canonical results, receipts, replay and no positive approval resume on pure decline.
 ACCEPTANCE_CRITERIA: decline-bearing requests dispatch no classified mutation or proposal under confirm/AUTO or mixed tokens; reads and fresh explicit requests remain authorized; unknown effects remain unretried; ordinary authenticated production proof remains owed.
 MOTION_PURPOSE: NONE: no motion change.
@@ -121,3 +121,29 @@ The accompanying commit does not modify runtime, tests, SQL, configuration,
 action-risk classification or activation. Final composed review and exact-head
 hosted CI remain required before merge. Production Chat remains the prior
 verified v421 until an actual corrected deployment/readback establishes otherwise.
+
+## Review follow-up: persisted decision artifacts
+
+PR2240 review thread PRRT_kwDOSAAXqM6tPsYG identified an actual remaining path:
+propose_action is deliberately exempt from the global mutation gate but files
+paige_pending_approvals. Source inspection also identified the two exempt archive
+preview writers that persist native confirmation bindings. Their global exemption
+is correct: normal customers must not approve being shown a proposal. The shared
+request-local decline fence now additionally names only those three existing
+persisted decision writers. The three in-memory generators and reads remain
+outside this additional fence; no global risk, authority or approval changes.
+
+Failing-first at predecessor e3730e7f: 1085 passing /18 failing actual-handler
+assertions. Every proposal/preview case fails in both confirm/AUTO lanes with
+matched, unmatched and failed recording, across repeated continuation rounds;
+three fresh-request positive controls already pass. The final corrected actual
+handler passes1103/0 (exit0). Negatives inspect the actual approval-table insert,
+SSE and canonical approval_queued, both native preview RPCs, returned confirmation
+tokens, confirmation cards and resume frames. They do not merely count CRM calls.
+The three fresh valid decision-preparation controls still pass after the repair.
+Model/SDK recording adapters are used; no real message, archive or provider call.
+
+The prior green hosted head e3730e7f is not release authority for this successor.
+Fresh immutable Independent Review, bounded fingerprint renewal and exact-head CI
+are required. This source checkpoint changes no production activation, provider,
+credentials, database, original18/50 scope or current Chat421 release identity.

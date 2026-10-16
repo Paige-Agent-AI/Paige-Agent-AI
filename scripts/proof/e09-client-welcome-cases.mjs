@@ -331,6 +331,16 @@ export async function runWelcomeCases(ctx) {
       }else{assert.equal(loaded.status,'configuration_required');assert.equal(loaded.expected_token,null);unchangedRefusal(()=>save(null),'55000');}
     }finally{setConfig(config);}
   });
+  if(entry)for(const useForeignVersion of [true,false])check(useForeignVersion?
+    'Unconfigured foreign customer cannot borrow another customer version token':
+    'Unconfigured foreign customer cannot borrow another business question with its own version',()=>{
+    const prior=row(sql(`SELECT features FROM public.tenants WHERE id=${lit(ids.tb)}`));
+    try{sql(`UPDATE public.tenants SET features='{}' WHERE id=${lit(ids.tb)}`);
+      const own=state(ids.b);assert.equal(own.profile.id,ids.cb);assert.deepEqual(own.fields,[]);
+      const token=useForeignVersion?state().expected_token:own.expected_token;
+      unchangedRefusal(()=>save(token,profile,{goal:'Foreign question must not be accepted'},ids.b),useForeignVersion?'40001':'22023');
+    }finally{sql(`UPDATE public.tenants SET features=${json(prior)} WHERE id=${lit(ids.tb)}`);}
+  });
   for(const [name,value]of [
     ['null authored config',null],['slug-only authored config',{slug:'test-welcome'}],
     ['malformed intake shape',{...config,intake:{goal:'invalid'}}],

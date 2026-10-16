@@ -264,6 +264,8 @@ Deno.serve(async (req) => {
       agreement_version,
       signed_pdf_path,
       signature_data: {
+        actor_user_id: userId,
+        tenant_id: profile.tenant_id,
         typed_name,
         has_drawn_signature: !!sigImg,
         e_sign_consent,

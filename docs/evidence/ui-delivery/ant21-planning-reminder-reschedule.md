@@ -32,7 +32,7 @@ MUST_NOT_HAPPEN: editing due_at while reporting a reminder saved, mixed edits si
 MUST_PRESERVE: caller profile/tenant/member/SOLO and target-work authority, incumbent native field permissions, exact version/CAS, complete native receipt response, atomic audit/receipt, native future marker rearm, worker claim fence, task/milestone dueAt path and existing recovery holds.
 ACCEPTANCE_CRITERIA: creator/eligible native admin saves future remind_at only; native role/tenant/type/terminal/version/time negatives refuse; canonical refreshed time matches before success; task due dates remain independent; native transactional and active rendered proof pass.
 PROTECTED_SEAMS: affected native Planning authorization/mutation/version/receipt/readback and existing editor feedback are explicitly tested; Auth/provisioning/entitlement/billing, Spine approval/autonomy, Chat/Live admission, credentials/Vault, provider sends, jobs/worker source and transcript/shell geometry are unchanged.
-INTERNAL_BUILD_IDENTITY: base=205c81ce9ccffe8f9e46fd8361d4d9db3a321cae; candidate=accompanying successor; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108160000 Planning integration); edge=PROOF_OWED(ordered reviewed composition); evidence=docs/evidence/ui-delivery/ant21-planning-reminder-reschedule.md
+INTERNAL_BUILD_IDENTITY: base=205c81ce9ccffe8f9e46fd8361d4d9db3a321cae; candidate=accompanying successor; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108190000 Planning integration); edge=PROOF_OWED(ordered reviewed composition); evidence=docs/evidence/ui-delivery/ant21-planning-reminder-reschedule.md
 RELEASE_CHANNEL: development: isolated local correction; no customer-reachability claim.
 RELEASE_CLASSIFICATION: internal-only: existing active reminder reschedule repair.
 CUSTOMER_RELEASE_IDENTITY: none: no completed customer restoration or publication decision.
@@ -186,3 +186,8 @@ remain separate integration work. No new writer, scheduler, ledger, approval mec
 special case, provider activation, delivery/recurrence or creation-deduplication claim is added.
 Distinct review of this final composition, exact-head CI/Preview, ordered production application and
 readback, authenticated ordinary Chat/Work parity, Live and owner acceptance remain **PROOF OWED**.
+
+
+## Forward-only ordering correction - 2026-10-16
+
+Production records Portal migration `20271108150000` from main `5dfb5156785681ebb8fbad7237793a0bf0f9c92e`. This still-unpublished Planning migration is now `20271108190000_planning_native_receipts_history.sql`, after publication-context `20271108170000` and Research `20271108180000`. SQL bodies and runtime source are unchanged; the native fixture and receipt evidence reference the new filename. Earlier version references remain historical evidence. No applied history is edited and no `--include-all` is used. Fresh Independent Review, exact-head CI, normal deployment and authenticated proof remain required.

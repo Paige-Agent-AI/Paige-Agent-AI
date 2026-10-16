@@ -884,37 +884,37 @@
       "tool": "plan_add_milestone",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_assign_task",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_create",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_remove_item",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_set_reminder",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_update_item",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "20271108160000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
+      "evidence": "20271108190000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "platform_post_notification",

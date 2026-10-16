@@ -25,7 +25,7 @@ MUST_PRESERVE: Existing Auth, consents, invitation, single assistant, domain rec
 ACCEPTANCE_CRITERIA: Composer and controls remain within the viewport; typing/menu/keyboard resize retain the same draft; navigation remains reachable and closes with focus return; native zoom is preserved.
 MOTION_PURPOSE: NONE: No authored animation or decorative motion is introduced.
 PROTECTED_SEAMS: Affected: responsive geometry, accessibility and assistant/composer lifetime, covered by browser and focused tests. Not affected: identity/tenant permissions, account choice, signup/billing/provisioning, approvals/autonomy, Spine/tool execution, canonical writes/readback, Rail/audit/Memory, Live state, browser/Vault/credentials, providers/effects and job scheduling. These source contracts are unchanged.
-INTERNAL_BUILD_IDENTITY: development candidate based on09fc1b6a10e8e1db728a5583172c3df98de9212a; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; final SHA recorded in PR receipt after commit.
+INTERNAL_BUILD_IDENTITY: development candidate based on09fc1b6a10e8e1db728a5583172c3df98de9212a; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-customer-mobile-fit/report.json; final SHA recorded in PR receipt after commit.
 RELEASE_CHANNEL: development: local presentation candidate, no production delivery yet.
 RELEASE_CLASSIFICATION: internal-only: bounded prelaunch mobile fit correction.
 CUSTOMER_RELEASE_IDENTITY: none: no new customer version or announcement.

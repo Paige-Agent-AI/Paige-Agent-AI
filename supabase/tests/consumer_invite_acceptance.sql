@@ -380,5 +380,199 @@ SELECT * FROM pg_temp.e09_action_case('empty question','{}',false,'question',' '
 SELECT * FROM pg_temp.e09_action_case('oversized question','{}',false,'question',repeat('x',4001));
 SELECT * FROM pg_temp.e09_action_case('null response kind','{}',false,NULL);
 
+-- E09_DOCUMENTS_BEGIN: actual native file/Storage/Rail contracts, same rolled-back suite.
+SELECT is(has_function_privilege('anon','public.client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)','EXECUTE'),false,'anonymous upload reservation denied');
+SELECT is(has_function_privilege('authenticated','public._client_portal_file_projection(public.client_files)','EXECUTE'),false,'internal file projector is not a consumer endpoint');
+SELECT is(has_table_privilege('authenticated','public.paige_client_events','SELECT'),false,'raw Rail remains closed; use its incumbent scoped projection');
+SELECT ok((SELECT NOT public AND file_size_limit=20971520 AND cardinality(allowed_mime_types)=4 FROM storage.buckets WHERE id='client-files'),'intended bucket is private with the approved20MB/type limit');
+SELECT ok(NOT EXISTS(SELECT 1 FROM pg_publication WHERE pubname='supabase_realtime') OR EXISTS(SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='client_files'),'incumbent file subscriptions have native publication coverage where Realtime exists');
+
+CREATE FUNCTION pg_temp.e09_document_snapshot() RETURNS jsonb LANGUAGE sql AS $$
+ SELECT jsonb_build_object('files',(SELECT jsonb_agg(to_jsonb(f) ORDER BY id) FROM public.client_files f),
+ 'objects',(SELECT jsonb_agg(to_jsonb(o) ORDER BY id) FROM storage.objects o WHERE bucket_id='client-files'),
+ 'audit',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM public.audit_logs a),
+ 'rail',(SELECT jsonb_agg(to_jsonb(e) ORDER BY id) FROM public.paige_client_events e))
+$$;
+CREATE FUNCTION pg_temp.e09_document_case(_label text,_options jsonb DEFAULT '{}',_allow boolean DEFAULT false)
+RETURNS SETOF text LANGUAGE plpgsql AS $$
+DECLARE _actor uuid:=gen_random_uuid();_other uuid:=gen_random_uuid();_contact uuid:=gen_random_uuid();_survivor uuid:=gen_random_uuid();_file uuid:=gen_random_uuid();
+ _tenant uuid:=CASE WHEN _options?'new_business' THEN 'e0901000-0000-0000-0000-000000000002'::uuid ELSE 'e0901000-0000-0000-0000-000000000001'::uuid END;
+ _foreign uuid:='e0901000-0000-0000-0000-000000000002';_owner uuid:=(SELECT owner_id FROM e09_history_fixture);
+ _before jsonb;_result jsonb;_path text;_denied boolean:=false;_count bigint;_caller text;_failure text;_staff_context uuid;
+ _staff_file uuid:=gen_random_uuid();_internal_file uuid:=gen_random_uuid();_shared_path text;_internal_path text;
+BEGIN
+ IF _options?'new_business' THEN
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES(_tenant,_owner,'owner','active',true,now());
+ END IF;
+ INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data)
+ VALUES(_actor,'authenticated','authenticated','document-client-'||_actor||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ (_other,'authenticated','authenticated','document-other-'||_other||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+ INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,linked_user_id)
+ VALUES(_contact,_tenant,_owner,'Test','Document client','active',_actor),(_survivor,_tenant,_owner,'Test','Survivor','active',NULL);
+ IF _options?'hybrid' THEN
+  INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES(_foreign,_actor,'admin','active',false,now());
+  INSERT INTO public.user_roles(user_id,role) VALUES(_actor,'admin'::public.app_role) ON CONFLICT DO NOTHING;
+  UPDATE public.profiles SET active_tenant_id=_foreign WHERE user_id=_actor;
+ END IF;
+ PERFORM set_config('test.actor',_actor::text,true);
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+ SET LOCAL ROLE authenticated;
+ _caller:=current_user;
+ BEGIN
+  _result:=public.client_portal_begin_file_upload(_file,CASE WHEN _options?'wrong_client' THEN _other ELSE _contact END,
+   CASE WHEN _options?'bad_name' THEN '../secret.pdf' ELSE 'Preparation.pdf' END,
+   CASE WHEN _options?'bad_type' THEN 'text/html' ELSE 'application/pdf' END,
+   CASE WHEN _options?'oversized' THEN 20971521 ELSE 4 END,
+   CASE WHEN _options?'wrong_business' THEN _foreign ELSE _tenant END);
+ EXCEPTION WHEN OTHERS THEN _denied:=true; END;
+ RESET ROLE;
+ RETURN NEXT is(_caller,'authenticated',_label||': actual native customer role');
+ IF _options?'wrong_client' OR _options?'bad_name' OR _options?'bad_type' OR _options?'oversized' OR _options?'wrong_business' THEN
+  RETURN NEXT ok(_denied,_label||': reservation refused');
+  RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),0::bigint,_label||': no reservation effect');
+ ELSE
+  RETURN NEXT ok(NOT _denied,_label||': authorized reservation');
+  _path:=_result->>'storage_path';
+  RETURN NEXT is(_path,_tenant::text||'/'||_contact::text||'/client_upload/'||_actor::text||'/'||_file::text,_label||': exact server namespace');
+  -- Physical Storage transport is NOT simulated by a metadata row. The actual
+  -- database policies are exercised here; live byte transfer remains proof owed.
+  IF NOT (_options?'no_object') THEN
+   IF _options?'bad_size' OR _options?'bad_mime' OR _options?'bad_owner' THEN
+    INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES('client-files',_path,
+     CASE WHEN _options?'bad_owner' THEN _other::text ELSE _actor::text END,
+     jsonb_build_object('size',CASE WHEN _options?'bad_size' THEN 5 ELSE 4 END,'mimetype',CASE WHEN _options?'bad_mime' THEN 'text/html' ELSE 'application/pdf' END));
+   ELSE
+    SET LOCAL ROLE authenticated;
+    INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES('client-files',_path,_actor::text,jsonb_build_object('size',4,'mimetype','application/pdf'));
+    RESET ROLE;
+   END IF;
+  END IF;
+  SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),0::bigint,_label||': pending object cannot be read');
+  RESET ROLE;
+  IF _options?'archived' THEN UPDATE public.clients SET status='archived' WHERE id=_contact; END IF;
+  IF _options?'merged' THEN
+   PERFORM set_config('request.jwt.claims','{"role":"service_role"}',true);SET LOCAL ROLE service_role;
+   PERFORM set_config('app.crm_merge_lineage_write','on',true);
+   UPDATE public.clients SET merged_into_contact_id=_survivor,merged_at=now() WHERE id=_contact;
+   PERFORM set_config('app.crm_merge_lineage_write','off',true);RESET ROLE;
+   RETURN NEXT is((SELECT merged_into_contact_id FROM public.clients WHERE id=_contact),_survivor,_label||': merged fixture reaches the intended guard');
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+  END IF;
+  IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='suspended' WHERE id=_tenant; END IF;
+  IF _options?'wrong_actor' THEN
+   PERFORM set_config('test.actor',_other::text,true);
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_other,'role','authenticated')::text,true);
+  END IF;
+  _before:=pg_temp.e09_document_snapshot();_denied:=false;
+  SET LOCAL ROLE authenticated;
+  BEGIN _result:=public.client_portal_finish_file_upload(_file,_tenant); EXCEPTION WHEN OTHERS THEN _denied:=true;_failure:=SQLERRM; END;
+  RESET ROLE;
+  RETURN NEXT is(_denied,NOT _allow,_label||': expected finalization outcome');
+  IF _options?'audit_failure' THEN RETURN NEXT is(_failure,'synthetic file audit refusal',_label||': intended audit guard caused refusal');END IF;
+  IF NOT _allow THEN RETURN NEXT is(pg_temp.e09_document_snapshot(),_before,_label||': no file/audit/Rail effects');
+  ELSE
+   RETURN NEXT is(_result->>'upload_state','ready',_label||': final record ready');
+   RETURN NEXT is((SELECT count(*) FROM public.audit_logs WHERE entity_id=_file AND action='file_uploaded' AND user_id=_actor),1::bigint,_label||': durable exact actor audit');
+   RETURN NEXT is((SELECT count(*) FROM public.paige_client_events WHERE ref_id=_file AND contact_id=_contact AND tenant_id=_tenant AND actor_user_id=_actor AND event_kind='client.document_uploaded'),1::bigint,_label||': single canonical Rail event');
+   SET LOCAL ROLE authenticated;
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),1::bigint,_label||': customer metadata reload');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),1::bigint,_label||': customer object reload');
+   _result:=public.client_portal_file_upload_status(_file,_tenant);
+   RETURN NEXT is((_result->>'object_verified')::boolean,true,_label||': independently verified saved object');
+   _result:=public.client_portal_file_upload_status(_other,_tenant);
+   RETURN NEXT is(_result,jsonb_build_object('file',NULL,'object_verified',false),_label||': unrelated candidate status reveals no record');
+   _denied:=false;
+   BEGIN INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES('client-files',_tenant::text||'/'||_contact::text||'/client_upload/'||_actor::text||'/'||_other::text,_actor::text,'{}');
+   EXCEPTION WHEN OTHERS THEN _denied:=true;END;
+   RETURN NEXT ok(_denied,_label||': unreserved object path refused');
+   _denied:=false;
+   BEGIN INSERT INTO public.client_files(tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,visibility)
+    VALUES(_tenant,_contact,_actor,_path||'-forged','forged.pdf','client_upload');EXCEPTION WHEN OTHERS THEN _denied:=true;END;
+   RETURN NEXT ok(_denied,_label||': direct forged customer metadata refused');
+   RESET ROLE;
+   _before:=pg_temp.e09_document_snapshot();
+   SET LOCAL ROLE authenticated;_result:=public.client_portal_finish_file_upload(_file,_tenant);RESET ROLE;
+   RETURN NEXT is(pg_temp.e09_document_snapshot(),_before,_label||': retry has no duplicate receipt or mutation');
+   IF _options?'hybrid' THEN RETURN NEXT is((SELECT active_tenant_id FROM public.profiles WHERE user_id=_actor),_foreign,_label||': unrelated active staff workspace preserved');END IF;
+   _staff_context:=(SELECT active_tenant_id FROM public.profiles WHERE user_id=_owner);
+   UPDATE public.profiles SET active_tenant_id=_tenant WHERE user_id=_owner;
+   PERFORM set_config('test.actor',_owner::text,true);
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_owner,'role','authenticated')::text,true);
+   SET LOCAL ROLE authenticated;
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),1::bigint,_label||': owner reloads the same canonical file');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),1::bigint,_label||': actual owner can retrieve its customer file');
+   _shared_path:=_tenant::text||'/'||_contact::text||'/shared/'||_staff_file::text||'.pdf';
+   _internal_path:=_tenant::text||'/'||_contact::text||'/internal/'||_internal_file::text||'.pdf';
+   INSERT INTO storage.objects(bucket_id,name,owner_id,metadata)
+    VALUES('client-files',_shared_path,_owner::text,jsonb_build_object('size',4,'mimetype','application/pdf')),
+    ('client-files',_internal_path,_owner::text,jsonb_build_object('size',4,'mimetype','application/pdf'));
+   INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility)
+    VALUES(_staff_file,_tenant,_contact,_owner,_shared_path,'Shared preparation.pdf','application/pdf',4,'shared'),
+    (_internal_file,_tenant,_contact,_owner,_internal_path,'Internal preparation.pdf','application/pdf',4,'internal');
+   PERFORM public.record_rail_event(p_contact_id=>_contact,p_event_kind=>'client.document_uploaded',p_surface=>'client_portal',
+    p_actor_type=>'client',p_title=>'Existing staff producer',p_ref_table=>'client_files',p_ref_id=>_staff_file,p_tenant_id=>_tenant);
+   -- Actual writer above ran with the owner JWT/role. Raw Rail SELECT remains
+   -- deliberately revoked in production; fixture-administrator readback below
+   -- proves the effect without inventing an ordinary caller grant.
+   RESET ROLE;
+   RETURN NEXT is((SELECT count(*) FROM public.paige_client_events WHERE ref_id=_staff_file AND actor_user_id=_owner AND tenant_id=_tenant),1::bigint,
+    _label||': incumbent staff producer without a customer identity retains native Rail authority');
+   UPDATE public.profiles SET active_tenant_id=_staff_context WHERE user_id=_owner;
+   PERFORM set_config('test.actor',_actor::text,true);
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+   SET LOCAL ROLE authenticated;
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_staff_file),1::bigint,_label||': customer reloads the incumbent owner-shared file');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_shared_path),1::bigint,_label||': owner-shared object is authorized');
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_internal_file),0::bigint,_label||': internal metadata stays private');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_internal_path),0::bigint,_label||': internal bytes stay private');
+   RESET ROLE;
+   -- A foreign caller sees neither file nor object and cannot use status as an oracle.
+   PERFORM set_config('test.actor',_other::text,true);
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_other,'role','authenticated')::text,true);
+   SET LOCAL ROLE authenticated;
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),0::bigint,_label||': wrong customer metadata denied');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),0::bigint,_label||': wrong customer object denied');
+   RESET ROLE;
+   PERFORM set_config('test.actor',_actor::text,true);
+   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
+   SET LOCAL ROLE authenticated;
+   UPDATE storage.objects SET metadata='{}' WHERE bucket_id='client-files' AND name=_path;GET DIAGNOSTICS _count=ROW_COUNT;
+   RETURN NEXT is(_count,0::bigint,_label||': object overwrite refused');
+   RESET ROLE;
+   UPDATE public.clients SET status='archived' WHERE id=_contact;
+   SET LOCAL ROLE authenticated;
+   RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),0::bigint,_label||': revoked customer loses metadata access');
+   RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),0::bigint,_label||': revoked customer loses object access');
+   RESET ROLE;
+  END IF;
+  IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='active' WHERE id=_tenant; END IF;
+ END IF;
+ PERFORM set_config('test.actor','',true);PERFORM set_config('request.jwt.claims','{}',true);
+END $$;
+
+SELECT * FROM pg_temp.e09_document_case('ordinary customer file', '{}',true);
+SELECT * FROM pg_temp.e09_document_case('separate staff workspace', '{"hybrid":true}',true);
+SELECT * FROM pg_temp.e09_document_case('other eligible business', '{"new_business":true}',true);
+SELECT * FROM pg_temp.e09_document_case('wrong expected client','{"wrong_client":true}');
+SELECT * FROM pg_temp.e09_document_case('wrong business','{"wrong_business":true}');
+SELECT * FROM pg_temp.e09_document_case('unsafe file name','{"bad_name":true}');
+SELECT * FROM pg_temp.e09_document_case('unapproved type','{"bad_type":true}');
+SELECT * FROM pg_temp.e09_document_case('over20MB','{"oversized":true}');
+SELECT * FROM pg_temp.e09_document_case('missing object','{"no_object":true}');
+SELECT * FROM pg_temp.e09_document_case('wrong object size','{"bad_size":true}');
+SELECT * FROM pg_temp.e09_document_case('wrong object MIME','{"bad_mime":true}');
+SELECT * FROM pg_temp.e09_document_case('wrong object owner','{"bad_owner":true}');
+SELECT * FROM pg_temp.e09_document_case('wrong finalizing customer','{"wrong_actor":true}');
+SELECT * FROM pg_temp.e09_document_case('revoked before finalize','{"archived":true}');
+SELECT * FROM pg_temp.e09_document_case('merged before finalize','{"merged":true}');
+SELECT * FROM pg_temp.e09_document_case('suspended before finalize','{"tenant_inactive":true}');
+CREATE FUNCTION pg_temp.e09_reject_document_audit() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+ IF NEW.action='file_uploaded' THEN RAISE EXCEPTION 'synthetic file audit refusal';END IF;RETURN NEW;END$$;
+CREATE TRIGGER e09_document_audit_refusal BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION pg_temp.e09_reject_document_audit();
+SELECT * FROM pg_temp.e09_document_case('failed audit rolls back file and canonical Rail','{"audit_failure":true}');
+DROP TRIGGER e09_document_audit_refusal ON public.audit_logs;
+-- E09_DOCUMENTS_END
+
 SELECT * FROM finish();
 ROLLBACK;

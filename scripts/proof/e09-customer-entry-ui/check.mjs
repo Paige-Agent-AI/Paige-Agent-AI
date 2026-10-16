@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
-if(process.argv.includes('--actions')){
+if(process.argv.includes('--documents')){
+ await import('./documents-check.mjs');
+}else if(process.argv.includes('--actions')){
  await import('./actions-check.mjs');
 }else{
 const gateway=process.argv.includes('--gateway');

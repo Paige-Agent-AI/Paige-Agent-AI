@@ -6161,7 +6161,7 @@ try {
   // discarded the reply, so a consumed proposal with a misleading answer escaped its assertions.
   const DECLINE_INTENT = "93939393-9393-4393-8393-939393939393";
   const DECLINE_REPLY = "Understood — you've chosen Not now for that proposal.";
-  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm" } = {}) => {
+  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm", bodyExtra = {}, unresolved = [] } = {}) => {
     let executor = null; let terminal = false;
     const history = [
       { id: SUSPENDED, role: "assistant", content: "I can create this contact once you approve.", seq: 2,
@@ -6170,11 +6170,11 @@ try {
       { id: "95959595-9595-4595-8595-959595959595", role: "user", content: "Create a contact for Dana Reyes.", seq: 1, bundle_ref: {} },
     ];
     return crmDrive(store, db, {
-      body: { declinedConfirmations: [token], requestIntentId: DECLINE_INTENT, interactive: { kind: "message" } },
+      body: { declinedConfirmations: [token], requestIntentId: DECLINE_INTENT, interactive: { kind: "message" }, ...bodyExtra },
       replyText: DECLINE_REPLY, streamScript, tableErrors,
       extraTables: {
         paige_chat_threads: () => [{ id: THREAD, caller_user_id: USER, tenant_id: CALLER_TENANT }],
-        paige_chat_turns: (filters) => filters.some(([op]) => op === "contains") ? [] : structuredClone(history),
+        paige_chat_turns: (filters) => filters.some(([op]) => op === "contains") ? structuredClone(unresolved) : structuredClone(history),
       },
       extraRpc: {
         resolve_tool_autonomy: { data: autonomy, error: null },
@@ -6406,6 +6406,9 @@ try {
         && (settled[0].args.p_bundle_ref?.paige_crm_result ?? []).length === 0
         && (settled[0].args.p_bundle_ref?.interactive?.effects ?? []).every((effect) => effect.tool === "crm_list_tasks"),
       JSON.stringify({ executions: db.executions, committed: db.committed.size, settled: settled.map((c) => c.args.p_bundle_ref) }));
+    assert("40.4b11 a decline-bearing turn still executes its authorized read-only CRM lookup",
+      declined.rec.from.some((query) => query.table === "tasks" && query.op === "select")
+        && toldModel(declined).includes('"tool_result"'), JSON.stringify(declined.rec.from.filter((q) => q.table === "tasks")));
     assert("40.4b6 decline reply and its canonical interactive terminal agree without rewriting prior approval history",
       settled.length === 1 && settled[0].client === "service" && settled[0].args.p_content === DECLINE_REPLY
         && wireAnswerMatchesSaved(declined.bodyText, settled[0].args.p_content) === null
@@ -6439,6 +6442,158 @@ try {
       unmatched.status === 200 && !st.rows[0].consumed && st.rows.length === 1 && db.executions.length === 0
         && db.committed.size === 0 && cardsOf(unmatched.bodyText).length === 0
         && /already chose Not now/.test(note) && /does not prove.*matched.*consumed/i.test(note), note);
+    // A successful cancellation is no authority for the reply model to choose another act.
+    // Exercise the actual Chat handler and actual CRM door, including repeated continuation calls,
+    // model confirm/key fields and an unmatched token whose no-error UPDATE consumed nothing.
+    for (const autonomy of ["confirm", "auto"]) {
+      for (const [label, call] of [
+        ["create", { ...CONTACT, args: { patch: { first_name: "Different", last_name: "Contact" }, confirm: true, idempotency_key: "decline-must-not-authorize" } }],
+        ["update", { name: "crm_update_contact", args: { contact_id: OWN, expected_updated_at: "2026-01-01T00:00:00Z", patch: { email: "changed@example.test" }, confirm: true } }],
+      ]) {
+        for (const matched of [true, false]) {
+          const stoppedStore = makeConfirmStore(); const stoppedDb = crmDb();
+          const stoppedCard = await proposeVia(stoppedStore, stoppedDb, CONTACT);
+          const stopped = await declineVia(stoppedStore, stoppedDb, stoppedCard, {
+            autonomy, ...(matched ? {} : { token: "0000000000000000" }),
+            streamScript: [call, call, DECLINE_REPLY],
+          });
+          const terminal = stopped.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+          assert(`40.4b9 ${autonomy} ${label} ${matched ? "matched" : "unmatched"}: successful decline pass cannot authorize CRM execution or a new proposal, even in later model rounds`,
+            stopped.status === 200 && stoppedStore.rows[0].consumed === matched
+              && stoppedDb.executions.length === 0 && stoppedDb.committed.size === 0 && doorCalls(stopped).length === 0
+              && stoppedStore.rows.length === 1 && cardsOf(stopped.bodyText).length === 0 && resumedFrames(stopped.bodyText).length === 0
+              && (terminal?.paige_crm_result ?? []).length === 0 && !terminal?.paige_resume
+              && replyRequests(stopped).length >= 3 && toldModel(stopped).includes("declined_turn_requires_new_instruction"),
+            JSON.stringify({ status: stopped.status, consumed: stoppedStore.rows[0].consumed, executions: stoppedDb.executions.length,
+              committed: stoppedDb.committed.size, doorCalls: doorCalls(stopped).length, rows: stoppedStore.rows.length,
+              cards: cardsOf(stopped.bodyText), rounds: replyRequests(stopped).length }));
+        }
+      }
+    }
+    // The brake belongs to this HTTP turn, not the conversation or the consumed proposal.
+    for (const autonomy of ["confirm", "auto"]) {
+      for (const call of [
+        { name: "deal_create", args: DEAL.args },
+        { name: "deal_move_stage", args: { deal_id: OWN, target_stage_id: STAGE, expected_version: 1 } },
+        { name: "crm_add_note", args: { client_ref: DEAL_CLIENT_REF, body: "A note chosen by the reply model" } },
+        { name: "crm_file_document", args: { file_id: OWN, client_ref: DEAL_CLIENT_REF } },
+        { name: "crm_update_pipeline_stage", args: { client_ref: DEAL_CLIENT_REF, status: "client_active" } },
+        { name: "crm_assign_contact", args: { client_ref: DEAL_CLIENT_REF, user_id: USER } },
+        { name: "pipeline_configure", args: { command: { type: "move-deal", deal_id: OWN, target_stage_id: STAGE } } },
+        { name: "knowledge_update", args: { id: OWN, expected_revision: 1, patch: { title: "Changed" } } },
+        { name: "save_to_knowledge_base", args: { title: "Declined", content: "Do not store" } },
+        { name: "plan_set_reminder", args: { title: "Do not schedule", remind_at: "2099-01-01T12:00:00Z", channel: "in_app" } },
+        { name: "growth_page_publish", args: { page_id: OWN } },
+      ]) {
+        const siblingStore = makeConfirmStore(); const siblingDb = crmDb();
+        const siblingCard = await proposeVia(siblingStore, siblingDb, CONTACT);
+        const sibling = await declineVia(siblingStore, siblingDb, siblingCard, { autonomy, streamScript: [call, DECLINE_REPLY] });
+        const terminal = sibling.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        assert(`40.4b12 ${autonomy} ${call.name}: decline fence covers aliases and existing domain paths before any proposal or native writer`,
+          sibling.status === 200 && siblingStore.rows[0].consumed === true && siblingStore.rows.length === 1
+            && siblingDb.executions.length === 0 && siblingDb.committed.size === 0 && doorCalls(sibling).length === 0
+            && cardsOf(sibling.bodyText).length === 0 && toldModel(sibling).includes("declined_turn_requires_new_instruction")
+            && !sibling.rec.rpc.some((c) => ["configure_tenant_pipeline", "configure_tenant_pipeline_as_paige", "assign_contact", "update_knowledge_document", "plan_set_reminder", "record_capability_run"].includes(c.name))
+            && sibling.rec.functions.length === 0
+            && !sibling.rec.from.some((q) => ["clients", "deals", "tasks", "client_notes", "client_files", "pipelines", "knowledge_documents", "plan_items"].includes(q.table) && q.op !== "select")
+            && !framesOf(sibling.bodyText).some((frame) => frame.paige_step?.kind === "action" && ["running", "done"].includes(frame.paige_step.status))
+            && !(terminal?.interactive?.effects ?? []).some((effect) => /succeeded|approval_required|accepted/.test(effect.outcome)),
+          JSON.stringify({ status: sibling.status, tool: call.name, rows: siblingStore.rows.length, calls: siblingDb.executions.length,
+            cards: cardsOf(sibling.bodyText), native: sibling.rec.rpc.filter((c) => /configure_tenant_pipeline|assign_contact/.test(c.name)) }));
+      }
+    }
+    // These existing tools are exempt from the business-mutation risk gate, but persist
+    // a new approval or confirmation artifact. A decline must stop that decision work too.
+    const decisionWriters = [
+      { name: "propose_action", args: { action_type: "email", contact_id: OWN,
+        subject: "Your next session", body: "Confirming Tuesday at 3pm.", summary: "Email Dana about booking" } },
+      { name: "pipeline_archive_preview", args: { pipeline_ref: "PPL-QA123" } },
+      { name: "pipeline_folder_archive_preview", args: { folder_id: OWN } },
+    ];
+    for (const autonomy of ["confirm", "auto"]) for (const call of decisionWriters) {
+      for (const state of ["matched", "unmatched", "recording_failed"]) {
+        const decisionStore = makeConfirmStore(); const decisionDb = crmDb();
+        const decisionCard = await proposeVia(decisionStore, decisionDb, CONTACT);
+        const stopped = await declineVia(decisionStore, decisionDb, decisionCard, { autonomy,
+          ...(state === "unmatched" ? { token: "0000000000000000" } : {}),
+          ...(state === "recording_failed" ? { tableErrors: {
+            paige_pending_confirmations: ({ op }) => op === "update" ? { code: "42501", message: "fixture recording denied" } : null,
+          } } : {}), streamScript: [call, call, DECLINE_REPLY] });
+        const terminal = stopped.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        const resultMessages = replyRequests(stopped).flatMap((r) => (r.messages ?? []).filter((m) => m.role === "tool").map((m) => m.content)).join("\n");
+        assert(`40.4b16 ${autonomy} ${call.name} ${state}: decline cannot file a new decision or mint a confirmation binding in any model round`,
+          stopped.status === 200 && decisionStore.rows[0].consumed === (state === "matched")
+            && decisionStore.rows.length === 1 && cardsOf(stopped.bodyText).length === 0
+            && !(stopped.rec.inserts ?? []).some((i) => i.table === "paige_pending_approvals")
+            && !stopped.rec.rpc.some((c) => ["prepare_pipeline_archive_as_paige", "prepare_pipeline_folder_archive_as_paige"].includes(c.name))
+            && !framesOf(stopped.bodyText).some((f) => f.approval_queued?.length)
+            && !(terminal?.approval_queued?.length) && !terminal?.paige_resume && resumedFrames(stopped.bodyText).length === 0
+            && !/"confirmation_token"\s*:/.test(resultMessages) && replyRequests(stopped).length >= 3
+            && toldModel(stopped).includes(state === "recording_failed" ? "confirmation_context_unavailable" : "declined_turn_requires_new_instruction"),
+          JSON.stringify({ tool: call.name, autonomy, state, inserts: stopped.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+            previewCalls: stopped.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)),
+            queued: terminal?.approval_queued, rounds: replyRequests(stopped).length }));
+      }
+    }
+    for (const call of decisionWriters) {
+      const positiveStore = makeConfirmStore(); const positiveDb = crmDb();
+      const positive = await crmDrive(positiveStore, positiveDb, { toolCall: call,
+        extraService: { paige_pending_approvals: () => [{ id: OWN }] },
+        extraRpc: { prepare_pipeline_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null },
+          prepare_pipeline_folder_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null } } });
+      assert(`40.4b17 fresh ${call.name}: ordinary authorized decision preparation remains available without a decline`,
+        positive.status === 200 && (call.name === "propose_action"
+          ? (positive.rec.inserts ?? []).filter((i) => i.table === "paige_pending_approvals").length === 1
+          : positive.rec.rpc.filter((c) => c.name === (call.name === "pipeline_archive_preview" ? "prepare_pipeline_archive_as_paige" : "prepare_pipeline_folder_archive_as_paige")).length === 1)
+          && !toldModel(positive).includes("declined_turn_requires_new_instruction"),
+        JSON.stringify({ tool: call.name, inserts: positive.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+          previewCalls: positive.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)) }));
+    }
+    for (const tokenKind of ["bare", "scoped", "same"]) {
+      const mixedStore = makeConfirmStore(); const mixedDb = crmDb();
+      const declinedCard = await proposeVia(mixedStore, mixedDb, CONTACT);
+      const approvedCard = await proposeVia(mixedStore, mixedDb, { ...CONTACT, args: { patch: { first_name: "Another", last_name: "Person" } } });
+      const token = tokenKind === "scoped" ? `${declinedCard.fingerprint}:${mixedStore.rows[0].issued_in_request}` : declinedCard.fingerprint;
+      const mixed = await declineVia(mixedStore, mixedDb, declinedCard, { token,
+        bodyExtra: { approvedConfirmations: [tokenKind === "same" ? declinedCard.fingerprint : approvedCard.fingerprint] },
+        streamScript: [CONTACT, DECLINE_REPLY], autonomy: "auto" });
+      const terminal = mixed.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+      assert(`40.4b13 ${tokenKind}: mixed approval/decline cannot construct a positive resume or execute either proposal`,
+        mixed.status === 200 && doorCalls(mixed).length === 0 && mixedDb.executions.length === 0 && mixedDb.committed.size === 0
+          && mixedStore.rows.length === 2 && !mixedStore.rows[1].consumed && resumedFrames(mixed.bodyText).length === 0
+          && cardsOf(mixed.bodyText).length === 0 && !terminal?.paige_resume && !terminal?.turn_state?.resumed
+          && toldModel(mixed).includes("declined_turn_requires_new_instruction"),
+        JSON.stringify({ status: mixed.status, executions: mixedDb.executions.length, calls: doorCalls(mixed).length,
+          rows: mixedStore.rows.length, consumed: mixedStore.rows.map((r) => r.consumed), resumed: resumedFrames(mixed.bodyText) }));
+    }
+    const freshStore = makeConfirmStore(); const freshDb = crmDb();
+    const freshCard = await proposeVia(freshStore, freshDb, CONTACT);
+    await declineVia(freshStore, freshDb, freshCard);
+    const fresh = await crmDrive(freshStore, freshDb, { toolCall: CONTACT,
+      extraRpc: { resolve_tool_autonomy: { data: "auto", error: null } } });
+    assert("40.4b10 a new explicit user request after decline retains ordinary AUTO CRM execution",
+      doorCalls(fresh).length === 1 && freshDb.executions.length === 1 && freshDb.committed.size === 1
+        && cardsOf(fresh.bodyText).length === 0 && replyRequests(fresh).every((body) => declineNote(body) === ""),
+      JSON.stringify({ executions: freshDb.executions.length, doorCalls: doorCalls(fresh).length, cards: cardsOf(fresh.bodyText) }));
+    const reminder = { title: "A fresh reminder", remind_at: "2099-01-01T12:00:00Z", channel: "in_app" };
+    const freshPlan = await crmDrive(freshStore, freshDb, { toolCall: { name: "plan_set_reminder", args: reminder },
+      extraRpc: { resolve_tool_autonomy: { data: "auto", error: null }, plan_set_reminder: { data: { ok: true, item_id: OWN }, error: null } },
+      extraTables: { plan_items: () => [{ id: OWN, tenant_id: CALLER_TENANT, updated_at: "2026-01-01T00:00:00Z",
+        title: reminder.title, summary: null, created_by: USER, item_type: "reminder", remind_at: reminder.remind_at,
+        remind_target: "user", remind_channel: "in_app", plan_id: null, assigned_to_user_id: USER, contact_id: null, status: "open" }] } });
+    assert("40.4b14 a fresh subsequent AUTO Planning request uses the native writer and verified readback normally",
+      freshPlan.rec.rpc.filter((c) => c.name === "plan_set_reminder").length === 1
+        && toldModel(freshPlan).includes('"success":true') && !toldModel(freshPlan).includes("declined_turn_requires_new_instruction")
+        && cardsOf(freshPlan.bodyText).length === 0 && replyRequests(freshPlan).every((body) => declineNote(body) === ""),
+      JSON.stringify({ rpc: freshPlan.rec.rpc.filter((c) => c.name === "plan_set_reminder"), cards: cardsOf(freshPlan.bodyText) }));
+    const unknownStore = makeConfirmStore(); const unknownDb = crmDb();
+    const unknownCard = await proposeVia(unknownStore, unknownDb, CONTACT);
+    const unknown = await declineVia(unknownStore, unknownDb, unknownCard, { autonomy: "auto", streamScript: [CONTACT, DECLINE_REPLY],
+      unresolved: [{ bundle_ref: { interactive: { effects: [{ tool: "crm_create_contact", outcome: "outcome_unknown" }] } } }] });
+    assert("40.4b15 an unresolved earlier effect keeps reconciliation precedence and is never retried on a decline turn",
+      unknown.status === 200 && doorCalls(unknown).length === 0 && unknownDb.executions.length === 0
+        && toldModel(unknown).includes("prior_effect_reconciliation_required") && !toldModel(unknown).includes("declined_turn_requires_new_instruction")
+        && cardsOf(unknown.bodyText).length === 0, JSON.stringify({ status: unknown.status, calls: doorCalls(unknown).length }));
     for (const autonomy of ["confirm", "auto"]) {
       const failedStore = makeConfirmStore(); const failedDb = crmDb();
       const failedCard = await proposeVia(failedStore, failedDb, CONTACT);

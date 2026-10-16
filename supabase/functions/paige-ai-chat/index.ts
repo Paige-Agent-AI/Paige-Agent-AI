@@ -41,7 +41,7 @@ import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
-import { selectPinnedPreviewRequest } from "../_shared/paige-turn/interactive-approval.ts";
+import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
@@ -838,7 +838,7 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional() }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1271,6 +1271,15 @@ serve(async (req) => {
         return data;
       };
       if (validatedData.interactive.kind === "status") {
+        if (validatedData.interactive.approvalTurnId) {
+          const approval_recovery = protocolActive ? await readPendingApprovalRecovery({
+            actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+            intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+            caller: supabaseClient as unknown as ApprovalRecoveryDb, service: supabase as unknown as ApprovalRecoveryDb,
+          }) : { v: 1, status: "unavailable" };
+          return new Response(JSON.stringify({ approval_recovery }), { headers: { ...corsHeaders,
+            "Content-Type": "application/json", "Cache-Control": "no-store" } });
+        }
         const originalScope = { threadId: validatedData.threadId!,
           intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };
         const status = await readInteractiveOutcomeStatus({

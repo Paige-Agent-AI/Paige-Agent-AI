@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {confirmFingerprint} from '../supabase/functions/_shared/confirm-fingerprint.ts';
+import {crmApprovalSubject,canonicalizeCrmCommand,CRM_ACTION_CAPABILITY} from '../supabase/functions/_shared/crm-command/catalog.ts';
 globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key'})[k]??''}};
 globalThis.fetch=async()=>new Response('{}',{status:503});
 const fake=await import('./knowledge-scope/fake-supabase.mjs');
@@ -114,3 +116,72 @@ for(const variant of ['success','missing-terminal','ambiguous','foreign-tenant',
  assert.equal(statusRec.rpc.filter(x=>x.name==='find_pipeline_metadata_original_effect').every(x=>x.client==='jwt'),true);
 }
 console.log('PASS automatic original-operation observation: ordinary typed status, DRAINING, authoritative identity only, ambiguity/refusal/race unknown, no release or effect');
+
+// Reload authority comes only from a fresh server read of the immutable terminal
+// AND its still-live native confirmation. No history JSON, settlement or retry.
+const reloadVariants=['available','admin-current','contact-current','contact-create','company-create','contact-ref-current','contact-ref-missing','contact-ref-changed-id','company-current','task-current','equivalent-version','missing-terminal','terminal-removed','json-only','wrong-actor','wrong-tenant','wrong-intent','closed-terminal','unknown-effect','superseded','executor-held','member-refused','role-member','foreign-thread','archived-thread','scope-changed','member-revoked','expired','consumed','consumed-after-read','foreign-pending','missing-issuance','newer-issuance','newer-issuance-microsecond','newer-creation-microsecond','wrong-tool','wrong-command','wrong-key','wrong-fingerprint','duplicate-card','duplicate-pending','changed-version','changed-microsecond','missing-contact-version','company-changed-version','task-changed-version','unsupported-preview','unsupported-activity','protocol-paused'];
+for(const variant of reloadVariants){
+ const isRef=variant.startsWith('contact-ref-');
+ const isContact=isRef||['contact-current','equivalent-version','changed-version','changed-microsecond','missing-contact-version'].includes(variant);
+ const isCompany=variant.startsWith('company-'),isTask=variant.startsWith('task-');
+ const revision='2026-10-16T12:00:00.123456Z';
+ const command=variant==='contact-create'?{action:'contact.create',patch:{first_name:'Fixture',last_name:'Person'}}
+  :variant==='company-create'?{action:'company.create',contact_id:id(74),patch:{name:'Fixture company'}}
+  :isContact?{action:'contact.update',...(isRef?{client_ref:'CLT-FIXTURE'}:{contact_id:id(74)}),expected_updated_at:revision,patch:{title:'Fixture title'}}
+  :isCompany?{action:'company.update',company_id:id(74),expected_updated_at:revision,patch:{name:'Fixture company'}}
+  :isTask?{action:'task.update',task_id:id(74),expected_updated_at:revision,patch:{title:'Fixture revised work'}}
+  :variant==='unsupported-activity'?{action:'activity.log',contact_id:id(74),patch:{body:'Fixture note'}}
+  :variant==='unsupported-preview'?{action:'task.delete',task_id:id(74),expected_updated_at:'2026-10-16T12:00:00Z'}:{action:'task.create',patch:{title:'Fixture work'}};
+ const tool=CRM_ACTION_CAPABILITY[command.action];
+ const nativeCommand=canonicalizeCrmCommand(isRef?{...command,contact_id:id(74)}:command);
+ const args={command:nativeCommand,idempotency_key:'fixture-original-key',approval_subject:await crmApprovalSubject(command.action,nativeCommand)};
+ const fingerprint=await confirmFingerprint(tool,args),turnId=id(70);
+ const card={tool,summary:'Review fixture work',fingerprint,command,idempotency_key:args.idempotency_key};
+ const issued=new Date(Date.now()-4000).toISOString(),terminalAt=new Date(Date.now()-2000).toISOString().replace(/\.\d{3}Z$/,'.123456Z');
+ const native={id:id(71),user_id:actor,tenant_id:tenant,thread_id:null,scoped_client_id:null,tool_name:tool,args,fingerprint,summary:card.summary,
+  issued_in_request:id(72),server_issued_at:issued,created_at:issued,expires_at:new Date(Date.now()+300000).toISOString(),consumed_at:null};
+ const terminal={id:turnId,thread_id:thread,role:'assistant',created_at:terminalAt,interactive_intent_id:intent,interactive_actor_id:actor,interactive_tenant_id:tenant,interactive_terminal_state:'WAIT_APPROVAL',
+  bundle_ref:{turn_state:{v:1,state:'WAIT_APPROVAL'},interactive:{request_intent_id:intent,effects:[{tool,outcome:'approval_required'}]},paige_confirm:[card]}};
+ if(variant==='json-only')delete terminal.interactive_terminal_state;
+ if(variant==='wrong-actor')terminal.interactive_actor_id=id(99);
+ if(variant==='wrong-tenant')terminal.interactive_tenant_id=id(99);
+ if(variant==='wrong-intent')terminal.interactive_intent_id=id(99);
+ if(variant==='closed-terminal')terminal.interactive_terminal_state='FINAL';
+ if(variant==='unknown-effect')terminal.bundle_ref.interactive.effects.push({tool:'plan_create',outcome:'outcome_unknown'});
+ if(variant==='expired')native.expires_at=issued;
+ if(variant==='consumed')native.consumed_at=issued;
+ if(variant==='foreign-pending')native.tenant_id=id(99);
+ if(variant==='missing-issuance')native.server_issued_at=null;
+ if(variant==='newer-issuance')native.server_issued_at=new Date(Date.now()-1000).toISOString();
+ if(variant==='newer-issuance-microsecond')native.server_issued_at=terminalAt.replace('123456','123457');
+ if(variant==='newer-creation-microsecond')native.created_at=terminalAt.replace('123456','123457');
+ if(variant==='wrong-tool')native.tool_name='crm_create_contact';
+ if(variant==='wrong-command')native.args={...args,command:{...command,patch:{title:'Different work'}}};
+ if(variant==='wrong-key')native.args={...args,idempotency_key:'another-key'};
+ if(variant==='wrong-fingerprint')native.fingerprint='f'.repeat(16);
+ if(variant==='duplicate-card')terminal.bundle_ref.paige_confirm.push(card);
+ let switched=false,memberReads=0,terminalReads=0,pendingReads=0;
+ const currentRevision=variant.includes('changed-version')?'2026-10-16T12:00:01.123456Z'
+  :variant==='changed-microsecond'?'2026-10-16T12:00:00.123457Z':variant==='equivalent-version'?'2026-10-16T12:00:00.123456+00:00':revision;
+ const recoveryRec=scenario('accepted',{tables:{
+  profiles:()=>[{active_tenant_id:switched? id(99):tenant}],
+  tenant_members:()=>{memberReads++;return variant==='member-refused'||variant==='member-revoked'&&memberReads>1?[]:[{tenant_id:tenant,user_id:actor,role:variant==='role-member'?'member':variant==='admin-current'?'admin':'owner',status:'active'}];},
+  paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:variant==='foreign-thread'?id(99):actor,is_archived:variant==='archived-thread',interactive_latest_intent:variant==='superseded'?id(99):intent,interactive_executor_intent:variant==='executor-held'?intent:null}],
+  paige_chat_turns:()=>{terminalReads++;return variant==='missing-terminal'||variant==='terminal-removed'&&terminalReads>1?[]:[terminal];},
+  paige_pending_confirmations:()=>{pendingReads++;if(variant==='scope-changed')switched=true;return variant==='duplicate-pending'?[native,{...native,id:id(73)}]:variant==='consumed-after-read'&&pendingReads>1?[{...native,consumed_at:issued}]:[native];},
+  contacts:[{id:id(74),tenant_id:tenant,updated_at:variant==='missing-contact-version'?null:currentRevision,created_at:currentRevision}],
+  clients:variant==='contact-ref-missing'?[]:[{id:variant==='contact-ref-changed-id'?id(75):id(74)}],
+  businesses:[{id:id(74),tenant_id:tenant,updated_at:null,created_at:currentRevision}],
+  tasks:[{id:id(74),tenant_id:tenant,updated_at:null,created_at:currentRevision}],
+ },rpcs:{paige_chat_interactive_protocol:{data:{version:2,active:variant!=='protocol-paused'},error:null},current_user_tenant_id:()=>({data:switched?id(99):tenant,error:null}),paige_chat_interactive_executor_v2:{data:{latest:intent,executor:variant==='executor-held'?intent:null,terminal:true,stopped:false},error:null}}});
+ const response=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));
+ assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
+ const result=await response.json();const available=['available','admin-current','contact-current','contact-create','company-create','contact-ref-current','company-current','task-current','equivalent-version'].includes(variant);
+ assert.equal(result.approval_recovery?.status,available?'available':'unavailable',`server recovery ${variant}: ${JSON.stringify(result)}`);
+ if(available){assert.equal(result.approval_recovery.turn_id,turnId);assert.equal(result.approval_recovery.intent_id,intent);assert.equal(result.approval_recovery.tenant_id,tenant);assert.deepEqual(result.approval_recovery.confirmations,[card]);}
+ else assert.equal(result.approval_recovery.confirmations,undefined,'refusal returns no executable proposal');
+ assert.equal(recoveryRec.inserts.length,0);assert.equal(recoveryRec.functions.length,0);
+ assert.equal(recoveryRec.rpc.some(c=>/begin_v2|settle|turn_append|transition|prepare|submit|claim|execute_crm/.test(c.name)),false,'recovery never admits, settles or executes');
+ assert.equal(recoveryRec.rpc.filter(c=>c.name==='paige_chat_interactive_executor_v2').every(c=>c.args.p_operation==='state'),true,'recovery never releases an executor');
+}
+console.log(`PASS actual read-only approval recovery: ${reloadVariants.length} positive/negative native-boundary variants; no provider, execution, admission, settlement or release`);

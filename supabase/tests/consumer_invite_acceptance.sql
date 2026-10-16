@@ -309,7 +309,17 @@ BEGIN
  INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,linked_user_id)
  VALUES(_contact,CASE WHEN _options?'foreign' THEN _foreign ELSE _tenant END,_owner,'Test','Action client',CASE WHEN _options?'archived' THEN 'archived' ELSE 'active' END,_actor),
  (_survivor,CASE WHEN _options?'foreign' THEN _foreign ELSE _tenant END,_owner,'Test','Survivor','active',NULL);
- IF _options?'merged' THEN UPDATE public.clients SET merged_into_contact_id=_survivor WHERE id=_contact;END IF;
+ IF _options?'merged' THEN
+  -- Same privileged, rolled-back fixture setup as client_portal_self_projection;
+  -- restore the native guard before switching to the actual customer role.
+  PERFORM set_config('request.jwt.claims','{"role":"service_role"}',true);
+  SET LOCAL ROLE service_role;
+  PERFORM set_config('app.crm_merge_lineage_write','on',true);
+  UPDATE public.clients SET merged_into_contact_id=_survivor,merged_at=now() WHERE id=_contact;
+  PERFORM set_config('app.crm_merge_lineage_write','off',true);
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims','{}',true);
+ END IF;
  IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='suspended' WHERE id=_tenant;END IF;
  INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at)
  VALUES(_action,_tenant,_contact,_owner,'task','Prepare for your next session',CASE WHEN _options?'closed' THEN 'customer_acted' ELSE 'proposed' END,
@@ -339,6 +349,13 @@ BEGIN
   RESET ROLE;
   PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_owner,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
   RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action),1::bigint,_label||': legitimate business owner sees the same canonical reply');
+  RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
+  UPDATE public.clients SET linked_user_id=_other WHERE id=_contact;
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_other,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action AND responded_by_user_id=_actor),1::bigint,_label||': replacement login retains authorized contact history with original attribution');
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action),0::bigint,_label||': former login loses read access after contact relink');
   RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
  END IF;
  IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='active' WHERE id=_tenant;END IF;

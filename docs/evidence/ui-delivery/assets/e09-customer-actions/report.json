@@ -148,16 +148,25 @@
       "result": "PASS",
       "transport": "synthetic-offline",
       "scope": "actual router/exit guard, keyboard Enter, canceled and confirmed exit; destination is double"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "history",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
     }
   ],
   "hashes": [
     {
       "path": "src/hooks/useMyActions.ts",
-      "sha256": "c4b46229c14c7c3b10fcdd3ec9b1fcfa9970d88fbb9474674aa675219aa41ab5"
+      "sha256": "2448cc191ab10900f936e37a6a364e6472c415a92f18a9bcb820a390f00b02f3"
     },
     {
       "path": "src/pages/app/ActionItems.tsx",
-      "sha256": "37d915fdaee8ecd36054592b54afffd62cffc919c9a3f26935e33d550b3ae421"
+      "sha256": "8ca20136b701cf0366ef60d0ecb8f4cec8d64b2215ab001108252b3ce167fedd"
     },
     {
       "path": "dist/assets/main-BiB6dTG7.css",

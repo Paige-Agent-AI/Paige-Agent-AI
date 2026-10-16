@@ -16,7 +16,7 @@ for(const m of [...css.matchAll(/url\(([^)]*\.woff2)\)/g)]){const p=m[1].replace
 const browser=await chromium.launch({headless:true,executablePath:process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined});
 const errors=[],results=[];
 try{
- for(const [width,height,state,context]of [[1536,770,'ready','a'],[1366,768,'ready','b'],[1024,768,'ready','a'],[900,1000,'ready','b'],[390,844,'ready','a'],[320,720,'ready','b'],[320,720,'long','a'],[390,844,'unknown','a'],[390,844,'error','b'],[390,844,'revoked','a'],[390,844,'empty','b'],[390,844,'expired','a'],[390,844,'loading','a'],[390,844,'pending','a'],[390,844,'switch','a'],[900,1000,'exit','b']]){
+ for(const [width,height,state,context]of [[1536,770,'ready','a'],[1366,768,'ready','b'],[1024,768,'ready','a'],[900,1000,'ready','b'],[390,844,'ready','a'],[320,720,'ready','b'],[320,720,'long','a'],[390,844,'unknown','a'],[390,844,'error','b'],[390,844,'revoked','a'],[390,844,'empty','b'],[390,844,'expired','a'],[390,844,'loading','a'],[390,844,'pending','a'],[390,844,'switch','a'],[900,1000,'exit','b'],[390,844,'history','a']]){
   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.abort());
   await page.setContent(`<html class="${context==='b'?'dark':''}" data-pg="${context==='b'?'dark':'light'}"><head></head><body><div id="root"></div></body></html>`);await page.addStyleTag({content:css});
   await page.evaluate(seed=>{window.actionSeed=seed;},{state,context});await page.addScriptTag({content:compiled.outputFiles[0].text});
@@ -54,6 +54,7 @@ try{
    if(state==='error'){await page.evaluate(()=>window.actionProof.recover());await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByRole('button',{name:'Mark complete',exact:true}).waitFor();}
   }else if(state==='empty'){await page.getByText("You're all caught up",{exact:true}).waitFor();}
   else if(state==='expired'){await page.getByText('Expired',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Mark complete',exact:true}).count(),0);}
+  else if(state==='history'){await page.getByText('Earlier customer asked',{exact:true}).waitFor();assert.equal(await page.getByText('You asked',{exact:true}).count(),0);await page.getByRole('button',{name:'Mark complete',exact:true}).click();await page.getByText('You completed',{exact:true}).waitFor();await page.getByText('Earlier customer asked',{exact:true}).waitFor();}
   else await page.getByText('Loading your action items…',{exact:true}).waitFor();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No action-page horizontal overflow');
   if(state!=='loading')for(const box of await page.getByRole('region',{name:'Your action items'}).getByRole('button').evaluateAll(buttons=>buttons.filter(b=>b.getBoundingClientRect().height>0).map(b=>b.getBoundingClientRect().height)))assert(box>=44,'Action-page touch targets are at least44px');

@@ -52,6 +52,7 @@ function expiryLabel(expires_at: string): string | null {
 function ActionCard({
   action,
   accent,
+  actorId,
   onRespond,
   open,
   blocked,
@@ -62,6 +63,7 @@ function ActionCard({
 }: {
   action: CustomerAction;
   accent: string | null;
+  actorId: string | null;
   open: boolean;
   blocked: boolean;
   uncertain: boolean;
@@ -142,7 +144,9 @@ function ActionCard({
           <div className="space-y-1.5 border-l-2 pl-3 break-words" style={accent ? { borderColor: accent } : undefined}>
             {responses.map((r) => (
               <div key={r.id} className="text-xs">
-                <span className="font-medium capitalize">{r.response_type === "question" ? "You asked" : `You ${r.response_type}`}</span>
+                <span className="font-medium capitalize">{r.responded_by_user_id===actorId
+                  ? r.response_type === "question" ? "You asked" : `You ${r.response_type}`
+                  : r.response_type === "question" ? "Earlier customer asked" : `Earlier customer ${r.response_type}`}</span>
                 {r.response_text && <span className="text-muted-foreground">: {r.response_text}</span>}
               </div>
             ))}
@@ -195,7 +199,7 @@ function ActionCard({
 }
 
 export default function ActionItems() {
-  const { actions, open, past, loading, error, respond, contactId, refresh, pendingActionId, uncertainActionIds, scopeEpoch, confirmation } = useMyActions();
+  const { actions, open, past, loading, error, respond, contactId, actorId, refresh, pendingActionId, uncertainActionIds, scopeEpoch, confirmation } = useMyActions();
   const {toast}=useToast();
   const announced=useRef<string|null>(null);
   const [drafts, setDrafts] = useState<{epoch:number;values:Record<string,string>}>({epoch:scopeEpoch,values:{}});
@@ -252,7 +256,7 @@ export default function ActionItems() {
         <div className="space-y-6">
           {open.length > 0 && (
             <div className="space-y-3">
-              {open.map((a) => <ActionCard key={`${scopeEpoch}:${a.id}`} action={a} accent={accent} open onRespond={handleRespond}
+              {open.map((a) => <ActionCard key={`${scopeEpoch}:${a.id}`} action={a} accent={accent} actorId={actorId} open onRespond={handleRespond}
                 question={questions[a.id] ?? ""} onQuestionChange={value => editQuestion(a.id,value)}
                 blocked={loading || !!error || !!pendingActionId} uncertain={uncertainActionIds.includes(a.id)} onCheck={() => void refresh()} />)}
             </div>
@@ -260,7 +264,7 @@ export default function ActionItems() {
           {past.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Earlier</h2>
-              {past.map((a) => <ActionCard key={`${scopeEpoch}:${a.id}`} action={a} accent={accent} open={false} onRespond={handleRespond}
+              {past.map((a) => <ActionCard key={`${scopeEpoch}:${a.id}`} action={a} accent={accent} actorId={actorId} open={false} onRespond={handleRespond}
                 question={questions[a.id] ?? ""} onQuestionChange={value => editQuestion(a.id,value)}
                 blocked={loading || !!error || !!pendingActionId} uncertain={uncertainActionIds.includes(a.id)} onCheck={() => void refresh()} />)}
             </div>

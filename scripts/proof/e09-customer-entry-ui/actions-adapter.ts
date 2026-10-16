@@ -10,7 +10,7 @@ const profile=()=>({id:id("e0933000"),tenant_id:id("e0923000"),linked_user_id:us
 const assigned=()=>({id:id("e0943000"),tenant_id:id("e0923000"),contact_id:id("e0933000"),updated_at:"2026-01-01T00:00:00Z",
  action_type:"task",title:index===0?"Prepare for your session":"Other customer request",body:mode==="long"?`Preparation: ${"DocumentReference".repeat(20)}`:"Review the questions shared by your team.",
  status:mode==="confirmed"?"customer_acted":mode==="expired"?"expired":"proposed",expires_at:mode==="expired"?"2020-01-01T00:00:00Z":"2099-01-01T00:00:00Z",
- created_at:"2026-01-01T00:00:00Z",paige_customer_responses:mode==="confirmed"?[{id:id("e0953000"),responded_by_user_id:user().id,response_type:"completed",response_text:null,created_at:"2026-01-02T00:00:00Z"}]:[]});
+ created_at:"2026-01-01T00:00:00Z",paige_customer_responses:mode==="history"?[{id:"e0953000-0000-0000-0000-000000000003",responded_by_user_id:"e0913000-0000-0000-0000-000000000003",response_type:"question",response_text:"Earlier preparation question",created_at:"2026-01-01T00:00:00Z"}]:mode==="confirmed"?[{id:id("e0953000"),responded_by_user_id:user().id,response_type:"completed",response_text:null,created_at:"2026-01-02T00:00:00Z"}]:[]});
 let rows=mode==="empty"?[]:[assigned()],writes=0;
 type Session={user:ReturnType<typeof user>};
 const listeners=new Set<(event:string,session:Session)=>void>();
@@ -29,7 +29,7 @@ export const supabase={
   if(mode==="pending")return never();
   if(args?.p_expected_updated_at!==rows[0]?.updated_at)throw Error("Missing loaded native version");
   const type=String(args.p_response_type),status=type==="question"?"proposed":type==="declined"?"customer_declined":"customer_acted";
-  rows=[{...rows[0],status,paige_customer_responses:[{id:id("e0953000"),responded_by_user_id:user().id,response_type:type,response_text:args.p_response_text as string|null,created_at:"2026-01-02T00:00:00Z"}]}];
+  rows=[{...rows[0],status,paige_customer_responses:[...rows[0].paige_customer_responses,{id:id("e0953000"),responded_by_user_id:user().id,response_type:type,response_text:args.p_response_text as string|null,created_at:"2026-01-02T00:00:00Z"}]}];
   if(mode==="unknown")throw Error("synthetic lost response after save");
   return{data:{ok:true,status},error:null};
  },

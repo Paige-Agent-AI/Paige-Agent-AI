@@ -42,7 +42,7 @@ function readActions(value:unknown,scope:Scope):CustomerAction[] {
       if(!entry||typeof entry!=="object"||Array.isArray(entry))throw new Error("invalid response");
       const r=entry as Record<string,unknown>;
       if(Object.keys(r).length!==responseFields.size||Object.keys(r).some(key=>!responseFields.has(key))
-        ||!isId(r.id)||responseIds.has(r.id)||r.responded_by_user_id!==scope.actor
+        ||!isId(r.id)||responseIds.has(r.id)||!isId(r.responded_by_user_id)
         ||!responseTypes.includes(String(r.response_type))||!isDate(r.created_at)
         ||(r.response_text!==null&&typeof r.response_text!=="string"))throw new Error("invalid response scope");
       responseIds.add(r.id);
@@ -70,6 +70,7 @@ function confirmed(rows:CustomerAction[],id:string,pending:PendingResponse):Acti
 export function useMyActions(){
   const [actions,setActions]=useState<CustomerAction[]>([]),[loading,setLoading]=useState(true);
   const [error,setError]=useState<string|null>(null),[contactId,setContactId]=useState<string|null>(null);
+  const [actorId,setActorId]=useState<string|null>(null);
   const [pendingActionId,setPendingActionId]=useState<string|null>(null),[uncertainActionIds,setUncertainActionIds]=useState<string[]>([]);
   const [scopeEpoch,setScopeEpoch]=useState(0);
   const [confirmation,setConfirmation]=useState<{epoch:number;actionId:string;responseId:string;type:ActionResponseType}|null>(null);
@@ -78,7 +79,7 @@ export function useMyActions(){
     const l=life.current;++l.epoch;++l.read;l.scope=null;l.lastScope=null;l.actions=[];l.unknown.clear();l.working=false;
     setScopeEpoch(l.epoch);
     setConfirmation(null);
-    setActions([]);setContactId(null);setPendingActionId(null);setUncertainActionIds([]);setError(notice);setLoading(waiting);
+    setActions([]);setContactId(null);setActorId(null);setPendingActionId(null);setUncertainActionIds([]);setError(notice);setLoading(waiting);
   },[]);
   const refresh=useCallback(async(deadline=Date.now()+20_000)=>{
     const l=life.current,n=++l.read,epoch=l.epoch,current=()=>l.alive&&l.read===n&&l.epoch===epoch;
@@ -107,7 +108,7 @@ export function useMyActions(){
       const rows=readActions(read.data,scope);
       const final=await bounded(supabase.auth.getUser(),deadline-Date.now());if(!current())return null;
       if(final.error||final.data.user?.id!==actor){retire("Your session changed. Reload your action items to continue.",false);return null;}
-      l.scope=scope;l.lastScope=scope;l.actions=rows;setActions(rows);setContactId(scope.contact);
+      l.scope=scope;l.lastScope=scope;l.actions=rows;setActions(rows);setContactId(scope.contact);setActorId(scope.actor);
       for(const [id,p] of l.unknown){
         const saved=sameScope(scope,p.scope)?confirmed(rows,id,p):null;
         if(saved){l.unknown.delete(id);setConfirmation({epoch,actionId:id,responseId:saved.id,type:p.type});}
@@ -115,7 +116,7 @@ export function useMyActions(){
       setUncertainActionIds([...l.unknown.keys()]);
       return rows;
     }catch{
-      if(current()){l.scope=null;l.actions=[];setActions([]);setContactId(null);setError("Your action items could not be verified. Check your connection or contact the business, then try again.");}
+      if(current()){l.scope=null;l.actions=[];setActions([]);setContactId(null);setActorId(null);setError("Your action items could not be verified. Check your connection or contact the business, then try again.");}
       return null;
     }finally{if(current())setLoading(false);}
   },[retire]);
@@ -190,5 +191,5 @@ export function useMyActions(){
       throw e;
     }finally{if(l.alive&&l.epoch===epoch){l.working=false;setPendingActionId(null);}}
   },[refresh,retire]);
-  return {actions,open:actions.filter(isActionOpen),past:actions.filter(a=>!isActionOpen(a)),loading,error,contactId,refresh,respond,pendingActionId,uncertainActionIds,scopeEpoch,confirmation};
+  return {actions,open:actions.filter(isActionOpen),past:actions.filter(a=>!isActionOpen(a)),loading,error,contactId,actorId,refresh,respond,pendingActionId,uncertainActionIds,scopeEpoch,confirmation};
 }

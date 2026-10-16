@@ -6355,7 +6355,7 @@ try {
   // Deliberately schedule the protected database port so a different request claims AFTER this
   // door read no original result but BEFORE its claim. This runs the real CRM and Chat consumers;
   // the competing transaction and its delayed commit are modelled ports, not PostgreSQL proof.
-  for (const lane of ["confirm", "auto"]) {
+  for (const lane of ["confirm", "auto", "off", "unresolved"]) {
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     let lostClaim = false;
@@ -6377,7 +6377,8 @@ try {
         && outcomeOf(losing.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
         && toldModel(losing).includes('"outcome_unknown":true') && toldModel(losing).includes('"not_applied":false')
         && toldModel(losing).includes('"refused_before_run":false')
-        && toldModel(losing).includes("CRM_APPROVAL_UNCONFIRMED")
+        && toldModel(losing).includes(lane === "off" ? "autonomy_off"
+          : lane === "unresolved" ? "autonomy_lane_unrecognized" : "CRM_APPROVAL_UNCONFIRMED")
         && toldModel(losing).includes("prior_effect_reconciliation_required"),
       JSON.stringify({ lostClaim, executions: db.executions.length, committed: db.committed.size,
         rows: st.rows.length, outcome: outcomeOf(losing.bodyText) }));

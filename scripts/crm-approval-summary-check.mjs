@@ -295,5 +295,30 @@ for (const lane of ['confirm', 'auto']) {
   assert.equal(proposals(retryLostAck.rec).length, 0);
   checks++;
 }
+// A Gateway refusal is authoritative about this request's permission, but an
+// empty explicit claim still cannot rule out a competing original execution.
+for (const [lane, code] of [['off', 'autonomy_off'], ['unresolved', 'autonomy_lane_unrecognized']]) {
+  const competing = freshStored();
+  const losing = await request(first.proposal.args.command, {
+    fingerprint: competing.fingerprint, options: { lane, stored: competing, competingClaim: true },
+  });
+  assert.ok(competing.consumed_at);
+  assert.equal(losing.status, 403, 'retain the original Gateway refusal status');
+  assert.equal(losing.body.code, code, 'retain the original Gateway refusal code');
+  assert.equal(losing.body.outcome_unknown, true, 'a Gateway refusal cannot prove the competing original absent');
+  assert.equal(losing.body.refused_before_run, false);
+  assert.equal(executions(losing.rec).length, 0);
+  assert.equal(proposals(losing.rec).length, 0);
+  checks++;
+  const ordinary = await request(first.proposal.args.command, { options: { lane } });
+  assert.equal(ordinary.status, 403);
+  assert.equal(ordinary.body.code, code);
+  assert.equal(ordinary.body.message, losing.body.message, 'preserve the Gateway explanation');
+  assert.equal(ordinary.body.outcome_unknown, undefined, 'an ordinary refusal has no failed explicit claim');
+  assert.equal(ordinary.body.refused_before_run, undefined);
+  assert.equal(executions(ordinary.rec).length, 0);
+  assert.equal(proposals(ordinary.rec).length, 0);
+  checks++;
+}
 queryPrototype.maybeSingle=originalSingle;
 console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);

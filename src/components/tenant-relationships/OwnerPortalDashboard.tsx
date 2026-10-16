@@ -1,4 +1,5 @@
 import { lazy, Suspense, useId, useMemo, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import {
   ArrowLeft,
   ArrowRight,
@@ -144,6 +145,8 @@ export function OwnerPortalDashboard({
   openClient: (id?: string) => void;
   openPaige: () => void;
 }) {
+  const { resolvedTheme } = useTheme();
+  const dialogTheme = resolvedTheme === "light" ? "light" : "dark";
   const [tab, setTab] = useState<Tab>("Overview");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -858,7 +861,7 @@ export function OwnerPortalDashboard({
         )}
       </div>
       <Dialog open={inviting} onOpenChange={setInviting}>
-        <DialogContent className="opd-preview-dialog opd-invite-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, invitationReturnRef.current, inviteTriggerRef.current)}>
+        <DialogContent data-pg={dialogTheme} className="opd-preview-dialog opd-invite-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, invitationReturnRef.current, inviteTriggerRef.current)}>
           <DialogTitle>Invite a client</DialogTitle>
           <DialogDescription>
             Choose an existing contact. The invitation is bound to their saved
@@ -933,7 +936,7 @@ export function OwnerPortalDashboard({
         </DialogContent>
       </Dialog>
       <Dialog open={preview} onOpenChange={setPreview}>
-        <DialogContent className="opd-preview-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, previewTriggerRef.current, null)}>
+        <DialogContent data-pg={dialogTheme} className="opd-preview-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, previewTriggerRef.current, null)}>
           <DialogTitle>Portal presentation preview</DialogTitle>
           <DialogDescription>
             Saved branding and configured modules. Customer records and actions

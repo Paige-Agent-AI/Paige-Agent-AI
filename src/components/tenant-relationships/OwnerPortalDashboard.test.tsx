@@ -5,11 +5,13 @@ import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import type { useTenantRelationshipsData, RelationshipPerson } from "./useTenantRelationshipsData";
 
 const fixture = vi.hoisted(() => ({
+  resolvedTheme: "light" as string | undefined,
   invitations: { data: [] as unknown[], isLoading: false, isError: false, refetch: vi.fn() },
   brand: { state: { effective: { product_name: "Test Service", primary_color: "#26362f", tagline: "A saved welcome", logo_url: null } }, isLoading: false, isError: false, refetch: vi.fn() },
   rail: { events: [] as unknown[], historyStatus: "ready" },
   allowed: true,
 }));
+vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: fixture.resolvedTheme }) }));
 vi.mock("@/hooks/useBrandKit", () => ({ useBrandKit: () => fixture.brand }));
 vi.mock("@/hooks/useRailEvents", () => ({ useRailEvents: () => fixture.rail }));
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }] } }) }));
@@ -26,6 +28,7 @@ const show = async (tenant = "test-tenant-a") => { await act(async () => root.re
 const button = (name: string) => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((node) => node.textContent?.trim() === name)!;
 const click = async (name: string) => { await act(async () => button(name).click()); };
 beforeEach(() => {
+  fixture.resolvedTheme = "light";
   data = { people: [person], peopleLoading: false, peopleError: false, retryPeople: vi.fn(), portalLoading: false, portalError: false, portalConfig: { welcome: { headline: "Saved greeting" }, modules: [{ key: "agreements", visible: false }] }, retryPortal: vi.fn() } as unknown as ReturnType<typeof useTenantRelationshipsData>;
   fixture.invitations = { data: [], isLoading: false, isError: false, refetch: vi.fn() };
   fixture.brand.isError = false; fixture.brand.isLoading = false;
@@ -35,6 +38,29 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 describe("approved owner dashboard is a real scoped product surface", () => {
+  it.each([
+    ["light", "light"], ["dark", "dark"], [undefined, "dark"],
+  ])("preserves the shell theme %s across both native body portals", async (resolvedTheme, expected) => {
+    fixture.resolvedTheme = resolvedTheme;
+    await show();
+    for (const name of ["Invite client", "Preview portal"]) {
+      await click(name);
+      const dialog = document.querySelector('[role="dialog"]')!;
+      expect(host.contains(dialog)).toBe(false);
+      expect(document.body.contains(dialog)).toBe(true);
+      expect(document.documentElement.hasAttribute("data-pg")).toBe(false);
+      expect(document.body.hasAttribute("data-pg")).toBe(false);
+      expect(dialog.getAttribute("data-pg")).toBe(expected);
+      await act(async () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    }
+  });
+  it.each(["Invite client", "Preview portal"])("updates the open %s dialog when the theme changes", async (name) => {
+    await show(); await click(name);
+    const dialog = document.querySelector('[role="dialog"]')!;
+    fixture.resolvedTheme = "dark"; await show();
+    expect(document.querySelector('[role="dialog"]')).toBe(dialog);
+    expect(dialog.getAttribute("data-pg")).toBe("dark");
+  });
   it("opens with the approved four tabs and compact hierarchy", async () => {
     await show();
     expect(Array.from(host.querySelectorAll('[role="tab"]')).map((node) => node.textContent)).toEqual(["Overview", "Experience", "Client access", "Activity"]);

@@ -1,0 +1,14 @@
+Browser tab: 170265210, Title: "Isolated source recovery proof", URL: "http://localhost:8776/#tenant-shell-main".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 33-34, 41-61
+~			3 text PAIGE folded; your conversation is preserved
+~				21 text TEST STUDIO B Clients Solo
++				41 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
++					42 image PAIGE
++					43 text Direct PAIGE, or press ⌘\
++					44 text ⌘\
++				45 container
++					46 heading Current scoped page, Value: 1
++						47 text Current scoped page
++					48 text Existing native shell and source recovery components; synthetic department content.
+The focused UI element is 30 button Switch synthetic account

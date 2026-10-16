@@ -1,0 +1,106 @@
+{
+  "head": "57d155682bd46cd0a91f71475ea0c0dd649c4aae",
+  "sources": [
+    {
+      "file": "src/solo/SoloApp.tsx",
+      "sha256": "24cfda4660a7b500ddf2b821e7225e2972cec564bc594e5bcc981595d13bd1e8"
+    },
+    {
+      "file": "src/solo/SoloScreenBoundary.tsx",
+      "sha256": "a0006545a4502aaa5db2c2531ad62c5f2c7c71bfe6abb9e525aa2fa0566e5350"
+    },
+    {
+      "file": "src/hooks/usePlatformUpdate.ts",
+      "sha256": "41a07baff4fd97ba422774a8a6092430a7b8f97f79722cff86da23b597585967"
+    },
+    {
+      "file": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "ff338d12cf00be2013c549dd69f4741c2191fac70f76d7cb544fb3299038bb14"
+    },
+    {
+      "file": "src/components/PlatformUpdateBanner.tsx",
+      "sha256": "6cf58caa7bc88439f0337720b09563d1be5839ebc391b67479ab0ce788ed33d1"
+    },
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/source.tsx",
+      "sha256": "cb30120588e413618f07fbab03dac75db142c87447ba426c2a106dbfe0a20443"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/adapter.tsx",
+      "sha256": "27ddbf6382e84d710c670b3fe34d1a74174238edb8fbb7169febb57627577649"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/build.mjs",
+      "sha256": "2470867316d39df01056359fc9fe33fdf6e0260b57ae9cc9ac3077fef0ca37f9"
+    },
+    {
+      "file": "dist/assets/AcceptInvite-Dkp0ubs5.css",
+      "sha256": "1208648de5f0482ad334664fa89e03de5226e6d3d620efc774c596bec0bfad0e"
+    },
+    {
+      "file": "dist/assets/AgencyApp-CsVvuHEx.css",
+      "sha256": "d2b6d943fd17f035cf1945357b372c066278e2da7e48467a2b9b080713696b56"
+    },
+    {
+      "file": "dist/assets/AgreementSigning-BpHLFpA8.css",
+      "sha256": "215ccaf709ba0350beb2b15d52c343d28b7ce90238afa3bd9b9111e21a3f82c9"
+    },
+    {
+      "file": "dist/assets/CalendarAdmin-DjYJ6oVy.css",
+      "sha256": "1f28d1193902941d1aefd31b08333d2224dc7653bed10b163b830157979080c4"
+    },
+    {
+      "file": "dist/assets/ClientsConversations-BSWdY4So.css",
+      "sha256": "f124d8465428e3499a3d88c4e6d72cff171ad323f51aefeae840b55de8f9ef8a"
+    },
+    {
+      "file": "dist/assets/GrowthBlocks-CobXfkC_.css",
+      "sha256": "a26126b71d6e93570bcfd3e4f250afec582d18b23386cc4f61e87db4e7510045"
+    },
+    {
+      "file": "dist/assets/IntelligenceSurface-BUqL7fOQ.css",
+      "sha256": "cc03088dfd3851051c68f914988b822c02898ad996b09ad8b728e91234d971df"
+    },
+    {
+      "file": "dist/assets/LiveTranscriptPanel-DlN_jxWB.css",
+      "sha256": "29b46b9149822ca47639ee54ad945ca28434c12c9ad373da14193220de306ab1"
+    },
+    {
+      "file": "dist/assets/main-DtUP0Tyx.css",
+      "sha256": "aeef403530f61d405bac0e3d1a72ba79c3ba0abf3848b3fbb1d2645f07d5807f"
+    },
+    {
+      "file": "dist/assets/McpOAuthCallback-DzvJ9675.css",
+      "sha256": "a8c0ddc16bf83239cdf2df3753bc6ca70b22f5ca262b29447b2ca9c4a62e0a6f"
+    },
+    {
+      "file": "dist/assets/OnboardLayout-BPiSIUKd.css",
+      "sha256": "f826be945631d4c34c4ad2f70baba8cf0fb4e488c5791cac531c7d3d3263be75"
+    },
+    {
+      "file": "dist/assets/paige-command-mark-DkDmfxtN.css",
+      "sha256": "7ec9aabb24246aa50580bb01eb6cbad5f58853cd36af4a1520380a5a8496f95c"
+    },
+    {
+      "file": "dist/assets/PaigeAIChat-CTvdVEyj.css",
+      "sha256": "a43d8dc4b15bea6ac90545d63ae6ae8738810018383d656c3b05bea800bf67e1"
+    },
+    {
+      "file": "dist/assets/PaigeHome-4FoskblA.css",
+      "sha256": "4e6491f3227cf8f926c510f642a8827d957bd74f56592aeda054bc2e025373b7"
+    },
+    {
+      "file": "dist/assets/SoloEntry-BTc4c4k8.css",
+      "sha256": "5ea12d612711ecb736e79efba2615bdc31b815d0d47214509d977580efca55ed"
+    },
+    {
+      "file": "dist/assets/TenantRedesign-BHck4q1t.css",
+      "sha256": "123f6c7d7e5625ec3cf8069fb8bce65a24ffa8e6b7074b52d1dec775f379fcb8"
+    }
+  ],
+  "boundary": "9 unchanged Git source inputs plus 16 current-build CSS assets. Synthetic source fixture only."
+}

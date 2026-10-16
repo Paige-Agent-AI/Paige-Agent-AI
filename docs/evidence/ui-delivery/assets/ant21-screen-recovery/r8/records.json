@@ -1,0 +1,1090 @@
+[
+  {
+    "label": "a-light-1536-770-closed",
+    "file": "a-light-1536-770-closed.jpg",
+    "bytes": 37716,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1536,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "a-light-1536-770-open",
+    "file": "a-light-1536-770-open.jpg",
+    "bytes": 46913,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1536,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "a-light-1366-768-closed",
+    "file": "a-light-1366-768-closed.jpg",
+    "bytes": 36315,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1366,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "a-light-1366-768-open",
+    "file": "a-light-1366-768-open.jpg",
+    "bytes": 45640,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1366,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "a-light-1024-768-closed",
+    "file": "a-light-1024-768-closed.jpg",
+    "bytes": 32840,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1024,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "a-light-1024-768-open",
+    "file": "a-light-1024-768-open.jpg",
+    "bytes": 30070,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1024,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "a-light-900-1000-closed",
+    "file": "a-light-900-1000-closed.jpg",
+    "bytes": 33789,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 900,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "a-light-900-1000-open",
+    "file": "a-light-900-1000-open.jpg",
+    "bytes": 31697,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 900,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "a-dark-1536-770-closed",
+    "file": "a-dark-1536-770-closed.jpg",
+    "bytes": 22768,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Toggle fixture theme"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1536,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "a-dark-1536-770-open",
+    "file": "a-dark-1536-770-open.jpg",
+    "bytes": 47753,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1536,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "a-dark-1366-768-closed",
+    "file": "a-dark-1366-768-closed.jpg",
+    "bytes": 36607,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1366,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "a-dark-1366-768-open",
+    "file": "a-dark-1366-768-open.jpg",
+    "bytes": 46155,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1366,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "a-dark-1024-768-closed",
+    "file": "a-dark-1024-768-closed.jpg",
+    "bytes": 33142,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1024,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "a-dark-1024-768-open",
+    "file": "a-dark-1024-768-open.jpg",
+    "bytes": 30478,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1024,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "a-dark-900-1000-closed",
+    "file": "a-dark-900-1000-closed.jpg",
+    "bytes": 31623,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 900,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "a-dark-900-1000-open",
+    "file": "a-dark-900-1000-open.jpg",
+    "bytes": 31565,
+    "account": [
+      "TEST STUDIO A"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 900,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "b-dark-1536-770-closed",
+    "file": "b-dark-1536-770-closed.jpg",
+    "bytes": 24383,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Simulate missing screen"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1536,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "b-dark-1536-770-open",
+    "file": "b-dark-1536-770-open.jpg",
+    "bytes": 47756,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1536,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "b-dark-1366-768-closed",
+    "file": "b-dark-1366-768-closed.jpg",
+    "bytes": 36609,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1366,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "b-dark-1366-768-open",
+    "file": "b-dark-1366-768-open.jpg",
+    "bytes": 46160,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1366,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "b-dark-1024-768-closed",
+    "file": "b-dark-1024-768-closed.jpg",
+    "bytes": 33132,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1024,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "b-dark-1024-768-open",
+    "file": "b-dark-1024-768-open.jpg",
+    "bytes": 30481,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1024,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "b-dark-900-1000-closed",
+    "file": "b-dark-900-1000-closed.jpg",
+    "bytes": 34207,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 900,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "b-dark-900-1000-open",
+    "file": "b-dark-900-1000-open.jpg",
+    "bytes": 31571,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 900,
+    "theme": "dark",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "b-light-1536-770-closed",
+    "file": "b-light-1536-770-closed.jpg",
+    "bytes": 37474,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Toggle fixture theme"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1536,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "b-light-1536-770-open",
+    "file": "b-light-1536-770-open.jpg",
+    "bytes": 46926,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1536,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scale": 1,
+      "width": 1536
+    }
+  },
+  {
+    "label": "b-light-1366-768-closed",
+    "file": "b-light-1366-768-closed.jpg",
+    "bytes": 36327,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1366,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "b-light-1366-768-open",
+    "file": "b-light-1366-768-open.jpg",
+    "bytes": 45661,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1366,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1366
+    }
+  },
+  {
+    "label": "b-light-1024-768-closed",
+    "file": "b-light-1024-768-closed.jpg",
+    "bytes": 32843,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 1024,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "b-light-1024-768-open",
+    "file": "b-light-1024-768-open.jpg",
+    "bytes": 30078,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 1024,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scale": 1,
+      "width": 1024
+    }
+  },
+  {
+    "label": "b-light-900-1000-closed",
+    "file": "b-light-900-1000-closed.jpg",
+    "bytes": 33788,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "closed",
+    "scrollWidth": 900,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "label": "b-light-900-1000-open",
+    "file": "b-light-900-1000-open.jpg",
+    "bytes": 31690,
+    "account": [
+      "TEST STUDIO B"
+    ],
+    "fallback": "This page couldn’t openYou can keep working from the navigation.",
+    "focused": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "navLinks": [
+      "Command Center",
+      "Operations",
+      "Clients",
+      "Marketing",
+      "Ads",
+      "Sales",
+      "Finance",
+      "Marketplace",
+      "Settings"
+    ],
+    "panel": "open",
+    "scrollWidth": 900,
+    "theme": "light",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  }
+]

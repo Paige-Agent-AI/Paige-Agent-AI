@@ -11,6 +11,18 @@ import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
   it.each([
+    ["account", "solo", "101", "/solo/101/operations/work"],
+    ["account", "standalone", "202", "/solo/202/operations/work"],
+    ["account", "sub_account", "303", "/business/303/calendar/tasks"],
+    ["account", "agency", "404", "/agency/404/calendar/tasks"],
+    ["operator", "operator", null, "/operator/calendar/tasks"],
+  ] as const)("keeps task destinations on the native %s/%s owner", (actor, tier, account, path) => {
+    expect(resolveCanonicalAppPath({ actor, tier, account, destination: "tasks" })).toBe(path);
+    expect(resolveCanonicalRecordLink({ actor, tier, account, destination: "tasks", recordId: "00000000-0000-4000-8000-000000000001" }))
+      .toEqual({ path, status: "surface_only" });
+  });
+
+  it.each([
     ["operator", "operator", null, "home", "/operator/fleet/systems-check"],
     ["account", "solo", "1971670", "home", "/solo/1971670/command-center/executive"],
     ["account", "sub_account", "1971671", "home", "/business/1971671/command-center/overview"],

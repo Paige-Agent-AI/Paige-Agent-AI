@@ -85,7 +85,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     settings: "/solo/{account}/settings/setup",
     connections: "/solo/{account}/settings/connections",
     integrations: "/solo/{account}/settings/integrations",
-    tasks: "/solo/{account}/calendar/tasks",
+    tasks: "/solo/{account}/operations/work",
     calendar: "/solo/{account}/calendar/week",
     contacts: "/solo/{account}/clients/people",
     pipeline: "/solo/{account}/growth/pipeline",

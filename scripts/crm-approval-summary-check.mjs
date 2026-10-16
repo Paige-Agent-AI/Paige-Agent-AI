@@ -32,14 +32,15 @@ function matches(row, filters) {
   });
 }
 
-function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "confirm", stored } = {}) {
+function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "confirm", stored, cached = false,
+  accountType = "standalone", parentTenantId = null } = {}) {
   let rec;
   rec = setScenario({
     authUser: { id: userId },
     tables: {
       tenant_members: filters => matches({ tenant_id: workspace, user_id: userId, status: "active" }, filters)
         ? [{ role, status: "active" }] : [],
-      tenants: [{ account_type: "standalone", account_number: "test-tenant-approval", parent_tenant_id: null }],
+      tenants: [{ account_type: accountType, account_number: "101", parent_tenant_id: parentTenantId }],
       paige_pending_confirmations: filters => {
         if (filters.some(([op, columns]) => op === "select" && columns === "args")) {
           if (!stored || !matches(stored, filters)) return [];
@@ -53,7 +54,7 @@ function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "
     },
     rpcs: {
       current_user_tenant_id: { data: workspace, error: null },
-      read_crm_command_result: { data: null, error: null },
+      read_crm_command_result: { data: cached ? { ok: true, outcome: "succeeded", readback: { id: id(6) } } : null, error: null },
       resolve_tool_autonomy: { data: lane, error: null },
       execute_crm_command: { data: { ok: true, outcome: "succeeded", readback: { id: id(6) } }, error: null },
     },
@@ -126,7 +127,35 @@ assert.equal(executions(approved.rec)[0].args._tenant_id, tenant);
 assert.equal(executions(approved.rec)[0].args._actor_id, actor);
 assert.ok(stored.consumed_at, "the existing atomic-claim path consumes the stored proposal");
 assert.equal(proposals(approved.rec).length, 0);
+const taskLocator = {
+  surface: "operations", tab: "work", record_id: id(6),
+  surface_url: "https://paigeagent.ai/solo/101/operations/work",
+  deep_link: null, deep_link_status: "surface_only",
+};
+assert.deepEqual(approved.body.record_locator, taskLocator, "fresh task result opens its existing native work owner without a made-up task query");
 checks++;
+
+const replay = await request(first.proposal.args.command, { options: { cached: true } });
+assert.equal(replay.status, 200);
+assert.deepEqual(replay.body.record_locator, taskLocator, "cached success must retain the same native task locator");
+assert.equal(executions(replay.rec).length, 0, "completed result replay is readback, not another task");
+assert.equal(proposals(replay.rec).length, 0, "completed result does not propose another approval");
+assert.equal(replay.rec.rpc.filter(call => call.name === "resolve_tool_autonomy").length, 0);
+checks++;
+
+for (const [options, tree] of [
+  [{ accountType: "agency" }, "agency"],
+  [{ parentTenantId: id(8) }, "business"],
+]) {
+  const otherTier = await request(first.proposal.args.command, { options: { ...options, lane: "auto" } });
+  assert.equal(otherTier.status, 200);
+  assert.equal(executions(otherTier.rec).length, 1);
+  assert.deepEqual(otherTier.body.record_locator, {
+    ...taskLocator, surface: "command-center", tab: "tasks",
+    surface_url: `https://paigeagent.ai/${tree}/101/calendar/tasks`,
+  }, "non-Solo task locator routing and metadata remain unchanged");
+  checks++;
+}
 
 // Wrong actor/workspace and reused or forged tokens cannot redeem the original approval.
 for (const options of [
@@ -158,6 +187,7 @@ for (const [command, options, status, code] of [
   assert.equal(refused.body.code, code);
   assert.equal(proposals(refused.rec).length, 0);
   assert.equal(executions(refused.rec).length, 0);
+  assert.equal(refused.body.record_locator, undefined);
   checks++;
 }
-console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);
+console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);

@@ -17,7 +17,7 @@ describe("canonical CRM action door", () => {
       cwd: process.cwd(), env, encoding: "utf8", windowsHide: true, timeout: 60_000,
       stdio: ["ignore", "pipe", "pipe"],
     });
-    expect(output).toContain("PASS 21 actual CRM approval-summary checks");
+    expect(output).toContain("PASS 24 actual CRM approval-summary checks");
   }, 65_000);
 
   it("accepts no tenant, actor, role, or account identity from the request", () => {

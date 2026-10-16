@@ -385,8 +385,8 @@ serve(async (req) => {
       : accountType === "agency" ? "agency" : accountType === "enterprise" ? "enterprise" : "solo";
     const surfaceUrl = canonicalAppUrl({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination });
     // The current Solo routers own unified People/business focus (`?person=`) and Pipeline deal
-    // focus (`?deal=`). CRM tasks still have no human record router, so task actions return only
-    // the truthful Command Center surface URL and explicitly label it surface_only.
+    // focus (`?deal=`). Solo CRM tasks live in Operations Work, which has no native task-ID focus
+    // router, so task actions return only that list URL and explicitly label it surface_only.
     const recordId = typeof readback?.id === "string" && readback.absent !== true ? readback.id : null;
     const deepLink = surfaceUrl && tier === "solo" && recordId && action.startsWith("contact.")
       ? `${surfaceUrl}?person=${encodeURIComponent(recordId)}`
@@ -396,8 +396,8 @@ serve(async (req) => {
       ...resultObject,
       capability,
       record_locator: {
-        surface: action.startsWith("deal.") ? "campaigns" : action.startsWith("task.") ? "command-center" : "clients",
-        tab: action.startsWith("deal.") ? "pipeline" : action.startsWith("task.") ? "tasks" : "people",
+        surface: action.startsWith("deal.") ? "campaigns" : action.startsWith("task.") ? tier === "solo" ? "operations" : "command-center" : "clients",
+        tab: action.startsWith("deal.") ? "pipeline" : action.startsWith("task.") ? tier === "solo" ? "work" : "tasks" : "people",
         record_id: readback?.id ?? null,
         surface_url: surfaceUrl,
         deep_link: deepLink,

@@ -27,7 +27,7 @@ RELEASE_CLASSIFICATION: internal-only: native scope correction awaiting distinct
 CUSTOMER_RELEASE_IDENTITY: none: production release and owner acceptance are not claimed
 RELEASE_NOTE_REQUIRED: no: candidate only
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: independent review, exact-head hosted gates, full-schema migration compatibility, actual deployment/readback and useful authenticated customer outcomes
-RELEASE_RECOVERY: position=deploy reviewed compatible read-only migration before endpoint; fail closed if scope RPC is unavailable; reference=PR2247 and existing native Research release procedure
+RELEASE_RECOVERY: position=reviewed compatible migration before endpoint with guarded forward correction and fail-closed RPC absence; reference=docs/evidence/ui-delivery/ant21-research-native-receipts.md
 
 ## Grounding and contract
 

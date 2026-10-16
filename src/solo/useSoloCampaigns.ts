@@ -1053,6 +1053,9 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
       clearTimeout(reloadTimer);
       reloadTimer = setTimeout(() => { if (!disposed) retry(); }, 200);
     };
+    // Chat already publishes completion after its request settles. Read canonical current
+    // truth even when realtime delivery is unavailable; the event carries no record authority.
+    window.addEventListener("paige:turn-settled", scheduleReload);
     const channel = supabase
       .channel(`solo-pipeline-board:${activeTenantId}`)
       .on(
@@ -1078,6 +1081,7 @@ export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" 
     return () => {
       disposed = true;
       clearTimeout(reloadTimer);
+      window.removeEventListener("paige:turn-settled", scheduleReload);
       supabase.removeChannel(channel);
     };
   }, [activeTenantId, accountContextLoading, retry]);

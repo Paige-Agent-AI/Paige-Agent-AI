@@ -6257,7 +6257,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           });
         }
         if (th?.summary && await readSummaryThread(payloadThreadId)) {
-          revalidateSummaryBinding = async () => !!(await readSummaryThread(payloadThreadId, false));
+          // Recheck selected workspace AFTER the awaited binding row read. The reader's
+          // maintenance scope check bypasses this callback, so this does not recurse.
+          revalidateSummaryBinding = async () => !!(await readSummaryThread(payloadThreadId));
           // THE ROLLING SUMMARY IS PROTECTED, and it is the strongest case of the lot. This
           // branch's own close-out comment says a persisted reply is folded into it by
           // `maybeRefreshSummary` — so it carries forward, verbatim and durably, exactly the

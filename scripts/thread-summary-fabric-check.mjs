@@ -28,13 +28,14 @@ globalThis.fetch=async(url,options)=>{
   return provider==='openai'?openReply(text,body.model):reply(text,body.model);
  }
  if(!body.stream)return reply(JSON.stringify({intent:'converse',research:'none',difficulty:'trivial',image:'none',needs_workspace_data:false,confidence:.99}));
+ state.mainBodies.push({provider,body,current:state.current,summaryReads:state.summaryReads});
  state.mainStreams++;
  return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Ordinary reply."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n');
 };
 const matches=(row,filters)=>filters.every(([op,key,value])=>op==='eq'?row[key]===value:op==='is'?row[key]===value:true);
 async function drive(options={}){
  const stamp='2026-10-15T12:00:00Z';
- state={options,current:tenant,folds:[],mainStreams:0,transcriptReads:0,summaryWrites:0,executor:null,
+ state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,transcriptReads:0,summaryWrites:0,executor:null,
   row:{id:thread,caller_user_id:options.foreignActor?id(99):actor,tenant_id:options.foreignTenant?other:tenant,
    message_count:options.postOnly?14:15,summary:options.prior??null,summary_through_seq:0,last_compacted_at:null,title:'Fixture thread',studio_session_id:null},
   turns:Array.from({length:options.postOnly?14:15},(_,i)=>({role:i%2?'assistant':'user',content:`old scoped turn ${i+1}`,seq:i+1,created_at:stamp}))};
@@ -52,6 +53,10 @@ async function drive(options={}){
      return [{...state.row}];
     }
     const selection=filters.find(([op])=>op==='select')?.[1]??'';
+    if(selection.startsWith('id, caller_user_id, tenant_id, message_count, summary')){
+     state.summaryReads++;
+     if(state.summaryReads===options.flipSummaryRead)state.current=other;
+    }
     if(options.beforeTranscript&&selection.includes('message_count')&&selection.includes('summary'))state.current=other;
     // Inject a foreign/malformed SDK row deliberately; the real handler must reject
     // it even if a policy broadens. Positive cases obey real filter semantics.
@@ -111,5 +116,18 @@ await check('rejected write never emits compaction done',{writeFail:true},r=>{as
 await check('compare-and-swap loser leaves concurrent watermark intact',{casLost:true},r=>{assert.equal(r.folds.length,1);assert.equal(r.summaryWrites,0);assert.equal(r.row.summary_through_seq,8);assert.ok(r.wire.includes('"state":"skipped"'));});
 await check('post-turn fold uses same Fabric/binding path',{postOnly:true},r=>{assert.equal(r.folds.length,1);assert.equal(r.folds[0].provider,'openai');assert.equal(r.summaryWrites,1);});
 await check('post-turn provider scope switch cannot persist',{postOnly:true,afterProvider:true},r=>{assert.equal(r.folds.length,1);assert.equal(r.summaryWrites,0);});
+const privateSummaryMarker='PRIVATE-SUMMARY-MARKER';
+await check('same-workspace recalled summary reaches ordinary provider',{postOnly:true,prior:privateSummaryMarker},r=>{
+ assert.equal(r.mainStreams,1);assert.equal(r.mainBodies[0].current,tenant);assert.equal(r.mainBodies[0].summaryReads,6);
+ assert.ok(JSON.stringify(r.mainBodies[0].body).includes(privateSummaryMarker));
+});
+await check('workspace change during earlier recall binding refuses ordinary provider',{postOnly:true,prior:privateSummaryMarker,flipSummaryRead:5},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainStreams,0);assert.equal(r.summaryWrites,0);
+ assert.ok(!r.wire.includes(privateSummaryMarker));
+});
+await check('workspace change during final recalled-summary binding refuses ordinary provider',{postOnly:true,prior:privateSummaryMarker,flipSummaryRead:6},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainStreams,0);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);
+ assert.ok(!r.wire.includes(privateSummaryMarker));
+});
 console.log(`${checks} passed, ${failures} failed actual-handler summary Fabric checks; native SQL/provider acceptance remains unverified`);
 process.exitCode=failures?1:0;

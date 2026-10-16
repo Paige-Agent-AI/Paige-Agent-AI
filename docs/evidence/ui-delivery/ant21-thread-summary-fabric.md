@@ -147,3 +147,52 @@ not key creation. No usable local real key was found, needed or read; tests use 
 with synthetic fixture values. PDF-bearing paths, the three session-summary calls, cache writes,
 provider telemetry/activation and the misleading legacy persisted model label are outside this delta.
 This is AUTHOR-REVIEW / LOWER ASSURANCE; distinct review and all release gates remain with the lead.
+
+## Recalled-summary final-read race correction
+
+The separate non-author restoration-boundary review of frozen
+9034e910956a2745d1d8e736b2d8a0445fa7a993 found a material P1 protected-content race.
+The outer scope revalidator read the current workspace and then awaited the recalled-summary
+thread binding with its workspace check disabled. A workspace switch during that last row read
+therefore left a correctly actor/thread/tenant-bound old summary eligible for provider egress.
+Native executor liveness validates intent/thread ownership, not a replacement current-workspace
+check at this provider boundary; publication-context proof governs released publication separately.
+The earlier green fixture set did not exercise this exact recalled-summary timing.
+
+This successor is isolated in work/chat-summary-scope-race from that exact9034 base. Its only
+runtime expression change restores the reader's existing default workspace check for the recall
+binding callback. The bound row is still read first; afterward the existing forced maintenance
+scope check reads the current resolver and explicit active profile. The maintenance flag bypasses
+the binding callback, avoiding recursion. A mismatch returns null, makes the summary task sticky
+refused and causes the outer protected-scope refusal before ordinary provider dispatch. No read
+order reversal, future lease, native authority, SQL, budget or fallback policy is introduced.
+
+The existing actual-handler fixture now records the real streamed provider request body and the
+number of canonical summary reads before egress. Three added cases retain fourteen old turns plus
+the admitted user turn, so preflight does not fold and a synthetic existing summary is recalled:
+
+- Same workspace: one ordinary provider request contains the synthetic summary marker; the
+  positive control observes six canonical summary reads before that request.
+- Workspace switch while canonical summary read five returns: zero ordinary provider requests,
+  zero summary writes and no marker on the wire.
+- Exact reviewer counterexample, switch while canonical summary read six returns the original
+  correctly bound row: zero ordinary provider requests, zero summary writes and no marker on
+  the wire. On unchanged9034 runtime this assertion genuinely fails because one request is sent.
+
+Failing first:20 PASS/1 FAIL, including all18 incumbent cases and the two passing new controls.
+After the correction:21 PASS/0 FAIL. Fresh callback/Fabric154, client-memory1103 and Knowledge457
+controls also pass without fixture recalibration. Node syntax and git diff --check pass.
+Commands are the same four Node --import commands recorded above. Sanitized synthetic logs are
+retained through managed security artifact storage under hardening/thread-summary-recall-scope/
+in this worktree's target-bound collection; no customer transcript, usable key or provider call
+is involved. This is protected-port evidence, not actual JWT/RLS or paid-provider acceptance.
+
+The eight SOLO viewport fields and all authenticated/native-provider/typecheck limits above
+remain UNVERIFIED; no UI geometry or native SQL was changed or exercised. All eligible current
+and future SOLO accounts use the same corrected shared callback, with no account predicates.
+The metadata-only98d460a4 follow-on remains a separate frozen commit and is not in this branch.
+No source pins or CI were renewed here. Distinct exact-head re-review, then the lead's reviewed
+29 dispatch fingerprints and the original9034 Fabric dependency renewal, hosted gates and release
+remain owed. Original held interrupted requests and their canonical receipts remain untouched.
+This correction's implementation check is AUTHOR-REVIEW / LOWER ASSURANCE; the separate reviewer
+who supplied the counterexample must recheck the frozen successor before release.

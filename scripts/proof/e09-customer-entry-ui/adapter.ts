@@ -22,4 +22,4 @@ export const supabase={
   throw Error("Unapproved synthetic contract");
  },from:()=>{throw Error("Customer entry must not access raw CRM/provisioning");},
 };
-Object.assign(window,{entryProof:{calls:()=>[...calls],confirmed:()=>{user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};listeners.forEach(fn=>fn("SIGNED_IN",{user}));}}});
+Object.assign(window,{entryProof:{calls:()=>[...calls],confirmed:(notify=true)=>{user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};if(notify)listeners.forEach(fn=>fn("SIGNED_IN",{user}));}}});

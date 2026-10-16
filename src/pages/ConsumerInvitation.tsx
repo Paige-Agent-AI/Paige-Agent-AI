@@ -19,6 +19,22 @@ export interface ConsumerInviteInfo {
 }
 type Phase="loading"|"choice"|"create"|"signin"|"verify"|"ready"|"wrong"|"accepted"|"unknown"|"invalid"|"error";
 type Receipt={tenant_id:string;client_id:string;accepted_at:string;status:"accepted"};
+type JoinIntent={token:string;tenantId:string;email:string;at:number};
+const JOIN_INTENT_KEY="paige_customer_join_intent",JOIN_INTENT_MS=30*60*1000;
+// Short-lived presentation intent only; no password/session or access decision.
+// localStorage lets the ordinary email return resume in a new tab on this browser.
+function retireJoinIntent(token:string){
+  try{if(JSON.parse(localStorage.getItem(JOIN_INTENT_KEY)||"null")?.token===token)localStorage.removeItem(JOIN_INTENT_KEY);}catch{/* optional storage */}
+}
+function resumeJoinIntent(token:string,tenantId:string,email:string):JoinIntent|null {
+  try{
+    const v=JSON.parse(localStorage.getItem(JOIN_INTENT_KEY)||"null");
+    if(v&&Object.keys(v).length===4&&v.token===token&&v.tenantId===tenantId&&v.email===email
+      &&typeof v.at==="number"&&Number.isFinite(v.at)&&Date.now()-v.at>=0&&Date.now()-v.at<JOIN_INTENT_MS)return v;
+    localStorage.removeItem(JOIN_INTENT_KEY);
+  }catch{/* A restricted browser retains the explicit join button. */}
+  return null;
+}
 function readReceipt(value:unknown,tenant:string):Receipt|null {
   if(!value||typeof value!=="object"||Array.isArray(value))return null;
   const r=value as Record<string,unknown>;
@@ -39,12 +55,14 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
   const [actor,setActor]=useState<User|null>(null),[password,setPassword]=useState("");
   const [showPassword,setShowPassword]=useState(false),[terms,setTerms]=useState(false);
   const [notice,setNotice]=useState(""),[receipt,setReceipt]=useState<Receipt|null>(null);
-  const [joinAfterAuth,setJoinAfterAuth]=useState<{token:string;tenantId:string}|null>(null),[authPending,setAuthPending]=useState(false);
+  const [joinAfterAuth,setJoinAfterAuth]=useState<JoinIntent|null>(null),[authPending,setAuthPending]=useState(false);
   const life=useRef({alive:true,sequence:0,working:false}),heading=useRef<HTMLHeadingElement>(null);
   const email=info.invited_email?.trim().toLowerCase()??"";
   useEffect(()=>{
-    setJoinAfterAuth(null);setPassword("");setTerms(false);setShowPassword(false);
+    setJoinAfterAuth(resumeJoinIntent(token,info.tenant_id,email));setPassword("");setTerms(false);setShowPassword(false);
   },[token,info.tenant_id,email]);
+  const clearJoinIntent=useCallback(()=>{retireJoinIntent(token);setJoinAfterAuth(null);},[token]);
+  useEffect(()=>{if(phase==="wrong"||phase==="invalid")clearJoinIntent();},[phase,clearJoinIntent]);
   const current=useCallback((n:number)=>life.current.alive&&n===life.current.sequence,[]);
   const checkedActor=useCallback(async(n:number,expected?:string)=>{
     const result=await bounded(supabase.auth.getUser());
@@ -90,7 +108,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
         const confirmation=await bounded(supabase.auth.getUser());if(!current(n))return;
         if(confirmation.error||confirmation.data.user?.id!==user.id)throw new Error("session_changed");
         setActor(user);
-        if(saved){setReceipt(saved);setPhase("accepted");await openPortal(saved,user.id,n);return;}
+        if(saved){clearJoinIntent();setReceipt(saved);setPhase("accepted");await openPortal(saved,user.id,n);return;}
         const valid=await validInvitation();if(!current(n))return;
         if(!valid){setPhase("invalid");return;}
         if(user.email?.trim().toLowerCase()!==email){setPhase("wrong");return;}
@@ -98,19 +116,19 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       }else{const valid=await validInvitation();if(current(n))setPhase(valid&&email?"choice":"invalid");}
     }catch{if(current(n)){setPhase("error");setNotice("We couldn’t check your session or invitation. Try again when connected.");}}
     finally{if(current(n))setBusy(false);}
-  },[email,status,validInvitation,current,openPortal]);
+  },[email,status,validInvitation,current,openPortal,clearJoinIntent]);
   useEffect(()=>{
     const lifetime=life.current;
     lifetime.alive=true;
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event)=>{
       if(event==="INITIAL_SESSION")return;
-      if(event==="SIGNED_OUT")setJoinAfterAuth(null);
+      if(event==="SIGNED_OUT")clearJoinIntent();
       ++life.current.sequence;setPassword("");setReceipt(null);setActor(null);setPhase("loading");
       queueMicrotask(()=>{if(life.current.alive)void refresh();});
     });
     void refresh();
     return()=>{lifetime.alive=false;++lifetime.sequence;subscription.unsubscribe();};
-  },[refresh]);
+  },[refresh,clearJoinIntent]);
   useEffect(()=>{heading.current?.focus();},[phase]);
 
   const authenticate=async()=>{
@@ -119,7 +137,9 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     if(password.length<8){setNotice("Enter a password with at least 8 characters.");return;}
     if(phase==="create"&&!terms){setNotice("Agree to the Terms and Privacy Policy to create your account.");return;}
     const n=++life.current.sequence,creating=phase==="create";
-    life.current.working=true;setBusy(true);setAuthPending(true);setJoinAfterAuth({token,tenantId:info.tenant_id});setNotice("");
+    const intent={token,tenantId:info.tenant_id,email,at:Date.now()};
+    life.current.working=true;setBusy(true);setAuthPending(true);setJoinAfterAuth(intent);setNotice("");
+    try{localStorage.setItem(JOIN_INTENT_KEY,JSON.stringify(intent));}catch{/* In-memory intent still works. */}
     try{
       // Revalidate the token immediately before identity creation. This does not
       // consume it or trust editable user metadata for membership/provisioning.
@@ -131,7 +151,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
         :await bounded(supabase.auth.signInWithPassword({email,password}));
       if(!current(n))return;
       if(result.error){
-        setJoinAfterAuth(null);
+        clearJoinIntent();
         const code=result.error.code;
         setNotice(code==="weak_password"?"Choose a stronger password and try again.":code==="over_email_send_rate_limit"||code==="over_request_rate_limit"?"Please wait a moment before trying again.":creating?"We couldn’t finish account setup. Try again shortly, or sign in if you already have an account.":"Sign-in failed. Check your password and confirm your email before trying again.");return;
       }
@@ -144,7 +164,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
   const accept=useCallback(async()=>{
     if(life.current.working||phase!=="ready"||!actor)return;
     const n=++life.current.sequence,subject=actor.id;
-    life.current.working=true;setBusy(true);setJoinAfterAuth(null);setNotice("");let dispatched=false;
+    life.current.working=true;setBusy(true);clearJoinIntent();setNotice("");let dispatched=false;
     try{
       const user=await checkedActor(n,subject);if(!current(n))return;
       if(!user?.email_confirmed_at||user.email?.trim().toLowerCase()!==email)throw new Error("wrong_recipient");
@@ -159,12 +179,13 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       await openPortal(saved,subject,n);
     }catch{if(current(n)){setPhase(dispatched?"unknown":"error");setNotice(dispatched?"We couldn’t confirm acceptance. Check the recorded result before trying again.":"Your session changed or could not be verified. Check your session to continue.");}}
     finally{life.current.working=false;if(current(n))setBusy(false);}
-  },[phase,actor,checkedActor,current,email,status,token,openPortal]);
+  },[phase,actor,checkedActor,current,email,status,token,openPortal,clearJoinIntent]);
   useEffect(()=>{
     // Only an explicit password submission requests automatic joining. Opening
     // an email in an already signed-in browser keeps the deliberate join button.
-    if(joinAfterAuth?.token===token&&joinAfterAuth.tenantId===info.tenant_id&&!authPending&&!busy&&phase==="ready")void accept();
-  },[joinAfterAuth,token,info.tenant_id,authPending,busy,phase,accept]);
+    if(joinAfterAuth?.token===token&&joinAfterAuth.tenantId===info.tenant_id&&joinAfterAuth.email===email
+      &&Date.now()-joinAfterAuth.at>=0&&Date.now()-joinAfterAuth.at<JOIN_INTENT_MS&&!authPending&&!busy&&phase==="ready")void accept();
+  },[joinAfterAuth,token,info.tenant_id,email,authPending,busy,phase,accept]);
   const continueToPortal=async()=>{
     if(!actor||!receipt||life.current.working)return;
     const n=++life.current.sequence;setBusy(true);life.current.working=true;
@@ -189,7 +210,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
   };
   const switchAccount=async()=>{
     if(life.current.working)return;
-    const n=++life.current.sequence;life.current.working=true;setBusy(true);setNotice("");setPassword("");
+    const n=++life.current.sequence;life.current.working=true;clearJoinIntent();setBusy(true);setNotice("");setPassword("");
     try{
       const result=await bounded(supabase.auth.signOut({scope:"local"}));if(!current(n))return;
       if(result.error)throw new Error("signout_unconfirmed");
@@ -210,13 +231,13 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       <CardContent className="space-y-4 [&_button:not([role=checkbox])]:min-h-11 [&_input]:min-h-11 [&_input]:text-base">
         {notice&&<p role="alert" className="text-sm break-words">{notice}</p>}
         {phase==="loading"?<p role="status" className="flex gap-2 items-center"><Loader2 aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none"/>Checking access…</p>:null}
-        {phase==="choice"&&<><Button className="w-full" style={style} onClick={()=>{setJoinAfterAuth(null);setPhase("create");setNotice("");}}>Create your account</Button><Button variant="outline" className="w-full" onClick={()=>{setJoinAfterAuth(null);setPhase("signin");setNotice("");}}>Sign in</Button></>}
+        {phase==="choice"&&<><Button className="w-full" style={style} onClick={()=>{clearJoinIntent();setPhase("create");setNotice("");}}>Create your account</Button><Button variant="outline" className="w-full" onClick={()=>{clearJoinIntent();setPhase("signin");setNotice("");}}>Sign in</Button></>}
         {(phase==="create"||phase==="signin")&&<form onSubmit={e=>{e.preventDefault();void authenticate();}} className="space-y-4" aria-busy={busy}>
           <div className="space-y-2"><Label htmlFor="customer-email">Invited email</Label><Input id="customer-email" type="email" autoComplete="username" value={email} readOnly/></div>
           <div className="space-y-2"><Label htmlFor="customer-password">Password</Label><div className="relative"><Input id="customer-password" type={showPassword?"text":"password"} autoComplete={phase==="create"?"new-password":"current-password"} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required disabled={busy} className="pr-12"/><button type="button" aria-label={showPassword?"Hide password":"Show password"} onClick={()=>setShowPassword(v=>!v)} className="absolute right-0 top-0 px-3" disabled={busy}>{showPassword?<EyeOff aria-hidden="true" className="size-4"/>:<Eye aria-hidden="true" className="size-4"/>}</button></div></div>
           {phase==="create"&&<div className="flex gap-3 items-start min-h-11"><Checkbox id="customer-terms" aria-label="I agree to the Terms and Privacy Policy" className="size-6 shrink-0" checked={terms} onCheckedChange={v=>setTerms(v===true)} disabled={busy}/><Label htmlFor="customer-terms" className="text-sm leading-relaxed">I agree to the <Link className="underline" to="/legal/terms" target="_blank" rel="noreferrer">Terms</Link> and <Link className="underline" to="/legal/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>.</Label></div>}
           <Button type="submit" disabled={busy||authPending} className="w-full" style={style}>{busy||authPending?"Please wait…":phase==="create"?"Create account and join":"Sign in and open portal"}</Button>
-          <Button type="button" variant="ghost" disabled={busy||authPending} className="w-full" onClick={()=>{setJoinAfterAuth(null);setPassword("");void refresh();}}>Back</Button>
+          <Button type="button" variant="ghost" disabled={busy||authPending} className="w-full" onClick={()=>{clearJoinIntent();setPassword("");void refresh();}}>Back</Button>
           {phase==="signin"&&<p className="text-sm"><Link className="underline" to={`/auth?mode=login&next=${encodeURIComponent(`/join/${token}`)}`}>Need help signing in?</Link></p>}
         </form>}
         {phase==="verify"&&<><p>Confirm your email, then return here to open your portal. No questionnaire is required.</p><Button style={style} disabled={busy} className="w-full" onClick={()=>void refresh()}>I have confirmed my email</Button><Button variant="outline" disabled={busy} className="w-full" onClick={()=>void resend()}>Resend confirmation email</Button><Button variant="ghost" disabled={busy} className="w-full" onClick={()=>{setPhase("signin");setNotice("");}}>Sign in</Button></>}

@@ -23,8 +23,11 @@ try{
  const sizes=[[1536,770,'choice','a'],[1366,768,'choice','b'],[1024,768,'choice','a'],[900,1000,'choice','b'],[390,844,'choice','a'],[320,720,'choice','b']];
  for(const [width,height,state,context] of gateway?sizes:[...sizes,[390,844,'ready','a'],[390,844,'accepted','b'],[390,844,'wrong','a'],[390,844,'invalid','b'],[390,844,'error','a']]){
   const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
-  page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>r.abort());
-  await page.setContent('<html data-pg="light"><head></head><body><div id="root"></div></body></html>');await page.addStyleTag({content:css});
+  page.on('pageerror',e=>errors.push(e.message));
+  // A routed .invalid origin permits browser storage while all transport stays offline.
+  const offlineOrigin='https://customer-entry.tests.invalid/';
+  await page.route('**/*',r=>r.request().url()===offlineOrigin?r.fulfill({contentType:'text/html',body:'<html data-pg="light"><head></head><body><div id="root"></div></body></html>'}):r.abort());
+  await page.goto(offlineOrigin);await page.addStyleTag({content:css});
   await page.evaluate(entrySeed=>{window.entrySeed=entrySeed;},{state,context});await page.addScriptTag({content:bundle.outputFiles[0].text});
   if(gateway){
    await page.getByLabel('Email',{exact:true}).waitFor();
@@ -49,7 +52,10 @@ try{
    await page.getByRole('heading',{name:'Check your email',exact:true}).waitFor();
    assert.equal(await page.getByLabel('Password',{exact:true}).count(),0);
    assert(!(await page.evaluate(()=>window.entryProof.calls())).includes('accept_tenant_invite'));
-   await page.evaluate(()=>window.entryProof.confirmed());
+   if(width===390){
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('paige_customer_join_intent')).email),'recipient@tests.invalid');
+    await page.evaluate(()=>{window.entryProof.confirmed(false);window.entryProof.remount();});
+   }else await page.evaluate(()=>window.entryProof.confirmed());
    await page.getByRole('heading',{name:'Verified portal test destination',exact:true}).waitFor();
    assert.equal((await page.evaluate(()=>window.entryProof.calls())).filter(x=>x==='accept_tenant_invite').length,1);
   }else{
@@ -59,10 +65,10 @@ try{
    await page.screenshot({path:path.join(output,`${width}-${state}-${context}.png`),fullPage:true});
   }
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');
-  await page.keyboard.press('Tab');results.push({width,height,state,context,result:'PASS',transport:'synthetic-offline'});await page.close();
+  await page.keyboard.press('Tab');results.push({width,height,state,context,result:'PASS',transport:'synthetic-offline',...(state==='choice'?{confirmationReturn:width===390?'component-remount':'same-mount-event'}:{})});await page.close();
  }
  assert.deepEqual(errors,[]);
- const hashes=[];for(const p of [...(gateway?['src/pages/PortalGateway.tsx']:['src/pages/JoinWorkspace.tsx','src/pages/ConsumerInvitation.tsx']),'src/pages/ConsumerInvitation.css',styles[0]&&`dist/assets/${styles[0]}`])hashes.push({path:p,sha256:createHash('sha256').update(await fs.readFile(p)).digest('hex')});
+ const hashes=[];for(const p of [...(gateway?['src/pages/PortalGateway.tsx']:['src/pages/JoinWorkspace.tsx','src/pages/ConsumerInvitation.tsx','scripts/proof/e09-customer-entry-ui/check.mjs','scripts/proof/e09-customer-entry-ui/source.tsx','scripts/proof/e09-customer-entry-ui/adapter.ts']),'src/pages/ConsumerInvitation.css',styles[0]&&`dist/assets/${styles[0]}`])hashes.push({path:p,sha256:createHash('sha256').update(await fs.readFile(p)).digest('hex')});
  await fs.writeFile(path.join(output,'report.json'),JSON.stringify({engine:'isolated Chromium',authenticated:'NOT_RUN',results,hashes},null,2));
  console.log(JSON.stringify({passed:results.length,output}));
 }finally{await browser.close();}

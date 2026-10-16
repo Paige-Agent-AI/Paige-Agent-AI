@@ -46,6 +46,69 @@ beforeEach(()=>{
   host=document.createElement("div");document.body.append(host);root=createRoot(host);
 });
 afterEach(()=>{act(()=>root.unmount());host.remove();});
+const remount=async()=>{await act(async()=>root.unmount());root=createRoot(host);await render();};
+it("a confirmation redirect remount resumes the explicit signup and joins exactly once",async()=>{
+  await render();await click("Create your account");await input('#customer-password','test-password-123');await click("I agree to the Terms and Privacy Policy");await click("Create account and join");
+  expect(host.textContent).toContain("Check your email");
+  f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  await remount();
+  expect(host.textContent).toBe("Portal destination");
+  expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(1);
+  await remount();
+  expect(host.textContent).toBe("Portal destination");
+  expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(1);
+});
+const storedIntent=(overrides:Record<string,unknown>={})=>localStorage.setItem("paige_customer_join_intent",JSON.stringify({token:"synthetic-recipient-token",tenantId:tenant,email:"recipient@tests.invalid",at:Date.now(),...overrides}));
+it.each([
+  {at:Date.now()-31*60*1000},{at:Date.now()+60*1000},{at:"invalid"},
+  {token:"other-invitation"},{tenantId:"other-business"},{email:"other@tests.invalid"},
+])("does not resume expired, malformed or differently scoped intent %j",async(overrides)=>{
+  storedIntent(overrides);f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  await render();expect(button("Open your portal")).toBeTruthy();
+  expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
+});
+it("persisted intent cannot join a wrong or unconfirmed recipient",async()=>{
+  storedIntent();f.user={id:"other",email:"other@tests.invalid",email_confirmed_at:"2026-01-01"};
+  await render();expect(host.textContent).toContain("Use your invited account");
+  expect(localStorage.getItem("paige_customer_join_intent")).toBeNull();
+  storedIntent();f.user={id:subject,email:"recipient@tests.invalid"};await remount();
+  expect(host.textContent).toContain("Check your email");
+  expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
+});
+it("a resumed lost acceptance response is checked after remount without a second write",async()=>{
+  storedIntent();f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  const original=f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{
+    if(name==="accept_tenant_invite"){f.accepted=true;throw Error("lost response");}
+    return original(name,...args);
+  });
+  await render();expect(host.textContent).toContain("We couldn’t confirm acceptance");
+  expect(localStorage.getItem("paige_customer_join_intent")).toBeNull();
+  await remount();expect(host.textContent).toBe("Portal destination");
+  expect(f.rpc.mock.calls.filter(([name])=>name==="accept_tenant_invite")).toHaveLength(1);
+});
+it("a signup error retires saved intent before the browser returns",async()=>{
+  f.signUp.mockResolvedValue({data:{user:null,session:null},error:{status:500}});
+  await render();await click("Create your account");await input('#customer-password','test-password-123');await click("I agree to the Terms and Privacy Policy");await click("Create account and join");
+  expect(localStorage.getItem("paige_customer_join_intent")).toBeNull();
+  f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};await remount();
+  expect(button("Open your portal")).toBeTruthy();expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
+});
+it("sign-out retires the saved request rather than joining on a later login",async()=>{
+  storedIntent();f.user={id:subject,email:"recipient@tests.invalid"};await render();
+  await act(async()=>{f.user=null;f.listeners.forEach(fn=>fn("SIGNED_OUT",null));});
+  expect(localStorage.getItem("paige_customer_join_intent")).toBeNull();
+  f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};await remount();
+  expect(button("Open your portal")).toBeTruthy();expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
+});
+it("storage refusal leaves a usable explicit join instead of fabricating resumed intent",async()=>{
+  const storage=vi.spyOn(Storage.prototype,"getItem").mockImplementation(()=>{throw Error("storage blocked");});
+  try{
+    f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};await render();
+    expect(button("Open your portal")).toBeTruthy();await click("Open your portal");
+    expect(host.textContent).toBe("Portal destination");
+  }finally{storage.mockRestore();}
+});
 it("offers real recipient signup, keeps the bound email fixed, and waits for confirmation without accepting",async()=>{
   await render();await click("Create your account");
   expect(host.querySelector<HTMLInputElement>('#customer-email')?.readOnly).toBe(true);

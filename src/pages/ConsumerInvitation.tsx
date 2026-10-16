@@ -56,6 +56,13 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     if(!value)throw new Error("status_unavailable");
     return value;
   },[token,info.tenant_id]);
+  const validInvitation=useCallback(async()=>{
+    const peek=await bounded(supabase.rpc("peek_tenant_invite",{_token:token}));
+    if(peek.error)throw new Error("invitation_unavailable");
+    const fresh=Array.isArray(peek.data)?peek.data[0]:peek.data;
+    return !!fresh&&fresh.is_valid&&fresh.kind==="consumer"&&fresh.tenant_id===info.tenant_id
+      &&fresh.invited_email?.trim().toLowerCase()===email;
+  },[token,info.tenant_id,email]);
   const refresh=useCallback(async()=>{
     const n=++life.current.sequence;
     setBusy(true);setReceipt(null);setActor(null);setNotice("");setPhase("loading");
@@ -69,13 +76,14 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
         if(confirmation.error||confirmation.data.user?.id!==user.id)throw new Error("session_changed");
         setActor(user);
         if(saved){setReceipt(saved);setPhase("accepted");return;}
-        if(!info.is_valid){setPhase("invalid");return;}
+        const valid=await validInvitation();if(!current(n))return;
+        if(!valid){setPhase("invalid");return;}
         if(user.email?.trim().toLowerCase()!==email){setPhase("wrong");return;}
         setPhase(user.email_confirmed_at?"ready":"verify");
-      }else setPhase(info.is_valid&&email?"choice":"invalid");
+      }else{const valid=await validInvitation();if(current(n))setPhase(valid&&email?"choice":"invalid");}
     }catch{if(current(n)){setPhase("error");setNotice("We couldn’t check your session or invitation. Try again when connected.");}}
     finally{if(current(n))setBusy(false);}
-  },[email,info.is_valid,status]);
+  },[email,status,validInvitation]);
   useEffect(()=>{
     const lifetime=life.current;
     lifetime.alive=true;
@@ -91,7 +99,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
 
   const authenticate=async()=>{
     if(life.current.working)return;
-    if(!info.is_valid||!email){setPhase("invalid");return;}
+    if(!email){setPhase("invalid");return;}
     if(password.length<8){setNotice("Enter a password with at least 8 characters.");return;}
     if(phase==="create"&&!terms){setNotice("Agree to the Terms and Privacy Policy to create your account.");return;}
     const n=++life.current.sequence,creating=phase==="create";
@@ -99,10 +107,9 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     try{
       // Revalidate the token immediately before identity creation. This does not
       // consume it or trust editable user metadata for membership/provisioning.
-      const peek=await bounded(supabase.rpc("peek_tenant_invite",{_token:token}));if(!current(n))return;
-      const fresh=Array.isArray(peek.data)?peek.data[0]:peek.data;
-      if(peek.error||!fresh||!fresh.is_valid||fresh.kind!=="consumer"||fresh.tenant_id!==info.tenant_id
-        ||fresh.invited_email?.trim().toLowerCase()!==email){setPhase("invalid");return;}
+      // Existing login is also permitted for a consumed link: it can recover
+      // already-accepted access, but cannot create or consume a new invitation.
+      if(creating){const valid=await validInvitation();if(!current(n))return;if(!valid){setPhase("invalid");return;}}
       const result=creating
         ?await bounded(supabase.auth.signUp({email,password,options:{emailRedirectTo:`${window.location.origin}/join/${encodeURIComponent(token)}`}}))
         :await bounded(supabase.auth.signInWithPassword({email,password}));
@@ -151,9 +158,20 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     if(busy||life.current.working)return;
     const n=++life.current.sequence;setBusy(true);life.current.working=true;
     try{
+      const valid=await validInvitation();if(!current(n))return;if(!valid){setPhase("invalid");return;}
       const result=await bounded(supabase.auth.resend({type:"signup",email,options:{emailRedirectTo:`${window.location.origin}/join/${encodeURIComponent(token)}`}}));
       if(current(n))setNotice(result.error?"Confirmation email could not be requested. Wait a moment, then try again.":"Confirmation email requested. Check your inbox and spam folder; delivery is not yet confirmed.");
     }catch{if(current(n))setNotice("We couldn’t confirm the email request. Check your inbox before requesting another.");}
+    finally{life.current.working=false;if(current(n))setBusy(false);}
+  };
+  const switchAccount=async()=>{
+    if(life.current.working)return;
+    const n=++life.current.sequence;life.current.working=true;setBusy(true);setNotice("");setPassword("");
+    try{
+      const result=await bounded(supabase.auth.signOut({scope:"local"}));if(!current(n))return;
+      if(result.error)throw new Error("signout_unconfirmed");
+      await refresh();
+    }catch{if(current(n))setNotice("Sign-out could not be confirmed. Try again when connected.");}
     finally{life.current.working=false;if(current(n))setBusy(false);}
   };
   const color=info.brand?.primary_color||"#150C31",style={backgroundColor:color,color:readableTextOn(color)};
@@ -175,15 +193,15 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
           <div className="space-y-2"><Label htmlFor="customer-password">Password</Label><div className="relative"><Input id="customer-password" type={showPassword?"text":"password"} autoComplete={phase==="create"?"new-password":"current-password"} value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required disabled={busy} className="pr-12"/><button type="button" aria-label={showPassword?"Hide password":"Show password"} onClick={()=>setShowPassword(v=>!v)} className="absolute right-0 top-0 px-3" disabled={busy}>{showPassword?<EyeOff aria-hidden="true" className="size-4"/>:<Eye aria-hidden="true" className="size-4"/>}</button></div></div>
           {phase==="create"&&<div className="flex gap-3 items-start min-h-11"><Checkbox id="customer-terms" aria-label="I agree to the Terms and Privacy Policy" className="size-6 shrink-0" checked={terms} onCheckedChange={v=>setTerms(v===true)} disabled={busy}/><Label htmlFor="customer-terms" className="text-sm leading-relaxed">I agree to the <Link className="underline" to="/legal/terms" target="_blank" rel="noreferrer">Terms</Link> and <Link className="underline" to="/legal/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>.</Label></div>}
           <Button type="submit" disabled={busy} className="w-full" style={style}>{busy?"Please wait…":phase==="create"?"Create account":"Sign in to continue"}</Button>
-          <Button type="button" variant="ghost" disabled={busy} className="w-full" onClick={()=>{setPassword("");setPhase("choice");setNotice("");}}>Back</Button>
+          <Button type="button" variant="ghost" disabled={busy} className="w-full" onClick={()=>{setPassword("");void refresh();}}>Back</Button>
           {phase==="signin"&&<p className="text-sm"><Link className="underline" to={`/auth?mode=login&next=${encodeURIComponent(`/join/${token}`)}`}>Need help signing in?</Link></p>}
         </form>}
         {phase==="verify"&&<><p>Confirm your email, then return to this invitation. Your customer access starts after you accept.</p><Button style={style} disabled={busy} className="w-full" onClick={()=>void refresh()}>I have confirmed my email</Button><Button variant="outline" disabled={busy} className="w-full" onClick={()=>void resend()}>Resend confirmation email</Button><Button variant="ghost" disabled={busy} className="w-full" onClick={()=>{setPhase("signin");setNotice("");}}>Sign in</Button></>}
         {phase==="ready"&&<><p>Accept to connect your customer account with {info.tenant_name} and open your authorized portal.</p><Button style={style} disabled={busy} className="w-full" onClick={()=>void accept()}>{busy?"Accepting…":"Accept invitation"}</Button></>}
         {phase==="accepted"&&<><p>Your customer relationship is confirmed. Continue to your saved information.</p><Button style={style} disabled={busy} className="w-full" onClick={()=>void continueToPortal()}>{busy?"Checking portal…":"Continue to your portal"}</Button></>}
-        {phase==="wrong"&&<><p>This invitation is for {email}. You are signed in as {actor?.email}.</p><Button variant="outline" disabled={busy} className="w-full" onClick={async()=>{if(life.current.working)return;setBusy(true);const r=await supabase.auth.signOut({scope:"local"});if(r.error){setNotice("Sign-out could not be confirmed. Try again.");setBusy(false);}else void refresh();}}>Sign out of this session</Button></>}
+        {phase==="wrong"&&<><p>This invitation is for {email}. You are signed in as {actor?.email}.</p><Button variant="outline" disabled={busy} className="w-full" onClick={()=>void switchAccount()}>Sign out of this session</Button></>}
         {(phase==="unknown"||phase==="error")&&<Button variant="outline" disabled={busy} className="w-full" onClick={()=>void refresh()}>{phase==="unknown"?"Check acceptance":"Try again"}</Button>}
-        {phase==="invalid"&&<p>Ask the business for a new invitation. No new access has been granted here.</p>}
+        {phase==="invalid"&&<><p>Ask the business for a new invitation. No new access has been granted here.</p>{email&&<Button variant="outline" className="w-full" onClick={()=>{setPhase("signin");setNotice("");}}>Sign in to check existing access</Button>}</>}
       </CardContent>
     </Card>
   </main>;

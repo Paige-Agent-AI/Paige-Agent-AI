@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: legitimate recipient creates/signs in, confirms, explicitly
 MOTION_PURPOSE: NONE: no added product motion; existing loading feedback honors reduced motion.
 PROTECTED_SEAMS: affected identity/account choice, client/tenant isolation, canonical writes/readback, audit/privacy and customer form accessibility are tested. Solo billing/provisioning preserved by its existing suite. Chat execution/admission/approval, stream/history/pop-out, Live state, Browser/Vault, provider sender/status, scheduler, payment and owner shell geometry are not modified. Existing private-context suppression is a customer projection change, not execution activation.
 
-INTERNAL_BUILD_IDENTITY: c70a4b3bbb4fbd281262a553371fea838d62fde1; exact source candidate; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271108120000_e09_customer_invitation_entry); edge=PROOF_OWED(paige-mcp and finalize-agreement); evidence=this record and exact-head PR receipts
+INTERNAL_BUILD_IDENTITY: 5696271a227b704ed623737736e0941f24467e87; reviewed source lineage, recovery repairs tracked by the final PR Git head; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271108120000_e09_customer_invitation_entry); edge=PROOF_OWED(paige-mcp and finalize-agreement); evidence=this record and exact-head PR receipts
 RELEASE_CHANNEL: development: source candidate, production only after documented review, exact-head CI and native migration/Edge/web readback.
 RELEASE_CLASSIFICATION: internal-only: repair of the owner-approved customer entry flow; full Portal completion is not claimed.
 CUSTOMER_RELEASE_IDENTITY: none: no new version or announcement inferred from a repair PR.
@@ -72,3 +72,5 @@ Service-agreement content from the browser was previously unbound to the tenant'
 ## Review and release
 
 Independent Review is mandatory. A separate sequential AUTHOR-REVIEW / LOWER ASSURANCE of the exact final head is still required and will be published in the PR; no third-party assurance is claimed. Final CI, migration/Edge/web deployment and actual user testing must be reported as separate states. No ordinary release waits for owner manual visual inspection.
+
+Review receipt6217197716 on5696271a2 found returning-recipient recovery, stale validity, unbounded explicit sign-out and inaccurate MCP wording. The consolidated repair adds existing-login-only recovery for consumed links, fresh validity reads before readiness/signup/resend, bounded sign-out and current field descriptions. Back returns through the same fresh check. New cases cover these paths;37 affected tests and the final19 entry/MCP tests pass. Eleven actual-source browser cases were re-executed with refreshed source hashes; no new aesthetic redesign or real Auth/provider effects. Final exact-head recheck remains in the PR.

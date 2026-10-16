@@ -102,3 +102,35 @@ it("a stale invitation cannot start signup",async()=>{
   f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{const r=await original(name,...args);if(name==="peek_tenant_invite")r.data[0].is_valid=false;return r;});
   await click("Create account");expect(host.textContent).toContain("This invitation is unavailable");expect(f.signUp).not.toHaveBeenCalled();
 });
+it("a signed-out returning recipient can sign in through a consumed link and recover existing access",async()=>{
+  const original=f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{
+    if(name==="client_portal_invite_status")return{data:f.user?{tenant_id:tenant,client_id:"contact-a",accepted_at:"2026-01-01",status:"accepted"}:null,error:null};
+    const r=await original(name,...args);if(name==="peek_tenant_invite")r.data[0].is_valid=false;return r;
+  });
+  f.signIn.mockImplementation(async()=>{f.user={id:"subject",email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};return{data:{user:f.user},error:null};});
+  await render();await click("Sign in to check existing access");await input('#customer-password','existing-password');await click("Sign in to continue");
+  expect(host.textContent).toContain("Your invitation is accepted");expect(f.signUp).not.toHaveBeenCalled();
+  expect(f.rpc.mock.calls.some(([name])=>name==="accept_tenant_invite")).toBe(false);
+});
+it("an invitation revoked after page load becomes unavailable on recovery",async()=>{
+  f.user={id:"subject",email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  let revoked=false;const original=f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{
+    if(name==="accept_tenant_invite"){revoked=true;return{data:null,error:{code:"42501"}};}
+    const r=await original(name,...args);if(name==="peek_tenant_invite")r.data[0].is_valid=!revoked;return r;
+  });
+  await render();await click("Accept invitation");await click("Check acceptance");
+  expect(host.textContent).toContain("This invitation is unavailable");expect(button("Accept invitation")).toBeUndefined();
+});
+it("a failed explicit sign-out leaves a retryable account boundary",async()=>{
+  f.user={id:"other",email:"other@tests.invalid",email_confirmed_at:"2026-01-01"};f.signOut.mockRejectedValue(Error("offline"));
+  await render();await click("Sign out of this session");
+  expect(host.textContent).toContain("Sign-out could not be confirmed");expect(button("Sign out of this session").disabled).toBe(false);
+});
+it("Back from consumed-link sign-in does not reopen the create-account choice",async()=>{
+  const original=f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{const r=await original(name,...args);if(name==="peek_tenant_invite")r.data[0].is_valid=false;return r;});
+  await render();await click("Sign in to check existing access");await click("Back");
+  expect(button("Create your account")).toBeUndefined();expect(button("Sign in to check existing access")).toBeTruthy();
+});

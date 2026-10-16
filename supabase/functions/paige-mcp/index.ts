@@ -4673,14 +4673,14 @@ mcp.tool("me_get_profile", {
 });
 
 mcp.tool("me_update_profile", {
-  description: "Update the calling user's own client profile. Only safe self-editable fields are allowed: first_name, last_name, phone, entity_name, current_notes, funding_goal_amount. Cannot change lifecycle_stage, assigned coach, tier, or status.",
+  description: "Update your own contact names, company name and primary phone. Internal CRM notes, commercial fields, lifecycle, assignments, tier and access status are not customer-editable.",
   inputSchema: z.object({
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     phone: z.string().optional(),
     entity_name: z.string().optional().describe("Their company / business name."),
-    current_notes: z.string().optional().describe("Free-form notes the user wants Paige to remember."),
-    funding_goal_amount: z.number().optional(),
+    current_notes: z.string().optional().describe("Internal field; customer updates are refused."),
+    funding_goal_amount: z.number().optional().describe("Commercial field; customer updates are refused."),
   }),
   handler: async (patch) => {
     const me = await actorClient();

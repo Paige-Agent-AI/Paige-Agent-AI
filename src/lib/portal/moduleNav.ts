@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Home, BookOpen, ListChecks, ClipboardList,
+  Home, BookOpen, ListChecks, ClipboardList, FileText,
   CreditCard, Landmark, Compass, Wallet, Building2, FileSignature, Handshake,
 } from "lucide-react";
 import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
@@ -25,6 +25,7 @@ export const MODULE_ROUTES: Record<string, { href: string; icon: LucideIcon }> =
   resources: { href: "/app/learn", icon: BookOpen },
   approvals: { href: "/app/approvals", icon: ListChecks },
   actions: { href: "/app/actions", icon: ClipboardList },
+  documents: { href: "/app/documents", icon: FileText },
   // Funding-vertical surfaces — keys match the /app route paths in App.tsx.
   // Gated by the funding Playbook's portal.modules (opt-in preset), never shown
   // to a coaching-generic tenant.

@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock } from "lucide-react";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { catalogRoutableItems, applyPortalOverlay } from "@/lib/portal/moduleNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -157,6 +157,15 @@ export function AppNav({ user }: AppNavProps) {
     navItems.splice(homeIdx >= 0 ? homeIdx + 1 : 0, 0, {
       label: "Action items", href: "/app/actions", icon: ClipboardList,
     });
+  }
+
+  // Documents is available to an actual native customer relationship even when
+  // an older Playbook predates the module key. Overlay stays presentation-only;
+  // the mounted page and Storage independently re-resolve actual permission.
+  if (brand && portalConfig.modules?.find(item => item.key === "documents")?.visible !== false
+    && !navItems.some(item => item.href === "/app/documents")) {
+    const after = navItems.findIndex(item => item.href === "/app/actions");
+    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {label: "Documents", href: "/app/documents", icon: FileText});
   }
 
   // Planning is the Task Manager — where every reminder/task/milestone Paige

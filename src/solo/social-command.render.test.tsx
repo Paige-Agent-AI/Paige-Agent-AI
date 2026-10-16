@@ -201,6 +201,118 @@ describe("the record flow, driven", () => {
   });
 });
 
+describe("record dismissal lifetime", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(window, "setTimeout");
+    vi.spyOn(window, "clearTimeout");
+  });
+  afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
+  // React may own unrelated scheduled work. Observe only this form's900ms dismissal.
+  const closeCalls = () => vi.mocked(window.setTimeout).mock.calls.filter(([, delay]) => delay === 900);
+
+  const open = () => {
+    const opener = buttonSaying("Record accounts")!;
+    act(() => opener.click());
+    return opener;
+  };
+  const submit = async () => {
+    await act(async () => {
+      host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+  };
+  const unmount = () => { act(() => root!.unmount()); root = null; };
+  const redraw = () => act(() => root!.render(
+    <SocialCommand campaigns={CAMPAIGNS} onOpenStudio={harness.nav.studio}
+      onAskPaige={harness.nav.paige} onOpenCompass={harness.nav.compass} onOpenPipeline={harness.nav.pipeline} />,
+  ));
+  const holdSave = () => {
+    let complete!: (result: Record<string, unknown>) => void;
+    const result = new Promise<Record<string, unknown>>(resolve => { complete = resolve; });
+    harness.social = { ...harness.social, recordHandles: async (draft: Record<string, string>) => {
+      harness.saved.push(draft); return result;
+    } };
+    return (value = { ok: true, recordedCount: 1 }) => act(async () => { complete(value); });
+  };
+
+  it("keeps the successful result visible for900ms, then closes and restores opener focus", async () => {
+    renderAt(); const opener = open(); await submit();
+    expect(host.querySelector('[role="status"]')?.textContent).toContain("Saved.");
+    act(() => vi.advanceTimersByTime(899));
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    expect(harness.saved).toHaveLength(1);
+  });
+
+  it("retires its successful dismissal callback before page teardown", async () => {
+    renderAt(); const opener = open(); const focus = vi.spyOn(opener, "focus"); await submit();
+    const timerIndex = vi.mocked(window.setTimeout).mock.calls.findIndex(([, delay]) => delay === 900);
+    expect(timerIndex).toBeGreaterThanOrEqual(0);
+    const timer = vi.mocked(window.setTimeout).mock.results[timerIndex].value;
+    unmount();
+    expect(window.clearTimeout).toHaveBeenCalledWith(timer);
+    act(() => vi.advanceTimersByTime(900));
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("does not let a manually closed form dismiss a newly opened form", async () => {
+    renderAt(); const opener = open(); await submit();
+    act(() => buttonSaying("Close")!.click());
+    expect(document.activeElement).toBe(opener);
+    open();
+    act(() => vi.advanceTimersByTime(900));
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
+  });
+
+  it("does not schedule UI work when the native save resolves after page unmount", async () => {
+    const complete = holdSave(); renderAt(); open(); await submit();
+    expect(buttonSaying("Saving")?.disabled).toBe(true);
+    unmount(); await complete();
+    expect(closeCalls()).toHaveLength(0);
+    expect(harness.saved).toHaveLength(1);
+  });
+
+  it("preserves successful dismissal across the incumbent Social read-refresh remount", async () => {
+    const complete = holdSave(); renderAt(); open(); await submit();
+    harness.social = { ...harness.social, phase: "loading" }; redraw();
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    await complete();
+    harness.social = { ...harness.social, phase: "ready" }; redraw();
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(900));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(harness.saved).toHaveLength(1);
+  });
+
+  it("gives a later explicit save its own full dismissal delay", async () => {
+    renderAt(); open(); await submit();
+    act(() => vi.advanceTimersByTime(400));
+    await submit();
+    act(() => vi.advanceTimersByTime(500));
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(400));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(harness.saved).toHaveLength(2);
+  });
+
+  it("retires the prior workspace's dismissal callback when the page changes context", async () => {
+    renderAt(); open(); await submit();
+    harness.social = { ...harness.social, tenantId: "tenant-2" }; redraw();
+    act(() => vi.advanceTimersByTime(900));
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy();
+  });
+
+  it("leaves a native refusal visible without scheduling dismissal", async () => {
+    harness.saveResult = { ok: false, message: "Your permission or workspace changed." };
+    renderAt(); open(); await submit();
+    expect(closeCalls()).toHaveLength(0);
+    act(() => vi.advanceTimersByTime(900));
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Your permission or workspace changed.");
+  });
+});
+
 describe("recorded accounts", () => {
   beforeEach(() => {
     harness.social = {

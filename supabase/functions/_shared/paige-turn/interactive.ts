@@ -1,3 +1,5 @@
+import { isKnowledgeCompletedUnrecorded } from "../approval-outcome.ts";
+
 /** INT-336: a lease over the canonical thread, never a second turn queue. */
 export class InteractiveSuperseded extends Error {
   constructor() { super("INTERACTIVE_SUPERSEDED"); }
@@ -33,6 +35,11 @@ export function interactiveEffect(tool: string, result: unknown): InteractiveEff
   const outcome = uncertain || r.outcome_unknown === true ? "outcome_unknown"
     : r.accepted === true && typeof r.work_id === "string" && UUID.test(r.work_id) ? "durable_accepted"
     : r.needs_confirm === true || r.queued === true ? "approval_required"
+    // The canonical Knowledge contract verifies the business change separately from Rail.
+    // Preserve actual completion in this closed effect vocabulary; the tool/card retain
+    // the unconfirmed-receipt outcome. Never generalize this opt-in to other capabilities.
+    : ["save_to_knowledge_base", "knowledge_update", "knowledge_delete"].includes(tool)
+      && isKnowledgeCompletedUnrecorded(r) ? "reported_success"
     : r.success === true || r.ok === true || r.outcome === "succeeded" ? "reported_success"
     : r.success === false || r.outcome === "failed" || r.outcome === "refused" ? "reported_failure" : "outcome_unknown";
   return { tool, outcome,
@@ -109,6 +116,8 @@ export interface InteractiveStore {
   state(): Promise<{ latest: string | null; executor: string | null }>;
   acquire(): Promise<boolean>;
   release(): Promise<void>;
+  /** One canonical current-scope/latest snapshot after release; never effect authority. */
+  publication?(): Promise<boolean>;
 }
 /** Handler finally owns early exits; asynchronous stream finally owns transferred work.
  * A client disconnect does not complete the server's running tool/persistence promise. */
@@ -177,6 +186,13 @@ export function createInteractiveExecution(intent: string, store: InteractiveSto
     async check() {
       const state = await store.state();
       if (state.latest !== intent || state.executor !== intent) stopped = true;
+      if (stopped) throw new InteractiveSuperseded();
+    },
+    // Publication after a canonical release owns no executor and authorizes no act.
+    // Keep check() strict for every dispatch/read; only this completed lifecycle
+    // may publish if its original intent is still latest.
+    async checkReleasedPublication() {
+      if (!released || !store.publication || !await store.publication()) stopped = true;
       if (stopped) throw new InteractiveSuperseded();
     },
     // Isolated proposed-liveness-check proved a real 20s predecessor settles before

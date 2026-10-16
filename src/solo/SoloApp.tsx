@@ -9,6 +9,7 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SoloSetupReadinessNotice } from "./SoloSetupReadinessNotice";
+import { SoloScreenBoundary } from "./SoloScreenBoundary";
 import { soloShellRole } from "./shell-role";
 import { isSoloSetupComplete } from "@/components/auth/RequireSetupComplete";
 import { branchBySlug, branchByKey, branchPath, defaultBranchSlug } from "@/lib/routing/tierBranches";
@@ -401,7 +402,7 @@ onSignOut={()=>void performSignOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>
-<main key={route} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}>{route==='paige'?null:screens[route]}</main>
+<main key={route} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary key={`${activeUserId??'resolving'}:${accountEpochKey}:${location.pathname}`}>{route==='paige'?null:screens[route]}</SoloScreenBoundary></main>
 {studio&&<VibeStudio onBack={closeStudio}/>}</div></div>
 </TenantCommandCenterShell>};
 

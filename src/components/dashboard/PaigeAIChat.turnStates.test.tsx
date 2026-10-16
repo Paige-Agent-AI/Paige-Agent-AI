@@ -414,7 +414,7 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     expect(host.textContent).not.toMatch(C4_LANGUAGE);
   });
 
-  it("Not now: hidden too, and the card settles to Skipped", async () => {
+  it("Not now: hidden too, and the card records the owner's choice", async () => {
     const bodies = server(
       body([turn("started", "WORKING", "pending"), card("fp-2"), turn("waiting", "WAIT_APPROVAL", "action"), DONE]),
       body([turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer"), say("Okay — it's not sent."), DONE]),
@@ -427,11 +427,12 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     expect(bodies[1].messages.filter((m) => m.role === "user").at(-1)!.content).toBe("Hold off — skip that one.");
     expect(bodies[1].declinedConfirmations).toEqual(["fp-2"]);
     expect(host.textContent).not.toContain("Hold off — skip that one.");
-    expect(host.textContent).toContain("Skipped");
+    expect(host.textContent).toContain("You chose Not now");
+    expect(host.textContent).not.toContain("nothing changed");
     // The button that was pressed went away with the card; focus lands on the record that replaced
     // it (the composer is disabled while the follow-up runs), not on <body>.
     expect(document.activeElement).toBe(host.querySelector("[data-paige-decided-record]"));
-    expect((document.activeElement as HTMLElement).textContent).toContain("Skipped");
+    expect((document.activeElement as HTMLElement).textContent).toContain("You chose Not now");
   });
 
   it("the drawer mount (no Solo safety) settles the decided card instead of losing it", async () => {
@@ -469,6 +470,52 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     expect(host.textContent).not.toContain("Approved — run it.");
     // Hiding the bubble does not hide whether it ran: the record carries the same verified result.
     expect(host.querySelector("[data-paige-card-result]")!.textContent).toBe("Result: Add John Coleman to your clients: didn't run");
+  });
+});
+
+describe("native approval pause — EOF and canonical reload", () => {
+  const command = { action: "task.create", patch: { title: "Protected fixture work" } };
+  const proposal = { tool: "crm_create_task", summary: "Create Protected fixture work", fingerprint: "0123456789abcdef", command, idempotency_key: "original-fixture-key" };
+
+  it("keeps an approval received before EOF without approving it or offering a blind retry", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const before = vi.mocked(supabase.functions.invoke).mock.calls.length;
+    const sent = server(body([turn("started", "WORKING", "pending"),
+      turn("waiting", "WAIT_APPROVAL", "action"), frame({ paige_confirm: proposal })]));
+    const host = await mount();
+    await ask(host, "Create protected fixture work.");
+    expect(host.textContent).toContain("The connection ended before PAIGE confirmed the result");
+    expect(host.textContent).toContain(proposal.summary);
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(true);
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+    expect(vi.mocked(supabase.functions.invoke).mock.calls.length).toBe(before);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].approvedConfirmations).toBeUndefined();
+  });
+
+  it("reloads a durable pause after EOF before the card, without turning stored JSON into approval authority", async () => {
+    const sent = server(body([turn("started", "WORKING", "pending")]));
+    const host = await mount();
+    await ask(host, "Create protected fixture work.");
+    expect(host.textContent).toContain("The connection ended before PAIGE confirmed the result");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve|^Retry$/.test(b.textContent ?? ""))).toBe(false);
+    await mounted.pop()!();
+    harness.threads = [{ id: "thread-paused", title: "Protected fixture work", updated_at: "2026-10-16T12:00:01Z" }];
+    harness.turns = [
+      { id: "user-paused", role: "user", content: "Create protected fixture work.", created_at: "2026-10-16T12:00:00Z" },
+      { id: "assistant-paused", role: "assistant", content: "Review the proposed changes before approving.", created_at: "2026-10-16T12:00:01Z", bundle_ref: {
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, waiting_on: { kind: "approval", approvals: 1 } },
+        paige_confirm: [proposal],
+        interactive: { request_intent_id: "00000000-0000-4000-8000-000000000004", effects: [{ tool: "crm_create_task", outcome: "approval_required" }] },
+      } },
+    ];
+    const reloaded = await mount();
+    expect(reloaded.textContent).toContain(`Earlier, Paige asked you to confirm: ${proposal.summary}`);
+    expect(reloaded.textContent).not.toContain("The connection ended");
+    expect(Array.from(reloaded.querySelectorAll("button")).some(b => /^Approve|^Retry$/.test(b.textContent ?? ""))).toBe(false);
+    expect(reloaded.textContent).not.toContain(proposal.fingerprint);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].approvedConfirmations).toBeUndefined();
   });
 });
 

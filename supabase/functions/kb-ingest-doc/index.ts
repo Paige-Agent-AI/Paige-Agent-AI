@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { ingestDoc } from "../_shared/kb-ingest-core.ts";
 import { bindKnowledgeIngestScope, KnowledgeIngestScopeError } from "../_shared/knowledge-ingest-scope.ts";
+import { recordCapabilityRun, stableRunId } from "../_shared/capability-record.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -84,9 +85,30 @@ serve(async (req) => {
     }, { docClient: supabase, authorize: scope.assert });
 
     await scope.assert();
+    let receipt: Record<string, unknown> = {};
+    if (result.ok === true && result.not_applied !== true && !result.error
+      && typeof result.doc_id === "string" && z.string().uuid().safeParse(result.doc_id).success
+      && Number.isSafeInteger(result.chunk_count) && result.chunk_count > 0 && typeof result.embedded === "boolean") {
+      // Native readback already proved this document and its indexed chunks. Record here,
+      // before returning HTTP, so a lost Chat acknowledgement cannot lose its workspace receipt.
+      // The doc ID deduplicates this receipt; it is not an ingestion request/replay guarantee.
+      const runId = await stableRunId(["save_to_knowledge_base", tenantId, result.doc_id]);
+      const railRecorded = await recordCapabilityRun(admin, {
+        tenantId, actorId: userId, capabilityKey: "save_to_knowledge_base", runId,
+        outcome: "capability_succeeded",
+        detail: { document_id: result.doc_id, chunk_count: result.chunk_count,
+          indexing_complete: result.embedded, operation: "knowledge_ingest" },
+      });
+      // false means receipt acknowledgement was not verified; its row may still have committed.
+      receipt = { tenant_id: tenantId, verified: true, railRecorded, run_id: runId,
+        outcome: railRecorded ? "capability_succeeded" : "capability_completed_unrecorded" };
+      // Do not reveal a former workspace's result after an account/identity change during recording.
+      await scope.assert();
+    }
     // Preserve every core outcome field, including the document to inspect when
-    // persistence is uncertain. Keep the legacy embedding-failure HTTP status.
-    return new Response(JSON.stringify(result), {
+    // persistence is uncertain. `ok` stays ingestion truth for incumbent callers, independent
+    // of receipt persistence. A receipt failure never cleans up or repeats a verified save.
+    return new Response(JSON.stringify({ ...result, ...receipt }), {
       status: result.ok || result.error === "embedding_failed" ? 200 : 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

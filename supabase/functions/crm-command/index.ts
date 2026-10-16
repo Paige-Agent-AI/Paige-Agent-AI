@@ -213,6 +213,11 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
   const target = (command.action.startsWith("deal.") ? command.deal_id : undefined)
     ?? contactName ?? command.company_id ?? command.task_id ?? command.deal_id ?? "a new record";
   const commandPatch = object(command.patch);
+  if (command.action === "task.update" && commandPatch?.status === "in_progress") {
+    const otherChanges = Object.entries(commandPatch).filter(([field]) => field !== "status")
+      .sort(([left], [right]) => left.localeCompare(right)).map(([field, value]) => `${field}=${JSON.stringify(value)}`);
+    return `Move task ${command.task_id} to In progress.${otherChanges.length ? ` Also update ${otherChanges.join(", ")}.` : ""}`;
+  }
   switch (command.action) {
     case "contact.assign_coach":
       return `Change contact ${target}'s coach to ${command.owner_user_id ?? "unassigned"}.`;
@@ -246,7 +251,7 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
       return `Add "${name}" as a new company.`;
     }
     case "task.create":
-      return `Create a task "${typeof command.title === "string" && command.title.trim() ? command.title.trim().slice(0, 80) : "Untitled"}".`;
+      return `Create a task "${typeof commandPatch?.title === "string" && commandPatch.title.trim() ? commandPatch.title.trim().slice(0, 80) : "Untitled"}".`;
     default: {
       // Never render the raw internal verb ("deal.create for …"). Compose from the action's
       // domain and verb so every catalogue action reads as a human sentence about the object.
@@ -385,8 +390,8 @@ serve(async (req) => {
       : accountType === "agency" ? "agency" : accountType === "enterprise" ? "enterprise" : "solo";
     const surfaceUrl = canonicalAppUrl({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination });
     // The current Solo routers own unified People/business focus (`?person=`) and Pipeline deal
-    // focus (`?deal=`). CRM tasks still have no human record router, so task actions return only
-    // the truthful Command Center surface URL and explicitly label it surface_only.
+    // focus (`?deal=`). Solo CRM tasks live in Operations Work, which has no native task-ID focus
+    // router, so task actions return only that list URL and explicitly label it surface_only.
     const recordId = typeof readback?.id === "string" && readback.absent !== true ? readback.id : null;
     const deepLink = surfaceUrl && tier === "solo" && recordId && action.startsWith("contact.")
       ? `${surfaceUrl}?person=${encodeURIComponent(recordId)}`
@@ -396,8 +401,8 @@ serve(async (req) => {
       ...resultObject,
       capability,
       record_locator: {
-        surface: action.startsWith("deal.") ? "campaigns" : action.startsWith("task.") ? "command-center" : "clients",
-        tab: action.startsWith("deal.") ? "pipeline" : action.startsWith("task.") ? "tasks" : "people",
+        surface: action.startsWith("deal.") ? "campaigns" : action.startsWith("task.") ? tier === "solo" ? "operations" : "command-center" : "clients",
+        tab: action.startsWith("deal.") ? "pipeline" : action.startsWith("task.") ? tier === "solo" ? "work" : "tasks" : "people",
         record_id: readback?.id ?? null,
         surface_url: surfaceUrl,
         deep_link: deepLink,

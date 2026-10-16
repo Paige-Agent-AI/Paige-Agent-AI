@@ -1,0 +1,2611 @@
+{
+  "proof": "LOCAL SYNTHETIC REAL COMPONENT/SHELL; NOT AUTHENTICATED ACCEPTANCE",
+  "results": [
+    {
+      "name": "after-narrow-light",
+      "panel": {
+        "x": 1000.25,
+        "y": 114,
+        "width": 513.75,
+        "height": 660,
+        "right": 1514,
+        "bottom": 774
+      },
+      "columns": "465.75px",
+      "card": {
+        "x": 1024.25,
+        "y": 287.90625,
+        "width": 465.75,
+        "height": 431.421875,
+        "right": 1490,
+        "bottom": 719.328125
+      },
+      "aside": {
+        "x": 1024.25,
+        "y": 1189.609375,
+        "width": 465.75,
+        "height": 279.703125,
+        "right": 1490,
+        "bottom": 1469.3125
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 1217,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1536x770-light-dock",
+      "panel": {
+        "x": 1014.765625,
+        "y": 114,
+        "width": 521.234375,
+        "height": 656,
+        "right": 1536,
+        "bottom": 770
+      },
+      "columns": "473.234px",
+      "card": {
+        "x": 1038.765625,
+        "y": 287.90625,
+        "width": 473.234375,
+        "height": 431.421875,
+        "right": 1512,
+        "bottom": 719.328125
+      },
+      "aside": {
+        "x": 1038.765625,
+        "y": 1189.609375,
+        "width": 473.234375,
+        "height": 279.703125,
+        "right": 1512,
+        "bottom": 1469.3125
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 500,
+        "content": 1217,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1536x770-light-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 717,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1536x770-light",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1536x770-light-workspace",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 1319,
+        "height": 656,
+        "right": 1536,
+        "bottom": 770
+      },
+      "columns": "726px 300px",
+      "card": {
+        "x": 356.5,
+        "y": 238.09375,
+        "width": 726,
+        "height": 327.328125,
+        "right": 1082.5,
+        "bottom": 565.421875
+      },
+      "aside": {
+        "x": 1096.5,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1396.5,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 550,
+        "content": 779,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1536x770-light-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-1536x770-dark-dock",
+      "panel": {
+        "x": 1014.765625,
+        "y": 114,
+        "width": 521.234375,
+        "height": 656,
+        "right": 1536,
+        "bottom": 770
+      },
+      "columns": "473.234px",
+      "card": {
+        "x": 1038.765625,
+        "y": 287.90625,
+        "width": 473.234375,
+        "height": 431.421875,
+        "right": 1512,
+        "bottom": 719.328125
+      },
+      "aside": {
+        "x": 1038.765625,
+        "y": 1189.609375,
+        "width": 473.234375,
+        "height": 279.703125,
+        "right": 1512,
+        "bottom": 1469.3125
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 500,
+        "content": 1217,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1536x770-dark-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 717,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1536x770-dark",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1536x770-dark-workspace",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 1319,
+        "height": 656,
+        "right": 1536,
+        "bottom": 770
+      },
+      "columns": "726px 300px",
+      "card": {
+        "x": 356.5,
+        "y": 238.09375,
+        "width": 726,
+        "height": 327.328125,
+        "right": 1082.5,
+        "bottom": 565.421875
+      },
+      "aside": {
+        "x": 1096.5,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1396.5,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 550,
+        "content": 779,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1536x770-dark-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-1366x768-light-dock",
+      "panel": {
+        "x": 902.5625,
+        "y": 114,
+        "width": 463.4375,
+        "height": 654,
+        "right": 1366,
+        "bottom": 768
+      },
+      "columns": "415.438px",
+      "card": {
+        "x": 926.5625,
+        "y": 287.90625,
+        "width": 415.4375,
+        "height": 465.5,
+        "right": 1342,
+        "bottom": 753.40625
+      },
+      "aside": {
+        "x": 926.5625,
+        "y": 1223.6875,
+        "width": 415.4375,
+        "height": 315.328125,
+        "right": 1342,
+        "bottom": 1539.015625
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 498,
+        "content": 1287,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1366x768-light-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 789,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1366x768-light",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1366x768-light-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 1293,
+        "height": 654,
+        "right": 1366,
+        "bottom": 768
+      },
+      "columns": "726px 300px",
+      "card": {
+        "x": 199.5,
+        "y": 238.09375,
+        "width": 726,
+        "height": 327.328125,
+        "right": 925.5,
+        "bottom": 565.421875
+      },
+      "aside": {
+        "x": 939.5,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1239.5,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 548,
+        "content": 779,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1366x768-light-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-1366x768-dark-dock",
+      "panel": {
+        "x": 902.5625,
+        "y": 114,
+        "width": 463.4375,
+        "height": 654,
+        "right": 1366,
+        "bottom": 768
+      },
+      "columns": "415.438px",
+      "card": {
+        "x": 926.5625,
+        "y": 287.90625,
+        "width": 415.4375,
+        "height": 465.5,
+        "right": 1342,
+        "bottom": 753.40625
+      },
+      "aside": {
+        "x": 926.5625,
+        "y": 1223.6875,
+        "width": 415.4375,
+        "height": 315.328125,
+        "right": 1342,
+        "bottom": 1539.015625
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 498,
+        "content": 1287,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1366x768-dark-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 789,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1366x768-dark",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1366x768-dark-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 1293,
+        "height": 654,
+        "right": 1366,
+        "bottom": 768
+      },
+      "columns": "726px 300px",
+      "card": {
+        "x": 199.5,
+        "y": 238.09375,
+        "width": 726,
+        "height": 327.328125,
+        "right": 925.5,
+        "bottom": 565.421875
+      },
+      "aside": {
+        "x": 939.5,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1239.5,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 548,
+        "content": 779,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1366x768-dark-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-1024x768-light-dock",
+      "panel": {
+        "x": 615,
+        "y": 114,
+        "width": 409,
+        "height": 654,
+        "right": 1024,
+        "bottom": 768
+      },
+      "columns": "361px",
+      "card": {
+        "x": 639,
+        "y": 287.90625,
+        "width": 361,
+        "height": 523.3125,
+        "right": 1000,
+        "bottom": 811.21875
+      },
+      "aside": {
+        "x": 639,
+        "y": 1421.640625,
+        "width": 361,
+        "height": 315.328125,
+        "right": 1000,
+        "bottom": 1736.96875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 498,
+        "content": 1485,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1024x768-light-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 987,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1024x768-light",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1024x768-light-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 951,
+        "height": 654,
+        "right": 1024,
+        "bottom": 768
+      },
+      "columns": "589px 300px",
+      "card": {
+        "x": 97,
+        "y": 238.09375,
+        "width": 589,
+        "height": 343.59375,
+        "right": 686,
+        "bottom": 581.6875
+      },
+      "aside": {
+        "x": 700,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1000,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 548,
+        "content": 816,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1024x768-light-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-1024x768-dark-dock",
+      "panel": {
+        "x": 615,
+        "y": 114,
+        "width": 409,
+        "height": 654,
+        "right": 1024,
+        "bottom": 768
+      },
+      "columns": "361px",
+      "card": {
+        "x": 639,
+        "y": 287.90625,
+        "width": 361,
+        "height": 523.3125,
+        "right": 1000,
+        "bottom": 811.21875
+      },
+      "aside": {
+        "x": 639,
+        "y": 1421.640625,
+        "width": 361,
+        "height": 315.328125,
+        "right": 1000,
+        "bottom": 1736.96875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 498,
+        "content": 1485,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1024x768-dark-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 987,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-1024x768-dark",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-1024x768-dark-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 951,
+        "height": 654,
+        "right": 1024,
+        "bottom": 768
+      },
+      "columns": "589px 300px",
+      "card": {
+        "x": 97,
+        "y": 238.09375,
+        "width": 589,
+        "height": 343.59375,
+        "right": 686,
+        "bottom": 581.6875
+      },
+      "aside": {
+        "x": 700,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1000,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 548,
+        "content": 816,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-1024x768-dark-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-900x1000-light-dock",
+      "panel": {
+        "x": 491,
+        "y": 114,
+        "width": 409,
+        "height": 886,
+        "right": 900,
+        "bottom": 1000
+      },
+      "columns": "377px",
+      "card": {
+        "x": 507,
+        "y": 276.90625,
+        "width": 377,
+        "height": 505.5,
+        "right": 884,
+        "bottom": 782.40625
+      },
+      "aside": {
+        "x": 507,
+        "y": 1392.828125,
+        "width": 377,
+        "height": 315.328125,
+        "right": 884,
+        "bottom": 1708.15625
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 737,
+        "content": 1459,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-900x1000-light-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 722,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-900x1000-light",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-900x1000-light-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 827,
+        "height": 886,
+        "right": 900,
+        "bottom": 1000
+      },
+      "columns": "481px 300px",
+      "card": {
+        "x": 89,
+        "y": 227.09375,
+        "width": 481,
+        "height": 397.8125,
+        "right": 570,
+        "bottom": 624.90625
+      },
+      "aside": {
+        "x": 584,
+        "y": 227.09375,
+        "width": 300,
+        "height": 854.09375,
+        "right": 884,
+        "bottom": 1081.1875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 787,
+        "content": 882,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-900x1000-light-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "DT",
+          "ratio": 5.47
+        },
+        {
+          "tag": "DD",
+          "ratio": 14.99
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "H3",
+          "ratio": 14.6
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        },
+        {
+          "tag": "P",
+          "ratio": 5.32
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "matrix-900x1000-dark-dock",
+      "panel": {
+        "x": 491,
+        "y": 114,
+        "width": 409,
+        "height": 886,
+        "right": 900,
+        "bottom": 1000
+      },
+      "columns": "377px",
+      "card": {
+        "x": 507,
+        "y": 276.90625,
+        "width": 377,
+        "height": 505.5,
+        "right": 884,
+        "bottom": 782.40625
+      },
+      "aside": {
+        "x": 507,
+        "y": 1392.828125,
+        "width": 377,
+        "height": 315.328125,
+        "right": 884,
+        "bottom": 1708.15625
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 737,
+        "content": 1459,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-900x1000-dark-dock-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 722,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "closed-900x1000-dark",
+      "workspaceHidden": true
+    },
+    {
+      "name": "matrix-900x1000-dark-workspace",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 827,
+        "height": 886,
+        "right": 900,
+        "bottom": 1000
+      },
+      "columns": "481px 300px",
+      "card": {
+        "x": 89,
+        "y": 227.09375,
+        "width": 481,
+        "height": 397.8125,
+        "right": 570,
+        "bottom": 624.90625
+      },
+      "aside": {
+        "x": 584,
+        "y": 227.09375,
+        "width": 300,
+        "height": 854.09375,
+        "right": 884,
+        "bottom": 1081.1875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 787,
+        "content": 882,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "matrix-900x1000-dark-workspace-interaction",
+      "focus": {
+        "width": "2px",
+        "style": "solid"
+      },
+      "textContrast": [
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "DT",
+          "ratio": 7.7
+        },
+        {
+          "tag": "DD",
+          "ratio": 16.45
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "H3",
+          "ratio": 16.06
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        },
+        {
+          "tag": "P",
+          "ratio": 7.52
+        }
+      ],
+      "scrollOwner": {
+        "knowledgeScroll": 0,
+        "pageScroll": 0
+      },
+      "finalControlReachable": true,
+      "nativeMindRoute": true,
+      "sourceCount": 4,
+      "pageErrors": []
+    },
+    {
+      "name": "container-320",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 320,
+        "height": 660,
+        "right": 537,
+        "bottom": 774
+      },
+      "columns": "272px",
+      "card": {
+        "x": 241,
+        "y": 327.3125,
+        "width": 272,
+        "height": 631.75,
+        "right": 513,
+        "bottom": 959.0625
+      },
+      "aside": {
+        "x": 241,
+        "y": 1703.484375,
+        "width": 272,
+        "height": 368.765625,
+        "right": 513,
+        "bottom": 2072.25
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 465,
+        "content": 1781,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-440",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 440,
+        "height": 660,
+        "right": 657,
+        "bottom": 774
+      },
+      "columns": "392px",
+      "card": {
+        "x": 241,
+        "y": 287.90625,
+        "width": 392,
+        "height": 505.5,
+        "right": 633,
+        "bottom": 793.40625
+      },
+      "aside": {
+        "x": 241,
+        "y": 1403.828125,
+        "width": 392,
+        "height": 315.328125,
+        "right": 633,
+        "bottom": 1719.15625
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 1467,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-518",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 518,
+        "height": 660,
+        "right": 735,
+        "bottom": 774
+      },
+      "columns": "470px",
+      "card": {
+        "x": 241,
+        "y": 287.90625,
+        "width": 470,
+        "height": 431.421875,
+        "right": 711,
+        "bottom": 719.328125
+      },
+      "aside": {
+        "x": 241,
+        "y": 1189.609375,
+        "width": 470,
+        "height": 279.703125,
+        "right": 711,
+        "bottom": 1469.3125
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 1217,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-640",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 640,
+        "height": 660,
+        "right": 857,
+        "bottom": 774
+      },
+      "columns": "592px",
+      "card": {
+        "x": 241,
+        "y": 287.90625,
+        "width": 592,
+        "height": 393.46875,
+        "right": 833,
+        "bottom": 681.375
+      },
+      "aside": {
+        "x": 241,
+        "y": 1131.515625,
+        "width": 592,
+        "height": 279.703125,
+        "right": 833,
+        "bottom": 1411.21875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 1159,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-779",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 779,
+        "height": 660,
+        "right": 996,
+        "bottom": 774
+      },
+      "columns": "731px",
+      "card": {
+        "x": 241,
+        "y": 255.90625,
+        "width": 731,
+        "height": 327.328125,
+        "right": 972,
+        "bottom": 583.234375
+      },
+      "aside": {
+        "x": 241,
+        "y": 1013.234375,
+        "width": 731,
+        "height": 261.890625,
+        "right": 972,
+        "bottom": 1275.125
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 536,
+        "content": 1055,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-780",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 780,
+        "height": 660,
+        "right": 997,
+        "bottom": 774
+      },
+      "columns": "418px 300px",
+      "card": {
+        "x": 241,
+        "y": 255.90625,
+        "width": 418,
+        "height": 431.890625,
+        "right": 659,
+        "bottom": 687.796875
+      },
+      "aside": {
+        "x": 673,
+        "y": 255.90625,
+        "width": 300,
+        "height": 350.953125,
+        "right": 973,
+        "bottom": 606.859375
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 536,
+        "content": 924,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-900",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 900,
+        "height": 660,
+        "right": 1117,
+        "bottom": 774
+      },
+      "columns": "538px 300px",
+      "card": {
+        "x": 241,
+        "y": 238.09375,
+        "width": 538,
+        "height": 343.59375,
+        "right": 779,
+        "bottom": 581.6875
+      },
+      "aside": {
+        "x": 793,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1093,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 554,
+        "content": 816,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "container-1040",
+      "panel": {
+        "x": 217,
+        "y": 114,
+        "width": 1040,
+        "height": 660,
+        "right": 1257,
+        "bottom": 774
+      },
+      "columns": "678px 300px",
+      "card": {
+        "x": 241,
+        "y": 238.09375,
+        "width": 678,
+        "height": 327.328125,
+        "right": 919,
+        "bottom": 565.421875
+      },
+      "aside": {
+        "x": 933,
+        "y": 238.09375,
+        "width": 300,
+        "height": 350.953125,
+        "right": 1233,
+        "bottom": 589.046875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 554,
+        "content": 779,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "state-loading",
+      "panel": {
+        "x": 1000.25,
+        "y": 114,
+        "width": 513.75,
+        "height": 660,
+        "right": 1514,
+        "bottom": 774
+      },
+      "columns": "465.75px",
+      "card": null,
+      "aside": {
+        "x": 1024.25,
+        "y": 451.90625,
+        "width": 465.75,
+        "height": 279.703125,
+        "right": 1490,
+        "bottom": 731.609375
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 504,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "state-empty",
+      "panel": {
+        "x": 1000.25,
+        "y": 114,
+        "width": 513.75,
+        "height": 660,
+        "right": 1514,
+        "bottom": 774
+      },
+      "columns": "465.75px",
+      "card": null,
+      "aside": {
+        "x": 1024.25,
+        "y": 451.90625,
+        "width": 465.75,
+        "height": 279.703125,
+        "right": 1490,
+        "bottom": 731.609375
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 504,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "state-error",
+      "panel": {
+        "x": 1000.25,
+        "y": 114,
+        "width": 513.75,
+        "height": 660,
+        "right": 1514,
+        "bottom": 774
+      },
+      "columns": "465.75px",
+      "card": null,
+      "aside": {
+        "x": 1024.25,
+        "y": 451.90625,
+        "width": 465.75,
+        "height": 279.703125,
+        "right": 1490,
+        "bottom": 731.609375
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 504,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "state-retried-second-context",
+      "panel": {
+        "x": 1000.25,
+        "y": 114,
+        "width": 513.75,
+        "height": 660,
+        "right": 1514,
+        "bottom": 774
+      },
+      "columns": "465.75px",
+      "card": {
+        "x": 1024.25,
+        "y": 287.90625,
+        "width": 465.75,
+        "height": 142.09375,
+        "right": 1490,
+        "bottom": 430
+      },
+      "aside": {
+        "x": 1024.25,
+        "y": 900.28125,
+        "width": 465.75,
+        "height": 279.703125,
+        "right": 1490,
+        "bottom": 1179.984375
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 504,
+        "content": 928,
+        "top": 0,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    },
+    {
+      "name": "reflow-683-dark",
+      "panel": {
+        "x": 73,
+        "y": 114,
+        "width": 610,
+        "height": 270,
+        "right": 683,
+        "bottom": 384
+      },
+      "columns": "578px",
+      "card": {
+        "x": 89,
+        "y": 272.90625,
+        "width": 578,
+        "height": 393.46875,
+        "right": 667,
+        "bottom": 666.375
+      },
+      "aside": {
+        "x": 89,
+        "y": 1116.515625,
+        "width": 578,
+        "height": 279.703125,
+        "right": 667,
+        "bottom": 1396.21875
+      },
+      "overlap": false,
+      "escaping": [],
+      "scroll": {
+        "height": 121,
+        "content": 1151,
+        "top": 4,
+        "overflow": "auto"
+      },
+      "horizontalOverflow": 0,
+      "pageOverflow": 0,
+      "reducedMotion": true
+    }
+  ],
+  "sourceCssLfSha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e"
+}

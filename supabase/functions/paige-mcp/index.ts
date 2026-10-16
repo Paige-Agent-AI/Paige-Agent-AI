@@ -4626,8 +4626,11 @@ async function actorClient(): Promise<{ id: string; tenant_id: string | null; ow
   if (!a.user_id) return null;
   const { data } = await admin
     .from("clients")
-    .select("id, tenant_id, linked_user_id")
+    .select("id, tenant_id, linked_user_id, tenants!inner(status)")
     .eq("linked_user_id", a.user_id)
+    .eq("status", "active")
+    .is("merged_into_contact_id", null)
+    .eq("tenants.status", "active")
     .maybeSingle();
   if (!data?.id) return null;
   return { id: data.id, tenant_id: (data as any).tenant_id ?? null, owner_user_id: a.user_id };
@@ -4649,13 +4652,15 @@ mcp.tool("me_whoami", {
 });
 
 mcp.tool("me_get_profile", {
-  description: "Get the calling user's own client profile (name, email, phone, lifecycle stage, funding goal, notes). Reads only the row linked to the caller via clients.linked_user_id.",
+  description: "Get the calling customer's authorized contact information and onboarding stage. Internal CRM notes, assignments, scores and provider fields are private.",
   inputSchema: z.object({}),
   handler: async () => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
     const { data, error } = await admin.from("clients")
-      .select(`${CLIENT_RECORD_COLUMNS}, ${CONTACT_METHOD_SELECT}`).eq("id", me.id).maybeSingle();
+      .select("id, tenant_id, first_name, last_name, entity_name, street_address, city, state, zip_code, onboarding_stage, client_contact_methods(kind,value,is_primary)")
+      .eq("id", me.id).eq("tenant_id", me.tenant_id).eq("linked_user_id", currentActor().user_id)
+      .eq("status", "active").is("merged_into_contact_id", null).maybeSingle();
     if (error) return err(error.message);
     // The column list is built at runtime, so the row's type is stated rather than inferred.
     const record = data as unknown as ({ client_contact_methods?: unknown } & Record<string, unknown>) | null;
@@ -4668,18 +4673,20 @@ mcp.tool("me_get_profile", {
 });
 
 mcp.tool("me_update_profile", {
-  description: "Update the calling user's own client profile. Only safe self-editable fields are allowed: first_name, last_name, phone, entity_name, current_notes, funding_goal_amount. Cannot change lifecycle_stage, assigned coach, tier, or status.",
+  description: "Update your own contact names, company name and primary phone. Internal CRM notes, commercial fields, lifecycle, assignments, tier and access status are not customer-editable.",
   inputSchema: z.object({
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     phone: z.string().optional(),
     entity_name: z.string().optional().describe("Their company / business name."),
-    current_notes: z.string().optional().describe("Free-form notes the user wants Paige to remember."),
-    funding_goal_amount: z.number().optional(),
+    current_notes: z.string().optional().describe("Internal field; customer updates are refused."),
+    funding_goal_amount: z.number().optional().describe("Commercial field; customer updates are refused."),
   }),
   handler: async (patch) => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
+    // These are internal CRM/commercial fields, not customer-editable profile data.
+    if (patch.current_notes !== undefined || patch.funding_goal_amount !== undefined) return err("field_not_customer_editable");
     // Each self-editable input, and the contact-row column it writes. `funding_goal_amount` is the
     // tool's input name; the column is `funding_goal` (there is no funding_goal_amount column, so
     // writing the input name straight through failed every time it was sent).

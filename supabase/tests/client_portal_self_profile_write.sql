@@ -165,7 +165,15 @@ SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(SELECT state->>'expected_tok
  '40001','Welcome information changed; reload before saving','prior token conflicts even within same now() transaction');
 SELECT throws_ok($$SELECT pg_temp.e09_welcome(false,NULL,NULL,NULL,NULL)$$,'42501','customer authentication required','subjectless actual role refuses Welcome');
 SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(SELECT state->>'expected_token' FROM e09_welcome_saved),'{"first_name":"No"}','{"goal":"No"}','e0912000-0000-0000-0000-000000000002')$$,
- '55000','published intake configuration required','foreign caller never borrows first customer schema or token');
+ '40001','Welcome information changed; reload before saving','foreign caller never borrows first customer version token');
+-- Missing custom configuration now has the legitimate basic-contact form. It
+-- must still never borrow the other business's authored questions or version.
+SELECT is(pg_temp.e09_welcome(false,NULL,NULL,NULL,'e0912000-0000-0000-0000-000000000002')->'fields','[]'::jsonb,
+ 'unconfigured second business exposes only its own basic contact form');
+SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,
+ (pg_temp.e09_welcome(false,NULL,NULL,NULL,'e0912000-0000-0000-0000-000000000002')->>'expected_token'),
+ '{"first_name":"No"}','{"goal":"No"}','e0912000-0000-0000-0000-000000000002')$$,
+ '22023','intake answer is not permitted','foreign customer cannot submit another business question even with its own current token');
 SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"No"}','{"goal":"No","email":"override@tests.invalid"}')$$,
  '22023','intake answer is not permitted','answer cannot override canonical contact');
 SELECT throws_ok($$SELECT pg_temp.e09_welcome(true,(pg_temp.e09_welcome(false)->>'expected_token'),'{"first_name":"No"}','{}')$$,

@@ -127,7 +127,16 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     if (Object.keys(ctx.args).some(k => k !== 'invoice_id') || typeof ctx.args.invoice_id !== 'string' || !UUID.test(ctx.args.invoice_id)) return { content: { success: false, error: 'Invalid invoice request.' } };
     try {
       const reply = await deps.caller.rpc('read_sales_invoice', { _expected_tenant_id: ctx.tenantId, _invoice_id: ctx.args.invoice_id.toLowerCase() });
-      return { content: reply.error ? { success: false, error: 'Invoice unavailable in this workspace.' } : { success: true, invoice: salesInvoiceSafeResult(reply.data) } };
+      // An error-free transport is not proof of an invoice. The native reader
+      // returns these coordinates and version; verify them before projection
+      // removes tenant identity or the model can claim an empty/unrelated read.
+      const row = reply.data && typeof reply.data === 'object' && !Array.isArray(reply.data)
+        ? reply.data as Record<string, unknown> : null;
+      if (reply.error || !row || row.id !== ctx.args.invoice_id.toLowerCase() || row.tenant_id !== ctx.tenantId ||
+          !Number.isSafeInteger(row.version) || Number(row.version) < 1) {
+        return { content: { success: false, error: 'Invoice unavailable in this workspace.' } };
+      }
+      return { content: { success: true, invoice: salesInvoiceSafeResult(row) } };
     } catch { return { content: { success: false, error: 'Invoice read unavailable.' } }; }
   }
   if(ctx.toolName==='billing_send_invoice'&&ctx.args.channel!==undefined&&(typeof ctx.args.channel!=='string'||!['email','sms'].includes(ctx.args.channel)))return {content:{success:false,error:'Invoice delivery channel unavailable.'}};

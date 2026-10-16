@@ -174,6 +174,26 @@ it("shows the original pending task before confirmation instead of the newly sel
  expect(dialog?.textContent).not.toContain(task.title);
 });
 
+it("offers the existing In progress selector for pending CRM work and routes it to review",async()=>{
+ const task={id:"progress-task",tenant_id:harness.tenant,user_id:harness.user,title:"Start scoped work",description:null,status:"pending" as const,due_date:null,updated_at:"2026-10-10T12:00:00.123456Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null};
+ harness.crmTasks=[task];await act(async()=>root.render(<OperationsWorkspace view="work"/>));
+ await act(async()=>container.querySelector<HTMLButtonElement>('[data-work-key="crm:progress-task"]')?.click());
+ const select=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]')!;
+ expect(Array.from(select.options).some(option=>option.value==="in_progress")).toBe(true);
+ await act(async()=>{select.value="in_progress";select.dispatchEvent(new Event("change",{bubbles:true}));});
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recovery test seam: progress-task");expect(task.status).toBe("pending");
+});
+
+it.each(["completed","cancelled"] as const)("excludes In progress from a %s CRM task selector",async status=>{
+ harness.crmTasks=[{id:"terminal-task",tenant_id:harness.tenant,user_id:harness.user,title:"Terminal scoped work",description:null,status,due_date:null,updated_at:"2026-10-10T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+ await act(async()=>root.render(<OperationsWorkspace view="work"/>));
+ const filter=container.querySelector<HTMLSelectElement>(".ops-view-toolbar select")!;
+ await act(async()=>{filter.value="all";filter.dispatchEvent(new Event("change",{bubbles:true}));});
+ await act(async()=>container.querySelector<HTMLButtonElement>('[data-work-key="crm:terminal-task"]')?.click());
+ const select=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]');
+ expect(select).toBeTruthy();expect(Array.from(select!.options).some(option=>option.value==="in_progress")).toBe(false);
+});
+
 const linkedId = "30000000-0000-4000-8000-000000000011";
 const linkedSearch = `?weeklySource=planning_item&item=${linkedId}`;
 const linkedItem = () => ({ id: linkedId, tenant_id: harness.tenant, plan_id: null, item_type: "task", title: "Canonical linked Planning work",

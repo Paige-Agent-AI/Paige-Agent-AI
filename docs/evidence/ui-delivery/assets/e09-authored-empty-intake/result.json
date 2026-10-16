@@ -1,0 +1,53 @@
+{
+  "evidence": "isolated-actual-source",
+  "network": "blocked",
+  "auth": "explicit-synthetic-double",
+  "records": "in-memory-fixture",
+  "productionAcceptance": "UNVERIFIED",
+  "fullShell": "NOT_RUN",
+  "fonts": "compiled local CSS and embedded available local fonts; network blocked",
+  "sourcePins": {
+    "src/lib/playbook/resolve.ts": "ac47cb928a20410370727ae38d399162a7fb8fc535cc1cec2bd610c2b88aa9d1",
+    "src/components/paige/usePlaybookEditor.ts": "58dc28b414b4c8e74621887d8a924de620f4ae32e6e3665399eb48c146b23375",
+    "src/components/paige/sections/IntakeSection.tsx": "20061928f0d31c47c086b3ed8b2c74f681f8fdeb1a6503694960e94e15dddb08",
+    "src/components/paige/PaigeConsoleSaveBar.tsx": "8c9fd6916cdd398f57fa03ad86b485b6a273fceb06f0981635aa1b9999733566",
+    "scripts/proof/e09-authored-intake-ui/adapter.ts": "9cfc9e9200571f78b01dfcaca99fdeae2a5e842b66def91a5a303b87989711fa",
+    "scripts/proof/e09-authored-intake-ui/source.tsx": "fb703eb7a4174f7ed41d1c4963fd2544c299b01302b10ab69574ce7b8f101f15",
+    "scripts/proof/e09-authored-intake-ui/check.mjs": "b6032cd8811b3bd935391f54390e1402f228b6d1b04a58c42ef25f9b55cefef3"
+  },
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "filename": "desktop.png",
+      "geometry": {
+        "x": 46,
+        "y": 112.5,
+        "width": 98.125,
+        "height": 31.5,
+        "overflow": false,
+        "scrollOwner": null
+      },
+      "rows": 0,
+      "syntheticWrites": 1,
+      "keyboardAddRemove": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "filename": "mobile.png",
+      "geometry": {
+        "x": 46,
+        "y": 112.5,
+        "width": 98.125,
+        "height": 31.5,
+        "overflow": false,
+        "scrollOwner": null
+      },
+      "rows": 0,
+      "syntheticWrites": 1,
+      "keyboardAddRemove": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,1024 @@
+[
+  {
+    "name": "a-light-1366-768-closed",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1366.4000244140625,
+        "top": 106.8000030517578,
+        "width": 1294.4000244140625,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1366
+    },
+    "nativeBytes": 36909,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-1366-768-open",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 901.8250122070312,
+        "top": 106.8000030517578,
+        "width": 829.8250122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1366
+    },
+    "nativeBytes": 45635,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-1536-770-closed",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1536,
+        "top": 106.8000030517578,
+        "width": 1464,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1536
+    },
+    "nativeBytes": 37716,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-1536-770-open",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1013.7625122070312,
+        "top": 106.8000030517578,
+        "width": 941.7625122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1536
+    },
+    "nativeBytes": 46913,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-1024-768-closed",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1024
+    },
+    "nativeBytes": 32840,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-1024-768-open",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1024
+    },
+    "nativeBytes": 30070,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-900-1000-closed",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 900
+    },
+    "nativeBytes": 33789,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-light-900-1000-open",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 900
+    },
+    "nativeBytes": 31697,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-900-1000-closed",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 900
+    },
+    "nativeBytes": 34208,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-900-1000-open",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 900
+    },
+    "nativeBytes": 31565,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1024-768-closed",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1024
+    },
+    "nativeBytes": 33382,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1024-768-open",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1024
+    },
+    "nativeBytes": 30471,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1366-768-closed",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1366.4000244140625,
+        "top": 106.8000030517578,
+        "width": 1294.4000244140625,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1366
+    },
+    "nativeBytes": 36972,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1366-768-open",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 901.8250122070312,
+        "top": 106.8000030517578,
+        "width": 829.8250122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1366
+    },
+    "nativeBytes": 46155,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1536-770-closed",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1536,
+        "top": 106.8000030517578,
+        "width": 1464,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1536
+    },
+    "nativeBytes": 38632,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "a-dark-1536-770-open",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO A"
+    },
+    "dom": {
+      "account": "TEST STUDIO A",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1013.7625122070312,
+        "top": 106.8000030517578,
+        "width": 941.7625122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1536
+    },
+    "nativeBytes": 47753,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1536-770-closed",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1536,
+        "top": 106.8000030517578,
+        "width": 1464,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1536
+    },
+    "nativeBytes": 38255,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1536-770-open",
+    "expected": {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 770,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 770.4000396728516,
+        "height": 663.6000366210938,
+        "left": 72,
+        "right": 1013.7625122070312,
+        "top": 106.8000030517578,
+        "width": 941.7625122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1536
+    },
+    "nativeBytes": 47756,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1366-768-closed",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1366.4000244140625,
+        "top": 106.8000030517578,
+        "width": 1294.4000244140625,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1366
+    },
+    "nativeBytes": 36609,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1366-768-open",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 901.8250122070312,
+        "top": 106.8000030517578,
+        "width": 829.8250122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1366
+    },
+    "nativeBytes": 46160,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1024-768-closed",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1024
+    },
+    "nativeBytes": 33132,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-1024-768-open",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 1024
+    },
+    "nativeBytes": 30481,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-900-1000-closed",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 900
+    },
+    "nativeBytes": 34207,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-dark-900-1000-open",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "dark",
+      "width": 900
+    },
+    "nativeBytes": 31571,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-900-1000-closed",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 900
+    },
+    "nativeBytes": 33795,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-900-1000-open",
+    "expected": {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 1000,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 1000.0000152587892,
+        "height": 893.2000122070312,
+        "left": 72,
+        "right": 900,
+        "top": 106.8000030517578,
+        "width": 828,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 900
+    },
+    "nativeBytes": 31690,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-1024-768-closed",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1024
+    },
+    "nativeBytes": 20161,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-1024-768-open",
+    "expected": {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1024,
+        "top": 106.8000030517578,
+        "width": 952,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1024
+    },
+    "nativeBytes": 20013,
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-1366-768-closed-standard",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "panel": "closed",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "closed",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 1366.4000244140625,
+        "top": 106.8000030517578,
+        "width": 1294.4000244140625,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1366
+    },
+    "bytes": 36482,
+    "api": "tab.screenshot({fullPage:false})",
+    "visualAcceptance": "REVIEW_REQUIRED"
+  },
+  {
+    "name": "b-light-1366-768-open-standard",
+    "expected": {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "panel": "open",
+      "account": "TEST STUDIO B"
+    },
+    "dom": {
+      "account": "TEST STUDIO B",
+      "documentOverflow": false,
+      "dpr": 1.0000000149011612,
+      "error": true,
+      "height": 768,
+      "navLinks": 9,
+      "panel": "open",
+      "ready": false,
+      "screenRect": {
+        "bottom": 768.0000152587891,
+        "height": 661.2000122070312,
+        "left": 72,
+        "right": 901.8250122070312,
+        "top": 106.8000030517578,
+        "width": 829.8250122070312,
+        "x": 72,
+        "y": 106.8000030517578
+      },
+      "theme": "light",
+      "width": 1366
+    },
+    "bytes": 45652,
+    "api": "tab.screenshot({fullPage:false})",
+    "visualAcceptance": "REVIEW_REQUIRED"
+  }
+]

@@ -1,0 +1,3 @@
+Browser tab: 170265210, Title: "Isolated source recovery proof", URL: "http://localhost:8776/#tenant-shell-main".
+There has been no change in the accessibility tree.
+The focused UI element is 29 button Simulate missing screen

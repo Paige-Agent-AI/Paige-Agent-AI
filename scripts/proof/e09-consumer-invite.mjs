@@ -9,7 +9,11 @@ import { createHash } from 'node:crypto';
 import { isProofDescendant } from './e09-proof-path.mjs';
 
 const baselineOnly = process.argv.includes('--baseline');
-const entry = process.argv.includes('--entry');
+const documents = process.argv.includes('--documents');
+const actions = process.argv.includes('--actions') || process.argv.includes('--actions-baseline');
+const actionsBaseline = process.argv.includes('--actions-baseline');
+const actionPredecessors=[];
+const entry = process.argv.includes('--entry') || actions || documents;
 const entryBaseline = process.argv.includes('--entry-baseline');
 const root = process.cwd();
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
@@ -42,7 +46,9 @@ function functionFrom(file,name) {
  assert(start>=0,`Source function missing: ${name}`);
  const end=s.indexOf('END $function$;',start);
  const alternative=s.indexOf('END;\n$function$;',start);
- const stop=end>=0?end+'END $function$;'.length:alternative+'END;\n$function$;'.length;
+ const inline=s.indexOf('END; $function$;',start);
+ const stops=[end<0?-1:end+'END $function$;'.length,alternative<0?-1:alternative+'END;\n$function$;'.length,inline<0?-1:inline+'END; $function$;'.length].filter(stop=>stop>start);
+ const stop=stops.length?Math.min(...stops):-1;
  assert(stop>start,`Function delimiter missing: ${name}`);
  return s.slice(start,stop);
 }
@@ -94,7 +100,6 @@ try {
      LANGUAGE sql AS $$ SELECT NULL::text,NULL::text,'#26483e'::text,NULL::text $$;
    CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
    CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $$ SELECT tenant_id FROM tenant_members WHERE user_id=auth.uid() AND status='active' LIMIT 1 $$;
-   CREATE FUNCTION public.client_portal_relationship_id(p_tenant uuid DEFAULT NULL) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $$ SELECT c.id FROM clients c JOIN tenants t ON t.id=c.tenant_id WHERE c.linked_user_id=auth.uid() AND c.status='active' AND c.merged_into_contact_id IS NULL AND t.status='active' AND (p_tenant IS NULL OR c.tenant_id=p_tenant) $$;
    ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
    CREATE POLICY clients_legacy_self ON clients FOR ALL TO authenticated USING(linked_user_id=auth.uid() OR tenant_id=current_user_tenant_id()) WITH CHECK(linked_user_id=auth.uid() OR tenant_id=current_user_tenant_id());
    GRANT SELECT,UPDATE ON clients TO authenticated;
@@ -112,6 +117,10 @@ try {
    CREATE POLICY "Clients can read approvals on their own record" ON paige_pending_approvals USING(true);
    CREATE TABLE tenant_entity_relationships(contact_id uuid,tenant_id uuid);
    CREATE POLICY "ter self read" ON tenant_entity_relationships USING(true);`);
+ const relationship=fs.readFileSync(path.join(root,'supabase/migrations/20271102120000_e09_client_self_projection.sql'),'utf8').replaceAll('\r\n','\n')
+   .match(/CREATE OR REPLACE FUNCTION public\.client_portal_relationship_id\([\s\S]*?\n\$\$;/)?.[0];
+ assert(relationship,'Actual customer relationship helper required');sql(relationship);
+ sql('REVOKE ALL ON FUNCTION client_portal_relationship_id(uuid) FROM PUBLIC,anon;GRANT EXECUTE ON FUNCTION client_portal_relationship_id(uuid) TO authenticated,service_role;');
  sql(peek);sql('REVOKE ALL ON FUNCTION peek_tenant_invite(text) FROM PUBLIC; GRANT EXECUTE ON FUNCTION peek_tenant_invite(text) TO anon,authenticated,service_role');
  }
  sql(functionFrom('supabase/migrations/20261200000300_solo_team_recipient_binding.sql','accept_tenant_invite'));
@@ -201,9 +210,105 @@ try {
  const outcomes=await Promise.all([simultaneous(),simultaneous()]);
  check('Concurrent acceptance grants once and records one attributable receipt',()=>{assert.equal(outcomes.filter(x=>x===0).length,1);assert.equal(sql(`SELECT uses FROM tenant_invite_tokens WHERE id='${f.invite}';`),'1');assert.equal(sql(`SELECT count(*) FROM audit_logs WHERE entity_id='${f.invite}';`),'1');assert.equal(sql(`SELECT count(*) FROM user_roles WHERE user_id='${f.actor}' AND role='client';`),'1');});
  }
+ if(actions){
+   // Extend the incumbent local consumer proof, not another runner. Tables use
+   // source-backed domain definitions; notification/Rail transports stay synthetic.
+   const schema=fs.readFileSync('supabase/migrations/20260702031428_90fade5b-1028-4c00-bd76-dfee700357d2.sql','utf8').replaceAll('\r\n','\n');
+   const table=name=>{const start=schema.indexOf(`CREATE TABLE IF NOT EXISTS public.${name} (`),stop=schema.indexOf('\n);',start)+4;assert(start>=0&&stop>start);return schema.slice(start,stop);};
+   sql('DROP TABLE paige_customer_responses;DROP TABLE paige_customer_actions;');
+   sql(table('paige_customer_actions'));sql(table('paige_customer_responses'));
+   sql(`ALTER TABLE paige_customer_actions ENABLE ROW LEVEL SECURITY;ALTER TABLE paige_customer_responses ENABLE ROW LEVEL SECURITY;
+    GRANT SELECT ON paige_customer_actions,paige_customer_responses TO authenticated;
+    CREATE POLICY pca_customer_subject_read ON paige_customer_actions FOR SELECT TO authenticated USING(contact_id=client_portal_relationship_id(tenant_id));
+    CREATE POLICY pcr_customer_subject_read ON paige_customer_responses FOR SELECT TO authenticated USING(contact_id=client_portal_relationship_id());
+    CREATE TYPE notification_type AS ENUM('system');
+    CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),user_id uuid,type notification_type,title text,message text,action_url text,metadata jsonb);
+    CREATE TABLE paige_audit_log(id uuid DEFAULT gen_random_uuid(),actor_user_id uuid,tenant_id uuid,action text,target_type text,target_id uuid,payload jsonb);
+    CREATE TABLE paige_actions(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,customer_action_id uuid,result jsonb,updated_at timestamptz);
+    CREATE TABLE proof_action_rail(id uuid DEFAULT gen_random_uuid(),contact_id uuid,event_kind text);
+    CREATE FUNCTION record_rail_event(p_contact_id uuid,p_event_kind text,p_surface text,p_actor_type text,p_title text,p_summary text,p_payload jsonb,p_ref_table text,p_ref_id uuid,p_from_department text,p_to_department text)
+      RETURNS uuid LANGUAGE plpgsql AS $$ DECLARE _id uuid;BEGIN INSERT INTO proof_action_rail(contact_id,event_kind) VALUES(p_contact_id,p_event_kind) RETURNING id INTO _id;RETURN _id;END;$$;
+    CREATE FUNCTION proof_action_snapshot() RETURNS jsonb LANGUAGE sql AS $$SELECT jsonb_build_object(
+      'actions',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM paige_customer_actions x),
+      'responses',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM paige_customer_responses x),
+      'notifications',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM notifications x),
+      'audit',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM paige_audit_log x),
+      'linked',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM paige_actions x),
+      'rail',(SELECT jsonb_agg(to_jsonb(x) ORDER BY id) FROM proof_action_rail x))$$;`);
+   const touch=schema.match(/CREATE OR REPLACE FUNCTION public\._touch_pca_updated_at\([\s\S]*?END; \$\$;/)?.[0];assert(touch);sql(touch);
+   sql('CREATE TRIGGER trg_pca_touch BEFORE UPDATE ON paige_customer_actions FOR EACH ROW EXECUTE FUNCTION _touch_pca_updated_at();');
+   const originalResponse=functionFrom('supabase/migrations/20260712240000_rail_step4_client_emitters.sql','customer_respond_to_action');
+   sql(originalResponse);
+   sql('REVOKE ALL ON FUNCTION customer_respond_to_action(uuid,text,text) FROM PUBLIC,anon;GRANT EXECUTE ON FUNCTION customer_respond_to_action(uuid,text,text) TO authenticated,service_role;');
+   if(!actionsBaseline){
+     const repair=fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql','utf8');
+     for(const [name,predecessor]of [['full-schema',originalResponse],['recorded-production',originalResponse
+       .replace('-- (B1) STEP 4 — §8 close-the-loop','-- (B1) §8 close-the-loop').replace('-- (B2) STEP 4 — file the response','-- (B2) file the response')]]){
+       sql('DROP FUNCTION IF EXISTS customer_respond_to_action(uuid,text,text,timestamptz)');sql(predecessor);
+       const before=sql("SELECT md5(pg_get_functiondef('customer_respond_to_action(uuid,text,text)'::regprocedure))");
+       sql(repair);const once=sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)");
+       sql(repair);assert.equal(sql("SELECT pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure)"),once);
+       actionPredecessors.push({name,before,after:sql("SELECT md5(pg_get_functiondef('customer_respond_to_action(uuid,text,text,timestamptz)'::regprocedure))"),replay:'PASS'});
+     }
+   }
+   const actionFixture=(options={})=>{const f=fixture(options);sql(`UPDATE clients SET linked_user_id='${f.actor}' WHERE id='${f.contact}';
+    ${options.tenantInactive?`UPDATE tenants SET status='suspended' WHERE id='${f.tenant}';`:''}
+    INSERT INTO paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at)
+    VALUES('${f.invite}','${f.tenant}','${f.contact}','${f.other}','task','Synthetic assigned work',${literal(options.closed?'customer_acted':'proposed')},now()+interval '${options.expired?'-1':'1'} day','2026-01-01');
+    INSERT INTO paige_actions(tenant_id,customer_action_id,result) VALUES('${f.tenant}','${f.invite}','{}');`);return f;};
+   const statement=(f,{actor=f.actor,type='completed',text=null,version='2026-01-01',legacy=false}={})=>`SELECT customer_respond_to_action('${f.invite}',${literal(type)},${literal(text)}${actionsBaseline||legacy?'':`,${literal(version)}::timestamptz`})`;
+   const response=(f,options={})=>{
+     const out=sql(`BEGIN;SELECT set_config('test.actor',${literal(options.actor===null?'':options.actor??f.actor)},true);SET LOCAL ROLE authenticated;${statement(f,options)};COMMIT;`);
+     const row=out.split(/\r?\n/).find(s=>s.startsWith('{'));assert(row,'Native response result required');return JSON.parse(row);
+   };
+   for(const [name,options,callOptions]of [
+     ['archived relationship',{inactive:true},{}],['merged relationship',{merged:true},{}],['suspended business',{tenantInactive:true},{}],
+     ['wrong business/contact tuple',{foreign:true},{}],['wrong actual subject',{},'other'],['missing actual subject',{}, {actor:null}],
+     ['closed action',{closed:true},{}],['expired action',{expired:true},{}],['empty question',{}, {type:'question',text:' '}],
+   ])check('Native customer action refuses '+name,()=>{const f=actionFixture(options),before=sql('SELECT proof_action_snapshot()');const result=response(f,callOptions==='other'?{actor:f.other}:callOptions);assert.equal(result.ok,false);assert.equal(sql('SELECT proof_action_snapshot()'),before);});
+   check('Native old caller cannot submit without the viewed version',()=>{const f=actionFixture(),before=sql('SELECT proof_action_snapshot()');assert.equal(response(f,{legacy:true}).error,'VERSION_REQUIRED');assert.equal(sql('SELECT proof_action_snapshot()'),before);});
+   if(!actionsBaseline)for(const version of [null,'2025-01-01'])check('Native version refusal '+version,()=>{const f=actionFixture(),before=sql('SELECT proof_action_snapshot()');assert.equal(response(f,{version}).error,'ACTION_VERSION_CONFLICT');assert.equal(sql('SELECT proof_action_snapshot()'),before);});
+   check('Native completion persists canonical response, actor, status, notification, audit and incumbent linked output',()=>{
+     const f=actionFixture();assert.equal(response(f).ok,true);
+     assert.equal(sql(`SELECT status FROM paige_customer_actions WHERE id='${f.invite}'`),'customer_acted');
+     assert.equal(sql(`SELECT responded_by_user_id FROM paige_customer_responses WHERE action_id='${f.invite}'`),f.actor);
+     assert.equal(sql(`SELECT count(*) FROM notifications WHERE user_id='${f.other}' AND metadata->>'action_id'='${f.invite}'`),'1');
+     assert.equal(sql(`SELECT count(*) FROM paige_audit_log WHERE actor_user_id='${f.actor}' AND tenant_id='${f.tenant}' AND target_id='${f.invite}'`),'1');
+     assert.equal(sql(`SELECT result->>'client_response' FROM paige_actions WHERE customer_action_id='${f.invite}'`),'completed');
+     assert.equal(sql(`SELECT count(*) FROM proof_action_rail WHERE contact_id='${f.contact}'`),'1');
+   });
+   for(const [type,text,status]of [['accepted',null,'customer_acted'],['declined',null,'customer_declined'],['question','Which document should I use?','proposed']]){
+     check('Native permitted response '+type,()=>{const f=actionFixture();assert.equal(response(f,{type,text}).ok,true);
+       assert.equal(sql(`SELECT status FROM paige_customer_actions WHERE id='${f.invite}'`),status);
+       const saved=JSON.parse(sql(`SELECT jsonb_build_object('actor',responded_by_user_id,'type',response_type,'text',response_text) FROM paige_customer_responses WHERE action_id='${f.invite}'`));
+       assert.deepEqual(saved,{actor:f.actor,type,text});
+     });
+   }
+   if(!actionsBaseline){
+     const f=actionFixture();
+     const race=()=>new Promise((resolve,reject)=>{
+       const child=spawn(exe('psql'),args,{windowsHide:true,stdio:['pipe','pipe','pipe']});let out='',err='';
+       child.stdout.on('data',v=>out+=v);child.stderr.on('data',v=>err+=v);child.on('error',reject);
+       child.on('close',code=>{transcripts.push({command:'psql-concurrent-action',args,exitCode:code,stdout:out,stderr:err});
+         const result=out.split(/\r?\n/).find(s=>s.startsWith('{'));if(code!==0||!result)reject(new Error(err||'missing native race result'));else resolve(JSON.parse(result));});
+       child.stdin.end(`BEGIN;SELECT set_config('test.actor','${f.actor}',true);SET LOCAL ROLE authenticated;${statement(f)};SELECT pg_sleep(0.2);COMMIT;`);
+     });
+     const settled=await Promise.all([race(),race()]);
+     check('Concurrent same-version completion persists once',()=>{assert.equal(settled.filter(r=>r.ok===true).length,1);
+       assert.equal(sql(`SELECT count(*) FROM paige_customer_responses WHERE action_id='${f.invite}'`),'1');
+       assert.equal(sql(`SELECT count(*) FROM paige_audit_log WHERE target_id='${f.invite}'`),'1');
+       assert.equal(sql(`SELECT count(*) FROM notifications WHERE metadata->>'action_id'='${f.invite}'`),'1');
+     });
+   }
+   check('Native audit failure rolls back response and all preceding effects',()=>{
+     const f=actionFixture();sql(`CREATE FUNCTION proof_reject_response_audit() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'synthetic response audit refusal';END;$$;CREATE TRIGGER proof_response_audit BEFORE INSERT ON paige_audit_log FOR EACH ROW EXECUTE FUNCTION proof_reject_response_audit();`);
+     const before=sql('SELECT proof_action_snapshot()');assert.throws(()=>response(f));assert.equal(sql('SELECT proof_action_snapshot()'),before);sql('DROP TRIGGER proof_response_audit ON paige_audit_log;DROP FUNCTION proof_reject_response_audit();');
+   });
+ }
+ if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
- const report={mode:baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
- fs.writeFileSync(path.join(work,baselineOnly?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
+ const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
+ fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;
 }finally{if(started)run('pg_ctl',['-D',cluster,'-w','stop','-m','fast']);fs.writeFileSync(path.join(work,baselineOnly?'baseline-transcript.json':'candidate-transcript.json'),JSON.stringify(transcripts,null,2));}

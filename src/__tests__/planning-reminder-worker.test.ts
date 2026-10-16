@@ -90,6 +90,12 @@ function fixture(options: Options = {}) {
 }
 
 describe('native reminder claim and interrupted-delivery boundaries', () => {
+  it('preserves the deployed Vault-only cron authentication in the release configuration', () => {
+    const config = readFileSync('supabase/config.toml', 'utf8');
+    const section = /\[functions\.plan-reminder-cron\]([\s\S]*?)(?=\n\[|$)/.exec(config)?.[1];
+    expect(section, 'CLI release must preserve incumbent worker68 JWTfalse plus handler Vault verification').toBeTruthy();
+    expect(section).toMatch(/^verify_jwt\s*=\s*false\s*(?:#.*)?$/m);
+  });
   it.each([id(2), id(20)])('preserves the normal due-reminder path for neutral tenant %s', async tenant => {
     const f = fixture({ tenant }); const result = await f.run();
     expect(result.result).toMatchObject({ in_app: 1, claimed: 1, failed: 0 });

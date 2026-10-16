@@ -892,6 +892,8 @@ jobs:
       - name: INT-336 — typed supersession and canonical settlement
         if: ${{ !cancelled() }}
         run: |
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/crm-contact-work-summary-check.mjs
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
@@ -962,6 +964,8 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation" node scripts/int346-isolation-db-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation_race" node scripts/int346-isolation-db-check.mjs --real-window-race
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_answer_admission
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_answer_admission" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs --native-db
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

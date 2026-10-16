@@ -23,11 +23,11 @@ const source = readFileSync('supabase/functions/paige-deep-research/index.ts', '
 
 type Options = {
   member?: boolean; actorMissing?: boolean; identityError?: boolean; profileError?: boolean;
-  noTenant?: boolean; unconfigured?: boolean; switchAt?: 'search' | 'run-insert' | 'receipt';
+  noTenant?: boolean; unconfigured?: boolean; switchAt?: 'search' | 'run-insert' | 'receipt' | 'synthesis' | 'strategy-error';
   runWriteError?: boolean; lostRunAck?: boolean; sourceWriteError?: boolean; lostSourcesAck?: boolean;
   runReadError?: boolean; sourcesReadError?: boolean; corruptRead?: 'actor' | 'tenant' | 'findings' | 'source' | 'extra-source';
   recorderError?: boolean; lostReceiptAck?: boolean;
-  cited?: boolean; failedSynthesis?: boolean; scopeReadThrows?: boolean;
+  cited?: boolean; failedSynthesis?: boolean; scopeReadThrows?: boolean; strategyError?: boolean;
 };
 
 function fixture(options: Options = {}) {
@@ -97,13 +97,22 @@ function fixture(options: Options = {}) {
     throw new Error('Unexpected fixture provider endpoint');
   });
   const model = vi.fn(async (phase: string) => {
-    if (options.failedSynthesis && phase === 'unit_synthesis') throw new Error('fixture synthesis failed');
+    if (options.failedSynthesis && ['unit_synthesis', 'dossier_synthesis'].includes(phase)) {
+      if (options.switchAt === 'synthesis') active = other;
+      throw new Error('fixture synthesis failed');
+    }
     return { resp: { choices: [{ message: { content: JSON.stringify(
     phase === 'unit_planner' ? { units: [{ objective: 'Verify the protected fixture baseline', coverage_kind: 'overall' }] }
       : phase === 'unit_synthesis' ? { insufficient: false, findings: [{ summary: 'Protected supporting fixture research establishes a reproducible baseline.', citations: [1], name: null, website: null, phone: null, values: [] }] }
         : { queries: ['protected fixture query'], done: false }) } }] }, route: null };
   });
-  const strategy = vi.fn(async () => ({ degraded: true }));
+  const strategy = vi.fn(async () => {
+    if (options.strategyError) {
+      if (options.switchAt === 'strategy-error') active = other;
+      throw new Error('fixture unexpected strategy error');
+    }
+    return { degraded: true };
+  });
   const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun,
     createClient: (_url: string, key: string) => key === 'fixture-service' ? admin : caller,
     researchCompletion: model, strategizeBeforeReasoning: strategy, fetch: provider,
@@ -176,6 +185,61 @@ describe('incumbent native Research receipt contract', () => {
 });
 
 describe('actual native Research authenticated door', () => {
+  it('guards every structured result return independently of optional persistence and guards the generic error return', () => {
+    const ast = ts.createSourceFile('research.ts', source, ts.ScriptTarget.Latest, true);
+    let execution: ts.TryStatement | undefined;
+    const locate = (node: ts.Node) => {
+      if (ts.isTryStatement(node) && node.tryBlock.statements.some(statement => ts.isVariableStatement(statement)
+        && statement.declarationList.declarations.some(declaration => declaration.name.getText(ast) === 'strategy'))) execution = node;
+      ts.forEachChild(node, locate);
+    };
+    locate(ast); expect(execution).toBeDefined();
+    const resultReturns: ts.ReturnStatement[] = [];
+    const collect = (node: ts.Node) => {
+      if (ts.isReturnStatement(node) && node.expression && ts.isCallExpression(node.expression)
+        && node.expression.expression.getText(ast) === 'json') resultReturns.push(node);
+      ts.forEachChild(node, collect);
+    };
+    collect(execution!.tryBlock); expect(resultReturns).toHaveLength(5);
+    for (const resultReturn of resultReturns) {
+      expect(ts.isBlock(resultReturn.parent)).toBe(true);
+      const statements = (resultReturn.parent as ts.Block).statements;
+      expect(statements[statements.indexOf(resultReturn) - 1].getText(ast)).toBe('await assertResearchScope();');
+    }
+    const errorScope = execution!.catchClause!.block.statements.find(ts.isTryStatement);
+    expect(errorScope?.tryBlock.getText(ast)).toContain('await assertResearchScope();');
+    expect(errorScope?.catchClause?.block.getText(ast)).toContain('return refuseChangedScope();');
+  });
+  it.each([
+    ['general', false], ['general', true], ['dossier', false], ['dossier', true],
+  ] as const)('withholds %s synthesis failure after workspace changes even with no persistence (service=%s)', async (mode, service) => {
+    const test = fixture({ cited: true, failedSynthesis: true, switchAt: 'synthesis' });
+    const { response, body } = await test.run({ question: mode === 'dossier' ? 'Research the company Protected Fixture Labs' : question, persist: false }, service);
+    expect(test.model.mock.calls.some(([phase]) => phase === (mode === 'dossier' ? 'dossier_synthesis' : 'unit_synthesis'))).toBe(true);
+    expect(test.provider.mock.calls.length).toBeGreaterThan(0);
+    expect(response.status).toBe(409); expect(body.outcome_unknown).toBe(true);
+    expect(body.run_id).toBeUndefined(); expect(body.question).toBeUndefined(); expect(body.findings).toBeUndefined(); expect(body.sources).toBeUndefined();
+    expect(test.rows.research_runs).toEqual([]); expect(test.adminRpc).not.toHaveBeenCalled();
+  });
+  it.each(['general', 'dossier'] as const)('keeps a same-workspace %s no-persist synthesis failure available without falsely saving it', async mode => {
+    const test = fixture({ cited: true, failedSynthesis: true });
+    const { response, body } = await test.run({ question: mode === 'dossier' ? 'Research the company Protected Fixture Labs' : question, persist: false }, true);
+    expect(response.status).toBe(200); expect(body.coverage.stop_reason).toBe('error');
+    expect(body.run_id).toEqual(expect.any(String)); expect(body.sources.length).toBeGreaterThan(0);
+    expect(test.rows.research_runs).toEqual([]); expect(test.adminRpc).not.toHaveBeenCalled();
+  });
+  it.each([false, true])('withholds unexpected post-await error identities after a scope change (service=%s)', async service => {
+    const test = fixture({ strategyError: true, switchAt: 'strategy-error' });
+    const { response, body } = await test.run({ persist: false }, service);
+    expect(test.strategy).toHaveBeenCalledTimes(1); expect(response.status).toBe(409); expect(body.outcome_unknown).toBe(true);
+    expect(body.run_id).toBeUndefined(); expect(body.question).toBeUndefined(); expect(body.findings).toBeUndefined(); expect(body.sources).toBeUndefined();
+    expect(test.rows.research_runs).toEqual([]); expect(test.adminRpc).not.toHaveBeenCalled();
+  });
+  it('preserves the structured unexpected-error response when identity and scope still hold', async () => {
+    const test = fixture({ strategyError: true }); const { response, body } = await test.run({ persist: false });
+    expect(response.status).toBe(200); expect(body.coverage.stop_reason).toBe('error'); expect(body.run_id).toEqual(expect.any(String));
+    expect(test.rows.research_runs).toEqual([]); expect(test.adminRpc).not.toHaveBeenCalled();
+  });
   it('runs the real citation/validation/persistence/receipt path with protected provider ports', async () => {
     const test = fixture({ cited: true }); const { body } = await test.run();
     expect(body.findings.length).toBeGreaterThan(0); expect(body.findings[0].citations).toEqual([1]);

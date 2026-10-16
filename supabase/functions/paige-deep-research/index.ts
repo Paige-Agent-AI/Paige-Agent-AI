@@ -2103,6 +2103,7 @@ serve(async (req) => {
   try { await assertResearchScope(); }
   catch (error) { return json({ error: "Research identity or current workspace could not be verified.", not_applied: true },
     error instanceof ResearchScopeError ? error.status : 403); }
+  const refuseChangedScope = () => json({ error: "Research workspace changed or access could not be verified. Earlier authorized work may have run; inspect the original workspace before repeating it.", outcome_unknown: true }, 409);
 
   try {
   // §34 L4 phase-1: strategize BEFORE the research loop. Honest-degrade — it NEVER throws and can never
@@ -2264,6 +2265,7 @@ serve(async (req) => {
 
   // Unconfigured → no synthesis, findings [], persist NOTHING (test iii).
   if (!configured) {
+    await assertResearchScope();
     return json(buildResult(
       [], "unconfigured",
       "Live web search is not connected, so no sources could be gathered. No facts were produced — nothing was invented.",
@@ -2279,6 +2281,7 @@ serve(async (req) => {
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
     if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+    await assertResearchScope();
     return json(result);
   }
 
@@ -2295,6 +2298,7 @@ serve(async (req) => {
     if (!mono) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
       if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      await assertResearchScope();
       return json(result);
     }
     // R6-B: the fabric's closed served-route projection on the dossier record (absent on
@@ -2337,6 +2341,7 @@ serve(async (req) => {
     if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
       if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      await assertResearchScope();
       return json(result);
     }
   }
@@ -2379,9 +2384,14 @@ serve(async (req) => {
   }
   await assertResearchScope();
   if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+  await assertResearchScope();
   return json(result);
   } catch (e) {
-    if (e instanceof ResearchScopeError) return json({ error: "Research workspace changed or access could not be verified. Earlier authorized work may have run; inspect the original workspace before repeating it.", outcome_unknown: true }, 409);
+    if (e instanceof ResearchScopeError) return refuseChangedScope();
+    // Error responses also carry identity/evidence. Persistence is optional,
+    // while authorization immediately before returning any result is not.
+    try { await assertResearchScope(); }
+    catch { return refuseChangedScope(); }
     // §13 — any unexpected failure returns a STRUCTURED honest error, never a
     // bare 500 and never a fabricated result. Nothing is persisted on this path.
     console.error("[paige-deep-research] run error:", (e as Error)?.message);

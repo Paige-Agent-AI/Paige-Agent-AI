@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: actual authorized native history projects into existing ins
 MOTION_PURPOSE: NONE: native disclosure/static evidence; no decorative motion.
 PROTECTED_SEAMS: new E09 read API only; no shared helper, sender, Chat/Live/Gateway/Spine, consumer mint/acceptance, staff selection, booking or commercial source edits. Exact shared source leases remain pending; no INT-346 bypass.
 
-INTERNAL_BUILD_IDENTITY: candidate-uncommitted; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271107120000_e09_owner_invitation_history is unapplied); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-owner-invitation-history.mjs, scripts/proof/e09-invitation-history-ui/check.mjs and supabase/tests/consumer_invite_acceptance.sql
+INTERNAL_BUILD_IDENTITY: 4587cecce8706508f00a127ce6410b5affa06f2d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271107120000_e09_owner_invitation_history is unapplied); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-owner-invitation-history.mjs, scripts/proof/e09-invitation-history-ui/check.mjs and supabase/tests/consumer_invite_acceptance.sql
 RELEASE_CHANNEL: development: isolated native/SDK/actual-source browser proof only; hosted release and real customer acceptance remain separate.
 RELEASE_CLASSIFICATION: internal-only: bounded increment of complete Portal integration.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent authenticated customer outcome established.

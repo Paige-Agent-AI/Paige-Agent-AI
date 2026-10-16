@@ -5,7 +5,7 @@
 // that rejects it. `npm run lint:crm-patch-fields` re-derives and fails on any difference.
 //
 // Regenerate:  node scripts/ci/crm-patch-field-gen.mjs --write
-// Derived from: 20270516000000_crm_commands_speak_contact_methods.sql, 20271108120000_task_progress_contract.sql
+// Derived from: 20270516000000_crm_commands_speak_contact_methods.sql, 20271108121000_task_progress_contract.sql
 
 export type CrmPatchFieldSpec = { readonly name: string; readonly description?: string };
 

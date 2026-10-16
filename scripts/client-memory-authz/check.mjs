@@ -6423,18 +6423,19 @@ try {
       JSON.stringify(settled.map((c) => c.args)));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4c a used approval with nothing committed under its key: nothing runs, the card says can't confirm, no fresh card",
-      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "unconfirmed" && /can't be used any more/.test(outcome?.note ?? "")
-        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_already_used"),
+    assert("40.4c a used approval with nothing committed under its key: native unavailable refusal, nothing runs and no fresh card",
+      db.executions.length === 0 && db.committed.size === 0 && outcome?.actions?.[0]?.outcome === "not_run"
+        && doorCalls(r).length === 1 && st.rows.length === 1 && cardsOf(r.bodyText).length === 0
+        && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE") && toldModel(r).includes("approval is no longer available"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
-    // The door proposed the act again under the SAME fingerprint (the stored command and key re-hash to
-    // it). That row was never shown, and it must not stay live: the same declined token, posted once
-    // more (a third surface, a re-send), would claim and run it. Kills: not retiring the re-proposal.
+    // The native door now refuses a failed explicit claim without proposing again. A repeated
+    // stale token must still create no hidden live row that a later request could claim.
     const liveAfter = st.rows.filter((row) => !row.consumed);
     const again = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     assert("40.4e declined, approved from a stale card, then posted AGAIN: no hidden live proposal was left, nothing ever runs",
       liveAfter.length === 0 && db.executions.length === 0 && st.rows.every((row) => row.consumed === true)
-        && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(again.bodyText).length === 0,
+        && st.rows.length === 1 && db.committed.size === 0 && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "not_run"
+        && cardsOf(again.bodyText).length === 0 && toldModel(again).includes("CRM_APPROVAL_UNAVAILABLE"),
       JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(again.bodyText) }));
   }
   {
@@ -6624,9 +6625,9 @@ try {
     }
   }
   {
-    // Expired between this request's selection and the door's claim: the door proposes again; the
-    // carried-forward approval reads "expired", not "can't confirm", and no card is shown. Time really
-    // passes: the proposal's window closes while the door's claim is on its way (an async store answer).
+    // Expired between selection and the door's claim: the native door acknowledges refusal as
+    // unavailable, without guessing why its exact claim failed or creating a replacement card.
+    // Time really passes while the claim is on its way (an async store answer).
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     const closesAt = Date.now() + 1500;
@@ -6639,12 +6640,12 @@ try {
         return st.table(filters.map((f) => (f[0] === "gt" && f[1] === "expires_at" ? ["gt", "expires_at", now] : f)));
       } } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4d expired between selection and the door's claim: nothing runs, the card says it expired, no fresh card",
-      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome?.note ?? "")
-        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_expired"),
+    assert("40.4d expired between selection and the door's claim: native unavailable refusal, nothing runs and no fresh card",
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
+        && st.rows.length === 1 && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
+        && toldModel(r).includes("approval is no longer available"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
-    // The person was told it expired. The door's fresh proposal (same fingerprint) is retired, so a
-    // later re-send of the same token runs nothing — "expired" stays true.
+    // No fresh proposal exists: a later re-send of the same token still runs nothing.
     const liveAfter = st.rows.filter((row) => !row.consumed && row.expires_at > new Date().toISOString());
     const later = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     assert("40.4f …and the token posted again later: no live proposal was left behind, nothing runs",
@@ -6654,13 +6655,11 @@ try {
   }
   {
     // THE DOOR'S CLAIM ITSELF COULD NOT RUN (a store error on its claim update) while the card is still
-    // live. crm-command reads that as nothing claimed and proposes again — its insert meets the live
-    // card (the live unique index) and it answers with THAT card. Nothing ran, and the approval is still
-    // good: the truthful outcome is C4a's "could not be checked" (the pinned row re-read: still live),
-    // never "it may already have happened". The card was shown minutes ago (a real card, not a row
+    // live. crm-command returns CRM_APPROVAL_UNCONFIRMED without an insert or execution. This is
+    // unknown claim authority, not an uncertain business write or permission to re-propose.
+    // The original card stays live. The card was shown minutes ago (a real card, not a row
     // minted milliseconds before the request), so it is outside the retirement's clock allowance
-    // altogether — it must stay live. Kills: settling a failed door claim without re-reading the row;
-    // widening the retirement's allowance (it would consume the person's live card).
+    // altogether — it must stay live. The explicit refusal must not consume it or create a new one.
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     st.rows[0].server_issued_at = new Date(Date.now() - 5 * 60_000).toISOString();
@@ -6668,9 +6667,9 @@ try {
       ? { code: "57014", message: "canceling statement due to statement timeout" } : null);
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4g the door's claim errors while the card is live: nothing runs, the person is told it could not be checked (not 'may already have happened'), no card",
-      db.executions.length === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
-        && /checking your approval/.test(outcome?.note ?? "") && toldModel(r).includes("approval_check_unavailable")
+    assert("40.4g the door's claim errors while live: native unconfirmed-approval refusal, no business write and no card",
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
+        && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED") && toldModel(r).includes("approval could not be confirmed")
         && !toldModel(r).includes("approval_already_used") && cardsOf(r.bodyText).length === 0,
       JSON.stringify({ outcome, executions: db.executions.length, told: toldModel(r).match(/approval_[a-z_]+/g) }));
     assert("40.4g …and the person's card is still live (not retired), so the same Approve, sent again, runs it once",
@@ -6680,23 +6679,22 @@ try {
       db.executions.length === 1 && st.rows[0].consumed === true && outcomeOf(retry.bodyText)?.actions?.[0]?.outcome === "ran",
       JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(retry.bodyText) }));
     // The same failed claim on a card minted a moment ago (inside the clock allowance): the pinned row is
-    // never what the retirement consumes, so it is still live and the outcome is still "could not be
-    // checked". Kills: dropping the pinned-row exclusion from the retirement.
+    // never retired, so it stays live and the native refusal still reports unconfirmed authority.
     const st2 = makeConfirmStore(); const db2 = crmDb();
     const card2 = await proposeVia(st2, db2, CONTACT);
     const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [card2.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     assert("40.4g2 …a card minted a moment before the request is the pinned row, and the retirement never consumes it",
       db2.executions.length === 0 && st2.rows.length === 1 && st2.rows[0].consumed === false
-        && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "not_run" && toldModel(r2).includes("approval_check_unavailable"),
+        && db2.committed.size === 0 && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "not_run"
+        && toldModel(r2).includes("CRM_APPROVAL_UNCONFIRMED"),
       JSON.stringify({ rows: st2.rows.map((row) => ({ consumed: !!row.consumed })), outcome: outcomeOf(r2.bodyText) }));
   }
   {
-    // THE RETIREMENT TAKES ONLY WHAT IS STILL LIVE. History with the
+    // A REFUSAL PRESERVES CONSUMED HISTORY. History with the
     // card's fingerprint (a declined card, and an earlier unshown re-proposal already retired), both
     // issued inside the retirement's window, both consumed at a known moment. A stale Approve: the
-    // pinned (newest) row is used, the door proposes again, and only that fresh row is retired — the
-    // consumed rows keep their consumed_at (an audit of when each was used stays true). Kills: dropping
-    // `consumed_at IS NULL` from the retirement (the older consumed row is re-stamped).
+    // pinned (newest) row is used, the native door refuses without a fresh row, and all consumed
+    // rows keep their consumed_at (an audit of when each was used stays true).
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     const now = Date.now();
@@ -6707,9 +6705,9 @@ try {
     const before = st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null }));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const fresh = st.rows.filter((row) => !before.some((b) => b.id === row.id));
-    assert("40.4h a stale Approve over consumed history: nothing runs, the door's fresh proposal is retired, every consumed row keeps its consumed_at",
-      db.executions.length === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(r.bodyText).length === 0
-        && fresh.length === 1 && fresh[0].consumed === true
+    assert("40.4h a stale Approve over consumed history: native refusal, no fresh row, every consumed timestamp retained",
+      db.executions.length === 0 && db.committed.size === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "not_run" && cardsOf(r.bodyText).length === 0
+        && fresh.length === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
         && before.filter((b) => b.consumedAt !== null).every((b) => st.rows.find((row) => row.id === b.id)?.consumedAt === b.consumedAt),
       JSON.stringify({ before, after: st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null })), outcome: outcomeOf(r.bodyText) }));
   }
@@ -6731,11 +6729,10 @@ try {
       JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length }));
   }
 
-  // ── 40.5c THE "ELSEWHERE" HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
-  // has the model call the door tool for the same act. The carried-forward call reads "can't confirm"
-  // (nothing was committed); the model's own call must not reach the door either — it would claim (or,
-  // with the re-proposal retired, re-propose as a fresh card) the act the person turned down. Kills:
-  // a guard that only refuses re-emits after a call that ran ("here").
+  // ── 40.5c THE REFUSED-RESULT HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
+  // has the model call the door tool for the same act. The native refusal is authoritative, and
+  // the model's own call must not reach the door either or propose the declined act afresh. Kills:
+  // a guard that only refuses re-emits after successful execution.
   {
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
@@ -6743,7 +6740,9 @@ try {
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, toolCall: CONTACT });
     const lostResults = (toldModel(r).match(/"error":"approval_already_used"/g) ?? []).length;
     assert("40.5c declined, stale Approve, and the model calls the door again: the re-emit is refused too — nothing runs, no card, the door asked once",
-      db.executions.length === 0 && doorCalls(r).length === 1 && cardsOf(r.bodyText).length === 0 && lostResults >= 2,
+      db.executions.length === 0 && db.committed.size === 0 && st.rows.length === 1 && doorCalls(r).length === 1
+        && cardsOf(r.bodyText).length === 0 && lostResults === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
+        && toldModel(r).includes("already_handled_this_reply"),
       JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length, lostResults }));
   }
 

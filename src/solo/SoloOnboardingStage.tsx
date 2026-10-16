@@ -3,7 +3,7 @@ import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import "./solo-onboarding-stage.css";
 
 export type OnboardingRecordState = "reading" | "ready" | "saving" | "unknown" | "reconciling" | "unavailable";
-export type OnboardingProfileStatus = { tenantId: string | null; state: OnboardingRecordState; confirmedCount: number };
+export type OnboardingProfileStatus = { tenantId: string | null; state: OnboardingRecordState; confirmedCount: number; hasConfirmedPriority?: boolean };
 
 const LABEL: Record<OnboardingRecordState, string> = {
   reading: "Reading your saved business context",

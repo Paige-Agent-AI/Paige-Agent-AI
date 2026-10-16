@@ -85,7 +85,13 @@ try {
  const validator=fs.readFileSync(path.join(root,'supabase/migrations/20271107110000_e09_client_welcome_atomic.sql'),'utf8').replaceAll('\r\n','\n')
    .match(/CREATE OR REPLACE FUNCTION public\._client_portal_welcome_fields\(p_config jsonb\)[\s\S]*?\n\$\$;/)?.[0];
  assert(validator,'Actual Welcome validator required');sql(validator);
- sql(`ALTER TABLE tenants ADD status text DEFAULT 'active';
+ const peek=fs.readFileSync(path.join(root,'supabase/migrations/20260713050000_invite_brand_cascade.sql'),'utf8').replaceAll('\r\n','\n')
+   .match(/CREATE OR REPLACE FUNCTION public\.peek_tenant_invite\([\s\S]*?END \$\$;/)?.[0];
+ assert(peek,'Actual public invitation reader required');
+ // Brand transport is synthetic; the actual native peek body runs unchanged.
+ sql(`ALTER TABLE tenants ADD status text DEFAULT 'active', ADD name text DEFAULT 'Test tenant', ADD slug text DEFAULT 'test-tenant';
+   CREATE FUNCTION public.resolve_tenant_brand(uuid) RETURNS TABLE(logo_url text,logo_dark_url text,primary_color text,accent_color text)
+     LANGUAGE sql AS $$ SELECT NULL::text,NULL::text,'#26483e'::text,NULL::text $$;
    CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
    CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $$ SELECT tenant_id FROM tenant_members WHERE user_id=auth.uid() AND status='active' LIMIT 1 $$;
    CREATE FUNCTION public.client_portal_relationship_id(p_tenant uuid DEFAULT NULL) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $$ SELECT c.id FROM clients c JOIN tenants t ON t.id=c.tenant_id WHERE c.linked_user_id=auth.uid() AND c.status='active' AND c.merged_into_contact_id IS NULL AND t.status='active' AND (p_tenant IS NULL OR c.tenant_id=p_tenant) $$;
@@ -106,6 +112,7 @@ try {
    CREATE POLICY "Clients can read approvals on their own record" ON paige_pending_approvals USING(true);
    CREATE TABLE tenant_entity_relationships(contact_id uuid,tenant_id uuid);
    CREATE POLICY "ter self read" ON tenant_entity_relationships USING(true);`);
+ sql(peek);sql('REVOKE ALL ON FUNCTION peek_tenant_invite(text) FROM PUBLIC; GRANT EXECUTE ON FUNCTION peek_tenant_invite(text) TO anon,authenticated,service_role');
  }
  sql(functionFrom('supabase/migrations/20261200000300_solo_team_recipient_binding.sql','accept_tenant_invite'));
  const matching=fs.readFileSync(path.join(root,'supabase/migrations/20270515010000_contact_methods_matching.sql'),'utf8').replaceAll('\r\n','\n');
@@ -125,6 +132,18 @@ try {
    const entrySource=fs.readFileSync(path.join(root,'supabase/migrations/20271108120000_e09_customer_invitation_entry.sql'),'utf8');
    sql(entrySource); const applied=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);");
    sql(entrySource); assert.equal(sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);"),applied);
+   for(const [name,options,valid] of [
+     ['unused consumer',{limit:null},true],['used unlimited consumer',{used:true},false],
+     ['recorded consumer acceptance despite count drift',{lastUsed:true},false],
+     ['revoked consumer',{revoked:true},false],['expired consumer',{expired:true},false],
+     ['existing unlimited team semantics',{team:true,used:true},true],
+   ])check('Public native peek: '+name,()=>{
+     const f=fixture(options),before=sql('SELECT proof_snapshot()');
+     const values=sql(`BEGIN;SET LOCAL ROLE anon;SELECT is_valid FROM public.peek_tenant_invite(${literal(f.token)});ROLLBACK;`)
+       .split(/\r?\n/).filter(value=>value==='t'||value==='f');
+     assert.deepEqual(values,[valid?'t':'f']);
+     assert.equal(sql('SELECT proof_snapshot()'),before,'Public validity read must not consume or mutate an invitation');
+   });
    check('No custom questions uses the existing contact form; malformed published configuration still refuses',()=>{
      assert.equal(sql('SELECT public._client_portal_welcome_fields(NULL);'),'[]');
      assert.equal(sql("SELECT coalesce(public._client_portal_welcome_fields('{}'::jsonb)::text,'REFUSED');"),'REFUSED');

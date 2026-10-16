@@ -67,6 +67,13 @@ BEGIN
  CASE WHEN _options?'used' THEN 1 ELSE 0 END,CASE WHEN _options?'last_used' THEN now() ELSE NULL END,
  CASE WHEN _options?'revoked' THEN now() ELSE NULL END,CASE WHEN _options?'unbound' THEN NULL ELSE _client END,
  CASE WHEN _options?'no_recipient' THEN NULL ELSE _email END);
+ IF _allow OR _options?'used' OR _options?'last_used' OR _options?'expired' OR _options?'revoked' THEN
+  SET LOCAL ROLE anon;
+  RETURN NEXT is((SELECT is_valid FROM public.peek_tenant_invite(_token)),
+   NOT (_options?'used' OR _options?'last_used' OR _options?'expired' OR _options?'revoked'),
+   _name||': public validity follows unused consumer state even with unlimited max uses');
+  RESET ROLE;
+ END IF;
  RETURN QUERY SELECT * FROM pg_temp.e09_call(_token,CASE WHEN _options?'anonymous' THEN NULL ELSE _actor END,_allow,_name,_options->>'expected_error');
  IF _allow THEN
   RETURN NEXT is((SELECT linked_user_id FROM public.clients WHERE id=_client),_actor,_name||': exact CRM contact linked');
@@ -85,6 +92,10 @@ BEGIN
    RETURN NEXT is((SELECT count(*) FROM public.clients),0::bigint,_name||': customer has no raw CRM read');
    RETURN NEXT is(public.client_portal_self_profile()->>'id',_client::text,_name||': closed customer projection still works');
   END IF;
+  RESET ROLE;
+  SET LOCAL ROLE anon;
+  RETURN NEXT is((SELECT is_valid FROM public.peek_tenant_invite(_token)),false,
+   _name||': consumed legacy unlimited link is sign-in recovery only');
   RESET ROLE;
   PERFORM set_config('request.jwt.claims','{}',true);
   RETURN QUERY SELECT * FROM pg_temp.e09_call(_token,_actor,false,_name||' replay');

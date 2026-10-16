@@ -1,10 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
+import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 // Pre-portal onboarding is now just two gates: welcome + agreement.
 // Anything beyond signing_agreement lands the client directly in /workspace,
 // where Paige takes over the intake/docs conversation.
 const STAGE_TO_PATH: Record<string, string> = {
+  pre_invite: "/onboard/welcome",
   invited: "/onboard/welcome",
   signing_agreement: "/onboard/agreement",
 };
@@ -188,7 +190,7 @@ type LandingTenant = {
  */
 export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
-export async function resolveLandingRoute(userId: string): Promise<string> {
+export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean } = {}): Promise<string> {
   try {
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
@@ -242,6 +244,18 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     // both route through here. The root cause is closed at the resolver instead.
     if (roles.includes("super_admin") || roles.includes("platform_admin")) {
       return "/choose-account";
+    }
+    // /app is the existing customer surface. A person who also runs a business
+    // may deliberately open their OWN customer relationship here. This is route
+    // intent only: the native subject-bound active relationship supplies authority.
+    // Fresh ordinary staff login and operator account choice stay unchanged.
+    if (options.customerPortal) {
+      if (clientRes.error) return LANDING_ROUTE_RETRY;
+      if (clientRes.data !== null) {
+        const profile = readClientPortalSelfProfile(clientRes.data, userId);
+        if (!profile) return LANDING_ROUTE_RETRY;
+        return STAGE_TO_PATH[profile.onboarding_stage ?? "invited"] ?? "/app";
+      }
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.

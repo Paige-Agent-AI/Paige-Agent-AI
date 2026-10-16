@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {Helmet} from "react-helmet-async";
 import {Loader2, Eye, EyeOff} from "lucide-react";
 import {supabase} from "@/integrations/supabase/client";
@@ -34,6 +34,7 @@ async function bounded<T>(request:PromiseLike<T>):Promise<T> {
 
 /** Ordinary recipient identity flow. The native acceptor alone grants access. */
 export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInviteInfo}) {
+  const navigate=useNavigate();
   const [phase,setPhase]=useState<Phase>("loading"),[busy,setBusy]=useState(false);
   const [actor,setActor]=useState<User|null>(null),[password,setPassword]=useState("");
   const [showPassword,setShowPassword]=useState(false),[terms,setTerms]=useState(false);
@@ -150,7 +151,8 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       const profile=readClientPortalSelfProfile(result.data,user.id,saved.tenant_id);
       if(result.error||!profile||profile.id!==saved.client_id)throw new Error("relationship_unavailable");
       if(!await checkedActor(n,user.id)||!current(n))return;
-      window.location.assign(["invited","pre_invite"].includes(profile.onboarding_stage??"invited")?"/onboard/welcome":profile.onboarding_stage==="signing_agreement"?"/onboard/agreement":"/app");
+      // Keep the established Auth client alive when browser storage is unavailable.
+      navigate(["invited","pre_invite"].includes(profile.onboarding_stage??"invited")?"/onboard/welcome":profile.onboarding_stage==="signing_agreement"?"/onboard/agreement":"/app");
     }catch{if(current(n)){setReceipt(null);setPhase("error");setNotice("Your portal access could not be confirmed. Check your invitation or contact the business.");}}
     finally{life.current.working=false;if(current(n))setBusy(false);}
   };

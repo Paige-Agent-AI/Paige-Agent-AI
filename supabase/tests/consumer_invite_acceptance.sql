@@ -280,5 +280,105 @@ SELECT throws_ok($$SELECT pg_temp.e09_history_call(platform_owner,platform_owner
 SELECT is(pg_temp.e09_consumer_authority_snapshot(),(SELECT state FROM e09_consumer_authority_before),
  'consumer authority behavior proof preserves the incumbent helper identities and definitions');
 
+-- Extend the incumbent full-schema customer entry suite with its first assigned
+-- work loop. Genuine Auth/provider/browser acceptance remains a separate claim.
+SELECT is(has_function_privilege('anon','public.customer_respond_to_action(uuid,text,text,timestamptz)','EXECUTE'),false,
+ 'anonymous callers cannot invoke the versioned customer response writer');
+INSERT INTO public.user_roles(user_id,role) SELECT owner_id,'admin'::public.app_role FROM e09_history_fixture ON CONFLICT DO NOTHING;
+UPDATE public.profiles SET active_tenant_id='e0901000-0000-0000-0000-000000000001' WHERE user_id=(SELECT owner_id FROM e09_history_fixture);
+
+CREATE FUNCTION pg_temp.e09_action_snapshot(_id uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT jsonb_build_object(
+ 'action',(SELECT to_jsonb(a) FROM public.paige_customer_actions a WHERE a.id=_id),
+ 'responses',(SELECT jsonb_agg(to_jsonb(r) ORDER BY id) FROM public.paige_customer_responses r WHERE r.action_id=_id),
+ 'notifications',(SELECT jsonb_agg(to_jsonb(n) ORDER BY id) FROM public.notifications n WHERE n.metadata->>'action_id'=_id::text),
+ 'audit',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM public.paige_audit_log a WHERE a.target_id::text=_id::text),
+ 'linked',(SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM public.paige_actions a WHERE a.customer_action_id=_id),
+ 'rail',(SELECT jsonb_agg(to_jsonb(e) ORDER BY id) FROM public.paige_client_events e WHERE e.ref_id::text=_id::text))
+$$;
+CREATE FUNCTION pg_temp.e09_action_case(_label text,_options jsonb DEFAULT '{}',_allow boolean DEFAULT false,
+ _type text DEFAULT 'completed',_text text DEFAULT NULL)
+RETURNS SETOF text LANGUAGE plpgsql AS $$
+DECLARE _actor uuid:=gen_random_uuid();_other uuid:=gen_random_uuid();_contact uuid:=gen_random_uuid();_survivor uuid:=gen_random_uuid();_action uuid:=gen_random_uuid();
+ _tenant uuid:='e0901000-0000-0000-0000-000000000001';_foreign uuid:='e0901000-0000-0000-0000-000000000002';
+ _owner uuid:=(SELECT owner_id FROM e09_history_fixture);_before jsonb;_result jsonb;_version timestamptz:='2026-01-01';_customer_read bigint;
+BEGIN
+ INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data)
+ VALUES(_actor,'authenticated','authenticated','action-client-'||_actor||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ (_other,'authenticated','authenticated','action-other-'||_other||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+ INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status,linked_user_id)
+ VALUES(_contact,CASE WHEN _options?'foreign' THEN _foreign ELSE _tenant END,_owner,'Test','Action client',CASE WHEN _options?'archived' THEN 'archived' ELSE 'active' END,_actor),
+ (_survivor,CASE WHEN _options?'foreign' THEN _foreign ELSE _tenant END,_owner,'Test','Survivor','active',NULL);
+ IF _options?'merged' THEN
+  -- Same privileged, rolled-back fixture setup as client_portal_self_projection;
+  -- restore the native guard before switching to the actual customer role.
+  PERFORM set_config('request.jwt.claims','{"role":"service_role"}',true);
+  SET LOCAL ROLE service_role;
+  PERFORM set_config('app.crm_merge_lineage_write','on',true);
+  UPDATE public.clients SET merged_into_contact_id=_survivor,merged_at=now() WHERE id=_contact;
+  PERFORM set_config('app.crm_merge_lineage_write','off',true);
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims','{}',true);
+ END IF;
+ IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='suspended' WHERE id=_tenant;END IF;
+ INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at)
+ VALUES(_action,_tenant,_contact,_owner,'task','Prepare for your next session',CASE WHEN _options?'closed' THEN 'customer_acted' ELSE 'proposed' END,
+  now()+CASE WHEN _options?'expired' THEN interval '-1 day' ELSE interval '1 day' END,_version);
+ _before:=pg_temp.e09_action_snapshot(_action);
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',CASE WHEN _options?'anonymous' THEN NULL WHEN _options?'wrong_actor' THEN _other ELSE _actor END,
+  'role','authenticated')::text,true);
+ SET LOCAL ROLE authenticated;
+ IF _options?'legacy' THEN _result:=public.customer_respond_to_action(_action,_type,_text);
+ ELSE _result:=public.customer_respond_to_action(_action,_type,_text,
+   CASE WHEN _options?'missing_version' THEN NULL WHEN _options?'stale' THEN _version-interval '1 day' ELSE _version END);END IF;
+ SELECT count(*) INTO _customer_read FROM public.paige_customer_responses WHERE action_id=_action;
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN NEXT is((_result->>'ok')::boolean,_allow,_label||': native response outcome');
+ IF NOT _allow THEN
+  RETURN NEXT is(pg_temp.e09_action_snapshot(_action),_before,_label||': no response, action, notification, audit, linked or Rail effects');
+ ELSE
+  RETURN NEXT is(_customer_read,1::bigint,_label||': actual customer role can reload the canonical saved response');
+  RETURN NEXT is((SELECT responded_by_user_id FROM public.paige_customer_responses WHERE action_id=_action),_actor,_label||': actual actor attributed');
+  RETURN NEXT is((SELECT status FROM public.paige_customer_actions WHERE id=_action),
+    CASE WHEN _type='question' THEN 'proposed' WHEN _type='declined' THEN 'customer_declined' ELSE 'customer_acted' END,_label||': canonical status');
+  RETURN NEXT is((SELECT count(*) FROM public.notifications WHERE user_id=_owner AND metadata->>'action_id'=_action::text),1::bigint,_label||': existing internal owner notification recorded');
+  RETURN NEXT is((SELECT count(*) FROM public.paige_audit_log WHERE actor_user_id=_actor AND tenant_id=_tenant AND target_id::text=_action::text),1::bigint,_label||': durable exact action audit');
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_other,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_actions WHERE id=_action),0::bigint,_label||': wrong customer cannot read the action');
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action),0::bigint,_label||': wrong customer cannot read the reply');
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_owner,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action),1::bigint,_label||': legitimate business owner sees the same canonical reply');
+  RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
+  UPDATE public.clients SET linked_user_id=_other WHERE id=_contact;
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_other,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action AND responded_by_user_id=_actor),1::bigint,_label||': replacement login retains authorized contact history with original attribution');
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);SET LOCAL ROLE authenticated;
+  RETURN NEXT is((SELECT count(*) FROM public.paige_customer_responses WHERE action_id=_action),0::bigint,_label||': former login loses read access after contact relink');
+  RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
+ END IF;
+ IF _options?'tenant_inactive' THEN UPDATE public.tenants SET status='active' WHERE id=_tenant;END IF;
+END;
+$$;
+SELECT * FROM pg_temp.e09_action_case('complete current assigned work','{}',true);
+SELECT * FROM pg_temp.e09_action_case('acknowledge current request','{}',true,'accepted');
+SELECT * FROM pg_temp.e09_action_case('decline current request','{}',true,'declined');
+SELECT * FROM pg_temp.e09_action_case('ask about current request','{}',true,'question','Which preparation document should I use?');
+SELECT * FROM pg_temp.e09_action_case('inactive customer','{"archived":true}');
+SELECT * FROM pg_temp.e09_action_case('merged customer','{"merged":true}');
+SELECT * FROM pg_temp.e09_action_case('inactive business','{"tenant_inactive":true}');
+SELECT * FROM pg_temp.e09_action_case('foreign business/client tuple','{"foreign":true}');
+SELECT * FROM pg_temp.e09_action_case('wrong actual customer','{"wrong_actor":true}');
+SELECT * FROM pg_temp.e09_action_case('missing actual customer','{"anonymous":true}');
+SELECT * FROM pg_temp.e09_action_case('stale viewed action','{"stale":true}');
+SELECT * FROM pg_temp.e09_action_case('missing viewed version','{"missing_version":true}');
+SELECT * FROM pg_temp.e09_action_case('cached old caller','{"legacy":true}');
+SELECT * FROM pg_temp.e09_action_case('already closed action','{"closed":true}');
+SELECT * FROM pg_temp.e09_action_case('expired action','{"expired":true}');
+SELECT * FROM pg_temp.e09_action_case('empty question','{}',false,'question',' ');
+SELECT * FROM pg_temp.e09_action_case('oversized question','{}',false,'question',repeat('x',4001));
+SELECT * FROM pg_temp.e09_action_case('null response kind','{}',false,NULL);
+
 SELECT * FROM finish();
 ROLLBACK;

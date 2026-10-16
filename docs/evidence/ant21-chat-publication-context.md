@@ -61,6 +61,14 @@ public native/helper definition and ACL byte-for-byte in the fixture.
 
 Migration SHA256: `2225612cf230fd44a949856b459379ef096f7753bbe75417401bdd1017753056`.
 
+October 16 release-order correction: Customer Portal PR #2249 reached main at
+`c9ace17ffa7e14eb0035629c67313eef68a15a8d` and production recorded its distinct
+`20271108122000_e09_customer_action_scope.sql` before this candidate was merged. The unpublished
+publication migration is therefore renamed to `20271108123000_int336_publication_context_v2.sql`;
+its SQL bytes and the SHA256 above are unchanged. The native fixture follows only that new path.
+The existing Portal migration and all applied history remain untouched. Required exact-head CI
+must run again on this composition; the earlier candidate's CI is not its release evidence.
+
 ## Native proof
 
 `scripts/int336-publication-context-db-check.mjs` reuses the existing canonical database fixture and

@@ -8,7 +8,8 @@
       "state": "choice",
       "context": "a",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "same-mount-event"
     },
     {
       "width": 1366,
@@ -16,7 +17,8 @@
       "state": "choice",
       "context": "b",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "same-mount-event"
     },
     {
       "width": 1024,
@@ -24,7 +26,8 @@
       "state": "choice",
       "context": "a",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "same-mount-event"
     },
     {
       "width": 900,
@@ -32,7 +35,8 @@
       "state": "choice",
       "context": "b",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "same-mount-event"
     },
     {
       "width": 390,
@@ -40,7 +44,8 @@
       "state": "choice",
       "context": "a",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "component-remount"
     },
     {
       "width": 320,
@@ -48,7 +53,8 @@
       "state": "choice",
       "context": "b",
       "result": "PASS",
-      "transport": "synthetic-offline"
+      "transport": "synthetic-offline",
+      "confirmationReturn": "same-mount-event"
     },
     {
       "width": 390,
@@ -98,15 +104,27 @@
     },
     {
       "path": "src/pages/ConsumerInvitation.tsx",
-      "sha256": "7813a58115156d3081902bbe7854df5ac7541cd1e31d3cd4c2dd921ef27e3608"
+      "sha256": "90544f59f418c864d5a4b0b196b1888e6103df1bc7a40180f6769bcdebc76913"
+    },
+    {
+      "path": "scripts/proof/e09-customer-entry-ui/check.mjs",
+      "sha256": "985482ae8a96c0aea7ec25f6d36025f737c23e05ef0f6aaa9073cdada974f7c1"
+    },
+    {
+      "path": "scripts/proof/e09-customer-entry-ui/source.tsx",
+      "sha256": "3b87608678709602459bd0b5983af1a47f567864b2c14e41c89292f67814aaab"
+    },
+    {
+      "path": "scripts/proof/e09-customer-entry-ui/adapter.ts",
+      "sha256": "a43ef77c77f126fbaecd2f7c3757e349e983712b727dd0e3b0991eb2205b93cc"
     },
     {
       "path": "src/pages/ConsumerInvitation.css",
       "sha256": "c1671a2c3cf08d78702cd71a6da5ab86444c58706aa5cee0871f87fc6bf45dbb"
     },
     {
-      "path": "dist/assets/main-BiB6dTG7.css",
-      "sha256": "2e9669ccd00e1bdc9ff0f349fbbdea28da883d780dc19379d19a8a9d0e8a16d2"
+      "path": "dist/assets/main-OFz6P1nd.css",
+      "sha256": "741441bbf60065739abe6875d927fe6853be9fca906c10db33026f7150d0390d"
     }
   ]
 }

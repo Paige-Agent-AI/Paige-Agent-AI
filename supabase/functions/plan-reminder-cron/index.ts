@@ -1,12 +1,15 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { databaseAnswered } from "../_shared/approval-outcome.ts";
 // Planning reminder runner. Invoked by pg_cron every minute (guarded by a
 // shared token). Finds due plan_items of type 'reminder' that haven't fired,
 // and delivers them so a reminder Paige "set" actually lands — an in-app ping
 // for the assignee (or the whole team), plus a branded email when the reminder
 // asked for one. Each reminder is claimed by stamping reminded_at BEFORE it's
-// delivered, so overlapping cron runs never double-fire; a PRE-delivery failure
-// releases the claim so the next run retries, while a post-ping error keeps the
-// claim (never a duplicate ping). A reminder with no reachable recipient is
+// delivered. The conditional claim also rechecks the due record/version; a
+// cancelled, postponed or revised snapshot cannot start delivery. Only a known
+// pre-dispatch failure or single-statement database refusal releases our own
+// unchanged claim. An ambiguous notification write remains held for readback.
+// A reminder with no reachable recipient is
 // marked cancelled/undeliverable so it doesn't retry forever.
 //
 // This is the honest other half of "set a reminder": Paige files the row via
@@ -74,7 +77,7 @@ Deno.serve(async (req) => {
   // Due, unfired reminders that are still open. Small batch per run; cron reruns.
   const { data: due, error: dueErr } = await admin
     .from("plan_items")
-    .select("id, tenant_id, plan_id, title, summary, remind_at, remind_channel, remind_target, assigned_to_user_id, created_by, metadata")
+    .select("id, tenant_id, plan_id, title, summary, remind_at, remind_channel, remind_target, assigned_to_user_id, created_by, metadata, updated_at")
     .eq("item_type", "reminder")
     .is("reminded_at", null)
     .not("status", "in", "(done,cancelled)")
@@ -115,36 +118,53 @@ Deno.serve(async (req) => {
   }
 
   let claimed = 0, inApp = 0, emailed = 0, teamFanned = 0, emailBlocked = 0;
-  const failures: { id: string; error: string }[] = [];
+  const failures: { id: string; error: string; outcome_unknown?: boolean }[] = [];
 
   for (const r of due ?? []) {
-    // Claim first: only one run wins the stamp. If we don't get the row back,
-    // another run already took it — skip.
+    if (typeof r.updated_at !== "string" || !r.updated_at) {
+      failures.push({ id: r.id as string, error: "reminder version unavailable" });
+      continue;
+    }
+    // Revalidate the same native record at claim time, not only at list time.
+    // updated_at is the existing NOT NULL Planning version, never an account gate.
     const { data: claimRow, error: claimErr } = await admin
       .from("plan_items")
       .update({ reminded_at: nowIso })
       .eq("id", r.id)
+      .eq("tenant_id", r.tenant_id)
+      .eq("item_type", "reminder")
+      .eq("updated_at", r.updated_at)
+      .not("status", "in", "(done,cancelled)")
+      .lte("remind_at", nowIso)
       .is("reminded_at", null)
-      .select("id")
+      .select("id, updated_at")
       .maybeSingle();
     if (claimErr) { failures.push({ id: r.id as string, error: claimErr.message }); continue; }
     if (!claimRow) continue; // lost the claim to a concurrent run
+    if (claimRow.id !== r.id || typeof claimRow.updated_at !== "string"
+      || !Number.isFinite(Date.parse(claimRow.updated_at))) {
+      failures.push({ id: r.id as string, error: "reminder claim unconfirmed", outcome_unknown: true });
+      continue;
+    }
     claimed++;
 
-    // Once the in-app ping has landed we must NOT roll the claim back — doing so
-    // would re-deliver (a duplicate ping) on the next run. Only pre-delivery
-    // failures release the claim.
+    // An absent write acknowledgement does not establish that nothing landed.
     let delivered = false;
+    let notificationAttempted = false;
+    let notificationRefused = false;
     try {
       // Who gets pinged: the whole active team, or the single assignee/creator.
       let recipients: string[] = [];
       if (r.remind_target === "team") {
-        const { data: members } = await admin
+        const { data: members, error: memberError } = await admin
           .from("tenant_members")
           .select("user_id")
           .eq("tenant_id", r.tenant_id)
           .eq("status", "active");
-        recipients = Array.from(new Set((members ?? []).map((m: any) => m.user_id).filter(Boolean)));
+        if (memberError) throw memberError;
+        recipients = Array.from(new Set((members ?? [])
+          .map((member: { user_id?: string | null }) => member.user_id)
+          .filter((userId): userId is string => typeof userId === "string" && Boolean(userId))));
         teamFanned++;
       } else {
         const who = (r.assigned_to_user_id || r.created_by) as string | null;
@@ -156,11 +176,13 @@ Deno.serve(async (req) => {
         // whose user was deleted). Keep the claim stamped so it becomes TERMINAL —
         // releasing it would re-scan and re-fail this row every minute forever.
         // Record why on the row so it's explainable.
-        await admin.from("plan_items").update({
+        const { data: terminal, error: terminalError } = await admin.from("plan_items").update({
           status: "cancelled",
-          metadata: { ...((r as any).metadata || {}), undeliverable: true, undeliverable_reason: "no active recipient at fire time" },
-        }).eq("id", r.id);
-        failures.push({ id: r.id as string, error: "no recipients (marked undeliverable)" });
+          metadata: { ...(r.metadata || {}), undeliverable: true, undeliverable_reason: "no active recipient at fire time" },
+        }).eq("id", r.id).eq("tenant_id", r.tenant_id).eq("reminded_at", nowIso)
+          .eq("updated_at", claimRow.updated_at).select("id").maybeSingle();
+        failures.push({ id: r.id as string, error: !terminalError && terminal?.id === r.id
+          ? "no recipients (marked undeliverable)" : "undeliverable state unconfirmed or record changed" });
         continue;
       }
 
@@ -168,8 +190,7 @@ Deno.serve(async (req) => {
       const summary = (r.summary as string) || "";
       const channel = (r.remind_channel as string) || "in_app";
 
-      // In-app ping is the baseline for every reminder — it always lands in the
-      // recipient's notification feed, isolated to them.
+      // In-app notification is the baseline; uncertainty must not invite replay.
       const rows = recipients.map((uid) => ({
         user_id: uid,
         type: "task_reminder",
@@ -179,8 +200,12 @@ Deno.serve(async (req) => {
         is_read: false,
         metadata: { plan_item_id: r.id, plan_id: r.plan_id, remind_target: r.remind_target, source: "paige_planning" },
       }));
+      notificationAttempted = true;
       const { error: notifErr } = await admin.from("notifications").insert(rows);
-      if (notifErr) throw notifErr;
+      if (notifErr) {
+        notificationRefused = databaseAnswered(notifErr);
+        throw notifErr;
+      }
       delivered = true; // ping landed — from here on, never release the claim
       inApp += rows.length;
 
@@ -189,11 +214,13 @@ Deno.serve(async (req) => {
         if (!(await commsProviderExecutionAllowed(admin, { tenantId: r.tenant_id }))) {
           // Internal delivery has landed; retain the claim and never retry email.
           // This records external refusal without cancelling the internal reminder.
-          const { error } = await admin.from("plan_items").update({
-            metadata: { ...((r as any).metadata || {}), provider_execution: "blocked", reason: "COMMS_PROVIDER_EXECUTION_DISABLED" },
-          }).eq("id", r.id);
+          const { data: blocked, error } = await admin.from("plan_items").update({
+            metadata: { ...(r.metadata || {}), provider_execution: "blocked", reason: "COMMS_PROVIDER_EXECUTION_DISABLED" },
+          }).eq("id", r.id).eq("tenant_id", r.tenant_id).eq("reminded_at", nowIso)
+            .eq("updated_at", claimRow.updated_at).select("id").maybeSingle();
           emailBlocked++;
-          failures.push({ id: r.id as string, error: error ? "blocked state persistence failed" : "COMMS_PROVIDER_EXECUTION_DISABLED" });
+          failures.push({ id: r.id as string, error: error || blocked?.id !== r.id
+            ? "blocked state persistence unconfirmed or record changed" : "COMMS_PROVIDER_EXECUTION_DISABLED" });
           continue;
         }
         const brand = await brandFor(r.tenant_id as string);
@@ -205,15 +232,27 @@ Deno.serve(async (req) => {
       }
       // sms channel: the in-app ping still fired above; text delivery rides the
       // shared SMS worker once a per-tenant number is connected (not wired yet).
-    } catch (e: any) {
-      // Only release the claim for PRE-delivery failures. If the in-app ping
-      // already landed, keep the claim stamped so we never double-ping — record
-      // the post-delivery error but leave the reminder marked fired.
-      if (!delivered) {
-        await admin.from("plan_items").update({ reminded_at: null }).eq("id", r.id);
-        claimed--;
+    } catch (e: unknown) {
+      // Only a known pre-dispatch failure or answered single INSERT refusal can
+      // retry. Compare the exact acknowledged claim version before releasing it;
+      // a snooze/newer claim must not be cleared by this old request's cleanup.
+      if (!delivered && (!notificationAttempted || notificationRefused)) {
+        if (typeof claimRow.updated_at === "string" && claimRow.updated_at) {
+          try {
+            const { data: released, error: releaseError } = await admin.from("plan_items")
+              .update({ reminded_at: null }).eq("id", r.id).eq("tenant_id", r.tenant_id)
+              .eq("reminded_at", nowIso).eq("updated_at", claimRow.updated_at)
+              .select("id").maybeSingle();
+            if (!releaseError && released?.id === r.id) claimed--;
+            else failures.push({ id: r.id as string, error: "claim release unconfirmed or record changed" });
+          } catch {
+            failures.push({ id: r.id as string, error: "claim release unconfirmed" });
+          }
+        }
       }
-      failures.push({ id: r.id as string, error: String(e?.message || e) });
+      const detail = e && typeof e === "object" && "message" in e ? e.message : e;
+      failures.push({ id: r.id as string, error: String(detail || e),
+        ...(!delivered && notificationAttempted && !notificationRefused ? { outcome_unknown: true } : {}) });
     }
   }
 

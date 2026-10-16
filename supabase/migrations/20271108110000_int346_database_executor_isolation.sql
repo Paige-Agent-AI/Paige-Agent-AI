@@ -256,4 +256,3 @@ revoke all on function public.paige_chat_interactive_activate(text,text) from pu
 grant execute on function public.paige_chat_interactive_activate(text,text) to service_role;
 
 commit;
-

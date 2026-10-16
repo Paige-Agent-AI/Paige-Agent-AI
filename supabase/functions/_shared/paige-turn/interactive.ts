@@ -116,6 +116,8 @@ export interface InteractiveStore {
   state(): Promise<{ latest: string | null; executor: string | null }>;
   acquire(): Promise<boolean>;
   release(): Promise<void>;
+  /** One canonical current-scope/latest snapshot after release; never effect authority. */
+  publication?(): Promise<boolean>;
 }
 /** Handler finally owns early exits; asynchronous stream finally owns transferred work.
  * A client disconnect does not complete the server's running tool/persistence promise. */
@@ -190,8 +192,7 @@ export function createInteractiveExecution(intent: string, store: InteractiveSto
     // Keep check() strict for every dispatch/read; only this completed lifecycle
     // may publish if its original intent is still latest.
     async checkReleasedPublication() {
-      const state = await store.state();
-      if (!released || state.latest !== intent) stopped = true;
+      if (!released || !store.publication || !await store.publication()) stopped = true;
       if (stopped) throw new InteractiveSuperseded();
     },
     // Isolated proposed-liveness-check proved a real 20s predecessor settles before

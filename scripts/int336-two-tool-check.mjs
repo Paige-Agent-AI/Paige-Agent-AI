@@ -16,7 +16,7 @@ if(bookingMode){assert.ok(['success','missing-id','missing-row','foreign-row','t
 const crmScopeMode=process.env.CRM_SCOPE_TEST;
 if(crmScopeMode){assert.ok(['normal-flip','pinned-flip','normal-same','pinned-same','null-scope','member-refused','native-no-tenant'].includes(crmScopeMode));assert.ok(!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const crmPauseMode=process.env.CRM_APPROVAL_PAUSE_TEST;
-if(crmPauseMode){assert.ok(['normal','kill','prior-success','following-unknown','protected-flip','settle-fails','commit-lost-ack','disconnect','settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded'].includes(crmPauseMode));assert.ok(!crmScopeMode&&!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
+if(crmPauseMode){assert.ok(['normal','kill','prior-success','following-unknown','protected-flip','settle-fails','commit-lost-ack','disconnect','settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded','publication-scope-flip','publication-superseded','publication-error','publication-malformed'].includes(crmPauseMode));assert.ok(!crmScopeMode&&!bookingMode&&!crmMode&&!researchMode&&!automationMode&&!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const pauseRows=[];
 const crmScopePinned=crmScopeMode?.startsWith('pinned-');
 const crmScopeModelBodies=[];
@@ -165,6 +165,15 @@ const rec=fake.setScenario({authUser:{id:actor},tables:{
  get_paige_persona_context:()=>({data:[{tenant_id:crmScopeMode||crmPauseMode?crmActiveTenant:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null}),
  paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:id(5)},error:null},
  paige_chat_interactive_executor_v2:a=>{if(a.p_operation==='acquire')executor=intent;if(a.p_operation==='release'){if(crmPauseMode)assert.ok(receipts.length,'native release requires a canonical terminal');executor=null;if(crmPauseMode==='release-superseded')latest=id(6);if(crmPauseMode==='release-scope-flip')crmActiveTenant=id(18);}return {data:{latest,executor,acquired:true,terminal:receipts.length>0},error:null};},
+ paige_chat_interactive_publication_context_v2:a=>{
+  assert.equal(a.p_thread,thread);assert.equal(a.p_intent,intent);
+  assert.equal(executor,null,'publication context follows native release');
+  if(crmPauseMode==='publication-scope-flip')crmActiveTenant=id(18);
+  if(crmPauseMode==='publication-superseded')latest=id(6);
+  if(crmPauseMode==='publication-error')return {data:null,error:{code:'08006',message:'fixture publication context unavailable'}};
+  if(crmPauseMode==='publication-malformed')return {data:{allowed:true},error:null};
+  return {data:latest===intent&&crmActiveTenant===tenant&&receipts.length===1&&receipts[0].bundle_ref.turn_state.state==='WAIT_APPROVAL',error:null};
+ },
  plan_create:()=>{
   if(recoveryMode==='lost'||crmPauseMode==='following-unknown')throw new TypeError('Failed to fetch after commit');
   if(recoveryMode==='gateway')return {data:null,error:{code:'',message:'gateway timed out'}};
@@ -186,7 +195,7 @@ if(crmPauseMode){
  assert.equal(rec.rpc.filter(c=>c.name==='execute_crm_command').length,0,'requesting approval executes no CRM command');
  if(crmPauseMode==='settle-fails'){assert.equal(receipts.length,0);assert.equal(executor,intent);assert.ok(!wire.includes('"paige_confirm"'),'no actionable card without durable settlement');}
  else if(crmPauseMode==='protected-flip'){assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');assert.ok(!wire.includes('"paige_confirm"'),'scope change withholds the card');}
- else if(['settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded'].includes(crmPauseMode)){
+ else if(['settle-superseded','settle-stopped','settle-scope-flip','release-superseded','release-scope-flip','commit-lost-ack-superseded','publication-scope-flip','publication-superseded','publication-error','publication-malformed'].includes(crmPauseMode)){
   assert.equal(modelCalls,1);assert.equal(receipts.length,1,'late revocation retains one immutable original receipt');
   assert.equal(receipts[0].bundle_ref.turn_state.state,'WAIT_APPROVAL','a committed pause is not rewritten as interrupted');
   assert.equal(receipts[0].bundle_ref.paige_confirm[0].fingerprint,pauseRows[0].fingerprint);
@@ -208,6 +217,7 @@ if(crmPauseMode){
   const saved=receipts[0].bundle_ref;assert.equal(saved.turn_state.state,'WAIT_APPROVAL');assert.equal(saved.paige_confirm.length,1);
   assert.equal(saved.paige_confirm[0].fingerprint,pauseRows[0].fingerprint);assert.deepEqual(saved.paige_confirm[0].command,pauseRows[0].args.command);assert.equal(saved.paige_confirm[0].idempotency_key,pauseRows[0].args.idempotency_key);
   assert.ok(saved.interactive.effects.some(e=>e.outcome==='approval_required'));
+  assert.equal(rec.rpc.filter(c=>c.name==='paige_chat_interactive_publication_context_v2').length,1,'one native coherent authority snapshot precedes publication');
   if(crmPauseMode==='prior-success')assert.ok(saved.interactive.effects.some(e=>e.outcome==='reported_success'&&e.record_refs?.some(r=>r.id===id(7))),'pause retains completed native work references');
  }
  console.log(`PASS actual Chat -> actual CRM durable approval pause ${crmPauseMode}; native SQL port synthetic; no provider/production proof`);process.exit(0);

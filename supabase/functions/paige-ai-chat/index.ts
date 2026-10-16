@@ -1385,7 +1385,14 @@ serve(async (req) => {
         const started = await startInteractiveTurn({ intent: validatedData.requestIntentId,
           begin: async () => await beginTurn(true),
           store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
-            release: async () => { await interactiveSettlement!.release(); } },
+            release: async () => { await interactiveSettlement!.release(); },
+            publication: async () => {
+              const { data, error } = await supabaseClient.rpc("paige_chat_interactive_publication_context_v2", {
+                p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
+              });
+              if (error) throw new Error("INTERACTIVE_PUBLICATION_UNAVAILABLE");
+              return data === true;
+            } },
         });
         if (!started.boundary.proceed) return new Response(JSON.stringify(started.boundary), {
           status: started.boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },

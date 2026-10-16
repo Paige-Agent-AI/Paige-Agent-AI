@@ -35,6 +35,7 @@ Deno.test("INT-336 released publication stays distinct from strict execution own
     state: async () => ({ latest, executor }),
     acquire: async () => { executor = "a"; return true; },
     release: async () => { executor = null; },
+    publication: async () => latest === "a" && executor === null,
   });
   const execution = make(); await execution.acquire(); await execution.check();
   await execution.release(); await execution.checkReleasedPublication();
@@ -51,11 +52,22 @@ Deno.test("INT-336 publication refuses pre-release and null latest", async () =>
       state: async () => ({ latest, executor }),
       acquire: async () => { executor = "a"; return true; },
       release: async () => { executor = null; latest = null; },
+      publication: async () => latest === "a" && executor === null,
     });
     await execution.acquire();
     if (released) await execution.release();
     await assertRejects(execution.checkReleasedPublication, InteractiveSuperseded);
   }
+});
+Deno.test("INT-336 missing native publication proof is not replaced by old executor state", async () => {
+  let executor: string | null = null;
+  const execution = createInteractiveExecution("a", {
+    state: async () => ({ latest: "a", executor }),
+    acquire: async () => { executor = "a"; return true; },
+    release: async () => { executor = null; },
+  });
+  await execution.acquire(); await execution.release();
+  await assertRejects(execution.checkReleasedPublication, InteractiveSuperseded);
 });
 Deno.test("INT-336 receipt uncertainty cannot release, canonical repair can", async () => {
   let exists = false, releases = 0, writes = 0;

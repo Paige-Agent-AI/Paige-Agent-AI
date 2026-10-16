@@ -1,0 +1,74 @@
+{
+  "engine": "isolated Chromium",
+  "authenticated": "NOT_RUN",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "gateway-signin-return",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "state": "gateway-signin-return",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "state": "gateway-signin-return",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "gateway-signin-return",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "gateway-signin-return",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "gateway-signin-return",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "destination": "explicit-test-double"
+    }
+  ],
+  "hashes": [
+    {
+      "path": "src/pages/PortalGateway.tsx",
+      "sha256": "a49004f8460487be70e95cfe053d46e4d53b5471ff5e1af0b57996d5019be3b9"
+    },
+    {
+      "path": "src/pages/ConsumerInvitation.css",
+      "sha256": "c1671a2c3cf08d78702cd71a6da5ab86444c58706aa5cee0871f87fc6bf45dbb"
+    },
+    {
+      "path": "dist/assets/main-D8DIAxqQ.css",
+      "sha256": "63d2aa061026d7bc8137484b372fac253e23b1c6fea47e7373c4be3a88e7fd78"
+    }
+  ]
+}

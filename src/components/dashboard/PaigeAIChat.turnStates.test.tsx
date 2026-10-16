@@ -414,7 +414,7 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     expect(host.textContent).not.toMatch(C4_LANGUAGE);
   });
 
-  it("Not now: hidden too, and the card settles to Skipped", async () => {
+  it("Not now: hidden too, and the card records the owner's choice", async () => {
     const bodies = server(
       body([turn("started", "WORKING", "pending"), card("fp-2"), turn("waiting", "WAIT_APPROVAL", "action"), DONE]),
       body([turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer"), say("Okay — it's not sent."), DONE]),
@@ -427,11 +427,12 @@ describe("C3a — proof (5): approval presentation without a synthetic bubble", 
     expect(bodies[1].messages.filter((m) => m.role === "user").at(-1)!.content).toBe("Hold off — skip that one.");
     expect(bodies[1].declinedConfirmations).toEqual(["fp-2"]);
     expect(host.textContent).not.toContain("Hold off — skip that one.");
-    expect(host.textContent).toContain("Skipped");
+    expect(host.textContent).toContain("You chose Not now");
+    expect(host.textContent).not.toContain("nothing changed");
     // The button that was pressed went away with the card; focus lands on the record that replaced
     // it (the composer is disabled while the follow-up runs), not on <body>.
     expect(document.activeElement).toBe(host.querySelector("[data-paige-decided-record]"));
-    expect((document.activeElement as HTMLElement).textContent).toContain("Skipped");
+    expect((document.activeElement as HTMLElement).textContent).toContain("You chose Not now");
   });
 
   it("the drawer mount (no Solo safety) settles the decided card instead of losing it", async () => {

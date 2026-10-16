@@ -15281,7 +15281,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!contact.data) {
                 result = { success: false, error: "contact_not_found" };
               } else {
-                if (contact.data.id !== id || contact.data.tenant_id !== crmTenantId) throw new Error("contact_scope_mismatch");
+                if (!("id" in contact.data) || !("tenant_id" in contact.data)
+                  || contact.data.id !== id || contact.data.tenant_id !== crmTenantId) throw new Error("contact_scope_mismatch");
                 const [deals, tasksRes, planningRes] = await Promise.all([
                   admin.from("deals").select("id, tenant_id, contact_client_id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(21),
                   admin.from("tasks").select("id, tenant_id, deal_id, title, status, due_date, track, updated_at, created_at, deals!inner(id, tenant_id, contact_client_id)").eq("tenant_id", crmTenantId).eq("deals.tenant_id", crmTenantId).eq("deals.contact_client_id", id).in("status", ["pending", "in_progress"]).order("due_date", { ascending: true, nullsFirst: false }).order("id").limit(21),

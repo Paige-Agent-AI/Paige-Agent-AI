@@ -14,7 +14,7 @@ function declaration(path, name) {
 }
 const canonical = declaration('supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql', 'current_user_tenant_id')
   + '\n' + declaration('supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql', 'is_tenant_member');
-const migration = read('supabase/migrations/20271108140000_research_current_scope.sql')
+const migration = read('supabase/migrations/20271108180000_research_current_scope.sql')
   .replace(/^begin;\s*$/im, '').replace(/^commit;\s*$/im, '');
 const a = '00000000-0000-4000-8000-000000000001';
 const b = '00000000-0000-4000-8000-000000000003';

@@ -106,7 +106,7 @@ describe("INT-305: M0 lineage untouched", () => {
     expect(source).toContain('rpc("research_assert_current_scope", {');
     expect(source).toContain('_expected_actor_id: body.user_id');
     expect(source).toContain('scope.data?.actor_id !== actor');
-    const scopeMigration = readFileSync(join(root, 'supabase/migrations/20271108140000_research_current_scope.sql'), 'utf8');
+    const scopeMigration = readFileSync(join(root, 'supabase/migrations/20271108180000_research_current_scope.sql'), 'utf8');
     expect(scopeMigration).toContain('public.current_user_tenant_id() is distinct from v_tenant');
     expect(scopeMigration).toContain("m.tenant_id=v_tenant and m.status='active'");
     // the cross-check stays a cross-check (never authority)

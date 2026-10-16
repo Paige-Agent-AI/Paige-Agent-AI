@@ -21,7 +21,7 @@ SOLO_UI: NO: shared native endpoint and read-only scope composition; existing no
 UNVERIFIED: final composition review, exact-head CI/Preview migration compatibility, production migration/Edge/source readback, actual provider readiness/cost, authenticated Research/library/Rail/reload/negative QA, Live and owner acceptance
 OWNER_INTENT: restore all18 historical capabilities and50 parity findings through shared tenant-neutral existing architecture; representative accounts are never implementation selectors
 PROTECTED_SEAMS: PASS: every fresh Auth and scope checkpoint, exact explicit active profile, existing JWT current-user/member predicates, delegated-service direct membership, generic refusal and existing run/source/receipt boundaries
-INTERNAL_BUILD_IDENTITY: 411d7e573b6ab450b383f799a280c963f3a43ff9 source/test freeze; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108140000_research_current_scope); edge=PROOF_OWED(reviewed native Research release after migration); evidence=docs/evidence/ui-delivery/ant21-research-scope-roundtrip.md
+INTERNAL_BUILD_IDENTITY: 411d7e573b6ab450b383f799a280c963f3a43ff9 source/test freeze; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108180000_research_current_scope); edge=PROOF_OWED(reviewed native Research release after migration); evidence=docs/evidence/ui-delivery/ant21-research-scope-roundtrip.md
 RELEASE_CHANNEL: development: local protected source and fixture proof only
 RELEASE_CLASSIFICATION: internal-only: native scope correction awaiting distinct review and lead integration
 CUSTOMER_RELEASE_IDENTITY: none: production release and owner acceptance are not claimed
@@ -40,6 +40,8 @@ No existing general RPC composes this Research contract: current-user/access hel
 The endpoint still makes fresh Auth.getUser/getUserById at every checkpoint and requires both its result and the canonical SQL result. It dispatches them concurrently: **two requests, one parallel network stage**, not one request. All16 checkpoint call sites remain. No scope result is cached or reused across checkpoints. These remain checkpoints, not a transaction spanning external calls.
 
 The Supabase CLI created the empty migration through its discovered `migration new` command. Its single local file was safely renamed to the lead-reserved `20271108140000` after frontier/collision inspection, following Task121000 and Planning130000 reservations. The native function must be deployed after the compatible migration. An unavailable or failed scope assertion fails closed; there is no unsafe legacy fallback.
+
+Forward-only ordering correction, 2026-10-16: production now records Portal `20271108150000` from main `5dfb5156785681ebb8fbad7237793a0bf0f9c92e`. This still-unpublished candidate is therefore named `20271108180000_research_current_scope.sql`, after the publication-context dependency reserved at `20271108170000` and before Planning reserved at `20271108190000`. The SQL bytes, runtime source and capability fingerprints are unchanged; the native fixture reads the new path. Earlier names remain historical evidence. No applied migration or history is changed, and no `--include-all` is used. Independent Review, fresh exact-head CI and actual production application/readback remain required.
 
 ## Proof and limits
 

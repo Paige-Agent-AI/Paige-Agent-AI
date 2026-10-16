@@ -24,7 +24,7 @@ const root = join(__dirname, "..", "..");
 const engine = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
 const migration = readFileSync(join(root, "supabase/migrations/20270545000000_research_tenant_lineage.sql"), "utf8");
 const pgTAP = readFileSync(join(root, "supabase/tests/research_tenant_lineage.sql"), "utf8");
-const scopeMigration = readFileSync(join(root, "supabase/migrations/20271108140000_research_current_scope.sql"), "utf8");
+const scopeMigration = readFileSync(join(root, "supabase/migrations/20271108180000_research_current_scope.sql"), "utf8");
 
 describe("the engine's persistence lineage is strict (fail-closed)", () => {
   it("actor and explicitly selected workspace are bound before provider effects", () => {

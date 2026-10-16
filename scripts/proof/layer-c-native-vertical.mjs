@@ -58,6 +58,7 @@ import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stripVTControlCharacters } from "node:util";
 import { readFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
@@ -482,8 +483,12 @@ async function ownerTaskNativeProof() {
           PSQL_BIN: exe("psql"), TEMP: scratch, TMP: scratch },
       });
       writeFileSync(resolve(scratch, "engine-c5-native.log"), log);
-      assert.match(log, /Tests\s+\d+ passed/);
-      assert.doesNotMatch(log, /\d+ (?:failed|skipped)/, "the optional native SQL case must actually execute");
+      // CI colors the real Vitest summary even through a pipe. Keep its raw log,
+      // then inspect the same report without terminal presentation controls.
+      const report = stripVTControlCharacters(log);
+      const passed = report.match(/Tests\s+(\d+) passed/);
+      assert.ok(passed && Number(passed[1]) >= 43, "all native engine/C5 controls must actually pass");
+      assert.doesNotMatch(report, /\d+ (?:failed|skipped)/, "the optional native SQL case must actually execute");
     });
     writeFileSync(resolve(scratch, "result.json"), JSON.stringify({ passed: cases.length, cases, database, port,
       evidence: "isolated-native-postgresql-selected-real-functions", fullSchema: "NOT_RUN", authenticatedQA: "NOT_RUN" }, null, 2));

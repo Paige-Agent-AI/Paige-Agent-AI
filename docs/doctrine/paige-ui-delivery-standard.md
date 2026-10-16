@@ -52,6 +52,17 @@ Verify 1536x770, 1366x768, 1024x768, and 900x1000 with PAIGE closed and open. Te
 
 No tenant/account number, tenant name, fixture, demo state, or URL value may fork shell layout, navigation, responsive behavior, page host, or PAIGE workspace.
 
+## Browser, device, 4K and scaling — shared release standard (owner 2026-10-15)
+
+[**Canonical browser/display support and evidence matrix**](paige-browser-display-compatibility.md) extends, never replaces, the existing eight SOLO viewport checks above, Impeccable, Flow-by-Flow, actual authenticated QA or the one shared SOLO product rule.
+
+- **Supported browsers:** current and previous stable major Chrome, Edge, Firefox and Safari on vendor-supported desktops; iPhone/iPad Safari and Android Chrome. Maintain feature parity of permitted Chat/Live/departmental/business actions; only genuine browser hardware/permission behavior may vary, with truthful supported fallbacks.
+- **Browser engines and real hardware are separate classes:** PR-risk-weighted Chromium, Firefox and WebKit automation; separately prove branded Safari, Edge and real iOS/Android when a changed flow depends on OAuth, voice/media, file picker, touch, virtual keyboard, or OS storage/permission behavior. Playwright WebKit is not the Safari binary. Record actual versions, route, user action and outcome.
+- **Responsive geometry:** preserve required 900x1000, 1024x768, 1366x768, 1536x770 with PAIGE open and closed; add 320 and 390 CSS-pixel phone width, 768 tablet, 1920 Full HD, 2560 QHD and 3840 4K-width checks according to change impact. Prefer existing shared layout/tokens, responsive min/max widths, crisp SVG/retina-safe media and charts, readable density, measured scroll owners and no clipped approval/Send/recovery controls.
+- **Display fidelity:** distinguish CSS viewport vs *physical* pixels, devicePixelRatio and OS/browser scaling. Sample 125/150/200% OS scaling and 200/400% browser zoom or their actual CSS-pixel reflow equivalents, including 320 CSS px without unintended horizontal scrolling. 3840 CSS-pixel screenshot does not prove real 4K hardware.
+- **Affected customer journeys:** check keyboard focus, touch targets, reduced motion, theme, Chat open/closed, Live permissions and denied microphone fallback, session/login/reload, OAuth return, upload/download, client invite/Welcome and truthful readback as applicable. Use anonymized fixture/authorized QA rather than leaking business data.
+- **Evidence and CI truth:** document a Browser / Device / High-resolution Coverage subsection in the **existing** `docs/evidence/ui-delivery/*.md` file, with tested engine/actual device, CSS viewport, OS scale, zoom, themes, artifacts, `PASS`/`FAIL`/`BLOCKED`/`UNVERIFIED` and exact untested boundaries. Current evidence validator does not require these as separate machine fields; build and validate the additive multi-engine Playwright and actual-device acceptance suite before enabling a new required CI status. Do not silently break active PRs, waive material UI defects, or advertise broad certification from fixture tests.
+
 ## Truth labels
 
 - `LIVE`: proven usable contract in the tested environment.

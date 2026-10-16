@@ -1,0 +1,36 @@
+{
+  "base": "469f96f27",
+  "checks": [
+    {
+      "path": "src/lib/voice/messageTts.ts",
+      "capturedSha256": "946edf2812a2c82cb7f9a213bdeedc6a82e525ee48834d295fbf7ba9c49688ad",
+      "currentSha256": "946edf2812a2c82cb7f9a213bdeedc6a82e525ee48834d295fbf7ba9c49688ad",
+      "matches": true,
+      "nativeDecoderDependency": true
+    },
+    {
+      "path": "src/components/chat/MessageAudioButton.tsx",
+      "capturedSha256": "ff9322882f005374d84c87b02666cb063362b3bc8fdcb6511418f6d205d9281e",
+      "currentSha256": "3e0ef6f3a0c3412673daf5ed4da949789e05d9c175143bf5d4f3c99fa9a962dd",
+      "matches": false,
+      "nativeDecoderDependency": false
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/message-audio-proof.html",
+      "capturedSha256": "37195b111c294cdcc77b6539885e339fbf3c6af4eb3f9a6b5d6a8133ebb6dc92",
+      "currentSha256": "37195b111c294cdcc77b6539885e339fbf3c6af4eb3f9a6b5d6a8133ebb6dc92",
+      "matches": true,
+      "nativeDecoderDependency": true
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/message-audio-proof.ts",
+      "capturedSha256": "3bb2bf0ef67da7e13c3e420a5a22b6e883cabf7748b220aaddd7f8c783ef3310",
+      "currentSha256": "3bb2bf0ef67da7e13c3e420a5a22b6e883cabf7748b220aaddd7f8c783ef3310",
+      "matches": true,
+      "nativeDecoderDependency": true
+    }
+  ],
+  "controllerNativeProofApplicable": true,
+  "fullButtonNativeProof": "UNVERIFIED; native fixture imports the controller only",
+  "buttonDelta": "Adds owned-message unmount cancellation;76 focused tests include owned cleanup and preserving newer output. Captured old button hash is retained, not relabelled."
+}

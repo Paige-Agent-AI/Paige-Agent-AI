@@ -37,4 +37,14 @@ describe("incumbent read-aloud button transport",()=>{
    await render();await act(async()=>host.querySelector('button')!.click());expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
    expect(state.fetch).toHaveBeenCalledTimes(1);expect(host.querySelector('[aria-label="Stop playback"]')).toBeTruthy();
  });
+ it("cancels owned loading output when its message leaves the workspace",async()=>{
+   let finish!:(value:Response)=>void;state.fetch.mockImplementation(()=>new Promise<Response>(r=>{finish=r;}));await render();await act(async()=>host.querySelector('button')!.click());
+   const signal=(state.fetch.mock.calls[0][1] as RequestInit).signal!;await act(async()=>root.render(null));expect(signal.aborted).toBe(true);expect(messageTts.getSnapshot().activeId).toBeNull();
+   await act(async()=>finish(new Response(new Uint8Array([1]),{headers:{"Content-Type":"audio/mpeg"}})));expect(URL.createObjectURL).not.toHaveBeenCalled();
+ });
+ it("does not stop another message during old-message cleanup",async()=>{
+   await render();await act(async()=>{await messageTts.toggle("other-conversation",async()=>new Blob(["other"]));});
+   await act(async()=>root.render(null));expect(messageTts.getSnapshot().activeId).toBe("other-conversation");
+ });
+
 });

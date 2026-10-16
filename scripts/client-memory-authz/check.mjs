@@ -6344,13 +6344,56 @@ try {
       outcomes.every((o) => o === "ran" || o === "unconfirmed") && outcomes.includes("ran")
         && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
       JSON.stringify({ outcomes, rows: st.rows.map((r) => ({ consumed: r.consumed, issued: r.issued_in_request })) }));
-    // A request that loses the claim before the winner has committed makes crm-command propose the act
-    // again (its own behaviour on a failed claim, crm-command ~L575+), under the SAME fingerprint. That
-    // proposal is never shown, and it is retired before the request ends: no live row is left for the
-    // card's token to claim later. Kills: not retiring the door's re-proposal (settlePinnedDoorResult).
-    assert("40.2e …a door that proposed again for the loser left NO live proposal behind (and never a card)",
-      st.rows.every((row) => row.consumed === true) && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
+    // A losing explicit claim must refuse without re-proposing. The existing single row stays
+    // consumed by its winner; there is no hidden replacement that a stale card could later spend.
+    assert("40.2e …the losing claim left NO replacement proposal behind (and never a card)",
+      st.rows.length === 1 && st.rows.every((row) => row.consumed === true)
+        && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
       JSON.stringify({ rows: st.rows.map((row) => ({ consumed: !!row.consumed, issued: row.issued_in_request })) }));
+  }
+
+  // Deliberately schedule the protected database port so a different request claims AFTER this
+  // door read no original result but BEFORE its claim. This runs the real CRM and Chat consumers;
+  // the competing transaction and its delayed commit are modelled ports, not PostgreSQL proof.
+  for (const lane of ["confirm", "auto"]) {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    let lostClaim = false;
+    const raceTable = (filters) => {
+      if (filters.some(([op, columns]) => op === "select" && columns === "args")
+          && filters.some(([op]) => op === "update")) {
+        lostClaim = true;
+        st.rows[0].consumed = true;
+        st.rows[0].consumedAt = new Date().toISOString();
+      }
+      return st.table(filters);
+    };
+    const losing = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      toolCall: CONTACT, extraTables: { paige_pending_confirmations: raceTable },
+      extraRpc: { resolve_tool_autonomy: { data: lane, error: null } } });
+    assert(`40.2f ${lane}: a losing claim before the winner commits is unconfirmed in the card and model, never not applied`,
+      lostClaim && db.executions.length === 0 && db.committed.size === 0 && st.rows.length === 1
+        && st.rows[0].consumed === true && doorCalls(losing).length === 1 && cardsOf(losing.bodyText).length === 0
+        && outcomeOf(losing.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(losing).includes('"outcome_unknown":true') && toldModel(losing).includes('"not_applied":false')
+        && toldModel(losing).includes('"refused_before_run":false')
+        && toldModel(losing).includes("CRM_APPROVAL_UNCONFIRMED")
+        && toldModel(losing).includes("prior_effect_reconciliation_required"),
+      JSON.stringify({ lostClaim, executions: db.executions.length, committed: db.committed.size,
+        rows: st.rows.length, outcome: outcomeOf(losing.bodyText) }));
+    // Only the separately modelled winner now commits its frozen stored command and key.
+    crmRpcs(db).execute_crm_command({ _tenant_id: CALLER_TENANT, _actor_id: USER,
+      _idempotency_key: st.rows[0].args.idempotency_key,
+      _command: { ...st.rows[0].args.command, approval_channel: "operator_card" } });
+    const consumedAt = st.rows[0].consumedAt;
+    const reconciled = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      extraRpc: { resolve_tool_autonomy: { data: lane, error: null } } });
+    assert(`40.2g ${lane}: the later canonical original result reconciles as ran without a second execution or replacement`,
+      db.executions.length === 1 && db.committed.size === 1 && st.rows.length === 1
+        && st.rows[0].consumedAt === consumedAt && doorCalls(reconciled).length === 1
+        && cardsOf(reconciled.bodyText).length === 0 && outcomeOf(reconciled.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ executions: db.executions.length, committed: db.committed.size,
+        rows: st.rows.length, outcome: outcomeOf(reconciled.bodyText) }));
   }
 
   // ── 40.3 ANOTHER WORKSPACE / ANOTHER PERSON: the row is not selected, the door is never handed it,
@@ -6423,10 +6466,10 @@ try {
       JSON.stringify(settled.map((c) => c.args)));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4c a used approval with nothing committed under its key: native unavailable refusal, nothing runs and no fresh card",
-      db.executions.length === 0 && db.committed.size === 0 && outcome?.actions?.[0]?.outcome === "not_run"
+    assert("40.4c a used approval with nothing committed under its key: native unconfirmed claim, this request never writes or proposes",
+      db.executions.length === 0 && db.committed.size === 0 && outcome?.actions?.[0]?.outcome === "unconfirmed"
         && doorCalls(r).length === 1 && st.rows.length === 1 && cardsOf(r.bodyText).length === 0
-        && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE") && toldModel(r).includes("approval is no longer available"),
+        && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED") && toldModel(r).includes("approval could not be confirmed"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
     // The native door now refuses a failed explicit claim without proposing again. A repeated
     // stale token must still create no hidden live row that a later request could claim.
@@ -6434,8 +6477,8 @@ try {
     const again = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     assert("40.4e declined, approved from a stale card, then posted AGAIN: no hidden live proposal was left, nothing ever runs",
       liveAfter.length === 0 && db.executions.length === 0 && st.rows.every((row) => row.consumed === true)
-        && st.rows.length === 1 && db.committed.size === 0 && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "not_run"
-        && cardsOf(again.bodyText).length === 0 && toldModel(again).includes("CRM_APPROVAL_UNAVAILABLE"),
+        && st.rows.length === 1 && db.committed.size === 0 && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && cardsOf(again.bodyText).length === 0 && toldModel(again).includes("CRM_APPROVAL_UNCONFIRMED"),
       JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(again.bodyText) }));
   }
   {
@@ -6640,10 +6683,10 @@ try {
         return st.table(filters.map((f) => (f[0] === "gt" && f[1] === "expires_at" ? ["gt", "expires_at", now] : f)));
       } } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4d expired between selection and the door's claim: native unavailable refusal, nothing runs and no fresh card",
-      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
-        && st.rows.length === 1 && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
-        && toldModel(r).includes("approval is no longer available"),
+    assert("40.4d expired between selection and the door's claim: native unconfirmed claim, this request never writes or proposes",
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "unconfirmed"
+        && st.rows.length === 1 && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
+        && toldModel(r).includes("approval could not be confirmed"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
     // No fresh proposal exists: a later re-send of the same token still runs nothing.
     const liveAfter = st.rows.filter((row) => !row.consumed && row.expires_at > new Date().toISOString());
@@ -6656,7 +6699,7 @@ try {
   {
     // THE DOOR'S CLAIM ITSELF COULD NOT RUN (a store error on its claim update) while the card is still
     // live. crm-command returns CRM_APPROVAL_UNCONFIRMED without an insert or execution. This is
-    // unknown claim authority, not an uncertain business write or permission to re-propose.
+    // unknown original outcome: another claimant may still commit, and this grants no permission to re-propose.
     // The original card stays live. The card was shown minutes ago (a real card, not a row
     // minted milliseconds before the request), so it is outside the retirement's clock allowance
     // altogether — it must stay live. The explicit refusal must not consume it or create a new one.
@@ -6668,7 +6711,7 @@ try {
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     const outcome = outcomeOf(r.bodyText);
     assert("40.4g the door's claim errors while live: native unconfirmed-approval refusal, no business write and no card",
-      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "unconfirmed"
         && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED") && toldModel(r).includes("approval could not be confirmed")
         && !toldModel(r).includes("approval_already_used") && cardsOf(r.bodyText).length === 0,
       JSON.stringify({ outcome, executions: db.executions.length, told: toldModel(r).match(/approval_[a-z_]+/g) }));
@@ -6685,7 +6728,7 @@ try {
     const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [card2.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     assert("40.4g2 …a card minted a moment before the request is the pinned row, and the retirement never consumes it",
       db2.executions.length === 0 && st2.rows.length === 1 && st2.rows[0].consumed === false
-        && db2.committed.size === 0 && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "not_run"
+        && db2.committed.size === 0 && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
         && toldModel(r2).includes("CRM_APPROVAL_UNCONFIRMED"),
       JSON.stringify({ rows: st2.rows.map((row) => ({ consumed: !!row.consumed })), outcome: outcomeOf(r2.bodyText) }));
   }
@@ -6706,8 +6749,8 @@ try {
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const fresh = st.rows.filter((row) => !before.some((b) => b.id === row.id));
     assert("40.4h a stale Approve over consumed history: native refusal, no fresh row, every consumed timestamp retained",
-      db.executions.length === 0 && db.committed.size === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "not_run" && cardsOf(r.bodyText).length === 0
-        && fresh.length === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
+      db.executions.length === 0 && db.committed.size === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(r.bodyText).length === 0
+        && fresh.length === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
         && before.filter((b) => b.consumedAt !== null).every((b) => st.rows.find((row) => row.id === b.id)?.consumedAt === b.consumedAt),
       JSON.stringify({ before, after: st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null })), outcome: outcomeOf(r.bodyText) }));
   }
@@ -6732,7 +6775,8 @@ try {
   // ── 40.5c THE REFUSED-RESULT HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
   // has the model call the door tool for the same act. The native refusal is authoritative, and
   // the model's own call must not reach the door either or propose the declined act afresh. Kills:
-  // a guard that only refuses re-emits after successful execution.
+  // a guard that only refuses re-emits after successful execution. Unknown native claim outcomes
+  // activate the stronger existing reconciliation brake before the ordinary re-emit guard.
   {
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
@@ -6741,8 +6785,10 @@ try {
     const lostResults = (toldModel(r).match(/"error":"approval_already_used"/g) ?? []).length;
     assert("40.5c declined, stale Approve, and the model calls the door again: the re-emit is refused too — nothing runs, no card, the door asked once",
       db.executions.length === 0 && db.committed.size === 0 && st.rows.length === 1 && doorCalls(r).length === 1
-        && cardsOf(r.bodyText).length === 0 && lostResults === 0 && toldModel(r).includes("CRM_APPROVAL_UNAVAILABLE")
-        && toldModel(r).includes("already_handled_this_reply"),
+        && cardsOf(r.bodyText).length === 0 && lostResults === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(r).includes('"outcome_unknown":true') && toldModel(r).includes('"not_applied":false')
+        && toldModel(r).includes("prior_effect_reconciliation_required"),
       JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length, lostResults }));
   }
 

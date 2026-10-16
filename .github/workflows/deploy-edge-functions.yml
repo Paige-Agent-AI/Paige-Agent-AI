@@ -21,6 +21,7 @@ on:
     paths:
       - "supabase/functions/**"
       - ".github/workflows/deploy-edge-functions.yml"
+      - ".github/scripts/edge-source-readback.py"
   # A credential rotation or a stranded retirement must not wait for the next
   # functions-touching merge — an operator can drive a deploy directly.
   workflow_dispatch: {}
@@ -40,6 +41,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # need history to diff before..after
+
+      - name: Test deployed-source verification contract
+        run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
 
       # The deployment baseline. Push: the event's before-SHA. Manual dispatch:
       # the edge-live tag — the repository's declared last-known-deployed edge
@@ -87,8 +91,12 @@ jobs:
       # deletes the old name only after the new one deployed, which is also correct.
       - name: Compute retired functions
         id: retired
-        if: steps.changed.outputs.count != '0'
         run: |
+          if [ ! -s changed.txt ]; then
+            : > retired.txt
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           before="${{ steps.changed.outputs.before }}"
           after="${{ steps.changed.outputs.after }}"
           # NOTE the braces: `{ A | grep || true; } | sort > f`. Written without
@@ -104,7 +112,6 @@ jobs:
 
       - name: Resolve affected functions
         id: affected
-        if: steps.changed.outputs.count != '0'
         run: |
           python3 .github/scripts/edge-affected.py < changed.txt | tee affected.txt
           echo "count=$(grep -c . affected.txt || true)" >> "$GITHUB_OUTPUT"
@@ -207,10 +214,43 @@ jobs:
           done < affected.txt
           exit $fail
 
+      # A successful upload is not evidence that the selected source is live.
+      # Reuse this job's authenticated CLI; download only into temporary dirs.
+      # Readback failure does not roll back already successful deployments.
+      - name: Verify deployed source
+        id: readback
+        if: steps.affected.outputs.count != '0'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/edge-source-readback.py \
+            --expected-commit "${{ github.sha }}" \
+            --functions affected.txt \
+            --report edge-source-readback.json
+
+      - name: Retain selected-source verification result
+        if: always() && steps.affected.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-source-readback-${{ github.sha }}
+          path: edge-source-readback.json
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Record deployed commit
-        if: success() && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
+        if: success() && (steps.affected.outputs.count == '0' || steps.readback.outcome == 'success') && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
         run: |
           # `edge-live` always points at the last commit whose functions are live in
           # prod. /edge-drift diffs edge-live..HEAD to show what's ahead of prod.
+          # A previous partial/failed release must not be skipped by the next
+          # push's narrower before..after selection. Frontend-only intervening
+          # commits are fine. Existing workflow_dispatch reconciles a real gap
+          # from edge-live without changing deploy/retirement behavior here.
+          verified_before="$(git rev-parse --verify refs/tags/edge-live)"
+          if ! git diff --quiet "$verified_before" "${{ steps.baseline.outputs.before }}" -- supabase/functions supabase/config.toml; then
+            echo "::error::Prior Edge source is unverified; use the existing workflow_dispatch recovery before advancing edge-live. Successful selected deployments remain live."
+            exit 1
+          fi
           git tag -f edge-live "${{ github.sha }}"
           git push -f origin edge-live

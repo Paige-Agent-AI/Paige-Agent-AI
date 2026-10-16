@@ -6214,8 +6214,9 @@ try {
     const pinnedBody = doorCalls(r)[0]?.body;
     assert(`40.1b ${label}: the door is handed exactly the pinned proposal — its fingerprint, its stored command and key — and nothing else`,
       doorCalls(r).length === 1 && pinnedBody?.approved_fingerprint === card.fingerprint
+        && pinnedBody?.expected_tenant_id === CALLER_TENANT
         && JSON.stringify(pinnedBody?.command) === JSON.stringify(stored.args.command) && pinnedBody?.idempotency_key === stored.args.idempotency_key
-        && Object.keys(pinnedBody ?? {}).sort().join() === "approved_fingerprint,command,idempotency_key",
+        && Object.keys(pinnedBody ?? {}).sort().join() === "approved_fingerprint,command,expected_tenant_id,idempotency_key",
       JSON.stringify(doorCalls(r).map((c) => c.body)));
     const outcome = outcomeOf(r.bodyText);
     assert(`40.1c ${label}: the card reports ran from the door's own answer; one resumed frame; PAIGE is called after, with the result`,

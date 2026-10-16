@@ -10753,6 +10753,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // performs the shared Gateway decision, owns the one stored approval, creates any bound
         // destructive preview, executes atomically, requires readback/receipt, and returns a route.
         if (CRM_COMMAND_TOOL_NAMES.has(tc.function.name as any)) {
+          if (!turnScopeTenantId) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+              success: false, not_applied: true, refused_before_run: true, error: "tenant_not_resolved",
+              message: "No workspace was resolved for this turn. Open the intended workspace and ask again; no CRM command was dispatched.",
+            }) });
+            continue;
+          }
           let crmArgs: Record<string, unknown> = {};
           try { crmArgs = JSON.parse(tc.function.arguments || "{}"); } catch { crmArgs = {}; }
           const action = CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION];
@@ -10935,12 +10942,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (approvedFingerprint) approvalSpend.set(approvedFingerprint, tc.id);
           // C4b — a carried-forward approval sends the command and key the door STORED, never the ones
           // derived from the call (and no legacy readback keys: they describe the call, not the proposal).
+          // The native door re-resolves mutable active workspace state. Carry the frozen turn scope
+          // across this async handoff so a switch after Chat's checks is refused by the door itself.
           const { data: crmData, error: crmError } = pinnedRequest ? await supabaseClient.functions.invoke("crm-command", {
             headers: { Authorization: authHeader },
-            body: { command: pinnedRequest.command, idempotency_key: pinnedRequest.idempotency_key, approved_fingerprint: approvedFingerprint },
+            body: { command: pinnedRequest.command, expected_tenant_id: turnScopeTenantId, idempotency_key: pinnedRequest.idempotency_key, approved_fingerprint: approvedFingerprint },
           }) : await supabaseClient.functions.invoke("crm-command", {
             headers: { Authorization: authHeader },
-            body: { command: canonicalCrmCommand, idempotency_key: idempotencyKey,
+            body: { command: canonicalCrmCommand, expected_tenant_id: turnScopeTenantId, idempotency_key: idempotencyKey,
               ...(legacyCrmCommand ? { legacy_command: legacyCrmCommand } : {}),
               ...(fallbackKeys.legacy ? { legacy_idempotency_key: fallbackKeys.legacy } : {}),
               ...(legacySuppliedIdempotencyKey ? { legacy_supplied_idempotency_key: legacySuppliedIdempotencyKey } : {}),

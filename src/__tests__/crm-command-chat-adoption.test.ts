@@ -263,8 +263,8 @@ describe("Paige Chat canonical CRM adoption", () => {
     expect(hashAt).toBeGreaterThan(identityAt);
     expect(invokeAt).toBeGreaterThan(hashAt);
     expect(chat).toContain('const idempotencyKey = action === "contact.create"\n            ? fallbackKeys.current\n            : (suppliedKey || fallbackKeys.current)');
-    expect(chat).toContain("body: { command: canonicalCrmCommand, idempotency_key: idempotencyKey");
-    expect(chat).not.toContain("body: { command: { action, ...crmArgs }, idempotency_key: idempotencyKey");
+    expect(chat).toContain("body: { command: canonicalCrmCommand, expected_tenant_id: turnScopeTenantId, idempotency_key: idempotencyKey");
+    expect(chat).not.toContain("body: { command: { action, ...crmArgs }");
 
     const legacy = canonicalizeCrmCommand({
       action: "contact.create",

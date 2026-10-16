@@ -918,6 +918,13 @@ jobs:
           CRM_ACK_TEST=malformed node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           CRM_ACK_TEST=contradictory node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           CRM_ACK_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=normal-flip node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=pinned-flip node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=normal-same node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=pinned-same node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=null-scope node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=member-refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          CRM_SCOPE_TEST=native-no-tenant node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           BOOKING_READBACK_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           BOOKING_READBACK_TEST=missing-id node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           BOOKING_READBACK_TEST=missing-row node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
@@ -943,12 +950,16 @@ jobs:
           WORK="$(mktemp -d)"; PORT=55462
           trap '"$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
           "$PGBIN/initdb" -D "$WORK/d" -U postgres --auth=trust >/dev/null
-          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
+          "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1 -c max_prepared_transactions=5" -l "$WORK/log" start >/dev/null
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int336-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-conversational-db-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int346-rollout-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation" node scripts/int346-isolation-db-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation_race
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation_race" node scripts/int346-isolation-db-check.mjs --real-window-race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

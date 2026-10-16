@@ -22,6 +22,7 @@ type FileRow = {
   visibility: Visibility;
   description: string | null;
   created_at: string;
+  upload_state?: "pending" | "ready";
 };
 
 const LABEL: Record<Visibility, string> = {
@@ -92,6 +93,7 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
   };
 
   const download = async (f: FileRow) => {
+    if (f.upload_state === "pending") return;
     const { data, error } = await supabase.storage.from("client-files").createSignedUrl(f.storage_path, 300);
     if (error || !data) return toast.error(error?.message || "Download failed");
     window.open(data.signedUrl, "_blank");
@@ -172,12 +174,12 @@ export function ContactFilesPanel({ contactId, tenantId }: { contactId: string; 
                       <div className="min-w-0">
                         <div className="truncate font-medium">{f.original_filename}</div>
                         <div className="text-xs text-muted-foreground">
-                          {f.mime_type || "file"} · {f.size_bytes ? `${(f.size_bytes / 1024).toFixed(1)} KB` : ""} · {formatDistanceToNow(new Date(f.created_at), { addSuffix: true })}
+                          {f.upload_state === "pending" ? "Upload incomplete" : f.mime_type || "file"} · {f.size_bytes ? `${(f.size_bytes / 1024).toFixed(1)} KB` : ""} · {formatDistanceToNow(new Date(f.created_at), { addSuffix: true })}
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" className="h-7" onClick={() => download(f)}>
+                      <Button variant="ghost" size="sm" className="h-7" disabled={f.upload_state === "pending"} aria-label={`Download ${f.original_filename}`} onClick={() => download(f)}>
                         <Download className="h-3.5 w-3.5" />
                       </Button>
                       {f.visibility !== "client_upload" && (

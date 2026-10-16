@@ -69,10 +69,11 @@ globalThis.fetch = async (url, options) => {
     const row = read.tasks.find(value => value.id === id(10));
     if (row) {
       const version = row.updated_at ?? row.created_at;
-      return toolResponse(scenario.write === 'update' ? 'crm_update_task' : 'crm_complete_task', {
+      return toolResponse(['update', 'progress'].includes(scenario.write) ? 'crm_update_task' : 'crm_complete_task', {
         task_id: row.id,
         ...(version == null ? {} : { expected_updated_at: version }),
         ...(scenario.write === 'update' ? { patch: { title: 'Reviewed task correction' } } : {}),
+        ...(scenario.write === 'progress' ? { patch: { status: 'in_progress' } } : {}),
       });
     }
   }
@@ -142,12 +143,12 @@ async function run(config) {
       execute_crm_command: args => config.stale
         ? { data: null, error: { code: '40001', message: 'CRM_VERSION_CONFLICT' } }
         : { data: { ok: true, action: args._command.action, outcome: 'succeeded',
-          readback: { id: id(10), title: 'Protected task 10', status: 'completed', updated_at: updated }, receipt_recorded: true }, error: null },
+          readback: { id: id(10), title: 'Protected task 10', status: args._command.patch?.status ?? (args._command.action === 'task.complete' ? 'completed' : 'pending'), updated_at: updated }, receipt_recorded: true }, error: null },
     },
   });
   const response = await chatHandler(new Request('https://test.supabase.co/functions/v1/paige-ai-chat', {
     method: 'POST', headers: { Authorization: 'Bearer test', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ role: 'user', content: config.write ? 'Read my task and complete the exact current task.' : 'List my tasks.' }],
+    body: JSON.stringify({ messages: [{ role: 'user', content: config.write === 'progress' ? 'Read my task and move the exact current task to In progress.' : config.write ? 'Read my task and complete the exact current task.' : 'List my tasks.' }],
       threadId: thread, requestIntentId: intent, interactive: { kind: 'message' } }),
   }));
   const wire = await response.text();
@@ -174,11 +175,16 @@ await check('explicit all includes completed tasks', { args: { status: 'all' } }
 for (const [status, n] of [['pending', 10], ['completed', 11], ['in_progress', 12], ['cancelled', 13]]) {
   await check(`explicit ${status} remains exact`, { args: { status } }, result => assert.deepEqual(ids(result), [id(n)]));
 }
-for (const write of ['complete', 'update']) await check(`current read -> exact native ${write} command`, { write }, result => {
+for (const write of ['complete', 'update', 'progress']) await check(`current read -> exact native ${write} command`, { write }, result => {
   assert.equal(result.nativeCalls.length, 1, 'one native door invocation');
   assert.equal(result.nativeCalls[0].command.expected_updated_at, updated);
   assert.equal(result.nativeCalls[0].command.task_id, id(10));
   assert.equal(result.nativeCalls[0].expected_tenant_id, tenant);
+  if (write === 'progress') {
+    assert.equal(result.nativeCalls[0].command.action, 'task.update');
+    assert.deepEqual(result.nativeCalls[0].command.patch, { status: 'in_progress' });
+    assert.equal(result.nativeAnswers[0].body.readback.status, 'in_progress');
+  }
   assert.equal(result.nativeAnswers[0].status, 200);
   assert.equal(result.rec.rpc.filter(call => call.name === 'execute_crm_command').length, 1);
   assert.equal(result.receipts.length, 1);
@@ -213,6 +219,21 @@ await check('a changed workspace refuses the read before any task query or comma
   assert.equal(result.nativeCalls.length, 0);
   assert.equal(result.rec.rpc.filter(call => call.name === 'execute_crm_command').length, 0);
 });
+for (const [name, config, status, code, calls] of [
+  ['legacy version', { legacy: true }, 200, undefined, 1],
+  ['stale version', { stale: true }, 409, 'CRM_VERSION_CONFLICT', 1],
+  ['missing version', { missingVersion: true }, 400, 'CRM_COMMAND_INVALID', 0],
+  ['plain member', { member: true }, 403, undefined, 0],
+]) await check(`progress preserves ${name} contract`, { write: 'progress', ...config }, result => {
+  assert.equal(result.nativeAnswers[0]?.status, status);
+  if (code) assert.equal(result.nativeAnswers[0]?.body.code, code);
+  assert.equal(result.rec.rpc.filter(call => call.name === 'execute_crm_command').length, calls);
+  assert.equal(result.nativeCalls.length, 1);
+  if (config.legacy) assert.equal(result.nativeCalls[0].command.expected_updated_at, created);
+});
+await check('progress cannot cross a changed active workspace', { write: 'progress', workspaceChanged: true }, result => {
+  assert.equal(result.reads.length, 0);assert.equal(result.nativeCalls.length, 0);
+});
 
 if (failures.length) { console.error(JSON.stringify({ failures }, null, 2)); process.exitCode = 1; }
-else console.log('PASS 15 actual-handler task read/command cases; native SQL port remains synthetic, no production or provider proof');
+else console.log('PASS 21 actual-handler task read/command cases; native SQL port remains synthetic, no production or provider proof');

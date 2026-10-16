@@ -111,6 +111,16 @@ await proposed(deal("y".repeat(100)), `Add a deal "${"y".repeat(80)}" to the pip
 await proposed({ action: "task.create", patch: { title: "Other eligible workspace", assignee_user_id: id(11) } }, 'Create a task "Other eligible workspace".', {
   expectedTenant: id(12), options: { workspace: id(12), userId: id(11), role: "admin" },
 });
+const progress={action:"task.update",task_id:id(6),expected_updated_at:"2026-10-10T12:00:00.123456Z",patch:{status:"in_progress"}};
+const progressApproval=await proposed(progress,`Move task ${id(6)} to In progress.`);
+await proposed({...progress,contact_id:id(8),company_id:id(9)},`Move task ${id(6)} to In progress.`);
+await proposed({...progress,patch:{title:"Retained title",status:"in_progress",description:"Retained description"}},`Move task ${id(6)} to In progress. Also update description="Retained description", title="Retained title".`);
+await proposed({...progress,patch:{description:"Existing description edit"}},`Update the task ${id(6)}.`);
+const progressStored={...progressApproval.proposal,consumed_at:null,expires_at:new Date(Date.now()+300_000).toISOString()};
+const progressApproved=await request({...progress,patch:{status:"in_progress",description:"Unapproved substitution"}},{fingerprint:progressStored.fingerprint,options:{stored:progressStored}});
+assert.equal(progressApproved.status,200);assert.equal(executions(progressApproved.rec).length,1);
+assert.deepEqual(executions(progressApproved.rec)[0].args._command,{...progress,approval_channel:"operator_card"},"progress approval executes only its exact stored status/version, not substituted request fields");
+checks++;
 
 // Round-trip the exact server-issued proposal, while the request tries to substitute a title.
 // The fixture answers only the SQL boundary; this proves stored-command routing, not a real task.

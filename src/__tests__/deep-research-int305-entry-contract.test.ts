@@ -100,8 +100,10 @@ describe("INT-305: the engine accepts the orchestrator's { input, context } enve
 
 describe("INT-305: M0 lineage untouched", () => {
   it("the §9 server-side tenant resolution still derives the tenant from user_id — never a body tenant field", () => {
-    expect(source).toContain("A tenant is derived SERVER-SIDE only.");
-    expect(source).toContain('const userId = typeof body.user_id === "string" ? body.user_id : "";');
+    expect(source).toContain('scopeCaller.auth.getUser()');
+    expect(source).toContain('scopeAdmin.auth.admin.getUserById(body.user_id)');
+    expect(source).toContain('actor !== body.user_id');
+    expect(source).toContain('.eq("user_id", actor).eq("tenant_id", active).eq("status", "active")');
     expect(source).toContain('current_user_tenant_id');
     // the cross-check stays a cross-check (never authority)
     expect(source).toContain("Optional CROSS-CHECK (never authority)");

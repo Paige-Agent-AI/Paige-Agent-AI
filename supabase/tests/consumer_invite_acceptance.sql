@@ -212,8 +212,8 @@ INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,acc
  VALUES('e0901000-0000-0000-0000-000000000003','test-e09-history-agency','Synthetic E09 history agency','active','agency',NULL,'E09H',9400903,'{}'),
  ('e0901000-0000-0000-0000-000000000006','test-e09-history-company','Synthetic E09 history company','active','standalone',NULL,'E09H',9400906,'{"system_workspace":true}');
 INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features)
- VALUES('e0901000-0000-0000-0000-000000000004','test-e09-history-child','Synthetic E09 history child','active','subaccount','e0901000-0000-0000-0000-000000000003','E09H',9400904,'{}'),
- ('e0901000-0000-0000-0000-000000000005','test-e09-history-sibling','Synthetic E09 history sibling','active','subaccount','e0901000-0000-0000-0000-000000000003','E09H',9400905,'{}');
+ VALUES('e0901000-0000-0000-0000-000000000004','test-e09-history-child','Synthetic E09 history child','active','sub_account','e0901000-0000-0000-0000-000000000003','E09H',9400904,'{}'),
+ ('e0901000-0000-0000-0000-000000000005','test-e09-history-sibling','Synthetic E09 history sibling','active','sub_account','e0901000-0000-0000-0000-000000000003','E09H',9400905,'{}');
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at)
  SELECT 'e0901000-0000-0000-0000-000000000003',parent_owner,'owner','active',true,now() FROM e09_history_authority;
 INSERT INTO public.agency_team_members(agency_tenant_id,user_id,status,agency_role,scoped_subaccounts)

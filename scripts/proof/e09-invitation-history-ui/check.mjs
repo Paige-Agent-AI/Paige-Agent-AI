@@ -3,10 +3,15 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import os from "node:os";
 import { build } from "esbuild";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const output = path.join(project, "docs/evidence/ui-delivery/assets/e09-invitation-history");
+const compatibility = process.argv.includes("--compatibility");
+const engineName = process.argv.find(value => value.startsWith("--engine="))?.slice(9) ?? "chromium";
+assert(["chromium", "firefox", "webkit", "edge"].includes(engineName), "unsupported proof engine");
+const engine = { chromium, firefox, webkit, edge: chromium }[engineName];
+const output = path.join(project, "docs/evidence/ui-delivery/assets/e09-invitation-history", ...(compatibility ? ["compatibility", engineName] : []));
 await fs.mkdir(output, { recursive: true });
 const adapter = path.join(project, "scripts/proof/e09-invitation-history-ui/adapter.tsx");
 const replace = /^(?:@\/(?:hooks\/(?:useTenantContext|useBrandKit|usePortalConfig|useRailEvents|useTierFeatures)|integrations\/supabase\/client|lib\/playbook|components\/ui\/paige|components\/admin\/voice\/DialPadTrigger|components\/dashboard\/PaigeAIChat|components\/tenant-calendar\/TenantCanonicalCalendarWorkspace)|\.\/(?:useTenantRelationshipsData|ClientStanding|PeopleContactEditor))$/;
@@ -21,10 +26,14 @@ for(const match of [...css.matchAll(/url\(([^)]*\.woff2)\)/g)]){
   const url=match[1].replace(/["']/g,""); if(!url.startsWith("/assets/"))continue;
   const bytes=await fs.readFile(path.join(project,"dist",url.slice(1))); css=css.replaceAll(match[0],"url(data:font/woff2;base64,"+bytes.toString("base64")+")");
 }
-const launch={headless:true};try{await fs.access(chromium.executablePath())}catch{launch.executablePath="C:/Program Files/Google/Chrome/Application/chrome.exe"}
-const browser=await chromium.launch(launch),cases=[],errors=[];
-async function render(width,height,open,theme,tenant,state="ready"){
-  const page=await browser.newPage({viewport:{width,height},reducedMotion:"reduce"});
+const launch={headless:true};
+if(engineName==="edge")launch.executablePath="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
+else if(engineName==="chromium")try{await fs.access(chromium.executablePath())}catch{launch.executablePath="C:/Program Files/Google/Chrome/Application/chrome.exe"}
+const browser=await engine.launch(launch),cases=[],errors=[];
+const runtime={engine:engineName,browserVersion:browser.version(),executable:launch.executablePath??engine.executablePath(),
+  os:os.type(),osVersion:os.release(),headless:true,route:"actual-source owner Clients/Portal/Client access via setContent",auth:"synthetic actual-subject/tenant fixtures",permissions:"network blocked; no media, file picker, OAuth or customer permission operation"};
+async function render(width,height,open,theme,tenant,state="ready",deviceScaleFactor=1,capture=true){
+  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor,reducedMotion:"reduce"});
   let focusOutline=null;
   page.on("pageerror",e=>errors.push(e.message));await page.route("**/*",r=>r.abort());
   await page.setContent('<!doctype html><html data-pg="'+theme+'"><head></head><body><div id="root"></div></body></html>');
@@ -40,7 +49,13 @@ async function render(width,height,open,theme,tenant,state="ready"){
     assert.equal(await page.getByRole("button",{name:"Send invitation email",exact:true}).count(),0);
   } else {
     const history=page.getByRole("region",{name:"Invitation history",exact:true});await history.waitFor();
-    const summary=history.locator("summary").first();await summary.focus();await page.keyboard.press("Enter");
+    const summary=history.locator("summary").first();
+    // Anchor at the existing selector, then use the real keyboard path. Firefox
+    // correctly does not promise focus-visible for programmatic pointer focus.
+    await select.focus();let tabsToHistory=0;
+    while(!await summary.evaluate(node=>node===document.activeElement)&&tabsToHistory<20){await page.keyboard.press("Tab");tabsToHistory++}
+    assert(tabsToHistory>0&&tabsToHistory<20,"history must be reachable by keyboard");
+    await page.keyboard.press("Enter");
     focusOutline=await summary.evaluate(node=>{const style=getComputedStyle(node);return{style:style.outlineStyle,width:style.outlineWidth,color:style.outlineColor,focused:node===document.activeElement}});
     assert.equal(focusOutline.focused,true);assert.equal(focusOutline.style,"solid");assert(parseFloat(focusOutline.width)>=2);
     assert(!["transparent","rgba(0, 0, 0, 0)"].includes(focusOutline.color));
@@ -59,19 +74,34 @@ async function render(width,height,open,theme,tenant,state="ready"){
   const geometry=await page.evaluate(()=>{const panel=document.querySelector(".trc-panel--portal"),history=document.querySelector(".opd-invitation-history"),backdrop=document.querySelector(".tcs-paige-backdrop");return{documentOverflow:document.documentElement.scrollWidth>innerWidth,scrollOwner:getComputedStyle(panel).overflowY,actualPaigeState:document.querySelector("[data-tenant-shell]").dataset.paige,historyWidth:history?.getBoundingClientRect().width??null,historyOverflow:history?history.scrollWidth>history.clientWidth:false,modalAssistant:!!backdrop&&getComputedStyle(backdrop).display!=="none"}});
   assert.equal(geometry.documentOverflow,false);assert.equal(geometry.scrollOwner,"auto");assert.equal(geometry.actualPaigeState,open?"open":"closed");
   assert.equal(geometry.historyOverflow,false);
+  assert(geometry.historyWidth===null||geometry.historyWidth<=862,"history retains the existing readable activity width");
   const filename=width+"-"+height+"-"+(open?"open":"closed")+"-"+theme+"-"+tenant.slice(-1)+"-"+state+".png";
-  await page.screenshot({path:path.join(output,filename)});
+  if(capture)await page.screenshot({path:path.join(output,filename)});
   const snapshot=await page.evaluate(()=>window.invitationProof());assert(snapshot.calls.every(name=>["can_manage_tenant_brand","client_portal_owner_invitations"].includes(name)));
-  cases.push({width,height,open,theme,tenant,state,geometry,filename,snapshot,focusOutline,keyboardDisclosure:state==="ready"});await page.close();
+  const display=await page.evaluate(()=>({innerWidth,innerHeight,devicePixelRatio}));
+  cases.push({width,height,open,theme,tenant,state,geometry,filename:capture?filename:null,snapshot,focusOutline,keyboardDisclosure:state==="ready",display,
+    displayProof:deviceScaleFactor===2?"synthetic DPR2; not physical4K/OS200%":"CSS viewport; OS scaling and physical display untested",zoom:width===320?"320 CSS px reflow equivalence; actual browser400% untested":"100% automated context; actual browser zoom untested"});await page.close();
 }
 try{
+  if(compatibility){
+    const sizes=engineName==="chromium"?[[320,568],[390,844],[768,1024],[1920,1080],[2560,1440],[3840,2160]]
+      :engineName==="edge"?[[320,568],[1536,770]]:[[320,568],[768,1024],[1536,770],[3840,2160]];
+    for(const [width,height]of sizes)for(const open of[false,true])for(const theme of["light","dark"]){
+      const capture=!open&&((width===320&&theme==="light")||(width===3840&&theme==="dark"))
+        ||(width===1536&&open&&theme==="light");
+      await render(width,height,open,theme,"e0921000-0000-0000-0000-000000000001","ready",1,capture);
+    }
+    if(engineName==="chromium")await render(1920,1080,false,"light","e0921000-0000-0000-0000-000000000002","ready",2,true);
+    await render(1366,768,false,"light","e0921000-0000-0000-0000-000000000002","history-error",1,false);
+  }else{
   for(const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]])for(const open of [false,true])for(const theme of ["light","dark"])await render(width,height,open,theme,"e0921000-0000-0000-0000-000000000001");
   await render(390,844,false,"light","e0921000-0000-0000-0000-000000000002");
   await render(768,385,false,"dark","e0921000-0000-0000-0000-000000000002");
   await render(1366,768,false,"light","e0921000-0000-0000-0000-000000000002","history-error");
+  }
   assert.deepEqual(errors,[]);
 }finally{await browser.close()}
 const files=["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationHistory.tsx","src/components/tenant-relationships/portalInvitationEvidence.ts","src/components/tenant-relationships/portalDashboardModel.ts","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/usePortalInvitations.ts","src/components/tenant-relationships/owner-portal-dashboard.css","scripts/proof/e09-invitation-history-ui/adapter.tsx","scripts/proof/e09-invitation-history-ui/source.tsx","scripts/proof/e09-invitation-history-ui/check.mjs","scripts/proof/e09-dashboard-ui/adapter.tsx"];
 const sourceHashes=await Promise.all(files.map(async file=>({file,sha256:createHash("sha256").update(await fs.readFile(path.join(project,file))).digest("hex")})));
-await fs.writeFile(path.join(output,"result.json"),JSON.stringify({sourceHashes,cases,errors,boundary:"Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. No real customer/provider operation, legitimate cohort, full customer frame, physical-device or zoom acceptance."},null,2));
-console.log(JSON.stringify({cases:cases.length,errors,output}));
+await fs.writeFile(path.join(output,"result.json"),JSON.stringify({runtime,sourceHashes,cases,errors,boundary:"Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."},null,2));
+console.log(JSON.stringify({runtime,cases:cases.length,errors,output}));

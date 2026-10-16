@@ -32,6 +32,10 @@ const hostedTest=fs.readFileSync(path.join(root,hostedTestFile),'utf8');
 // Execute the exact hosted fixture, not a second handwritten copy of its UNION.
 const hostedEmailInsert=hostedTest.match(/INSERT INTO public\.email_send_log\([\s\S]*?FROM e09_history_fixture;/)?.[0];
 assert(hostedEmailInsert,'exact hosted email fixture INSERT not found');
+const accountTypeSourceFile='supabase/migrations/20260803120000_p1_subaccount_owner_leak_fix.sql';
+const accountTypeSource=fs.readFileSync(path.join(root,accountTypeSourceFile),'utf8');
+const accountTypeConstraint=accountTypeSource.match(/ALTER TABLE public\.tenants\s+ADD CONSTRAINT tenants_account_type_chk[\s\S]*?;/)?.[0];
+assert(accountTypeConstraint,'actual account-type CHECK not found');
 function actual(header,file){const source=fs.readFileSync(path.join(root,'supabase/migrations',file),'utf8').replaceAll('\r\n','\n');
  const start=source.indexOf('CREATE OR REPLACE FUNCTION public.'+header),tail=source.slice(start);
  const tag=tail.match(/\bAS\s+(\$[a-zA-Z_0-9]*\$)/i)?.[1];assert(start>=0&&tag,'actual native body not found: '+header);
@@ -71,7 +75,8 @@ try{
  GRANT USAGE ON SCHEMA auth TO authenticated,anon,service_role;
  CREATE TYPE public.tenant_role AS ENUM('owner','admin','member');
  CREATE TYPE public.app_role AS ENUM('super_admin','platform_admin','admin','client','user');
- CREATE TABLE tenants(id uuid PRIMARY KEY,account_type text,parent_tenant_id uuid,features jsonb DEFAULT '{}');
+ CREATE TABLE tenants(id uuid PRIMARY KEY,account_type text NOT NULL DEFAULT 'standalone',parent_tenant_id uuid,features jsonb DEFAULT '{}');
+ ${accountTypeConstraint}
  CREATE TABLE tenant_members(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,user_id uuid,status text,role tenant_role,is_owner boolean);
  CREATE TABLE agency_team_members(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),agency_tenant_id uuid,user_id uuid,status text,agency_role text,scoped_subaccounts uuid[] DEFAULT '{}');
  CREATE TABLE user_roles(user_id uuid,role public.app_role);
@@ -82,7 +87,7 @@ try{
  ALTER TABLE tenant_invite_tokens ENABLE ROW LEVEL SECURITY;ALTER TABLE email_send_log ENABLE ROW LEVEL SECURITY;
  REVOKE ALL ON tenants,tenant_members,agency_team_members,user_roles,tenant_invite_tokens,email_send_log FROM PUBLIC,anon,authenticated,service_role;
  INSERT INTO tenants(id,account_type,parent_tenant_id,features) VALUES('${ids.ta}','standalone',NULL,'{}'),('${ids.tb}','standalone',NULL,'{}'),
- ('${ids.parent}','agency',NULL,'{}'),('${ids.child}','subaccount','${ids.parent}','{}'),('${ids.otherChild}','subaccount','${ids.parent}','{}'),
+ ('${ids.parent}','agency',NULL,'{}'),('${ids.child}','sub_account','${ids.parent}','{}'),('${ids.otherChild}','sub_account','${ids.parent}','{}'),
  ('${ids.company}','standalone',NULL,'{"system_workspace":true}');
  INSERT INTO tenant_members(tenant_id,user_id,status,role,is_owner) VALUES('${ids.ta}','${ids.a}','active','owner',true),('${ids.tb}','${ids.b}','active','admin',false),
  ('${ids.parent}','${ids.parentOwner}','active','owner',true);
@@ -101,6 +106,11 @@ try{
  sql('REVOKE ALL ON FUNCTION agency_can_manage_child(uuid,uuid) FROM PUBLIC,anon,authenticated;GRANT EXECUTE ON FUNCTION agency_can_manage_child(uuid,uuid) TO service_role;');
  if(!baseline){sql(migration);const once=sql("SELECT pg_get_functiondef('client_portal_owner_invitations(uuid,uuid)'::regprocedure)");sql(migration);
  check('Migration repeat preserves exact reader definition',()=>assert.equal(sql("SELECT pg_get_functiondef('client_portal_owner_invitations(uuid,uuid)'::regprocedure)"),once));}
+ check('Actual source account-type CHECK rejects old subaccount and admits native sub_account',()=>{
+ const before=snapshot(),insert=account=>`BEGIN;INSERT INTO public.tenants(id,account_type,parent_tenant_id)VALUES('${ids.absent}',${lit(account)},'${ids.parent}');SELECT account_type FROM public.tenants WHERE id='${ids.absent}';ROLLBACK;`;
+ assert.throws(()=>sql(insert('subaccount')),e=>e.message.includes('23514')&&e.message.includes('tenants_account_type_chk'));
+ assert(sql(insert('sub_account')).split(/\r?\n/).includes('sub_account'));assert.equal(snapshot(),before);
+ });
  check('Exact hosted UNION fixture executes; omitted first UUID cast reproduces CI42804',()=>{
  const before=snapshot(),setup=`BEGIN;
  CREATE TEMP TABLE e09_history_fixture AS SELECT '${ids.i}'::uuid AS invite_id;
@@ -168,7 +178,7 @@ try{
  denied('Nonagency parent cannot create delegated child authority',ids.delegate,ids.delegate,ids.child);
  sql(`UPDATE tenants SET account_type='agency' WHERE id='${ids.parent}'`);
  denied('Pure agency target is denied even for platform authority',ids.platform,ids.platform,ids.parent);
- for(const account of ['enterprise','subaccount'])check('Native consumer tier retains '+account,()=>{sql(`UPDATE tenants SET account_type=${lit(account)} WHERE id='${ids.ta}'`);try{assert.equal(call().tenant_id,ids.ta);}finally{sql(`UPDATE tenants SET account_type='standalone' WHERE id='${ids.ta}'`);}});
+ for(const account of ['enterprise','sub_account'])check('Native consumer tier retains '+account,()=>{sql(`UPDATE tenants SET account_type=${lit(account)},parent_tenant_id=${account==='sub_account'?lit(ids.parent)+'::uuid':'NULL'} WHERE id='${ids.ta}'`);try{assert.equal(call().tenant_id,ids.ta);}finally{sql(`UPDATE tenants SET account_type='standalone',parent_tenant_id=NULL WHERE id='${ids.ta}'`);}});
  denied('No Auth is refused despite service role',null,ids.a,ids.ta,'service_role');
  denied('Anonymous caller cannot execute',null,ids.a,ids.ta,'anon');
  denied('A claimed actor different from actual Auth is refused',ids.b,ids.a,ids.ta);
@@ -215,6 +225,7 @@ try{
  const r=call();assert.equal(r.invitations.length,1001);assert.equal(r.invitations[0].id,'e0958000-0000-0000-0000-000000001002');assert.equal(r.invitations.at(-1).id,'e0958000-0000-0000-0000-000000000002');});
  const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({evidence:'synthetic-native-postgresql',baseline,proofScriptSHA256,migrationFile,migrationSHA256:baseline?null:hash(migration),
  hostedTestFile,hostedTestSHA256:hash(hostedTest),hostedEmailInsertSHA256:hash(hostedEmailInsert),
+ accountTypeSourceFile,accountTypeSourceSHA256:hash(accountTypeSource),accountTypeConstraintSHA256:hash(accountTypeConstraint),
  authority:'actual consumer-mint trio and actual lower helper bodies',helperCatalog,
  standIns:['auth.uid() from transaction-local test.actor GUC','tenants/tenant_members/agency_team_members/user_roles narrow synthetic tables (no production triggers)','tenant_role/app_role minimal enum members used by actual helpers','tenant_invite_tokens/email_send_log narrow synthetic tables','NO authority or lower-helper predicate stand-in in nominal tests; NULL helpers only in explicit rollback perturbation'],
  managedSupabase:'UNVERIFIED',authenticatedQA:'NOT_RUN',results},null,2));

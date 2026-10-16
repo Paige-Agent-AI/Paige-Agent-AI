@@ -705,7 +705,7 @@
 }
 .opd-main > * { min-width:0; max-width:100%; } @container portal-dashboard (max-width:480px) { .opd-paige { display:grid; grid-template-columns:20px minmax(0,1fr); }.opd-paige > .opd-text-button { grid-column:2; margin-left:0; } }
 .opd-delivery-state { display:block; margin-top:6px; color:var(--pg-muted); font-size:12px; }
-.opd-invitation-history { border-top:1px solid var(--pg-line); margin-top:20px; padding-top:18px; min-width:0; }
+.opd-invitation-history { border-top:1px solid var(--pg-line); margin-top:20px; padding-top:18px; min-width:0; max-width:860px; }
 .opd-invitation-history h4 { font-size:15px; margin:0 0 12px; }
 .opd-invitation-history ol { list-style:none; margin:0; padding:0; }
 .opd-invitation-history details { border-bottom:1px solid var(--pg-line); padding:8px 0; }

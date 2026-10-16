@@ -1,4 +1,15 @@
 {
+  "runtime": {
+    "engine": "chromium",
+    "browserVersion": "155.0.8059.40",
+    "executable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "os": "Windows_NT",
+    "osVersion": "10.0.26300",
+    "headless": true,
+    "route": "actual-source owner Clients/Portal/Client access via setContent",
+    "auth": "synthetic actual-subject/tenant fixtures",
+    "permissions": "network blocked; no media, file picker, OAuth or customer permission operation"
+  },
   "sourceHashes": [
     {
       "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
@@ -34,7 +45,7 @@
     },
     {
       "file": "src/components/tenant-relationships/owner-portal-dashboard.css",
-      "sha256": "cdf47af89b83379e94ea31d7d2045cfd16e37ae120ca35e692ba024b6ca1cda1"
+      "sha256": "fdc4dee8b948f9d5b47c47a402db2679e09e03839774f133ee0dc4c9014f959e"
     },
     {
       "file": "scripts/proof/e09-invitation-history-ui/adapter.tsx",
@@ -46,7 +57,7 @@
     },
     {
       "file": "scripts/proof/e09-invitation-history-ui/check.mjs",
-      "sha256": "69d28e671bb598b8babf4d33504619f1fb40432a95dee5ea97643eaf30ad1081"
+      "sha256": "1b86bcf809ad8d950106642d0a96d7a8957c0067ca4aaa8adf9d4f527cc81ab4"
     },
     {
       "file": "scripts/proof/e09-dashboard-ui/adapter.tsx",
@@ -65,7 +76,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 1260,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -84,7 +95,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1536,
+        "innerHeight": 770,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1536,
@@ -97,7 +115,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 1260,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -116,7 +134,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1536,
+        "innerHeight": 770,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1536,
@@ -148,7 +173,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1536,
+        "innerHeight": 770,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1536,
@@ -180,7 +212,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1536,
+        "innerHeight": 770,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1366,
@@ -193,7 +232,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 1234,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -212,7 +251,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1366,
@@ -225,7 +271,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 1234,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -244,7 +290,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1366,
@@ -276,7 +329,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1366,
@@ -308,7 +368,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1024,
@@ -321,7 +388,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 892,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -340,7 +407,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1024,
@@ -353,7 +427,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "closed",
-        "historyWidth": 892,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": false
       },
@@ -372,7 +446,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1024,
@@ -385,7 +466,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "open",
-        "historyWidth": 892,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": true
       },
@@ -404,7 +485,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1024,
@@ -417,7 +505,7 @@
         "documentOverflow": false,
         "scrollOwner": "auto",
         "actualPaigeState": "open",
-        "historyWidth": 892,
+        "historyWidth": 860,
         "historyOverflow": false,
         "modalAssistant": true
       },
@@ -436,7 +524,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1024,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 900,
@@ -468,7 +563,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 900,
+        "innerHeight": 1000,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 900,
@@ -500,7 +602,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 900,
+        "innerHeight": 1000,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 900,
@@ -532,7 +641,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 900,
+        "innerHeight": 1000,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 900,
@@ -564,7 +680,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 900,
+        "innerHeight": 1000,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 390,
@@ -596,7 +719,14 @@
         "color": "rgb(111, 86, 54)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 768,
@@ -628,7 +758,14 @@
         "color": "rgb(255, 240, 207)",
         "focused": true
       },
-      "keyboardDisclosure": true
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 768,
+        "innerHeight": 385,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     },
     {
       "width": 1366,
@@ -654,9 +791,16 @@
         "synthetic": true
       },
       "focusOutline": null,
-      "keyboardDisclosure": false
+      "keyboardDisclosure": false,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
     }
   ],
   "errors": [],
-  "boundary": "Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. No real customer/provider operation, legitimate cohort, full customer frame, physical-device or zoom acceptance."
+  "boundary": "Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."
 }

@@ -209,7 +209,7 @@ correct stays a human §5/§39 responsibility.
   is live — and it *refuses* every mutation). LIVE there is a delivery fact, not a Paige-autonomy fact.
 - The communications/scheduling/social/automation providers (Twilio, Google Calendar, Resend, Meta,
   n8n, Zapier) are `PARTIAL` with named gaps; accounting/e-sign (QuickBooks, DocuSign) and SendGrid (PAIGE Email, 2026-10-13) are
-  `PROOF_OWED`; Microsoft 365 is `DEFERRED`; HubSpot / Vapi are `UNAVAILABLE`; Browserbase is `PROPOSED` (owner-ruled 2026-09-07 as the replaceable bootstrap browser-worker runtime for the Paige-owned Secure Browser, behind a provider-neutral internal contract — desk review 2026-09-07 = **CONDITIONAL GO** with seven owner-side vendor gates before credentialed wiring; `BROWSERBASE_API_KEY` present as an Edge secret = infra readiness only, not wired, not live); the Vault
+  `PROOF_OWED`; Gmail is separately `PROOF_OWED` for its existing mailbox/connection implementation and the bounded authority repair below. Microsoft 365 is `DEFERRED`; HubSpot / Vapi are `UNAVAILABLE`; Browserbase is `PROPOSED` (owner-ruled 2026-09-07 as the replaceable bootstrap browser-worker runtime for the Paige-owned Secure Browser, behind a provider-neutral internal contract — desk review 2026-09-07 = **CONDITIONAL GO** with seven owner-side vendor gates before credentialed wiring; `BROWSERBASE_API_KEY` present as an Edge secret = infra readiness only, not wired, not live); the Vault
   OCR/DLP seam is `PROPOSED`.
 - **Coverage is honest, not complete.** The catalogued providers span all six taxonomy groups and all
   six status words. Every other WIRED provider (per master §4) is named in
@@ -255,6 +255,7 @@ longer exists).
 | Business verification (multi-source) | finance/accounting/payments | `PARTIAL` | read | Funding & Coaching Tools package-gated; OpenCorporates/SEC direct + SoS via Firecrawl real; D&B/LexisNexis/TU/Array are inert stubs; package-entitlement gate OWED (§2/§194) |
 | Twilio | CRM/calendar/communications | `PARTIAL` | confirm | per-tenant A2P go-live; vanity/premium number search |
 | Google Calendar | CRM/calendar/communications | `PARTIAL` | confirm | FU-3 Rail contract; attribution truthfulness (#786) |
+| Gmail | CRM/calendar/communications | `PROOF_OWED` | confirm | existing connection/transport and bounded owner/admin authority repair; native migration200000 before endpoints, exact-head CI/deployed readback and ordinary Google consent/send/inbox proof owed; default send and separate inbox consent remain distinct |
 | Resend | CRM/calendar/communications | `PARTIAL` | confirm | Platform Operator email under the 2026-10-13 owner policy; existing tenant Resend connectors kept, not converted; per-tenant sending identity; send receipt on Rail |
 | SendGrid (PAIGE Email) | CRM/calendar/communications | `PROOF_OWED` | confirm | tenant PAIGE Email (owner policy 2026-10-13); governed door + verified-domain gate + receipts built in Experience 03 S3 (not merged 2026-10-13); operator steps (key, domain authentication, verification facts, connector, Event Webhook) and the first owner-approved live send owed |
 | HubSpot | CRM/calendar/communications | `UNAVAILABLE` | prohibited | not wired; native CRM is default |
@@ -271,6 +272,45 @@ longer exists).
 | Custom remote MCP | marketplace/MCP/automation | `PARTIAL` | confirm | encrypted headers and shared form shipped; authenticated proof owed. Incoming-contact binding/drawer merged in #1595; owner/sender proof remains owed. Candidate OAuth correction selects challenge scopes, then resource scopes, otherwise omits scope; never the authorization-server-wide catalogue. Provider acceptance and governed outbound execution remain unproven. See `../evidence/ui-delivery/mcp-oauth-resource-scopes.md` and `../delivery/mcp-contact-binding.md`. |
 | Browserbase | marketplace/MCP/automation | `PROPOSED` | prohibited | Secure Browser bootstrap browser-**worker** runtime (replaceable, behind a provider-neutral internal contract); review 2026-09-07 = **CONDITIONAL GO**, 7 vendor gates before wiring |
 | Paige browser + Firecrawl | marketplace/MCP/automation | `PARTIAL` | draft | G5/read-only egress deployed in #1042; DNS-rebinding + SSRF reconciliation and §32.c authenticated drive remain |
+
+### Gmail connection-authority proof boundary (2026-10-16)
+
+The `gmail` entry is the communications provider home, separate from `google-workspace`
+(Drive/Docs) and `google-calendar`. Calendar OAuth anchors do not prove Drive/Docs or Gmail
+readiness. The existing person-driven Connections flow uses `gmail-oauth-start`,
+`gmail-oauth-callback` and `gmail-disconnect`; normal business email continues through
+`comms.email_send` → the existing governed `comms-email-command` / `send-message` → Gmail
+transport → canonical record/readback and Rail. OAuth consent is not an approved business send.
+
+Reviewed runtime source candidate `36c24022f6c311226a677fc5177bea73c46e1388` has independent
+NON-AUTHOR **150/150 focused tests** and **34/34 actual local PostgreSQL checks**, including
+authority/privacy/collision concurrency, rollback and migration replay. Vault cryptography is a
+fixture stand-in; the existing bridge/body and real PostgreSQL transaction semantics run. These
+are development/protected proofs, not Google or ordinary authenticated customer acceptance.
+`20271108200000_gmail_connection_authority` must be applied **before** the three endpoint updates;
+exact-head hosted CI/full-schema compatibility, production SQL/Edge source readback and actual
+authorized Google-account testing remain owed. No connection, credential or provider is activated
+by this documentation.
+
+Default consent requests `gmail.send` and `userinfo.email`. The already separate `purpose=inbox`
+requests `gmail.modify`, `gmail.labels` and `userinfo.email`; the SOLO hook still supplies the
+default send purpose. This repair does not add its missing inbox-consent UI binding or grant wider
+scopes. The actual returned scope set is persisted. Personal mailbox content/derivatives remain
+owner-private; the canonical server actor/workspace/tenant-admin checks and native connector/Vault
+transaction do not create a new permission engine or account-specific implementation.
+
+Google consent/exchange/revocation is external and cannot be atomic with PostgreSQL. Native saved,
+disconnected, saved-but-withheld and unknown results remain distinct; an uncertain acknowledgement
+is not retried automatically. Optional Google revocation follows confirmed local disconnect and
+reports a separate acknowledgement. A Gmail message id proves provider acceptance, not delivery,
+reading or payment. Connection audit acknowledgement is separate from native persistence and from
+a business-action Rail receipt.
+
+The owner's SendGrid direction retains separate platform/tenant authority; this Gmail repair
+performs no key selection, domain cutover or provider activation. Existing Resend connectors are
+preserved. Generic SMTP sending is not Apple/iCloud inbox management; no managed Apple mailbox
+adapter is established by the Gmail entry. The original 18-capability/50-parity registers and all
+remaining Communications outcomes stay open at their actual evidence boundaries.
 
 ### INT-311 Sales merchant connection boundary
 

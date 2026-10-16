@@ -66,6 +66,8 @@ export interface UsePlanListOpts {
   /** Treat from/to as ITEM due/remind dates (the calendar range read) rather
    * than plan-window dates. */
   byItemDate?: boolean;
+  /** Explicit native history read; ordinary/default callers keep excluding cancellations. */
+  includeCancelled?: boolean;
   enabled?: boolean;
   /**
    * Authenticated tenant epoch. The RPC still derives authority server-side;
@@ -94,7 +96,7 @@ export interface UsePlanListResult {
 }
 
 export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
-  const { scope = "mine", from, to, status, contactId, byItemDate, enabled = true, tenantScopeKey, operationsActorId, operationsTenantId } = opts;
+  const { scope = "mine", from, to, status, contactId, byItemDate, includeCancelled, enabled = true, tenantScopeKey, operationsActorId, operationsTenantId } = opts;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [looseItems, setLooseItems] = useState<PlanItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,6 +132,7 @@ export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
         p_contact_id: contactId ?? null,
         p_by_item_date: byItemDate ?? false,
       };
+      if (includeCancelled === true) params.p_include_cancelled = true;
       // 'mine' pins to the caller; 'team'/'by_me' fetch the full visible set and
       // filter client-side (plan_list has no created_by filter yet).
       if (scope === "mine" && uid) params.p_assigned_to_user_id = uid;
@@ -169,7 +172,7 @@ export function usePlanList(opts: UsePlanListOpts = {}): UsePlanListResult {
     } finally {
       if (seq === requestSeq.current) setLoading(false);
     }
-  }, [enabled, scope, from, to, status, contactId, byItemDate, tenantScopeKey, operationsActorId, operationsTenantId]);
+  }, [enabled, scope, from, to, status, contactId, byItemDate, includeCancelled, tenantScopeKey, operationsActorId, operationsTenantId]);
 
   useEffect(() => {
     requestSeq.current += 1;

@@ -48,6 +48,7 @@ import { ClientsHub } from "@/solo/conversations";
 import { GrowthHub } from "@/solo/growth2";
 import { Analytics2 } from "@/solo/analytics2";
 import { SoloPaigeWorkspace } from "@/solo/SoloPaigeWorkspace";
+import { OperationsWorkspace } from "@/solo/operations/OperationsWorkspace";
 import "@/index.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
 // PRODUCTION ORDER, and the reason this line exists (2026-08-31 reconciliation).
@@ -171,6 +172,7 @@ const NEGATIVE_CONTROLS: Record<string, ReactNode> = {
   clients: <ClientsHub />,
   growth: <GrowthHub />,
   analytics: <Analytics2 accountContext={{ accountName: "Harness workspace", accountType: "standalone" }} accountEpoch="harness-tenant" openPaige={() => {}} />,
+  operations: <OperationsWorkspace view="work" />,
 };
 
 /**

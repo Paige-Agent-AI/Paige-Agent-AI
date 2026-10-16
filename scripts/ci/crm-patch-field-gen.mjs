@@ -53,7 +53,7 @@
  * `contact.create` allows `notes`. `contact.update` allows `current_notes` — the same concept under
  * a different name, because the create path writes a seed note and the update path edits the live
  * one. `task.create` accepts nine fields including `assignee_user_id` and `due_date`; `task.update`
- * accepts four and NEITHER of those. Collapsing the seven into one shared list would hand the model
+ * accepts five (including the bounded in_progress status) and NEITHER of those. Collapsing the seven into one shared list would hand the model
  * a field the database will reject on four of the seven actions — reintroducing the incident with
  * different field names. Each action therefore gets its own derived set.
  *
@@ -208,6 +208,7 @@ const FIELD_DESCRIPTIONS = {
   track: "Workstream the task belongs to.",
   metadata: "Structured object of extra task fields; must be an object.",
   description: "Longer body text for the task.",
+  status: "Task update only: in_progress starts pending work or updates work already in progress. Use the separate complete, reopen or cancel command for other stages.",
   assigned_coach_user_id: "Exact active member UUID to set as coach across the selected contacts.",
   tags: "Full replacement list of tags; this is not additive.",
   contact_methods: "The contact's COMPLETE list of email addresses and phone numbers, in display order: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. On an update anything left out is REMOVED, so read the current list first (crm_search_contacts or crm_get_contact_summary). One primary per kind; with none marked, the first of each kind is primary. To only add an address, use add_contact_methods.",

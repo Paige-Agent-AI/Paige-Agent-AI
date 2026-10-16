@@ -213,6 +213,11 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
   const target = (command.action.startsWith("deal.") ? command.deal_id : undefined)
     ?? contactName ?? command.company_id ?? command.task_id ?? command.deal_id ?? "a new record";
   const commandPatch = object(command.patch);
+  if (command.action === "task.update" && commandPatch?.status === "in_progress") {
+    const otherChanges = Object.entries(commandPatch).filter(([field]) => field !== "status")
+      .sort(([left], [right]) => left.localeCompare(right)).map(([field, value]) => `${field}=${JSON.stringify(value)}`);
+    return `Move task ${command.task_id} to In progress.${otherChanges.length ? ` Also update ${otherChanges.join(", ")}.` : ""}`;
+  }
   switch (command.action) {
     case "contact.assign_coach":
       return `Change contact ${target}'s coach to ${command.owner_user_id ?? "unassigned"}.`;

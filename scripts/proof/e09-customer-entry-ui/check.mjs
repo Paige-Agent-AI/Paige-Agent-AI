@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
+if(process.argv.includes('--actions')){
+ await import('./actions-check.mjs');
+}else{
 const gateway=process.argv.includes('--gateway');
 const root=process.cwd(),output=path.join(root,'docs/evidence/ui-delivery/assets',gateway?'e09-customer-return':'e09-customer-entry');
 await fs.mkdir(output,{recursive:true});
@@ -61,3 +64,4 @@ try{
  await fs.writeFile(path.join(output,'report.json'),JSON.stringify({engine:'isolated Chromium',authenticated:'NOT_RUN',results,hashes},null,2));
  console.log(JSON.stringify({passed:results.length,output}));
 }finally{await browser.close();}
+}

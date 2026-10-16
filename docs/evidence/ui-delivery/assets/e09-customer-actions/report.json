@@ -1,0 +1,176 @@
+{
+  "engine": "isolated Chromium",
+  "authenticated": "NOT_RUN",
+  "nativeDevice": "NOT_RUN",
+  "fullShell": "UNVERIFIED",
+  "font": "incumbent offline fallback",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "state": "ready",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "ready",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "ready",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "long",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "unknown",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "error",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "revoked",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "empty",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "expired",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "loading",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "pending",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "switch",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "exit",
+      "context": "b",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual router/exit guard, keyboard Enter, canceled and confirmed exit; destination is double"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "history",
+      "context": "a",
+      "result": "PASS",
+      "transport": "synthetic-offline",
+      "scope": "actual page/hook/brand/router/guard/toaster; Rail and destination are doubles"
+    }
+  ],
+  "hashes": [
+    {
+      "path": "src/hooks/useMyActions.ts",
+      "sha256": "2448cc191ab10900f936e37a6a364e6472c415a92f18a9bcb820a390f00b02f3"
+    },
+    {
+      "path": "src/pages/app/ActionItems.tsx",
+      "sha256": "8ca20136b701cf0366ef60d0ecb8f4cec8d64b2215ab001108252b3ce167fedd"
+    },
+    {
+      "path": "dist/assets/main-BiB6dTG7.css",
+      "sha256": "2e9669ccd00e1bdc9ff0f349fbbdea28da883d780dc19379d19a8a9d0e8a16d2"
+    }
+  ]
+}

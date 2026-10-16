@@ -78,10 +78,10 @@ revoke all on function public._owner_task_source_snapshot(uuid,uuid) from public
 -- A pre-existing held row without this evidence stays unsupported; no backfill.
 create or replace function public.paige_owner_task_hold_context()
 returns trigger language plpgsql security definer set search_path='' as $$
-declare snap jsonb;
+declare snap jsonb; draft jsonb; subject_label text;
 begin
   if tg_op='INSERT' then
-    new.detail:=coalesce(new.detail,'{}'::jsonb)-'owner_task_source';
+    new.detail:=coalesce(new.detail,'{}'::jsonb)-'owner_task_source'-'owner_task_approval';
     if new.capability_key='owner.task' and new.outcome::text='approval_pending' then
       new.detail:=new.detail-'approved_by'-'approved_at';
       if new.adapter_kind is distinct from 'native' or new.effective_lane is distinct from 'confirm' then
@@ -93,10 +93,23 @@ begin
         or snap#>'{acts,0,config}' is distinct from new.detail->'snapshot_args' then
         raise exception 'OWNER_TASK_SOURCE_CHANGED' using errcode='22023';
       end if;
-      new.detail:=new.detail||jsonb_build_object('owner_task_source',snap);
+      -- The contact is already locked by source capture. Freeze the SAME canonical
+      -- description the incumbent AFTER trigger will mint, before any review can
+      -- occur. Do not reconstruct an approval from a later client name or JSON.
+      select nullif(trim(coalesce(first_name,'')||' '||coalesce(last_name,'')),'') into subject_label
+        from public.clients where id=(snap#>>'{contact,id}')::uuid and tenant_id=new.tenant_id;
+      draft:=public.paige_orchestration_approval_content(new.capability_key,new.detail->'snapshot_args',subject_label);
+      new.detail:=new.detail||jsonb_build_object('owner_task_source',snap,'owner_task_approval',jsonb_build_object(
+        'type','other','draft_content',draft,'summary',draft->>'subject','category',new.capability_key,
+        'contact_id',null,'conversation_id',null,'tenant_id',new.tenant_id,'source','paige_orchestration',
+        'risk_level',case when new.detail->>'risk'='high' then 'high' else 'medium' end,'submitted_by_user_id',null,
+        'metadata',jsonb_build_object('source','paige_orchestration','event_id',new.event_id,'act_id',new.act_id,
+          'act_execution_id',new.id,'automation_id',new.automation_id,'capability_id',new.capability_key,
+          'snapshot_args',new.detail->'snapshot_args')));
     end if;
   elsif old.detail ? 'owner_task_source' then
     if new.detail->'owner_task_source' is distinct from old.detail->'owner_task_source'
+      or new.detail->'owner_task_approval' is distinct from old.detail->'owner_task_approval'
       or new.detail->'snapshot_args' is distinct from old.detail->'snapshot_args'
       or (old.detail ? 'approved_by' and (new.detail->'approved_by' is distinct from old.detail->'approved_by'
         or new.detail->'approved_at' is distinct from old.detail->'approved_at'))
@@ -104,7 +117,7 @@ begin
         is distinct from row(old.event_id,old.act_id,old.automation_id,old.tenant_id,old.capability_key,old.idempotency_key,old.correlation_ref,old.effective_lane,old.adapter_kind,old.act_position) then
       raise exception 'OWNER_TASK_HELD_CONTEXT_IMMUTABLE' using errcode='42501';
     end if;
-  elsif new.detail ? 'owner_task_source' then
+  elsif new.detail ? 'owner_task_source' or new.detail ? 'owner_task_approval' then
     raise exception 'OWNER_TASK_LEGACY_CONTEXT_UNAVAILABLE' using errcode='42501';
   end if;
   return new;
@@ -112,6 +125,49 @@ end $$;
 revoke all on function public.paige_owner_task_hold_context() from public,anon,authenticated,service_role;
 create trigger paige_owner_task_hold_context before insert or update on public.paige_act_executions
 for each row execute function public.paige_owner_task_hold_context();
+
+-- Bind the visible description and argument/identity metadata, not operational
+-- claim/review/recovery fields. Other approval types retain their existing edit
+-- contracts. This projection is shared by the guard and the independent bridge
+-- check; it is not an approval or execution authority.
+create or replace function public._owner_task_approval_projection(_approval public.paige_pending_approvals)
+returns jsonb language sql immutable set search_path='' as $$
+  select jsonb_build_object('type',(_approval).type,'draft_content',(_approval).draft_content,
+    'summary',(_approval).summary,'category',(_approval).category,'contact_id',(_approval).contact_id,
+    'conversation_id',(_approval).conversation_id,'tenant_id',(_approval).tenant_id,'source',(_approval).source,
+    'risk_level',(_approval).risk_level,'submitted_by_user_id',(_approval).submitted_by_user_id,
+    'metadata',jsonb_build_object('source',(_approval).metadata->'source','event_id',(_approval).metadata->'event_id',
+      'act_id',(_approval).metadata->'act_id','act_execution_id',(_approval).metadata->'act_execution_id',
+      'automation_id',(_approval).metadata->'automation_id','capability_id',(_approval).metadata->'capability_id',
+      'snapshot_args',(_approval).metadata->'snapshot_args'));
+$$;
+revoke all on function public._owner_task_approval_projection(public.paige_pending_approvals) from public,anon,authenticated,service_role;
+
+create or replace function public.paige_owner_task_approval_context()
+returns trigger language plpgsql security definer set search_path='' as $$
+declare prior public.paige_pending_approvals; held public.paige_act_executions;
+begin
+  if tg_op='UPDATE' then prior:=old; else prior:=new; end if;
+  if prior.source is distinct from 'paige_orchestration' then return new; end if;
+  select * into held from public.paige_act_executions where capability_key='owner.task'
+    and event_id::text=prior.metadata->>'event_id' and act_id::text=prior.metadata->>'act_id';
+  if held.id is null then return new; end if;
+  -- A receipt/review/claim update does not change what was shown. Even a legacy
+  -- or privileged-corrupt row must permit truthful operational settlement; the
+  -- bridge separately refuses a new effect when its display is not bound.
+  if tg_op='UPDATE' and public._owner_task_approval_projection(new) is not distinct from public._owner_task_approval_projection(old) then return new; end if;
+  if held.detail->'owner_task_approval' is null then
+    -- No reconstruction/backfill of legacy held reviews.
+    raise exception 'OWNER_TASK_LEGACY_APPROVAL_UNAVAILABLE' using errcode='42501';
+  end if;
+  if public._owner_task_approval_projection(new) is distinct from held.detail->'owner_task_approval' then
+    raise exception 'OWNER_TASK_APPROVAL_CONTEXT_IMMUTABLE' using errcode='42501';
+  end if;
+  return new;
+end $$;
+revoke all on function public.paige_owner_task_approval_context() from public,anon,authenticated,service_role;
+create trigger paige_owner_task_approval_context before insert or update on public.paige_pending_approvals
+for each row execute function public.paige_owner_task_approval_context();
 
 -- Owner-only internal reader: called by the existing protected cron reconciler
 -- and the service-JWT wrapper below. No invented JWT, no caller actor override.
@@ -199,6 +255,13 @@ begin
   prior:=public._read_owner_task_act(_event_id,_act_id,_correlation);
   if prior->>'state'='found' then return prior; end if;
   if prior->>'state' is distinct from 'absent' then return jsonb_build_object('state','unknown'); end if;
+  -- Defense in depth for legacy/corrupt rows or privileged trigger bypass: the
+  -- task about to run must be exactly the one the DB originally showed for review.
+  -- A landed receipt above remains truthfully readable; this gate permits no new effect.
+  if l.detail->'owner_task_approval' is null
+    or public._owner_task_approval_projection(companion) is distinct from l.detail->'owner_task_approval' then
+    return jsonb_build_object('outcome','failed','reason','reviewed_approval_changed');
+  end if;
   snap:=public._owner_task_source_snapshot(_event_id,_act_id);
   if snap is distinct from l.detail->'owner_task_source' then
     return jsonb_build_object('outcome','failed','reason','reviewed_context_changed');

@@ -7,6 +7,35 @@ blocked checkpoint below are retained. The domain bridge is prepared in the exis
 adapter and the forward migration `20271108210000_owner_task_native_bridge.sql`; it has not
 been applied to a hosted database. This is **not a releasable or activated customer automation**.
 
+### Independent Review repair — successor to `d4b99cb26afb620bb6acda78a0fe5f9167bd84ec`
+
+The distinct review of d4 returned **REVISE** despite its passing 41 native controls and 43 engine/C5
+tests. An additional actual PostgreSQL negative demonstrated that the companion's displayed task
+could differ from the original held command while the original task still executed. That failed
+proof is retained unchanged at `work/owner-task-native-proof/run-CGbVc0/independent-approval-display-result.json`
+and the lead's `work/automation-native-review-d4/independent-native.log`. It is not a production
+incident or authenticated-customer proof. The historical d4 commit and evidence are not rewritten.
+
+The bounded successor captures the exact incumbent-generated approval description at the first
+database hold, alongside the existing source snapshot. The contact is already locked; the incumbent
+`paige_orchestration_approval_content` remains the one description builder used by both capture and
+mint. The protected ledger detail holds the same description already present in the companion;
+the contact source projection remains minimized. Caller-supplied approval-binding JSON is discarded,
+and the captured binding cannot be changed or reconstructed later.
+
+A narrow `owner.task` companion trigger binds summary, complete draft content (including args),
+category, risk, tenant/visibility and source/occurrence/process/capability/argument metadata. It
+preserves the incumbent source/coordinate/direct-approve guards and permits unchanged operational
+claim, review and recovery updates. Other approval types and other orchestration capabilities keep
+their existing description-editing contracts. The native bridge independently compares the companion
+to the original binding before a new effect, including when a fixture-only privileged corruption
+bypasses the new trigger. Missing legacy binding is refused; no backfill is performed. A real task
+that already landed remains truthfully readable and can be reconciled without another effect.
+
+Final migration bytes: SHA-256 `af70e2a6b5aaa39a6c77c3531743c33fcbfddb3c6dec229cc01e24ea594995f4`.
+Successor Independent Review, integration, full-schema replay, CI and all release/activation gates
+remain owed to the lead; these local proofs do not close them.
+
 The intended human outcome is one existing, eligible SOLO business approving a held new-contact
 review and receiving one real internal CRM task with canonical readback and receipt. Portfolio
 ownership remains CRM plus the shared Harness/Layer-C orchestration path. The exact native kind
@@ -26,6 +55,9 @@ remain dark; there is no replacement permission system, executor, store, schedul
 - The held source, exact args, occurrence coordinates, adapter, act position and first native
   approver/time are immutable. Current semantic context must match before an effect. This
   detects a current difference, not every edit-away-and-back without a native revision history.
+- The DB-held approval description and its semantic metadata are immutable, and the original
+  companion must match them before any new task effect. Editable unrelated approval contracts
+  and truthful operational settlement remain intact.
 - The service-only execution bridge accepts only event ID, act ID and correlation. It derives
   tenant, original approver, command and key from the protected ledger. It takes tenant,
   original-actor profile, membership, companion, ledger, ordered act-set, process and event/contact
@@ -43,7 +75,7 @@ remain dark; there is no replacement permission system, executor, store, schedul
 
 ### Fresh executed proof
 
-`node scripts/proof/layer-c-native-vertical.mjs --owner-task-native` passes **41 native
+`node scripts/proof/layer-c-native-vertical.mjs --owner-task-native` passes **66 native
 PostgreSQL controls**. It starts and stops only its owned disposable loopback cluster. The
 selected installed native table/function bodies, contact-created trigger, recorder, companion
 mint/guard, redemption, dispatch claim, canonical CRM task writer/result/receipt and reconciler
@@ -53,6 +85,12 @@ Eight separate native claim sessions produce one dispatch owner and no claim-tim
 The proof also covers legacy refusal, immutable evidence, semantic/sibling changes, original
 authority revocation/switch, JWT/ACL negatives, native receipt rollback, delayed result recovery,
 and no false journey or age-based settlement.
+The added native controls cover unchanged exact minted approval equality, forged INSERT refusal,
+18 display/content/argument/identity mutations, JWT/source/coordinate/direct-approve negatives,
+operational and unrelated-approval editing compatibility, independent pre-effect refusal after
+fixture-only privileged display corruption, missing-original-binding refusal without reconstruction,
+private-helper ACLs and landed-result recovery after later privileged display corruption. Privileged
+fixture corruption is explicitly not evidence that an ordinary customer can bypass the trigger.
 
 The same native proof runs `automation-chat-draft-recovery.test.ts` with its disposable SQL port
 enabled: **43/43 tests pass, no skip**. The saved draft reaches the actual engine and C5 through
@@ -62,10 +100,13 @@ not production evidence. Unrelated Auth/display/realtime/weekly ports are also f
 is selected-function native PostgreSQL proof, **not full-schema Supabase replay, HTTP/Auth/RLS,
 customer QA or provider evidence**.
 
-Final native output: `work/native-proof-final.log`; native result and engine transcript:
-`work/owner-task-native-proof/run-x8en3y/result.json` and `engine-c5-native.log`.
-Deno native-adapter compilation and scoped ESLint pass (`work/core-deno-final.log`,
-`work/core-lint-final.log`). The nine-suite attempt is **NOT PASS**: 144 assertions passed,
+Final native output: `work/native-approval-binding-final.log`; native result and engine transcript:
+`work/owner-task-native-proof/run-0csPHb/result.json` and `engine-c5-native.log`. Both disposable
+native runs stopped only their owned servers. The earlier d4 proof and the first repair's 64-control
+run remain historical evidence, not the final source proof.
+Deno native-adapter compilation, scoped ESLint, proof syntax and whitespace pass
+(`work/approval-binding-deno-final.log`, `work/approval-binding-lint-final.log`). The unchanged
+historical nine-suite attempt is **NOT PASS**: 144 assertions passed,
 the existing whole-edge-tree static scan timed out at 30 seconds, and two fork workers failed
 to start. The three affected suites were rerun sequentially without changing assertions or
 repository CI: **71 PASS / 1 FAIL across72 tests**, no runner errors. The sole assertion failure

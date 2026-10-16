@@ -238,12 +238,89 @@ async function ownerTaskNativeProof() {
       assert.equal(f.row.detail.owner_task_source.acts.length, 1); assert.equal(f.row.detail.owner_task_source.contact.id, f.contact);
       assert.equal(sql(`select count(*)from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}';`), "1");
       assert.ok(!JSON.stringify(f.row.detail.owner_task_source.contact).includes("Synthetic"));
+      assert.deepEqual(JSON.parse(sql(`select _owner_task_approval_projection(a)::text from paige_pending_approvals a where metadata->>'act_execution_id'='${f.row.id}';`)), f.row.detail.owner_task_approval);
+      assert.equal(f.row.detail.owner_task_approval.draft_content.args.title, "Native internal task");
+      assert.match(f.row.detail.owner_task_approval.summary, /Native internal task/);
     });
     check("native held evidence and args cannot be replaced", () => {
       refuses(`update paige_act_executions set detail=jsonb_set(detail,'{owner_task_source}','{}')where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
       refuses(`update paige_act_executions set detail=jsonb_set(detail,'{snapshot_args}','{}')where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+      refuses(`update paige_act_executions set detail=jsonb_set(detail,'{owner_task_approval}','{}')where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
       refuses(`update paige_act_executions set adapter_kind='n8n'where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
       refuses(`update paige_act_executions set act_position=2 where id='${f.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+    });
+    for (const [label, assignment] of [
+      ["visible summary", "summary='Different task shown for review'"],
+      ["whole draft content", "draft_content='\"Different display\"'::jsonb"],
+      ["subject", "draft_content=jsonb_set(draft_content,'{subject}','\"Different subject\"')"],
+      ["preview", "draft_content=jsonb_set(draft_content,'{preview}','\"Different preview\"')"],
+      ["body", "draft_content=jsonb_set(draft_content,'{body}','\"Different body\"')"],
+      ["draft capability", "draft_content=jsonb_set(draft_content,'{capability}','\"other.action\"')"],
+      ["draft title args", "draft_content=jsonb_set(draft_content,'{args,title}','\"Different task title\"')"],
+      ["draft extra args", "draft_content=jsonb_set(draft_content,'{args,description}','\"Different description\"')"],
+      ["category", "category='other.action'"],
+      ["risk", "risk_level='low'"],
+      ["tenant", `tenant_id='${other}'`],
+      ["contact visibility", `contact_id='${f.contact}'`],
+      ["conversation", `conversation_id='${other}'`],
+      ["submitted actor", `submitted_by_user_id='${other}'`],
+      ["metadata args", "metadata=jsonb_set(metadata,'{snapshot_args,title}','\"Different metadata title\"')"],
+      ["metadata process", `metadata=jsonb_set(metadata,'{automation_id}',${json(other)})`],
+      ["metadata capability", "metadata=jsonb_set(metadata,'{capability_id}','\"other.action\"')"],
+      ["metadata source", "metadata=jsonb_set(metadata,'{source}','\"other.source\"')"],
+    ]) check(`DB-minted owner.task ${label} cannot change before review`, () => {
+      refuses(`update paige_pending_approvals set ${assignment} where metadata->>'act_execution_id'='${f.row.id}';`, "OWNER_TASK_APPROVAL_CONTEXT_IMMUTABLE");
+      assert.equal(resultCount(f), "0");
+    });
+    check("a forged owner.task companion INSERT cannot substitute a different review description", () => {
+      refuses(`insert into paige_pending_approvals(type,draft_content,summary,category,contact_id,conversation_id,tenant_id,source,status,risk_level,submitted_by_user_id,metadata)
+        select type,draft_content,'Different inserted approval',category,contact_id,conversation_id,tenant_id,source,status,risk_level,submitted_by_user_id,metadata
+        from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}' on conflict do nothing;`, "OWNER_TASK_APPROVAL_CONTEXT_IMMUTABLE");
+      assert.equal(sql(`select count(*)from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}';`), "1");
+    });
+    check("JWT caller cannot rewrite displayed task while the incumbent source/coordinate/approve guards remain intact", () => {
+      refuses(`set request.jwt.claims='{"role":"authenticated","sub":"${actor}"}';update paige_pending_approvals set summary='Rewritten by reviewer' where metadata->>'act_execution_id'='${f.row.id}';`, "OWNER_TASK_APPROVAL_CONTEXT_IMMUTABLE");
+      refuses(`update paige_pending_approvals set source='other' where metadata->>'act_execution_id'='${f.row.id}';`, "ORCH_APPROVAL_SOURCE_IMMUTABLE");
+      refuses(`update paige_pending_approvals set metadata=jsonb_set(metadata,'{act_id}',${json(other)}) where metadata->>'act_execution_id'='${f.row.id}';`, "ORCH_APPROVAL_COORDS_IMMUTABLE");
+      refuses(`set request.jwt.claims='{"role":"authenticated","sub":"${actor}"}';update paige_pending_approvals set status='approved' where metadata->>'act_execution_id'='${f.row.id}';`, "ORCH_APPROVAL_MUST_EXECUTE");
+    });
+    check("native operational claim/recovery metadata remains editable without changing the held approval", () => {
+      sql(`update paige_pending_approvals set claimed_at=now(),metadata=metadata||'{"execute_note":"pending review","act_outcome":"approval_pending"}' where metadata->>'act_execution_id'='${f.row.id}';
+        update paige_pending_approvals set claimed_at=null where metadata->>'act_execution_id'='${f.row.id}';`);
+      assert.deepEqual(JSON.parse(sql(`select _owner_task_approval_projection(a)::text from paige_pending_approvals a where metadata->>'act_execution_id'='${f.row.id}';`)), f.row.detail.owner_task_approval);
+    });
+    check("other approval types and other orchestration capabilities retain legitimate description/argument editing", () => {
+      const editable = id(1900), otherAct = id(1901), otherEvent = id(1902);
+      sql(`insert into paige_pending_approvals(id,type,source,status,tenant_id,summary,draft_content,metadata)values('${editable}','comms_draft','paige_mcp','pending','${tenant}','Original draft','{"args":{"title":"Original"}}','{}');
+        update paige_pending_approvals set summary='Edited draft',draft_content='{"args":{"title":"Edited"}}',metadata='{"note":"editable"}' where id='${editable}';
+        insert into paige_pending_approvals(id,type,source,status,tenant_id,summary,draft_content,metadata)values('${otherAct}','other','paige_orchestration','pending','${tenant}','Other capability','{}','{"event_id":"${otherEvent}","act_id":"${otherAct}","act_execution_id":"${otherAct}","capability_id":"owner.other"}');
+        update paige_pending_approvals set summary='Edited other capability',draft_content='{"args":{"title":"Edited"}}' where id='${otherAct}';`);
+      assert.equal(sql(`select summary from paige_pending_approvals where id='${editable}';`), "Edited draft");
+      assert.equal(sql(`select summary from paige_pending_approvals where id='${otherAct}';`), "Edited other capability");
+    });
+    const corruptDisplay = held(1920); approve(corruptDisplay); claim(corruptDisplay);
+    check("privileged corruption of displayed summary/args independently refuses pre-effect in the native bridge", () => {
+      const before = sql("select count(*)from tasks;");
+      // Fixture-only superuser corruption, explicitly bypassing JUST the new
+      // trigger; the incumbent coordinate/status guard and real bridge still run.
+      sql(`alter table paige_pending_approvals disable trigger paige_owner_task_approval_context;
+        update paige_pending_approvals set summary='Different task the owner saw',draft_content=jsonb_set(draft_content,'{args,title}','"Different task the owner saw"') where metadata->>'act_execution_id'='${corruptDisplay.row.id}';
+        alter table paige_pending_approvals enable trigger paige_owner_task_approval_context;`);
+      const result = bridge(corruptDisplay); assert.equal(result.outcome, "failed"); assert.equal(result.reason, "reviewed_approval_changed");
+      assert.equal(resultCount(corruptDisplay), "0"); assert.equal(sql("select count(*)from tasks;"), before);
+      // The unchanged operational claim can still be released; it cannot bless
+      // the corrupted semantic content or authorize an effect.
+      sql(`update paige_pending_approvals set claimed_at=null where metadata->>'act_execution_id'='${corruptDisplay.row.id}';`);
+    });
+    const legacyDisplay = held(1940); approve(legacyDisplay); claim(legacyDisplay);
+    check("legacy/corrupt native source without original approval binding refuses without reconstructing it", () => {
+      sql(`alter table paige_act_executions disable trigger paige_owner_task_hold_context;
+        update paige_act_executions set detail=detail-'owner_task_approval' where id='${legacyDisplay.row.id}';
+        alter table paige_act_executions enable trigger paige_owner_task_hold_context;`);
+      const result = bridge(legacyDisplay); assert.equal(result.outcome, "failed"); assert.equal(result.reason, "reviewed_approval_changed");
+      assert.equal(resultCount(legacyDisplay), "0");
+      refuses(`update paige_act_executions set detail=detail||${json({owner_task_approval: legacyDisplay.row.detail.owner_task_approval})} where id='${legacyDisplay.row.id}';`, "OWNER_TASK_HELD_CONTEXT_IMMUTABLE");
+      refuses(`update paige_pending_approvals set summary='Reconstructed display' where metadata->>'act_execution_id'='${legacyDisplay.row.id}';`, "OWNER_TASK_LEGACY_APPROVAL_UNAVAILABLE");
     });
     check("approval is redeemed once; later reviewer cannot replace original native actor", () => {
       assert.equal(approve(f).detail.approved_by, actor); assert.equal(approve(f, other).detail.approved_by, actor); assert.ok(claim(f).id);
@@ -262,7 +339,8 @@ async function ownerTaskNativeProof() {
         refuses(`set role service_role;select ${name}('${f.event}','${f.act}','${f.correlation}');`, "OWNER_TASK_INTERNAL_ONLY");
         refuses(`set role service_role;set request.jwt.claims='{"role":"service_role","sub":"${actor}"}';select ${name}('${f.event}','${f.act}','${f.correlation}');`, "OWNER_TASK_INTERNAL_ONLY");
       }
-      for(const name of ["_owner_task_source_snapshot(uuid,uuid)","_read_owner_task_act(uuid,uuid,text)","_read_crm_command_result_scoped(uuid,uuid,jsonb,text)"])
+      for(const name of ["_owner_task_source_snapshot(uuid,uuid)","_read_owner_task_act(uuid,uuid,text)","_read_crm_command_result_scoped(uuid,uuid,jsonb,text)",
+        "_owner_task_approval_projection(public.paige_pending_approvals)","paige_owner_task_approval_context()"])
         for(const role of ["anon","authenticated","service_role"])
           assert.equal(sql(`select has_function_privilege('${role}','public.${name}','EXECUTE');`), "f");
     });
@@ -274,6 +352,19 @@ async function ownerTaskNativeProof() {
         select paige_reconcile_orchestration_acts();`);
       assert.equal(sql(`select outcome from paige_act_executions where id='${f.row.id}';`), "executed");
       assert.equal(sql(`select status from paige_pending_approvals where metadata->>'act_execution_id'='${f.row.id}';`), "approved");
+    });
+    const landedDisplay = held(1960); approve(landedDisplay); claim(landedDisplay);
+    check("later privileged display corruption cannot hide a landed receipt or block truthful operational recovery", () => {
+      const landed = bridge(landedDisplay); assert.equal(landed.state, "found");
+      sql(`alter table paige_pending_approvals disable trigger paige_owner_task_approval_context;
+        update paige_pending_approvals set summary='Privileged corruption after execution' where metadata->>'act_execution_id'='${landedDisplay.row.id}';
+        alter table paige_pending_approvals enable trigger paige_owner_task_approval_context;`);
+      assert.equal(bridge(landedDisplay, true).result.readback.id, landed.result.readback.id);
+      assert.equal(bridge(landedDisplay).result.readback.id, landed.result.readback.id);
+      age(landedDisplay); sql("select paige_reconcile_orchestration_acts();");
+      assert.equal(sql(`select outcome from paige_act_executions where id='${landedDisplay.row.id}';`), "executed");
+      assert.equal(sql(`select status from paige_pending_approvals where metadata->>'act_execution_id'='${landedDisplay.row.id}';`), "approved");
+      assert.equal(resultCount(landedDisplay), "1");
     });
     const g = held(200); approve(g); claim(g);
     check("semantic edits with unchanged timestamp are refused", () => {

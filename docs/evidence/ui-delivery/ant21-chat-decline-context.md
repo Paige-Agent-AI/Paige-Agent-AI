@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: prior Chat proposal -> owner Not now -> existing scoped confirmation consumption -> trusted current-turn reply context -> canonical terminal with the same answer shown on the wire.
-PAIGE_UI_DESIGN: PASS: existing visible-flow/protected-behavior guidance applied; server reply-context repair without interface, navigation, controls, layout, styling or motion changes.
+PAIGE_UI_DESIGN: PASS: existing visible-flow/protected-behavior guidance applied; server reply-context repair and truthful existing decision-record copy; no navigation, control, layout, styling or motion changes.
 MATERIAL_FLOW_CHANGE: NO: restore truthful behavior of the existing decline interaction and its existing failed-cancellation mutation brake; no new flow, action, approval or authority.
 FLOW_PROTOTYPE: NOT_REQUIRED: existing Not now interaction repaired without introducing controls or workflow states.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO customers decline an approval once and receive a reply that recognizes their choice.
@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: no layout change.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
 STATE_COVERAGE: PASS: matched decline, unmatched token, failed cancellation under confirm and auto, adversarial CRM tool request, read-only continuation, exact prior proposal history, stale re-Approve/replay, ordinary approval controls and scoped CRM refusal regressions.
 TRUTHFUL_STATE_LABELS: PASS: acknowledges the choice without promoting a no-error cancellation pass into matched consumption, completed cancellation, non-execution or unchanged-record proof; failed verification remains explicit.
-SOLO_UI: NO: shared server conversation-context and canonical CRM door guard only; existing SOLO shell components unchanged.
+SOLO_UI: YES: existing Chat decline decision record now reports the owner's actual choice without claiming a verified business outcome.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport observation in this isolated repair.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated viewport observation in this isolated repair.
 UNVERIFIED: production behavior, live provider wording, authenticated paired accounts, Live-specific behavior, full 18/50 disposition and final owner acceptance.
 OWNER_INTENT: restore usable governed business actions for every eligible current and future SOLO business while respecting a person's decision not to proceed.
 MUST_NOT_HAPPEN: asking the person to make the same decline again, treating cancellation-pass success as matched native evidence, re-proposing without new instruction, or dispatching CRM work after failed decline persistence.
@@ -53,6 +61,15 @@ on the other native action doors. The bounded extension restores that same check
 normalization or dispatch. A refusal is marked `refused_before_run` and `not_applied`, because the
 native CRM handler has not been invoked. No permission evaluator, confirmation engine or domain
 writer is added or changed. This material guard change requires distinct security review.
+
+The existing optimistic decision record previously said `Skipped · nothing changed`, even while
+server recording was pending or had timed out. It now says `You chose Not now`: the owner's real
+choice, without asserting successful cancellation, absent prior effects or unchanged records.
+The pending and timed-out decline regression cases prohibit the former unsupported outcome claim.
+No decision state, request, historical receipt, control or recovery action changes.
+The focused decision-record and actual Chat approval-recovery suites pass 40 tests across two files,
+including pending and timed-out decline assertions. Focused ESLint, Impeccable detection and whitespace
+checks pass for this follow-up. Browser/provider and viewport acceptance remain unverified.
 
 ## Failing-first and regression evidence
 

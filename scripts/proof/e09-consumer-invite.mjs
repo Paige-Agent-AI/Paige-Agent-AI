@@ -129,9 +129,14 @@ try {
  if(!baselineOnly){sql(migration); const once=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);"); sql(migration);assert.equal(sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);"),once,'Migration replay must be idempotent');
  check('Other invitation branches preserved byte-for-byte',()=>{const tail=s=>s.slice(s.indexOf("  ELSIF _tok.kind = 'subaccount_owner' THEN"),s.indexOf('  UPDATE public.tenant_invite_tokens SET uses =')); assert.equal(tail(once),tail(before));}); }
  if(entry) {
-   const entrySource=fs.readFileSync(path.join(root,'supabase/migrations/20271108120000_e09_customer_invitation_entry.sql'),'utf8');
-   sql(entrySource); const applied=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);");
-   sql(entrySource); assert.equal(sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);"),applied);
+   const entrySources=['20271108120000_e09_customer_invitation_entry.sql','20271108120100_e09_consumer_invitation_peek.sql']
+     .map(file=>fs.readFileSync(path.join(root,'supabase/migrations',file),'utf8'));
+   for(const source of entrySources)sql(source);
+   const applied=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);");
+   const peekApplied=sql("SELECT pg_get_functiondef('public.peek_tenant_invite(text)'::regprocedure);");
+   for(const source of entrySources)sql(source);
+   assert.equal(sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);"),applied);
+   assert.equal(sql("SELECT pg_get_functiondef('public.peek_tenant_invite(text)'::regprocedure);"),peekApplied);
    for(const [name,options,valid] of [
      ['unused consumer',{limit:null},true],['used unlimited consumer',{used:true},false],
      ['recorded consumer acceptance despite count drift',{lastUsed:true},false],

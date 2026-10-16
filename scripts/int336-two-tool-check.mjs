@@ -4,7 +4,7 @@ const unknownTool=process.env.INT336_UNKNOWN_TOOL;
 const recoveryMode=process.env.PLANNING_RECOVERY;
 if(recoveryMode)assert.ok(['lost','gateway','missing-readback','refused'].includes(recoveryMode));
 const knowledgeMode=process.env.KNOWLEDGE_INGEST_TEST;
-if(knowledgeMode){assert.ok(['success','uncertain','refused','partial'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
+if(knowledgeMode){assert.ok(['success','uncertain','refused','partial','unrecorded'].includes(knowledgeMode));assert.ok(!recoveryMode&&!unknownTool);}
 const automationMode=process.env.AUTOMATION_DRAFT_TEST;
 if(automationMode){assert.ok(['success','uncertain','refused'].includes(automationMode));assert.ok(!knowledgeMode&&!recoveryMode&&!unknownTool);}
 const researchMode=process.env.RESEARCH_READBACK_TEST;
@@ -34,7 +34,8 @@ globalThis.fetch=async(url,opts)=>{
   ingestRequests.push({body:JSON.parse(opts.body),authorization:opts.headers.Authorization});
   return Response.json(knowledgeMode==='uncertain'?{ok:false,doc_id:'00000000-0000-4000-8000-000000000009',error:'persistence_unverified',chunk_count:0,embedded:false}
    :knowledgeMode==='refused'?{ok:false,ingestion_started:false}
-   :{ok:true,doc_id:'00000000-0000-4000-8000-000000000009',chunk_count:1,embedded:knowledgeMode!=='partial'},
+   :{ok:true,doc_id:'00000000-0000-4000-8000-000000000009',chunk_count:1,embedded:knowledgeMode!=='partial',
+    ...(knowledgeMode==='unrecorded'?{tenant_id:tenant,verified:true,railRecorded:false,outcome:'capability_completed_unrecorded',run_id:'00000000-0000-4000-8000-000000000010'}:{})},
    {status:knowledgeMode==='uncertain'?400:knowledgeMode==='refused'?403:200});
  }
  if(!String(url).includes('api.anthropic.com')) return new Response('{}',{status:503});
@@ -278,6 +279,15 @@ if(knowledgeMode){
  const effect=receipts[0].bundle_ref.interactive.effects.find(e=>e.tool==='save_to_knowledge_base');
  assert.equal(effect.outcome,knowledgeMode==='uncertain'?'outcome_unknown':knowledgeMode==='refused'?'reported_failure':'reported_success');
  if(knowledgeMode!=='refused')assert.ok(effect.record_refs.some(r=>r.kind==='knowledge_document'&&r.id===id(9)));
+ if(knowledgeMode==='unrecorded'){
+  assert.equal(effect.run_id,id(10),'native operation identity retained');
+  const actionSteps=wire.split('\n').filter(line=>line.startsWith('data: ')).flatMap(line=>{try{return [JSON.parse(line.slice(6)).paige_step]}catch{return []}}).filter(step=>step?.kind==='action');
+  assert.ok(actionSteps.some(step=>step.status==='done'),'verified saved Knowledge is not a failed business act');
+  assert.equal(actionSteps.some(step=>step.status==='error'),false,'missing activity record must not imply failed save');
+  const audit=rec.inserts.filter(row=>row.table==='paige_audit_log'&&row.row.action==='save_to_knowledge_base');
+  assert.equal(audit.length,1,'existing separate audit remains');
+  assert.equal(audit[0].row.payload.outcome,'completed_unrecorded','audit must not turn verified data completion into failure');
+ }
  if(knowledgeMode==='uncertain'){
   assert.equal(receipts[0].bundle_ref.interactive.effects.length,1,'blocked successor is not an executed effect');
   assert.equal(rec.inserts.filter(c=>c.table==='paige_audit_log'&&c.row.action==='plan_create').length,0,'blocked successor has no write attribution');

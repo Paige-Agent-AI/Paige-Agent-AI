@@ -37,6 +37,35 @@ async function drive(data: unknown, options: { status?: number; raw?: string; th
   return { result: JSON.parse(outputs[0].content), calls, requestExecutionState };
 }
 describe('Knowledge Chat ingestion uses native scope and outcome evidence', () => {
+  it('keeps verified document completion separate from a native missing Rail receipt', async () => {
+    const { result, calls, requestExecutionState } = await drive({ ok: true, tenant_id: tenant, doc_id: doc, chunk_count: 1, embedded: true,
+      verified: true, railRecorded: false, outcome: 'capability_completed_unrecorded', run_id: doc });
+    expect(result).toMatchObject({ success: false, ok: false, verified: true, railRecorded: false, outcome: 'capability_completed_unrecorded', knowledge_doc_id: doc });
+    expect(result.note).toMatch(/saved.*activity|activity.*missing/i);
+    expect(result.note).toMatch(/do not repeat/i);
+    expect(classifySpentApproval(JSON.stringify(result), { reportsKnowledge: true })).toEqual({ outcome: 'ran', reason: 'completed_unrecorded' });
+    expect(interactiveEffect('save_to_knowledge_base', result)).toMatchObject({ outcome: 'reported_success', record_refs: [{ kind: 'knowledge_document', id: doc }] });
+    expect(requestExecutionState.needsReview).toBe(false); expect(calls).toHaveLength(1);
+  });
+  it('preserves a verified native receipt and partial indexing as separate facts', async () => {
+    const { result } = await drive({ ok: true, tenant_id: tenant, doc_id: doc, chunk_count: 1, embedded: false,
+      verified: true, railRecorded: true, outcome: 'capability_succeeded', run_id: doc });
+    expect(result).toMatchObject({ success: true, verified: true, railRecorded: true, run_id: doc, partial: true, embedded: false });
+  });
+  it.each([
+    { tenant_id: '00000000-0000-4000-8000-000000000099' }, { verified: false }, { railRecorded: false },
+    { run_id: 'bad-id' }, { outcome: 'capability_completed_unrecorded' },
+  ])('does not accept contradictory native receipt provenance: %j', async bad => {
+    const { result } = await drive({ ok: true, tenant_id: tenant, doc_id: doc, chunk_count: 1, embedded: true,
+      verified: true, railRecorded: true, outcome: 'capability_succeeded', run_id: doc, ...bad });
+    expect(result).toMatchObject({ success: false, outcome_unknown: true });
+  });
+  it('does not reinterpret another capability or uncertain Knowledge result as completed-unrecorded', () => {
+    const completed = { outcome: 'capability_completed_unrecorded', verified: true, railRecorded: false, success: false, knowledge_doc_id: doc };
+    expect(interactiveEffect('crm_create_contact', completed)?.outcome).toBe('reported_failure');
+    expect(interactiveEffect('save_to_knowledge_base', { ...completed, outcome_unknown: true })?.outcome).toBe('outcome_unknown');
+    expect(interactiveEffect('save_to_knowledge_base', { ...completed, verified: false })?.outcome).toBe('reported_failure');
+  });
   it('keeps the uncertain save separate from its definitely unexecuted approved successor', async () => {
     const prior = await drive(null, { thrown: new TypeError('Lost ingestion acknowledgement') });
     if (!reconciliationGuard) throw new Error('Canonical reconciliation guard missing');

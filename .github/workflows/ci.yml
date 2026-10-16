@@ -903,7 +903,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.
-          for mode in normal kill prior-success following-unknown protected-flip settle-fails commit-lost-ack disconnect; do
+          for mode in normal kill prior-success following-unknown protected-flip settle-fails commit-lost-ack disconnect settle-superseded settle-stopped settle-scope-flip release-superseded release-scope-flip commit-lost-ack-superseded publication-scope-flip publication-superseded publication-error publication-malformed; do
             CRM_APPROVAL_PAUSE_TEST="$mode" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           done
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-crm-task-read-check.mjs
@@ -971,6 +971,8 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation_race" node scripts/int346-isolation-db-check.mjs --real-window-race
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_answer_admission
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_answer_admission" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs --native-db
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_publication
+          PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_publication" node scripts/int336-publication-context-db-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

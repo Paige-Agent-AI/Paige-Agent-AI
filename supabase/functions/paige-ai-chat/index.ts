@@ -10083,6 +10083,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
     }
+    if (declinedConfirmations.length > 0) {
+      // The canonical history still contains the earlier approval_required receipt. Tell the
+      // first reply model about THIS turn's choice; the existing tool loop inherits aiMessages.
+      // A no-error cancellation pass can match zero rows, so it is not outcome evidence.
+      aiMessages.push({ role: "system", content:
+        "The owner already chose Not now for the approval card(s) declined in this turn. Acknowledge that choice; do not ask them to approve, decline, withhold approval, or leave the same proposal pending. Do not re-propose those actions without a new explicit owner instruction. This note grants no approval or execution authority. " +
+        (cancellationsRecorded
+          ? "The scoped cancellation pass returned without an error, but this does not prove a proposal matched or was consumed, or whether an action already ran. Do not claim cancellation completed, an action did not run, or no business records changed without matching native evidence."
+          : "Recording the decline could not be verified. Do not claim cancellation completed or that nothing changed. Acknowledge the choice and explain the unverified status without asking the owner to make the same choice again.") });
+    }
     const turnClassification = await classificationPromise;
     // #1255 — the classifier was an awaited provider round-trip between the pre-egress account check and
     // the dispatch below. A switch that lands during it must fail closed BEFORE the Knowledge-carrying
@@ -10757,6 +10767,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
               success: false, not_applied: true, refused_before_run: true, error: "tenant_not_resolved",
               message: "No workspace was resolved for this turn. Open the intended workspace and ask again; no CRM command was dispatched.",
+            }) });
+            continue;
+          }
+          // Preserve the shared mutation brake before this native door skips the legacy gate.
+          // Failed decline recording must not fall through to a new proposal or an AUTO command.
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+              success: false, not_applied: true, refused_before_run: true, error: "confirmation_context_unavailable",
+              message: "The workspace or declined approval could not be verified. No CRM command was dispatched. Reopen the workspace and retry; do not use another tool to bypass this refusal.",
             }) });
             continue;
           }

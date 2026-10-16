@@ -383,6 +383,7 @@ SELECT * FROM pg_temp.e09_action_case('null response kind','{}',false,NULL);
 -- E09_DOCUMENTS_BEGIN: actual native file/Storage/Rail contracts, same rolled-back suite.
 SELECT is(has_function_privilege('anon','public.client_portal_begin_file_upload(uuid,uuid,text,text,bigint,uuid)','EXECUTE'),false,'anonymous upload reservation denied');
 SELECT is(has_function_privilege('authenticated','public._client_portal_file_projection(public.client_files)','EXECUTE'),false,'internal file projector is not a consumer endpoint');
+SELECT is(has_table_privilege('authenticated','public.paige_client_events','SELECT'),false,'raw Rail remains closed; use its incumbent scoped projection');
 SELECT ok((SELECT NOT public AND file_size_limit=20971520 AND cardinality(allowed_mime_types)=4 FROM storage.buckets WHERE id='client-files'),'intended bucket is private with the approved20MB/type limit');
 SELECT ok(NOT EXISTS(SELECT 1 FROM pg_publication WHERE pubname='supabase_realtime') OR EXISTS(SELECT 1 FROM pg_publication_tables WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='client_files'),'incumbent file subscriptions have native publication coverage where Realtime exists');
 
@@ -511,9 +512,13 @@ BEGIN
     (_internal_file,_tenant,_contact,_owner,_internal_path,'Internal preparation.pdf','application/pdf',4,'internal');
    PERFORM public.record_rail_event(p_contact_id=>_contact,p_event_kind=>'client.document_uploaded',p_surface=>'client_portal',
     p_actor_type=>'client',p_title=>'Existing staff producer',p_ref_table=>'client_files',p_ref_id=>_staff_file,p_tenant_id=>_tenant);
+   -- Actual writer above ran with the owner JWT/role. Raw Rail SELECT remains
+   -- deliberately revoked in production; fixture-administrator readback below
+   -- proves the effect without inventing an ordinary caller grant.
+   RESET ROLE;
    RETURN NEXT is((SELECT count(*) FROM public.paige_client_events WHERE ref_id=_staff_file AND actor_user_id=_owner AND tenant_id=_tenant),1::bigint,
     _label||': incumbent staff producer without a customer identity retains native Rail authority');
-   RESET ROLE;UPDATE public.profiles SET active_tenant_id=_staff_context WHERE user_id=_owner;
+   UPDATE public.profiles SET active_tenant_id=_staff_context WHERE user_id=_owner;
    PERFORM set_config('test.actor',_actor::text,true);
    PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);
    SET LOCAL ROLE authenticated;

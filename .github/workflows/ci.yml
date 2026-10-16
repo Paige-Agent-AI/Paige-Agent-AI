@@ -911,6 +911,7 @@ jobs:
           KNOWLEDGE_INGEST_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           KNOWLEDGE_INGEST_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           KNOWLEDGE_INGEST_TEST=partial node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          KNOWLEDGE_INGEST_TEST=unrecorded node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           AUTOMATION_DRAFT_TEST=success node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           AUTOMATION_DRAFT_TEST=uncertain node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           AUTOMATION_DRAFT_TEST=refused node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs

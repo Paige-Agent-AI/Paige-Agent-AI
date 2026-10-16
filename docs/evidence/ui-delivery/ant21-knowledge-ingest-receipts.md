@@ -17,7 +17,15 @@ ZOOM_REFLOW: NOT_APPLICABLE: no geometry or responsive behavior changed.
 REDUCED_MOTION: NOT_APPLICABLE: no motion introduced.
 STATE_COVERAGE: PASS: saved and recorded, saved with unconfirmed receipt, partial indexing, unknown persistence, lost HTTP or receipt acknowledgement, changed scope, absent save and contradictory receipt envelopes.
 TRUTHFUL_STATE_LABELS: PASS: verified document completion, indexing completeness and receipt acknowledgement are distinct; an unconfirmed receipt never implies that the document was not saved or that the receipt row definitely does not exist.
-SOLO_UI: NO: shared backend outcome repair applies to every eligible existing and future SOLO tenant, without an account-specific UI or implementation.
+SOLO_UI: YES: shared backend outcome repair changes visible save-result truth in the canonical SOLO Chat for every eligible existing and future account.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated save-result viewport observation in this backend candidate.
 UNVERIFIED: native PostgreSQL receipt persistence and ACL readback, composed source fingerprints, Independent Review, exact-head CI, production deployment, paired ordinary authenticated Chat/reload and separate Live behavior.
 OWNER_INTENT: restore governed business actions with real canonical records, durable activity evidence and truthful recovery.
 MUST_NOT_HAPPEN: no blind re-ingestion or document deletion after a receipt failure; no exactly-once ingestion claim, foreign-tenant result, duplicated metadata/delete recorder or fabricated release evidence.
@@ -137,3 +145,44 @@ SOLO customer behavior. Academy and Antonio remain representative QA accounts, n
 implementation targets. Equivalent entitlement, tenant isolation and future-account behavior
 remain part of the original 18-capability / 50-parity acceptance scope. Live needs its own proof;
 neither this candidate nor Chat-only evidence establishes Live completion or owner acceptance.
+
+## Local composition checkpoint — 2026-10-16
+
+This development candidate composes the reviewed receipt change `c0eb275a` and Knowledge panel
+fit `9ad125e5` on `8335a25287fb2bb2339227d2c48a595f5f960c85`, retaining its two-file CI repair.
+The lead's reviewed CRM ancestry pins `87fced8e` and Master closeout `b2af0c52` are retained;
+the pre-checkpoint composition is `5811bf36e70783dcebd09b8e0218e14182b01835`.
+No source conflict or semantic rewrite was required. The inherited
+component evidence above remains evidence about its stated component; it is not a production claim.
+
+The unchanged approved browser drive was repeated against the composed real-component mount,
+with output redirected outside source to preserve the original captures: all 54 local synthetic
+geometry/interaction observations pass. The initial cold Vite navigation exceeded the existing
+20-second load deadline; after observing the mount serving HTTP 200, the unchanged drive passed.
+Both attempts are retained locally. Fresh narrow/light and 320px frames were visually inspected;
+source/provenance containment, hierarchy and keyboard reach are preserved. This is synthetic
+Chromium evidence, not authenticated save-result, production isolation or physical-device proof.
+
+Fresh combined checks pass: 277 assertions in 17 native/Chat/approval/receipt/UI/shell suites,
+78 core-persistence/delete assertions in three more suites, 1045 full actual-Chat-handler checks,
+all five Knowledge handler modes, 17 answer-admission and nine native-marker history controls,
+22 actual-handler contact-summary checks, interactive lifetime, conversational INT-346 degraded
+mode and the SOLO parity guard with all 18 controls. Existing negative tests remain intact.
+CI now also runs the new `KNOWLEDGE_INGEST_TEST=unrecorded` handler mode beside its four
+incumbent Knowledge modes; no check, timeout, baseline or negative control is waived.
+
+Native `kb-ingest-doc` passes Deno 2.9.6 with the existing CI flags. Chat retains nine inherited
+diagnostics and passes the unchanged comparator with no new/increased diagnostics; raw Chat
+type checking still exits 1. Focused ESLint has no errors and one existing harness fast-refresh
+warning. Installed Impeccable Adapt/craft-floor/Polish checks preserve the approved layout;
+its changed-file detector exits 0 with 17 incumbent design-system advisories. Existing DESIGN.md
+and its sidecar drift is not repaired in this bounded composition.
+
+The composed native save still distinguishes verified document/chunks, partial embedding and
+unconfirmed activity persistence. Root's distinct source inspection passed the runtime delta;
+the prior distinct UI component review is retained. Final exact-head review, reviewed renewal of
+29 dispatch scalars plus the single native endpoint dependency, required CI, release/source
+readback, native receipt persistence and reload, paired ordinary authenticated customer QA,
+separate Live proof and owner acceptance remain owed. The existing 18-capability/50-parity
+registers and shared applicability to every eligible current/future SOLO account remain open.
+No provider, credential, role, SQL, migration, activation or production effect was performed here.

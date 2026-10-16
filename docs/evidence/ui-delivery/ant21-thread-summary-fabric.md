@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restores existing summary maintenance and intended pro
 FLOW_PROTOTYPE: NOT_REQUIRED: existing compaction lifecycle and human workflow remain unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible owner can continue a long working conversation without losing attributed earlier context or allowing another workspace/thread into its summary.
 VISUAL_DIRECTION: PASS: incumbent Chat/Live surfaces, design tokens and compaction presentation preserved without frontend edits.
-AUTOMATED_EVIDENCE: PASS:21 actual-handler fold/recall cases;4 metadata controls (2 actual handler and2 exact private closure);154 Fabric assertions including all146 incumbents;1103 client-memory assertions;457 Knowledge scope assertions;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. Fresh integration results and prior-only bounds are distinguished below. All provider/database ports here are synthetic.
+AUTOMATED_EVIDENCE: PASS:31 actual-handler fold/recall/stream-budget cases;4 metadata controls (2 actual handler and2 exact private closure);171 Fabric assertions including all146 original incumbents;1103 client-memory assertions;462 Knowledge scope assertions;18 incumbent actual Chat/native-door approval-pause modes;9 anchor source/migration guards; compaction smoke reports0 failures. Successor results, rejected predecessor and prior-only bounds are distinguished below. All provider/database ports here are synthetic.
 STATIC_EVIDENCE: PASS: source parses through the incumbent real-handler loader; shared Fabric ESLint0, Chat baseline403/current403 with no introduced diagnostic signatures, Node fixture syntax and whitespace pass. Native Deno typecheck remains UNVERIFIED because the exact remote SDK import is not cached/resolvable.
 RENDERED_EVIDENCE: UNVERIFIED: no browser session or new geometry rendering; frontend files are unchanged.
 BEHAVIORAL_EVIDENCE: PASS: real handler plus real Fabric/adapters/budget execute against recording transport and protected SDK ports; positive primary/fallback and negative authority/CAS/error paths are observed. This is not real provider or native-RLS acceptance.
@@ -31,7 +31,7 @@ MUST_NOT_HAPPEN: no foreign/changed-workspace transcript egress, stale-owner sum
 MUST_PRESERVE: existing attribution prompt, both fold callers, 12-turn cadence tail/5-turn floor/token hysteresis, canonical watermark CAS, failed-write truth, Studio/anchor fields and restrictions, P0 WAIT_APPROVAL durable pause, native action writers, actor JWT, tenantless native owner standing and current-main Portal/Task/Social source.
 ACCEPTANCE_CRITERIA: a valid scoped fold uses operational OpenAI with2048 output cap; a proven pre-response health failure may use Anthropic only after fresh caller authority; refused or uncertain scope sends/writes nothing further; only one matching native row with the original watermark can acknowledge compaction. Real provider-backed customer acceptance remains owed.
 PROTECTED_SEAMS: affected and tested: actor/thread/workspace binding, canonical summary CAS/readback, Memory attribution, protected-content egress, provider/budget/fallback, Chat transcript maintenance. Existing approval/Spine/native effect writers are preserved and18 P0 modes regress them. Auth/JWT cryptography and native RLS remain unverified. Entitlement/signup/paywall/billing/provisioning, Rail business receipts, Live state machine, Secure Browser/Vault/credential storage, provider status/real sends, durable jobs/schedulers, shell geometry, scroll/focus/accessibility source are unchanged.
-INTERNAL_BUILD_IDENTITY: base=086d1d8f4d16a11df2a011fc31d0b162dfa0995c; branch=fix/ant21-chat-model-integration; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
+INTERNAL_BUILD_IDENTITY: base=086d1d8f4d16a11df2a011fc31d0b162dfa0995c; branch=fix/ant21-chat-model-egress-scope; candidate=the Git commit carrying this record; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat scoped source candidate has not been deployed); evidence=docs/evidence/ui-delivery/ant21-thread-summary-fabric.md.
 RELEASE_CHANNEL: development: source candidate only; no provider activation or rollout change.
 RELEASE_CLASSIFICATION: internal-only: scoped provider-routing and maintenance correctness repair.
 CUSTOMER_RELEASE_IDENTITY: none: no released or owner-accepted outcome claimed.
@@ -232,3 +232,64 @@ changes plus the one model-fabric SOURCE digest; the other96 dependency digests 
 only those values in memory gives29 tools and zero findings, without writing the guard. Actual
 reviewed renewal belongs to the lead after exact composition review. Source/CI preparation is not
 a green required-CI, merged, deployed, activated or customer-accepted result.
+
+## Streaming budget-await P1 successor
+
+The distinct approval-postcommit review REJECTED cc892011e6cbb88c7b4dce10a95e5e8e92bf7141:
+its final caller binding preceded fabricChatStream's awaited main budget read. The actual handler
+sent its synthetic recalled summary to OpenAI after a switch in that wait. The reviewer separately
+confirmed Anthropic fallback's internal gateway budget wait. Completion callbacks protect folding,
+but did not protect these streaming sinks. The old branch/head and its review history are retained;
+its prior green tests/pin proposal are not release authority for this successor.
+
+The lead explicitly extended shared-file ownership to the incumbent gatewayCompat in claude.ts.
+Current main's Claude blob0c4e401186ff3fb26782476e936283bbabe64fd7 matched this base exactly,
+and all48 current open PR changed-file lists were read successfully; none changed claude.ts.
+No source collision was found. The extra dependency review/digest requirement is acknowledged,
+not masked as a Fabric-only change.
+
+fabricChatStream now accepts the same optional trusted in-process beforeProviderAttempt contract.
+OpenAI checks it after its existing awaited budget gate. Anthropic forwards it to gatewayCompat,
+which checks after its own existing awaited budget/ceiling reads and before invoking the actual
+provider. Its shaping between that check and fetch is synchronous. No budget gate is skipped,
+moved or reclassified. Existing callers omitting the callback preserve their path. A false,
+synchronous throw or rejected promise returns terminal caller_refused, clears the projected route,
+and never enters provider-health failure/fallback classification or emits a provider-error trace.
+Only a trusted server closure supplies it; model/request JSON cannot provide authority.
+
+All five shared Chat streaming call sites bind the existing protected-evidence scope revalidator:
+initial reply, tool loop, claim correction, action continuation and closing/Live answer. Recalled
+summary binding still uses its post-row maintenance check, which bypasses callback recursion.
+Initial caller refusal returns the established ACTIVE_ACCOUNT_CHANGED409; later paths retain
+their existing protected-content hold, truthful interruption and canonical effect accounting.
+No executor, native effect writer, approval or lifetime/publication contract is replaced.
+
+Failing first on unchanged cc892 runtime:26 PASS/4 FAIL in30 actual-handler cases. Failures cover
+OpenAI main-budget boundary3, Anthropic-primary boundary3 and fallback table-port boundaries4/5.
+The table callback also materializes a failed-provider trace insert, so the full fixture's actual
+fallback transport occurs at port call5; both4 and5 remain refusal cases. The first draft incorrectly
+expected4 in that positive calibration and reported25/3; correction retained the genuine failures.
+The first post-fix run reported29/1 because its added callback legitimately made seven canonical
+summary reads before first egress, versus the prior six. The positive exact count was re-derived,
+and an additional switch-during-that-new-read-seven case was added; no refusal was relaxed.
+Final actual-handler31/0 and focused metadata4/0 PASS. Same-scope primary/fallback and a later
+switch control still prove the useful existing route; early switches prove zero egress.
+
+New streaming Fabric controls failed17/17 before the extension while all154 incumbents passed;
+afterward171/171 PASS. They cover false/throw/rejection on both providers, route clearing,
+allowed primary/health fallback and refusal inside actual OpenAI/fallback gateway cost-estimate
+SELECT awaits. These direct budget cases exclude trace INSERT callbacks. Client-memory1103 PASS.
+First Knowledge run448/14 honestly failed stale exact persona timing assumptions. Re-derived
+tables add one callback per actual stream: tool+text11, two-tools+text12, text7,
+tool+failed-continuation+closing12 and credit-document11. Intended per-tool, post-drain,
+pre-emission, continuation, closing and sent-approval switch fixtures move to those real boundaries;
+the document late-switch positive is strengthened to exactly two provider calls. Knowledge462/0
+PASS, including five extra all-boundary assertions from the new document check. Assertions are
+retained; no native permission, completion or failure claim is replaced with fixture success.
+
+The same two existing INT336 commands now run31+4 focused cases; the metadata import also runs31.
+There is no new workflow or test engine. Source contract remains byte-identical to086d:97 entries,
+extractor/metadata/refusal tests and P0 interactive88d238 digest preserved. The new read-only
+proposal must include29 dispatch values and TWO source digests, model-fabric.ts and claude.ts;
+the other95 dependencies match. No pins are renewed in this branch. Distinct exact successor
+review, hosted gates, native/provider/browser/authenticated acceptance and deployment remain owed.

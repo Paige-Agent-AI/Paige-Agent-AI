@@ -30,7 +30,7 @@ globalThis.fetch=async(url,options)=>{
  if(!body.stream)return reply(JSON.stringify(state.options.answerRoute
   ?{intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.99}
   :{intent:'converse',research:'none',difficulty:'trivial',image:'none',needs_workspace_data:false,confidence:.99}));
- state.mainBodies.push({provider,body,current:state.current,summaryReads:state.summaryReads});
+ state.mainBodies.push({provider,body,current:state.current,summaryReads:state.summaryReads,budgetReads:state.budgetReads});
  state.mainStreams++;
  state.answerProviders.push(provider);
  if(provider==='openai'){
@@ -46,7 +46,7 @@ const matches=(row,filters)=>filters.every(([op,key,value])=>op==='eq'?row[key]=
 export async function drive(options={}){
  const stamp='2026-10-15T12:00:00Z';
  const count=options.noFold?1:options.postOnly?14:15;
- state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,answerProviders:[],transcriptReads:0,summaryWrites:0,executor:null,
+ state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,budgetReads:0,answerProviders:[],transcriptReads:0,summaryWrites:0,executor:null,
   row:{id:thread,caller_user_id:options.foreignActor?id(99):actor,tenant_id:options.foreignTenant?other:tenant,
    message_count:count,summary:options.prior??null,summary_through_seq:0,last_compacted_at:null,title:'Fixture thread',studio_session_id:null},
   turns:Array.from({length:count},(_,i)=>({role:i%2?'assistant':'user',content:`old scoped turn ${i+1}`,seq:i+1,created_at:stamp}))};
@@ -80,7 +80,7 @@ export async function drive(options={}){
     return state.turns.filter(row=>filters.every(([op,key,value])=>op==='gt'?row[key]>value:op==='eq'&&key==='role'?row[key]===value:true));
    }},
   serviceTables:{admin_app_settings:[{key:`llm_budget_daily_usd__t_${tenant}`,value:1}],
-   paige_llm_trace:()=>{if(options.duringBudget)state.current=other;return options.budget?[{tenant_id:tenant,cost_estimate_usd:10,created_at:new Date().toISOString()}]:[];}},
+   paige_llm_trace:()=>{state.budgetReads++;if(options.flipBudgetRead===state.budgetReads)state.current=other;if(options.duringBudget)state.current=other;return options.budget?[{tenant_id:tenant,cost_estimate_usd:10,created_at:new Date().toISOString()}]:[];}},
   rpcs:{check_rate_limit:{data:true,error:null},is_platform_owner:{data:false,error:null},get_actor_access:{data:{tier:'tenant'},error:null},
    current_user_tenant_id:()=>({data:state.current,error:null}),
    get_paige_persona_context:()=>({data:[{tenant_id:options.nullProfile?tenant:state.current,funding_enabled:false}],error:null}),
@@ -129,7 +129,7 @@ await check('post-turn fold uses same Fabric/binding path',{postOnly:true},r=>{a
 await check('post-turn provider scope switch cannot persist',{postOnly:true,afterProvider:true},r=>{assert.equal(r.folds.length,1);assert.equal(r.summaryWrites,0);});
 const privateSummaryMarker='PRIVATE-SUMMARY-MARKER';
 await check('same-workspace recalled summary reaches ordinary provider',{postOnly:true,prior:privateSummaryMarker},r=>{
- assert.equal(r.mainStreams,1);assert.equal(r.mainBodies[0].current,tenant);assert.equal(r.mainBodies[0].summaryReads,6);
+ assert.equal(r.mainStreams,1);assert.equal(r.mainBodies[0].current,tenant);assert.equal(r.mainBodies[0].summaryReads,7);
  assert.ok(JSON.stringify(r.mainBodies[0].body).includes(privateSummaryMarker));
 });
 await check('workspace change during earlier recall binding refuses ordinary provider',{postOnly:true,prior:privateSummaryMarker,flipSummaryRead:5},r=>{
@@ -139,6 +139,36 @@ await check('workspace change during earlier recall binding refuses ordinary pro
 await check('workspace change during final recalled-summary binding refuses ordinary provider',{postOnly:true,prior:privateSummaryMarker,flipSummaryRead:6},r=>{
  assert.equal(r.current,other);assert.equal(r.mainStreams,0);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);
  assert.ok(!r.wire.includes(privateSummaryMarker));
+});
+await check('workspace change during streaming callback binding refuses ordinary provider',{postOnly:true,prior:privateSummaryMarker,flipSummaryRead:7},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
+});
+await check('same-workspace recalled summary reaches primary after its streaming budget',{noFold:true,prior:privateSummaryMarker,answerRoute:'primary'},r=>{
+ assert.equal(r.mainBodies.length,1);assert.equal(r.mainBodies[0].provider,'openai');assert.equal(r.mainBodies[0].budgetReads,3);
+ assert.equal(r.mainBodies[0].current,tenant);assert.ok(JSON.stringify(r.mainBodies[0].body).includes(privateSummaryMarker));
+});
+for(const flipBudgetRead of [1,2])await check(`earlier budget read ${flipBudgetRead} workspace change refuses recalled summary`,{noFold:true,prior:privateSummaryMarker,answerRoute:'primary',flipBudgetRead},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
+});
+await check('main streaming budget workspace change refuses primary recalled-summary egress',{noFold:true,prior:privateSummaryMarker,answerRoute:'primary',flipBudgetRead:3},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
+ assert.equal(r.status,409);assert.ok(r.wire.includes('ACTIVE_ACCOUNT_CHANGED'));
+});
+await check('same-workspace fallback receives recalled summary after its own streaming budget',{noFold:true,prior:privateSummaryMarker,answerRoute:'fallback'},r=>{
+ assert.deepEqual(r.mainBodies.map(call=>call.provider),['openai','anthropic']);assert.deepEqual(r.mainBodies.map(call=>call.budgetReads),[3,5]);
+ assert.ok(r.mainBodies.every(call=>call.current===tenant&&JSON.stringify(call.body).includes(privateSummaryMarker)));
+});
+for(const flipBudgetRead of [4,5])await check(`fallback table-port boundary ${flipBudgetRead} workspace change refuses Anthropic recalled-summary egress`,{noFold:true,prior:privateSummaryMarker,answerRoute:'fallback',flipBudgetRead},r=>{
+ assert.equal(r.current,other);assert.deepEqual(r.mainBodies.map(call=>call.provider),['openai']);assert.equal(r.mainBodies[0].current,tenant);
+ assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
+ assert.equal(r.status,409);assert.ok(r.wire.includes('ACTIVE_ACCOUNT_CHANGED'));
+});
+await check('Anthropic-primary streaming budget workspace change refuses recalled-summary egress',{noFold:true,prior:privateSummaryMarker,flipBudgetRead:3},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainBodies.length,0);assert.equal(r.summaryWrites,0);assert.ok(!r.wire.includes(privateSummaryMarker));
+ assert.equal(r.status,409);assert.ok(r.wire.includes('ACTIVE_ACCOUNT_CHANGED'));
+});
+await check('later budget switch does not relabel already scoped primary dispatch',{noFold:true,prior:privateSummaryMarker,answerRoute:'primary',flipBudgetRead:4},r=>{
+ assert.equal(r.current,other);assert.equal(r.mainBodies.length,1);assert.equal(r.mainBodies[0].current,tenant);assert.equal(r.mainBodies[0].budgetReads,3);
 });
 console.log(`${checks} passed, ${failures} failed actual-handler summary Fabric checks; native SQL/provider acceptance remains unverified`);
 process.exitCode=failures?1:0;

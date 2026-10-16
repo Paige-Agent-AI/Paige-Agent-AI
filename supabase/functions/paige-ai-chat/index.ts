@@ -10219,11 +10219,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
         // "studio-design-agent" at the Studio-session branch above, which runs before this line.
         trace: traceFor("chat"),
+        beforeProviderAttempt: () => revalidateTenantKnowledgeScope(),
         // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
         anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
       }));
 
     if (response && !response.ok) {
+      if (response.attempts.at(-1)?.failure === "caller_refused") {
+        const refused = new Response(
+          JSON.stringify({ error: "Active workspace changed. Start this request again in the current workspace.", code: "ACTIVE_ACCOUNT_CHANGED" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+        return afterAnswerClaimFailure ? afterAnswerClaimFailure(refused) : refused;
+      }
       const errorId = crypto.randomUUID();
       const status = response.status;
       // C4c — an answer claimed for this turn is not stranded by the refusal: the question is asked again.
@@ -17974,7 +17982,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop") }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -18064,7 +18072,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // turn escalates here too: the manifest the correction round was sent and the manifest
               // its calls are graded against stay the same set.
               escalateTurn("claim correction");
-              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction") }));
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -18111,7 +18119,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // operational class with the full set: a cheap misread never keeps the turn's tools
                 // narrowed once the turn is KNOWN to be action work.
                 escalateTurn("action-intent continuation");
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation") }));
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -18258,7 +18266,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close") }));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME

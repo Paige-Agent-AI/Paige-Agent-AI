@@ -143,6 +143,8 @@ export interface FabricStream {
 
 export interface FabricOptions {
   trace?: TraceCtx;
+  /** Trusted caller authority after each leg's budget awaits; never model/request JSON. */
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
   /** Anthropic-only request extras the chat already sends (e.g. the dormant Studio thinking flag). */
   anthropicExtras?: Record<string, unknown>;
   /** Test seam: override the enabled set and transports. Never set by production callers. */
@@ -230,6 +232,11 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
 
   for (const c of use) {
     const model = c.model as string;
+    const callerRefused = (): FabricStream => {
+      attempts.push({ provider: c.provider, model, failure: "caller_refused", status: 0 });
+      if (opts.trace) opts.trace.fabric_route = null;
+      return { ok: false, status: 0, served: null, attempts };
+    };
     let opened: { ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: ProviderFailureClass };
     // #1856 — the projected route rides the ctx BEFORE the leg: the Anthropic gateway copies the ctx
     // at call time, so the attach must precede the dispatch; on open-success the projection is exact.
@@ -260,6 +267,11 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.trace?.tenant_id) {
           await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace, body.messages);
         }
+        if (opts.beforeProviderAttempt) {
+          let current = false;
+          try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+          if (!current) return callerRefused();
+        }
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch }, opts.trace);
       } else {
@@ -269,7 +281,8 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...body, model, stream: true, ...(opts.anthropicExtras ?? {}) }),
-        }, opts.trace);
+        }, opts.trace, opts.beforeProviderAttempt);
+        if (r.failureClass === "caller_refused") return callerRefused();
         const proven = PROVIDER_FAILURE_CLASSES.includes(r.failureClass as ProviderFailureClass) ? r.failureClass as ProviderFailureClass : undefined;
         opened = { ok: r.ok, status: r.status, body: r.body, failureClass: r.ok ? undefined : proven ?? classifyProviderFailure({ provider: "anthropic", status: r.status }) };
       }

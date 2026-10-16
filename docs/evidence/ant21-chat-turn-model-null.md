@@ -66,3 +66,9 @@ not waived by the metadata tests. Fresh metadata4 and the composed21 summary cas
 with Fabric154/client-memory1103/Knowledge457 and all18 P0 approval-pause modes. Both focused
 commands are wired into the existing required INT336 step. Final composed-head review, actual
 pin renewal, hosted CI, release and authenticated acceptance remain owed; no history is backfilled.
+
+The later streaming-budget review rejects cc892 as release authority. Its successor adds the
+existing trusted callback at the streaming Fabric and internal Anthropic budget boundary; the
+metadata runtime expression stays exact. Focused metadata4 and its imported31 actual-handler
+controls PASS on that successor. The original four metadata claims and their native proof limits
+are unchanged; see the shared summary evidence for rejected-head history and final review gates.

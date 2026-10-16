@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import ts from 'typescript';
 import {drive} from './thread-summary-fabric-check.mjs';
 
-// Reuse the incumbent actual-handler recording fixture; its21 fold/recall regressions
+// Reuse the incumbent actual-handler recording fixture; its31 fold/recall regressions
 // also run on import. Every transport is synthetic; no real provider/key/JWT.
 let passed=0,failed=0;
 async function check(name,run){try{await run();passed++;console.log(`PASS metadata ${name}`);}catch(error){failed++;console.error(`FAIL metadata ${name}: ${error.message}`);}}

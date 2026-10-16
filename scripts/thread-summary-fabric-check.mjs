@@ -27,18 +27,29 @@ globalThis.fetch=async(url,options)=>{
   const text=state.options.empty?'':'Scoped rolling recollection';
   return provider==='openai'?openReply(text,body.model):reply(text,body.model);
  }
- if(!body.stream)return reply(JSON.stringify({intent:'converse',research:'none',difficulty:'trivial',image:'none',needs_workspace_data:false,confidence:.99}));
+ if(!body.stream)return reply(JSON.stringify(state.options.answerRoute
+  ?{intent:'answer',research:'none',difficulty:'routine',image:'none',needs_workspace_data:true,confidence:.99}
+  :{intent:'converse',research:'none',difficulty:'trivial',image:'none',needs_workspace_data:false,confidence:.99}));
  state.mainBodies.push({provider,body,current:state.current,summaryReads:state.summaryReads});
  state.mainStreams++;
+ state.answerProviders.push(provider);
+ if(provider==='openai'){
+  if(state.options.answerRoute==='fallback')return Response.json({error:{type:'rate_limit_error',message:'synthetic'}},{status:429});
+  const response={id:'fixture-answer',model:body.model,status:'completed',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'Ordinary reply.'}]}],usage:{input_tokens:1,output_tokens:1}};
+  return new Response([{type:'response.created',response:{id:response.id,model:body.model}},
+   {type:'response.output_text.delta',delta:'Ordinary reply.'},{type:'response.completed',response}]
+   .map(event=>`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(''));
+ }
  return new Response('event: content_block_delta\ndata: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Ordinary reply."}}\n\nevent: message_delta\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\nevent: message_stop\ndata: {"type":"message_stop"}\n\n');
 };
 const matches=(row,filters)=>filters.every(([op,key,value])=>op==='eq'?row[key]===value:op==='is'?row[key]===value:true);
-async function drive(options={}){
+export async function drive(options={}){
  const stamp='2026-10-15T12:00:00Z';
- state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,transcriptReads:0,summaryWrites:0,executor:null,
+ const count=options.noFold?1:options.postOnly?14:15;
+ state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,answerProviders:[],transcriptReads:0,summaryWrites:0,executor:null,
   row:{id:thread,caller_user_id:options.foreignActor?id(99):actor,tenant_id:options.foreignTenant?other:tenant,
-   message_count:options.postOnly?14:15,summary:options.prior??null,summary_through_seq:0,last_compacted_at:null,title:'Fixture thread',studio_session_id:null},
-  turns:Array.from({length:options.postOnly?14:15},(_,i)=>({role:i%2?'assistant':'user',content:`old scoped turn ${i+1}`,seq:i+1,created_at:stamp}))};
+   message_count:count,summary:options.prior??null,summary_through_seq:0,last_compacted_at:null,title:'Fixture thread',studio_session_id:null},
+  turns:Array.from({length:count},(_,i)=>({role:i%2?'assistant':'user',content:`old scoped turn ${i+1}`,seq:i+1,created_at:stamp}))};
  const append=(role,content,bundle_ref)=>{state.turns.push({role,content,bundle_ref,seq:state.turns.length+1,created_at:new Date().toISOString()});state.row.message_count++;};
  const rec=setScenario({authUser:{id:actor},declaredActiveTenantId:tenant,
   tableErrors:{'paige_chat_threads:update':options.writeFail?{code:'42501',message:'synthetic write rejection'}:null},

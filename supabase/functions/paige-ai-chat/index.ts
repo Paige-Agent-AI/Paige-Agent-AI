@@ -6291,7 +6291,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const writeAssistant = async () => await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
-          p_model: meta.model ?? "google/gemini-2.5-flash", p_tokens_used: null, p_latency_ms: null,
+          p_model: meta.model ?? null, p_tokens_used: null, p_latency_ms: null,
           p_bundle_ref: (interactive ? { ...((meta.bundleRef ?? {}) as Record<string, unknown>),
             interactive: { ...(((meta.bundleRef as any)?.interactive ?? {}) as Record<string, unknown>), request_intent_id: payloadRequestIntentId } }
             : (meta.bundleRef ?? null)) as any, p_tool_calls: null,

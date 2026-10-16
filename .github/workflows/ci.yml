@@ -975,6 +975,7 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_publication" node scripts/int336-publication-context-db-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_approval_recovery
           PSQL_BIN="$PGBIN/psql" APPROVAL_RECOVERY_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_approval_recovery" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          OPERATOR_PROOF_PSQL="$PGBIN/psql" PLANNING_PROOF_PORT="$PORT" node scripts/planning-native/check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

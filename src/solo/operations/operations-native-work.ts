@@ -33,12 +33,12 @@ export function presentNativeWork(native: NativeOperationsWork) {
   if (native.source === "planning") return { native, id:native.key, title:native.record.title,
     summary:native.record.summary, status:native.record.status, priority:native.record.priority,
     item_type:native.record.item_type, assigned_to_user_id:native.record.assigned_to_user_id,
-    plan_id:native.record.plan_id, due_at:native.record.due_at, updated_at:native.record.updated_at,
+    plan_id:native.record.plan_id, due_at:native.record.due_at, remind_at:native.record.remind_at, updated_at:native.record.updated_at,
     linked_action_id:native.record.linked_action_id };
   return { native, id:native.key, title:row.title, summary:native.record.description,
     status:nativeWorkStage(native), priority:native.record.recorded_priority,
     item_type:"task", assigned_to_user_id:native.record.user_id, plan_id:null,
-    due_at:native.record.due_date, updated_at:native.record.updated_at ?? native.record.created_at,
+    due_at:native.record.due_date, remind_at:null, updated_at:native.record.updated_at ?? native.record.created_at,
     linked_action_id:null };
 }
 

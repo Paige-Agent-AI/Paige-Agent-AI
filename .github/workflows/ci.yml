@@ -41,9 +41,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest from ECR Public.
-        # Avoid shared-runner Docker Hub anonymous pull throttling before proof starts.
-        image: public.ecr.aws/docker/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
+        # Docker Official PostgreSQL 16, immutable linux/amd64 manifest.
+        # Same bytes verified at Docker Hub; ECR Public refused runner pulls before tests.
+        image: docker.io/library/postgres@sha256:75adc2a65806c96bc0e59030230bfe3f1c1b0d6d8f8181a8913e2b8b53bdc166
         env:
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
@@ -900,6 +900,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-crm-task-read-check.mjs
           PLANNING_RECOVERY=lost node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           PLANNING_RECOVERY=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           PLANNING_RECOVERY=missing-readback node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
@@ -935,6 +936,7 @@ jobs:
           BOOKING_READBACK_TEST=role-denied node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-preview-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-native-pipeline-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/crm-approval-summary-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
           INT336_ERROR_KIND=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-error-receipt-check.mjs
           INT336_UNKNOWN_TOOL=plan_create node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs

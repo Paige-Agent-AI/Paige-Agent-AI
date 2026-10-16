@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 const edge = readFileSync("supabase/functions/crm-command/index.ts", "utf8");
@@ -7,6 +8,18 @@ const identityMigrationPath = "supabase/migrations/20270523000000_crm_contact_na
 const originalCrmMigration = readFileSync("supabase/migrations/20270204000000_governed_crm_contact_company_commands.sql", "utf8");
 
 describe("canonical CRM action door", () => {
+  it("renders canonical create summaries through the actual approval handler without changing the approved command", () => {
+    const processKeys = ["SystemRoot", "SYSTEMROOT", "WINDIR", "PATH", "Path", "PATHEXT", "COMSPEC", "TEMP", "TMP"];
+    const env = Object.fromEntries(processKeys.filter(key => process.env[key] !== undefined)
+      .map(key => [key, process.env[key] as string]));
+    const output = execFileSync(process.execPath, ["--import", "./scripts/knowledge-scope/register.mjs",
+      "scripts/crm-approval-summary-check.mjs"], {
+      cwd: process.cwd(), env, encoding: "utf8", windowsHide: true, timeout: 60_000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    expect(output).toContain("PASS 24 actual CRM approval-summary checks");
+  }, 65_000);
+
   it("accepts no tenant, actor, role, or account identity from the request", () => {
     expect(edge).toContain("bodySchema");
     expect(edge).toContain("}).strict()");

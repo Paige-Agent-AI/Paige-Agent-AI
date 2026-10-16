@@ -63,9 +63,15 @@ export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "dir
   useEffect(() => {
     if (tier !== "solo" || owner !== "direct" || !calendarRoot || !clientsCalendarRoot) return;
     if (!location.pathname.startsWith(calendarRoot)) return;
+    // Previously emitted CRM task result URLs belong to Operations Work. Keep this exact
+    // Solo alias without redirecting Clients-owned Calendar views or other account trees.
+    if (routeRoot?.startsWith("/solo/") && (location.pathname === `${calendarRoot}/tasks` || location.pathname === `${calendarRoot}/tasks/`)) {
+      navigate(`${routeRoot}/operations/work`, { replace: true });
+      return;
+    }
     const view = resolvedDirectTab || "calendar";
     navigate(`${clientsCalendarRoot}?calendarView=${view}`, { replace: true });
-  }, [calendarRoot, clientsCalendarRoot, location.pathname, navigate, owner, resolvedDirectTab, tier]);
+  }, [calendarRoot, clientsCalendarRoot, location.pathname, navigate, owner, resolvedDirectTab, routeRoot, tier]);
 
   if (loading || accountContextLoading) return <CalendarBoundary kind="loading" />;
   if (!activeTenantId) return <CalendarBoundary kind="permission" />;

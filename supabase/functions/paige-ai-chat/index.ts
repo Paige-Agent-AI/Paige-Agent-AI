@@ -7705,7 +7705,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_tasks",
-              description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id.",
+              description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id, updated_at and created_at. Before changing an existing task, use this current updated_at as expected_updated_at; use created_at only when updated_at is null. If neither supplies a valid timestamp, do not guess a version or change the task. Omitted status excludes completed tasks; status all includes every status.",
               parameters: {
                 type: "object",
                 properties: {
@@ -15306,9 +15306,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = { success: true, count: data?.length || 0, deals: data || [] };
             } else if (tc.function.name === "crm_list_tasks") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
-              let q = admin.from("tasks").select("id, title, status, due_date, track, user_id, biz_id, deal_id, source_thread_id").eq("tenant_id", crmTenantId);
+              let q = admin.from("tasks").select("id, title, status, due_date, track, user_id, biz_id, deal_id, source_thread_id, updated_at, created_at").eq("tenant_id", crmTenantId);
               if (args.status && args.status !== "all") q = q.eq("status", args.status);
-              else q = q.neq("status", "completed");
+              else if (!args.status) q = q.neq("status", "completed");
               if (args.assignee_email) {
                 const { data: us } = await admin.auth.admin.listUsers();
                 const a = us?.users?.find((x: any) => (x.email || "").toLowerCase() === String(args.assignee_email).toLowerCase());

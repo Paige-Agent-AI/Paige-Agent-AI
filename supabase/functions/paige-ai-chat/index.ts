@@ -53,7 +53,7 @@ import type { BudgetDb } from "../_shared/router-budget/mod.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
 import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
-import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, databaseAnswered, invokeOutcomeUnknown, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
+import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, databaseAnswered, invokeOutcomeUnknown, isKnowledgeCompletedUnrecorded, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
@@ -333,8 +333,9 @@ const corsHeaders = {
  * (sibling functions passed through as-is: paige-web-search, paige-write-back). An affirmative
  * `success: true` or `ok: true` wins over an `error` field.
  */
-function toolResultReportsFailure(out: any): boolean {
+function toolResultReportsFailure(out: any, tool?: string): boolean {
   if (!out || typeof out !== "object") return false;
+  if (tool === "save_to_knowledge_base" && out.outcome_unknown !== true && isKnowledgeCompletedUnrecorded(out)) return false;
   if (out.success === false || out.ok === false) return true;
   if (out.success === true || out.ok === true) return false;
   // E4-S3: the closed read envelope. Only `available` finished a read; describeStep withdraws
@@ -366,7 +367,7 @@ function describeStep(
   try { args = JSON.parse(tc?.function?.arguments ?? "{}"); } catch { /* ignore */ }
   let out: any = {};
   try { out = JSON.parse(res?.content ?? "{}"); } catch { /* ignore */ }
-  const failed = toolResultReportsFailure(out);
+  const failed = toolResultReportsFailure(out, name);
 
   // Drop policy-gated rejections (funding-not-enabled, permission-denied) and web_fetch —
   // never render these as work or as failure. web_fetch is now a functional SSRF-guarded
@@ -9728,7 +9729,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // binding is the door's own claim scope (this user, this workspace, the exact tool and
     // fingerprint, unconsumed, unexpired, server-issued). Requiring a thread would add no binding the
     // row carries. The general-gate half still requires one (its rows are thread-scoped).
-    if (approvedConfirmations.size > 0 && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
+    if (approvedConfirmations.size > 0 && declinedConfirmations.length === 0 && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
       try {
         const scoped = !payloadThreadId ? [] : [...approvedConfirmations]
           .map((token) => ({ token, parsed: parseScopedToken(token) }))
@@ -10546,6 +10547,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true, refused_before_run: true,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
+          continue;
+        }
+
+        // Not now grants no new mutation authority for this request, including later model rounds.
+        // Keep the existing mutator classification and also stop its three exempt persisted
+        // decision writers. Reads and in-memory drafts remain available; no global risk changes.
+        // Failed recording retains its existing uncertainty error.
+        if (declinedConfirmations.length > 0 && (MUTATING_TOOLS.has(tc.function.name)
+            || tc.function.name === "propose_action" || tc.function.name === "pipeline_archive_preview"
+            || tc.function.name === "pipeline_folder_archive_preview")) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+            success: false, not_applied: true, refused_before_run: true,
+            error: cancellationsRecorded ? "declined_turn_requires_new_instruction" : "confirmation_context_unavailable",
+            message: cancellationsRecorded
+              ? "The owner chose Not now in this turn. This call was not dispatched. Acknowledge that choice; do not propose or run another action without a new explicit user instruction in a fresh turn."
+              : "The workspace or declined approval could not be verified. This call was not dispatched. Reopen the workspace and retry; do not use another tool to bypass this refusal.",
+          }) });
           continue;
         }
 
@@ -15751,7 +15769,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // Saved ONLY if the transport succeeded AND the doc actually embedded
             // (kb-ingest-doc returns 200 + ok:false when the embedder is down; a doc
             // with 0 vectors is not searchable, so it is NOT a real save).
-            const kbOk = kbResp.ok && kbData.ok === true && kbData.error == null
+            const hasReceipt = ["verified", "railRecorded", "run_id", "outcome", "tenant_id"].some(key => kbData[key] !== undefined);
+            const receiptVerified = kbData.verified === true && kbData.tenant_id === knowledgeTenant
+              && typeof kbData.run_id === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(kbData.run_id)
+              && ((kbData.outcome === "capability_succeeded" && kbData.railRecorded === true)
+                || (kbData.outcome === "capability_completed_unrecorded" && kbData.railRecorded === false));
+            const kbOk = kbResp.ok && kbData.ok === true && kbData.error == null && (!hasReceipt || receiptVerified)
               && typeof kbData.doc_id === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(kbData.doc_id)
               && Number.isSafeInteger(kbData.chunk_count) && (kbData.chunk_count as number) > 0 && typeof kbData.embedded === "boolean"
               && kbData.not_applied !== true && kbData.ingestion_started !== false;
@@ -15765,9 +15788,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && kbData.embedded !== true && (kbData.chunk_count === undefined || kbData.chunk_count === 0)
               && (kbData.not_applied === true || kbData.ingestion_started === false);
             const result = kbOk
-              ? { success: true, ok: true, doc_id: kbData.doc_id, knowledge_doc_id: kbData.doc_id, chunk_count: kbData.chunk_count, embedded: kbData.embedded,
+              ? { success: kbData.railRecorded !== false, ok: kbData.railRecorded !== false,
+                ...(receiptVerified ? { verified: true, railRecorded: kbData.railRecorded, run_id: kbData.run_id, outcome: kbData.outcome } : {}),
+                doc_id: kbData.doc_id, knowledge_doc_id: kbData.doc_id, chunk_count: kbData.chunk_count, embedded: kbData.embedded,
                 partial: kbData.embedded !== true,
-                note: kbData.embedded === true
+                note: kbData.railRecorded === false
+                  ? "The knowledge entry and its indexed chunks are saved and verified, but its activity record could not be confirmed. Do not repeat the save; the activity evidence needs repair." + (kbData.embedded !== true ? " Indexing is incomplete; only part of the content is searchable." : "")
+                  : kbData.embedded === true
                   ? "The knowledge entry and its indexed chunks are saved and verified by the knowledge service."
                   : "The entry is saved, but indexing is incomplete. Only part of its content is searchable; inspect the saved entry before making another change." }
               : notApplied ? { success: false, ok: false, not_applied: true,
@@ -17029,10 +17056,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // R2 — a draft for a customer refused for internal text never reached its write.
           if (out?.error === "internal_text_in_draft") return;
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
-          const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
+          const knowledgeCompleted = name === "save_to_knowledge_base" && out?.outcome_unknown !== true && isKnowledgeCompletedUnrecorded(out);
+          const failed = n8nOutcome ? out?.ok !== true : out?.success === false && !knowledgeCompleted;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;
           const outcome = out?.outcome_unknown === true || out?.outcome === "outcome_unknown" || out?.outcome === "capability_outcome_unknown" ? "outcome_unknown"
-            : missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
+            : knowledgeCompleted ? "completed_unrecorded" : missionReplay ? "replayed_no_change" : n8nOutcome && out?.error === "outcome_unknown" ? "outcome_unknown"
             : failed ? "failed" : n8nOutcome && out?.started === true ? "started" : "succeeded";
           const n8nSafeErrors = new Set(["outcome_unknown", "authorization_needed", "owner_approval_required", "provider_tool_unavailable", "unsupported_operation", "forbidden", "invalid_arguments", "provider_refused", "provider_response_invalid", "provider_scope_refused", "token_expired", "oauth_needed", "busy", "tenant_changed", "stale_operation", "operation_refused"]);
           // `Promise.resolve` around the builder, not `void builder.then?.()`: a postgrest builder
@@ -17389,7 +17417,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // `done` / `error` from the SAME reading describeStep's wording uses (`toolResultReportsFailure`),
               // so a result that reports failure in any of the shapes tools use never closes `done`.
               let ok = true;
-              try { const result = JSON.parse(res?.content ?? "{}"); ok = !toolResultReportsFailure(result); if (tc?.function?.name === "delegate_to_subagent") ok = ok && (result?.ok === true || result?.success === true); } catch { if (tc?.function?.name === "delegate_to_subagent") ok = false; }
+              try { const result = JSON.parse(res?.content ?? "{}"); ok = !toolResultReportsFailure(result, tc?.function?.name); if (tc?.function?.name === "delegate_to_subagent") ok = ok && (result?.ok === true || result?.success === true); } catch { if (tc?.function?.name === "delegate_to_subagent") ok = false; }
               const derived = describeScopedStep(tc, res);
               finishedSteps.set(tc, derived);
               if (!derived) {
@@ -17522,7 +17550,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           withheld: info?.state === "withheld",
           refusal: info?.state === "unavailable" ? "lookup_failed" : info ? approvalRefusals.get(info.tool) : undefined,
           reportsOk: !!info && N8N_MANAGEMENT_TOOL_NAMES.has(info.tool),
-          reportsKnowledge: info?.tool === "knowledge_update" || info?.tool === "knowledge_delete",
+          reportsKnowledge: info?.tool === "knowledge_update" || info?.tool === "knowledge_delete" || info?.tool === "save_to_knowledge_base",
         });
       }
       let approvalOutcomeSent = false;
@@ -17539,7 +17567,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const spentBy = approvalSpend.get(token);
             const tool = approvalTokenTool.get(token);
             return spentBy !== undefined
-              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" })
+              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" || tool === "save_to_knowledge_base" })
               : classifyUnspentApproval(tool ? approvalRefusals.get(tool) : approvalLookupFailed ? "lookup_failed" : undefined);
           });
           // An approval this request could not use may have been used before it, by a request that did
@@ -17764,7 +17792,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const token = spentBy.get(r.tool_call_id);
                 if (token === undefined) continue;
                 const tool = approvalTokenTool.get(token);
-                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" });
+                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" || tool === "save_to_knowledge_base" });
               }
             }
             for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));

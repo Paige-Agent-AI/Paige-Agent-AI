@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
 import { createComposerRequestFence } from "@/lib/paigeComposerScopeState";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
+import type { SoloKnowledgeDoc } from "./data/useSoloKnowledge";
 
 function visibleTranscriptGeometry(transcript: HTMLDivElement) {
   transcript.getBoundingClientRect = () => ({ top: 0, bottom: 300, left: 0, right: 600, width: 600, height: 300, x: 0, y: 0, toJSON: () => ({}) });
@@ -23,6 +24,7 @@ const chatHarness = vi.hoisted(() => ({
   loadTurns: vi.fn(),
   ensureThread: vi.fn(),
   dictationOnText: null as null | ((segment: string) => void),
+  knowledgeDocs: [] as SoloKnowledgeDoc[],
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
@@ -44,7 +46,7 @@ vi.mock("@/hooks/useChatDocumentUpload", () => ({
   }),
 }));
 vi.mock("./data/useSoloKnowledge", () => ({
-  useSoloKnowledge: () => ({ loading: false, error: null, empty: true, docs: [], refresh: vi.fn() }),
+  useSoloKnowledge: () => ({ loading: false, error: null, empty: chatHarness.knowledgeDocs.length === 0, docs: chatHarness.knowledgeDocs, refresh: vi.fn() }),
 }));
 vi.mock("./data/useSoloSkills", () => ({
   useSoloSkills: () => ({ loading: false, error: null, empty: true, skills: [], refresh: vi.fn() }),
@@ -199,6 +201,45 @@ describe("Solo PAIGE workspace contract", () => {
     expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/42/command-center/mind");
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it("keeps source provenance and native Mind navigation operable in the Knowledge layout", async () => {
+    chatHarness.tenantId = "account-a";
+    chatHarness.knowledgeDocs = [{ id: "test-document", title: "Example operating knowledge for a customer onboarding process",
+      summary: "Synthetic source summary", domain: "Process", tags: [], source: "chat-saved-note", chunkCount: 1,
+      createdAt: "2026-10-16T00:00:00Z", when: "just now", color: "currentColor" }];
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(
+        <MemoryRouter initialEntries={["/solo/42/paige/knowledge"]}>
+          <Routes><Route path="/solo/:account/*" element={<><SoloPaigeWorkspace full /><RouteProbe /></>} /></Routes>
+        </MemoryRouter>,
+      ));
+      const layout = host.querySelector(".spw-knowledge-layout")!;
+      expect(layout.firstElementChild?.getAttribute("aria-label")).toBe("Knowledge sources");
+      expect(layout.lastElementChild?.tagName).toBe("ASIDE");
+      const card = layout.querySelector(".spw-source-card")!;
+      expect(card.textContent).toContain("1 indexed section");
+      const review = card.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
+      expect(review.getAttribute("aria-expanded")).toBe("false");
+      await act(async () => review.click());
+      expect(review.getAttribute("aria-expanded")).toBe("true");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("chat-saved-note");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("Active Solo account only");
+      expect(card.querySelector(".spw-provenance")?.textContent).toContain("PAIGE may retrieve; mutation is not enabled here");
+      expect(Array.from(card.querySelectorAll("button")).find(button => button.textContent?.includes("Disconnect"))?.disabled).toBe(true);
+      await act(async () => review.click());
+      expect(card.querySelector(".spw-provenance")).toBeNull();
+      const mind = Array.from(card.querySelectorAll("button")).find(button => button.textContent?.includes("Open in Mind"))!;
+      await act(async () => mind.click());
+      expect(host.querySelector("[data-route]")?.textContent).toBe("/solo/42/command-center/mind");
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+      chatHarness.knowledgeDocs = [];
+    }
   });
 
   it("keeps the shared async safety additive and Solo-only", () => {

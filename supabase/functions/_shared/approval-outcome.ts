@@ -91,8 +91,8 @@ const NOTES: Record<NoteKey, (many: boolean) => string> = {
     ? "Those approvals can't be used any more. Check before asking again, so nothing happens twice."
     : "That approval can't be used any more. Check before asking again, so it doesn't happen twice.",
   completed_unrecorded: (many) => many
-    ? "The changes completed, but their activity records are missing. Do not repeat them."
-    : "The change completed, but its activity record is missing. Do not repeat it.",
+    ? "The changes completed, but their activity records could not be confirmed. Do not repeat them."
+    : "The change completed, but its activity record could not be confirmed. Do not repeat it.",
   started: (many) => many ? "They started, and finish on their own." : "It started, and finishes on its own.",
 };
 
@@ -101,6 +101,13 @@ const NOTES: Record<NoteKey, (many: boolean) => string> = {
 export const APPROVAL_OUTCOME_SENTENCES: ReadonlySet<string> = new Set(
   Object.values(NOTES).flatMap((say) => [say(false), say(true)]),
 );
+
+/** Existing Knowledge contract: verified business completion, separately unconfirmed Rail evidence.
+ * Callers must opt into this contract and keep uncertainty/refusal precedence. */
+export function isKnowledgeCompletedUnrecorded(out: Record<string, unknown>): boolean {
+  return out.outcome === "capability_completed_unrecorded" && out.verified === true
+    && out.railRecorded === false && out.success === false && out.not_applied !== true && out.ok !== true;
+}
 
 /**
  * An approval the handler spent on a call: classify what that call returned. `content` is the
@@ -138,8 +145,7 @@ export function classifySpentApproval(
   // opts in. Data completion and receipt persistence are separate verified facts.
   // Keep the existing frame kinds; a fixed note prevents "ran" implying full evidence.
   if (opts.reportsKnowledge && out.outcome === "capability_completed_unrecorded") {
-    return out.verified === true && out.railRecorded === false && out.success === false &&
-        out.not_applied !== true && out.ok !== true
+    return isKnowledgeCompletedUnrecorded(out)
       ? { outcome: "ran", reason: "completed_unrecorded" }
       : { outcome: "unconfirmed", reason: "unconfirmed" };
   }

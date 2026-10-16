@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: NOT_APPLICABLE: no input, focus owner or keyboard behavior chang
 ZOOM_REFLOW: NOT_APPLICABLE: no geometry, typography or responsive behavior changed.
 REDUCED_MOTION: NOT_APPLICABLE: no animation introduced.
 STATE_COVERAGE: PASS: pending proposal, prior completed work, uncertain mixed work, scope change, failed settlement, committed settlement with lost acknowledgement, disconnected reader, incomplete wire and historical reload.
-TRUTHFUL_STATE_LABELS: PASS: WAIT_APPROVAL means a native proposal and canonical pause, never a completed business action; uncertain work retains INTERRUPTED and its outcome_unknown effect.
+TRUTHFUL_STATE_LABELS: PASS: WAIT_APPROVAL means a native proposal and canonical pause, never a completed business action; uncertain work retains its distinct INTERRUPTED state and effect verdict.
 SOLO_UI: YES: shared Chat approval-result repair applies universally through normal tenant, role and autonomy authorization.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no rendered or authenticated viewport observation for this candidate.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no rendered or authenticated viewport observation for this candidate.
@@ -33,7 +33,7 @@ MUST_PRESERVE: exact native proposal/approval binding, frozen server scope, call
 ACCEPTANCE_CRITERIA: a successful proposal settles WAIT_APPROVAL before another decision-model call or actionable card publication, releases through the native lifetime, and remains truthfully visible after incomplete delivery.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: shared Chat post-tool accounting/close only; actual native CRM door and native SQL protocol are reused unchanged; action-risk, SQL, grants, browser token stripping, providers, global pins and CI are untouched.
-INTERNAL_BUILD_IDENTITY: base=016727365e7f7dca79b6a6a1e24438bee02a49aa; branch=fix/ant21-chat-durable-approval-pause; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/evidence/ui-delivery/ant21-chat-durable-approval-pause.md
+INTERNAL_BUILD_IDENTITY: base=016727365e7f7dca79b6a6a1e24438bee02a49aa; branch=fix/ant21-chat-durable-approval-pause; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed composed source deployment and readback); evidence=docs/evidence/ui-delivery/ant21-chat-durable-approval-pause.md
 RELEASE_CHANNEL: development: isolated source candidate only.
 RELEASE_CLASSIFICATION: patch: restore the existing governed approval pause and its canonical receipt.
 CUSTOMER_RELEASE_IDENTITY: none: this candidate is not a production release.

@@ -15,8 +15,8 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: a real owner invitation was issued through or
 KEYBOARD_FOCUS: PASS: labelled password/email/terms, existing heading focus, native Tab controls and44px actions retained. Screen-reader/physical keyboard operation remains unverified.
 ZOOM_REFLOW: UNVERIFIED: rendered width reflow and reachability pass to320px with16px fields; physical browser zoom, text scaling and iPhone Safari were not driven.
 REDUCED_MOTION: PASS: all capsule cases use reduced motion; existing loading animation suppression and stable form are retained. No new motion.
-STATE_COVERAGE: PASS: signed-out choice, password/sign-in, consent/validation, required confirmation, fixed recipient, server rejection, unknown reply, accepted readback, wrong/revoked/foreign subject, changed invitation, cancellation/Back and returning access are covered at the stated evidence classes.
-TRUTHFUL_STATE_LABELS: PASS: safe setup errors preserve editable input, unknown acceptance checks the recorded result without replay, profile/actor failure cannot open records, and provider acceptance never means delivered/opened/read or customer access.
+STATE_COVERAGE: PASS: signed-out choice, password/sign-in, consent/validation, required confirmation, fixed recipient, server rejection, lost reply, accepted readback, wrong/revoked/foreign subject, changed invitation, cancellation/Back and returning access are covered at the stated evidence classes.
+TRUTHFUL_STATE_LABELS: PASS: safe setup errors preserve editable input, lost acceptance responses use native readback without replay, profile/actor failure cannot open records, and provider acceptance never means delivered/opened/read or customer access.
 SOLO_UI: NO: existing public customer entry and behavior-only shared landing resolver; no Solo department geometry, navigation or Chat/Live source change. Full approved customer frame remains a separate incomplete E09 outcome.
 UNVERIFIED: actual corrected SMTP delivery, external-client signup/confirmation/return, physical iPhone/Safari and full customer frame, two-business membership and seven-pillar product acceptance remain owed.
 

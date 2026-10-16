@@ -23,6 +23,14 @@ function ok(d: unknown, status = 200) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // This deprecated compatibility handler is not a public delegation door.
+  // Canonical customer research binds its ordinary caller at paige-deep-research.
+  // Never upgrade an ordinary caller's asserted actor to service authority here.
+  const bearer = req.headers.get("Authorization")?.trim().match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (!SERVICE_KEY || bearer !== SERVICE_KEY) {
+    return ok({ ok: false, error: "Research compatibility access could not be verified." }, 401);
+  }
+
   let payload: {
     input?: { lender?: string; product?: string; question?: string; limit?: number };
     user_id?: string;

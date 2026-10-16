@@ -18,6 +18,14 @@ REDUCED_MOTION: NOT_APPLICABLE: no motion change.
 STATE_COVERAGE: PASS: canonical patch title, top-level decoy, trim, truncation, absent/malformed title fallback, correct deal shape, exact stored approval, actor/workspace/reused/forged token negatives, schema and role refusal.
 TRUTHFUL_STATE_LABELS: PASS: no capability status or release state promoted; approval_required remains a proposal rather than an execution claim.
 SOLO_UI: YES: the composed task-management PR also repairs SOLO task links and legacy routing; this title expression reuses the existing confirmation surface.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no authenticated viewport certification at this source checkpoint
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no authenticated viewport certification at this source checkpoint
 UNVERIFIED: production deployment, existing-account readback, authenticated Chat and Live, native SQL persistence and owner acceptance are not established by this source slice.
 OWNER_INTENT: eligible SOLO customers must see and approve the actual business task PAIGE proposes, through existing canonical governance.
 MUST_NOT_HAPPEN: changing a command, approval scope, argument hash, risk, entitlement, actor/tenant authority or executor to repair a label; no external effects.

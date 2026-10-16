@@ -22,7 +22,7 @@ STATE_COVERAGE: PASS: local tests cover progressive start, same-response unsuppo
 TRUTHFUL_STATE_LABELS: PASS: playing follows actual media startup; buffer waiting returns loading; loading is cancellable; failure never claims successful business action or receipt.
 SOLO_UI: YES: existing message read-aloud button shared by SOLO Chat and current output ownership.
 UNVERIFIED: Real Jessica/provider p50/p95, full streamed ElevenLabs backend, complete Live responsiveness, actual devices/browser matrix, authenticated continuity and all ten E01 outcomes.
-INTERNAL_BUILD_IDENTITY: local development successor of reviewed guidance dce4c51b19426948e1b65f6887db5a6fba25bc19; final source identity in Git/PR; deployment=NOT_DEPLOYED; migrations=NOT_APPLICABLE; edge=NOT_CHANGED; evidence=linked native manifest and focused test logs.
+INTERNAL_BUILD_IDENTITY: local development successor of reviewed guidance dce4c51b19426948e1b65f6887db5a6fba25bc19; final source identity in Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=linked native manifest and focused test logs.
 RELEASE_CHANNEL: development: local repair only, no release or activation.
 RELEASE_CLASSIFICATION: internal-only: progressive playback repair within the complete E01 journey.
 CUSTOMER_RELEASE_IDENTITY: none: no complete outcome or announcement earned.

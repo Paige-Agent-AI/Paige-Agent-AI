@@ -63,7 +63,8 @@ function coercePlaybook(raw: unknown): Playbook | null {
     journey: arr<JourneyStage>(raw.journey, 1).length
       ? arr<JourneyStage>(raw.journey)
       : generalDefault.journey,
-    intake: arr<IntakeField>(raw.intake, 1).length ? arr<IntakeField>(raw.intake) : generalDefault.intake,
+    // An authored [] means no questions; only absent/non-array intake inherits the starter.
+    intake: Array.isArray(raw.intake) ? arr<IntakeField>(raw.intake) : generalDefault.intake,
     portal: isRecord(raw.portal) && Array.isArray((raw.portal as { modules?: unknown }).modules)
       ? (raw.portal as Playbook["portal"])
       : generalDefault.portal,

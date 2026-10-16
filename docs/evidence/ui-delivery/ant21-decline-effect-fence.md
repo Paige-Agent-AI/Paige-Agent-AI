@@ -33,7 +33,7 @@ MUST_PRESERVE: canonical confirmation selection/consumption, exact stored approv
 ACCEPTANCE_CRITERIA: decline-bearing requests dispatch no classified mutation or proposal under confirm/AUTO or mixed tokens; reads and fresh explicit requests remain authorized; unknown effects remain unretried; ordinary authenticated production proof remains owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: existing scoped cancellation pass, canonical history, first conversational provider request and inherited continuation messages, existing CRM door mutation brake, active workspace recheck, native stored-command approval and terminal persistence.
-INTERNAL_BUILD_IDENTITY: cfeeb5461acad4eaab9afb99af75e559d6aa6433 merged base; runtime=700e0d52ad54de802e6f368de75971cc43aa201d; candidate=accompanying evidence-routing commit; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed integrated Chat release); evidence=docs/evidence/ui-delivery/ant21-chat-decline-context.md
+INTERNAL_BUILD_IDENTITY: cfeeb5461acad4eaab9afb99af75e559d6aa6433 merged base; runtime=700e0d52ad54de802e6f368de75971cc43aa201d; candidate=accompanying evidence-routing commit; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed integrated Chat release); evidence=docs/evidence/ui-delivery/ant21-decline-effect-fence.md
 RELEASE_CHANNEL: development: isolated security candidate; restoration lead owns containment, reviewed composition and release.
 RELEASE_CLASSIFICATION: patch: request-local mutation refusal after an owner decline, before native doors, approval construction and proposals.
 CUSTOMER_RELEASE_IDENTITY: none: no release, activation, authenticated outcome or owner acceptance claimed.
@@ -100,3 +100,24 @@ change or release claim was performed by this worker. Recovery is a reviewed for
 reverting the fence reopens the demonstrated vulnerability. Shipped Log N/A: not yet released.
 
 The first exact-head UI evidence check failed because the checkpoint edited an inherited record; the guard requires an added record. This new scoped record satisfies that existing rule without changing the guard or runtime.
+
+
+## Final composition review and bounded fingerprint renewal
+
+Distinct NON-AUTHOR review PASS at exact immutable
+`96b06b69bcd6ed554786e0e2387e9957a921eae1`: independent actual Chat/CRM
+handler 1082/0, classification lint 189 classified actions/six exemptions/zero
+unclassified writes, all 32 native CRM names plus representative sibling writes
+inside the incumbent mutator set, read exclusions, syntax and whitespace.
+The reviewer found no material source finding. Model/SDK fixtures are not
+ordinary production, PostgreSQL, provider or Live proof.
+
+After that review, the lead renewed only the 29 existing dispatch fingerprint
+scalars using the unchanged extractor. All 29 prior values were independently
+matched to exact merged base `cfeeb5461acad4eaab9afb99af75e559d6aa6433`.
+A scalar-masked byte comparison preserves the rest of the contract file,
+including all capability metadata, extractor and dependency/ancestry pins.
+The accompanying commit does not modify runtime, tests, SQL, configuration,
+action-risk classification or activation. Final composed review and exact-head
+hosted CI remain required before merge. Production Chat remains the prior
+verified v421 until an actual corrected deployment/readback establishes otherwise.

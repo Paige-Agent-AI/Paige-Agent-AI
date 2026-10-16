@@ -4,16 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTenantRelationshipsData } from "./useTenantRelationshipsData";
 
-const { pending, from, selections } = vi.hoisted(() => {
-  type Result = { data: unknown; error: null };
+const { pending, requests, from, selections, filters } = vi.hoisted(() => {
+  type Result = { data: unknown; error: { message: string } | null };
   type Deferred = { promise: Promise<Result>; resolve: (value: Result) => void };
   const requests = new Map<string, Deferred>();
+  const history: Array<{ key: string; request: Deferred }> = [];
   const selectedColumns: Array<{ table: string; columns: string }> = [];
+  const queryFilters: Array<{ table: string; column: string; value: string }> = [];
   const createDeferred = (key: string) => {
     let resolve!: Deferred["resolve"];
     const promise = new Promise<Result>((done) => { resolve = done; });
     const value = { promise, resolve };
     requests.set(key, value);
+    history.push({ key, request: value });
     return value;
   };
   const fromTable = vi.fn((table: string) => {
@@ -21,14 +24,14 @@ const { pending, from, selections } = vi.hoisted(() => {
     let recordId = "";
     const chain = {
       select: (columns: string) => { selectedColumns.push({ table, columns }); return chain; },
-      eq: (column: string, value: string) => { if (column === "tenant_id") tenant = value; if (column === "id") recordId = value; return chain; },
+      eq: (column: string, value: string) => { queryFilters.push({ table, column, value }); if (column === "tenant_id") tenant = value; if (column === "id") recordId = value; return chain; },
       order: () => chain,
-      limit: () => requests.get(`${table}:${tenant}`)?.promise ?? createDeferred(`${table}:${tenant}`).promise,
-      maybeSingle: () => requests.get(`${table}:${tenant}:${recordId}`)?.promise ?? createDeferred(`${table}:${tenant}:${recordId}`).promise,
+      limit: () => createDeferred(`${table}:${tenant}`).promise,
+      maybeSingle: () => createDeferred(`${table}:${tenant}:${recordId}`).promise,
     };
     return chain;
   });
-  return { pending: requests, from: fromTable, selections: selectedColumns };
+  return { pending: requests, requests: history, from: fromTable, selections: selectedColumns, filters: queryFilters };
 });
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from } }));
@@ -43,8 +46,8 @@ function Harness({ tenantId }: { tenantId: string | null }) {
   return <output data-people={state.people.map(({ name }) => name).join(",")} />;
 }
 
-function DetailHarness({ tenantId }: { tenantId: string }) {
-  const state = useTenantRelationshipsData({ activeTenantId: tenantId, variant: "clients", soloPeople: true });
+function DetailHarness({ tenantId, soloPeople = true }: { tenantId: string | null; soloPeople?: boolean }) {
+  const state = useTenantRelationshipsData({ activeTenantId: tenantId, variant: "clients", soloPeople });
   const person = state.people[0];
   return <output data-record={person ? JSON.stringify(person) : ""} />;
 }
@@ -54,8 +57,219 @@ function DeepLinkHarness({ tenantId, personId }: { tenantId: string | null; pers
   return <output data-record={state.deepLinkedPerson ? JSON.stringify(state.deepLinkedPerson) : ""} />;
 }
 
+function RefreshHarness({ tenantId, personId = null, soloPeople = true, variant = "clients", expose }: {
+  tenantId: string | null; personId?: string | null; soloPeople?: boolean; variant?: "clients" | "relationships";
+  expose: (state: ReturnType<typeof useTenantRelationshipsData>) => void;
+}) {
+  const state = useTenantRelationshipsData({ activeTenantId: tenantId, variant, soloPeople, deepLinkedContactId: personId });
+  expose(state);
+  return <output data-record={JSON.stringify(state.people)} data-detail={JSON.stringify(state.deepLinkedPerson)} data-error={String(state.peopleError)} />;
+}
+
 describe("tenant relationship adapter sequencing", () => {
-  beforeEach(() => { pending.clear(); selections.length = 0; from.mockClear(); });
+  beforeEach(() => { pending.clear(); requests.length = 0; selections.length = 0; filters.length = 0; from.mockClear(); });
+
+  const ownerRow = (owner: string | null) => ({ id: "person", first_name: "Test", last_name: "Contact", lead_owner_user_id: owner, assigned_coach_user_id: null, client_contact_methods: [] });
+  const readsFor = (key: string) => requests.filter((entry) => entry.key === key);
+
+  it("retires initial list/detail reads so a post-turn read cannot reuse their older promises", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(["tenant-relationships", "people", "tenant-other", "solo-enriched"], ["foreign cache"]);
+    client.setQueryData(["unrelated"], "unchanged");
+    const host = document.createElement("div"); const root = createRoot(host);
+    let api!: ReturnType<typeof useTenantRelationshipsData>;
+    await act(async () => root.render(<QueryClientProvider client={client}><RefreshHarness tenantId="tenant-a" personId="person" expose={(value) => { api = value; }} /></QueryClientProvider>));
+    await vi.waitFor(() => expect(requests).toHaveLength(2));
+    const oldList = pending.get("clients:tenant-a")!, oldDetail = pending.get("clients:tenant-a:person")!;
+    expect(typeof api.refreshPeopleAfterTurn).toBe("function");
+    let refresh!: Promise<void>;
+    await act(async () => { refresh = api.refreshPeopleAfterTurn(); });
+    await vi.waitFor(() => expect(readsFor("clients:tenant-a")).toHaveLength(2));
+    expect(readsFor("clients:tenant-a:person")).toHaveLength(2);
+    await act(async () => {
+      pending.get("clients:tenant-a")!.resolve({ data: [ownerRow("owner")], error: null });
+      pending.get("clients:tenant-a:person")!.resolve({ data: ownerRow("owner"), error: null });
+      await refresh;
+    });
+    await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).toContain("Assigned owner"));
+    await act(async () => { oldList.resolve({ data: [ownerRow(null)], error: null }); oldDetail.resolve({ data: ownerRow(null), error: null }); });
+    expect(api.people[0].owner).toBe("Assigned owner");
+    expect(api.deepLinkedPerson?.owner).toBe("Assigned owner");
+    expect(client.getQueryData(["tenant-relationships", "people", "tenant-other", "solo-enriched"])).toEqual(["foreign cache"]);
+    expect(client.getQueryState(["tenant-relationships", "people", "tenant-other", "solo-enriched"])?.isInvalidated).toBe(false);
+    expect(client.getQueryState(["unrelated"])?.isInvalidated).toBe(false);
+    act(() => root.unmount());
+  });
+
+  it("retains the last read and exposes a failed background read without fabricating an owner", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div"); const root = createRoot(host);
+    let api!: ReturnType<typeof useTenantRelationshipsData>;
+    await act(async () => root.render(<QueryClientProvider client={client}><RefreshHarness tenantId="tenant-a" expose={(value) => { api = value; }} /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-a")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-a")!.resolve({ data: [ownerRow(null)], error: null }); });
+    await vi.waitFor(() => expect(api.people[0]?.owner).toBe("Unassigned"));
+    expect(typeof api.refreshPeopleAfterTurn).toBe("function");
+    let refresh!: Promise<void>;
+    await act(async () => { refresh = api.refreshPeopleAfterTurn(); });
+    await vi.waitFor(() => expect(readsFor("clients:tenant-a")).toHaveLength(2));
+    await act(async () => { pending.get("clients:tenant-a")!.resolve({ data: null, error: { message: "Read unavailable" } }); await refresh; });
+    await vi.waitFor(() => expect(api.peopleError).toBe(true));
+    expect(api.people[0].owner).toBe("Unassigned");
+    expect(requests).toHaveLength(2);
+    act(() => root.unmount());
+  });
+
+  it.each(["switch", "unmount"])("does not dispatch a retired refresh after cancellation awaits a %s", async (exit) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div"); const root = createRoot(host);
+    let api!: ReturnType<typeof useTenantRelationshipsData>;
+    const tree = (tenantId: string) => <QueryClientProvider client={client}><RefreshHarness tenantId={tenantId} expose={(value) => { api = value; }} /></QueryClientProvider>;
+    await act(async () => root.render(tree("tenant-a")));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-a")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-a")!.resolve({ data: [ownerRow(null)], error: null }); });
+    await vi.waitFor(() => expect(api.people[0]?.owner).toBe("Unassigned"));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const cancel = client.cancelQueries.bind(client);
+    const invalidations = vi.spyOn(client, "invalidateQueries");
+    vi.spyOn(client, "cancelQueries").mockImplementation(async (options) => { await cancel(options); await held; });
+    expect(typeof api.refreshPeopleAfterTurn).toBe("function");
+    let refresh!: Promise<void>;
+    await act(async () => { refresh = api.refreshPeopleAfterTurn(); });
+    await vi.waitFor(() => expect(client.cancelQueries).toHaveBeenCalled());
+    expect(client.getQueryState(["tenant-relationships", "people", "tenant-a", "solo-enriched"])?.isInvalidated).toBe(true);
+    if (exit === "switch") await act(async () => root.render(tree("tenant-b")));
+    else act(() => root.unmount());
+    await act(async () => { release(); await refresh; });
+    expect(readsFor("clients:tenant-a")).toHaveLength(1);
+    expect(invalidations.mock.calls.filter(([options]) => options?.refetchType === "active")).toHaveLength(0);
+    if (exit === "switch") {
+      await vi.waitFor(() => expect(readsFor("clients:tenant-b")).toHaveLength(1));
+      await act(async () => { pending.get("clients:tenant-b")!.resolve({ data: [ownerRow("owner-b")], error: null }); });
+      await vi.waitFor(() => expect(api.people[0]?.owner).toBe("Assigned owner"));
+      act(() => root.unmount());
+    }
+  });
+
+  it("still refreshes the same tenant's list when the selected detail changes during cancellation", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div"); const root = createRoot(host);
+    let api!: ReturnType<typeof useTenantRelationshipsData>;
+    const tree = (personId: string) => <QueryClientProvider client={client}><RefreshHarness tenantId="tenant-a" personId={personId} expose={(value) => { api = value; }} /></QueryClientProvider>;
+    await act(async () => root.render(tree("person-a")));
+    await vi.waitFor(() => expect(requests).toHaveLength(2));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const cancel = client.cancelQueries.bind(client);
+    vi.spyOn(client, "cancelQueries").mockImplementation(async (options) => { await cancel(options); await held; });
+    let refresh!: Promise<void>;
+    await act(async () => { refresh = api.refreshPeopleAfterTurn(); });
+    await vi.waitFor(() => expect(client.cancelQueries).toHaveBeenCalled());
+    await act(async () => root.render(tree("person-b")));
+    await act(async () => release());
+    await vi.waitFor(() => expect(readsFor("clients:tenant-a")).toHaveLength(2));
+    expect(readsFor("clients:tenant-a:person-a")).toHaveLength(1);
+    expect(readsFor("clients:tenant-a:person-b")).toHaveLength(1);
+    await act(async () => { pending.get("clients:tenant-a")!.resolve({ data: [ownerRow("owner")], error: null }); await refresh; });
+    await vi.waitFor(() => expect(api.people[0]?.owner).toBe("Assigned owner"));
+    act(() => root.unmount());
+  });
+
+  it.each([{ tenantId: null }, { tenantId: "tenant-a", soloPeople: false }, { tenantId: "tenant-a", variant: "relationships" as const }])("does not refresh an unavailable SOLO People scope: %j", async (scope) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div"); const root = createRoot(host);
+    let api!: ReturnType<typeof useTenantRelationshipsData>;
+    await act(async () => root.render(<QueryClientProvider client={client}><RefreshHarness {...scope} expose={(value) => { api = value; }} /></QueryClientProvider>));
+    const count = requests.length;
+    expect(typeof api.refreshPeopleAfterTurn).toBe("function");
+    await act(async () => { await api.refreshPeopleAfterTurn(); });
+    expect(requests).toHaveLength(count);
+    act(() => root.unmount());
+  });
+
+  const ownerCases = [
+    { label: "owner only", lead_owner_user_id: "owner-user", assigned_coach_user_id: null, owner: "Assigned owner" },
+    { label: "coach only", lead_owner_user_id: null, assigned_coach_user_id: "coach-user", owner: "Unassigned" },
+    { label: "different owner and coach", lead_owner_user_id: "owner-user", assigned_coach_user_id: "coach-user", owner: "Assigned owner" },
+    { label: "neither", lead_owner_user_id: null, assigned_coach_user_id: null, owner: "Unassigned" },
+  ];
+  for (const deepLink of [false, true]) {
+    it.each(ownerCases)(`uses the native contact owner for the SOLO ${deepLink ? "deep link" : "list"}: $label`, async ({ lead_owner_user_id, assigned_coach_user_id, owner }) => {
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const host = document.createElement("div");
+      const root = createRoot(host);
+      const requestKey = deepLink ? "clients:tenant-owner:contact-owner" : "clients:tenant-owner";
+      await act(async () => root.render(<QueryClientProvider client={client}>{deepLink
+        ? <DeepLinkHarness tenantId="tenant-owner" personId="contact-owner" />
+        : <DetailHarness tenantId="tenant-owner" />}</QueryClientProvider>));
+      await vi.waitFor(() => expect(pending.has(requestKey)).toBe(true));
+      const row = { id: "contact-owner", first_name: "Test", last_name: "Contact", lead_owner_user_id, assigned_coach_user_id, client_contact_methods: [] };
+      await act(async () => { pending.get(requestKey)?.resolve({ data: deepLink ? row : [row], error: null }); });
+      await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).not.toBe(""));
+      expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ owner, assignedCoachUserId: assigned_coach_user_id });
+      expect(from.mock.calls.every(([table]) => table === "clients")).toBe(true);
+      act(() => root.unmount());
+    });
+  }
+
+  it.each(ownerCases)("preserves the legacy coach-based roster projection: $label", async ({ lead_owner_user_id, assigned_coach_user_id }) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId="tenant-legacy-owner" soloPeople={false} /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-legacy-owner")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-legacy-owner")?.resolve({ data: [{ id: "legacy", lead_owner_user_id, assigned_coach_user_id }], error: null }); });
+    await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).not.toBe(""));
+    expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ owner: assigned_coach_user_id ? "Assigned owner" : "Unassigned", assignedCoachUserId: assigned_coach_user_id });
+    expect(selections[0].columns).not.toContain("lead_owner_user_id");
+    act(() => root.unmount());
+  });
+
+  it("adds only the native owner ID to both closed SOLO projections", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DeepLinkHarness tenantId="tenant-owner-fields" personId="contact-owner" /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-owner-fields:contact-owner")).toBe(true));
+    const exactColumns = "id,first_name,last_name,entity_name,entity_type,client_contact_methods(id,kind,value,label,is_primary,position),title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at";
+    expect(selections).toEqual([{ table: "clients", columns: exactColumns }, { table: "clients", columns: exactColumns }]);
+    expect(filters).toEqual([{ table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "id", value: "contact-owner" }]);
+    expect(from.mock.calls).toEqual([["clients"], ["clients"]]);
+    act(() => root.unmount());
+  });
+
+  it("keeps a wrong-tenant contact unavailable instead of doing an unscoped owner lookup", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DeepLinkHarness tenantId="tenant-b" personId="tenant-a-contact" /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-b:tenant-a-contact")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-b:tenant-a-contact")?.resolve({ data: null, error: null }); });
+    expect(host.querySelector("output")?.getAttribute("data-record")).toBe("");
+    expect(filters.filter(({ column }) => column === "tenant_id")).toEqual([{ table: "clients", column: "tenant_id", value: "tenant-b" }, { table: "clients", column: "tenant_id", value: "tenant-b" }]);
+    expect(from.mock.calls).toEqual([["clients"], ["clients"]]);
+    act(() => root.unmount());
+  });
+
+  it("never replaces the current SOLO owner with a delayed earlier account owner", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId="tenant-a" /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-a")).toBe(true));
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId="tenant-b" /></QueryClientProvider>));
+    expect(host.querySelector("output")?.getAttribute("data-record")).toBe("");
+    await vi.waitFor(() => expect(pending.has("clients:tenant-b")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-b")?.resolve({ data: [{ id: "b", lead_owner_user_id: null, assigned_coach_user_id: "coach-b" }], error: null }); });
+    await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).toContain('"id":"b"'));
+    expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ owner: "Unassigned", assignedCoachUserId: "coach-b" });
+    await act(async () => { pending.get("clients:tenant-a")?.resolve({ data: [{ id: "a", lead_owner_user_id: "owner-a", assigned_coach_user_id: null }], error: null }); });
+    expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ id: "b", owner: "Unassigned", assignedCoachUserId: "coach-b" });
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId={null} /></QueryClientProvider>));
+    expect(host.querySelector("output")?.getAttribute("data-record")).toBe("");
+    act(() => root.unmount());
+  });
 
   it("never lets an older account response overwrite the newer active account", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

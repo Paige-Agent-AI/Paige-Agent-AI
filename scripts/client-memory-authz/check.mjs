@@ -6139,13 +6139,13 @@ try {
   const turnsWith = (fp, tool) => ({ paige_chat_turns: () => [
     { id: SUSPENDED, role: "assistant", content: "Here is what I'll do.", seq: 2, bundle_ref: { paige_confirm: [{ tool, summary: "Do it", fingerprint: fp }] } },
   ] });
-  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId } = {}) => drive({
+  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId, replyText = "ok", streamScript = null } = {}) => drive({
     // INT-334 R5b — "please do it" is a bare go-ahead: the REAL classifier labels it act (43.42e
     // pins classify.test on exactly this), so the fixture says act too instead of the implicit
     // ≤3-words-is-converse shortcut, and the R5b manifest boundary does not re-route it.
     stream: true, clientId,
     classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
-    text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
+    text: body.declinedConfirmations ? "Hold off — skip that one." : body.approvedConfirmations ? "Approved — run it." : "please do it",
     extraBody: { ...(threadId ? { threadId } : {}), ...body }, toolCall,
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE, ...extraService },
@@ -6154,7 +6154,43 @@ try {
     functionsExtra: { "crm-command": realCrmDoor },
     concurrentRequests: concurrent,
     tableErrorsExtra: tableErrors,
+    replyText, streamScript,
   });
+  // Ordinary browser decline: ACTIVE interactive admission, canonical prior user/proposal turns,
+  // and the native terminal receipt. The earlier helper sent approval prose for declines and
+  // discarded the reply, so a consumed proposal with a misleading answer escaped its assertions.
+  const DECLINE_INTENT = "93939393-9393-4393-8393-939393939393";
+  const DECLINE_REPLY = "Understood — you've chosen Not now for that proposal.";
+  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm" } = {}) => {
+    let executor = null; let terminal = false;
+    const history = [
+      { id: SUSPENDED, role: "assistant", content: "I can create this contact once you approve.", seq: 2,
+        bundle_ref: { paige_confirm: [card], interactive: { request_intent_id: "94949494-9494-4494-8494-949494949494",
+          effects: [{ tool: "crm_create_contact", outcome: "approval_required" }] } } },
+      { id: "95959595-9595-4595-8595-959595959595", role: "user", content: "Create a contact for Dana Reyes.", seq: 1, bundle_ref: {} },
+    ];
+    return crmDrive(store, db, {
+      body: { declinedConfirmations: [token], requestIntentId: DECLINE_INTENT, interactive: { kind: "message" } },
+      replyText: DECLINE_REPLY, streamScript, tableErrors,
+      extraTables: {
+        paige_chat_threads: () => [{ id: THREAD, caller_user_id: USER, tenant_id: CALLER_TENANT }],
+        paige_chat_turns: (filters) => filters.some(([op]) => op === "contains") ? [] : structuredClone(history),
+      },
+      extraRpc: {
+        resolve_tool_autonomy: { data: autonomy, error: null },
+        paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+        paige_chat_interactive_begin_v2: { data: { status: "accepted", turn_id: "96969696-9696-4696-8696-969696969696" }, error: null },
+        paige_chat_interactive_executor_v2: (args) => {
+          if (args.p_operation === "acquire") executor = args.p_intent;
+          if (args.p_operation === "release") executor = null;
+          return { data: { latest: DECLINE_INTENT, executor, acquired: executor === args.p_intent, terminal, stopped: false }, error: null };
+        },
+        paige_chat_interactive_settle: () => { terminal = true; return { data: "97979797-9797-4797-8797-979797979797", error: null }; },
+      },
+    });
+  };
+  const replyRequests = (r) => r.modelEgress.map((body) => JSON.parse(body)).filter((body) => body.stream === true);
+  const declineNote = (body) => String(body?.system ?? "").split("\n\n").find((part) => part.startsWith("The owner already chose Not now")) ?? "";
   // The approved card's OWN lane (PaigeAIChat.tsx ~L1932-1960): it invokes crm-command directly with the
   // card's command, idempotency key and fingerprint, before (and instead of) echoing it to the chat.
   const cardLane = async (store, db, card, tenant = CALLER_TENANT) => {
@@ -6198,6 +6234,8 @@ try {
   };
   const contact = await strand(CONTACT);
   const deal = await strand(DEAL);
+  assert("40.1 decline context is turn-local: ordinary contact/deal approvals never receive it",
+    [contact.r, deal.r].every((r) => replyRequests(r).every((body) => declineNote(body) === "")));
   for (const [label, { st, db, card, r, minted }] of [["crm_create_contact", contact], ["deal_create", deal]]) {
     assert(`40.0 ${label}: the real door minted ONE door-scoped proposal (thread and client NULL, bare token, its own key) — guards 40.1`,
       !!card && /^[0-9a-f]{16}$/.test(card.fingerprint ?? "") && minted.rows === 1 && minted.row?.thread_id == null && minted.row?.scoped_client_id == null
@@ -6342,8 +6380,38 @@ try {
     // Declined (Not now), then approved from a stale card: the row is used and nothing was committed.
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
-    await crmDrive(st, db, { body: { declinedConfirmations: [card.fingerprint] } });
+    const declined = await declineVia(st, db, card, { streamScript: [{ name: "crm_list_tasks", args: {} }, DECLINE_REPLY] });
     assert("40.4b (guard) Not now consumed the door proposal", st.rows[0].consumed === true, JSON.stringify(st.rows[0]));
+    const requests = replyRequests(declined);
+    const first = requests[0];
+    const note = declineNote(first);
+    assert("40.4b1 ordinary decline retains genuine prior approval history and the actual Not now sentence",
+      declined.status === 200 && JSON.stringify(first?.messages).includes("approval_required")
+        && JSON.stringify(first?.messages).includes("Hold off — skip that one.")
+        && declined.rec.rpc.some((c) => c.name === "paige_chat_interactive_begin_v2"),
+      JSON.stringify({ status: declined.status, messages: first?.messages }));
+    assert("40.4b2 the FIRST reply request has a trusted already-made decline, no repeated approve/decline instruction",
+      /already chose Not now/.test(note) && /do not ask.*approve.*decline/i.test(note) && /do not re-propose/i.test(note), note);
+    assert("40.4b3 the decline note survives the existing tool continuation in system authority",
+      requests.length >= 2 && requests.every((body) => declineNote(body) === note && note.length > 0),
+      JSON.stringify({ requests: requests.length, notes: requests.map(declineNote) }));
+    assert("40.4b4 cancellation-pass success is not misrepresented as matched cancellation or no prior effect",
+      /does not prove.*matched.*consumed/i.test(note) && /already ran/i.test(note) && /native evidence/i.test(note), note);
+    const settled = declined.rec.rpc.filter((c) => c.name === "paige_chat_interactive_settle");
+    assert("40.4b5 a real decline runs no CRM command, commits no result, proposes nothing and does not resume an approval",
+      doorCalls(declined).length === 0 && db.executions.length === 0 && db.committed.size === 0
+        && st.rows.length === 1 && cardsOf(declined.bodyText).length === 0 && resumedFrames(declined.bodyText).length === 0
+        && !declined.rec.from.some((query) => ["clients", "deals", "tasks"].includes(query.table) && query.op !== "select")
+        && settled.length === 1 && !settled[0].args.p_bundle_ref?.paige_resume && !settled[0].args.p_bundle_ref?.turn_state?.resumed
+        && (settled[0].args.p_bundle_ref?.paige_crm_result ?? []).length === 0
+        && (settled[0].args.p_bundle_ref?.interactive?.effects ?? []).every((effect) => effect.tool === "crm_list_tasks"),
+      JSON.stringify({ executions: db.executions, committed: db.committed.size, settled: settled.map((c) => c.args.p_bundle_ref) }));
+    assert("40.4b6 decline reply and its canonical interactive terminal agree without rewriting prior approval history",
+      settled.length === 1 && settled[0].client === "service" && settled[0].args.p_content === DECLINE_REPLY
+        && wireAnswerMatchesSaved(declined.bodyText, settled[0].args.p_content) === null
+        && settled[0].args.p_bundle_ref?.interactive?.request_intent_id === DECLINE_INTENT
+        && !declined.rec.from.some((q) => q.table === "paige_chat_turns" && q.op !== "select"),
+      JSON.stringify(settled.map((c) => c.args)));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const outcome = outcomeOf(r.bodyText);
     assert("40.4c a used approval with nothing committed under its key: nothing runs, the card says can't confirm, no fresh card",
@@ -6359,6 +6427,40 @@ try {
       liveAfter.length === 0 && db.executions.length === 0 && st.rows.every((row) => row.consumed === true)
         && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(again.bodyText).length === 0,
       JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(again.bodyText) }));
+  }
+  {
+    // A no-error UPDATE can match zero rows. Its reply still acknowledges the choice, without
+    // upgrading cancellationsRecorded into proof that a particular card was retired or ran nothing.
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const unmatched = await declineVia(st, db, card, { token: "0000000000000000" });
+    const note = declineNote(replyRequests(unmatched)[0]);
+    assert("40.4b7 an unmatched decline acknowledges the choice but cannot claim a matched native cancellation",
+      unmatched.status === 200 && !st.rows[0].consumed && st.rows.length === 1 && db.executions.length === 0
+        && db.committed.size === 0 && cardsOf(unmatched.bodyText).length === 0
+        && /already chose Not now/.test(note) && /does not prove.*matched.*consumed/i.test(note), note);
+    for (const autonomy of ["confirm", "auto"]) {
+      const failedStore = makeConfirmStore(); const failedDb = crmDb();
+      const failedCard = await proposeVia(failedStore, failedDb, CONTACT);
+      const failed = await declineVia(failedStore, failedDb, failedCard, {
+        autonomy, streamScript: [CONTACT, DECLINE_REPLY],
+        tableErrors: {
+          paige_pending_confirmations: ({ op }) => op === "update" ? { code: "42501", message: "fixture decline recording denied" } : null,
+        },
+      });
+      const failedNote = declineNote(replyRequests(failed)[0]);
+      const failedTerminal = failed.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+      assert(`40.4b8 ${autonomy}: failed decline recording blocks adversarial CRM model dispatch and explains uncertainty without repeating the choice`,
+        failed.status === 200 && !failedStore.rows[0].consumed && failedDb.executions.length === 0 && failedDb.committed.size === 0
+          && doorCalls(failed).length === 0 && failedStore.rows.length === 1
+          && cardsOf(failed.bodyText).length === 0 && resumedFrames(failed.bodyText).length === 0
+          && (failedTerminal?.paige_crm_result ?? []).length === 0 && !failedTerminal?.paige_resume
+          && /already chose Not now/.test(failedNote) && /could not be verified/i.test(failedNote)
+          && /do not claim cancellation completed/i.test(failedNote)
+          && toldModel(failed).includes("confirmation_context_unavailable"),
+        JSON.stringify({ status: failed.status, consumed: failedStore.rows[0].consumed, executions: failedDb.executions.length,
+          committed: failedDb.committed.size, doorCalls: doorCalls(failed).length, cards: cardsOf(failed.bodyText), note: failedNote }));
+    }
   }
   {
     // Expired between this request's selection and the door's claim: the door proposes again; the

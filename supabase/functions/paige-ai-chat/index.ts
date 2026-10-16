@@ -257,7 +257,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
-import { answerClaim, answerClaimBound, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
+import { answerClaim, answerClaimBound, answerTurnsAfterAdmission, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
 import { executableToolCalls, LIVE_ROUND_NOT_FINISHED_NOTE, readModelRound, ROUND_NOT_FINISHED_NOTE, wholeArguments } from "../_shared/paige-turn/round.ts";
@@ -5971,7 +5971,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // a new id (`afterAnswerClaimFailure`) — one question never ends with zero continuations.
     // An answer grants nothing: it only shapes the prompt (`answerTurnNote`); every act PAIGE proposes
     // after it still meets the gate.
-    let answerBinding: { turnId: string; ask: AskRecord; skipped: boolean; content: string } | null = null;
+    let answerBinding: { turnId: string; ask: AskRecord; skipped: boolean; content: string; tenantId: string | null; admissionMarkerId: string | null } | null = null;
     let answerResume: { askId: string; turnId: string; ask: AskRecord; skipped: boolean } | null = null;
     // What happened to the answer — and only that. Where the person's words now are (still in the
     // composer, or a choice made on the card) is the client's to say: it is the one that put them back.
@@ -6033,10 +6033,14 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       const latest = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       if (typeof latest !== "string" || !latest.trim()) return notOpen("empty_answer");
       const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
-        .select("id,role,bundle_ref,created_at").eq("thread_id", payloadThreadId)
+        .select("id,role,content,bundle_ref,created_at,interactive_intent_id,interactive_actor_id,interactive_tenant_id,interactive_terminal_state,interactive_supersedes_id").eq("thread_id", payloadThreadId)
         .order("seq", { ascending: false }).limit(25);
       if (recentError) return refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "turn_read_failed");
-      const live = resolveAskLiveness((recent ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown; created_at?: unknown }>, validatedData.resume.ask_id);
+      await interactive?.check();
+      const answerHistory = answerTurnsAfterAdmission(recent ?? [], { actorId: user.id, tenantId: turnTenant,
+        askId: validatedData.resume.ask_id, ...(interactive && payloadRequestIntentId && validatedData.interactive?.supersedesIntentId
+          ? { admission: { intentId: payloadRequestIntentId, supersedesIntentId: validatedData.interactive.supersedesIntentId } } : {}) });
+      const live = resolveAskLiveness(answerHistory.turns, validatedData.resume.ask_id);
       if (live.state === "answered") return refuseAnswer(409, "ASK_ALREADY_ANSWERED", ANSWER_REASON.ASK_ALREADY_ANSWERED, "already_answered");
       if (live.state === "reopened") return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "already_reopened", { ask_reopened: askFrame(live.ask) });
       if (live.state === "pending") {
@@ -6051,7 +6055,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         return refuseAnswer(409, "ASK_REOPENED", ANSWER_REASON.ASK_REOPENED, "claim_stranded", { ask_reopened: askFrame(again) });
       }
       if (live.state !== "live") return notOpen(live.reason);
-      answerBinding = { turnId: live.turnId, ask: live.ask, skipped: validatedData.resume.skipped === true, content: latest };
+      answerBinding = { turnId: live.turnId, ask: live.ask, skipped: validatedData.resume.skipped === true, content: latest, tenantId: turnTenant,
+        admissionMarkerId: answerHistory.ownAdmissionMarkerId };
     }
 
     if (payloadThreadId) {
@@ -10060,14 +10065,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // not called; the claim stays in the transcript as what it is — a reply to a question already
       // moved past (`resolveAskLiveness` reads it as superseded, never as an answer).
       const { data: after, error: afterError } = await supabaseClient.from("paige_chat_turns")
-        .select("id,role,bundle_ref").eq("thread_id", payloadThreadId)
+        .select("id,role,content,bundle_ref,interactive_intent_id,interactive_actor_id,interactive_tenant_id,interactive_terminal_state,interactive_supersedes_id").eq("thread_id", payloadThreadId)
         .order("seq", { ascending: false }).limit(25);
       // A read that fails here leaves the claim written and unverified: the question is asked again
       // (the same exit as any failure after the claim), never left with an answer and nothing after it.
       if (afterError || typeof claimTurnId !== "string") {
         return afterAnswerClaimFailure(refuseAnswer(503, "ASK_ANSWER_UNAVAILABLE", ANSWER_REASON.CHECK_UNAVAILABLE, "claim_unverified"));
       }
-      if (!answerClaimBound((after ?? []) as Array<{ id?: unknown; role?: unknown; bundle_ref?: unknown }>, askId, claimTurnId)) {
+      await interactive?.check();
+      const boundHistory = answerTurnsAfterAdmission(after ?? [], { actorId: user.id, tenantId: binding.tenantId, askId,
+        ...(interactive && binding.admissionMarkerId && payloadRequestIntentId && validatedData.interactive?.supersedesIntentId
+          ? { admission: { intentId: payloadRequestIntentId, supersedesIntentId: validatedData.interactive.supersedesIntentId,
+            markerId: binding.admissionMarkerId } } : {}) });
+      if (!answerClaimBound(boundHistory.turns, askId, claimTurnId)) {
         afterAnswerClaimFailure = null;
         return refuseAnswer(409, "ASK_NOT_OPEN", ANSWER_REASON.ASK_ANSWER_SUPERSEDED, "superseded_at_claim", { answer_kept: true });
       }
@@ -10082,6 +10092,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       aiMessages.push({ role: "system", content: offerAccepted
         ? acceptedOfferNote(foreground.offer.offer, reply, { kind: acceptedKind ?? undefined })
         : ambiguousOfferNote(foreground.offer.offer, reply) });
+    }
+    if (declinedConfirmations.length > 0) {
+      // The canonical history still contains the earlier approval_required receipt. Tell the
+      // first reply model about THIS turn's choice; the existing tool loop inherits aiMessages.
+      // A no-error cancellation pass can match zero rows, so it is not outcome evidence.
+      aiMessages.push({ role: "system", content:
+        "The owner already chose Not now for the approval card(s) declined in this turn. Acknowledge that choice; do not ask them to approve, decline, withhold approval, or leave the same proposal pending. Do not re-propose those actions without a new explicit owner instruction. This note grants no approval or execution authority. " +
+        (cancellationsRecorded
+          ? "The scoped cancellation pass returned without an error, but this does not prove a proposal matched or was consumed, or whether an action already ran. Do not claim cancellation completed, an action did not run, or no business records changed without matching native evidence."
+          : "Recording the decline could not be verified. Do not claim cancellation completed or that nothing changed. Acknowledge the choice and explain the unverified status without asking the owner to make the same choice again.") });
     }
     const turnClassification = await classificationPromise;
     // #1255 — the classifier was an awaited provider round-trip between the pre-egress account check and
@@ -10757,6 +10777,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
               success: false, not_applied: true, refused_before_run: true, error: "tenant_not_resolved",
               message: "No workspace was resolved for this turn. Open the intended workspace and ask again; no CRM command was dispatched.",
+            }) });
+            continue;
+          }
+          // Preserve the shared mutation brake before this native door skips the legacy gate.
+          // Failed decline recording must not fall through to a new proposal or an AUTO command.
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+              success: false, not_applied: true, refused_before_run: true, error: "confirmation_context_unavailable",
+              message: "The workspace or declined approval could not be verified. No CRM command was dispatched. Reopen the workspace and retry; do not use another tool to bypass this refusal.",
             }) });
             continue;
           }
@@ -15243,47 +15272,69 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // This service-role read must never diagnose relationships without a workspace.
               if (!crmTenantId) throw new Error("tenant_not_resolved");
               const id = await resolveClientReference(admin, crmTenantId, args.client_ref);
-              // §9 IDOR FIX: scope the contact fetch to the caller's tenant so a
-              // foreign client_id resolves to null → contact_not_found (never
-              // another tenant's contact). Deals are tenant-scoped too as
-              // defense-in-depth; tasks/activities/comms derive from the now
-              // tenant-verified contact/deal ids, so they inherit the scope.
-              const [contact, deals, tasksRes, activities] = await Promise.all([
-                admin.from("clients").select(`${CLIENT_RECORD_COLUMNS}, client_contact_methods(kind, value, label, is_primary, position)`).eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
-                admin.from("deals").select("id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(20),
-                admin.from("tasks").select("id, title, status, due_date, track").eq("biz_id", id).neq("status", "completed").order("due_date", { ascending: true, nullsFirst: false }).limit(20),
-                admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", []).limit(1),
-              ]);
+              // Verify the contact before reading children. A task's biz_id names a BUSINESS,
+              // never a contact. Native CRM tasks relate through their deal's contact; Planning
+              // owns the existing direct contact relationship on plan_items, under caller RLS.
+              const contact = id ? await admin.from("clients").select(`${CLIENT_RECORD_COLUMNS}, client_contact_methods(kind, value, label, is_primary, position)`).eq("id", id).eq("tenant_id", crmTenantId).maybeSingle()
+                : { data: null, error: null };
               if (contact.error) throw contact.error;
-              if (deals.error) throw deals.error;
               if (!contact.data) {
                 result = { success: false, error: "contact_not_found" };
               } else {
+                if (!("id" in contact.data) || !("tenant_id" in contact.data)
+                  || contact.data.id !== id || contact.data.tenant_id !== crmTenantId) throw new Error("contact_scope_mismatch");
+                const [deals, tasksRes, planningRes] = await Promise.all([
+                  admin.from("deals").select("id, tenant_id, contact_client_id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(21),
+                  admin.from("tasks").select("id, tenant_id, deal_id, title, status, due_date, track, updated_at, created_at, deals!inner(id, tenant_id, contact_client_id)").eq("tenant_id", crmTenantId).eq("deals.tenant_id", crmTenantId).eq("deals.contact_client_id", id).in("status", ["pending", "in_progress"]).order("due_date", { ascending: true, nullsFirst: false }).order("id").limit(21),
+                  supabaseClient.from("plan_items").select("id, tenant_id, contact_id, item_type, title, summary, status, due_at, remind_at, assigned_to_user_id, updated_at, created_at").eq("tenant_id", crmTenantId).eq("contact_id", id).in("status", ["open", "in_progress", "blocked"]).order("due_at", { ascending: true, nullsFirst: false }).order("id").limit(21),
+                ]);
+                if (deals.error) throw deals.error;
+                if (tasksRes.error) throw tasksRes.error;
+                if (planningRes.error) throw planningRes.error;
+                if (!Array.isArray(deals.data) || !Array.isArray(tasksRes.data) || !Array.isArray(planningRes.data)) throw new Error("contact_work_read_unavailable");
+                if (deals.data.some((row: any) => typeof row.id !== "string" || row.tenant_id !== crmTenantId || row.contact_client_id !== id)
+                  || tasksRes.data.some((row: any) => typeof row.id !== "string" || typeof row.title !== "string" || !["pending", "in_progress"].includes(row.status)
+                    || (row.updated_at !== null && typeof row.updated_at !== "string") || (row.created_at !== null && typeof row.created_at !== "string")
+                    || row.tenant_id !== crmTenantId || !row.deals || row.deals.id !== row.deal_id || row.deals.tenant_id !== crmTenantId || row.deals.contact_client_id !== id)
+                  || planningRes.data.some((row: any) => typeof row.id !== "string" || typeof row.title !== "string" || !["task", "milestone", "reminder"].includes(row.item_type)
+                    || !["open", "in_progress", "blocked"].includes(row.status) || (row.updated_at !== null && typeof row.updated_at !== "string")
+                    || row.tenant_id !== crmTenantId || row.contact_id !== id)) throw new Error("contact_work_scope_mismatch");
                 let recentActivity: any[] = [];
-                const dealIds = (deals.data || []).map((d: any) => d.id);
+                const dealIds = deals.data.slice(0, 20).map((d: any) => d.id);
                 if (dealIds.length) {
-                  const { data: a } = await admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", dealIds).order("created_at", { ascending: false }).limit(10);
-                  recentActivity = a || [];
+                  const { data: a, error: activityError } = await admin.from("deal_activities").select("id, deal_id, type, summary, created_at, deals!inner(tenant_id, contact_client_id)").in("deal_id", dealIds).eq("deals.tenant_id", crmTenantId).eq("deals.contact_client_id", id).order("created_at", { ascending: false }).limit(10);
+                  if (activityError) throw activityError;
+                  if (!Array.isArray(a)) throw new Error("contact_activity_read_unavailable");
+                  recentActivity = a;
                 }
-                const { data: commLog } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
+                const { data: commLog, error: commError } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("tenant_id", crmTenantId).eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
+                if (commError) throw commError;
+                if (!Array.isArray(commLog)) throw new Error("contact_communication_read_unavailable");
                 // Every address the contact holds, from its contact methods.
                 const { client_contact_methods: methodRows, ...profile } = contact.data as any;
-                const unlinked = (deals.data || []).length ? { data: [], error: null }
+                const unlinked = deals.data.length ? { data: [], error: null }
                   : await admin.from("deals").select("id, tenant_id, contact_client_id, title, pipeline_id, stage_id, status")
                     .eq("tenant_id", crmTenantId).is("contact_client_id", null)
                     .order("updated_at", { ascending: false }).limit(101);
+                if (unlinked.error) throw unlinked.error;
+                if (!Array.isArray(unlinked.data)) throw new Error("contact_relationship_read_unavailable");
                 const relationshipIntegrity = projectDealRelationshipIntegrity({
                   tenantId: crmTenantId, linkedDealCount: (deals.data || []).length,
                   clientLabels: [[profile.first_name, profile.last_name].filter(Boolean).join(" "), profile.entity_name || ""],
                   unlinkedDeals: (unlinked.data || []).slice(0, 100), queryFailed: Boolean(unlinked.error),
                   truncated: (unlinked.data || []).length > 100,
                 });
+                const currentScope = await supabaseClient.rpc("current_user_tenant_id");
+                if (currentScope.error || currentScope.data !== crmTenantId) throw new Error("contact_work_scope_changed");
                 result = {
                   success: true,
                   contact: { ...profile, client_ref: profile.account_number ?? null, contact_methods: orderedContactMethods(methodRows) },
-                  deals: deals.data || [],
+                  deals: deals.data.slice(0, 20),
+                  deals_has_more: deals.data.length > 20,
                   relationship_integrity: relationshipIntegrity,
-                  open_tasks: tasksRes.data || [],
+                  open_tasks: tasksRes.data.slice(0, 20).map(({ deals: _parent, ...task }: any) => ({ ...task, source: "crm", record_kind: "task" })),
+                  planning_work: planningRes.data.slice(0, 20).map((item: any) => ({ ...item, source: "planning", record_kind: "planning_item" })),
+                  task_relationships: { native_relation: "deal_contact", planning_relation: "contact_id", planning_visibility: "caller_rls", direct_crm_contact_link: "unavailable", native_has_more: tasksRes.data.length > 20, planning_has_more: planningRes.data.length > 20 },
                   recent_deal_activity: recentActivity,
                   recent_communications: commLog || [],
                 };

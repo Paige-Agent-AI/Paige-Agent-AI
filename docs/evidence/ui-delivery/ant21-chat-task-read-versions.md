@@ -17,7 +17,7 @@ ZOOM_REFLOW: NOT_APPLICABLE: no geometry, viewport, scrolling or typography chan
 REDUCED_MOTION: NOT_APPLICABLE: no motion change
 STATE_COVERAGE: PASS: default open selection; exact pending/completed/in_progress/cancelled; explicit all; current-version completion/update; legacy created_at fallback; missing/invalid version; native stale-version refusal propagation without retry; member denial; workspace-change refusal; foreign-tenant exclusion
 TRUTHFUL_STATE_LABELS: PASS: source fixture success is not production execution, native SQL proof, deployment, Live restoration or owner acceptance; no version is invented and native authorization/version checks are unchanged
-SOLO_UI: NO: existing shared Chat read; no frontend file or geometry change
+SOLO_UI: YES: the composed task-management PR also repairs SOLO task links and legacy routing; this read-only binding adds no geometry change
 UNVERIFIED: native full-schema pgTAP execution, hosted exact-head CI, root integration of source fingerprints, production deployment/activation/readback, ordinary authenticated Chat/Live outcomes, reload/recovery and final owner product acceptance
 OWNER_INTENT: restore the original 18 historical capabilities and 50 parity findings for all eligible current/future SOLO accounts through canonical shared architecture; this increment repairs task read/version availability
 MUST_NOT_HAPPEN: no stale or missing version may grant mutation authority; no tenant-specific branch, second task engine, writer change, guessed contact relationship or provider effect

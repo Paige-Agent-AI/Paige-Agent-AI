@@ -114,6 +114,7 @@ jobs:
       - name: Resolve affected functions
         id: affected
         run: |
+          set -euo pipefail
           python3 .github/scripts/edge-affected.py < changed.txt | tee affected.txt
           # Source-only graph selection cannot see JWT, entrypoint or import-map
           # changes. Add only functions whose immutable options changed; a project
@@ -125,7 +126,7 @@ jobs:
           echo "count=$(grep -c . affected.txt || true)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Supabase CLI
-        if: steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0'
+        if: steps.affected.outcome == 'success' && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
         uses: supabase/setup-cli@v1
         with:
           # PINNED -- this file already anticipated pinning "if a CLI release ever
@@ -141,7 +142,7 @@ jobs:
       # was present but expired, every deploy returned 401, and the run ended
       # before the retirement delete could matter.
       - name: Preflight — the provider accepts the credential
-        if: steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0'
+        if: steps.affected.outcome == 'success' && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
@@ -163,11 +164,14 @@ jobs:
       # 2026-09-19 run proved the old order (deploy → delete) strands the
       # retirement: every deploy 401'd, the failed step suppressed the delete,
       # and the retired function stayed ACTIVE in production while CI merely
-      # looked red. `always()` keeps the delete coupled only to its own inputs —
+      # looked red. `always()` keeps the delete independent of later deploy failure,
+      # but only after successful local target/config validation and retired-set
+      # computation. A rejected project/configuration must never reach a mutation.
+      # With that authority intact, the delete is coupled to its own inputs —
       # a retired name is absent from HEAD by construction, so it can never be
       # in the deploy set: the two steps are provably disjoint and order-safe.
       - name: Delete retired functions at the provider
-        if: always() && steps.retired.outputs.count != '0'
+        if: always() && steps.affected.outcome == 'success' && steps.retired.outcome == 'success' && steps.retired.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
@@ -194,7 +198,7 @@ jobs:
           exit $fail
 
       - name: Deploy affected functions
-        if: steps.affected.outputs.count != '0'
+        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
@@ -227,7 +231,7 @@ jobs:
       # Readback failure does not roll back already successful deployments.
       - name: Verify deployed source
         id: readback
-        if: steps.affected.outputs.count != '0'
+        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |

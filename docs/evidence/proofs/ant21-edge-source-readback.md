@@ -207,3 +207,49 @@ Python syntax, workflow YAML, all10 Bash-block syntax checks and whitespace
 PASS. The added configuration and type-edge negative controls are included;
 the old conservative affected-graph file remains byte-identical. No provider
 command, authenticated download, production mutation or deploy was invoked.
+
+## Composite retirement correction
+
+Independent review of `1d2398e924c9ba148daf6e1273a0921060b3adfd` found that
+`always()` retirement could outlive a failed local configuration check. A
+neutral fixture changed project ID and removed a function: selection correctly
+refused, but the actual retirement condition and shell still reached the local
+Supabase stub with the different project. A disabled-configuration refusal and
+skipped/failed local prerequisites reproduced the same missing boundary. No
+real provider was invoked. Before the correction, these three negative tests
+failed while the positive authorized-retirement/later-job-failure test passed.
+
+Provider setup, credential probe, deployment and source readback now explicitly
+require the existing affected/target-validation step's successful outcome.
+Retirement retains `always()` but additionally requires successful target
+validation and retired-set computation. Selection uses explicit `set -euo
+pipefail` so a refused target cannot continue to produce a successful step.
+This preserves valid retirement after an unrelated or later deployment failure
+without permitting a rejected project/configuration to reach any mutation.
+The shared classifier, provider credentials, deletion/deployment loop bodies,
+retire-first ordering, source manifest, product runtime and activation are unchanged.
+
+The new protected controls evaluate the actual workflow conditions (including
+GitHub's implicit success check) and execute the actual provider-step shell with
+only a local function stub. They cover project-refusal plus retirement,
+disabled-refusal plus retirement, skipped target/failed retired-set outcomes and
+valid retirement under a simulated later job failure. Fake credential and
+neutral Git records never leave the temporary fixture. A Windows LF-fixture
+correction was needed to model the Ubuntu runner's `retired.txt` accurately.
+Initial managed-sandbox Temp/Git-Bash namespace errors were environmental;
+the local-only process run was repeated with the bounded process permission,
+without provider/network/production operations or credential extraction.
+
+The existing unit wrapper now requires at least58 collected fixtures and zero
+skips. Its bounded timeout increases from120 to180seconds for the expanded
+suite; the earlier54-fixture Windows run already took99.56seconds before four
+additional real-shell fixtures. No CI job, release requirement or test is skipped.
+
+Composite correction validation: **PASS58** protected stdlib fixtures through
+the actual existing CI Vitest wrapper (**1/1**, minimum58, zero skips;
+118.54seconds total). Focused ESLint, Python syntax, workflow YAML, all10 real
+Bash-block syntax checks and whitespace PASS. The verification helper, source
+graph, product runtime, provider/project configuration, credentials, global
+fingerprints and generic CI workflow remain byte-identical to `1d2398`.
+Independent exact-candidate review, hosted CI and authoritative production
+source readback remain separate obligations. No push, PR or deployment occurred.

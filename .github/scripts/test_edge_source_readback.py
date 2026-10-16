@@ -1,5 +1,6 @@
 """Protected local release fixtures. Never invokes the real Supabase CLI."""
 import importlib.util
+import ast
 import contextlib
 import io
 import json
@@ -37,7 +38,7 @@ class WorkflowContract(unittest.TestCase):
     def test_preserves_retirement_and_no_effectful_readback_commands(self):
         workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
         self.assertLess(workflow.index('- name: Delete retired functions'), workflow.index('- name: Deploy affected functions'))
-        self.assertIn("if: always() && steps.retired.outputs.count != '0'", workflow)
+        self.assertIn("if: always() && steps.affected.outcome == 'success' && steps.retired.outcome == 'success' && steps.retired.outputs.count != '0'", workflow)
         self.assertIn('supabase functions delete "$fn" --project-ref "$ref" --yes', workflow)
         self.assertIn('supabase functions deploy "$fn" --project-ref "$ref"', workflow)
         self.assertIn('cancel-in-progress: false', workflow)
@@ -46,6 +47,12 @@ class WorkflowContract(unittest.TestCase):
         affected = workflow.split('- name: Resolve affected functions', 1)[1].split('- name: Setup Supabase CLI', 1)[0]
         self.assertNotIn('if:', affected, 'An empty selected set must still produce count=0')
         self.assertIn('edge-affected.py < changed.txt', affected)
+        self.assertIn('set -euo pipefail', affected, 'Rejected local configuration must stop selection before success/count outputs')
+        for name in ['Setup Supabase CLI', 'Preflight — the provider accepts the credential',
+                     'Delete retired functions at the provider', 'Deploy affected functions', 'Verify deployed source']:
+            step = workflow.split(f'- name: {name}', 1)[1].split('\n      - name:', 1)[0]
+            self.assertIn("steps.affected.outcome == 'success'", step.split('if:', 1)[1].splitlines()[0],
+                          f'Every provider boundary must require successful local target validation: {name}')
 
 
 class ReleaseFixtures(unittest.TestCase):
@@ -553,6 +560,83 @@ class ReleaseFixtures(unittest.TestCase):
         with self.assertRaisesRegex(readback.ReadbackError, 'configuration_selection_refused'):
             self.select_as_workflow(before)
         self.assertEqual(self.calls, [])
+
+    def prepare_retirement(self, configuration_change=None):
+        source = 'supabase/functions/retired-fixture/index.ts'
+        self.files[source] = 'export const retired = true;\n'
+        self.recommit()
+        before = self.commit
+        self.files.pop(source)
+        (self.repo / source).unlink()
+        (self.repo / source).parent.rmdir()
+        if configuration_change == 'project':
+            self.files['supabase/config.toml'] = self.files['supabase/config.toml'].replace('test-project', 'different-test-project')
+        if configuration_change == 'disabled':
+            self.files['supabase/config.toml'] += 'enabled = false\n'
+        self.recommit()
+        (self.repo / 'retired.txt').write_text('retired-fixture\n', encoding='utf-8', newline='\n')
+        return before
+
+    def run_actual_provider_step(self, name, selection='success', retirement='success', job_success=True):
+        """Evaluate the actual bounded step condition and execute only its stubbed shell."""
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        step = workflow.split(f'- name: {name}', 1)[1].split('\n      - name:', 1)[0]
+        condition = step.split('if:', 1)[1].splitlines()[0].strip()
+        if not any(status in condition for status in ['always()', 'success()', 'failure()', 'cancelled()']):
+            condition = f'({condition}) && success()'  # GitHub's implicit default status check.
+        values = {'steps.affected.outcome': selection, 'steps.retired.outcome': retirement,
+                  'steps.affected.outputs.count': '1', 'steps.retired.outputs.count': '1'}
+        condition = condition.replace('always()', 'True').replace('success()', str(job_success))
+        for key, value in values.items():
+            condition = condition.replace(key, repr(value))
+        condition = condition.replace('&&', ' and ').replace('||', ' or ')
+        expression = ast.parse(condition, mode='eval')
+        allowed = (ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.Compare, ast.Eq, ast.NotEq, ast.Constant)
+        self.assertTrue(all(isinstance(node, allowed) for node in ast.walk(expression)), 'Unknown workflow expression must fail the fixture')
+        eligible = eval(compile(expression, '<actual-step-condition>', 'eval'), {'__builtins__': {}})
+        calls = self.repo / 'provider-calls.txt'
+        if not eligible:
+            return None, []
+        script = textwrap.dedent(step.split('run: |', 1)[1])
+        stub = 'supabase() { printf "%s\\n" "$*" >> provider-calls.txt; return 0; };\n'
+        bash = shutil.which('bash') or (r'C:\Program Files\Git\bin\bash.exe' if os.name == 'nt' else None)
+        self.assertTrue(bash and Path(bash).is_file())
+        result = subprocess.run([bash, '-e', '-c', stub + script], cwd=self.repo, capture_output=True, text=True,
+                                timeout=15, env={**os.environ, 'SUPABASE_ACCESS_TOKEN': 'fixture-never-a-provider-token'})
+        return result, calls.read_text(encoding='utf-8').splitlines() if calls.exists() else []
+
+    def test_project_refusal_with_retirement_blocks_actual_delete_and_deploy(self):
+        before = self.prepare_retirement('project')
+        with self.assertRaisesRegex(readback.ReadbackError, 'configuration_selection_refused'):
+            self.select_as_workflow(before)
+        for name in ['Delete retired functions at the provider', 'Deploy affected functions']:
+            result, calls = self.run_actual_provider_step(name, selection='failure', job_success=False)
+            self.assertIsNone(result, f'Refused target configuration must suppress {name}; got {calls}')
+            self.assertEqual(calls, [])
+
+    def test_disabled_configuration_refusal_with_retirement_blocks_actual_delete(self):
+        before = self.prepare_retirement('disabled')
+        with self.assertRaisesRegex(readback.ReadbackError, 'configuration_selection_refused'):
+            self.select_as_workflow(before)
+        result, calls = self.run_actual_provider_step('Delete retired functions at the provider', selection='failure', job_success=False)
+        self.assertIsNone(result, f'Refused configuration must suppress retirement; got {calls}')
+        self.assertEqual(calls, [])
+
+    def test_valid_retirement_still_runs_despite_later_ordinary_deploy_failure(self):
+        before = self.prepare_retirement()
+        self.select_as_workflow(before)
+        result, calls = self.run_actual_provider_step('Delete retired functions at the provider', job_success=False)
+        self.assertIsNotNone(result, 'A later deployment failure must not strand an authorized retirement')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls, ['functions delete retired-fixture --project-ref test-project --yes'])
+
+    def test_skipped_local_preflight_or_failed_retirement_computation_cannot_delete(self):
+        self.prepare_retirement()
+        for selection, retirement in [('skipped', 'success'), ('success', 'failure')]:
+            result, calls = self.run_actual_provider_step('Delete retired functions at the provider',
+                                                         selection=selection, retirement=retirement, job_success=False)
+            self.assertIsNone(result, f'Unverified step outcomes must suppress deletion; got {calls}')
+            self.assertEqual(calls, [])
 
     def test_prior_unverified_source_cannot_be_skipped_by_a_later_push(self):
         self.git('tag', 'edge-live', self.commit)

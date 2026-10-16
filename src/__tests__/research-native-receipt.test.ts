@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { recordCapabilityRun } from '../../supabase/functions/_shared/capability-record';
 
 const actor = '00000000-0000-4000-8000-000000000001';
-const tenant = '00000000-0000-4000-8000-000000000002';
+const tenant = 'aa000000-0000-4000-8000-000000000002';
 const other = '00000000-0000-4000-8000-000000000003';
 const runId = '00000000-0000-4000-8000-000000000004';
 const question = 'Protected fixture public research question';
@@ -28,6 +28,7 @@ type Options = {
   runReadError?: boolean; sourcesReadError?: boolean; corruptRead?: 'actor' | 'tenant' | 'findings' | 'source' | 'extra-source';
   recorderError?: boolean; lostReceiptAck?: boolean;
   cited?: boolean; failedSynthesis?: boolean; scopeReadThrows?: boolean; strategyError?: boolean;
+  scopeRpcError?: boolean; corruptScope?: 'actor' | 'tenant'; maxSources?: boolean; scopeBudgetAfterSearch?: boolean;
 };
 
 function fixture(options: Options = {}) {
@@ -37,6 +38,24 @@ function fixture(options: Options = {}) {
   const operations: Array<{ table: string; method: string; filters: Array<[string, unknown]>; fields?: string }> = [];
   const receipts = new Map<string, Row>();
   const identity = () => ({ data: { user: options.actorMissing ? null : { id: actor } }, error: options.identityError ? { message: 'fixture unavailable' } : null });
+  let inFlight = 0; let maxParallel = 0;
+  let clockNow = Date.now(); let clockAdvanced = false;
+  class FixtureDate extends Date { static now() { return clockNow; } }
+  const request = async <T,>(read: () => T): Promise<T> => {
+    inFlight++; maxParallel = Math.max(maxParallel, inFlight);
+    try { await Promise.resolve(); return read(); } finally { inFlight--; }
+  };
+  const identityRead = vi.fn(() => request(identity));
+  const scopeRpc = vi.fn((args: Row) => request(() => {
+    if (options.scopeBudgetAfterSearch && provider.mock.calls.length > 0 && !clockAdvanced) {
+      clockNow += 91_000; clockAdvanced = true;
+    }
+    if (options.scopeReadThrows) throw new Error('fixture scope read lost');
+    const refused = options.scopeRpcError || options.profileError || !active || options.member === false
+      || args._expected_actor_id !== actor || args._expected_tenant_id != null && String(args._expected_tenant_id).toLowerCase() !== active;
+    return { data: refused ? null : { actor_id: options.corruptScope === 'actor' ? other : actor,
+      tenant_id: options.corruptScope === 'tenant' ? other : active }, error: refused ? { message: 'fixture scope unavailable' } : null };
+  }));
   const query = (table: string) => {
     let method = 'read'; let payload: Row[] = []; let fields = '';
     const filters: Array<[string, unknown]> = [];
@@ -86,11 +105,11 @@ function fixture(options: Options = {}) {
     receipts.set([args._tenant_id, args._run_id, args._outcome].join(':'), args);
     return { data: null, error: options.lostReceiptAck ? { message: 'fixture acknowledgement lost' } : null };
   });
-  const admin = { from: query, rpc: adminRpc, auth: { admin: { getUserById: async () => identity() } } };
-  const caller = { from: query, auth: { getUser: async () => identity() }, rpc: async (name: string) => ({ data: name === 'current_user_tenant_id' ? active : options.member !== false, error: null }) };
+  const admin = { from: query, rpc: (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
+  const caller = { from: query, auth: { getUser: identityRead }, rpc: async (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : ({ data: name === 'current_user_tenant_id' ? active : options.member !== false, error: null }) };
   const provider = vi.fn(async (url: string) => {
     if (options.switchAt === 'search') active = other;
-    if (url.endsWith('/paige-web-search')) return Response.json({ configured: !options.unconfigured, results: options.cited ? [
+    if (url.endsWith('/paige-web-search')) return Response.json({ configured: !options.unconfigured, results: options.maxSources ? Array.from({ length: 10 }, (_, n) => ({ url: `https://research-fixture.gov/evidence-${provider.mock.calls.length}-${n}`, title: `Protected evidence${n}`, description: 'Protected supporting fixture research establishes a reproducible baseline.' })) : options.cited ? [
       { url: 'https://research-fixture.gov/evidence', title: 'Protected research fixture evidence', description: 'Protected supporting fixture research establishes a reproducible baseline.' },
     ] : [] });
     if (url.endsWith('/fetch-url-content')) return Response.json({ success: true, content: 'Protected supporting fixture research establishes a reproducible baseline.' });
@@ -113,7 +132,7 @@ function fixture(options: Options = {}) {
     }
     return { degraded: true };
   });
-  const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun,
+  const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun, Date: options.scopeBudgetAfterSearch ? FixtureDate : Date,
     createClient: (_url: string, key: string) => key === 'fixture-service' ? admin : caller,
     researchCompletion: model, strategizeBeforeReasoning: strategy, fetch: provider,
     Deno: { env: { get: (name: string) => ({ SUPABASE_URL: 'https://local.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-service', SUPABASE_ANON_KEY: 'fixture-anon' })[name] } } };
@@ -131,7 +150,8 @@ function fixture(options: Options = {}) {
     });
     return result;
   };
-  return { run, persist, rows, receipts, operations, adminRpc, admin, provider, model, strategy };
+  return { run, persist, rows, receipts, operations, adminRpc, admin, provider, model, strategy,
+    identityRead, scopeRpc, maxParallel: () => maxParallel };
 }
 
 function nativeResult(): Row {
@@ -185,6 +205,40 @@ describe('incumbent native Research receipt contract', () => {
 });
 
 describe('actual native Research authenticated door', () => {
+  it.each([false, true])('pairs every fresh Auth read with one parallel canonical scope request (service=%s)', async service => {
+    const test = fixture({ cited: true }); const { response } = await test.run({}, service);
+    expect(response.status).toBe(200); expect(test.scopeRpc.mock.calls.length).toBeGreaterThanOrEqual(test.provider.mock.calls.length * 2);
+    expect(test.identityRead).toHaveBeenCalledTimes(test.scopeRpc.mock.calls.length);
+    expect(test.maxParallel()).toBe(2);
+    expect(test.operations.filter(operation => ['profiles', 'tenant_members'].includes(operation.table))).toEqual([]);
+    expect(test.scopeRpc.mock.calls.every(([args]) => args._expected_actor_id === actor && args._expected_tenant_id === tenant)).toBe(true);
+  });
+  it.each([false, true])('preserves maximum dossier gathering bounds with two requests per scope stage (service=%s)', async service => {
+    const test = fixture({ maxSources: true }); const { response, body } = await test.run({ question: 'Research the company Protected Fixture Labs', max_hops: 4, persist: false }, service);
+    expect(response.status).toBe(200); expect(body.coverage.searches).toBeGreaterThan(1);
+    expect(body.coverage.searches).toBeLessThanOrEqual(18); expect(body.coverage.reads).toBeLessThanOrEqual(10);
+    expect(test.identityRead.mock.calls.length).toBe(test.scopeRpc.mock.calls.length);
+    expect(test.maxParallel()).toBe(2); expect(test.scopeRpc.mock.calls.length).toBeLessThanOrEqual(61);
+    console.info('Protected dossier scope proof', { service, searches: body.coverage.searches, reads: body.coverage.reads,
+      scopeStages: test.scopeRpc.mock.calls.length, requests: test.identityRead.mock.calls.length + test.scopeRpc.mock.calls.length });
+  });
+  it.each([{ scopeRpcError: true }, { corruptScope: 'actor' }, { corruptScope: 'tenant' }] as Options[])('refuses failed or contradictory scope evidence before provider effects (%j)', async options => {
+    const test = fixture(options); const { response } = await test.run();
+    expect(response.status).toBe(403); expect(test.provider).not.toHaveBeenCalled(); expect(test.strategy).not.toHaveBeenCalled();
+    expect(test.rows.research_runs).toEqual([]); expect(test.adminRpc).not.toHaveBeenCalled();
+  });
+  it.each([false, true])('keeps the dossier gathering clock authoritative when a scope checkpoint consumes its remaining budget (service=%s)', async service => {
+    const test = fixture({ maxSources: true, scopeBudgetAfterSearch: true });
+    const { response, body } = await test.run({ question: 'Research the company Protected Fixture Labs', max_hops: 4, persist: false }, service);
+    expect(response.status).toBe(200); expect(body.coverage.searches).toBe(1); expect(body.coverage.reads).toBe(0);
+    expect(test.provider).toHaveBeenCalledTimes(1);
+  });
+  it.each([false, true])('accepts a valid uppercase expected workspace UUID without selecting another workspace (service=%s)', async service => {
+    expect(tenant.toUpperCase()).not.toBe(tenant);
+    const test = fixture(); const { response, body } = await test.run({ expected_tenant_id: tenant.toUpperCase() }, service);
+    expect(response.status).toBe(200); expect(body.persistence_verified).toBe(true);
+    expect(test.rows.research_runs[0].tenant_id).toBe(tenant);
+  });
   it('guards every structured result return independently of optional persistence and guards the generic error return', () => {
     const ast = ts.createSourceFile('research.ts', source, ts.ScriptTarget.Latest, true);
     let execution: ts.TryStatement | undefined;

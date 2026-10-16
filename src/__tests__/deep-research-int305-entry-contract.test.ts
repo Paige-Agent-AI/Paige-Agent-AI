@@ -103,8 +103,12 @@ describe("INT-305: M0 lineage untouched", () => {
     expect(source).toContain('scopeCaller.auth.getUser()');
     expect(source).toContain('scopeAdmin.auth.admin.getUserById(body.user_id)');
     expect(source).toContain('actor !== body.user_id');
-    expect(source).toContain('.eq("user_id", actor).eq("tenant_id", active).eq("status", "active")');
-    expect(source).toContain('current_user_tenant_id');
+    expect(source).toContain('rpc("research_assert_current_scope", {');
+    expect(source).toContain('_expected_actor_id: body.user_id');
+    expect(source).toContain('scope.data?.actor_id !== actor');
+    const scopeMigration = readFileSync(join(root, 'supabase/migrations/20271108140000_research_current_scope.sql'), 'utf8');
+    expect(scopeMigration).toContain('public.current_user_tenant_id() is distinct from v_tenant');
+    expect(scopeMigration).toContain("m.tenant_id=v_tenant and m.status='active'");
     // the cross-check stays a cross-check (never authority)
     expect(source).toContain("Optional CROSS-CHECK (never authority)");
   });

@@ -2057,6 +2057,8 @@ serve(async (req) => {
   // trusted server contract; that actor must still exist and hold active membership.
   // No first-membership fallback, role grant or caller-selected tenant can authorize a run.
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const expectedTenantId = typeof body.expected_tenant_id === "string" && UUID_RE.test(body.expected_tenant_id)
+    ? body.expected_tenant_id.toLowerCase() : body.expected_tenant_id;
   let resolvedTenantId: string | null = null;
   let lineageTenantId: string | null = null;
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -2070,28 +2072,23 @@ serve(async (req) => {
   const assertResearchScope = async (): Promise<void> => {
     try {
     if (!bearer) throw new ResearchScopeError(401);
-    const identity = delegated
-      ? await scopeAdmin.auth.admin.getUserById(body.user_id)
-      : await scopeCaller.auth.getUser();
+    // Two fresh requests, ONE parallel network stage. Neither grants authority
+    // alone: Auth validates the identity and the canonical SQL composes the exact
+    // incumbent profile/current-workspace/member predicates in one read snapshot.
+    const [identity, scope] = await Promise.all([
+      delegated ? scopeAdmin.auth.admin.getUserById(body.user_id) : scopeCaller.auth.getUser(),
+      (delegated ? scopeAdmin : scopeCaller).rpc("research_assert_current_scope", {
+        _expected_actor_id: body.user_id,
+        _expected_tenant_id: lineageTenantId ?? expectedTenantId ?? null,
+      }),
+    ]);
     const actor = identity.data?.user?.id;
     if (identity.error || !actor || !UUID_RE.test(actor)) throw new ResearchScopeError(401);
     if (actor !== body.user_id || boundActor && actor !== boundActor) throw new ResearchScopeError();
-    const profile = await (delegated ? scopeAdmin : scopeCaller)
-      .from("profiles").select("active_tenant_id").eq("user_id", actor).maybeSingle();
-    const active = profile.data?.active_tenant_id;
-    if (profile.error || typeof active !== "string" || !UUID_RE.test(active) ||
+    const active = scope.data?.tenant_id;
+    if (scope.error || scope.data?.actor_id !== actor || typeof active !== "string" || !UUID_RE.test(active) ||
       lineageTenantId && active !== lineageTenantId ||
-      body.expected_tenant_id !== undefined && body.expected_tenant_id !== active) throw new ResearchScopeError();
-    if (delegated) {
-      // Same active-seat predicate used by the canonical member contract and recorder.
-      const member = await scopeAdmin.from("tenant_members").select("user_id")
-        .eq("user_id", actor).eq("tenant_id", active).eq("status", "active").maybeSingle();
-      if (member.error || member.data?.user_id !== actor) throw new ResearchScopeError();
-    } else {
-      const current = await scopeCaller.rpc("current_user_tenant_id");
-      const member = await scopeCaller.rpc("is_tenant_member", { _tenant: active });
-      if (current.error || current.data !== active || member.error || member.data !== true) throw new ResearchScopeError();
-    }
+      expectedTenantId !== undefined && expectedTenantId !== active) throw new ResearchScopeError();
     boundActor = actor;
     resolvedTenantId = active;
     lineageTenantId = active;

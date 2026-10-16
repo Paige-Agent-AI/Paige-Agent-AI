@@ -24,6 +24,7 @@ const root = join(__dirname, "..", "..");
 const engine = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
 const migration = readFileSync(join(root, "supabase/migrations/20270545000000_research_tenant_lineage.sql"), "utf8");
 const pgTAP = readFileSync(join(root, "supabase/tests/research_tenant_lineage.sql"), "utf8");
+const scopeMigration = readFileSync(join(root, "supabase/migrations/20271108140000_research_current_scope.sql"), "utf8");
 
 describe("the engine's persistence lineage is strict (fail-closed)", () => {
   it("actor and explicitly selected workspace are bound before provider effects", () => {
@@ -34,9 +35,12 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
   });
 
   it("the service path derives lineage from active_tenant_id ONLY — no first-membership fallback", () => {
-    expect(engine).toContain('const active = profile.data?.active_tenant_id;');
+    expect(engine).toContain('const active = scope.data?.tenant_id;');
     expect(engine).toContain("lineageTenantId = active;");
-    expect(engine).toContain('.eq("user_id", actor).eq("tenant_id", active).eq("status", "active")');
+    expect(engine).toContain('rpc("research_assert_current_scope", {');
+    expect(scopeMigration).toContain('select p.active_tenant_id into v_tenant from public.profiles p');
+    expect(scopeMigration).toMatch(/if v_role='service_role' then[\s\S]*m\.user_id=_expected_actor_id[\s\S]*m\.tenant_id=v_tenant and m\.status='active'/);
+    expect(scopeMigration).not.toMatch(/order\s+by\s+joined_at/i);
     expect(engine).not.toContain('.order("joined_at", { ascending: true }).limit(1)');
   });
 
@@ -59,15 +63,18 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
 
   it("the JWT path is exact by construction (lineage = the RLS-pinned resolver)", () => {
     expect(engine).toContain('scopeCaller.auth.getUser()');
-    expect(engine).toContain('scopeCaller.rpc("current_user_tenant_id")');
-    expect(engine).toContain('current.data !== active');
-    expect(engine).toContain('scopeCaller.rpc("is_tenant_member", { _tenant: active })');
+    expect(engine).toContain('scope.data?.actor_id !== actor');
+    expect(scopeMigration).toContain("auth.uid() is distinct from _expected_actor_id");
+    expect(scopeMigration).toContain('public.current_user_tenant_id() is distinct from v_tenant');
+    expect(scopeMigration).toContain('public.is_tenant_member(v_tenant) is distinct from true');
   });
 });
 
 describe("the expected_tenant_id cross-check never grants authority", () => {
   it("a disagreement is refused before providers as well as persistence, never resolved in the caller's favor", () => {
-    expect(engine).toContain("body.expected_tenant_id !== undefined && body.expected_tenant_id !== active");
+    expect(engine).toContain("expectedTenantId !== undefined && expectedTenantId !== active");
+    expect(engine).toContain('UUID_RE.test(body.expected_tenant_id)');
+    expect(engine).toContain('body.expected_tenant_id.toLowerCase()');
     expect(engine).toContain("No first-membership fallback, role grant or caller-selected tenant can authorize a run.");
     expect(engine).toContain("the persisted value and never authority");
   });

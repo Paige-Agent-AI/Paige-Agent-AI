@@ -141,3 +141,13 @@ review; they do not inherit NON-AUTHOR assurance from the runtime/native review 
 validation checks 33 providers/all six taxonomy groups/117 resolving anchors; its existing 42
 honesty/structure mutation controls and dead-anchor/glob controls pass. Other provider entries,
 their eligibility/authority and pricing facts are preserved; no production state is changed.
+
+## Required CI integration
+
+The root integration adds the existing 34-check native proof to the existing required
+`comms-provider-boundary` job, using that job's isolated loopback PostgreSQL service on port5432.
+The incumbent fixture rejects that port outside CI, creates a uniquely named disposable database
+and does not accept a remote URL or credentials. No new job, provider call or schema engine is
+introduced. Hosted execution of this new named step remains PROOF OWED until its exact-head run
+passes; local34 and source wiring alone do not supply that result. The150 focused tests continue
+through the incumbent Vitest collection.

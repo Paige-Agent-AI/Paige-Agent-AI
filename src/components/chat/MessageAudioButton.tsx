@@ -3,7 +3,7 @@
 // configured → disabled Volume2 + tooltip. One shared audio element via the messageTts controller,
 // so a new play always stops the prior (no overlapping voices). §11: NO gold — playback is not the
 // act/approve moment; a neutral ghost icon in the muted-foreground token, matching MessageMeta.
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Volume2, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -66,11 +66,12 @@ async function fetchMessageAudio(content: string, requestId: string, signal: Abo
 
 export function MessageAudioButton({ messageId, content, className }: MessageAudioButtonProps) {
   const snap = useSyncExternalStore(messageTts.subscribe, messageTts.getSnapshot, messageTts.getSnapshot);
+  const ownedRequest = useRef<AbortSignal | null>(null);
   const trimmed = content.trim();
   // Leaving this message (including a workspace/thread change) cancels only its
   // own output. Cleanup must not stop another conversation's newer message.
   useEffect(() => () => {
-    if (messageTts.getSnapshot().activeId === messageId) messageTts.stop();
+    if (ownedRequest.current && !ownedRequest.current.aborted && messageTts.getSnapshot().activeId === messageId) messageTts.stop();
   }, [messageId]);
   if (!trimmed) return null;
 
@@ -85,7 +86,7 @@ export function MessageAudioButton({ messageId, content, className }: MessageAud
     const requestId = crypto.randomUUID();
     void messageTts.toggle(
       messageId,
-      signal => fetchMessageAudio(trimmed, requestId, signal),
+      signal => { ownedRequest.current = signal; return fetchMessageAudio(trimmed, requestId, signal); },
       (e: TtsFetchError) => {
         // needsConfig is reflected by the disabled state below — don't scream a red error (§13/§36).
         if (e.needsConfig) return;

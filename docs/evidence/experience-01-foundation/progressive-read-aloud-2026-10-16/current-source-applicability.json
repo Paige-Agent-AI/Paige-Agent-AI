@@ -11,7 +11,7 @@
     {
       "path": "src/components/chat/MessageAudioButton.tsx",
       "capturedSha256": "ff9322882f005374d84c87b02666cb063362b3bc8fdcb6511418f6d205d9281e",
-      "currentSha256": "3e0ef6f3a0c3412673daf5ed4da949789e05d9c175143bf5d4f3c99fa9a962dd",
+      "currentSha256": "af535b392a9bd1482020e320ccd4eff8901074e7714d87b8a358a95de70bc394",
       "matches": false,
       "nativeDecoderDependency": false
     },
@@ -32,5 +32,5 @@
   ],
   "controllerNativeProofApplicable": true,
   "fullButtonNativeProof": "UNVERIFIED; native fixture imports the controller only",
-  "buttonDelta": "Adds owned-message unmount cancellation;76 focused tests include owned cleanup and preserving newer output. Captured old button hash is retained, not relabelled."
+  "buttonDelta": "Adds original-request AbortSignal ownership to unmount cancellation;77 focused tests include cleanup, newer same-id leases and preserving different-message output. Captured old button hash is retained, not relabelled."
 }

@@ -47,4 +47,10 @@ describe("incumbent read-aloud button transport",()=>{
    await act(async()=>root.render(null));expect(messageTts.getSnapshot().activeId).toBe("other-conversation");
  });
 
+ it("does not cancel a newer playback lease even when the visible message id is the same",async()=>{
+   state.fetch.mockResolvedValue(new Response(new Uint8Array([1]),{headers:{"Content-Type":"audio/mpeg"}}));await render();await act(async()=>host.querySelector('button')!.click());
+   await act(async()=>{await messageTts.toggle("synthetic-message",async()=>new Blob(["unused"]));await messageTts.toggle("synthetic-message",async()=>new Blob(["new owner"]));});
+   await act(async()=>root.render(null));expect(messageTts.getSnapshot().activeId).toBe("synthetic-message");expect(messageTts.getSnapshot().status).toBe("playing");
+ });
+
 });

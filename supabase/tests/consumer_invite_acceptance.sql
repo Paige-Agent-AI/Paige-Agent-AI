@@ -508,6 +508,10 @@ BEGIN
    INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility)
     VALUES(_staff_file,_tenant,_contact,_owner,_shared_path,'Shared preparation.pdf','application/pdf',4,'shared'),
     (_internal_file,_tenant,_contact,_owner,_internal_path,'Internal preparation.pdf','application/pdf',4,'internal');
+   PERFORM public.record_rail_event(p_contact_id=>_contact,p_event_kind=>'client.document_uploaded',p_surface=>'client_portal',
+    p_actor_type=>'client',p_title=>'Existing staff producer',p_ref_table=>'client_files',p_ref_id=>_staff_file,p_tenant_id=>_tenant);
+   RETURN NEXT is((SELECT count(*) FROM public.paige_client_events WHERE ref_id=_staff_file AND actor_user_id=_owner AND tenant_id=_tenant),1::bigint,
+    _label||': incumbent staff producer without a customer identity retains native Rail authority');
    RESET ROLE;UPDATE public.profiles SET active_tenant_id=_staff_context WHERE user_id=_owner;
    PERFORM set_config('test.actor',_actor::text,true);
    PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated')::text,true);

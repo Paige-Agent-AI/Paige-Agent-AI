@@ -21,7 +21,7 @@ export function documentProof({sql,check,assert,fs,root,path}) {
  CREATE POLICY proof_uploader_update ON client_files FOR UPDATE TO authenticated USING(uploaded_by_user_id=auth.uid());
  CREATE POLICY proof_uploader_delete ON client_files FOR DELETE TO authenticated USING(uploaded_by_user_id=auth.uid());
  CREATE FUNCTION has_role(uuid,app_role) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role=$2::text)$$;
- CREATE FUNCTION has_any_role(uuid,text[]) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION has_any_role(uuid,text[]) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role=ANY($2))$$;
  CREATE FUNCTION is_tenant_admin(uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT EXISTS(SELECT 1 FROM tenant_members WHERE user_id=auth.uid() AND tenant_id=$1 AND status='active' AND role IN ('owner','admin'))$$;
  CREATE POLICY proof_staff_file_read ON client_files FOR SELECT TO authenticated
  USING(tenant_id=current_user_tenant_id() AND is_tenant_admin(tenant_id));

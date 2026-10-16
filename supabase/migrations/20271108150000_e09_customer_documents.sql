@@ -199,11 +199,15 @@ DECLARE
         FROM public.clients c
        WHERE c.id = p_contact_id AND c.linked_user_id = v_uid;
     END IF;$old$;
- _new text:=$new$    IF p_actor_type = 'client' THEN
+ _new text:=$new$    v_tenant := NULL;
+    IF p_actor_type = 'client' THEN
       SELECT c.tenant_id INTO v_tenant FROM public.clients c
        WHERE c.id = p_contact_id AND c.id = public.client_portal_relationship_id(p_tenant_id)
          AND c.linked_user_id = v_uid;
-    ELSE
+    END IF;
+    -- Incumbent staff-side booking producers also use actor_type=client.
+    -- Preserve their original staff resolution and downstream role checks.
+    IF v_tenant IS NULL THEN
       v_tenant := public.current_user_tenant_id();
     END IF;$new$;
 BEGIN

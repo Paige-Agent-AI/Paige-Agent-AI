@@ -900,6 +900,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int336-crm-task-read-check.mjs
           PLANNING_RECOVERY=lost node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           PLANNING_RECOVERY=gateway node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           PLANNING_RECOVERY=missing-readback node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs

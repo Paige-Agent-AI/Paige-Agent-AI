@@ -186,3 +186,29 @@ readback, native receipt persistence and reload, paired ordinary authenticated c
 separate Live proof and owner acceptance remain owed. The existing 18-capability/50-parity
 registers and shared applicability to every eligible current/future SOLO account remain open.
 No provider, credential, role, SQL, migration, activation or production effect was performed here.
+
+
+## Reviewed decline-fence composition — 2026-10-16
+
+The Knowledge branch incorporates exact reviewed shared decline correction
+`e3730e7f2232ef2082d0dfe5963e489950001a90` from PR2240, before its release.
+Distinct NON-AUTHOR composition-delta review PASS at immutable
+`ecc6f502cf98c389278f32c6e555c726976d887b`: bidirectional added/removed-line
+checks prove the Chat/test delta versus prior reviewed Knowledge `b26c7ff` is
+exactly the decline repair, and the delta versus `e3730e7` is exactly the prior
+Knowledge repair. Ten other Knowledge source/test blobs and original evidence
+are unchanged. Master/decline evidence are exact incoming copies. The reviewer
+ran the actual-handler Knowledge unrecorded compatibility mode successfully.
+This composition-delta review excludes that reviewer's original UI authorship;
+unchanged original Knowledge review5548595656 remains its separate review basis.
+
+The only conflict resolutions retained Knowledge's original dependency pins and
+metadata while combining the exact incoming Master2237 row atop identical
+history. After reviewed source composition, only29 existing dispatch scalars
+are renewed through the unchanged extractor. All29 prior pins matched immutable
+`b26c7ffdea4dc5601a4186ed470e14b7c595248a`; scalar-masked contract bytes remain
+identical. No runtime, SQL, activation, risk or provider changes occur in the
+renewal. The reviewed Knowledge dependency digest and all other dependency and
+ancestry digests remain unchanged. Exact composed final-head review and hosted
+CI, actual deployed source, genuine customer record/receipt/reload evidence,
+Live and owner acceptance remain separate gates. No release is claimed here.

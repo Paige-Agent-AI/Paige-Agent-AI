@@ -9728,7 +9728,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // binding is the door's own claim scope (this user, this workspace, the exact tool and
     // fingerprint, unconsumed, unexpired, server-issued). Requiring a thread would add no binding the
     // row carries. The general-gate half still requires one (its rows are thread-scoped).
-    if (approvedConfirmations.size > 0 && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
+    if (approvedConfirmations.size > 0 && declinedConfirmations.length === 0 && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
       try {
         const scoped = !payloadThreadId ? [] : [...approvedConfirmations]
           .map((token) => ({ token, parsed: parseScopedToken(token) }))
@@ -10546,6 +10546,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, not_applied: true, refused_before_run: true,
             error: "prior_effect_reconciliation_required",
             message: "An earlier consequential action has an unknown outcome. Read back and reconcile its authoritative receipt before any further write. It has not been declared failed or retried." }) });
+          continue;
+        }
+
+        // Not now grants no new mutation authority for this request, including later model rounds.
+        // Use the existing authoritative mutator classification before any native door or proposal;
+        // reads remain available. Failed recording retains its existing uncertainty error.
+        if (declinedConfirmations.length > 0 && MUTATING_TOOLS.has(tc.function.name)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+            success: false, not_applied: true, refused_before_run: true,
+            error: cancellationsRecorded ? "declined_turn_requires_new_instruction" : "confirmation_context_unavailable",
+            message: cancellationsRecorded
+              ? "The owner chose Not now in this turn. This call was not dispatched. Acknowledge that choice; do not propose or run another action without a new explicit user instruction in a fresh turn."
+              : "The workspace or declined approval could not be verified. This call was not dispatched. Reopen the workspace and retry; do not use another tool to bypass this refusal.",
+          }) });
           continue;
         }
 

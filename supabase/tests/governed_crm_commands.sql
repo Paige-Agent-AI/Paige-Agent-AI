@@ -1,6 +1,6 @@
 -- Canonical governed CRM command: synthetic tenant fixtures only; always rolled back.
 BEGIN;
-SELECT plan(152);
+SELECT plan(160);
 
 SELECT ok(NOT has_function_privilege('anon','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'anon cannot execute the CRM domain writer');
 SELECT ok(NOT has_function_privilege('authenticated','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'authenticated callers cannot bypass the CRM action door');
@@ -206,6 +206,56 @@ CREATE TEMP TABLE task_metadata_fixture AS SELECT public.execute_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Metadata Fixture"}}','task-metadata-create-1') result;
 SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',(SELECT result->'readback'->>'id' FROM task_metadata_fixture),'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_metadata_fixture),'patch',jsonb_build_object('metadata','urgent'))::text,'task-metadata-invalid-1'),'22023','CRM_TASK_METADATA_INVALID','task update refuses malformed metadata instead of recording a no-op success');
+
+-- Chat task reads must supply the native optimistic version rather than guessing it.
+-- These are actual domain-writer assertions; the handler fixture tests the read projection.
+CREATE TEMP TABLE task_version_update AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.update',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_metadata_fixture),
+  'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_metadata_fixture),
+  'patch',jsonb_build_object('title','Reviewed task correction')),'task-current-version-update-1') result;
+SELECT is((SELECT result->'readback'->>'title' FROM task_version_update),'Reviewed task correction','a task update uses its current native read version');
+SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)',
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.complete',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_metadata_fixture),
+  'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_metadata_fixture))::text,
+ 'task-stale-version-complete-1'),'40001','CRM_VERSION_CONFLICT','an intervening native update refuses a stale Chat task version');
+SELECT is((SELECT status FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_metadata_fixture)),'pending','a stale completion leaves the task status unchanged');
+SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)',
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.complete',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_metadata_fixture))::text,
+ 'task-missing-version-complete-1'),'22023','CRM_EXPECTED_VERSION_REQUIRED','a missing task version never grants native execution authority');
+CREATE TEMP TABLE task_version_complete AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.complete',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_version_update),
+  'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_version_update)),
+ 'task-current-version-complete-1') result;
+SELECT is((SELECT result->'readback'->>'status' FROM task_version_complete),'completed','a task completes after reading its exact current version');
+SELECT is((public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.complete',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_version_update),
+  'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_version_update)),
+ 'task-current-version-complete-1')->>'replayed')::boolean,true,'an identical completed task command reads its existing result instead of running twice');
+SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)',
+ 'c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001',
+ jsonb_build_object('approval_channel','operator_card','action','task.complete',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_version_complete),
+  'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_version_complete))::text,
+ 'task-foreign-version-complete-1'),'P0002','CRM_TASK_NOT_FOUND','a task id and version do not grant another tenant access');
+RESET ROLE;
+INSERT INTO public.tasks(id,tenant_id,user_id,title,status,created_at,updated_at) VALUES(
+ 'c7100000-0000-4000-8000-00000000a109','c7100000-0000-4000-8000-000000001111',
+ 'c7100000-0000-4000-8000-000000000001','Legacy task version fixture','pending','2026-09-01T10:00:00Z',NULL);
+SET LOCAL ROLE service_role;
+SELECT is((public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ '{"approval_channel":"operator_card","action":"task.complete","task_id":"c7100000-0000-4000-8000-00000000a109","expected_updated_at":"2026-09-01T10:00:00Z"}',
+ 'task-created-at-fallback-1')->'readback'->>'status'),'completed','a legacy task without updated_at uses its actual created_at version');
 SELECT throws_ok($$SELECT public.execute_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Unsupported contact follow-up","contact_id":"c7100000-0000-4000-8000-00000000c103"}}','contact-task-link-unavailable-1')$$,

@@ -81,3 +81,21 @@ it("orders the shared deadline timeline chronologically across ISO offsets", asy
   expect(rows[0].textContent).toContain("Earlier CRM deadline");
   expect(rows[1].textContent).toContain("Later Planning deadline");
 });
+
+it("proposes pending CRM progress without moving the saved card and refuses terminal progress",async()=>{
+ const crm={id:"crm",tenant_id:"workspace",user_id:"person",title:"Start native work",description:null,
+  status:"pending",due_date:null,updated_at:item.updated_at,created_at:null,deal_id:null,biz_id:null,
+  recorded_priority:null,estimated_minutes:null} as CrmWorkRecord;
+ const propose=vi.fn();
+ const render=async(record:CrmWorkRecord)=>act(async()=>root.render(<OperationsWork plans={[]} items={[]} crmTasks={[record]} members={[]}
+  onInspectItem={vi.fn()} onInspectCrmTask={vi.fn()} onProposeCrmStage={propose}/>));
+ await render(crm);let card=container.querySelector<HTMLButtonElement>(".ops-work-card")!;
+ await drag(card,"dragstart");await drag(container.querySelector('[aria-label="In progress"]')!,"drop");
+ expect(propose).toHaveBeenCalledExactlyOnceWith(crm,"in_progress",card);expect(crm.status).toBe("pending");expect(card.closest(".ops-work-lane")?.getAttribute("aria-label")).toBe("Ready");
+ const filter=container.querySelector<HTMLSelectElement>(".ops-view-toolbar select")!;
+ await act(async()=>{filter.value="all";filter.dispatchEvent(new Event("change",{bubbles:true}));});
+ for(const status of ["completed","cancelled"] as const){
+  propose.mockClear();await render({...crm,status});card=container.querySelector<HTMLButtonElement>(".ops-work-card")!;
+  await drag(card,"dragstart");await drag(container.querySelector('[aria-label="In progress"]')!,"drop");expect(propose).not.toHaveBeenCalled();
+ }
+});

@@ -1,6 +1,6 @@
 -- Canonical governed CRM command: synthetic tenant fixtures only; always rolled back.
 BEGIN;
-SELECT plan(160);
+SELECT plan(194);
 
 SELECT ok(NOT has_function_privilege('anon','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'anon cannot execute the CRM domain writer');
 SELECT ok(NOT has_function_privilege('authenticated','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'authenticated callers cannot bypass the CRM action door');
@@ -206,6 +206,86 @@ CREATE TEMP TABLE task_metadata_fixture AS SELECT public.execute_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Metadata Fixture"}}','task-metadata-create-1') result;
 SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',(SELECT result->'readback'->>'id' FROM task_metadata_fixture),'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_metadata_fixture),'patch',jsonb_build_object('metadata','urgent'))::text,'task-metadata-invalid-1'),'22023','CRM_TASK_METADATA_INVALID','task update refuses malformed metadata instead of recording a no-op success');
+
+-- Additive task progress contract: actual writer/receipt chain, no provider port.
+CREATE TEMP TABLE task_progress_fixture AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Protected progress fixture"}}','task-progress-create-1') result;
+CREATE FUNCTION pg_temp.task_progress_call(_patch jsonb,_key text,
+ _actor uuid DEFAULT 'c7100000-0000-4000-8000-000000000001',
+ _tenant uuid DEFAULT 'c7100000-0000-4000-8000-000000001111',_version text DEFAULT NULL)
+RETURNS jsonb LANGUAGE sql AS $$
+ SELECT public.execute_crm_command(_tenant,_actor,jsonb_build_object('approval_channel','operator_card','action','task.update',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),
+  'expected_updated_at',coalesce(_version,(SELECT coalesce(t.updated_at,t.created_at)::text FROM public.tasks t WHERE t.id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture))),
+  'patch',_patch),_key)
+$$;
+CREATE TEMP TABLE task_progress_before AS SELECT count(*)::integer receipts FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111';
+-- Retain the exact first command, including its original timestamp spelling.
+-- A replay never rebuilds that identity from a later read or another encoding.
+CREATE TEMP TABLE task_progress_start_command AS SELECT jsonb_build_object(
+ 'approval_channel','operator_card','action','task.update',
+ 'task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),
+ 'expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_progress_fixture),
+ 'patch',jsonb_build_object('status','in_progress')) command;
+CREATE TEMP TABLE task_progress_result AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT command FROM task_progress_start_command),'task-progress-start-1') result;
+SELECT is((SELECT result->'readback'->>'status' FROM task_progress_result),'in_progress','pending work enters In progress through native task.update');
+SELECT is((SELECT status FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture)),'in_progress','native progress readback matches the persisted task');
+SELECT ok((SELECT (result->>'receipt_recorded')::boolean AND result->'readback'->>'external_effect'='false' AND result->'readback'->>'notification_sent'='false' FROM task_progress_result),'progress records its durable receipt and no external or notification effect');
+SELECT is((SELECT count(*)::integer FROM task_notification_spy),0,'progress invokes no legacy outbound team notification');
+SELECT is((SELECT count(*)::integer FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts+1 FROM task_progress_before),'progress emits one native Rail event');
+CREATE TEMP TABLE task_progress_replay AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT command FROM task_progress_start_command),'task-progress-start-1') result;
+SELECT is((SELECT (result->>'replayed')::boolean FROM task_progress_replay),true,'same progress key and original version replay the original result');
+SELECT is((SELECT result->'readback' FROM task_progress_replay),(SELECT result->'readback' FROM task_progress_result),'progress replay preserves the original exact readback');
+SELECT is((SELECT count(*)::integer FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts+1 FROM task_progress_before),'progress replay emits no second receipt');
+SELECT throws_ok($$SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ (SELECT jsonb_set(command,'{patch,description}','"Different payload"'::jsonb) FROM task_progress_start_command),
+ 'task-progress-start-1')$$,'22023','CRM_IDEMPOTENCY_REUSE','a changed progress payload cannot reuse the original key');
+SELECT throws_ok(format('SELECT pg_temp.task_progress_call(%L::jsonb,%L,_version=>%L)','{"status":"in_progress"}','task-progress-stale-1',(SELECT result->'readback'->>'updated_at' FROM task_progress_fixture)),'40001','CRM_VERSION_CONFLICT','a fresh progress key cannot use a stale version');
+SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),'patch',jsonb_build_object('status','in_progress'))::text,'task-progress-no-version-1'),'22023','CRM_EXPECTED_VERSION_REQUIRED','progress requires an exact native version');
+SELECT throws_ok(format('SELECT pg_temp.task_progress_call(%L::jsonb,%L)',jsonb_build_object('status',value)::text,'task-progress-invalid-'||ordinal),'22023','CRM_TASK_STATUS_INVALID','task.update refuses unsupported or malformed status '||ordinal)
+ FROM (VALUES ('"completed"'::jsonb,1),('"cancelled"'::jsonb,2),('"pending"'::jsonb,3),('"blocked"'::jsonb,4),('null'::jsonb,5),('3'::jsonb,6),('{}'::jsonb,7),('[]'::jsonb,8)) invalid(value,ordinal);
+SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress","assignee_user_id":"c7100000-0000-4000-8000-000000000002"}','task-progress-assignment-bypass-1')$$,'22023','CRM_PATCH_FIELDS_INVALID:assignee_user_id','progress cannot bypass separate task assignment authority');
+SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress"}','task-progress-member-1',_actor=>'c7100000-0000-4000-8000-000000000002')$$,'42501','CRM_FORBIDDEN','a plain member cannot start owner work');
+SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress"}','task-progress-foreign-1','c7200000-0000-4000-8000-000000000001','c7200000-0000-4000-8000-000000002222')$$,'P0002','CRM_TASK_NOT_FOUND','a foreign tenant owner cannot start this task');
+SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress"}','task-progress-workspace-1',_tenant=>'c7200000-0000-4000-8000-000000002222')$$,'42501','CRM_ACTIVE_ACCOUNT_CHANGED','an owner membership in another workspace does not change the active workspace pin');
+SELECT is((pg_temp.task_progress_call('{"status":"in_progress","description":"Work remains underway"}','task-progress-current-1')->'readback'->>'description'),'Work remains underway','already-progress work supports a current-version ordinary update');
+RESET ROLE;
+INSERT INTO public.tasks(id,tenant_id,user_id,title,status,created_at,updated_at) VALUES
+ ('c7100000-0000-4000-8000-00000000a110','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','Completed progress refusal','completed','2026-09-01T10:00:00.123456Z','2026-09-01T10:00:00.123456Z'),
+ ('c7100000-0000-4000-8000-00000000a111','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','Cancelled progress refusal','cancelled','2026-09-01T10:00:00.123456Z','2026-09-01T10:00:00.123456Z'),
+ ('c7100000-0000-4000-8000-00000000a112','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','Legacy exact progress','pending','2026-09-01T10:00:00.123456Z',NULL);
+SET LOCAL ROLE service_role;
+SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id',id,'expected_updated_at','2026-09-01T10:00:00.123456Z','patch',jsonb_build_object('status','in_progress'))::text,'task-progress-terminal-'||ordinal),'22023','CRM_TASK_STATUS_TRANSITION_INVALID','status patch cannot revive terminal work '||ordinal)
+ FROM (VALUES ('c7100000-0000-4000-8000-00000000a110',1),('c7100000-0000-4000-8000-00000000a111',2)) terminal(id,ordinal);
+SELECT is((public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"task.update","task_id":"c7100000-0000-4000-8000-00000000a110","expected_updated_at":"2026-09-01T10:00:00.123456Z","patch":{"description":"Existing terminal description edit"}}','task-progress-terminal-description-1')->'readback'->>'status'),'completed','a description-only terminal update keeps its existing contract');
+CREATE TEMP TABLE task_progress_reopened AS SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"task.reopen","task_id":"c7100000-0000-4000-8000-00000000a111","expected_updated_at":"2026-09-01T10:00:00.123456Z"}','task-progress-explicit-reopen-1') result;
+SELECT is((public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.update','task_id','c7100000-0000-4000-8000-00000000a111','expected_updated_at',(SELECT result->'readback'->>'updated_at' FROM task_progress_reopened),'patch',jsonb_build_object('status','in_progress')),'task-progress-after-reopen-1')->'readback'->>'status'),'in_progress','terminal work can start only after its separate explicit reopen');
+SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"task.update","task_id":"c7100000-0000-4000-8000-00000000a112","expected_updated_at":"2026-09-01T10:00:00.123Z","patch":{"status":"in_progress"}}','task-progress-rounded-1')$$,'40001','CRM_VERSION_CONFLICT','rounded legacy versions cannot start progress');
+SELECT is((public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"task.update","task_id":"c7100000-0000-4000-8000-00000000a112","expected_updated_at":"2026-09-01T10:00:00.123456Z","patch":{"status":"in_progress"}}','task-progress-legacy-exact-1')->'readback'->>'status'),'in_progress','legacy progress uses its exact microsecond created_at when updated_at is null');
+-- Inject failure at the real receipt table boundary, never replace the receipt engine.
+CREATE TEMP TABLE task_progress_rollback_source AS SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','task.reopen','task_id',(SELECT result->'readback'->>'id' FROM task_progress_fixture),'expected_updated_at',(SELECT updated_at::text FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture))),'task-progress-rollback-source-reopen-1') result;
+RESET ROLE;
+CREATE FUNCTION pg_temp.task_progress_receipt_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN
+ IF current_setting('test.task_progress_receipt_failure',true)='on' THEN RAISE EXCEPTION 'TASK_PROGRESS_FIXTURE_RECEIPT_FAILURE'; END IF;RETURN NEW;
+END$$;
+CREATE TRIGGER task_progress_receipt_failure BEFORE INSERT ON public.paige_workspace_events FOR EACH ROW EXECUTE FUNCTION pg_temp.task_progress_receipt_failure();
+SET LOCAL ROLE service_role;
+CREATE TEMP TABLE task_progress_rollback_before AS SELECT updated_at,(SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111') receipts FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture);
+SET LOCAL test.task_progress_receipt_failure='on';
+SELECT throws_ok($$SELECT pg_temp.task_progress_call('{"status":"in_progress","description":"Must roll back"}','task-progress-receipt-failure-1')$$,'P0001','TASK_PROGRESS_FIXTURE_RECEIPT_FAILURE','native progress never succeeds without its canonical receipt');
+SET LOCAL test.task_progress_receipt_failure='off';
+SELECT ok((SELECT t.updated_at=b.updated_at AND t.description='Work remains underway' AND t.status='pending' FROM public.tasks t CROSS JOIN task_progress_rollback_before b WHERE t.id=(SELECT (result->'readback'->>'id')::uuid FROM task_progress_fixture)),'receipt failure rolls back pending-to-progress status, fields and version');
+SELECT is((SELECT count(*)::integer FROM public.crm_command_results WHERE tenant_id='c7100000-0000-4000-8000-000000001111' AND actor_user_id='c7100000-0000-4000-8000-000000000001' AND idempotency_key='task-progress-receipt-failure-1'),0,'receipt failure writes no replay success');
+SELECT is((SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts FROM task_progress_rollback_before),'receipt failure leaves no extra Rail event');
+RESET ROLE;
+DROP TRIGGER task_progress_receipt_failure ON public.paige_workspace_events;
+SET LOCAL ROLE service_role;
 
 -- Chat task reads must supply the native optimistic version rather than guessing it.
 -- These are actual domain-writer assertions; the handler fixture tests the read projection.

@@ -936,7 +936,7 @@
       },
       "prohibited_context": ["tenant full Second Brain", "private Mind or Memory", "Vault or connected-account secrets", "internal team conversations", "other clients", "financial controls", "private strategy", "credentials or private browser content", "hidden prompts or reasoning traces"],
       "state": "PARTIAL",
-      "state_reason": "A real external-client portal substrate exists, but consumer-invite recipient binding, accepted-access revocation, multi-workspace switching, canonical conversation/document/task convergence, approval-record decisions, tenant-facing support/booking, tenant service-agreement receipt/PDF, governed portal tools, and authenticated isolation/recovery proof remain unavailable, broken, or owed.",
+      "state_reason": "Recipient-bound single-use invitation acceptance and safe customer-profile/Welcome records exist. The current entry repair adds real consumer signup/confirmation, receipt reconciliation, private-CRM containment and exact service-agreement content checks; hosted production and actual external-customer proof remain owed. Accepted-access lifecycle, multi-workspace switching, complete canonical conversations/documents/tasks, deliverable decisions, tenant-facing support/booking, governed portal tools and full seven-pillar acceptance remain incomplete.",
       "evidence_class": ["source_read"],
       "linked": ["docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"],
       "next_slice": "Continue the approved complete Portal: customer-safe entry/readers, relationship lifecycle and multi-business isolation, all seven pillars, governed assistance and authenticated acceptance; preserve active domain ownership.",

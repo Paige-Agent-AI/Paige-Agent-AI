@@ -29,7 +29,7 @@ const welcome=welcomeBaseline||process.argv.includes('--welcome');
 assert(!welcome||(!baseline&&!intakeBaseline),'Welcome control retains its existing profile/intake prerequisites');
 const intakePath='supabase/migrations/20271106130000_e09_client_intake_table_authority.sql';
 const welcomePath='supabase/migrations/20271107110000_e09_client_welcome_atomic.sql';
-const reportStem=welcome?(welcomeBaseline?'welcome-baseline':'welcome-candidate'):baseline?'baseline':intakeBaseline?'intake-baseline':'candidate';
+const reportStem=welcome?(welcomeBaseline?'welcome-baseline':process.argv.includes('--entry')?'welcome-entry':'welcome-candidate'):baseline?'baseline':intakeBaseline?'intake-baseline':'candidate';
 let started=false,migration='',intakeMigration='';
 try{run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start']);started=true;
 sql(`CREATE ROLE authenticated NOLOGIN;CREATE ROLE anon NOLOGIN;CREATE ROLE service_role NOLOGIN;CREATE SCHEMA auth;

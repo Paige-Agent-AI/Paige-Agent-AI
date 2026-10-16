@@ -117,6 +117,26 @@ beforeEach(() => {
 });
 
 describe("resolveLandingRoute — agency landing (§65)", () => {
+  const customerActor="e0911000-0000-0000-0000-000000000001";
+  const ownCustomer=(stage="completed")=>({id:"e0931000-0000-0000-0000-000000000001",tenant_id:"e0921000-0000-0000-0000-000000000001",linked_user_id:customerActor,
+    first_name:"Test",last_name:"Customer",entity_name:null,street_address:null,city:null,state:null,zip_code:null,
+    onboarding_stage:stage,is_signup_contact:false,paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,
+    updated_at:null,email:"recipient@tests.invalid",phone:null,contact_methods:[]});
+  it("an explicit customer surface keeps an ordinary business owner in their actual customer relationship",async()=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?ownCustomer():null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/app");
+    expect(await resolveLandingRoute(customerActor)).toBe("/choose-account");
+  });
+  it.each(["pre_invite","invited"])("the customer surface preserves required Welcome for stage %s",async stage=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?ownCustomer(stage):null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/onboard/welcome");
+  });
+  it("customer route intent cannot claim a foreign profile or override operator choice",async()=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?{...ownCustomer(),linked_user_id:"foreign"}:null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/auth?mode=login&route=retry");
+    mockTables({roles:["platform_admin"]});
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/choose-account");
+  });
   it("sends an eligible manager to their REAL numeric URL, not the legacy board", async () => {
     mockCtx(MANAGER);
     expect(await resolveLandingRoute("u1")).toBe("/agency/1924546/command-center");

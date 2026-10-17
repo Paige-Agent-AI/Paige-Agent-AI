@@ -4218,7 +4218,10 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
   const BUSINESS = "Northside Fitness";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  // This is an actual ordinary customer relationship, not a staff workspace
+  // pointer substituted for one. The production native resolver supplies it.
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const WITHHELD = withheldReplyForClient(BUSINESS);
   const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -5479,7 +5482,8 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
   const unread = await drive({
     stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
     tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, PLATFORM_SUMMARY) },
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).trim() === "tenant_id") ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" &&
+      ["tenant_id","tenant_id,audience"].includes(String(f[1]).trim())) ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("38.12 a thread in another tenant workspace is refused the same way, before any model call",
     foreign.status === 409 && foreign.modelEgress.length === 0 && foreign.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
@@ -8419,7 +8423,9 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       stream: true, text: "ok great", streamScript: opts.script,
       classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 },
       extraBody: { threadId: THREAD_FRESH },
-      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null }, ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null },
+        client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null},
+        ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
       tablesExtra: { paige_chat_turns: sH.table, paige_chat_threads: sH.threadsTable, client_memory: () => [], paige_pending_confirmations: cH.table },
       serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
       onInsert: mirrorConfirms(cH),
@@ -8803,7 +8809,8 @@ console.log("\npaige_turn — every stream says it started and ends once, before
 {
   const THREAD = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
   const turnsOf = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")

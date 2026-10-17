@@ -25,7 +25,7 @@ MUST_PRESERVE: Setter signature, native can_manage_tenant_brand permission, post
 ACCEPTANCE_CRITERIA: Native owner saves; customer/foreign/revoked callers refuse without writes; independent partial changes and disabled policy survive; existing native customer presentation reads the exact saved configuration.
 MOTION_PURPOSE: NONE: No motion or UI change.
 PROTECTED_SEAMS: Existing setter only; native Identity/Trust predicates, RLS/roles, Chat/Live/Spine/Rail/admission, Knowledge, brand writer, booking, merchant and invitation/sender contracts remain unchanged. No new table, store, queue, engine, grants or activation.
-INTERNAL_BUILD_IDENTITY: Parent1f5d20156b3fedec01fdb0d0b3efaf7a39af408d; exact candidate head recorded in PR review; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108202000); edge=NOT_APPLICABLE; evidence=docs/evidence/customer-assistant-settings-2026-10-17/native-report.json
+INTERNAL_BUILD_IDENTITY: parent 1f5d20156b3fedec01fdb0d0b3efaf7a39af408d; exact candidate head recorded in PR review; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108202000); edge=NOT_APPLICABLE; evidence=docs/evidence/customer-assistant-settings-2026-10-17/native-report.json
 RELEASE_CHANNEL: development: native prerequisite for the existing Portal, requiring normal exact-head review/CI and production source readback.
 RELEASE_CLASSIFICATION: patch: safe canonical configuration composition and permission recheck.
 CUSTOMER_RELEASE_IDENTITY: none: Internal prerequisite, not a completed Portal release or announcement.

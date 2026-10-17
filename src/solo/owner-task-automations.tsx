@@ -55,6 +55,8 @@ export function OwnerTaskAutomations() {
       <p>A new contact can prepare a task for your approval.</p></div>
       <button type="button" className="sa-ctl" ref={refreshRef} disabled={a.busy || a.read.status === "loading"}
         onClick={() => { setReview(null); void a.refresh(); }}>Refresh</button></header>
+    {a.busy && <p className="sa-empty" role="status">Saving the reviewed configuration…</p>}
+    {a.feedback && <p className="sa-empty" role="status">{feedbackWords(a.feedback)}</p>}
     {a.read.status === "loading" ? <p className="sa-empty" role="status">Checking internal task processes…</p>
       : a.read.status === "refused" ? <p className="sa-empty" role="status">An active owner or admin in this workspace is required.</p>
       : a.read.status !== "ready" ? <p className="sa-empty" role="status">Internal task processes could not be read. Refresh to check again.</p>
@@ -95,8 +97,6 @@ export function OwnerTaskAutomations() {
         })}</ul>
         {a.read.hasMore && <p className="sa-empty">Only the first 50 contact-created processes were checked. Older processes may not appear here.</p>}
       </>}
-    {a.busy && <p className="sa-empty" role="status">Saving the reviewed configuration…</p>}
-    {a.feedback && <p className="sa-empty" role="status">{feedbackWords(a.feedback)}</p>}
     {base && <footer className="sa-editor-foot"><Link to={`${base}/command-center/business-game-plan`} className="sa-note">Review pending tasks</Link>
       <Link to={`${base}/operations/work`} className="sa-note">Open work</Link></footer>}
   </section>;

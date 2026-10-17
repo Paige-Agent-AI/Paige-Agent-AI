@@ -37,6 +37,16 @@ beforeEach(() => {
 afterEach(cleanup);
 const view = () => render(<MemoryRouter initialEntries={["/solo/123/settings/integrations"]}><OwnerTaskAutomations /></MemoryRouter>);
 describe("internal task process customer controls", () => {
+  it.each(["busy", "unknown"])("keeps %s feedback beside Refresh before long saved configuration", state => {
+    row.acts[0].config = { title: "Review this contact", description: "Read the complete contact context carefully. ".repeat(9) };
+    if (state === "busy") m.state.busy = true;
+    else { m.state.feedback = { result: { status: "unknown" }, action: "arm" }; m.state.needsRefresh = true; }
+    view(); const panel = document.querySelector(".sa-owner-tasks")!, header = panel.querySelector("header")!;
+    const statuses = panel.querySelectorAll('[role="status"]'); expect(statuses).toHaveLength(1);
+    expect(header.nextElementSibling).toBe(statuses[0]);
+    expect(statuses[0].compareDocumentPosition(panel.querySelector(".sa-rules")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(m.control).not.toHaveBeenCalled(); expect(m.refresh).not.toHaveBeenCalled();
+  });
   it("shows the complete stored task and links to the existing approvals/work homes", () => {
     view(); const config = row.acts[0].config as Record<string, string>;
     expect(screen.getByText(config.title)).toBeTruthy(); expect(screen.getByText(/Read all contact notes/).textContent).toBe(config.description);

@@ -75,7 +75,7 @@ vi.mock("@/integrations/supabase/client", () => {
           // to need when it was written. `useSoloAutomations` reads pipeline_stages as
           // .eq(...).is("archived_at", null).order(...) — a link this mock did not have,
           // so `.is` was undefined, the read threw, and the whole surface sat on
-          // "Checking what is set up…" while fifteen assertions blamed the copy.
+          // the pipeline loading state while fifteen assertions blamed the copy.
           const ordered = { order: settle };
           return { eq: () => ({ ...ordered, is: () => ordered }) };
         },
@@ -122,7 +122,7 @@ describe("Automations sub-tab routing (owned locally by Integrations)", () => {
     db.failTable = "stage_automation_rules";
     const { host } = await render(`${BASE}/automations`);
     expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
-    expect(host.textContent).toContain("Couldn’t check your automations");
+    expect(host.textContent).toContain("Couldn’t check your pipeline-message rules");
     expect(db.writes).toHaveLength(0);
   });
 
@@ -130,7 +130,7 @@ describe("Automations sub-tab routing (owned locally by Integrations)", () => {
     db.holdReads = true;
     const { host } = await render(`${BASE}/automations`);
     expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
-    expect(host.textContent).toContain("Checking what is set up");
+    expect(host.textContent).toContain("Checking pipeline-message rules");
     expect(db.writes).toHaveLength(0);
   });
 
@@ -157,10 +157,24 @@ describe("Automations sub-tab routing (owned locally by Integrations)", () => {
 });
 
 describe("Automations truth boundary", () => {
+  it("scopes empty, introduction and history wording to pipeline-message rules alongside task controls", async () => {
+    const { host } = await render(`${BASE}/automations`); const text = host.textContent ?? "";
+    expect(text).toContain("No pipeline-message rules saved");
+    expect(text).toContain("Pipeline-message rules follow a client through your pipeline.");
+    expect(text).toMatch(/this section cannot enable a pipeline-message rule/i);
+    expect(text).toContain("No pipeline-message outcomes recorded.");
+    expect(text).not.toContain("Nothing is set up yet"); expect(text).not.toContain("nothing on this page switches one on");
+    expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
+  });
+  it("scopes failed pipeline reads without denying separate task controls", async () => {
+    db.failTable = "stage_automation_rules"; const { host } = await render(`${BASE}/automations`);
+    expect(host.textContent).toContain("Couldn’t check your pipeline-message rules");
+    expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
+  });
   it("makes no promise about delivery it cannot keep, and none about a route it cannot see", async () => {
     const { host } = await render(`${BASE}/automations`);
     const text = host.textContent ?? "";
-    expect(text).toContain("Nothing is set up yet");
+    expect(text).toContain("No pipeline-message rules saved");
     // The earlier copy promised a saved rule "cannot deliver" and that "no route
     // out" existed. That was read off one environment; a platform fallback route
     // is seeded by migration elsewhere, so the promise was not ours to make.
@@ -169,7 +183,7 @@ describe("Automations truth boundary", () => {
     expect(text).not.toMatch(/nothing will reach a client/i);
     // What replaces it is the part this surface actually enforces.
     expect(text).toMatch(/saved switched\s+off/i);
-    expect(text).toMatch(/nothing on this page switches one on/i);
+    expect(text).toMatch(/this section cannot enable a pipeline-message rule/i);
   });
 
   it("offers no control that starts a rule, so the claim above is enforced not asserted", async () => {
@@ -231,8 +245,8 @@ describe("Automations truth boundary", () => {
   it("does not claim an empty workspace when a read failed", async () => {
     db.failTable = "stage_automation_rules";
     const { host } = await render(`${BASE}/automations`);
-    expect(host.textContent).toContain("Couldn’t check your automations");
-    expect(host.textContent).not.toContain("Nothing is set up yet");
+    expect(host.textContent).toContain("Couldn’t check your pipeline-message rules");
+    expect(host.textContent).not.toContain("No pipeline-message rules saved");
   });
 
   it("offers pipeline setup as the next step only while no pipeline exists", async () => {
@@ -368,7 +382,7 @@ describe("More than one pipeline (regressions from the exact-head review)", () =
     await act(async () => { await Promise.resolve(); });
 
     expect(db.releaseReads.length).toBeGreaterThan(0); // the reload really is in flight
-    expect(host.textContent).not.toContain("Checking what is set up");
+    expect(host.textContent).not.toContain("Checking pipeline-message rules");
     expect(host.textContent).toContain("from Enquiry to Working");
 
     db.holdReads = false;
@@ -415,17 +429,17 @@ describe("Consumed outcomes stay in owner language", () => {
     db.failTable = "stage_automation_events";
     const { host } = await render(`${BASE}/automations`);
     const text = host.textContent ?? "";
-    // "Nothing has run here" and "could not be read" are different claims, and
+    // "No pipeline-message outcomes recorded" and "could not be read" are different claims, and
     // only one of them is true when the read failed.
-    expect(text).not.toContain("Nothing has run here");
+    expect(text).not.toContain("No pipeline-message outcomes recorded");
     expect(text).toMatch(/could not be read|could not be checked/i);
     // The rest of the surface must survive: one failed read is not an outage.
-    expect(text).toContain("Nothing is set up yet");
+    expect(text).toContain("No pipeline-message rules saved");
   });
 
-  it("says nothing has run when the log is empty, rather than implying success", async () => {
+  it("reports no recorded pipeline-message outcomes when the log is empty", async () => {
     const { host } = await render(`${BASE}/automations`);
-    expect(host.textContent).toContain("Nothing has run here");
+    expect(host.textContent).toContain("No pipeline-message outcomes recorded");
   });
 });
 

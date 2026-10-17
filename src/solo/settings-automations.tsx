@@ -8,13 +8,11 @@
  * read-only through its own tenant-scoped policy, in owner language, with nothing
  * raw surfaced.
  *
- * HONESTY CONTRACT (§13). A rule authored here is genuinely saved — the write is a
- * live tenant-admin contract — and the deal-stage trigger genuinely matches it. It
- * cannot yet reach anybody, because the dispatcher only forwards to a delivery
- * route and none is configured anywhere. That is stated on the surface in plain
- * words, on the card and again at the moment of turning a rule on. Nothing here
- * shows a run count, a success rate, a health signal or a repair action, because
- * no automation has ever run.
+ * HONESTY CONTRACT (§13). Pipeline-message rules use their existing tenant-admin
+ * writer and stage trigger. This section saves new pipeline-message rules off;
+ * delivery readiness is not inferred from saving or from another automation type.
+ * Its pipeline-message status/history never describes the separate internal task
+ * controls, and it invents no run counts, success rates, health or delivery proof.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -101,7 +99,7 @@ function PipelineAutomationsView() {
   }, [a.hasPipeline]);
 
   if (a.loading) {
-    return <div className="ss-state" role="status"><RefreshCw className="ss-spin" aria-hidden />Checking what is set up…</div>;
+    return <div className="ss-state" role="status"><RefreshCw className="ss-spin" aria-hidden />Checking pipeline-message rules…</div>;
   }
 
   if (a.error) {
@@ -109,8 +107,8 @@ function PipelineAutomationsView() {
       <div className="ss-state" role="alert">
         <AlertTriangle aria-hidden />
         <span>
-          <strong>Couldn’t check your automations</strong>
-          Nothing is being claimed either way — not that you have none, and not that they are running.
+          <strong>Couldn’t check your pipeline-message rules</strong>
+          Their current state could not be checked.
         </span>
         <button type="button" onClick={() => void a.refresh()}>Try again</button>
       </div>
@@ -125,19 +123,19 @@ function PipelineAutomationsView() {
         <div className="sa-status-head">
           <h2 id="sa-status-title">
             {a.rules.length === 0
-              ? "Nothing is set up yet"
+              ? "No pipeline-message rules saved"
               : live === 0
-                ? `${a.rules.length} saved, none turned on`
-                : `${live} of ${a.rules.length} turned on`}
+                ? `${a.rules.length} pipeline-message rules saved, none turned on`
+                : `${live} of ${a.rules.length} pipeline-message rules turned on`}
           </h2>
           <span className="sa-pill" data-tone={a.rules.length === 0 ? "idle" : live ? "on" : "held"}>
-            {a.rules.length === 0 ? "Nothing set up" : live ? "On" : "Off"}
+            {a.rules.length === 0 ? "None saved" : live ? "On" : "Off"}
           </span>
         </div>
 
         <p>
-          Automations are things Paige does on her own so you do not have to remember them. The kind
-          you can set up here follows a client through your pipeline.
+          Pipeline-message rules follow a client through your pipeline. Their message delivery
+          depends on the supported delivery path and its current readiness.
         </p>
 
         {/* This used to promise that no route out existed and nothing could reach a
@@ -146,10 +144,9 @@ function PipelineAutomationsView() {
             it is enforced rather than asserted: rules are saved off, and this surface
             has no control that starts one. */}
         <p className="sa-caveat">
-          <strong>Worth knowing before you build one.</strong> Rules you build here are saved switched
-          off, and nothing on this page switches one on. Building and changing them is safe. Whether a
-          message would actually go out once a rule is running is decided elsewhere and is not settled
-          here — so treat starting one as a separate decision, not a side effect of saving.
+          <strong>Before building a pipeline-message rule.</strong> New pipeline-message rules are saved switched
+          off. This section cannot enable a pipeline-message rule. Creating or editing one does not enable it;
+          delivery readiness and deliberate activation remain separate from saving.
         </p>
 
         {!a.hasPipeline && (
@@ -171,7 +168,7 @@ function PipelineAutomationsView() {
 
         {a.hasPipeline && !a.canWrite && (
           <p className="sa-caveat">
-            You can see what is set up here, but changing it needs an owner or admin on this workspace.
+            You can inspect pipeline-message rules, but changing them needs an owner or admin on this workspace.
           </p>
         )}
       </section>
@@ -179,8 +176,8 @@ function PipelineAutomationsView() {
       <section className="sa-panel" aria-labelledby="sa-list-title">
         <header className="sa-panel-head">
           <div>
-            <h2 id="sa-list-title">Yours</h2>
-            <p>{a.rules.length === 0 ? "Nothing here yet." : "Turn one off at any time."}</p>
+            <h2 id="sa-list-title">Pipeline-message rules</h2>
+            <p>{a.rules.length === 0 ? "No pipeline-message rules here yet." : "Turn a pipeline-message rule off at any time."}</p>
           </div>
           {a.hasPipeline && a.canWrite && editing === null && (
             <button type="button" className="sa-action" data-primary onClick={() => setEditing("new")}>
@@ -198,8 +195,8 @@ function PipelineAutomationsView() {
         {a.rules.length === 0 && editing === null && (
           <p className="sa-empty">
             {a.hasPipeline
-              ? "When you make one it appears here, with whether it is on and when it last changed."
-              : "Once your pipeline exists, this is where the ones you build will live."}
+              ? "When you save a pipeline-message rule it appears here with its current state and last change."
+              : "You can create pipeline-message rules here once your pipeline exists."}
           </p>
         )}
 
@@ -271,26 +268,25 @@ function PipelineAutomationsView() {
       <section className="sa-panel" aria-labelledby="sa-history-title">
         <header className="sa-panel-head">
           <div>
-            <h2 id="sa-history-title">What has happened</h2>
+            <h2 id="sa-history-title">Pipeline-message outcomes</h2>
             <p>
               {a.outcomesUnavailable
-                ? "This could not be checked just now."
+                ? "Pipeline-message outcomes could not be checked just now."
                 : a.outcomes.length === 0
-                  ? "Nothing has run here."
-                  : "Newest first. Only the outcome is kept here — never the message itself."}
+                  ? "No pipeline-message outcomes recorded."
+                  : "Newest pipeline-message outcomes first. Only the outcome is kept here — never the message itself."}
             </p>
           </div>
         </header>
 
         {a.outcomesUnavailable ? (
           <p className="sa-empty">
-            The record of what has happened could not be read, so nothing is being claimed either
-            way — not that something ran, and not that nothing did.
+            The pipeline-message outcome log could not be read. Past pipeline-message execution is unconfirmed.
           </p>
         ) : a.outcomes.length === 0 ? (
           <p className="sa-empty">
-            Once an automation is running and a client moves, every time it is considered will be
-            listed here — including the times it held back, and why.
+            When a running pipeline-message rule is considered after a client moves, its outcome appears here,
+            including when it held back and why.
           </p>
         ) : (
           <ul className="sa-history">
@@ -398,7 +394,7 @@ function AutomationEditor({
         <span className="sa-editor-note">
           {rule
             ? "Saving a change does not switch a rule on or off — it stays as it is."
-            : "Saved switched off, so nothing starts on its own."}
+            : "Saved switched off, so this pipeline-message rule does not start on its own."}
         </span>
       </div>
     </form>

@@ -60,7 +60,7 @@ describe("emailSenderReadiness — PAIGE Email (SendGrid) four states", () => {
 });
 
 describe("readEmailSenderFacts / readCommsEmailReadiness — verification read from the business's own domain row", () => {
-  const conn = (extra: Row = {}) => ({ id: SG, tenant_id: T, channel_type: "email", provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {}, ...extra });
+  const conn = (extra: Row = {}) => ({ id: SG, tenant_id: T, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {}, ...extra });
   const domain = (extra: Row = {}) => ({ tenant_id: T, domain: "own.example.invalid", sendgrid_status: "verified", sendgrid_domain_id: "sg-1", sendgrid_verified_at: "2026-10-13T00:00:00Z", ...extra });
   it("verified only for THIS business's row with every fact present", async () => {
     const a = admin({ channel_connectors: [conn()], tenant_email_domains: [domain()] });

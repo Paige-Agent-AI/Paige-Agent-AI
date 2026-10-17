@@ -1,3 +1,4 @@
+import { decideContentRead } from "../inbox-intelligence/policy.ts";
 // Experience 03 · S3 — the SendGrid arm of the REAL send-message handler on the governed
 // comms_email path (PAIGE Email). Same technique as send-message.test.ts: the handler source is
 // transpiled and executed with only its imports and the network substituted. `fetch` is a stub:
@@ -50,7 +51,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
         if (table === "messages") return { data: { tenant_id: TENANT, status: "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { source: "comms-email-command", comms_email_binding: b } }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: ["Lead@Example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", provider: "sendgrid", from_address: "hello@own.example.test", from_name: "Own Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "hello@own.example.test", from_name: "Own Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -85,7 +86,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean } = {}) {
     if (mode === "throw") return Promise.reject(new TypeError(`network down near ${SG_KEY}`));
     return new Promise<Response>((_, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
   };
-  const scope = { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "SENDGRID_MAIL_SEND_API_KEY" ? (opts.key === false ? undefined : SG_KEY) : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },

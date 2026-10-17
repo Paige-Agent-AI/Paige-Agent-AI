@@ -21,7 +21,7 @@ function admin(tables: Record<string, Row[]>, fail = false): CommsEmailAdmin & {
   } }) };
 }
 const contact = { id: C, tenant_id: T, first_name: "Dana", last_name: "Reyes", client_contact_methods: [{ kind: "email", value: "second@x.test", is_primary: false, position: 0 }, { kind: "email", value: " Primary@X.test", is_primary: true, position: 1 }] };
-const conn = (id: string, extra: Row = {}) => ({ id, tenant_id: T, channel_type: "email", provider: "resend", from_address: "Owner@Biz.test", active: true, status: "active", credentials_vault_ref: null, config: {}, ...extra });
+const conn = (id: string, extra: Row = {}) => ({ id, tenant_id: T, channel_type: "email", provider: "resend", from_address: "Owner@Biz.test", active: true, status: "active", credentials_vault_ref: null, config: {}, mailbox_class: "shared_support", mailbox_owner_user_id: null, ...extra });
 
 describe("resolveCommsEmailParties", () => {
   it("reads the contact only inside the server tenant and picks its PRIMARY email", async () => {
@@ -45,6 +45,31 @@ describe("resolveCommsEmailParties", () => {
   });
   it("a read failure throws instead of answering", async () => {
     await expect(resolveCommsEmailParties(admin({}, true), { tenantId: T, contactId: C, connectorId: null })).rejects.toThrow();
+  });
+});
+
+describe("personal sender authority", () => {
+  const owner = "40000000-0000-4000-8000-000000000001", teammate = "40000000-0000-4000-8000-000000000002";
+  const privateSender = (extra: Row = {}) => conn(S1, { provider: "gmail", credentials_vault_ref: "reference-only", mailbox_class: "personal", mailbox_owner_user_id: owner, ...extra });
+  const env = (key: string) => key.startsWith("GOOGLE_OAUTH_") ? "synthetic-presence" : undefined;
+  const input = (actorUserId: string | null) => ({ tenantId: T, actorUserId, contactId: C, connectorId: S1 });
+  it("permits the granting owner's own active personal sender and keeps company senders usable", async () => {
+    expect((await resolveCommsEmailParties(admin({ clients: [contact], channel_connectors: [privateSender()] }), input(owner))).kind).toBe("resolved");
+    expect((await readWith(admin({ channel_connectors: [privateSender()] }), { ...input(owner), recipient: "primary@x.test" }, env, check)).eligible).toBe(true);
+    expect((await resolveCommsEmailParties(admin({ clients: [contact], channel_connectors: [conn(S1)] }), input(null))).kind).toBe("resolved");
+  });
+  it.each([teammate, null])("refuses another actor or a missing actor without revealing or selecting the private sender: %s", async actor => {
+    const a = admin({ clients: [contact], channel_connectors: [privateSender(), conn(S2)] });
+    expect((await resolveCommsEmailParties(a, input(actor))).kind).toBe("sender_missing");
+    expect((await readWith(a, { ...input(actor), recipient: "primary@x.test" }, env, check)).eligible).toBe(false);
+    const listed = await resolveCommsEmailParties(a, { ...input(actor), connectorId: null });
+    expect(listed).toMatchObject({ kind: "resolved", connectorId: S2 });
+    expect(JSON.stringify(listed)).not.toContain(S1);
+  });
+  it.each([{ mailbox_owner_user_id: null }, { mailbox_class: null }, { status: "disabled" }, { active: false }, { mailbox_owner_user_id: teammate }])("refuses revoked, missing or changed personal authority: %j", async change => {
+    const a = admin({ clients: [contact], channel_connectors: [privateSender(change)] });
+    expect((await resolveCommsEmailParties(a, input(owner))).kind).toBe("sender_missing");
+    expect((await readWith(a, { ...input(owner), recipient: "primary@x.test" }, env, check)).eligible).toBe(false);
   });
 });
 
@@ -75,7 +100,7 @@ describe("readEmailSenderFacts — the one connector sender-fact read", () => {
     const a = admin({ channel_connectors: [conn(S1, { credentials_vault_ref: "vault-ref", provider: "smtp", config: { host: "smtp.x.test", port: 587, password: "never-read" } })] });
     expect(await readEmailSenderFacts(a, T, S1)).toEqual({ tenantMatches: true, active: true, provider: "smtp", fromAddress: "Owner@Biz.test", credentialReferencePresent: true, smtpConfigured: true });
     expect(a.reads).toEqual([{ table: "channel_connectors", filters: [["tenant_id", T], ["id", S1], ["channel_type", "email"]] }]);
-    expect(await readEmailSenderFacts(admin({ channel_connectors: [conn(S1, { status: "disconnected" })] }), T, S1)).toMatchObject({ active: false });
+    expect(await readEmailSenderFacts(admin({ channel_connectors: [conn(S1, { status: "disconnected" })] }), T, S1)).toBeNull();
   });
   it("no row is null (a missing sender), a read failure throws", async () => {
     expect(await readEmailSenderFacts(admin({ channel_connectors: [conn(S1, { tenant_id: F })] }), T, S1)).toBeNull();
@@ -83,7 +108,7 @@ describe("readEmailSenderFacts — the one connector sender-fact read", () => {
   });
   it("comms readiness reads its sender through it, with no second copy of the select", () => {
     const comms = readFileSync("supabase/functions/_shared/comms-email/readiness.ts", "utf8");
-    expect(comms).toContain("await readEmailSenderFacts(admin, input.tenantId, input.connectorId)");
+    expect(comms).toContain("await readEmailSenderFacts(admin, input.tenantId, input.connectorId, input.actorUserId)");
     expect(comms.match(/credentials_vault_ref,config/g)).toHaveLength(1);
   });
 });

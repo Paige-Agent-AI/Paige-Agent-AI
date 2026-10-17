@@ -1,0 +1,82 @@
+{
+  "proofClass": "SYNTHETIC_FULL_SHELL_NATIVE_GEOMETRY",
+  "uniqueCases": 64,
+  "requiredFourSizesCases": 48,
+  "mobileCases": 12,
+  "reflowCases": 4,
+  "exactViewportAndPNG": true,
+  "horizontalOverflowCases": 0,
+  "full357CharacterTitleCases": 64,
+  "localFontLoadedCases": 64,
+  "visibleUnknownCases": [
+    {
+      "name": "reflow-light-768x384-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "reflow-dark-768x384-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-1536x770-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-1536x770-open-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-1366x768-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-1366x768-open-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-1024x768-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-900x1000-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-light-390x768-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-1536x770-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-1536x770-open-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-1366x768-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-1366x768-open-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-1024x768-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-900x1000-closed-unknown.html",
+      "allTextVisible": true
+    },
+    {
+      "name": "shell-dark-390x768-closed-unknown.html",
+      "allTextVisible": true
+    }
+  ],
+  "intentionalNarrowPaigeOverlayCases": 18,
+  "authenticatedQa": "UNVERIFIED",
+  "liveQa": "UNVERIFIED",
+  "productionEffects": 0,
+  "interactionBoundary": "Actual React handler test precedes static serialization; native browser checks layout, keyboard, scroll, CSS media and screenshots without hydration or backend access"
+}

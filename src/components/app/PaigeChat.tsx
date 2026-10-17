@@ -40,6 +40,7 @@ import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTransc
 import {useClientPortalFrame} from "@/hooks/useClientPortalFrame";
 import {type ClientPortalFrame} from "@/lib/client-portal-frame";
 import {readCustomerChat} from "@/lib/customer-chat";
+import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
 
 type Message = {
   id: string;
@@ -77,8 +78,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   // a hardcoded credit/funding script. Defaults to neutral coaching today.
   const tenantPlaybook = usePlaybook(!customerFrame);
   const playbook = useMemo(() => customerFrame ? {...tenantPlaybook,persona:{
-    ...tenantPlaybook.persona,name:customerFrame.config.assistant?.display_name??"PAIGE",role:"AI assistant for "+customerFrame.brand.tenant_name,
-    greeting:"Hi — I’m "+(customerFrame.config.assistant?.display_name??"PAIGE")+", the AI assistant for "+customerFrame.brand.tenant_name+". How can I help?",
+    ...tenantPlaybook.persona,name:customerAgentName(customerFrame.config.assistant?.display_name),role:"AI client success agent for "+customerFrame.brand.tenant_name,
+    greeting:"Hi — I’m "+customerAgentName(customerFrame.config.assistant?.display_name)+", the AI client success agent for "+customerFrame.brand.tenant_name+". How can I help?",
   }} : tenantPlaybook,[tenantPlaybook,customerFrame]);
   const quickActions = playbook.quickActions;
   // The chat header wears the TENANT's brand, not a hardcoded Paige face (§6/§9).
@@ -644,11 +645,11 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       </div>
 
       {/* Messages */}
-      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label={customerFrame?`${personaName} conversation`:"PAIGE conversation"} tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
           <div key={message.id} data-paige-message-id={message.id} className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
             {message.role === "assistant" && (
-              <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
+              customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
             )}
             <div className={`max-w-[88%] sm:max-w-[85%] rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5 ${message.role === "user" ? "bg-accent text-accent-foreground" : "bg-muted/40 border border-border"}`}>
               {message.documentFileName && <DocumentMessageBubble fileName={message.documentFileName} />}
@@ -688,7 +689,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             NON-persisting portal → no compacting card (§13 — it never folds). */}
         {isLoading && messages.some((m) => m.role === "user") && (
           <div className="flex gap-2 sm:gap-3">
-            <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
+            {customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />}
             <PaigeThinkingIndicator
               active={isLoading}
               writing={writingPhase}
@@ -739,9 +740,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder={isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
+            placeholder={customerFrame ? (isMobile ? `Message ${personaName}…` : `Ask ${personaName}… (Shift+Enter for new line)`) : isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
             rows={1}
-            aria-label="Message PAIGE"
+            aria-label={customerFrame?`Message ${personaName}`:"Message PAIGE"}
             className="flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2"
             disabled={isLoading}
           />

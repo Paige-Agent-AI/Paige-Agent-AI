@@ -101,7 +101,7 @@ jobs:
       - name: Weekly internal commitment check authority, receipt and recovery proof in disposable PostgreSQL
         run: node scripts/proof/weekly-commitment-check.mjs --postgres
       - name: Native approved internal task authority, exact approval, receipt and recovery in disposable PostgreSQL
-        run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-native --postgres
+        run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-human-control --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

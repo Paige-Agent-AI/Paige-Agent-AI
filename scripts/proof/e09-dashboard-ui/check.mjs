@@ -85,9 +85,9 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     assert.deepEqual(reviewContrast.failures,[],JSON.stringify({width,theme,reviewContrast}));resourceContrast={list:listContrast,review:reviewContrast};
   } else if (assistantOnly) {
     await page.getByRole("button", { name: "Configure assistant", exact: true }).click();
-    const name = page.getByRole("textbox", { name: "Assistant name", exact: true });
+    const name = page.getByRole("textbox", { name: "Agent name", exact: true });
     await name.waitFor();
-    await page.waitForFunction(() => document.activeElement?.getAttribute("placeholder") === "PAIGE");
+    await page.waitForFunction(() => document.activeElement?.getAttribute("placeholder") === "Cura");
     await name.fill("Test business customer guide");
     await page.keyboard.press("Tab");
     assert.equal(await page.getByRole("textbox", { name: "Tone", exact: true }).evaluate(node => node === document.activeElement), true);
@@ -95,7 +95,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     await page.getByRole("button", { name: "Configure assistant", exact: true }).click();
     assert.equal(await name.inputValue(), "Test business customer guide");
     await page.getByRole("textbox", { name: "When to contact a person", exact: true }).scrollIntoViewIfNeeded();
-    const fields = await page.locator('fieldset[aria-label="Customer assistant settings"] input:not([type="checkbox"]),fieldset[aria-label="Customer assistant settings"] textarea').evaluateAll(nodes => nodes.map(node => ({ tag: node.tagName, width: node.getBoundingClientRect().width, fontSize: parseFloat(getComputedStyle(node).fontSize), wraps: node.scrollWidth <= node.clientWidth + 1 })));
+    const fields = await page.locator('fieldset[aria-label="Customer agent settings"] input:not([type="checkbox"]),fieldset[aria-label="Customer agent settings"] textarea').evaluateAll(nodes => nodes.map(node => ({ tag: node.tagName, width: node.getBoundingClientRect().width, fontSize: parseFloat(getComputedStyle(node).fontSize), wraps: node.scrollWidth <= node.clientWidth + 1 })));
     // A single-line input intentionally scrolls long values; its outer bounds
     // must fit below. Multiline guidance must wrap rather than clip horizontally.
     assert.equal(fields.length, 4); assert(fields.every(field => field.width > 0 && (field.tag === "INPUT" || field.wraps)), JSON.stringify({width,open,theme,fields}));

@@ -6,7 +6,7 @@ import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
-  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null }));
+  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown> }));
 const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn() }));
 vi.mock("./operations-weekly-source", async importOriginal => ({ ...await importOriginal<typeof import("./operations-weekly-source")>(), readWeeklyPlanningSource: weekly.read }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
@@ -17,10 +17,10 @@ vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTe
   activeUserId: harness.user, loading: false, accountContextStatus: harness.status }) }));
 vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: harness.members, loading: false,
   error: null, partial: false, refresh: vi.fn() }) }));
-vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], loading: false, error: harness.planningError,
+vi.mock("@/hooks/usePlanList", () => ({ usePlanList: (options: unknown) => { harness.planningOptions.push(options); return ({ plans: [], loading: false, error: harness.planningError,
   forbidden: false, refresh: weekly.refresh, allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
     plan_id: null, title: `${harness.tenant} assigned work`, summary: "Test source", status: "open", priority: "normal",
-    item_type: "task", assigned_to_user_id: null, due_at: null }] }) }));
+    item_type: "task", assigned_to_user_id: null, due_at: null,...harness.planningOverrides }] }); } }));
 vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam</div> }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
 vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onNavigationGuardChange }: {
@@ -39,10 +39,40 @@ let root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
+  harness.planningOptions=[];
+  harness.planningOverrides={};
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); setScopedUserId(null); container.remove(); });
+it.each([["2099-01-02T13:15:00+03:00",new Date("2099-01-02T13:15:00+03:00").toLocaleString()],
+  [null,"Not scheduled"],["invalid-date","Date unavailable"],[undefined,"Date unavailable"]])("inspects the reminder time truthfully without reading due_at (%s)",async(remindAt,expected)=>{
+  harness.planningOverrides={item_type:"reminder",remind_at:remindAt,due_at:"2099-08-20T12:00:00Z"};
+  await act(async()=>root.render(<OperationsWorkspace view="work" />));
+  await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")!.click());
+  const labels=Array.from(document.querySelectorAll(".ops-detail-content dt"));
+  const date=labels.find(label=>label.textContent==="Reminder time");
+  expect(date).toBeTruthy();expect(date?.nextElementSibling?.textContent).toBe(expected);
+});
+it.each(["task","milestone"])("retains the %s inspector's native due date",async(itemType)=>{
+  const dueAt="2099-08-20T12:00:00Z";
+  harness.planningOverrides={item_type:itemType,remind_at:"2099-01-02T13:15:00+03:00",due_at:dueAt};
+  await act(async()=>root.render(<OperationsWorkspace view="work" />));
+  await act(async()=>container.querySelector<HTMLButtonElement>(".ops-work-card")!.click());
+  const date=Array.from(document.querySelectorAll(".ops-detail-content dt")).find(label=>label.textContent==="Due date");
+  expect(date?.nextElementSibling?.textContent).toBe(new Date(dueAt).toLocaleString());
+  expect(document.querySelector(".ops-detail-content")?.textContent).not.toContain("Reminder time");
+});
+it("opts into native cancellation history only for Work", async () => {
+  await act(async () => root.render(<OperationsWorkspace />));
+  expect(harness.planningOptions.at(-1)).toMatchObject({ includeCancelled: false });
+  const work = Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Work")!;
+  await act(async () => work.click());
+  expect(harness.planningOptions.at(-1)).toMatchObject({ includeCancelled: true });
+  const projects = Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Projects")!;
+  await act(async () => projects.click());
+  expect(harness.planningOptions.at(-1)).toMatchObject({ includeCancelled: false });
+});
 it("effective client view immediately removes business work and its open inspection", async () => {
   await act(async () => root.render(<OperationsWorkspace view="work" />));
   const task = container.querySelector<HTMLButtonElement>(".ops-work-card");

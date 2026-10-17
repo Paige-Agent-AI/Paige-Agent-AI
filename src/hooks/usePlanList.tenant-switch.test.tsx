@@ -51,8 +51,9 @@ function item(id: string, tenantId: string) {
   };
 }
 
-function Probe({ tenantId, guarded = false, actorId = "qa-user" }: { tenantId: string | null; guarded?: boolean; actorId?: string }) {
+function Probe({ tenantId, guarded = false, actorId = "qa-user", includeCancelled }: { tenantId: string | null; guarded?: boolean; actorId?: string; includeCancelled?: boolean }) {
   const result = usePlanList({ tenantScopeKey: tenantId, enabled: tenantId !== null,
+    includeCancelled,
     ...(guarded ? { operationsActorId: actorId, operationsTenantId: tenantId } : {}) });
   return <output data-loading={String(result.loading)} data-forbidden={String(result.forbidden)}>{result.allItems.map((entry) => entry.id).join(",")}</output>;
 }
@@ -74,6 +75,15 @@ afterEach(() => {
 });
 
 describe("usePlanList tenant epoch", () => {
+  it("keeps the old reader arguments by default and requests history only with explicit opt-in", async () => {
+    harness.calls = [{ promise: Promise.resolve({ data: { plans: [], loose_items: [] }, error: null }), resolve: vi.fn() },
+      { promise: Promise.resolve({ data: { plans: [], loose_items: [] }, error: null }), resolve: vi.fn() }];
+    await act(async () => root.render(<Probe tenantId="tenant-a" guarded />));
+    expect(harness.requests[0].parameters).not.toHaveProperty("p_include_cancelled");
+    await act(async () => root.render(<Probe tenantId="tenant-a" guarded includeCancelled />));
+    expect(harness.requests[1]).toMatchObject({ name: "plan_list_operations_scoped", parameters: {
+      p_include_cancelled: true, p_by_item_date: false, p_expected_tenant_id: "tenant-a", p_expected_actor_id: "qa-user" } });
+  });
   it("clears tenant A immediately and rejects its late response after tenant B resolves", async () => {
     const a = deferred();
     const b = deferred();

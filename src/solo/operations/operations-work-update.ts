@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PlanItemStatus, PlanPriority } from "@/hooks/usePlanList";
 
-export type WorkUpdate = { status?: PlanItemStatus; dueAt?: string; assigneeId?: string; priority?: PlanPriority };
+export type WorkUpdate = { status?: PlanItemStatus; dueAt?: string; remindAt?: string; assigneeId?: string; priority?: PlanPriority };
 export type WorkUpdateScope = { actorId: string; tenantId: string; itemId: string; expectedUpdatedAt?: string };
 export type WorkUpdateResult =
   | { kind: "acknowledged" }
@@ -14,17 +14,29 @@ export async function submitOperationsWorkUpdate(scope: WorkUpdateScope, update:
   if (!scope.expectedUpdatedAt || !Number.isFinite(Date.parse(scope.expectedUpdatedAt))) return {
     kind: "refused", message: "This work’s current version is unavailable. Refresh before editing.",
   };
+  const removing = update.status === "cancelled";
+  const rescheduling = Object.prototype.hasOwnProperty.call(update, "remindAt");
+  if (rescheduling && Object.keys(update).some(key => key !== "remindAt")) return {
+    kind: "refused", message: "Review reminder rescheduling separately from other work changes.",
+  };
+  if (rescheduling && (typeof update.remindAt !== "string" || !Number.isFinite(Date.parse(update.remindAt)) || Date.parse(update.remindAt) <= Date.now())) return {
+    kind: "refused", message: "Choose a valid future reminder date and time.",
+  };
+  if (removing && Object.keys(update).some(key => key !== "status")) return {
+    kind: "refused", message: "Review cancellation separately from other work changes.",
+  };
   try {
     const { data: session, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || session.session?.user.id !== scope.actorId) return {
       kind: "refused", message: "Your account changed. Reopen the work in your current workspace.",
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new scoped RPC awaits generated schema types
-    const { data, error } = await (supabase as any).rpc(update.priority ? "plan_update_item_priority_versioned" : "plan_update_item_versioned", {
+    const { data, error } = await (supabase as any).rpc(rescheduling ? "plan_reschedule_reminder_versioned" : removing ? "plan_remove_item_versioned" : update.priority ? "plan_update_item_priority_versioned" : "plan_update_item_versioned", {
       p_item_id: scope.itemId, p_expected_actor_id: scope.actorId, p_expected_tenant_id: scope.tenantId,
       p_expected_updated_at: scope.expectedUpdatedAt,
-      ...(update.status ? { p_status: update.status } : {}),
+      ...(!removing && update.status ? { p_status: update.status } : {}),
       ...(update.dueAt ? { p_due_at: update.dueAt } : {}),
+      ...(rescheduling ? { p_remind_at: update.remindAt } : {}),
       ...(update.assigneeId ? { p_assigned_to_user_id: update.assigneeId } : {}),
       ...(update.priority ? { p_priority: update.priority } : {}),
     });
@@ -38,7 +50,11 @@ export async function submitOperationsWorkUpdate(scope: WorkUpdateScope, update:
       // A timeout or interrupted response does not prove that the transaction failed.
       return uncertain;
     }
-    if (data?.ok !== true || data.item_id !== scope.itemId || data.tenant_id !== scope.tenantId || data.actor_id !== scope.actorId) return uncertain;
+    if (data?.ok !== true || data.item_id !== scope.itemId || data.tenant_id !== scope.tenantId || data.actor_id !== scope.actorId
+      || removing && data.status !== "cancelled") return uncertain;
+    if (rescheduling && (data.railRecorded !== true || data.receipt_status !== "recorded" || typeof data.receipt_run_id !== "string"
+      || typeof data.remind_at !== "string" || !Number.isFinite(Date.parse(data.remind_at))
+      || Date.parse(data.remind_at) !== Date.parse(update.remindAt!))) return uncertain;
     return { kind: "acknowledged" };
   } catch { return uncertain; }
 }

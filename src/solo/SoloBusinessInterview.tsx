@@ -198,11 +198,11 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
           setMessage("Review the question in Chat, then press Send. No action has been submitted.");
           panel.current?.closest(".spw-root")?.querySelector<HTMLTextAreaElement>("[data-solo-composer-input] textarea")?.focus({ preventScroll: true });
         }}>{question.label}</button>)}</div>}
-        <p className="sbi-note">Ask PAIGE what fits your business. Review connections in Settings; keep passwords and tokens out of Chat. Opening a page makes no connection or business change.</p>
-        <div className="sbi-actions">{(["integrations", "connections", "vault"] as const).map(destination => <button key={destination} type="button" disabled={locked || !activeTenant?.account_number} onClick={() => {
+        <p className="sbi-note">Ask PAIGE what fits your business. Review connections and communications in Settings; keep passwords and tokens out of Chat. Opening a page makes no connection or business change.</p>
+        <div className="sbi-actions">{(["integrations", "connections", "vault", "communications"] as const).map(destination => <button key={destination} type="button" disabled={locked || !activeTenant?.account_number} onClick={() => {
           if (!ready || locked || context.saveOutcomeUnknown || !activeTenant?.account_number) return;
           navigate(interviewConnectionPath(activeTenant.account_number, destination, threadId));
-        }}>Open {destination === "vault" ? "Vault" : destination === "connections" ? "Connections" : "Integrations"}</button>)}</div>
+        }}>Open {destination === "vault" ? "Vault" : destination === "connections" ? "Connections" : destination === "integrations" ? "Integrations" : "Communications"}</button>)}</div>
       </section>}
     </>}
   </aside>;

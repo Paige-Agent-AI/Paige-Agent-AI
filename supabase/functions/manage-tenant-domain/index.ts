@@ -41,6 +41,10 @@ function mapStatus(s: string | undefined): string {
   return "verifying";
 }
 
+class DomainAuthorityError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -54,9 +58,7 @@ Deno.serve(async (req) => {
   const { data: { user } } = await userClient.auth.getUser();
   if (!user) return json({ error: "unauthorized" }, 401);
 
-  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
   const { data: isOwner } = await admin.rpc("is_platform_owner");
-  if (!isAdmin && !isOwner) return json({ error: "forbidden" }, 403);
 
   let body: any;
   try { body = await req.json(); } catch { body = {}; }
@@ -76,7 +78,32 @@ Deno.serve(async (req) => {
     return json({ error: decision.error }, decision.status);
   }
   const tenantId = decision.tenantId;
-  if (verb !== "list" && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return json({ error: COMMS_PROVIDER_EXECUTION_DISABLED }, 403);
+  let operationAttempted = false;
+
+  // A global app role may belong to another business. Reuse the canonical current
+  // workspace/active seat contract; the service client does not confer the actor's authority.
+  // Check again across awaited boundaries. These checkpoints are not a transaction
+  // or a future authority lease and cannot roll back an earlier provider operation.
+  const requireCurrentAuthority = async () => {
+    if (isOwner) return; // Existing platform-owner target exception is unchanged.
+    try {
+      const { data: identity, error: identityError } = await userClient.auth.getUser();
+      if (identityError || identity?.user?.id !== user.id) throw new DomainAuthorityError("unauthorized", 401);
+      const currentTenant = async () => {
+        const { data, error } = await admin.from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
+        if (error) throw new DomainAuthorityError("authority_unavailable", 503);
+        if (data?.active_tenant_id !== tenantId) throw new DomainAuthorityError("cross_tenant_forbidden", 403);
+      };
+      await currentTenant();
+      const { data: allowed, error } = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+      if (error) throw new DomainAuthorityError("authority_unavailable", 503);
+      if (allowed !== true) throw new DomainAuthorityError("forbidden", 403);
+      await currentTenant();
+    } catch (error) {
+      if (error instanceof DomainAuthorityError) throw error;
+      throw new DomainAuthorityError("authority_unavailable", 503);
+    }
+  };
 
   /**
    * Evidence that a real change happened to what this business sends email FROM.
@@ -106,6 +133,7 @@ Deno.serve(async (req) => {
     domainRowId: string | null,
     detail: Record<string, unknown>,
   ) => {
+    await requireCurrentAuthority();
     const { error: auditErr } = await admin.from("audit_logs").insert({
       user_id: user.id,
       entity: "tenant_email_domain",
@@ -117,8 +145,13 @@ Deno.serve(async (req) => {
   };
 
   try {
+    await requireCurrentAuthority();
+    if (verb !== "list" && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return json({ error: COMMS_PROVIDER_EXECUTION_DISABLED }, 403);
+    await requireCurrentAuthority();
+
     if (verb === "list") {
       const { data } = await admin.from("tenant_email_domains").select("*").eq("tenant_id", tenantId).order("created_at");
+      await requireCurrentAuthority();
       return json({ domains: data ?? [] });
     }
 
@@ -127,11 +160,15 @@ Deno.serve(async (req) => {
       const fromName = String(body.from_name || "").trim() || "Notifications";
       const fromLocal = String(body.from_email_local || "no-reply").trim().toLowerCase();
       if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) return json({ error: "invalid_domain" }, 400);
+      await requireCurrentAuthority();
+      operationAttempted = true;
       const created = await resend("/domains", { method: "POST", body: JSON.stringify({ name: domain }) });
+      await requireCurrentAuthority();
       const records = created?.records ?? [];
       const status = mapStatus(created?.status);
       const { data: existingDefault } = await admin
         .from("tenant_email_domains").select("id").eq("tenant_id", tenantId).eq("is_default", true).maybeSingle();
+      await requireCurrentAuthority();
       const { data, error } = await admin
         .from("tenant_email_domains")
         .insert({
@@ -147,6 +184,7 @@ Deno.serve(async (req) => {
         // when the workspace had no default yet.
         became_default: !existingDefault,
       });
+      await requireCurrentAuthority();
       return json({ domain: data });
     }
 
@@ -154,10 +192,14 @@ Deno.serve(async (req) => {
       const id = String(body.id);
       // §9: scope the lookup to the caller's tenant — a foreign row id resolves to nothing (404).
       const { data: row } = await admin.from("tenant_email_domains").select("*").eq("id", id).eq("tenant_id", tenantId).maybeSingle();
+      await requireCurrentAuthority();
       if (!row) return json({ error: "not_found" }, 404);
       if (row.resend_domain_id) {
+        operationAttempted = true;
         try { await resend(`/domains/${row.resend_domain_id}/verify`, { method: "POST" }); } catch (_) { /* ignore */ }
+        await requireCurrentAuthority();
         const info = await resend(`/domains/${row.resend_domain_id}`);
+        await requireCurrentAuthority();
         const status = mapStatus(info?.status);
         await admin.from("tenant_email_domains").update({
           status, dns_records: info?.records ?? row.dns_records,
@@ -174,6 +216,7 @@ Deno.serve(async (req) => {
         }
       }
       const { data: fresh } = await admin.from("tenant_email_domains").select("*").eq("id", id).eq("tenant_id", tenantId).maybeSingle();
+      await requireCurrentAuthority();
       return json({ domain: fresh });
     }
 
@@ -184,12 +227,16 @@ Deno.serve(async (req) => {
       // that the default changed without naming what it changed TO is a row you
       // cannot answer the question from, which is most of the point of writing it.
       const { data: target } = await admin.from("tenant_email_domains").select("id, domain").eq("id", id).eq("tenant_id", tenantId).maybeSingle();
+      await requireCurrentAuthority();
       if (!target) return json({ error: "not_found" }, 404);
       // Read the outgoing default BEFORE the flip — afterwards there is no way to
       // recover which domain this replaced.
       const { data: previousDefault } = await admin
         .from("tenant_email_domains").select("id, domain").eq("tenant_id", tenantId).eq("is_default", true).maybeSingle();
+      await requireCurrentAuthority();
+      operationAttempted = true;
       await admin.from("tenant_email_domains").update({ is_default: false }).eq("tenant_id", tenantId);
+      await requireCurrentAuthority();
       await admin.from("tenant_email_domains").update({ is_default: true }).eq("id", id).eq("tenant_id", tenantId);
       await writeDomainAudit("comms:sending_domain_set_default", id, {
         domain: target.domain,
@@ -197,6 +244,7 @@ Deno.serve(async (req) => {
         // from replacing one and reads as such.
         replaced_domain: previousDefault?.domain ?? null,
       });
+      await requireCurrentAuthority();
       return json({ ok: true });
     }
 
@@ -204,10 +252,14 @@ Deno.serve(async (req) => {
       const id = String(body.id);
       // §9: scope the lookup + delete to the caller's tenant — closes the cross-tenant destructive IDOR.
       const { data: row } = await admin.from("tenant_email_domains").select("*").eq("id", id).eq("tenant_id", tenantId).maybeSingle();
+      await requireCurrentAuthority();
       if (!row) return json({ error: "not_found" }, 404);
       if (row.resend_domain_id) {
+        operationAttempted = true;
         try { await resend(`/domains/${row.resend_domain_id}`, { method: "DELETE" }); } catch (_) { /* ignore */ }
+        await requireCurrentAuthority();
       }
+      operationAttempted = true;
       await admin.from("tenant_email_domains").delete().eq("id", id).eq("tenant_id", tenantId);
       // The row is gone, so this audit entry is the ONLY record anywhere that this
       // domain was ever a sending identity for this business, and the only place
@@ -216,11 +268,16 @@ Deno.serve(async (req) => {
       await writeDomainAudit("comms:sending_domain_removed", id, {
         domain: row.domain, was_default: row.is_default === true, status: row.status,
       });
+      await requireCurrentAuthority();
       return json({ ok: true });
     }
 
     return json({ error: "unknown_verb" }, 400);
   } catch (e) {
+    if (e instanceof DomainAuthorityError) return json({
+      error: e.message,
+      ...(operationAttempted ? { operation_outcome: "unconfirmed", message: "An operation was attempted before access changed. Check its outcome before retrying." } : {}),
+    }, e.status);
     return json({ error: (e as Error).message }, 502);
   }
 });

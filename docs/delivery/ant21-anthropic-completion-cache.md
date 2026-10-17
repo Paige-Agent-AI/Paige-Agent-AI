@@ -75,3 +75,10 @@ customer record, credential, production effect or activation occurred. No custom
 or all-18/all-50 restoration completion is claimed; Shipped Delivery Log is N/A before merge.
 Migrations are NOT_APPLICABLE; an Edge release/source readback has not been performed in this slice.
 Recovery is an ordinary reviewed forward correction; no history reset or effect replay is involved.
+
+
+## Lead integration and reviewed source renewal
+
+Distinct NON-AUTHOR lead review inspected frozenfe161456e231f27251088c52178cf55f9aa3c545: exactly two cache_control defaults in the existing non-stream request constructors, eight corresponding non-stream fixture updates and unchanged streaming/PDF/model/provider/approval/budget contracts. Lead independently reran84 actual-helper checks, PASS; broader preserved Fabric/Responses/trace proof totals359PASS. The reviewed changes are composed with thread-summary Fabric143c07bb and recovery532cefc8a/current-main d17; no route flags, keys, cohorts, paid activation or billing changes occur.
+
+Only the reviewed Claude source AST scalar renews to cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff. Actual binding and all59 restrictive negative controls PASS after composition. Separate AUTHOR-REVIEW / LOWER ASSURANCE of the scalar-only integration confirms no extractor, metadata, refusal test or other source pin was broadened. Required exact-successor hosted CI and production served-source readback remain pending. No actual Anthropic cache-hit improvement or organization-level savings is claimed.

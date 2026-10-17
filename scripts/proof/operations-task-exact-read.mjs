@@ -28,7 +28,7 @@ const paths = {
   seats: 'supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql',
   tenant: 'supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql',
   roles: 'supabase/migrations/20251009234919_3d7566f7-15b7-462f-90a3-b74b713298b6.sql',
-  migration: 'supabase/migrations/20271109035000_operations_crm_task_exact_read.sql',
+  migration: 'supabase/migrations/20271109046000_operations_crm_task_exact_read.sql',
   incumbent: 'supabase/tests/operations_native_crm_work_read.sql',
   proof: 'supabase/tests/operations_crm_task_exact_read.sql',
 };

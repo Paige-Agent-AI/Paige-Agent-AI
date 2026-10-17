@@ -256,7 +256,8 @@ async function resolveSkillCaller(
     return {
       authenticated: true,
       principal: "service",
-      userId: body.invoker_user_id ?? null,
+      // A body label cannot become the authenticated actor on the governed decision/audit.
+      userId: null,
       tenantId: body.tenant_id ?? null,
       access: { allowed: true },
       isApprovingAuthority: false,
@@ -267,8 +268,8 @@ async function resolveSkillCaller(
   // A real JWT. Derive the acting identity + tenant SERVER-SIDE. Never the body, never the contact.
   let actorUserId: string | null = null;
   try {
-    const { data } = await admin.auth.getUser(presented);
-    actorUserId = data?.user?.id ?? null;
+    const { data, error } = presented ? await admin.auth.getUser(presented) : { data: null, error: null };
+    actorUserId = error ? null : data?.user?.id ?? null;
   } catch { actorUserId = null; }
   if (!actorUserId) {
     return {
@@ -282,13 +283,13 @@ async function resolveSkillCaller(
   // with no active tenant falls back to the operator workspace, exactly as the browser path does.
   let tenantId: string | null = null;
   try {
-    const { data: prof } = await admin.from("profiles").select("active_tenant_id").eq("user_id", actorUserId).maybeSingle();
-    tenantId = prof?.active_tenant_id ? String(prof.active_tenant_id) : null;
+    const { data: prof, error } = await admin.from("profiles").select("active_tenant_id").eq("user_id", actorUserId).maybeSingle();
+    tenantId = !error && prof?.active_tenant_id ? String(prof.active_tenant_id) : null;
   } catch { /* resolved below / left null */ }
   let platformOwner = false;
   try {
-    const { data } = await admin.rpc("is_platform_owner", { _user_id: actorUserId });
-    platformOwner = data === true;
+    const { data, error } = await admin.rpc("is_platform_owner", { _user_id: actorUserId });
+    platformOwner = !error && data === true;
   } catch { platformOwner = false; }
   if (!tenantId && platformOwner) tenantId = await platformOperatorTenantId(admin);
   if (!tenantId) {
@@ -308,8 +309,8 @@ async function resolveSkillCaller(
       admin.rpc("is_tenant_admin_as", { _actor: actorUserId, _tenant: tenantId }),
       admin.rpc("agency_can_manage_child", { _child: tenantId, _actor: actorUserId }),
     ]);
-    tenantAdmin = a?.data === true;
-    agencyManager = b?.data === true;
+    tenantAdmin = !a?.error && a?.data === true;
+    agencyManager = !b?.error && b?.data === true;
   } catch { /* default false — a failed authority check never grants authority */ }
   const isApprovingAuthority = platformOwner || tenantAdmin || agencyManager;
   return {
@@ -636,35 +637,15 @@ Deno.serve(async (req) => {
     const body: RunRequest = await req.json();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    const { data: skill, error: skillErr } = await admin
-      .from("paige_skills")
-      .select("*")
-      .eq("slug", body.skill_slug)
-      .maybeSingle();
-    if (skillErr || !skill) {
-      return new Response(JSON.stringify({ error: `Unknown skill: ${body.skill_slug}` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (skill.status !== "active") {
-      return new Response(JSON.stringify({ error: `Skill is ${skill.status}` }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const hasBrowserStep = browserToolAllowed(skill as SkillRow);
-    // Resolve and authorize before any run/activity row is written. A refused browser request leaves
-    // no fabricated or caller-attributed execution trace.
-    const browserAuthority = hasBrowserStep
-      ? await resolveBrowserAuthority(req, body, admin)
-      : null;
-
     // ── THE GOVERNED GATE (§9/§59) — the direct Edge route enforces the governed truth ITSELF. ──
     // Resolve the caller SERVER-SIDE (JWT actor + tenant + authority, or a trusted internal service
-    // credential). Then run the ONE governed pathway. A refusal (unauthenticated, request-supplied
-    // tenant, access-denied, service principal acting alone, owner-only) leaves NO run row and NO
-    // side effect — the attempt is recorded only on paige_audit_log.
-    const skillCaller = await resolveSkillCaller(req, body, admin, browserAuthority);
-    const callerTenantId = skillCaller.tenantId;
+    // credential) BEFORE the privileged skill lookup, including browser-enabled skills. The slug is
+    // an audit label only: decideSkillRun always uses the canonical skill_run mutation contract.
+    // An internal credential never borrows a body-named human's browser authority.
+    let skillCaller = await resolveSkillCaller(req, body, admin, null);
     const requestNonce = crypto.randomUUID();
     const governed = decideSkillRun({
-      skillSlug: skill.slug,
+      skillSlug: body.skill_slug,
       authenticated: skillCaller.authenticated,
       userId: skillCaller.userId,
       principal: skillCaller.principal,
@@ -679,9 +660,43 @@ Deno.serve(async (req) => {
       await writeGovernedSkillAudit(admin, skillCaller, governed.audit);
       return new Response(
         JSON.stringify({ status: "refused", code: governed.outcome.code, error: governed.outcome.message }),
-        { status: governed.outcome.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: governed.outcome.code === "unauthenticated" ? 401 : governed.outcome.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    const { data: skill, error: skillErr } = await admin
+      .from("paige_skills")
+      .select("*")
+      .eq("slug", body.skill_slug)
+      .maybeSingle();
+    if (skillErr || !skill) {
+      return new Response(JSON.stringify({ error: `Unknown skill: ${body.skill_slug}` }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (skill.status !== "active") {
+      return new Response(JSON.stringify({ error: `Skill is ${skill.status}` }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Browser authority is an ADDITIONAL current-session/workspace/role check, never a substitute for
+    // the governed caller gate above. Known denials are 401/403, not generic server failures.
+    let browserAuthority: SecureBrowserAuthority | null = null;
+    if (browserToolAllowed(skill as SkillRow)) {
+      try {
+        browserAuthority = await resolveBrowserAuthority(req, body, admin);
+      } catch (err) {
+        const code = err instanceof Error ? err.message : "";
+        if (!["browser_session_invalid", "browser_human_actor_required", "browser_active_workspace_required",
+          "browser_actor_not_authorized", "browser_contact_not_available", "browser_authority_unresolved"].includes(code)) throw err;
+        return new Response(JSON.stringify({ status: "refused", code, error: "Browser access is not authorized for the current session and workspace." }),
+          { status: code === "browser_session_invalid" ? 401 : 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (browserAuthority.actorUserId !== skillCaller.userId || browserAuthority.tenantId !== skillCaller.tenantId) {
+        return new Response(JSON.stringify({ status: "refused", code: "browser_workspace_changed", error: "The active session or workspace changed. Refresh before starting a new run." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      skillCaller = await resolveSkillCaller(req, body, admin, browserAuthority);
+    }
+    const callerTenantId = skillCaller.tenantId;
 
     // ── EXTERNAL SEND — draft_and_email_document requires a durable, single-use, fingerprint-bound
     // approval (reusing paige_pending_confirmations + confirm-fingerprint, §18). Its flow is two-phase,

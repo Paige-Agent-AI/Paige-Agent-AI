@@ -19,11 +19,18 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
 
-function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}) {
+function fixture(options: {
+  noWorkspace?: boolean; providerHeld?: boolean; browser?: boolean; notMember?: boolean;
+  authError?: boolean; authThrows?: boolean; revokedAfterFirstCheck?: boolean; roleRevokedAfterFirstCheck?: boolean;
+  workspaceChangedAfterFirstCheck?: boolean; inactiveSkill?: boolean;
+} = {}) {
   const writes: Array<{ table: string; operation: string; values: Row; filters: Row }> = [];
   const reads: Array<{ table: string; filters: Row }> = [];
   const decisions: governed.SkillGovernedInput[] = [];
   const tokens: string[] = [];
+  const interpreterCalls: Array<Row> = [];
+  let roleChecks = 0;
+  let workspaceChecks = 0;
   let drafts = 0;
   let network = 0;
   let handler: ((req: Request) => Promise<Response>) | undefined;
@@ -32,8 +39,9 @@ function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}
     client_contact_methods: [{ kind: "email", value: "client@example.invalid", is_primary: true, position: 0 }],
   });
   const contacts = [contact("test-contact-a", "test-tenant-a"), contact("test-contact-b", "test-tenant-b")];
-  const skill = { id: "test-skill", slug: "draft_and_email_document", status: "active", run_count: 0,
-    success_count: 0, require_admin_confirm_first_n: 1, steps: [] };
+  const skill = { id: "test-skill", slug: options.browser ? "browse_public_url" : "draft_and_email_document", status: options.inactiveSkill ? "disabled" : "active", run_count: 0,
+    success_count: 0, require_admin_confirm_first_n: 1,
+    allowed_tools: options.browser ? ["browser"] : [], steps: options.browser ? [{ tool: "browser", mode: "public" }] : [] };
   function from(table: string) {
     const filters: Row = {};
     let operation = "read";
@@ -47,8 +55,12 @@ function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}
       }
       reads.push({ table, filters: { ...filters } });
       if (table === "paige_skills") return { data: filters.slug === skill.slug ? skill : null, error: null };
-      if (table === "profiles") return { data: filters.user_id === "test-owner-a"
-        ? { active_tenant_id: options.noWorkspace ? null : "test-tenant-a" } : null, error: null };
+      if (table === "profiles") {
+        workspaceChecks++;
+        return { data: filters.user_id === "test-owner-a"
+          ? { active_tenant_id: options.noWorkspace ? null
+            : options.workspaceChangedAfterFirstCheck && workspaceChecks > 1 ? "test-tenant-b" : "test-tenant-a" } : null, error: null };
+      }
       if (table === "clients") return { data: contacts.find(row => row.id === filters.id && row.tenant_id === filters.tenant_id) ?? null, error: null };
       throw new Error(`Unexpected fixture read ${table}`);
     });
@@ -71,11 +83,18 @@ function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}
     from,
     auth: { getUser: async (token: string) => {
       tokens.push(token);
-      return { data: { user: token === "test-owner-jwt" ? { id: "test-owner-a" } : null }, error: null };
+      if (options.authThrows) throw new Error("Protected Auth port unavailable");
+      const valid = token === "test-owner-jwt" && !(options.revokedAfterFirstCheck && tokens.length > 1);
+      return { data: { user: valid ? { id: "test-owner-a" } : null }, error: options.authError ? { message: "Invalid session" } : null };
     } },
     rpc: async (name: string, args: Row) => {
       if (name === "is_platform_owner" || name === "agency_can_manage_child") return { data: false, error: null };
-      if (name === "is_tenant_admin_as") return { data: args._actor === "test-owner-a" && args._tenant === "test-tenant-a", error: null };
+      if (name === "is_tenant_admin_as") {
+        roleChecks++;
+        return { data: !options.notMember && !(options.roleRevokedAfterFirstCheck && roleChecks > 1)
+          && args._actor === "test-owner-a" && (args._tenant === "test-tenant-a"
+            || options.workspaceChangedAfterFirstCheck && args._tenant === "test-tenant-b"), error: null };
+      }
       if (name === "get_tenant_sender" && args._tenant_id === "test-tenant-a") return { data: { from_name: "Fixture Business", from_email: "sender@example.invalid" }, error: null };
       throw new Error(`Unexpected fixture RPC ${name}`);
     },
@@ -90,7 +109,12 @@ function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}
     "../_shared/comms-provider-boundary.ts": { commsProviderExecutionAllowed: async () => !options.providerHeld, COMMS_PROVIDER_EXECUTION_DISABLED: "COMMS_PROVIDER_EXECUTION_DISABLED" },
     "../_shared/platform-operator-tenant.ts": { platformOperatorTenantId: async () => null },
     "../_shared/prompt-forge.ts": { forge: forbidden },
-    "../_shared/skill-interpreter.ts": { interpretSkill: forbidden },
+    "../_shared/skill-interpreter.ts": { interpretSkill: async (_deps: unknown, args: Row) => {
+      if (!options.browser) return forbidden();
+      interpreterCalls.push(args);
+      // Strict port boundary: no browse/model/provider work. This is not native interpreter proof.
+      return { status: "needs_config", outputs: {}, steps_log: [], error: "Protected fixture: browser execution held" };
+    } },
     "../_shared/skill-interpreter-core.ts": interpreterCore,
     "../_shared/secure-browser-authority.ts": browserAuthority,
     "../_shared/paige-skill/governed-adapter.ts": { ...governed, decideSkillRun: (input: governed.SkillGovernedInput) => {
@@ -114,16 +138,16 @@ function fixture(options: { noWorkspace?: boolean; providerHeld?: boolean } = {}
     load, {}, deno, webcrypto, () => { network++; throw new Error("Network forbidden in protected handler fixture"); },
   );
   return {
-    writes, reads, decisions, tokens,
+    writes, reads, decisions, tokens, interpreterCalls,
     get drafts() { return drafts; },
     get network() { return network; },
-    async invoke(token?: string, overrides: Row = {}) {
+    async invoke(token?: string, overrides: Row = {}, method = "POST") {
       if (!handler) throw new Error("Actual Deno.serve handler not captured");
       const response = await handler(new Request("https://fixture.invalid/functions/v1/skill-runner", {
-        method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ skill_slug: skill.slug, contact_id: "test-contact-a", inputs: { doc_type: "summary", prompt: "Offline fixture" }, ...overrides }),
       }));
-      return { status: response.status, body: await response.json() };
+      return { status: response.status, body: method === "OPTIONS" ? await response.text() : await response.json() };
     },
   };
 }
@@ -134,8 +158,9 @@ describe("skill-runner actual handler authentication ports (no provider effects)
   it.each([undefined, "forged-session", "expired-session"])("refuses absent/invalid credential %s before any proposal/run", async token => {
     const f = fixture();
     const result = await f.invoke(token, { tenant_id: "test-tenant-a", invoker_user_id: "test-owner-a", invoker_kind: "admin" });
-    expect(result.status).toBe(403);
+    expect(result.status).toBe(401);
     expect(result.body).toMatchObject({ status: "refused", code: "unauthenticated" });
+    expect(f.reads).toEqual([]);
     expect(effectWrites(f)).toEqual([]);
     expect(f.drafts).toBe(0);
     expect(f.network).toBe(0);
@@ -177,7 +202,8 @@ describe("skill-runner actual handler authentication ports (no provider effects)
     const f = fixture();
     const result = await f.invoke("test-internal-service", { tenant_id: "test-tenant-a", invoker_user_id: "test-owner-a", invoker_kind: "admin" });
     expect(result).toMatchObject({ status: 403, body: { status: "refused", code: "service_principal_may_not_mutate" } });
-    expect(f.decisions[0]).toMatchObject({ principal: "service", authenticated: true });
+    expect(f.decisions[0]).toMatchObject({ principal: "service", authenticated: true, userId: null });
+    expect(f.writes.find(w => w.table === "paige_audit_log")?.values).toMatchObject({ actor_user_id: null });
     expect(f.tokens).toEqual([]);
     expect(effectWrites(f)).toEqual([]);
     expect(f.drafts).toBe(0);
@@ -212,6 +238,137 @@ describe("skill-runner actual handler authentication ports (no provider effects)
     } });
     expect(f.writes.some(w => w.table === "paige_skill_runs" || w.table === "communication_log")).toBe(false);
     expect(f.drafts).toBe(0);
+    expect(f.network).toBe(0);
+  });
+});
+
+describe("skill-runner browser-enabled actual handler authentication before privileged lookup", () => {
+  it.each([undefined, "forged-session", "expired-session", "revoked-session", "test-internal-service-forged"])(
+    "returns401 for credential %s before registry/contact/run/provider access", async token => {
+      const f = fixture({ browser: true });
+      const result = await f.invoke(token, { tenant_id: "test-tenant-a", invoker_user_id: "test-owner-a", invoker_kind: "admin" });
+      expect(result).toMatchObject({ status: 401, body: { status: "refused", code: "unauthenticated" } });
+      expect(f.reads).toEqual([]);
+      expect(effectWrites(f)).toEqual([]);
+      expect(f.interpreterCalls).toEqual([]);
+      expect(f.drafts).toBe(0);
+      expect(f.network).toBe(0);
+    },
+  );
+
+  it.each([{ authError: true }, { authThrows: true }])("fails closed on Auth error %j even if a user field is present", async options => {
+    const f = fixture({ browser: true, ...options });
+    const result = await f.invoke("test-owner-jwt");
+    expect(result).toMatchObject({ status: 401, body: { code: "unauthenticated" } });
+    expect(f.reads).toEqual([]);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("refuses the exact unattended service principal before browser resolution or registry access, despite owner labels", async () => {
+    const f = fixture({ browser: true });
+    const result = await f.invoke("test-internal-service", { tenant_id: "test-tenant-a", invoker_user_id: "test-owner-a", invoker_kind: "admin" });
+    expect(result).toMatchObject({ status: 403, body: { code: "service_principal_may_not_mutate" } });
+    expect(f.decisions[0]).toMatchObject({ principal: "service", authenticated: true, userId: null });
+    expect(f.writes.find(w => w.table === "paige_audit_log")?.values).toMatchObject({ actor_user_id: null });
+    expect(f.reads).toEqual([]);
+    expect(f.tokens).toEqual([]);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it.each([{ notMember: true }, { roleRevokedAfterFirstCheck: true }])("refuses current nonmember/revoked browser authority %j before contact or effects", async options => {
+    const f = fixture({ browser: true, ...options });
+    const result = await f.invoke("test-owner-jwt", { invoker_kind: "admin", invoker_user_id: "test-owner-b" });
+    expect(result).toMatchObject({ status: 403, body: { code: "browser_actor_not_authorized" } });
+    expect(f.reads.some(r => r.table === "clients")).toBe(false);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("returns401 if the verified session is revoked before the stricter browser authority resolves", async () => {
+    const f = fixture({ browser: true, revokedAfterFirstCheck: true });
+    const result = await f.invoke("test-owner-jwt");
+    expect(result).toMatchObject({ status: 401, body: { code: "browser_session_invalid" } });
+    expect(f.reads.some(r => r.table === "clients")).toBe(false);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("valid ordinary owner reaches only the held interpreter port with server-derived workspace and actor", async () => {
+    const f = fixture({ browser: true });
+    const result = await f.invoke("test-owner-jwt", { tenant_id: "test-tenant-b", invoker_user_id: "test-owner-b", invoker_kind: "system" });
+    expect(result).toMatchObject({ status: 200, body: { status: "cancelled", outputs: { interpreter_status: "needs_config" } } });
+    expect(f.interpreterCalls).toHaveLength(1);
+    expect(f.interpreterCalls[0]).toMatchObject({ actorUserId: "test-owner-a", tenantId: "test-tenant-a", actorRole: "admin" });
+    expect(f.writes.find(w => w.table === "paige_skill_runs" && w.operation === "insert")?.values)
+      .toMatchObject({ invoker_user_id: "test-owner-a", invoker_kind: "admin" });
+    expect(f.drafts).toBe(0);
+    expect(f.network).toBe(0);
+  });
+
+  it("cannot resolve a missing active workspace from a browser request body", async () => {
+    const f = fixture({ browser: true, noWorkspace: true });
+    const result = await f.invoke("test-owner-jwt", { tenant_id: "test-tenant-b" });
+    expect(result).toMatchObject({ status: 403, body: { code: "tenant_unresolved" } });
+    expect(f.reads.some(r => r.table === "paige_skills" || r.table === "clients")).toBe(false);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("refuses a foreign browser contact using only the current server workspace", async () => {
+    const f = fixture({ browser: true });
+    const result = await f.invoke("test-owner-jwt", { contact_id: "test-contact-b", tenant_id: "test-tenant-b" });
+    expect(result).toMatchObject({ status: 403, body: { code: "browser_contact_not_available" } });
+    expect(f.reads.find(r => r.table === "clients")?.filters).toEqual({ id: "test-contact-b", tenant_id: "test-tenant-a" });
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("refuses a real workspace switch between credential and browser authority resolution, without replay", async () => {
+    const f = fixture({ browser: true, workspaceChangedAfterFirstCheck: true });
+    const result = await f.invoke("test-owner-jwt", { contact_id: undefined });
+    expect(result).toMatchObject({ status: 403, body: { code: "browser_workspace_changed" } });
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.interpreterCalls).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("does not expose whether a requested skill exists before session authentication", async () => {
+    const f = fixture({ browser: true });
+    const result = await f.invoke("forged-session", { skill_slug: "unknown-synthetic-skill" });
+    expect(result).toMatchObject({ status: 401, body: { code: "unauthenticated" } });
+    expect(f.reads).toEqual([]);
+    expect(effectWrites(f)).toEqual([]);
+    expect(f.network).toBe(0);
+  });
+
+  it("keeps authenticated unknown and inactive skill responses, with no execution", async () => {
+    const unknown = fixture({ browser: true });
+    expect(await unknown.invoke("test-owner-jwt", { skill_slug: "unknown-synthetic-skill" }))
+      .toMatchObject({ status: 404 });
+    const inactive = fixture({ browser: true, inactiveSkill: true });
+    expect(await inactive.invoke("test-owner-jwt")).toMatchObject({ status: 409 });
+    for (const f of [unknown, inactive]) {
+      expect(f.tokens).toEqual(["test-owner-jwt"]);
+      expect(effectWrites(f)).toEqual([]);
+      expect(f.interpreterCalls).toEqual([]);
+      expect(f.network).toBe(0);
+    }
+  });
+
+  it("preserves credential-free CORS preflight without privileged reads or effects", async () => {
+    const f = fixture({ browser: true });
+    expect(await f.invoke(undefined, {}, "OPTIONS")).toEqual({ status: 200, body: "ok" });
+    expect(f.tokens).toEqual([]);
+    expect(f.reads).toEqual([]);
+    expect(f.writes).toEqual([]);
     expect(f.network).toBe(0);
   });
 });

@@ -6,8 +6,11 @@
 // the REAL playbook resolver and the REAL NotificationBell all run against this client, so the page,
 // the chrome and the state machine are the shipped code. The RPC payloads follow the contract in
 // supabase/migrations/20271110010000_e09_customer_portal_messages.sql:
-//   client_portal_conversation(p_tenant_id, p_before, p_limit)
-//     -> { tenant_id, messages: [{ id, author, kind, body, created_at }] newest first, has_more } | null
+//   client_portal_conversation(p_tenant_id, p_before, p_limit, p_before_id)
+//     -> { tenant_id, messages: [{ id, author, kind, body, created_at, request_id? }] newest first, has_more } | null
+//     Keyset-paged on (created_at, id): with p_before_id the cursor is the exact oldest row held; with
+//     p_before alone, strictly before that time. has_more is true only when an older row exists
+//     (the server reads limit + 1). request_id appears only on customer rows the caller authored.
 //   client_portal_send_message(p_body, p_request_id, p_kind, p_tenant_id)
 //     -> { ok, replayed, message_id, created_at } | { ok: false, error }
 //
@@ -19,7 +22,7 @@ export const TENANT = "e0900000-0000-4000-8000-00000000b001";
 const USER = { id: "e0900000-0000-4000-8000-00000000c001", email: "jordan.rivera@example.test" };
 const BRAND = { tenant_id: TENANT, tenant_name: "Northwind Studio", tenant_slug: "northwind-studio", logo_url: null, primary_color: "#26483e" };
 
-type Msg = { id: string; author: "customer" | "business"; kind: "message" | "help"; body: string; created_at: string };
+type Msg = { id: string; author: "customer" | "business"; kind: "message" | "help"; body: string; created_at: string; request_id?: string };
 
 /** A local wall-clock time `daysAgo` days before the (Playwright-fixed) current date. */
 function at(daysAgo: number, h: number, m: number) {
@@ -29,9 +32,13 @@ function at(daysAgo: number, h: number, m: number) {
   return d.toISOString();
 }
 let seq = 0;
-const msg = (author: Msg["author"], body: string, iso: string, kind: Msg["kind"] = "message"): Msg => ({
-  id: `e0900000-0000-4000-8000-${String(++seq).padStart(12, "0")}`, author, kind, body, created_at: iso,
-});
+const msg = (author: Msg["author"], body: string, iso: string, kind: Msg["kind"] = "message", requestId?: string): Msg => {
+  const n = String(++seq).padStart(12, "0");
+  const m: Msg = { id: `e0900000-0000-4000-8000-${n}`, author, kind, body, created_at: iso };
+  // Every customer row here was written by the signed-in customer, so it carries their own request id.
+  if (author === "customer") m.request_id = requestId ?? `e0900000-0000-4000-9000-${n}`;
+  return m;
+};
 
 // Oldest first. Two days of a realistic thread, both authors, one customer help request.
 const recent: Msg[] = [
@@ -62,12 +69,22 @@ function conversation(args: Record<string, unknown>) {
   if (state === "norelationship") return Promise.resolve({ data: null, error: null });
   if (state === "multiple") return Promise.resolve({ data: null, error: MULTI });
   if (state === "error") return Promise.resolve({ data: null, error: { code: "57014", message: "canceling statement due to statement timeout" } });
-  const before = typeof args.p_before === "string" ? Date.parse(args.p_before) : Infinity;
-  // The newest p_limit messages before p_before, newest first; has_more when older ones remain.
-  const limit = pageSize(args.p_limit);
-  const eligible = store.filter((m) => Date.parse(m.created_at) < before).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-  const page = eligible.slice(0, limit);
-  return Promise.resolve({ data: { tenant_id: TENANT, messages: page, has_more: eligible.length > page.length }, error: null });
+  const before = typeof args.p_before === "string" ? Date.parse(args.p_before) : null;
+  const beforeId = typeof args.p_before_id === "string" ? args.p_before_id : null;
+  // (created_at, id) descending, the server's order; ids compare as the server's uuid order does.
+  const newestFirst = (a: Msg, b: Msg) =>
+    Date.parse(b.created_at) - Date.parse(a.created_at) || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0);
+  const olderThanCursor = (m: Msg) => {
+    if (before === null) return true;
+    const t = Date.parse(m.created_at);
+    return beforeId === null ? t < before : t < before || (t === before && m.id < beforeId);
+  };
+  const limit = Math.min(pageSize(args.p_limit), 100);
+  // Read one extra row: it only proves an older one exists and is not part of the page.
+  const read = store.filter(olderThanCursor).sort(newestFirst).slice(0, limit + 1);
+  const hasMore = read.length > limit;
+  const page = hasMore ? read.slice(0, limit) : read;
+  return Promise.resolve({ data: { tenant_id: TENANT, messages: page, has_more: hasMore }, error: null });
 }
 
 function send(args: Record<string, unknown>) {
@@ -80,7 +97,8 @@ function send(args: Record<string, unknown>) {
     return Promise.resolve({ data: null, error: { code: "08006", message: "connection failure" } });
   }
   const body = String(args.p_body ?? "").trim();
-  const m = msg("customer", body, new Date().toISOString(), args.p_kind === "help" ? "help" : "message");
+  const m = msg("customer", body, new Date().toISOString(), args.p_kind === "help" ? "help" : "message",
+    typeof args.p_request_id === "string" ? args.p_request_id : undefined);
   store = [...store, m];
   return Promise.resolve({ data: { ok: true, replayed: false, message_id: m.id, created_at: m.created_at }, error: null });
 }

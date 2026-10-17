@@ -181,6 +181,9 @@ Deno.serve(async (req) => {
       throw new Error("not authorized: this invitation resolved to a different workspace than the one requested");
     }
     const { data: sendData, error: sendError } = await admin.functions.invoke("send-portal-invite", {
+      // Keep the already verified human caller at the shared sender boundary;
+      // the service client prepares native records but is not a human identity.
+      headers: { Authorization: authorization },
       body: { token: invite.token, email: invite.email },
     });
     const emailed = !sendError && sendData?.emailed === true;

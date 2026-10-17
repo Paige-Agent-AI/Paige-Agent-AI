@@ -31,8 +31,10 @@ function harness(rows: unknown[] = [], reply: unknown = { ok: false, outcome: 'a
 
 describe('comms.email_send Chat tool declaration', () => {
   it('declares exactly one closed tool whose fields come from the Kit declaration', () => {
-    expect(COMMS_EMAIL_TOOLS.map(t => t.function.name)).toEqual(['comms_send_email']);
-    expect([...COMMS_EMAIL_TOOL_NAMES]).toEqual(['comms_send_email']);
+    expect(COMMS_EMAIL_TOOLS.map(t => t.function.name)).toEqual(['comms_send_email','client_portal_invitation_send']);
+    expect([...COMMS_EMAIL_TOOL_NAMES]).toEqual(['comms_send_email','client_portal_invitation_send']);
+    expect(COMMS_EMAIL_TOOLS[1].function.parameters).toMatchObject({required:['contact_id'],additionalProperties:false});
+    expect(Object.keys(COMMS_EMAIL_TOOLS[1].function.parameters.properties)).toEqual(['contact_id']);
     const parameters = COMMS_EMAIL_TOOLS[0].function.parameters;
     expect(parameters.required).toEqual(COMMS_EMAIL_SEND_CAPABILITY.input.required);
     expect(Object.keys(parameters.properties).sort()).toEqual(Object.keys(COMMS_EMAIL_SEND_CAPABILITY.input.properties).sort());

@@ -10,12 +10,19 @@ export type CrmResultMetadata = {
 };
 
 // Existing single-contact native actions whose readback names the surviving contact.
-// Hard delete and bulk actions cannot name one existing record. Other CRM families
-// have no exact destination in readRecordLinks; do not manufacture one here.
+// Hard delete and bulk actions cannot name one existing record.
 const CONTACT_ACTIONS = new Set([
   "contact.create", "contact.update", "contact.archive", "contact.restore",
   "contact.link_company", "contact.unlink_company", "contact.assign_coach",
   "contact.assign_owner", "contact.merge",
+]);
+const TASK_ACTIONS = new Set([
+  "task.create", "task.update", "task.assign", "task.reschedule",
+  "task.complete", "task.reopen", "task.cancel",
+]);
+const DEAL_ACTIONS = new Set([
+  "deal.create", "deal.update", "deal.assign_owner", "deal.assign_contact",
+  "deal.move", "deal.close", "deal.reopen",
 ]);
 // Native identity generation uses CLT + twelve uppercase hex characters; older
 // immutable CLT references may be shorter. Never persist a name/profile as subject.
@@ -26,11 +33,35 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 export function crmResultRecordReference(value: unknown): ReadRecordLink | null {
   const result = object(value);
-  if (!result || typeof result.action !== "string" || !CONTACT_ACTIONS.has(result.action)
+  if (!result || typeof result.action !== "string"
     || result.outcome !== "succeeded" || result.receipt_recorded !== true) return null;
   const readback = object(result.readback), locator = object(result.record_locator);
   if (readback?.absent === true) return null;
   const stored = object(result.record_reference);
+  const task = TASK_ACTIONS.has(result.action), deal = DEAL_ACTIONS.has(result.action);
+  if (task || deal) {
+    const destination = task ? "operations_work" : "pipeline";
+    if (result.record_reference !== undefined && (!stored || stored.destination !== destination
+      || Object.keys(stored).some(key => key !== "destination" && key !== "record_id")
+      || (task ? stored.record_id !== null : !readRecordLinks([stored])[0]?.record_id))) return null;
+    // A fresh result must prove the native readback and locator agree. A reduced
+    // historical reference alone never reconstructs a name, URL or raw payload.
+    const fresh = !stored || result.readback != null || result.record_locator != null;
+    let recordId = stored?.record_id;
+    if (fresh) {
+      if (!readback || !locator || locator.deep_link_status !== (task ? "surface_only" : "exact")) return null;
+      const ids = [readback.id, locator.record_id].map(id =>
+        readRecordLinks([{ destination: "contacts", record_id: id }])[0]?.record_id);
+      if (!ids[0] || !ids[1] || ids[0] !== ids[1]
+        || (deal && stored && readRecordLinks([stored])[0]?.record_id !== ids[0])) return null;
+      recordId = ids[0];
+    }
+    // Tasks intentionally retain no record ID: Work has no native Task focus
+    // contract. Deals reuse Pipeline's existing exact-ID contract.
+    const [reference] = readRecordLinks([{ destination, record_id: task ? null : recordId }]);
+    return reference && (task || reference.record_id) ? reference : null;
+  }
+  if (!CONTACT_ACTIONS.has(result.action)) return null;
   if (result.record_reference !== undefined && (!stored || stored.destination !== "contacts"
     || Object.keys(stored).some(key => !["destination", "record_id", "subject"].includes(key))
     || (stored.subject !== undefined && (typeof stored.subject !== "string" || !CLIENT_REFERENCE.test(stored.subject))))) return null;

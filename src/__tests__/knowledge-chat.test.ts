@@ -46,6 +46,37 @@ describe('governed Knowledge adapter',()=>{
   const caller=port({tenant_id:tenant,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,run_id:id,outcome:'capability_succeeded',source_cleanup:{status:'not_attempted',reason:'canonical_source_binding_unavailable'}});
   expect(await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}})).toMatchObject({success:true,verified:true,railRecorded:true,source_cleanup:{status:'not_attempted'}});
  });
+ it.each(['capability_succeeded','capability_completed_unrecorded'])('accepts native bound-source deletion with %s without replay',async(outcome)=>{
+  const caller=port({tenant_id:tenant,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,run_id:id,outcome,source_cleanup:{status:'not_attempted',reason:'retained_by_policy'}});
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});
+  expect(result).toMatchObject({success:outcome==='capability_succeeded',verified:true,railRecorded:outcome==='capability_succeeded',outcome,run_id:id,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:'not_attempted',reason:'retained_by_policy'}});
+  expect(result.note).toContain('uploaded source was retained by policy');
+  expect(classifySpentApproval(sayWhatTheCardSays(JSON.stringify(result),{reportsKnowledge:true}),{reportsKnowledge:true})).toEqual({outcome:'ran',reason:outcome==='capability_completed_unrecorded'?'completed_unrecorded':null});
+  expect(caller.rpc).toHaveBeenCalledExactlyOnceWith('delete_tenant_knowledge',{p_expected_tenant:tenant,p_doc_id:id,p_expected_revision:2});
+ });
+ it.each([
+  {source_cleanup:undefined}, {source_cleanup:null}, {source_cleanup:{status:'not_attempted'}},
+  {source_cleanup:{status:'not_attempted',reason:'PRIVATE-UNSUPPORTED-REASON'}},
+  {source_cleanup:{status:'deleted',reason:'retained_by_policy'}},
+  {tenant_id:id}, {document_id:tenant}, {deleted_revision:3}, {document_absent:false},
+  {chunks_absent:false}, {outcome:'already_deleted'}, {run_id:'invalid'},
+ ])('does not upgrade a contradictory bound-source deletion %j',async(override)=>{
+  const caller=port({tenant_id:tenant,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,run_id:id,outcome:'capability_succeeded',source_cleanup:{status:'not_attempted',reason:'retained_by_policy'},...override});
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});
+  expect(result).toMatchObject({success:false,verified:false,railRecorded:false,mutationMayHavePersisted:true});
+  expect(result.not_applied).not.toBe(true);
+  expect(JSON.stringify(result)).not.toContain('PRIVATE-UNSUPPORTED-REASON');
+  expect(classifySpentApproval(sayWhatTheCardSays(JSON.stringify(result),{reportsKnowledge:true}),{reportsKnowledge:true})).toMatchObject({outcome:'unconfirmed'});
+  expect(caller.rpc).toHaveBeenCalledTimes(1);
+ });
+ it.each(['TimeoutError','TypeError'])('keeps a lost bound-source acknowledgement %s uncertain with one attempt',async(name)=>{
+  const error=Object.assign(new Error('lost native acknowledgement'),{name});
+  const caller={rpc:vi.fn().mockRejectedValue(error)};
+  const result=await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});
+  expect(result).toMatchObject({success:false,verified:false,railRecorded:false,mutationMayHavePersisted:true});
+  expect(result.not_applied).not.toBe(true);
+  expect(caller.rpc).toHaveBeenCalledTimes(1);
+ });
  it('binds normalized document revision and patch to the existing fingerprint',async()=>{
   const args={document_id:id,expected_revision:2,patch:{title:' Guide '}};
   const fp=await confirmFingerprint('knowledge_update',normalizeKnowledgeArgs('knowledge_update',args));

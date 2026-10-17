@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,28 +12,45 @@ import {
 import {
   KnowledgeReviewServiceError, readKnowledgePublicationStatus, saveKnowledgeReview, sha256Hex,
 } from "@/lib/knowledge-review-service";
-import { KnowledgeServiceError, submitKnowledgePublication } from "@/lib/knowledge-service";
+import { KnowledgeServiceError, submitKnowledgePublication, type KnowledgeDocument } from "@/lib/knowledge-service";
+import { useTenantContext } from "@/hooks/useTenantContext";
 
 type HaltAction = "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
 type Halt = { title: string; message: string; action: HaltAction | null };
 type Step = "choose" | "extracting" | "review" | "ready" | "publishing" | "done";
+export type KnowledgeCorrectionTarget = Pick<KnowledgeDocument, "id" | "tenant_id" | "revision" | "title" | "content" | "summary" | "category" | "tags">;
+type Props = {
+  tenantId: string; onPublished?: () => void; onClose: () => void;
+  replacementTarget?: KnowledgeCorrectionTarget;
+  returnFocus?: () => HTMLElement | null;
+};
 
 /** The governed add flow: submit a source, review what Paige extracted, publish the exact
  * reviewed text. Every uncertain state is named honestly and never resolved by a second,
  * different write — a retry replays the same intent, and recovery settles the rest.
  */
-export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
-  tenantId: string; onPublished?: () => void; onClose: () => void;
-}) {
+export function AddKnowledgeFlow(props: Props) {
+  const identity = useTenantContext();
+  if (identity.loading || identity.accountContextStatus !== "ready" || !identity.activeUserId || identity.activeTenantId !== props.tenantId) {
+    return <DialogContent><DialogHeader><DialogTitle>Workspace changed</DialogTitle><DialogDescription>Close this review and reopen Knowledge in your current workspace.</DialogDescription></DialogHeader><Button onClick={props.onClose}>Close</Button></DialogContent>;
+  }
+  // An observed actor/workspace or target change disposes the whole local incarnation,
+  // including polling closures. Returning to A must never revive A's retired write.
+  const target = props.replacementTarget;
+  return <KnowledgeFlowSession key={`${props.tenantId}:${identity.activeUserId}:${target?.id ?? "new"}:${target?.revision ?? "new"}`} {...props} />;
+}
+
+function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus }: Props) {
+  const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
   const [step, setStep] = useState<Step>("choose");
   const [mode, setMode] = useState<"paste" | "file">("paste");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = useState(target?.title ?? "");
+  const [content, setContent] = useState(target?.content ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [reviewContent, setReviewContent] = useState("");
-  const [summary, setSummary] = useState("");
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState("");
+  const [summary, setSummary] = useState(target?.summary ?? "");
+  const [category, setCategory] = useState(target?.category ?? "");
+  const [tags, setTags] = useState(target?.tags.join(", ") ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [halt, setHalt] = useState<Halt | null>(null);
   const reference = useRef<ExtractionReference | null>(null);
@@ -42,18 +59,20 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
   const publishWorkId = useRef<string | null>(null);
   const extractIntent = useRef<string | null>(null);
   const publishIntent = useRef<string | null>(null);
+  const submittedInput = useRef<ExtractionInput | null>(null);
   const busy = useRef(false);
   const mounted = useRef(true);
   const scope = useRef({ tenantId });
   const pollRun = useRef(0);
   if (scope.current.tenantId !== tenantId) scope.current = { tenantId };
   const attemptScope = scope.current;
-  useEffect(() => {
+  useLayoutEffect(() => {
     mounted.current = true;
     const run = pollRun.current;
     return () => { mounted.current = false; pollRun.current = run + 1; };
   }, []);
   const current = () => mounted.current && scope.current === attemptScope;
+  const close = () => { mounted.current = false; pollRun.current++; onClose(); };
   // The generated supabase client's rpc() keys on a known function-name union; the shared
   // ports take a plain name, so the call is widened once here.
   const rpcByName = supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
@@ -67,7 +86,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
   const loadReview = async (ref: ExtractionReference) => {
     const read = await readKnowledgeExtractionReview(client, extractionScope(), ref);
     if (!current()) return;
-    if (read.phase !== "awaiting_review" || !read.pending_review) {
+    if (read.phase !== "awaiting_review" || !read.pending_review || read.tenant_id !== tenantId || read.document_id !== ref.documentId || read.extraction_work_id !== ref.workId || (target && read.document_id !== target.id)) {
       stop({ title: "Review unavailable", message: "The extracted review is no longer available for this source. Nothing was published; add the source again if it should be re-read.", action: null });
       return;
     }
@@ -86,7 +105,11 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
       return;
     }
     if (!current() || pollRun.current !== run) return;
-    if (status.work_status === "succeeded") { await loadReview(ref); return; }
+    if (status.work_status === "succeeded") {
+      try { await loadReview(ref); }
+      catch { if (current()) stop({ title: "Review unavailable", message: "The current review could not be verified. Check the original reading before saving or publishing.", action: "reread" }); }
+      return;
+    }
     if (status.work_status === "claimed" || status.work_status === "expired") {
       if (attempt >= 40) { stop({ title: "Still reading", message: "Paige is still reading this source. You can close this — the reading continues, and the source appears in Knowledge only after you review and publish it.", action: "check-extraction" }); return; }
       setNotice("Paige is reading your source…");
@@ -112,7 +135,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
   };
 
   const submit = async () => {
-    if (busy.current || !tenantId) return;
+    if (busy.current || !tenantId || !current()) return;
     const trimmed = title.trim();
     if (!trimmed || trimmed.length > 300) { setNotice("Give the source a title of 1–300 characters."); return; }
     if (mode === "paste" && !content.trim()) { setNotice("Paste the text Paige should read."); return; }
@@ -123,11 +146,20 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
     try {
       if (!extractIntent.current) extractIntent.current = crypto.randomUUID();
       const intentId = extractIntent.current;
-      const input: ExtractionInput = mode === "paste"
-        ? { intent_id: intentId, title: trimmed, kind: "paste", content }
-        : { intent_id: intentId, title: trimmed, kind: "file", path: await uploadFile() };
+      if (!submittedInput.current) {
+        const input: ExtractionInput = mode === "paste"
+          ? { intent_id: intentId, title: trimmed, kind: "paste", content }
+          : { intent_id: intentId, title: trimmed, kind: "file", path: await uploadFile() };
+        if (!current()) return;
+        submittedInput.current = target ? { ...input, doc_id: target.id, expected_revision: target.revision } : input;
+      }
+      // Same-intent recovery must also preserve the exact source path and target.
+      const input = submittedInput.current;
       const submission = await submitKnowledgeExtraction(client, extractionScope(), input);
       if (!current()) return;
+      if (submission.reference.tenantId !== tenantId || (target && submission.reference.documentId !== target.id)) {
+        throw new ExtractionConsumerError("EXTRACTION_RESPONSE_INVALID", "The submitted source could not be verified. Reconcile the original request before another correction.", true);
+      }
       reference.current = submission.reference;
       const run = ++pollRun.current;
       setNotice("Paige is reading your source…");
@@ -145,7 +177,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
   };
 
   const saveReview = async () => {
-    if (busy.current || step !== "review" || !review.current || !reference.current || !tenantId) return;
+    if (busy.current || step !== "review" || !review.current || !reference.current || !tenantId || !current()) return;
     const parsedTags = [...new Set(tags.split(",").map(tag => tag.trim()).filter(Boolean))];
     if (!title.trim() || title.trim().length > 300 || summary.length > 2000 || category.length > 100 || parsedTags.length > 20 || parsedTags.some(tag => tag.length > 60)) {
       setNotice("Use a title of 1–300 characters, a summary up to 2,000, a category up to 100, and at most 20 tags of 60 characters each.");
@@ -172,11 +204,12 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
   };
 
   const publish = async (retry = false) => {
-    if (busy.current || (!retry && step !== "ready") || !reference.current || savedRevision.current === null || !tenantId) return;
+    if (busy.current || (!retry && step !== "ready") || !reference.current || savedRevision.current === null || !tenantId || !current()) return;
     busy.current = true; setHalt(null); setNotice("Publishing…");
     if (!publishIntent.current) publishIntent.current = crypto.randomUUID();
     try {
       const hash = await sha256Hex(reviewContent);
+      if (!current()) return;
       const submission = await submitKnowledgePublication(supabase, tenantId, reference.current.documentId, reference.current.workId, savedRevision.current, publishIntent.current, hash);
       if (!current()) return;
       publishWorkId.current = submission.work_id;
@@ -188,7 +221,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
       if (!current()) return;
       if (error instanceof KnowledgeServiceError && error.code === "55000" && error.message.includes("KNOWLEDGE_PUBLICATION_PENDING")) {
         stop({ title: "Already publishing", message: "A publication for this source is already in flight. It will appear in Knowledge when it completes — do not start another.", action: null });
-      } else if (error instanceof KnowledgeServiceError) {
+      } else if (error instanceof KnowledgeServiceError && ["40001", "42501", "22023", "P0002", "55000"].includes(error.code)) {
         stop({ title: "Publication refused", message: plainRefusal(error), action: null });
       } else {
         stop({ title: "Publication unconfirmed", message: "Paige could not confirm whether publishing started. Recovery will reconcile it — do not publish again; check the source in Knowledge in a minute.", action: null });
@@ -206,7 +239,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
     }
     if (!current() || pollRun.current !== run) return;
     if (status.phase === "resolved" && status.status === "succeeded") {
-      setStep("done"); setNotice("Published. The reviewed text is now part of Knowledge.");
+      setStep("done"); setNotice(target ? "Published. The corrected text is now on the same document." : "Published. The reviewed text is now part of Knowledge.");
       onPublished?.();
       return;
     }
@@ -222,11 +255,15 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
     stop({ title: "Publication failed", message: "The publication did not complete and nothing was changed in Knowledge. Your review is still saved — you can publish it again.", action: "retry-publish" });
   };
 
-  return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto">
+  const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
+  if (target && (target.tenant_id !== tenantId || typeof target.id !== "string" || !target.id || !Number.isSafeInteger(target.revision) || target.revision < 1 || typeof target.content !== "string")) {
+    return <DialogContent onCloseAutoFocus={restoreFocus}><DialogHeader><DialogTitle>Source unavailable</DialogTitle><DialogDescription>Read the current document in this workspace before correcting its content.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
+  }
+  return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={restoreFocus}>
     <DialogHeader>
-      <DialogTitle>{step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : "Add Knowledge"}</DialogTitle>
+      <DialogTitle>{step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
       <DialogDescription>
-        {step === "choose" && "Paige reads the source first; you review the exact text, then publish it to Knowledge."}
+        {step === "choose" && (target ? `Correct revision ${target.revision} of this document. Its published text stays in use until you review and publish the replacement.` : "Paige reads the source first; you review the exact text, then publish it to Knowledge.")}
         {step === "extracting" && "The reading continues even if you close this."}
         {step === "review" && `Edit the text and details — this exact text becomes the Knowledge source.${review.current ? ` Revision ${review.current.revision}.` : ""}`}
         {step === "ready" && "Your review is saved. Publishing makes the exact reviewed text searchable and usable for this business."}
@@ -238,10 +275,10 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
       <p className="font-medium">{halt.title}</p>
       <p className="text-sm">{halt.message}</p>
       <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>Close</Button>
+        <Button variant="outline" onClick={close}>Close</Button>
         {halt.action === "retry-submit" && <Button onClick={() => { setHalt(null); setStep("choose"); void submit(); }}>Retry same request</Button>}
         {halt.action === "check-extraction" && reference.current && <Button onClick={() => { setHalt(null); setStep("extracting"); const run = ++pollRun.current; setNotice("Checking Paige's reading…"); void watchExtraction(reference.current!, 0, run); }}>Check reading</Button>}
-        {halt.action === "reread" && reference.current && <Button onClick={() => { setHalt(null); setNotice("Reading the current review…"); loadReview(reference.current!).catch(() => stop({ title: "Review unavailable", message: "The current review could not be read. Your draft is still here; try again in a moment.", action: "reread" })); }}>Reload review</Button>}
+        {halt.action === "reread" && reference.current && <Button onClick={() => { setHalt(null); setNotice("Reading the current review…"); loadReview(reference.current!).catch(() => { if (current()) stop({ title: "Review unavailable", message: "The current review could not be read. Your draft is still here; try again in a moment.", action: "reread" }); }); }}>Reload review</Button>}
         {halt.action === "retry-publish" && <Button onClick={() => { setHalt(null); setStep("ready"); void publish(true); }}>Publish again</Button>}
         {halt.action === "check-publication" && publishWorkId.current && <Button onClick={() => { setHalt(null); setStep("publishing"); const run = ++pollRun.current; setNotice("Checking the publication…"); void watchPublication(publishWorkId.current!, 0, run); }}>Check publication</Button>}
       </div>
@@ -264,7 +301,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
               <Input id="knowledge-add-file" type="file" accept=".txt,.md,.markdown,.csv,.json" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={step === "extracting"} />
             </div>}
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={step === "extracting"}>Close</Button>
+          <Button variant="outline" onClick={close} disabled={step === "extracting"}>Close</Button>
           <Button onClick={() => void submit()} disabled={step === "extracting"}>{step === "extracting" ? "Reading…" : "Send to Paige"}</Button>
         </div>
       </>}
@@ -285,20 +322,20 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
           <Input id="knowledge-review-tags" value={tags} onChange={event => setTags(event.target.value)} />
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={close}>Close</Button>
           <Button onClick={() => void saveReview()}>Save review</Button>
         </div>
       </>}
       {step === "ready" && <div className="space-y-3">
         <p className="text-sm">“{title.trim()}” is reviewed and saved. Publish it to make it part of Knowledge — Paige will index the exact reviewed text.</p>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Finish later</Button>
+          <Button variant="outline" onClick={close}>Finish later</Button>
           <Button onClick={() => void publish()}>Publish to Knowledge</Button>
         </div>
       </div>}
       {(step === "publishing" || step === "done") && <div className="flex flex-wrap justify-end gap-2">
-        {step === "publishing" && <Button variant="outline" onClick={onClose}>Close</Button>}
-        {step === "done" && <Button onClick={onClose}>Done</Button>}
+        {step === "publishing" && <Button variant="outline" onClick={close}>Close</Button>}
+        {step === "done" && <Button onClick={close}>Done</Button>}
       </div>}
     </div>}
   </DialogContent>;

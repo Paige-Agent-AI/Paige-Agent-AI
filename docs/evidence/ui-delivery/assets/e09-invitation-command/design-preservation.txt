@@ -1,0 +1,41 @@
+# Invitation extension: design preservation
+
+Ordinary Operate extension; no visual-system change. Compared the finished invitation command, manager and owner dashboard against `DESIGN.md`, `.impeccable/design.json`, `PRODUCT.md`, the invitation surface brief and delivery packet, following `reference/document.md`. Incumbent system files are preserved without edits. Their sampled Chat/Calendar/Operations/weekly scope is not expanded into universal Portal authority.
+
+## Source and rendered evidence
+
+The command uses existing `opd-button`/`opd-primary` controls and the shared `PaigeConfirmCard`. It introduces no stylesheet, font, color token, shell, icon language or confirmation design. The manager retains the existing invitation section and pending cancellation control. The owner dashboard removes the redundant recipient field; the shared server-summary card discloses the recipient. The Auth recovery uses an existing control class and a concrete sign-in link.
+
+Sampled `src/index.css`, `owner-portal-dashboard.css` and `PaigeConfirmCard.tsx`: Obsidian/Mineral roles, Schibsted UI, warm tonal surfaces, quiet rules, compact controls, native dialog scroll ownership and reduced-motion card behavior remain incumbent implementations. Portal's local 18px heading, 38px control minimum and gold focus are existing scoped choices; they are not promoted to shared tokens.
+
+The bounded repair retains the shared per-contact lock through existing scoped history invalidation when an approved request's control unmounts, including a lost response. It performs no send retry. Preparation-only retirement changes no invitation/email history. Only fallback body/native-dialog focus moves to the existing review card after the preparing control retires; another focused input is preserved and Approve is never auto-focused. PaigeConfirmCard is unchanged. The canonicalized pre-repair regression reproduced missing readback (2 passes/1 failure); the coordinator's final Command/Manager/Concurrency run passes 49/49. The native-dialog fallback focus defect was separately reproduced and fixed only at this Portal caller.
+
+Viewed the current `1536-770-closed-dark-invite-ready-review.png` and `390-844-closed-light-invite-ready-review.png`. The desktop/mobile review retains the same shell, dialog, reading hierarchy, wrapping history and visible controls. No visual-system change is apparent in these two captures. This is a bounded documentation comparison, not a replacement finish review or independent execution of the component suites.
+
+Fresh `result.json` contains 23 cases and zero errors, with 27 PNGs in this directory. All 19 recorded source SHA256 values match current files after CRLF-to-LF normalization, including the command, manager, dashboard, shared card, Portal stylesheet, theme source and harness bindings. SDK/Auth/provider records are synthetic and network is blocked. Actual account authority, provider delivery, customer acceptance and physical Safari/iPhone acceptance remain UNVERIFIED. The detector's once-run empty finding list is historical for this increment; the detector was not rerun for this documentation pass or final repair.
+
+## Hashes checked
+
+| File | SHA256 |
+| --- | --- |
+| `DESIGN.md` | `fb5b1d84e1c5e092db2f89d2f46059ed894c01355f4dc5594366ae0b1f46c500` |
+| `.impeccable/design.json` | `10749d235989f091c898f6099b359a48a1f2aa5388c5f12a8d3729923a46d2b0` |
+| `PortalInvitationCommand.tsx` | `ff4560a6324d6dc4bdc4df2bf529b419ac5d1ad5544c180d02e425b151d08076` |
+| `PaigeConfirmCard.tsx` | `3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88` |
+| `PortalInvitationManager.tsx` | `36de8defda42d94a61e39e8014cf14b233083856aecec28cff0218ec505f81e5` |
+| `OwnerPortalDashboard.tsx` | `5ecc9b2986709f723a1abb40a3ae6b4331027863def34203205a8816edd5d9e1` |
+| `result.json` (bytes) | `ef049ef27450af75dc3de0ec12fedd1b92d2a12e3e026e498575b7d4bc7b164a` |
+| `1536-770-closed-dark-invite-ready-review.png` | `8f81b1bd395f2bfd6acc1fdf541b9ceae479e203cf6b35780dd18642b3008804` |
+| `390-844-closed-light-invite-ready-review.png` | `a948d199e92d8f61b4360532bd18c363630909d6e1d3520e1962544463d5e0df` |
+
+DESIGN.md and sidecar hashes above are byte hashes, identical to the incumbent preservation record; neither file has a working-tree diff. Production source hashes use the report's LF normalization. Screenshot and report hashes identify this current evidence sample, rather than the earlier recovery captures.
+
+## System summary
+
+- Palette: separately authored Obsidian and Mineral through existing theme roles.
+- Type: Schibsted UI; shared 11/13/16/21px roles, 14px reading body, component-local sizes stay local.
+- Theme Root Rule: preserve authored `--pg-*` roles.
+- Prose Figures Rule: tabular numerals belong on figures.
+- Existing Depth Rule: use incumbent tonal layers and elevation.
+
+Not canonized or repaired: existing Portal gold focus/local control sizing and incumbent Calendar/small-text exclusions stay scoped; `DESIGN.md`'s root-wide tabular-numeral defect sentence is stale relative to current `src/index.css`, which explicitly omits root tabular numerals. These pre-existing documentation/source differences are outside this ordinary extension; no system refresh or runtime repair is performed.

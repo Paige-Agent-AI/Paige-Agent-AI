@@ -1,71 +1,36 @@
-import React, { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PortalInvitationManager } from "./PortalInvitationManager";
-import type { RelationshipPerson } from "./useTenantRelationshipsData";
-import type { PortalInvitation } from "./portalDashboardModel";
-const fixture = vi.hoisted(() => ({
-  context: { activeUserId: "test-actor-a", activeTenantId: "test-tenant-a", accountContextStatus: "ready", accountContextLoading: false },
-  allowed: true, getUser: vi.fn(), rpc: vi.fn(), invoke: vi.fn(), readback: vi.fn(),
-  requests: [] as Array<{ table: string; filters: unknown[][]; update?: unknown }>,
-  contact: { data: { id: "client-a", status: "active", merged_into_contact_id: null as string | null, do_not_contact: false, linked_user_id: null as string | null }, error: null },
-  method: { data: { value: "client@example.test" }, error: null }, cancelRows: [{ id: "invite-a" }],
-}));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => fixture.context }));
-vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => fixture.allowed }) }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  auth: { getUser: () => fixture.getUser() }, rpc: (...args: unknown[]) => fixture.rpc(...args), functions: { invoke: (...args: unknown[]) => fixture.invoke(...args) },
-  from: (table: string) => {
-    const record = { table, filters: [] as unknown[][], update: undefined as unknown }; fixture.requests.push(record);
-    const chain = { select: () => chain, update: (patch: unknown) => { record.update = patch; return chain; }, eq: (...args: unknown[]) => { record.filters.push(args); return chain; }, is: (...args: unknown[]) => { record.filters.push(args); return chain; }, gt: (...args: unknown[]) => { record.filters.push(args); return chain; }, maybeSingle: async () => table === "clients" ? { ...fixture.contact, data: { ...fixture.contact.data, client_contact_methods: [{ kind: "email", is_primary: true, value: fixture.method.data.value }] } } : table === "client_contact_methods" ? fixture.method : { data: { token: "synthetic-invite-token" }, error: null }, then: (done: (value: unknown) => unknown) => Promise.resolve({ data: fixture.cancelRows, error: null }).then(done) }; return chain;
-  },
-} }));
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-const person = { id: "client-a", name: "Test Client", email: "client@example.test", linkedUserId: null, status: "active", doNotContact: false } as RelationshipPerson;
-const pending: PortalInvitation = { id: "invite-a", contact_id: "client-a", email: person.email, created_at: "2026-10-01T12:00:00Z", expires_at: "2099-10-30T12:00:00Z", revoked_at: null, last_used_at: null };
-let host: HTMLDivElement; let root: Root;
-const show = async (contact = person, latest?: PortalInvitation) => { await act(async () => root.render(<PortalInvitationManager tenantId="test-tenant-a" person={contact} latest={latest} onReadback={fixture.readback} />)); };
-const click = async (name: string) => { const button = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((el) => el.textContent === name)!; await act(async () => button.click()); };
-beforeEach(() => {
-  fixture.context = { activeUserId: "test-actor-a", activeTenantId: "test-tenant-a", accountContextStatus: "ready", accountContextLoading: false }; fixture.allowed = true; fixture.requests = [];
-  fixture.contact = { data: { id: "client-a", status: "active", merged_into_contact_id: null, do_not_contact: false, linked_user_id: null }, error: null }; fixture.method = { data: { value: "client@example.test" }, error: null }; fixture.cancelRows = [{ id: "invite-a" }];
-  fixture.getUser.mockReset().mockResolvedValue({ data: { user: { id: "test-actor-a" } }, error: null }); fixture.rpc.mockReset().mockResolvedValue({ data: { token: "synthetic-invite-token" }, error: null }); fixture.invoke.mockReset().mockResolvedValue({ data: { ok: true, emailed: true }, error: null }); fixture.readback.mockReset().mockResolvedValue(undefined);
-  host = document.createElement("div"); document.body.append(host); root = createRoot(host);
-});
-afterEach(() => { act(() => root.unmount()); host.remove(); });
-describe("explicit canonical invitation actions", () => {
-  it("mints a single-use contact/tenant/recipient-bound invitation and reports provider acceptance only", async () => {
-    await show(); await click("Send invitation email");
-    expect(fixture.rpc).toHaveBeenCalledWith("create_tenant_invite_token", expect.objectContaining({ _tenant_id: "test-tenant-a", _contact_id: "client-a", _email: "client@example.test", _max_uses: 1, _kind: "consumer" }));
-    expect(fixture.invoke).toHaveBeenCalledWith("send-portal-invite", { body: { token: "synthetic-invite-token", email: "client@example.test" } });
-    expect(host.textContent).toContain("accepted the invitation for sending"); expect(host.textContent).not.toContain("synthetic-invite-token"); expect(fixture.readback).toHaveBeenCalledOnce();
-    for (const request of fixture.requests) expect(request.filters).toContainEqual(["tenant_id", "test-tenant-a"]);
-  });
-  it("reuses a pending exact-contact token rather than minting another on resend", async () => {
-    await show(person, pending); await click("Resend invitation email"); expect(fixture.rpc).not.toHaveBeenCalled();
-    const request = fixture.requests.find((entry) => entry.table === "tenant_invite_tokens")!;
-    expect(request.filters).toEqual(expect.arrayContaining([["id", "invite-a"], ["contact_id", "client-a"], ["kind", "consumer"], ["revoked_at", null], ["last_used_at", null]]));
-  });
-  it("never reports a blocked or failed provider call as sent", async () => {
-    fixture.invoke.mockResolvedValue({ data: { ok: false, emailed: false, status: "blocked" }, error: null });
-    await show(); await click("Send invitation email"); expect(host.querySelector('[role="alert"]')?.textContent).toContain("Email sending was not confirmed"); expect(host.textContent).not.toContain("accepted the invitation for sending");
-  });
-  it.each(["do_not_contact", "merged_into_contact_id", "linked_user_id", "status"])("rechecks changed canonical %s before mint/send", async (field) => {
-    Object.assign(fixture.contact.data, { [field]: field === "do_not_contact" ? true : field === "status" ? "inactive" : "changed" });
-    await show(); await click("Send invitation email"); expect(fixture.rpc).not.toHaveBeenCalled(); expect(fixture.invoke).not.toHaveBeenCalled(); expect(host.querySelector('[role="alert"]')).not.toBeNull();
-  });
-  it("refuses an email changed after the roster loaded", async () => { fixture.method.data.value = "changed@example.test"; await show(); await click("Send invitation email"); expect(fixture.rpc).not.toHaveBeenCalled(); expect(fixture.invoke).not.toHaveBeenCalled(); });
-  it("refuses a mismatched authenticated subject", async () => { fixture.getUser.mockResolvedValue({ data: { user: { id: "test-actor-b" } }, error: null }); await show(); await click("Send invitation email"); expect(fixture.requests).toHaveLength(0); expect(fixture.invoke).not.toHaveBeenCalled(); });
-  it("cancels only the exact pending consumer invitation and requires a matching readback", async () => {
-    await show(person, pending); await click("Cancel pending invitation"); const request = fixture.requests[0]; expect(request.filters).toEqual(expect.arrayContaining([["tenant_id", "test-tenant-a"], ["contact_id", "client-a"], ["id", "invite-a"], ["last_used_at", null]])); expect(request.update).toBeTruthy(); expect(fixture.invoke).not.toHaveBeenCalled(); expect(host.textContent).toContain("Invitation canceled.");
-  });
-  it("does not claim cancellation if acceptance won the race", async () => { fixture.cancelRows = []; await show(person, pending); await click("Cancel pending invitation"); expect(host.textContent).toContain("The invitation changed"); expect(host.textContent).not.toContain("Invitation canceled."); });
-  it("keeps a readback failure recoverable after an accepted send", async () => { fixture.readback.mockRejectedValue(new Error("offline")); await show(); await click("Send invitation email"); expect(host.textContent).toContain("status could not be reloaded"); expect(host.querySelector<HTMLButtonElement>("button")?.disabled).toBe(false); });
-  it("starts no operation in a different or unresolved workspace", async () => { fixture.context.activeTenantId = "test-tenant-b"; await show(); await click("Send invitation email"); expect(fixture.getUser).not.toHaveBeenCalled(); expect(fixture.rpc).not.toHaveBeenCalled(); });
-  it("retires a pending authentication check on unmount", async () => {
-    let finish!: (value: unknown) => void; fixture.getUser.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
-    await show(); await click("Send invitation email"); act(() => root.unmount());
-    await act(async () => finish({ data: { user: { id: "test-actor-a" } }, error: null })); expect(fixture.requests).toHaveLength(0); expect(fixture.invoke).not.toHaveBeenCalled();
-    root = createRoot(host);
-  });
+import React,{act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
+import type {RelationshipPerson} from './useTenantRelationshipsData';
+import type {PortalInvitation} from './portalDashboardModel';
+const f=vi.hoisted(()=>({context:{activeUserId:'test-actor-a',activeTenantId:'test-tenant-a',accountContextStatus:'ready',accountContextLoading:false},allowed:true,getUser:vi.fn(),rpc:vi.fn(),invoke:vi.fn(),readback:vi.fn(),rows:[{id:'invite-a'}],error:null as unknown,requests:[] as Array<{table:string;filters:unknown[][];patch?:unknown}>}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>f.context}));
+vi.mock('@/hooks/useTierFeatures',()=>({useTierFeatures:()=>({has:()=>f.allowed})}));
+vi.mock('./PortalInvitationCommand',()=>({PortalInvitationCommand:(p:{tenantId:string;contactId:string;eligible:boolean})=><button type="button" data-canonical-tenant={p.tenantId} data-canonical-contact={p.contactId} disabled={!p.eligible}>Review invitation</button>}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getUser:()=>f.getUser()},rpc:f.rpc,functions:{invoke:f.invoke},from:(table:string)=>{
+ const request={table,filters:[] as unknown[][],patch:undefined as unknown};f.requests.push(request);
+ const chain={update:(patch:unknown)=>{request.patch=patch;return chain},eq:(...v:unknown[])=>{request.filters.push(v);return chain},is:(...v:unknown[])=>{request.filters.push(v);return chain},select:()=>chain,then:(done:(v:unknown)=>unknown)=>Promise.resolve({data:f.rows,error:f.error}).then(done)};return chain;
+}}}));
+import {PortalInvitationManager,type PortalInvitationActionLock} from './PortalInvitationManager';
+Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});
+const person={id:'client-a',name:'Test customer',email:'customer@tests.invalid',linkedUserId:null,status:'active',doNotContact:false} as RelationshipPerson;
+const pending:PortalInvitation={id:'invite-a',contact_id:person.id,email:person.email,created_at:'2026-10-01T12:00:00Z',expires_at:'2099-01-01T00:00:00Z',revoked_at:null,last_used_at:null};
+let host:HTMLDivElement,root:Root;
+const show=async(p=person,latest:PortalInvitation|undefined=pending,actionLock?:PortalInvitationActionLock)=>{await act(async()=>root.render(<PortalInvitationManager tenantId="test-tenant-a" person={p} latest={latest} onReadback={f.readback} actionLock={actionLock}/>))};
+const click=async(name:string)=>{const b=[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name);expect(b).toBeTruthy();await act(async()=>b!.click())};
+beforeEach(()=>{Object.assign(f.context,{activeUserId:'test-actor-a',activeTenantId:'test-tenant-a',accountContextStatus:'ready',accountContextLoading:false});f.allowed=true;f.rows=[{id:'invite-a'}];f.error=null;f.requests=[];f.getUser.mockReset().mockResolvedValue({data:{user:{id:'test-actor-a'}},error:null});f.rpc.mockReset();f.invoke.mockReset();f.readback.mockReset().mockResolvedValue(undefined);host=document.createElement('div');document.body.append(host);root=createRoot(host)});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.useRealTimers()});
+describe('Portal manager delegates sending and preserves bounded cancellation',()=>{
+ it('binds the shared command to this exact tenant/customer without reading or minting a token',async()=>{await show();const command=host.querySelector('[data-canonical-contact]')!;expect(command.getAttribute('data-canonical-contact')).toBe(person.id);expect(command.getAttribute('data-canonical-tenant')).toBe('test-tenant-a');expect(f.requests).toHaveLength(0);expect(f.rpc).not.toHaveBeenCalled();expect(f.invoke).not.toHaveBeenCalled()});
+ for(const [name,patch]of [['missing recipient',{email:null}],['contact preference',{doNotContact:true}],['linked identity',{linkedUserId:'test-client-login'}],['archived contact',{status:'archived'}]] as const)
+ it('presents shared review unavailable for '+name,async()=>{await show({...person,...patch} as RelationshipPerson);expect(host.querySelector<HTMLButtonElement>('[data-canonical-contact]')!.disabled).toBe(true);expect(f.requests).toHaveLength(0)});
+ it('cancels only the exact pending consumer token and keeps customer identity untouched',async()=>{await show();await click('Cancel pending invitation');expect(f.requests).toHaveLength(1);expect(f.requests[0].table).toBe('tenant_invite_tokens');expect(f.requests[0].filters).toEqual(expect.arrayContaining([['id','invite-a'],['tenant_id','test-tenant-a'],['contact_id','client-a'],['kind','consumer'],['revoked_at',null],['last_used_at',null]]));expect(f.requests[0].patch).toHaveProperty('revoked_at');expect(host.textContent).toContain('Invitation canceled.');expect(f.readback).toHaveBeenCalledOnce();expect(f.invoke).not.toHaveBeenCalled()});
+ it('acceptance winning the race is not reported as cancellation',async()=>{f.rows=[];await show();await click('Cancel pending invitation');expect(host.textContent).toContain('could not be confirmed');expect(host.textContent).not.toContain('Invitation canceled.')});
+ it('never exposes raw database errors',async()=>{f.error={message:'PRIVATE_PROVIDER_OR_DATABASE_DETAIL'};await show();await click('Cancel pending invitation');expect(host.textContent).not.toContain('PRIVATE_PROVIDER');expect(host.textContent).toContain('could not be confirmed')});
+ it('an accepted invitation has no pending cancellation control',async()=>{await show(person,{...pending,last_used_at:'2026-10-17T00:00:00Z'});expect(host.textContent).not.toContain('Cancel pending invitation');expect(host.textContent).toContain('accepted')});
+ for(const mode of ['wrong tenant','loading','no tier','wrong Auth'])it('cannot cancel under '+mode,async()=>{if(mode==='wrong tenant')f.context.activeTenantId='other';if(mode==='loading')f.context.accountContextLoading=true;if(mode==='no tier')f.allowed=false;if(mode==='wrong Auth')f.getUser.mockResolvedValue({data:{user:{id:'other'}},error:null});await show();await click('Cancel pending invitation');expect(f.requests).toHaveLength(0)});
+ it('a shared action lock prevents a second instance from starting cancellation',async()=>{const acquire=vi.fn(()=>null);await show(person,pending,{pending:new Set(),acquire});await click('Cancel pending invitation');expect(acquire).toHaveBeenCalledOnce();expect(f.getUser).not.toHaveBeenCalled()});
+ it('a loading→ready session change retires old cancellation without leaving a stuck control',async()=>{let finish!:(v:unknown)=>void;f.getUser.mockImplementation(()=>new Promise(r=>{finish=r}));await show();await click('Cancel pending invitation');f.context.accountContextLoading=true;await show();f.context.accountContextLoading=false;await show();await act(async()=>finish({data:{user:{id:'test-actor-a'}},error:null}));expect(f.requests).toHaveLength(0);expect([...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent==='Cancel pending invitation')!.disabled).toBe(false)});
+ it('unmount during Auth starts no cancellation or readback',async()=>{let finish!:(v:unknown)=>void;f.getUser.mockImplementation(()=>new Promise(r=>{finish=r}));await show();await click('Cancel pending invitation');act(()=>root.unmount());root=createRoot(host);await act(async()=>finish({data:{user:{id:'test-actor-a'}},error:null}));expect(f.requests).toHaveLength(0);expect(f.readback).not.toHaveBeenCalled()});
+ it('retains cancellation separately when its history refresh fails',async()=>{f.readback.mockRejectedValue(Error('private'));await show();await click('Cancel pending invitation');expect(host.textContent).toContain('Invitation canceled.');expect(host.textContent).toContain('history could not reload');expect(host.textContent).not.toContain('private')});
 });

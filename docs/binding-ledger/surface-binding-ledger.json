@@ -928,7 +928,7 @@
         "tenant_scope": {"status": "server_resolved"},
         "safe_context": {"status": "partial", "note": "real client-scoped reads exist, but no complete approved shared-item projection is proven"},
         "authority": {"status": "partial", "note": "a narrow client tool allowance and action-item RPC exist; complete per-action tenant policy is not proven"},
-        "governed_write": {"status": "partial", "note": "client action responses exist; shared messages, documents, tasks and approve/decline are incomplete; common owner invitation command source binds existing canonical approval/sender/recovery, while Dashboard migration and authenticated Chat/Live/provider acceptance remain unverified"},
+        "governed_write": {"status": "partial", "note": "client action responses exist; shared messages, documents, tasks and approve/decline are incomplete; Dashboard and owner typed/Live source use the common invitation command with existing canonical approval/sender/recovery; actual authenticated Chat/Live/provider acceptance remains unverified"},
         "verified_outcome": {"status": "partial"},
         "rail_evidence": {"producer": "partial", "read": "client-scoped resolver", "note": "client-visible activity exists; universal client action receipts are not proven"},
         "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "client context is a bounded projection through the shared Harness, never a separate Mind"},

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { ConfirmItem } from "@/components/chat/confirmPreview";
 
 /**
  * Multi-chat history for "Your Paige" (#94).
@@ -37,6 +38,44 @@ export interface PaigeTurn {
   surfaces_used: string[] | null;
   seq: number;
   created_at: string | null;
+  interactive_intent_id?: string | null;
+  interactive_terminal_state?: string | null;
+}
+
+export interface RecoveredPaigeApproval {
+  v: 1; status: "available"; thread_id: string; turn_id: string; intent_id: string;
+  tenant_id: string; expires_at: string;
+  confirmations: Array<ConfirmItem & {fingerprint: string; command: Record<string, unknown>; idempotency_key: string}>;
+}
+
+/** Accept only the dedicated server read response, never bundle_ref or a cached
+ * browser card. Native single-use claim remains the execution authority. */
+export function readRecoveredPaigeApproval(raw: unknown, scope: {
+  threadId: string; turnId: string; intentId: string; tenantId: string;
+}): RecoveredPaigeApproval | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (r.v !== 1 || r.status !== "available" || r.thread_id !== scope.threadId || r.turn_id !== scope.turnId
+    || r.intent_id !== scope.intentId || r.tenant_id !== scope.tenantId || typeof r.expires_at !== "string"
+    || !Number.isFinite(Date.parse(r.expires_at)) || Date.parse(r.expires_at) <= Date.now()
+    || !Array.isArray(r.confirmations) || r.confirmations.length < 1 || r.confirmations.length > 10) return null;
+  const seen = new Set<string>();
+  const confirmations: RecoveredPaigeApproval["confirmations"] = [];
+  for (const candidate of r.confirmations) {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+    const c = candidate as Record<string, unknown>;
+    if (typeof c.tool !== "string" || !/^[a-z][a-z0-9_]{0,95}$/.test(c.tool)
+      || typeof c.summary !== "string" || !c.summary.trim() || typeof c.fingerprint !== "string"
+      || !/^[0-9a-f]{16}$/.test(c.fingerprint) || seen.has(c.fingerprint)
+      || !c.command || typeof c.command !== "object" || Array.isArray(c.command)
+      || typeof (c.command as Record<string, unknown>).action !== "string"
+      || typeof c.idempotency_key !== "string" || !c.idempotency_key.trim() || c.idempotency_key.length > 192) return null;
+    seen.add(c.fingerprint);
+    confirmations.push({tool: c.tool, summary: c.summary, fingerprint: c.fingerprint,
+      command: c.command as Record<string, unknown>, idempotency_key: c.idempotency_key});
+  }
+  return {v: 1, status: "available", thread_id: scope.threadId, turn_id: scope.turnId, intent_id: scope.intentId,
+    tenant_id: scope.tenantId, expires_at: r.expires_at, confirmations};
 }
 
 // The generated Supabase types don't yet carry these owner-chat rows/RPCs; the
@@ -92,12 +131,23 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   const loadTurns = useCallback(async (threadId: string): Promise<PaigeTurn[]> => {
     const { data, error } = await db
       .from("paige_chat_turns")
-      .select("id,role,content,bundle_ref,surfaces_used,seq,created_at")
+      .select("id,role,content,bundle_ref,surfaces_used,seq,created_at,interactive_intent_id,interactive_terminal_state")
       .eq("thread_id", threadId)
       .order("seq", { ascending: true });
     if (error) throw error;
     return (data ?? []) as PaigeTurn[];
   }, []);
+
+  const loadApprovalRecovery = useCallback(async (threadId: string, turnId: string, intentId: string) => {
+    if (platform || !callerUserId || !tenantId) return null;
+    try {
+      const {data, error} = await supabase.functions.invoke("paige-ai-chat", {body: {
+        messages: [{role: "user", content: "Read pending approval status."}], threadId, requestIntentId: intentId,
+        interactive: {kind: "status", approvalTurnId: turnId},
+      }});
+      return error ? null : readRecoveredPaigeApproval(data?.approval_recovery, {threadId, turnId, intentId, tenantId});
+    } catch { return null; }
+  }, [callerUserId, tenantId, platform]);
 
   /** Create a thread lazily on first send. Title is a placeholder the server
    *  refines from the first message. */
@@ -175,6 +225,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
     // empty first render and never restores the most-recent chat (#94).
     isFetched: enabled && threadsQuery.isFetched,
     loadTurns,
+    loadApprovalRecovery,
     ensureThread,
     renameThread: (id: string, title: string) => renameThread.mutate({ id, title }),
     archiveThread: (id: string) => archiveThread.mutate(id),

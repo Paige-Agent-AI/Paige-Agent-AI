@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ExtractionConsumerError, readKnowledgeExtractionReview, readKnowledgeExtractionStatus,
-  submitKnowledgeExtraction, type ExtractionClient, type ExtractionInput, type ExtractionReference, type ExtractionReview,
+  ExtractionConsumerError, readKnowledgeExtractionForDocument, readKnowledgeExtractionReview, readKnowledgeExtractionStatus,
+  submitKnowledgeExtraction, type ExtractionClient, type ExtractionInput, type ExtractionReadReference, type ExtractionReview,
 } from "@/lib/knowledge-extraction-service";
 import {
   KnowledgeReviewServiceError, readKnowledgePublicationStatus, saveKnowledgeReview, sha256Hex,
@@ -17,7 +17,7 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 
 type HaltAction = "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
 type Halt = { title: string; message: string; action: HaltAction | null };
-type Step = "choose" | "extracting" | "review" | "ready" | "publishing" | "done";
+type Step = "checking" | "choose" | "extracting" | "review" | "ready" | "publishing" | "done";
 export type KnowledgeCorrectionTarget = Pick<KnowledgeDocument, "id" | "tenant_id" | "revision" | "title" | "content" | "summary" | "category" | "tags">;
 type Props = {
   tenantId: string; onPublished?: () => void; onClose: () => void;
@@ -42,7 +42,7 @@ export function AddKnowledgeFlow(props: Props) {
 
 function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus }: Props) {
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
-  const [step, setStep] = useState<Step>("choose");
+  const [step, setStep] = useState<Step>(target ? "checking" : "choose");
   const [mode, setMode] = useState<"paste" | "file">("paste");
   const [title, setTitle] = useState(target?.title ?? "");
   const [content, setContent] = useState(target?.content ?? "");
@@ -53,7 +53,8 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const [tags, setTags] = useState(target?.tags.join(", ") ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [halt, setHalt] = useState<Halt | null>(null);
-  const reference = useRef<ExtractionReference | null>(null);
+  const reference = useRef<ExtractionReadReference | null>(null);
+  const resumed = useRef(false);
   const review = useRef<ExtractionReview | null>(null);
   const savedRevision = useRef<number | null>(null);
   const publishWorkId = useRef<string | null>(null);
@@ -66,28 +67,36 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const pollRun = useRef(0);
   if (scope.current.tenantId !== tenantId) scope.current = { tenantId };
   const attemptScope = scope.current;
+  const targetValid = !target || (target.tenant_id === tenantId && typeof target.id === "string" && !!target.id && Number.isSafeInteger(target.revision) && target.revision > 0 && typeof target.content === "string");
+  const initialRestore = useRef<((run: number) => void) | null>(null);
   useLayoutEffect(() => {
     mounted.current = true;
-    const run = pollRun.current;
+    const run = ++pollRun.current;
+    initialRestore.current?.(run);
     return () => { mounted.current = false; pollRun.current = run + 1; };
   }, []);
   const current = () => mounted.current && scope.current === attemptScope;
   const close = () => { mounted.current = false; pollRun.current++; onClose(); };
   // The generated supabase client's rpc() keys on a known function-name union; the shared
   // ports take a plain name, so the call is widened once here.
-  const rpcByName = supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
   const client: ExtractionClient = {
     functions: { invoke: (name, options) => supabase.functions.invoke(name, options) },
-    rpc: rpcByName,
+    rpc: (name, args) => (supabase.rpc as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>).call(supabase, name, args),
   };
-  const extractionScope = () => ({ tenantId, isCurrent: () => current() });
+  const extractionScope = (run?: number) => ({ tenantId, isCurrent: () => current() && (run === undefined || pollRun.current === run) });
   const stop = (next: Halt) => { setHalt(next); setNotice(null); };
 
-  const loadReview = async (ref: ExtractionReference) => {
-    const read = await readKnowledgeExtractionReview(client, extractionScope(), ref);
-    if (!current()) return;
+  const loadReview = async (ref: ExtractionReadReference, run?: number) => {
+    const read = await readKnowledgeExtractionReview(client, extractionScope(run), ref);
+    if (!extractionScope(run).isCurrent()) return;
     if (read.phase !== "awaiting_review" || !read.pending_review || read.tenant_id !== tenantId || read.document_id !== ref.documentId || read.extraction_work_id !== ref.workId || (target && read.document_id !== target.id)) {
-      stop({ title: "Review unavailable", message: "The extracted review is no longer available for this source. Nothing was published; add the source again if it should be re-read.", action: null });
+      stop({ title: "Review unavailable", message: "The current review could not be verified for this source. Check this document in Knowledge before starting another correction.", action: null });
+      return;
+    }
+    // A saved review can already have a publication in flight. The public review reader
+    // does not identify that work; never overwrite it or invent a new publication intent.
+    if (resumed.current && read.pending_review.reviewed_content !== null) {
+      stop({ title: "Saved review needs confirmation", message: "This review is saved, but its publication status could not be confirmed here. No new reading or publication was started. Check this document in Knowledge before starting another correction.", action: null });
       return;
     }
     review.current = read;
@@ -96,18 +105,18 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     setNotice(null);
   };
 
-  const watchExtraction = async (ref: ExtractionReference, attempt: number, run: number) => {
+  const watchExtraction = async (ref: ExtractionReadReference, attempt: number, run: number) => {
     if (!current() || pollRun.current !== run) return;
     let status;
-    try { status = await readKnowledgeExtractionStatus(client, extractionScope(), ref); }
+    try { status = await readKnowledgeExtractionStatus(client, extractionScope(run), ref); }
     catch {
       if (current() && pollRun.current === run) stop({ title: "Reading status failed", message: "Paige's progress could not be read right now. The reading itself was not cancelled — check again in a moment.", action: "check-extraction" });
       return;
     }
     if (!current() || pollRun.current !== run) return;
     if (status.work_status === "succeeded") {
-      try { await loadReview(ref); }
-      catch { if (current()) stop({ title: "Review unavailable", message: "The current review could not be verified. Check the original reading before saving or publishing.", action: "reread" }); }
+      try { await loadReview(ref, run); }
+      catch { if (extractionScope(run).isCurrent()) stop({ title: "Review unavailable", message: "The current review could not be verified. Check the original reading before saving or publishing.", action: "reread" }); }
       return;
     }
     if (status.work_status === "claimed" || status.work_status === "expired") {
@@ -120,6 +129,23 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     if (status.work_status === "outcome_unknown") { stop({ title: "Reading outcome unconfirmed", message: "Paige could not confirm whether this reading completed. Recovery will reconcile it — do not submit the source again; check its status instead.", action: "check-extraction" }); return; }
     stop({ title: "Reading failed", message: status.safe_summary ?? "Paige could not read this source. Nothing was added to Knowledge.", action: null });
   };
+
+  const restoreExisting = async (run: number) => {
+    if (!target) return;
+    try {
+      const read = await readKnowledgeExtractionForDocument(client, extractionScope(run), target.id, target.revision);
+      if (!extractionScope(run).isCurrent()) return;
+      if (read.extraction_work_id === null && read.pending_review === null) { setStep("choose"); return; }
+      if (!read.extraction_work_id) throw new Error("Missing existing work");
+      const ref: ExtractionReadReference = { tenantId, documentId: target.id, workId: read.extraction_work_id, revision: read.revision };
+      reference.current = ref; resumed.current = true;
+      setStep("extracting"); setNotice("Checking the existing reading…");
+      await watchExtraction(ref, 0, run);
+    } catch {
+      if (extractionScope(run).isCurrent()) stop({ title: "Existing reading unavailable", message: "The saved reading could not be verified. Close this review and reopen the current document. No new reading or publication was started.", action: null });
+    }
+  };
+  initialRestore.current = target && targetValid ? run => { void restoreExisting(run); } : null;
 
   /** A file is uploaded to the workspace bucket first; extraction reads it from there. A
    * lost acknowledgement after upload may leave the stored object behind — cleanup belongs
@@ -256,13 +282,14 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   };
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
-  if (target && (target.tenant_id !== tenantId || typeof target.id !== "string" || !target.id || !Number.isSafeInteger(target.revision) || target.revision < 1 || typeof target.content !== "string")) {
+  if (!targetValid) {
     return <DialogContent onCloseAutoFocus={restoreFocus}><DialogHeader><DialogTitle>Source unavailable</DialogTitle><DialogDescription>Read the current document in this workspace before correcting its content.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
   }
   return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={restoreFocus}>
     <DialogHeader>
       <DialogTitle>{step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
       <DialogDescription>
+        {step === "checking" && "Checking the saved reading for this document."}
         {step === "choose" && (target ? `Correct revision ${target.revision} of this document. Its published text stays in use until you review and publish the replacement.` : "Paige reads the source first; you review the exact text, then publish it to Knowledge.")}
         {step === "extracting" && "The reading continues even if you close this."}
         {step === "review" && `Edit the text and details — this exact text becomes the Knowledge source.${review.current ? ` Revision ${review.current.revision}.` : ""}`}
@@ -284,6 +311,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       </div>
     </div> : <div className="space-y-4">
       {notice && <p role="status" className="text-sm">{notice}</p>}
+      {step === "checking" && <div className="flex justify-end"><Button variant="outline" onClick={close}>Close</Button></div>}
       {(step === "choose" || step === "extracting") && <>
         <div className="space-y-1.5"><Label>Source type</Label>
           <div className="flex gap-2" role="group" aria-label="Source type">

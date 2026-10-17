@@ -24,6 +24,6 @@ Deno.serve(async req=>{
  if(previewError||!preview||typeof preview!=='object')return respond(503,{ok:false,code:'DELIVERY_ELIGIBILITY_UNAVAILABLE'});
  const {data:invoice,error:invoiceError}=await admin.rpc('_sales_invoice_read',{_tenant:tenant,_invoice:command.invoice_id});
  if(invoiceError)return respond(503,{ok:false,code:'DELIVERY_READINESS_UNAVAILABLE'});
- const readiness=await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin,{tenantId:tenant,invoice,channel:String(command.action)==='invoice.sms_send'?'sms':'email',connectorId:typeof command.connector_id==='string'?command.connector_id:null},key=>Deno.env.get(key));
+ const readiness=await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin,{tenantId:tenant,actorUserId:user.id,invoice,channel:String(command.action)==='invoice.sms_send'?'sms':'email',connectorId:typeof command.connector_id==='string'?command.connector_id:null},key=>Deno.env.get(key));
  return respond(200,{ok:true,readiness,eligible:preview.eligible===true&&readiness.eligible,summary:typeof preview.summary==='string'?preview.summary:'Invoice email eligibility unavailable.',remaining_cents:preview.remaining_cents??null,provider_execution_verified:false});
 });

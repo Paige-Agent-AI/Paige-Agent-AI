@@ -171,3 +171,35 @@ Root's authoritative22:30:56 production readback records only native25000,30000 
 The ordinary main merge completed cleanly. Only the unapplied Knowledge migration filename moves from20271109045000 to reserved20271110011000_knowledge_publication_recovery.sql, followed by the incumbent publication-check.py default path. The complete SQL bytes, including the reviewed reader and nonunique partial OR index, remain exact c79650e5a. Existing publication assertions, fixture/data-directory fences, all current main files and both Knowledge/E09 native CI commands are preserved. No Chat, Spine, C0b, pin, authority, writer, role, provider or customer-data change occurs.
 
 The earlier176 native assertions and all retained red/infrastructure attempts remain evidence for identical SQL; they are not rerun or relabeled by this path-only correction. The current native CI retry's Chromium screenshot failure is not waived, and no old check is described as green for this successor. Migration collision/security lint, Python syntax, driver path resolution, SQL byte preservation and tracked-tree checks are recorded in the private frontier freeze receipt. Fresh exact-head hosted CI and reviewed chronological native release/readback remain mandatory before any consumer activation or authenticated publication-recovery claim.
+
+## Native release attestation for the composed restoration
+
+The standard evidence validator requires this newly introduced native record to declare its own scope. Earlier native source and test history are unchanged above. The separate consumer interface is reviewed in PR2331; no interface implementation or geometry proof is claimed for this data-only prerequisite.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: the existing read_tenant_knowledge_review flow above correlates the original saved review, durable publication and current document generation; the installed Flow-by-Flow micro-change route preserves that native lifecycle.
+PAIGE_UI_DESIGN: PASS: docs/doctrine/paige-ui-delivery-standard.md routing is preserved; this native reader supplies truthful data to existing Knowledge recovery states without adding interface markup, controls or styling.
+MATERIAL_FLOW_CHANGE: NO: native additive association and evidence metadata only; the separately reviewed consumer owns its visible recovery flow.
+FLOW_PROTOTYPE: NOT_REQUIRED: this native contract and attestation add no user interaction, choice, layout or frontend control.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible existing and future SOLO owner can identify the original saved document publication without inventing another extraction, intent or uncertain replay.
+VISUAL_DIRECTION: NOT_APPLICABLE: native JSON projection and a tenant/document index contain no rendered surface or visual geometry.
+AUTOMATED_EVIDENCE: PASS: actual native PostgreSQL campaigns above retain134 original assertions plus42 scale/authority controls,176 total with zero failures;100k mixed-work plans exercise the exact OR index and preserve missing-index/unsafe-AND failures.
+STATIC_EVIDENCE: PASS: original reader body, owner/ACL contract and reviewed index are preserved; the11000 R100 successor passes migration collision/security/managed-schema checks and actual proof-driver path/syntax verification.
+RENDERED_EVIDENCE: NOT_APPLICABLE: no native rendered interface; separate consumer component captures do not certify this source release as authenticated product behavior.
+BEHAVIORAL_EVIDENCE: PASS: disposable native fixtures execute actual saved-review/publication association, visibility, terminal generation, unrecorded outcome and indexed lookup controls; no customer or provider effect ran.
+AUTHENTICATED_RUNTIME: UNVERIFIED: native11000 is not deployed; exact production body/owner/ACL/index and ordinary saved-publication recovery must precede customer acceptance.
+KEYBOARD_FOCUS: NOT_APPLICABLE: no native keyboard target, event or focus behavior is added.
+ZOOM_REFLOW: NOT_APPLICABLE: the native reader and SQL index add no dimensions, text scale or layout source.
+REDUCED_MOTION: NOT_APPLICABLE: no animation or motion behavior is added by this native contract.
+STATE_COVERAGE: PASS: original unsubmitted/matched/ambiguous/unreadable/failed/cancelled association, exact terminal generation, legacy-idle and replacement isolation controls remain; both indexed custom/generic native lookup plans are covered.
+TRUTHFUL_STATE_LABELS: PASS: matched association is evidence about the original operation, never a new submission; unavailable remains held and completed-unrecorded never becomes a recorded receipt.
+SOLO_UI: NO: this record covers native projection/index and evidence only; the shared SOLO consumer interface has its own separate delivery record and release.
+UNVERIFIED: fresh release-head CI, native11000 production body/owner/ACL/index readback, ordinary same-document publication recovery/reload/Rail/isolation, separate Live and owner acceptance remain owed because this native source is not released.
+
+INTERNAL_BUILD_IDENTITY: source=224a3c257127a4f83458850145c3ad033c050eee; environment=development; deployment=PROOF_OWED; migrations=PROOF_OWED(20271110011000_knowledge_publication_recovery exact production body owner ACL and index); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/ant21-knowledge-publication-recovery.md
+RELEASE_CHANNEL: development: current-main native prerequisite and focused disposable engineering proof; production readback remains separate
+RELEASE_CLASSIFICATION: internal-only: native restoration prerequisite under existing integrator review and release custody
+CUSTOMER_RELEASE_IDENTITY: none: this native evidence record does not announce an accepted customer outcome
+RELEASE_NOTE_REQUIRED: NO: native source and attestation are separate from an owner-approved customer announcement
+RELEASE_TRUTH_BOUNDARY: PARTIAL:176 native assertions establish only their scoped contract; production saved-publication recovery, Live and owner acceptance are unverified
+RELEASE_RECOVERY: position=preserve original durable work and document generation while using the existing native association and reviewed forward correction; reference=read_tenant_knowledge_review and the canonical Knowledge publication lifecycle

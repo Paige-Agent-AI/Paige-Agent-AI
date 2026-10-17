@@ -51,7 +51,7 @@ function world(overrides: Partial<World> = {}): World {
       { id: ACT2, tenant_id: T, approval_id: AP2, action_kind: "owner.lead_followup", contact_id: C },
     ],
     domains: [{ tenant_id: T, domain: "own.example.invalid", sendgrid_status: "verified", sendgrid_domain_id: "sg-dom-1", sendgrid_verified_at: "2026-10-13T00:00:00Z" }],
-    connectors: [{ id: SG, tenant_id: T, channel_type: "email", provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {} }],
+    connectors: [{ id: SG, tenant_id: T, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "Hello@Own.example.invalid", active: true, status: "active", credentials_vault_ref: null, config: {} }],
     proposals: [], sent: false, recordResult: { data: { ok: true, state: "provider_accepted" }, error: null },
     rpcCalls: [], fetches: [], messages: [], bindingApproval: AP, prepareError: null,
     ...overrides,

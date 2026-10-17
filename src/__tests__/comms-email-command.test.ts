@@ -66,7 +66,7 @@ function setup(options: Setup = {}) {
       { id: CONTACT, tenant_id: TENANT, first_name: "Dana", last_name: "Reyes", entity_name: null, client_contact_methods: [{ kind: "email", value: " Dana@Example.test ", label: null, is_primary: true, position: 0 }, { kind: "email", value: "old@example.test", label: null, is_primary: false, position: 1 }] },
       { id: FOREIGN_CONTACT, tenant_id: FOREIGN, first_name: "Other", last_name: "Tenant", client_contact_methods: [{ kind: "email", value: "x@foreign.test", is_primary: true, position: 0 }] },
     ],
-    channel_connectors: options.connectors ?? [{ id: SENDER, tenant_id: TENANT, channel_type: "email", provider: "resend", from_address: "Owner@Business.test", active: true, status: "active" }],
+    channel_connectors: options.connectors ?? [{ id: SENDER, tenant_id: TENANT, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "resend", from_address: "Owner@Business.test", active: true, status: "active" }],
     paige_pending_confirmations: [],
     paige_audit_log: [],
   };
@@ -204,6 +204,21 @@ function setup(options: Setup = {}) {
 }
 
 describe("comms-email-command: authority before anything", () => {
+  it("only proposes a personal sender for its granting actor and refuses drift on approval", async () => {
+    const sender = { id: SENDER, tenant_id: TENANT, channel_type: "email", provider: "gmail", from_address: "owner@business.test", active: true, status: "active", mailbox_class: "personal", mailbox_owner_user_id: ACTOR };
+    const own = setup({ connectors: [sender] });
+    const proposal = await own.request();
+    expect(proposal.body.outcome).toBe("approval_required");
+    expect(own.sends).toHaveLength(0);
+    expect(own.named("readiness")[0].args.actorUserId).toBe(ACTOR);
+    own.tables.channel_connectors[0].mailbox_owner_user_id = ACTOR_2;
+    expect((await own.request({ approved_fingerprint: proposal.body.fingerprint })).body.outcome).toBe("needs_setup");
+    expect(own.sends).toHaveLength(0);
+    const foreign = setup({ connectors: [{ ...sender, mailbox_owner_user_id: ACTOR_2 }] });
+    expect((await foreign.request()).body.outcome).toBe("needs_setup");
+    expect(foreign.tables.paige_pending_confirmations).toHaveLength(0);
+    expect(foreign.sends).toHaveLength(0);
+  });
   it("refuses restricted, malformed and unavailable provider authority before proposals or effects", async () => {
     for (const options of [{ providerExecution: false }, { providerExecution: null }, { providerExecution: "true" }, { providerExecution: { allowed: true } }, { providerBoundaryError: true }]) {
       const t = setup(options);
@@ -242,8 +257,8 @@ describe("comms-email-command: server-resolved parties and readiness before a pr
   });
   it("asks which sender when the workspace has two, and raises no card", async () => {
     const t = setup({ connectors: [
-      { id: SENDER, tenant_id: TENANT, channel_type: "email", provider: "resend", from_address: "owner@business.test", active: true, status: "active" },
-      { id: SENDER_2, tenant_id: TENANT, channel_type: "email", provider: "gmail", from_address: "team@business.test", active: true, status: "active" },
+      { id: SENDER, tenant_id: TENANT, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "resend", from_address: "owner@business.test", active: true, status: "active" },
+      { id: SENDER_2, tenant_id: TENANT, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "gmail", from_address: "team@business.test", active: true, status: "active" },
     ] });
     const r = await t.request();
     expect(r.body).toMatchObject({ ok: false, outcome: "sender_choice_required" });

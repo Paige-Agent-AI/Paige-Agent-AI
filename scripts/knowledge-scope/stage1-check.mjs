@@ -4201,5 +4201,46 @@ group("30 Knowledge canonical tools on the actual Chat gate");
 }
 
 
+group("31 Ordinary customer relationship at the protected Chat boundary");
+{
+  const customerId="66666666-6666-4666-8666-666666666666";
+  const profile={id:customerId,tenant_id:CHILD,linked_user_id:USER};
+  const customer={personaTenant:CHILD,memberships:[],activeTenantId:null,
+    bodyExtras:{clientContext:"Current page: Home"},
+    rpcExtras:{get_actor_access:{data:{tier:"client"},error:null},client_portal_self_profile:{data:profile,error:null}}};
+  const valid=await drive(customer);
+  assert("31.1 an ordinary linked customer without a staff workspace receives a reply",
+    valid.status===200 && valid.responseText.includes("Scoped response."),valid.status);
+  assert("31.2 customer scope is read and rechecked through the caller JWT, without staff grants",
+    valid.rec.rpc.filter(x=>x.name==="client_portal_self_profile" && x.client==="jwt").length>=2);
+  assert("31.3 customer continuation never reads owner Knowledge or owner Memory",
+    !valid.rec.rpc.some(x=>["match_tenant_knowledge","recall_owner_memory","match_paige_memory"].includes(x.name)));
+  for(const [label,result] of [
+    ["missing",{data:null,error:null}],
+    ["wrong actor",{data:{...profile,linked_user_id:AGENCY},error:null}],
+    ["foreign business",{data:{...profile,tenant_id:AGENCY},error:null}],
+    ["malformed",{data:{...profile,id:"not-a-client"},error:null}],
+    ["ambiguous",{data:null,error:{code:"42501",message:"select a relationship"}}],
+    ["unknown",{data:null,error:{message:"connection lost"}}],
+  ]) {
+    const r=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:result}});
+    assert(`31.4 ${label}: refuses before a provider call`,r.status===409 && r.providerCalls.length===0,r.status);
+  }
+  for(const [label,next] of [["revoked",null],["client replaced",{...profile,id:SOLO}],["business changed",{...profile,tenant_id:AGENCY}],["actor changed",{...profile,linked_user_id:AGENCY}]]){
+    let reads=0;
+    const r=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>({data:++reads===1?profile:next,error:null})}});
+    assert(`31.5 ${label} after capture: no stale provider dispatch`,r.status===409 && r.providerCalls.length===0,r.status);
+  }
+  let reads=0;
+  const during=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>({data:++reads<4?profile:null,error:null})}});
+  assert("31.6 relationship revoked during the provider round withholds the answer",
+    during.status===200 && !during.responseText.includes("Scoped response.") && during.responseText.includes("active workspace changed"),
+    JSON.stringify({status:during.status,reads,providers:during.providerCalls.length}));
+  const owner=await drive({personaTenant:CHILD,memberships:[CHILD],activeTenantId:null,
+    bodyExtras:{clientContext:"Current page: Home"},rpcExtras:{client_portal_self_profile:{data:profile,error:null}}});
+  assert("31.7 an owner cannot borrow a customer binding when their declared workspace is unset",
+    owner.status===409 && owner.providerCalls.length===0,owner.status);
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

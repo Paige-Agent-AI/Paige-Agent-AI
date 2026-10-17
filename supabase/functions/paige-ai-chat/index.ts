@@ -235,6 +235,7 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
+import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -2788,6 +2789,11 @@ JSON:`;
     } catch (e) {
       console.warn("[paige-ai-chat] persona context resolution failed (defaulting to neutral):", e);
     }
+    // An external customer has an active CRM relationship, not a staff workspace
+    // selection. Pin that native caller-bound relationship before protected work;
+    // the same relationship must still exist at every later protected boundary.
+    const customerChatBinding = callerTier === "client" && !payloadClientId
+      ? await readClientPortalChatBinding(supabaseClient, user.id) : null;
     const fundingEnabled = personaCtx.funding_enabled;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
@@ -3551,7 +3557,11 @@ JSON:`;
         // clears. Re-read the selected workspace itself at the same protected
         // boundary. Tenantless operator turns retain their existing resolver path.
         let declaredScopeMatches = turnScopeTenantId === null;
-        if (turnScopeTenantId !== null) {
+        if (callerTier === "client" && !payloadClientId && (customerChatBinding || turnScopeTenantId !== null)) {
+          declaredScopeMatches = customerChatBinding?.tenantId === turnScopeTenantId &&
+            sameClientPortalChatBinding(customerChatBinding,
+              await readClientPortalChatBinding(supabaseClient, user.id));
+        } else if (turnScopeTenantId !== null) {
           const { data: declaredProfile, error: declaredError } = await supabaseClient
             .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
           declaredScopeMatches = !declaredError &&

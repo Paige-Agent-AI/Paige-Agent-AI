@@ -4261,6 +4261,28 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 customer provider telemetry contains no private transcript excerpts",
     privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
     privateTraces.map(x=>({input:x.row.input_excerpt,output:x.row.output_excerpt})));
+  // Production currently uses active v2. Preserve its executor/settlement path;
+  // a customer conversation must not depend on the staged fallback being active.
+  terminal=false;
+  let activeExecutor=null;
+  const active=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
+    paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},
+    paige_chat_interactive_executor_v2:args=>{
+      let acquired=false;
+      if(args.p_operation==="acquire"&&activeExecutor===null&&!terminal){activeExecutor=intent;acquired=true;}
+      if(args.p_operation==="release"&&terminal)activeExecutor=null;
+      return {data:{latest:intent,executor:activeExecutor,acquired,terminal,stopped:false},error:null};
+    },
+    paige_chat_interactive_publication_context_v2:()=>({data:terminal&&activeExecutor===null,error:null}),
+  }});
+  assert("32 active v2 customer reaches the canonical provider and returns its answer",
+    active.status===200&&active.providerCalls.length===1&&active.responseText.includes("Scoped response."),
+    {status:active.status,providers:active.providerCalls.length,response:active.responseText.slice(-600),logs:active.logged.slice(-5)});
+  assert("32 active customer preserves canonical settlement and executor release",
+    terminal&&activeExecutor===null&&active.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
+  assert("32 active customer provider still excludes private owner context and owner tools",
+    !/OWNER_PRIVATE_SENTINEL|OWNER_MEMORY_SENTINEL|OWNER_KNOWLEDGE_SENTINEL|OWNER_BUSINESS_SENTINEL|FORGED_/.test(JSON.stringify(active.providerCalls))
+    &&active.providerCalls.every(x=>!x.tools?.length));
   for(const [label,extra] of [
     ["disabled",{client_portal_frame:{data:{...frame,config:{assistant:{enabled:false}}},error:null}}],
     ["revoked",{client_portal_frame:{data:null,error:null}}],

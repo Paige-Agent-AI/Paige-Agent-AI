@@ -161,7 +161,7 @@ export async function readPendingApprovalRecovery(input: {
       // Read the native CAS fields; an available card is not permission to run
       // against a different record revision. The writer still rechecks on claim.
       const action = String(command.action);
-      const record = action.startsWith("contact.") && action !== "contact.create" ? ["contacts", command.contact_id]
+      const record = action.startsWith("contact.") && action !== "contact.create" ? ["clients", command.contact_id]
         : action.startsWith("company.") && action !== "company.create" ? ["businesses", command.company_id]
         : action.startsWith("task.") && action !== "task.create" ? ["tasks", command.task_id] : null;
       if (record) {

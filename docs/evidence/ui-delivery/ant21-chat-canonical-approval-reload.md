@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: a reloaded canonical WAIT_APPROVAL can regain its exi
 FLOW_PROTOTYPE: PASS: incumbent real-component approval-recovery fixture extends the approved existing flow with deterministic available, unavailable and interrupted reload scenes; the October 16 bounded task authorization specifies the terminal/native guard and forbids execution on reload.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO customers can deliberately decide a still-valid proposal after reopening their own conversation.
 VISUAL_DIRECTION: PASS: incumbent PAIGE Chat hierarchy and native confirmation card; inline status uses established text tokens, with no new screen, style system or motion.
-AUTOMATED_EVIDENCE: PASS: 64 actual status-handler cases; 52 incumbent native publication-context SQL assertions; ten actual status-handler-to-native-SQL controls; actual CRM-door consumption/version-race controls; 72 tests in four component/hook/render suites. Proposal/domain SDK ports remain synthetic; this is not hosted schema/JWT proof.
+AUTOMATED_EVIDENCE: PASS: 67 actual status-handler cases; 52 incumbent native publication-context SQL assertions; ten actual status-handler-to-native-SQL controls; actual CRM-door consumption/version-race controls; original 72 component/hook/render controls retained. Proposal/domain SDK ports remain synthetic; this is not hosted schema/JWT proof.
 STATIC_EVIDENCE: PASS: scoped ESLint clean; Deno 2.9.6 checks the recovery helper without remote imports; whitespace clean. The original UI candidate's production build passed; the composed build and full Edge typechecking remain owed, with missing local remote-import cache preventing the latter.
 RENDERED_EVIDENCE: PASS: isolated Edge static captures of the real component with compiled CSS cover three reload states, 518px and 320px widths, light/dark themes; representative PNGs and twelve measurements are linked below. This is not the full authenticated SOLO shell.
 BEHAVIORAL_EVIDENCE: PASS: component tests drive checking, explicit approval, unavailable, expired, non-SOLO, late response, newer request and workspace change; status-handler ports record no business execution, admission, settlement or executor release. Local browser checks native keyboard order and clipping on serialized real-component output.
@@ -205,3 +205,41 @@ The unchanged extractor reports all 29 dispatch scalar differences against revie
 been renewed. The proposed full recovery-helper TypeScript AST digest is
 `95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c`.
 These are review inputs only, never evidence of production execution or automatic approval.
+
+## Canonical contact revision correction — 2026-10-16
+
+Review thread `PRRT_kwDOSAAXqM6tU617` identified that the recovery reader selected
+`public.contacts`, although canonical CRM contacts and their native version checks use
+`public.clients`. The previous SDK fixture invented the absent relation and concealed this
+functional refusal. With that relation explicitly rejected and the actual client-row shape
+supplied, the unchanged HTTP handler fails first for `contact-current`: expected available,
+received unavailable. Private evidence: `work/contact-recovery-schema-fix/failing-first.log`.
+
+The runtime correction changes only that relation to `clients`. Both existing record-revision
+observations retain their exact record and tenant predicates, six-digit timestamp comparison,
+contact-specific null-version refusal, native proposal checks and final publication-context
+boundary. No claim, approval, execution, membership, grant, migration or alternate store is added.
+This shared reader applies to eligible existing and future SOLO tenants without account selectors.
+
+The actual-handler campaign retains all original 64 variants in their original order and adds
+missing, foreign-tenant and unreadable canonical contacts, for 67 passing variants. It explicitly
+rejects queries to the nonexistent relation, checks both tenant/id-scoped client revision reads,
+and performs another reload after a previously recoverable contact changes; that reload returns
+no executable proposal. Existing microsecond/version, reference-resolution, expiry, consumption,
+membership, publication-race and unknown-outcome controls remain intact.
+
+Fresh verification passes all 67 handler variants, 52 actual native publication assertions and ten
+actual-handler-to-native-SQL controls, plus the existing CRM consumption/replay negatives. The
+owned disposable loopback server was stopped afterward. Logs:
+`work/contact-recovery-schema-fix/native-bridge-node-final.log` and `pg-node-stop.log` in that folder.
+The four UI/hook/render suites pass 73 cases with the concurrently owned renderer successor,
+including the original 72 controls; that renderer work is not part of this correction.
+Scoped ESLint, Node syntax, TypeScript parse, UTF-8 and whitespace checks pass. Deno is unavailable
+on this runner's PATH, so a fresh Deno check is **UNVERIFIED**. Interrupted sandbox runs and the
+first PowerShell server-launch pipe stall are retained as non-passing runner evidence.
+
+The expected protected-source hold is exactly the changed `interactive-approval.ts` ancestry
+fingerprint. Its proposed review-input AST digest is
+`4ab6bdbd41f2fc6b81e51ee1c286a859a8167db66f34ef66599c0dda55a9e03c`;
+no pin is renewed here. Independent Review, required exact-head CI, production deployment,
+ordinary authenticated contact-reload QA, Live and owner acceptance remain separate obligations.

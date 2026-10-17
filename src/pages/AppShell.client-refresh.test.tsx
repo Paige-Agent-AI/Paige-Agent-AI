@@ -8,12 +8,20 @@ const nextActorId = "e0913000-0000-0000-0000-000000000002";
 type TestSession = { user: { id: string; email: string } };
 let session: TestSession | null;
 let authListener: ((_event: string, next: TestSession | null) => void) | null;
+const authListeners = new Set<NonNullable<typeof authListener>>();
 const getSession = vi.fn(), unsubscribe = vi.fn(), invalidateQueries = vi.fn(), landing = vi.fn();
 const channel = vi.fn(() => { throw new Error("Customer shell must not receive raw CRM rows"); });
 const queryClient = { invalidateQueries };
 const preview = vi.hoisted(() => ({target:null as null | {contactId:string;targetUserId:string;targetName:string},isImpersonating:false}));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  auth: { getSession: () => getSession(), onAuthStateChange: (callback: typeof authListener) => { authListener = callback; return { data: { subscription: { unsubscribe } } }; } },
+  auth: { getSession: () => getSession(), onAuthStateChange: (callback: NonNullable<typeof authListener>) => {
+    // The real SDK supports independent Shell and customer-frame subscribers.
+    // Retain the Shell cleanup spy without replacing its listener with a child.
+    const shell = authListeners.size === 0;
+    authListeners.add(callback);
+    authListener = (event, next) => { for (const listener of [...authListeners]) listener(event, next); };
+    return { data: { subscription: { unsubscribe: () => { authListeners.delete(callback); if (shell) unsubscribe(); } } } };
+  } },
   channel,
 } }));
 vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => queryClient }));
@@ -51,6 +59,7 @@ async function mount(initialPath = "/app") {
   await flush();
 }
 beforeEach(() => {
+  authListeners.clear();
   preview.target=null;preview.isImpersonating=false;
   session = { user: { id: actorId, email: "client@example.test" } }; authListener = null; mounted = false;
   getSession.mockReset(); getSession.mockImplementation(async () => ({ data: { session }, error: null }));

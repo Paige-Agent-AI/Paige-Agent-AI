@@ -47,7 +47,7 @@ beforeEach(async () => {
 afterEach(() => { act(() => root.unmount()); qc.clear(); container.remove(); });
 describe("Customer assistant configuration through the real editor and config hook", () => {
   it("saves only changed fields and reloads the canonical returned configuration", async () => {
-    await change("Assistant name", "Client guide");
+    await change("Agent name", "Client guide");
     // Another legitimate writer disables the assistant while this draft remains open.
     db.config.assistant!.enabled = false;
     act(() => { qc.setQueryData(["portal-config", db.tenant], normalizePortalConfig(db.config)); });
@@ -58,7 +58,7 @@ describe("Customer assistant configuration through the real editor and config ho
     expect(container.querySelector('[role="switch"][id$="-enabled"]')?.getAttribute("aria-checked")).toBe("false");
     expect(save().disabled).toBe(true);
     await act(async () => { root.unmount(); root = createRoot(container); }); await render(); await flush();
-    expect(input("Assistant name").value).toBe("Client guide");
+    expect(input("Agent name").value).toBe("Client guide");
   });
   it("keeps a failed draft and retries the same canonical operation", async () => {
     await change("What it helps with", "Program milestones"); db.fail = true;
@@ -69,9 +69,9 @@ describe("Customer assistant configuration through the real editor and config ho
     expect(db.calls[0]).toEqual(db.calls[1]);
   });
   it("shows a newer canonical policy read rather than an older mutation response", async () => {
-    await change("Assistant name", "Updated guide"); db.disableAfterWrite = true;
+    await change("Agent name", "Updated guide"); db.disableAfterWrite = true;
     await act(async () => { save().click(); }); await flush();
-    expect(input("Assistant name").value).toBe("Updated guide");
+    expect(input("Agent name").value).toBe("Updated guide");
     expect(container.querySelector('[role="switch"][id$="-enabled"]')?.getAttribute("aria-checked")).toBe("false");
     expect(save().disabled).toBe(true);
   });
@@ -81,9 +81,9 @@ describe("Customer assistant configuration through the real editor and config ho
     expect(input("Tone").closest('fieldset[aria-label="Portal experience settings"]')?.hasAttribute("disabled")).toBe(true);
     db.tenant = "test-business-b"; db.config = { assistant: { display_name: "Business B guide", enabled: false } };
     await render(); await flush();
-    expect(input("Assistant name").value).toBe("Business B guide"); expect(input("Tone").value).toBe("");
+    expect(input("Agent name").value).toBe("Business B guide"); expect(input("Tone").value).toBe("");
     await act(async () => { db.pending = false; db.defer?.(); }); await flush();
-    expect(input("Assistant name").value).toBe("Business B guide");
+    expect(input("Agent name").value).toBe("Business B guide");
   });
   it("does not write assistant policy when only Welcome is edited", async () => {
     await change("Headline", "Welcome to your program"); await act(async () => { save().click(); }); await flush();
@@ -98,4 +98,8 @@ describe("Customer assistant policy normalization", () => {
     const a = normalizePortalConfig({ assistant: { enabled: false, display_name: "x".repeat(100), tone: "x".repeat(200), service_scope: "x".repeat(1800), human_handoff: "x".repeat(700) } }).assistant!;
     expect(a.enabled).toBe(false); expect([a.display_name?.length, a.tone?.length, a.service_scope?.length, a.human_handoff?.length]).toEqual([80, 180, 1600, 600]);
   });
+});
+
+describe("Customer agent identity read",()=>{
+ it.each([undefined,"PAIGE"," Paige "])("shows Cura for legacy name %s without saving",async name=>{await act(()=>root.unmount());qc.clear();root=createRoot(container);db.config={assistant:{display_name:name}};await render();await flush();expect(input("Agent name").value).toBe("Cura");expect(save().disabled).toBe(true);expect(db.calls).toEqual([]);await change("Headline","A welcome");await act(async()=>{save().click();});await flush();expect(db.calls[0].args._patch).toEqual({welcome:{headline:"A welcome"}});});
 });

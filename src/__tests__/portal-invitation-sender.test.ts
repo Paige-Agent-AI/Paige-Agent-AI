@@ -14,7 +14,7 @@ const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-80
 const recipient="client@tests.invalid";
 type Options={header?:boolean;authenticated?:boolean;authThrows?:boolean;authority?:"admin"|"agency"|"platform"|"none";
  token?:Record<string,unknown>;client?:Record<string,unknown>|null;emails?:unknown[];rpcError?:boolean;
- providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider";transportUnknown?:boolean;body?:Record<string,unknown>};
+ providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend"};
 async function drive(options:Options={}){
  let handler:(request:Request)=>Promise<Response>,brandRead=false;
  const calls:Array<{kind:string;name:string;args:unknown}>=[],sends:unknown[]=[],logs:unknown[]=[];
@@ -24,13 +24,22 @@ async function drive(options:Options={}){
   do_not_contact:false,linked_user_id:null,...options.client};
  const methods=(options.emails??[{kind:"email",is_primary:true,value:recipient}])
   .map(method=>method&&typeof method==="object"?{client_id:contact,tenant_id:tenant,...method}:method);
- function makeClient(_url:string,key:string){
+ function makeClient(_url:string,key:string,configuration?:{global?:{headers?:{Authorization?:string}}}){
   const kind=key.includes("service")?"service":"jwt";
+  const actualCaller=configuration?.global?.headers?.Authorization==="Bearer synthetic-local-only";
   return {auth:{getUser:async()=>{if(options.authThrows)throw Error("synthetic Auth transport unavailable");
-    return {data:{user:options.authenticated===false?null:{id:brandRead&&options.lateChange==="actor"?contact:actor}},
-    error:options.authenticated===false?{message:"not authenticated"}:null};}},
+    return {data:{user:options.authenticated===false||!actualCaller?null:{id:brandRead&&options.lateChange==="actor"?contact:actor}},
+    error:options.authenticated===false||!actualCaller?{message:"not authenticated"}:null};}},
+   functions:{invoke:async(name:string,input:{headers?:{Authorization?:string};body:unknown})=>{
+    if(name!=="send-portal-invite")throw Error("Unexpected function invocation");
+    calls.push({kind,name,args:input.headers});
+    const result=await handler(new Request("https://invitation.tests.invalid",{method:"POST",headers:{
+     Authorization:input.headers?.Authorization??"Bearer synthetic-service-key","Content-Type":"application/json"},body:JSON.stringify(input.body)}));
+    return {data:await result.json(),error:result.ok?null:{message:"sender refused"}};
+   }},
    rpc:async(name:string,args:unknown)=>{
     calls.push({kind,name,args});
+    if(name==="create_solo_team_invite"||name==="resend_solo_team_invite")return {data:{id:invitation,token:"synthetic-invite-token",email:recipient,tenant_id:tenant,expires_at:token.expires_at},error:null};
     if(name==="resolve_tenant_brand"){brandRead=true;return {data:[{tenant_name:"Test business",primary_color:"#150C31",logo_url:null}],error:null};}
     if(name==="tenant_sender_identity")return {data:{from_address:"business@tests.invalid",from_name:"Test business"},error:null};
     if(name==="comms_provider_execution_allowed")return {data:options.providerAllowed!==false&&!(brandRead&&options.lateChange==="provider"),error:null};
@@ -61,9 +70,19 @@ async function drive(options:Options={}){
    sends.push(JSON.parse(request.body));if(options.transportUnknown)throw Error("synthetic lost acknowledgement");
    return new Response(JSON.stringify({id:"synthetic-provider-message"}),{status:200,headers:{"Content-Type":"application/json"}});
   },{error:()=>{}});
- const response=await handler!(new Request("https://invitation.tests.invalid",{method:"POST",
+ let entry=handler!;
+ if(options.teamAction){
+  const teamSource=readFileSync("supabase/functions/solo-team-invitations/index.ts","utf8");
+  if((teamSource.match(/^import .*;\r?$/gm)??[]).length!==1)throw Error("Review the changed team module boundary");
+  const teamJavascript=ts.transpileModule(teamSource.replace(/^import .*;\r?\n/gm,""),{
+   compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+  new Function("createClient","Deno","console",teamJavascript)(makeClient,
+   {env:{get:(key:string)=>env[key]??""},serve:(value:typeof entry)=>{entry=value;}},{error:()=>{}});
+ }
+ const response=await entry(new Request("https://invitation.tests.invalid",{method:"POST",
   headers:{...(options.header===false?{}:{Authorization:"Bearer synthetic-local-only"}),"Content-Type":"application/json"},
-  body:JSON.stringify({token:"synthetic-invite-token",email:recipient,...options.body})}));
+  body:JSON.stringify(options.teamAction?{action:options.teamAction,expectedTenantId:tenant,email:recipient,inviteId:invitation,permission:"member"}
+   :{token:"synthetic-invite-token",email:recipient,...options.body})}));
  return {status:response.status,body:await response.json(),calls,sends,logs};
 }
 
@@ -101,6 +120,16 @@ describe("canonical portal invitation sender authority",()=>{
  });
  it("preserves legitimate existing team invitation delivery",async()=>{
   const r=await drive({token:{kind:"team",contact_id:null}});expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);
+ });
+ for(const teamAction of ["create","resend"] as const)it("preserves the real team "+teamAction+" caller through the shared sender",async()=>{
+  const r=await drive({teamAction,token:{kind:"team",contact_id:null}});
+  expect(r.status).toBe(200);expect(r.body).toMatchObject({emailed:true,invitationId:invitation,tenantId:tenant});expect(r.sends).toHaveLength(1);
+  expect(r.calls).toContainEqual({kind:"service",name:"send-portal-invite",args:{Authorization:"Bearer synthetic-local-only"}});
+  expect(r.logs[0]).toMatchObject({metadata:{actor_user_id:actor,invite_id:invitation}});
+ });
+ it("refuses an unauthenticated caller at the real team entry before native preparation or delivery",async()=>{
+  const r=await drive({teamAction:"create",authenticated:false,token:{kind:"team",contact_id:null}});
+  expect(r.status).toBe(401);expect(r.calls).toHaveLength(0);expect(r.sends).toHaveLength(0);expect(r.logs).toHaveLength(0);
  });
  it("does not retry a provider transport outcome that is unknown",async()=>{
   const r=await drive({transportUnknown:true});expect(r.body.emailed).toBe(false);expect(r.body.reason).toBe("transport");expect(r.sends).toHaveLength(1);

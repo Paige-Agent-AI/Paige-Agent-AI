@@ -91,3 +91,34 @@ refactor beat (byte-comparable projection for identical inputs).
 - #93/#117 (memory/compaction): the transcript source defers to that workstream's design;
   this contract only types the seam.
 - #754 (Brain wiring): Brain/Mind/Memory eligibility contracts are linked, not redefined.
+
+## 5. Customer frame read primitive — implementation candidate
+
+The existing customer self-profile, public brand and portal configuration can be
+composed through `public.client_portal_frame()` in one STABLE database snapshot.
+Its caller JWT supplies the subject; there are no actor, client or tenant arguments.
+The unchanged native relationship reader excludes inactive/merged/unlinked or
+ambiguous relationships. Brand and profile must name the same business. The closed
+result is `{actor_id,profile,brand,config}`; it creates no identity, staff membership,
+program, Knowledge store, action or receipt. Only authenticated execution is granted;
+PUBLIC, anon and service_role execution is revoked. Canonical records remain the
+existing clients, tenant brand cascade and tenants.features.portal_config.
+
+The primitive is preparation for the existing customer frame and a typed customer
+ContextSource adapter; it does not wire either consumer or add a Spine/model tool.
+The customer assistant represents the business to its customer. Its future adapter
+must include only customer-public presentation and authorized customer/program
+records, report unavailable/degraded input honestly, revalidate the actor/client/
+business and policy/publication versions at protected boundaries, and preserve
+internal owner/operator context separately. Presentation settings do not grant
+record, Knowledge, tool, approval or provider authority. Private customer AI history
+and deliberately business-shared Conversations retain separate native audiences.
+
+Source: migration `20271108190000_e09_customer_frame_projection.sql`. Proof extends
+the incumbent `scripts/proof/e09-client-self-projection.mjs --frame` and the existing
+fully replayed `supabase/tests/client_portal_self_projection.sql`; no new QA or CI
+engine. Local synthetic native PostgreSQL cases are not authenticated Supabase or
+customer acceptance. Exact-head review/CI, migration/source readback and consumer
+acceptance remain separately required. Overall clients.portal remains PARTIAL;
+multi-business selection, customer Knowledge publication, private durable history,
+Chat/Live applicability and the complete seven-pillar experience remain proof owed.

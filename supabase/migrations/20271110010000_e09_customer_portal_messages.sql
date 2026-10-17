@@ -11,10 +11,12 @@ ALTER TABLE public.messages DROP CONSTRAINT messages_channel_type_check;
 ALTER TABLE public.messages ADD CONSTRAINT messages_channel_type_check
   CHECK (channel_type = ANY (ARRAY['email','sms','whatsapp','instagram','facebook','voice','portal']));
 
--- Structural shape of a portal row, whatever writes it (including service role).
+-- Structural shape of a portal row, whatever writes it (including service role). contact_id is
+-- set by both writers but is not required here: messages.contact_id is ON DELETE SET NULL, and a
+-- deleted customer's retained portal history must not block that delete.
 ALTER TABLE public.messages ADD CONSTRAINT messages_portal_shape CHECK (
   channel_type <> 'portal' OR (
-    contact_id IS NOT NULL AND connector_id IS NULL AND provider_message_id IS NULL
+    connector_id IS NULL AND provider_message_id IS NULL
     AND jsonb_typeof(meta->'portal') = 'object'
     AND (meta #>> '{portal,request_id}') IS NOT NULL
     AND ((direction = 'inbound' AND status = 'received' AND meta #>> '{portal,author_role}' = 'customer')
@@ -28,7 +30,8 @@ CREATE UNIQUE INDEX messages_portal_request
 
 CREATE OR REPLACE FUNCTION public._portal_message_body(p_body text)
 RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
-AS $$ SELECT CASE WHEN length(btrim(coalesce(p_body,''))) BETWEEN 1 AND 4000 THEN btrim(p_body) END $$;
+AS $$ SELECT CASE WHEN length(btrim(coalesce(p_body,''), E' \t\r\n')) BETWEEN 1 AND 4000
+  THEN btrim(p_body, E' \t\r\n') END $$;
 REVOKE ALL ON FUNCTION public._portal_message_body(text) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.client_portal_send_message(
@@ -67,6 +70,12 @@ BEGIN
       RETURN jsonb_build_object('ok', true, 'replayed', true, 'message_id', _existing.id, 'created_at', _existing.created_at);
     END IF;
     RETURN jsonb_build_object('ok', false, 'error', 'REQUEST_ID_CONFLICT');
+  END IF;
+  -- A customer cannot flood the business inbox: 20 new messages per relationship per minute.
+  IF (SELECT count(*) FROM public.messages m
+      WHERE m.channel_type = 'portal' AND m.tenant_id = _client.tenant_id AND m.contact_id = _client.id
+        AND m.direction = 'inbound' AND m.created_at > now() - interval '1 minute') >= 20 THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'RATE_LIMITED');
   END IF;
 
   BEGIN
@@ -157,10 +166,13 @@ BEGIN
   END IF;
   IF p_request_id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'REQUEST_ID_REQUIRED'); END IF;
   IF _body IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'INVALID_BODY'); END IF;
-  SELECT c.* INTO _client FROM public.clients c JOIN public.tenants t ON t.id = c.tenant_id
+  -- The customer side only works for an active business, so a reply to an inactive one would be unseen.
+  PERFORM 1 FROM public.tenants t WHERE t.id = p_tenant_id AND t.status = 'active' FOR SHARE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'WORKSPACE_INACTIVE'); END IF;
+  SELECT c.* INTO _client FROM public.clients c
   WHERE c.id = p_contact_id AND c.tenant_id = p_tenant_id AND c.status = 'active'
-    AND c.merged_into_contact_id IS NULL AND t.status = 'active'
-  FOR SHARE OF c, t;
+    AND c.merged_into_contact_id IS NULL
+  FOR SHARE OF c;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND'); END IF;
   IF _client.linked_user_id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'PORTAL_NOT_CONNECTED'); END IF;
 

@@ -117,6 +117,29 @@ SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_conversation()$q$,
 SELECT throws_ok($q$INSERT INTO public.messages(tenant_id,thread_key,contact_id,channel_type,direction,status,meta)
  VALUES('e0924100-0000-4000-8000-000000000001','x','e0934100-0000-4000-8000-000000000001','portal','outbound','queued','{"portal":{"request_id":"z","author_role":"business"}}')$q$,
  '23514',NULL,'a portal row can never be queued for a provider');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_send_message(E'\n\t \r\n','e0954100-0000-4000-8000-000000000020')$q$)->>'error','INVALID_BODY','whitespace-only body (newlines/tabs) refused');
+
+-- Rate limit: 20 new customer messages per relationship per minute.
+DO $$BEGIN FOR i IN 1..18 LOOP
+ PERFORM pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+  format($q$SELECT public.client_portal_send_message('burst %s',%L)$q$, i, ('e0954100-0000-4000-8000-0000000001'||lpad(i::text,2,'0'))::uuid));
+END LOOP;END$$;
+SELECT is((SELECT count(*) FROM public.messages WHERE channel_type='portal' AND direction='inbound' AND contact_id='e0934100-0000-4000-8000-000000000001'),20::bigint,'twenty customer messages accepted');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_send_message('one too many','e0954100-0000-4000-8000-000000000200')$q$)->>'error','RATE_LIMITED','the twenty-first within a minute is refused');
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_send_message('Hello team','e0954100-0000-4000-8000-000000000001')$q$)->>'replayed','true','a retry of an earlier request still replays under the limit');
+
+-- Inactive business: the reply is refused with an honest reason.
+UPDATE public.tenants SET status='suspended' WHERE id='e0924100-0000-4000-8000-000000000002';
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000002',
+ $q$SELECT public.comms_portal_reply('e0924100-0000-4000-8000-000000000002','e0934100-0000-4000-8000-000000000002','hi','e0954100-0000-4000-8000-000000000201')$q$)->>'error','WORKSPACE_INACTIVE','inactive business cannot post portal replies');
+
+-- Deleting a customer keeps retained portal history (contact_id SET NULL) and does not fail.
+SELECT lives_ok($q$DELETE FROM public.clients WHERE id='e0934100-0000-4000-8000-000000000001'$q$,'a customer with portal messages can still be deleted');
+SELECT is((SELECT count(*) FROM public.messages WHERE channel_type='portal' AND contact_id IS NULL AND tenant_id='e0924100-0000-4000-8000-000000000001'),21::bigint,'their portal rows are orphaned, not lost');
+
 SELECT ok(NOT has_function_privilege('anon','public.client_portal_send_message(text,uuid,text,uuid)','EXECUTE'),'anon cannot execute customer send');
 SELECT ok(NOT has_function_privilege('anon','public.comms_portal_reply(uuid,uuid,text,uuid)','EXECUTE'),'anon cannot execute business reply');
 SELECT * FROM finish();

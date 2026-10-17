@@ -8257,7 +8257,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "automation_draft",
-              description: "Set up a repeatable process for this workspace: something that starts, and an ordered list of what you do when it does. Use this when the operator describes work they want handled the same way every time ('when a lead fills in my form, add them and send the welcome note'). It is always created switched OFF and asking-first — you never grant yourself autonomy. Tell them what you built and what it would do, then offer to turn it on.",
+              description: "Save an exact repeatable process as a draft, switched off and asking first. For a task prepared when a new contact is added, use trigger_key contact.created and one action_kind owner.task step with a literal title and optional description. The owner reviews supported internal task drafts in Settings > Integrations > Automations and enables future contacts there; never offer to activate a process from Chat or claim saving started execution. Other saved configurations require their own verified execution and human activation path.",
               parameters: {
                 type: "object",
                 properties: {
@@ -8270,9 +8270,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     items: {
                       type: "object",
                       properties: {
-                        tool_key: { type: "string", description: "The action to take, named as one of your own tools, e.g. 'crm_create_task'." },
-                        action_kind: { type: "string", description: "Or an activity kind from the action bus, e.g. 'client.followup'. Give exactly ONE of tool_key or action_kind." },
-                        config: { type: "object", description: "Optional settings for this step." }
+                        tool_key: { type: "string", description: "Use a registered tool key only when its native execution path is verified. For a new-contact task, omit this and use action_kind owner.task." },
+                        action_kind: { type: "string", description: "A registered native activity kind. Use owner.task for an internal task prepared from contact.created. Give exactly ONE of tool_key or action_kind." },
+                        config: { type: "object", description: "For owner.task, exactly a nonempty literal title (at most 500 characters) and optional literal description (at most 10000 characters). No templates, assignee, recipient or extra settings." }
                       }
                     }
                   },
@@ -12628,7 +12628,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 verified_readback: true, execution_started: false, readiness: readinessVerified ? "resolved" : "unverified",
                 what_it_would_do: readinessVerified ? posture?.effective : null,
                 cannot_fire_because: readinessVerified ? posture?.dark : null,
-                note: "The exact process and its steps were saved as a draft, switched off and asking first. No execution was started. Autonomy and activation remain separate human decisions." };
+                note: "The exact process and its steps were saved as a draft, switched off and asking first. No execution was started. Supported new-contact internal task drafts can be reviewed in Settings > Integrations > Automations for deliberate future-contact activation. Other configurations require a compatible execution and human activation path; saving them does not enable them." };
             } catch (_e) {
               return draftWriteAttempted ? draftUnknown() : { success: false, not_applied: true,
                 execution_started: false, error: "The process was not saved. Check the requested configuration." };

@@ -77,6 +77,30 @@ async function drive(fault = '', args: object = input) {
   return { state, result: JSON.parse(outputs[0].content), recovery };
 }
 describe('automation draft exact configuration and recovery', () => {
+  it('offers the native task action and human review path instead of a bare task tool or model activation', () => {
+    let declaration: ts.ObjectLiteralExpression | undefined;
+    const find = (node: ts.Node) => {
+      if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) &&
+          p.name.getText(ast) === 'name' && ts.isStringLiteral(p.initializer) && p.initializer.text === 'automation_draft')) declaration = node;
+      ts.forEachChild(node, find);
+    };
+    find(ast); expect(declaration).toBeDefined();
+    const definition = new Function(`return (${declaration!.getText(ast)});`)();
+    expect(definition.description).toContain('action_kind owner.task');
+    expect(definition.description).toContain('Settings > Integrations > Automations');
+    expect(definition.description).not.toMatch(/then offer to turn it on|add them and send/i);
+    expect(definition.parameters.properties.steps.items.properties.tool_key.description).not.toContain("e.g. 'crm_create_task'");
+  });
+
+  it('returns the human review handoff without enabling a saved native task draft', async () => {
+    const { state, result } = await drive('', { name: 'Review new contacts', trigger_key: 'contact.created',
+      steps: [{ action_kind: 'owner.task', config: { title: 'Review the new contact' } }] });
+    expect(result).toMatchObject({ success: true, state: 'draft', granted: 'confirm', execution_started: false });
+    expect(result.note).toContain('Settings > Integrations > Automations');
+    expect(state.processes[0].state).toBe('draft');
+    expect(state.acts[0]).toMatchObject({ action_kind: 'owner.task', tool_key: null, config: { title: 'Review the new contact' } });
+  });
+
   it('verifies the native process and ordered acts before claiming it was built', async () => {
     const { state, result } = await drive();
     expect(result).toMatchObject({ success: true, automation_id: process, state: 'draft', granted: 'confirm', verified_readback: true, execution_started: false });

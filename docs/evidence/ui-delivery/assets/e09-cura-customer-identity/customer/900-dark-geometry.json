@@ -1,0 +1,213 @@
+{
+  "width": 900,
+  "height": 1000,
+  "input": {
+    "top": 945.5,
+    "bottom": 989.5,
+    "width": 257.09375,
+    "height": 44,
+    "font": "12.25px"
+  },
+  "buttons": [
+    {
+      "name": "Start voice typing",
+      "height": 31.5,
+      "width": 31.5,
+      "bottom": 983.25
+    },
+    {
+      "name": "Send message",
+      "height": 35,
+      "width": 35,
+      "bottom": 985
+    }
+  ],
+  "documentHeight": 1000,
+  "documentWidth": 900,
+  "transcript": 701.859375,
+  "customerAgent": "Cura",
+  "layout": [
+    {
+      "tag": "TEXTAREA",
+      "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+      "top": 945.5,
+      "bottom": 989.5,
+      "height": 44,
+      "cssHeight": "44px",
+      "minHeight": "44px",
+      "flex": "1 1 0%",
+      "padding": "7px 10.5px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex gap-1.5 sm:gap-2 items-center",
+      "top": 945.5,
+      "bottom": 989.5,
+      "height": 44,
+      "cssHeight": "44px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+      "top": 934,
+      "bottom": 1000,
+      "height": 66,
+      "cssHeight": "66px",
+      "minHeight": "auto",
+      "flex": "0 0 auto",
+      "padding": "10.5px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+      "top": 85,
+      "bottom": 1000,
+      "height": 915,
+      "cssHeight": "915px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "h-full",
+      "top": 85,
+      "bottom": 1000,
+      "height": 915,
+      "cssHeight": "915px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "relative h-full min-h-0 min-w-0",
+      "top": 85,
+      "bottom": 1000,
+      "height": 915,
+      "cssHeight": "915px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "min-h-0 max-md:!flex-[1_1_100%]",
+      "top": 85,
+      "bottom": 1000,
+      "height": 915,
+      "cssHeight": "915px",
+      "minHeight": "0px",
+      "flex": "40 1 0px",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+      "top": 85,
+      "bottom": 1000,
+      "height": 915,
+      "cssHeight": "915px",
+      "minHeight": "0px",
+      "flex": "1 1 0%",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+      "top": 0,
+      "bottom": 1000,
+      "height": 1000,
+      "cssHeight": "1000px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "top": 0,
+      "bottom": 1000,
+      "height": 1000,
+      "cssHeight": "1000px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "BODY",
+      "class": "",
+      "top": 0,
+      "bottom": 1000,
+      "height": 1000,
+      "cssHeight": "1000px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "HTML",
+      "class": "dark",
+      "top": 0,
+      "bottom": 1000,
+      "height": 1000,
+      "cssHeight": "1000px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    }
+  ],
+  "headerControls": [
+    {
+      "name": "TTest Service Studio",
+      "left": 21,
+      "right": 175.859375,
+      "width": 154.859375
+    },
+    {
+      "name": "Home",
+      "left": 189.859375,
+      "right": 265.4375,
+      "width": 75.578125
+    },
+    {
+      "name": "Action items",
+      "left": 268.9375,
+      "right": 378.03125,
+      "width": 109.09375
+    },
+    {
+      "name": "Documents",
+      "left": 381.53125,
+      "right": 484.890625,
+      "width": 103.359375
+    },
+    {
+      "name": "Resources",
+      "left": 488.390625,
+      "right": 584.34375,
+      "width": 95.953125
+    },
+    {
+      "name": "Contact Advisor",
+      "left": 566.703125,
+      "right": 682.484375,
+      "width": 115.78125
+    },
+    {
+      "name": "",
+      "left": 692.984375,
+      "right": 727.984375,
+      "width": 35
+    },
+    {
+      "name": "signin@example.test",
+      "left": 738.484375,
+      "right": 879,
+      "width": 140.515625
+    }
+  ]
+}

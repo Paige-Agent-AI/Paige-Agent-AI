@@ -32,7 +32,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
     WHEN (p_row).metadata->>'outcome' IN ('failed','refused') THEN (p_row).metadata->>'outcome'
     WHEN (p_row).metadata->>'outcome'='outcome_unknown' THEN 'outcome_unknown' ELSE 'pending' END,
   'provider_message_id',CASE WHEN (p_row).message_id ~ '^[A-Za-z0-9_-]{1,200}$' AND (p_row).status='sent' THEN (p_row).message_id ELSE NULL END,
-  'observed_at',(p_row).created_at)
+  'observed_at',COALESCE(((p_row).metadata->>'recorded_at')::timestamptz,(p_row).created_at))
 $$;
 
 CREATE FUNCTION public.read_client_portal_invitation_delivery(p_tenant_id uuid,p_operation_id uuid) RETURNS jsonb
@@ -130,7 +130,7 @@ BEGIN
  IF outcome='provider_accepted' AND (p_message_id ~ '^[A-Za-z0-9_-]{1,200}$') IS DISTINCT FROM true THEN outcome:='outcome_unknown';END IF;
  send_status:=CASE WHEN outcome='provider_accepted' THEN 'sent' ELSE 'failed' END;
  UPDATE public.email_send_log SET status=send_status,
-  message_id=CASE WHEN outcome='provider_accepted' THEN p_message_id ELSE NULL END,created_at=clock_timestamp(),
+  message_id=CASE WHEN outcome='provider_accepted' THEN p_message_id ELSE NULL END,
   metadata=metadata||jsonb_build_object('outcome',outcome,'reason',CASE WHEN outcome='outcome_unknown' THEN 'transport' WHEN outcome='refused' THEN 'not_dispatched' ELSE 'provider_response' END,
     'claim_expires_at',statement_timestamp(),'recorded_at',clock_timestamp()) WHERE id=source.id RETURNING * INTO source;
  RETURN public._client_portal_invitation_delivery_result(source,(source.metadata->>'reconciler_user_id')::uuid);

@@ -13,7 +13,7 @@
   },
   "deliveryProof": {
     "migration": "supabase/migrations/20271108234000_e09_customer_invitation_delivery.sql",
-    "migrationSHA256": "6c19e5e0d7b39401501f083eced2df533e31739629c634d35f726f0c8d74a7bd",
+    "migrationSHA256": "2a0a538f894076edffda833f7096f18c856ac9c99769d50dd6e461959ab0c478",
     "provider": "NOT_CALLED",
     "hostedQA": "UNVERIFIED"
   },
@@ -474,6 +474,10 @@
       "result": "PASS"
     },
     {
+      "name": "Finalization retains the original attempt timestamp and records its observation separately",
+      "result": "PASS"
+    },
+    {
       "name": "Recovery reuses the exact provider key and original record after the claim expires",
       "result": "PASS"
     },
@@ -491,6 +495,10 @@
     },
     {
       "name": "A rejected recovery response also preserves uncertainty",
+      "result": "PASS"
+    },
+    {
+      "name": "Repeated reconciliation preserves the original attempt time and webhook ordering",
       "result": "PASS"
     },
     {

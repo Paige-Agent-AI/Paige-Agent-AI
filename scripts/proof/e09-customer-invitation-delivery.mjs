@@ -24,11 +24,16 @@ export async function invitationDeliveryProof({sql,check,assert,fs,path,root,ids
  const read=(op=operation,actor=ids.a,tenant=ids.ta,role='authenticated')=>api('read_client_portal_invitation_delivery',`'${tenant}','${op}'`,actor,role);
  const finish=(ticket,outcome='provider_accepted',message=randomUUID(),role='service_role',hash=digest,op=operation)=>api('finalize_client_portal_invitation_delivery',`'${ids.ta}','${op}','${ticket}','${hash}','${outcome}',${lit(message)}`,null,role);
  const snapshot=()=>sql('SELECT coalesce(jsonb_agg(to_jsonb(l)ORDER BY id),\'[]\'::jsonb)FROM email_send_log l');
- let first;
+ let first,originalAttemptAt;
  check('Native delivery claims one canonical pending log row, not a provider acceptance',()=>{
   first=claim();assert.equal(first.disposition,'dispatch');assert.equal(first.outcome,'pending');assert.equal(first.provider_message_id,null);
   assert.equal(first.requested_by,ids.a);assert.match(first.claim_id,/^[0-9a-f-]{36}$/);assert(first.provider_key.length<256);
   assert.equal(sql(`SELECT count(*)FROM email_send_log WHERE metadata->>'operation_id'='${operation}'`),'1');
+  sql(`UPDATE email_send_log SET created_at=now()-interval '1 hour' WHERE id='${first.receipt_id}';
+   INSERT INTO email_send_log(tenant_id,template_name,recipient_email,status,message_id,metadata,created_at)
+    SELECT tenant_id,template_name,recipient_email,'delivered','early-provider-observation',metadata-'claim_id'-'claim_expires_at',created_at+interval '1 second'
+    FROM email_send_log WHERE id='${first.receipt_id}';`);
+  originalAttemptAt=sql(`SELECT created_at::text FROM email_send_log WHERE id='${first.receipt_id}'`);
  });
  check('Current delivery readback has no raw token, payload, key or claim authority',()=>{
   const result=read();assert.equal(result.outcome,'pending');for(const key of ['claim_id','provider_key','payload_digest','token','join_url'])assert(!(key in result));
@@ -56,6 +61,11 @@ export async function invitationDeliveryProof({sql,check,assert,fs,path,root,ids
   const result=finish(first.claim_id,'outcome_unknown',null);assert.equal(result.outcome,'outcome_unknown');assert.equal(read().outcome,'outcome_unknown');
   assert.equal(sql(`SELECT status||':'||(metadata->>'reason')FROM email_send_log WHERE id='${first.receipt_id}'`),'failed:transport');
  });
+ check('Finalization retains the original attempt timestamp and records its observation separately',()=>{
+  assert(originalAttemptAt);assert.equal(sql(`SELECT metadata ? 'recorded_at' FROM email_send_log WHERE id='${first.receipt_id}'`),'t');
+  assert.equal(sql(`SELECT created_at::text FROM email_send_log WHERE id='${first.receipt_id}'`),originalAttemptAt);
+  assert.equal(sql(`SELECT (_client_portal_invitation_delivery_result(l,'${ids.a}')->>'observed_at')::timestamptz=(metadata->>'recorded_at')::timestamptz FROM email_send_log l WHERE id='${first.receipt_id}'`),'t');
+ });
  let recovery;
  check('Recovery reuses the exact provider key and original record after the claim expires',()=>{
   recovery=claim();assert.equal(recovery.disposition,'reconcile');assert.equal(recovery.provider_key,first.provider_key);
@@ -79,6 +89,11 @@ export async function invitationDeliveryProof({sql,check,assert,fs,path,root,ids
   recovery=claim(operation,digest,ids.delegate);
  });
  let message;
+ check('Repeated reconciliation preserves the original attempt time and webhook ordering',()=>{
+  assert.equal(sql(`SELECT created_at::text FROM email_send_log WHERE id='${first.receipt_id}'`),originalAttemptAt);
+  assert.equal(sql(`SELECT (metadata->>'recorded_at')::timestamptz >= created_at FROM email_send_log WHERE id='${first.receipt_id}'`),'t');
+  assert.equal(sql(`SELECT created_at < (SELECT created_at FROM email_send_log WHERE status='delivered' AND message_id='early-provider-observation') FROM email_send_log WHERE id='${first.receipt_id}'`),'t');
+ });
  check('Verified provider acceptance settles the original row and survives reload without another dispatch',()=>{
   message=randomUUID();const accepted=finish(recovery.claim_id,'provider_accepted',message);assert.equal(accepted.outcome,'provider_accepted');
   const before=snapshot(),recorded=claim();assert.equal(recorded.disposition,'recorded');assert.equal(recorded.provider_message_id,message);assert(!('provider_key'in recorded));

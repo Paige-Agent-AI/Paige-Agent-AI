@@ -29,18 +29,19 @@ export function getActivePlaybook(): Playbook {
  * default and updates once the tenant's authored config resolves, so call
  * sites can treat the return as a ready Playbook without a loading branch.
  */
-export function usePlaybook(): Playbook {
+export function usePlaybook(enabled = true): Playbook {
   const [playbook, setPlaybook] = useState<Playbook>(generalDefault);
 
   useEffect(() => {
     let cancelled = false;
+    if (!enabled) return;
     resolveActivePlaybook().then((pb) => {
       if (!cancelled) setPlaybook(pb);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return playbook;
 }

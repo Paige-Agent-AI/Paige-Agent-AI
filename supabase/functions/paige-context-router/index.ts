@@ -92,6 +92,17 @@ Deno.serve(async (req) => {
 
   const scopesUsed = body.scopes && body.scopes.length ? body.scopes : ["contact"];
 
+  // This legacy workspace persona must never consume the private customer
+  // audience, even when the same person also has a legitimate staff role.
+  // Caller-JWT RLS remains controlling; an unknown read cannot grant a fallback.
+  if (body.thread_id) {
+    const { data: thread, error } = await client.from("paige_chat_threads")
+      .select("audience").eq("id", body.thread_id).maybeSingle();
+    if (error || !thread || thread.audience !== "workspace") {
+      return json({ ok: false, error: "CHAT_AUDIENCE_UNAVAILABLE" }, 403);
+    }
+  }
+
   // Load context (RLS applies)
   const rpc = body.self
     ? await client.rpc("load_self_context")

@@ -28,13 +28,16 @@ import {
 } from "@/lib/brand/resolveBrand";
 import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 import { cn } from "@/lib/utils";
+import { CustomerAssistantSettings } from "@/components/tenant-relationships/CustomerAssistantSettings";
+import { assistantFields, assistantPatch } from "@/lib/portal/assistantSettings";
+import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 
 /**
  * Client Portal (§9/§10/§11) — the ONE tenant-facing surface where a tenant skins
  * the client-facing portal (/app): brand (logo, colors, type), which tabs a client
  * sees + their order, the welcome greeting, and a live "View as Client" preview.
  *
- * Two data seams, both Paige-callable:
+ * Two existing native data seams (governed Chat/Live configuration is not registered yet):
  *   - Brand  → set_tenant_brand (via useBrandKit).
  *   - Portal → set_tenant_portal_config (via usePortalConfig): a PRESENTATION
  *     OVERLAY over the Playbook module CATALOG — subtractive/reordering only,
@@ -77,8 +80,14 @@ function seedRows(catalog: PortalCatalogItem[], overlay: PortalModuleOverlay[] |
     }));
 }
 
-export default function PortalStudio({ embedded = false, onDirtyChange }: { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void } = {}) {
-  const { activeTenantId } = useTenantContext();
+type PortalStudioProps = { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void; assistantFocusRequest?: number };
+export default function PortalStudio(props: PortalStudioProps = {}) {
+  const { activeTenantId, activeUserId } = useTenantContext();
+  return <PortalStudioEditor key={`${activeUserId ?? ""}:${activeTenantId ?? ""}`} {...props} activeTenantId={activeTenantId} />;
+}
+function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusRequest = 0, activeTenantId }: PortalStudioProps & { activeTenantId: string | null }) {
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const { toast } = useToast();
   const bk = useBrandKit(activeTenantId);
   const pc = usePortalConfig(activeTenantId);
@@ -117,34 +126,34 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
   // ── Portal overlay editor (tabs + welcome) ──
   const [rows, setRows] = useState<TabRow[]>([]);
   const [welcome, setWelcome] = useState({ headline: "", subhead: "" });
+  const [assistant, setAssistant] = useState(() => assistantFields());
+  const [portalBaseline, setPortalBaseline] = useState<{ rows: TabRow[]; welcome: typeof welcome; assistant: typeof assistant } | null>(null);
 
   const initialRows = useMemo(() => seedRows(catalog, pc.config.modules), [catalog, pc.config]);
   const initialWelcome = useMemo(
     () => ({ headline: pc.config.welcome?.headline ?? "", subhead: pc.config.welcome?.subhead ?? "" }),
     [pc.config],
   );
-  const baselineKey = useMemo(
-    () => JSON.stringify({
-      r: initialRows.map((r) => ({ k: r.key, v: r.visible })),
-      w: initialWelcome,
-    }),
-    [initialRows, initialWelcome],
-  );
-  const currentKey = JSON.stringify({
-    r: rows.map((r) => ({ k: r.key, v: r.visible })),
-    w: welcome,
-  });
-  const portalSeeded = useRef(false);
-  const portalDirty = portalSeeded.current && currentKey !== baselineKey;
+  const rowsKey = (value: TabRow[]) => JSON.stringify(value.map(r => ({ k: r.key, v: r.visible })));
+  const modulesDirty = !!portalBaseline && rowsKey(rows) !== rowsKey(portalBaseline.rows);
+  const welcomeDirty = !!portalBaseline && JSON.stringify(welcome) !== JSON.stringify(portalBaseline.welcome);
+  const changedAssistant = portalBaseline ? assistantPatch(portalBaseline.assistant, assistant) : undefined;
+  const portalDirty = modulesDirty || welcomeDirty || !!changedAssistant;
+  const savedPortalKey = JSON.stringify({ rows: initialRows.map(r => ({ key: r.key, visible: r.visible })), welcome: initialWelcome, assistant: assistantFields(pc.config.assistant) });
+  const seedPortal = (config: ClientPortalConfig) => {
+    const next = {
+      rows: seedRows(catalog, config.modules),
+      welcome: { headline: config.welcome?.headline ?? "", subhead: config.welcome?.subhead ?? "" },
+      assistant: assistantFields(config.assistant),
+    };
+    setRows(next.rows); setWelcome(next.welcome); setAssistant(next.assistant); setPortalBaseline(next);
+  };
 
   useEffect(() => {
-    if (pc.isLoading) return;
-    if (portalSeeded.current && portalDirty) return;
-    setRows(initialRows);
-    setWelcome(initialWelcome);
-    portalSeeded.current = true;
+    if (pc.isLoading || pc.isError || portalDirty) return;
+    seedPortal(pc.config);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baselineKey, pc.isLoading]);
+  }, [savedPortalKey, pc.isLoading, pc.isError, portalDirty]);
 
   // ── Preview brand values (own → inherited → floor), live from the form ──
   const previewPrimary = isValidHex(brandForm.primary_color)
@@ -218,16 +227,23 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
           if (nextVal !== prevVal) patch[k] = nextVal;
         });
         await bk.save(patch);
+        if (!mounted.current) return;
       }
       if (portalDirty) {
-        const modules: PortalModuleOverlay[] = rows.map((r, i) => ({ key: r.key, visible: r.visible, order: i }));
+        const patch: Partial<ClientPortalConfig> = {};
+        if (modulesDirty) patch.modules = rows.map((r, i) => ({ key: r.key, visible: r.visible, order: i }));
         const w: { headline?: string; subhead?: string } = {};
         if (welcome.headline.trim()) w.headline = welcome.headline.trim();
         if (welcome.subhead.trim()) w.subhead = welcome.subhead.trim();
-        await pc.save({ modules, welcome: w });
+        if (welcomeDirty) patch.welcome = w;
+        if (changedAssistant) patch.assistant = changedAssistant;
+        const saved = await pc.save(patch);
+        if (!mounted.current) return;
+        seedPortal(saved);
       }
       toast({ title: "Portal saved", description: "Your clients will see this next time they sign in." });
     } catch (e) {
+      if (!mounted.current) return;
       toast({ title: "Couldn't save", description: e instanceof Error ? e.message : "Try again.", variant: "destructive" });
     }
   };
@@ -270,14 +286,14 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
       />
 
       {bk.isLoading || pc.isLoading ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           <div className="space-y-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 w-full rounded-xl" />)}</div>
           <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           {/* ── Authoring ── */}
-          <div className="space-y-4">
+          <fieldset disabled={busy} className="min-w-0 space-y-4" aria-label="Portal experience settings">
             {/* BRAND */}
             <SectionCard
               icon={Palette}
@@ -415,10 +431,11 @@ export default function PortalStudio({ embedded = false, onDirtyChange }: { embe
                 </div>
               </div>
             </SectionCard>
-          </div>
+            <CustomerAssistantSettings value={assistant} onChange={setAssistant} focusRequest={assistantFocusRequest} />
+          </fieldset>
 
           {/* ── View as Client (live preview) ── */}
-          <div className="lg:sticky lg:top-4 lg:self-start">
+          <div className="min-w-0 lg:sticky lg:top-4 lg:self-start">
             <SectionCard
               padded={false}
               icon={Eye}

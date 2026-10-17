@@ -228,9 +228,11 @@ try {
           const vis = n.clientWidth ? Math.round(own.length * n.clientWidth / n.scrollWidth) : 0;
           if (vis < 4) return true;
         }
-        if (!r.width) return true;
+        if (!r.width) return true; // squeezed to nothing
         for (let p = n.parentElement; p && p !== document.body; p = p.parentElement) {
-          const o = getComputedStyle(p); if (!/hidden|clip/.test(o.overflowX)) continue;
+          const o = getComputedStyle(p);
+          if (/auto|scroll/.test(o.overflowX)) return false; // a horizontal scroller: reachable, not clipped
+          if (!/hidden|clip/.test(o.overflowX)) continue;
           const pr = p.getBoundingClientRect(); const shown = Math.max(0, Math.min(r.right, pr.right) - Math.max(r.left, pr.left));
           return shown < r.width * 0.5;
         }

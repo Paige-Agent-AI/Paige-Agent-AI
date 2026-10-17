@@ -209,7 +209,7 @@ async function ownerTask(fault = '') {
       lte(k: string, v: unknown) { filters.push([k, v, 'lte']); return q; }, order() { return q; }, limit() { return q; },
       then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
         if (fault === 'native-sql') {
-          const where = filters.map(([k, v, op]) => k + (op === 'lte' ? '<=' : '=') + "'" + String(v).replaceAll("'", "''") + "'").join(' and ') || 'true';
+          const where = filters.map(([k, v, op]) => k + (op === 'lte' ? '<=' : '=') + "'" + String(v).split("'").join("''") + "'").join(' and ') || 'true';
           const data = JSON.parse(nativeSql(`select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb)::text from public.${table} t where ${where};`));
           return Promise.resolve({ data, error: null }).then(resolve, reject);
         }
@@ -221,8 +221,8 @@ async function ownerTask(fault = '') {
     if (fault === 'native-sql' && ['resolve_automation_autonomy', 'paige_record_act_execution', 'paige_approve_act_execution',
       'paige_claim_act_dispatch', 'execute_owner_task_act', 'read_owner_task_act'].includes(fn)) {
       const value = (v: unknown) => v == null ? 'null' : typeof v === 'object'
-        ? "'" + JSON.stringify(v).replaceAll("'", "''") + "'::jsonb"
-        : typeof v === 'boolean' || typeof v === 'number' ? String(v) : "'" + String(v).replaceAll("'", "''") + "'";
+        ? "'" + JSON.stringify(v).split("'").join("''") + "'::jsonb"
+        : typeof v === 'boolean' || typeof v === 'number' ? String(v) : "'" + String(v).split("'").join("''") + "'";
       const named = Object.entries(args).map(([key, v]) => key + '=>' + value(v)).join(',');
       const output = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';select to_jsonb(public.${fn}(${named}))::text;`);
       const data = output ? JSON.parse(output) : null;
@@ -280,7 +280,7 @@ async function ownerTask(fault = '') {
     }
     if (fn === 'execute_crm_command' || fn === 'read_crm_command_result') {
       if (fault === 'native-sql') {
-        const command = JSON.stringify(args._command).replaceAll("'", "''");
+        const command = JSON.stringify(args._command).split("'").join("''");
         const output = nativeSql(`set role service_role;set request.jwt.claims='{"role":"service_role"}';
           select public.${fn}('${args._tenant_id}','${args._actor_id}','${command}'::jsonb,'${args._idempotency_key}')::text;`);
         const data = output ? JSON.parse(output) : null;

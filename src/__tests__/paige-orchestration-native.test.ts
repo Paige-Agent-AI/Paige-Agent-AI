@@ -163,7 +163,7 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       }
       if (fn === "resolve_tool_autonomy") {
         if (cfg.gatewayError === "lane") return { data: null, error: { message: "resolve_tool_autonomy_failed" } };
-        return { data: Object.hasOwn(cfg, "laneResult") ? cfg.laneResult : cfg.toolLane ?? "auto", error: null };
+        return { data: Object.prototype.hasOwnProperty.call(cfg, "laneResult") ? cfg.laneResult : cfg.toolLane ?? "auto", error: null };
       }
       if (fn === "resolve_automation_autonomy") {
         return { data: cfg.lanes?.[args._automation_id as string] ?? { effective: "off" }, error: null };

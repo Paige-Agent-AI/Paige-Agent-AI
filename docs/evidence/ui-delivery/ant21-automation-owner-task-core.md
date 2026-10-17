@@ -354,3 +354,10 @@ racing source pause/edit/contact revision and claim/replay, original actor revok
 same exact task/key across a different retrying reviewer, committed-lost-ack readback, native
 receipt rollback, service-only ACL, and reconciler adoption/no false journey evidence. Full
 schema/ordinary customer activation and owner acceptance remain separate **UNVERIFIED** legs.
+
+
+## 2026-10-17 — exact-head CI fixture compatibility correction
+
+Hosted verify job117248025860 failed at the TypeScript ratchet on headab282e538f06a6ff25827b4709b76a8e5bdea1ad. Local actual compiler reproduced four String.replaceAll uses and one Object.hasOwn use introduced in two test files under the existing ES2020 application target. Four literal quote escapes now use split/join, and the optional lane-result check uses Object.prototype.hasOwnProperty.call, preserving explicit-null behavior. No application target, baseline allowance, production function, migration, identity, policy or effect contract changes. Separate fresh AUTHOR-REVIEW / LOWER ASSURANCE inspected all five substitutions and the unchanged literal quote semantics.
+
+Focused tests103PASS with the native-only case explicitly skipped when no native DB is supplied; that run alone does not prove the SQL integration. The existing native PostgreSQL proof was then run separately on an owned disposable loopback cluster: all66 native controls and43 actual saved-draft/engine/C5 testsPASS with no skips; owned fixture stopped. Private evidence: work/native-fixture-es2020-check.log and work/owner-task-native-proof/run-GIqN6i. Actual full compiler successor completion and new required exact-head CI remain separately owed here; the previous failed hosted run remains FAIL.

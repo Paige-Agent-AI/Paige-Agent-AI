@@ -31,7 +31,7 @@ const paths = {
   roleMap: 'supabase/migrations/20270509000000_nothing_reads_the_retired_title_role.sql',
   roleSync: 'supabase/migrations/20260721002907_move2_slice1_tenant_scope_pii_admin.sql',
   roleTrigger: 'supabase/migrations/20260701012156_526687dc-9adb-46c8-bb99-ff3f0737dc1c.sql',
-  migration: 'supabase/migrations/20271109046000_operations_crm_task_exact_read.sql',
+  migration: 'supabase/migrations/20271110012000_operations_crm_task_exact_read.sql',
   incumbent: 'supabase/tests/operations_native_crm_work_read.sql',
   proof: 'supabase/tests/operations_crm_task_exact_read.sql',
 };

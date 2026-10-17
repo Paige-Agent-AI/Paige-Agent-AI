@@ -6,14 +6,16 @@ import { useSoloComms } from "./useSoloComms";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const TENANT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const OTHER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
-const state = vi.hoisted(() => ({ tenant: "", actor: "", loading: false, invoke: vi.fn() }));
+const CONNECTOR = "44444444-4444-4444-8444-444444444444";
+const VERSION = "2026-10-16T00:00:00.123456Z";
+const state = vi.hoisted(() => ({ tenant: "", actor: "", loading: false, invoke: vi.fn(), connectors: [] as Record<string, unknown>[] }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({
   activeTenantId: state.tenant || null, activeUserId: state.actor || null, activeTenant: null, loading: state.loading,
 }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   rpc: vi.fn(async (name: string) => ({ data: name === "is_current_user_tenant_admin" ? true : null, error: null })),
   from: (table: string) => {
-    const answer = { data: table === "tenants" ? { brand: {} } : [], error: null };
+    const answer = { data: table === "tenants" ? { brand: {} } : table === "channel_connectors" ? state.connectors.slice(0,1) : [], error: null };
     const b = { select: () => b, eq: () => b, order: () => b, limit: () => b,
       maybeSingle: async () => answer, then: (done: (v: unknown) => unknown) => Promise.resolve(answer).then(done) };
     return b;
@@ -34,14 +36,50 @@ async function ready(result: ReturnType<typeof mount>["result"]) {
 }
 beforeEach(() => {
   state.tenant = TENANT; state.actor = "actor-a"; state.loading = false;
+  state.connectors = [{id:CONNECTOR,updated_at:VERSION,provider:"gmail",from_address:"visible@example.invalid",display_name:"Visible",active:true,status:"active"}];
   state.invoke.mockReset().mockImplementation(async (name: string) => ({
     data: name === "gmail-oauth-start" ? { authorization_url: "https://accounts.google.com/fixture" }
-      : name === "gmail-disconnect" ? { ok: true, disconnected: true } : { domains: [] }, error: null,
+      : name === "gmail-disconnect" ? { ok: true, disconnected: true, connector_id: CONNECTOR } : { domains: [] }, error: null,
   }));
 });
 afterEach(() => { mounted.splice(0).forEach(root => act(() => root.unmount())); });
 
 describe("SOLO Gmail mutations bind the selected workspace without granting authority", () => {
+  it("sends the exact visible connector and raw version when another connector exists", async () => {
+    state.connectors.push({...state.connectors[0],id:OTHER,from_address:"other@example.invalid"});
+    const { result } = mount(); await ready(result);
+    await act(async () => { expect((await result.current.disconnectGmail()).ok).toBe(true); });
+    expect(state.invoke).toHaveBeenCalledWith("gmail-disconnect",{body:{expected_tenant_id:TENANT,connector_id:CONNECTOR,expected_updated_at:VERSION}});
+  });
+  it.each([{}, {connector_id:OTHER}])("refuses a successful-looking acknowledgement for an unconfirmed connector %j",async(extra)=>{
+    const { result } = mount(); await ready(result);
+    state.invoke.mockResolvedValue({data:{ok:true,disconnected:true,...extra},error:null});
+    await act(async()=>{expect(await result.current.disconnectGmail()).toMatchObject({ok:false,error:expect.stringContaining("could not be confirmed")});});
+    expect(state.invoke.mock.calls.filter(([name])=>name==="gmail-disconnect")).toHaveLength(1);
+  });
+  it.each(["id","updated_at","from_address","provider"])("does not dispatch when the visible connection lacks %s",async(key)=>{
+    delete state.connectors[0][key]; const {result}=mount();await ready(result);
+    await act(async()=>{expect((await result.current.disconnectGmail()).ok).toBe(false);});
+    expect(state.invoke.mock.calls.some(([name])=>name==="gmail-disconnect")).toBe(false);
+  });
+  it("an old callback cannot disconnect a connection that is no longer displayed",async()=>{
+    const {result}=mount();await ready(result);const previous=result.current.disconnectGmail;
+    state.connectors=[{...state.connectors[0],id:OTHER,from_address:"new@example.invalid"}];
+    await act(async()=>{result.current.refresh();});
+    expect(result.current.mailbox?.address).toBe("new@example.invalid");
+    await act(async()=>{expect((await previous()).ok).toBe(false);});
+    expect(state.invoke.mock.calls.some(([name])=>name==="gmail-disconnect")).toBe(false);
+  });
+  it.each(["body","http-error"])("a stale connector version from %s is not called a workspace switch",async(wire)=>{
+    const {result}=mount();await ready(result);
+    const body={error:"gmail_connection_changed"};
+    state.invoke.mockResolvedValue(wire==="body"?{data:body,error:null}:{data:null,error:{context:new Response(JSON.stringify(body),{status:409})}});
+    await act(async()=>{
+      const answer=await result.current.disconnectGmail();expect(answer.ok).toBe(false);
+      expect(answer.error).toContain("Google connection changed");expect(answer.error).not.toContain("Workspace changed");
+    });
+    expect(state.invoke.mock.calls.filter(([name])=>name==="gmail-disconnect")).toHaveLength(1);
+  });
   for (const [code, message] of [
     ["gmail_disconnected_result_withheld", "PAIGE disconnected Google"],
     ["gmail_disconnect_outcome_unknown", "could not be confirmed"],

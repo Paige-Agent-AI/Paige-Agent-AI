@@ -89,7 +89,7 @@ async function ownerTaskNativeProof() {
   const call = (name, argv, options = {}) => execFileSync(exe(name), argv, { encoding: "utf8", windowsHide: true, timeout: 30000, ...options });
   const sql = (text, db = database) => call("psql", args(db), { input: text }).trim();
   const text = file => readFileSync(resolve(root, file), "utf8");
-  const migration = text("supabase/migrations/20271108210000_owner_task_native_bridge.sql");
+  const migration = text("supabase/migrations/20271108241000_owner_task_native_bridge.sql");
   const fn = (file, name, acl = false) => {
     const source = text("supabase/migrations/" + file);
     const match = source.match(new RegExp("create(?: or replace)? function public\\." + name + "\\s*\\([\\s\\S]*?\\bas\\s+(\\$[a-z_0-9]*\\$)[\\s\\S]*?\\1;", "i"));

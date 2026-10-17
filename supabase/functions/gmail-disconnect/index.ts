@@ -12,6 +12,7 @@ const corsHeaders = {
 const response = (status: number, body: unknown) => new Response(JSON.stringify(body), {
   status, headers: { ...corsHeaders, "Content-Type": "application/json" },
 });
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -28,7 +29,17 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     });
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)
+      || Object.keys(body).some(key => !["connector_id", "expected_updated_at", "expected_tenant_id"].includes(key))) {
+      return response(400, { error: "gmail_connector_selection_invalid" });
+    }
+    const selected = body.connector_id !== undefined;
+    if ((selected && (typeof body.connector_id !== "string" || !UUID.test(body.connector_id)
+      || typeof body.expected_updated_at !== "string" || !Number.isFinite(Date.parse(body.expected_updated_at))))
+      || (!selected && body.expected_updated_at !== undefined)) {
+      return response(400, { error: "gmail_connector_selection_invalid" });
+    }
     const authority = await readGmailConnectionAuthority(caller, admin, undefined, body.expected_tenant_id);
     if (!authority.ok) return response(authority.status, { error: authority.error });
     const { tenantId, actorId } = authority;
@@ -36,13 +47,26 @@ Deno.serve(async (req) => {
     const refuse = (check: { status: number; error: string }) => disconnected
       ? withheld(check.status) : response(check.status, { error: check.error });
 
-    const { data: row, error: readError } = await admin.from("channel_connectors")
+    const lookup = admin.from("channel_connectors")
       .select("id,credentials_vault_ref,inbound_address,external_account_id,mailbox_class,mailbox_owner_user_id,updated_at")
-      .eq("tenant_id", tenantId).eq("channel_type", "email").eq("provider", "gmail").maybeSingle();
+      .eq("tenant_id", tenantId).eq("channel_type", "email").eq("provider", "gmail");
+    // Identity/version are stale-view preconditions, never authority. Old callers
+    // can omit them only when two bounded rows prove there is no choice to make.
+    const { data, error: readError } = selected
+      ? await lookup.eq("id", body.connector_id.toLowerCase()).maybeSingle()
+      : await lookup.limit(2);
     const afterRead = await currentAuthority();
     if (!afterRead.ok) return refuse(afterRead);
     if (readError) return response(503, { error: "gmail_connector_lookup_failed" });
-    if (!row) return response(200, { ok: true, disconnected: false });
+    if (!selected && (!Array.isArray(data) || data.length > 1)) {
+      return response(409, { error: "gmail_connector_selection_required" });
+    }
+    const row = selected ? data : data[0];
+    if (!row) return selected ? response(409, { error: "gmail_connection_changed" })
+      : response(200, { ok: true, disconnected: false });
+    if (selected && (row.id !== body.connector_id.toLowerCase() || row.updated_at !== body.expected_updated_at)) {
+      return response(409, { error: "gmail_connection_changed" });
+    }
     if (row.mailbox_class === "personal" && row.mailbox_owner_user_id !== actorId) {
       return response(403, { error: "gmail_already_personal_to_another_user" });
     }
@@ -102,7 +126,7 @@ Deno.serve(async (req) => {
     }
     const beforeResult = await currentAuthority();
     if (!beforeResult.ok) return refuse(beforeResult);
-    return response(200, { ok: true, disconnected, audit_confirmed: auditConfirmed,
+    return response(200, { ok: true, disconnected, connector_id: row.id, audit_confirmed: auditConfirmed,
       google_revocation_acknowledged: revocationAcknowledged });
   } catch {
     if (disconnected) return withheld(503);

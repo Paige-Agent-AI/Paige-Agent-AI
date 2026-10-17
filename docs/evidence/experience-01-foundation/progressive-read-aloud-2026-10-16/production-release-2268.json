@@ -1,0 +1,55 @@
+{
+  "pr": 2268,
+  "reviewedHead": "161226913a9018d7bc4c615e3a6b68e4d70c396d",
+  "merge": "dd27f5a5a47b0e19d1a1ad8967be2538e1f93669",
+  "firstParent": "efd55ca6db1c563cf735cdea37258d4c654d0ef2",
+  "tree": "66cb7b9be0e57eec88498b4c24c9fb3499f7c394",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "exactHeadChecks": {
+    "checks": 11,
+    "workflowGroups": 6,
+    "vercelStatuses": 2,
+    "all": "SUCCESS",
+    "preview": "SUCCESS"
+  },
+  "web": {
+    "id": "dpl_2SesRF4AohcRjMW5g1dym5taExWe",
+    "state": "READY",
+    "target": "production",
+    "buildId": "dd27f5a5a47b0e19d1a1ad8967be2538e1f93669-mvbrn5h5",
+    "customerUpdate": null
+  },
+  "edge": {
+    "pushRun": 38994290237,
+    "pushResult": "FAILURE_AT_GLOBAL_MARKER_AFTER_SELECTED_SOURCE_PASS",
+    "recoveryRun": 38994599455,
+    "recoveryResult": "FAILURE_GLOBAL_CERTIFICATION",
+    "globalMarkerAdvanced": false,
+    "sharedRecoveryPR": 2271,
+    "sourceReadbackArtifact": 12086513066,
+    "functions": [
+      {
+        "function": "paige-live-relay",
+        "status": "PASS",
+        "version": 31,
+        "verify_jwt": false,
+        "files": 10,
+        "archive_sha256": "7a7fc251370530bb5e13fbc38617b8063ac3a02d7be6d23faf75b9fa6f1de9bb",
+        "manifest_sha256": "93d07be0dacaa0a4df5dcfa83b0b68cc81a461cdb2004f3b3073613d825662ce"
+      },
+      {
+        "function": "paige-tts",
+        "status": "PASS",
+        "version": 73,
+        "verify_jwt": true,
+        "files": 7,
+        "archive_sha256": "3617e92ac065401ebd95b0640a04f3806a6e995b875c970541d50f44e7b0b2a2",
+        "manifest_sha256": "d550ca386b0e3fb6692f9f70e75a75052304e785211d813c79d374ac8920e06f"
+      }
+    ]
+  },
+  "migrations": "NOT_APPLICABLE",
+  "authenticatedCustomerAcceptance": "UNVERIFIED",
+  "providerLatency": "UNVERIFIED",
+  "customerReleaseIdentity": null
+}

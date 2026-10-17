@@ -12,7 +12,7 @@ const javascript=ts.transpileModule(source.replace(/^import .*;\r?\n/gm,""),{
 const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-8000-000000000001",
  contact="e0939000-0000-4000-8000-000000000001",invitation="e0949000-0000-4000-8000-000000000001";
 const recipient="client@tests.invalid";
-type Options={header?:boolean;authenticated?:boolean;authThrows?:boolean;authority?:"admin"|"agency"|"platform"|"none";
+type Options={header?:boolean;authenticated?:boolean;authThrows?:boolean;authority?:"admin"|"agency"|"platform"|"team_owner"|"none";
  token?:Record<string,unknown>;client?:Record<string,unknown>|null;emails?:unknown[];rpcError?:boolean;
  providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend"};
 async function drive(options:Options={}){
@@ -39,7 +39,11 @@ async function drive(options:Options={}){
    }},
    rpc:async(name:string,args:unknown)=>{
     calls.push({kind,name,args});
-    if(name==="create_solo_team_invite"||name==="resend_solo_team_invite")return {data:{id:invitation,token:"synthetic-invite-token",email:recipient,tenant_id:tenant,expires_at:token.expires_at},error:null};
+    if(name==="create_solo_team_invite"||name==="resend_solo_team_invite")return options.authority==="none"
+     ?{data:null,error:new Error("only an owner or admin may manage team invitations in that workspace")}
+     :{data:{id:invitation,token:"synthetic-invite-token",email:recipient,tenant_id:tenant,expires_at:token.expires_at},error:null};
+    if(name==="solo_team_invite_authority")return options.authority==="team_owner"&&!(brandRead&&options.lateChange==="role")
+     ?{data:tenant,error:null}:{data:null,error:{message:"native team authority refused"}};
     if(name==="resolve_tenant_brand"){brandRead=true;return {data:[{tenant_name:"Test business",primary_color:"#150C31",logo_url:null}],error:null};}
     if(name==="tenant_sender_identity")return {data:{from_address:"business@tests.invalid",from_name:"Test business"},error:null};
     if(name==="comms_provider_execution_allowed")return {data:options.providerAllowed!==false&&!(brandRead&&options.lateChange==="provider"),error:null};
@@ -99,6 +103,7 @@ describe("canonical portal invitation sender authority",()=>{
  for(const [label,options] of [
   ["missing authorization header",{header:false}], ["no verified user",{authenticated:false}], ["Auth read unavailable",{authThrows:true}],
   ["ordinary recipient or foreign-business actor",{authority:"none",body:{tenant_id:tenant,role:"owner"}}],
+  ["ordinary recipient or foreign-business team actor",{authority:"none",token:{kind:"team",contact_id:null}}],
   ["native permission read failed",{rpcError:true}], ["missing contact",{token:{contact_id:null}}],
   ["missing bound recipient",{token:{email:null}}], ["consumed invitation",{token:{uses:1,last_used_at:"2026-01-01T00:00:00Z"}}],
   ["revoked invitation",{token:{revoked_at:"2026-01-01T00:00:00Z"}}], ["expired invitation",{token:{expires_at:"2000-01-01T00:00:00Z"}}],
@@ -110,6 +115,7 @@ describe("canonical portal invitation sender authority",()=>{
   ["foreign email-method business",{emails:[{tenant_id:contact,kind:"email",is_primary:true,value:recipient}]}],
   ["foreign email-method client",{emails:[{client_id:invitation,kind:"email",is_primary:true,value:recipient}]}],
   ["permission revoked before provider",{lateChange:"role"}], ["actor changed before provider",{lateChange:"actor"}],
+  ["native team owner authority withdrawn before provider",{authority:"team_owner",token:{kind:"team",contact_id:null},lateChange:"role"}],
   ["saved recipient changed before provider",{lateChange:"email"}],
   ["invitation revoked before provider",{lateChange:"token"}], ["provider gate withdrawn before provider",{lateChange:"provider"}],
  ] as Array<[string,Options]>)it("refuses "+label+" without sending or filing a send",async()=>{
@@ -120,6 +126,13 @@ describe("canonical portal invitation sender authority",()=>{
  });
  it("preserves legitimate existing team invitation delivery",async()=>{
   const r=await drive({token:{kind:"team",contact_id:null}});expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);
+ });
+ it("preserves the incumbent native team owner flag without granting consumer send authority",async()=>{
+  const r=await drive({authority:"team_owner",token:{kind:"team",contact_id:null}});
+  expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);expect(r.sends).toHaveLength(1);
+  expect(r.calls).toContainEqual({kind:"service",name:"solo_team_invite_authority",args:{_actor:actor,_expected_tenant_id:tenant}});
+  const consumer=await drive({authority:"team_owner"});expect(consumer.status).toBe(403);expect(consumer.sends).toHaveLength(0);
+  expect(consumer.calls.some(x=>x.name==="solo_team_invite_authority")).toBe(false);
  });
  for(const teamAction of ["create","resend"] as const)it("preserves the real team "+teamAction+" caller through the shared sender",async()=>{
   const r=await drive({teamAction,token:{kind:"team",contact_id:null}});

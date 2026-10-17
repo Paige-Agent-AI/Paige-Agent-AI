@@ -150,7 +150,16 @@ Deno.serve(async (req) => {
         caller.rpc("is_tenant_admin", { _tenant: tok.tenant_id }),
         caller.rpc("agency_can_manage_child", { _child: tok.tenant_id }),
       ]);
-      return checks.every((result) => !result.error) && checks.some((result) => result.data === true);
+      if (checks.some((result) => result.error)) return false;
+      if (checks.some((result) => result.data === true)) return true;
+      // The incumbent Team writer also recognizes its native is_owner flag.
+      // Reuse that exact authority only for team tokens and the verified actor;
+      // it cannot grant permission on a consumer invitation.
+      if (tok.kind !== "team") return false;
+      const team = await admin.rpc("solo_team_invite_authority", {
+        _actor: actorUserId, _expected_tenant_id: tok.tenant_id,
+      });
+      return !team.error && team.data === tok.tenant_id;
     } catch { return false; }
   };
   if (!(await authorized()))

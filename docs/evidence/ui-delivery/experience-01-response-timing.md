@@ -23,7 +23,7 @@ OWNER_INTENT: measure and improve the existing responsive conversation while ret
 MUST_NOT_HAPPEN: no customer/thread/message/profile identity in metrics, new telemetry store/reporter, request-reference bypass, provider activation, fabricated completion or automatic retry.
 MUST_PRESERVE: original23 cases, existing server profile/cost/refusal, private conversation, canonical Setup and shared Spine/Harness/Trust/Rail execution.
 ACCEPTANCE_CRITERIA: actual authorized output yields distinct same-response stages and one owned first-playback event; Stop/unknown/failure remain truthful; protected provider and customer evidence must separately establish the complete experience.
-INTERNAL_BUILD_IDENTITY: runtime8c148b98b938d4f3c77b4418e201a4fe74e611d6 with documentation-only successor; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-tts timing successor not deployed); evidence=docs/evidence/experience-01-foundation/progressive-read-aloud-2026-10-16/timing-native-proof.json.
+INTERNAL_BUILD_IDENTITY: runtime 8c148b98b938d4f3c77b4418e201a4fe74e611d6 with documentation-only successor; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-tts timing successor not deployed); evidence=docs/evidence/experience-01-foundation/progressive-read-aloud-2026-10-16/timing-native-proof.json.
 RELEASE_CHANNEL: development: required exact-head hosted gates and normal production deployment/readback remain pending.
 RELEASE_CLASSIFICATION: internal-only: optional diagnostics on incumbent speech transport.
 CUSTOMER_RELEASE_IDENTITY: none: complete authenticated outcome/announcement not earned.

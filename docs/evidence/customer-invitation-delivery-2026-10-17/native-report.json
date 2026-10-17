@@ -13,7 +13,7 @@
   },
   "deliveryProof": {
     "migration": "supabase/migrations/20271108234000_e09_customer_invitation_delivery.sql",
-    "migrationSHA256": "c111fd83bb5008b81b25b1168de70385a85f33947900a297360a9259394192df",
+    "migrationSHA256": "6c19e5e0d7b39401501f083eced2df533e31739629c634d35f726f0c8d74a7bd",
     "provider": "NOT_CALLED",
     "hostedQA": "UNVERIFIED"
   },
@@ -435,6 +435,10 @@
     },
     {
       "name": "A new operation cannot bypass a pending invitation delivery",
+      "result": "PASS"
+    },
+    {
+      "name": "A newly minted invitation for the same CRM customer cannot bypass the original unknown send",
       "result": "PASS"
     },
     {

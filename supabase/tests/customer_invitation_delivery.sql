@@ -50,6 +50,18 @@ SELECT is((SELECT first_claim->>'outcome'FROM e09_delivery_fixture),'pending','c
 SELECT is((SELECT count(*)FROM public.email_send_log WHERE id=(SELECT(first_claim->>'receipt_id')::uuid FROM e09_delivery_fixture)),1::bigint,'one canonical log row');
 SELECT is(pg_temp.delivery('claim')->>'disposition','busy','concurrent live lease grants no second dispatch');
 SELECT is(pg_temp.delivery('claim',operation=>'e0953400-0000-4000-8000-000000000002')->>'sqlstate','40001','new operation cannot bypass pending send');
+DO $$DECLARE target jsonb;other jsonb;original uuid;BEGIN
+ SELECT invitation INTO original FROM e09_delivery_fixture;
+ PERFORM set_config('request.jwt.claims','{"sub":"e0913400-0000-4000-8000-000000000001","role":"authenticated"}',true);
+ SET LOCAL ROLE authenticated;
+ target:=public.prepare_client_portal_invitation('e0923400-0000-4000-8000-000000000001','e0933400-0000-4000-8000-000000000001');
+ other:=public.create_client_portal_invitation('e0923400-0000-4000-8000-000000000001','e0933400-0000-4000-8000-000000000001',target->>'proposal_hash','e0953400-0000-4000-8000-000000000098');
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);
+ UPDATE e09_delivery_fixture SET invitation=(other->>'invitation_id')::uuid;
+ PERFORM set_config('e09.delivery.original',original::text,true);
+END$$;
+SELECT is(pg_temp.delivery('claim',operation=>'e0953400-0000-4000-8000-000000000002')->>'sqlstate','40001','a new invitation cannot bypass this same customer pending send');
+UPDATE e09_delivery_fixture SET invitation=current_setting('e09.delivery.original')::uuid;
 SELECT is(pg_temp.delivery('claim',digest=>repeat('b',64))->>'sqlstate','40001','payload change cannot reuse operation');
 SELECT is(pg_temp.delivery('claim',actor=>'e0913400-0000-4000-8000-000000000002')->>'sqlstate','42501','foreign owner refuses');
 SELECT is(pg_temp.delivery('read',actor=>NULL)->>'sqlstate','42501','missing actual Auth refuses');

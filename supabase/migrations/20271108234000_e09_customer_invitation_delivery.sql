@@ -57,11 +57,11 @@ BEGIN
  IF p_invitation_id IS NULL OR p_operation_id IS NULL OR (p_payload_digest ~ '^[0-9a-f]{64}$') IS DISTINCT FROM true THEN
   RAISE EXCEPTION 'CUSTOMER_INVITATION_DELIVERY_ARGUMENTS' USING ERRCODE='22023';END IF;
  key:='customer-portal-delivery/v1/'||p_tenant_id::text||'/'||p_operation_id::text;
- -- One invitation cannot bypass an unknown send with a new operation or another owner.
- PERFORM pg_advisory_xact_lock(hashtextextended('portal-invitation-delivery:'||p_tenant_id::text||':'||p_invitation_id::text,0));
  SELECT i.* INTO invitation FROM public.tenant_invite_tokens i WHERE i.id=p_invitation_id AND i.tenant_id=p_tenant_id FOR SHARE;
  IF NOT FOUND OR invitation.kind IS DISTINCT FROM 'consumer' OR invitation.contact_id IS NULL THEN
   RAISE EXCEPTION 'CUSTOMER_INVITATION_DELIVERY_UNAVAILABLE' USING ERRCODE='42501';END IF;
+ -- Another operation/owner/invitation for this SAME CRM customer cannot bypass an unknown send.
+ PERFORM pg_advisory_xact_lock(hashtextextended('portal-invitation-delivery:'||p_tenant_id::text||':'||invitation.contact_id::text,0));
  SELECT l.* INTO source FROM public.email_send_log l WHERE l.idempotency_key=key FOR UPDATE;
  IF FOUND THEN
   IF source.tenant_id IS DISTINCT FROM p_tenant_id OR source.template_name IS DISTINCT FROM 'portal_invite'
@@ -92,7 +92,7 @@ BEGIN
     'reconciler_user_id',actor,'recovery_attempt',true) WHERE id=source.id RETURNING * INTO source;
  ELSE
   IF EXISTS(SELECT 1 FROM public.email_send_log l WHERE l.tenant_id=p_tenant_id
-    AND l.idempotency_key LIKE 'customer-portal-delivery/v1/%' AND l.metadata->>'invite_id'=p_invitation_id::text
+    AND l.idempotency_key LIKE 'customer-portal-delivery/v1/%' AND l.metadata->>'contact_id'=invitation.contact_id::text
     AND NOT (l.status='sent' AND l.message_id ~ '^[A-Za-z0-9_-]{1,200}$')
     AND COALESCE(l.metadata->>'outcome','pending') NOT IN ('failed','refused')) THEN
    RAISE EXCEPTION 'CUSTOMER_INVITATION_PREVIOUS_SEND_UNCONFIRMED' USING ERRCODE='40001';END IF;

@@ -40,6 +40,12 @@ export async function invitationDeliveryProof({sql,check,assert,fs,path,root,ids
  check('A new operation cannot bypass a pending invitation delivery',()=>{
   const before=snapshot();assert.throws(()=>claim(randomUUID()),/PREVIOUS_SEND_UNCONFIRMED/);assert.equal(snapshot(),before);
  });
+ check('A newly minted invitation for the same CRM customer cannot bypass the original unknown send',()=>{
+  const freshTarget=api('prepare_client_portal_invitation',`'${ids.ta}','${contact}'`);
+  const other=api('create_client_portal_invitation',`'${ids.ta}','${contact}','${freshTarget.proposal_hash}','${randomUUID()}'`);
+  assert.notEqual(other.invitation_id,invite);const before=snapshot();
+  assert.throws(()=>claim(randomUUID(),digest,ids.a,ids.ta,other.invitation_id),/PREVIOUS_SEND_UNCONFIRMED/);assert.equal(snapshot(),before);
+ });
  check('A reused operation cannot change its exact payload',()=>{
   const before=snapshot();assert.throws(()=>claim(operation,'c'.repeat(64)),/DELIVERY_CONFLICT/);assert.equal(snapshot(),before);
  });

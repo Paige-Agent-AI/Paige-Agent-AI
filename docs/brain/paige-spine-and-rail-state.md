@@ -2,7 +2,7 @@
 
 ## DEVELOPMENT 2026-10-17 — Portal invitation common command
 
-`client.portal_invite` / `client_portal_invitation_send` joins the existing owner communications dispatcher, canonical confirmation/kernel, incumbent sender and Rail. Native preparation2330 is source-verified from production; delivery2340 remains candidate #2292. [Work packet](../delivery/e09-canonical-invitation-command.md) records exact CRM recipient/version binding, original-operation recovery, high-risk approval and protected provider floor. Source maturity PARTIAL; registration is not Dashboard/Live/provider/customer acceptance. The private customer assistant gets no owner tool/context/history. No shared core handler or execution activation changes.
+`client.portal_invite` / `client_portal_invitation_send` joins the existing owner communications dispatcher, canonical confirmation/kernel, incumbent sender and Rail. Native preparation2330 is source-verified from production; delivery2340 is production source-verified from merged #2292. [Work packet](../delivery/e09-canonical-invitation-command.md) records exact CRM recipient/version binding, original-operation recovery, high-risk approval and protected provider floor. Source maturity PARTIAL; registration is not Dashboard/Live/provider/customer acceptance. The private customer assistant gets no owner tool/context/history. No shared core handler or execution activation changes.
 
 ## CANDIDATE 2026-10-14 UTC — E5 connected inspection, not deployed
 

@@ -10,11 +10,13 @@ import { GamePlanApprovals } from "./GamePlanApprovals";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-type Row = { id: string; type: string; category: string | null; status: string; summary: string | null; assigned_to_user_id?: string | null; requires_role?: string | null };
+type Row = { id: string; type: string; category: string | null; status: string; summary: string | null; assigned_to_user_id?: string | null; requires_role?: string | null;
+  source?: string;tenant_id?: string;visible_to_roles?: string[];draft_content?: unknown;metadata?: unknown };
 
 const state: { items?: Row[]; loading?: boolean; error?: string | null; refresh?: ReturnType<typeof vi.fn> } = {};
 
-vi.mock("@/hooks/usePendingApprovals", () => ({
+vi.mock("@/hooks/usePendingApprovals", async importOriginal => ({
+  ...await importOriginal<typeof import("@/hooks/usePendingApprovals")>(),
   usePendingApprovals: () => ({
     items: state.items ?? [],
     loading: state.loading ?? false,
@@ -22,7 +24,8 @@ vi.mock("@/hooks/usePendingApprovals", () => ({
     refresh: state.refresh ?? vi.fn(),
   }),
 }));
-const viewer: { userId?: string | null; tenantId?: string | null; role?: string | null } = {};
+const viewer: { userId?: string | null; tenantId?: string | null; role?: string | null; status?: string;roleReply?:Promise<unknown> } = {};
+const roleFilters:Array<[string,unknown]>=[];
 
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: viewer.tenantId ?? "t-1", activeUserId: viewer.userId ?? "u-1" }),
@@ -34,7 +37,8 @@ vi.mock("@/integrations/supabase/client", () => {
   const chain: Record<string, unknown> = new Proxy({}, {
     get(_t, k) {
       if (typeof k !== "string" || k === "then") return undefined;
-      if (k === "maybeSingle") return async () => ({ data: viewer.role ? { role: viewer.role } : null, error: null });
+      if (k === "maybeSingle") return async () => viewer.roleReply ?? ({ data: viewer.role && viewer.status==="active" ? { role: viewer.role } : null, error: null });
+      if(k==="eq") return (key:string,value:unknown)=>{roleFilters.push([key,value]);return chain;};
       return () => chain;
     },
   });
@@ -50,6 +54,7 @@ beforeEach(() => {
   viewer.userId = "u-1";
   viewer.tenantId = "t-1";
   viewer.role = null;
+  viewer.status="active";delete viewer.roleReply;roleFilters.length=0;
   state.items = [];
   state.loading = false;
   state.error = null;
@@ -150,4 +155,32 @@ it("a load error offers Retry — never fabricated rows", async () => {
   const retry = [...host.querySelectorAll("button")].find((b) => b.textContent === "Retry") as HTMLElement;
   await act(async () => { retry.click(); });
   expect(state.refresh).toHaveBeenCalled();
+});
+
+const nativeTask:Row={id:"00000000-0000-4000-8000-000000000010",type:"other",category:"owner.task",status:"pending",summary:"Held internal task",
+  source:"paige_orchestration",tenant_id:"00000000-0000-4000-8000-000000000002",visible_to_roles:["admin","super_admin"],
+  draft_content:{capability:"owner.task",args:{title:"Review the new contact"}},metadata:{source:"paige_orchestration",capability_id:"owner.task",
+    event_id:"00000000-0000-4000-8000-000000000011",act_id:"00000000-0000-4000-8000-000000000012",
+    act_execution_id:"00000000-0000-4000-8000-000000000013",automation_id:"00000000-0000-4000-8000-000000000014"}};
+it.each(["owner","admin"])("shows the canonical native task to an ordinary active %s seat without mapping every legacy role",async role=>{
+  viewer.role=role;viewer.tenantId=nativeTask.tenant_id;state.items=[nativeTask,{...one,visible_to_roles:["super_admin"]}];
+  render_();await settle();expect(host.textContent).toContain(nativeTask.summary);expect(host.textContent).not.toContain(one.summary);
+});
+it.each(["member","coach",null])("does not give a %s seat the native owner task exception",async role=>{
+  viewer.role=role;viewer.tenantId=nativeTask.tenant_id;state.items=[nativeTask];render_();await settle();expect(host.textContent).toBe("");
+});
+it.each(["foreign","unrelated","missing-companion"])("does not apply the native owner exception to %s rows",async kind=>{
+  viewer.role="owner";viewer.tenantId=nativeTask.tenant_id;
+  state.items=[kind==="foreign"?{...nativeTask,tenant_id:"00000000-0000-4000-8000-000000000099"}:kind==="unrelated"?{...nativeTask,category:"email"}:{...nativeTask,metadata:{}}];
+  render_();await settle();expect(host.textContent).toBe("");
+});
+it("requires active membership in the actual tenant-role read",async()=>{
+  viewer.role="owner";viewer.status="suspended";viewer.tenantId=nativeTask.tenant_id;state.items=[nativeTask];render_();await settle();
+  expect(roleFilters).toContainEqual(["status","active"]);expect(host.textContent).toBe("");
+});
+it("does not reuse the previous workspace's owner seat while a new role read is pending",async()=>{
+  viewer.role="owner";viewer.tenantId=nativeTask.tenant_id;state.items=[nativeTask];render_();await settle();expect(host.textContent).toContain(nativeTask.summary);
+  let resolve!:(value:unknown)=>void;viewer.roleReply=new Promise(yes=>{resolve=yes;});viewer.tenantId="00000000-0000-4000-8000-000000000099";
+  state.items=[{...nativeTask,tenant_id:viewer.tenantId}];render_();expect(host.textContent).toBe("");
+  await act(async()=>resolve({data:{role:"member"},error:null}));expect(host.textContent).toBe("");
 });

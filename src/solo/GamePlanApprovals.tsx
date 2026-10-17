@@ -11,13 +11,13 @@
 // sales desk's work; support sees support; the header says whose desk this is.
 //
 // §18 one home: each row is the proven ApprovalRow (approve-and-acts via the
-// execute-approval seam; decline demands a reason so Paige learns). This component
+// execute-approval seam; decline records the reviewer's reason). This component
 // owns only the embedding: the dismissible frame, viewer scoping, the states, and
 // the returns-when-new-work-lands contract.
 import React, { useEffect, useRef, useState } from "react";
 import { BellRing, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { usePendingApprovals } from "@/hooks/usePendingApprovals";
+import { usePendingApprovals, isNativeOwnerTaskApproval } from "@/hooks/usePendingApprovals";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ApprovalRow } from "@/components/paige/ApprovalRow";
 
@@ -27,27 +27,36 @@ type RoleFields = { assigned_to_user_id?: string | null; requires_role?: string 
 export function GamePlanApprovals() {
   const { items, loading, error, refresh } = usePendingApprovals();
   const { activeTenantId, activeUserId } = useTenantContext();
-  const [myRole, setMyRole] = useState<string | null>(null);
+  const [seat, setSeat] = useState<{tenant:string;user:string;role:string|null}|null>(null);
+  const myRole=seat?.tenant===activeTenantId && seat?.user===activeUserId ? seat.role:null;
 
   // Resolve the viewer's tenant role once per workspace — the relevance lane key.
   useEffect(() => {
     let alive = true;
-    setMyRole(null);
+    setSeat(null);
     if (!activeTenantId || !activeUserId) return;
     void (async () => {
-      const { data } = await supabase
-        .from("tenant_members")
-        .select("role")
-        .eq("tenant_id", activeTenantId)
-        .eq("user_id", activeUserId)
-        .maybeSingle();
-      if (alive) setMyRole((data as { role?: string } | null)?.role ?? null);
+      try {
+        const { data, error } = await supabase
+          .from("tenant_members")
+          .select("role")
+          .eq("tenant_id", activeTenantId)
+          .eq("user_id", activeUserId)
+          .eq("status", "active")
+          .maybeSingle();
+        if (alive) setSeat({tenant:activeTenantId,user:activeUserId,role:error?null:(data as { role?: string } | null)?.role ?? null});
+      } catch {
+        if(alive) setSeat(null);
+      }
     })();
     return () => { alive = false; };
   }, [activeTenantId, activeUserId]);
 
   // Viewer-relevant items: assigned to me, the general queue, or role-targeted at me.
   const relevant = items.filter((a) => {
+    // Same narrow native family as the server's ordinary-seat exception. Never
+    // translate an owner seat into a global admin for unrelated approval types.
+    if(isNativeOwnerTaskApproval(a)) return a.tenant_id===activeTenantId && ["owner","admin"].includes(myRole ?? "");
     const r = a as RoleFields;
     if (r.assigned_to_user_id) return r.assigned_to_user_id === activeUserId;
     if (r.requires_role) return r.requires_role === myRole;

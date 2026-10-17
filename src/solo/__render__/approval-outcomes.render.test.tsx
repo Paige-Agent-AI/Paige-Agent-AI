@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   tenant: "00000000-0000-4000-8000-000000000201", actor: "00000000-0000-4000-8000-000000000202",
   context: {} as Record<string, unknown>, queue: [] as ApprovalQueueRow[], response: null as unknown,
   invoke: [] as Array<Record<string, unknown>>, updates: [] as Array<Record<string, unknown>>, reads: [] as string[], unexpected: [] as string[],
+  decisions: [] as Array<Record<string,unknown>>,
   authListeners: new Set<(event: string) => void>(), serverTenant: "", serverActor: "",
 }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: h.theme, setTheme: vi.fn() }) }));
@@ -78,9 +79,15 @@ vi.mock("@/integrations/supabase/client", () => {
       onAuthStateChange: (cb: (event: string) => void) => { h.authListeners.add(cb); return { data: { subscription: { unsubscribe: () => h.authListeners.delete(cb) } } }; },
     }, from,
     channel: () => { const channel = { on: () => channel, subscribe: () => channel }; return channel; }, removeChannel: () => {},
-    rpc: async (name: string) => {
+    rpc: async (name: string,args?:Record<string,unknown>) => {
       h.reads.push(`rpc:${name}`);
       if (name === "current_user_tenant_id") return { data: h.serverTenant, error: null };
+      if(name==="decline_owner_task_approval") {
+        h.decisions.push(args??{});
+        return {data:{id:approvalId,tenant_id:h.tenant,status:"rejected",decision_rationale:args?._reason,reviewed_by_user_id:h.actor,
+          reviewed_at:"2026-10-17T18:30:41.123456Z",updated_at:"2026-10-17T18:30:41.123456Z",act_outcome:"cancelled",receipt_recorded:true,
+          receipt_id:"00000000-0000-4000-8000-000000000219",replayed:false},error:null};
+      }
       if (name === "get_solo_setup_context") return { data: { tenantId: h.tenant, tenantName: "Test services", accessScope: "owner_full", brief: {}, businessOwners: [] }, error: null };
       if (name === "resolve_tenant_domain_identity") return { data: { default_email_sender: null }, error: null };
       if (name === "read_tenant_knowledge") return { data: { tenant_id: h.tenant, documents: [] }, error: null };
@@ -110,16 +117,18 @@ const title = "Review the new contact, verify their preferred next step, and pre
   + "Preserve the complete request and check these long reference details: " + "contactreference".repeat(12);
 const description = "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.";
 const approvalId = "00000000-0000-4000-8000-000000000203";
-const fixture = (): ApprovalQueueRow => ({ id: approvalId, tenant_id: h.tenant, status: "pending", source: "paige_orchestration", category: "owner.task",
+const fixture = (): ApprovalQueueRow => ({ id: approvalId, tenant_id: h.tenant,type:"other",visible_to_roles:["admin","super_admin"],updated_at:"2026-10-17T18:30:41.123456Z", status: "pending", source: "paige_orchestration", category: "owner.task",
   summary: "Prepare the reviewed internal task", sla_state: "unscheduled", draft_content: { capability: "owner.task", subject: "Prepare the reviewed internal task",
-    body: "Approve only this held task. Its full title and description remain visible in the approval row.", args: { title, description } }, metadata: { private_fixture: "do-not-render-this" },
+    body: "Approve only this held task. Its full title and description remain visible in the approval row.", args: { title, description } },
+    metadata: { private_fixture: "do-not-render-this",source:"paige_orchestration",capability_id:"owner.task",event_id:"00000000-0000-4000-8000-000000000220",
+      act_id:"00000000-0000-4000-8000-000000000221",act_execution_id:"00000000-0000-4000-8000-000000000222",automation_id:"00000000-0000-4000-8000-000000000223" },
 } as unknown as ApprovalQueueRow);
 const flush = async () => { for (let n = 0; n < 180; n++) await Promise.resolve(); };
 const row = (host: Element) => host.querySelector(".gp-ap-list")!;
 const button = (host: Element, label: string) => [...row(host).querySelectorAll<HTMLButtonElement>("button")].find(e => e.textContent?.trim() === label)!;
 async function click(host: Element, label: string) { expect(button(host, label), label).toBeTruthy(); await act(async () => { button(host, label).click(); await flush(); }); }
 function reset() {
-  h.serverActor = h.actor; h.serverTenant = h.tenant; h.invoke = []; h.updates = []; h.reads = []; h.unexpected = []; h.authListeners.clear();
+  h.serverActor = h.actor; h.serverTenant = h.tenant; h.invoke = []; h.updates = [];h.decisions=[]; h.reads = []; h.unexpected = []; h.authListeners.clear();
   h.context = { activeTenantId: h.tenant, activeUserId: h.actor, activeTenant: { id: h.tenant, name: "Test services", account_number: "1234567" },
     loading: false, accountContextLoading: false, accountContextStatus: "ready", isPlatformStaff: false };
   h.queue = [fixture()]; h.response = { data: { ok: true, executed: true, approval_id: approvalId, act_outcome: "executed" }, error: null };
@@ -211,12 +220,12 @@ describe("actual Game Plan approval outcomes inside the SOLO shell", () => {
       expect(row(v.host).textContent).toContain("The request could not be started"); expect(h.invoke).toEqual([]); expect(h.updates).toEqual([]);
     } finally { await v.cleanup(); }
   });
-  it("sends a deliberate decline through the same exact pending-row decision writer", async () => {
+  it("sends a deliberate native decline through the exact-version canonical decision writer", async () => {
     const v = await mount(); try {
       await click(v.host,"Decline"); const field=row(v.host).querySelector("textarea")!;
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(field,"Needs correction");field.dispatchEvent(new Event("input",{bubbles:true}));});
-      await click(v.host,"Decline action"); expect(h.invoke).toEqual([]); expect(h.updates).toHaveLength(1);
-      expect(h.updates[0]).toMatchObject({table:"paige_pending_approvals",patch:{status:"rejected",decision_rationale:"Needs correction"},filters:{id:approvalId,status:"pending",tenant_id:h.tenant}});
+      await click(v.host,"Decline action"); expect(h.invoke).toEqual([]); expect(h.updates).toEqual([]);
+      expect(h.decisions).toEqual([{_approval_id:approvalId,_expected_updated_at:fixture().updated_at,_reason:"Needs correction"}]);
       expect(row(v.host).textContent).toContain("Decline confirmed. The reviewed action was rejected.");
     } finally { await v.cleanup(); }
   });

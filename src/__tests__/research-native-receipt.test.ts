@@ -25,7 +25,7 @@ type Options = {
   member?: boolean; actorMissing?: boolean; identityError?: boolean; profileError?: boolean;
   noTenant?: boolean; unconfigured?: boolean; switchAt?: 'search' | 'run-insert' | 'receipt' | 'synthesis' | 'strategy-error';
   runWriteError?: boolean; lostRunAck?: boolean; sourceWriteError?: boolean; lostSourcesAck?: boolean;
-  runReadError?: boolean; sourcesReadError?: boolean; corruptRead?: 'actor' | 'tenant' | 'findings' | 'source' | 'extra-source';
+  runReadError?: boolean; sourcesReadError?: boolean; corruptRead?: 'actor' | 'tenant' | 'findings' | 'source' | 'extra-source' | 'source-actor' | 'source-tenant' | 'source-index' | 'final-findings';
   recorderError?: boolean; lostReceiptAck?: boolean;
   cited?: boolean; failedSynthesis?: boolean; scopeReadThrows?: boolean; strategyError?: boolean;
   scopeRpcError?: boolean; corruptScope?: 'actor' | 'tenant'; maxSources?: boolean; scopeBudgetAfterSearch?: boolean;
@@ -81,6 +81,8 @@ function fixture(options: Options = {}) {
         if (!failed) rows[table].push(...structuredClone(payload));
         return { data: null, error: failed || lost ? { message: 'fixture write acknowledgement unavailable' } : null };
       }
+      // Production intentionally grants INSERT only. RLS bypass does not grant SELECT.
+      if (table === 'research_runs' || table === 'research_sources') return { data: null, error: { message: `permission denied for table ${table}` } };
       if (table === 'research_runs' && options.runReadError || table === 'research_sources' && options.sourcesReadError) return { data: null, error: { message: 'fixture read unavailable' } };
       let result = structuredClone(rows[table].filter(row => filters.every(([key, value]) => row[key] === value)));
       if (table === 'research_runs' && result.length) {
@@ -105,7 +107,26 @@ function fixture(options: Options = {}) {
     receipts.set([args._tenant_id, args._run_id, args._outcome].join(':'), args);
     return { data: null, error: options.lostReceiptAck ? { message: 'fixture acknowledgement lost' } : null };
   });
-  const admin = { from: query, rpc: (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
+  const readbackRpc = vi.fn(async (args: Row): Promise<Reply> => {
+    if (options.runReadError || options.sourcesReadError && rows.research_sources.length || active !== tenant || options.member === false ||
+        typeof args._run_id !== 'string' || args._tenant_id !== tenant || args._actor_id !== actor) return { data: null, error: { message: 'fixture readback unavailable' } };
+    const saved = structuredClone(rows.research_runs.find(row => row.id === args._run_id && row.tenant_id === args._tenant_id && row.user_id === args._actor_id) ?? null);
+    if (!saved) return { data: null, error: null };
+    if (options.corruptRead === 'actor') saved.user_id = other;
+    if (options.corruptRead === 'tenant') saved.tenant_id = other;
+    if (options.corruptRead === 'findings' || options.corruptRead === 'final-findings' && readbackRpc.mock.calls.length > 1) saved.findings = [];
+    const sources = structuredClone(rows.research_sources.filter(row => row.run_id === args._run_id));
+    if (sources.length) {
+      if (options.corruptRead === 'source') sources[0].url = 'https://example.invalid/wrong';
+      if (options.corruptRead === 'extra-source') sources.push({ ...sources[0], source_index: 2 });
+      if (options.corruptRead === 'source-actor') sources[0].user_id = other;
+      if (options.corruptRead === 'source-tenant') sources[0].tenant_id = other;
+      if (options.corruptRead === 'source-index') sources[0].source_index = 2;
+    }
+    return { data: { ...saved, sources }, error: null };
+  });
+  const admin = { from: query, rpc: (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args)
+    : name === 'research_readback_persisted_run' ? readbackRpc(args) : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
   const caller = { from: query, auth: { getUser: identityRead }, rpc: async (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : ({ data: name === 'current_user_tenant_id' ? active : options.member !== false, error: null }) };
   const provider = vi.fn(async (url: string) => {
     if (options.switchAt === 'search') active = other;
@@ -151,7 +172,7 @@ function fixture(options: Options = {}) {
     return result;
   };
   return { run, persist, rows, receipts, operations, adminRpc, admin, provider, model, strategy,
-    identityRead, scopeRpc, maxParallel: () => maxParallel };
+    identityRead, scopeRpc, readbackRpc, maxParallel: () => maxParallel };
 }
 
 function nativeResult(): Row {
@@ -168,12 +189,11 @@ describe('incumbent native Research receipt contract', () => {
     expect(test.adminRpc.mock.calls[0][1]).toMatchObject({ _tenant_id: tenant, _actor_id: actor, _capability_key: 'deep_research', _run_id: runId, _outcome: 'capability_succeeded', _detail: { report_saved: true, findings_count: 1, sources_count: 1, stop_reason: 'answered' } });
     expect(JSON.stringify(test.adminRpc.mock.calls)).not.toContain(question);
     expect(JSON.stringify(test.adminRpc.mock.calls)).not.toContain('Private source text');
-    for (const op of test.operations.filter(op => op.method === 'read')) {
-      expect(op.filters).toContainEqual(['tenant_id', tenant]); expect(op.filters).toContainEqual(['user_id', actor]);
-      expect(op.filters).toContainEqual([op.table === 'research_runs' ? 'id' : 'run_id', runId]);
-    }
+    expect(test.readbackRpc).toHaveBeenCalledTimes(2);
+    for (const [args] of test.readbackRpc.mock.calls) expect(args).toEqual({ _run_id: runId, _tenant_id: tenant, _actor_id: actor });
+    expect(test.operations.some(op => op.method === 'read' && ['research_runs', 'research_sources'].includes(op.table))).toBe(false);
   });
-  it.each(['actor', 'tenant', 'findings', 'source', 'extra-source'] as const)('does not call a mismatched %s report saved', async corruptRead => {
+  it.each(['actor', 'tenant', 'findings', 'source', 'extra-source', 'source-actor', 'source-tenant', 'source-index', 'final-findings'] as const)('does not call a mismatched %s report saved', async corruptRead => {
     const test = fixture({ corruptRead }); const result = await test.persist();
     expect(result.persistence_verified).toBe(false);
     expect(test.adminRpc.mock.calls.every(([, args]) => args._outcome !== 'capability_succeeded')).toBe(true);

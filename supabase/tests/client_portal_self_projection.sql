@@ -542,6 +542,66 @@ SELECT ok(NOT has_function_privilege('anon','public.set_tenant_portal_config(uui
  AND has_function_privilege('authenticated','public.set_tenant_portal_config(uuid,jsonb)','EXECUTE'),
  'existing authenticated-only writer ACL remains exact');
 
+-- Explicit customer Knowledge shares use the fully replayed native authority,
+-- canonical Knowledge documents and the same customer relationship resolver.
+UPDATE public.tenant_members SET status='active' WHERE user_id='e0911000-0000-0000-0000-000000000003';
+INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
+ ('e0911000-0000-0000-0000-000000000003','e0921000-0000-0000-0000-000000000001'),
+ ('e0911000-0000-0000-0000-000000000004','e0921000-0000-0000-0000-000000000002')
+ ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
+INSERT INTO public.tenant_knowledge_docs(id,tenant_id,title,content,created_by) VALUES
+ ('e0941000-0000-4000-8000-000000000001','e0921000-0000-0000-0000-000000000001','Customer program','Approved program guidance','e0911000-0000-0000-0000-000000000003'),
+ ('e0941000-0000-4000-8000-000000000002','e0921000-0000-0000-0000-000000000002','Foreign program','FOREIGN GUIDANCE','e0911000-0000-0000-0000-000000000004');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)->'sources',
+ '[]'::jsonb,'internal Knowledge remains excluded before an explicit owner grant');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001')$$)$q$,
+ '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','customer cannot publish business Knowledge');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000004',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001')$$)$q$,
+ '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','another business administrator cannot prepare this publication');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000002')$$)$q$,
+ '42501','CUSTOMER_KNOWLEDGE_SOURCE_UNAVAILABLE','owner cannot substitute a foreign source');
+CREATE TEMP TABLE e09_knowledge_proposal AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001')$$)::jsonb proposal;
+CREATE TEMP TABLE e09_knowledge_result AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',format(
+ 'SELECT public.set_client_portal_knowledge_share(%L,%L,%L,true,%s,%L,%L)',
+ proposal->>'tenant_id',proposal->>'contact_id',proposal->>'document_id',proposal->>'expected_share_revision',proposal->>'proposal_hash','e0951000-0000-4000-8000-000000000001'))::jsonb result FROM e09_knowledge_proposal;
+SELECT is((SELECT result->>'currently_available' FROM e09_knowledge_result),'true','native reviewed grant is available after commit within the transaction');
+SELECT is((SELECT user_id::text FROM public.audit_logs WHERE id='e0951000-0000-4000-8000-000000000001'),
+ 'e0911000-0000-0000-0000-000000000003','publication receipt attributes the actual owner');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)#>>'{sources,0,content}',
+ 'Approved program guidance','customer reloads only explicitly shared canonical content');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)$q$,
+ '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','wrong customer cannot read the shared business content');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.list_client_portal_knowledge_shares('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001')$$)$q$,
+ '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','customer cannot read owner sharing administration');
+SELECT ok(NOT has_table_privilege('authenticated','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
+ AND NOT has_table_privilege('anon','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
+ AND NOT has_table_privilege('service_role','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE'),
+ 'sharing metadata is RPC-only for every external API role');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)','EXECUTE'),
+ 'customer reader cannot be invoked through anonymous or service credentials');
+UPDATE public.tenant_knowledge_docs SET content='A later unreviewed revision' WHERE id='e0941000-0000-4000-8000-000000000001';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)->'sources',
+ '[]'::jsonb,'the real Knowledge revision trigger retires a grant when its exact source changes');
+CREATE TEMP TABLE e09_knowledge_withdraw AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001',false)$$)::jsonb proposal;
+SELECT lives_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',format(
+ 'SELECT public.set_client_portal_knowledge_share(%L,%L,%L,false,%s,%L,%L)',
+ proposal->>'tenant_id',proposal->>'contact_id',proposal->>'document_id',proposal->>'expected_share_revision',proposal->>'proposal_hash','e0951000-0000-4000-8000-000000000002')) FROM e09_knowledge_withdraw$q$,
+ 'owner can withdraw even after the source has changed');
+SELECT is((SELECT count(*)::int FROM public.audit_logs WHERE id IN('e0951000-0000-4000-8000-000000000001','e0951000-0000-4000-8000-000000000002')),
+ 2,'publication and withdrawal retain their distinct durable native receipts');
+
 DELETE FROM public.clients WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT ok((SELECT contact_id IS NULL AND is_archived FROM public.paige_chat_threads
  WHERE id=(SELECT thread_id FROM e09_customer_chat)),

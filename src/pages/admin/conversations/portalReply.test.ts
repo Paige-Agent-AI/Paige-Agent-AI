@@ -102,6 +102,9 @@ describe("sendPortalReply — the comms_portal_reply seam", () => {
   it("maps 42501 to NOT_AUTHORIZED and any other failure or unreadable answer to UNCONFIRMED", async () => {
     rpc.mockResolvedValueOnce({ data: null, error: { code: "42501", message: "not authorized for this business inbox" } });
     await expect(sendPortalReply(args)).resolves.toEqual({ ok: false, code: "NOT_AUTHORIZED" });
+    // The same SQLSTATE for an expired session is not a role problem: it says to sign in again.
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "42501", message: "authentication required" } });
+    await expect(sendPortalReply(args)).resolves.toEqual({ ok: false, code: "SIGNED_OUT" });
     rpc.mockResolvedValueOnce({ data: null, error: { code: "08006", message: "connection failure" } });
     await expect(sendPortalReply(args)).resolves.toEqual({ ok: false, code: "UNCONFIRMED" });
     rpc.mockResolvedValueOnce({ data: { ok: false, error: "SOMETHING_NEW" }, error: null });

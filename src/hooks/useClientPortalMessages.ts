@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PORTAL_MESSAGE_MAX, portalBodyLength } from "@/lib/portal-message-body";
 
 /**
  * The signed-in customer's portal conversation with their business (E09).
@@ -62,7 +63,7 @@ export function portalSendFailureCopy(code: string | null): string {
   return (code && (PORTAL_SEND_FAILURE_COPY as Record<string, string>)[code]) || "This message wasn't sent.";
 }
 
-export const PORTAL_MESSAGE_MAX = 4000;
+export { PORTAL_MESSAGE_MAX };
 export const PORTAL_MESSAGES_PAGE = 50;
 export const PORTAL_MESSAGES_POLL_MS = 30_000;
 
@@ -326,7 +327,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
 
   const send = useCallback(async (body: string, kind: PortalMessageKind) => {
     const trimmed = body.trim();
-    if (!trimmed || trimmed.length > PORTAL_MESSAGE_MAX || !tenantRef.current || halted.current) return false;
+    if (!trimmed || portalBodyLength(trimmed) > PORTAL_MESSAGE_MAX || !tenantRef.current || halted.current) return false;
     const entry: OutboxMessage = { localId: newId(), requestId: newId(), body: trimmed, kind, status: "sending", error: null };
     outboxRef.current = [...outboxRef.current, entry];
     setOutbox(outboxRef.current);

@@ -51,7 +51,7 @@ type FeatureFilter = "all" | "voted" | "recent" | "planned" | "shipped";
  * thread. Nothing platform-side renders until the relationship has resolved.
  */
 export default function Support() {
-  const { brand, loading, error } = useClientPortalBrandState();
+  const { brand, loading, error, multipleBusinesses } = useClientPortalBrandState();
   if (loading) {
     return (
       <div role="status" aria-busy="true" className="max-w-5xl mx-auto p-6 space-y-4">
@@ -61,7 +61,7 @@ export default function Support() {
       </div>
     );
   }
-  if (brand?.tenant_id) return <Navigate to="/app/messages?topic=help" replace />;
+  if (brand?.tenant_id || multipleBusinesses) return <Navigate to="/app/messages?topic=help" replace />;
   if (error) {
     return (
       <div role="alert" className="max-w-xl mx-auto space-y-3 py-12 text-center">

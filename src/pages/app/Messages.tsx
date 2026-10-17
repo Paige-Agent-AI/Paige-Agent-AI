@@ -28,6 +28,7 @@ import { applyPortalOverlay, catalogRoutableItems } from "@/lib/portal/moduleNav
 import { readableTextOn } from "@/lib/brand/contrast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useClientAccountExit } from "@/components/client/useClientAccountExit";
+import { portalBodyLength } from "@/lib/portal-message-body";
 
 /** Refusals where editing the text cannot help: nothing to resend from the composer. */
 const NO_EDIT = new Set(["NO_RELATIONSHIP", "MULTIPLE_RELATIONSHIPS", "RATE_LIMITED"]);
@@ -190,15 +191,23 @@ export default function Messages() {
     [pb.portal.modules, portalConfig.modules],
   );
 
-  // Drafts belong to the signed-in identity: a scope change retires them.
-  const [draft, setDraft] = useState<{ epoch: number; text: string }>({ epoch: thread.scopeEpoch, text: "" });
-  const text = draft.epoch === thread.scopeEpoch ? draft.text : "";
-  const setText = (value: string) => setDraft({ epoch: thread.scopeEpoch, text: value });
+  // Drafts belong to the signed-in identity: a scope change retires them. A draft carries whether it
+  // is a help request, so a failed request edited and resent from the plain thread stays one.
+  const [draft, setDraft] = useState<{ epoch: number; text: string; help: boolean }>({ epoch: thread.scopeEpoch, text: "", help: false });
+  const live = draft.epoch === thread.scopeEpoch;
+  const text = live ? draft.text : "";
+  const draftIsHelp = live && draft.help;
+  const setText = (value: string) => setDraft((prev) => ({
+    epoch: thread.scopeEpoch,
+    text: value,
+    help: prev.epoch === thread.scopeEpoch && prev.help && value.trim().length > 0,
+  }));
   const [sending, setSending] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
   const lastSeen = useRef<string | null>(null);
   const lastOutbox = useRef(0);
+  const lastEpoch = useRef(thread.scopeEpoch);
   const anchor = useRef<string | null>(null);
   const nearBottom = useRef(true);
   const settled = useRef(false);
@@ -232,6 +241,15 @@ export default function Messages() {
   const newestId = newest?.id ?? null;
   const outboxCount = thread.outbox.length;
   useEffect(() => {
+    // A new signed-in identity is a new conversation: its first load is a first load again, not
+    // "new messages" to announce, and no scroll anchor from the old thread carries over.
+    if (lastEpoch.current !== thread.scopeEpoch) {
+      lastEpoch.current = thread.scopeEpoch;
+      settled.current = false;
+      lastSeen.current = null;
+      lastOutbox.current = 0;
+      anchor.current = null;
+    }
     const previous = lastSeen.current;
     const initial = !settled.current;
     if (!thread.loading) settled.current = true;
@@ -253,9 +271,9 @@ export default function Messages() {
       end.current?.scrollIntoView?.({ block: "end" });
       nearBottom.current = true;
     }
-  }, [newestId, newest, outboxCount, businessName, thread.loading]);
+  }, [newestId, newest, outboxCount, businessName, thread.loading, thread.scopeEpoch]);
 
-  const length = text.trim().length;
+  const length = portalBodyLength(text);
   const tooLong = length > PORTAL_MESSAGE_MAX;
   const blocked = thread.unavailable || thread.multipleBusinesses;
   const canCompose = !thread.loading && !blocked && !!thread.tenantId;
@@ -274,10 +292,11 @@ export default function Messages() {
     event?.preventDefault();
     if (!canSend) return;
     const body = text;
+    const kind = help || draftIsHelp ? "help" : "message";
     setSending(true);
     setText("");
     try {
-      await thread.send(body, help ? "help" : "message");
+      await thread.send(body, kind);
     } finally {
       setSending(false);
       field.current?.focus();
@@ -300,7 +319,11 @@ export default function Messages() {
   // "Edit and resend" never loses a failed message: it moves into the composer, after any draft.
   const editFailed = (entry: OutboxMessage) => {
     const current = text.replace(/\s+$/, "");
-    setText(current.trim() ? `${current}\n\n${entry.body}` : entry.body);
+    setDraft({
+      epoch: thread.scopeEpoch,
+      text: current.trim() ? `${current}\n\n${entry.body}` : entry.body,
+      help: draftIsHelp || entry.kind === "help",
+    });
     thread.discard(entry.localId);
     field.current?.focus();
   };
@@ -438,6 +461,9 @@ export default function Messages() {
           <Label htmlFor="portal-message-body" className="sr-only">
             {help ? `Your request for ${businessName}` : `Message ${businessName}`}
           </Label>
+          {draftIsHelp && !help && (
+            <p className="mb-1.5 px-1 text-[11px] text-muted-foreground">This goes to {businessName} as a help request.</p>
+          )}
           <div className="flex items-end gap-2">
             <Textarea
               id="portal-message-body"
@@ -447,7 +473,6 @@ export default function Messages() {
               onKeyDown={onKeyDown}
               placeholder={help ? "What do you need help with?" : `Message ${businessName}`}
               rows={2}
-              maxLength={PORTAL_MESSAGE_MAX + 200}
               disabled={!canCompose}
               aria-invalid={tooLong || undefined}
               aria-describedby={counterId}

@@ -195,3 +195,14 @@ it("keeps a rate-limited send retryable with the same request id and honest copy
   await act(async () => { await state.retry(state.outbox[0].localId); });
   expect(sendCalls()[1][1].p_request_id).toBe(firstId);
 });
+
+it("accepts a body of 4,000 emoji, as the server counts characters, and refuses 4,001", async () => {
+  await mount();
+  let ok: boolean | undefined;
+  await act(async () => { ok = await state.send("🙂".repeat(4001), "message"); });
+  expect(ok).toBe(false);
+  expect(sendCalls()).toHaveLength(0);
+  await act(async () => { ok = await state.send("🙂".repeat(4000), "message"); });
+  await flush();
+  expect(sendCalls()).toHaveLength(1);
+});

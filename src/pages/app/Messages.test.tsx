@@ -295,3 +295,48 @@ it("follows new replies only while the reader is near the bottom", async () => {
   expect(scroll).toHaveBeenCalled();
   Element.prototype.scrollIntoView = original;
 });
+
+it("counts characters the way the server does, so 4,000 emoji are sendable", async () => {
+  await render();
+  // 4,000 emoji are 8,000 UTF-16 units but 4,000 characters to Postgres length().
+  await type("🙂".repeat(4000));
+  expect(button("Send message").disabled).toBe(false);
+  expect(host.querySelector("textarea")!.hasAttribute("maxlength")).toBe(false);
+  await type("🙂".repeat(4001));
+  expect(button("Send message").disabled).toBe(true);
+  expect(host.textContent).toContain("1 characters over the 4,000 limit");
+  await type("");
+});
+
+it("a failed help request edited and resent from the plain thread is still a help request", async () => {
+  f.state.outbox = [{ localId: "h1", requestId: "r1", body: "My login is broken", kind: "help", status: "failed", error: "REQUEST_ID_CONFLICT" }];
+  await render();
+  await act(async () => button("Edit and resend").click());
+  expect(host.textContent).toContain("This goes to Northwind Studio as a help request.");
+  f.state.outbox = [];
+  await act(async () => button("Send message").click());
+  expect(f.state.send).toHaveBeenCalledWith("My login is broken", "help");
+  // The next, freshly typed message is an ordinary one again.
+  await type("Thanks!");
+  expect(host.textContent).not.toContain("as a help request");
+  await act(async () => button("Send message").click());
+  expect(f.state.send).toHaveBeenLastCalledWith("Thanks!", "message");
+});
+
+it("treats a new signed-in identity as a first load: nothing announced, scrolled to the end", async () => {
+  const scroll = vi.fn();
+  const original = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = scroll;
+  const status = () => Array.from(host.querySelectorAll('[role="status"]')).map(n => n.textContent).join("|");
+  f.state.messages = [customer("a", "Hi", "2026-10-01T10:00:00Z")];
+  await render();
+  // Another person signs in on this device: the hook clears, then loads THEIR thread.
+  f.state = { ...f.state, scopeEpoch: 1, loading: true, messages: [] };
+  await render();
+  f.state = { ...f.state, loading: false, messages: [business("x", "Private to the second person", "2026-10-02T10:00:00Z")] };
+  scroll.mockClear();
+  await render();
+  expect(status()).not.toContain("New message");
+  expect(scroll).toHaveBeenCalled();
+  Element.prototype.scrollIntoView = original;
+});

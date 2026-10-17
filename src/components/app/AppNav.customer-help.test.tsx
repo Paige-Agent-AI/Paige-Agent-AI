@@ -11,6 +11,7 @@ const f = vi.hoisted(() => ({
   brand: null as null | { tenant_id: string; tenant_name: string; logo_url: null; primary_color: null },
   brandLoading: false,
   brandError: false,
+  multiple: false,
   unreadArg: [] as (string | null)[],
 }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => f.mobile }));
@@ -20,7 +21,7 @@ vi.mock("@/components/brand/PaigeCommandMark", () => ({ PaigeCommandMark: () => 
 vi.mock("@/hooks/useUnreadSupportCount", () => ({
   useUnreadSupportCount: (id: string | null) => { f.unreadArg.push(id); return { count: id ? 2 : 0 }; },
 }));
-vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: f.brandError }) }));
+vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: f.brandError, multipleBusinesses: f.multiple }) }));
 vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: {}, loading: false }) }));
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [{ key: "home", label: "Home" }] }, persona: { name: "Paige" } }) }));
 vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn(), customerSignOutTarget: vi.fn(), cachePortalSlug: vi.fn() }));
@@ -44,7 +45,7 @@ const openMobileMenu = async () => {
 const menuLabels = () => Array.from(document.querySelectorAll('nav[aria-label="Customer navigation"] button')).map(b => b.textContent?.trim());
 
 beforeEach(() => {
-  f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.brandError = false; f.unreadArg = [];
+  f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.brandError = false; f.multiple = false; f.unreadArg = [];
   f.brand = { tenant_id: "e0923000-0000-0000-0000-000000000001", tenant_name: "Northwind Studio", logo_url: null, primary_color: null };
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
@@ -134,4 +135,14 @@ it("on a failed brand read the desktop bar offers no contact destination that co
   await render();
   expect(topBarButton("Contact Advisor")).toBeUndefined();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
+});
+
+it("treats a customer of more than one business as a customer: Get help, never platform Support", async () => {
+  f.mobile = true; f.brand = null; f.multiple = true;
+  await render();
+  await openMobileMenu();
+  const labels = menuLabels();
+  expect(labels).toContain("Get help");
+  expect(labels).toContain("Messages");
+  expect(labels.some(l => l?.startsWith("Support"))).toBe(false);
 });

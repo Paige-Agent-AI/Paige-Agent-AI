@@ -111,7 +111,7 @@ export function AppNav({ user }: AppNavProps) {
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
-  const { brand, loading: brandLoading, error: brandError } = useClientPortalBrandState();
+  const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = useClientPortalBrandState();
   // A customer of a business (an actual relationship resolved server-side) gets
   // help from THAT business ("Get help" → their own inbox), never Paige's platform
   // support desk. Staff/owners without a customer relationship keep platform
@@ -119,8 +119,8 @@ export function AppNav({ user }: AppNavProps) {
   // sees the platform desk flash in (E09 owner decision). A FAILED resolve is not
   // "not a customer": it shows neither, rather than a destination that may be wrong.
   const relationshipKnown = !brandLoading && !brandError;
-  const isCustomer = relationshipKnown && !!brand?.tenant_id;
-  const showPlatformSupport = relationshipKnown && !brand?.tenant_id;
+  const isCustomer = relationshipKnown && (!!brand?.tenant_id || multipleBusinesses);
+  const showPlatformSupport = relationshipKnown && !isCustomer;
   const showGetHelp = isCustomer;
   const businessName = brand?.tenant_name?.trim();
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);

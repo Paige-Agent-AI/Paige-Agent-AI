@@ -8,9 +8,10 @@ const f = vi.hoisted(() => ({
   brand: null as null | { tenant_id: string; tenant_name: string; logo_url: null; primary_color: null },
   loading: false,
   error: false,
+  multiple: false,
 }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
-  useClientPortalBrandState: () => ({ brand: f.brand, loading: f.loading, error: f.error }),
+  useClientPortalBrandState: () => ({ brand: f.brand, loading: f.loading, error: f.error, multipleBusinesses: f.multiple }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { getUser: () => Promise.resolve({ data: { user: null } }) } },
@@ -35,7 +36,7 @@ const render = async () => act(async () => root.render(
 const where = () => host.querySelector('[data-testid="where"]')?.textContent;
 
 beforeEach(() => {
-  f.brand = null; f.loading = false; f.error = false;
+  f.brand = null; f.loading = false; f.error = false; f.multiple = false;
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
@@ -68,4 +69,11 @@ it("does not guess when the relationship check fails", async () => {
   await render();
   expect(host.querySelector('[role="alert"]')?.textContent).toContain("couldn't check your account");
   expect(host.querySelectorAll('[role="tab"]')).toHaveLength(0);
+});
+
+it("sends a customer of more than one business to Contact your team, not 'couldn't check'", async () => {
+  f.multiple = true;
+  await render();
+  expect(where()).toBe("/app/messages?topic=help");
+  expect(host.querySelector('[role="alert"]')).toBeNull();
 });

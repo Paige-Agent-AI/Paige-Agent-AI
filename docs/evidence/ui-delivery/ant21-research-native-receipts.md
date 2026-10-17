@@ -1,5 +1,22 @@
 # ANT-21: native Research outcome and workspace receipt
 
+## Source-policy correction: pre-edit routing (development, 2026-10-16)
+
+1. Owner outcome: a constrained research request uses at most the requested number of unique sources, restricted to the requested hostnames, with readable cited findings and truthful saved status.
+2. Domain: existing portfolio family3 Research, integrated with family2 Chat. This bounded source-policy lease is composed above reviewed native readback `dca68db5d6e3c55fb9276227671caa11410d2c19`; the lead retains all other Chat sites, C0b bindings and release ownership.
+3. Shared dependencies: existing Harness A identity/scope, B capability admission and F outcome evidence. The completion map records partial layers; this does not introduce a second engine, durable-work runtime or claim the absent/partial layers complete.
+4. Spine: existing dynamic `research_knowledge.deep_research` in C0b, through the incumbent Chat/native engine. Registration, maturity and protected source pins are unchanged in this candidate.
+5. Provider: existing Integration Capability Registry `paige-browser-research` is PARTIAL. Only its existing Firecrawl web-search wrapper and SSRF-guarded page reader are reused. Listing/configuration is not connection proof; no provider activation, credentials or live calls.
+6. Authority: existing read/read_only/member/approval-none contract; no mutation verb or new Trust/confirmation channel. Existing actor, current workspace, membership, scope checkpoints and budget ceilings remain binding. Optional source constraints can only narrow gathering.
+7. Durability: no new jobs/events/scheduler. Existing native research run/source persistence and workspace capability recorder are retained; `persistRun` must remain byte-identical to the reviewed base.
+8. Proof: exact canonical run/source readback plus separate receipt acknowledgement. `coverage.source_policy` accompanies the existing coverage JSON; an uncertain save directs inspection of the existing library before any repeated run.
+9. Surface: incumbent Conversations/Research Home; ledger `paige.workspace` PARTIAL remains PARTIAL. No JSX, geometry, navigation, new controls or state machine; only truthful terminal recovery copy. Existing visual direction, keyboard and responsive contracts remain unchanged and rendered proof is UNVERIFIED in this source-only slice.
+10. Acceptance: protected actual handler/wrapper/Chat tests prove bounded source admission and durable transport; ordinary authenticated constrained runs, real provider enforcement, reload, paired SOLO parity, Live and owner acceptance remain UNVERIFIED/PROOF OWED. Shared tenant-neutral optional arguments cover all eligible existing/future SOLO accounts, without provisioning/schema changes or reference-account branches.
+
+Flow-by-Flow and Paige UI Design were routed; Impeccable clarify/craft-floor applied to the existing terminal recovery copy (canonical upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md). FLOW_PROTOTYPE: NOT_REQUIRED for this exact recovery-copy correction and narrowing of the incumbent callable contract; no new user flow or visual world. All existing viewport proof boundaries above remain unchanged.
+
+Official provider contract: https://docs.firecrawl.dev/api-reference/endpoint/search and https://docs.firecrawl.dev/features/search#domain-filters document hostname-only `includeDomains`, web source selection and bounded search limit. Provider filtering is advisory defense-in-depth: exact full-hostname or dot-boundary subdomain admission is enforced locally before reads/synthesis/persistence. An allowed hostname does not increase a source's authority/reliability tier.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ordinary or delegated verified actor -> current active workspace/member -> incumbent bounded Research engine -> exact native run/source readback -> existing workspace recorder -> separate report/receipt acknowledgement
 PAIGE_UI_DESIGN: PASS: native-only source boundary; src/components/paige/chat/PaigeResearchCard.tsx and src/solo/paige-research.tsx presentation preserved without JSX, CSS or control changes

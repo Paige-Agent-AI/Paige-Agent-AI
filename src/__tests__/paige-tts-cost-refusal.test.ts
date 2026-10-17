@@ -210,7 +210,7 @@ describe("INT-321 paige-tts wiring (structural)", () => {
   it("8/11: a refused reservation returns from the request — no provider call, no next attempt", () => {
     expect(refusalBranch.length).toBeGreaterThan(0);
     // INT-324: the one refusal branch sits before EITHER provider is entered.
-    expect(tts.indexOf("if (reservationError || !reservationId) {")).toBeLessThan(tts.indexOf("elevenlabsTts({"));
+    expect(tts.indexOf("if (reservationError || !reservationId) {")).toBeLessThan(tts.indexOf("elevenlabsMessageStream({"));
     expect(tts.indexOf("if (reservationError || !reservationId) {")).toBeLessThan(tts.indexOf("synthesizeSpeechStream("));
     expect(refusalBranch).toContain("classifyVoiceCostRefusal(reservationError)");
     // 12/F2: the response is the one allow-listed body builder + the classifier's status — never a
@@ -218,7 +218,7 @@ describe("INT-321 paige-tts wiring (structural)", () => {
     expect(refusalBranch).toContain("return json(voiceCostRefusalBody(refusal), refusal.status);");
     expect(refusalBranch.match(/return json\(/g)).toHaveLength(1);
     expect(refusalBranch).not.toMatch(/["']tts_[a-z_]+["']/);
-    expect(refusalBranch).not.toMatch(/\bcontinue\b|elevenlabsTts|synthesizeSpeechStream|new Response\(/);
+    expect(refusalBranch).not.toMatch(/\bcontinue\b|elevenlabsMessageStream|synthesizeSpeechStream|new Response\(/);
     // Raw database text never reaches the browser body.
     expect(refusalBranch).not.toMatch(/reservationError\??\.(message|details|hint)/);
   });

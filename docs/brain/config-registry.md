@@ -309,6 +309,8 @@ not re-propose it.)* Module header `_shared/twilio.ts:24-35` states the model ex
 
 ## Voice / TTS / STT — Paige Voice Profile
 
+**2026-10-16 E01 streaming development:** existing HTTP read-aloud adapter/handler now have local first-byte delivery, original-request cancellation, complete-only cache and stage durations on incumbent usage records; model, approved voice, retention, budgets and Live dialogue transport remain unchanged. Provider-neutral56 checks and real Deno graph pass; production provider latency, activated transport and ordinary-customer acceptance are not established by this candidate. Cache remains provider:model:voice:text under existing tenant prefix, with revision attribution in cost/usage.
+
 **2026-10-16 E01 read-only production metadata:** active slot remains ElevenLabs revision `elevenlabs-jessica-r1`, approved/active/status approved. The separate `elevenlabs-jessica-take5-r1` candidate remains unapproved/inactive/pending-provider-proof. No profile, credential, readiness, routing or budget was changed. This supersedes the earlier activation snapshot below; it does not establish current provider latency, consented Live acceptance or full readiness. Local progressive message playback is unreleased and retains this existing server selection.
 
 **2026-09-08 full-audio continuation (development):** owner authority now permits existing-account

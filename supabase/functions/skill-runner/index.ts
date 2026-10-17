@@ -679,8 +679,9 @@ Deno.serve(async (req) => {
 
     // Browser authority is an ADDITIONAL current-session/workspace/role check, never a substitute for
     // the governed caller gate above. Known denials are 401/403, not generic server failures.
+    const hasBrowserStep = browserToolAllowed(skill as SkillRow);
     let browserAuthority: SecureBrowserAuthority | null = null;
-    if (browserToolAllowed(skill as SkillRow)) {
+    if (hasBrowserStep) {
       try {
         browserAuthority = await resolveBrowserAuthority(req, body, admin);
       } catch (err) {

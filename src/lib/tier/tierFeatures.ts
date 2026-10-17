@@ -42,6 +42,7 @@
  */
 
 import type { TierClassification } from "@/lib/agency/tierLabels";
+import { isSoloStandalone as canonicalSoloStandalone } from "../../../supabase/functions/_shared/solo-classification";
 
 export type { TierClassification };
 
@@ -216,10 +217,7 @@ export function resolveTierKey(c: TierClassification): TierKey {
  * operator/retired row. Kept in this one home so no render gate hardcodes an
  * `account_type ===` compare (§60 lint:tier-features).
  */
-export function isSoloStandalone(c: TierClassification): boolean {
-  return !c.parent_tenant_id && c.account_type === "standalone";
-}
-
+export const isSoloStandalone: (c: TierClassification) => boolean = canonicalSoloStandalone;
 // --- Baseline building blocks ------------------------------------------------
 
 /** Universal surfaces (§35) — present on every tier, God included. */

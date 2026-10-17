@@ -240,3 +240,97 @@ UPDATE public.profiles SET active_tenant_id='00000000-0000-0000-0000-00000000000
 SET LOCAL ROLE authenticated;
 SELECT public.test_denied($q$SELECT public.test_idle_publication_review()$q$,'KNOWLEDGE_SCOPE_CHANGED');
 ROLLBACK;
+
+-- Reload lookup scale regression. Exercise the exact association-loop and
+-- legacy-idle predicates on the real incumbent envelope, not an index-only toy
+-- table. All 100k neutral rows and test helpers roll back after the proof.
+BEGIN;
+SET LOCAL statement_timeout='20s';
+INSERT INTO public.paige_durable_work(id,tenant_id,initiating_user_id,intent_id,
+ capability_key,work_kind,authority_context,scope_epoch,idempotency_key,status,
+ terminal_outcome,settled_at,request_payload)
+SELECT md5('knowledge-index-work-'||g)::uuid,
+ CASE WHEN g<=80000 THEN '00000000-0000-0000-0000-000000000001'::uuid
+      ELSE '00000000-0000-0000-0000-000000000002'::uuid END,
+ '10000000-0000-0000-0000-000000000001'::uuid,md5('knowledge-index-intent-'||g)::uuid,
+ CASE WHEN g%4 IN (2,3) THEN 'knowledge.publish' ELSE 'documents.generate' END,
+ CASE WHEN g%4 IN (1,3) THEN 'knowledge_publish' ELSE 'document_generate' END,
+ '{}'::jsonb,'knowledge-index-proof','knowledge-index-proof-'||g,'failed',
+ '{"reason":"neutral_fixture"}'::jsonb,now(),
+ jsonb_build_object('document_id',CASE WHEN g IN(1,2,3,4,80001)
+  THEN '90000000-0000-4000-8000-000000000001' ELSE md5('knowledge-index-doc-'||g)::uuid::text END,
+  'neutral_fixture',repeat('n',256))
+FROM generate_series(1,100000)g;
+ANALYZE public.paige_durable_work;
+SELECT public.test_assert((SELECT count(*)=100000 FROM public.paige_durable_work
+ WHERE idempotency_key LIKE 'knowledge-index-proof-%'),'100k mixed tenant/capability native envelopes loaded for document lookup proof');
+
+PREPARE knowledge_publication_candidates(uuid,text) AS
+ SELECT x.* FROM public.paige_durable_work x
+ WHERE x.tenant_id=$1 AND (x.work_kind='knowledge_publish' OR x.capability_key='knowledge.publish')
+   AND x.request_payload->>'document_id'=$2;
+PREPARE knowledge_publication_absence(uuid,text) AS
+ SELECT NOT EXISTS(SELECT 1 FROM public.paige_durable_work x
+ WHERE x.tenant_id=$1 AND (x.work_kind='knowledge_publish' OR x.capability_key='knowledge.publish')
+   AND x.request_payload->>'document_id'=$2);
+CREATE FUNCTION pg_temp.check_publication_lookup_plan(mode text,statement_name text,tenant uuid,document text)
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE report jsonb; root_plan jsonb; indexed boolean; label text;
+BEGIN
+ PERFORM set_config('plan_cache_mode',mode,true);
+ EXECUTE format('EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON) EXECUTE %I(%L,%L)',statement_name,tenant,document) INTO report;
+ root_plan:=report->0->'Plan';
+ label:=mode||'/'||statement_name||'/'||tenant::text||'/'||document;
+ WITH RECURSIVE nodes(node) AS (
+  SELECT root_plan UNION ALL
+  SELECT child FROM nodes CROSS JOIN LATERAL jsonb_array_elements(coalesce(node->'Plans','[]'::jsonb))child
+ ) SELECT coalesce(bool_or(node->>'Index Name'='paige_durable_work_knowledge_document_idx'
+   AND node->>'Index Cond' LIKE '%tenant_id%'
+   AND node->>'Index Cond' LIKE '%document_id%'),false) INTO indexed FROM nodes;
+ RAISE NOTICE 'KNOWLEDGE_PUBLICATION_LOOKUP_PLAN %',jsonb_build_object('case',label,'report',report);
+ PERFORM public.test_assert(indexed,'tenant+document index serves exact native lookup: '||label);
+ PERFORM public.test_assert(coalesce((root_plan->>'Shared Hit Blocks')::integer,0)
+   +coalesce((root_plan->>'Shared Read Blocks')::integer,0)<=64,
+   'document lookup visits bounded native pages, not tenant history: '||label);
+ PERFORM public.test_assert(coalesce((root_plan->>'Temp Read Blocks')::integer,0)=0
+   AND coalesce((root_plan->>'Temp Written Blocks')::integer,0)=0,
+   'document lookup does not spill native work history: '||label);
+END $$;
+DO $$ DECLARE mode text; statement_name text; target record; BEGIN
+ FOREACH mode IN ARRAY ARRAY['force_custom_plan','force_generic_plan'] LOOP
+  FOREACH statement_name IN ARRAY ARRAY['knowledge_publication_candidates','knowledge_publication_absence'] LOOP
+   FOR target IN SELECT * FROM (VALUES
+    ('00000000-0000-0000-0000-000000000001'::uuid,'90000000-0000-4000-8000-000000000001'),
+    ('00000000-0000-0000-0000-000000000001'::uuid,'90000000-0000-4000-8000-000000000099'),
+    ('00000000-0000-0000-0000-000000000002'::uuid,'90000000-0000-4000-8000-000000000001')
+   )t(tenant,document) LOOP
+    PERFORM pg_temp.check_publication_lookup_plan(mode,statement_name,target.tenant,target.document);
+   END LOOP;
+  END LOOP;
+ END LOOP;
+END $$;
+SELECT public.test_assert((SELECT count(*)=3 FROM public.paige_durable_work x
+ WHERE x.tenant_id='00000000-0000-0000-0000-000000000001'
+ AND (x.work_kind='knowledge_publish' OR x.capability_key='knowledge.publish')
+ AND x.request_payload->>'document_id'='90000000-0000-4000-8000-000000000001'),
+ 'indexed predicate includes both kind-only and capability-only malformed candidates, excluding neither');
+SELECT public.test_assert((SELECT count(*)=1 FROM public.paige_durable_work x
+ WHERE x.tenant_id='00000000-0000-0000-0000-000000000002'
+ AND (x.work_kind='knowledge_publish' OR x.capability_key='knowledge.publish')
+ AND x.request_payload->>'document_id'='90000000-0000-4000-8000-000000000001'),
+ 'same document identity remains independently tenant bounded under the index');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='not_submitted',
+ 'actual native legacy-idle read stays truthful with 100k unrelated native envelopes');
+SELECT public.test_assert(public.test_publication_review()#>>'{publication,association}'='not_submitted',
+ 'actual native saved-review read stays truthful with 100k unrelated native envelopes');
+RESET ROLE;
+DEALLOCATE knowledge_publication_candidates;
+DEALLOCATE knowledge_publication_absence;
+ROLLBACK;
+BEGIN;
+SELECT public.test_idle_work('{"capability_key":"documents.generate"}');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable',
+ 'publication kind alone remains a native refusal, complementing the original capability-only control');
+ROLLBACK;

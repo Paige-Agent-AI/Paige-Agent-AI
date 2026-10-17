@@ -138,3 +138,13 @@ BEGIN
   'publication',publication);
 END $$;
 -- CREATE OR REPLACE preserves the incumbent owner and ACL. No new grants.
+
+-- Both the saved-review candidate loop and legacy-idle NOT EXISTS use this
+-- exact tenant/document predicate. Keep OR: a malformed envelope carrying only
+-- one publication marker must remain visible to the reader's refusal checks.
+-- Ordinary CREATE INDEX supports transactional migration replay; unlike a
+-- concurrent build it cannot leave a failed invalid index. It can briefly block
+-- envelope writes while building, so normal release lock monitoring still applies.
+CREATE INDEX IF NOT EXISTS paige_durable_work_knowledge_document_idx
+ ON public.paige_durable_work (tenant_id, (request_payload->>'document_id'))
+ WHERE (work_kind='knowledge_publish' OR capability_key='knowledge.publish');

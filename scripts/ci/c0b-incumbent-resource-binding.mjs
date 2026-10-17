@@ -547,7 +547,7 @@ const SOURCES = {
 // Original-effect discovery and status projection are reviewed read-only context.
 // Pin both so a changed helper cannot introduce effects or fabricate settlement.
 const ANCESTRY_SOURCES = {
- "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "5927f625f25e6e1baeeb9da64a80a6544ba731aff1b36375eb3b56270152540b",
+ "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.
  // Pin BOTH reviewed files; no generated digest acceptance or effect guard waiver.
@@ -562,7 +562,7 @@ const ANCESTRY_SOURCES = {
  // Independently reviewed completed-lifecycle publication reader; no effect authority.
  "supabase/functions/_shared/paige-turn/interactive.ts": "88d238f65d488277112b87d131ad122e4b28d534b43ca5803df97569a2c54ba5",
  // Independently reviewed canonical approval-status projection; no effect authority.
- "supabase/functions/_shared/paige-turn/interactive-approval.ts": "95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c",
+ "supabase/functions/_shared/paige-turn/interactive-approval.ts": "4ab6bdbd41f2fc6b81e51ee1c286a859a8167db66f34ef66599c0dda55a9e03c",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

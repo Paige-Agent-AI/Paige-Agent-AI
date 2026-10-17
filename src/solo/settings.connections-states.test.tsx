@@ -42,6 +42,8 @@ const rpcState = vi.hoisted(() => ({
   tenantId: "tenant-1971670",
   userId: "u1",
   tenantLoading: false,
+  accountOverride: null as string | null,
+  platformStaff: false,
 }));
 
 vi.mock("@/hooks/useUserRoles", () => ({
@@ -63,7 +65,8 @@ vi.mock("@/hooks/useTenantContext", () => ({
     activeTenantId: rpcState.tenantId,
     activeUserId: rpcState.userId,
     loading: rpcState.tenantLoading,
-    activeTenant: { account_number: rpcState.tenantId === "tenant-1971670" ? "1971670" : "2000000" },
+    isPlatformStaff: rpcState.platformStaff,
+    activeTenant: { account_number: rpcState.accountOverride ?? (rpcState.tenantId === "tenant-1971670" ? "1971670" : "2000000") },
   }),
 }));
 vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: () => ["connections", vi.fn()] }));
@@ -91,13 +94,13 @@ const READY = {
   billing: { subscription: "active", plan_name: "Solo", period_end: null, cancel_at_period_end: false, usage_metering: "not_recording", metered_events_30d: 0 },
 };
 
-async function mountConnections() {
+async function mountConnections(search = "", account = "1971670") {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   await act(async () => {
     root.render(
-      <MemoryRouter initialEntries={["/solo/1971670/settings/connections"]}>
+      <MemoryRouter initialEntries={[`/solo/${account}/settings/connections${search}`]}>
         <Routes><Route path="/solo/:account/settings/:tab" element={<SoloSettings />} /></Routes>
       </MemoryRouter>,
     );
@@ -113,7 +116,22 @@ async function openArea(host: HTMLDivElement, label: string) {
 }
 
 describe("Connections renders its real states", () => {
-  beforeEach(() => { rpcState.readiness = { data: null, error: null }; rpcState.identity = { data: null, error: null }; rpcState.commsError = null; rpcState.commsLoading = false; rpcState.mailboxConnected = false; rpcState.tenantId = "tenant-1971670"; rpcState.userId = "u1"; rpcState.tenantLoading = false; });
+  beforeEach(() => { rpcState.readiness = { data: null, error: null }; rpcState.identity = { data: null, error: null }; rpcState.commsError = null; rpcState.commsLoading = false; rpcState.mailboxConnected = false; rpcState.tenantId = "tenant-1971670"; rpcState.userId = "u1"; rpcState.tenantLoading = false; rpcState.accountOverride = null; rpcState.platformStaff = false; });
+
+  it("returns to the current interview from native Connections without carrying account authority in the query", async () => {
+    rpcState.tenantId = "test-tenant-a"; rpcState.accountOverride = "test-tenant-a";
+    const thread = "10000000-0000-4000-8000-000000000001";
+    const {host, cleanup} = await mountConnections(`?interviewThread=${thread}&account=foreign&owner=true`, "test-tenant-a");
+    expect(host.querySelector('.ss-return--interview a')?.getAttribute("href")).toBe(`/solo/test-tenant-a/paige/chat?interviewThread=${thread}`);
+    await cleanup();
+  });
+  it.each(["loading", "operator", "different-account", "ambiguous-thread"])("withholds the interview return hint for %s", async reason => {
+    rpcState.tenantId = "test-tenant-a"; rpcState.accountOverride = reason === "different-account" ? "test-tenant-b" : "test-tenant-a";
+    rpcState.tenantLoading = reason === "loading"; rpcState.platformStaff = reason === "operator";
+    const thread = "10000000-0000-4000-8000-000000000001";
+    const {host, cleanup} = await mountConnections(`?interviewThread=${thread}${reason === "ambiguous-thread" ? `&interviewThread=${thread}` : ""}`, "test-tenant-a");
+    expect(host.querySelector('.ss-return--interview')).toBeNull(); await cleanup();
+  });
 
   it("says the READ failed — it does not report an empty account", async () => {
     rpcState.readiness = { data: null, error: { message: "COMMS_READINESS_FORBIDDEN" } };

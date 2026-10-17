@@ -2,6 +2,8 @@
 
 Status: IMPLEMENTED; UNPUBLISHED. No production/customer acceptance claim.
 
+Current build identity: reviewed native source c79650e5a3c4e69739dfef6b4b9cfc88cffca381, ordinary main eaeaf80d6c78cb4374d6f440261f5f9e5ede2f7b composition0247a66eea09a74e6d9a7b451b757a1310139572, reserved unapplied migration20271110011000. Fresh successor-head hosted CI, deployment and authenticated consumer recovery remain owed; earlier45000 proof and CI states below are historical.
+
 ## Customer outcome and canonical path
 
 A saved review must remain recoverable after reload without creating another extraction, publication intent or job. The incumbent submit freezes the publication in paige_durable_work; the browser currently retains its acknowledgement only in a volatile ref. The scoped native review reader has no publication association. Successful promotion clears the pending review/extraction reference and retains the authoritative publication work as active_generation_id.
@@ -161,3 +163,11 @@ Private sibling work/knowledge-publication-index-proof retains full notices and 
 Grounding / Collision Check: fetched current main88e544d5ad4a760b21b2845e3b570d23ae424a4e and read ANT-21/52/147 plus adjacent50/51/138, canonical Master/portfolio/Brain and the actual open PR finding. Normal composition preserves all current Calendar source/pins/native30000 and both its native/Chat CI commands, plus this native recovery command. The native30000 production readback is the root integrator's separate release evidence; this author ran no production operation. Task2324, consumer28922e9ca97eac797bd89ea8ca5759ec32152e16, E09 Portal2320 and policy2297/2229 keep separate leases. Consumer source/evidence was not edited here; its later composition must preserve both native history here and its separately reviewed UI metadata appendix.
 
 This is source/test proof for the still-unapplied45000 index successor, not a final review verdict. Required distinct source review, exact successor-head CI, controlled merge, native45000 index validity/predicate/body/ACL readback, separately integrated consumer release and ordinary saved-publication recovery remain owed. No whole18-capability/50-parity, every-account manual QA, full-shell, provider, Live or owner acceptance claim is made. Historical134-control/b496 green CI remains historical and does not certify this new head.
+
+## Unapplied migration frontier reconciliation (2026-10-17)
+
+Root's authoritative22:30:56 production readback records only native25000,30000 and E09 Portal20271110010000 in this release sequence; Knowledge45000, Task46000 and email47000 have never been applied there. E09 #2320 merged to eaeaf80d6c78cb4374d6f440261f5f9e5ede2f7b at22:20:26 and advances the actual frontier above these earlier reservations. This is parent-supplied production evidence, not a new database operation by this author. No migration ledger or applied source is rewritten.
+
+The ordinary main merge completed cleanly. Only the unapplied Knowledge migration filename moves from20271109045000 to reserved20271110011000_knowledge_publication_recovery.sql, followed by the incumbent publication-check.py default path. The complete SQL bytes, including the reviewed reader and nonunique partial OR index, remain exact c79650e5a. Existing publication assertions, fixture/data-directory fences, all current main files and both Knowledge/E09 native CI commands are preserved. No Chat, Spine, C0b, pin, authority, writer, role, provider or customer-data change occurs.
+
+The earlier176 native assertions and all retained red/infrastructure attempts remain evidence for identical SQL; they are not rerun or relabeled by this path-only correction. The current native CI retry's Chromium screenshot failure is not waived, and no old check is described as green for this successor. Migration collision/security lint, Python syntax, driver path resolution, SQL byte preservation and tracked-tree checks are recorded in the private frontier freeze receipt. Fresh exact-head hosted CI and reviewed chronological native release/readback remain mandatory before any consumer activation or authenticated publication-recovery claim.

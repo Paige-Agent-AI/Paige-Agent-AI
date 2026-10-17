@@ -141,7 +141,7 @@ function calendarBookingReadDoorBound(resolver) {
     && native.includes('.select(COLUMNS.join(",")).eq("id",bookingId).limit(2).abortSignal(abort.signal)')
     && native.includes('caller.from("tenants").select("id,account_type,parent_tenant_id").eq("id",tenantId).limit(2).abortSignal(abort.signal)')
     && native.includes('row.id!==tenantId') && native.includes('row.parent_tenant_id!==null')
-    && native.includes('!isSoloStandalone({account_type:row.account_type,parent_tenant_id:row.parent_tenant_id})')
+    && native.includes('!isSoloStandalone({account_type:row.account_type,parent_tenant_id:null})')
     && compact(classification).includes('return!c.parent_tenant_id&&c.account_type==="standalone";');
 }
 

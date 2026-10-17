@@ -8,11 +8,26 @@
  * frames, real compiled CSS — with the network, the tenant and the session stubbed. It is not an
  * authenticated runtime drive of Solo; that is owed, and the evidence record says so.
  */
-import { act } from "react";
+import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { MemoryRouter } from "react-router-dom";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
+import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
+import { SoloPaigeWorkspace } from "@/solo/SoloPaigeWorkspace";
+
+const reloadHarness = vi.hoisted(() => ({ threads: [] as Array<Record<string, unknown>>, turns: [] as Array<Record<string, unknown>>, recovery: null as unknown }));
+const shellHarness = vi.hoisted(() => ({ theme: "light", open: true }));
+vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: shellHarness.theme, setTheme: vi.fn() }) }));
+vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
+vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ loading: false, has: () => true }) }));
+vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ isImpersonating: false, target: null }) }));
+vi.mock("@/solo/data/useSoloToolGovernance", () => ({ useSoloToolGovernance: () => ({ loading: false, configured: true, error: null, byTool: {}, canWrite: false }) }));
+vi.mock("@/components/ui/paige", () => ({ useAgentPresence: () => {
+  const [railExpanded, setRailExpanded] = useState(shellHarness.open);
+  return { railExpanded, expandRail: () => setRailExpanded(true), collapseRail: () => setRailExpanded(false) };
+} }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -34,8 +49,9 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/hooks/usePaigeThreads", () => ({
   usePaigeThreads: () => ({
-    threads: [], isLoading: false, isFetched: true,
-    loadTurns: vi.fn(async () => []), ensureThread: vi.fn(async () => "thread-a"),
+    threads: reloadHarness.threads, isLoading: false, isFetched: true,
+    loadTurns: vi.fn(async () => reloadHarness.turns), ensureThread: vi.fn(async () => "thread-a"),
+    loadApprovalRecovery: vi.fn(async () => reloadHarness.recovery),
     onTurnPersisted: vi.fn(), renameThread: vi.fn(), archiveThread: vi.fn(), deleteThread: vi.fn(),
   }),
 }));
@@ -91,9 +107,17 @@ type Scene = {
   /** What the approval turn returns; undefined leaves the card live, a pending promise leaves it running. */
   answer?: unknown;
   decline?: boolean;
+  reload?: "available" | "unavailable" | "interrupted";
 };
 
 const SCENES: Scene[] = [
+  ...(["available", "unavailable", "interrupted"] as const).map(reload => ({
+    label: `Reload — ${reload}`,
+    note: reload === "available" ? "Synthetic canonical WAIT_APPROVAL and a fresh server-issued native projection. No action runs on reload."
+      : reload === "unavailable" ? "A canonical proposal failed its fresh check. Historical context stays; approval controls do not."
+      : "An interrupted historical proposal has no WAIT_APPROVAL terminal. It cannot be recovered by this reader.",
+    ask: "", offer: "Review the proposed changes before approving.", proposal: CONTACT, reload,
+  })),
   {
     label: "Needs your OK",
     note: "Unchanged. Gold is spent on Approve and nowhere else.",
@@ -212,7 +236,28 @@ const SCENES: Scene[] = [
   },
 ];
 
-async function capture(scene: Scene): Promise<string> {
+async function capture(scene: Scene, shell?: { width: number; height: number; open: boolean; theme: "light" | "dark" }): Promise<string> {
+  const originalWidth = window.innerWidth, originalHeight = window.innerHeight;
+  if (shell) {
+    Object.defineProperty(window, "innerWidth", { value: shell.width, configurable: true });
+    Object.defineProperty(window, "innerHeight", { value: shell.height, configurable: true });
+    window.localStorage.removeItem("paige.tenantShell.navExpanded");
+    shellHarness.theme = shell.theme; shellHarness.open = shell.open;
+  }
+  reloadHarness.threads = []; reloadHarness.turns = []; reloadHarness.recovery = null;
+  if (scene.reload) {
+    const threadId = "00000000-0000-4000-8000-000000000003", turnId = "00000000-0000-4000-8000-000000000005", intentId = "00000000-0000-4000-8000-000000000004";
+    const card = {...CONTACT[0], command: {action: "contact.create", patch: {first_name: "Maya", last_name: "Ortiz"}}, idempotency_key: "fixture-original-key"};
+    reloadHarness.threads = [{id: threadId, title: "Fixture pending work", updated_at: new Date().toISOString()}];
+    reloadHarness.turns = [
+      {id: "fixture-user", role: "user", content: "Add the new contact.", bundle_ref: null},
+      {id: turnId, role: "assistant", content: scene.offer, interactive_intent_id: intentId,
+        interactive_terminal_state: scene.reload === "interrupted" ? "INTERRUPTED" : "WAIT_APPROVAL",
+        bundle_ref: {paige_confirm: [card], turn_state: {v: 1, state: scene.reload === "interrupted" ? "INTERRUPTED" : "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1}}},
+    ];
+    reloadHarness.recovery = scene.reload === "available" ? {v: 1, status: "available", thread_id: threadId, turn_id: turnId, intent_id: intentId,
+      tenant_id: "account-a", expires_at: new Date(Date.now() + 300000).toISOString(), confirmations: [card]} : null;
+  }
   let turn = 0;
   vi.stubGlobal("fetch", vi.fn(async () => {
     turn += 1;
@@ -226,9 +271,29 @@ async function capture(scene: Scene): Promise<string> {
     // The props the Solo workspace mounts the chat with (SoloPaigeWorkspace.tsx), minus the
     // caller-owned rail and permissions chip, which sit outside the transcript captured here.
     await act(async () => {
-      root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety greeting="What are we moving?" />);
+      const chat = <PaigeAIChat hideHeader fill enableHistory soloTenantSafety greeting="What are we moving?" />;
+      root.render(shell ? <MemoryRouter initialEntries={["/solo/3855/clients/people"]}>
+        <TenantCommandCenterShell accountName="Test services" accountType="standalone" userRole="admin" onSignOut={() => {}} soloPaigeWorkspace={<SoloPaigeWorkspace visible={shell.open} />}>
+          <section aria-label="Synthetic client records"><h1>Clients</h1><p>Local geometry fixture. No customer or provider connection.</p><label>Find a client<input aria-label="Find a client" /></label></section>
+        </TenantCommandCenterShell>
+      </MemoryRouter> : chat);
       await flush();
     });
+    if (scene.reload) {
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); await flush(); });
+      const transcript = host.querySelector("#solo-paige-transcript")!;
+      const approve = Array.from(transcript.querySelectorAll("button")).some(button => /^Approve/.test(button.textContent ?? ""));
+      expect(approve).toBe(scene.reload === "available");
+      expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+      if (shell) {
+        const mounted = host.querySelector("[data-tenant-shell]");
+        expect(mounted?.getAttribute("data-paige")).toBe(shell.open ? "open" : "closed");
+        expect(host.querySelector("#tenant-shell-main")).toBeTruthy();
+        expect(host.querySelector("#tenant-paige-workspace")).toBeTruthy();
+        return mounted!.outerHTML;
+      }
+      return Array.from(transcript.querySelectorAll("[data-paige-message-id]")).map(message => message.outerHTML).join("\n");
+    }
     const textarea = host.querySelector("textarea")!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, scene.ask);
@@ -252,6 +317,8 @@ async function capture(scene: Scene): Promise<string> {
     await act(async () => { root.unmount(); });
     host.remove();
     vi.unstubAllGlobals();
+    Object.defineProperty(window, "innerWidth", { value: originalWidth, configurable: true });
+    Object.defineProperty(window, "innerHeight", { value: originalHeight, configurable: true });
   }
 }
 
@@ -259,7 +326,8 @@ function compiledCss(): string {
   const dir = "dist/assets";
   const files = readdirSync(dir).filter((f) => f.endsWith(".css"));
   const pick = ["main-", "SoloEntry-", "PaigeAIChat-"].map((p) => files.find((f) => f.startsWith(p))).filter(Boolean) as string[];
-  return pick.map((f) => readFileSync(`${dir}/${f}`, "utf8")).join("\n");
+  return pick.map((f) => readFileSync(`${dir}/${f}`, "utf8")).join("\n") + "\n" +
+    readFileSync("src/components/tenant-shell/tenant-command-center-shell.css", "utf8") + "\n" + readFileSync("src/solo/solo-paige-workspace.css", "utf8");
 }
 
 function page(theme: "light" | "dark", scenes: Array<{ scene: Scene; html: string }>): string {
@@ -286,12 +354,24 @@ ${scenes.map(({ scene, html }) => `<section class="scene" data-scene="${scene.la
 }
 
 describe("approval recovery render harness", () => {
+  it.skipIf(!existsSync("dist/assets"))("captures the real shell at every required viewport with PAIGE open and closed", async () => {
+    const dir = process.env.APPROVAL_RECOVERY_RENDER_DIR || "work/recovery-render";
+    mkdirSync(dir, { recursive: true });
+    for (const theme of ["light", "dark"] as const) for (const [width, height] of [[1536,770],[1366,768],[1024,768],[900,1000],[390,768]]) {
+      for (const open of [false, true]) for (const reload of ["available", "unavailable", "interrupted"] as const) {
+        const scene = SCENES.find(s => s.reload === reload)!;
+        const html = await capture(scene, { width, height, open, theme });
+        writeFileSync(`${dir}/shell-${theme}-${width}x${height}-${open ? "open" : "closed"}-${reload}.html`,
+          `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local SOLO recovery geometry</title><style>${compiledCss()} html,body{margin:0;height:100%;}</style></head><body>${html}</body></html>`, "utf8");
+      }
+    }
+  }, 90_000);
   // The pages embed the COMPILED tokens, so they need a build. CI runs tests without one; skip
   // rather than fail, because this harness is a viewing aid, not a correctness gate.
   it.skipIf(!existsSync("dist/assets"))("drives the real surface into every state and writes the pages", async () => {
     const captured: Array<{ scene: Scene; html: string }> = [];
     for (const scene of SCENES) captured.push({ scene, html: await capture(scene) });
-    const dir = "docs/evidence/ui-delivery/solo-approval-recovery";
+    const dir = process.env.APPROVAL_RECOVERY_RENDER_DIR || "docs/evidence/ui-delivery/solo-approval-recovery";
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/approval-recovery.light.html`, page("light", captured), "utf8");
     writeFileSync(`${dir}/approval-recovery.dark.html`, page("dark", captured), "utf8");

@@ -18,7 +18,9 @@ export async function readCustomerChat(frame:ClientPortalFrame):Promise<{threadI
  if(made.error||!uuid(made.data))throw Error("Conversation could not be opened");
  const threadId=made.data;
  const thread=await supabase.from("paige_chat_threads").select("id,caller_user_id,contact_id,tenant_id,lens")
-  .eq("id",threadId).eq("audience","customer_private").is("studio_session_id",null).maybeSingle();
+  // audience is supplied by the reviewed forward migration; retain the same
+  // server predicate through the SDK's explicit-column overload until generated types catch up.
+  .eq("id",threadId).filter("audience","eq","customer_private").is("studio_session_id",null).maybeSingle();
  if(thread.error||!thread.data||thread.data.caller_user_id!==frame.actorId||thread.data.contact_id!==frame.profile.id||
   thread.data.tenant_id!==frame.profile.tenant_id||thread.data.lens!=="client")throw Error("Customer conversation changed");
  const turns=await supabase.from("paige_chat_turns").select("id,role,content")

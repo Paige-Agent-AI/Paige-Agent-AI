@@ -2,7 +2,7 @@ import {beforeEach,expect,it,vi} from "vitest";
 import {readCustomerChat} from "./customer-chat";
 import {readClientPortalFrame} from "./client-portal-frame";
 const f=vi.hoisted(()=>({getUser:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
- error:null as unknown,reads:[] as string[]}));
+ error:null as unknown,reads:[] as string[],filters:[] as unknown[][]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
  auth:{getUser:(...a:unknown[])=>f.getUser(...a)},rpc:(...a:unknown[])=>f.rpc(...a),
  from:(name:string)=>{f.reads.push(name);return f.from(name);},
@@ -16,13 +16,14 @@ const value=()=>({actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user
  brand:{tenant_id:tenant,tenant_name:"Test practice",tenant_slug:"test-practice",logo_url:null,primary_color:null,support_email:null},config:{}});
 const frame=()=>readClientPortalFrame(value(),actor)!;
 beforeEach(()=>{
- vi.clearAllMocks();f.reads=[];f.error=null;
+ vi.clearAllMocks();f.reads=[];f.filters=[];f.error=null;
  f.thread={id:thread,caller_user_id:actor,contact_id:client,tenant_id:tenant,lens:"client"};
  f.turns=[{id:"e0957000-0000-4000-8000-000000000002",role:"assistant",content:"Saved answer"},
   {id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Saved question"}];
  f.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
  f.rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_frame"?value():thread,error:null}));
  f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,order:()=>q,
+   filter:(...args:unknown[])=>{f.filters.push(args);return q;},
    maybeSingle:async()=>({data:f.thread,error:null}),limit:async()=>({data:f.turns,error:f.error})};return q;});
 });
 it("reuses native creation and reloads only the canonical customer transcript",async()=>{
@@ -31,6 +32,7 @@ it("reuses native creation and reloads only the canonical customer transcript",a
  expect(f.rpc).toHaveBeenCalledWith("paige_chat_thread_create",{p_contact_id:null,p_lens:"customer",
    p_title:"Customer conversation",p_consent_snapshot:{audience:"customer_private"}});
  expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns"]);
+ expect(f.filters).toContainEqual(["audience","eq","customer_private"]);
 });
 for(const field of ["caller_user_id","contact_id","tenant_id","lens"])it("refuses a mismatched "+field+" before reading turns",async()=>{
  f.thread={...(f.thread as object),[field]:"foreign"};

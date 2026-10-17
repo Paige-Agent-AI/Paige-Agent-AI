@@ -29,5 +29,7 @@
     "passed": 39,
     "failed": 0
   },
-  "guardApplication": "PENDING_SEPARATE_EXACT_PACKET_REVIEW"
+  "guardApplication": "APPLIED_REVIEW_6230009520; EXACT_INVERSE_AND_59_CONTROLS_PASS",
+  "spineSelfTest": "PASS",
+  "sdkAudiencePredicate": "UNCHANGED; explicit SDK filter overload; 9 client tests pass"
 }

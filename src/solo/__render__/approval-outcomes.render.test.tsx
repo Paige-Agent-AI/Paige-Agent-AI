@@ -100,7 +100,11 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-const output = "work/approval-outcomes-render", assets = `${output}/dist/assets`;
+const output = process.env.APPROVAL_RENDER_DIR ?? "work/approval-outcomes-render";
+if (output !== "work/approval-outcomes-render" && !/^work\/human-stripe-\d{8}\/after$/.test(output)) {
+  throw new Error("Approval render output must use the incumbent directory or an isolated work/human-stripe-YYYYMMDD/after directory");
+}
+const assets = `${output}/dist/assets`;
 const digest = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 const title = "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. "
   + "Preserve the complete request and check these long reference details: " + "contactreference".repeat(12);

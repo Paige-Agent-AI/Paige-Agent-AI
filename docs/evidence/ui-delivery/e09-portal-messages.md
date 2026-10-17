@@ -23,9 +23,9 @@ SOLO_1536X770_PAIGE_OPEN: PASS: e09-inbox-matrix-open light/dark: portal thread,
 SOLO_1366X768_PAIGE_CLOSED: PASS: e09-inbox-matrix-closed light/dark: portal thread, help request and Portal composer render; portal-scope checks pass.
 SOLO_1366X768_PAIGE_OPEN: PASS: e09-inbox-matrix-open light/dark: portal thread, help request and Portal composer render; portal-scope checks pass.
 SOLO_1024X768_PAIGE_CLOSED: PASS: e09-inbox-matrix-closed light/dark: portal thread, help request and Portal composer render; portal-scope checks pass.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the harness PAIGE dock is a placeholder that covers the composer's Send and the right panel at this width, so the docked inbox layout is owed to an authenticated Solo drive; the portal-scope element checks in e09-inbox-matrix-open light/dark pass.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the harness PAIGE dock is a stand-in panel that covers the composer's Send and the right panel at this width, so the docked inbox layout is owed to an authenticated Solo drive; the portal-scope element checks in e09-inbox-matrix-open light/dark pass.
 SOLO_900X1000_PAIGE_CLOSED: PASS: e09-inbox-matrix-closed light/dark: portal thread, help request and Portal composer render; portal-scope checks pass.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: the harness PAIGE dock is a placeholder that covers the composer's Send and the right panel at this width, so the docked inbox layout is owed to an authenticated Solo drive; the portal-scope element checks in e09-inbox-matrix-open light/dark pass.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: the harness PAIGE dock is a stand-in panel that covers the composer's Send and the right panel at this width, so the docked inbox layout is owed to an authenticated Solo drive; the portal-scope element checks in e09-inbox-matrix-open light/dark pass.
 UNVERIFIED: authenticated customer and owner send/read/reply on production; physical Safari/iOS keyboard behaviour; screen reader; browser 400% zoom; the owner inbox's phone layout (pre-existing, separate task).
 
 OWNER_INTENT: A customer can talk to the business they are a customer of, inside that business's portal, and ask that business for help; the business answers from its own inbox.

@@ -21,10 +21,12 @@ const changes = [
   ['SOLO classification', 'supabase/functions/_shared/solo-classification.ts', '!c.parent_tenant_id && c.account_type === "standalone"', 'true'],
   ['Calendar read declaration', 'supabase/functions/_shared/paige-spine/domains/calendar_booking.ts', 'effect: "read"', 'effect: "mutation"'],
   ['native Team authority source', 'supabase/functions/_shared/paige-spine/domains/teamAuthorityChatEvidence.ts', 'client.rpc("get_team_authority_readiness", {})', 'client.rpc("counterfeit_team_authority", {})'],
+  ['Task fresh authority callback', 'supabase/functions/_shared/operations-task-read.ts', 'deps.revalidateScope(abort.signal)', 'Promise.resolve(true)'],
+  ['Task final native authority read', 'supabase/functions/_shared/operations-task-read.ts', 'const final = decode(await read());', 'const final = first;'],
 ];
 
-test('reviewed Calendar context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 108);
+test('reviewed Calendar and Task context binds all incumbent adapters without replacing their contracts', () => {
+  assert.equal(incumbentSourcePaths.length, 109);
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);
   assert.equal(baseline.tools.size, 29);

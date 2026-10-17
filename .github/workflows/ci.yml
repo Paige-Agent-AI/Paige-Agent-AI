@@ -68,6 +68,8 @@ jobs:
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/send-portal-invite/canonical-delivery.test.mjs
+          supabase/functions/send-portal-invite/command.test.mjs
           supabase/functions/_shared/operator-retirement-handler.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql

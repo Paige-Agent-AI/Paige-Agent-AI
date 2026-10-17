@@ -331,7 +331,7 @@ function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
       // Never bypass a public SQL symbol, even on a verified TS capability.
       if (!symbol.startsWith("public.") && (provenTypeScriptSymbol(capability,role,symbol)||provenMerchantSymbol(capability,role,symbol)||provenStoredReadSymbol(capability,role,symbol)||provenInvitationSymbol(capability,role,symbol)||provenIncumbentSymbol(capability,role,symbol)||provenFundingStudioSymbol(capability,role,symbol)||provenBrowserSymbol(capability,role,symbol))) continue;
       const bare = symbol.replace(/^public\./, "");
-      if (!new RegExp(`create\\s+or\\s+replace\\s+function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
+      if (!new RegExp(`create\\s+(?:or\\s+replace\\s+)?function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
     }
     if (["mutate", "external_effect"].includes(capability.action?.classification)) {
       if (!chatGuard) findings.push(`${capability.key}: mutable capability requires the direct Chat registry guard`);
@@ -357,6 +357,9 @@ if (process.argv.includes("--self-test")) {
   const later = migrations + "\ncreate or replace function public.future_domain_adapter() returns void language sql as $$ select $$;";
   const future = [{ ...PAIGE_SPINE_CAPABILITIES[0], key: "future.safe_evidence", domain: "future", owner: "future-domain", evidence: { ...PAIGE_SPINE_CAPABILITIES[0].evidence, adapter: "public.future_domain_adapter" }, action: undefined, outcome: undefined }];
   if (lint(future, later, null, null).length) { console.error("PAIGE Spine registry lint rejected a coherent additive later-domain migration"); process.exit(1); }
+  const firstCreation=migrations+'\nCREATE FUNCTION public.future_domain_adapter() RETURNS void LANGUAGE sql AS $$ SELECT $$;';
+  if(lint(future,firstCreation,null,null).length)throw Error('Plain CREATE FUNCTION must be recognized as an actual SQL declaration');
+  if(!lint(future,migrations+'\nCREATE TABLE public.future_domain_adapter(id uuid);',null,null).some(f=>f.includes('registered server symbol is absent')))throw Error('A table cannot substitute for the exact function symbol');
   if(tsProof.findings.length||zapierProof.findings.length||ghlProof.findings.length||merchantProof.findings.length||browserProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings,ghlProof.findings,merchantProof.findings,browserProof.findings));process.exit(1);}
   const merchantNegatives=[
     ['unmounted catalog','aggregate','...SALES_MERCHANT_TOOLS','...OTHER_TOOLS'],

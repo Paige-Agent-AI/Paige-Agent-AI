@@ -89,7 +89,7 @@ BEGIN
    RETURN public._client_portal_invitation_delivery_result(source,actor)||jsonb_build_object('disposition','busy');END IF;
   disposition:='reconcile';
   UPDATE public.email_send_log SET metadata=metadata||jsonb_build_object('claim_id',claim,'claim_expires_at',statement_timestamp()+interval '25 seconds',
-    'reconciler_user_id',actor) WHERE id=source.id RETURNING * INTO source;
+    'reconciler_user_id',actor,'recovery_attempt',true) WHERE id=source.id RETURNING * INTO source;
  ELSE
   IF EXISTS(SELECT 1 FROM public.email_send_log l WHERE l.tenant_id=p_tenant_id
     AND l.idempotency_key LIKE 'customer-portal-delivery/v1/%' AND l.metadata->>'invite_id'=p_invitation_id::text
@@ -100,7 +100,7 @@ BEGIN
   INSERT INTO public.email_send_log(id,tenant_id,template_name,recipient_email,status,sender_account,idempotency_key,metadata)
    VALUES(gen_random_uuid(),p_tenant_id,'portal_invite',lower(btrim(invitation.email)),'pending','platform',key,
     jsonb_build_object('via','send-portal-invite','kind','consumer','invite_id',p_invitation_id,'contact_id',invitation.contact_id,
-      'operation_id',p_operation_id,'actor_user_id',actor,'reconciler_user_id',actor,'payload_digest',p_payload_digest,
+      'operation_id',p_operation_id,'actor_user_id',actor,'reconciler_user_id',actor,'payload_digest',p_payload_digest,'recovery_attempt',false,
       'started_at',statement_timestamp(),'claim_id',claim,'claim_expires_at',statement_timestamp()+interval '25 seconds')) RETURNING * INTO source;
  END IF;
  -- Claim identity/key are internal execution preconditions; adapters never put them in model/tool results.
@@ -125,6 +125,8 @@ BEGIN
  IF source.metadata->>'claim_id' IS DISTINCT FROM p_claim_id::text THEN
   RAISE EXCEPTION 'CUSTOMER_INVITATION_DELIVERY_CLAIM_CHANGED' USING ERRCODE='40001';END IF;
  outcome:=p_outcome;
+ -- A later refusal cannot prove the ORIGINAL uncertain attempt did not send.
+ IF source.metadata->>'recovery_attempt'='true' AND outcome IN ('failed','refused') THEN outcome:='outcome_unknown';END IF;
  IF outcome='provider_accepted' AND (p_message_id ~ '^[A-Za-z0-9_-]{1,200}$') IS DISTINCT FROM true THEN outcome:='outcome_unknown';END IF;
  send_status:=CASE WHEN outcome='provider_accepted' THEN 'sent' ELSE 'failed' END;
  UPDATE public.email_send_log SET status=send_status,
@@ -134,12 +136,12 @@ BEGIN
  RETURN public._client_portal_invitation_delivery_result(source,(source.metadata->>'reconciler_user_id')::uuid);
 END $$;
 
-REVOKE ALL ON FUNCTION public._client_portal_invitation_delivery_guard(),
- public._client_portal_invitation_delivery_result(public.email_send_log,uuid),
- public.read_client_portal_invitation_delivery(uuid,uuid),
- public.claim_client_portal_invitation_delivery(uuid,uuid,uuid,text),
- public.finalize_client_portal_invitation_delivery(uuid,uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.read_client_portal_invitation_delivery(uuid,uuid),
- public.claim_client_portal_invitation_delivery(uuid,uuid,uuid,text) TO authenticated;
+REVOKE ALL ON FUNCTION public._client_portal_invitation_delivery_guard() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._client_portal_invitation_delivery_result(public.email_send_log,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.read_client_portal_invitation_delivery(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.claim_client_portal_invitation_delivery(uuid,uuid,uuid,text) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.finalize_client_portal_invitation_delivery(uuid,uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.read_client_portal_invitation_delivery(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_client_portal_invitation_delivery(uuid,uuid,uuid,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.finalize_client_portal_invitation_delivery(uuid,uuid,uuid,text,text,text) TO service_role;
 COMMIT;

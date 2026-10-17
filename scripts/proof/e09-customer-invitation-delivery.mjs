@@ -1,6 +1,6 @@
 // Existing isolated invitation runner extension. Provider effects are not exercised here.
 import {randomUUID,createHash} from 'node:crypto';
-export function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit}){
+export async function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit,spawn,exe,port,transcript}){
  const file='supabase/migrations/20271108234000_e09_customer_invitation_delivery.sql';
  const migration=fs.readFileSync(path.join(root,file),'utf8'),contact=randomUUID(),operation=randomUUID(),digest='d'.repeat(64);
  sql(`DELETE FROM email_send_log;
@@ -22,7 +22,7 @@ export function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit})
  sql(migration);
  const claim=(op=operation,hash=digest,actor=ids.a,tenant=ids.ta,invitation=invite,role='authenticated')=>api('claim_client_portal_invitation_delivery',`'${tenant}','${invitation}','${op}','${hash}'`,actor,role);
  const read=(op=operation,actor=ids.a,tenant=ids.ta,role='authenticated')=>api('read_client_portal_invitation_delivery',`'${tenant}','${op}'`,actor,role);
- const finish=(ticket,outcome='provider_accepted',message=randomUUID(),role='service_role',hash=digest)=>api('finalize_client_portal_invitation_delivery',`'${ids.ta}','${operation}','${ticket}','${hash}','${outcome}',${lit(message)}`,null,role);
+ const finish=(ticket,outcome='provider_accepted',message=randomUUID(),role='service_role',hash=digest,op=operation)=>api('finalize_client_portal_invitation_delivery',`'${ids.ta}','${op}','${ticket}','${hash}','${outcome}',${lit(message)}`,null,role);
  const snapshot=()=>sql('SELECT coalesce(jsonb_agg(to_jsonb(l)ORDER BY id),\'[]\'::jsonb)FROM email_send_log l');
  let first;
  check('Native delivery claims one canonical pending log row, not a provider acceptance',()=>{
@@ -34,7 +34,7 @@ export function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit})
   const result=read();assert.equal(result.outcome,'pending');for(const key of ['claim_id','provider_key','payload_digest','token','join_url'])assert(!(key in result));
   assert(!JSON.stringify(result).includes('delivery@'));assert.equal(result.receipt_id,first.receipt_id);
  });
- check('Concurrent repeated dispatch is busy and does not grant another provider request',()=>{
+ check('Repeated dispatch during a live claim is busy and does not grant another provider request',()=>{
   const before=snapshot(),again=claim();assert.equal(again.disposition,'busy');assert(!('provider_key'in again));assert.equal(snapshot(),before);
  });
  check('A new operation cannot bypass a pending invitation delivery',()=>{
@@ -58,6 +58,20 @@ export function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit})
  check('A stale claim cannot overwrite the current recovery outcome',()=>{
   assert.throws(()=>finish(first.claim_id,'failed',null),/CLAIM_CHANGED/);assert.equal(read().outcome,'outcome_unknown');
  });
+ check('A refusal during recovery preserves the original send uncertainty',()=>{
+  assert.equal(finish(recovery.claim_id,'refused',null).outcome,'outcome_unknown');
+  assert.throws(()=>claim(randomUUID()),/PREVIOUS_SEND_UNCONFIRMED/);
+ });
+ check('Another current authorized owner can recover without rewriting original attribution',()=>{
+  sql(`INSERT INTO tenant_members(tenant_id,user_id,status,role,is_owner)VALUES('${ids.ta}','${ids.delegate}','active','admin',false)`);
+  recovery=claim(operation,digest,ids.delegate);assert.equal(recovery.disposition,'reconcile');
+  assert.equal(recovery.actor_id,ids.delegate);assert.equal(recovery.requested_by,ids.a);assert.equal(recovery.reconciled_by,ids.delegate);
+  assert.equal(recovery.provider_key,first.provider_key);assert.equal(recovery.receipt_id,first.receipt_id);
+ });
+ check('A rejected recovery response also preserves uncertainty',()=>{
+  assert.equal(finish(recovery.claim_id,'failed',null).outcome,'outcome_unknown');
+  recovery=claim(operation,digest,ids.delegate);
+ });
  let message;
  check('Verified provider acceptance settles the original row and survives reload without another dispatch',()=>{
   message=randomUUID();const accepted=finish(recovery.claim_id,'provider_accepted',message);assert.equal(accepted.outcome,'provider_accepted');
@@ -67,6 +81,37 @@ export function invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit})
  check('A late uncertainty does not downgrade a recorded acceptance',()=>{
   const before=snapshot();assert.equal(finish(recovery.claim_id,'outcome_unknown',null).outcome,'provider_accepted');assert.equal(snapshot(),before);
  });
+ for(const outcome of ['failed','refused'])check('A known first-dispatch '+outcome+' stays terminal and allows a deliberate new operation',()=>{
+  const op=randomUUID(),fresh=claim(op);assert.equal(fresh.disposition,'dispatch');
+  assert.equal(finish(fresh.claim_id,outcome,null,'service_role',digest,op).outcome,outcome);
+  assert.equal(finish(fresh.claim_id,'outcome_unknown',null,'service_role',digest,op).outcome,outcome);
+  assert.equal(claim(op).disposition,'recorded');assert.equal(read(op).outcome,outcome);
+ });
+ check('After claim, service can record the actual result while a revoked owner cannot read or send',()=>{
+  const op=randomUUID(),fresh=claim(op);
+  sql(`UPDATE tenant_members SET status='revoked'WHERE tenant_id='${ids.ta}' AND user_id='${ids.a}'`);
+  try{assert.throws(()=>read(op));assert.throws(()=>claim(op));
+   assert.equal(finish(fresh.claim_id,'provider_accepted',randomUUID(),'service_role',digest,op).outcome,'provider_accepted');
+  }finally{sql(`UPDATE tenant_members SET status='active'WHERE tenant_id='${ids.ta}' AND user_id='${ids.a}'`)}
+  assert.equal(read(op).outcome,'provider_accepted');
+ });
+ const concurrentOperation=randomUUID();let concurrent;
+ const statement=`BEGIN;SELECT set_config('test.actor','${ids.a}',true);SET LOCAL ROLE authenticated;SELECT claim_client_portal_invitation_delivery('${ids.ta}','${invite}','${concurrentOperation}','${digest}');COMMIT;`;
+ const query=()=>new Promise((resolve,reject)=>{
+  const args=['-X','-h','127.0.0.1','-p',String(port),'-U','postgres','-d','postgres','-A','-t','-v','ON_ERROR_STOP=1'];
+  const child=spawn(exe('psql'),args,{windowsHide:true,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';
+  const timer=setTimeout(()=>{child.kill();reject(Error('Concurrent local delivery proof timed out'));},20000);
+  child.stdout.on('data',v=>{stdout+=v});child.stderr.on('data',v=>{stderr+=v});child.on('error',e=>{clearTimeout(timer);reject(e)});
+  child.on('close',exit=>{clearTimeout(timer);transcript.push({name:'psql-concurrent-invitation-delivery',args,exit,stdout,stderr});
+   if(exit!==0)reject(Error(stderr));else resolve(JSON.parse(stdout.split(/\r?\n/).find(line=>line.startsWith('{'))));});child.stdin.end(statement);
+ });
+ concurrent=await Promise.all([query(),query()]);
+ check('Two simultaneous native API calls grant exactly one provider attempt and one durable row',()=>{
+  assert.deepEqual(concurrent.map(v=>v.disposition).sort(),['busy','dispatch']);
+  assert.equal(concurrent[0].receipt_id,concurrent[1].receipt_id);
+  assert.equal(sql(`SELECT count(*)FROM email_send_log WHERE metadata->>'operation_id'='${concurrentOperation}'`),'1');
+ });
+ finish(concurrent.find(v=>v.disposition==='dispatch').claim_id,'provider_accepted',randomUUID(),'service_role',digest,concurrentOperation);
  const next=randomUUID();let second;
  check('A deliberate fresh resend can claim a new operation after known acceptance',()=>{second=claim(next);assert.equal(second.disposition,'dispatch');assert.notEqual(second.provider_key,first.provider_key)});
  check('After the provider key window, an unknown request stays held and never invents a new key',()=>{

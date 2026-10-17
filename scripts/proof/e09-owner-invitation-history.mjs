@@ -226,7 +226,7 @@ try{
  SELECT ('e0958000-0000-0000-0000-'||lpad(n::text,12,'0'))::uuid,'${ids.ta}','consumer','cap@tests.invalid','2026-10-16','2026-11-16' FROM generate_series(1,1002)n`);
  const r=call();assert.equal(r.invitations.length,1001);assert.equal(r.invitations[0].id,'e0958000-0000-0000-0000-000000001002');assert.equal(r.invitations.at(-1).id,'e0958000-0000-0000-0000-000000000002');});
  const operationProof=process.argv.includes('--operation')||process.argv.includes('--delivery')?await invitationOperationProof({sql,check,assert,fs,path,root,actual,ids,lit,spawn,exe,port,transcript}):null;
- const deliveryProof=process.argv.includes('--delivery')?invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit}):null;
+ const deliveryProof=process.argv.includes('--delivery')?await invitationDeliveryProof({sql,check,assert,fs,path,root,ids,lit,spawn,exe,port,transcript}):null;
  const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({evidence:'synthetic-native-postgresql',baseline,proofScriptSHA256,migrationFile,migrationSHA256:baseline?null:hash(migration),operationProof,deliveryProof,
  hostedTestFile,hostedTestSHA256:hash(hostedTest),hostedEmailInsertSHA256:hash(hostedEmailInsert),
  accountTypeSourceFile,accountTypeSourceSHA256:hash(accountTypeSource),accountTypeConstraintSHA256:hash(accountTypeConstraint),

@@ -226,7 +226,7 @@ async function ownerTask(fault = '') {
       const review = JSON.parse(nativeSql(`select jsonb_build_object('updated_at',p.updated_at,'process',_owner_task_process_review(p),'acts',
         (select jsonb_agg(jsonb_build_object('id',a.id,'position',a.position,'action_kind',a.action_kind,'tool_key',a.tool_key,'config',a.config)order by a.position,a.id)
           from paige_automation_acts a where a.automation_id=p.id))from paige_automations p where id='${process}';`));
-      const quote = (value: unknown) => "'" + String(value).replaceAll("'", "''") + "'";
+      const quote = (value: unknown) => "'" + String(value).split("'").join("''") + "'";
       nativeSql(`set role authenticated;set request.jwt.claims='{"role":"authenticated","sub":"${actor}"}';
         select control_owner_task_automation('${process}','arm',${quote(review.updated_at)}::timestamptz,
           ${quote(JSON.stringify(review.process))}::jsonb,${quote(JSON.stringify(review.acts))}::jsonb);`);

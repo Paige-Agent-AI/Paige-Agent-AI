@@ -36,6 +36,9 @@ vi.mock("@/hooks/useTenantContext", () => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     rpc,
+    // The real Automations leaf also subscribes to Auth changes; navigation
+    // coverage needs that port even when no action is authorized by this fixture.
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
     // Defined inline: `vi.mock` is hoisted above any top-level const.
     from: () => ({
       select: () => {

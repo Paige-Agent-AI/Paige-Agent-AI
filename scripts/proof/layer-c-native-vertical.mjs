@@ -117,12 +117,18 @@ async function ownerTaskNativeProof() {
       call("initdb", ["-D", data, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8", "--no-sync"]);
       call("pg_ctl", ["-D", data, "-l", resolve(scratch, "server.log"), "-o", `-h 127.0.0.1 -p ${port} -F`, "-w", "-t", "30", "start"], { stdio: "ignore" });
       started = true;
+      // Reproduce a shared CI cluster where an earlier proof created this role
+      // without Supabase's BYPASSRLS attribute. Only our fresh local cluster is seeded.
+      sql("create role service_role nobypassrls;", "postgres");
     }
     sql("create database " + database, "postgres");
     sql(`do $$begin
       if not exists(select 1 from pg_roles where rolname='anon')then create role anon;end if;
       if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated;end if;
       if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role bypassrls;end if;end$$;
+      -- Earlier proofs share CI's disposable cluster and can create this role
+      -- without Supabase's attributes. Normalize the fixture, never production.
+      alter role service_role nosuperuser inherit bypassrls;
       create schema auth;create schema extensions;create extension pgcrypto with schema extensions;
       create function auth.jwt()returns jsonb language sql as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
       create function auth.uid()returns uuid language sql as $$select nullif(auth.jwt()->>'sub','')::uuid$$;
@@ -164,6 +170,10 @@ async function ownerTaskNativeProof() {
       table("20261022000000_automations_the_process_record.sql", "paige_automations") +
       table("20261022000000_automations_the_process_record.sql", "paige_automation_acts") +
       table("20270119000000_contact_created_native_event.sql", "paige_native_events"));
+    check("disposable service role matches authoritative Supabase RLS attributes even when created by an earlier proof",()=>{
+      assert.deepEqual(JSON.parse(sql("select json_build_object('superuser',rolsuper,'bypassrls',rolbypassrls,'inherit',rolinherit)from pg_roles where rolname='service_role';")),
+        {superuser:false,bypassrls:true,inherit:true});
+    });
     sql(text("supabase/migrations/20270126000000_paige_act_execution_ledger.sql") +
       text("supabase/migrations/20271023000000_paige_act_dispatch_claim.sql") +
       fn("20271025000100_paige_dispatch_crash_recovery.sql", "paige_claim_act_dispatch", true) +

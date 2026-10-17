@@ -1,7 +1,7 @@
 import { act, StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import type { ApprovalQueueRow } from "@/hooks/usePendingApprovals";
 const m = vi.hoisted(() => ({ invoke: vi.fn(), rpc: vi.fn(), getUser: vi.fn(), query: vi.fn(), error: vi.fn(), auth: null as null | (() => void),
   context: { activeUserId: "owner", activeTenantId: "tenant", loading: false, accountContextLoading: false, accountContextStatus: "ready" }, impersonating: false }));
@@ -15,7 +15,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invo
 import { ApprovalRow } from "./ApprovalRow";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-let host: HTMLDivElement, root: Root, resolved: ReturnType<typeof vi.fn>, row: ApprovalQueueRow;
+let host: HTMLDivElement, root: Root, resolved: Mock<() => void>, row: ApprovalQueueRow;
 const controls: { name: string; value: unknown }[] = [];
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(yes => { resolve = yes; }); return { promise, resolve }; }
 const fixture = () => ({ id: "approval", tenant_id: "tenant", status: "pending", source: "paige_orchestration", category: "owner.task",
@@ -23,7 +23,7 @@ const fixture = () => ({ id: "approval", tenant_id: "tenant", status: "pending",
     args: { title: "Review the complete held task " + "carefully ".repeat(30), description: "Read all customer notes.\nPreserve approval requirements." },
     body: "Paige needs approval for the held task." }, metadata: { secret_fixture: "do-not-render-this" } } as unknown as ApprovalQueueRow);
 beforeEach(() => {
-  row = fixture(); controls.length = 0; resolved = vi.fn(); m.context = { activeUserId: "owner", activeTenantId: "tenant", loading: false, accountContextLoading: false, accountContextStatus: "ready" }; m.impersonating = false;
+  row = fixture(); controls.length = 0; resolved = vi.fn<() => void>(); m.context = { activeUserId: "owner", activeTenantId: "tenant", loading: false, accountContextLoading: false, accountContextStatus: "ready" }; m.impersonating = false;
   m.invoke.mockReset(); m.rpc.mockReset(); m.getUser.mockReset(); m.query.mockReset(); m.error.mockReset();
   m.getUser.mockResolvedValue({ data: { user: { id: "owner" } }, error: null }); m.rpc.mockResolvedValue({ data: "tenant", error: null });
   m.invoke.mockResolvedValue({ data: { ok: true, executed: true, approval_id: "approval", act_outcome: "executed" }, error: null });

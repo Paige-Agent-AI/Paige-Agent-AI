@@ -25,7 +25,7 @@ MUST_PRESERVE: approved Jessica/server selection; existing reserve/commit/releas
 ACCEPTANCE_CRITERIA: protected ordinary-session playback starts on real audio, Stop/interruption cancels promptly, failures stay truthful, later complete cache replay has the same voice/profile and no second provider charge. Real provider timings and complete E01 acceptance are owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: canonical Auth/current tenant, server voice profile, reserve-before-provider, typed pre-dispatch release only, settle-before-output, complete-only tenant cache, existing usage records. Shared Spine/Harness/Trust/Rail and actual business-action approval/receipt remain untouched.
-INTERNAL_BUILD_IDENTITY: local successor of a736009712f20b5254dc9bc7804a9a8873909ebc; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=paige-tts local candidate, not deployed; evidence=existing E01 test logs and this record.
+INTERNAL_BUILD_IDENTITY: local successor of a736009712f20b5254dc9bc7804a9a8873909ebc; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-tts candidate not deployed); evidence=existing E01 test logs and this record.
 RELEASE_CHANNEL: development: local candidate only; no activation or release.
 RELEASE_CLASSIFICATION: internal-only: existing governed speech transport repair.
 CUSTOMER_RELEASE_IDENTITY: none: full outcome/announcement not earned.
@@ -46,3 +46,19 @@ Primary documentation checked: https://elevenlabs.io/docs/api-reference/text-to-
 #2262 frontend repair remains a separate reviewed/CI-gated release. This backend candidate is not included in its pushed head. Preserve all original23 authenticated cases and append streaming/cancel/cache/latency cases under their individual permissions. Do not request Antonio testing before the entire E01 is integrated and live.
 
 Cache truth: the existing key is SHA256(provider:model:voice:text), under the established tenant prefix. Profile revision is attributed in reservation/usage, not secretly added to that hash by this repair. The old source comment overstated the key; it is corrected without changing cache identity or creating another cache.
+
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.

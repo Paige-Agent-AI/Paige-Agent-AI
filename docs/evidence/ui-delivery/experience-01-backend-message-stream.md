@@ -1,5 +1,7 @@
 # E01 governed message speech streaming — development evidence
 
+**Current release truth:** #2268 mergeddd27f5a5a47b0e19d1a1ad8967be2538e1f93669 after exact reviewed161226913, all11 checks/Preview/six workflows/two Vercel SUCCESS. Exact production web READY; actual source/configuration passes paige-tts73/7 files and paige-live-relay31/10. Full global Edge certification remains HELD on the already-owned BUG#2271 dependency after supported recovery38994599455, not falsely marked successful. [Exact receipt](../experience-01-foundation/progressive-read-aloud-2026-10-16/production-release-2268.json). No customer/provider execution or authenticated outcome is proved; local candidate labels below retain their original evidence boundary. The optional numeric-header/client timing successor is separate/unreleased.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing explicit message Play -> authenticated paige-tts -> approved server profile -> canonical reserve -> provider first chunk -> commit -> cancellable output -> complete-only tenant cache and incumbent usage metadata.
 PAIGE_UI_DESIGN: PASS: reuse existing Chat message button, one messageTts output controller, loading/playing/failure states and approved Presence. No UI markup, theme or navigation change.

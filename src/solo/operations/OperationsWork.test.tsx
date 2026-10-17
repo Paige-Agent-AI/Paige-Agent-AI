@@ -99,3 +99,41 @@ it("proposes pending CRM progress without moving the saved card and refuses term
   await drag(card,"dragstart");await drag(container.querySelector('[aria-label="In progress"]')!,"drop");expect(propose).not.toHaveBeenCalled();
  }
 });
+
+it("shows a reminder's saved local time rather than a task due date", async () => {
+  const remindAt="2099-01-02T13:15:00+03:00",dueAt="2099-08-20T12:00:00Z";
+  const reminder={...item,item_type:"reminder" as const,due_at:dueAt,remind_at:remindAt};
+  await act(async()=>root.render(<OperationsWork plans={[]} items={[reminder]} members={[]} onInspectItem={vi.fn()} />));
+  const card=container.querySelector(".ops-work-card")!;
+  expect(card.textContent).toContain("Reminder · "+new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date(remindAt)));
+  expect(card.textContent).not.toContain(new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric"}).format(new Date(dueAt)));
+  expect(reminder.due_at).toBe(dueAt);expect(reminder.remind_at).toBe(remindAt);
+});
+it.each<[string|null|undefined,string]>([[null,"Not scheduled"],["invalid-date","Date unavailable"],[undefined,"Date unavailable"],["","Date unavailable"]])("does not substitute due_at for an absent or unavailable reminder time (%s)",async(remindAt,label)=>{
+  const reminder:PlanItem={...item,item_type:"reminder",remind_at:remindAt??null,due_at:"2099-08-20T12:00:00Z"};
+  if(remindAt===undefined)Reflect.deleteProperty(reminder,"remind_at");
+  await act(async()=>root.render(<OperationsWork plans={[]} items={[reminder]} members={[]} onInspectItem={vi.fn()} />));
+  expect(container.querySelector(".ops-work-card")?.textContent).toContain("Reminder · "+label);
+});
+it.each(["task","milestone"] as const)("retains the native due_at date for %s even when remind_at is present",async(itemType)=>{
+  const dueAt="2099-08-20T12:00:00Z";
+  await act(async()=>root.render(<OperationsWork plans={[]} items={[{...item,item_type:itemType,due_at:dueAt,remind_at:"2099-01-02T13:15:00Z"}]} members={[]} onInspectItem={vi.fn()} />));
+  expect(container.querySelector(".ops-work-card")?.textContent).toContain(new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric"}).format(new Date(dueAt)));
+  expect(container.querySelector(".ops-work-card")?.textContent).not.toContain("Reminder ·");
+});
+it("keeps a saved reminder time visible in List and outside the deadline/overdue views",async()=>{
+  const reminder:PlanItem={...item,item_type:"reminder",due_at:"2000-01-01T00:00:00Z",remind_at:"2099-01-02T13:15:00+03:00"};
+  await act(async()=>root.render(<OperationsWork plans={[]} items={[reminder]} members={[]} onInspectItem={vi.fn()} />));
+  expect(container.querySelector(".ops-view-overdue")).toBeNull();
+  const select=container.querySelector("select")!;
+  await act(async()=>{select.value="overdue";select.dispatchEvent(new Event("change",{bubbles:true}));});
+  expect(container.querySelector(".ops-work-card")).toBeNull();
+  await act(async()=>{select.value="all";select.dispatchEvent(new Event("change",{bubbles:true}));});
+  const button=(name:string)=>Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(entry=>entry.textContent===name)!;
+  await act(async()=>button("List").click());
+  expect(container.querySelector('[data-label="Reminder"]')?.textContent).toContain("Reminder · ");
+  expect(container.textContent).not.toContain("Jan 1, 2000");
+  await act(async()=>button("Timeline").click());
+  expect(container.querySelector(".ops-timeline-marker")).toBeNull();
+  expect(container.querySelector(".ops-timeline-undated")?.textContent).toContain("Reminder · ");
+});

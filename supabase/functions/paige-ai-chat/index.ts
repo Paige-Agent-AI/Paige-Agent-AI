@@ -1,4 +1,5 @@
 import { KNOWLEDGE_TOOLS } from "../_shared/paige-spine/domains/knowledge.ts";
+import { parseResearchSourcePolicy, researchResultHonorsSourcePolicy } from "../_shared/research-source-policy.ts";
 import { executeKnowledgeTool, normalizeKnowledgeArgs, type KnowledgeTool } from "../_shared/knowledge-tenant-brain.ts";
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
 import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, resolveSelectedBusinessMissionContext } from '../_shared/business-mission-tenant-brain.ts';
@@ -753,9 +754,9 @@ function researchLimitFallbackCopy(researchTrace: Array<Record<string, unknown>>
     ? "I reached this conversation's research limit before I could finish the written summary"
     : "The research ran, but the written summary came back empty before the turn closed";
   if (savedRuns > 0) {
-    return how + " — the saved run is in this workspace's research library. Open it from the Research tab, or ask me again and I can continue from that saved run in a fresh message.";
+    return how + " — the saved run is in this workspace's research library. Open it from the Research tab to inspect the saved findings before requesting more research.";
   }
-  return how + ", and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Ask me again and I'll run a fresh, better-targeted research pass.";
+  return how + ", and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Inspect this workspace's research library before repeating the request; the report may already exist.";
 }
 
 const messageSchema = z.object({
@@ -6826,6 +6827,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   question: { type: "string", description: "The research goal in natural language." },
                   domain: { type: "string", description: "Optional topic hint, e.g. 'market', 'general'." },
                   max_hops: { type: "integer", minimum: 1, maximum: 3, description: "Depth. Default 2." },
+                  max_sources: { type: "integer", minimum: 1, maximum: 90, description: "Maximum unique sources when the operator specifies a source count. Always carry that explicit limit here; it can only narrow the existing run budget." },
+                  allowed_domains: { type: "array", minItems: 1, maxItems: 20, items: { type: "string" }, description: "Bare hostnames when the operator restricts sources (for example openai.com for official OpenAI sources). Always carry explicit source-domain restrictions here. Each includes its dot-boundary subdomains; no URLs, paths or wildcards. This does not raise source reliability." },
                 },
                 required: ["question"],
               },
@@ -7917,13 +7920,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_list",
-              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; admins/coaches see all. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Filter by horizon, a single plan, status, assignee, or a date window. Read-only.",
+              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; native permissions govern access. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Cancelled items are excluded by default; request include_cancelled:true or status:cancelled to inspect their saved history. A missing item alone does not prove cancellation. Read-only.",
               parameters: {
                 type: "object",
                 properties: {
                   horizon: { type: "string", enum: ["week", "month", "quarter", "semiannual", "year", "custom"], description: "Only plans on this horizon." },
                   plan_id: { type: "string", description: "Drill into one plan's items." },
                   status: { type: "string", description: "Filter items by status." },
+                  include_cancelled: { type: "boolean", description: "Include authorized cancelled Planning history; default false. This reads records and never reopens or repeats work." },
                   assigned_to_user_id: { type: "string", description: "Only items assigned to this teammate." },
                   from: { type: "string", description: "ISO date lower bound (plan window / item due)." },
                   to: { type: "string", description: "ISO date upper bound." },
@@ -12142,6 +12146,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let researchScopeInvalidated = false;
           try {
             const args = JSON.parse(tc.function.arguments || "{}");
+            const sourcePolicy = parseResearchSourcePolicy(args);
             const tenantId = personaCtx?.tenant_id;
             const researchUuid = (value: unknown): value is string => typeof value === "string" &&
               /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -12168,6 +12173,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 question: args.question,
                 domain: args.domain,
                 max_hops: args.max_hops,
+                ...sourcePolicy,
                 user_id: user.id,
                 expected_tenant_id: tenantId,
                 caller: "chat",
@@ -12186,6 +12192,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const coverage = dr.coverage;
             const findings = Array.isArray(dr?.findings) ? dr.findings : [];
             const sources = Array.isArray(dr?.sources) ? dr.sources : [];
+            if (!researchResultHonorsSourcePolicy(sourcePolicy, sources, coverage)) throw new Error("RESEARCH_SOURCE_POLICY_UNCONFIRMED");
             // R2b §10 — the governed readback: never claim a saved run without proving the
             // row through the M0 RPC (the caller's own client; scope server-derived). A
             // failed/absent row renders the honest not-saved state downstream.
@@ -12276,6 +12283,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 citation_coverage: citationCoverage,
                 question: typeof args.question === "string" ? args.question : "",
                 stop_reason: coverage.stop_reason ?? null,
+                ...(coverage.source_policy ? { source_policy: coverage.source_policy } : {}),
                 ...(dossier ? { dossier } : {}),
                 ...(ep ? { unverified_notes: Array.isArray(ep.unverified_notes) ? ep.unverified_notes : [] } : {}),
                 findings: findings.map((f: any) => ({
@@ -16633,7 +16641,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 break;
               case "plan_list":
                 rpcName = "plan_list";
-                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
+                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid,
+                  p_contact_id: null, p_by_item_date: false, p_include_cancelled: args.include_cancelled === true || args.status === "cancelled" };
                 break;
             }
             planningWriteAttempted = planningIsWrite;
@@ -16669,6 +16678,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else {
               let verifiedRecord: Record<string, unknown> | null = null;
               let recordLocator: { table: string; id: string } | null = null;
+              if (!planningIsWrite) {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                if (!tid || scope.error || scope.data !== tid) throw new Error("planning_read_scope_changed");
+              }
               if (planningIsWrite) {
                 const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
                 const table = tc.function.name === "plan_create" ? "plans" : "plan_items";

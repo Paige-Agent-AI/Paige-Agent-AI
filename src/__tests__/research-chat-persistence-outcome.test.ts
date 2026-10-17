@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { interactiveEffect } from '../../supabase/functions/_shared/paige-turn/interactive';
+import { parseResearchSourcePolicy, researchResultHonorsSourcePolicy } from '../../supabase/functions/_shared/research-source-policy';
 const source = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const ast = ts.createSourceFile('chat.ts', source, ts.ScriptTarget.Latest, true);
 let branch: ts.Statement | undefined;
@@ -10,7 +11,7 @@ function visit(n: ts.Node) { if (ts.isIfStatement(n) && n.expression.getText(ast
 visit(ast);
 if (!branch) throw new Error('Canonical Research dispatch missing');
 const code = ts.transpileModule(`async function dispatch(tc, supabaseClient, personaCtx, user, toolResults,
-  supabase, logAnalyticsEvent, fetch, supabaseUrl, supabaseServiceKey, formatDossier) ${branch.getText(ast)}`,
+  supabase, logAnalyticsEvent, fetch, supabaseUrl, supabaseServiceKey, formatDossier, parseResearchSourcePolicy, researchResultHonorsSourcePolicy) ${branch.getText(ast)}`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const dispatch = new Function(`${code}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -20,11 +21,12 @@ const sources=[{ index:1,url:'https://example.com/source',title:'Fixture source'
 const findings=[{text:'Fixture cited finding',citations:[1],confidence:'high'}];
 const native={run_id:run,question,findings,sources,coverage:{configured:true,stop_reason:'answered',hops_used:1,searches:1,reads:1,note:''}};
 const saved={id:run,question,domain:'general',caller:'chat',configured:true,stop_reason:'answered',findings,sources,coverage:native.coverage};
-async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean; scopeErrorAt?:number }={}) {
+async function drive(options: { readback?:unknown; readError?:unknown; native?:unknown; status?:number; tenant?:string|null; scopes?:string[]; transportLost?:boolean; scopeErrorAt?:number; args?:Record<string,unknown> }={}) {
   const calls:Array<{body:Record<string,unknown>;headers:Record<string,string>}>=[];
   const outputs:Array<{content:string}>=[];
   const rpcs:Array<{name:string;args:unknown}>=[];
   let scopeReads=0;
+  let analytics=0;
   const caller={rpc:async(name:string,args:unknown)=>{
     rpcs.push({name,args});
     if(name==='current_user_tenant_id'){
@@ -34,17 +36,34 @@ async function drive(options: { readback?:unknown; readError?:unknown; native?:u
     }
     return {data:'readback' in options?options.readback:saved,error:options.readError??null};
   }};
-  await dispatch({id:'research-fixture',function:{name:'deep_research',arguments:JSON.stringify({question,expected_tenant_id:id(99),user_id:id(98)})}},
-    caller,{tenant_id:'tenant' in options?options.tenant:tenant},{id:actor},outputs,{},()=>{},
+  await dispatch({id:'research-fixture',function:{name:'deep_research',arguments:JSON.stringify({question,expected_tenant_id:id(99),user_id:id(98),...options.args})}},
+    caller,{tenant_id:'tenant' in options?options.tenant:tenant},{id:actor},outputs,{},()=>{analytics++;},
     async(_url:string,init:{body:string;headers:Record<string,string>})=>{
       calls.push({body:JSON.parse(init.body),headers:init.headers});
       if(options.transportLost)throw new TypeError('fixture secret provider body');
       return Response.json('native' in options?options.native:native,{status:options.status??200});
-    },'https://fixture.invalid','fixture-service-key',()=>null);
+    },'https://fixture.invalid','fixture-service-key',()=>null,parseResearchSourcePolicy,researchResultHonorsSourcePolicy);
   expect(outputs).toHaveLength(1);
-  return {calls,rpcs,result:JSON.parse(outputs[0].content)};
+  return {calls,rpcs,analytics,result:JSON.parse(outputs[0].content)};
 }
 describe('Research Chat native invocation and durable library proof',()=>{
+  it('forwards normalized source constraints and preserves exact policy in the governed saved readback',async()=>{
+    const source_policy={max_sources:3,allowed_domains:['example.com'],admitted_sources:1,limit_reached:false};
+    const coverage={...native.coverage,source_policy};
+    const {calls,result}=await drive({args:{max_sources:3,allowed_domains:['Example.com']},native:{...native,coverage},readback:{...saved,coverage}});
+    expect(calls[0].body).toMatchObject({max_sources:3,allowed_domains:['example.com']});
+    expect(result).toMatchObject({success:true,saved:true,source_policy});
+  });
+  it.each([{max_sources:0},{max_sources:'3'},{allowed_domains:[]},{allowed_domains:['https://example.com']}])('refuses invalid constraints before analytics or provider: %j',async args=>{
+    const {calls,result,analytics}=await drive({args});expect(calls).toHaveLength(0);expect(analytics).toBe(0);
+    expect(result).toMatchObject({not_applied:true,saved:false});
+  });
+  it.each([undefined,{max_sources:3,allowed_domains:['wrong.invalid'],admitted_sources:1,limit_reached:false}])('withholds a native response that did not enforce the requested policy (%j)',async source_policy=>{
+    const coverage={...native.coverage,...(source_policy?{source_policy}:{})};
+    const {calls,result}=await drive({args:{max_sources:3,allowed_domains:['example.com']},native:{...native,coverage},readback:{...saved,coverage}});
+    expect(calls).toHaveLength(1);expect(result).toMatchObject({success:false,outcome_unknown:true,saved:false});
+    expect(result.findings).toBeUndefined();
+  });
   it('binds the existing engine request to the server workspace and authenticated actor',async()=>{
     const {calls,result}=await drive();
     expect(calls).toHaveLength(1); expect(calls[0].body).toMatchObject({expected_tenant_id:tenant,user_id:actor,caller:'chat',persist:true});

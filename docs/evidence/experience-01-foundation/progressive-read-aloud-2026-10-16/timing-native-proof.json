@@ -1,0 +1,351 @@
+{
+  "classification": "NATIVE_SYNTHETIC_CONTROLLER_ONLY",
+  "baseHead": "161226913a9018d7bc4c615e3a6b68e4d70c396d",
+  "uncommittedTimingDelta": true,
+  "checks": {
+    "firstPlaybackBeforeEof": true,
+    "stopCancelsOriginal": true,
+    "noCompletionForStopped": true,
+    "holdIsPaused": true,
+    "resumeDoesNotDuplicatePlayback": true,
+    "completionOnlyAfterEof": true,
+    "noProviderRequests": true
+  },
+  "hashes": [
+    {
+      "file": "src/lib/voice/messageTts.ts",
+      "sha256": "3debf726a4391da024997ad9a88bb3c5da224b2869c60e775f07c999518af2f4"
+    },
+    {
+      "file": "scripts/live-drive/harness/mount/message-audio-timing-proof.html",
+      "sha256": "c769e8a72f32581dcfa9358a1518e7a429d53d3f7b1a8effe752a3872759980e"
+    },
+    {
+      "file": "scripts/live-drive/harness/mount/message-audio-timing-proof.ts",
+      "sha256": "7bc9636b7f4b18439a607abd805ff7e01a1f01cea56ced7743e32c980eaef8c8"
+    },
+    {
+      "file": "scripts/live-drive/harness/mount/e1-synthetic-tone.mp3",
+      "sha256": "d86437635c6877c6fb5a35dcf5d673c4cb0feadf74e3994eb392fd7ffa748e4c"
+    },
+    {
+      "file": "scripts/live-drive/harness/mount/e1-message-audio-timing-proof/message-audio-timing-proof.html",
+      "sha256": "62c82d8ff20194f3289091fad8f55a336c59e3a8acf6124835bbec1c3b60c131"
+    },
+    {
+      "file": "scripts/live-drive/harness/mount/e1-message-audio-timing-proof/assets/message-audio-timing-proof-CKDWOVXA.js",
+      "sha256": "322a1cfc2d11d7334c8bafbc73d42f9616a77bc89400a431b49c25b3811abd80"
+    }
+  ],
+  "captures": [
+    {
+      "file": "timing-native-before-eof.txt",
+      "sha256": "9b63cdbb5259d0c044a3fb203ca16e089fada2b7a2857590324d805ab9833ea9",
+      "trace": {
+        "synthetic": true,
+        "providerRequests": 0,
+        "fetches": 1,
+        "eof": false,
+        "cancelled": false,
+        "mse": true,
+        "prefixBytes": 64000,
+        "firstPlayingMs": 247,
+        "performanceEntries": [
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 2,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 128.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 247.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          }
+        ],
+        "state": {
+          "activeId": "synthetic-progressive",
+          "status": "loading",
+          "needsConfig": false
+        },
+        "audioReady": 2,
+        "currentTime": 3.907709
+      }
+    },
+    {
+      "file": "timing-native-stopped.txt",
+      "sha256": "ea2ec93a4d65c536617e244a9b45f7ac09965a0747ce1003b223aca790e74843",
+      "trace": {
+        "synthetic": true,
+        "providerRequests": 0,
+        "fetches": 1,
+        "eof": false,
+        "cancelled": true,
+        "mse": true,
+        "prefixBytes": 64000,
+        "firstPlayingMs": 247,
+        "performanceEntries": [
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 2,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 128.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 247.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          }
+        ],
+        "state": {
+          "activeId": null,
+          "status": "idle",
+          "needsConfig": false
+        },
+        "audioReady": 0,
+        "currentTime": 0
+      }
+    },
+    {
+      "file": "timing-native-held.txt",
+      "sha256": "b36642591e80da4901666b1bb36984863294ef3f60b0772b1d3cc8d4925bd8b3",
+      "trace": {
+        "synthetic": true,
+        "providerRequests": 0,
+        "fetches": 2,
+        "eof": false,
+        "cancelled": false,
+        "mse": true,
+        "prefixBytes": 64000,
+        "firstPlayingMs": 459,
+        "performanceEntries": [
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 2,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 128.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 247.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 5,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 122.7999999821186,
+            "detail": {
+              "request": 5,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 458.19999998807907,
+            "detail": {
+              "request": 5,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          }
+        ],
+        "state": {
+          "activeId": "synthetic-progressive",
+          "status": "paused",
+          "needsConfig": false
+        },
+        "audioReady": 4,
+        "currentTime": 0
+      }
+    },
+    {
+      "file": "timing-native-final.txt",
+      "sha256": "485781d3ba47606740a3dd77a920ad3d74954f6d5f6d6cefcba98be64ed993ca",
+      "trace": {
+        "synthetic": true,
+        "providerRequests": 0,
+        "fetches": 2,
+        "eof": true,
+        "cancelled": false,
+        "mse": true,
+        "prefixBytes": 64000,
+        "firstPlayingMs": 459,
+        "performanceEntries": [
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 2,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 128.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 247.10000002384186,
+            "detail": {
+              "request": 2,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.request_start",
+            "duration": 0,
+            "detail": {
+              "request": 5,
+              "transport": "pending",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_chunk",
+            "duration": 122.7999999821186,
+            "detail": {
+              "request": 5,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.first_playback",
+            "duration": 458.19999998807907,
+            "detail": {
+              "request": 5,
+              "transport": "progressive",
+              "held": false,
+              "muted": false,
+              "serverTiming": {}
+            }
+          },
+          {
+            "name": "paige.voice.message.body_complete",
+            "duration": 18489.29999998212,
+            "detail": {
+              "request": 5,
+              "transport": "progressive",
+              "held": true,
+              "muted": false,
+              "serverTiming": {}
+            }
+          }
+        ],
+        "state": {
+          "activeId": null,
+          "status": "idle",
+          "needsConfig": false
+        },
+        "audioReady": 0,
+        "currentTime": 0
+      }
+    }
+  ],
+  "excluded": [
+    "provider latency",
+    "p50/p95",
+    "approved voice audition",
+    "hardware audibility",
+    "customer acceptance",
+    "full Chat UI"
+  ]
+}

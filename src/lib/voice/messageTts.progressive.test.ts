@@ -96,4 +96,60 @@ describe("existing message controller progressive response",()=>{
    audio.onwaiting?.();expect(messageTts.getSnapshot().status).toBe("loading");audio.onplaying?.();expect(messageTts.getSnapshot().status).toBe("playing");expect(fetchAudio).toHaveBeenCalledTimes(1);messageTts.stop();
  });
 
+ it("measures the first consumed chunk and actual playing event once, without private identifiers",async()=>{
+   let clock=10;const measure=vi.fn();vi.stubGlobal("performance",{now:()=>clock,measure});
+   const {messageTts}=await import("./messageTts");let body!:ReadableStreamDefaultController<Uint8Array>;
+   const response=new Response(new ReadableStream<Uint8Array>({start(c){body=c;}}),{headers:{"Content-Type":"audio/mpeg"}});
+   const playing=messageTts.toggle("private-message-not-a-metric",async()=>response);await flush();
+   clock=25;body.enqueue(new Uint8Array([255,251,1]));await flush();
+   clock=40;audio.onplaying?.();clock=50;audio.onplaying?.();
+   expect(measure.mock.calls.filter(([name])=>name==="paige.voice.message.first_chunk")).toHaveLength(1);
+   const started=measure.mock.calls.filter(([name])=>name==="paige.voice.message.first_playback");expect(started).toHaveLength(1);
+   expect(started[0][1]).toMatchObject({start:10,end:40,detail:{transport:"progressive"}});
+   expect(JSON.stringify(measure.mock.calls)).not.toContain("private-message-not-a-metric");
+   clock=65;body.close();await playing;expect(measure.mock.calls.filter(([name])=>name==="paige.voice.message.body_complete")).toHaveLength(1);messageTts.stop();
+ });
+
+ it("does not invent first-chunk timing for a complete-response fallback",async()=>{
+   const measure=vi.fn();vi.stubGlobal("performance",{now:()=>20,measure});FakeMediaSource.isTypeSupported.mockReturnValue(false);
+   const {messageTts}=await import("./messageTts");await messageTts.toggle("fallback-metric",async()=>new Response(new Uint8Array([1]),{headers:{"Content-Type":"audio/mpeg"}}));audio.onplaying?.();
+   expect(measure.mock.calls.filter(([name])=>name==="paige.voice.message.first_chunk")).toHaveLength(0);
+   expect(measure.mock.calls.filter(([name])=>name==="paige.voice.message.body_complete")).toHaveLength(1);
+   expect(measure.mock.calls.find(([name])=>name==="paige.voice.message.first_playback")?.[1].detail.transport).toBe("buffered");messageTts.stop();
+ });
+
+ it("never breaks playback when browser performance measurement is unavailable",async()=>{
+   vi.stubGlobal("performance",{now:()=>10,measure:()=>{throw new Error("synthetic unavailable timing");}});
+   const {messageTts}=await import("./messageTts");await messageTts.toggle("timing-unavailable",async()=>new Blob(["audio"]));audio.onplaying?.();
+   expect(messageTts.getSnapshot().status).toBe("playing");messageTts.stop();
+ });
+
+ it("identifies intentional Hold and rejects stale playing measurements from an old owner",async()=>{
+   const measure=vi.fn();vi.stubGlobal("performance",{now:()=>30,measure});
+   const {messageTts}=await import("./messageTts");await messageTts.toggle("old-private-message",async()=>new Blob(["old"]));const stalePlaying=audio.onplaying;
+   await messageTts.toggle("new-private-message",async()=>new Blob(["new"]));stalePlaying?.();
+   expect(measure.mock.calls.filter(([name])=>name==="paige.voice.message.first_playback")).toHaveLength(0);
+   messageTts.pause();await messageTts.resume();audio.onplaying?.();audio.onplaying?.();
+   const first=measure.mock.calls.filter(([name])=>name==="paige.voice.message.first_playback");expect(first).toHaveLength(1);expect(first[0][1].detail.held).toBe(true);
+   expect(JSON.stringify(measure.mock.calls)).not.toContain("private-message");messageTts.stop();
+ });
+
+ it("correlates only finite allowlisted server durations from the same response",async()=>{
+   const measure=vi.fn();vi.stubGlobal("performance",{now:()=>30,measure});FakeMediaSource.isTypeSupported.mockReturnValue(false);
+   const {messageTts}=await import("./messageTts");
+   await messageTts.toggle("safe-timing",async()=>new Response(new Uint8Array([1]),{headers:{"Content-Type":"audio/mpeg","Server-Timing":"voice_first_byte;dur=12, voice_ready;dur=20, customer_secret;dur=44, voice_cache;dur=-9, voice_settlement;dur=999999999999"}}));audio.onplaying?.();
+   const detail=measure.mock.calls.find(([name])=>name==="paige.voice.message.first_playback")?.[1].detail;
+   expect(detail.serverTiming).toEqual({voice_first_byte:12,voice_ready:20});expect(JSON.stringify(measure.mock.calls)).not.toContain("customer_secret");messageTts.stop();
+ });
+
+ it.each([
+   "voice_ready;dur=10, voice_ready;dur=20",
+   "voice_ready;dur=10, "+"x".repeat(2048),
+ ])("does not attribute ambiguous or oversized server timing (%#)",async(header)=>{
+   const measure=vi.fn();vi.stubGlobal("performance",{now:()=>30,measure});FakeMediaSource.isTypeSupported.mockReturnValue(false);
+   const {messageTts}=await import("./messageTts");
+   await messageTts.toggle("bounded-timing",async()=>new Response(new Uint8Array([1]),{headers:{"Content-Type":"audio/mpeg","Server-Timing":header}}));audio.onplaying?.();
+   expect(measure.mock.calls.find(([name])=>name==="paige.voice.message.first_playback")?.[1].detail.serverTiming).toEqual({});messageTts.stop();
+ });
+
 });

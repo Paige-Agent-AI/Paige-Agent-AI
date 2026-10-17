@@ -1563,7 +1563,7 @@ export default function ClientsConversations() {
       : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
     sendLabel: portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    note: portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
     identities: [
       ...composerConnectors.map((c) => ({

@@ -255,3 +255,21 @@ it("accepts a body of 4,000 emoji, as the server counts characters, and refuses 
   await flush();
   expect(sendCalls()).toHaveLength(1);
 });
+
+it("keeps a definitely refused send visible even when a saved row carries its request id", async () => {
+  await mount();
+  const conversation = f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async (name: string, a: unknown) => name === "client_portal_send_message"
+    ? { data: { ok: false, error: "REQUEST_ID_CONFLICT" }, error: null } : conversation(name, a));
+  await act(async () => { await state.send("Different text", "message"); });
+  const failed = state.outbox[0];
+  expect(failed.status).toBe("failed");
+  // The id is spent by another message: the read returns it on a saved row with a different body.
+  f.rpc.mockImplementation(async (name: string) => name === "client_portal_conversation"
+    ? { data: { tenant_id: T, messages: [{ ...msg("z", "customer", "2026-10-03T10:00:00Z", "Original text"), request_id: failed.requestId }], has_more: false }, error: null }
+    : { data: null, error: null });
+  await act(async () => { await state.refresh(); });
+  await flush();
+  expect(state.outbox).toHaveLength(1);
+  expect(state.outbox[0].status).toBe("failed");
+});

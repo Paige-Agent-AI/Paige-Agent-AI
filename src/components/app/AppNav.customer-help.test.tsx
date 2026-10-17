@@ -158,12 +158,13 @@ it("keeps platform Support for a customer of more than one business, and no entr
   expect(where()).toBe("/app/support");
 });
 
-it("gives a customer of more than one business no desktop Messages link or top-bar message button", async () => {
+it("gives a customer of more than one business no Messages dead end, and keeps Contact Advisor as before", async () => {
   f.brand = null; f.multiple = true;
   await render();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
   expect(topBarButton("Message your team")).toBeUndefined();
-  expect(topBarButton("Contact Advisor")).toBeUndefined();
+  // Their top-bar route is unchanged from before E09 (§58): Messages can't serve them yet.
+  expect(topBarButton("Contact Advisor")).toBeDefined();
 });
 
 it("switches from the thread to Get help in place, so the page's discard guard is not asked", async () => {

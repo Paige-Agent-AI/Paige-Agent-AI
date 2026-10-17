@@ -235,8 +235,11 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
    */
   const settleOutbox = useCallback((list: PortalMessage[]) => {
     const saved = new Set(list.map((m) => m.request_id).filter((id): id is string => !!id));
-    if (!saved.size || !outboxRef.current.some((o) => saved.has(o.requestId))) return;
-    const next = outboxRef.current.filter((o) => !saved.has(o.requestId));
+    // A definite refusal stays visible even when its id matches a saved row: on REQUEST_ID_CONFLICT the
+    // saved row is a DIFFERENT message, and the customer still has to see this one was not sent.
+    const settled = (o: OutboxMessage) => o.status !== "failed" && saved.has(o.requestId);
+    if (!saved.size || !outboxRef.current.some(settled)) return;
+    const next = outboxRef.current.filter((o) => !settled(o));
     outboxRef.current = next;
     setOutbox(next);
   }, []);

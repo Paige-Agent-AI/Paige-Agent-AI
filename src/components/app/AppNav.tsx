@@ -122,7 +122,6 @@ export function AppNav({ user }: AppNavProps) {
   // neither, rather than a destination that may be wrong.
   const relationshipKnown = !brandLoading && !brandError;
   const isCustomer = relationshipKnown && !!brand?.tenant_id && !multipleBusinesses;
-  const isAnyCustomer = relationshipKnown && (!!brand?.tenant_id || multipleBusinesses);
   const showPlatformSupport = relationshipKnown && !isCustomer;
   const showGetHelp = isCustomer;
   // Moving between the thread and its help mode is one page: replace, so the page's
@@ -375,7 +374,7 @@ export function AppNav({ user }: AppNavProps) {
 
         {/* A customer reaches their business through the Messages nav item; a second
             top-bar entry to the same page only crowded the bar. */}
-        {!isAnyCustomer && !isAdmin && relationshipKnown && (
+        {!isCustomer && !isAdmin && relationshipKnown && (
           <Button
             variant="ghost"
             size="sm"

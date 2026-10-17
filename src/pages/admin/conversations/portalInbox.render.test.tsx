@@ -447,6 +447,8 @@ describe.each([
     expect(composerBox(host).placeholder).toBe("Message Maya Ortiz in their client portal…");
     const notice = host.querySelector("[data-portal-not-connected]");
     expect(notice?.textContent).toContain("Maya Ortiz hasn't joined your client portal yet");
+    // The footer must not promise a post the notice above says can't happen.
+    expect(host.textContent).not.toContain("Posts in Maya Ortiz's client portal");
     await type(host, "Are you there?");
     expect(sendButton(host)?.disabled).toBe(true);
     await clickSend(host);

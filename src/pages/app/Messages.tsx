@@ -111,7 +111,7 @@ function Bubble({ message, businessName, showAuthor, accent }: { message: Portal
       )}
       <div
         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-base leading-relaxed whitespace-pre-wrap break-words ${
-          mine ? `${accent ? "" : MINE_FALLBACK} rounded-br-md` : "bg-muted text-foreground rounded-bl-md"
+          mine ? `${accent ? "dark:ring-1 dark:ring-foreground/30" : MINE_FALLBACK} rounded-br-md` : "bg-muted text-foreground rounded-bl-md"
         }`}
         style={mine ? accent : undefined}
       >
@@ -143,7 +143,7 @@ function PendingBubble({
         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md px-4 py-2.5 text-base leading-relaxed whitespace-pre-wrap break-words ${
           sending
             // Still in flight: the same fill as a sent message, held back until the server confirms it.
-            ? `${accent ? "" : MINE_FALLBACK} opacity-70`
+            ? `${accent ? "dark:ring-1 dark:ring-foreground/30" : MINE_FALLBACK} opacity-70`
             : "border border-destructive/50 bg-background text-foreground"
         }`}
         style={sending ? accent : undefined}
@@ -414,7 +414,8 @@ export default function Messages() {
           <p className="text-sm font-medium">Messaging for more than one business isn't available yet</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
             Your account is connected to more than one business. Messages here work with one business at a time
-            for now, so nothing can be sent from this page yet.
+            for now, so nothing can be sent from this page yet. For help in the meantime, use{" "}
+            <Link to="/app/support" className="font-medium text-foreground underline underline-offset-4">Support</Link>.
           </p>
           <BackHome />
         </div>

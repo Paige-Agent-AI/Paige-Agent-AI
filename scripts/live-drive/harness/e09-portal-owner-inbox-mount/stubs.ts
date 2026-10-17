@@ -6,7 +6,9 @@
 // portalInbox.render.test.tsx stubs; the RPC answers mirror migration 20271110010000 (comms_portal_reply).
 //   ?state=thread     a portal-joined client; email + SMS + portal + one help request; latest is a portal reply
 //   ?state=help       the help request is the newest, unread message in the thread
-//   ?state=notjoined  portal rows in the thread but no linked portal login; Send → PORTAL_NOT_CONNECTED
+//   ?state=notjoined  portal rows in the thread but no linked portal login: the composer opens on email; picking
+//                     Portal shows the not-connected notice and holds Send (the RPC answer below stays as the
+//                     server backstop, PORTAL_NOT_CONNECTED)
 //   ?state=error      the reply call fails at the transport → UNCONFIRMED; the draft is kept
 
 const params = new URLSearchParams(window.location.search);

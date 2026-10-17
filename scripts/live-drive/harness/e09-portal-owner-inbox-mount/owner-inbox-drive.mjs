@@ -71,6 +71,15 @@ try {
     try {
       await page.waitForSelector("[data-canonical-conversations]", { timeout: 30_000 });
       composer = page.locator(`textarea[placeholder="${PORTAL_PLACEHOLDER}"]`).first();
+      if (s.state === "notjoined") {
+        // A client who hasn't joined the portal can't receive a portal post, so the composer opens on
+        // email, never on Portal. The owner can still pick Portal; the drive does, through the picker.
+        await page.locator("textarea").first().waitFor({ timeout: 30_000 });
+        await page.waitForTimeout(400);
+        behaviour.defaultNotPortal = !(await composer.isVisible());
+        await page.locator('button[role="combobox"]').filter({ hasText: /Portal|Jordan|Sending address|@/ }).first().click();
+        await page.getByRole("option", { name: /Client portal/ }).first().click();
+      }
       await composer.waitFor({ timeout: 30_000 });
       await page.waitForTimeout(400);
       behaviour.composerPortal = true;
@@ -80,11 +89,24 @@ try {
     }
     if (behaviour.composerPortal) {
       if (s.state === "thread") await composer.fill(DRAFT);
-      if (s.state === "notjoined" || s.state === "error") {
-        const text = s.state === "notjoined" ? "Here's the timeline link." : DRAFT;
+      if (s.state === "notjoined") {
+        // Picked Portal for an unjoined client: the composer says why inline and holds Send; nothing posts.
+        const text = "Here's the timeline link.";
+        await composer.fill(text);
+        const expected = `${NAME} hasn't joined your client portal yet`;
+        const sendBtn = page.getByRole("button", { name: "Send", exact: true });
+        behaviour.sendHeld = await sendBtn.isDisabled();
+        if (!behaviour.sendHeld) await sendBtn.click();
+        try { await page.locator("[data-portal-not-connected]").filter({ hasText: expected }).first().waitFor({ timeout: 10_000 }); behaviour.toast = expected; }
+        catch { behaviour.toast = null; errors.push(`expected inline notice not shown: "${expected}"`); }
+        behaviour.draftKept = (await composer.inputValue()) === text;
+        await page.waitForTimeout(300);
+      }
+      if (s.state === "error") {
+        const text = DRAFT;
         await composer.fill(text);
         await page.getByRole("button", { name: "Send", exact: true }).click();
-        const expected = s.state === "notjoined" ? `${NAME} hasn't joined your client portal yet` : "Couldn't confirm the portal message was posted";
+        const expected = "Couldn't confirm the portal message was posted";
         try { await page.locator("[data-sonner-toast]").filter({ hasText: expected }).first().waitFor({ timeout: 10_000 }); behaviour.toast = expected; }
         catch { behaviour.toast = null; errors.push(`expected outcome copy not shown: "${expected}"`); }
         behaviour.draftKept = (await composer.inputValue()) === text;
@@ -265,11 +287,15 @@ try {
     const sentElsewhere = m.rpc.filter((r) => r === "functions:send-message").length;
     const checks = {
       composerPortal: behaviour.composerPortal === true,
-      noteShown: m.note,
+      // The "Posts in …'s client portal" note is for a client who can receive the post; an unjoined
+      // client gets the not-connected notice instead (outcomeCopy).
+      noteShown: s.state === "notjoined" ? true : m.note,
+      defaultNotPortal: s.state === "notjoined" ? behaviour.defaultNotPortal === true : true,
+      sendHeld: s.state === "notjoined" ? behaviour.sendHeld === true : true,
       labelsShown: m.labels.portalClient && m.labels.help && m.labels.email && m.labels.sms && (s.state === "thread" ? m.labels.portalYou : true),
       railHelpPreview: s.state === "help" ? m.railHelpPreview === true : true,
       neverClaimsRead: !m.claimsRead,
-      rpcOnce: s.state === "notjoined" || s.state === "error" ? portalReplies === 1 : portalReplies === 0,
+      rpcOnce: s.state === "error" ? portalReplies === 1 : portalReplies === 0,
       noProviderSend: sentElsewhere === 0,
       outcomeCopy: s.state === "notjoined" || s.state === "error" ? !!behaviour.toast : true,
       draftKept: s.state === "notjoined" || s.state === "error" ? behaviour.draftKept === true : true,

@@ -627,6 +627,55 @@ SELECT ok(has_function_privilege('authenticated','public.client_portal_knowledge
  AND NOT has_function_privilege('anon','public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)','EXECUTE')
  AND NOT has_function_privilege('service_role','public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)','EXECUTE'),
  'customer reader cannot be invoked through anonymous or service credentials');
+-- Full resource text is paged from the same explicit current canonical grant.
+INSERT INTO public.tenant_knowledge_docs(id,tenant_id,title,content,created_by) VALUES
+ ('e0941000-0000-4000-8000-000000000004','e0921000-0000-0000-0000-000000000001','Long customer resource',
+ repeat('A',11999)||chr(128512)||repeat('B',13000),'e0911000-0000-0000-0000-000000000003');
+CREATE TEMP TABLE e09_resource_proposal AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000004')$$)::jsonb proposal;
+CREATE TEMP TABLE e09_resource_saved AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',format(
+ 'SELECT public.set_client_portal_knowledge_share(%L,%L,%L,true,%s,%L,%L)',proposal->>'tenant_id',proposal->>'contact_id',
+ proposal->>'document_id',proposal->>'expected_share_revision',proposal->>'proposal_hash','e0951000-0000-4000-8000-000000000004'))::jsonb result FROM e09_resource_proposal;
+CREATE TEMP TABLE e09_resource_reference AS SELECT s.* FROM public.tenant_knowledge_client_shares s
+ JOIN e09_resource_saved r ON s.id=(r.result->>'share_id')::uuid;
+CREATE TEMP TABLE e09_resource_first AS SELECT r.id share_id,pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_document(%L,%L,%s,%L)',r.tenant_id,r.id,r.revision,r.source_fingerprint))::jsonb page
+ FROM e09_resource_reference r;
+SELECT is((page->>'next_offset')::int,12000,'full resource offsets count native characters, not UTF-16 units') FROM e09_resource_first;
+SELECT is(right(page->>'content',1),chr(128512),'resource page does not split an authorized Unicode character') FROM e09_resource_first;
+SELECT is((page->>'total_characters')::int,25000,'full resource reports its actual canonical text length') FROM e09_resource_first;
+CREATE TEMP TABLE e09_resource_second AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_document(%L,%L,%s,%L,%s)',r.tenant_id,r.id,r.revision,r.source_fingerprint,f.page->>'next_offset'))::jsonb page
+ FROM e09_resource_reference r JOIN e09_resource_first f ON f.share_id=r.id;
+CREATE TEMP TABLE e09_resource_third AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_document(%L,%L,%s,%L,%s)',r.tenant_id,r.id,r.revision,r.source_fingerprint,s.page->>'next_offset'))::jsonb page
+ FROM e09_resource_reference r CROSS JOIN e09_resource_second s;
+SELECT is((SELECT page->>'content' FROM e09_resource_first)||(SELECT page->>'content' FROM e09_resource_second)||(SELECT page->>'content' FROM e09_resource_third),
+ (SELECT content FROM public.tenant_knowledge_docs WHERE id='e0941000-0000-4000-8000-000000000004'),
+ 'customer retrieves the complete approved canonical resource without a copied content store');
+SELECT is((SELECT page->>'has_more' FROM e09_resource_third),'false','resource end state does not claim a truncated excerpt is the whole document');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',%L)$q$,
+ format('SELECT public.client_portal_knowledge_document(%L,%L,%s,%L)',tenant_id,id,revision,source_fingerprint)),
+ '42501','CUSTOMER_KNOWLEDGE_SOURCE_WITHDRAWN','same-business other customer cannot retrieve a known source') FROM e09_resource_reference;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',%L)$q$,
+ format('SELECT public.client_portal_knowledge_document(%L,%L,%s,%L)',tenant_id,id,revision,source_fingerprint)),
+ '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','another business customer cannot retrieve the source') FROM e09_resource_reference;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format('SELECT public.client_portal_knowledge_document(%L,%L,%s,%L,-1)',tenant_id,id,revision,source_fingerprint)),
+ '22023','CUSTOMER_RESOURCE_ARGUMENTS_INVALID','resource paging refuses invalid ranges') FROM e09_resource_reference;
+SELECT ok(has_function_privilege('authenticated','public.client_portal_knowledge_document(uuid,uuid,integer,text,integer,integer)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_knowledge_document(uuid,uuid,integer,text,integer,integer)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_knowledge_document(uuid,uuid,integer,text,integer,integer)','EXECUTE'),
+ 'full resource read requires the actual caller JWT rather than an actor selector');
+CREATE TEMP TABLE e09_resource_withdraw AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000004',false)$$)::jsonb proposal;
+SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',format(
+ 'SELECT public.set_client_portal_knowledge_share(%L,%L,%L,false,%s,%L,%L)',proposal->>'tenant_id',proposal->>'contact_id',
+ proposal->>'document_id',proposal->>'expected_share_revision',proposal->>'proposal_hash','e0951000-0000-4000-8000-000000000005')) FROM e09_resource_withdraw;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format('SELECT public.client_portal_knowledge_document(%L,%L,%s,%L,12000)',tenant_id,id,revision,source_fingerprint)),
+ '42501','CUSTOMER_KNOWLEDGE_SOURCE_WITHDRAWN','withdrawal denies subsequent resource continuation and reload') FROM e09_resource_reference;
+
 UPDATE public.tenant_knowledge_docs SET content='A later unreviewed revision' WHERE id='e0941000-0000-4000-8000-000000000001';
 SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)->'sources',

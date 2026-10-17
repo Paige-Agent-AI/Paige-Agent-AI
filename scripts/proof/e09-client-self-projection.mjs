@@ -54,10 +54,11 @@ const frame=process.argv.includes('--frame')||process.argv.includes('--frame-uns
 const unsafeFrame=process.argv.includes('--frame-unsafe-control');
 const unsafeAssistantSettings=process.argv.includes('--assistant-settings-unsafe-control');
 const unsafeKnowledge=process.argv.includes('--knowledge-shares-unsafe-control');
-const knowledgeShares=process.argv.includes('--knowledge-shares')||unsafeKnowledge;
+const knowledgeResources=process.argv.includes('--knowledge-resources');
+const knowledgeShares=process.argv.includes('--knowledge-shares')||unsafeKnowledge||knowledgeResources;
 const assistantSettings=process.argv.includes('--assistant-settings')||unsafeAssistantSettings||knowledgeShares;
 assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame,unsafeAssistantSettings,unsafeKnowledge,unsafeKnowledgeContext].filter(Boolean).length<=1,'Choose one negative control');
-const reportStem=knowledgeContext?(unsafeKnowledgeContext?'knowledge-context-unsafe-control':'knowledge-context-candidate'):knowledgeShares?(unsafeKnowledge?'knowledge-shares-unsafe-control':'knowledge-shares-candidate'):assistantSettings?(unsafeAssistantSettings?'assistant-settings-unsafe-control':'assistant-settings-candidate'):unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+const reportStem=knowledgeResources?'knowledge-resource-candidate':knowledgeContext?(unsafeKnowledgeContext?'knowledge-context-unsafe-control':'knowledge-context-candidate'):knowledgeShares?(unsafeKnowledge?'knowledge-shares-unsafe-control':'knowledge-shares-candidate'):assistantSettings?(unsafeAssistantSettings?'assistant-settings-unsafe-control':'assistant-settings-candidate'):unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
 function advance(actor=uid,stage='signing_agreement',payload={},role='authenticated') {
   const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT row_to_json(s) FROM public.client_advance_onboarding_stage(${stage===null?'NULL':`'${stage}'`},$payload$${JSON.stringify(payload)}$payload$::jsonb) s; COMMIT;`);
   return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
@@ -235,6 +236,10 @@ try {
   if(knowledgeShares){
     const {knowledgeSharesProof}=await import('./e09-customer-knowledge-shares.mjs');
     Object.assign(frameEvidence,await knowledgeSharesProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact,otherContact,spawn,exe,port,transcripts,unsafe:unsafeKnowledge}));
+  }
+  if(knowledgeResources){
+    const {resourceReadProof}=await import('./e09-customer-resource-read.mjs');
+    Object.assign(frameEvidence,resourceReadProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}));
   }
   if(knowledgeContext){
     const {knowledgeContextProof}=await import('./e09-customer-knowledge-context.mjs');

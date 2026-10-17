@@ -131,7 +131,7 @@ const AcceptInvite = lazyWithReload(() => import("./pages/AcceptInvite"));
 
 // Lazy-load existing dashboard sections for /app/* routes
 const RepositioningNotice = lazyWithReload(() => import("./components/dashboard/RepositioningNotice").then(m => ({ default: m.RepositioningNotice })));
-const LearningVault = lazyWithReload(() => import("./components/dashboard/LearningVault").then(m => ({ default: m.LearningVault })));
+const LearningVault = lazyWithReload(() => import("./pages/app/Resources"));
 const CourseViewer = lazyWithReload(() => import("./pages/CourseViewer"));
 const BusinessInfrastructureAssessment = lazyWithReload(() => import("./components/dashboard/business-profile/BusinessInfrastructureAssessment").then(m => ({ default: m.BusinessInfrastructureAssessment })));
 const ProfileSettings = lazyWithReload(() => import("./components/dashboard/ProfileSettings").then(m => ({ default: m.ProfileSettings })));

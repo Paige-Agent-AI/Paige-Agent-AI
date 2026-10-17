@@ -6,6 +6,7 @@ import { workStatusLabel } from "./operations-presentation";
 import { submitOperationsWorkUpdate, type WorkUpdate } from "./operations-work-update";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
 
 // Cancelled work remains inspect-only; status changes retain their existing path.
@@ -31,6 +32,8 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const retained = useRef(linkedDrafts.get(draftKey)).current;
   const keepLinkedDraft = retainDraftOnLeave || Boolean(retained);
   const [staff, setStaff] = useState<boolean | null>(null);
+  const [staffScope, setStaffScope] = useState<{ actorId: string; tenantId: string } | null>(null);
+  const userRoles = useUserRoles();
   const [status, setStatus] = useState<PlanItemStatus>(retained?.status ?? (proposedStage && STATUSES.includes(proposedStage) ? proposedStage : item.status));
   const [due, setDue] = useState(retained?.due ?? "");
   const [assignee, setAssignee] = useState(retained?.assignee ?? item.assigned_to_user_id ?? "");
@@ -50,12 +53,16 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const mounted = useRef(true);
   useEffect(() => {
     let current = true; mounted.current = true;
+    setStaffScope(null);
     void (async () => {
       try {
         const { data, error } = await supabase.rpc("is_tenant_admin", {
           _tenant: tenantId,
         });
-        if (current) setStaff(!error && data === true);
+        if (current) {
+          setStaff(!error && data === true);
+          setStaffScope({ actorId, tenantId });
+        }
       } catch { if (current) setStaff(false); }
     })();
     return () => { current = false; mounted.current = false; };
@@ -80,7 +87,11 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   const canStatus = staff === true || creator || item.assigned_to_user_id === actorId;
   const canDate = staff === true || creator;
   const reminder = item.item_type === "reminder";
-  const canEditTime = canDate && (!reminder || !["done","cancelled"].includes(item.status));
+  // The native reminder field also requires the incumbent app role for a noncreator.
+  const reminderStaff = staff === true && staffScope?.actorId === actorId && staffScope.tenantId === tenantId
+    && !userRoles.loading && userRoles.userId === actorId
+    && (userRoles.roles.includes("admin") || userRoles.roles.includes("super_admin"));
+  const canEditTime = (reminder ? creator || reminderStaff : canDate) && (!reminder || !["done","cancelled"].includes(item.status));
   const busy = phase !== "idle";
   const changed = status !== item.status || priority !== item.priority || Boolean(due) || assignee !== (item.assigned_to_user_id ?? "");
   const mixedReschedule = reminder && Boolean(due) && (status !== item.status || priority !== item.priority || assignee !== (item.assigned_to_user_id ?? ""));
@@ -157,6 +168,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
       {STATUSES.map(value => <option key={value} value={value}>{workStatusLabel(value)}</option>)}
     </select></label>
     {canEditTime && <label>{reminder ? "New reminder time" : "New due date and time"}<input type="datetime-local" value={due} disabled={busy} onChange={(event) => setDue(event.target.value)} /></label>}
+    {reminder && !["done","cancelled"].includes(item.status) && !canEditTime && <p role="status">Reminder time is read-only.</p>}
     {canDate && <label>Priority<select aria-label="Priority" value={priority} disabled={busy} onChange={event => setPriority(event.target.value as PlanPriority)}>{["low", "normal", "high", "urgent"].map(value => <option key={value}>{value}</option>)}</select></label>}
     {staff && <label>Responsible person<select value={assignee} disabled={busy} onChange={(event) => setAssignee(event.target.value)}>
       {!members.some(member => member.user_id === assignee) && <option value={assignee}>{assignee ? "Current member unavailable" : "Unassigned"}</option>}

@@ -64,7 +64,7 @@ import { createServer } from "node:net";
 import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-if (process.argv.includes("--owner-task-native") || process.argv.includes("--owner-task-human-control")) {
+if (process.argv.includes("--owner-task-native") || process.argv.includes("--owner-task-human-control") || process.argv.includes("--owner-task-approval-visibility")) {
   await ownerTaskNativeProof();
   process.exit(0);
 }
@@ -74,7 +74,8 @@ if (process.argv.includes("--owner-task-native") || process.argv.includes("--own
 // against disposable PostgreSQL. Auth, display/realtime and unrelated weekly work
 // are explicit fixture ports; this is NOT a full Supabase schema replay.
 async function ownerTaskNativeProof() {
-  const humanControl = process.argv.includes("--owner-task-human-control");
+  const approvalVisibility=process.argv.includes("--owner-task-approval-visibility");
+  const humanControl = process.argv.includes("--owner-task-human-control") || approvalVisibility;
   const ci = process.argv.includes("--postgres");
   assert.ok(!ci || process.env.CI === "true", "--postgres requires the disposable CI service");
   assert.ok(!ci || !process.env.PGHOST || ["localhost", "127.0.0.1"].includes(process.env.PGHOST), "loopback only");
@@ -157,7 +158,9 @@ async function ownerTaskNativeProof() {
       create schema realtime;create function realtime.send(jsonb,text,text,boolean)returns void language sql as $$select$$;
       create table paige_pending_approvals(id uuid primary key default gen_random_uuid(),type text,draft_content jsonb,summary text,category text,
         contact_id uuid,conversation_id uuid,tenant_id uuid,source text,status text,risk_level text,submitted_by_user_id uuid,metadata jsonb,
-        claimed_at timestamptz,reviewed_at timestamptz);
+        claimed_at timestamptz,reviewed_at timestamptz,reviewed_by_user_id uuid,decision_rationale text,
+        assigned_to_user_id uuid,visible_to_roles text[] not null default array['admin','super_admin'],requires_role text,
+        priority integer,created_at timestamptz not null default now(),updated_at timestamptz not null default now(),sla_due_at timestamptz,sent_at timestamptz);
       create unique index approval_occurrence on paige_pending_approvals((metadata->>'event_id'),(metadata->>'act_id'))where source='paige_orchestration';
       create table paige_journey_stage_transitions(id uuid,contact_id uuid,source_event text);
       create table paige_departments(slug text primary key);insert into paige_departments values('owner_ops');
@@ -262,6 +265,14 @@ async function ownerTaskNativeProof() {
         for (const role of ["anon", "service_role"]) assert.equal(sql(`select has_function_privilege('${role}','${abi}','EXECUTE');`), "f");
         assert.equal(sql(`select count(*)from paige_automations where owner_task_armed_at is not null;`), "0");
       });
+    }
+    if(approvalVisibility) {
+      // An extension of THIS disposable native harness, not a second engine.
+      const {proveOwnerTaskApprovalVisibility}=await import('./owner-task-approval-visibility-cases.mjs');
+      await proveOwnerTaskApprovalVisibility({sql,text,fn,held,control,actor,tenant,other,human,check,refuses,id,literal,json,scratch,exe,args,database});
+      writeFileSync(resolve(scratch,'approval-visibility-result.json'),JSON.stringify({passed:cases.length,cases,
+        proofClass:'DISPOSABLE_POSTGRES_ACTUAL_RLS_VIEW_COMPANION_CANCELLATION_RECEIPT',authenticatedQA:'NOT_RUN',fullSchema:'NOT_RUN'},null,2));
+      console.log(JSON.stringify({result:resolve(scratch,'approval-visibility-result.json'),passed:cases.length,failed:0}));return;
     }
     check("public reader ABI/owner/ACL/config/definer preserved", () => { for (const key of ["oid", "owner", "acl", "config", "definer"]) assert.deepEqual(after[key], original[key], key); });
     check("private reader retains the installed authorization/hash body", () => {

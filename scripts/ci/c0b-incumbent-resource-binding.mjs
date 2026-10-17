@@ -474,7 +474,7 @@ const SOURCES = {
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
-  "supabase/functions/_shared/channel-adapters.ts": "6ca080080233039c808d79af0a659ab3f93adb818b59573a99083b1cee015e2c",
+  "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
   "supabase/functions/_shared/pre-send-pipeline.ts": "f44dff1b639511729fff60f48b90041d1ece27e7cccbdca3b5d455b045685f12",
   "supabase/functions/_shared/contact-methods.ts": "cea64c7f9ac201150bfd28834eaac88a6ebe0333c2c0a42dc9b9a8476840eef6",
   "supabase/functions/_shared/internal-vocabulary.ts": "9074425cc61d1a678e3a4ca03595fe8c4d1eac4572a4bd2daf31aff77f39d37a",

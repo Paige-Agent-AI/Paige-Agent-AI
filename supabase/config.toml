@@ -1,6 +1,13 @@
 project_id = "xygzykjyynhzqytbqnzu"
 
 [functions]
+  # Preserve the existing skill-runner gateway posture. Before any privileged skill
+  # lookup, the handler verifies credentials and resolves actor/workspace server-side.
+  # The canonical adapter refuses unattended service mutations; browser authority and
+  # exact send approval remain additional checks. Missing/invalid sessions return401.
+  [functions.skill-runner]
+    verify_jwt = false
+
   [functions.public-booking]
     verify_jwt = false
 

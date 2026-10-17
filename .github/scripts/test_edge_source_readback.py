@@ -735,5 +735,20 @@ class ReleaseFixtures(unittest.TestCase):
         self.assertEqual(self.run_actual_tag_guard(before).returncode, 0)
 
 
+class RepositoryRuntimeContracts(unittest.TestCase):
+    def test_inbound_attachment_type_is_not_an_expected_runtime_asset(self):
+        spec = importlib.util.spec_from_file_location('repository_graph', ROOT / '.github/scripts/edge-affected.py')
+        graph = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(graph)
+        entry = ROOT / 'supabase/functions/handle-inbound-email/index.ts'
+        expected = readback.runtime_closure(graph, str(entry))
+        self.assertNotIn(str(ROOT / 'supabase/functions/_shared/email-attachments.ts'), expected)
+
+    def test_skill_runner_declares_its_existing_handler_auth_posture_only(self):
+        config = readback.tomllib.loads((ROOT / 'supabase/config.toml').read_text(encoding='utf-8'))
+        self.assertIs(config.get('functions', {}).get('skill-runner', {}).get('verify_jwt'), False)
+        self.assertIs(config.get('functions', {}).get('undeclared-fixture', {}).get('verify_jwt', True), True)
+
+
 if __name__ == '__main__':
     unittest.main()

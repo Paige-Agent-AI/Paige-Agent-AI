@@ -16,6 +16,9 @@ begin
   select * into a from public.paige_pending_approvals where id=_approval_id;
   if a.id is null or a.tenant_id is distinct from tenant or a.source is distinct from 'paige_orchestration'
     or a.category is distinct from 'owner.task' or a.type is distinct from 'other'
+    -- The native producer never writes these cross-domain bindings. Even a
+    -- null key is not a canonical task; ordinary review/recovery notes survive.
+    or a.metadata ?| array['action_id','governed_send']
     or a.metadata->>'source' is distinct from 'paige_orchestration'
     or a.metadata->>'capability_id' is distinct from 'owner.task'
     or not pg_catalog.pg_input_is_valid(coalesce(a.metadata->>'act_execution_id',''),'uuid') then return false; end if;

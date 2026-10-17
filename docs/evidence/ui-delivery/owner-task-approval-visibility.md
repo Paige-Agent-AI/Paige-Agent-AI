@@ -6,26 +6,26 @@ PAIGE_UI_DESIGN: PASS: skill and five modules read; incumbent compact Game Plan/
 MATERIAL_FLOW_CHANGE: NO: restore visibility and rejection in the existing queue, with the same Approve/View/Decline/Cancel/Refresh controls
 FLOW_PROTOTYPE: NOT_REQUIRED: installed skill read; this restores the same existing approval lifecycle and controls, with no new customer goal, flow or destination
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible ordinary SOLO active owner/admin can review the canonical native held task without a global app role
-AUTOMATED_EVIDENCE: PASS: native candidate30 checks passed in disposable PostgreSQL; final focused and mounted UI80 passed with only the not-yet-built styled serializer skipped; final canonical-seed/concurrent-decline extension is separately pending
-STATIC_EVIDENCE: PASS: changed-path ESLint has zero errors/warnings; migration lint checks1 with0 warnings; whitespace passes; full application compiler was interrupted after no output and remains UNVERIFIED, not green
-RENDERED_EVIDENCE: UNVERIFIED: existing mounted actual-consumer fixture is being updated; local static render/geometry is not authenticated platform proof
+AUTOMATED_EVIDENCE: PASS: predecessor native31 checks passed in disposable PostgreSQL; focused and mounted UI80 passed; separate existing styled serializer passed1 selected test and88 scenes with10 previously-passed tests intentionally filtered; final malformed-metadata refusal extension remains in flight
+STATIC_EVIDENCE: PASS: changed-path ESLint has zero errors/warnings; migration lint checks1 with0 warnings; scoped real compiler diagnostics for three changed product files are0 after additive version compatibility correction; full application compiler remains INTERRUPTED/UNVERIFIED; current Vite build passes4m43s
+RENDERED_EVIDENCE: PASS: existing real-consumer source produced88 styled fixture scenes; isolated headless Chromium measured16 required viewport/theme/open-closed combinations with no global horizontal overflow, bounded controls and focused rationale; this is static fixture geometry, not hydrated/authenticated customer behavior
 BEHAVIORAL_EVIDENCE: PASS: actual native RLS/base/view, role and tenant negatives, paused-hold cancellation, original-decision replay, atomic Rail rollback and two-session lock refusal
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate not deployed; root owns ordinary owner/admin acceptance and wrong-tenant/stale controls after release
-KEYBOARD_FOCUS: UNVERIFIED: focus/escape/cancel controls are preserved and tested by the incumbent ApprovalRow suite; final mounted rendering remains separate
-ZOOM_REFLOW: UNVERIFIED: no CSS/layout/breakpoint changes; native viewport and zoom readback for the current candidate remains owed
+KEYBOARD_FOCUS: PASS: incumbent React tests exercise View/Close/Escape/Decline/Cancel focus restoration; isolated native HTML measurements confirm rationale focus; compact PAIGE-open modal overlay is preserved and underlying controls require closing PAIGE, not unconditional pointer access
+ZOOM_REFLOW: UNVERIFIED: required native viewport bounds are measured, but actual browser zoom interaction remains unverified; no CSS/layout/breakpoint changes
 REDUCED_MOTION: NOT_APPLICABLE: no transition, animation or motion behavior is added or changed
 STATE_COVERAGE: PASS: loading/empty/error/retry/dismissal, active role/workspace changes, exact decision, denied/stale/uncertain results, response loss and no automatic replay are bounded by existing components and focused tests
 TRUTHFUL_STATE_LABELS: PASS: cancellation is never execution; native rejection requires canonical cancelled result and actual receipt; replay does not claim the current reviewer authored the original decision
 SOLO_UI: YES: existing Business Game Plan approval rail, shared for every eligible existing and future SOLO business
 UNVERIFIED: Independent Review, final exact-head CI, production migration/deployment, ordinary authenticated QA, Live and owner product acceptance remain unclaimed
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final native viewport geometry for this candidate is not yet recorded; unchanged shell CSS is preserved
+SOLO_1536X770_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; work/approval-visibility-proof/geometry/result.json; not authenticated runtime
+SOLO_1536X770_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; existing PAIGE state preserved; not hydrated/authenticated runtime
+SOLO_1366X768_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; existing rail scroll owner preserved; not authenticated runtime
+SOLO_1366X768_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; existing PAIGE presentation preserved; no unconditional underlying pointer-access claim
+SOLO_1024X768_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; existing responsive field scroll preserved; not authenticated runtime
+SOLO_1024X768_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; compact modal overlay preserved; close PAIGE to operate the underlying queue
+SOLO_900X1000_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; existing responsive field scroll preserved; not authenticated runtime
+SOLO_900X1000_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; compact modal overlay preserved; close PAIGE to operate the underlying queue
 
 OWNER_INTENT: Restore the existing Business Game Plan approval queue so every eligible current and future SOLO active owner/admin can inspect, approve or decline a canonical held native owner.task. The owner performs final product acceptance after technical release. Root authorized this bounded restoration on 2026-10-17; no additional product flow or approval engine is introduced.
 

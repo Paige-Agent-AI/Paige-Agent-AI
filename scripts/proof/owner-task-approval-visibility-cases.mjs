@@ -11,13 +11,17 @@ export async function proveOwnerTaskApprovalVisibility(c) {
     .match(/CREATE POLICY tenant_isolation ON public\.%I[\s\S]*?\n        \)/)[0].replace('%I','paige_pending_approvals');
   const view=text('supabase/migrations/20270519010000_contact_methods_dependents.sql').match(/CREATE OR REPLACE VIEW public\.paige_approval_queue_v[\s\S]*?;/)[0];
   sql(`create table user_roles(user_id uuid,role text);create table client_contact_methods(client_id uuid,value text,kind text,is_primary boolean,position integer);
+    alter table paige_pending_approvals add column sent_message_audit_id uuid;
+    create table paige_actions(id uuid primary key,tenant_id uuid,status text,executed_at timestamptz,resolved_at timestamptz,result jsonb,decision_rationale text);
     create function is_platform_owner(uuid)returns boolean language sql as $$select false$$;
     create function update_updated_at_column()returns trigger language plpgsql as $$begin new.updated_at=now();return new;end$$;
     create trigger approval_touch before update on paige_pending_approvals for each row execute function update_updated_at_column();`+
     fn('20260628013834_d790fe45-ba03-445b-bb94-6373e77f9f0b.sql','has_any_role',true)+
     fn('20260628013834_d790fe45-ba03-445b-bb94-6373e77f9f0b.sql','current_user_roles',true)+
     fn('20270303000000_paige_orchestration_companion_minting.sql','paige_sync_orchestration_act_on_decision')+
+    fn('20260711140000_action_bus.sql','trg_ppa_sync_action')+
     `create trigger decision_cancel after update of status on paige_pending_approvals for each row execute function paige_sync_orchestration_act_on_decision();
+    create trigger legacy_action_sync after update of status on paige_pending_approvals for each row execute function trg_ppa_sync_action();
     alter table paige_pending_approvals enable row level security;`+policies+tenantPolicy+';'+view+
     'grant select,insert,update on paige_pending_approvals to authenticated;grant select on clients,client_contact_methods,paige_approval_queue_v to authenticated;');
   let number=60000;
@@ -50,6 +54,22 @@ export async function proveOwnerTaskApprovalVisibility(c) {
       assert.equal(p.owner,'postgres');assert.equal(p.definer,true);assert.deepEqual(p.config,['search_path=""']);
     }
   });
+  check('malformed cross-domain metadata is refused with actual incumbent trigger and unrelated record unchanged',()=>{
+    const a=fresh(),sentinel=id(69100),foreignTenant=id(69101),tasks=sql('select count(*)from tasks;'),rails=sql('select count(*)from paige_workspace_events;');
+    sql(`insert into paige_actions(id,tenant_id,status)values('${sentinel}','${foreignTenant}','queued');`);
+    const original=sql(`select to_jsonb(p)from paige_actions p where id='${sentinel}';`);
+    for(const extra of [{action_id:sentinel},{action_id:null},{governed_send:{message_id:id(69102)}},{governed_send:null}]){
+      sql(`update paige_pending_approvals set metadata=metadata-'action_id'-'governed_send'||${json(extra)} where id='${a.id}';`);
+      const before=decision(a.id);assert.equal(read(a.id),'0');refuses(statement(a.id),'OWNER_TASK_APPROVAL_FORBIDDEN');
+      assert.deepEqual(decision(a.id),before);assert.equal(sql(`select to_jsonb(p)from paige_actions p where id='${sentinel}';`),original);
+      assert.equal(sql(`select outcome from paige_act_executions where id='${a.f.row.id}';`),'approval_pending');
+      assert.equal(sql('select count(*)from tasks;'),tasks);assert.equal(sql('select count(*)from paige_workspace_events;'),rails);
+    }
+    // Ordinary native operational notes retain their existing compatibility.
+    sql(`update paige_pending_approvals set metadata=metadata-'action_id'-'governed_send'||'{"execute_note":"Pending review","act_outcome":"approval_pending"}' where id='${a.id}';`);
+    assert.equal(read(a.id),'1');
+  });
+  if(process.argv.includes('--owner-task-approval-hybrid-only'))return;
   for(const [label,mutation,restore]of[
     ['member',`update tenant_members set role='member'where user_id='${actor}'`,`update tenant_members set role='owner'where user_id='${actor}'`],
     ['coach',`update tenant_members set role='coach'where user_id='${actor}'`,`update tenant_members set role='owner'where user_id='${actor}'`],

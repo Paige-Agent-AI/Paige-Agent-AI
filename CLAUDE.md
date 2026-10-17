@@ -2,7 +2,9 @@
 
 Standing rules for how work gets done in this repo. These persist across sessions.
 
-## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.
+## 00. UI AUTHORITY — THE FIRST RULE (with 2026-10-15 PRELAUNCH SHIP-THEN-OWNER-TEST release timing).
+
+**Superseding owner decision (2026-10-15):** The older 2026-09-22 design-preview and pre-production approval timing below is historical and **no longer a stop** for an ordinary technically ready prelaunch release. Flow-by-Flow and Impeccable remain mandatory engineering quality authorities, while the OWNER judges the **real LIVE production interface after normal review, green CI, merge and deployment**, and then requests improvements. The governing detailed rule is `AGENTS.md` → “Prelaunch owner ruling — Ship first, owner tests live.” No agent shall demand preview screenshots/owner design sign-off as a pre-merge permission gate. Product security, permissions, genuine irreversible effects and required CI remain separate mandatory safeguards.
 
 > **"I told you to use Flow by Flow and then use Impeccable. That's it. We don't need Claude Design
 > any longer. You can update all the rules to make sure that that's clear: Flow by Flow, then
@@ -14,7 +16,7 @@ Standing rules for how work gets done in this repo. These persist across session
 
 **Claude Code owns the user interface — design and engineering both — and executes it in a fixed
 order: FLOW-BY-FLOW first, then IMPECCABLE. Impeccable is the priority authority on anything the
-user sees.** The owner approves the design before it ships. There is no third party in this loop.
+user sees.** The owner evaluates and accepts the live deployed design after technical release during prelaunch. No separate design approver is inserted.
 
 ### The order, and it is not optional
 
@@ -25,8 +27,7 @@ user sees.** The owner approves the design before it ships. There is no third pa
    decides HOW the interface looks and behaves. Read its `SKILL.md`, then the playbook for the
    request, then `reference/craft-floor.md` immediately before any UI edit. Its OPERATE mode
    governs settings/tools/dashboard surfaces; its refuse-list is binding, not advisory.
-3. **Owner approval** — the owner sees the design and approves it BEFORE production. A design he
-   has not seen is not finished, however green the build is.
+3. **Owner live evaluation (prelaunch)** — after the agent independently verifies, merges and deploys the working design, the owner uses the actual production surface and supplies final acceptance or revisions. Do not require prior visual approval for routine safe deployment.
 
 ### What this means in practice
 
@@ -35,9 +36,7 @@ user sees.** The owner approves the design before it ships. There is no third pa
   it · own hierarchy, motion, type, colour, spacing, layout, iconography and in-surface copy · and
   still own everything under it — RPC and edge seams, tenant scoping and RLS (§9/§51/§53), the
   callable seam (§10), performance, CI gates, migrations, and proof that what shipped runs (§32).
-- **CC SHOWS THE WORK.** A design is presented to the owner as something he can SEE and, where it
-  has hover or motion, something he can FEEL — a rendered frame or an interactive page, never a
-  description of a design and never a Vercel link he has to log into to find.
+- **CC SHIPS THE WORK.** Before release, prove visual and behavioral quality with actual rendered, keyboard and responsive evidence. After the technically verified prelaunch merge/deployment, give the owner the real production route and actions to SEE and FEEL; never substitute a prototype or private Vercel preview as the final product-delivery gate.
 - **Measurements remain measurements.** Contrast ratios, type sizes, grid tracks, whether a face
   loaded, whether a control 404s, whether a surface renders — these are facts and CC reports them
   plainly. CC now also decides what to DO about them.
@@ -62,9 +61,8 @@ It is no longer an authority that outranks CC's judgement or Impeccable's craft 
 
 - **The design cannot be wired as drawn** — the surface needs data that does not exist, a write with
   no seam, or a value no tenant-scoped read may return (§9). Name the exact impossibility.
-- **The backend must change for the design to work** — a new table, column, RPC, edge function,
-  index or policy. Name it and stop.
-- **Owner approval before production**, per the quote above.
+- **The backend must change for the design to work** — create the necessary reviewed table, column, RPC, edge function, index or policy within the agent's assigned authorized scope; name it and continue. Stop only for a genuine privileged/security/external-effect approval, not routine engineering work.
+- **No routine prelaunch owner design approval before production**. The owner tests after merge/deploy under the superseding October 15 ruling.
 - Every material boundary §69 lists: missing authority or a credential, spending money, accepting a
   legal term, a destructive real-data action, a material product decision, unbounded scope.
 
@@ -92,8 +90,7 @@ judging or proposing design, **is void and is DELETED on sight rather than recon
 contrast and light-vs-dark rules remain binding **constraints CC designs within**; §69's gates;
 §70's usability gate; §13 honesty; §28 approved-frozen; §58 anti-regression.
 
-**The test, every time:** *"Did I run Flow-by-Flow, then Impeccable, and can the owner SEE and
-approve this before it ships?"* If the answer is a description instead of a design, it isn't done.
+**The test, every time (prelaunch):** *"Did I run Flow-by-Flow, then Impeccable, deliver a functional tested release to production, and provide the owner a real route to inspect and accept?"* A descriptive prototype alone is not completion.
 
 
 ## 0. SESSION START — READ THE MASTER PROJECT REFERENCE FIRST (single source of truth).

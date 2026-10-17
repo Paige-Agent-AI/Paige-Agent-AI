@@ -103,6 +103,11 @@ export function inspectIncumbentSource(chatText,tool) {
 // E09 UUID-format correction separately reviewed at c7cc4f38adea6f705525a4c6f2ae0b0d2a05bd08.
 // Same native UUID identities, canonical input and receipt spelling; no permission change.
 // Existing dispatcher/control/helper/authority components and verifier logic remain unchanged.
+// E09 attribution review of immutable 936de0b7651886565176ab83c69823063db79c75:
+// removing exactly the two new invitation-attribution lines restores current main
+// byte-for-byte. Only comms_setup_calling captures that shared attribution helper.
+// Its one literal is renewed after source review; all other28, dependency pins,
+// extraction/authority logic and refusal mutants remain unchanged.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -114,7 +119,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "da78412e392cddc1fa7b1764e8b8bec4a0f572ba2353a68cacd3b8747b5deaf9"
+    "fingerprint": "fc05eb5cb8c49caf26d0c73b49e1c9f3a27a6fb5c579c4f805ac0a43e2022396"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",

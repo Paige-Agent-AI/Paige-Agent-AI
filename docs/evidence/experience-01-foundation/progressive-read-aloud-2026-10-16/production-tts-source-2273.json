@@ -1,0 +1,54 @@
+{
+  "merge": "6a2c4258033c6438deab211f56d5188f1b32c9ec",
+  "function": "paige-tts",
+  "version": 76,
+  "status": "ACTIVE",
+  "verify_jwt": true,
+  "providerArchiveSha256": "00b878d51c3f774a6d44a45891ff86f4281e8376873dcc6ad529442674841ccd",
+  "evidenceClass": "MCP_ACTUAL_DEPLOYED_SOURCE_NOT_CUSTOMER_EXECUTION",
+  "files": [
+    {
+      "file": "supabase/functions/paige-tts/index.ts",
+      "expectedSha256": "0485414f555b5793a88c20ec4f9153b0e979ebf170ff495c7cf8feccb6b95162",
+      "actualSha256": "0485414f555b5793a88c20ec4f9153b0e979ebf170ff495c7cf8feccb6b95162",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/tts-router.ts",
+      "expectedSha256": "2d038c4e56c24df2703f473c49582238256fa1dd9729bac3ec327204cee51b59",
+      "actualSha256": "2d038c4e56c24df2703f473c49582238256fa1dd9729bac3ec327204cee51b59",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/env-key.ts",
+      "expectedSha256": "b436393e01d06906bc3918fc57f0bcfb310827790be6a725b2946b52cf7275ca",
+      "actualSha256": "b436393e01d06906bc3918fc57f0bcfb310827790be6a725b2946b52cf7275ca",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/openai.ts",
+      "expectedSha256": "e26e95b46ab2eb55bcb2572c04ef83b25f16b324c2412faaef4ad17e7611c5a2",
+      "actualSha256": "e26e95b46ab2eb55bcb2572c04ef83b25f16b324c2412faaef4ad17e7611c5a2",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/provider-types.ts",
+      "expectedSha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+      "actualSha256": "fd1fe3148f7f61cd539989dc2b4bf59279b08052701293152a3559f92f4b1631",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/elevenlabs.ts",
+      "expectedSha256": "5d3a88de649e4a312d66c0c9c5e58bdda60bcfdb33e0ee85d8d13489929db325",
+      "actualSha256": "5d3a88de649e4a312d66c0c9c5e58bdda60bcfdb33e0ee85d8d13489929db325",
+      "matches": true
+    },
+    {
+      "file": "supabase/functions/_shared/voice-cost-refusal.ts",
+      "expectedSha256": "07100832bea29c4b3044f9507a2bde1881f3dc8041cb6f4e035732033be4653a",
+      "actualSha256": "07100832bea29c4b3044f9507a2bde1881f3dc8041cb6f4e035732033be4653a",
+      "matches": true
+    }
+  ],
+  "passed": true
+}

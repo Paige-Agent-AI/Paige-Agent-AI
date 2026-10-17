@@ -11,7 +11,8 @@ export type ExtractionInput = {
   intent_id: string; title: string; doc_id?: string; expected_revision?: number;
 } & ({ kind: 'paste'; content: string; path?: never } | { kind: 'file'; path: string; content?: never });
 export type ExtractionStatus = 'claimed' | 'succeeded' | 'failed' | 'blocked' | 'cancelled' | 'expired' | 'outcome_unknown';
-export interface ExtractionReference { tenantId: string; intentId: string; documentId: string; workId: string; revision?: number }
+export interface ExtractionReadReference { tenantId: string; documentId: string; workId: string; revision?: number }
+export interface ExtractionReference extends ExtractionReadReference { intentId: string }
 export interface ExtractionSubmission { reference: ExtractionReference; status: ExtractionStatus; replayed: boolean }
 export interface SourceBinding {
   bucket: 'tenant-knowledge'; object_id: string; object_name: string; sha256: string;
@@ -25,6 +26,7 @@ export interface ExtractionReview {
   extraction_work_id: string; extraction_source_binding: SourceBinding | null;
   pending_review: null | { schema_version: 1; extracted_content: string; reviewed_content: string | null; extraction_version: string; coverage: SourceCoverage };
 }
+export type ExtractionDocumentReview = Omit<ExtractionReview, 'extraction_work_id'> & { extraction_work_id: string | null };
 export interface ExtractionWorkStatus {
   work_id: string; capability_key: 'knowledge.extract'; work_kind: 'knowledge_extract'; work_status: ExtractionStatus;
   attempt_count: number; max_attempts: number; blocked_reason: string | null; error_code: string | null;
@@ -48,8 +50,8 @@ function assertScope(scope: ExtractionScope, uncertain = false) {
   if (!uuid(scope.tenantId) || typeof scope.isCurrent !== 'function' || scope.isCurrent() !== true) throw new ExtractionConsumerError('EXTRACTION_SCOPE_CHANGED', 'Select the original workspace and check the current extraction.', uncertain);
 }
 function capture(scope: ExtractionScope): ExtractionScope { const captured = { tenantId: scope.tenantId, isCurrent: scope.isCurrent }; assertScope(captured); return captured; }
-function reference(scope: ExtractionScope, ref: ExtractionReference) {
-  if (ref.tenantId !== scope.tenantId || !uuid(ref.intentId) || !uuid(ref.documentId) || !uuid(ref.workId) || (ref.revision !== undefined && !integer(ref.revision))) invalid();
+function reference(scope: ExtractionScope, ref: ExtractionReadReference) {
+  if (ref.tenantId !== scope.tenantId || ('intentId' in ref && !uuid(ref.intentId)) || !uuid(ref.documentId) || !uuid(ref.workId) || (ref.revision !== undefined && !integer(ref.revision))) invalid();
   return { ...ref };
 }
 function pathInTenant(value: unknown, tenant: string): value is string {
@@ -110,26 +112,40 @@ export async function submitKnowledgeExtraction(client: ExtractionClient, suppli
     ...(d.revision !== undefined ? { revision: d.revision as number } : {}) }, status: d.status as ExtractionStatus, replayed: d.replayed };
 }
 /** Plain text only. Presence of pending_review means awaiting review, never publication or indexing. */
-export async function readKnowledgeExtractionReview(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReference): Promise<ExtractionReview> {
-  const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
-  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: ref.documentId });
-  if (!object(d) || d.tenant_id !== scope.tenantId || d.document_id !== ref.documentId || d.extraction_work_id !== ref.workId
-    || !integer(d.revision) || (ref.revision !== undefined && d.revision < ref.revision)
+function reviewProjection(d: unknown, scope: ExtractionScope, documentId: string, revision?: number, workId?: string, exactRevision = false): ExtractionDocumentReview {
+  if (!object(d) || d.tenant_id !== scope.tenantId || d.document_id !== documentId
+    || !(d.extraction_work_id === null || uuid(d.extraction_work_id)) || (workId !== undefined && d.extraction_work_id !== workId)
+    || !integer(d.revision) || (revision !== undefined && (exactRevision ? d.revision !== revision : d.revision < revision))
     || !['draft', 'canonical'].includes(String(d.record_state)) || !coverages.includes(String(d.source_coverage))) invalid();
   const p = d.pending_review;
-  if (p !== null && (!object(p) || p.schema_version !== 1 || !content(p.extracted_content)
+  if (p !== null && (d.extraction_work_id === null || !object(p) || p.schema_version !== 1 || !content(p.extracted_content)
     || (p.reviewed_content !== null && !content(p.reviewed_content)) || !text(p.extraction_version, 100) || !coverages.includes(String(p.coverage)))) invalid();
-  return { phase: p === null ? 'review_unavailable' : 'awaiting_review', tenant_id: scope.tenantId, document_id: ref.documentId, revision: d.revision,
+  return { phase: p === null ? 'review_unavailable' : 'awaiting_review', tenant_id: scope.tenantId, document_id: documentId, revision: d.revision,
     record_state: d.record_state as ExtractionReview['record_state'], source_coverage: d.source_coverage as SourceCoverage,
-    source_binding: binding(d.source_binding, scope.tenantId), extraction_work_id: ref.workId,
+    source_binding: binding(d.source_binding, scope.tenantId), extraction_work_id: d.extraction_work_id as string | null,
     extraction_source_binding: binding(d.extraction_source_binding, scope.tenantId),
     pending_review: p === null ? null : { schema_version: 1, extracted_content: (p as Record<string, unknown>).extracted_content as string,
       reviewed_content: (p as Record<string, unknown>).reviewed_content as string | null, extraction_version: (p as Record<string, unknown>).extraction_version as string, coverage: (p as Record<string, unknown>).coverage as SourceCoverage } };
 }
+/** Discover existing staged work from the canonical scoped document, never from a new intent.
+ * The fresh selected revision must still match; malformed/unreadable data is never idle.
+ */
+export async function readKnowledgeExtractionForDocument(client: ExtractionClient, suppliedScope: ExtractionScope, documentId: string, expectedRevision: number): Promise<ExtractionDocumentReview> {
+  const scope = capture(suppliedScope);
+  if (!uuid(documentId) || !integer(expectedRevision)) invalid();
+  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: documentId });
+  return reviewProjection(d, scope, documentId, expectedRevision, undefined, true);
+}
+export async function readKnowledgeExtractionReview(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReadReference): Promise<ExtractionReview> {
+  const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
+  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: ref.documentId });
+  const projected = reviewProjection(d, scope, ref.documentId, ref.revision, ref.workId);
+  return { ...projected, extraction_work_id: ref.workId };
+}
 /** Status has no tenant/document fields. First verify its exact source/work association through
  * the scoped review RPC; then read the existing job. No new status store or receipt inference.
  */
-export async function readKnowledgeExtractionStatus(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReference): Promise<ExtractionWorkStatus> {
+export async function readKnowledgeExtractionStatus(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReadReference): Promise<ExtractionWorkStatus> {
   const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
   await readKnowledgeExtractionReview(client, scope, ref);
   const rows = await read(client, scope, 'get_paige_durable_work', { _work_id: ref.workId });

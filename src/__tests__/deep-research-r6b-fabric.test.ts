@@ -3,9 +3,8 @@
  * class seam (fabricCompletion, #1831), DORMANT by construction.
  *
  * The ruling's core guarantees, pinned from both sides:
- *   • flag OFF (the only state this slice ships): every research model call is BYTE-PARITY
- *     with the R5/R6-A shipped path — the same routed job kind, the same body, no trace arg,
- *     no telemetry side-effects;
+ *   • flag OFF: the same legacy routed job kind and body retain provider order, with the
+ *     server-resolved trace required for the incumbent tenant budget and cost ledger;
  *   • flag ON (dormant, owner-gated later): the request carries ONLY a cognitive class from
  *     the engine's own RESEARCH_COGNITIVE_CLASSES declaration and a stable research job
  *     identity — never a provider or model — plus the server-resolved tenant/actor trace;
@@ -18,12 +17,14 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
+import { BudgetExceeded, enforceBudget } from "../../supabase/functions/_shared/router-budget/mod";
 
 const root = join(__dirname, "..", "..");
 const core = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
 const fabric = readFileSync(join(root, "supabase/functions/paige-deep-research/fabric.ts"), "utf8");
+const router = readFileSync(join(root, "supabase/functions/_shared/model-router.ts"), "utf8");
 const r5artifact = JSON.parse(readFileSync(join(root, "docs/research-quality/q0/r5-after-dev.json"), "utf8")) as Array<{ id: string; class: string; outcomes: string[] }>;
 
 const js = (body: string) =>
@@ -88,7 +89,7 @@ describe("R6-B — the dormant gate (default OFF is the shipped state)", () => {
   });
 });
 
-describe("R6-B — flag OFF: byte-parity with the shipped R5/R6-A path", () => {
+describe("R6-B — flag OFF: legacy requests carry their server-resolved budget trace", () => {
   const phases: Array<[string, string]> = [
     ["hop_query_planner", "extract"],
     ["unit_planner", "extract"],
@@ -96,15 +97,16 @@ describe("R6-B — flag OFF: byte-parity with the shipped R5/R6-A path", () => {
     ["dossier_synthesis", "doc_draft"],
   ];
   for (const [phase, jobKind] of phases) {
-    it(`${phase}: routedChatCompletion receives exactly (${jobKind}, body) — no trace, no fabric call, no route`, async () => {
-      const list: Array<{ kind: unknown; b: unknown }> = [];
+    it(`${phase}: preserves (${jobKind}, body) and attributes the existing router budget without a Fabric call or route`, async () => {
+      const list: Array<{ kind: unknown; b: unknown; trace: unknown }> = [];
       const adapter = buildAdapter(false);
       const out = await adapter.researchCompletion(phase, "cheap", { messages: [], temperature: 0.2, max_tokens: 700 }, { tenantId: "t", runId: "r" }, {
-        routed: ((kind: unknown, b: unknown) => { list.push({ kind, b }); return Promise.resolve({ content: "x" }); }) as never,
+        routed: ((kind: unknown, b: unknown, trace: unknown) => { list.push({ kind, b, trace }); return Promise.resolve({ content: "x" }); }) as never,
         fabric: (() => { throw new Error("fabric must not be called while disabled"); }) as never,
       });
       expect(list.length).toBe(1);
-      expect(list[0]).toEqual({ kind: jobKind, b: { messages: [], temperature: 0.2, max_tokens: 700 } });
+      expect(list[0]).toEqual({ kind: jobKind, b: { messages: [], temperature: 0.2, max_tokens: 700 },
+        trace: { tenant_id: "t", task_id: "r", agent_id: "paige-deep-research", job_kind: `research_${phase === "hop_query_planner" ? "hop_planner" : phase}` } });
       expect((out as { resp: unknown }).resp).toEqual({ content: "x" });
       expect(out.route).toBeNull();
     });
@@ -115,6 +117,120 @@ describe("R6-B — flag OFF: byte-parity with the shipped R5/R6-A path", () => {
       routed: (() => { throw new Error("must not call"); }) as never,
       fabric: (() => { throw new Error("must not call"); }) as never,
     })).rejects.toThrow("deterministic");
+  });
+  it.each([null, "", "   "])("refuses a missing or blank legacy tenant before either transport: %j", async tenantId => {
+    const routed = vi.fn(async () => ({}));
+    const fabricCall = vi.fn(async () => ({ ok: true, response: {} }));
+    await expect(buildAdapter(false).researchCompletion("hop_query_planner", "cheap", { messages: [] }, { tenantId, runId: null }, {
+      routed, fabric: fabricCall,
+    })).rejects.toThrow("research_tenant_required");
+    expect(routed).not.toHaveBeenCalled();
+    expect(fabricCall).not.toHaveBeenCalled();
+  });
+});
+
+// Execute the actual routed-text function and its actual route classifier. Only IO,
+// provider transports and pricing are neutral ports; the budget ladder is also real.
+const budgetedRouter = (options: { accrued?: number | null; openFails?: boolean; waitForAccrual?: Promise<number | null> } = {}) => {
+  const events: string[] = [];
+  const traces: Array<Record<string, unknown>> = [];
+  const response = (model: string) => ({ model, usage: { prompt_tokens: 3, completion_tokens: 4 }, choices: [{ message: { content: "Controlled answer" } }] });
+  const ports = {
+    getAdmin: () => ({}),
+    resolveCeiling: async (_db: unknown, tenant: string) => { events.push(`ceiling:${tenant}`); return 10; },
+    accruedSpendToday: async (_db: unknown, tenant: string) => {
+      events.push(`accrual:${tenant}`);
+      return options.waitForAccrual ?? (options.accrued === undefined ? 0 : options.accrued);
+    },
+    enforceBudget, BudgetExceeded,
+    featherlessKey: () => "synthetic-port",
+    featherlessModelFor: () => "controlled-open-model",
+    featherlessChat: async () => { events.push("provider:featherless"); return options.openFails ? null : response("controlled-open-model"); },
+    chatCompletionCompat: async () => { events.push("provider:anthropic"); return response("controlled-reasoning-model"); },
+    traceLLMCall: (trace: Record<string, unknown>) => { traces.push(trace); },
+    estimateCost: () => 0.001,
+    resolvedClaudeModel: () => "controlled-reasoning-model",
+  };
+  const source = ["CHEAP_KINDS", "REASONING_KINDS", "SENSITIVE_KINDS", "pickRoute", "routedChatCompletion"]
+    .map(name => stripExport(extractFn(router, name))).join("\n");
+  const routed = new Function(...Object.keys(ports), `${js(source)}\nreturn routedChatCompletion;`)(...Object.values(ports)) as (...args: unknown[]) => Promise<unknown>;
+  return { routed, events, traces };
+};
+
+describe("native Research — actual legacy router budget and trace integration", () => {
+  const tenantId = "aa000000-0000-4000-8000-000000000002";
+  const runId = "00000000-0000-4000-8000-000000000004";
+  const phases = ["hop_query_planner", "unit_planner", "unit_synthesis", "dossier_synthesis"] as const;
+  const call = (phase: typeof phases[number], port: ReturnType<typeof budgetedRouter>, body: Record<string, unknown> = { messages: [] }, run: string | null = runId) =>
+    buildAdapter(false).researchCompletion(phase, phase.endsWith("synthesis") ? "operational" : "cheap", body, { tenantId, runId: run }, {
+      routed: port.routed,
+      fabric: async () => { throw new Error("Disabled Fabric must not run or add a second trace"); },
+    });
+
+  it.each(phases)("%s crosses tenant preflight before the unchanged provider leg and emits one attributed trace", async phase => {
+    const port = budgetedRouter();
+    const result = await call(phase, port);
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, `provider:${phase.endsWith("synthesis") ? "anthropic" : "featherless"}`]);
+    expect(port.traces).toHaveLength(1);
+    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, task_id: runId, agent_id: "paige-deep-research",
+      job_kind: `research_${phase === "hop_query_planner" ? "hop_planner" : phase}`, status: "success" });
+    expect(result.route).toBeNull();
+  });
+
+  it.each(["unit_synthesis", "dossier_synthesis"] as const)("%s is refused at the hard ceiling before reasoning spend", async phase => {
+    const port = budgetedRouter({ accrued: 10 });
+    await expect(call(phase, port)).rejects.toBeInstanceOf(BudgetExceeded);
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+    expect(port.traces).toHaveLength(1);
+    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, task_id: runId, provider: "router_budget", error_class: "budget_exceeded",
+      doctrine_gate_hits: { budget: { level: "exceeded", band: "reasoning" } } });
+  });
+
+  it.each(["hop_query_planner", "unit_planner"] as const)("%s retains the incumbent cheap-band continuation and records its hard gate", async phase => {
+    const port = budgetedRouter({ accrued: 11 });
+    await call(phase, port);
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, "provider:featherless"]);
+    expect(port.traces).toHaveLength(1);
+    expect(port.traces[0]).toMatchObject({ doctrine_gate_hits: { budget: { level: "hard", band: "cheap" } } });
+  });
+
+  it("waits for accrual before dispatch and cannot turn a delayed hard stop into a provider call", async () => {
+    let resolve!: (spend: number) => void;
+    const port = budgetedRouter({ waitForAccrual: new Promise<number>(done => { resolve = done; }) });
+    const task = call("unit_synthesis", port);
+    const refused = expect(task).rejects.toBeInstanceOf(BudgetExceeded);
+    for (let index = 0; index < 8; index++) await Promise.resolve();
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+    resolve(10);
+    await refused;
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+  });
+
+  it("retains observable unknown-accrual policy rather than inventing zero spend or a new cap", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const port = budgetedRouter({ accrued: null });
+      await call("unit_synthesis", port);
+      expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, "provider:anthropic"]);
+      expect(warning).toHaveBeenCalledWith(expect.stringContaining("budget_accrual_unknown"));
+      expect(port.traces).toHaveLength(1);
+      expect(port.traces[0].doctrine_gate_hits).toBeNull();
+    } finally { warning.mockRestore(); }
+  });
+
+  it("ignores an untrusted body trace and does not invent a missing run correlation", async () => {
+    const port = budgetedRouter();
+    await call("unit_synthesis", port, { messages: [], trace: { tenant_id: "foreign-tenant", task_id: "foreign-run" } }, null);
+    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, task_id: null, agent_id: "paige-deep-research" });
+    expect(port.events.slice(0, 2)).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+  });
+
+  it("keeps cheap provider-health fallback order and the router's single final trace", async () => {
+    const port = budgetedRouter({ openFails: true });
+    await call("hop_query_planner", port);
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, "provider:featherless", "provider:anthropic"]);
+    expect(port.traces).toHaveLength(1);
+    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, provider: "anthropic", status: "success" });
   });
 });
 

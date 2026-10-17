@@ -1,4 +1,5 @@
 import {clientPortalBindingFromProfile, type ClientPortalChatBinding} from "./client-portal-chat-scope.ts";
+import {contextAvailable,contextDegraded,contextUnavailable,type ContextSourceResult} from "./paige-context/mod.ts";
 
 type Caller={rpc(name:string):PromiseLike<{data:unknown;error:unknown}>};
 export type ClientPortalPersonaInput=Readonly<{
@@ -22,22 +23,28 @@ const text=(value:unknown,limit:number):string|null=>
  * The handler must still refuse disabled/unverified input and revalidate scope
  * at every protected dispatch/release boundary; this helper is not authority.
  */
-export async function readClientPortalPersonaInput(caller:Caller,actorId:string):Promise<ClientPortalPersonaInput|null>{
-  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId))return null;
+export async function readClientPortalPersonaSource(caller:Caller,actorId:string):Promise<ContextSourceResult<ClientPortalPersonaInput>>{
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId))return contextDegraded("customer_actor_invalid");
   try{
     // One native STABLE snapshot prevents identity A / settings B / identity A
     // from looking like a consistent read during a relationship transition.
     // No fallback to three independently scoped presentation reads.
     const {data,error}=await caller.rpc("client_portal_frame");
+    if(error)return object(error)?.code==="42501"
+      ?contextUnavailable("customer_relationship_unavailable")
+      :contextDegraded("customer_frame_read_failed");
+    if(data===null)return contextUnavailable("customer_relationship_unavailable");
     const frame=object(data);
-    if(error||!frame||Object.keys(frame).length!==4||frame.actor_id!==actorId)return null;
+    if(!frame||Object.keys(frame).length!==4)return contextDegraded("customer_frame_invalid");
+    if(frame.actor_id!==actorId)return contextUnavailable("customer_scope_changed");
     const binding=clientPortalBindingFromProfile(frame.profile,actorId);
     const brand=object(frame.brand),config=object(frame.config);
-    if(!binding||!brand||brand.tenant_id!==binding.tenantId||!config)return null;
+    if(!binding||!brand||!config)return contextDegraded("customer_frame_invalid");
+    if(brand.tenant_id!==binding.tenantId)return contextUnavailable("customer_scope_changed");
     const assistant=object(config?.assistant);
     if(("assistant"in config&&!assistant)||
-      (assistant&&"enabled"in assistant&&typeof assistant.enabled!=="boolean"))return null;
-    return {
+      (assistant&&"enabled"in assistant&&typeof assistant.enabled!=="boolean"))return contextDegraded("customer_assistant_policy_invalid");
+    return contextAvailable({
       binding,
       enabled:assistant?.enabled!==false,
       businessName:text(brand.tenant_name,180)??"your business",
@@ -47,8 +54,18 @@ export async function readClientPortalPersonaInput(caller:Caller,actorId:string)
       humanHandoff:text(assistant?.human_handoff,600),
       tagline:text(brand.tagline,300),
       supportEmail:text(brand.support_email,254),
-    };
-  }catch{return null;}
+    });
+  }catch{return contextDegraded("customer_frame_read_failed");}
+}
+
+/** Compatibility for leaf callers; context assembly must use the typed source
+ * above so unavailable/degraded reasons reach the incumbent degradation ledger.
+ * A readable disabled policy remains data; consumers must refuse dispatch when
+ * enabled=false rather than silently fall back to an owner persona.
+ */
+export async function readClientPortalPersonaInput(caller:Caller,actorId:string):Promise<ClientPortalPersonaInput|null>{
+  const source=await readClientPortalPersonaSource(caller,actorId);
+  return source.status==="available"?source.data:null;
 }
 
 /** Audience-specific messages for the existing PAIGE transport and tool loop.

@@ -557,7 +557,7 @@ const SOURCES = {
 // Pin both so a changed helper cannot introduce effects or fabricate settlement.
 const ANCESTRY_SOURCES = {
  // Independently reviewed pure contact receipt reference; presentation only, no authority.
- "supabase/functions/_shared/paige-turn/crm-result-reference.ts": "3c7d4f6c33c0a1a05044471f5ee9033a80d4c3eae51df26704a60a82126c14aa",
+ "supabase/functions/_shared/paige-turn/crm-result-reference.ts": "8671158fb14f8d6b2e555a53951687180ab7be0c9061de458ecbc6fddc8842c2",
  "supabase/functions/_shared/client-portal-assistant-context.ts": "a19e19a393c6f0a71b7fdab1e8a9204372915fa38860abf4213c0d945eb01967",
  "supabase/functions/_shared/client-portal-chat-scope.ts": "f9f0cc67e17097d3e3f3c817793550acd6d35ecf436965c04851c90254555433",
  // Cura identity review at36fd1031470aaaa1e0c0b364ecd57468b473bd2f:

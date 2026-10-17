@@ -30,6 +30,9 @@ import { toast } from "sonner";
 import { ChevronDown, KeyRound, Loader2, Link as LinkIcon, Mail, Unlink } from "lucide-react";
 
 type GmailConnector = {
+  id: string;
+  tenant_id: string;
+  updated_at: string;
   from_address: string | null;
   display_name: string | null;
 };
@@ -67,13 +70,15 @@ export default function EmailIntegrationConfig() {
     // RLS scopes to the caller's tenant (§9). A live Gmail connector is provider='gmail'.
     const { data } = await sb
       .from("channel_connectors")
-      .select("from_address, display_name")
+      .select("id, tenant_id, updated_at, from_address, display_name")
       .eq("channel_type", "email")
       .eq("provider", "gmail")
       .eq("active", true)
       .eq("status", "active")
-      .maybeSingle();
-    setGmail((data as GmailConnector | null) ?? null);
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: true })
+      .limit(1);
+    setGmail((Array.isArray(data) ? data[0] as GmailConnector | undefined : null) ?? null);
   };
 
   const loadSmtp = async () => {
@@ -127,16 +132,30 @@ export default function EmailIntegrationConfig() {
   };
 
   const disconnectGmail = async () => {
-    setGmailBusy(true);
-    const { data, error } = await supabase.functions.invoke("gmail-disconnect", { body: {} });
-    setGmailBusy(false);
-    if (error || (data as { error?: string } | null)?.error) {
-      toast.error((await resolveFunctionError({ error, data, action: "disconnect Gmail" })).message);
+    const selected = gmail;
+    if (!selected?.id || !selected.tenant_id || !selected.updated_at || !Number.isFinite(Date.parse(selected.updated_at))) {
+      toast.error("Refresh the Google connection before disconnecting it.");
       return;
     }
-    toast.success("Gmail disconnected");
-    setGmail(null);
-    void loadGmail();
+    setGmailBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gmail-disconnect", { body: {
+        expected_tenant_id: selected.tenant_id, connector_id: selected.id, expected_updated_at: selected.updated_at,
+      } });
+      if (error || (data as { error?: string } | null)?.error) {
+        toast.error((await resolveFunctionError({ error, data, action: "disconnect Gmail" })).message);
+        return;
+      }
+      if (data?.ok !== true || data.disconnected !== true || data.connector_id !== selected.id) {
+        toast.error("The Google disconnect could not be confirmed. Inspect the connection before retrying.");
+        return;
+      }
+      toast.success("Gmail disconnected");
+      setGmail(null);
+      await loadGmail();
+    } catch {
+      toast.error("The Google disconnect could not be confirmed. Inspect the connection before retrying.");
+    } finally { setGmailBusy(false); }
   };
 
   // #141c: a coach fills host/port/user/pass/from and it just connects (§36). smtp-connect

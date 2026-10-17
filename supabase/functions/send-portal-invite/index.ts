@@ -110,7 +110,21 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceKey) return json({ ok: false, error: "server not configured" }, 500);
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !serviceKey || !anonKey) return json({ ok: false, error: "server not configured" }, 500);
+  const authorization = req.headers.get("Authorization");
+  if (!authorization || !/^Bearer\s+\S+$/i.test(authorization))
+    return json({ ok: false, emailed: false, error: "Sign in to manage invitations." }, 401);
+  const caller = createClient(url, anonKey, {
+    global: { headers: { Authorization: authorization } },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const verified = await caller.auth.getUser().catch(() => null);
+  if (!verified)
+    return json({ ok: false, emailed: false, error: "Invitation authorization could not be verified." }, 503);
+  if (verified.error || !verified.data.user?.id)
+    return json({ ok: false, emailed: false, error: "Sign in to manage invitations." }, 401);
+  const actorUserId = verified.data.user.id;
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
   // Validate the token, then resolve the brand up the parent chain (below).
@@ -118,14 +132,33 @@ Deno.serve(async (req) => {
     .from("tenant_invite_tokens")
     // `id` is new here: it is the handle every later delivery event is matched back to. Without it
     // a webhook can prove an email was opened but not WHICH invitation it belonged to.
-    .select("id, tenant_id, revoked_at, expires_at, email, kind")
+    .select("id, tenant_id, contact_id, revoked_at, expires_at, email, kind, uses, max_uses, last_used_at")
     .eq("token", token)
     .maybeSingle();
   if (!tok || tok.revoked_at || new Date(tok.expires_at as string) <= new Date()) {
     return json({ ok: false, error: "invite is not valid" }, 400);
   }
 
-  if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id }))) {
+  // Same caller-bound native predicates as create_tenant_invite_token. Neither
+  // token possession, recipient equality nor service-role reads grant send authority.
+  const authorized = async (): Promise<boolean> => {
+    try {
+      const current = await caller.auth.getUser();
+      if (current.error || current.data.user?.id !== actorUserId) return false;
+      const checks = await Promise.all([
+        caller.rpc("is_platform_owner"),
+        caller.rpc("is_tenant_admin", { _tenant: tok.tenant_id }),
+        caller.rpc("agency_can_manage_child", { _child: tok.tenant_id }),
+      ]);
+      return checks.every((result) => !result.error) && checks.some((result) => result.data === true);
+    } catch { return false; }
+  };
+  if (!(await authorized()))
+    return json({ ok: false, emailed: false, error: "Invitation is not available for sending." }, 403);
+
+  if (!(await commsProviderExecutionAllowed(admin, {
+    tenantId: tok.tenant_id, actorUserId, recipientEmail: email,
+  }))) {
     return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
   }
 
@@ -137,6 +170,40 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "this invite is bound to a different address" }, 400);
   }
   const recipient = boundEmail ?? email;
+
+  const eligible = async (): Promise<boolean> => {
+    try {
+      const current = await admin.from("tenant_invite_tokens")
+        .select("id,tenant_id,contact_id,email,kind,revoked_at,expires_at,uses,max_uses,last_used_at")
+        .eq("id", tok.id).eq("tenant_id", tok.tenant_id).eq("token", token).maybeSingle();
+      const invite = current.data;
+      if (current.error || !invite || invite.id !== tok.id || invite.tenant_id !== tok.tenant_id
+        || invite.contact_id !== tok.contact_id || invite.kind !== tok.kind || invite.revoked_at
+        || String(invite.email ?? "").trim().toLowerCase() !== String(tok.email ?? "").trim().toLowerCase()
+        || !Number.isFinite(Date.parse(invite.expires_at)) || Date.parse(invite.expires_at) <= Date.now()
+        || (invite.max_uses !== null && invite.uses >= invite.max_uses)) return false;
+      if (String(invite.kind ?? "consumer") !== "consumer") return true;
+      if (!boundEmail || !invite.contact_id || invite.uses !== 0 || invite.last_used_at !== null) return false;
+      const client = await admin.from("clients")
+        .select("id,tenant_id,status,merged_into_contact_id,do_not_contact,linked_user_id")
+        .eq("id", invite.contact_id).eq("tenant_id", invite.tenant_id).maybeSingle();
+      const contact = client.data;
+      if (client.error || !contact || contact.id !== invite.contact_id || contact.tenant_id !== invite.tenant_id
+        || contact.status !== "active" || contact.merged_into_contact_id !== null
+        || contact.do_not_contact !== false || contact.linked_user_id !== null) return false;
+      const methods = await admin.from("client_contact_methods")
+        .select("client_id,tenant_id,kind,is_primary,value")
+        .eq("client_id", contact.id).eq("tenant_id", invite.tenant_id)
+        .eq("kind", "email").eq("is_primary", true).limit(2);
+      if (methods.error || !Array.isArray(methods.data) || methods.data.length !== 1) return false;
+      const method = methods.data[0];
+      return method.client_id === contact.id && method.tenant_id === invite.tenant_id
+        && method.kind === "email" && method.is_primary === true && typeof method.value === "string"
+        && method.value.trim().toLowerCase() === boundEmail;
+    } catch { return false; }
+  };
+  if (!(await eligible()))
+    return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
 
   // §6/§9: resolve the brand UP the parent chain so a sub-account invite wears its
   // AGENCY's logo + accent (not the child's empty stub, never Paige). The resolver
@@ -200,7 +267,7 @@ Deno.serve(async (req) => {
         // so scoping the row properly is what keeps one tenant's delivery data away from another's.
         tenant_id: (tok as { tenant_id?: string }).tenant_id ?? null,
         sender_account: "platform",
-        metadata: { via: "send-portal-invite", invite_id: (tok as { id?: string }).id ?? null, kind, ...detail },
+        metadata: { via: "send-portal-invite", invite_id: (tok as { id?: string }).id ?? null, kind, actor_user_id: actorUserId, ...detail },
       });
       if (error) console.error("[send-portal-invite] logSend insert failed", error.message);
     } catch (e) {
@@ -215,6 +282,12 @@ Deno.serve(async (req) => {
     return json({ ok: true, join_url: joinUrl, emailed: false, reason: "no_provider_configured" });
   }
   try {
+    // Final native readback before provider egress. Permission, identity,
+    // invitation and recipient changes cannot be hidden by a stale dashboard.
+    if (!(await authorized()) || !(await eligible()))
+      return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
+    if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id, actorUserId, recipientEmail: recipient })))
+      return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },

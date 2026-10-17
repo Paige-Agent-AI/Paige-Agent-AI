@@ -71,7 +71,7 @@ createRoot(document.getElementById("root")!).render(
         <span
           data-harness-tag
           aria-hidden="true"
-          style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", fontSize: 10, lineHeight: "14px", padding: "0 6px", zIndex: 1000, pointerEvents: "none", whiteSpace: "nowrap", background: "#ffe066", color: "#1a1a1a", borderRadius: "0 0 4px 4px", fontFamily: "ui-monospace, monospace" }}
+          style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", fontSize: 10, lineHeight: "14px", padding: "0 6px", zIndex: 1000, pointerEvents: "none", whiteSpace: "nowrap", background: "#111111", color: "#ffffff", borderRadius: "0 0 4px 4px", fontFamily: "ui-monospace, monospace" }}
         >
           HARNESS RENDER · SYNTHETIC DATA · NOT LIVE
         </span>

@@ -261,11 +261,25 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     })();
   }, [clientId, contextBlock, contextLoading, hasCreditData, messages.length, user, buildContextWithPage]);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { activeTenantId } = useTenantContext();
+  const { activeTenantId, loading: tenantLoading } = useTenantContext();
+  const memoryIdentity = JSON.stringify([user.id, clientId ?? null, !!customerFrame]);
   const memoryView = JSON.stringify([user.id, activeTenantId, clientId ?? null, !!customerFrame]);
   const summaryOriginRef = useRef(memoryView);
   const summaryOriginRevokedRef = useRef(false);
-  if (summaryOriginRef.current !== memoryView) summaryOriginRevokedRef.current = true;
+  const summaryHydrationRef = useRef({ identity: memoryIdentity, pending: tenantLoading && activeTenantId === null });
+  if (summaryOriginRef.current !== memoryView) {
+    // Cold startup may resolve the first workspace while only its greeting is
+    // present. Never adopt a transcript or a later identity/tenant transition.
+    const hydration = summaryHydrationRef.current;
+    if (!summaryOriginRevokedRef.current && hydration.pending && activeTenantId &&
+      hydration.identity === memoryIdentity && messages.length === 1 && messages[0].role === "assistant") {
+      summaryOriginRef.current = memoryView;
+    } else summaryOriginRevokedRef.current = true;
+    hydration.pending = false;
+  }
+  if ((!tenantLoading && activeTenantId === null) || messages.some(message => message.role === "user")) {
+    summaryHydrationRef.current.pending = false;
+  }
 
   const {
     extractDocumentSummary,
@@ -274,7 +288,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     generateSessionSummary,
     resetSession,
   } = usePaigeMemory({ actorId: user.id, tenantId: activeTenantId, clientId: clientId ?? null,
-    enabled: !customerFrame && !summaryOriginRevokedRef.current });
+    enabled: !customerFrame && !tenantLoading && !summaryOriginRevokedRef.current });
   const summarySnapshotRef = useRef({ messages, generateSessionSummary, sessionId: sessionIdRef.current, view: memoryView });
   summarySnapshotRef.current = { messages, generateSessionSummary, sessionId: sessionIdRef.current, view: memoryView };
 
@@ -300,6 +314,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
       summaryOriginRef.current = memoryView;
       summaryOriginRevokedRef.current = false;
+      summaryHydrationRef.current = { identity: memoryIdentity, pending: tenantLoading && activeTenantId === null };
       sessionIdRef.current = crypto.randomUUID();
       resetSession();
       setInput("");
@@ -309,7 +324,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
     window.addEventListener("paige-factory-reset", handleFactoryReset);
     return () => window.removeEventListener("paige-factory-reset", handleFactoryReset);
-  }, [resetSession, playbook.persona.greeting, memoryView]);
+  }, [resetSession, playbook.persona.greeting, memoryView, memoryIdentity, tenantLoading, activeTenantId]);
 
   useLayoutEffect(() => {
     transcriptScrollRef.current?.setContext(transcriptContext);

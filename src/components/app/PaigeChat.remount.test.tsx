@@ -30,10 +30,10 @@ vi.mock("@/lib/playbook", () => ({
 const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,checking:false,
   read:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
 const memoryFixture = vi.hoisted(() => ({
-  actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001",
-  session: vi.fn(), auth: vi.fn(),
+  actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001" as string | null,
+  loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(),
 }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant, loading: memoryFixture.loading }) }));
 vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture}));
 vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
@@ -44,10 +44,13 @@ vi.mock("@/hooks/useProfileSnapshot", () => ({ useProfileSnapshot: () => ({ snap
 vi.mock("@/hooks/useBeforeUnloadGuard", () => ({ useBeforeUnloadGuard: () => undefined }));
 vi.mock("@/hooks/useAnalytics", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/hooks/usePaigeMemory", () => ({
-  usePaigeMemory: () => ({
-    extractDocumentSummary: vi.fn(), getSessionDocumentContext: vi.fn(() => ""), trackActivity: vi.fn(),
-    generateSessionSummary: portalFixture.summary, resetSession: vi.fn(),
-  }),
+  usePaigeMemory: (scope: unknown) => {
+    memoryFixture.scope(scope);
+    return {
+      extractDocumentSummary: vi.fn(), getSessionDocumentContext: vi.fn(() => ""), trackActivity: vi.fn(),
+      generateSessionSummary: portalFixture.summary, resetSession: vi.fn(),
+    };
+  },
 }));
 vi.mock("@/hooks/useChatDocumentUpload", () => ({
   useChatDocumentUpload: () => ({
@@ -107,6 +110,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     portalFixture.read.mockReset();portalFixture.summary.mockClear();
     memoryFixture.actor = "d2000000-0000-4000-8000-000000000001";
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
+    memoryFixture.loading = false; memoryFixture.scope.mockClear();
     memoryFixture.auth.mockReset().mockImplementation(async () => ({ data: { user: { id: memoryFixture.actor } }, error: null }));
     memoryFixture.session.mockReset().mockImplementation(async () => ({ data: { session: { user: { id: memoryFixture.actor }, access_token: "synthetic-session" } } }));
     sessionStorage.clear();
@@ -150,7 +154,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it.each(["actor", "tenant", "client"])("rejects delayed and retained callbacks after a %s A→B→A transition", async boundary => {
+  it.each(["actor", "tenant", "client"])("rejects delayed and retained callbacks after a %s Aâ†’Bâ†’A transition", async boundary => {
     memoryFetch(); const original = scope(); await renderMemory(original);
     const oldGenerate = memoryApi.generateSessionSummary;
     const session = pendingMemory<{ data: { session: { user: { id: string }; access_token: string } } }>();
@@ -209,6 +213,70 @@ describe("normal PaigeChat remount scroll behavior", () => {
     else if (boundary === "unmount") { await act(async () => root.unmount()); root = createRoot(host); }
     else await act(async () => { await vi.advanceTimersByTimeAsync(35_001); });
     await task; expect(signal?.aborted).toBe(true); expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  const ordinaryUser = () => ({ id: memoryFixture.actor, user_metadata: {} } as never);
+  const renderOrdinaryChat = async (user = ordinaryUser(), clientId?: string) => act(async () => {
+    root.render(<PaigeChat user={user} session={null} clientId={clientId} />); await memoryFlush();
+  });
+  const sendOrdinary = async (text: string) => {
+    await act(async () => {
+      const input = host.querySelector("textarea")!;
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(input, text);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => { (host.querySelector('button[aria-label="Send message"]') as HTMLButtonElement).click(); await memoryFlush(); });
+  };
+  const ordinaryStream = () => vi.stubGlobal("fetch", vi.fn(async () => new Response('data: {"choices":[{"delta":{"content":"Same-scope answer"}}]}\n\ndata: [DONE]\n\n',
+    { status: 200, headers: { "Content-Type": "text/event-stream" } })));
+  const observedScope = () => memoryFixture.scope.mock.lastCall?.[0] as TestMemoryScope;
+
+  it.each([false, true])("enables an untouched cold-start summary after legitimate tenant hydration (intermediate loading=%s)", async intermediate => {
+    vi.useFakeTimers(); ordinaryStream();
+    memoryFixture.tenant = null; memoryFixture.loading = true;
+    await renderOrdinaryChat();
+    const unresolvedScope = observedScope();
+    expect(unresolvedScope).toMatchObject({ actorId: memoryFixture.actor, tenantId: null, clientId: null });
+    memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
+    if (intermediate) { await renderOrdinaryChat(); expect(observedScope().enabled).toBe(false); }
+    memoryFixture.loading = false; await renderOrdinaryChat();
+    expect(observedScope()).toEqual({ actorId: memoryFixture.actor, tenantId: memoryFixture.tenant, clientId: null, enabled: true });
+    expect(unresolvedScope.enabled).toBe(false);
+    await sendOrdinary("First question after workspace hydration");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).toHaveBeenCalledTimes(1);
+    expect(portalFixture.summary.mock.calls[0][0]).toEqual(expect.arrayContaining([{ role: "user", content: "First question after workspace hydration" }]));
+  });
+
+  it.each(["actor", "client", "settled-null", "settled-after-loading", "unscoped-transcript"])("does not adopt a cold transcript after %s changes", async boundary => {
+    vi.useFakeTimers(); ordinaryStream();
+    const user = ordinaryUser(); memoryFixture.tenant = null; memoryFixture.loading = boundary !== "settled-null";
+    await renderOrdinaryChat(user);
+    if (boundary === "actor") { await renderOrdinaryChat({ id: "d2000000-0000-4000-8000-000000000002", user_metadata: {} } as never); await renderOrdinaryChat(user); }
+    if (boundary === "client") { await renderOrdinaryChat(user, "d2200000-0000-4000-8000-000000000001"); await renderOrdinaryChat(user); }
+    if (boundary === "settled-after-loading") { memoryFixture.loading = false; await renderOrdinaryChat(user); }
+    if (boundary === "unscoped-transcript") await sendOrdinary("Question before workspace is known");
+    memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false;
+    await renderOrdinaryChat(user); expect(observedScope().enabled).toBe(false);
+    await sendOrdinary("Retained conversation after hydration");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).not.toHaveBeenCalled();
+  });
+
+  it("revokes a hydrated origin across a null detach and return until an explicit reset", async () => {
+    vi.useFakeTimers(); ordinaryStream(); memoryFixture.tenant = null; memoryFixture.loading = true;
+    await renderOrdinaryChat(); memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false;
+    await renderOrdinaryChat(); await sendOrdinary("Original hydrated workspace question");
+    memoryFixture.tenant = null; memoryFixture.loading = true; await renderOrdinaryChat();
+    memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false; await renderOrdinaryChat();
+    expect(observedScope().enabled).toBe(false);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).not.toHaveBeenCalled();
+    await act(async () => { window.dispatchEvent(new Event("paige-factory-reset")); });
+    expect(observedScope().enabled).toBe(true); await sendOrdinary("Fresh reset after detach");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(portalFixture.summary.mock.calls[0][0])).not.toContain("Original hydrated workspace question");
   });
 
   it.each(["actor", "tenant", "client"])("keeps ordinary inactivity summaries origin-bound after %s changes until an explicit reset", async boundary => {

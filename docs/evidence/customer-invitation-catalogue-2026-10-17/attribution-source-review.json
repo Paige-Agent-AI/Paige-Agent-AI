@@ -1,0 +1,155 @@
+{
+  "reviewClass": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "sourceCommit": "936de0b7651886565176ab83c69823063db79c75",
+  "mainCommit": "0e769dcbbd1d975ad7dce37cc9ae58e66f83e885",
+  "exactDelta": "Two new invitation-attribution lines only; removing them restores main byte-for-byte.",
+  "effect": "Name portal_tokens and accept returned invitation_id only; never substitute contact/operation.",
+  "preserved": "All incumbent dispatch, authentication, scope, admission, policy, provider and execution bodies. Metadata, dependencies and extraction algorithm unchanged.",
+  "scalars": [
+    {
+      "tool": "comms_setup_calling",
+      "old": "da78412e392cddc1fa7b1764e8b8bec4a0f572ba2353a68cacd3b8747b5deaf9",
+      "actual": "fc05eb5cb8c49caf26d0c73b49e1c9f3a27a6fb5c579c4f805ac0a43e2022396"
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "old": "aa21e32dfd8e385f16743229e89c4621c660b6f1f07964d588722d0c5841f558",
+      "actual": "0c652395dfd6059181734027f31cc8256572a4fa4b24eda5300a47949ff9528b"
+    },
+    {
+      "tool": "calendar_link_send",
+      "old": "30f08313cb7b88ba2404e31819da6b9287903d9ffecab2f467dea66b1ac562ec",
+      "actual": "7985fa7d98e4596a591df403693404d024ce5484c0751e5c43fd15e4caab7f82"
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "old": "5424434d8224ff33dff7b535862958b0d8cf61cda54ee418665e77aec1f8f24f",
+      "actual": "79ba16f4cce534b71777486fb83777e0e82edd2bdb87fe7457c2f341b0ccf096"
+    },
+    {
+      "tool": "update_business_profile",
+      "old": "a03f5aa86494a2d38aa2573869c422ef70a6084924608d8b043c2b95764f3b72",
+      "actual": "5ae67de23e594b9f4052502fe76ce4408dded62c07fef31021e62929f9468158"
+    },
+    {
+      "tool": "capability_status",
+      "old": "c6a006f9b328b11bbbf011bc13ef81d92a5efb1f1f0e68340c354d93c773da79",
+      "actual": "9e6a9e22c664005df7638a13edcaf6ce6c99350ec8ffa79b22657153c7e22ffb"
+    },
+    {
+      "tool": "improvement_propose",
+      "old": "e63d5c12e149413372c2e0f6eb4ab6c0828b6bb8e51009fbe1c6fe5925386e25",
+      "actual": "98c5be23804e66af31a5d26c699d31aaa0a66c2e520572b9abb2b82929c6655f"
+    },
+    {
+      "tool": "improvement_decide",
+      "old": "0a3a36c39d18fbf25a501422157d8f9de0d6f9bb9d4dbd4713cb4d015d1d47b8",
+      "actual": "a3dce420ead4b2a5d7b808f68b62eee6e3829a0fe0c2f71248fc053143e427c5"
+    },
+    {
+      "tool": "list_subagents",
+      "old": "b4929ea58761b6de695b464742f1d99c2e89d77f57f8dbb2868a5dead4c77059",
+      "actual": "4eeb0e9d8e348c15a6915bf769733ef7cb6d94a6faf652987bd9f187246d6c28"
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "old": "b4929ea58761b6de695b464742f1d99c2e89d77f57f8dbb2868a5dead4c77059",
+      "actual": "4eeb0e9d8e348c15a6915bf769733ef7cb6d94a6faf652987bd9f187246d6c28"
+    },
+    {
+      "tool": "forge_subagent",
+      "old": "ff2f9cf768c862aeda6dac5e21d55776f985aac90899314482e28ee5a050f314",
+      "actual": "2104f4308dee6a00a5ac9b2e946b3f93209431991eada1e7fcaa2ff4abf7ecba"
+    },
+    {
+      "tool": "author_event_kind",
+      "old": "f588fb6fb928fbec9ee81696a52c45e502b72d2b383d4e276acda7fd81790dd4",
+      "actual": "d3180a0d6e46e20791f3df5d1e1488911fd1772be8be0fb65f61c3ba53fbb692"
+    },
+    {
+      "tool": "crm_add_note",
+      "old": "e7a19430f24f39fdd864fc1c58e5cbd36260948191c73779a951718ce03c309b",
+      "actual": "78dab56ecd29abd98358ce4782ce0f73da2cbafed3bf7643a21102dd76c9098f"
+    },
+    {
+      "tool": "crm_file_document",
+      "old": "d8cc97b6706ae6e78c5e18cf8ed76d0cec1362fb2172f9d5f143aa74970d5d51",
+      "actual": "9c989745c60931677339ec2fbd12bb95266ee06b5933d96e2cc99e587e5c46f4"
+    },
+    {
+      "tool": "update_client_data",
+      "old": "e2d218289b268429bed960ce14c0a7f6deb82de8a4e3e5727a1f94eb82c6d8bb",
+      "actual": "ef94f1fc00676078d106908f5c7e7e44f904f732c5b28e7dfdb701c69f68257f"
+    },
+    {
+      "tool": "pipeline_configure",
+      "old": "b2c03311762055de9198b56a4553f889293754ebd5cc7ee77772f3097f91bdac",
+      "actual": "b18e0f73ebba4fc9c9c5ce4b6f2b505a544cf6ef4095e572a963ade9df39efda"
+    },
+    {
+      "tool": "deep_research",
+      "old": "94ede00f47005cee9803af9da9cbec901a2ee1a1898fc9cda0892bd0f88b4cdb",
+      "actual": "21f355e0cc052c7ade773c35793356d2b2402a3cc494d0604931b1fd7f546334"
+    },
+    {
+      "tool": "web_search",
+      "old": "756b8c832e3370073809f6b133da6fe0bfd6141327c6cc5e7aa8b5a7d52fe80d",
+      "actual": "f246b821c3cebdfe5ac466ad79a6d66e26b0158207902ceb9dea55cfea01cd9b"
+    },
+    {
+      "tool": "web_fetch",
+      "old": "47760a70de6995c5476389dd003b59e4999821d43490f283aa6baab8599058e4",
+      "actual": "595f8f1e38613ccd4574f282033b07472f6f11a28ee19098e4403f5ac1677964"
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "old": "0f4b80a74e569da38b0d7df7e35e99498e297adca495979e2a6d385cbe69681f",
+      "actual": "71e34a5faa017d5d6389f45cc2d888c53794121c9cdc8f3915cd776cf8e70dc9"
+    },
+    {
+      "tool": "automation_draft",
+      "old": "f4a85075b98ce6f4154c6e5b58555bd62b57df2d9ecd6810ce18f8ef3e1a9b96",
+      "actual": "469bbdde66a85ff842473a3a74060fd5ffa06b4705f5574b5ff0a4a460812ac5"
+    },
+    {
+      "tool": "comms_connection_summary",
+      "old": "f392c1a636319b51c27c810fe962c3ab4202a8e1ece37fb7e5d679892787ca29",
+      "actual": "d50c16dc01cd465eb9a472e2c91a8df4e9215153011077febd59f10ce13cc788"
+    },
+    {
+      "tool": "comms_registration_status",
+      "old": "ebc39f9a2182fa17e7c9b960e4a19bb095a3332f3083d43c174665d82312e4e1",
+      "actual": "26126429487b1d86e4ecc3574c8f1295de1e46c7d3417d5e61ab80f563cd4fd0"
+    },
+    {
+      "tool": "comms_list_numbers",
+      "old": "c2f346ca7a395d856a61ddfaaee5acc6ca6004a452b6e6c07537c93d24f3d3df",
+      "actual": "fa75dffbf6b4839c06b5614891527fb2ecb7ded993ec45623bd0349bf3fbec72"
+    },
+    {
+      "tool": "comms_search_numbers",
+      "old": "a78a0981c8a77296a5c4d20c609d4f9a0b61b13314c094ba80dd53b8565320de",
+      "actual": "ca41a25b7951bd4257598326190a8ff905b848a965fe7682f50fcd56ecefc371"
+    },
+    {
+      "tool": "comms_buy_number",
+      "old": "826109825cecde76715fa4039d5d724cf076011021528184f074dc98594dbd98",
+      "actual": "4e4619e4651034c8798768357eca0cb057380a5243ef7e948e5620f7e4678384"
+    },
+    {
+      "tool": "comms_draft_registration",
+      "old": "724ca57115bd8f3ca99724f010f889f16dd26ff8fbb6911d25b77772b822b8af",
+      "actual": "b54d32d37d719bece47f31071e4c2ff1266c42830fdb55e7d89af801605eab28"
+    },
+    {
+      "tool": "comms_name_number",
+      "old": "b9c4b692d76d47b7935bcfa59fc53a23e759f1861ed6f615f6731b74d99e5b39",
+      "actual": "e2ebb324463b54dedea4723fd0ac58b75242093186f2ab82ddadc7149ad841df"
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "old": "8e71223ecb79802aa74b089cda5908f336dd18bfd38885b78e90452cbdf0f72c",
+      "actual": "d5bd561250ea6c96dcee4a5b4686399a0a09a6b4191fe8922da34ac32a67c388"
+    }
+  ]
+}

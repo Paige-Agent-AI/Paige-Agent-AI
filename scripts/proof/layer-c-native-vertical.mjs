@@ -64,7 +64,7 @@ import { createServer } from "node:net";
 import { retireSyntheticTenantSQL } from "./operator-postgres-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-if (process.argv.includes("--owner-task-native")) {
+if (process.argv.includes("--owner-task-native") || process.argv.includes("--owner-task-human-control")) {
   await ownerTaskNativeProof();
   process.exit(0);
 }
@@ -74,6 +74,7 @@ if (process.argv.includes("--owner-task-native")) {
 // against disposable PostgreSQL. Auth, display/realtime and unrelated weekly work
 // are explicit fixture ports; this is NOT a full Supabase schema replay.
 async function ownerTaskNativeProof() {
+  const humanControl = process.argv.includes("--owner-task-human-control");
   const ci = process.argv.includes("--postgres");
   assert.ok(!ci || process.env.CI === "true", "--postgres requires the disposable CI service");
   assert.ok(!ci || !process.env.PGHOST || ["localhost", "127.0.0.1"].includes(process.env.PGHOST), "loopback only");
@@ -116,15 +117,22 @@ async function ownerTaskNativeProof() {
       call("initdb", ["-D", data, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8", "--no-sync"]);
       call("pg_ctl", ["-D", data, "-l", resolve(scratch, "server.log"), "-o", `-h 127.0.0.1 -p ${port} -F`, "-w", "-t", "30", "start"], { stdio: "ignore" });
       started = true;
+      // Reproduce a shared CI cluster where an earlier proof created this role
+      // without Supabase's BYPASSRLS attribute. Only our fresh local cluster is seeded.
+      sql("create role service_role nobypassrls;", "postgres");
     }
     sql("create database " + database, "postgres");
     sql(`do $$begin
       if not exists(select 1 from pg_roles where rolname='anon')then create role anon;end if;
       if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated;end if;
       if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role bypassrls;end if;end$$;
+      -- Earlier proofs share CI's disposable cluster and can create this role
+      -- without Supabase's attributes. Normalize the fixture, never production.
+      alter role service_role nosuperuser inherit bypassrls;
       create schema auth;create schema extensions;create extension pgcrypto with schema extensions;
       create function auth.jwt()returns jsonb language sql as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
       create function auth.uid()returns uuid language sql as $$select nullif(auth.jwt()->>'sub','')::uuid$$;
+      create table auth.users(id uuid primary key,deleted_at timestamptz,banned_until timestamptz);
       create function is_platform_owner()returns boolean language sql as $$select false$$;
       create function current_user_tenant_id()returns uuid language sql as $$select nullif(current_setting('test.tenant',true),'')::uuid$$;
       create function trust_effective_rung()returns int language sql as $$select 3$$;
@@ -132,7 +140,8 @@ async function ownerTaskNativeProof() {
       create function is_tenant_member(uuid)returns boolean language sql as $$select false$$;
       create table tenants(id uuid primary key,status text,archived_at timestamptz,lifecycle_execution_paused boolean default false);
       create table profiles(user_id uuid primary key,active_tenant_id uuid);
-      create table tenant_members(tenant_id uuid,user_id uuid,role text,status text);
+      create table tenant_members(tenant_id uuid,user_id uuid,role text,status text,joined_at timestamptz default clock_timestamp());
+      create table audit_logs(id uuid primary key default gen_random_uuid(),user_id uuid references auth.users(id),action text not null,entity text not null,entity_id uuid,data jsonb,created_at timestamptz default now());
       create table tenant_tool_autonomy(tenant_id uuid,tool_key text,mode text);
       create table clients(id uuid primary key,tenant_id uuid,linked_user_id uuid,assigned_coach_user_id uuid,primary_business_id uuid,
         account_number text,first_name text,last_name text,lifecycle_stage text,source text,status text default 'active',updated_at timestamptz default clock_timestamp());
@@ -161,6 +170,10 @@ async function ownerTaskNativeProof() {
       table("20261022000000_automations_the_process_record.sql", "paige_automations") +
       table("20261022000000_automations_the_process_record.sql", "paige_automation_acts") +
       table("20270119000000_contact_created_native_event.sql", "paige_native_events"));
+    check("disposable service role matches authoritative Supabase RLS attributes even when created by an earlier proof",()=>{
+      assert.deepEqual(JSON.parse(sql("select json_build_object('superuser',rolsuper,'bypassrls',rolbypassrls,'inherit',rolinherit)from pg_roles where rolname='service_role';")),
+        {superuser:false,bypassrls:true,inherit:true});
+    });
     sql(text("supabase/migrations/20270126000000_paige_act_execution_ledger.sql") +
       text("supabase/migrations/20271023000000_paige_act_dispatch_claim.sql") +
       fn("20271025000100_paige_dispatch_crash_recovery.sql", "paige_claim_act_dispatch", true) +
@@ -192,24 +205,64 @@ async function ownerTaskNativeProof() {
     sql(`revoke all on function read_crm_command_result(uuid,uuid,jsonb,text)from public,anon,authenticated;grant execute on function read_crm_command_result(uuid,uuid,jsonb,text)to service_role;
       grant usage on schema public,auth to service_role,authenticated,anon;grant all on all tables in schema public to service_role;
       insert into tenants(id,status)values('${tenant}','active');insert into profiles values('${actor}','${tenant}'),('${other}','${tenant}');
-      insert into tenant_members values('${tenant}','${actor}','owner','active'),('${tenant}','${other}','admin','active');
+      insert into tenant_members(tenant_id,user_id,role,status)values('${tenant}','${actor}','owner','active'),('${tenant}','${other}','admin','active');
+      insert into auth.users(id)values('${actor}'),('${other}');
       insert into paige_action_kinds(slug,label,description,default_from_department,default_to_department,executor,requires_approval,default_autonomy_lane)
       values('owner.task','Internal task','Internal task for the owner team','owner_ops','owner_ops','record_only',false,'auto');
       insert into paige_automation_triggers(key,label,category,description,is_live)values('contact.created','Contact','records','Real native insert',true);`);
     const metadata = () => JSON.parse(sql("select json_build_object('oid',oid,'owner',proowner,'acl',proacl,'config',proconfig,'definer',prosecdef,'body',prosrc)from pg_proc where oid='public.read_crm_command_result(uuid,uuid,jsonb,text)'::regprocedure;"));
     const original = metadata();
     const fixtures = [];
+    const controlReview = process => JSON.parse(sql(`select jsonb_build_object('updated_at',p.updated_at,'process',public._owner_task_process_review(p),'acts',
+      (select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'position',a.position,'action_kind',a.action_kind,'tool_key',a.tool_key,'config',a.config)order by a.position,a.id),'[]')from paige_automation_acts a where a.automation_id=p.id))
+      from paige_automations p where p.id='${process}';`));
+    const human = who => `set role authenticated;set request.jwt.claims='{"role":"authenticated","sub":"${who}"}';`;
+    const controlStatement = (process, action, review = controlReview(process), who = actor) => human(who)+
+      `select control_owner_task_automation('${process}',${literal(action)},${literal(review.updated_at)}::timestamptz,${json(review.process)},${json(review.acts)})::text;`;
+    const control = (process, action, review, who) => JSON.parse(sql(controlStatement(process, action, review, who)));
+    let controlInstalled = false;
     function held(number) {
       const process = id(number), act = id(number + 1), contact = id(number + 2);
-      sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)values('${process}','${tenant}','Native task ${number}','contact.created','${actor}','confirm','live');
-        insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task','{"title":"Native internal task"}');
-        insert into clients(id,tenant_id,first_name,last_name,account_number,source)values('${contact}','${tenant}','Synthetic','Contact','fixture-${number}','test');`);
+      sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)values('${process}','${tenant}','Native task ${number}','contact.created','${actor}','confirm','${controlInstalled ? "draft" : "live"}');
+        insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task','{"title":"Native internal task"}');`);
+      if (controlInstalled) control(process, "arm");
+      sql(`insert into clients(id,tenant_id,first_name,last_name,account_number,source)values('${contact}','${tenant}','Synthetic','Contact','fixture-${number}','test');`);
       const event = sql(`select id from paige_native_events where subject_id='${contact}';`), correlation = id(number + 3);
       const row = native("paige_record_act_execution", [literal(event), literal(process), literal(act), "1", literal(tenant), "'native'", "'owner.task'", "'confirm'", "'approval_pending'", "null", literal(correlation), literal(correlation), "null", json({ snapshot_args: { title: "Native internal task" } }), "null", "null", "null"]);
       const f = { process, act, contact, event, correlation, row }; fixtures.push(f); return f;
     }
     const legacy = held(800); // Actual native recorder/companion before the new capture trigger exists.
     sql(migration); const after = metadata();
+    let preControlLanded=null,preControlPending=null,preControlResult=null;
+    if (humanControl) {
+      // Genuine incumbent holds/results BEFORE220000, not reconstructed legacy
+      // JSON. The forward migration must not hide a landed canonical result or
+      // fabricate activation evidence for an old pending occurrence.
+      preControlLanded=held(820);preControlPending=held(840);
+      native("paige_approve_act_execution",[literal(preControlLanded.event),literal(preControlLanded.act),literal(actor)]);
+      native("paige_claim_act_dispatch",[literal(preControlLanded.event),literal(preControlLanded.act),literal(randomUUID()),"interval '10 minutes'","true"]);
+      preControlResult=native("execute_owner_task_act",[literal(preControlLanded.event),literal(preControlLanded.act),literal(preControlLanded.correlation)]);
+      assert.equal(preControlResult.state,"found");
+      // The production resolver body is installed unchanged; only unrelated
+      // agency/operator helper ports are explicit fixture inputs. RPC authority
+      // must still require the ordinary active owner/admin seat independently.
+      sql(`create function agency_can_manage_child(uuid,uuid)returns boolean language sql as $$select coalesce(current_setting('test.agency',true),'')='true'$$;
+        create function agency_team_role(uuid,uuid)returns text language sql as $$select null::text$$;
+        create function is_platform_admin(uuid)returns boolean language sql as $$select coalesce(current_setting('test.operator',true),'')='true'$$;
+        create function is_tenant_admin(uuid)returns boolean language sql security definer set search_path='' as $$select exists(select 1 from public.tenant_members where tenant_id=$1 and user_id=auth.uid()and status='active'and role in('owner','admin'))$$;`+
+        fn("20260714144656_tier_rail_phaseB_agency_standing.sql", "current_user_tenant_id", true));
+      const base = text("supabase/migrations/20261022000000_automations_the_process_record.sql");
+      sql(base.slice(base.indexOf("ALTER TABLE public.paige_automations      ENABLE ROW LEVEL SECURITY;"), base.indexOf("-- ── 5."))+
+        [...base.matchAll(/GRANT [^;]* ON public\.paige_(?:automations|automation_acts) TO authenticated;/g)].map(m=>m[0]).join("\n"));
+      sql(text("supabase/migrations/20271108242000_owner_task_human_control.sql"));
+      controlInstalled = true;
+      check("human control exists as an authenticated-only exact five-argument domain writer", () => {
+        const abi = "public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)";
+        assert.equal(sql(`select has_function_privilege('authenticated','${abi}','EXECUTE');`), "t");
+        for (const role of ["anon", "service_role"]) assert.equal(sql(`select has_function_privilege('${role}','${abi}','EXECUTE');`), "f");
+        assert.equal(sql(`select count(*)from paige_automations where owner_task_armed_at is not null;`), "0");
+      });
+    }
     check("public reader ABI/owner/ACL/config/definer preserved", () => { for (const key of ["oid", "owner", "acl", "config", "definer"]) assert.deepEqual(after[key], original[key], key); });
     check("private reader retains the installed authorization/hash body", () => {
       const body = JSON.parse(sql("select to_jsonb(prosrc)::text from pg_proc where oid='public._read_crm_command_result_scoped(uuid,uuid,jsonb,text)'::regprocedure;"));
@@ -475,6 +528,241 @@ async function ownerTaskNativeProof() {
       assert.equal(sql(`select outcome from paige_act_executions where id='${competing.row.id}';`),"accepted_for_execution");
       assert.equal(bridge(competing).state,"found");assert.equal(bridge(competing).state,"found");assert.equal(resultCount(competing),"1");
     });
+    if (humanControl) {
+      const controlCasesStart=cases.length;
+      let nextControl=3000;
+      function draft(config={title:"Review the new contact"}, fixtureTenant=tenant, fixtureActor=actor) {
+        const process=id(nextControl++),act=id(nextControl++);
+        sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by)values('${process}','${fixtureTenant}','Human task ${process}','contact.created','${fixtureActor}');
+          insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task',${json(config)});`);
+        return {process,act};
+      }
+      const auditCount=p=>sql(`select count(*)from audit_logs where entity_id='${p}';`);
+      const armed=draft(), initial=controlReview(armed.process);
+      check("ordinary owner arms only the exact reviewed stored process with confirm; canonical audit is configuration, not a task receipt",()=>{
+        const before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
+        const r=control(armed.process,"arm",initial);
+        assert.equal(r.state,"live");assert.equal(r.granted_lane,"confirm");assert.equal(r.execution_started,false);
+        assert.equal(r.future_events_only,true);assert.equal(r.changed,true);assert.ok(r.armed_at);
+        assert.equal(sql("select count(*)from tasks;"),before);assert.equal(sql("select count(*)from paige_workspace_events;"),rails);
+        assert.equal(auditCount(armed.process),"1");
+        const audit=JSON.parse(sql(`select to_jsonb(a)from audit_logs a where entity_id='${armed.process}';`));
+        assert.equal(audit.user_id,actor);assert.equal(audit.action,"owner_task_automation.arm");
+        assert.equal(audit.data.tenant_id,tenant);assert.equal(audit.data.execution_started,false);
+      });
+      check("an exact current arm replay is a truthful no-op; a stale pre-arm review cannot authorize again",()=>{
+        assert.equal(control(armed.process,"arm").changed,false);assert.equal(auditCount(armed.process),"1");
+        refuses(controlStatement(armed.process,"arm",initial),"OWNER_TASK_CONTROL_STALE");
+      });
+      check("complete process and ordered act snapshots plus exact native timestamp are independently required",()=>{
+        const r=controlReview(armed.process);
+        for(const review of [
+          {...r,updated_at:"1900-01-01T00:00:00.000001Z"},
+          {...r,updated_at:sql(`select to_jsonb(updated_at+interval '1 microsecond')from paige_automations where id='${armed.process}';`).replaceAll('"','')},
+          {...r,process:{...r.process,category:"different"}},
+          {...r,process:{...r.process,unreviewed:true}},
+          {...r,acts:r.acts.map(a=>({...a,config:{title:"A different reviewed task"}}))},
+          {...r,acts:[]},
+        ])refuses(controlStatement(armed.process,"pause",review),"OWNER_TASK_CONTROL_STALE");
+        assert.equal(auditCount(armed.process),"1");
+      });
+      check("direct authenticated/service writes cannot mint or rewrite activation, including fabricated timestamp plus JSON cutoff",()=>{
+        const x=draft();
+        for(const prefix of [human(actor),service]) {
+          refuses(prefix+`update paige_automations set state='live'where id='${x.process}';`,"OWNER_TASK_HUMAN_CONTROL_REQUIRED");
+          refuses(prefix+`update paige_automations set owner_task_armed_at='1900-01-01',trigger_config='{"armed_at":"1900-01-01"}'where id='${x.process}';`,"OWNER_TASK_HUMAN_CONTROL_REQUIRED");
+          refuses(prefix+`update paige_automations set owner_task_armed_at='1900-01-01'where id='${armed.process}';`,"OWNER_TASK_HUMAN_CONTROL_REQUIRED");
+        }
+        assert.equal(sql(`select state||':'||(owner_task_armed_at is null)::text from paige_automations where id='${x.process}';`),"draft:true");
+      });
+      check("a directly inserted live shell cannot acquire an owner.task step and bypass human arming",()=>{
+        const process=id(nextControl++),act=id(nextControl++);
+        sql(human(actor)+`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,state)values('${process}','${tenant}','Direct live shell','contact.created','${actor}','live');
+          insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task','{"title":"Direct step"}');`);
+        assert.equal(controlReview(process).process.state,"paused");assert.equal(controlReview(process).process.owner_task_armed_at,null);
+        assert.equal(auditCount(process),"0");
+      });
+      check("service JWT, service JWT with forged subject, missing subject and anonymous callers cannot use human control",()=>{
+        const x=draft(),r=controlReview(x.process),values=`'${x.process}','arm',${literal(r.updated_at)}::timestamptz,${json(r.process)},${json(r.acts)}`;
+        for(const prefix of [service,service+`set request.jwt.claims='{"role":"service_role","sub":"${actor}"}';`,"set role anon;"])
+          refuses(prefix+`select control_owner_task_automation(${values});`,"permission denied");
+        refuses(`set role authenticated;set request.jwt.claims='{"role":"authenticated"}';select control_owner_task_automation(${values});`,"OWNER_TASK_CONTROL_FORBIDDEN");
+        refuses(`set request.jwt.claims='{"role":"service_role","sub":"${actor}"}';select control_owner_task_automation(${values});`,"OWNER_TASK_CONTROL_FORBIDDEN");
+      });
+      for(const [label,mutation,restore,settings] of [
+        ["ordinary member",`update tenant_members set role='member'where user_id='${actor}'`, `update tenant_members set role='owner'where user_id='${actor}'`,""],
+        ["suspended seat",`update tenant_members set status='suspended'where user_id='${actor}'`, `update tenant_members set status='active'where user_id='${actor}'`,""],
+        ["operator privilege without an active seat",`update tenant_members set status='suspended'where user_id='${actor}'`, `update tenant_members set status='active'where user_id='${actor}'`,"set test.operator='true';"],
+        ["agency privilege without an active seat",`update tenant_members set status='suspended'where user_id='${actor}'`, `update tenant_members set status='active'where user_id='${actor}'`,"set test.agency='true';"],
+        ["switched profile despite resolver fallback",`update profiles set active_tenant_id='${other}'where user_id='${actor}'`, `update profiles set active_tenant_id='${tenant}'where user_id='${actor}'`,""],
+        ["deleted Auth identity",`update auth.users set deleted_at=now()where id='${actor}'`, `update auth.users set deleted_at=null where id='${actor}'`,""],
+        ["banned Auth identity",`update auth.users set banned_until=now()+interval '1 day'where id='${actor}'`, `update auth.users set banned_until=null where id='${actor}'`,""],
+      ]) check(label+" cannot mint human activation or audit success",()=>{
+        const x=draft();sql(mutation+";");
+        try {refuses(settings+controlStatement(x.process,"arm"),"OWNER_TASK_CONTROL_FORBIDDEN");assert.equal(auditCount(x.process),"0");}
+        finally{sql(restore+";");}
+      });
+      check("active ordinary admin controls the same tenant process without impersonating its author",()=>{
+        const x=draft();assert.equal(control(x.process,"arm",undefined,other).state,"live");
+        assert.equal(sql(`select user_id from audit_logs where entity_id='${x.process}';`),other);
+        assert.equal(control(x.process,"pause",undefined,other).state,"paused");
+        assert.equal(control(x.process,"pause",undefined,other).changed,false);assert.equal(auditCount(x.process),"2");
+      });
+      for(const [label,mutation,restore]of[
+        ["archived tenant",`update tenants set archived_at=now()where id='${tenant}'`,`update tenants set archived_at=null where id='${tenant}'`],
+        ["lifecycle execution pause",`update tenants set lifecycle_execution_paused=true where id='${tenant}'`,`update tenants set lifecycle_execution_paused=false where id='${tenant}'`],
+        ["ineligible tenant status",`update tenants set status='suspended'where id='${tenant}'`,`update tenants set status='active'where id='${tenant}'`],
+      ])check(label+" cannot arm but the active owner can still brake the exact process",()=>{
+        const x=draft();sql(mutation+";");
+        try{refuses(controlStatement(x.process,"arm"),"OWNER_TASK_CONTROL_UNSUPPORTED");assert.equal(control(x.process,"pause").state,"paused");}
+        finally{sql(restore+";");}
+      });
+      for(const [label,config] of [
+        ["assignment",{title:"Review",assignee_user_id:actor}],
+        ["external recipient",{title:"Review",to:"outside@example.invalid"}],
+        ["dynamic title",{title:"Review {{payload.contact_id}}"}],
+        ["dynamic description",{title:"Review",description:"Review ${payload.contact_id}"}],
+        ["empty title",{title:" "}],
+        ["non-string title",{title:{path:"payload.contact_id"}}],
+        ["malformed description",{title:"Review",description:[]}],
+        ["array configuration",[]],
+        ["null title",{title:null}],
+        ["string configuration","Review"],
+      ])check("unsupported "+label+" refuses arm yet remains safely pausable",()=>{
+        const x=draft(config);refuses(controlStatement(x.process,"arm"),"OWNER_TASK_CONTROL_UNSUPPORTED");
+        assert.equal(control(x.process,"pause").state,"paused");assert.equal(auditCount(x.process),"1");
+      });
+      for(const [label,mutation] of [
+        ["multi-step",x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${id(nextControl++)}','${x.process}',2,'owner.task','{"title":"Second"}');`],
+        ["nonempty trigger configuration",x=>`update paige_automations set trigger_config='{"delay":1}'where id='${x.process}';`],
+        ["conditions",x=>`update paige_automations set conditions='[{"field":"source","op":"eq","value":"test"}]'where id='${x.process}';`],
+      ])check(label+" cannot arm; owner can pause the exact unsupported process",()=>{
+        const x=draft();sql(mutation(x));refuses(controlStatement(x.process,"arm"),"OWNER_TASK_CONTROL_UNSUPPORTED");
+        assert.equal(control(x.process,"pause").state,"paused");
+      });
+      check("bare historical tool-key drafts cannot be armed or misclassified as supported native actions",()=>{
+        const x=draft();sql(`update paige_automation_acts set action_kind=null,tool_key='crm_create_task'where id='${x.act}';`);
+        refuses(controlStatement(x.process,"arm"),"OWNER_TASK_CONTROL_UNSUPPORTED");assert.equal(auditCount(x.process),"0");
+      });
+      check("other process families retain their existing direct configuration/state/act editing contract",()=>{
+        const process=id(nextControl++),act=id(nextControl++);
+        sql(`insert into paige_action_kinds(slug,label,description,default_from_department,default_to_department,executor,requires_approval,default_autonomy_lane)
+          values('owner.proof_other','Other proof act','Unrelated contract compatibility','owner_ops','owner_ops','record_only',false,'confirm');`);
+        sql(human(actor)+`insert into paige_automations(id,tenant_id,name,trigger_key,created_by)values('${process}','${tenant}','Other process family','contact.created','${actor}');
+          insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.proof_other','{}');
+          update paige_automations set state='live',trigger_config='{"existing":"configuration"}'where id='${process}';
+          update paige_automation_acts set config='{"existing":"edit"}'where id='${act}';`);
+        assert.equal(sql(`select state||':'||(owner_task_armed_at is null)::text from paige_automations where id='${process}';`),"live:true");
+        assert.equal(auditCount(process),"0");
+      });
+      check("legacy live rows are never backfilled; human pause and explicit re-arm supply the first true activation",()=>{
+        assert.equal(sql(`select owner_task_armed_at is null from paige_automations where id='${legacy.process}';`),"t");
+        refuses(controlStatement(legacy.process,"arm"),"OWNER_TASK_CONTROL_LEGACY_REVIEW_REQUIRED");
+        assert.equal(control(legacy.process,"pause").state,"paused");assert.ok(control(legacy.process,"arm").armed_at);
+        assert.equal(legacy.row.detail.owner_task_source,undefined);
+      });
+      check("forward migration preserves a genuine pre220000 landed task/result and does not backfill a prior held source",()=>{
+        assert.equal(preControlLanded.row.detail.owner_task_source.process.owner_task_armed_at,undefined);
+        assert.equal(bridge(preControlLanded,true).result.readback.id,preControlResult.result.readback.id);
+        assert.equal(bridge(preControlLanded).result.readback.id,preControlResult.result.readback.id);
+        assert.equal(resultCount(preControlLanded),"1");
+        const before=preControlPending.row.detail.owner_task_source;approve(preControlPending);claim(preControlPending);
+        assert.equal(bridge(preControlPending).outcome,"failed");assert.equal(resultCount(preControlPending),"0");
+        assert.deepEqual(JSON.parse(sql(`select detail->'owner_task_source'from paige_act_executions where id='${preControlPending.row.id}';`)),before);
+        assert.equal(sql(`select owner_task_armed_at is null from paige_automations where id='${preControlPending.process}';`),"t");
+      });
+      check("unrelated bookkeeping and exact no-op act refresh preserve activation; semantic process/act edits invalidate it",()=>{
+        const x=draft();control(x.process,"arm");const r=controlReview(x.process);
+        sql(`update paige_automation_acts set config=config where id='${x.act}';update paige_automations set updated_at='1900-01-01'where id='${x.process}';`);
+        assert.deepEqual(controlReview(x.process),r);
+        sql(`update paige_automation_acts set config='{"title":"Changed after arm"}'where id='${x.act}';`);
+        assert.equal(controlReview(x.process).process.owner_task_armed_at,null);assert.equal(controlReview(x.process).process.state,"paused");
+        control(x.process,"arm");sql(`update paige_automations set name='Changed after review'where id='${x.process}';`);
+        assert.equal(controlReview(x.process).process.owner_task_armed_at,null);assert.equal(controlReview(x.process).process.state,"paused");
+      });
+      check("a direct brake clears activation and a direct live transition cannot restore it",()=>{
+        const x=draft();control(x.process,"arm");
+        sql(human(actor)+`update paige_automations set state='paused'where id='${x.process}';`);
+        assert.equal(controlReview(x.process).process.owner_task_armed_at,null);
+        refuses(human(actor)+`update paige_automations set state='live'where id='${x.process}';`,"OWNER_TASK_HUMAN_CONTROL_REQUIRED");
+      });
+      check("an attempted auto grant revokes this confirm-only activation rather than widening execution",()=>{
+        const x=draft();control(x.process,"arm");sql(human(actor)+`update paige_automations set granted_lane='auto'where id='${x.process}';`);
+        assert.equal(controlReview(x.process).process.owner_task_armed_at,null);assert.equal(controlReview(x.process).process.state,"paused");
+        assert.equal(control(x.process,"arm").granted_lane,"confirm");
+      });
+      check("events before first arm and before re-arm cannot create an approval; genuine fresh contact can execute once",()=>{
+        const x=draft(),contact=id(nextControl++);
+        sql(`insert into clients(id,tenant_id,first_name,last_name,account_number,source)values('${contact}','${tenant}','Synthetic','Before arm','fixture-old','test');`);
+        const oldEvent=sql(`select id from paige_native_events where subject_id='${contact}';`);
+        control(x.process,"arm");
+        refuses(service+`select _owner_task_source_snapshot('${oldEvent}','${x.act}');`,"permission denied");
+        refuses(`select _owner_task_source_snapshot('${oldEvent}','${x.act}');`,"OWNER_TASK_SOURCE_CHANGED");
+        const oldKey=id(nextControl++);
+        assert.throws(()=>native("paige_record_act_execution",[literal(oldEvent),literal(x.process),literal(x.act),"1",literal(tenant),"'native'","'owner.task'","'confirm'","'approval_pending'","null",literal(oldKey),literal(oldKey),"null",json({snapshot_args:{title:"Review the new contact"}}),"null","null","null"]),/OWNER_TASK_SOURCE_CHANGED/);
+        assert.equal(sql(`select count(*)from paige_act_executions where event_id='${oldEvent}'and act_id='${x.act}';`),"0");
+        assert.equal(sql(`select count(*)from paige_pending_approvals where metadata->>'event_id'='${oldEvent}'and metadata->>'act_id'='${x.act}';`),"0");
+        const fresh=held(5000);approve(fresh);claim(fresh);assert.equal(bridge(fresh).state,"found");assert.equal(resultCount(fresh),"1");
+        assert.equal(bridge(fresh).state,"found");assert.equal(resultCount(fresh),"1");
+        const pending=held(5020);approve(pending);claim(pending);const snap=pending.row.detail.owner_task_source;
+        control(pending.process,"pause");control(pending.process,"arm");
+        assert.equal(bridge(pending).outcome,"failed");assert.equal(resultCount(pending),"0");
+        assert.deepEqual(JSON.parse(sql(`select detail->'owner_task_source'from paige_act_executions where id='${pending.row.id}';`)),snap);
+        control(fresh.process,"pause");assert.equal(bridge(fresh,true).state,"found");assert.equal(bridge(fresh).state,"found");
+      });
+      check("audit failure rolls back activation atomically and caller transaction rollback leaves no successful control",()=>{
+        const x=draft(),r=controlReview(x.process);
+        sql(`create function control_fixture_audit_failure()returns trigger language plpgsql as $$begin raise exception 'fixture control audit refused'using errcode='23514';end$$;
+          create trigger control_fixture_audit_failure before insert on audit_logs for each row execute function control_fixture_audit_failure();`);
+        try{refuses(controlStatement(x.process,"arm",r),"fixture control audit refused");}finally{sql("drop trigger control_fixture_audit_failure on audit_logs;drop function control_fixture_audit_failure();");}
+        assert.deepEqual(controlReview(x.process),r);assert.equal(auditCount(x.process),"0");
+        sql("begin;"+controlStatement(x.process,"arm",r)+"rollback;");assert.deepEqual(controlReview(x.process),r);assert.equal(auditCount(x.process),"0");
+      });
+      check("newly provisioned tenant uses the same writer and foreign workspace process is undisclosed",()=>{
+        const newTenant=id(6000),newOwner=id(6001);
+        sql(`insert into tenants(id,status)values('${newTenant}','trial');insert into auth.users(id)values('${newOwner}');
+          insert into profiles values('${newOwner}','${newTenant}');insert into tenant_members(tenant_id,user_id,role,status)values('${newTenant}','${newOwner}','owner','active');`);
+        const x=draft({title:"Future tenant contact review"},newTenant,newOwner),r=controlReview(x.process);
+        refuses(controlStatement(x.process,"arm",r,actor),"OWNER_TASK_CONTROL_NOT_FOUND");
+        assert.equal(control(x.process,"arm",r,newOwner).state,"live");
+        assert.equal(sql(human(actor)+`select count(*)from paige_automations where id='${x.process}';`),"0");
+        assert.equal(sql(`select user_id||':'||(data->>'tenant_id')from audit_logs where entity_id='${x.process}';`),newOwner+":"+newTenant);
+      });
+      for(const [label,statement]of[
+        ["tenant",()=>`select 1 from tenants where id='${tenant}'for update;`],
+        ["actor profile",()=>`select 1 from profiles where user_id='${actor}'for update;`],
+        ["owner/admin seat",()=>`select 1 from tenant_members where tenant_id='${tenant}'and user_id='${actor}'for update;`],
+        ["complete reviewed act set",x=>`select 1 from paige_automation_acts where id='${x.act}'for update;`],
+        ["process",x=>`select 1 from paige_automations where id='${x.process}'for update;`],
+      ]){
+        const x=draft(),r=controlReview(x.process),peer=spawn(exe("psql"),args(database),{windowsHide:true,stdio:["pipe","pipe","pipe"]});
+        let out="",err="";peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});
+        const closed=new Promise((yes,no)=>{peer.on("error",no);peer.on("exit",code=>code===0?yes():no(Error(err)));});
+        try{peer.stdin.write(`begin;${statement(x)}select 'CONTROL_LOCKED';\n`);
+          for(let i=0;!out.includes("CONTROL_LOCKED")&&i<150;i++)await new Promise(yes=>setTimeout(yes,20));
+          assert.ok(out.includes("CONTROL_LOCKED"),err);
+          check("two actual sessions: "+label+" contention refuses before arming or audit",()=>{
+            refuses(controlStatement(x.process,"arm",r),"could not obtain lock");assert.equal(auditCount(x.process),"0");assert.deepEqual(controlReview(x.process),r);
+          });
+        }finally{peer.stdin.end("rollback;\n");await closed;}
+        check("released "+label+" lock permits the same exact owner review once",()=>{assert.equal(control(x.process,"arm",r).state,"live");assert.equal(auditCount(x.process),"1");});
+      }
+      const race=draft(),raceReview=controlReview(race.process);
+      const controlAttempts=await Promise.all(Array.from({length:8},()=>new Promise((yes,no)=>{
+        const peer=spawn(exe("psql"),[...args(database),"-c",controlStatement(race.process,"arm",raceReview)],{windowsHide:true,stdio:["ignore","pipe","pipe"]});
+        let out="",err="";const timer=setTimeout(()=>peer.kill(),30000);
+        peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});peer.on("error",no);
+        peer.on("exit",code=>{clearTimeout(timer);yes({code,out,err});});
+      })));
+      check("eight actual simultaneous owner controls mint one activation/audit; every loser is stale or NOWAIT refused",()=>{
+        const succeeded=controlAttempts.filter(r=>r.code===0);assert.equal(succeeded.length,1);
+        assert.equal(JSON.parse(succeeded[0].out).changed,true);
+        for(const failure of controlAttempts.filter(r=>r.code!==0))assert.match(failure.err,/OWNER_TASK_CONTROL_STALE|could not obtain lock/);
+        assert.equal(auditCount(race.process),"1");assert.equal(control(race.process,"arm").changed,false);
+      });
+      writeFileSync(resolve(scratch,"human-control-result.json"),JSON.stringify({passed:cases.length-controlCasesStart,cases:cases.slice(controlCasesStart),
+        evidence:"actual selected native SQL + canonical resolver body; auth/agency/operator/Realtime ports; synthetic new-tenant fixture, not full provisioning",authenticatedQA:"NOT_RUN",fullSchema:"NOT_RUN"},null,2));
+    }
     check("saved draft drives actual engine/C5 and native recorder/claim/CRM SQL, including receipt-backed replay", () => {
       const log = execFileSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run",
         "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2"], {

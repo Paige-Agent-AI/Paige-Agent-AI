@@ -1,0 +1,22 @@
+{
+  "proofClass": "SYNTHETIC_ACTUAL_APPROVAL_CONSUMER_NATIVE_GEOMETRY",
+  "uniqueCases": 88,
+  "requiredFourSizeCases": 64,
+  "mobileCases": 16,
+  "additionalDetailsCases": 4,
+  "reflowCases": 4,
+  "exactViewportsAndPngs": 88,
+  "full357CharacterTitles": 88,
+  "fontsLoaded": 88,
+  "incumbentFrames": 88,
+  "horizontalOverflow": 0,
+  "stackedCases": 54,
+  "stackedOverlap": 0,
+  "intentionalCoveredPaigeCases": 24,
+  "focusChecks": 5,
+  "extraReadabilityKeyboardScroll": 1,
+  "realEffects": 0,
+  "authenticatedQa": "UNVERIFIED",
+  "Live": "UNVERIFIED",
+  "boundary": "Actual React handlers and hooks ran before static serialization; native browser verifies CSS/layout/keyboard/PNG, not hydration/customer execution. SoloApp identity/provisioning/setup-reminder conditions outside fixture. DPR2 is equivalent CSS reflow, not literal browser zoom."
+}

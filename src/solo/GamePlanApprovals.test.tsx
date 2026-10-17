@@ -79,6 +79,8 @@ it("renders the running list with the waiting count when drafts are pending", as
   await settle();
   expect(host.textContent ?? "").toMatch(/Waiting on you — 2/);
   expect(host.querySelectorAll('[data-testid="approval-row"]').length).toBe(2);
+  expect(host.textContent ?? "").toContain("Approve the reviewed action");
+  expect(host.textContent ?? "").not.toContain("Approving sends");
 });
 
 it("quiet when nothing needs the owner and while loading — no phantom card", async () => {

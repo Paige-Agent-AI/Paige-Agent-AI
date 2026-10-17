@@ -97,7 +97,7 @@ export function GamePlanApprovals() {
           <X />
         </button>
       </div>
-      <p className="gp-ap-note">Drafts Paige's team produced for you{myRole ? ` (${myRole})` : ""}. Approving sends; declining asks for a reason so Paige learns.</p>
+      <p className="gp-ap-note">Actions Paige's team prepared for you{myRole ? ` (${myRole})` : ""}. Approve the reviewed action; decline with a reason when it needs to change.</p>
       <div className="gp-ap-list">
         {relevant.map((a) => (
           <ApprovalRow key={a.id} a={a} showDecline onResolved={onResolved} />

@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### Recover a saved review through its native publication, never a guessed intent (2026-10-17, BUG)
+
+A browser-only publication work reference disappears on reload while native work can still be claimed or unknown. Pending review text is not proof that publication never started, and an earlier active generation is not proof a replacement published. Extend the incumbent scoped reader with the exact native document/extraction/revision/hash association and existing job visibility; distinguish no submitted publication from unreadable/ambiguous work. Preserve original work, unknown-result and unrecorded-receipt truth. Never create a second job or replay because the acknowledgement was lost. Native fixture proof remains separate from integrated authenticated recovery and owner acceptance.
+
 ### A streaming cache must obey the original cancellation (2026-10-16, E01)
 
 Starting playback early is incomplete if a second tee reader continues draining the paid provider after Stop. Keep one owned provider reader, cancel the original request/reader, count ambiguous dispatched spend, and upload only after complete EOF. Verify first chunk before EOF, caller/consumer abort, failed settlement, stalled first audio, malformed/empty response and no partial cache or automatic retry. Record provider-first-byte and whole-request readiness separately from audible speech; mocked timings are not provider p50/p95.

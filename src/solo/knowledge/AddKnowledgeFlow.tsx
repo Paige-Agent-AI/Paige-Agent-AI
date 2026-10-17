@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ExtractionConsumerError, readKnowledgeExtractionForDocument, readKnowledgeExtractionReview, readKnowledgeExtractionStatus,
+  ExtractionConsumerError, readKnowledgeExtractionForDocument, readKnowledgeExtractionReview, readKnowledgeExtractionStatus, readKnowledgePublicationForDocument,
   submitKnowledgeExtraction, type ExtractionClient, type ExtractionInput, type ExtractionReadReference, type ExtractionReview,
+  type ExtractionDocumentReview, type KnowledgePublicationReadReference,
 } from "@/lib/knowledge-extraction-service";
 import {
-  KnowledgeReviewServiceError, readKnowledgePublicationStatus, saveKnowledgeReview, sha256Hex,
+  KnowledgeReviewServiceError, saveKnowledgeReview, sha256Hex,
 } from "@/lib/knowledge-review-service";
 import { KnowledgeServiceError, submitKnowledgePublication, type KnowledgeDocument } from "@/lib/knowledge-service";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -53,11 +54,14 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const [tags, setTags] = useState(target?.tags.join(", ") ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [halt, setHalt] = useState<Halt | null>(null);
+  const [canCorrectAgain, setCanCorrectAgain] = useState(false);
   const reference = useRef<ExtractionReadReference | null>(null);
   const resumed = useRef(false);
   const review = useRef<ExtractionReview | null>(null);
   const savedRevision = useRef<number | null>(null);
   const publishWorkId = useRef<string | null>(null);
+  const publicationReference = useRef<KnowledgePublicationReadReference | null>(null);
+  const openedPublication = useRef<string | null>(null);
   const extractIntent = useRef<string | null>(null);
   const publishIntent = useRef<string | null>(null);
   const submittedInput = useRef<ExtractionInput | null>(null);
@@ -89,18 +93,19 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const loadReview = async (ref: ExtractionReadReference, run?: number) => {
     const read = await readKnowledgeExtractionReview(client, extractionScope(run), ref);
     if (!extractionScope(run).isCurrent()) return;
-    if (read.phase !== "awaiting_review" || !read.pending_review || read.tenant_id !== tenantId || read.document_id !== ref.documentId || read.extraction_work_id !== ref.workId || (target && read.document_id !== target.id)) {
+    if (read.phase !== "awaiting_review" || !read.pending_review || read.tenant_id !== tenantId || read.document_id !== ref.documentId || read.extraction_work_id !== ref.workId || (target && read.document_id !== target.id)
+      || (resumed.current && read.revision !== ref.revision)) {
       stop({ title: "Review unavailable", message: "The current review could not be verified for this source. Check this document in Knowledge before starting another correction.", action: null });
-      return;
-    }
-    // A saved review can already have a publication in flight. The public review reader
-    // does not identify that work; never overwrite it or invent a new publication intent.
-    if (resumed.current && read.pending_review.reviewed_content !== null) {
-      stop({ title: "Saved review needs confirmation", message: "This review is saved, but its publication status could not be confirmed here. No new reading or publication was started. Check this document in Knowledge before starting another correction.", action: null });
       return;
     }
     review.current = read;
     setReviewContent(read.pending_review.reviewed_content ?? read.pending_review.extracted_content);
+    if (read.pending_review.reviewed_content !== null) {
+      savedRevision.current = read.revision;
+      publicationReference.current = { tenantId, documentId: read.document_id, extractionWorkId: read.extraction_work_id, revision: read.revision };
+      presentPublication(read, 0, run ?? pollRun.current, true);
+      return;
+    }
     setStep("review");
     setNotice(null);
   };
@@ -135,10 +140,19 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     try {
       const read = await readKnowledgeExtractionForDocument(client, extractionScope(run), target.id, target.revision);
       if (!extractionScope(run).isCurrent()) return;
-      if (read.extraction_work_id === null && read.pending_review === null) { setStep("choose"); return; }
+      if (read.extraction_work_id === null && read.pending_review === null) {
+        if (read.publication?.association === "not_submitted") { setStep("choose"); return; }
+        if (read.publication?.association === "matched" && read.publication.work_id) {
+          openedPublication.current = read.publication.work_id;
+          publicationReference.current = { tenantId, documentId: read.document_id, revision: read.revision, workId: read.publication.work_id };
+          presentPublication(read, 0, run); return;
+        }
+        stop({ title: "Publication unavailable", message: "The publication for this document could not be verified. No new reading or publication was started. Close this review and reopen the current document.", action: null }); return;
+      }
       if (!read.extraction_work_id) throw new Error("Missing existing work");
       const ref: ExtractionReadReference = { tenantId, documentId: target.id, workId: read.extraction_work_id, revision: read.revision };
       reference.current = ref; resumed.current = true;
+      if (read.pending_review?.reviewed_content != null) { await loadReview(ref, run); return; }
       setStep("extracting"); setNotice("Checking the existing reading…");
       await watchExtraction(ref, 0, run);
     } catch {
@@ -232,53 +246,107 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const publish = async (retry = false) => {
     if (busy.current || (!retry && step !== "ready") || !reference.current || savedRevision.current === null || !tenantId || !current()) return;
     busy.current = true; setHalt(null); setNotice("Publishing…");
-    if (!publishIntent.current) publishIntent.current = crypto.randomUUID();
+    let submitted = false;
     try {
+      const ref = reference.current;
+      const saved = await readKnowledgeExtractionForDocument(client, extractionScope(), ref.documentId, savedRevision.current);
+      if (!current()) return;
+      if (saved.extraction_work_id !== ref.workId || saved.pending_review?.reviewed_content !== reviewContent) throw new Error("Saved review changed");
+      const association = saved.publication;
+      const retryable = association?.association === "matched" && (association.work_status === "failed" || association.work_status === "cancelled");
+      if (association?.association !== "not_submitted" && !retryable) {
+        publicationReference.current = { tenantId, documentId: ref.documentId, extractionWorkId: ref.workId, revision: savedRevision.current };
+        presentPublication(saved, 0, pollRun.current); return;
+      }
+      if (!publishIntent.current) publishIntent.current = crypto.randomUUID();
+      publicationReference.current = { tenantId, documentId: ref.documentId, extractionWorkId: ref.workId, revision: savedRevision.current };
       const hash = await sha256Hex(reviewContent);
       if (!current()) return;
+      submitted = true;
       const submission = await submitKnowledgePublication(supabase, tenantId, reference.current.documentId, reference.current.workId, savedRevision.current, publishIntent.current, hash);
       if (!current()) return;
       publishWorkId.current = submission.work_id;
+      publicationReference.current = { ...publicationReference.current, workId: submission.work_id };
       setStep("publishing");
       const run = ++pollRun.current;
       setNotice("Paige is publishing the reviewed text…");
-      setTimeout(() => void watchPublication(submission.work_id, 0, run), 800);
+      setTimeout(() => void watchPublication(0, run), 800);
     } catch (error) {
       if (!current()) return;
-      if (error instanceof KnowledgeServiceError && error.code === "55000" && error.message.includes("KNOWLEDGE_PUBLICATION_PENDING")) {
-        stop({ title: "Already publishing", message: "A publication for this source is already in flight. It will appear in Knowledge when it completes — do not start another.", action: null });
+      if (!submitted) {
+        stop({ title: "Publication unavailable", message: "The current saved review could not be verified. No publication was submitted. Close this review and reopen the current document before publishing.", action: null });
+      } else if (error instanceof KnowledgeServiceError && error.code === "55000" && error.message.includes("KNOWLEDGE_PUBLICATION_PENDING")) {
+        stop({ title: "Already publishing", message: "A publication for this source is already in flight. Check its original progress before another publication.", action: "check-publication" });
       } else if (error instanceof KnowledgeServiceError && ["40001", "42501", "22023", "P0002", "55000"].includes(error.code)) {
         stop({ title: "Publication refused", message: plainRefusal(error), action: null });
       } else {
-        stop({ title: "Publication unconfirmed", message: "Paige could not confirm whether publishing started. Recovery will reconcile it — do not publish again; check the source in Knowledge in a minute.", action: null });
+        stop({ title: "Publication unconfirmed", message: "Paige could not confirm whether publishing started. Do not publish again; check the original publication.", action: publicationReference.current ? "check-publication" : null });
       }
     } finally { busy.current = false; }
   };
 
-  const watchPublication = async (workId: string, attempt: number, run: number) => {
+  const presentPublication = (read: ExtractionDocumentReview, attempt: number, run: number, allowReady = false) => {
+    const association = read.publication;
+    if (association?.association === "not_submitted" && allowReady && read.pending_review?.reviewed_content != null) {
+      setStep("ready"); setNotice("Your saved review is ready to publish."); return;
+    }
+    if (association?.association !== "matched") {
+      stop({ title: "Saved review needs confirmation", message: "This review is saved, but its publication status could not be confirmed. No new publication was started. Check the original publication before trying again.", action: publicationReference.current ? "check-publication" : null }); return;
+    }
+    publishWorkId.current = association.work_id;
+    if (publicationReference.current && association.work_id) publicationReference.current = { ...publicationReference.current, workId: association.work_id };
+    if (association.work_status === "succeeded" && association.generation_id === association.work_id && association.outcome) {
+      setHalt(null); setStep("done");
+      setCanCorrectAgain(!!openedPublication.current);
+      setNotice(association.outcome === "capability_completed_unrecorded" ? "Published. The activity receipt could not be recorded; do not publish again." : target ? "Published. The corrected text is now on the same document." : "Published. The reviewed text is now part of Knowledge.");
+      if (!openedPublication.current) onPublished?.();
+      return;
+    }
+    if (association.work_status === "claimed" || association.work_status === "expired") {
+      setStep("publishing");
+      if (attempt >= 40) { stop({ title: "Still publishing", message: "Paige is still publishing this source. You can close this and return to the same document later.", action: "check-publication" }); return; }
+      setNotice("Paige is publishing the reviewed text…");
+      setTimeout(() => void watchPublication(attempt + 1, run), 1500); return;
+    }
+    if (association.work_status === "blocked") { stop({ title: "Publication paused", message: "Publishing is paused. Restore the required access, then check its original progress.", action: "check-publication" }); return; }
+    if (association.work_status === "outcome_unknown") { stop({ title: "Publication unconfirmed", message: "Paige could not confirm whether publishing completed. Do not publish again; check the original publication.", action: "check-publication" }); return; }
+    if ((association.work_status === "failed" || association.work_status === "cancelled") && read.pending_review?.reviewed_content != null) {
+      publishIntent.current = null;
+      stop({ title: "Publication failed", message: "The publication did not complete and the reviewed replacement was not promoted. Your review is still saved — you can explicitly publish it again.", action: "retry-publish" }); return;
+    }
+    stop({ title: "Publication unconfirmed", message: "The current publication could not be verified. No new publication was started.", action: "check-publication" });
+  };
+
+  const watchPublication = async (attempt: number, run: number) => {
     if (!current() || pollRun.current !== run) return;
-    let status;
-    try { status = await readKnowledgePublicationStatus(supabase, workId); }
+    const ref = publicationReference.current;
+    if (!ref) return;
+    let read;
+    try { read = await readKnowledgePublicationForDocument(client, extractionScope(run), ref); }
     catch {
       if (current() && pollRun.current === run) stop({ title: "Publication status failed", message: "The publication's progress could not be read right now. Publishing was not cancelled — check again in a moment.", action: "check-publication" });
       return;
     }
     if (!current() || pollRun.current !== run) return;
-    if (status.phase === "resolved" && status.status === "succeeded") {
-      setStep("done"); setNotice(target ? "Published. The corrected text is now on the same document." : "Published. The reviewed text is now part of Knowledge.");
-      onPublished?.();
-      return;
-    }
-    if (status.phase === "working") {
-      if (attempt >= 40) { stop({ title: "Still publishing", message: "Paige is still publishing this source. You can close this — it will appear in Knowledge when it completes.", action: "check-publication" }); return; }
-      setNotice("Paige is publishing the reviewed text…");
-      setTimeout(() => void watchPublication(workId, attempt + 1, run), 1500);
-      return;
-    }
-    if (status.phase === "paused") { stop({ title: "Publication paused", message: "Publishing is paused because workspace access changed. Restore access, then check again.", action: "check-publication" }); return; }
-    if (status.phase === "reconcile") { stop({ title: "Publication unconfirmed", message: "Paige could not confirm whether publishing completed. Recovery will reconcile it — do not publish again; check the source in Knowledge in a minute.", action: "check-publication" }); return; }
-    publishIntent.current = null;
-    stop({ title: "Publication failed", message: "The publication did not complete and nothing was changed in Knowledge. Your review is still saved — you can publish it again.", action: "retry-publish" });
+    // A definitive native non-submission after a lost acknowledgement can return
+    // to the existing explicit Publish step. A known work ID disappearing or a
+    // changed saved source is still uncertainty, never permission to replay.
+    const ready = ref.workId === undefined && read.revision === ref.revision
+      && read.extraction_work_id === ref.extractionWorkId && read.pending_review?.reviewed_content === reviewContent;
+    presentPublication(read, attempt, run, ready);
+  };
+
+  const correctAgain = async () => {
+    if (!target || !openedPublication.current || busy.current || !current()) return;
+    busy.current = true; setNotice("Checking the current document…");
+    try {
+      const read = await readKnowledgeExtractionForDocument(client, extractionScope(), target.id, target.revision);
+      if (!current()) return;
+      if (read.publication?.association !== "matched" || read.publication.work_status !== "succeeded" || read.publication.work_id !== openedPublication.current) throw new Error("Publication changed");
+      setCanCorrectAgain(false); openedPublication.current = null; publishWorkId.current = null;
+      publicationReference.current = null; setNotice(null); setStep("choose");
+    } catch { if (current()) stop({ title: "Document changed", message: "Close this review and reopen the current document before another correction. No new reading was started.", action: null }); }
+    finally { busy.current = false; }
   };
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
@@ -289,7 +357,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     <DialogHeader>
       <DialogTitle>{step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
       <DialogDescription>
-        {step === "checking" && "Checking the saved reading for this document."}
+        {step === "checking" && (halt ? "Check this document's current state before continuing." : "Checking the saved reading for this document.")}
         {step === "choose" && (target ? `Correct revision ${target.revision} of this document. Its published text stays in use until you review and publish the replacement.` : "Paige reads the source first; you review the exact text, then publish it to Knowledge.")}
         {step === "extracting" && "The reading continues even if you close this."}
         {step === "review" && `Edit the text and details — this exact text becomes the Knowledge source.${review.current ? ` Revision ${review.current.revision}.` : ""}`}
@@ -307,7 +375,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
         {halt.action === "check-extraction" && reference.current && <Button onClick={() => { setHalt(null); setStep("extracting"); const run = ++pollRun.current; setNotice("Checking Paige's reading…"); void watchExtraction(reference.current!, 0, run); }}>Check reading</Button>}
         {halt.action === "reread" && reference.current && <Button onClick={() => { setHalt(null); setNotice("Reading the current review…"); loadReview(reference.current!).catch(() => { if (current()) stop({ title: "Review unavailable", message: "The current review could not be read. Your draft is still here; try again in a moment.", action: "reread" }); }); }}>Reload review</Button>}
         {halt.action === "retry-publish" && <Button onClick={() => { setHalt(null); setStep("ready"); void publish(true); }}>Publish again</Button>}
-        {halt.action === "check-publication" && publishWorkId.current && <Button onClick={() => { setHalt(null); setStep("publishing"); const run = ++pollRun.current; setNotice("Checking the publication…"); void watchPublication(publishWorkId.current!, 0, run); }}>Check publication</Button>}
+        {halt.action === "check-publication" && publicationReference.current && <Button onClick={() => { setHalt(null); setStep("publishing"); const run = ++pollRun.current; setNotice("Checking the publication…"); void watchPublication(0, run); }}>Check publication</Button>}
       </div>
     </div> : <div className="space-y-4">
       {notice && <p role="status" className="text-sm">{notice}</p>}
@@ -355,7 +423,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
         </div>
       </>}
       {step === "ready" && <div className="space-y-3">
-        <p className="text-sm">“{title.trim()}” is reviewed and saved. Publish it to make it part of Knowledge — Paige will index the exact reviewed text.</p>
+        <p className="text-sm">{resumed.current ? "Your saved reviewed text is ready." : `“${title.trim()}” is reviewed and saved.`} Publish it to make it part of Knowledge — Paige will index the exact reviewed text.</p>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={close}>Finish later</Button>
           <Button onClick={() => void publish()}>Publish to Knowledge</Button>
@@ -363,6 +431,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       </div>}
       {(step === "publishing" || step === "done") && <div className="flex flex-wrap justify-end gap-2">
         {step === "publishing" && <Button variant="outline" onClick={close}>Close</Button>}
+        {step === "done" && canCorrectAgain && <Button variant="outline" onClick={() => void correctAgain()}>Make another correction</Button>}
         {step === "done" && <Button onClick={close}>Done</Button>}
       </div>}
     </div>}

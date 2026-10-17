@@ -30,10 +30,10 @@ let calls;
 let providerAllowed = true;
 let authority;
 const reset = () => {
-  calls = { audits: [], inserts: [], updates: [], deletes: [], providerCalls: [] };
+  calls = { audits: [], inserts: [], updates: [], deletes: [], providerCalls: [], listClients: [] };
   authority = { actor: "user-1", activeTenant: "tenant-1", role: "owner", status: "active", globalAdmin: true,
-    platformOwner: false, roleError: false, roleValue: undefined, throwRole: false,
-    onFloor: null, onProvider: null, onDomainRead: null, onUpdate: null, onRole: null };
+    platformOwner: false, roleError: false, roleValue: undefined, throwRole: false, auditError: false, auditThrow: false,
+    onFloor: null, onProvider: null, onDomainRead: null, onUpdate: null, onDelete: null, onInsert: null, onRole: null };
 };
 
 /**
@@ -43,10 +43,10 @@ const reset = () => {
  * Terminal calls resolve through the scenario; every write is recorded.
  */
 fs.writeFileSync(path.join(outDir, "supabase-stub.mjs"), `
-export function createClient() {
+export function createClient(_url, clientKey) {
   const g = globalThis.__smoke;
   const q = (table) => {
-    const st = { table, filters: {}, op: "select" };
+    const st = { table, filters: {}, op: "select", clientKey };
     const api = {
       select() { return api; },
       eq(c, v) { st.filters[c] = v; return api; },
@@ -62,7 +62,7 @@ export function createClient() {
   };
   return {
     auth: { getUser: () => Promise.resolve(g.user()) },
-    rpc: (name, args) => Promise.resolve(g.rpc(name, args)),
+    rpc: (name, args) => Promise.resolve(g.rpc(name, args, clientKey)),
     from: (t) => q(t),
   };
 }
@@ -104,10 +104,11 @@ globalThis.fetch = async (url) => { calls.providerCalls.push(String(url)); autho
 let rows;
 globalThis.__smoke = {
   user() { return { data: { user: authority.actor ? { id: authority.actor } : null }, error: null }; },
-  rpc(name, args) {
+  rpc(name, args, clientKey) {
     if (name === "comms_provider_execution_allowed") { authority.onFloor?.(); return { data: providerAllowed, error: null }; }
     if (name === "has_role") return { data: authority.globalAdmin };
     if (name === "is_platform_owner") return { data: authority.platformOwner };
+    if (name === "current_user_tenant_id") return { data: clientKey === "anon" && authority.status === "active" ? authority.activeTenant : null, error: null };
     if (name === "is_tenant_admin_as") {
       if (authority.throwRole) throw new Error("fixture transport failure");
       const allowed = args?._actor === "user-1" && args?._tenant === authority.activeTenant
@@ -118,26 +119,29 @@ globalThis.__smoke = {
     return { data: null };
   },
   record(st) {
-    if (st.table === "audit_logs" && st.op === "insert") calls.audits.push(st.row);
-    else if (st.op === "insert") calls.inserts.push(st.row);
+    if (st.table === "audit_logs" && st.op === "insert") { calls.audits.push(st.row); if (authority.auditThrow) throw new Error("fixture audit transport failed"); }
+    else if (st.op === "insert") { calls.inserts.push(st.row); authority.onInsert?.(); }
     else if (st.op === "update") { calls.updates.push({ filters: st.filters, row: st.row }); authority.onUpdate?.(); }
-    else if (st.op === "delete") calls.deletes.push(st.filters);
+    else if (st.op === "delete") { calls.deletes.push(st.filters); authority.onDelete?.(); }
   },
   read(st) {
     if (st.table === "profiles") return { data: { active_tenant_id: authority.activeTenant }, error: null };
-    if (st.table === "audit_logs") return { data: null, error: null };
+    if (st.table === "audit_logs") return { data: null, error: authority.auditError ? {message:"fixture audit error"} : null };
     if (st.op === "insert") return { data: { id: "dom-new", ...st.row }, error: null };
     if (st.op === "update" || st.op === "delete") return { data: null, error: null };
     authority.onDomainRead?.();
     // A default-domain probe asks for is_default=true; a row lookup asks for id.
     if (st.filters.is_default === true) return { data: rows.existingDefault, error: null };
     if (st.filters.id) return { data: rows.byId, error: null };
-    return { data: [], error: null };
+    calls.listClients.push(st.clientKey); return { data: [], error: null };
   },
 };
 
 await import(pathToFileURL(outFile).href);
 assert.ok(handler, "handler was never registered");
+const errorFile=path.join(outDir,"connect-error.mjs");
+await build({entryPoints:["src/lib/integrations/connectError.ts"],outfile:errorFile,bundle:true,format:"esm",platform:"neutral",target:"es2022"});
+const {resolveFunctionError}=await import(pathToFileURL(errorFile).href);
 
 const post = (body) => handler(new Request("https://x.test/manage-tenant-domain", {
   method: "POST",
@@ -231,7 +235,9 @@ for (const [label, configure] of [
   for (const body of [{ verb: "list" }, { verb: "add", domain: "new.invalid" }, { verb: "refresh", id: "dom-2" }, { verb: "set_default", id: "dom-2" }, { verb: "remove", id: "dom-2" }]) {
     reset(); rows = { existingDefault: null, byId: fixtureRow() }; configure();
     const response = await post(body);
-    ok(`${label}: ${body.verb} refused`, () => assert.equal(response.status, 403));
+    const readAllowed = body.verb === "list" && authority.status === "active";
+    ok(`${label}: ${body.verb} preserves read visibility without mutation authority`, () => assert.equal(response.status, readAllowed ? 200 : 403));
+    if (readAllowed) ok(`${label}: list uses the original JWT native SELECT`, () => assert.deepEqual(calls.listClients, ["anon"]));
     ok(`${label}: ${body.verb} has no effects`, noEffects);
   }
 }
@@ -269,13 +275,39 @@ for (const verb of ["add", "refresh", "remove"]) {
   const body = await response.json();
   ok(`${verb}: role change after provider await refuses later registry writes`, () => { assert.equal(response.status, 403); assert.equal(calls.inserts.length + calls.updates.length + calls.deletes.length + calls.audits.length, 0); });
   ok(`${verb}: earlier provider attempt is reported uncertain rather than rolled back`, () => { assert.equal(calls.providerCalls.length, 1); assert.equal(body.operation_outcome, "unconfirmed"); });
+  const {message}=await resolveFunctionError({data:null,error:{context:new Response(JSON.stringify(body),{status:response.status})},action:"change your sending domain"});
+  ok(`${verb}: actual handler body reaches the incumbent caller's no-repeat/readback copy`,()=>{assert.ok(message.includes("Don’t repeat"));assert.ok(message.includes("current sending-domain state"));assert.ok(!message.includes("try again in a moment"));});
 }
 reset(); rows = { existingDefault: null, byId: fixtureRow() }; authority.onDomainRead = () => { authority.activeTenant = "tenant-2"; };
 const switchedRead = await post({ verb: "set_default", id: "dom-2" });
 ok("scope change during a domain read cannot precede a stale write", () => { assert.equal(switchedRead.status, 403); noEffects(); });
 reset(); rows = { existingDefault: null, byId: fixtureRow() }; authority.onUpdate = () => { authority.role = "member"; };
 const switchedWrite = await post({ verb: "set_default", id: "dom-2" }); const switchedBody = await switchedWrite.json();
-ok("role loss after first default write stops second write and audit", () => { assert.equal(switchedWrite.status, 403); assert.equal(calls.updates.length, 1); assert.equal(calls.audits.length, 0); assert.equal(switchedBody.operation_outcome, "unconfirmed"); });
+ok("role loss after first default write stops second write and preserves truthful partial audit", () => { assert.equal(switchedWrite.status, 403); assert.equal(calls.updates.length, 1); assert.equal(calls.audits.length, 1); assert.equal(audit().data.new_default_set, false); assert.equal(audit().data.operation_outcome, "unconfirmed"); assert.equal(switchedBody.error, "domain_operation_unconfirmed"); });
+for (const [verb, effect, complete] of [
+  ["remove", "onDelete", "deletes"], ["add", "onInsert", "inserts"], ["refresh", "onUpdate", "updates"],
+]) {
+  reset(); rows = { existingDefault: null, byId: { ...fixtureRow(), resend_domain_id: verb === "remove" ? null : "rsd_1" } };
+  authority[effect] = () => { authority.role = "member"; };
+  const response = await post(verb === "add" ? { verb, domain: "new.invalid" } : { verb, id: "dom-2" });
+  const body = await response.json();
+  ok(`${verb}: completed registry effect retains its original actor/tenant audit after role loss`, () => {
+    assert.equal(calls[complete].length, 1); assert.equal(calls.audits.length, 1); assert.equal(audit().user_id, "user-1"); assert.equal(audit().data.tenant_id, "tenant-1");
+    assert.equal(response.status, 403); assert.equal(body.error, "domain_operation_unconfirmed");
+  });
+}
+reset(); rows = { existingDefault: null, byId: fixtureRow() };
+authority.onUpdate = () => { if (calls.updates.length === 2) authority.role = "member"; };
+const finishedDefault = await post({ verb: "set_default", id: "dom-2" });
+ok("completed default change retains exactly one ordinary audit before result is withheld", () => {
+  assert.equal(finishedDefault.status, 403); assert.equal(calls.updates.length, 2); assert.equal(calls.audits.length, 1); assert.equal(audit().data.new_default_set, undefined);
+});
+for(const fault of ["auditError","auditThrow"]) {
+  reset(); rows = { existingDefault: null, byId: { ...fixtureRow(), resend_domain_id: null } }; authority[fault]=true;
+  const originalError=console.error; let logged=0; console.error=(...args)=>{logged++;originalError(...args);};
+  let response;try{response=await post({verb:"remove",id:"dom-2"});}finally{console.error=originalError;}
+  ok(`existing audit ${fault} is logged without claiming the completed removal failed`,()=>{assert.equal(response.status,200);assert.equal(calls.deletes.length,1);assert.equal(calls.audits.length,1);assert.equal(logged,1);});
+}
 reset(); rows = { existingDefault: null, byId: fixtureRow() }; authority.onRole = () => { authority.activeTenant = "tenant-2"; };
 const switchedRole = await post({ verb: "set_default", id: "dom-2" });
 ok("scope is checked after the canonical role RPC resolves", () => { assert.equal(switchedRole.status, 403); noEffects(); });

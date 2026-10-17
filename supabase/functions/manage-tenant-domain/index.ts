@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
   // workspace/active seat contract; the service client does not confer the actor's authority.
   // Check again across awaited boundaries. These checkpoints are not a transaction
   // or a future authority lease and cannot roll back an earlier provider operation.
-  const requireCurrentAuthority = async () => {
+  const requireCurrentAuthority = async (readOnly = false) => {
     if (isOwner) return; // Existing platform-owner target exception is unchanged.
     try {
       const { data: identity, error: identityError } = await userClient.auth.getUser();
@@ -95,9 +95,17 @@ Deno.serve(async (req) => {
         if (data?.active_tenant_id !== tenantId) throw new DomainAuthorityError("cross_tenant_forbidden", 403);
       };
       await currentTenant();
-      const { data: allowed, error } = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
-      if (error) throw new DomainAuthorityError("authority_unavailable", 503);
-      if (allowed !== true) throw new DomainAuthorityError("forbidden", 403);
+      if (readOnly) {
+        // The incumbent member SELECT policy uses this original-JWT scope; read
+        // visibility is not owner/admin mutation authority. Never use a service fallback.
+        const { data: current, error } = await userClient.rpc("current_user_tenant_id");
+        if (error) throw new DomainAuthorityError("authority_unavailable", 503);
+        if (current !== tenantId) throw new DomainAuthorityError("cross_tenant_forbidden", 403);
+      } else {
+        const { data: allowed, error } = await admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
+        if (error) throw new DomainAuthorityError("authority_unavailable", 503);
+        if (allowed !== true) throw new DomainAuthorityError("forbidden", 403);
+      }
       await currentTenant();
     } catch (error) {
       if (error instanceof DomainAuthorityError) throw error;
@@ -133,25 +141,31 @@ Deno.serve(async (req) => {
     domainRowId: string | null,
     detail: Record<string, unknown>,
   ) => {
-    await requireCurrentAuthority();
-    const { error: auditErr } = await admin.from("audit_logs").insert({
-      user_id: user.id,
-      entity: "tenant_email_domain",
-      action,
-      entity_id: domainRowId,
-      data: { tenant_id: tenantId, ...detail },
-    });
-    if (auditErr) console.error(`[manage-tenant-domain] audit write failed (${action}):`, auditErr.message);
+    // This records an earlier server-observed effect; it cannot authorize another
+    // domain mutation. A later role/workspace change must not erase its evidence.
+    try {
+      const { error: auditErr } = await admin.from("audit_logs").insert({
+        user_id: user.id,
+        entity: "tenant_email_domain",
+        action,
+        entity_id: domainRowId,
+        data: { tenant_id: tenantId, ...detail },
+      });
+      if (auditErr) console.error(`[manage-tenant-domain] audit write failed (${action}):`, auditErr.message);
+    } catch (error) {
+      console.error(`[manage-tenant-domain] audit write failed (${action}):`, error instanceof Error ? error.message : "audit unavailable");
+    }
   };
 
   try {
-    await requireCurrentAuthority();
+    await requireCurrentAuthority(verb === "list");
     if (verb !== "list" && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return json({ error: COMMS_PROVIDER_EXECUTION_DISABLED }, 403);
-    await requireCurrentAuthority();
+    await requireCurrentAuthority(verb === "list");
 
     if (verb === "list") {
-      const { data } = await admin.from("tenant_email_domains").select("*").eq("tenant_id", tenantId).order("created_at");
-      await requireCurrentAuthority();
+      const { data, error } = await (isOwner ? admin : userClient).from("tenant_email_domains").select("*").eq("tenant_id", tenantId).order("created_at");
+      if (error) throw error;
+      await requireCurrentAuthority(true);
       return json({ domains: data ?? [] });
     }
 
@@ -236,7 +250,15 @@ Deno.serve(async (req) => {
       await requireCurrentAuthority();
       operationAttempted = true;
       await admin.from("tenant_email_domains").update({ is_default: false }).eq("tenant_id", tenantId);
-      await requireCurrentAuthority();
+      try {
+        await requireCurrentAuthority();
+      } catch (error) {
+        await writeDomainAudit("comms:sending_domain_set_default", id, {
+          domain: target.domain, replaced_domain: previousDefault?.domain ?? null,
+          default_cleared: true, new_default_set: false, operation_outcome: "unconfirmed",
+        });
+        throw error;
+      }
       await admin.from("tenant_email_domains").update({ is_default: true }).eq("id", id).eq("tenant_id", tenantId);
       await writeDomainAudit("comms:sending_domain_set_default", id, {
         domain: target.domain,
@@ -275,8 +297,8 @@ Deno.serve(async (req) => {
     return json({ error: "unknown_verb" }, 400);
   } catch (e) {
     if (e instanceof DomainAuthorityError) return json({
-      error: e.message,
-      ...(operationAttempted ? { operation_outcome: "unconfirmed", message: "An operation was attempted before access changed. Check its outcome before retrying." } : {}),
+      error: operationAttempted ? "domain_operation_unconfirmed" : e.message,
+      ...(operationAttempted ? { authority_error: e.message, operation_outcome: "unconfirmed" } : {}),
     }, e.status);
     return json({ error: (e as Error).message }, 502);
   }

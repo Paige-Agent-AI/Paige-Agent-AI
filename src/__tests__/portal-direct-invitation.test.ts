@@ -45,7 +45,7 @@ describe("Existing direct Client invitation compatibility", () => {
     });
   }
   it.each([false, undefined])("does not claim delivery from emailed=%s", async emailed => {
-    const r = await drive({ emailed }); expect(r.notices.at(-1)?.level).toBe("warning"); expect(r.notices.some(n => n.level === "success")).toBe(false);
+    const r = await drive({ emailed }); expect(r.notices.at(-1)?.level).toBe("warning"); expect(r.notices.at(-1)?.message).toContain("delivery is unconfirmed"); expect(r.notices.some(n => n.level === "success")).toBe(false);
   });
   it("treats an invocation error as a failure, without retrying an unknown send", async () => {
     const r = await drive({ sendError: true }); expect(r.notices.at(-1)?.level).toBe("error"); expect(r.calls.filter(c => c.name === "send-portal-invite")).toHaveLength(1);

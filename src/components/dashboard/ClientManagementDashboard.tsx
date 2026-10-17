@@ -478,7 +478,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
         const emailed = (sent as { emailed?: boolean } | null)?.emailed;
         toast[emailed === true ? "success" : "warning"](
           emailed !== true
-            ? `Invite created for ${inviteEmail}, but the email didn't send. Check delivery.`
+            ? `Invite prepared for ${inviteEmail}. Email delivery is unconfirmed. Check delivery before resending.`
             : `Client portal invite sent to ${inviteEmail}`,
         );
       } else {

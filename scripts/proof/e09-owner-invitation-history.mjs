@@ -1,7 +1,8 @@
 // Disposable native PostgreSQL proof. Real consumer predicates AND lower helpers; synthetic Auth/schema.
 // No managed Supabase, provider send, customer record or production acceptance.
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';
+import {spawnSync,spawn} from 'node:child_process';import {createHash} from 'node:crypto';
+import {invitationOperationProof} from './e09-customer-invitation-operation.mjs';
 const root=process.cwd(),workspace=path.resolve(root,'..'),baseline=process.argv.includes('--baseline');
 const out=path.resolve(root,process.env.E09_INVITE_PROOF_DIR??'../e09-invitation-history-native');
 assert(out.startsWith(workspace+path.sep));fs.mkdirSync(out,{recursive:true});
@@ -223,7 +224,8 @@ try{
  check('Invitation overflow returns bounded1001 newest rows for frontend refusal',()=>{sql(`INSERT INTO tenant_invite_tokens(id,tenant_id,kind,email,created_at,expires_at)
  SELECT ('e0958000-0000-0000-0000-'||lpad(n::text,12,'0'))::uuid,'${ids.ta}','consumer','cap@tests.invalid','2026-10-16','2026-11-16' FROM generate_series(1,1002)n`);
  const r=call();assert.equal(r.invitations.length,1001);assert.equal(r.invitations[0].id,'e0958000-0000-0000-0000-000000001002');assert.equal(r.invitations.at(-1).id,'e0958000-0000-0000-0000-000000000002');});
- const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({evidence:'synthetic-native-postgresql',baseline,proofScriptSHA256,migrationFile,migrationSHA256:baseline?null:hash(migration),
+ const operationProof=process.argv.includes('--operation')?await invitationOperationProof({sql,check,assert,fs,path,root,actual,ids,lit,spawn,exe,port,transcript}):null;
+ const failed=results.filter(r=>r.result==='FAIL');fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({evidence:'synthetic-native-postgresql',baseline,proofScriptSHA256,migrationFile,migrationSHA256:baseline?null:hash(migration),operationProof,
  hostedTestFile,hostedTestSHA256:hash(hostedTest),hostedEmailInsertSHA256:hash(hostedEmailInsert),
  accountTypeSourceFile,accountTypeSourceSHA256:hash(accountTypeSource),accountTypeConstraintSHA256:hash(accountTypeConstraint),
  authority:'actual consumer-mint trio and actual lower helper bodies',helperCatalog,

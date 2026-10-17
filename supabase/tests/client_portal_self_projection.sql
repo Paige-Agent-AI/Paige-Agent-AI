@@ -282,5 +282,230 @@ SELECT is(pg_temp.e09_frame_brand_control(true),'unsafe_mismatch_observed',
  'removing only the business predicate makes the deliberate mismatch observable');
 SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id',
  'e0921000-0000-0000-0000-000000000001','mutation control restores both actual native function definitions');
+-- Private AI conversation extends the same native tables/issued v2 receipts.
+-- Synthetic caller claims in this rollback-only, fully replayed database job.
+CREATE FUNCTION pg_temp.e09_chat(_actor uuid,_sql text,_role text DEFAULT 'authenticated')
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE _result text;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
+ IF _role='service_role' THEN SET LOCAL ROLE service_role; ELSE SET LOCAL ROLE authenticated; END IF;
+ EXECUTE _sql INTO _result;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _result;
+END $$;
+CREATE TEMP TABLE e09_customer_chat(thread_id uuid);
+-- Retained workspace history for the same actor/contact must not collide with
+-- or become readable as the newly created private customer audience.
+INSERT INTO public.paige_chat_threads(caller_user_id,contact_id,tenant_id,lens,title,consent_snapshot)
+ VALUES('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',
+ 'e0921000-0000-0000-0000-000000000001','client','Synthetic staff-focused history','{}');
+INSERT INTO e09_customer_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Private customer conversation','{}')$$)::uuid;
+SELECT is((SELECT audience FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'customer_private','ordinary customer receives the canonical private audience');
+SELECT is((SELECT contact_id::text FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'e0931000-0000-0000-0000-000000000001','thread subject is the native relationship');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Return','{}')$$),
+ (SELECT thread_id::text FROM e09_customer_chat),'returning customer resumes the same thread');
+-- Global staff classification in another business must not turn a linked
+-- customer relationship or its private thread into business-write authority.
+INSERT INTO public.user_roles(user_id,role) VALUES('e0911000-0000-0000-0000-000000000001','sales_rep');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status) VALUES
+ ('e0921000-0000-0000-0000-000000000002','e0911000-0000-0000-0000-000000000001','owner','active');
+SELECT ok(public.is_staff('e0911000-0000-0000-0000-000000000001'),
+ 'mixed-role negative control really passes the incumbent global staff gate');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.client_portal_relationship_id()$$),'e0931000-0000-0000-0000-000000000001',
+ 'a staff workspace elsewhere does not change the native customer relationship');
+SELECT ok(public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001'),
+ 'incumbent two-argument contact read preserves linked-customer access');
+SELECT ok(NOT public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'internal staff narrowing excludes the linked-customer-only permission');
+SELECT ok(NOT has_function_privilege('anon','public.can_access_contact(uuid,uuid,boolean)','EXECUTE')
+ AND NOT has_function_privilege('authenticated','public.can_access_contact(uuid,uuid,boolean)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.can_access_contact(uuid,uuid,boolean)','EXECUTE'),
+ 'internal actor-explicit narrowing is not a caller-accessible RPC');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false)$s$)$q$,
+ '42501','permission denied for function can_access_contact','authenticated callers cannot select the internal permission mode');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','client','Denied customer read escalation','{}')$s$)$q$,
+ '42501','workspace contact unavailable','customer read permission cannot authorize workspace thread creation');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','platform','Denied lens escalation','{}')$s$)$q$,
+ '42501','platform lens requires authorized self scope','a contact argument cannot bypass native platform authority');
+CREATE TEMP TABLE e09_private_effect_baseline AS SELECT
+ (SELECT count(*) FROM public.tasks) AS tasks,
+ (SELECT count(*) FROM public.client_notes) AS notes,
+ (SELECT count(*) FROM public.paige_audit_log) AS audit;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','mixed-role customer cannot use private Chat as staff task authority');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','mixed-role customer cannot use private Chat as staff note authority');
+UPDATE public.clients SET cs_primary_user_id='e0911000-0000-0000-0000-000000000001'
+ WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT ok(public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'explicit staff assignment remains canonical staff-contact authority');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','even assigned staff cannot authorize a task with customer-private Chat');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','even assigned staff cannot authorize a note with customer-private Chat');
+SELECT ok((SELECT tasks=(SELECT count(*) FROM public.tasks)
+ AND notes=(SELECT count(*) FROM public.client_notes)
+ AND audit=(SELECT count(*) FROM public.paige_audit_log) FROM e09_private_effect_baseline),
+ 'all refused private-context staff calls leave no task, note or audit effect');
+-- Check the canonical owner-work root without invoking a worker or provider.
+-- The actor is genuinely a member of this business, so audience is the refusal.
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status) VALUES
+ ('e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001','owner','active');
+CREATE TEMP TABLE e09_private_work_baseline AS SELECT count(*) AS work FROM public.paige_durable_work;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L,'service_role')$q$,
+ format($s$SELECT work_id FROM public.create_paige_durable_work('e0921000-0000-0000-0000-000000000001',
+ 'e0911000-0000-0000-0000-000000000001',gen_random_uuid(),%L,'document_generate','document_authoring',
+ '{"tenant_id":"e0921000-0000-0000-0000-000000000001","actor_user_id":"e0911000-0000-0000-0000-000000000001"}',
+ 'e09-private-native-check',60,5)$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '42501','DURABLE_WORK_THREAD_FORBIDDEN','private Chat cannot authorize owner work even for a current member of its business');
+SELECT ok((SELECT work=(SELECT count(*) FROM public.paige_durable_work) FROM e09_private_work_baseline),
+ 'private-context owner-work refusal leaves no durable envelope or worker wake-up');
+DELETE FROM public.tenant_members WHERE user_id='e0911000-0000-0000-0000-000000000001'
+ AND tenant_id='e0921000-0000-0000-0000-000000000001';
+-- The same canonical staff tools still work from genuinely authorized workspace
+-- conversations. These are rollback-only native writes, not provider actions.
+CREATE TEMP TABLE e09_staff_chat(thread_id uuid,purpose text);
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','coach','Assigned staff conversation','{}')$$)::uuid,'assigned';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','Authorized assigned staff note',NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='assigned')))::jsonb)->>'ok','true',
+ 'explicit assigned staff retain their canonical workspace note writer');
+UPDATE public.clients SET cs_primary_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+UPDATE public.paige_chat_threads SET is_archived=true WHERE id=(SELECT thread_id FROM e09_staff_chat WHERE purpose='assigned');
+-- Native agency ownership must also survive the shared predicate refactor.
+UPDATE public.tenants SET account_type='agency' WHERE id='e0921000-0000-0000-0000-000000000002';
+UPDATE public.tenants SET parent_tenant_id='e0921000-0000-0000-0000-000000000002' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT ok(public.agency_can_manage_child('e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001')
+ AND public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'native parent-agency authority survives the shared contact narrowing');
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','coach','Agency staff conversation','{}')$$)::uuid,'agency';
+SELECT ok((SELECT audience='workspace' FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_staff_chat WHERE purpose='agency')),
+ 'native parent-agency staff retain workspace conversation creation');
+UPDATE public.tenants SET parent_tenant_id=NULL WHERE id='e0921000-0000-0000-0000-000000000001';
+UPDATE public.tenants SET account_type='standalone' WHERE id='e0921000-0000-0000-0000-000000000002';
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','client','Authorized owner conversation','{}')$$)::uuid,'owner';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000002','Authorized workspace staff task',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')))::jsonb)->>'ok','true',
+ 'native business owner retains the canonical workspace task writer');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000002','Authorized workspace staff note',NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')))::jsonb)->>'ok','true',
+ 'native business owner retains the canonical workspace note writer');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT work_id FROM public.create_paige_durable_work('e0921000-0000-0000-0000-000000000002',
+ 'e0911000-0000-0000-0000-000000000001',gen_random_uuid(),%L,'document_generate','document_authoring',
+ '{"tenant_id":"e0921000-0000-0000-0000-000000000002","actor_user_id":"e0911000-0000-0000-0000-000000000001"}',
+ 'e09-workspace-native-check',60,5)$s$,(SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')),'service_role') IS NOT NULL,
+ 'canonical durable-work root preserves genuine member workspace envelopes without running a provider');
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'coach','Authorized personal workspace','{}')$$)::uuid,'self';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_create_task(%L,NULL,'Authorized personal task',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='self')))::jsonb)->>'ok','true',
+ 'native member retains own-workspace Chat and personal task semantics');
+DELETE FROM public.tenant_members WHERE user_id='e0911000-0000-0000-0000-000000000001';
+DELETE FROM public.user_roles WHERE user_id='e0911000-0000-0000-0000-000000000001' AND role='sales_rep';
+SELECT throws_like($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create(NULL,'coach','Denied absent workspace','{}')$s$)$q$,
+ '%self-mode requires caller tenant%','absent native membership cannot borrow a self workspace');
+SELECT throws_like($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','customer','Forged','{}')$s$)$q$,
+ '%customer subject is server resolved%','request cannot choose another customer');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_begin_v2(%L,'e0941000-0000-4000-8000-000000000001',
+ NULL,'Private customer question',false,false,false)$s$,(SELECT thread_id FROM e09_customer_chat)))::jsonb)->>'status',
+ 'accepted','existing staged v2 admits a non-effectful customer conversation');
+SELECT throws_like(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ %L)$q$,format($s$SELECT public.paige_chat_turn_append(%L,'assistant','Forged',NULL,NULL,NULL,NULL,NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ '%customer answers require a server-issued receipt%','customer cannot forge durable AI text');
+SELECT throws_like(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ %L)$q$,format($s$UPDATE public.paige_chat_threads SET audience='workspace' WHERE id=%L RETURNING id$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ '%customer thread audience is immutable%','private history cannot be relabeled as business history');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_settle(%L,'e0911000-0000-0000-0000-000000000001',
+ 'e0921000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001',
+ 'A private customer answer',NULL,NULL,'{"interactive":{"request_intent_id":"e0941000-0000-4000-8000-000000000001"},"turn_state":{"v":1,"state":"FINAL"}}',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat)),'service_role') IS NOT NULL,
+ 'existing service-only settlement saves an issued customer answer');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '2','returning customer can read the two issued canonical turns');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '0','another legitimate customer cannot read private history');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_publication_context_v2(%L,'e0941000-0000-4000-8000-000000000001')$s$,
+ (SELECT thread_id FROM e09_customer_chat))),'true','native publication checks the customer relationship without a staff workspace');
+-- Exercise the current active-v2 protocol as well as staged conversation. This
+-- protocol flag is changed only in this disposable rollback transaction.
+CREATE TEMP TABLE e09_active_chat(thread_id uuid);
+CREATE TEMP TABLE e09_rollout_baseline AS SELECT active FROM public.paige_chat_interactive_rollout WHERE singleton;
+INSERT INTO e09_active_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Active protocol customer','{}')$$)::uuid;
+UPDATE public.paige_chat_interactive_rollout SET active=true WHERE singleton;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_begin_v2(%L,'e0941000-0000-4000-8000-000000000002',
+ NULL,'Active protocol question',false,false,true)$s$,(SELECT thread_id FROM e09_active_chat)))::jsonb)->>'status',
+ 'accepted','active v2 admits an ordinary customer without staff membership');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_executor_v2(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','acquire')$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role')::jsonb)->>'acquired','true',
+ 'active customer turn acquires the canonical service-only executor');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_settle(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','Active customer answer',NULL,NULL,
+ '{"interactive":{"request_intent_id":"e0941000-0000-4000-8000-000000000002"},"turn_state":{"v":1,"state":"FINAL"}}',NULL)$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role') IS NOT NULL,
+ 'active customer answer uses the existing service-only terminal writer');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_executor_v2(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','release')$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role') IS NOT NULL,'active customer executor releases after terminal settlement');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_publication_context_v2(%L,'e0941000-0000-4000-8000-000000000002')$s$,
+ (SELECT thread_id FROM e09_active_chat))),'true','active customer publishes under native relationship authority');
+UPDATE public.paige_chat_interactive_rollout SET active=(SELECT active FROM e09_rollout_baseline) WHERE singleton;
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '0','revoked relationship loses private-history access');
+SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=(SELECT thread_id FROM e09_customer_chat)),
+ 2,'revocation retains canonical receipts without granting access');
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001'
+ WHERE id='e0931000-0000-0000-0000-000000000001';
+
+-- Native referential cleanup must preserve the incumbent ON DELETE SET NULL
+-- disposition, archive detached private text and continue refusing identity edits.
+DELETE FROM public.clients WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT ok((SELECT contact_id IS NULL AND is_archived FROM public.paige_chat_threads
+ WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'canonical contact removal detaches and archives the private thread');
+SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=(SELECT thread_id FROM e09_customer_chat)),
+ 2,'contact removal retains private issued receipts without exposing them');
 SELECT * FROM finish();
 ROLLBACK;

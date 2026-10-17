@@ -357,7 +357,7 @@ SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-0000
  format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL)$s$,
  (SELECT thread_id FROM e09_customer_chat))),
  'P0001','thread not found','even assigned staff cannot authorize a task with customer-private Chat');
-SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-000000000001',%L)$q$,
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
  format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL)$s$,
  (SELECT thread_id FROM e09_customer_chat))),
  'P0001','thread not found','even assigned staff cannot authorize a note with customer-private Chat');
@@ -416,7 +416,7 @@ SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
 SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  format($s$SELECT work_id FROM public.create_paige_durable_work('e0921000-0000-0000-0000-000000000002',
  'e0911000-0000-0000-0000-000000000001',gen_random_uuid(),%L,'document_generate','document_authoring',
- '{"tenant_id":"e0921000-0000-0000-0000-000000000002","actor_user_id":"e0911000-0000-0000-000000000001"}',
+ '{"tenant_id":"e0921000-0000-0000-0000-000000000002","actor_user_id":"e0911000-0000-0000-0000-000000000001"}',
  'e09-workspace-native-check',60,5)$s$,(SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')),'service_role') IS NOT NULL,
  'canonical durable-work root preserves genuine member workspace envelopes without running a provider');
 INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',

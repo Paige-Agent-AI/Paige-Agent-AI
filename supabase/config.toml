@@ -8,6 +8,15 @@ project_id = "xygzykjyynhzqytbqnzu"
   [functions.skill-runner]
     verify_jwt = false
 
+  # Explicit true is required on updates: CLI2.116 preserves the remote setting
+  # when verify_jwt is omitted. Both handlers retain their own authenticate-first
+  # authority checks; existing callers carry user or legacy service-role JWTs.
+  [functions.send-message]
+    verify_jwt = true
+
+  [functions.dispatch-stage-automation]
+    verify_jwt = true
+
   [functions.public-booking]
     verify_jwt = false
 

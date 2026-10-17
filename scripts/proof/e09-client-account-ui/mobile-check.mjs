@@ -37,9 +37,22 @@ try{
    await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByRole('button',{name:'Sign Out',exact:true}).scrollIntoViewIfNeeded();await page.keyboard.press('Escape');await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Open navigation');
    await page.getByRole('button',{name:'Open navigation',exact:true}).click();const close=page.getByRole('button',{name:'Close',exact:true});const closeBox=await close.boundingBox();assert(closeBox.width>=44&&closeBox.height>=44);await close.click();await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Open navigation');
    assert.equal(await page.locator('textarea').inputValue(),'My draft stays here','Opening navigation preserves draft');
-   await page.evaluate(()=>{const viewport=new EventTarget();Object.assign(viewport,{width:innerWidth,height:350,scale:1,offsetTop:0});Object.defineProperty(window,'visualViewport',{configurable:true,value:viewport});window.dispatchEvent(new Event('resize'));});
-   await page.waitForFunction(()=>document.querySelector('textarea').getBoundingClientRect().bottom<=351);
-   assert.equal(await page.locator('textarea').inputValue(),'My draft stays here','Keyboard resize preserves the same composer');await page.screenshot({path:path.join(output,`${width}-${theme}-keyboard-synthetic.png`),fullPage:true});
+   before.keyboard=[];
+   for(const keyboardHeight of [350,180]){
+    await page.evaluate(height=>{const viewport=new EventTarget();Object.assign(viewport,{width:innerWidth,height,scale:1,offsetTop:0});Object.defineProperty(window,'visualViewport',{configurable:true,value:viewport});window.dispatchEvent(new Event('resize'));},keyboardHeight);
+    await page.waitForFunction(height=>document.querySelector('.h-dvh').style.height===`${height}px`,keyboardHeight);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const keyboard=await measure();await fs.writeFile(path.join(output,`${width}-${theme}-keyboard-${keyboardHeight}-geometry.json`),JSON.stringify(keyboard,null,2));
+    assert(keyboard.input.bottom<=keyboardHeight+1&&keyboard.buttons.every(b=>b.bottom<=keyboardHeight+1),'Composer remains reachable in the short keyboard viewport');
+    if(keyboardHeight===180){
+     await page.getByRole('button',{name:'My progress',exact:true}).scrollIntoViewIfNeeded();
+     const afterScroll=await measure();assert(afterScroll.input.bottom<=keyboardHeight+1,'Scrolling the chrome does not hide the composer');
+     assert(await page.locator('[data-paige-content-scroll]').evaluate(e=>e.scrollTop>0),'Short keyboard chrome remains reachable through its own scroll owner');
+    }
+    before.keyboard.push({height:keyboardHeight,result:'PASS',geometry:keyboard,chromeReachable:true,draftRetained:true});
+    assert.equal(await page.locator('textarea').inputValue(),'My draft stays here','Keyboard resize preserves the same composer');
+    await page.screenshot({path:path.join(output,`${width}-${theme}-keyboard${keyboardHeight===350?'':`-${keyboardHeight}`}-synthetic.png`),fullPage:true});
+   }
   }
   results.push({width,height,theme,context,result:'PASS',geometry:before});await page.close();
  }

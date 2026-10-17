@@ -572,6 +572,8 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
       <input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />
 
+      {/* Very short keyboard viewports scroll the chrome above the pinned composer. */}
+      <div data-paige-content-scroll="true" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
       {/* Header — compact on mobile */}
       <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -584,7 +586,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       </div>
 
       {/* Messages */}
-      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
           <div key={message.id} data-paige-message-id={message.id} className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
             {message.role === "assistant" && (
@@ -659,6 +661,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       {attachedDoc && (

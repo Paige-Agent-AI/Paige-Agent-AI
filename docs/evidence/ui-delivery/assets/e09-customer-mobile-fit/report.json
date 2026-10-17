@@ -8,11 +8,11 @@
   "hashes": {
     "src/pages/AppShell.tsx": "10ec05b8af98e23c0b3f83666e948fd5b80cc36e825ec9f367b402d38269c9a6",
     "src/components/app/AppNav.tsx": "80a82b182d01bc7d39e8c1270fbd386f50ed7f0ab82735fd186a5ed4594ef500",
-    "src/components/app/PaigeChat.tsx": "34d5fd0bd710c31aa7893d5b53e7d066270772cf2ea004c806d5ec15a7d9ef7d",
+    "src/components/app/PaigeChat.tsx": "a61cb0758a818d0d947f3666287f9c22c473b77629413ec0ec5904b54dace4f8",
     "src/hooks/useClientViewportHeight.ts": "8042e70b918520caecf149785385030c7d1f595d0ca026e5fd40cbc4af50d488",
     "scripts/proof/e09-client-account-ui/mobile-source.tsx": "8db396dcd5ddde5d0c7edf0cbfc831fefd320e3f67acbfd4c04e48803339fb5a",
     "scripts/proof/e09-client-account-ui/mobile-adapter.tsx": "a9e5b6383eb7bc7e84fd28a50b40ed67ccdd3005f173eaa5e216d6e3effcba4b",
-    "scripts/proof/e09-client-account-ui/mobile-check.mjs": "cdcf92ca0f9c0081367e124448ba814bd74c9597b3e07d467a6501bfaafc55a9"
+    "scripts/proof/e09-client-account-ui/mobile-check.mjs": "6576566f94240d0cf5d23f60902a399be7dc99cb03edb823267f1c048abb6bb9"
   },
   "results": [
     {
@@ -178,6 +178,88 @@
             "left": 332,
             "right": 376,
             "width": 44
+          }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 390,
+              "height": 744,
+              "input": {
+                "top": 298,
+                "bottom": 342,
+                "width": 227.25,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                }
+              ],
+              "documentHeight": 744,
+              "documentWidth": 390,
+              "transcript": 69.203125
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 390,
+              "height": 744,
+              "input": {
+                "top": 128,
+                "bottom": 172,
+                "width": 227.25,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                }
+              ],
+              "documentHeight": 744,
+              "documentWidth": 390,
+              "transcript": 56
+            },
+            "chromeReachable": true,
+            "draftRetained": true
           }
         ]
       }
@@ -346,6 +428,88 @@
             "right": 306,
             "width": 44
           }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 320,
+              "height": 568,
+              "input": {
+                "top": 298,
+                "bottom": 342,
+                "width": 157.25,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                }
+              ],
+              "documentHeight": 568,
+              "documentWidth": 320,
+              "transcript": 69.203125
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 320,
+              "height": 568,
+              "input": {
+                "top": 128,
+                "bottom": 172,
+                "width": 157.25,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                }
+              ],
+              "documentHeight": 568,
+              "documentWidth": 320,
+              "transcript": 56
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          }
         ]
       }
     },
@@ -512,6 +676,88 @@
             "left": 642,
             "right": 686,
             "width": 44
+          }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 700,
+              "height": 390,
+              "input": {
+                "top": 295.5,
+                "bottom": 339.5,
+                "width": 525,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 339.5
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 339.5
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 339.5
+                }
+              ],
+              "documentHeight": 390,
+              "documentWidth": 700,
+              "transcript": 56
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 700,
+              "height": 390,
+              "input": {
+                "top": 125.5,
+                "bottom": 169.5,
+                "width": 525,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Attach a document (PDF)",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 169.5
+                },
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 169.5
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 169.5
+                }
+              ],
+              "documentHeight": 390,
+              "documentWidth": 700,
+              "transcript": 56
+            },
+            "chromeReachable": true,
+            "draftRetained": true
           }
         ]
       }

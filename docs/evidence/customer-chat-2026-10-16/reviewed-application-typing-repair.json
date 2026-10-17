@@ -1,0 +1,12 @@
+{
+  "review": 6230009520,
+  "sourceCommit": "7a5f27fa63ae1776a7554ce2ecfadaa77f28ec55",
+  "packetSha256": "6423deb842e58dd493be43302191895aae1dc217afde647524c246404d70428c",
+  "beforeGuardSha256": "4c62c20fc9a79ea0ca036065dd3f6cffa3ecb02dd49ab3540f1bb9e0d9b1c609",
+  "afterGuardSha256": "5db3386e15b420e5f24c89562a8753e0776325c32419d365bb0b9b823b1607a9",
+  "dispatchScalarUpdates": 29,
+  "existingSourceScalarUpdates": 1,
+  "additionalSourcesAdded": 0,
+  "exactInverseRestoration": true,
+  "extractorMetadataAncestrySelectionOtherPinsAndNegativeControls": "UNCHANGED"
+}

@@ -6,12 +6,12 @@ import {
 } from "@/hooks/useClientPortalConfig";
 
 /**
- * Editor-side seam for the tenant PRESENTATION OVERLAY (§10 — Paige-callable).
+ * Editor-side seam for the existing tenant portal configuration writer.
  *
  * Reads tenants.features.portal_config for the admin's active tenant (a direct
  * select on the tenants row they can access, mirroring useBrandKit's read), and
  * writes through the ONE shared RPC set_tenant_portal_config — the same entry
- * point Paige drives from chat, with the same authority as brand editing
+ * point reserved for governed callers, with the same authority as brand editing
  * (can_manage_tenant_brand). The overlay is subtractive/reordering over the
  * Playbook catalog and never introduces module keys.
  *
@@ -21,8 +21,14 @@ import {
 
 // Untyped shim — the generated types don't yet carry the portal_config RPC.
 const db = supabase as unknown as {
-  from: (t: string) => any;
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: any; error: any }>;
+  from: (t: "tenants") => {
+    select: (columns: "features") => {
+      eq: (column: "id", value: string) => {
+        maybeSingle: () => Promise<{ data: { features?: unknown } | null; error: unknown }>;
+      };
+    };
+  };
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 };
 
 export function usePortalConfig(tenantId: string | null) {
@@ -57,14 +63,16 @@ export function usePortalConfig(tenantId: string | null) {
     onMutate: async (patch) => {
       await qc.cancelQueries({ queryKey: key });
       const prev = qc.getQueryData<ClientPortalConfig>(key);
-      qc.setQueryData<ClientPortalConfig>(key, (old) =>
-        normalizePortalConfig({ ...(old ?? {}), ...patch }),
-      );
+      qc.setQueryData<ClientPortalConfig>(key, (old) => normalizePortalConfig({
+        ...(old ?? {}), ...patch,
+        ...(patch.assistant ? { assistant: { ...old?.assistant, ...patch.assistant } } : {}),
+      }));
       return { prev };
     },
     onError: (_err, _patch, ctx) => {
       if (ctx?.prev !== undefined) qc.setQueryData(key, ctx.prev);
     },
+    onSuccess: (saved) => qc.setQueryData(key, saved),
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
   });
 

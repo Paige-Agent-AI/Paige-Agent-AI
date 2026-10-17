@@ -28,9 +28,17 @@ export interface PortalWelcome {
   subhead?: string;
 }
 
+export interface PortalAssistant {
+  enabled?: boolean;
+  display_name?: string;
+  tone?: string;
+  service_scope?: string;
+  human_handoff?: string;
+}
 export interface ClientPortalConfig {
   modules?: PortalModuleOverlay[];
   welcome?: PortalWelcome;
+  assistant?: PortalAssistant;
 }
 
 export interface ClientPortalConfigState {
@@ -74,6 +82,19 @@ export function normalizePortalConfig(raw: unknown): ClientPortalConfig {
       : source;
 
   const out: ClientPortalConfig = {};
+  if ("assistant" in candidate && (!candidate.assistant || typeof candidate.assistant !== "object" || Array.isArray(candidate.assistant))) {
+    out.assistant = { enabled: false };
+  } else if(candidate.assistant&&typeof candidate.assistant==="object"&&!Array.isArray(candidate.assistant)){
+    const source=candidate.assistant as Record<string,unknown>;
+    const assistant:NonNullable<ClientPortalConfig["assistant"]>={};
+    if(typeof source.display_name==="string"&&source.display_name.trim())assistant.display_name=source.display_name.trim().slice(0,80);
+    if(typeof source.enabled==="boolean")assistant.enabled=source.enabled;
+    else if ("enabled" in source) assistant.enabled = false;
+    for (const [key, limit] of [["tone", 180], ["service_scope", 1600], ["human_handoff", 600]] as const) {
+      if (typeof source[key] === "string") assistant[key] = source[key].trim().slice(0, limit);
+    }
+    out.assistant=assistant;
+  }
 
   if (Array.isArray(candidate.modules)) {
     const modules = candidate.modules

@@ -23,6 +23,8 @@ export interface ClientPortalBrandState {
    * tenant's (§6/§11 — no jarring hand-off).
    */
   loading: boolean;
+  /** The resolver failed: whether the caller is a customer is UNKNOWN (not "not a customer"). */
+  error: boolean;
 }
 
 /**
@@ -31,8 +33,8 @@ export interface ClientPortalBrandState {
  * tenant brand, then fall back to the platform brand only once resolved-empty.
  */
 export function useClientPortalBrandState(): ClientPortalBrandState {
-  const { data: brand, loading } = useClientPortalRead(readBrand, null);
-  return { brand, loading };
+  const { data: brand, loading, error } = useClientPortalRead(readBrand, null);
+  return { brand, loading, error };
 }
 
 async function readBrand(): Promise<ClientPortalBrand | null> {

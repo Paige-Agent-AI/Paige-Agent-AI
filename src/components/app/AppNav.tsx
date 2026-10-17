@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText } from "lucide-react";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText, MessagesSquare, CircleHelp } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { catalogRoutableItems, applyPortalOverlay } from "@/lib/portal/moduleNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -107,12 +107,23 @@ export function AppNav({ user }: AppNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { isAdmin, mode, setMode } = useDashboardMode();
-  const { count: unreadSupport } = useUnreadSupportCount(user.id);
   const pb = usePlaybook();
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
-  const { brand, loading: brandLoading } = useClientPortalBrandState();
+  const { brand, loading: brandLoading, error: brandError } = useClientPortalBrandState();
+  // A customer of a business (an actual relationship resolved server-side) gets
+  // help from THAT business ("Get help" → their own inbox), never Paige's platform
+  // support desk. Staff/owners without a customer relationship keep platform
+  // Support. Neither renders until the relationship resolves, so a customer never
+  // sees the platform desk flash in (E09 owner decision). A FAILED resolve is not
+  // "not a customer": it shows neither, rather than a destination that may be wrong.
+  const relationshipKnown = !brandLoading && !brandError;
+  const isCustomer = relationshipKnown && !!brand?.tenant_id;
+  const showPlatformSupport = relationshipKnown && !brand?.tenant_id;
+  const showGetHelp = isCustomer;
+  const businessName = brand?.tenant_name?.trim();
+  const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
   // The tenant's PRESENTATION OVERLAY over the Playbook module catalog (§9/§10).
   // Purely subtractive/reordering — never introduces module keys. Resolves to {}
   // while loading / for staff / on error, so the nav is fail-open: an
@@ -166,6 +177,21 @@ export function AppNav({ user }: AppNavProps) {
     && !navItems.some(item => item.href === "/app/documents")) {
     const after = navItems.findIndex(item => item.href === "/app/actions");
     navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {label: "Documents", href: "/app/documents", icon: FileText});
+  }
+
+  // Messages is the customer's conversation with their business (E09) — a core
+  // portal surface every customer gets, independent of the Playbook's module list.
+  // Shown only once a customer relationship has resolved (like Documents / Get
+  // help), so nobody without one is handed a dead-end link. The page still
+  // re-resolves the relationship server-side.
+  if (isCustomer && !navItems.some((i) => i.href === "/app/messages")) {
+    const after = Math.max(
+      navItems.findIndex((i) => i.href === "/app/documents"),
+      navItems.findIndex((i) => i.href === "/app/actions"),
+    );
+    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
+      label: "Messages", href: "/app/messages", icon: MessagesSquare,
+    });
   }
 
   // Planning is the Task Manager — where every reminder/task/milestone Paige
@@ -223,18 +249,29 @@ export function AppNav({ user }: AppNavProps) {
                   {item.label}
                 </button>
               ))}
-              <button
-                onClick={() => { navigate("/app/support"); setMobileMenuOpen(false); }}
-                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
-              >
-                <LifeBuoy className="w-4 h-4" />
-                <span className="flex-1 text-left">Support</span>
-                {unreadSupport > 0 && (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
-                    {unreadSupport > 9 ? "9+" : unreadSupport}
-                  </span>
-                )}
-              </button>
+              {showGetHelp && (
+                <button
+                  onClick={() => { navigate("/app/messages?topic=help"); setMobileMenuOpen(false); }}
+                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                >
+                  <CircleHelp className="w-4 h-4" />
+                  Get help
+                </button>
+              )}
+              {showPlatformSupport && (
+                <button
+                  onClick={() => { navigate("/app/support"); setMobileMenuOpen(false); }}
+                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                >
+                  <LifeBuoy className="w-4 h-4" />
+                  <span className="flex-1 text-left">Support</span>
+                  {unreadSupport > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                      {unreadSupport > 9 ? "9+" : unreadSupport}
+                    </span>
+                  )}
+                </button>
+              )}
               {!brandLoading && brand?.tenant_id && (
                 <button
                   onClick={() => { navigate("/app/settings?view=client-account"); setMobileMenuOpen(false); }}
@@ -328,7 +365,19 @@ export function AppNav({ user }: AppNavProps) {
           </Button>
         )}
 
-        {!isAdmin && (
+        {isCustomer ? (
+          // A customer reaches THEIR business in the portal thread (E09), by name.
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs max-w-[220px]"
+            onClick={() => navigate("/app/messages")}
+            aria-label={businessName ? `Message ${businessName}` : "Message your team"}
+          >
+            <MessageCircle aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline truncate">{businessName ? `Message ${businessName}` : "Message your team"}</span>
+          </Button>
+        ) : !isAdmin && relationshipKnown && (
           <Button
             variant="ghost"
             size="sm"
@@ -369,15 +418,23 @@ export function AppNav({ user }: AppNavProps) {
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem onClick={() => navigate("/app/support")}>
-              <LifeBuoy className="w-4 h-4 mr-2" />
-              <span className="flex-1">Support</span>
-              {unreadSupport > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
-                  {unreadSupport > 9 ? "9+" : unreadSupport}
-                </span>
-              )}
-            </DropdownMenuItem>
+            {showGetHelp && (
+              <DropdownMenuItem onClick={() => navigate("/app/messages?topic=help")}>
+                <CircleHelp className="w-4 h-4 mr-2" />
+                Get help
+              </DropdownMenuItem>
+            )}
+            {showPlatformSupport && (
+              <DropdownMenuItem onClick={() => navigate("/app/support")}>
+                <LifeBuoy className="w-4 h-4 mr-2" />
+                <span className="flex-1">Support</span>
+                {unreadSupport > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                    {unreadSupport > 9 ? "9+" : unreadSupport}
+                  </span>
+                )}
+              </DropdownMenuItem>
+            )}
             {!brandLoading && brand?.tenant_id && (
               <DropdownMenuItem onClick={() => navigate("/app/settings?view=client-account")}>
                 <UserIcon className="w-4 h-4 mr-2" />

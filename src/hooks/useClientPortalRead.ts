@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /** Per-mount lifetime for native customer reads; no cached identity or authority. */
-export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T): { data: T; loading: boolean } {
-  const [state, setState] = useState({ data: empty, loading: true });
+/**
+ * `error` is true only when the read itself failed (as opposed to resolving empty), so
+ * callers can tell "not a customer" apart from "couldn't check".
+ */
+export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T): { data: T; loading: boolean; error: boolean } {
+  const [state, setState] = useState({ data: empty, loading: true, error: false });
 
   useEffect(() => {
     let cancelled = false;
     let sequence = 0;
     let actor: string | null = null;
     let signedOut = false;
-    const clear = (loading: boolean) => setState({ data: empty, loading });
+    const clear = (loading: boolean, error = false) => setState({ data: empty, loading, error });
     const read = async (expectedActor?: string) => {
       const request = ++sequence;
       const current = () => !cancelled && request === sequence && !signedOut;
@@ -20,9 +24,9 @@ export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T): {
         if (!current() || error || !user || (expectedActor && user.id !== expectedActor)) return;
         actor = user.id;
         const value = await readValue();
-        if (current()) setState({ data: value, loading: false });
+        if (current()) setState({ data: value, loading: false, error: false });
       } catch {
-        if (current()) clear(false);
+        if (current()) clear(false, true);
       } finally {
         if (current()) setState(previous => ({ ...previous, loading: false }));
       }

@@ -40,6 +40,7 @@ import { resolveGmailAccessToken, gmailSend } from "../_shared/gmail.ts";
 // send through the tenant's OWN SMTP host, SSRF-guarded). The SAME email adapter dispatches
 // to it when provider==='smtp' (§18 — not a second 'email' registry entry).
 import { resolveSmtpCreds, smtpSend } from "../_shared/smtp.ts";
+import { decideContentRead } from "../_shared/inbox-intelligence/policy.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 import { parseDeliveryBinding, renderTransientInvoiceLink, renderTransientInvoiceText, type DeliveryBinding } from "../_shared/sales-invoice-delivery/binding.ts";
@@ -98,7 +99,7 @@ const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 // Refusal code for any SendGrid send that is not the governed email door's dispatch (security H2).
 const PAIGE_EMAIL_DOOR_REQUIRED = "paige_email_requires_governed_send";
 interface CommsEmailBinding {
-  operation_id: string; tenant_id: string; contact_id: string; connector_id: string;
+  operation_id: string; tenant_id: string; actor_user_id: string; contact_id: string; connector_id: string;
   recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
   subject: string; body_html: string; state: string;
 }
@@ -121,7 +122,7 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
   const v = (outer.comms_email_binding && typeof outer.comms_email_binding === "object"
     ? { ...(outer.comms_email_binding as Record<string, unknown>), message_tenant_id: outer.message_tenant_id ?? outer.tenant_id }
     : outer) as Record<string, unknown>;
-  for (const key of ["operation_id", "tenant_id", "contact_id", "connector_id"]) {
+  for (const key of ["operation_id", "tenant_id", "actor_user_id", "contact_id", "connector_id"]) {
     if (typeof v[key] !== "string" || !COMMS_EMAIL_UUID.test(v[key] as string)) return null;
   }
   if (!messageTenantId || v.tenant_id !== messageTenantId) return null;
@@ -136,7 +137,7 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
   if (typeof v.body_html !== "string" || !v.body_html) return null;
   if (typeof v.state !== "string") return null;
   return {
-    operation_id: v.operation_id as string, tenant_id: v.tenant_id as string,
+    operation_id: v.operation_id as string, tenant_id: v.tenant_id as string, actor_user_id: v.actor_user_id as string,
     contact_id: v.contact_id as string, connector_id: v.connector_id as string,
     recipient: v.recipient, from_address: v.from_address, provider: v.provider,
     subject: v.subject, body_html: v.body_html, state: v.state,
@@ -716,6 +717,7 @@ Deno.serve(async (req) => {
         provider?: string | null; credentials_vault_ref?: string | null; external_account_id?: string | null;
         // #141c: non-secret SMTP transport config (host/port/secure) for the provider==='smtp' path.
         config?: Record<string, unknown> | null;
+        mailbox_class?: unknown; mailbox_owner_user_id?: unknown;
       }
     | null = null;
   let replyTo: string | null = null;
@@ -798,7 +800,7 @@ Deno.serve(async (req) => {
   }
   if (invoiceBinding) {
     const { data: invoiceFacts, error: factsError } = await admin.rpc("_sales_invoice_read", { _tenant: tenantId, _invoice: invoiceBinding.invoice_id });
-    const readiness = !factsError ? await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId: tenantId!, invoice: invoiceFacts, channel: body.channel === "sms" ? "sms" : "email", connectorId: effectiveConnectorId }, key => Deno.env.get(key)) : null;
+    const readiness = !factsError ? await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId: tenantId!, actorUserId: invoiceBinding.actor_user_id, invoice: invoiceFacts, channel: body.channel === "sms" ? "sms" : "email", connectorId: effectiveConnectorId }, key => Deno.env.get(key)) : null;
     if (!readiness?.eligible) return new Response(JSON.stringify({ok:false,outcome:"prepared",code:readiness?.reason ?? "DELIVERY_READINESS_UNVERIFIED"}), {status:422,headers:{...corsHeaders,"Content-Type":"application/json"}});
   }
   // ── INT-328 comms.email_send binding. A prepared governed email is never an ordinary editable
@@ -929,7 +931,7 @@ Deno.serve(async (req) => {
       // email path can route a Gmail connector through the Gmail seam (else Resend).
       // #141c: + config (jsonb host/port/secure) so the provider==='smtp' path can send through
       // the tenant's own SMTP host. Additive (§37) — Resend/Gmail callers ignore the extra column.
-      .select("tenant_id, from_address, from_name, reply_to, channel_type, status, active, provider, credentials_vault_ref, external_account_id, config")
+      .select("tenant_id, from_address, from_name, reply_to, channel_type, status, active, provider, credentials_vault_ref, external_account_id, config, mailbox_class, mailbox_owner_user_id")
       .eq("id", effectiveConnectorId)
       .maybeSingle();
     if (connectorError) {
@@ -1017,6 +1019,35 @@ Deno.serve(async (req) => {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // Actor comes from the caller JWT or the already validated canonical operation,
+  // never the service-role transport identity or request-authored message metadata.
+  const emailActor = commsBinding?.actor_user_id ?? invoiceBinding?.actor_user_id ?? user?.id ?? null;
+  const mailboxAllowed = (row: NonNullable<typeof connectorRow>) => decideContentRead({
+    callerUserId: emailActor ?? "", callerTenantId: tenantId,
+    mailboxTenantId: typeof row.tenant_id === "string" ? row.tenant_id : "",
+    mailbox: { mailbox_class: row.mailbox_class, mailbox_owner_user_id: row.mailbox_owner_user_id,
+      active: row.active, status: row.status, mailbox_scopes: null },
+  }).allowed;
+  if (body.channel === "email" && connectorRow && !mailboxAllowed(connectorRow)) {
+    if (commsBinding) return await refuseCommsEmail("SENDER_CHANGED");
+    if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease("scheduled_connector_unavailable");
+    return new Response(JSON.stringify({ status: "blocked", outcome: "refused", error: "email_sender_unavailable" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  // Recheck after preparation/attachments and directly before the provider call.
+  // Shared and personal connectors use the same incumbent mailbox policy; a
+  // changed class/owner is not a fallback or a fresh approval.
+  const assertCurrentEmailSender = async () => {
+    if (!connectorRow || !effectiveConnectorId) return;
+    const { data: current, error } = await admin.from("channel_connectors")
+      .select("tenant_id,status,active,mailbox_class,mailbox_owner_user_id,provider,from_address,credentials_vault_ref")
+      .eq("id", effectiveConnectorId).eq("tenant_id", tenantId).eq("channel_type", "email").maybeSingle();
+    if (error || !current || !mailboxAllowed(current)
+      || current.mailbox_class !== connectorRow.mailbox_class
+      || current.mailbox_owner_user_id !== connectorRow.mailbox_owner_user_id
+      || current.provider !== connectorRow.provider
+      || (current.from_address?.trim().toLowerCase() ?? null) !== (connectorRow.from_address?.trim().toLowerCase() ?? null)
+      || current.credentials_vault_ref !== connectorRow.credentials_vault_ref) throw new Error("email_sender_unavailable");
+  };
   // Experience 03 (security H2): PAIGE Email (SendGrid) sends ONLY as the governed email door's
   // dispatch. The SendGrid arm uses the PLATFORM Mail Send key, and SendGrid authenticates a domain for
   // the whole shared account, not per business — so the provider would accept any From this account
@@ -1507,7 +1538,6 @@ Deno.serve(async (req) => {
         const current=await admin.rpc('_sales_invoice_read',{_tenant:tenantId,_invoice:invoiceBinding.invoice_id});
         if(current.error||!current.data||current.data.version!==facts.version||current.data.status!=='issued')throw Error('INVOICE_CHANGED_DURING_PDF');
         outMsg.body_html = transientHtml;
-        invoiceProviderAttempted = true;
       }
       let commsAbort: AbortController | null = null;
       if (commsBinding) {
@@ -1534,8 +1564,10 @@ Deno.serve(async (req) => {
         (ctx as CommsEmailSendContext).sendgridCustomArgs = {
           paige_tenant_id: commsBinding.tenant_id, paige_operation_id: commsBinding.operation_id, paige_message_id: String(body.message_id),
         };
-        commsProviderAttempted = true;
       }
+      await assertCurrentEmailSender();
+      if (invoiceBinding) invoiceProviderAttempted = true;
+      if (commsBinding) commsProviderAttempted = true;
       const delivery = commsAbort
         ? await sendWithinCommsEmailDeadline(() => adapter.send(outMsg, ctx), commsAbort)
         : await adapter.send(outMsg, ctx);

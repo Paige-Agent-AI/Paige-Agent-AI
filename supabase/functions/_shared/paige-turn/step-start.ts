@@ -113,6 +113,7 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   // Scheduling
   calendar_book_meeting: "Booking the meeting",
   read_calendar_booking: "Checking that booking",
+  crm_get_task: "Checking that Task",
   // Research and the specialist team
   web_search: "Searching the web",
   // Business operating snapshot (shared read; E2-1 wired the dispatch)

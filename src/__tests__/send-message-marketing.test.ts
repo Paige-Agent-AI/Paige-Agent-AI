@@ -1,3 +1,4 @@
+import { decideContentRead } from "../../supabase/functions/_shared/inbox-intelligence/policy.ts";
 // send-message marketing mode (E1, owner rulings 2026-10-04): the real handler source, with only the
 // network and database substituted (same harness as the invoice-delivery suite).
 import { readFileSync } from "node:fs";
@@ -52,7 +53,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
       return { data: null, error: null };
     },
   };
-  const scope = {
+  const scope = { decideContentRead,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "SUPABASE_URL" ? "https://db.example.test" : "configured") },

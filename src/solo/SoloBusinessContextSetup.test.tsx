@@ -31,6 +31,18 @@ state.brief = cleanSoloSetupBrief({
 });
 state.paigeProfile = EMPTY_PAIGE_PROFILE;
 
+// The real Knowledge library requires the app's settled actor/workspace context.
+// Keep this isolated Setup fixture aligned with the business-context tenant below.
+vi.mock("@/hooks/useTenantContext", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useTenantContext")>()),
+  useTenantContext: () => ({
+    activeUserId: "owner-1",
+    activeTenantId: state.activeTenantId,
+    loading: false,
+    accountContextStatus: "ready",
+  }),
+}));
+
 vi.mock("./data/useSoloBusinessContext", () => ({
   useSoloBusinessContext: () => ({
     loading: false,

@@ -46,9 +46,15 @@ test("unknown actor is refused before any native presentation read",async()=>{
   const {caller,calls}=fixture();assert.equal(await readClientPortalPersonaInput(caller,""),null);assert.deepEqual(calls,[]);
 });
 test("malformed optional settings fall back to fixed customer defaults",async()=>{
-  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:{secret:privateMarker},tone:[],service_scope:42,enabled:"false"}}}).caller,actor);
+  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:{secret:privateMarker},tone:[],service_scope:42}}}).caller,actor);
   assert.ok(input);assert.equal(input.enabled,true);assert.equal(input.assistantName,"PAIGE");
   assert.equal(input.tone,"Warm, clear and professional");assert.equal(input.serviceScope,null);
+});
+for(const enabled of [null,"false",0,{},[]])test(`invalid assistant control ${JSON.stringify(enabled)} cannot default to enabled`,async()=>{
+  assert.equal(await readClientPortalPersonaInput(fixture({config:{assistant:{enabled}}}).caller,actor),null);
+});
+for(const assistant of [null,"invalid",[],1])test(`invalid assistant policy ${JSON.stringify(assistant)} is refused`,async()=>{
+  assert.equal(await readClientPortalPersonaInput(fixture({config:{assistant}}).caller,actor),null);
 });
 test("owner disablement is explicit and cannot be overridden by configuration prose",async()=>{
   const input=await readClientPortalPersonaInput(fixture({config:{assistant:{enabled:false,display_name:"Guide",system_prompt:privateMarker,tools:["read_private_business"]}}}).caller,actor);

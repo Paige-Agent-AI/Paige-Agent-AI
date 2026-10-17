@@ -35,6 +35,8 @@ export async function readClientPortalPersonaInput(caller:Caller,actorId:string)
     const brand=object(frame.brand),config=object(frame.config);
     if(!binding||!brand||brand.tenant_id!==binding.tenantId||!config)return null;
     const assistant=object(config?.assistant);
+    if(("assistant"in config&&!assistant)||
+      (assistant&&"enabled"in assistant&&typeof assistant.enabled!=="boolean"))return null;
     return {
       binding,
       enabled:assistant?.enabled!==false,

@@ -1,4 +1,5 @@
 import { identityScopeChanged, type ContextIdentity } from "./paige-context/mod.ts";
+import { isSoloStandalone } from "./solo-classification.ts";
 
 type Response = { data: unknown; error: unknown };
 type Query = PromiseLike<Response> & {
@@ -10,11 +11,14 @@ type Query = PromiseLike<Response> & {
 export type CalendarBookingReadCaller = {
   auth: { getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: unknown }> };
   rpc(name: string, args?: Record<string, unknown>): Query;
+  from(table: "tenants"): Query;
 };
 export type CalendarBookingReadDeps = {
   /** Original caller-JWT client. Never the service client or a model-authored scope. */
   caller: CalendarBookingReadCaller;
   currentIdentity: () => ContextIdentity | null;
+  /** Incumbent server context revalidation, not a caller/model assertion. */
+  revalidateScope?: () => PromiseLike<boolean>;
   signal?: AbortSignal;
 };
 const COLUMNS = ["id", "tenant_id", "calendar_id", "host_user_id", "contact_id", "title", "start_at", "end_at", "timezone", "status", "booking_kind", "guest_name"] as const;
@@ -40,14 +44,50 @@ function project(value: unknown, bookingId: string, tenantId: string) {
 const unavailable = () => ({ status: "unavailable" as const, reason: "canonical_read_unconfirmed", message: "This booking could not be verified. Do not infer absence, completion, provider readiness or retry an action." });
 const refused = () => ({ status: "refused" as const, reason: "current_scope_or_authority_refused", message: "The current actor/workspace authority could not be verified. No booking details are available." });
 
-/** Prepared reader only: no Chat admission, registration, writes, provider calls or replay. */
+/** Exact caller-visible classification for offer and read. No role/tenant fallback. */
+export async function readCalendarAccountShape(caller: CalendarBookingReadCaller, tenantId: string | null, signal?: AbortSignal) {
+  if (!uuid(tenantId)) return { status: "refused" as const };
+  const abort = new AbortController(), stop = () => abort.abort();
+  const expires = performance.now() + 8000;
+  signal?.addEventListener("abort", stop, { once: true });
+  if (signal?.aborted) stop();
+  const timer = setTimeout(stop, 8000);
+  try {
+    const classification = await new Promise<Response>((resolve, reject) => {
+      let settled = false;
+      const finish = (result: Response | null) => {
+        if (settled) return; settled = true; abort.signal.removeEventListener("abort", onAbort);
+        if (result) resolve(result); else reject(new Error("classification_unconfirmed"));
+      };
+      const onAbort = () => finish(null);
+      abort.signal.addEventListener("abort", onAbort, { once: true });
+      Promise.resolve().then(() => {
+        if (abort.signal.aborted || performance.now() >= expires) throw new Error("classification_retired");
+        return caller.from("tenants").select("id,account_type,parent_tenant_id").eq("id", tenantId).limit(2).abortSignal(abort.signal);
+      }).then(result => finish(abort.signal.aborted || performance.now() >= expires ? null : result), () => finish(null));
+    });
+    if (classification.error) return { status: "unavailable" as const };
+    if (!Array.isArray(classification.data) || classification.data.length !== 1) return { status: "refused" as const };
+    const row = classification.data[0];
+    // The UI's falsy-parent predicate is not a DB response validator. Require
+    // exact ID, readable type and explicit native NULL before applying it.
+    if (!object(row) || row.id !== tenantId || typeof row.account_type !== "string" || row.parent_tenant_id !== null ||
+      !isSoloStandalone({ account_type: row.account_type, parent_tenant_id: row.parent_tenant_id })) return { status: "refused" as const };
+    return { status: "available" as const, accountShape: "solo" as const };
+  } catch { return { status: "unavailable" as const }; }
+  finally { clearTimeout(timer); signal?.removeEventListener("abort", stop); }
+}
+
+/** Canonical read only: no booking writes, provider calls or replay. */
 export async function readCalendarBooking(identity: ContextIdentity, deps: CalendarBookingReadDeps, args: unknown) {
   if (!object(args) || Object.keys(args).length !== 1 || Object.keys(args)[0] !== "booking_id" || !uuid(args.booking_id)) {
     return { status: "needs_input" as const, message: "Provide only one exact booking_id UUID. Scope and date-range arguments are not accepted." };
   }
   const origin = { ...identity }, bookingId = args.booking_id.toLowerCase();
-  if (!uuid(origin.actorId) || !uuid(origin.tenantId) || origin.accountShape !== "solo" ||
-    !["owner", "admin", "member"].includes(String(origin.role)) || origin.actAsClientId !== null) return refused();
+  // A null ContextIdentity shape is unresolved, never implicitly SOLO. Resolve
+  // it from the actual caller-visible row below; a non-SOLO context is refused.
+  if (!uuid(origin.actorId) || !uuid(origin.tenantId) || (origin.accountShape !== null && origin.accountShape !== "solo") ||
+    !["owner", "admin", "member", "coach"].includes(String(origin.role)) || origin.actAsClientId !== null) return refused();
   const tenantId = origin.tenantId;
   const current = () => sameScope(origin, deps.currentIdentity());
   const abort = new AbortController();
@@ -80,12 +120,15 @@ export async function readCalendarBooking(identity: ContextIdentity, deps: Calen
   };
   const rpc = (name: string, parameters?: Record<string, unknown>) => wait(() => deps.caller.rpc(name, parameters).abortSignal(abort.signal));
   const auth = async () => {
+    if (deps.revalidateScope && !(await wait(deps.revalidateScope))) return "refused";
     const user = await wait(() => deps.caller.auth.getUser());
     if (user.error) return "unavailable";
     if (user.data.user?.id !== origin.actorId) return "refused";
     const tenant = await rpc("current_user_tenant_id");
     if (tenant.error) return "unavailable";
-    return tenant.data === tenantId ? "ready" : "refused";
+    if (tenant.data !== tenantId) return "refused";
+    const classification = await wait(() => readCalendarAccountShape(deps.caller, tenantId, abort.signal));
+    return classification.status === "available" ? "ready" : classification.status;
   };
   try {
     check();

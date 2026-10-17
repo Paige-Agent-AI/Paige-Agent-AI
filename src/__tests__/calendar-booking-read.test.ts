@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readCalendarBooking, type CalendarBookingReadCaller } from "../../supabase/functions/_shared/calendar-booking-read";
+import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingReadCaller } from "../../supabase/functions/_shared/calendar-booking-read";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,11 +12,12 @@ const deferred = <T,>() => { let resolve!: (value: T) => void; const promise = n
 function fixture() {
   let current: ContextIdentity | null = { ...identity };
   const calls: { name: string; args: unknown; operations: unknown[]; signal?: AbortSignal }[] = [];
+  const classificationQueries: typeof calls = [];
   const pending: Partial<Record<string, PromiseLike<Response>>> = {};
-  const responses: Record<string, Response> = { current_user_tenant_id: { data: id(2), error: null }, list_team_bookings: { data: [record()], error: null }, is_tenant_member: { data: true, error: null }, is_tenant_admin: { data: true, error: null } };
+  const responses: Record<string, Response> = { tenant_classification: { data: [{ id: id(2), account_type: "standalone", parent_tenant_id: null }], error: null }, current_user_tenant_id: { data: id(2), error: null }, list_team_bookings: { data: [record()], error: null }, is_tenant_member: { data: true, error: null }, is_tenant_admin: { data: true, error: null } };
   const user = vi.fn(() => Promise.resolve({ data: { user: { id: id(1) } }, error: null }));
-  const caller = { auth: { getUser: user }, rpc(name: string, args?: unknown) {
-    const call = { name, args, operations: [] as unknown[], signal: undefined as AbortSignal | undefined }; calls.push(call);
+  const queryFor = (name: string, args?: unknown, store = calls) => {
+    const call = { name, args, operations: [] as unknown[], signal: undefined as AbortSignal | undefined }; store.push(call);
     const query = {
       select(value: string) { call.operations.push(["select", value]); return query; },
       eq(key: string, value: unknown) { call.operations.push(["eq", key, value]); return query; },
@@ -26,13 +27,107 @@ function fixture() {
         return Promise.resolve(pending[name] ?? responses[name]).then(resolve, reject);
       },
     }; return query;
-  } };
+  };
+  const caller = { auth: { getUser: user }, rpc: (name: string, args?: unknown) => queryFor(name, args), from: (table: "tenants") => queryFor("tenant_classification", table, classificationQueries) };
   const deps = { caller, currentIdentity: () => current };
-  return { calls, responses, pending, user, deps, switchTo(value: ContextIdentity | null) { current = value; }, read(args: unknown = { booking_id: id(3) }) { return readCalendarBooking(identity, deps, args); } };
+  return { calls, classificationQueries, responses, pending, user, deps, switchTo(value: ContextIdentity | null) { current = value; }, read(args: unknown = { booking_id: id(3) }) { return readCalendarBooking(identity, deps, args); } };
 }
 afterEach(() => { vi.useRealTimers(); });
 
 describe("canonical exact Calendar booking reader", () => {
+  it("the exact shared offer projection resolves no unknown type or optimistic missing parent", async () => {
+    const f = fixture(); expect(await readCalendarAccountShape(f.deps.caller, id(2))).toEqual({ status: "available", accountShape: "solo" });
+    f.responses.tenant_classification.data = [{ id: id(2), account_type: "standalone" }];
+    expect(await readCalendarAccountShape(f.deps.caller, id(2))).toEqual({ status: "refused" });
+    expect(await readCalendarAccountShape(f.deps.caller, null)).toEqual({ status: "refused" });
+    expect(f.calls).toEqual([]);
+  });
+  it("the offer classification itself is bounded and cannot upgrade after late completion", async () => {
+    vi.useFakeTimers(); const f = fixture(); const slow = deferred<Response>(); f.pending.tenant_classification = slow.promise;
+    const result = readCalendarAccountShape(f.deps.caller, id(2)); await vi.advanceTimersByTimeAsync(8001);
+    expect(await result).toEqual({ status: "unavailable" }); expect(f.classificationQueries[0].signal?.aborted).toBe(true);
+    slow.resolve({ data: [{ id: id(2), account_type: "standalone", parent_tenant_id: null }], error: null }); await vi.runAllTimersAsync();
+    expect(await result).toEqual({ status: "unavailable" }); expect(f.classificationQueries).toHaveLength(1);
+  });
+  it("an already cancelled offer starts no query", async () => {
+    const f = fixture(), abort = new AbortController(); abort.abort();
+    expect(await readCalendarAccountShape(f.deps.caller, id(2), abort.signal)).toEqual({ status: "unavailable" }); expect(f.classificationQueries).toEqual([]);
+  });
+  for (const [label, rows] of Object.entries({ missing: [], duplicate: [{ id: id(2), account_type: "standalone", parent_tenant_id: null }, { id: id(2), account_type: "standalone", parent_tenant_id: null }],
+    unknown: [{ id: id(2), account_type: null, parent_tenant_id: null }], agency: [{ id: id(2), account_type: "agency", parent_tenant_id: null }], enterprise: [{ id: id(2), account_type: "enterprise", parent_tenant_id: null }],
+    parented: [{ id: id(2), account_type: "standalone", parent_tenant_id: id(9) }], missingParent: [{ id: id(2), account_type: "standalone" }], emptyParent: [{ id: id(2), account_type: "standalone", parent_tenant_id: "" }], foreign: [{ id: id(9), account_type: "standalone", parent_tenant_id: null }] })) {
+    it("classification " + label + " never borrows a SOLO label from actor tier or supplied identity", async () => {
+      const f = fixture(); f.responses.tenant_classification.data = rows;
+      const result = await f.read(); expect(result).toMatchObject({ status: "refused" }); expect(result).not.toHaveProperty("booking");
+      expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(false);
+    });
+  }
+  it("an unresolved context shape becomes readable only after exact authoritative SOLO classification", async () => {
+    const f = fixture(), scope = { ...identity, accountShape: null }; f.switchTo(scope);
+    expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "available", found: true });
+    expect(f.classificationQueries).toHaveLength(2);
+    expect(f.classificationQueries[0].operations).toEqual([["select", "id,account_type,parent_tenant_id"], ["eq", "id", id(2)], ["limit", 2]]);
+  });
+  it("classification error is unavailable rather than absence or guessed SOLO", async () => {
+    const f = fixture(); f.responses.tenant_classification = { data: null, error: { code: "42501" } };
+    expect(await f.read()).toMatchObject({ status: "unavailable" }); expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(false);
+  });
+  for (const change of [{ account_type: "agency", parent_tenant_id: null }, { account_type: "standalone", parent_tenant_id: id(9) }]) {
+    it("classification change after canonical read suppresses the previously valid record: " + JSON.stringify(change), async () => {
+      const f = fixture(); const slow = deferred<Response>(); f.pending.list_team_bookings = slow.promise;
+      const result = f.read(); await vi.waitFor(() => expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(true));
+      f.responses.tenant_classification.data = [{ id: id(2), ...change }]; slow.resolve({ data: [record()], error: null });
+      expect(await result).toMatchObject({ status: "refused" }); expect(f.classificationQueries).toHaveLength(2);
+    });
+  }
+  it("classification transport deadline cancels and cannot start a late booking lookup", async () => {
+    vi.useFakeTimers(); const f = fixture(); const slow = deferred<Response>(); f.pending.tenant_classification = slow.promise;
+    const result = f.read(); await vi.advanceTimersByTimeAsync(8001); expect(await result).toMatchObject({ status: "unavailable" });
+    expect(f.classificationQueries[0].signal?.aborted).toBe(true);
+    slow.resolve({ data: [{ id: id(2), account_type: "standalone", parent_tenant_id: null }], error: null }); await vi.runAllTimersAsync();
+    expect(f.calls.some(c => c.name === "list_team_bookings")).toBe(false);
+  });
+  it("the incumbent live context revalidator runs before and after the canonical read", async () => {
+    const f = fixture(); const revalidateScope = vi.fn(async () => true);
+    expect(await readCalendarBooking(identity, { ...f.deps, revalidateScope }, { booking_id: id(3) })).toMatchObject({ status: "available", found: true });
+    expect(revalidateScope).toHaveBeenCalledTimes(2);
+  });
+  it("a server-context preflight refusal starts no lookup or native authority read", async () => {
+    const f = fixture();
+    expect(await readCalendarBooking(identity, { ...f.deps, revalidateScope: async () => false }, { booking_id: id(3) })).toMatchObject({ status: "refused" });
+    expect(f.calls).toEqual([]); expect(f.user).not.toHaveBeenCalled();
+  });
+  it("a server-context post-read refusal suppresses the otherwise valid booking", async () => {
+    const f = fixture(); const revalidateScope = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const result = await readCalendarBooking(identity, { ...f.deps, revalidateScope }, { booking_id: id(3) });
+    expect(result).toMatchObject({ status: "refused" }); expect(result).not.toHaveProperty("booking");
+    expect(f.calls.filter(c => c.name === "list_team_bookings")).toHaveLength(1);
+  });
+  for (const stage of ["before", "after"]) {
+    it("bounds deferred server context " + stage + " and discards its late continuation", async () => {
+      vi.useFakeTimers(); const f = fixture(); const slow = deferred<boolean>();
+      const revalidateScope = stage === "before" ? vi.fn(() => slow.promise) : vi.fn().mockResolvedValueOnce(true).mockReturnValueOnce(slow.promise);
+      const result = readCalendarBooking(identity, { ...f.deps, revalidateScope }, { booking_id: id(3) });
+      await vi.advanceTimersByTimeAsync(8001); expect(await result).toMatchObject({ status: "unavailable" });
+      slow.resolve(true); await vi.runAllTimersAsync();
+      expect(f.calls.filter(c => c.name === "list_team_bookings")).toHaveLength(stage === "before" ? 0 : 1);
+      expect(f.user).toHaveBeenCalledTimes(stage === "before" ? 0 : 1);
+    });
+  }
+  it("thrown live server scope cannot become a confirmed result", async () => {
+    const f = fixture();
+    expect(await readCalendarBooking(identity, { ...f.deps, revalidateScope: async () => { throw new Error("scope unavailable"); } }, { booking_id: id(3) })).toMatchObject({ status: "unavailable" });
+    expect(f.calls).toEqual([]);
+  });
+  it("an active coach keeps native own-host visibility without acquiring admin authority", async () => {
+    const f = fixture(), scope = { ...identity, role: "coach" }; f.switchTo(scope);
+    expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "available", found: true });
+    expect(f.calls.some(c => c.name === "is_tenant_admin")).toBe(false);
+    f.responses.list_team_bookings.data = [{ ...record(), host_user_id: id(9) }]; f.responses.is_tenant_admin.data = false;
+    expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "refused" });
+    f.responses.is_tenant_member.data = false;
+    expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "refused" });
+  });
   it("reads the one canonical record with original caller JWT and exact bounded native query", async () => {
     const f = fixture(); const result = await f.read();
     expect(result).toMatchObject({ status: "available", found: true, booking: record() });
@@ -110,7 +205,7 @@ describe("canonical exact Calendar booking reader", () => {
   });
   it("keeps a second eligible tenant and member on the same adapter/provisioning contract", async () => {
     const f = fixture(); const scope = { ...identity, actorId: id(11), tenantId: id(12), workspaceId: id(12), role: "member", scopeEpoch: 4 };
-    f.switchTo(scope); f.user.mockResolvedValue({ data: { user: { id: id(11) } }, error: null }); f.responses.current_user_tenant_id.data = id(12);
+    f.switchTo(scope); f.user.mockResolvedValue({ data: { user: { id: id(11) } }, error: null }); f.responses.current_user_tenant_id.data = id(12); f.responses.tenant_classification.data = [{ id: id(12), account_type: "standalone", parent_tenant_id: null }];
     f.responses.list_team_bookings.data = [{ ...record(), id: id(13), tenant_id: id(12), host_user_id: id(11) }];
     expect(await readCalendarBooking(scope, f.deps, { booking_id: id(13) })).toMatchObject({ status: "available", booking: { id: id(13), tenant_id: id(12) } });
     expect(f.calls.find(c => c.name === "list_team_bookings")?.args).toMatchObject({ _tenant_id: id(12), _booking_id: id(13) });
@@ -130,7 +225,7 @@ describe("canonical exact Calendar booking reader", () => {
     expect(await f.read()).toMatchObject({ status: "unavailable" });
   });
   it("excludes unresolved or customer contexts without native reads", async () => {
-    for (const change of [{ tenantId: null }, { role: null }, { accountShape: null }, { actAsClientId: id(8) }, { accountShape: "agency" as const }]) {
+    for (const change of [{ tenantId: null }, { role: null }, { actAsClientId: id(8) }, { accountShape: "agency" as const }]) {
       const f = fixture(); const scope = { ...identity, ...change }; f.switchTo(scope);
       expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "refused" }); expect(f.calls).toEqual([]);
     }
@@ -141,7 +236,7 @@ describe("canonical exact Calendar booking reader", () => {
       const url = new URL(String(input)); const headers = new Headers(options?.headers);
       requests.push({ url, method: options?.method ?? "GET", body: options?.body ? JSON.parse(String(options.body)) : null, authorization: headers.get("Authorization"), signal: options?.signal });
       const data = url.pathname === "/auth/v1/user" ? { id: id(1), app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-01-01" }
-        : url.pathname.endsWith("/current_user_tenant_id") ? id(2) : url.pathname.endsWith("/is_tenant_member") ? true : [record()];
+        : url.pathname.endsWith("/tenants") ? [{ id: id(2), account_type: "standalone", parent_tenant_id: null }] : url.pathname.endsWith("/current_user_tenant_id") ? id(2) : url.pathname.endsWith("/is_tenant_member") ? true : [record()];
       return new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } });
     };
     const caller = createClient("https://calendar-fixture.invalid", "fixture-public-key", { global: { fetch: transport, headers: { Authorization: "Bearer TEST_ONLY_CALLER_JWT" } }, auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });

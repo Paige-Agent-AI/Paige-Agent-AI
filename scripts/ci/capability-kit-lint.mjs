@@ -113,6 +113,38 @@ function businessSnapshotReadDoorBound(resolver) {
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
  */
+// Calendar reuses its incumbent public.list_team_bookings reader rather than adding a
+// naming-only read_* wrapper. Only this exact read tuple/schema and mounted caller-JWT
+// adapter qualify. This does not clear risk debt, arbitrary list_* tools or effects.
+const CALENDAR_BOOKING_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts";
+const CALENDAR_BOOKING_ADAPTER_FILE = "supabase/functions/_shared/calendar-booking-read.ts";
+function calendarBookingReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const adapter = read(CALENDAR_BOOKING_ADAPTER_FILE);
+  const classification = read("supabase/functions/_shared/solo-classification.ts");
+  const compact = value => value.replace(/\s+/g, "");
+  const mounted = compact(chat), native = compact(adapter);
+  return chat.includes('from "../_shared/calendar-booking-read.ts"')
+    && chat.includes('from "../_shared/paige-spine/domains/calendar_booking.ts"')
+    && mounted.includes('toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)')
+    && mounted.includes('accountShape:calendarBookingAccountShape')
+    && mounted.includes('actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
+    && mounted.includes('awaitreadCalendarBooking(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
+    && mounted.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
+    && mounted.includes('awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,turnScopeTenantId,req.signal)')
+    && native.includes('deps.caller.auth.getUser()')
+    && native.includes('rpc("current_user_tenant_id")')
+    && native.includes('constbefore=awaitauth()') && native.includes('constafter=awaitauth()')
+    && native.includes('readCalendarAccountShape(deps.caller,tenantId,abort.signal)')
+    && native.includes('deps.caller.rpc("list_team_bookings",{_from:"-infinity",_to:"infinity",_host_ids:null,_tenant_id:tenantId,_booking_id:bookingId})')
+    && native.includes('.select(COLUMNS.join(",")).eq("id",bookingId).limit(2).abortSignal(abort.signal)')
+    && native.includes('caller.from("tenants").select("id,account_type,parent_tenant_id").eq("id",tenantId).limit(2).abortSignal(abort.signal)')
+    && native.includes('row.id!==tenantId') && native.includes('row.parent_tenant_id!==null')
+    && native.includes('!isSoloStandalone({account_type:row.account_type,parent_tenant_id:row.parent_tenant_id})')
+    && compact(classification).includes('return!c.parent_tenant_id&&c.account_type==="standalone";');
+}
+
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
@@ -170,6 +202,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
                   && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);
+              }
+              else if(operation==='public.list_team_bookings'&&relative(file)===CALENDAR_BOOKING_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='calendar.booking_read'&&owner.name.text==='CALENDAR_BOOKING_READ_CAPABILITY'
+                  && calendarBookingReadDoorBound(resolver))readTools.set('read_calendar_booking',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1240,6 +1277,35 @@ function runSelfTest() {
     const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
     const texts=new Map([[adsAdapterPath,adapter],[path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'),chat]]);
     const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:texts.has(p)?ts.createSourceFile(p,texts.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  // Exercise the actual Calendar sources, not a renamed synthetic public.read_* door.
+  const calendarFile=path.join(ROOT,CALENDAR_BOOKING_DECLARATION_FILE);
+  const calendarAdapter=path.join(ROOT,CALENDAR_BOOKING_ADAPTER_FILE);
+  const calendarChat=path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts');
+  const calendarShape=path.join(ROOT,'supabase/functions/_shared/solo-classification.ts');
+  const calendarSources=new Map([calendarFile,calendarAdapter,calendarChat,calendarShape].map(file=>[file,fs.readFileSync(file,'utf8')]));
+  const calendarTool='const tool={name:"read_calendar_booking",description:"Read only",parameters:CALENDAR_BOOKING_READ_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['Calendar exact incumbent caller door',calendarFile,null,null,false],
+    ['Calendar mutation cannot clear',calendarFile,'effect: "read"','effect: "mutation"',true],
+    ['Calendar wrong declaration',calendarFile,'calendar.booking_read','calendar.other',true],
+    ['Calendar arbitrary list executor',calendarFile,'public.list_team_bookings','public.list_secrets',true],
+    ['Calendar service caller',calendarChat,'caller: supabaseClient as unknown as CalendarBookingReadCaller','caller: supabase as unknown as CalendarBookingReadCaller',true],
+    ['Calendar model tenant',calendarChat,'tenantId: turnScopeTenantId, workspaceId: turnScopeTenantId','tenantId: args.tenant_id, workspaceId: turnScopeTenantId',true],
+    ['Calendar lost scope callback',calendarChat,'revalidateScope: () => revalidateTenantKnowledgeScope(true)','revalidateScope: () => Promise.resolve(true)',true],
+    ['Calendar not mounted',calendarChat,'toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)','toolDefs.push(...OTHER_TOOLS)',true],
+    ['Calendar missing native adapter',calendarAdapter,calendarSources.get(calendarAdapter),'',true],
+    ['Calendar wrong native read',calendarAdapter,'deps.caller.rpc("list_team_bookings"','deps.caller.rpc("dispatch_automation"',true],
+    ['Calendar classification omitted',calendarAdapter,'row.parent_tenant_id !== null','false',true],
+    ['Calendar missing classification source',calendarShape,calendarSources.get(calendarShape),'',true],
+    ['Calendar unrelated payload',null,null,null,true],
+  ]){
+    const texts=new Map(calendarSources);
+    if(from!==null){const original=texts.get(file);const changed=original.replace(from,to);if(changed===original)throw Error('Calendar negative did not mutate '+name);texts.set(file,changed);}
+    const names=collectDeclaredCapabilityNames([calendarFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const tool=file===null?calendarTool.replace('CALENDAR_BOOKING_READ_CAPABILITY.input','{type:"object"}'):calendarTool;
     const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }

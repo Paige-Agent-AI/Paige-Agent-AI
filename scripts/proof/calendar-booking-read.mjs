@@ -11,12 +11,15 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const baseline = process.argv.includes('--baseline');
+const ci = process.argv.includes('--postgres');
+assert.ok(!ci || process.env.CI === 'true', '--postgres requires disposable CI');
+assert.ok(!ci || !process.env.PGHOST || ['127.0.0.1', 'localhost'].includes(process.env.PGHOST), 'loopback only');
 const directory = resolve(root, 'work/calendar-booking-read-proof');
 mkdirSync(directory, { recursive: true });
 const scratch = mkdtempSync(resolve(directory, baseline ? 'red-' : 'green-'));
 const bin = process.env.CALENDAR_READ_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');
 const exe = name => bin ? resolve(bin, name + (process.platform === 'win32' ? '.exe' : '')) : name;
-const port = Number(process.env.CALENDAR_READ_PG_PORT ?? 65488);
+const port = Number(process.env.CALENDAR_READ_PG_PORT ?? (ci ? 5432 : 65488));
 const database = `calendar_booking_read_${process.pid}`;
 const data = resolve(scratch, 'data');
 const args = db => ['-X', '-q', '-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', '-d', db, '-A', '-t', '-v', 'ON_ERROR_STOP=1'];
@@ -59,14 +62,20 @@ const refusal = (actor, workspace = ta, role = 'authenticated') => {
 };
 let started = false, created = false;
 try {
+  if (!ci) {
   const probe = createServer();
   await new Promise((yes, no) => { probe.once('error', no); probe.listen(port, '127.0.0.1', yes); });
   await new Promise(yes => probe.close(yes));
   call('initdb', ['-D', data, '-U', 'postgres', '--auth=trust', '--no-locale', '--encoding=UTF8', '--no-sync']);
   call('pg_ctl', ['-D', data, '-l', resolve(scratch, 'server.log'), '-o', `-h 127.0.0.1 -p ${port} -F`, '-w', '-t', '30', 'start'], { stdio: 'ignore' });
   started = true;
+  }
   sql('create database ' + database, 'postgres'); created = true;
-  sql(`create role authenticated;create role anon;create role service_role;
+  sql(`do $$begin
+    if not exists(select from pg_roles where rolname='authenticated') then create role authenticated;end if;
+    if not exists(select from pg_roles where rolname='anon') then create role anon;end if;
+    if not exists(select from pg_roles where rolname='service_role') then create role service_role;end if;
+  end$$;
     create schema auth;
     create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
     create table public.profiles(id uuid primary key default gen_random_uuid(),user_id uuid unique,full_name text,active_tenant_id uuid);
@@ -168,7 +177,7 @@ try {
         const booking = id(10000 + index);
         sql(`update public.internal_bookings set booking_kind='${kind}',class_session_id=${kind === 'class_seat' ? "'" + id(10002) + "'" : 'null'},capacity=${kind === 'class_session' ? '8' : 'null'} where id='${booking}';`);
         const exact = sql(claims(owner) + `select row_to_json(r) from public.list_team_bookings('-infinity','infinity',null,'${ta}','${booking}') r;`);
-        const legacy = sql(claims(owner) + `select row_to_json(r) from public.list_team_bookings('2027-01-01','2040-01-01',null,'${ta}') r where id='${booking}';`);
+        const legacy = sql(claims(owner) + `select row_to_json(r) from public.list_team_bookings((select start_at-interval '1 minute' from public.internal_bookings where id='${booking}'),(select end_at+interval '1 minute' from public.internal_bookings where id='${booking}'),null,'${ta}') r where id='${booking}';`);
         assert.equal(exact, legacy); assert.equal(JSON.parse(exact).booking_kind, kind); assert.equal(JSON.parse(exact).id, booking);
       }
     });
@@ -201,6 +210,12 @@ try {
     check('null exact ID retains the complete legacy listing contract', () => assert.equal(sql(claims(owner) + `select count(*) from public.list_team_bookings('-infinity','infinity',null,'${ta}',null);`), '100001'));
     check('migration replay retains the original wrapper OID and exact row outcome', () => { sql(text(paths.migration)); assert.equal(metadata(), compatibility.beforeMetadata); assert.equal(rows(owner, id(109999)).length, 1); });
   }
+  check('active coach retains own-host visibility and cannot read another host', () => {
+    sql(`update public.tenant_members set role='coach' where user_id='${staff}' and tenant_id='${ta}';`);
+    assert.equal(rows(staff, memberBooking).length, 1); assert.equal(rows(staff, id(100000)).length, 0);
+    sql(`update public.tenant_members set status='inactive' where user_id='${staff}' and tenant_id='${ta}';`);
+    refusal(staff);
+  });
   check('read operations preserve total fixture row count after intentional class-fixture preparation', () => assert.equal(Number(sql('select count(*) from public.internal_bookings;')), 100002));
 } catch (error) { cases.push({ name: 'proof setup/runtime', status: 'FAIL', error: String(error.stack) }); console.error(error); }
 finally {

@@ -33,9 +33,9 @@ MUST_PRESERVE: Existing helper ABI/owner/service-only ACL/search path and event/
 ACCEPTANCE_CRITERIA: After normal reviewed release, a newly authorized future event reaches the existing exact task approval; only normal human approval can produce the task, canonical readback and Rail. This source candidate does not itself meet that authenticated acceptance.
 MOTION_PURPOSE: NONE: no interface or motion implementation.
 PROTECTED_SEAMS: Only existing paige_fire_event_processor is replaced. Header/verifier, dispatcher, actors/roles, native241000/242000, Chat/Spine/C0b, domain writers and UI remain unchanged. The existing CI Postgres job gains one focused command without removing any check.
-INTERNAL_BUILD_IDENTITY: candidate=Git commit carrying this record; deployment=NOT_RUN; environment=isolated local PostgreSQL; migrations=NOT_APPLIED_PRODUCTION; edge=NOT_APPLICABLE; evidence=work/native-event-enqueue-proof/
+INTERNAL_BUILD_IDENTITY: source=1be4dd33f51728239b715bf6bce06428e9483f81; deployment=NOT_RUN; environment=local; migrations=PROOF_OWED(production20271109020000_native_event_enqueue_cron_auth); edge=NOT_APPLICABLE; evidence=work/native-event-enqueue-proof/green-tvf1cg/report.json
 RELEASE_CHANNEL: development: local source candidate only; parent lead controls Independent Review, CI, normal production release and authenticated QA.
-RELEASE_CLASSIFICATION: internal patch: restore one shared native event transport dependency without claiming a complete customer outcome.
+RELEASE_CLASSIFICATION: patch: restore one shared native event transport dependency without claiming a complete customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: this prerequisite does not qualify as a named customer release.
 RELEASE_NOTE_REQUIRED: no: internal restoration prerequisite; no customer announcement.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local producer/enqueue/claim proof only; real HTTP/authentication, full-schema CI, task approval/effect and ordinary customer/Live acceptance remain PROOF OWED.

@@ -175,6 +175,27 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
   assert.equal(as(`SELECT paige_chat_interactive_publication_context_v2('${thread}','${intent}')`),'t');
   assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`),'2');
  });
+ const activeThread=as("SELECT paige_chat_thread_create(NULL,'customer','Active protocol customer','{}')",other);
+ const activeIntent='e0941000-0000-4000-8000-000000000002';
+ const rolloutBefore=sql('SELECT active FROM public.paige_chat_interactive_rollout WHERE singleton');
+ assert(['t','f'].includes(rolloutBefore),'Disposable rollout baseline must be a PostgreSQL boolean');
+ const service=statement=>sql('SET ROLE service_role;'+statement+';RESET ROLE;').split('\n').at(-2)?.trim();
+ // Disposable fixture state only. Production's protocol/activation is never changed.
+ sql('UPDATE public.paige_chat_interactive_rollout SET active=true WHERE singleton');
+ try {
+  check('Active v2 admits the ordinary customer and uses its existing executor gate',()=>{
+   assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${other}'`),'0');
+   assert.equal(JSON.parse(as(`SELECT paige_chat_interactive_begin_v2('${activeThread}','${activeIntent}',NULL,'Active customer question',false,false,true)`,other)).status,'accepted');
+   assert.equal(JSON.parse(service(`SELECT paige_chat_interactive_executor_v2('${activeThread}','${other}','${foreign}','${activeIntent}','acquire')`)).acquired,true);
+  });
+  check('Active v2 settles, releases and publishes the customer answer without staff membership',()=>{
+   service(`SELECT paige_chat_interactive_settle('${activeThread}','${other}','${foreign}','${activeIntent}',
+    'Active private customer answer',NULL,NULL,'{"interactive":{"request_intent_id":"${activeIntent}"},"turn_state":{"v":1,"state":"FINAL"}}',NULL)`);
+   service(`SELECT paige_chat_interactive_executor_v2('${activeThread}','${other}','${foreign}','${activeIntent}','release')`);
+   assert.equal(as(`SELECT paige_chat_interactive_publication_context_v2('${activeThread}','${activeIntent}')`,other),'t');
+   assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${activeThread}'`,other),'2');
+  });
+ } finally {sql('UPDATE public.paige_chat_interactive_rollout SET active='+(rolloutBefore==='t'?'true':'false')+' WHERE singleton');}
  check('Another customer and same-business staff cannot read the private history',()=>{
   assert.equal(as(`SELECT count(*) FROM paige_chat_threads WHERE id='${thread}'`,other,tenant),'0');
   assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`,other,tenant),'0');

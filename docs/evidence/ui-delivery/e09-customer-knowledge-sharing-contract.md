@@ -25,7 +25,7 @@ MUST_PRESERVE: Existing Knowledge content/chunks/publication and staff readers, 
 ACCEPTANCE_CRITERIA: Native owner review/commit and customer read agree on exact canonical source and grant; changes/revocation refuse on the next read; one operation creates one durable grant/receipt; raw grants/private helpers deny API roles; no visible/model admission occurs before the consumer proves every protected boundary.
 MOTION_PURPOSE: NONE: No UI change.
 PROTECTED_SEAMS: Existing authority helper source is leased, not modified. New authorization metadata references canonical Knowledge/CRM; existing generic audit logs hold operation receipts. No new content/Memory/message store, authority engine, capability registry, sender, scheduler or approval channel.
-INTERNAL_BUILD_IDENTITY: parent804c27f87129fc28c7fd6ac233921f6a2f15f181; exact candidate head recorded in PR review; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108230000); edge=NOT_APPLICABLE; evidence=docs/evidence/customer-knowledge-sharing-2026-10-17/native-report.json
+INTERNAL_BUILD_IDENTITY: parent 804c27f87129fc28c7fd6ac233921f6a2f15f181; exact candidate head recorded in PR review; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271108230000); edge=NOT_APPLICABLE; evidence=docs/evidence/customer-knowledge-sharing-2026-10-17/native-report.json
 RELEASE_CHANNEL: development: additive native prerequisite, requiring exact-head review/CI and ordinary production migration/readback.
 RELEASE_CLASSIFICATION: patch: internal prelaunch permission/read foundation for the complete Portal.
 CUSTOMER_RELEASE_IDENTITY: none: No completed Knowledge/customer release or announcement.

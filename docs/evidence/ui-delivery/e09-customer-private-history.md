@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: Adds an unmounted customer audience to the incumbent t
 FLOW_PROTOTYPE: NOT_REQUIRED: No UI mounting or visual flow change in this bounded prerequisite; the approved customer Chat consumer follows separately.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authenticated linked customer can own a private, durable AI conversation in the canonical Chat tables without a staff workspace.
 VISUAL_DIRECTION: PASS: Preserve the existing approved customer shell and Chat, with Impeccable applied to the later consumer.
-AUTOMATED_EVIDENCE: PASS: Isolated native PostgreSQL proof reached72 passing checks with0 failures; the final change additionally locks the resolved CRM row and tests platform-owner privacy denial. Fully replayed native pgTAP assertions are added to the existing database-contract suite; final exact-head CI remains required.
+AUTOMATED_EVIDENCE: PASS: Final isolated native PostgreSQL proof74 passing checks with0 failures, including the locked CRM row, staff/private index coexistence, platform-owner privacy denial and expired-session return. Fully replayed native pgTAP assertions are added to the existing database-contract suite; final exact-head CI remains required.
 STATIC_EVIDENCE: PASS: Source review preserves existing workspace/platform creation, v2 rollout/admission, executor, terminal writer and one approval contract. No provider or action activation.
 RENDERED_EVIDENCE: UNVERIFIED: No UI is mounted or changed by this prerequisite.
 BEHAVIORAL_EVIDENCE: PASS: Native synthetic-role proof covers creation, return, issued turn persistence, private history, forged AI refusal, immutable audience, cross-customer denial, dual-role scope, revocation and retained receipts.

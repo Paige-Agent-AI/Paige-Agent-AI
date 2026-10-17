@@ -5,6 +5,12 @@ ALTER TABLE public.paige_chat_threads ADD COLUMN audience text NOT NULL DEFAULT 
   CHECK (audience IN ('workspace','customer_private'));
 CREATE INDEX paige_chat_customer_history ON public.paige_chat_threads(caller_user_id,tenant_id,contact_id,created_at DESC)
   WHERE audience='customer_private';
+-- Preserve workspace uniqueness and NULL-distinct personal/Studio behavior while
+-- allowing the same actor/contact to have distinct staff and private audiences.
+DROP INDEX public.idx_paige_chat_threads_single_active;
+CREATE UNIQUE INDEX idx_paige_chat_threads_single_active
+ ON public.paige_chat_threads(caller_user_id,contact_id,lens,audience)
+ WHERE is_archived=false AND studio_session_id IS NULL;
 
 -- Native relationship resolver is the single identity authority. Caller JWT only.
 -- SECURITY DEFINER is needed because clients has no general customer SELECT grant.
@@ -35,6 +41,9 @@ BEGIN
     IF ROW(NEW.audience,NEW.caller_user_id,NEW.contact_id,NEW.tenant_id,NEW.lens,NEW.studio_session_id)
       IS DISTINCT FROM ROW(OLD.audience,OLD.caller_user_id,OLD.contact_id,OLD.tenant_id,OLD.lens,OLD.studio_session_id) THEN
       RAISE EXCEPTION 'customer thread audience is immutable' USING ERRCODE='42501';
+    END IF;
+    IF current_user<>'postgres' AND NEW.auto_delete_at IS DISTINCT FROM OLD.auto_delete_at THEN
+      RAISE EXCEPTION 'customer retention is server-owned' USING ERRCODE='42501';
     END IF;
   END IF;
   RETURN NEW;
@@ -87,6 +96,9 @@ BEGIN
         AND audience='customer_private' AND NOT is_archived AND auto_delete_at>now()
       ORDER BY created_at DESC LIMIT 1;
     IF v_thread_id IS NOT NULL THEN RETURN v_thread_id; END IF;
+    UPDATE public.paige_chat_threads SET is_archived=true
+      WHERE caller_user_id=v_uid AND tenant_id=v_tenant_id AND contact_id=p_contact_id
+        AND audience='customer_private' AND NOT is_archived AND auto_delete_at<=now();
   ELSIF p_contact_id IS NOT NULL THEN
     SELECT tenant_id INTO v_tenant_id
       FROM public.clients WHERE id = p_contact_id;

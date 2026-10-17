@@ -14,6 +14,8 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
   ADD COLUMN title text,ADD COLUMN consent_snapshot jsonb,ADD COLUMN is_archived boolean DEFAULT false,
   ADD COLUMN created_at timestamptz DEFAULT now(),ADD COLUMN studio_session_id uuid;
   ALTER TABLE paige_chat_threads ALTER COLUMN id SET DEFAULT gen_random_uuid();
+  CREATE UNIQUE INDEX idx_paige_chat_threads_single_active ON paige_chat_threads(caller_user_id,contact_id,lens)
+    WHERE is_archived=false AND studio_session_id IS NULL;
   CREATE TABLE profiles(user_id uuid,active_tenant_id uuid);
   CREATE OR REPLACE FUNCTION public.is_tenant_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
   ALTER TABLE paige_chat_threads ENABLE ROW LEVEL SECURITY;ALTER TABLE paige_chat_turns ENABLE ROW LEVEL SECURITY;
@@ -37,6 +39,10 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  const auth=(actor=uid,workspace=null)=>`SELECT set_config('test.actor',${quote(actor??'')},false);SELECT set_config('test.tenant',${quote(workspace??'')},false);SET ROLE authenticated;`;
  const as=(statement,actor=uid,workspace=null)=>sql(auth(actor,workspace)+statement+';RESET ROLE;').split('\n').at(-2)?.trim();
  const create=()=>as("SELECT paige_chat_thread_create(NULL,'customer','Private customer conversation','{}'::jsonb)");
+ check('Legacy staff-focused thread and private customer thread can coexist',()=>{
+  const legacy=as(`SELECT paige_chat_thread_create('${contact}','client','Staff-focused conversation','{}')`,uid,tenant);
+  assert.match(legacy,/^[0-9a-f-]{36}$/);
+ });
  let thread;
  check('Customer without staff membership creates its native private thread',()=>{
   thread=create();assert.match(thread,/^[0-9a-f-]{36}$/);
@@ -84,6 +90,12 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  });
  check('Private-history ACL refuses anonymous and service-role customer authorization',()=>{
   assert.equal(sql("SELECT has_function_privilege('authenticated','paige_chat_customer_thread_authorized(uuid)','EXECUTE') AND NOT has_function_privilege('anon','paige_chat_customer_thread_authorized(uuid)','EXECUTE') AND NOT has_function_privilege('service_role','paige_chat_customer_thread_authorized(uuid)','EXECUTE')"),'t');
+ });
+ check('Expired history cannot be revived; a fresh conversation archives the expired native thread',()=>{
+  sql(`UPDATE paige_chat_threads SET auto_delete_at=now()-interval '1 second' WHERE id='${thread}'`);
+  assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`),'0');
+  const next=create();assert.notEqual(next,thread);assert.match(next,/^[0-9a-f-]{36}$/);
+  assert.equal(sql(`SELECT is_archived FROM paige_chat_threads WHERE id='${thread}'`),'t');
  });
  return {customerChatMigration:'20271108191000_e09_customer_private_chat.sql'};
 }

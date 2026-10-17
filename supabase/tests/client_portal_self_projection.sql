@@ -296,6 +296,11 @@ BEGIN
  RETURN _result;
 END $$;
 CREATE TEMP TABLE e09_customer_chat(thread_id uuid);
+-- Retained workspace history for the same actor/contact must not collide with
+-- or become readable as the newly created private customer audience.
+INSERT INTO public.paige_chat_threads(caller_user_id,contact_id,tenant_id,lens,title,consent_snapshot)
+ VALUES('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',
+ 'e0921000-0000-0000-0000-000000000001','client','Synthetic staff-focused history','{}');
 INSERT INTO e09_customer_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.paige_chat_thread_create(NULL,'customer','Private customer conversation','{}')$$)::uuid;
 SELECT is((SELECT audience FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_customer_chat)),

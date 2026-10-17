@@ -34,6 +34,7 @@ import {
   type ApprovalOutcome,
 } from "@/components/chat/approvalOutcome";
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
+import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -1058,7 +1059,7 @@ const PaigeAIChatInner = ({
         // could re-fire a decision already taken (§15). INT-328 — stored items pass the same preview
         // gate as the live frame.
         const confirm = rehydrateConfirmItems(b.paige_confirm);
-        const crmResults = Array.isArray(b.paige_crm_result) ? b.paige_crm_result as PaigeCrmResult[] : undefined;
+        const crmResults = readCrmResultMetadata(b.paige_crm_result);
         // E4-S3 — the read references this answer persisted (the same reader the live frame uses).
         const recordLinks = readRecordLinks(b.paige_record_links);
         // R2b §12 — a reloaded turn carries the run REFERENCE; the evidence rehydrates
@@ -3289,7 +3290,7 @@ const PaigeAIChatInner = ({
                         {!!message.crmResults?.length && (
                           <div className="flex flex-col gap-2">
                             {message.crmResults.map((result, resultIndex) => (
-                              <PaigeCrmResultCard key={`${result.action}:${String(result.record_locator?.record_id || resultIndex)}`} result={result} />
+                              <PaigeCrmResultCard key={`${result.action}:${String(result.record_reference?.record_id || result.record_locator?.record_id || resultIndex)}`} result={result} account={activeTenant} />
                             ))}
                           </div>
                         )}

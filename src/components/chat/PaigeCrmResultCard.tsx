@@ -1,11 +1,10 @@
 import { CheckCircle2, ExternalLink } from "lucide-react";
+import { workspaceLinkTarget, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
+import { crmResultRecordReference, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 
-export type PaigeCrmResult = {
-  action: string;
-  outcome: string;
-  readback: Record<string, unknown> | null;
-  receipt_recorded: boolean;
-  record_locator: {
+export type PaigeCrmResult = CrmResultMetadata & {
+  readback?: Record<string, unknown> | null;
+  record_locator?: {
     record_id?: string | null;
     surface_url?: string | null;
     deep_link?: string | null;
@@ -14,7 +13,7 @@ export type PaigeCrmResult = {
   external_effect?: boolean;
 };
 
-export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
+export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult; account?: WorkspaceLinkTenant | null }) {
   const absent = result.readback?.absent === true;
   // A create is a new record, so it reads "Added" — "Updated: contact create" described an edit
   // that never happened (owner ruling, 2026-09-26). Every *.create the executor runs inserts a new
@@ -22,9 +21,14 @@ export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
   // whenever the receipt is shown.
   const created = !absent && result.action.endsWith(".create");
   const label = result.action.replace(/\./g, " ");
-  const href = result.record_locator?.deep_link || result.record_locator?.surface_url || null;
-  const exact = result.record_locator?.deep_link_status === "exact";
-  const record = String(result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
+  const reference = crmResultRecordReference(result);
+  const target = reference ? workspaceLinkTarget(reference, account) : null;
+  // Other live native families keep their incumbent locator behavior. The history
+  // reader never hydrates locators; contact references always use current workspace routing.
+  const liveLocator = !result.action.startsWith("contact.") ? result.record_locator : null;
+  const href = target?.to || liveLocator?.deep_link || liveLocator?.surface_url || null;
+  const exact = target?.status === "exact" || (!target && liveLocator?.deep_link_status === "exact");
+  const record = String(reference?.subject || result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
   return (
     <div className="mt-2 rounded-md border border-border bg-muted/30 p-3" data-paige-crm-result>
       <div className="flex items-start gap-2">

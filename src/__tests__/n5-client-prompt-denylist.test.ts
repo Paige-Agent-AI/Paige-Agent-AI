@@ -6,6 +6,7 @@
 // tenant's prompt) — that failure is the point.
 import { describe, expect, it } from "vitest";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
+import { crmResultReferenceMetadata } from "../../supabase/functions/_shared/paige-turn/crm-result-reference";
 import {
   buildFundingProgramVocab,
   buildLaneGuardSection,
@@ -242,13 +243,13 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // variable like every other one; an empty array must project to no research key.
     // E4-S3: the read-link trace is one more seam variable (empty here, so it projects to no key) and
     // its sanitiser `readRecordLinks` is the shared one the handler imports.
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", js(`return ${initializer("assistantTurnMetadata")};`));
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "crmResultReferenceMetadata", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks, crmResultReferenceMetadata);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
     // E4-S3: a turn whose only card is a read link still persists, as references only — never an address.
     const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
-    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks);
+    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks, crmResultReferenceMetadata);
     expect(linksOnly()).toEqual({ surfaces: [], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [],
       paige_record_links: [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null }] } });
     // The success persist goes through this same projection, with the turn record added at the call site.

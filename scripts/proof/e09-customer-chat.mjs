@@ -10,16 +10,23 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
    .replaceAll('create function public.current_user_tenant_id()','create or replace function public.current_user_tenant_id()')
    .replaceAll('create function public.is_platform_owner()','create or replace function public.is_platform_owner()');
  sql(baseline+' COMMIT;');
- sql(`ALTER TABLE paige_chat_threads ADD COLUMN contact_id uuid,ADD COLUMN lens text DEFAULT 'coach',
+ sql(`ALTER TABLE paige_chat_threads ADD COLUMN contact_id uuid REFERENCES clients(id) ON DELETE SET NULL,ADD COLUMN lens text DEFAULT 'coach',
   ADD COLUMN title text,ADD COLUMN consent_snapshot jsonb,ADD COLUMN is_archived boolean DEFAULT false,
   ADD COLUMN created_at timestamptz DEFAULT now(),ADD COLUMN studio_session_id uuid;
   ALTER TABLE paige_chat_threads ALTER COLUMN id SET DEFAULT gen_random_uuid();
   CREATE UNIQUE INDEX idx_paige_chat_threads_single_active ON paige_chat_threads(caller_user_id,contact_id,lens)
     WHERE is_archived=false AND studio_session_id IS NULL;
   CREATE TABLE profiles(user_id uuid,active_tenant_id uuid);
+  CREATE TABLE auth.users(id uuid PRIMARY KEY);
+  INSERT INTO auth.users VALUES('${uid}'),('${other}');
+  ALTER TABLE paige_chat_threads ADD CONSTRAINT paige_chat_threads_caller_user_id_fkey
+    FOREIGN KEY(caller_user_id) REFERENCES auth.users(id) ON DELETE RESTRICT;
   CREATE OR REPLACE FUNCTION public.is_tenant_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
   ALTER TABLE paige_chat_threads ENABLE ROW LEVEL SECURITY;ALTER TABLE paige_chat_turns ENABLE ROW LEVEL SECURITY;
   GRANT USAGE ON SCHEMA auth TO anon,service_role;
+  -- Supabase's native service_role bypasses RLS; the ordinary authenticated
+  -- privacy/forgery assertions continue using the non-bypass caller role.
+  ALTER ROLE service_role BYPASSRLS;
   GRANT SELECT,INSERT,UPDATE,DELETE ON paige_chat_threads,paige_chat_turns TO authenticated;
   GRANT ALL ON paige_chat_threads,paige_chat_turns TO service_role;
   CREATE POLICY threads_select_owner_or_admin ON paige_chat_threads FOR SELECT TO authenticated USING
@@ -59,6 +66,7 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  check('A customer cannot forge a saved assistant reply or change private audience',()=>{
   assert.throws(()=>as(`SELECT paige_chat_turn_append('${thread}','assistant','Forged answer',NULL,NULL,NULL,NULL,NULL,NULL,NULL)`));
   assert.throws(()=>as(`UPDATE paige_chat_threads SET audience='workspace' WHERE id='${thread}'`));
+  assert.throws(()=>as(`UPDATE paige_chat_threads SET contact_id=NULL WHERE id='${thread}'`));
  });
  check('Canonical service settlement and native publication complete the private turn',()=>{
   sql(`SET ROLE service_role;SELECT paige_chat_interactive_settle('${thread}','${uid}','${tenant}','${intent}',
@@ -96,6 +104,22 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
   assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`),'0');
   const next=create();assert.notEqual(next,thread);assert.match(next,/^[0-9a-f-]{36}$/);
   assert.equal(sql(`SELECT is_archived FROM paige_chat_threads WHERE id='${thread}'`),'t');
+ });
+ check('Canonical contact deletion detaches and archives private threads without exposing retained receipts',()=>{
+  sql(`DELETE FROM clients WHERE id='${contact}'`);
+  assert.equal(sql(`SELECT contact_id IS NULL AND is_archived FROM paige_chat_threads WHERE id='${thread}'`),'t');
+  assert.equal(sql(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`),'2');
+  assert.equal(as(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}'`),'0');
+ });
+ check('Canonical private cleanup permits Auth deletion while retaining the unlinked CRM contact',()=>{
+  const otherThread=as("SELECT paige_chat_thread_create(NULL,'customer','Private second customer','{}')",other);
+  assert.match(otherThread,/^[0-9a-f-]{36}$/);
+  assert.throws(()=>sql(`DELETE FROM auth.users WHERE id='${other}'`));
+  sql(`UPDATE clients SET linked_user_id=NULL WHERE linked_user_id='${other}';
+    SET ROLE service_role;DELETE FROM paige_chat_threads WHERE caller_user_id='${other}' AND audience='customer_private';RESET ROLE;
+    DELETE FROM auth.users WHERE id='${other}';`);
+  assert.equal(sql(`SELECT count(*) FROM clients WHERE tenant_id='${foreign}'`),'1');
+  assert.equal(sql(`SELECT count(*) FROM auth.users WHERE id='${other}'`),'0');
  });
  return {customerChatMigration:'20271108191000_e09_customer_private_chat.sql'};
 }

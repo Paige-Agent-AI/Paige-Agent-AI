@@ -5,10 +5,12 @@ import path from 'node:path';
 import { spawnSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
+import {isProofDescendant} from './e09-proof-path.mjs';
 
 const root = process.cwd();
-const work = path.resolve(root, process.env.E09_PROJECTION_PROOF_DIR ?? '../../work/e09-client-projection-proof');
-assert(work.startsWith(path.resolve(root, '../..') + path.sep), 'Proof stays in task workspace');
+const explicitProofDir=process.env.E09_PROJECTION_PROOF_DIR;
+const work = path.resolve(root, explicitProofDir ?? '.cache/e09-client-projection-proof');
+assert(isProofDescendant(explicitProofDir?path.resolve(root,'../..'):root,work), 'Proof stays in task workspace');
 const port = Number(process.env.E09_PROJECTION_PG_PORT ?? 55443);
 assert(Number.isInteger(port) && port >= 1024 && port <= 65535 && ![5432,54322].includes(port), 'Dedicated proof port');
 const bin = process.env.E09_PG_BIN ?? (process.platform === 'win32' ? 'C:/Program Files/PostgreSQL/16/bin' : '');

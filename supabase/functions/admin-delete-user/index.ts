@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const errors: Array<{ step: string; error: string }> = [];
-    const track = async (step: string, p: Promise<any>) => {
+    const track = async (step: string, p: PromiseLike<any>) => {
       try {
         const { error } = await p;
         if (error) errors.push({ step, error: error.message });

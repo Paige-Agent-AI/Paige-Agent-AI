@@ -33,6 +33,8 @@ RELEASE_NOTE_REQUIRED: no: No announcement or customer version.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: native customer-private Chat foundation; consumer, hosted conversation and acceptance remain PROOF OWED.
 RELEASE_RECOVERY: position=reviewed additive forward correction preserving canonical messages and protected execution; reference=AGENTS.md and docs/doctrine/release-governance-and-customer-update-policy.md
 
+CI's35a3647e0cc298b70a436b1133812f9cdd47301c Deno artifact12087559454 identified an increased TS2345 in admin-delete-user: the incumbent cleanup helper declared Promise although PostgREST queries are PromiseLike. Its parameter now accurately accepts that thenable shape; authorization, filters, awaiting, error collection and runtime behavior are unchanged. The four inherited instances are also corrected by the same type declaration. No diagnostic baseline is relaxed. Repaired-head CI remains controlling.
+
 ## Source and proof
 
 The only new record field is an audience on existing paige_chat_threads. All old rows remain workspace. Customer creation reuses paige_chat_thread_create with a narrowing customer lens; the server derives its actor/contact/business from client_portal_relationship_id. The caller cannot choose a contact for this audience.

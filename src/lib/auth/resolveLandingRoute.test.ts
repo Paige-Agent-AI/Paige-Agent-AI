@@ -127,9 +127,10 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
     expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/app");
     expect(await resolveLandingRoute(customerActor)).toBe("/choose-account");
   });
-  it.each(["pre_invite","invited"])("the customer surface preserves required Welcome for stage %s",async stage=>{
+  it.each(["pre_invite","invited","signing_agreement"])("the verified customer surface opens the portal without completing optional onboarding stage %s",async stage=>{
     rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?ownCustomer(stage):null,error:null}));
-    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/onboard/welcome");
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/app");
+    expect(rpc.mock.calls.some(([name])=>name==="client_advance_onboarding_stage"||name==="client_portal_save_welcome")).toBe(false);
   });
   it("customer route intent cannot claim a foreign profile or override operator choice",async()=>{
     rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?{...ownCustomer(),linked_user_id:"foreign"}:null,error:null}));

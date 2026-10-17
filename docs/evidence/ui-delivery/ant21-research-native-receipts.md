@@ -169,3 +169,10 @@ persistence, paired ordinary customer readback/reload, Live and owner acceptance
 UNVERIFIED. No production mutation, provider invocation, spending experiment or activation occurred.
 Shipped Delivery Log is N/A before merge; no customer release identity is assigned. Recovery is an
 additive reviewed forward fix preserving canonical records and uncertain outcomes.
+
+
+### Lead review and successor composition
+
+NON-AUTHOR lead review inspected exact six-file4c31dcbef991676235c555800171164eb7e844ae, all native persistence changes, the complete55-line forward migration and actual canonical-DDL proof. The exact service reader reuses current-scope authority, rejects foreign parent/mixed-child lineage, keeps fixed search_path/PUBLIC and browser denial, and leaves base ACL unchanged. The caller compares full parent semantics both before source insertion and in final verification and independently compares all source fields/counts. No historical record, stored execution or provider is modified. Migration181000 follows installed180000 and precedes pending190000. Existing callers remain schema-compatible; deployment must apply the migration before the new Edge caller.
+
+Final frozen77/77 handler/M0 author tests now pass, superseding only the earlier stalled redundant attempt; the broader214 tests and29+19 actual PostgreSQL controls remain separately labeled. Native definition MD5 is3796427a93f683e3e376ca4607e3b600, body MD564c47698d64cae7238fd0d2b47218394. Raw migration SHA256 is6dc180ef4d1796b2742e9776cd19cb8dc5beaebce3eeff01dee36b57fb5fab3b. Distinct source review supports renewing only the native Research source AST scalar to d7769118988ba2a8393f0b100471651fe0d10b8b776b4ff9cb68265b87c9d469. No guard extractor, metadata, unrelated source digest or permission is changed. Lead scalar integration receives separate AUTHOR-REVIEW / LOWER ASSURANCE. Required exact-head CI, production readback and ordinary authenticated persistence remain owed.

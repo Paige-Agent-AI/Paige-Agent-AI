@@ -165,6 +165,16 @@ describe("ordinary Chat history restores existing Research through its governed 
     expect(host.querySelector(".dr-saved")).toBeNull();
   });
 
+  it.each([false, true])("withholds the observed incomplete historical evidence for saved:%s without rerunning Research", async saved => {
+    port.turns = [storedTurn(saved)];
+    port.read.mockResolvedValue({ data: { ...run(), sources: [],
+      findings: Array.from({ length: 10 }, (_, index) => ({ text: `Unsupported historical finding ${index}`, citations: [1, 5, 6, 11], confidence: "high" })),
+      coverage: { note: "Verified 10 findings from 23 citable sources" } }, error: null });
+    await render(); unavailable();
+    expect(host.textContent).not.toMatch(/Unsupported historical finding|Verified 10/);
+    expect(port.read).toHaveBeenCalledTimes(1); expect(fetch).not.toHaveBeenCalled();
+  });
+
   it.each(["null", "denied", "throw"])("settles a %s read without a stale Saved badge or automatic replay", async kind => {
     if (kind === "throw") port.read.mockRejectedValue(new Error("private provider detail"));
     else port.read.mockResolvedValue({ data: kind === "denied" ? run() : null, error: kind === "denied" ? { message: "private denial" } : null });

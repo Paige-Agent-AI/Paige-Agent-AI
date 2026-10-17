@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Square, Loader2, Clock, Paperclip, X, ArrowDown, Hand, CircleHelp } from "lucide-react";
 import { PaigeResearchCard, type PaigeResearchResult } from "@/components/paige/chat/PaigeResearchCard";
+import { readResearchHistoryRun } from "@/lib/paigeResearchReadback";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -109,48 +110,6 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
 
 type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
-
-// The public library reader returns current rows, not a new persistence verdict.
-// Validate that shape and its citation identities before rendering; only an originally
-// confirmed reference may retain Saved. A parent row never upgrades an unconfirmed save.
-function readResearchHistoryRun(value: unknown, runId: string): Omit<PaigeResearchResult, "saved"> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const run = value as Record<string, unknown>;
-  if (run.id !== runId || typeof run.question !== "string" || typeof run.configured !== "boolean"
-    || !(run.stop_reason === null || typeof run.stop_reason === "string")
-    || !Array.isArray(run.findings) || !Array.isArray(run.sources)
-    || !run.coverage || typeof run.coverage !== "object" || Array.isArray(run.coverage)) return null;
-  const sources: PaigeResearchResult["sources"] = [];
-  const indices = new Set<number>();
-  for (const value of run.sources) {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-    const src = value as Record<string, unknown>;
-    if (!Number.isInteger(src.index) || (src.index as number) < 1 || indices.has(src.index as number)
-      || typeof src.url !== "string" || !/^https?:\/\//i.test(src.url)
-      || !(src.title === null || typeof src.title === "string")
-      || !(src.reliability === null || typeof src.reliability === "string")
-      || !(src.tier === null || typeof src.tier === "string")
-      || !(src.published_at === undefined || src.published_at === null || typeof src.published_at === "string")
-      || !(src.excluded === undefined || typeof src.excluded === "boolean")) return null;
-    indices.add(src.index as number);
-    sources.push({ index: src.index as number, url: src.url, title: src.title as string | null,
-      reliability: src.reliability as string | null, tier: src.tier as string | null,
-      published_at: src.published_at as string | null | undefined, excluded: src.excluded === true });
-  }
-  const findings: PaigeResearchResult["findings"] = [];
-  for (const value of run.findings) {
-    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-    const finding = value as Record<string, unknown>;
-    if (typeof finding.text !== "string" || typeof finding.confidence !== "string" || !Array.isArray(finding.citations)
-      || !finding.citations.every(index => Number.isInteger(index) && sources.some(src => src.index === index && !src.excluded))) return null;
-    findings.push({ text: finding.text, confidence: finding.confidence, citations: finding.citations as number[] });
-  }
-  const notes = (run.coverage as Record<string, unknown>).unverified_notes;
-  if (notes !== undefined && (!Array.isArray(notes) || !notes.every(note => typeof note === "string"))) return null;
-  return { run_id: runId, question: run.question, configured: run.configured,
-    stop_reason: run.stop_reason as string | null, is_dossier: !!run.entity_profile,
-    findings, sources, unverified_notes: notes as string[] | undefined ?? [], rehydrating: false };
-}
 
 // INT-328 — the server's preview of the exact email a confirm card will send rides the
 // `paige_confirm` frame beside `command` (as `preview` or `confirm_preview`); `previewOf` passes it

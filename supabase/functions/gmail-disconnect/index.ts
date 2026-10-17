@@ -61,7 +61,8 @@ Deno.serve(async (req) => {
     if (!selected && (!Array.isArray(data) || data.length > 1)) {
       return response(409, { error: "gmail_connector_selection_required" });
     }
-    const row = selected ? data : data[0];
+    if (selected && Array.isArray(data)) return response(409, { error: "gmail_connection_changed" });
+    const row = Array.isArray(data) ? data[0] : data;
     if (!row) return selected ? response(409, { error: "gmail_connection_changed" })
       : response(200, { ok: true, disconnected: false });
     if (selected && (row.id !== body.connector_id.toLowerCase() || row.updated_at !== body.expected_updated_at)) {

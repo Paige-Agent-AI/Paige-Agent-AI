@@ -99,6 +99,8 @@ jobs:
         run: node scripts/proof/weekly-commitment-check.mjs --postgres
       - name: Native approved internal task authority, exact approval, receipt and recovery in disposable PostgreSQL
         run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-human-control --postgres
+      - name: Native event enqueue, internal cron authentication, rollback and replay in disposable PostgreSQL
+        run: node scripts/proof/native-event-enqueue.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

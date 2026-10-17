@@ -5,6 +5,9 @@ export function resourceReadProof({sql,check,assert,fs,root,path,uid,other,tenan
  const peer='e091a000-0000-4000-8000-000000000006';
  const text='A'.repeat(11999)+'😀'+'B'.repeat(13000);
  const json=value=>`$json$${JSON.stringify(value)}$json$::jsonb`;
+ // The real canonical table also has a source column. Preserve that shape so
+ // PL/pgSQL name collisions fail locally as well as in full-schema replay.
+ sql("ALTER TABLE public.tenant_knowledge_docs ADD COLUMN source text NOT NULL DEFAULT 'text';");
  const as=(query,actor=uid,role='authenticated')=>{
   const result=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true);SET LOCAL ROLE ${role};${query};COMMIT;`);
   const value=result.split(/\r?\n/).find(s=>s.startsWith('{'));return value?JSON.parse(value):result;
@@ -23,6 +26,12 @@ export function resourceReadProof({sql,check,assert,fs,root,path,uid,other,tenan
  sql(migration);
  const read=(offset=0,limit=12000,actor=uid,business=tenant,revision=saved.current_revision,hash=fingerprint,role='authenticated')=>
   as(`SELECT client_portal_knowledge_document('${business}','${saved.share_id}',${revision},'${hash}',${offset??'NULL'},${limit??'NULL'});`,actor,role);
+ check('The real canonical source-column shape catches an unqualified resource variable',()=>{
+  const replace=migration.replace('CREATE FUNCTION public.client_portal_knowledge_document','CREATE OR REPLACE FUNCTION public.client_portal_knowledge_document');
+  sql(replace.replace('resource_read.source->>','source->>'));
+  try{assert.throws(()=>read(),/column reference "source" is ambiguous/);}
+  finally{sql(replace);}
+ });
  const first=read(),second=read(first.next_offset),third=read(second.next_offset);
  check('Authorized resource pages return the complete canonical text without splitting Unicode or inventing a complete excerpt',()=>{
   assert.equal(first.actor_id,uid);assert.equal(first.contact_id,contact);assert.equal(first.tenant_id,tenant);

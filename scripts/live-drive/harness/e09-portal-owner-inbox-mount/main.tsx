@@ -12,9 +12,12 @@ import "@/components/tenant-shell/tenant-command-center-shell.css";
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get("theme") === "dark" ? "dark" : "light";
-document.documentElement.setAttribute("data-pg", theme);
+// Theme attributes sit where the APP puts them, not all on <html>: next-themes puts `.dark` on <html>
+// (App.tsx ThemeProvider attribute="class"), TenantCommandCenterShell puts `data-pg` on the shell root, and
+// SoloApp puts `data-theme` on its .paige-solo wrapper. Stacking all three on <html> changes which token
+// block wins (`.dark` and `[data-pg="dark"]` both set --primary; on one element the later rule wins, while
+// in the app the shell's own data-pg block overrides the inherited `.dark` values).
 document.documentElement.classList.toggle("dark", theme === "dark");
-document.documentElement.setAttribute("data-theme", theme);
 const paige = params.get("paige") === "open" ? "open" : "closed";
 const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -26,14 +29,18 @@ createRoot(document.getElementById("root")!).render(
             The VoiceDeviceProvider is NOT mounted: useVoiceDevice() is null here, so the call affordance
             is whatever the inbox renders without a device — a harness divergence, not product evidence. */}
         <AgentPresenceProvider launcherEnabled={false} hasChatBody>
-          <div data-tenant-shell data-nav="compact" data-paige={paige} style={{ height: "100vh" }}>
+          <div data-pg={theme} data-tenant-shell data-nav="compact" data-paige={paige} style={{ height: "100vh" }}>
             <nav className="tcs-nav" />
             <section className="tcs-canvas">
               <main id="tenant-shell-main" className="tcs-main">
                 {/* The app mounts Solo under /solo/:account/* — useSubtabRoute reads the sub-tab from those params. */}
-                <Routes>
-                  <Route path="/solo/:account/*" element={<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={() => undefined} />} />
-                </Routes>
+                <div className="paige-solo" data-theme={theme} style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+                  <main data-solo-screen-host style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>
+                    <Routes>
+                      <Route path="/solo/:account/*" element={<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={() => undefined} />} />
+                    </Routes>
+                  </main>
+                </div>
               </main>
             </section>
             {/* The shell's PAIGE column, a placeholder only: `?paige=open` shows the dock region. It does not

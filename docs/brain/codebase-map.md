@@ -10,6 +10,8 @@ Invitation preparation2330 is production source-verified at merged #2291; delive
 
 ## INT-340 / #1837 conversational Metric/Evidence binding
 
+Dashboard `PortalInvitationManager.tsx` delegates sends to `PortalInvitationCommand.tsx`, the same `send-portal-invite` command used by owner typed Chat/Live. Server summary/fingerprint, native original-operation readback and the incumbent PaigeConfirmCard remain authoritative; definite session loss requires canonical sign-in and a fresh review. The Dashboard preserves pending-token cancellation and retires stale workspace results. [UI evidence](../evidence/ui-delivery/e09-dashboard-invitation-command.md) separates controlled source/browser proof from actual owner/provider/customer acceptance. This adds no authority to private customer Chat; accepted-access lifecycle and all seven pillars remain required.
+
 `_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.
 
 ## Ads from chat — lead funnel read + Ads showroom feature (2026-10-12)

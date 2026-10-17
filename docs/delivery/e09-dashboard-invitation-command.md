@@ -1,0 +1,25 @@
+# Dashboard invitation command flow
+
+Pre-edit UI packet, following the native operation/delivery and common command packets. The owner requests one universal invitation workflow from Dashboard, typed PAIGE and Live. Preserve the approved owner Portal inside the canonical Solo shell and use the existing PaigeConfirmCard; no new shell or visual direction. Impeccable Operate and Flow Prototype apply. Portable writing fallback uses direct product language because no humanizing-writing skill is installed.
+
+User goal: choose a real CRM customer, review the server-resolved recipient, explicitly approve one invitation and return to truthful canonical invitation/email history. Existing Client access and People contact record are entry points. Native authority and the common command own recipients, approval and effects; frontend scope/eligibility only control presentation. clients.portal remains PARTIAL until real acceptance. Pure Agency remains excluded by the existing feature/native contract; all eligible existing/future Solo accounts use this shared implementation.
+
+## State and transition map
+
+- Select/search → exact CRM customer → Review invitation. Native owner history is read-only; missing data is not an empty invitation history.
+- Preparing → server-issued canonical card. No token/email is created by this UI. Existing card takes focus, never its Approve button. Summary and fingerprint remain paired.
+- Review → Not now → original control receives focus. No provider call. Canonical proposal expires under its existing policy.
+- Review → Approve → non-repeatable working/report state → closed verified result. One synchronous action lock spans request and history readback across existing inline/dialog instances.
+- Provider accepted → show provider acceptance separately from delivery, open, click, human reading, customer acceptance and portal access. Refresh canonical history without another send.
+- Interrupted or uncertain write → Couldn't confirm → Check status reads existing canonical history only. Explicit Review recovery obtains a fresh card for the same original operation; it never changes the unknown send into a new key/token automatically.
+- Policy/recipient/authority changed → clear current approval and state the concrete next action. The business owner corrects the existing People record or reconnects the current session; UI cannot override recipient or role.
+- Actor/workspace/contact change or unmount → retire stale UI results and further client-side action. The server independently revalidates; a dispatched request may have completed and must be checked on return.
+- Missing/failed history → preserve the prior provider result separately, state that current history could not reload, and offer read-only refresh. Do not label it a send failure or automatically retry.
+
+Scroll owner remains the existing Portal content/native dialog. Cards wrap long recipients, retain reachable touch/keyboard controls and reduced-motion behavior. Cover the four Solo desktop sizes with PAIGE open/closed, narrow mobile/landscape, light/dark, two synthetic contexts, focus/cancel, uncertainty, late response and context switch. Synthetic proof is not physical Safari, authenticated customer proof or provider acceptance.
+
+Prototype uses the existing isolated invitation-history harness and actual shell/card/components with deterministic local state and network blocked. It must be traversed before production component edits. No UI SDK call, email, upload, analytics, hosted database or paid effect runs in the prototype. The existing approved design and owner's Build → Ship → Owner Test direction authorize routine implementation after engineering review of this flow; no new design decision is invented.
+
+Capability routing: E09 supplies the UI projection of client.portal_invite; E03 sender and Identity producer/acceptance remain authoritative. S01–S07 governed execution, stored confirmation and Rail plus S29–S36 communications are reused. Existing email_send_log/tenant_invite_tokens/CRM history only; no client approval store, alternate sender or CRM. Provider registry/activation remain unchanged from the common-command dependency. Typed/Live keep that same command. Native pending cancellation and other legacy contact controls must be preserved and separately verified; this increment does not claim accepted-membership revocation or global Auth administration.
+
+Acceptance remains exact-head reviewed/green ordinary release, normal source readback and real authorized owner/customer testing. No additional test business, credential reset, impersonation, provider activation or blind resend is permitted. All seven pillars remain required.

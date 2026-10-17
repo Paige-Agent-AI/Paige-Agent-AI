@@ -8,15 +8,20 @@ import { build } from "esbuild";
 import { chromium, firefox, webkit } from "playwright";
 const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const compatibility = process.argv.includes("--compatibility");
-const dialogs = process.argv.includes("--dialogs");
+const canonicalPrototype=process.argv.includes('--canonical-prototype');
+const canonicalCommand=process.argv.includes('--canonical-command');
+const canonicalFlow=canonicalPrototype||canonicalCommand;
+const dialogs = process.argv.includes("--dialogs")||canonicalFlow;
 const engineName = process.argv.find(value => value.startsWith("--engine="))?.slice(9) ?? "chromium";
 assert(["chromium", "firefox", "webkit", "edge"].includes(engineName), "unsupported proof engine");
 const engine = { chromium, firefox, webkit, edge: chromium }[engineName];
-const output = path.join(project, "docs/evidence/ui-delivery/assets", dialogs ? "e09-portal-dialog-theme" : "e09-invitation-history", ...(compatibility ? ["compatibility", engineName] : []));
+const output = path.join(project, "docs/evidence/ui-delivery/assets", canonicalPrototype?'e09-invitation-command-prototype':canonicalCommand?'e09-invitation-command':dialogs ? "e09-portal-dialog-theme" : "e09-invitation-history", ...(compatibility ? ["compatibility", engineName] : []));
 await fs.mkdir(output, { recursive: true });
 const adapter = path.join(project, "scripts/proof/e09-invitation-history-ui/adapter.tsx");
 const replace = /^(?:@\/(?:hooks\/(?:useTenantContext|useBrandKit|usePortalConfig|useRailEvents|useTierFeatures)|integrations\/supabase\/client|lib\/playbook|components\/ui\/paige|components\/admin\/voice\/DialPadTrigger|components\/dashboard\/PaigeAIChat|components\/tenant-calendar\/TenantCanonicalCalendarWorkspace)|\.\/(?:useTenantRelationshipsData|ClientStanding|PeopleContactEditor))$/;
 const bundled = await build({ entryPoints: [path.join(project,"scripts/proof/e09-invitation-history-ui/source.tsx")], bundle:true,write:false,format:"iife",jsx:"automatic",loader:{".css":"empty"},define:{"process.env.NODE_ENV":'"production"',"import.meta.env.DEV":"false"},plugins:[{name:"explicit-read-only-transport",setup(api){
+  if(canonicalPrototype)api.onResolve({filter:/^\.\/PortalInvitationManager$/},()=>({path:path.join(project,'scripts/proof/e09-invitation-history-ui/canonical-prototype.tsx')}));
+  if(canonicalCommand)api.onResolve({filter:/^@\/integrations\/supabase\/client$/},()=>({path:path.join(project,'scripts/proof/e09-invitation-history-ui/canonical-adapter.tsx')}));
   api.onResolve({filter:replace},()=>({path:adapter}));
   api.onResolve({filter:/^next-themes$/},()=>({path:adapter}));
   api.onResolve({filter:/^@\/pages\/admin\/(ClientsConversations|CalendarAdmin)$/},()=>({path:adapter}));
@@ -36,7 +41,7 @@ if(engineName==="edge")launch.executablePath="C:/Program Files (x86)/Microsoft/E
 else if(engineName==="chromium")try{await fs.access(chromium.executablePath())}catch{launch.executablePath="C:/Program Files/Google/Chrome/Application/chrome.exe"}
 const browser=await engine.launch(launch),cases=[],errors=[];
 const runtime={engine:engineName,browserVersion:browser.version(),executable:launch.executablePath??engine.executablePath(),
-  os:os.type(),osVersion:os.release(),headless:true,route:"actual-source owner Clients/Portal/Client access via setContent",auth:"synthetic actual-subject/tenant fixtures",permissions:"network blocked; no media, file picker, OAuth or customer permission operation"};
+  os:os.type(),osVersion:os.release(),headless:true,route:canonicalCommand?"actual-source owner Clients/Portal/Client access via intercepted HTTPS document":"actual-source owner Clients/Portal/Client access via setContent",auth:"synthetic actual-subject/tenant fixtures",permissions:"network blocked; no media, file picker, OAuth or customer permission operation"};
 async function render(width,height,open,theme,tenant,state="ready",deviceScaleFactor=1,capture=true){
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor,reducedMotion:"reduce"});
   let focusOutline=null;
@@ -92,7 +97,12 @@ async function renderDialog(width,height,open,theme,kind="invite",state="ready",
   page.on("pageerror",e=>errors.push(e.message));await page.route("**/*",r=>r.abort());
   // Deliberately reproduce production: theme variables belong to the native
   // SOLO shell, never html/body. A global marker would mask the portal defect.
-  await page.setContent('<!doctype html><html><head></head><body><div id="root"></div></body></html>');
+  if(canonicalCommand){
+    // Production requires HTTPS crypto.randomUUID. Fulfill a secure local test origin
+    // without DNS/network instead of changing Web Crypto or inventing client IDs.
+    await page.route('https://portal-proof.invalid/',route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><head></head><body><div id="root"></div></body></html>'}));
+    await page.goto('https://portal-proof.invalid/');
+  }else await page.setContent('<!doctype html><html><head></head><body><div id="root"></div></body></html>');
   await page.addStyleTag({content:css});
   await page.evaluate(v=>{window.portalProof=v},{open:false,theme,tenant:"e0921000-0000-0000-0000-00000000000"+(second?"2":"1"),state});
   await page.addScriptTag({content:bundled.outputFiles[0].text});
@@ -116,6 +126,45 @@ async function renderDialog(width,height,open,theme,kind="invite",state="ready",
       await dialog.getByText("Invitations couldn’t be checked",{exact:true}).waitFor();
       assert.equal(await dialog.getByRole("button",{name:"Send invitation email",exact:true}).count(),0);
     }else{
+      if(canonicalFlow){
+       await dialog.getByRole('button',{name:'Review invitation',exact:true}).click();
+       const card=dialog.getByRole('group',{name:'Needs your OK',exact:true});await card.waitFor({timeout:5000}).catch(async error=>{
+        const detail=await page.evaluate(()=>({cryptoUuid:typeof crypto.randomUUID,records:window.invitationCommandPrototype.records(),text:document.body.innerText.slice(-1700)}));
+        throw Error(JSON.stringify({error:error.message,errors,detail}));
+       });
+       assert(await card.evaluate(node=>node===document.activeElement),'card, not Approve, receives focus');
+       await dialog.getByRole('button',{name:'Not now',exact:true}).click();
+       await page.waitForFunction(()=>document.activeElement?.textContent==='Review invitation');
+       assert.equal(await page.evaluate(()=>window.invitationCommandPrototype.records()[0][1].effects),0);
+       await page.evaluate(()=>window.invitationCommandPrototype.setOutcome('uncertain'));
+       await dialog.getByRole('button',{name:'Review invitation',exact:true}).click();
+       await dialog.getByRole('button',{name:'Approve',exact:true}).click();
+       const check=dialog.getByRole('button',{name:'Check status',exact:true});await check.waitFor();
+       assert.equal(await dialog.getByRole('button',{name:'Approve',exact:true}).count(),0);
+       await check.click();await dialog.getByText(canonicalCommand?'Status checked. The original send remains unconfirmed; no new email was requested.':'Status checked. The original send remains unconfirmed.',{exact:true}).waitFor();
+       assert.equal(await page.evaluate(()=>window.invitationCommandPrototype.records()[0][1].effects),1);
+       await page.evaluate(()=>window.invitationCommandPrototype.setOutcome('accepted'));
+       await dialog.getByRole('button',{name:'Review recovery',exact:true}).click();
+       await card.waitFor();await card.scrollIntoViewIfNeeded();
+       const cardBounds=await card.boundingBox();assert(cardBounds&&cardBounds.width<=width,'canonical card wraps in native dialog');
+       if(width===390||width===1536)await page.screenshot({path:path.join(output,filename.replace('.png','-review.png'))});
+       await dialog.getByRole('button',{name:'Approve',exact:true}).click();
+       await dialog.getByRole('button',{name:'Refresh history',exact:true}).waitFor();
+       await dialog.getByRole('button',{name:'Refresh history',exact:true}).click();
+       const record=await page.evaluate(()=>window.invitationCommandPrototype.records()[0][1]);
+       assert.equal(record.effects,2);assert.equal(record.reads,2);assert.equal(record.phase,'accepted');
+       if(canonicalCommand){
+        await dialog.getByRole('button',{name:'Review resend',exact:true}).click();await card.waitFor();
+        await page.evaluate(()=>window.invitationCommandPrototype.expireAuth());
+        await dialog.getByRole('button',{name:'Approve',exact:true}).click();
+        const signIn=dialog.getByRole('link',{name:'Sign in again',exact:true});await signIn.waitFor();await signIn.scrollIntoViewIfNeeded();
+        assert((await signIn.getAttribute('href')).startsWith('/auth?mode=login&next='));
+        assert.equal(await dialog.getByRole('button',{name:'Approve',exact:true}).count(),0);
+        assert.equal(await dialog.getByRole('button',{name:'Review recovery',exact:true}).count(),0);
+        assert.equal(await page.evaluate(()=>window.invitationCommandPrototype.records()[0][1].effects),2);
+        if(width===390||width===1536)await page.screenshot({path:path.join(output,filename.replace('.png','-session.png'))});
+       }
+      }
       const history=dialog.getByRole("region",{name:"Invitation history",exact:true});await history.waitFor();
       if(width===390||width===1536){
         await page.evaluate(()=>document.fonts.ready);
@@ -173,6 +222,8 @@ try{
 }finally{await browser.close()}
 const files=["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationHistory.tsx","src/components/tenant-relationships/portalInvitationEvidence.ts","src/components/tenant-relationships/portalDashboardModel.ts","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/usePortalInvitations.ts","src/components/tenant-relationships/owner-portal-dashboard.css","scripts/proof/e09-invitation-history-ui/adapter.tsx","scripts/proof/e09-invitation-history-ui/source.tsx","scripts/proof/e09-invitation-history-ui/check.mjs","scripts/proof/e09-dashboard-ui/adapter.tsx"];
 if(dialogs)files.push("src/components/ui/dialog.tsx","src/index.css");
+if(canonicalPrototype)files.push('scripts/proof/e09-invitation-history-ui/canonical-prototype.tsx','src/components/chat/PaigeConfirmCard.tsx');
+if(canonicalCommand)files.push('scripts/proof/e09-invitation-history-ui/canonical-adapter.tsx','src/components/chat/PaigeConfirmCard.tsx','src/components/tenant-relationships/PortalInvitationCommand.tsx','src/components/tenant-relationships/portalInvitationUiDeadline.ts');
 const sourceHashes=await Promise.all(files.map(async file=>({file,sha256:createHash("sha256").update(await fs.readFile(path.join(project,file))).digest("hex")})));
 await fs.writeFile(path.join(output,"result.json"),JSON.stringify({runtime,sourceHashes,cases,errors,boundary:"Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."},null,2));
 console.log(JSON.stringify({runtime,cases:cases.length,errors,output}));

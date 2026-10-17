@@ -203,7 +203,7 @@ const FIELD_DESCRIPTIONS = {
   naics: "NAICS industry classification code.",
   revenue_band: "Banded company revenue range.",
   state_of_formation: "US state the company was formed in.",
-  assignee_user_id: "Exact active member UUID to own the task.",
+  assignee_user_id: "Exact authorized user UUID to own the task. On creation, omitted, null or empty assigns to the requester. Tasks cannot be unassigned; clarify explicit unassigned intent before proposing.",
   due_date: "When the task is due.",
   track: "Workstream the task belongs to.",
   metadata: "Structured object of extra task fields; must be an object.",

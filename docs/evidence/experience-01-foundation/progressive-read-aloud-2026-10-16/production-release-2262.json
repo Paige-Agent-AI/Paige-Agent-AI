@@ -1,0 +1,263 @@
+{
+  "releaseCommit": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+  "reviewedHead": "a736009712f20b5254dc9bc7804a9a8873909ebc",
+  "firstParent": "6c0d79597fbdd806f5506651446758196ab23047",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "reviewReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2262#issuecomment-6227608021",
+  "gateReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2262#issuecomment-6227853033",
+  "workflows": [
+    {
+      "id": 38988374921,
+      "name": "ui-delivery-evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 38988374978,
+      "name": "Security Audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 38988375035,
+      "name": "migration-lint",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 38988374903,
+      "name": "Finance source proof",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 38988375103,
+      "name": "PAIGE Spine contract",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 38988374969,
+      "name": "ci",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "checks": [
+    {
+      "id": 117265168200,
+      "name": "Vercel Preview Comments",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264998002,
+      "name": "database-contract",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997763,
+      "name": "contract",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997652,
+      "name": "comms-provider-boundary",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997628,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997583,
+      "name": "lint",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997495,
+      "name": "web-fetch-hardening-smoke",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997355,
+      "name": "Validate UI delivery evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264997096,
+      "name": "audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264996982,
+      "name": "postgres-authority",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117264977167,
+      "name": "Supabase Preview",
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ],
+  "vercelStatuses": [
+    {
+      "context": "Vercel",
+      "state": "success",
+      "description": "Deployment has completed",
+      "target_url": "https://vercel.com/paige-agent-ai/paige-agent-ai/Akp4UHjtGSnSeEivv6ZWFXCgKmsj"
+    },
+    {
+      "context": "Vercel Deployments – MMA",
+      "state": "success",
+      "description": "All required and affected projects deployed",
+      "target_url": "https://vercel.com/paige-agent-ai/~/deployments?repo=github%2FPaige-Agent-AI%2FPaige-Agent-AI&filterBranch=codex%2Fant50-experience01&sha=a736009712f20b5254dc9bc7804a9a8873909ebc"
+    }
+  ],
+  "deployment": {
+    "id": "dpl_GEDMGU1HqMGsKS2amK54tX6n5rH6",
+    "state": "READY",
+    "target": "production",
+    "sha": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511"
+  },
+  "initialPublicBuildObserved": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511-mvbpja0f",
+  "migrations": "NOT_APPLICABLE",
+  "edgeChanges": "NOT_APPLICABLE",
+  "actualMergeTests": {
+    "files": 5,
+    "passed": 79,
+    "failed": 0,
+    "evidenceClass": "DETERMINISTIC_LOCAL_NOT_AUTHENTICATED"
+  },
+  "authCases": {
+    "count": 23,
+    "status": "NOT_RUN_BY_E01",
+    "packetSha256": "ca1fd533365165802ef5a607c0f5bc5de7250c2618e540da01765219a265e408"
+  },
+  "ownerAccepted": false,
+  "customerReleaseIdentity": null,
+  "at": "2026-10-17T01:27:02.804Z",
+  "tree": "c1d28f0e512a7b10eae5ffd35b1898d7a09b0de9",
+  "publicReadback": {
+    "observedBuildId": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1-mvbplx52",
+    "observedHead": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1",
+    "at": "2026-10-17T01:24:07.0185706Z",
+    "releaseCommit": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+    "evidenceClass": "PUBLIC_SERVED_MODULE_GRAPH_NOT_AUTHENTICATED_BROWSER",
+    "entry": "/assets/main-BZr_T54w.js",
+    "main": "/assets/main-DTXiYSP_.js",
+    "solo": "/assets/SoloEntry-jVfg1Il-.js",
+    "chat": "/assets/PaigeAIChat-Czz5Ro-L.js",
+    "chatSha256": "af5153bf17b977885c6075369edca8d30f5b812aefcc8fa5d6d17cc5a8bf9a2b",
+    "soloSha256": "248ef2c49cbe3bac6529dda1a51cd9bf07bb29f3f55f06bba46e0d21da9fbd58",
+    "markers": {
+      "What can help?": true,
+      "What should I connect?": true,
+      "Choose a first action": true,
+      "Return to interview": true,
+      "Check saved Setup": true,
+      "Confirm and save to Setup": true,
+      "Stop loading voice": true,
+      "Voice playback returned an unsupported response.": true,
+      "MediaSource": true
+    },
+    "passed": true,
+    "authenticatedAcceptance": false
+  },
+  "sourceChain": {
+    "at": "2026-10-17T01:23:56.243Z",
+    "releaseCommit": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+    "reviewedHead": "a736009712f20b5254dc9bc7804a9a8873909ebc",
+    "publicDescendant": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1",
+    "ancestorVerified": true,
+    "files": [
+      {
+        "path": "src/lib/voice/messageTts.ts",
+        "sha256": "946edf2812a2c82cb7f9a213bdeedc6a82e525ee48834d295fbf7ba9c49688ad",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      },
+      {
+        "path": "src/components/chat/MessageAudioButton.tsx",
+        "sha256": "af535b392a9bd1482020e320ccd4eff8901074e7714d87b8a358a95de70bc394",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      },
+      {
+        "path": "src/solo/SoloBusinessInterview.tsx",
+        "sha256": "913c180f66dba57042613c1027f45c98fcb0d9148cbaba4596e4df647463185a",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      },
+      {
+        "path": "src/solo/SoloOnboardingStage.tsx",
+        "sha256": "0643620f2f267f948118e97f093454751efeef47f77d981ec9fd25d0f4616fa3",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      },
+      {
+        "path": "src/solo/SoloPaigeWorkspace.tsx",
+        "sha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      },
+      {
+        "path": "src/solo/solo-interview-navigation.ts",
+        "sha256": "517f9a20edc7687c8b4ba6a48e1b43d75512d83d2d1e72d75f7548caf46b4cfd",
+        "reviewedEqualsMerge": true,
+        "reviewedEqualsObservedDescendant": true
+      }
+    ],
+    "passed": true
+  },
+  "checkpoints": {
+    "at": "2026-10-17T01:21:43.572Z",
+    "merge": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+    "evidenceClass": "READ_ONLY_FUNCTION_METADATA_NOT_CUSTOMER_WORKFLOW",
+    "functions": [
+      {
+        "name": "get_solo_business_interview_checkpoint",
+        "definitionMatches": true,
+        "aclMatches": true,
+        "ownerMatches": true,
+        "configMatches": true,
+        "languageMatches": true,
+        "definerMatches": true
+      },
+      {
+        "name": "save_solo_business_interview_checkpoint",
+        "definitionMatches": true,
+        "aclMatches": true,
+        "ownerMatches": true,
+        "configMatches": true,
+        "languageMatches": true,
+        "definerMatches": true
+      },
+      {
+        "name": "solo_business_interview_assert_thread",
+        "definitionMatches": true,
+        "aclMatches": true,
+        "ownerMatches": true,
+        "configMatches": true,
+        "languageMatches": true,
+        "definerMatches": true
+      }
+    ],
+    "passed": true,
+    "customerRecordsRead": 0,
+    "customerWrites": 0,
+    "functionInvocations": 0
+  },
+  "truthBoundary": "Source/deployment verified. Actual provider/audible latency, ordinary authenticated playback and complete E01 customer/owner acceptance remain UNVERIFIED. Live alias advanced to independently verified descendant; assets are bound to their actual observed build. Immutable version endpoint did not return expected build JSON and was not bypassed."
+}

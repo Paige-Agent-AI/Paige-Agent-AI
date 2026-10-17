@@ -1,5 +1,22 @@
 # ANT-21: native Research outcome and workspace receipt
 
+## Source-policy correction: pre-edit routing (development, 2026-10-16)
+
+1. Owner outcome: a constrained research request uses at most the requested number of unique sources, restricted to the requested hostnames, with readable cited findings and truthful saved status.
+2. Domain: existing portfolio family3 Research, integrated with family2 Chat. This bounded source-policy lease is composed above reviewed native readback `dca68db5d6e3c55fb9276227671caa11410d2c19`; the lead retains all other Chat sites, C0b bindings and release ownership.
+3. Shared dependencies: existing Harness A identity/scope, B capability admission and F outcome evidence. The completion map records partial layers; this does not introduce a second engine, durable-work runtime or claim the absent/partial layers complete.
+4. Spine: existing dynamic `research_knowledge.deep_research` in C0b, through the incumbent Chat/native engine. Registration, maturity and protected source pins are unchanged in this candidate.
+5. Provider: existing Integration Capability Registry `paige-browser-research` is PARTIAL. Only its existing Firecrawl web-search wrapper and SSRF-guarded page reader are reused. Listing/configuration is not connection proof; no provider activation, credentials or live calls.
+6. Authority: existing read/read_only/member/approval-none contract; no mutation verb or new Trust/confirmation channel. Existing actor, current workspace, membership, scope checkpoints and budget ceilings remain binding. Optional source constraints can only narrow gathering.
+7. Durability: no new jobs/events/scheduler. Existing native research run/source persistence and workspace capability recorder are retained; `persistRun` must remain byte-identical to the reviewed base.
+8. Proof: exact canonical run/source readback plus separate receipt acknowledgement. `coverage.source_policy` accompanies the existing coverage JSON; an uncertain save directs inspection of the existing library before any repeated run.
+9. Surface: incumbent Conversations/Research Home; ledger `paige.workspace` PARTIAL remains PARTIAL. No JSX, geometry, navigation, new controls or state machine; only truthful terminal recovery copy. Existing visual direction, keyboard and responsive contracts remain unchanged and rendered proof is UNVERIFIED in this source-only slice.
+10. Acceptance: protected actual handler/wrapper/Chat tests prove bounded source admission and durable transport; ordinary authenticated constrained runs, real provider enforcement, reload, paired SOLO parity, Live and owner acceptance remain UNVERIFIED/PROOF OWED. Shared tenant-neutral optional arguments cover all eligible existing/future SOLO accounts, without provisioning/schema changes or reference-account branches.
+
+Flow-by-Flow and Paige UI Design were routed; Impeccable clarify/craft-floor applied to the existing terminal recovery copy (canonical upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md). FLOW_PROTOTYPE: NOT_REQUIRED for this exact recovery-copy correction and narrowing of the incumbent callable contract; no new user flow or visual world. All existing viewport proof boundaries above remain unchanged.
+
+Official provider contract: https://docs.firecrawl.dev/api-reference/endpoint/search and https://docs.firecrawl.dev/features/search#domain-filters document hostname-only `includeDomains`, web source selection and bounded search limit. Provider filtering is advisory defense-in-depth: exact full-hostname or dot-boundary subdomain admission is enforced locally before reads/synthesis/persistence. An allowed hostname does not increase a source's authority/reliability tier.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ordinary or delegated verified actor -> current active workspace/member -> incumbent bounded Research engine -> exact native run/source readback -> existing workspace recorder -> separate report/receipt acknowledgement
 PAIGE_UI_DESIGN: PASS: native-only source boundary; src/components/paige/chat/PaigeResearchCard.tsx and src/solo/paige-research.tsx presentation preserved without JSX, CSS or control changes
@@ -90,3 +107,89 @@ Following that distinct review, renew only the native endpoint's reviewed canoni
 Release this coherent native authorization/receipt repair through required exact-head CI and guarded deployment; do not delay its verified containment merely for the separate Chat projection. Source merge, actual served-source verification, provider-backed customer outcomes, paired ordinary QA, Live and owner acceptance remain separate evidence states. No provider invocation, spend activation, identity change, migration or new execution engine is authorized or performed by this candidate.
 
 Lead composition verification: exact scalar-only comparison and actual native AST extraction PASS; Chat-tool registry and all seven registry self-test controls PASS; focused actual native/shim/entry/M0 run82/82 PASS. The first focused attempt was a Windows sandbox cache-rename EPERM setup failure with no tests executed; identical focused command outside that sandbox completed82/82 in14.91s. That setup failure is retained rather than counted as an assertion pass. Final composed-head review and exact-head hosted CI remain required before release.
+
+## Forward native persistence readback — development candidate
+
+Base is current-main `d17d6c42acb3ab1c51e2a840d0f4ab8713968fcc`; the lead owns final distinct
+review, fingerprints, CI composition and release. This section does not change the historical
+proof or release state of the preceding native work.
+
+Authorized read-only production diagnosis found a real parent run and its existing
+`capability_completed_unrecorded` receipt, but zero source rows. The receipt correctly said
+`report_saved:false`. Production privileges independently proved INSERT=true/SELECT=false for
+service_role on both Research base tables, with no browser table grants. The deployed persistence
+implementation had introduced direct SELECT before allowing source insertion. The earlier
+INSERT-only migration intentionally did not authorize those new reads; RLS bypass alone does
+not grant table SELECT. This shared defect affects every applicable existing/future SOLO account,
+not a reference-account allowlist. Partial investigation output is not Research unavailability.
+
+The forward migration `20271108181000_research_native_readback.sql` adds one read-only,
+service-only `research_readback_persisted_run(uuid,uuid,uuid)` RPC after deployed scope migration
+180000 and before pending Planning190000. It reuses `research_assert_current_scope`, validates
+the service JWT role, and requires exact current actor/workspace/active membership plus exact
+parent identity. Unknown or foreign parents reveal no report. Mixed actor/tenant source lineage
+refuses without returning foreign facts. Its definer search path is fixed; PUBLIC/anon/authenticated
+execution is revoked. Existing service base INSERT-only and browser zero-base-read ACLs remain.
+No role, entitlement, provider, credential, scheduler, store or permission engine is introduced.
+
+Only the incumbent `persistRun` function changes in native source. Both direct SELECTs become
+the exact scoped RPC. Parent semantics are independently compared before source insertion and
+again on final parent/source readback; all source fields, timestamps, ordering and counts still
+must match. The existing native recorder, stable run identity, receipt semantics, lost-acknowledgement
+handling and current-scope checks remain. Nothing retries Research, deletes an orphan, backfills
+missing source facts or alters historical records. Apply the additive migration before deploying
+the new caller; older callers remain compatible but retain their already-confirmed limitation.
+
+Fresh proof is local, synthetic and provider-free:
+
+- Failing-first actual helper with production-like INSERT-only recording ports:12 FAIL/49 PASS.
+  The old native source was evaluated before its product edit. A concurrent sandbox cache-rename
+  attempt ran no tests and is INVALID setup evidence, not a product result.
+- Final10 focused Research suites:214 PASS, including61 actual native handler/receipt cases.
+  Lost run/source acknowledgements, failed/unknown persistence, corrupt identity/source/count,
+  final-parent changes, receipt failure, no findings, synthesis failure and scope revocation remain
+  truthful. Provider/SDK ports are recording fixtures; these are not hosted Auth or native Rail proof.
+- Actual PostgreSQL16:29 new readback controls plus all19 incumbent scope controls PASS. A separate
+  baseline reproduces both base-table SELECT permission denials. The fixture loads canonical
+  Research table/lineage DDL, the original INSERT grants and existing current-scope SQL predicates.
+  It proves service/browser/PUBLIC ACLs, trusted role, foreign/missing/wrong-owner runs, mixed
+  child lineage, current workspace/seat, banned/deleted actors, numerical/timestamp/source ordering,
+  additive migration replay and existing/new records. Auth claim helpers and non-Research dependency
+  ports are local fixtures; this is not a full application migration or JWT-cryptography campaign.
+- `node scripts/research-readback-check.mjs` is the protected repeatable proof; `--baseline` records
+  the existing denial without this migration. It reuses `research-scope-check.mjs`, accepts only an
+  empty dedicated credential-free loopback database, rolls its transaction back, and uses no provider.
+  The owned65476 cluster stopped successfully. Its first SQL-composition attempt had invalid dollar
+  quoting in the proof, was corrected, and is not counted as product verification.
+- Native AST-mask comparison: all source outside `persistRun` is byte-identical to the base.
+  Default native ESLint remains8 inherited diagnostics, with exact base/current equality and zero
+  introduced. Changed test/proof lint, both definer checks, migration-version guard, syntax and
+  whitespace PASS. The existing M0 static assertion now matches the exact record property instead
+  of accidentally counting the new `_tenant_id` RPC argument; actual lineage checks remain.
+- A broad application TypeScript attempt did not finish and was interrupted without diagnostics;
+  it is UNVERIFIED, not a green typecheck or an attributed source failure. Native Deno/hosted type
+  gates remain the lead's release prerequisite.
+- After the214-pass run, the recording RPC callback gained only an explicit `Promise<Reply>`
+  return annotation. Product source stayed identical. A redundant two-suite rerun then stalled
+  before assertion output and was interrupted, so that rerun is UNVERIFIED and is not counted.
+  The lead's independent exact-head run remains required.
+
+Local transcripts are under the owned worktree's untracked `work/readback-proof/` directory.
+The live observation's23 citable versus25 total sources is preserved, as is its partial max_hops
+status. A structured source cap/allowed-domain contract is absent from current Chat/native input;
+that separate confirmed gap and the Chat inspect-before-repeat wording are outside this patch.
+No broader 18-capability/50-parity completion or restored historical source payload is claimed.
+
+Channel/environment is development. Distinct final review, source-pin renewal, exact-head hosted
+CI/native Deno compilation, migration application, served-source comparison, actual provider-backed
+persistence, paired ordinary customer readback/reload, Live and owner acceptance remain pending or
+UNVERIFIED. No production mutation, provider invocation, spending experiment or activation occurred.
+Shipped Delivery Log is N/A before merge; no customer release identity is assigned. Recovery is an
+additive reviewed forward fix preserving canonical records and uncertain outcomes.
+
+
+### Lead review and successor composition
+
+NON-AUTHOR lead review inspected exact six-file4c31dcbef991676235c555800171164eb7e844ae, all native persistence changes, the complete55-line forward migration and actual canonical-DDL proof. The exact service reader reuses current-scope authority, rejects foreign parent/mixed-child lineage, keeps fixed search_path/PUBLIC and browser denial, and leaves base ACL unchanged. The caller compares full parent semantics both before source insertion and in final verification and independently compares all source fields/counts. No historical record, stored execution or provider is modified. Migration181000 follows installed180000 and precedes pending190000. Existing callers remain schema-compatible; deployment must apply the migration before the new Edge caller.
+
+Final frozen77/77 handler/M0 author tests now pass, superseding only the earlier stalled redundant attempt; the broader214 tests and29+19 actual PostgreSQL controls remain separately labeled. Native definition MD5 is3796427a93f683e3e376ca4607e3b600, body MD564c47698d64cae7238fd0d2b47218394. Raw migration SHA256 is6dc180ef4d1796b2742e9776cd19cb8dc5beaebce3eeff01dee36b57fb5fab3b. Distinct source review supports renewing only the native Research source AST scalar to d7769118988ba2a8393f0b100471651fe0d10b8b776b4ff9cb68265b87c9d469. No guard extractor, metadata, unrelated source digest or permission is changed. Lead scalar integration receives separate AUTHOR-REVIEW / LOWER ASSURANCE. Required exact-head CI, production readback and ordinary authenticated persistence remain owed.

@@ -1,0 +1,26 @@
+{
+  "observedBuildId": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1-mvbplx52",
+  "observedHead": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1",
+  "at": "2026-10-17T01:24:07.0185706Z",
+  "releaseCommit": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+  "evidenceClass": "PUBLIC_SERVED_MODULE_GRAPH_NOT_AUTHENTICATED_BROWSER",
+  "entry": "/assets/main-BZr_T54w.js",
+  "main": "/assets/main-DTXiYSP_.js",
+  "solo": "/assets/SoloEntry-jVfg1Il-.js",
+  "chat": "/assets/PaigeAIChat-Czz5Ro-L.js",
+  "chatSha256": "af5153bf17b977885c6075369edca8d30f5b812aefcc8fa5d6d17cc5a8bf9a2b",
+  "soloSha256": "248ef2c49cbe3bac6529dda1a51cd9bf07bb29f3f55f06bba46e0d21da9fbd58",
+  "markers": {
+    "What can help?": true,
+    "What should I connect?": true,
+    "Choose a first action": true,
+    "Return to interview": true,
+    "Check saved Setup": true,
+    "Confirm and save to Setup": true,
+    "Stop loading voice": true,
+    "Voice playback returned an unsupported response.": true,
+    "MediaSource": true
+  },
+  "passed": true,
+  "authenticatedAcceptance": false
+}

@@ -24,7 +24,7 @@ vi.mock("../../supabase/functions/_shared/tts-router.ts", () => ({
 }));
 
 vi.mock("../../supabase/functions/_shared/elevenlabs.ts", () => ({
-  elevenlabsTts: vi.fn(),
+  elevenlabsMessageStream: vi.fn(),
 }));
 
 vi.mock("../../supabase/functions/_shared/provider-types.ts", () => ({

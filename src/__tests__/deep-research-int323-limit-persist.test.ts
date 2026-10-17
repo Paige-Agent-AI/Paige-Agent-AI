@@ -68,7 +68,9 @@ describe("INT-323 — the fallback copy is deterministic runtime truth", () => {
     const c = copyFor([{ saved: false }]);
     expect(c).toContain("could not be confirmed as saved");
     expect(c).toContain("I won't claim any result from it");
-    expect(c).not.toContain("research library");
+    expect(c).toContain("Inspect this workspace's research library before repeating");
+    expect(c).not.toContain("I'll run a fresh");
+    expect(c).not.toContain("saved run is in");
   });
 
   it("saved=true (the governed readback verdict) claims the library truthfully", () => {
@@ -79,7 +81,7 @@ describe("INT-323 — the fallback copy is deterministic runtime truth", () => {
 
   it("mixed runs: ANY saved run → the saved arm (the owner is pointed at what exists)", () => {
     expect(copyFor([{ saved: false }, { saved: true }])).toContain("research library");
-    expect(copyFor([{ saved: false }, { saved: false }])).not.toContain("research library");
+    expect(copyFor([{ saved: false }, { saved: false }])).toContain("report may already exist");
   });
 
   it("the limit wording appears ONLY when a limit was actually recorded (site-truthful copy)", () => {

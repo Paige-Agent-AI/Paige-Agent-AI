@@ -146,7 +146,9 @@ try {
       const contrast = textEls.filter((n) => !disabled(n)).map((n) => {
         const col = getComputedStyle(n).color;
         const worst = bgCandidates(n).map((bg) => ({ bg, r: ratio(over(col, bg), bg) })).sort((a, b) => a.r - b.r)[0];
-        return { e09: inE09(n), text: n.textContent.trim().slice(0, 50), ratio: worst.r, color: col, bg: worst.bg, el: n.tagName.toLowerCase() + (typeof n.className === "string" && n.className ? "." + n.className.split(" ").slice(0, 4).join(".") : "") };
+        // aria-hidden text (an avatar's initials beside the full name) is incidental under WCAG 1.4.3: it is
+        // measured and reported, but does not fail the frame.
+        return { e09: inE09(n), incidental: !!n.closest("[aria-hidden='true']"), text: n.textContent.trim().slice(0, 50), ratio: worst.r, color: col, bg: worst.bg, el: n.tagName.toLowerCase() + (typeof n.className === "string" && n.className ? "." + n.className.split(" ").slice(0, 4).join(".") : "") };
       });
       // Placeholders are text too.
       for (const t of document.querySelectorAll("#tenant-shell-main textarea, #tenant-shell-main input")) {
@@ -154,7 +156,8 @@ try {
         const bg = bgOf(t); const col = getComputedStyle(t, "::placeholder").color;
         contrast.push({ e09: inE09(t), text: `placeholder: ${t.placeholder.slice(0, 40)}`, ratio: ratio(over(col, bg), bg), color: col, bg });
       }
-      const low = contrast.filter((c) => c.ratio < 4.5);
+      const low = contrast.filter((c) => c.ratio < 4.5 && !c.incidental);
+      const lowIncidental = contrast.filter((c) => c.ratio < 4.5 && c.incidental);
 
       // Gold: every brand gold token (and the gold gradient's stops) resolved to its computed colour INSIDE the
       // inbox, so the tokens' own scoping applies — plus any paint in the gold hue band, so an off-token gold is
@@ -220,7 +223,7 @@ try {
       const has = (t) => text.includes(t);
       const helpRow = [...document.querySelectorAll("[data-thread-key]")].find((r) => r.textContent.includes("Jordan Rivera"));
       return {
-        contrastMin: contrast.length ? Math.min(...contrast.map((c) => c.ratio)) : null, textCount: contrast.length, low,
+        contrastMin: contrast.length ? Math.min(...contrast.map((c) => c.ratio)) : null, textCount: contrast.length, low, lowIncidental,
         e09: { roots: e09Roots.length, textCount: contrast.filter((c) => c.e09).length, contrastMin: (() => { const e = contrast.filter((c) => c.e09); return e.length ? Math.min(...e.map((c) => c.ratio)) : null; })(), low: low.filter((c) => c.e09), goldOutsideAct: goldEls.filter((g) => g.e09 && g.kind === "decorative") },
         goldTokens: goldRgb, warningToken: warningRgb, gold: goldEls.length, goldActs, goldWarning, goldWash, goldOutsideAct, overflowX, pastEdge, smallTargets,
         labels: { portalClient: has("Portal · Jordan Rivera"), portalYou: has("Portal · You"), help: has("Help request"), email: has("Before we sign off on phase two"), sms: has("Thursday works") },

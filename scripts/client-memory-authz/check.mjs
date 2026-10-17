@@ -533,8 +533,13 @@ async function drive({
             ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
             : typeof persona === "function" ? null : persona; // a scripted function is not called twice
           const own = typeof answer?.data?.[0]?.tenant_id === "string" ? answer.data[0].tenant_id : null;
+          // Native thread rows always have these immutable bindings, including
+          // narrow summary/Studio fixtures. Preserve explicitly foreign values.
           return (tablesExtra.paige_chat_threads(filters) ?? []).map((row) =>
-            row && typeof row === "object" && !("tenant_id" in row) ? { tenant_id: own, ...row } : row);
+            row && typeof row === "object" ? {
+              id: extraBody?.threadId, caller_user_id: USER,
+              ...(!("tenant_id" in row) ? { tenant_id: own } : {}), ...row,
+            } : row);
         },
       } : {}),
     },
@@ -5140,12 +5145,13 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
 
   // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
   // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.
+  let summaryReads33 = 0;
   const flaky = await drive({
     stream: true, extraBody: { threadId: THREAD }, toolCall: { name: "crm_create_contact", args: {} },
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
     tablesExtra: studioTables(),
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).includes("summary")) ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).includes("summary")) && ++summaryReads33 === 2 ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("33.6 a Studio thread whose re-read fails is still fail-closed Studio: off-scope tool refused, only the fail-closed set offered",
     scopeRefused(flaky, "crm_create_contact") && offered(flaky).every((t) => ["ask_choices", "capability_status"].includes(t)),

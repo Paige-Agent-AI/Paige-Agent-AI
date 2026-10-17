@@ -147,7 +147,8 @@ describe("normal PaigeChat remount scroll behavior", () => {
     const props={user:{id:actor,user_metadata:{}} as never,session:null};
     await act(async()=>{root.render(<PaigeChat {...props}/>);for(let i=0;i<30;i++)await Promise.resolve();});
     expect(host.textContent).toContain("Saved private answer");
-    expect(host.textContent).toContain("AI assistant for Test customer practice");
+    expect(host.textContent).toContain("Cura");
+    expect(host.textContent).toContain("AI client success agent for Test customer practice");
     expect(host.querySelector('[data-paige-message-id="e0955000-0000-4000-8000-000000000002"]')).not.toBeNull();
     const input=host.querySelector("textarea")!;
     await act(async()=>{

@@ -9,16 +9,16 @@ export function CustomerAssistantSettings({ value, onChange, focusRequest = 0 }:
   const id = useId();
   const name = useRef<HTMLInputElement>(null);
   useEffect(() => { if (focusRequest > 0) name.current?.focus(); }, [focusRequest]);
-  return <SectionCard title="Customer assistant" description="How your AI assistant introduces itself and supports your clients.">
-    <fieldset className="space-y-4" aria-label="Customer assistant settings">
+  return <SectionCard title="Customer agent" description="How your AI client success agent introduces itself and supports your clients.">
+    <fieldset className="space-y-4" aria-label="Customer agent settings">
       <div className="flex items-center justify-between gap-4">
         <label htmlFor={`${id}-enabled`} className="inline-flex min-h-[44px] flex-1 items-center text-sm font-medium">Available in the portal</label>
         <Switch id={`${id}-enabled`} checked={value.enabled} onCheckedChange={enabled => onChange({ ...value, enabled })} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <label htmlFor={`${id}-name`} className="text-sm font-medium">Assistant name</label>
-          <Input ref={name} id={`${id}-name`} value={value.display_name} maxLength={ASSISTANT_TEXT_LIMITS.display_name} placeholder="PAIGE" className="min-h-[44px] text-base md:text-sm" onChange={e => onChange({ ...value, display_name: e.target.value })} />
+          <label htmlFor={`${id}-name`} className="text-sm font-medium">Agent name</label>
+          <Input ref={name} id={`${id}-name`} value={value.display_name} maxLength={ASSISTANT_TEXT_LIMITS.display_name} placeholder="Cura" className="min-h-[44px] text-base md:text-sm" onChange={e => onChange({ ...value, display_name: e.target.value })} />
         </div>
         <div className="space-y-1.5">
           <label htmlFor={`${id}-tone`} className="text-sm font-medium">Tone</label>

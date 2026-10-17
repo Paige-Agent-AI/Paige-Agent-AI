@@ -76,6 +76,8 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   assert.equal(sql("SELECT to_regclass('public.tenant_knowledge_client_shares') IS NULL;"),'t');
  });
  sql(migration);
+ check('RPC-only metadata deny policy stays restrictive if a later policy is added',()=>
+  assert.equal(sql("SELECT NOT polpermissive FROM pg_policy WHERE polrelid='public.tenant_knowledge_client_shares'::regclass AND polname='customer_knowledge_shares_no_direct_access';"),'t'));
  if(authorityLockControl){
   const current=sql("SELECT pg_get_functiondef('public.set_client_portal_knowledge_share(uuid,uuid,uuid,boolean,integer,text,uuid)'::regprocedure);");
   const region=/IF NOT public\.lock_knowledge_extraction_authority\(auth\.uid\(\),p_tenant_id\) THEN[\s\S]*?(?=SELECT \* INTO c FROM public\.clients)/;

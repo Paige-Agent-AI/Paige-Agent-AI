@@ -15,6 +15,7 @@ import { appendDictation } from "@/lib/voice/useDictation";
 import { useChatDocumentUpload } from "@/hooks/useChatDocumentUpload";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { usePaigeMemory } from "@/hooks/usePaigeMemory";
+import { useTenantContext } from "@/hooks/useTenantContext";
 import { useClientChatContext } from "@/hooks/useClientChatContext";
 import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip";
 import { DocumentMessageBubble } from "@/components/chat/DocumentMessageBubble";
@@ -259,6 +260,11 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     })();
   }, [clientId, contextBlock, contextLoading, hasCreditData, messages.length, user, buildContextWithPage]);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { activeTenantId } = useTenantContext();
+  const memoryView = JSON.stringify([user.id, activeTenantId, clientId ?? null, !!customerFrame]);
+  const summaryOriginRef = useRef(memoryView);
+  const summaryOriginRevokedRef = useRef(false);
+  if (summaryOriginRef.current !== memoryView) summaryOriginRevokedRef.current = true;
 
   const {
     extractDocumentSummary,
@@ -266,7 +272,10 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     trackActivity,
     generateSessionSummary,
     resetSession,
-  } = usePaigeMemory();
+  } = usePaigeMemory({ actorId: user.id, tenantId: activeTenantId, clientId: clientId ?? null,
+    enabled: !customerFrame && !summaryOriginRevokedRef.current });
+  const summarySnapshotRef = useRef({ messages, generateSessionSummary, sessionId: sessionIdRef.current, view: memoryView });
+  summarySnapshotRef.current = { messages, generateSessionSummary, sessionId: sessionIdRef.current, view: memoryView };
 
   const {
     attachedDoc,
@@ -287,6 +296,10 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     const handleFactoryReset = () => {
       if(customerFrame){setHistoryRetry(n=>n+1);return;}
       contextInjectedRef.current = false;
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      summaryOriginRef.current = memoryView;
+      summaryOriginRevokedRef.current = false;
+      sessionIdRef.current = crypto.randomUUID();
       resetSession();
       setInput("");
       transcriptScrollRef.current?.jumpToBottom("auto");
@@ -295,7 +308,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
     window.addEventListener("paige-factory-reset", handleFactoryReset);
     return () => window.removeEventListener("paige-factory-reset", handleFactoryReset);
-  }, [resetSession, playbook.persona.greeting]);
+  }, [resetSession, playbook.persona.greeting, memoryView]);
 
   useLayoutEffect(() => {
     transcriptScrollRef.current?.setContext(transcriptContext);
@@ -309,20 +322,23 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     if(customerFrame)return;
     trackActivity();
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    const originView = memoryView;
+    const originSession = sessionIdRef.current;
     inactivityTimerRef.current = setTimeout(() => {
-      if (!customerFrame && messages.length > 2) {
-        generateSessionSummary(
-          messages.map(m => ({ role: m.role, content: m.content })),
-          sessionIdRef.current
+      const snapshot = summarySnapshotRef.current;
+      if (!summaryOriginRevokedRef.current && snapshot.view === originView && snapshot.sessionId === originSession && snapshot.messages.length > 2) {
+        snapshot.generateSessionSummary(
+          snapshot.messages.map(m => ({ role: m.role, content: m.content })),
+          originSession
         );
       }
     }, 30 * 60 * 1000);
-  }, [messages, trackActivity, generateSessionSummary]);
+  }, [customerFrame, trackActivity, memoryView]);
 
   useEffect(() => {
     return () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      if (!customerFrame && messages.length > 2) {
+      if (!customerFrame && !summaryOriginRevokedRef.current && summaryOriginRef.current === memoryView && messages.length > 2) {
         generateSessionSummary(
           messages.map(m => ({ role: m.role, content: m.content })),
           sessionIdRef.current

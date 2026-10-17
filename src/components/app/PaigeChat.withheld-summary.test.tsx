@@ -19,6 +19,7 @@ const extractDocumentSummary = vi.fn();
 const DOC = { name: "intake.pdf", base64: "JVBERi0xLjQK" };
 
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: "test-tenant-a" }) }));
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return { ...actual, useNavigate: () => vi.fn(), useLocation: () => ({ pathname: "/app" }) };

@@ -23,10 +23,14 @@ const changes = [
   ['native Team authority source', 'supabase/functions/_shared/paige-spine/domains/teamAuthorityChatEvidence.ts', 'client.rpc("get_team_authority_readiness", {})', 'client.rpc("counterfeit_team_authority", {})'],
   ['Task fresh authority callback', 'supabase/functions/_shared/operations-task-read.ts', 'deps.revalidateScope(abort.signal)', 'Promise.resolve(true)'],
   ['Task final native authority read', 'supabase/functions/_shared/operations-task-read.ts', 'const final = decode(await read());', 'const final = first;'],
+  ['personal mailbox owner policy', 'supabase/functions/_shared/inbox-intelligence/policy.ts', 'query.mailbox.mailbox_owner_user_id !== query.callerUserId', 'false'],
+  ['final email sender freshness', 'supabase/functions/send-message/index.ts', 'await assertCurrentEmailSender();', 'void 0;'],
+  ['closed-read declaration authority', 'supabase/functions/_shared/paige-turn/interactive.ts', 'action?.classification === "read" && action.riskPolicyKey === "read_only" && action.approvalAuthority === "none"', 'true'],
+  ['closed-read effect contradiction refusal', 'supabase/functions/_shared/paige-turn/interactive.ts', '!readHasEffectContradiction(r) && declaresClosedRead(tool, spine)', 'declaresClosedRead(tool, spine)'],
 ];
 
-test('reviewed Calendar and Task context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 109);
+test('reviewed Calendar, Task, email and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
+  assert.equal(incumbentSourcePaths.length, 110);
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);
   assert.equal(baseline.tools.size, 29);

@@ -1,3 +1,4 @@
+import { decideContentRead } from "../inbox-intelligence/policy.ts";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../comms-provider-boundary.ts";
 // INT-328 — the comms.email_send branch of the REAL send-message handler.
 //
@@ -49,6 +50,10 @@ interface Options {
   // The message row's own tenant (null = a row with no resolvable workspace) and the contact row's.
   messageTenant?: string | null;
   clientTenant?: string;
+  mailboxClass?: unknown;
+  mailboxOwner?: unknown;
+  freshMailboxOwner?: unknown;
+  freshProvider?: string;
 }
 
 function setup(options: Options = {}) {
@@ -60,6 +65,7 @@ function setup(options: Options = {}) {
   // The database binding as finalize_comms_email_send sees it (claim moves it to dispatching).
   const db = { state: options.dbState ?? (b.state as string), attempts: Number(b.attempts ?? 0) };
   const timeouts: number[] = [];
+  let connectorReads = 0;
   const adapters: Record<string, { send: (...a: unknown[]) => Promise<unknown> }> = {};
   let handler: (req: Request) => Promise<Response>;
 
@@ -80,7 +86,8 @@ function setup(options: Options = {}) {
         }
         if (table === "clients") return { data: { tenant_id: options.clientTenant ?? TENANT, emails: options.contactEmails ?? ["Client@Example.test"] }, error: null };
         if (table === "channel_connectors") {
-          return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", provider: options.provider ?? "resend", from_address: "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+          connectorReads++;
+          return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: options.mailboxClass ?? "shared_support", mailbox_owner_user_id: connectorReads > 1 && options.freshMailboxOwner !== undefined ? options.freshMailboxOwner : options.mailboxOwner ?? null, provider: connectorReads > 1 && options.freshProvider ? options.freshProvider : options.provider ?? "resend", from_address: "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         }
         if (table === "email_unsubscribe_tokens") return { data: null, error: null };
         return { data: null, error: null };
@@ -134,7 +141,7 @@ function setup(options: Options = {}) {
     });
   };
 
-  const scope = { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "RESEND_API_KEY" ? RESEND_KEY : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured") },
@@ -469,4 +476,38 @@ it.each([{providerAllowed:false},{boundaryError:true}])('provider floor refuses 
  expect(r.body.outcome).toBe('refused');expect(s.fetchCalls).toHaveLength(0);
  expect(s.names()).not.toContain('claim_comms_email_send');
  expect(s.finalizeCalls()).toEqual([expect.objectContaining({_outcome:'refused',_reason:'comms_provider_execution_disabled'})]);
+});
+
+describe("canonical personal sender at final transport", () => {
+  it("uses the original stored actor, permits their own mailbox and retains the receipt", async () => {
+    const s = setup({ mailboxClass: "personal", mailboxOwner: ACTOR });
+    expect((await s.request()).body.outcome).toBe("provider_accepted");
+    expect(s.fetchCalls).toHaveLength(1);
+    expect(s.finalizeCalls()).toEqual([expect.objectContaining({ _outcome: "provider_accepted" })]);
+  });
+  it.each([OTHER, null])("refuses a private sender not owned by that actor before claim/provider: %s", async mailboxOwner => {
+    const s = setup({ mailboxClass: "personal", mailboxOwner });
+    expect((await s.request()).body.outcome).toBe("refused");
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.names()).not.toContain("claim_comms_email_send");
+  });
+  it("never substitutes the service transport for a missing or different original actor", async () => {
+    for (const actor_user_id of [undefined, null, OTHER]) {
+      const s = setup({ mailboxClass: "personal", mailboxOwner: ACTOR, bindingOverride: { actor_user_id } });
+      expect((await s.request()).body.outcome).not.toBe("provider_accepted");
+      expect(s.fetchCalls).toHaveLength(0);
+    }
+  });
+  it("refuses ownership drift after claim without a provider call or an unknown-send retry", async () => {
+    const s = setup({ mailboxClass: "personal", mailboxOwner: ACTOR, freshMailboxOwner: OTHER });
+    expect((await s.request()).body.outcome).toBe("failed");
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.names()).toContain("claim_comms_email_send");
+    expect(s.finalizeCalls()).toEqual([expect.objectContaining({ _outcome: "failed", _claimed_attempt: 1 })]);
+  });
+  it("keeps the approved connector provider during the final ownership recheck", async () => {
+    const s = setup({ mailboxClass: "personal", mailboxOwner: ACTOR, freshProvider: "gmail" });
+    expect((await s.request()).body.outcome).toBe("failed");
+    expect(s.fetchCalls).toHaveLength(0);
+  });
 });

@@ -112,7 +112,7 @@ Deno.serve(async req => {
   if (emailAction) {
     const { data: invoice, error } = await admin.rpc("_sales_invoice_read", { _tenant:tenantId, _invoice:command.invoice_id });
     if (error) return response(503, { ok:false,outcome:"refused",code:"INVOICE_READ_UNAVAILABLE" });
-    const readiness = await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,invoice,channel:command.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof command.connector_id === "string" ? command.connector_id : null }, key => Deno.env.get(key));
+    const readiness = await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,actorUserId:user.id,invoice,channel:command.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof command.connector_id === "string" ? command.connector_id : null }, key => Deno.env.get(key));
     if (!readiness.eligible) return response(422, { ok:false,outcome:"needs_setup",code:"INVOICE_DELIVERY_NOT_READY",readiness });
   }
   if (preparedRecovery || body.approved_fingerprint === undefined) {
@@ -208,7 +208,7 @@ Deno.serve(async req => {
     };
     const result = await executeSalesInvoiceDelivery({ actorUserId: user.id, tenantId, operationId: args.operation_id, command: { action:decided.action,invoice_id: decided.invoice_id, expected_version: decided.expected_version, connector_id: typeof decided.connector_id === "string" ? decided.connector_id : null }, governance }, {
       stillCurrent, hash: sha256Hex, readOutcome,
-      readiness: invoice => readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,invoice,channel:decided.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof decided.connector_id === "string" ? decided.connector_id : null }, key => Deno.env.get(key)),
+      readiness: invoice => readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,actorUserId:user.id,invoice,channel:decided.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof decided.connector_id === "string" ? decided.connector_id : null }, key => Deno.env.get(key)),
       readInvoice: async () => { const { data, error } = await admin.rpc("_sales_invoice_read", { _tenant: tenantId, _invoice: decided.invoice_id }); if (error) throw new Error("invoice_read_unavailable"); return data; },
       prepare: async prepared => { const { data, error } = await admin.rpc(decided.action === "invoice.sms_send" ? "prepare_sales_invoice_channel_delivery" : "prepare_sales_invoice_delivery", prepared); if (error) throw new Error("delivery_prepare_unavailable"); return data; },
       send: async prepared => {

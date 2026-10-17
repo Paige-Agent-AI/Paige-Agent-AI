@@ -20,8 +20,10 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { strict as assert } from 'node:assert';
+import { installPersonalSenderProof, registerPersonalSenderCases } from './comms-email-personal-sender-cases.mjs';
 
 const [binary, port, user, expectedDirectory] = process.argv.slice(2);
+const personalSender = process.argv.includes('--personal-sender') || process.argv.includes('--personal-sender-baseline');
 if (!binary || !/^\d+$/.test(port ?? '') || !user || !expectedDirectory) throw new Error('Usage: node scripts/sql/comms-email-send-concurrency-proof.mjs <psql> <local-port> <local-user> <verified-disposable-data-directory>');
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const migrationPath = process.env.COMMS_EMAIL_MIGRATION_OVERRIDE
@@ -55,7 +57,7 @@ function session(sql, appName = 'comms_email_race') {
 function parse(run) {
   const line = run.stdout.split(/\r?\n/).find(l => l.startsWith('RESULT '));
   const error = /ERROR:\s+([0-9A-Z]{5}): ([^\n]*)/.exec(run.stderr);
-  return { ...run, result: line ? JSON.parse(line.slice(7)) : undefined, sqlstate: error?.[1], message: error?.[2] };
+  return { ...run, result: line ? JSON.parse(line.slice(7)) : undefined, sqlstate: error?.[1], message: error?.[2]?.replace(/\r$/, '') };
 }
 async function waitFor(sql, expected, label, timeoutMs = 15000) {
   const until = Date.now() + timeoutMs;
@@ -285,6 +287,7 @@ try {
   console.log(`Migration under test: ${migrationPath}${process.env.COMMS_EMAIL_MIGRATION_OVERRIDE ? '   (OVERRIDE — scratch mutant, not the repo migration)' : ''}`);
   sync(database, readFileSync(new URL('comms-email-send-concurrency-schema.sql', import.meta.url), 'utf8'));
   sync(database, readFileSync(migrationPath, 'utf8'));
+  if (personalSender) installPersonalSenderProof({ sql: source => sync(database, source), baseline: process.argv.includes('--personal-sender-baseline') });
   // Proof instrument (NOT a stub of anything in prod): records every binding write so a double
   // admission is visible even when both writers store the same attempts value.
   sync(database, `
@@ -308,6 +311,7 @@ INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_prim
   (${q(tA)},${q(cA)},'email','Client.A@Example.invalid',true),(${q(tB)},${q(cB)},'email','client.b@example.invalid',true);
 INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,from_address,status,active) VALUES
   (${q(kA)},${q(tA)},'email','resend','Owner@A.example.invalid','active',true),(${q(kB)},${q(tB)},'email','resend','owner@b.example.invalid','active',true);`);
+  if (personalSender) registerPersonalSenderCases({ scenario, sql: source => sync(database, source), asService, prepareCall, selectResult, session, waitFor, q, A, op });
   for (const { name, fn } of scenarios) {
     try { await fn(); console.log(`PASS ${name}`); }
     catch (error) { failed += 1; console.log(`FAIL ${name}\n     ${String(error.message).split('\n')[0]}`); }

@@ -7,7 +7,7 @@
   "operationProof": null,
   "deliveryProof": null,
   "catalogueProof": {
-    "file": "supabase/migrations/20271108235000_e09_invitation_tool_catalogue.sql",
+    "file": "supabase/migrations/20271109010000_e09_invitation_tool_catalogue.sql",
     "migrationSHA256": "f44f3c00f6b249569a80390853d86e99763267f410b1a28a1c61b36da6416f0e",
     "incumbentRows": 192,
     "resolver": "synthetic current-user membership resolver; actual catalogue bodies and authority checks",

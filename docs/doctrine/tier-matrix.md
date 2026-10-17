@@ -4684,3 +4684,25 @@ Styles are scoped to `.pa-site` so no tenant or operator surface changes.
 |---|---|---|---|---|---|---|---|
 | Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **LIVE** — signed-out production drive 2026-09-29 (evidence record, Post-deploy proof) | LIVE on paigeagent.ai, first live in `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` (2026-09-29); carried by every later production deploy of `main` |
 
+
+### Customer Portal — Messages and Contact your team, `/app/messages` + the owner inbox Portal channel (E09 Slice 1, 2026-10-17)
+
+One conversation per customer relationship, held in the canonical inbox (`public.messages`,
+`channel_type = 'portal'`). The customer writes through `client_portal_send_message`; a business
+admin replies through `comms_portal_reply`; both are SECURITY DEFINER with in-body scope (§59). No
+provider is contacted on either side. Owner decision (2026-10-17): a customer's help comes from
+the business they are a customer of, so `/app/support` (Paige's platform desk and feature board)
+redirects customers to `/app/messages?topic=help`. Staff and owners without a customer
+relationship keep the platform desk.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Read the portal thread in the inbox | Platform-owner read (existing `messages_select`) | Its own workspace only, as a tenant admin there | ✓ owner/admin of the current workspace | ✓ owner/admin of the current workspace | — | — | PROOF OWED |
+| Reply on the Portal channel (`comms_portal_reply`) | Refused unless it is an admin of the current workspace (no cross-tenant reply) | Only inside the current workspace it administers | ✓ admin; staff without admin are refused | ✓ admin | — | 42501 | PROOF OWED |
+| Customer conversation `/app/messages` (`client_portal_conversation`, `client_portal_send_message`) | — | — | — | — | ✓ own relationship only; more than one relationship is refused and explained (business choice is Slice 8) | 42501 | PROOF OWED |
+| Contact your team (`?topic=help`), replacing platform Support for customers | — | — | — | — | ✓ lands in the business inbox titled "Help request" | — | PROOF OWED |
+| Platform Support desk and feature board `/app/support` | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | Redirected to Contact your team | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_messages.sql`) covers cross-business, staff-member and
+anonymous refusals, and the multi-relationship refusal. Authenticated customer and owner
+send/read/reply on production are owed; the row becomes LIVE only after that drive.

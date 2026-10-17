@@ -214,11 +214,13 @@ SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'config'->'
  'Saved greeting A','frame reload reads the saved canonical portal configuration');
 SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000002')->'brand'->>'tenant_id',
  'e0921000-0000-0000-0000-000000000002','another subject receives its own business frame');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000002')->'config'->'welcome'->>'headline',
+ 'Saved greeting B','another subject receives its own saved business configuration');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(
  pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')) k),
  ARRAY['actor_id','brand','config','profile']::text[],'frame has the closed top-level contract');
 SELECT ok(position('PRIVATE CRM NOTE' in pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')::text)=0
- AND position('Foreign greeting B' in pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')::text)=0,
+ AND position('Saved greeting B' in pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')::text)=0,
  'frame excludes private CRM notes and the other business configuration');
 SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000099'),NULL::jsonb,
  'unlinked authenticated subject receives no customer frame');

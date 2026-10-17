@@ -14,7 +14,7 @@ import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye
 import type { LucideIcon } from "lucide-react";
 import { catalogRoutableItems, applyPortalOverlay } from "@/lib/portal/moduleNav";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
 import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,29 +190,30 @@ export function AppNav({ user }: AppNavProps) {
 
   if (isMobile) {
     return (
-      <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground border-b border-border">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground border-b border-border">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-light">
+            <Button aria-label="Open navigation" variant="ghost" size="icon" className="h-[44px] w-[44px] text-primary-foreground hover:bg-primary-light">
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="bg-primary text-primary-foreground w-64 p-0">
-            <div className="p-4 border-b border-sidebar-border">
+          <SheetContent side="left" aria-describedby={undefined} className="bg-primary text-primary-foreground w-64 max-w-[calc(100vw-2rem)] max-h-[100dvh] p-0 flex flex-col motion-reduce:animate-none motion-reduce:transition-none [&>button]:h-[44px] [&>button]:w-[44px] [&>button]:top-1 [&>button]:right-1 [&>button]:flex [&>button]:items-center [&>button]:justify-center">
+            <SheetTitle className="sr-only">Customer navigation</SheetTitle>
+            <div className="p-4 pr-[52px] border-b border-sidebar-border">
               <PortalLogo
                 brand={brand}
                 loading={brandLoading}
-                imgClassName="h-8 w-auto max-w-[200px] object-contain"
+                imgClassName="h-8 w-auto max-w-full object-contain"
                 skeletonClassName="h-8 w-28"
-                nameClassName="font-bold text-lg truncate max-w-[180px]"
+                nameClassName="font-bold text-lg truncate min-w-0"
               />
             </div>
-            <nav className="p-2 space-y-1">
+            <nav aria-label="Customer navigation" className="p-2 pb-[max(8px,env(safe-area-inset-bottom))] space-y-1 flex-1 min-h-0 overflow-y-auto">
               {navItems.map((item) => (
                 <button
                   key={item.href}
                   onClick={() => { navigate(item.href); setMobileMenuOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
+                  className={`w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] transition-colors ${
                     location.pathname === item.href
                       ? "bg-sidebar-accent text-accent"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -224,7 +225,7 @@ export function AppNav({ user }: AppNavProps) {
               ))}
               <button
                 onClick={() => { navigate("/app/support"); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
                 <LifeBuoy className="w-4 h-4" />
                 <span className="flex-1 text-left">Support</span>
@@ -237,7 +238,7 @@ export function AppNav({ user }: AppNavProps) {
               {!brandLoading && brand?.tenant_id && (
                 <button
                   onClick={() => { navigate("/app/settings?view=client-account"); setMobileMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
                 >
                   <UserIcon className="w-4 h-4" />
                   Account
@@ -245,7 +246,7 @@ export function AppNav({ user }: AppNavProps) {
               )}
               <button
                 onClick={() => { navigate("/app/settings"); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
               >
                 <Settings className="w-4 h-4" />
                 Settings
@@ -254,7 +255,7 @@ export function AppNav({ user }: AppNavProps) {
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-red-400 hover:bg-red-500/10 disabled:opacity-60"
+                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-red-400 hover:bg-red-500/10 disabled:opacity-60"
               >
                 <LogOut className="w-4 h-4" />
                 {isSigningOut ? "Signing Out..." : "Sign Out"}
@@ -274,7 +275,7 @@ export function AppNav({ user }: AppNavProps) {
           </span>
         )}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 [&_button]:min-h-[44px] [&_button]:min-w-[44px]">
           <NotificationBell />
         </div>
       </div>
@@ -282,8 +283,8 @@ export function AppNav({ user }: AppNavProps) {
   }
 
   return (
-    <div className="flex items-center justify-between px-6 py-2 bg-primary text-primary-foreground border-b border-sidebar-border">
-      <div className="flex items-center gap-8">
+    <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-2 bg-primary text-primary-foreground border-b border-sidebar-border">
+      <div className="flex flex-wrap min-w-0 max-w-full items-center gap-x-4 gap-y-2">
         <Link to="/app" className="flex items-center gap-2">
           <PortalLogo
             brand={brand}
@@ -292,12 +293,12 @@ export function AppNav({ user }: AppNavProps) {
             skeletonClassName="h-7 w-24"
           />
         </Link>
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap min-w-0 items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                 location.pathname === item.href
                   ? "bg-sidebar-accent text-accent font-medium"
                   : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50"
@@ -310,7 +311,7 @@ export function AppNav({ user }: AppNavProps) {
         </nav>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap min-w-0 items-center gap-3 ml-auto">
         <Badge variant="outline" className="text-[10px] font-medium capitalize border-accent/30 text-accent hidden sm:inline-flex">
           {userRoleLabel}
         </Badge>

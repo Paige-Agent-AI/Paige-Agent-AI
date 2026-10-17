@@ -33,6 +33,7 @@ import { UpcomingWidget } from "@/components/planning/UpcomingWidget";
 import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
+import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -62,6 +63,7 @@ function routeToFeatureName(pathname: string): string | null {
 const DEV_MODE = false; // Require authentication
 
 const AppShell = () => {
+  const viewportHeight = useClientViewportHeight();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(!DEV_MODE);
@@ -273,21 +275,21 @@ const AppShell = () => {
       <AdminViewBanner />
       <SessionTimeoutWarning open={showWarning} onStaySignedIn={staySignedIn} />
       <PushNotificationPrompt />
-      <div className="h-dvh flex flex-col bg-background overflow-x-hidden">
+      <div style={viewportHeight ? {height: viewportHeight} : undefined} className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden">
         <AppNav user={activeUser} />
-        <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
           <ResizablePanel
             defaultSize={40}
             minSize={30}
             maxSize={60}
-            className={location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}
+            className={`min-h-0 ${location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
           >
             <PaigeChat user={scopedUser} session={session} />
           </ResizablePanel>
           <ResizableHandle withHandle className="max-md:hidden" />
           <ResizablePanel
             defaultSize={60}
-            className={location.pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}
+            className={`min-h-0 ${location.pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}`}
           >
             <div className="h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6">
               {location.pathname === "/app" ? (

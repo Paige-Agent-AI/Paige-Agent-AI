@@ -4,7 +4,7 @@
 //
 // It exposes a tiny external store (subscribe/getSnapshot) so every MessageAudioButton reflects the
 // same live state via useSyncExternalStore. It owns NO React state itself and NO network code — the
-// caller passes a `fetchAudio` that returns the mp3 Blob (paige-tts streams it), keeping this module
+// caller passes a `fetchAudio` that returns the authenticated Response or legacy Blob, keeping this module
 // framework-agnostic and the auth/URL concerns at the call site.
 //
 // HONEST degrade (§13): a `tts_not_configured` code from the endpoint flips a workspace-level
@@ -31,6 +31,21 @@ export interface TtsFetchError {
 }
 
 type Listener = () => void;
+export type MessageAudio = Blob | Response;
+
+/** Register before attaching/appending. Every wait owns cleanup and a bounded abort path. */
+function mediaUpdate(target: EventTarget, event: string, signal: AbortSignal, run?: () => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => { clearTimeout(timer); target.removeEventListener(event, done); target.removeEventListener("error", failed); signal.removeEventListener("abort", aborted); };
+    const done = () => { cleanup(); resolve(); };
+    const failed = () => { cleanup(); reject(new Error("Voice playback could not be decoded.")); };
+    const aborted = () => { cleanup(); reject(new DOMException("Playback stopped", "AbortError")); };
+    const timer = setTimeout(failed, 10_000);
+    target.addEventListener(event, done, { once: true }); target.addEventListener("error", failed, { once: true }); signal.addEventListener("abort", aborted, { once: true });
+    if (signal.aborted) { aborted(); return; }
+    try { run?.(); } catch (error) { cleanup(); reject(error); }
+  });
+}
 
 class MessageTtsController {
   private audio: HTMLAudioElement | null = null;
@@ -39,6 +54,10 @@ class MessageTtsController {
   private listeners = new Set<Listener>();
   /** Monotonic token so a stale in-flight fetch can't resurrect playback after a newer start/stop. */
   private token = 0;
+  private playToken = 0;
+  private held = false;
+  private request: AbortController | null = null;
+  private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
   subscribe = (cb: Listener): (() => void) => {
     this.listeners.add(cb);
@@ -51,20 +70,22 @@ class MessageTtsController {
   getAudioElement = (): HTMLAudioElement | null => this.audio;
 
   pause = () => {
-    if (this.audio && (this.snapshot.status === "playing" || this.snapshot.status === "paused")) {
-      this.token++;
-      this.audio.pause();
-      this.emit({ status: "paused" });
-    }
+    if (!this.snapshot.activeId) return;
+    this.held = true; this.playToken++;
+    this.audio?.pause();
+    this.emit({ status: "paused" });
   };
 
   resume = async () => {
-    if (!this.audio || this.snapshot.status !== "paused") return;
-    const myToken = this.token;
+    if (this.snapshot.status !== "paused") return;
+    this.held = false;
+    if (!this.audio || !this.objectUrl) { this.emit({ status: "loading" }); return; }
+    const myToken = this.token, playToken = ++this.playToken;
+    this.emit({ status: "loading" });
     try {
       await this.audio.play();
-      if (myToken === this.token) this.emit({ status: "playing" });
-    } catch { if (myToken === this.token) this.stop(); }
+      if (myToken === this.token && playToken === this.playToken && !this.held) this.emit({ status: "playing" });
+    } catch { if (myToken === this.token && playToken === this.playToken && !this.held) this.stop(); }
   };
 
   private emit(next: Partial<TtsSnapshot>) {
@@ -73,10 +94,12 @@ class MessageTtsController {
   }
 
   private ensureAudio(): HTMLAudioElement {
-    if (this.audio) return this.audio;
-    const a = new Audio();
-    a.onended = () => this.reset();
-    a.onerror = () => this.reset();
+    const a = this.audio ?? new Audio();
+    const owner = this.token;
+    a.onended = () => { if (owner === this.token) this.stop(); };
+    a.onerror = () => { if (owner === this.token) this.stop(); };
+    a.onwaiting = () => { if (owner === this.token && this.snapshot.activeId && !this.held) this.emit({ status: "loading" }); };
+    a.onplaying = () => { if (owner === this.token && this.snapshot.activeId && !this.held) this.emit({ status: "playing" }); };
     this.audio = a;
     return a;
   }
@@ -95,52 +118,97 @@ class MessageTtsController {
 
   /** Stop any current playback/loading and clear state. */
   stop = () => {
-    this.token++;
+    this.token++; this.playToken++; this.held = false;
+    this.request?.abort(); this.request = null;
+    void this.reader?.cancel().catch(() => undefined); this.reader = null;
     if (this.audio) {
-      try { this.audio.pause(); this.audio.currentTime = 0; } catch { /* noop */ }
+      this.audio.pause();
+      try { this.audio.currentTime = 0; } catch { /* no seekable range yet */ }
+      // Empty-string src starts a failing document request in real browsers and can
+      // deliver a late error into the next owner. Remove/detach the media instead.
+      this.audio.removeAttribute?.("src");
+      this.audio.load?.();
     }
     this.reset();
   };
 
-  /**
-   * Toggle-aware play: if `id` is already the active (loading/playing) message, stop it. Otherwise
-   * stop whatever is current, mark `id` loading, run `fetchAudio` to get the mp3 Blob, then play it.
-   * A `needsConfig` error flips the workspace flag (all buttons disable); any other error stops and
-   * calls `onError` so the caller can toast.
-   */
+  private async playBlob(blob: Blob, myToken: number): Promise<void> {
+    if (myToken !== this.token) return;
+    if (!blob.size) throw new Error("Voice playback returned no audio.");
+    this.objectUrl = URL.createObjectURL(blob);
+    const audio = this.ensureAudio(); audio.src = this.objectUrl;
+    if (this.held) return;
+    const playToken = ++this.playToken;
+    await audio.play();
+    // A late play completion must NEVER stop a newer message on the shared element.
+    if (myToken === this.token && playToken === this.playToken && !this.held) this.emit({ status: "playing" });
+  }
+
+  private async playResponse(response: Response, myToken: number, signal: AbortSignal, onError?: (e: TtsFetchError) => void): Promise<void> {
+    if (!response.ok || !response.body || !/^audio\/(mpeg|mp3)(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw new Error("Voice playback returned an unsupported response.");
+    let progressive = false;
+    try { progressive = typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg"); } catch { /* use same-response buffered fallback */ }
+    if (!progressive) { await this.playBlob(await response.blob(), myToken); return; }
+    const reader = response.body.getReader(); this.reader = reader;
+    try {
+      const source = new MediaSource();
+      const opened = mediaUpdate(source, "sourceopen", signal);
+      this.objectUrl = URL.createObjectURL(source);
+      const audio = this.ensureAudio(); audio.src = this.objectUrl;
+      await opened;
+      if (myToken !== this.token || signal.aborted) return;
+      const buffer = source.addSourceBuffer("audio/mpeg");
+      let bytes = 0, requestedPlay = false;
+      while (myToken === this.token && !signal.aborted) {
+        const chunk = await reader.read();
+        if (myToken !== this.token || signal.aborted) return;
+        if (chunk.done) break;
+        if (!chunk.value.length) continue;
+        bytes += chunk.value.length;
+        await mediaUpdate(buffer, "updateend", signal, () => buffer.appendBuffer(chunk.value.slice().buffer));
+        if (!requestedPlay && !this.held && myToken === this.token) {
+          requestedPlay = true;
+          const playToken = ++this.playToken;
+          // Do not await play here: the decoder may need another network chunk to start.
+          void audio.play().then(() => {
+            if (myToken === this.token && playToken === this.playToken && !this.held) this.emit({ status: "playing" });
+          }).catch(error => {
+            if (myToken !== this.token || playToken !== this.playToken || this.held) return;
+            this.stop(); onError?.(error as TtsFetchError);
+          });
+        }
+      }
+      if (myToken !== this.token || signal.aborted) return;
+      if (!bytes) throw new Error("Voice playback returned no audio.");
+      if (source.readyState === "open") source.endOfStream();
+    } finally {
+      reader.releaseLock();
+      if (this.reader === reader) this.reader = null;
+    }
+  }
+
+  /** One explicit request and one output owner; unsupported browsers reuse the same body. */
   toggle = async (
     id: string,
-    fetchAudio: () => Promise<Blob>,
+    fetchAudio: (signal: AbortSignal) => Promise<MessageAudio>,
     onError?: (e: TtsFetchError) => void,
   ): Promise<void> => {
-    if (this.snapshot.activeId === id && this.snapshot.status === "paused") {
-      await this.resume();
-      return;
-    }
-    if (this.snapshot.activeId === id && this.snapshot.status !== "idle") {
-      this.stop();
-      return;
-    }
-    // Starting a new one always stops the prior — no overlapping voices.
+    if (this.snapshot.activeId === id && this.snapshot.status === "paused") { await this.resume(); return; }
+    if (this.snapshot.activeId === id && this.snapshot.status !== "idle") { this.stop(); return; }
     this.stop();
     const myToken = ++this.token;
+    const request = new AbortController(); this.request = request;
     this.emit({ activeId: id, status: "loading" });
     try {
-      const blob = await fetchAudio();
-      if (myToken !== this.token) return; // superseded by a newer start/stop
-      const url = URL.createObjectURL(blob);
-      this.revoke();
-      this.objectUrl = url;
-      const a = this.ensureAudio();
-      a.src = url;
-      await a.play();
-      if (myToken !== this.token) { this.stop(); return; }
-      this.emit({ activeId: id, status: "playing" });
+      const audio = await fetchAudio(request.signal);
+      if (myToken !== this.token || request.signal.aborted) return;
+      if (audio instanceof Blob) await this.playBlob(audio, myToken);
+      else await this.playResponse(audio, myToken, request.signal, onError);
     } catch (e) {
       if (myToken !== this.token) return;
       const err = (e ?? {}) as TtsFetchError;
-      if (err.needsConfig) this.emit({ activeId: null, status: "idle", needsConfig: true });
-      else this.reset();
+      this.stop();
+      if (err.needsConfig) this.emit({ needsConfig: true });
       onError?.(err);
     }
   };

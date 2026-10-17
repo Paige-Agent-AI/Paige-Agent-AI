@@ -1,0 +1,11 @@
+export * from "./adapter";
+export const useClientChatContext=()=>({contextBlock:"CUSTOMER CONTEXT — Test Customer",isLoading:false,hasCreditData:false,hasCompletedIntake:true});
+export const useProfileSnapshot=()=>({snapshot:{},refresh:async()=>{}});
+const noop=()=>{};
+export const usePaigeMemory=()=>({extractDocumentSummary:noop,getSessionDocumentContext:()=>undefined,trackActivity:noop,generateSessionSummary:noop,resetSession:noop});
+export const useChatDocumentUpload=()=>({attachedDoc:null,isProcessingFile:false,isDragOver:false,fileInputRef:{current:null},handleFileSelect:noop,handleDragOver:noop,handleDragLeave:noop,handleDrop:noop,removeAttachment:noop,openFilePicker:noop,setAttachedDoc:noop});
+export const useToast=()=>({toast:noop});
+export const useDictation=()=>({supported:true,status:"idle",failure:null,notice:null,start:noop,stop:noop,cancel:noop});
+export const appendDictation=(value:string,text:string)=>value+text;
+export const useNotifications=()=>({notifications:[],unreadCount:0,markAsRead:noop,markAllAsRead:noop,deleteNotification:noop});
+export const useCreditAlerts=()=>({alerts:[],unreadCount:0,highestSeverity:null,markAsRead:noop,markAllAsRead:noop});

@@ -235,6 +235,8 @@ export function OwnerPortalDashboard({
     setEditorMounted(true);
     setEditing(true);
   };
+  const [assistantFocusRequest, setAssistantFocusRequest] = useState(0);
+  const configureAssistant = () => { setAssistantFocusRequest(value => value + 1); customize(); };
   const chooseClient = () => {
     setTab("Client access");
     requestAnimationFrame(() => searchRef.current?.focus());
@@ -794,16 +796,16 @@ export function OwnerPortalDashboard({
                   <div>
                     <h2>PAIGE for your clients</h2>
                     <p>
-                      Client actions use the permissions and approval policies
-                      of your business.
+                      Set your customer assistant’s name, guidance and human
+                      handoff. Internal business information stays private.
                     </p>
                   </div>
                   <button
                     className="opd-text-button"
                     type="button"
-                    onClick={openPaige}
+                    onClick={configureAssistant}
                   >
-                    Open PAIGE <ArrowRight />
+                    Configure assistant <ArrowRight />
                   </button>
                 </section>
               </section>
@@ -854,7 +856,7 @@ export function OwnerPortalDashboard({
               <Suspense
                 fallback={<Status title="Loading the experience editor…" />}
               >
-                <PortalStudio embedded onDirtyChange={setEditorDirty} />
+                <PortalStudio embedded onDirtyChange={setEditorDirty} assistantFocusRequest={assistantFocusRequest} />
               </Suspense>
             </PortalConfigurationGate>
           </div>

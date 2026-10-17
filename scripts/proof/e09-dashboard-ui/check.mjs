@@ -65,7 +65,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     assert.equal(await page.getByRole("button",{name:"Cancel",exact:true}).evaluate(node=>node===document.activeElement),true);
     if(width===390) await page.evaluate(()=>window.resourceProof.loseNextAcknowledgement());
     await share.click();
-    if(width===390){await page.getByRole("button",{name:"Check saved status",exact:true}).waitFor();assert(await page.getByRole("button",{name:"Back to client access",exact:true}).isDisabled());assert(await page.getByRole('tab',{name:'Overview',exact:true}).isDisabled());await page.getByRole("button",{name:"Check saved status",exact:true}).click();}
+    if(width===390){await page.getByRole("button",{name:"Check saved status",exact:true}).waitFor();assert(await page.getByRole("button",{name:"Back to client access",exact:true}).isDisabled());assert(await page.getByRole('tab',{name:'Overview',exact:true}).isDisabled());await page.getByRole("button",{name:"Check saved status",exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:path.join(output,`unknown-result-${width}-${height}-${theme}.png`),fullPage:true});await page.getByRole("button",{name:"Check saved status",exact:true}).click();}
     await page.getByText("Resource shared with this customer.",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Reload resources",exact:true}).click();
     await page.getByRole("button",{name:"Withdraw access",exact:true}).click();

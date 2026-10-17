@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ArrowLeft,BookOpen,Search} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -21,7 +21,7 @@ export function OwnerCustomerResources({tenantId,person,onBack,onPendingChange}:
  const exitBlocked=busy||model.outcome==='unknown';
  useBeforeUnloadGuard(exitBlocked);
  useClientAccountExit(exitBlocked,exitBlocked);
- useEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);
+ useLayoutEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);
  useEffect(()=>{
   if(!focus.current||model.phase==='loading'||model.outcome==='preparing'||busy)return;
   const target=focus.current;focus.current=null;

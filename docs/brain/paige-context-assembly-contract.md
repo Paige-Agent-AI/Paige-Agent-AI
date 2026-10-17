@@ -153,3 +153,7 @@ remain required follow-on contracts. See
 docs/evidence/ui-delivery/e09-customer-chat-audience.md for source, local proof
 and the separate hosted/authenticated acceptance boundary. This is a consumer
 candidate, not proof of complete customer Chat or Portal availability.
+
+The incumbent legacy paige-context-router remains a workspace persona: a resumed
+thread must have a caller-JWT-verified workspace audience before context loading,
+writes or model work. It cannot replay customer-private history into that persona.

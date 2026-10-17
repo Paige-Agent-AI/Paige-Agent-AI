@@ -55,6 +55,27 @@ async function drive(options: { tool?: string; args?: object; reply?: unknown; t
   return { result: JSON.parse(outputs[0].content), calls, reads, receipts, executionState };
 }
 describe('canonical Planning Chat execution and recovery', () => {
+  it.each([
+    [{}, false],
+    [{ include_cancelled: true }, true],
+    [{ status: 'cancelled' }, true],
+    [{ include_cancelled: 'true' }, false],
+  ])('routes explicit history without changing the native item-date option: %j', async (readArgs, included) => {
+    const { calls, receipts } = await drive({ tool: 'plan_list', args: readArgs,
+      reply: { data: { plans: [], loose_items: [] }, error: null } });
+    expect(calls.find(call => call.name === 'plan_list')?.args).toMatchObject({
+      p_tenant_id: tenant, p_include_cancelled: included, p_by_item_date: false,
+    });
+    expect(receipts).toHaveLength(0);
+  });
+  it('withholds a history response when the active workspace changed during the read', async () => {
+    const { result, receipts } = await drive({ tool: 'plan_list', args: { include_cancelled: true },
+      reply: { data: { plans: [], loose_items: [{ id: item, title: 'Do not expose this old scope' }] }, error: null },
+      resolvedTenant: id(99) });
+    expect(result.success).toBe(false);
+    expect(JSON.stringify(result)).not.toContain('Do not expose this old scope');
+    expect(receipts).toHaveLength(0);
+  });
   it.each(['request', 'prior-turn', 'saturated'] as const)('reports a %s reconciliation-blocked successor as never run', async heldBy => {
     if (!reconciliationGuard) throw new Error('Canonical reconciliation guard missing');
     const stateName = reconciliationGuard.expression.getText(ast).includes('requestExecutionState') ? 'requestExecutionState' : 'planningExecutionState';

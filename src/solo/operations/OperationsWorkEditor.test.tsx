@@ -21,6 +21,10 @@ async function status(value: string) {
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
 async function requestSave() { await act(async () => container.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))); }
+async function date(value:string) {
+  const input=container.querySelector<HTMLInputElement>('input[type="datetime-local"]')!;
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value);input.dispatchEvent(new Event("input",{bubbles:true}));});
+}
 async function save() {
   await requestSave();
   const confirm = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')).find(button => button.textContent === "Confirm change");
@@ -54,6 +58,52 @@ it("requires matching canonical readback after an acknowledgement", async () => 
   expect(container.textContent).not.toContain("Saved and confirmed");
   await render({ ...item, status: "done" }, "assignee", refresh);
   expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("reschedules an active reminder through remindAt and confirms only its canonical reminder time",async()=>{
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  const refresh=vi.fn().mockResolvedValue(undefined);mock.submit.mockResolvedValue({kind:"acknowledged"});
+  await render(reminder,"creator",refresh);
+  expect(container.textContent).toContain("New reminder time");expect(container.textContent).not.toContain("New due date and time");
+  await date("2099-02-01T09:30");await save();
+  const requested=new Date("2099-02-01T09:30").toISOString();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({expectedUpdatedAt:item.updated_at}),{remindAt:requested});
+  expect(container.textContent).not.toContain("Saved and confirmed");
+  await render({...reminder,remind_at:requested,updated_at:"2026-10-10T12:01:00Z"},"creator",refresh);
+  expect(container.textContent).toContain("Saved and confirmed in current work");
+});
+it("never confirms an active reminder when only due_at changed",async()=>{
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  mock.submit.mockResolvedValue({kind:"acknowledged"});await render(reminder,"creator");await date("2099-02-01T09:30");await save();
+  await render({...reminder,due_at:new Date("2099-02-01T09:30").toISOString(),updated_at:"2026-10-10T12:01:00Z"},"creator");
+  expect(container.textContent).toContain("Current work differs");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it("holds an uncertain active reschedule and requires read-only review without retry",async()=>{
+  mock.submit.mockResolvedValue({kind:"uncertain",message:"Reminder result unconfirmed"});
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  const refresh=vi.fn().mockResolvedValue(undefined);await render(reminder,"creator",refresh);await date("2099-02-01T09:30");await save();await save();
+  expect(mock.submit).toHaveBeenCalledOnce();expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  const review=Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(button=>button.textContent==="Refresh and review")!;
+  await act(async()=>review.click());await render({...reminder,remind_at:new Date("2099-02-01T09:30").toISOString(),updated_at:"2026-10-10T12:01:00Z"},"creator",refresh);
+  expect(mock.submit).toHaveBeenCalledOnce();expect(container.textContent).toContain("Current work refreshed. Review");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it.each([{tenant_id:"foreign-tenant"},{id:"foreign-item"},{remind_at:"invalid"}])("refuses a foreign or unavailable reminder readback (%o)",async override=>{
+  mock.submit.mockResolvedValue({kind:"acknowledged"});const reminder={...item,item_type:"reminder" as const,priority:"normal" as const,remind_at:"2099-01-01T13:00:00Z"};
+  await render(reminder,"creator");await date("2099-02-01T09:30");await save();
+  await render({...reminder,remind_at:new Date("2099-02-01T09:30").toISOString(),...override},"creator");
+  expect(container.textContent).toContain("Current work differs");expect(container.textContent).not.toContain("Saved and confirmed");
+});
+it("refuses a reminder time combined with another edit and never offers terminal rescheduling",async()=>{
+  mock.submit.mockResolvedValue({kind:"uncertain",message:"Unexpected old route"});
+  const reminder={...item,item_type:"reminder" as const,priority:"normal" as const};
+  await render(reminder,"creator");await date("2099-02-01T09:30");
+  const priority=container.querySelector<HTMLSelectElement>('select[aria-label="Priority"]')!;
+  await act(async()=>{priority.value="high";priority.dispatchEvent(new Event("change",{bubbles:true}));});
+  await requestSave();expect(mock.submit).not.toHaveBeenCalled();expect(container.textContent).toContain("Review reminder rescheduling separately");
+  await render({...reminder,status:"done"},"creator");expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
+});
+it.each(["task","milestone"] as const)("retains %s dueAt editing",async itemType=>{
+  mock.submit.mockResolvedValue({kind:"acknowledged"});await render({...item,item_type:itemType},"creator");
+  await date("2099-02-01T09:30");await save();expect(mock.submit).toHaveBeenCalledWith(expect.anything(),{dueAt:new Date("2099-02-01T09:30").toISOString()});
 });
 it("keeps uncertain results from becoming successful saves or automatic retries", async () => {
   mock.submit.mockResolvedValue({ kind: "uncertain", message: "Result uncertain" });

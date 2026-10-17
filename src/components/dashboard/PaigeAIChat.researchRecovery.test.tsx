@@ -10,6 +10,9 @@ const port = vi.hoisted(() => ({
   rail: null as ChatRailApi | null,
   read: vi.fn(),
   loadTurns: vi.fn(),
+  requests: [] as Array<{ signal?: AbortSignal }>,
+  activeReads: 0,
+  peakReads: 0,
 }));
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: port.tenant }) }));
@@ -25,7 +28,37 @@ vi.mock("@/hooks/useChatDocumentUpload", () => ({ useChatDocumentUpload: () => (
   removeAttachment: vi.fn(), openFilePicker: vi.fn(), setAttachedDoc: vi.fn(),
 }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  rpc: (...args: unknown[]) => port.read(...args),
+  rpc: (...args: unknown[]) => {
+    const request: { signal?: AbortSignal } = {};
+    port.requests.push(request);
+    // PostgREST is a lazy thenable: abortSignal configures the same builder
+    // before awaiting it starts the transport. Abort settles the transport,
+    // even when the synthetic underlying response is resolved much later.
+    const builder = {
+      abortSignal: (signal: AbortSignal) => { request.signal = signal; return builder; },
+      then: (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => {
+        const response = new Promise((fulfill, fail) => {
+          const signal = request.signal;
+          let settled = false;
+          const finish = (value: unknown, error = false) => {
+            if (settled) return;
+            settled = true;
+            port.activeReads -= 1;
+            signal?.removeEventListener("abort", abort);
+            if (error) fail(value); else fulfill(value);
+          };
+          const abort = () => finish({ data: null, error: { message: "AbortError: request aborted" } });
+          port.activeReads += 1;
+          port.peakReads = Math.max(port.peakReads, port.activeReads);
+          if (signal?.aborted) { abort(); return; }
+          signal?.addEventListener("abort", abort, { once: true });
+          Promise.resolve().then(() => port.read(...args)).then(value => finish(value), error => finish(error, true));
+        });
+        return response.then(resolve, reject);
+      },
+    };
+    return builder;
+  },
   auth: { getSession: vi.fn(async () => ({ data: { session: { access_token: "synthetic-session" } } })) },
 } }));
 vi.mock("@/hooks/usePaigeThreads", () => ({ usePaigeThreads: () => ({
@@ -67,6 +100,9 @@ describe("ordinary Chat history restores existing Research through its governed 
     port.tenant = `test-tenant-${instance}`;
     port.actor = "test-owner-a";
     port.turns = [storedTurn()];
+    port.requests = [];
+    port.activeReads = 0;
+    port.peakReads = 0;
     port.read.mockReset().mockResolvedValue({ data: run(), error: null });
     port.loadTurns.mockReset().mockImplementation(async () => port.turns);
     vi.stubGlobal("fetch", vi.fn(async () => new Response(
@@ -313,6 +349,121 @@ describe("ordinary Chat history restores existing Research through its governed 
     unavailable();
     expect(host.textContent).not.toContain("Expired before timer");
     expect(port.read).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("actually aborts a hung transport while allowing deferred timeout state to settle", async () => {
+    vi.useFakeTimers();
+    const response = deferred<{ data: ReturnType<typeof run>; error: null }>();
+    port.read.mockReturnValue(response.promise);
+    await render();
+    expect(port.read).toHaveBeenCalledTimes(1);
+    await act(async () => { vi.advanceTimersByTime(8_001); await flush(); });
+    unavailable();
+    expect(port.requests[0].signal?.aborted).toBe(true);
+    expect(port.activeReads).toBe(0);
+    await act(async () => { response.resolve({ data: run("Late aborted finding"), error: null }); await flush(); });
+    unavailable();
+    expect(host.textContent).not.toContain("Late aborted finding");
+    expect(port.read).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates a long history and progresses its queue with at most four active reads", async () => {
+    const responses = Array.from({ length: 10 }, () => deferred<{ data: ReturnType<typeof run>; error: null }>());
+    port.turns = responses.map((_response, index) => storedTurn(true, `run-${index}`, `answer-${index}`));
+    port.turns.push(storedTurn(false, "run-0", "duplicate-answer"));
+    port.read.mockImplementation((_name: string, args: { _run_id: string }) => responses[Number(args._run_id.slice(4))].promise);
+    await render();
+    expect(port.read).toHaveBeenCalledTimes(4);
+    expect(port.requests).toHaveLength(4);
+    expect(port.requests.every(request => request.signal instanceof AbortSignal && !request.signal.aborted)).toBe(true);
+    expect(port.activeReads).toBe(4);
+    expect(cards()).toHaveLength(11);
+    for (let index = 0; index < responses.length; index += 1) {
+      await act(async () => { responses[index].resolve({ data: run(`Finding ${index}`, `run-${index}`), error: null }); await flush(); });
+      expect(port.read).toHaveBeenCalledTimes(Math.min(index + 5, 10));
+      expect(port.peakReads).toBe(4);
+    }
+    expect(port.activeReads).toBe(0);
+    expect(port.read.mock.calls.map(([_name, args]) => args._run_id)).toEqual(responses.map((_response, index) => `run-${index}`));
+    expect(cards().every(card => !card.textContent?.includes("Loading this run"))).toBe(true);
+    expect(cards()[0].querySelector(".dr-saved")).not.toBeNull();
+    expect(cards()[10].textContent).toContain("Finding 0");
+    expect(cards()[10].querySelector(".dr-saved")).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("aborts all four outstanding reads at expiry and settles queued references without starting them", async () => {
+    vi.useFakeTimers();
+    const responses = Array.from({ length: 9 }, () => deferred<{ data: ReturnType<typeof run>; error: null }>());
+    port.turns = responses.map((_response, index) => storedTurn(true, `run-${index}`, `answer-${index}`));
+    port.read.mockImplementation((_name: string, args: { _run_id: string }) => responses[Number(args._run_id.slice(4))].promise);
+    await render();
+    expect(port.read).toHaveBeenCalledTimes(4);
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_001); await flush(); });
+    expect(port.requests).toHaveLength(4);
+    expect(port.requests.every(request => request.signal?.aborted)).toBe(true);
+    expect(port.activeReads).toBe(0);
+    expect(cards()).toHaveLength(9);
+    expect(cards().every(card => card.textContent?.includes("Unavailable"))).toBe(true);
+    unavailable();
+    await act(async () => {
+      responses.forEach((response, index) => response.resolve({ data: run("Expired queued finding", `run-${index}`), error: null }));
+      await flush();
+      await vi.advanceTimersByTimeAsync(16_000);
+    });
+    unavailable();
+    expect(host.textContent).not.toContain("Expired queued finding");
+    expect(port.read).toHaveBeenCalledTimes(4);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(["thread", "tenant", "actor", "unmount"])("aborts outstanding reads and never starts the old queue after %s cancellation", async boundary => {
+    const responses = Array.from({ length: 8 }, () => deferred<{ data: ReturnType<typeof run>; error: null }>());
+    port.turns = responses.map((_response, index) => storedTurn(true, `run-${index}`, `answer-${index}`));
+    port.read.mockImplementation((_name: string, args: { _run_id: string }) => responses[Number(args._run_id.slice(4))].promise);
+    await render();
+    expect(port.read).toHaveBeenCalledTimes(4);
+    const oldRequests = [...port.requests];
+    port.turns = [];
+    if (boundary === "unmount") {
+      await act(async () => root.unmount());
+      root = createRoot(host);
+    } else {
+      if (boundary === "tenant") port.tenant = "test-tenant-other";
+      if (boundary === "actor") port.actor = "test-owner-other";
+      await render(boundary === "thread" ? "thread-b" : "thread-a");
+    }
+    expect(oldRequests).toHaveLength(4);
+    expect(oldRequests.every(request => request.signal?.aborted)).toBe(true);
+    expect(port.activeReads).toBe(0);
+    await act(async () => {
+      responses.forEach((response, index) => response.resolve({ data: run("Cancelled finding", `run-${index}`), error: null }));
+      await flush();
+    });
+    expect(port.requests).toHaveLength(4);
+    expect(port.read).toHaveBeenCalledTimes(4);
+    expect(host.textContent).not.toContain("Cancelled finding");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("aborts peers and leaves the queue untouched when wall-clock expiry precedes the timer callback", async () => {
+    vi.useFakeTimers();
+    const responses = Array.from({ length: 7 }, () => deferred<{ data: ReturnType<typeof run>; error: null }>());
+    port.turns = responses.map((_response, index) => storedTurn(true, `run-${index}`, `answer-${index}`));
+    port.read.mockImplementation((_name: string, args: { _run_id: string }) => responses[Number(args._run_id.slice(4))].promise);
+    await render();
+    expect(port.read).toHaveBeenCalledTimes(4);
+    vi.setSystemTime(Date.now() + 8_001);
+    await act(async () => { responses[0].resolve({ data: run("Missed deadline", "run-0"), error: null }); await flush(); });
+    expect(port.requests).toHaveLength(4);
+    expect(port.requests.every(request => request.signal?.aborted)).toBe(true);
+    expect(port.activeReads).toBe(0);
+    expect(cards().every(card => card.textContent?.includes("Unavailable"))).toBe(true);
+    unavailable();
+    expect(host.textContent).not.toContain("Missed deadline");
+    expect(port.read).toHaveBeenCalledTimes(4);
     expect(fetch).not.toHaveBeenCalled();
   });
 });

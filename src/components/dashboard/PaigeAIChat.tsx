@@ -1229,9 +1229,14 @@ const PaigeAIChatInner = ({
     }
     if (!pending.size) return;
     const deadline = Date.now() + RESEARCH_HISTORY_READ_BUDGET_MS;
+    const controller = new AbortController();
+    const queue = [...pending.keys()];
+    let next = 0;
     let cancelled = false;
+    let expired = false;
     const hydration = { scope, cancel: () => {
       cancelled = true;
+      controller.abort();
       window.clearTimeout(timer);
       if (researchHydrationRef.current === hydration) researchHydrationRef.current = null;
     } };
@@ -1254,21 +1259,32 @@ const PaigeAIChatInner = ({
       }));
       if (!pending.size) window.clearTimeout(timer);
     };
-    const timer = window.setTimeout(() => {
+    const expire = () => {
+      if (!current() || expired) return;
+      expired = true;
+      controller.abort();
+      // Keep this hydration current until React applies its queued fallbacks.
+      // Scope cancellation, unlike expiry, invalidates those state updates.
       for (const runId of pending.keys()) settle(runId, null);
-    }, RESEARCH_HISTORY_READ_BUDGET_MS);
-    for (const runId of pending.keys()) {
-      void (async () => {
+    };
+    const timer = window.setTimeout(expire, RESEARCH_HISTORY_READ_BUDGET_MS);
+    const readQueuedRuns = async () => {
+      while (next < queue.length && current() && !expired) {
+        if (Date.now() >= deadline) { expire(); return; }
+        const runId = queue[next++];
         try {
-          if (!current()) return;
-          if (Date.now() >= deadline) { settle(runId, null); return; }
-          const { data, error } = await supabase.rpc("get_workspace_research_run", { _run_id: runId });
-          if (current()) settle(runId, error ? null : readResearchHistoryRun(data, runId));
+          const { data, error } = await supabase.rpc("get_workspace_research_run", { _run_id: runId })
+            .abortSignal(controller.signal);
+          if (!current() || expired) return;
+          if (Date.now() >= deadline) { expire(); return; }
+          settle(runId, error ? null : readResearchHistoryRun(data, runId));
         } catch {
+          if (Date.now() >= deadline) { expire(); return; }
           settle(runId, null);
         }
-      })();
-    }
+      }
+    };
+    for (let worker = 0; worker < Math.min(4, queue.length); worker += 1) void readQueuedRuns();
   };
 
   const restorePendingApproval = async (

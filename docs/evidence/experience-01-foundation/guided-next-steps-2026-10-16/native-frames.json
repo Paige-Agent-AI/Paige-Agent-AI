@@ -1,0 +1,1371 @@
+{
+  "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+  "build": "candidate-guided-baa1e5-build.json",
+  "frames": [
+    {
+      "file": "guided-baa-320-light-opening.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "d14d6f4ecca668ad0792f09338d51de475987dd19c885051932c2cd1fd7899ea",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 425.9125061035156,
+          "height": 63.375,
+          "right": 288.4000015258789,
+          "width": 184,
+          "x": 104.4000015258789,
+          "y": 362.5375061035156
+        },
+        "height": 720,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 688,
+          "height": 44,
+          "right": 288.40000915527344,
+          "width": 44,
+          "x": 244.40000915527344,
+          "y": 644
+        },
+        "transcript": {
+          "bottom": 505.2000274658203,
+          "height": 165.46250915527344,
+          "right": 311.2000045776367,
+          "width": 229.6000061035156,
+          "x": 81.5999984741211,
+          "y": 339.7375183105469
+        },
+        "width": 320
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 900,
+          "width": 400,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 720,
+          "width": 320,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=first-use&theme=light&layout=full&context=first",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-320-light-unsent-first-action.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "9d4d5acce12e156f8684d7f5563e1aee88d3be190320ed642a19644c2efdfeb6",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Message PAIGE",
+        "greeting": {
+          "bottom": 400.3999938964844,
+          "height": 63.375,
+          "right": 278.80001068115234,
+          "width": 174.40000915527344,
+          "x": 104.4000015258789,
+          "y": 337.0249938964844
+        },
+        "height": 720,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 696.4000244140625,
+          "height": 44,
+          "right": 288.40000915527344,
+          "width": 44,
+          "x": 244.40000915527344,
+          "y": 652.4000244140625
+        },
+        "transcript": {
+          "bottom": 455.2000045776367,
+          "height": 82.57500457763672,
+          "right": 311.2000045776367,
+          "width": 229.6000061035156,
+          "x": 81.5999984741211,
+          "y": 372.625
+        },
+        "width": 320
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 900,
+          "width": 400,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 720,
+          "width": 320,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=first-use&theme=light&layout=full&context=first",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1366-light-open.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "e3d768c5d2dd8479a258c5e8338eef72ba5f45251882e9affe6b760a5229902a",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 411.6000061035156,
+          "height": 20,
+          "right": 862.6625061035156,
+          "width": 508.2625122070313,
+          "x": 354.3999938964844,
+          "y": 391.6000061035156
+        },
+        "height": 768,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 742.4000244140625,
+          "height": 40,
+          "right": 1322.800048828125,
+          "width": 40,
+          "x": 1282.800048828125,
+          "y": 702.4000244140625
+        },
+        "transcript": {
+          "bottom": 600.0000152587891,
+          "height": 249.1999969482422,
+          "right": 1349.6000061035156,
+          "width": 1036,
+          "x": 313.6000061035156,
+          "y": 350.8000183105469
+        },
+        "width": 1366
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 960,
+          "width": 1708,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 768,
+          "width": 1366,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366.4000244140625,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=first-use&theme=light&layout=full&context=first",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1366-dark-docked-open.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "924b8728b64ae963e68c34d63e594619065fc46af158cfb37a90943f61897ed3",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 391.5500183105469,
+          "height": 40,
+          "right": 1334.800048828125,
+          "width": 400.5750122070313,
+          "x": 934.2250366210938,
+          "y": 351.5500183105469
+        },
+        "height": 768,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 744.4000244140625,
+          "height": 44,
+          "right": 1334.800048828125,
+          "width": 44,
+          "x": 1290.800048828125,
+          "y": 700.4000244140625
+        },
+        "transcript": {
+          "bottom": 570,
+          "height": 241.25,
+          "right": 1357.6000061035156,
+          "width": 446.1750183105469,
+          "x": 911.4249877929688,
+          "y": 328.75
+        },
+        "width": 1366
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 960,
+          "width": 1708,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 768,
+          "width": 1366,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366.4000244140625,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1366-dark-closed.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "6f0e4ec3035faab0ea3998106577e0c6211fa90d8225b5cd1bd7610fc62676a5",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "height": 768,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "transcript": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "width": 1366
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 960,
+          "width": 1708,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 768,
+          "width": 1366,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1366.4000244140625,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1708,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1024-dark-closed.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "e2fd943a2f6ca036094ddc22b9c7b5624c0557c4ee9aedb291fcb5b39c6bf0e9",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "height": 768,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "transcript": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "width": 1024
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 960,
+          "width": 1280,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 768,
+          "width": 1024,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1024,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1024,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1280,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1280,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1024-dark-docked-open.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "3507f6a70983ec0068a120a861b546b077966a1d483296f431b16c8e6a6ec14e",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 391.5500183105469,
+          "height": 40,
+          "right": 992.4000244140624,
+          "width": 346,
+          "x": 646.4000244140625,
+          "y": 351.5500183105469
+        },
+        "height": 768,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 744.4000244140625,
+          "height": 44,
+          "right": 992.4000244140624,
+          "width": 44,
+          "x": 948.4000244140624,
+          "y": 700.4000244140625
+        },
+        "transcript": {
+          "bottom": 570,
+          "height": 241.25,
+          "right": 1015.2000427246094,
+          "width": 391.6000061035156,
+          "x": 623.6000366210938,
+          "y": 328.75
+        },
+        "width": 1024
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 960,
+          "width": 1280,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 768,
+          "width": 1024,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1024,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 768,
+          "clientWidth": 1024,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1280,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 960,
+          "clientWidth": 1280,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-900-dark-docked-open.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "2a6c59e4ba1b9caebcdfc61a308d8b1cabfe06deaca3876e5d94790cdd6fb41e",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 391.5500183105469,
+          "height": 40,
+          "right": 868.4000244140625,
+          "width": 346,
+          "x": 522.4000244140625,
+          "y": 351.5500183105469
+        },
+        "height": 1000,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 976.4000244140624,
+          "height": 44,
+          "right": 868.4000244140625,
+          "width": 44,
+          "x": 824.4000244140625,
+          "y": 932.4000244140624
+        },
+        "transcript": {
+          "bottom": 802,
+          "height": 473.25,
+          "right": 891.2000122070312,
+          "width": 391.6000061035156,
+          "x": 499.6000061035156,
+          "y": 328.75
+        },
+        "width": 900
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 1250,
+          "width": 1125,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 1000,
+          "width": 900,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-900-dark-closed.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "2a6c59e4ba1b9caebcdfc61a308d8b1cabfe06deaca3876e5d94790cdd6fb41e",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 391.5500183105469,
+          "height": 40,
+          "right": 868.4000244140625,
+          "width": 346,
+          "x": 522.4000244140625,
+          "y": 351.5500183105469
+        },
+        "height": 1000,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 976.4000244140624,
+          "height": 44,
+          "right": 868.4000244140625,
+          "width": 44,
+          "x": 824.4000244140625,
+          "y": 932.4000244140624
+        },
+        "transcript": {
+          "bottom": 802,
+          "height": 473.25,
+          "right": 891.2000122070312,
+          "width": 391.6000061035156,
+          "x": 499.6000061035156,
+          "y": 328.75
+        },
+        "width": 900
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 1250,
+          "width": 1125,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 1000,
+          "width": 900,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE",
+      "evidenceDisposition": "INVALID_STATE: panel remained open after workspace toggle; raw original preserved"
+    },
+    {
+      "file": "guided-baa-900-dark-verified-closed.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "3285c4a4a76c53e0cda9d572980cc094ec200392096eb2fd48413a29d7695242",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "height": 1000,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "transcript": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "width": 900
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 1250,
+          "width": 1125,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 1000,
+          "width": 900,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 1250,
+          "clientWidth": 1125,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1536-dark-closed.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "8f4055e84f08ba7437be0d9436d0b28cb8eaa1228a9fb46719f3c9e06d04f8ee",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "height": 770,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "transcript": {
+          "bottom": 0,
+          "height": 0,
+          "right": 0,
+          "width": 0,
+          "x": 0,
+          "y": 0
+        },
+        "width": 1536
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 963,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 770,
+          "width": 1536,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 770,
+          "clientWidth": 1536,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 770.4000244140625,
+          "clientWidth": 1536,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 963,
+          "clientWidth": 1920,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 963,
+          "clientWidth": 1920,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-1536-dark-docked-open.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "e0734d35568f0b6ee0a6798774e7c6cb23982b08743339b0d4d9ab33ea1bd337",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Direct PAIGE",
+        "greeting": {
+          "bottom": 391.5500183105469,
+          "height": 40,
+          "right": 1504.3999938964844,
+          "width": 458.2375183105469,
+          "x": 1046.1624755859375,
+          "y": 351.5500183105469
+        },
+        "height": 770,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 746.7999877929688,
+          "height": 44,
+          "right": 1504.4000244140625,
+          "width": 44,
+          "x": 1460.4000244140625,
+          "y": 702.7999877929688
+        },
+        "transcript": {
+          "bottom": 572.4000091552734,
+          "height": 243.65000915527344,
+          "right": 1527.1999816894531,
+          "width": 503.8374938964844,
+          "x": 1023.3624877929688,
+          "y": 328.75
+        },
+        "width": 1536
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 963,
+          "width": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 770,
+          "width": 1536,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 770,
+          "clientWidth": 1536,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 770.4000244140625,
+          "clientWidth": 1536,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 963,
+          "clientWidth": 1920,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 963,
+          "clientWidth": 1920,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=populated&theme=dark&layout=docked&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-320-dark-opening.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "2df539ba8db43edc4c50d8f2834baa5c3ced08800480488a2ee6d47caf18e405",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 425.9125061035156,
+          "height": 63.375,
+          "right": 288.4000015258789,
+          "width": 184,
+          "x": 104.4000015258789,
+          "y": 362.5375061035156
+        },
+        "height": 720,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 688,
+          "height": 44,
+          "right": 288.40000915527344,
+          "width": 44,
+          "x": 244.40000915527344,
+          "y": 644
+        },
+        "transcript": {
+          "bottom": 505.2000274658203,
+          "height": 165.46250915527344,
+          "right": 311.2000045776367,
+          "width": 229.6000061035156,
+          "x": 81.5999984741211,
+          "y": 339.7375183105469
+        },
+        "width": 320
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 900,
+          "width": 400,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 720,
+          "width": 320,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=first-use&theme=dark&layout=full&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-320-dark-keyboard.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "470f4460df006f571f70b4932bf079640ae9531889b5595d810ca54452006cdc",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 425.9125061035156,
+          "height": 63.375,
+          "right": 288.4000015258789,
+          "width": 184,
+          "x": 104.4000015258789,
+          "y": 362.5375061035156
+        },
+        "height": 720,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 688,
+          "height": 44,
+          "right": 288.40000915527344,
+          "width": 44,
+          "x": 244.40000915527344,
+          "y": 644
+        },
+        "transcript": {
+          "bottom": 505.2000274658203,
+          "height": 165.46250915527344,
+          "right": 311.2000045776367,
+          "width": 229.6000061035156,
+          "x": 81.5999984741211,
+          "y": 339.7375183105469
+        },
+        "width": 320
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 900,
+          "width": 400,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 720,
+          "width": 320,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 720,
+          "clientWidth": 320,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 900,
+          "clientWidth": 400,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=first-use&theme=dark&layout=full&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-390-dark-unknown.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "97135b4a612a41de64689d913e55e8c50c604fa34ac52cddddd6b43e279579ad",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": null,
+        "greeting": {
+          "bottom": 427.8500061035156,
+          "height": 42.25,
+          "right": 358.80001068115234,
+          "width": 254.40000915527344,
+          "x": 104.4000015258789,
+          "y": 385.6000061035156
+        },
+        "height": 844,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 820.4000244140625,
+          "height": 44,
+          "right": 358.8000183105469,
+          "width": 44,
+          "x": 314.8000183105469,
+          "y": 776.4000244140625
+        },
+        "transcript": {
+          "bottom": 646.0000305175781,
+          "height": 283.20001220703125,
+          "right": 381.5999984741211,
+          "width": 300,
+          "x": 81.5999984741211,
+          "y": 362.8000183105469
+        },
+        "width": 390
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 1055,
+          "width": 488,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 844,
+          "width": 390,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 844,
+          "clientWidth": 390,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 844,
+          "clientWidth": 390.3999938964844,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 1055,
+          "clientWidth": 488,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 1055,
+          "clientWidth": 488,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=unknown-committed&theme=dark&layout=full&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    },
+    {
+      "file": "guided-baa-390-dark-reconciled.png",
+      "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+      "sha256": "3653cd8fe382442c80f9100488326b1fe69fdd91c38c3aebc31bc212063581bf",
+      "geometry": {
+        "dpr": 1.25,
+        "focus": "Correct Industry",
+        "greeting": {
+          "bottom": 427.8500061035156,
+          "height": 42.25,
+          "right": 358.80001068115234,
+          "width": 254.40000915527344,
+          "x": 104.4000015258789,
+          "y": 385.6000061035156
+        },
+        "height": 844,
+        "overflow": false,
+        "reducedMotion": true,
+        "send": {
+          "bottom": 820.4000244140625,
+          "height": 44,
+          "right": 358.8000183105469,
+          "width": 44,
+          "x": 314.8000183105469,
+          "y": 776.4000244140625
+        },
+        "transcript": {
+          "bottom": 646.0000305175781,
+          "height": 283.20001220703125,
+          "right": 381.5999984741211,
+          "width": 300,
+          "x": 81.5999984741211,
+          "y": 362.8000183105469
+        },
+        "width": 390
+      },
+      "metrics": {
+        "contentSize": {
+          "height": 1055,
+          "width": 488,
+          "x": 0,
+          "y": 0
+        },
+        "cssContentSize": {
+          "height": 844,
+          "width": 390,
+          "x": 0,
+          "y": 0
+        },
+        "cssLayoutViewport": {
+          "clientHeight": 844,
+          "clientWidth": 390,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "cssVisualViewport": {
+          "clientHeight": 844,
+          "clientWidth": 390.3999938964844,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        },
+        "layoutViewport": {
+          "clientHeight": 1055,
+          "clientWidth": 488,
+          "pageX": 0,
+          "pageY": 0
+        },
+        "visualViewport": {
+          "clientHeight": 1055,
+          "clientWidth": 488,
+          "offsetX": 0,
+          "offsetY": 0,
+          "pageX": 0,
+          "pageY": 0,
+          "scale": 1,
+          "zoom": 1
+        }
+      },
+      "url": "http://127.0.0.1:5208/e1-ui-proof/candidate-guided-baa1e5/interview.html?state=unknown-committed&theme=dark&layout=full&context=second",
+      "evidenceClass": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT_NO_CUSTOMER_ACCEPTANCE"
+    }
+  ],
+  "limitations": [
+    "Synthetic transport; no customer authorization or persistent record proof",
+    "Physical mobile keyboard, assistive technology and actual browser zoom unverified"
+  ]
+}

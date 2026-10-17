@@ -1,0 +1,789 @@
+{
+  "head": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+  "trackedClean": true,
+  "config": "scripts/live-drive/harness/mount/interview.config.ts",
+  "fixture": "EXISTING_UNCHANGED_INTERVIEW_FIXTURE",
+  "base": "/e1-ui-proof/candidate-guided-baa1e5/",
+  "inputs": [
+    {
+      "path": "scripts/live-drive/harness/mount/interview.fixture.ts",
+      "sha256": "65330b82c70ca23871e21de0f0a638de01d0122721822c91b8401bbee106f272"
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/interview.html",
+      "sha256": "ca2e6746b5342abed9e630e27f24d3c2ec0e9a15518b27eb6fc3e41a0251abd9"
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/interview.tsx",
+      "sha256": "1170fa6c11f93a04b4d8d9170854bcbc8506fc224a5f2eea43786046f69ab02f"
+    },
+    {
+      "path": "scripts/live-drive/harness/paige-chat-mount/solo-stubs.ts",
+      "sha256": "9a3340ce19557a217df4d5da9cc5dd09c5e91861e65f6b7a7ce8598bc9a934f6"
+    },
+    {
+      "path": "src/components/admin/studio/ArtifactStrip.tsx",
+      "sha256": "8c0a6483419ad8fca95d96bc617dcac125bb40b629c138f0d45190f7a13eb211"
+    },
+    {
+      "path": "src/components/admin/studio/DocumentPreview.tsx",
+      "sha256": "72b9366afebd557db8fa36f10fbb4394de290e8d2248b24cfee1375adc35dfd0"
+    },
+    {
+      "path": "src/components/admin/studio/studio-copy.ts",
+      "sha256": "6790975ecc76a088e2b75e9e1473c8d46b6cf8ab1efe4fc6b1133e29a40066f1"
+    },
+    {
+      "path": "src/components/admin/studio/studio-document.ts",
+      "sha256": "a4efe1932c96d38cca481fb1dae95774fd7e8c0ec028619ef03e414073ec76b4"
+    },
+    {
+      "path": "src/components/admin/studio/studio-types.ts",
+      "sha256": "fd6ec80396867f4197fbc3e3390b2b42c26b14179efed09aa3eac051e54c59ec"
+    },
+    {
+      "path": "src/components/admin/studio/studio.ts",
+      "sha256": "9a0e4b8ca416b05a486d14381d75e2a73d4069d56a34e4d61ef3c02344e6d028"
+    },
+    {
+      "path": "src/components/admin/voice/DialPadTrigger.tsx",
+      "sha256": "2efc60f1203b6eb662870db445393a269c3f9bbe65d168a307bc9d041c11c3f3"
+    },
+    {
+      "path": "src/components/brand/PaigeCommandMark.tsx",
+      "sha256": "a02481abc9a2402a402f5854f4ea55db3c51136df36bc37768f72086b96354b1"
+    },
+    {
+      "path": "src/components/brand/paige-command-mark.css",
+      "sha256": "e2d17ad14b748140f6c55f08a6d248497515061e0053dcf7730539d06d5b41b8"
+    },
+    {
+      "path": "src/components/chat/CheckLinks.tsx",
+      "sha256": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15"
+    },
+    {
+      "path": "src/components/chat/DocumentAttachmentChip.tsx",
+      "sha256": "0714d17978193689474fcd1d4f3f0e02cdd2263fc38adc4936c9d97ad5c6bbae"
+    },
+    {
+      "path": "src/components/chat/DocumentMessageBubble.tsx",
+      "sha256": "f9b99ca20684a98c4e96a74eb8666fa47cf9a77741d72cb0892656b45b560fb2"
+    },
+    {
+      "path": "src/components/chat/EntityDiagramCard.tsx",
+      "sha256": "f82c82a9506f0f9081e1c00e2eaca63c18c3a1768b232b4aab9a20a7f536c6d9"
+    },
+    {
+      "path": "src/components/chat/ExtractionProposalCard.tsx",
+      "sha256": "1887d101a395aacd277dbbace438b34c8f79443fb62e91c5a776d600853c223a"
+    },
+    {
+      "path": "src/components/chat/MarkdownMessage.tsx",
+      "sha256": "50a4d492da1650b2b35541ff4b3b413c8c24ba197a8c0f78e56a53574ea252e5"
+    },
+    {
+      "path": "src/components/chat/MessageAudioButton.tsx",
+      "sha256": "8a2d6f82d6cfc0b73fc2774b3c2b9c538caf99ff2631b28438d89cea18bd22c2"
+    },
+    {
+      "path": "src/components/chat/MessageMeta.tsx",
+      "sha256": "69fab79f9bf30d30238ecdaa4652f20bb5fef3e65fbd2b85a5858e0e1cfeb4f4"
+    },
+    {
+      "path": "src/components/chat/PaigeAskCard.tsx",
+      "sha256": "34f8fa4ec40dab4afd4f264d611bf7423d40489429d2c9cd49f0b0eb6dbc991f"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88"
+    },
+    {
+      "path": "src/components/chat/PaigeCrmResultCard.tsx",
+      "sha256": "a4cd32be4a22f2f0f2d1ab70bfcfeff319f4d1a68647de9671d304766b6db03f"
+    },
+    {
+      "path": "src/components/chat/PaigeRecordLinks.tsx",
+      "sha256": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf"
+    },
+    {
+      "path": "src/components/chat/ResponseFeedback.tsx",
+      "sha256": "b6dbb45342b0ca4d1a0478bf0ce6c86b0adea8701d42447c2500e082ecb10154"
+    },
+    {
+      "path": "src/components/chat/SlashCommandMenu.tsx",
+      "sha256": "dd2370186ba5b3b0d8352bc7cdc62e5cf6830a3308a84c2e2324b69691eaa703"
+    },
+    {
+      "path": "src/components/chat/anchoredTranscriptScroll.ts",
+      "sha256": "53204158d3e12307ab44c8ce6c33bcf8cdbcfcc02de60a3703e04833e29dbc6e"
+    },
+    {
+      "path": "src/components/chat/approvalOutcome.ts",
+      "sha256": "5679e54bee4f358f75b664944102b2facc698b7e547151bb1c02ed2c698a2292"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "14958f071cdc0d67777c640c638ad2bf4de675d6fc1e6641b543e2663d2f1945"
+    },
+    {
+      "path": "src/components/dashboard/EntityDossier.tsx",
+      "sha256": "a8cc5d761b48ccab7e35d164b88d47f3a58c10bde9e63eda709c91c427e6d256"
+    },
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "sha256": "3b4ddd29ee63e8d15c06c8a6ce618285650aec2c66ebba1adb97b7c2b2b1e145"
+    },
+    {
+      "path": "src/components/dashboard/PaigeStepTrace.tsx",
+      "sha256": "7f1dde48d67ad5543af98c1adf637a1deed15020990001e76eeb406982b675f0"
+    },
+    {
+      "path": "src/components/dashboard/paige/PaigeComposerAutonomyChip.tsx",
+      "sha256": "552e07fdd1e7a0854f466c912418aaff464652cf06f2a3fefd57ec459cab5e9f"
+    },
+    {
+      "path": "src/components/dashboard/paige/ThreadRail.tsx",
+      "sha256": "3de8c119c752e0e93e997b416ba96bd8894d68873a29caa24a0710133953f9a2"
+    },
+    {
+      "path": "src/components/growth/growth-theme.ts",
+      "sha256": "c5bec29534d87af0a47b058da5c8d7d8eb32153927c9f0ee6190e08706163960"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+      "sha256": "33d1a0bef816fe9b53a10b53329e8552f8e3db1b734b60c891ffbf5713b6bb9e"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeCompactingCard.tsx",
+      "sha256": "f03eaf339824986592b338c670d11017710490eb57f7a63251bdac7b49dc0eff"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeResearchCard.tsx",
+      "sha256": "cb18a4dd5204d94591ef828000cf98a6fab3901c668d3a68886579f6459a3eed"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeTurnStatus.tsx",
+      "sha256": "1bd5808a9d6aa926bfff5f6db1b23175f22e808ef6048a09569b23ca2830945a"
+    },
+    {
+      "path": "src/components/paige/chat/paige-research-card.css",
+      "sha256": "1804542f9d47ad95675d1e9b0da3df382c7d552f13bdc1a0ce7e699e7c695df3"
+    },
+    {
+      "path": "src/components/paige/chat/paige-turn-status.css",
+      "sha256": "394aeb8e810392ce4ab21fd999134e75379f249e55e71167a4bb5a562db13517"
+    },
+    {
+      "path": "src/components/paige/live/PaigeLiveConversation.tsx",
+      "sha256": "ea3009b6feedd4fcae376668ec0c663d557d8bb067b176e66ccca5aae1c8123d"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresence.tsx",
+      "sha256": "ceabefdf83b24dba197ee62a40cefdcd1c8a0aa1f3ad4d3d10fc40c2bdef198b"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresence3D.tsx",
+      "sha256": "2851f82bd24f922ce3e66af1e5b157b6bd7d5374f03e5768be478fad9d8bc0b2"
+    },
+    {
+      "path": "src/components/paige/live/PaigePresenceScene.tsx",
+      "sha256": "cb2e5494b060353c4f5ee9fb91d32b910ccb20102cbaa3ae46461a747118624e"
+    },
+    {
+      "path": "src/components/paige/live/paige-live-conversation.css",
+      "sha256": "7393eb074da64929a2239a2ea6132669e88ad5e0a5e8fcb845715da2de647f4e"
+    },
+    {
+      "path": "src/components/paige/live/paige-presence-3d.css",
+      "sha256": "88f17cadb66add969544ac3b112fc3ccf124d92b5b2597b6cc110dd467719625"
+    },
+    {
+      "path": "src/components/paige/live/paige-presence.css",
+      "sha256": "ae19b83af2309c9abe32fe0f1a6b415eee6ff2d06c8f698ff518695dd1d37e99"
+    },
+    {
+      "path": "src/components/paige/live/usePaigeOutput.ts",
+      "sha256": "787603686e29eec8153e0149d36604746e40f78ece65778a6ab5424ec30cbd6a"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "src/components/tenant-shell/settings-scroll-contract.ts",
+      "sha256": "082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-content-focus.ts",
+      "sha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "7efe0044151935edd51fd0754201cd7cebcf938f7fb5ee24c85b5cc87da8d1c5"
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283"
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77"
+    },
+    {
+      "path": "src/components/ui/calendar.tsx",
+      "sha256": "845a0b0fdec33d8d49ab8ed05dd29a12c10b5bbcf60f24d0b9fc0a731ab18621"
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "sha256": "1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06"
+    },
+    {
+      "path": "src/components/ui/chart.tsx",
+      "sha256": "1889cbad6e8f0014667d05caea6bac7eaa2390562dace4c81e0c63fa7866af93"
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "sha256": "178f8177bedb1704b4dd3e748f4826848981c8af43178c04e1a276a7f017cf1f"
+    },
+    {
+      "path": "src/components/ui/command.tsx",
+      "sha256": "004926ab33465d7f7fb5b7ad80aec626317171c4e15dabf21c756332be8ddbb5"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "sha256": "0aa6dfd88b188940c62d27d6f2b6b09beb4491bf5b54933fac8b5a3a1c72201e"
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "sha256": "aacef8933fe99ab553e12a82c874a23c97e2b5602eb6f00018454fa0a8d4f7f2"
+    },
+    {
+      "path": "src/components/ui/label.tsx",
+      "sha256": "d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753"
+    },
+    {
+      "path": "src/components/ui/page/ArtifactPreview.tsx",
+      "sha256": "a38622162e4409fee4f8a69f379cc0bc5f4e4129104b86f6fb04624a46273906"
+    },
+    {
+      "path": "src/components/ui/page/BrandControls.tsx",
+      "sha256": "78898e24d7169a31927671e6d6f472efab2e82eb36ad9f9001903d6b13ced0fb"
+    },
+    {
+      "path": "src/components/ui/page/ChartCards.tsx",
+      "sha256": "c069e22e912363a058e2c29911e4c130af2f7b4257cb3624086020041576a20d"
+    },
+    {
+      "path": "src/components/ui/page/DataTableShell.tsx",
+      "sha256": "b4ad4f32b4177ca05220545d52b75d688681137548cccab6fe65bafe5d9bd4f0"
+    },
+    {
+      "path": "src/components/ui/page/DateRangePicker.tsx",
+      "sha256": "ce7ea2b2d2465c405ffa4e09d19e9b55b0ff89051c6955d616ac2d3a9f7c60af"
+    },
+    {
+      "path": "src/components/ui/page/DrillContainer.tsx",
+      "sha256": "34565d2b1147e4c5313c21eb07680450f34a238a61401dacdc56528a00fd369f"
+    },
+    {
+      "path": "src/components/ui/page/EmptyState.tsx",
+      "sha256": "af2ec5f89ae19650a3c526316700db94663612e5d4355f160950b3edfd47ee5e"
+    },
+    {
+      "path": "src/components/ui/page/ExploreChart.tsx",
+      "sha256": "e3134ae3eb9b453ac4d6d540e98ebf73579749ae12081f9152097c7cdee22238"
+    },
+    {
+      "path": "src/components/ui/page/GlyphPlate.tsx",
+      "sha256": "9e6063e589cbd28e2774fbb4de01cee2acb9b0b046d9eaa40744c061120a3c5a"
+    },
+    {
+      "path": "src/components/ui/page/MetricEntityCard.tsx",
+      "sha256": "a2a51dcee3fc30382b6bb9f5d8f2b379b919764ad6fce8266c0c045951c48717"
+    },
+    {
+      "path": "src/components/ui/page/PageHeader.tsx",
+      "sha256": "efd6c59507d106da7a49443730c8977ba7cddbed84088478b61346a217fd6e3e"
+    },
+    {
+      "path": "src/components/ui/page/PageShell.tsx",
+      "sha256": "2c9db0bf3dae4bdac35f8ad17a324d208011a505ad3cdd2e1b93d4a6c5a5cc8a"
+    },
+    {
+      "path": "src/components/ui/page/PageSkeleton.tsx",
+      "sha256": "c6a9a1c80c7634136fdc0e6d81a3dd8b95ba23825cc05397bfc592defabb8dfe"
+    },
+    {
+      "path": "src/components/ui/page/PaigeAttribution.tsx",
+      "sha256": "544d257325dc93b457b26c8f75e762f5d8e2c3b681dd9c58360ec05b9e8da077"
+    },
+    {
+      "path": "src/components/ui/page/PresenceDot.tsx",
+      "sha256": "760feb343f3b9b30cebe51f3226b5c80ac988253801c1647e058ea4d7f3bf326"
+    },
+    {
+      "path": "src/components/ui/page/SectionCard.tsx",
+      "sha256": "b8fa7de3319f12c8df50df15c74e131ece9bc3c3ccc21ca7e217808ccc7bb43e"
+    },
+    {
+      "path": "src/components/ui/page/SectionNote.tsx",
+      "sha256": "0bd97e46483204ed61c4a86bfec4cf22378abaa51679b9b3b65cd264e8f55f7a"
+    },
+    {
+      "path": "src/components/ui/page/Sparkline.tsx",
+      "sha256": "e9102b940e9ddc36e120c34b34e2837c5f23dfa20b134ab35da57f57a2b408f1"
+    },
+    {
+      "path": "src/components/ui/page/StatPill.tsx",
+      "sha256": "e4d79201baf3d3d1ce1854ef64674a0e28611bab66f44c6113f77ebd04b49eee"
+    },
+    {
+      "path": "src/components/ui/page/StatTile.tsx",
+      "sha256": "6b94f8b8f4d54e550eddc1257f76033881ef56bca6818320417e6cbe6358420a"
+    },
+    {
+      "path": "src/components/ui/page/StatePill.tsx",
+      "sha256": "c5801f43ee3abd177b85ae861d05e7818e2fda0db938f1d06d2fbdc8845d2fdc"
+    },
+    {
+      "path": "src/components/ui/page/Toolbar.tsx",
+      "sha256": "8ed6c1958fafccfe4b82e3a87d16dfbc408079b4034d871ee5f57b5baa676fee"
+    },
+    {
+      "path": "src/components/ui/page/index.ts",
+      "sha256": "f7e1f8ae0c064198f6997584b216dbec9bd7f01b86316c30027dda7738953616"
+    },
+    {
+      "path": "src/components/ui/paige/AgentPresence.tsx",
+      "sha256": "d29411949a37bfae71d669e4b6503b0163bffde1f157dcb3a3d1bf4f7fec6c2d"
+    },
+    {
+      "path": "src/components/ui/paige/AgentPresenceContext.tsx",
+      "sha256": "e5f737f324fa90b1efef4a60195913413ff90d28a9148fd4ce30f794cf49771b"
+    },
+    {
+      "path": "src/components/ui/paige/AgentRail.tsx",
+      "sha256": "d7b10b2859307056760c6a4e679c85a04b107f489b137c36f8771cff876ccaeb"
+    },
+    {
+      "path": "src/components/ui/paige/CommandLauncher.tsx",
+      "sha256": "2ba211a65b7b7a504795190931d3628377e055b708cdd85fb9572ff42ad1ca48"
+    },
+    {
+      "path": "src/components/ui/paige/index.ts",
+      "sha256": "4f2c913efba3964e050fc142e7dc9ede2c6b337db592b991864b69f73a0f003f"
+    },
+    {
+      "path": "src/components/ui/paige/persona.ts",
+      "sha256": "628fbb37b14d712f1f5f284723e6e8c8cacf4c55fcb47d888a93add2cbacd2ea"
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "sha256": "ee5f78ece57c9e8eb5f9b4186e2bb9ebe46b69b52f03f1edd9a601883bc64772"
+    },
+    {
+      "path": "src/components/ui/scroll-area.tsx",
+      "sha256": "998181a10164aa6e508210064ba61b2f772a92958d7bb2141867007f0ebd9783"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "d8a698f4cabc5323f561e560dc09a727c70da50a4bf5eaccbc44d928e6d1bc23"
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "sha256": "a229c310b9cbcb01ddd5e580865a6f14a19061aff7f6a97ef82a40b6a83583a4"
+    },
+    {
+      "path": "src/components/ui/table.tsx",
+      "sha256": "fab18d9eeb84781f534330ff4b2c2cbe3a93f9bdf5c449debff2f682a83a4876"
+    },
+    {
+      "path": "src/components/ui/textarea.tsx",
+      "sha256": "2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461"
+    },
+    {
+      "path": "src/components/ui/tooltip.tsx",
+      "sha256": "bd9361649477cf9496f4b48415a2eafb9ae1ebca81af58a29b61b1516adc88c1"
+    },
+    {
+      "path": "src/components/voice/DictationMicButton.tsx",
+      "sha256": "2c8d60b0ee4693b604c883588ab884ca2cd00559874de2c71aeffd4334054f70"
+    },
+    {
+      "path": "src/contexts/ImpersonationContext.tsx",
+      "sha256": "d94a6c91f970b801128e92eb7d0450abd1492c516cc34b475998e5d4e0baf917"
+    },
+    {
+      "path": "src/hooks/use-mobile.tsx",
+      "sha256": "21eff740f9e5c965c7f0782925a7e8f67ddfcdf0f58b6613550f99c3e1c454e9"
+    },
+    {
+      "path": "src/hooks/use-toast.ts",
+      "sha256": "0602ac84d95719f2a27075ce60333db73128e09c0b07365dce7f9c77441c9d7c"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "ff338d12cf00be2013c549dd69f4741c2191fac70f76d7cb544fb3299038bb14"
+    },
+    {
+      "path": "src/hooks/useBrandFontFaces.ts",
+      "sha256": "cf7065c88d9e9d657752a44543890f13c9b2221d4543d7f86d12516060a63854"
+    },
+    {
+      "path": "src/hooks/useKnowledgeDocuments.ts",
+      "sha256": "34f473274e6eb1032b779cda52c1d309c061ae02ff6306646fe7dd961c25e6d6"
+    },
+    {
+      "path": "src/hooks/useTierFeatures.ts",
+      "sha256": "5e8dba91698b980f1a74acb84503134f5c78da682ec239a49bd9f95057e668d5"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/lib/agency/accountCapabilities.ts",
+      "sha256": "f5f590728091da41ff30ec68c1f959f4e333c594fad9fd392c0d5d6ab6aa538f"
+    },
+    {
+      "path": "src/lib/brand-fonts.files.ts",
+      "sha256": "512aa69eb757081fd911c459267cf8cb96094e8da809eebd616a2aacb3d7a2e4"
+    },
+    {
+      "path": "src/lib/brand-fonts.ts",
+      "sha256": "be20a5e5903f015424d32f6003ef4603eb951d2a3b499461e5a5443d91737a8f"
+    },
+    {
+      "path": "src/lib/brand/resolveBrand.ts",
+      "sha256": "df466f5a96dd86c26c48dbf92802ea08995fe55115fd6dddf063ee58dc4622ea"
+    },
+    {
+      "path": "src/lib/entityDiagram.ts",
+      "sha256": "80096444219b9e30c905fae9c2192653677404e6afb469caf0b6542611ff2a25"
+    },
+    {
+      "path": "src/lib/growth-visit.ts",
+      "sha256": "8e3f92a9b447dc2817445c84fe73765350b05505d9a1fc8fdf226b8c67915e40"
+    },
+    {
+      "path": "src/lib/growth.ts",
+      "sha256": "a497e335ccabbc280433aa08cf32743c0f5cee208ff8b49f3d8b2b292da2bc9c"
+    },
+    {
+      "path": "src/lib/knowledge-service.ts",
+      "sha256": "66f0ecfd3df48591381e1aa15c60eb88e768ae38fe6e7e6cc6fa0d7d513c007f"
+    },
+    {
+      "path": "src/lib/knowledge/ingest-outcome.ts",
+      "sha256": "24019e45e3fb725a09c5a1a962b8f1e29bb0b5edbcfc20d7a3c4dffffe75f78a"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "50536455c685a5ad20bc4ccb2247b99ae6b46cca260ac5084ff6200b2ae95571"
+    },
+    {
+      "path": "src/lib/paige-stream/decode.ts",
+      "sha256": "b09188d5bf6797e98c52c37559823541f644bff73dbcd1da95624e4299b33c01"
+    },
+    {
+      "path": "src/lib/paige-stream/framing.ts",
+      "sha256": "583d379140780a953c6d79b9e1c16da2e93acc6859cb17c57a3434e5fd8a8d45"
+    },
+    {
+      "path": "src/lib/paige-stream/index.ts",
+      "sha256": "655d74cae28e745e1da375e4b43c84431dd6a170f40d85bc291dedd96968568d"
+    },
+    {
+      "path": "src/lib/paige-stream/step-status.ts",
+      "sha256": "c89e615170dd8b0a54cc5b0924240eb3b98d8a2139ec2f8bd0aedc6633748fa7"
+    },
+    {
+      "path": "src/lib/paige-stream/turn-view.ts",
+      "sha256": "a8e20246835c7d557d7ddbb2288e7067bc2ce80b77ce0fd09adad798af839d70"
+    },
+    {
+      "path": "src/lib/paigeChatError.ts",
+      "sha256": "6ade398ee9a2c2af6bac86288c07dba6d3aeb66b8dd3af560fbf88f22e680cf7"
+    },
+    {
+      "path": "src/lib/paigeComposerScopeState.ts",
+      "sha256": "c0e38d7c1867ed412075c2c53ea82d0fa86c81d57fb7dc216e59ca4b84f25e4a"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/client.ts",
+      "sha256": "62163cb65ee618a2f1ed0e6972ee045f5e97525ff3c802ab0dcfa8646f219fbc"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/contract.ts",
+      "sha256": "47fb9a1ab58582073688e24479ee13102a9699e35afbde46c4e5e20c3b2724aa"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/outputAnalysis.ts",
+      "sha256": "0f3617c5a456cc5eed684aff8be8574da6271a39236292ec97751b49ebd013b4"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/presence.ts",
+      "sha256": "fb8434a88a8e134d19c4858cf56cacba4ac34426ba99c9d74862375ed61dfaa7"
+    },
+    {
+      "path": "src/lib/paigeLiveConversation/relayTransport.ts",
+      "sha256": "2f08d16c4b6000fc4e09f7a40a718a77308ff2daaefe9269518373eb4c3cb220"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "f712f4a4862d88269bd6be01657ae33af31a1aca9e39570b892ddec2aded89d3"
+    },
+    {
+      "path": "src/lib/routing/tierBranches.ts",
+      "sha256": "801680b21cfd8b473fce6473bfffdb6c3e6a1115b81842ca1cd2d98e8da809e3"
+    },
+    {
+      "path": "src/lib/routing/useSubtabRoute.ts",
+      "sha256": "02dd34efa28e4a11d25e13b8574f6c6f9893a6485ee1be06c50c5eb498277216"
+    },
+    {
+      "path": "src/lib/scopedUser.ts",
+      "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "666f38c6993cb6e0a9d6851c4900165a3c9ff716d52707a4e5870163c65eec3c"
+    },
+    {
+      "path": "src/lib/useCopyToClipboard.ts",
+      "sha256": "0e6f4fe79ba4211258e9639ac0507851aebc362af2631450d2805f9d759f0007"
+    },
+    {
+      "path": "src/lib/userClock.ts",
+      "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "src/lib/voice/VoiceDeviceProvider.tsx",
+      "sha256": "a43a250b7ddaf6452eb3e5e0851bd81f42d7b150292c2b15c496c7646e081814"
+    },
+    {
+      "path": "src/lib/voice/callIntelligence.ts",
+      "sha256": "72ed10c74857411c1f9e089eb6c071e9c77515276c0f9a7aa299e5632de694dd"
+    },
+    {
+      "path": "src/lib/voice/messageTts.ts",
+      "sha256": "a78abf4bad5340828e37c1e6cb9d3c452823d672ec9b7cc9cdd25f5545d4decb"
+    },
+    {
+      "path": "src/lib/voice/messageTtsFailure.ts",
+      "sha256": "1832e8d497ac1d4606c9ac756b530720db82b59db663fb779ef61e65403f5edc"
+    },
+    {
+      "path": "src/lib/voice/useDictation.ts",
+      "sha256": "e356270667b3885b88fdf483480f826ad53e15d3fdbe1c010aeea1d5c6441b4f"
+    },
+    {
+      "path": "src/lib/voice/useLiveTranscript.ts",
+      "sha256": "b2d310d0d512fe88acb8e9a08c07196b2974844c630e4756225a0f1d181c7694"
+    },
+    {
+      "path": "src/lib/voice/voiceCallSafety.ts",
+      "sha256": "d0bca6b1c6a1c6922305865990c243677dac3543023c309a1f5f357672c47b10"
+    },
+    {
+      "path": "src/lib/webgl.ts",
+      "sha256": "fdcbed31f1fdb82015dbe14b96d946de011b0789414e8c248bfc0fd8f2b54852"
+    },
+    {
+      "path": "src/operator/shell/CommandMark.tsx",
+      "sha256": "f16530566302d4b78151658e0b02ee76eaf57c2d73b97ef2bce30c27f201d46a"
+    },
+    {
+      "path": "src/solo/SoloBusinessInterview.tsx",
+      "sha256": "913c180f66dba57042613c1027f45c98fcb0d9148cbaba4596e4df647463185a"
+    },
+    {
+      "path": "src/solo/SoloOnboardingStage.tsx",
+      "sha256": "0643620f2f267f948118e97f093454751efeef47f77d981ec9fd25d0f4616fa3"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0"
+    },
+    {
+      "path": "src/solo/data/capabilityTools.ts",
+      "sha256": "191f035d0c40d7b4b213d9760a4ba40a9e17823bde542b76317279153794724e"
+    },
+    {
+      "path": "src/solo/data/deepResearch.ts",
+      "sha256": "9c1f66f845ecfec6b8b48bfb34baab32f2c5f66f48e59df99eaa5f08acdc2359"
+    },
+    {
+      "path": "src/solo/data/useSoloKnowledge.ts",
+      "sha256": "aab1129b024404d01bd897777fe8024a93b5e94e308dcc67e2905d248587c28f"
+    },
+    {
+      "path": "src/solo/data/useSoloSkills.ts",
+      "sha256": "241bcc7f57a0d72e483fa165733872b55011b9a2f770cc7bcb9a1b94e647ecf4"
+    },
+    {
+      "path": "src/solo/data/useSoloToolGovernance.ts",
+      "sha256": "785bd70e763297c3ade8f91789701a98e0b65b5404c63eb503d4c0425c8da702"
+    },
+    {
+      "path": "src/solo/paige-research.tsx",
+      "sha256": "b317a2376f681fbbe07c5e35ee23b660e8b1bd08ed16b0435a2daf31b51aa0e8"
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "sha256": "670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0"
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "sha256": "52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70"
+    },
+    {
+      "path": "src/solo/settings-business-context-contract.ts",
+      "sha256": "8a8a6daaf8c4ac466cf8c10437dfda118848b2c1c69dcf069126510cf19dc33b"
+    },
+    {
+      "path": "src/solo/settings-setup-contract.ts",
+      "sha256": "ae80c59c05bdbb0021e35c0230fe0cc31411980930ec5bc53798ffd0d4e2d7d2"
+    },
+    {
+      "path": "src/solo/solo-business-interview-contract.ts",
+      "sha256": "d846a20daf17eff6ab06e65ffce3c2ff2e577765b7a743415617769476bb5bb0"
+    },
+    {
+      "path": "src/solo/solo-business-interview.css",
+      "sha256": "6b670235f1936425ddaa0c0fb34df02bf17eeef3ccdf3917d792e8f8da7ccb5d"
+    },
+    {
+      "path": "src/solo/solo-interview-navigation.ts",
+      "sha256": "517f9a20edc7687c8b4ba6a48e1b43d75512d83d2d1e72d75f7548caf46b4cfd"
+    },
+    {
+      "path": "src/solo/solo-onboarding-stage.css",
+      "sha256": "3fd91266f92bed189e787a285e1ef8876ee81dee2fe4f8599906cb82fa352709"
+    },
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "sha256": "2903be5f091da16ae4c9045ef991bbd3d6416d50b3e92f3f9eaa7d25ff5a1e8e"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "36b23624bbc5f72032e3089af6e38b1a5cbe9822da338e11e57825f8ef070501"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "99626f6a0b84872d5d5a89281acb5bb0e791876b3a68a688978e3eb922448c64"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "sha256": "d18311b3fa60a672a77ed628e9478201710391c483c45e8c107c786a5b5c6c47"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "sha256": "5245dadde3301d4fe1c87f15ec131d30523d4e6c285a5f6b2654f4560bbed742"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "cb180879c7ccf4ccbf555719858870fa88ae7300baa6f1d5d50ea87d5ade8d68"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/utils/VoiceAudio.ts",
+      "sha256": "6b263aaf434f8a90fce5c0f78fd0dfdb5d0508b0811fc866637ef437376fac7a"
+    },
+    {
+      "path": "supabase/functions/_shared/approval-outcome.ts",
+      "sha256": "e0f5a2ab8ab3f5be0435e8a796efca0a20f907a86e21adaca53532d1bfdbc9d1"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "4eb2c48a767339782a22212cb2799ce8297e331e8a4373c6314854e9c92ece8d"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/mod.ts",
+      "sha256": "608d221c85d8fba5999ed4da613e3ce41b1aff9a17ae534666013f0d6002c70f"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts",
+      "sha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+      "sha256": "30db8790dcd3a26b7cc13d26295ee70538d95fe97d06d2309fbc71f8b4fed56e"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts",
+      "sha256": "86a34db98c9951298b73ae46dd7e19506fed686f7e4ca32e26bcf9a287116337"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/contract.ts",
+      "sha256": "d9f3b52e245ec6801f81e95d4960cd20f05435ae87423dd68db4c5220e152981"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a69c67dcfd2976fb9965eebc412c85324b7d051bacd01d7fecb7eba1196239e1"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/resume.ts",
+      "sha256": "5e7c833ad88e509091fe35e7bee42044b50dc1ddef64973788df747fe2000414"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/step-start.ts",
+      "sha256": "99ad3794c402e6f149c709ec8e40dcde22c94edb1c2eefd03e340815fa83eae8"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "192a5e1cb079c47cd7c382de44e2ba83ecb3996959e46b5226f36aa3883beceb"
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/interview.config.ts",
+      "sha256": "2280cafc49f505b5183f33e4e5fa91615bf61e989ebc188d01f1b92e8c23772b"
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/html2canvas.esm-QH1iLAAe.js",
+      "sha256": "061c08e50c0dc57b8d5e6531f0b8237a52a68b233260d49ab2f2c2906ad112c4"
+    },
+    {
+      "path": "assets/interview-BwjYOdmn.css",
+      "sha256": "2e37170a5dca9f0829267de16542750e8dc1567a5b1c50405635b6a87f76fb24"
+    },
+    {
+      "path": "assets/interview-CvkakHLz.js",
+      "sha256": "6d8d256f0614eecf321004a63112c8284200128eab8283fba54fb4fd4a7d9da0"
+    },
+    {
+      "path": "assets/PaigePresenceScene-DRaw5Qbp.js",
+      "sha256": "32c2f9c7718d8a5c05b480e9725bef4c7f862370d21e307b1d0e0af859249c72"
+    },
+    {
+      "path": "interview.html",
+      "sha256": "e21b1d58519bf5b82e2c8dc3772b9c573ba931e15ec0c533713775851dced278"
+    }
+  ],
+  "modules": 3981,
+  "evidenceClass": "SYNTHETIC_NATIVE_COMPONENT_NOT_AUTHENTICATED"
+}

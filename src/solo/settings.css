@@ -137,6 +137,8 @@
 .ss-add-drawer > footer { display: flex; justify-content: flex-end; gap: 8px; padding: 13px 17px; border-top: 1px solid var(--pg-line); }
 .ss-tags { display: flex; flex-wrap: wrap; gap: 7px; }.ss-tags span { padding: 6px 8px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-muted); background: var(--pg-lift); font-size: 10px; }
 .ss-return { display: flex; max-width: 1180px; align-items: center; justify-content: space-between; gap: 10px; margin: -4px auto 14px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--pg-accent) 30%, var(--pg-line)); border-radius: var(--pg-r-chip); color: var(--pg-muted); background: color-mix(in srgb, var(--pg-accent) 6%, var(--pg-surface)); font-size: 10px; }
+.ss-return--interview { font-size:14px; }
+.ss-return--interview a { display:inline-flex; align-items:center; min-height:44px; min-width:44px; overflow-wrap:anywhere; }
 .tcs-main--settings-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
 [data-tenant-shell] .tcs-main--settings-scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .ss-phone-setup, .ss-reg-setup { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--pg-accent) 28%, var(--pg-line)); box-shadow: var(--pg-e1), var(--pg-rim); }

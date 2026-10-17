@@ -2,15 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
-// Pre-portal onboarding is now just two gates: welcome + agreement.
-// Anything beyond signing_agreement lands the client directly in /workspace,
-// where Paige takes over the intake/docs conversation.
-const STAGE_TO_PATH: Record<string, string> = {
-  pre_invite: "/onboard/welcome",
-  invited: "/onboard/welcome",
-  signing_agreement: "/onboard/agreement",
-};
-const PRE_PORTAL_STAGES = new Set(Object.keys(STAGE_TO_PATH));
+// Customer onboarding and agreements remain actual work inside the portal.
+// Entry never pretends to complete Welcome or accept an unsigned agreement.
 
 /**
  * Agency default-landing (#191). For a staff user who would otherwise land on
@@ -254,7 +247,7 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
       if (clientRes.data !== null) {
         const profile = readClientPortalSelfProfile(clientRes.data, userId);
         if (!profile) return LANDING_ROUTE_RETRY;
-        return STAGE_TO_PATH[profile.onboarding_stage ?? "invited"] ?? "/app";
+        return "/app";
       }
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
@@ -286,10 +279,6 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
     }
 
     if (clientRow?.id) {
-      const stage = clientRow.onboarding_stage ?? "invited";
-      if (PRE_PORTAL_STAGES.has(stage)) {
-        return STAGE_TO_PATH[stage];
-      }
       return "/app";
     }
 

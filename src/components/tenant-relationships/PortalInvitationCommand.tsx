@@ -23,10 +23,17 @@ export function PortalInvitationCommand({tenantId,contactId,eligible,onReadback,
  const generation=useRef({key,revision:0});
  if(generation.current.key!==key)generation.current={key,revision:generation.current.revision+1};
  const scope=key+':'+generation.current.revision;
- const currentScope=useRef(scope),alive=useRef(true),inFlight=useRef<string|null>(null),reviewButton=useRef<HTMLButtonElement>(null);
+ const currentScope=useRef(scope),alive=useRef(true),inFlight=useRef<string|null>(null),reviewButton=useRef<HTMLButtonElement>(null),surface=useRef<HTMLDivElement>(null);
  currentScope.current=scope;
  useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[]);
  const [saved,setSaved]=useState<State>({scope,phase:'idle'}),state=saved.scope===scope?saved:{scope,phase:'idle' as const};
+ useEffect(()=>{
+  if(state.phase!=='review')return;
+  const active=document.activeElement,dialog=surface.current?.closest('[role="dialog"]');
+  // The native dialog may recover focus when the preparing button retires.
+  // Move that fallback to the review card, without stealing another input.
+  if(active===document.body||(dialog&&active===dialog))surface.current?.querySelector<HTMLElement>('[role="group"][data-card-mode="decide"]')?.focus({preventScroll:true});
+ },[state.phase,state.proposal?.fingerprint,scope]);
  const ready=!context.accountContextLoading&&context.accountContextStatus==='ready'&&context.activeTenantId===tenantId&&!!context.activeUserId&&has('customer_portal_invite');
  const actionKey=JSON.stringify([context.activeUserId,tenantId,contactId]);
  const [reading,setReading]=useState<string|null>(null);
@@ -41,10 +48,12 @@ export function PortalInvitationCommand({tenantId,contactId,eligible,onReadback,
   inFlight.current=scope;
   const started=scope,current=()=>alive.current&&currentScope.current===started;
   let operation=proposal?.operation??(fresh?undefined:state.operation);
+  let requested=false,historyRequested=false;
   try{
    operation??=crypto.randomUUID();
    set({phase:proposal?'working':'preparing',operation,proposal});
    if(!await authCurrent())throw new SessionRequired();if(!current())return;
+   requested=true;
    const result=await bounded(supabase.functions.invoke('send-portal-invite',{body:{expected_tenant_id:tenantId,contact_id:contactId,operation_id:operation,...(proposal?{approved_fingerprint:proposal.fingerprint}:{})}}));
    let value:unknown=result.data;
    if(result.error){const error=result.error as {context?:{status?:number;json?:()=>Promise<unknown>}};if(error.context?.status===401)throw new SessionRequired();if(!error.context?.json)throw Error('unanswered');value=await bounded(error.context.json())}
@@ -62,10 +71,15 @@ export function PortalInvitationCommand({tenantId,contactId,eligible,onReadback,
    }else if(['refused','failed','held'].includes(String(value.outcome))){
     set({phase:'refused',operation:actual,proposal:proposal??state.proposal,note:'This action was held or not accepted for sending. Check the invitation history before another action.'});
    }else set({phase:'uncertain',operation:actual,proposal:proposal??state.proposal,note:'The original invitation result could not be confirmed. Check status before reviewing recovery.'});
-   try{await bounded(onReadback())}catch{if(current())setSaved(previous=>previous.scope===started?{...previous,note:`${previous.note??'The invitation review is available.'} Invitation history could not reload. Refresh history before another action.`}:previous)}
+   try{historyRequested=true;await bounded(onReadback())}catch{if(current())setSaved(previous=>previous.scope===started?{...previous,note:`${previous.note??'The invitation review is available.'} Invitation history could not reload. Refresh history before another action.`}:previous)}
   }catch(error){
    if(current())set(error instanceof SessionRequired?{phase:'session',operation,note:sessionNote}:{phase:proposal?'uncertain':'idle',operation,proposal,note:proposal?'The original request may have completed. Check status before reviewing recovery.':'The invitation review could not be loaded. Refresh history and review again; no new email was requested by this review.'});
-  }finally{release?.();if(inFlight.current===started)inFlight.current=null}
+  }finally{
+   // Closing a control cannot retire an already submitted effect. Keep the
+   // shared lock through its scoped history refresh, including a lost response.
+   try{if(proposal&&requested&&!historyRequested&&!alive.current&&currentScope.current===started)await bounded(onReadback())}catch{/* The result remains unconfirmed; never retry the send here. */}
+   finally{release?.();if(inFlight.current===started)inFlight.current=null}
+  }
  };
  const check=async()=>{
   if(inFlight.current===scope||!ready)return;inFlight.current=scope;setReading(scope);
@@ -92,7 +106,7 @@ export function PortalInvitationCommand({tenantId,contactId,eligible,onReadback,
   finally{if(inFlight.current===started)inFlight.current=null;setReading(previous=>previous===started?null:previous)}
  };
  const summary=state.proposal?.summary??'Invitation to this customer’s portal.';
- return <div aria-busy={busy}>
+ return <div ref={surface} aria-busy={busy}>
   {(state.phase==='idle'||state.phase==='preparing')&&<button ref={reviewButton} type="button" className="opd-button opd-primary" disabled={busy||!ready||!eligible} onClick={()=>void act()}>{state.phase==='preparing'?'Preparing review…':'Review invitation'}</button>}
   {state.phase==='review'&&state.proposal&&<PaigeConfirmCard key={`review:${state.proposal.fingerprint}`} focusOnMount disabled={busy||!ready||!eligible}
    actions={[{summary,fingerprint:state.proposal.fingerprint}]} onApprove={values=>{if(values.length===1&&values[0]===state.proposal?.fingerprint)void act(state.proposal)}}

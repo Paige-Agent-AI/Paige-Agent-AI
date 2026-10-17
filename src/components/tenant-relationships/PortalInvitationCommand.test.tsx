@@ -32,6 +32,18 @@ describe('one canonical owner invitation UI',()=>{
   expect(host.textContent).toContain('email provider accepted');expect(host.textContent).toContain('Delivery and customer acceptance are separate');expect(host.textContent).toContain('exact@tests.invalid');expect(host.textContent).not.toContain('PRIVATE');expect(f.rpc).not.toHaveBeenCalled();
  });
  it('Not now requests no email and returns to review',async()=>{await show();await review();await click('Not now');expect(f.invoke).toHaveBeenCalledTimes(1);expect(host.textContent).toContain('Review invitation');expect(host.textContent).not.toContain('Approve');});
+ it('moves native dialog fallback focus to the review card instead of Approve',async()=>{
+  let resolve!:(v:unknown)=>void;f.invoke.mockImplementation(()=>new Promise(r=>{resolve=r}));await show();await click('Review invitation');
+  host.setAttribute('role','dialog');host.tabIndex=-1;host.focus();expect(document.activeElement).toBe(host);
+  await act(async()=>resolve({data:proposal(),error:null}));
+  expect(document.activeElement).toBe(host.querySelector('[role="group"][data-card-mode="decide"]'));
+  expect(document.activeElement?.textContent).not.toBe('Approve');expect(f.invoke).toHaveBeenCalledTimes(1);
+ });
+ it('preserves another focused input while an invitation review arrives',async()=>{
+  let resolve!:(v:unknown)=>void;f.invoke.mockImplementation(()=>new Promise(r=>{resolve=r}));await show();await click('Review invitation');
+  const other=document.createElement('input');document.body.append(other);other.focus();
+  try{await act(async()=>resolve({data:proposal(),error:null}));expect(document.activeElement).toBe(other);expect(f.invoke).toHaveBeenCalledTimes(1)}finally{other.remove()}
+ });
  for(const stage of ['review','approval','status'])it('requires sign-in and a fresh review when Auth is lost before '+stage,async()=>{
   await show();if(stage!=='review')await review();
   f.getUser.mockResolvedValue({data:{user:null},error:null});

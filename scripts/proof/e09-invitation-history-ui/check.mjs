@@ -132,6 +132,10 @@ async function renderDialog(width,height,open,theme,kind="invite",state="ready",
         const detail=await page.evaluate(()=>({cryptoUuid:typeof crypto.randomUUID,records:window.invitationCommandPrototype.records(),text:document.body.innerText.slice(-1700)}));
         throw Error(JSON.stringify({error:error.message,errors,detail}));
        });
+       await page.waitForFunction(()=>document.activeElement?.getAttribute('role')==='group'&&document.activeElement?.getAttribute('aria-label')==='Needs your OK',null,{timeout:5000}).catch(async error=>{
+        const focus=await page.evaluate(()=>({active:document.activeElement?.outerHTML.slice(0,600),card:document.querySelector('[role="group"][aria-label="Needs your OK"]')?.outerHTML.slice(0,700)}));
+        throw Error(JSON.stringify({case:{width,height,open,theme,kind,state},focus,error:error.message}));
+       });
        assert(await card.evaluate(node=>node===document.activeElement),'card, not Approve, receives focus');
        await dialog.getByRole('button',{name:'Not now',exact:true}).click();
        await page.waitForFunction(()=>document.activeElement?.textContent==='Review invitation');

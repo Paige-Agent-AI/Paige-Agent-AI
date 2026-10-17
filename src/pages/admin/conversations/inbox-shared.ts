@@ -6,17 +6,21 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone,
+  Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone, DoorOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // ── message substrate (locked columns from public.messages) ────────────────────────
-export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice";
+// 'portal' (E09) — the customer <-> business thread inside the client portal. Same per-contact
+// thread as email/SMS; written only by client_portal_send_message / comms_portal_reply, never by a
+// provider (no connector, no provider id). See ./portalReply.ts.
+export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice" | "portal";
 export type Direction = "inbound" | "outbound";
 export type MsgStatus = "draft" | "queued" | "sent" | "delivered" | "failed" | "received" | "read";
 
-export interface MessageParty { address?: string; display_name?: string }
+// `name` is the portal sender shape ({ kind, name }) — a portal row carries no address.
+export interface MessageParty { address?: string; display_name?: string; name?: string }
 export interface Attachment { url?: string; mime?: string; name?: string; size?: number }
 export interface ClientJoin {
   first_name: string | null;
@@ -187,11 +191,11 @@ export interface SelectedView {
 // ── channel presentation ────────────────────────────────────────────────────────────
 export const CHANNEL_ICON: Record<ChannelType, LucideIcon> = {
   email: Mail, sms: MessageSquare, whatsapp: MessageCircle,
-  instagram: Instagram, facebook: Facebook, voice: Phone,
+  instagram: Instagram, facebook: Facebook, voice: Phone, portal: DoorOpen,
 };
 export const CHANNEL_LABEL: Record<ChannelType, string> = {
   email: "Email", sms: "SMS", whatsapp: "WhatsApp",
-  instagram: "Instagram", facebook: "Facebook", voice: "Voice",
+  instagram: "Instagram", facebook: "Facebook", voice: "Voice", portal: "Portal",
 };
 
 // #10 channel-of-origin — human label for clients.created_by_channel_type (a BROADER vocabulary

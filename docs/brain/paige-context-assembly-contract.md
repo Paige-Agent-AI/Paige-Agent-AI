@@ -132,3 +132,24 @@ customer acceptance. Exact-head review/CI, migration/source readback and consume
 acceptance remain separately required. Overall clients.portal remains PARTIAL;
 multi-business selection, customer Knowledge publication, private durable history,
 Chat/Live applicability and the complete seven-pillar experience remain proof owed.
+
+### Customer Chat consumer candidate
+
+The typed client-portal-persona ContextSource reads that atomic frame and exposes
+only bounded customer-public business presentation. In the incumbent paige-ai-chat
+runtime, customer_portal narrows the audience; native relationship and private
+thread authorization establish it. The browser sends current text, native thread
+and intent, never customer identity or prompt history. Canonical issued turns are
+rehydrated from the existing Chat records. Owner/operator playbook, brief,
+Knowledge, operating Memory and specialist context are excluded; trace content
+is metadata-only and private AI text is not copied to business-shared Rail.
+
+The existing provider/admission/settlement path remains controlling. Native
+actor/client/business, private audience and presentation policy are revalidated
+before protected dispatch/output. Customer tools and Live are not activated by
+this conversational repair. Explicit version-bound customer/program Knowledge
+publication, real domain reads/actions and verified multi-business membership
+remain required follow-on contracts. See
+docs/evidence/ui-delivery/e09-customer-chat-audience.md for source, local proof
+and the separate hosted/authenticated acceptance boundary. This is a consumer
+candidate, not proof of complete customer Chat or Portal availability.

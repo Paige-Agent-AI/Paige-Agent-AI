@@ -1,0 +1,2696 @@
+{
+  "evidenceClass": "actual-AppShell-AppNav-PaigeChat-offline-with-explicit-data-provider-doubles",
+  "nativeAuth": "NOT_EXECUTED",
+  "providerChat": "NOT_EXECUTED",
+  "physicalSafariKeyboard": "UNVERIFIED",
+  "keyboard": "synthetic VisualViewport event",
+  "network": "blocked",
+  "hashes": {
+    "src/pages/AppShell.tsx": "10ec05b8af98e23c0b3f83666e948fd5b80cc36e825ec9f367b402d38269c9a6",
+    "src/components/app/AppNav.tsx": "80a82b182d01bc7d39e8c1270fbd386f50ed7f0ab82735fd186a5ed4594ef500",
+    "src/components/app/PaigeChat.tsx": "586347389e0a84d98ed2d55b912004ec43255147f6ea6f0d6753ceef615f54fa",
+    "src/hooks/useClientViewportHeight.ts": "8042e70b918520caecf149785385030c7d1f595d0ca026e5fd40cbc4af50d488",
+    "scripts/proof/e09-client-account-ui/mobile-source.tsx": "8db396dcd5ddde5d0c7edf0cbfc831fefd320e3f67acbfd4c04e48803339fb5a",
+    "scripts/proof/e09-client-account-ui/mobile-adapter.tsx": "20d2f21d6f20abf81e9d5f4f8ade74ddfb8fdd05c0e0d20673c7d1cb9cf95e18",
+    "scripts/proof/e09-client-account-ui/mobile-check.mjs": "25049f2d137bfb50c712eb2e84df49152fd9b01a586ea6b2a2e3185dc8f3e1ce"
+  },
+  "results": [
+    {
+      "width": 390,
+      "height": 744,
+      "theme": "light",
+      "context": "a",
+      "result": "PASS",
+      "geometry": {
+        "width": 390,
+        "height": 744,
+        "input": {
+          "top": 692,
+          "bottom": 736,
+          "width": 276.5,
+          "height": 44,
+          "font": "16px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 44,
+            "width": 44,
+            "bottom": 736
+          },
+          {
+            "name": "Send message",
+            "height": 44,
+            "width": 44,
+            "bottom": 736
+          }
+        ],
+        "documentHeight": 744,
+        "documentWidth": 390,
+        "transcript": 463.203125,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 692,
+            "bottom": 736,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 692,
+            "bottom": 736,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 684,
+            "bottom": 744,
+            "height": 60,
+            "cssHeight": "60px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "7px 7px 8px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 66,
+            "bottom": 744,
+            "height": 678,
+            "cssHeight": "678px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 66,
+            "bottom": 744,
+            "height": 678,
+            "cssHeight": "678px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 66,
+            "bottom": 744,
+            "height": 678,
+            "cssHeight": "678px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 66,
+            "bottom": 744,
+            "height": 678,
+            "cssHeight": "678px",
+            "minHeight": "0px",
+            "flex": "1 1 100%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 66,
+            "bottom": 744,
+            "height": 678,
+            "cssHeight": "678px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 744,
+            "height": 744,
+            "cssHeight": "744px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 744,
+            "height": 744,
+            "cssHeight": "744px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 744,
+            "height": 744,
+            "cssHeight": "744px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "light",
+            "top": 0,
+            "bottom": 744,
+            "height": 744,
+            "cssHeight": "744px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "Open navigation",
+            "left": 14,
+            "right": 58,
+            "width": 44
+          },
+          {
+            "name": "",
+            "left": 332,
+            "right": 376,
+            "width": 44
+          }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 390,
+              "height": 744,
+              "input": {
+                "top": 298,
+                "bottom": 342,
+                "width": 276.5,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                }
+              ],
+              "documentHeight": 744,
+              "documentWidth": 390,
+              "transcript": 69.203125,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 298,
+                  "bottom": 342,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 298,
+                  "bottom": 342,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 290,
+                  "bottom": 350,
+                  "height": "60px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 350px;",
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 744,
+                  "height": "744px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "light",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 744,
+                  "height": "744px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 390,
+              "height": 744,
+              "input": {
+                "top": 128,
+                "bottom": 172,
+                "width": 276.5,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                }
+              ],
+              "documentHeight": 744,
+              "documentWidth": 390,
+              "transcript": 56,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 128,
+                  "bottom": 172,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 128,
+                  "bottom": 172,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 120,
+                  "bottom": 180,
+                  "height": "60px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 180px;",
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 744,
+                  "height": "744px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "light",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 744,
+                  "height": "744px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "context": "b",
+      "result": "PASS",
+      "geometry": {
+        "width": 320,
+        "height": 568,
+        "input": {
+          "top": 516,
+          "bottom": 560,
+          "width": 206.5,
+          "height": 44,
+          "font": "16px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 44,
+            "width": 44,
+            "bottom": 560
+          },
+          {
+            "name": "Send message",
+            "height": 44,
+            "width": 44,
+            "bottom": 560
+          }
+        ],
+        "documentHeight": 568,
+        "documentWidth": 320,
+        "transcript": 287.203125,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 516,
+            "bottom": 560,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 516,
+            "bottom": 560,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 508,
+            "bottom": 568,
+            "height": 60,
+            "cssHeight": "60px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "7px 7px 8px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 66,
+            "bottom": 568,
+            "height": 502,
+            "cssHeight": "502px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 66,
+            "bottom": 568,
+            "height": 502,
+            "cssHeight": "502px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 66,
+            "bottom": 568,
+            "height": 502,
+            "cssHeight": "502px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 66,
+            "bottom": 568,
+            "height": 502,
+            "cssHeight": "502px",
+            "minHeight": "0px",
+            "flex": "1 1 100%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 66,
+            "bottom": 568,
+            "height": 502,
+            "cssHeight": "502px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 568,
+            "height": 568,
+            "cssHeight": "568px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 568,
+            "height": 568,
+            "cssHeight": "568px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 568,
+            "height": 568,
+            "cssHeight": "568px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "dark",
+            "top": 0,
+            "bottom": 568,
+            "height": 568,
+            "cssHeight": "568px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "Open navigation",
+            "left": 14,
+            "right": 58,
+            "width": 44
+          },
+          {
+            "name": "",
+            "left": 262,
+            "right": 306,
+            "width": 44
+          }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 320,
+              "height": 568,
+              "input": {
+                "top": 298,
+                "bottom": 342,
+                "width": 206.5,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 342
+                }
+              ],
+              "documentHeight": 568,
+              "documentWidth": 320,
+              "transcript": 69.203125,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 298,
+                  "bottom": 342,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 298,
+                  "bottom": 342,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 290,
+                  "bottom": 350,
+                  "height": "60px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 350px;",
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 568,
+                  "height": "568px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "dark",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 568,
+                  "height": "568px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 320,
+              "height": 568,
+              "input": {
+                "top": 128,
+                "bottom": 172,
+                "width": 206.5,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 172
+                }
+              ],
+              "documentHeight": 568,
+              "documentWidth": 320,
+              "transcript": 56,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 128,
+                  "bottom": 172,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 128,
+                  "bottom": 172,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 120,
+                  "bottom": 180,
+                  "height": "60px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 180px;",
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 568,
+                  "height": "568px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "dark",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 568,
+                  "height": "568px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 700,
+      "height": 390,
+      "theme": "light",
+      "context": "b",
+      "result": "PASS",
+      "geometry": {
+        "width": 700,
+        "height": 390,
+        "input": {
+          "top": 335.5,
+          "bottom": 379.5,
+          "width": 576,
+          "height": 44,
+          "font": "16px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 44,
+            "width": 44,
+            "bottom": 379.5
+          },
+          {
+            "name": "Send message",
+            "height": 44,
+            "width": 44,
+            "bottom": 379.5
+          }
+        ],
+        "documentHeight": 390,
+        "documentWidth": 700,
+        "transcript": 92.90625,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 335.5,
+            "bottom": 379.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 335.5,
+            "bottom": 379.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 324,
+            "bottom": 390,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 66,
+            "bottom": 390,
+            "height": 324,
+            "cssHeight": "324px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 66,
+            "bottom": 390,
+            "height": 324,
+            "cssHeight": "324px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 66,
+            "bottom": 390,
+            "height": 324,
+            "cssHeight": "324px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 66,
+            "bottom": 390,
+            "height": 324,
+            "cssHeight": "324px",
+            "minHeight": "0px",
+            "flex": "1 1 100%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 66,
+            "bottom": 390,
+            "height": 324,
+            "cssHeight": "324px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "light",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "Open navigation",
+            "left": 14,
+            "right": 58,
+            "width": 44
+          },
+          {
+            "name": "",
+            "left": 642,
+            "right": 686,
+            "width": 44
+          }
+        ],
+        "keyboard": [
+          {
+            "height": 350,
+            "result": "PASS",
+            "geometry": {
+              "width": 700,
+              "height": 390,
+              "input": {
+                "top": 295.5,
+                "bottom": 339.5,
+                "width": 576,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 339.5
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 339.5
+                }
+              ],
+              "documentHeight": 390,
+              "documentWidth": 700,
+              "transcript": 56,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 295.5,
+                  "bottom": 339.5,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 295.5,
+                  "bottom": 339.5,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 284,
+                  "bottom": 350,
+                  "height": "66px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 350,
+                  "height": "284px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 350px;",
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 350,
+                  "height": "350px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 390,
+                  "height": "390px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "light",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 390,
+                  "height": "390px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          },
+          {
+            "height": 180,
+            "result": "PASS",
+            "geometry": {
+              "width": 700,
+              "height": 390,
+              "input": {
+                "top": 125.5,
+                "bottom": 169.5,
+                "width": 576,
+                "height": 44,
+                "font": "16px"
+              },
+              "buttons": [
+                {
+                  "name": "Start voice typing",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 169.5
+                },
+                {
+                  "name": "Send message",
+                  "height": 44,
+                  "width": 44,
+                  "bottom": 169.5
+                }
+              ],
+              "documentHeight": 390,
+              "documentWidth": 700,
+              "transcript": 56,
+              "ancestors": [
+                {
+                  "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+                  "style": "",
+                  "top": 125.5,
+                  "bottom": 169.5,
+                  "height": "44px",
+                  "minHeight": "44px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex gap-1.5 sm:gap-2 items-center",
+                  "style": null,
+                  "top": 125.5,
+                  "bottom": 169.5,
+                  "height": "44px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+                  "style": null,
+                  "top": 114,
+                  "bottom": 180,
+                  "height": "66px",
+                  "minHeight": "auto",
+                  "flex": "0 0 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-full",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "relative h-full min-h-0 min-w-0",
+                  "style": null,
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "min-h-0 max-md:!flex-[1_1_100%]",
+                  "style": "flex: 40 1 0px; overflow: hidden;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 100%",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+                  "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+                  "top": 66,
+                  "bottom": 180,
+                  "height": "114px",
+                  "minHeight": "0px",
+                  "flex": "1 1 0%",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+                  "style": "height: 180px;",
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "flex",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 180,
+                  "height": "180px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "",
+                  "style": "",
+                  "top": 0,
+                  "bottom": 390,
+                  "height": "390px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                },
+                {
+                  "class": "light",
+                  "style": null,
+                  "top": 0,
+                  "bottom": 390,
+                  "height": "390px",
+                  "minHeight": "0px",
+                  "flex": "0 1 auto",
+                  "display": "block",
+                  "visibility": "visible"
+                }
+              ]
+            },
+            "chromeReachable": true,
+            "draftRetained": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "theme": "light",
+      "context": "b",
+      "result": "PASS",
+      "geometry": {
+        "width": 844,
+        "height": 390,
+        "input": {
+          "top": 335.5,
+          "bottom": 379.5,
+          "width": 234.703125,
+          "height": 44,
+          "font": "12.25px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 31.5,
+            "width": 31.5,
+            "bottom": 373.25
+          },
+          {
+            "name": "Send message",
+            "height": 35,
+            "width": 35,
+            "bottom": 375
+          }
+        ],
+        "documentHeight": 390,
+        "documentWidth": 844,
+        "transcript": 91.859375,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 335.5,
+            "bottom": 379.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 335.5,
+            "bottom": 379.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 324,
+            "bottom": 390,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 85,
+            "bottom": 390,
+            "height": 305,
+            "cssHeight": "305px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 85,
+            "bottom": 390,
+            "height": 305,
+            "cssHeight": "305px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 85,
+            "bottom": 390,
+            "height": 305,
+            "cssHeight": "305px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 85,
+            "bottom": 390,
+            "height": 305,
+            "cssHeight": "305px",
+            "minHeight": "0px",
+            "flex": "40 1 0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 85,
+            "bottom": 390,
+            "height": 305,
+            "cssHeight": "305px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "light",
+            "top": 0,
+            "bottom": 390,
+            "height": 390,
+            "cssHeight": "390px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "SSecond Test Business",
+            "left": 21,
+            "right": 189.578125,
+            "width": 168.578125
+          },
+          {
+            "name": "Home",
+            "left": 203.578125,
+            "right": 279.15625,
+            "width": 75.578125
+          },
+          {
+            "name": "Action items",
+            "left": 282.65625,
+            "right": 391.75,
+            "width": 109.09375
+          },
+          {
+            "name": "Documents",
+            "left": 395.25,
+            "right": 498.609375,
+            "width": 103.359375
+          },
+          {
+            "name": "Resources",
+            "left": 502.109375,
+            "right": 598.0625,
+            "width": 95.953125
+          },
+          {
+            "name": "Contact Advisor",
+            "left": 510.703125,
+            "right": 626.484375,
+            "width": 115.78125
+          },
+          {
+            "name": "",
+            "left": 636.984375,
+            "right": 671.984375,
+            "width": 35
+          },
+          {
+            "name": "signin@example.test",
+            "left": 682.484375,
+            "right": 823,
+            "width": 140.515625
+          }
+        ]
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "context": "a",
+      "result": "PASS",
+      "geometry": {
+        "width": 1536,
+        "height": 770,
+        "input": {
+          "top": 715.5,
+          "bottom": 759.5,
+          "width": 511.5,
+          "height": 44,
+          "font": "12.25px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 31.5,
+            "width": 31.5,
+            "bottom": 753.25
+          },
+          {
+            "name": "Send message",
+            "height": 35,
+            "width": 35,
+            "bottom": 755
+          }
+        ],
+        "documentHeight": 770,
+        "documentWidth": 1536,
+        "transcript": 506.859375,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 715.5,
+            "bottom": 759.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 715.5,
+            "bottom": 759.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 704,
+            "bottom": 770,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 50,
+            "bottom": 770,
+            "height": 720,
+            "cssHeight": "720px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 50,
+            "bottom": 770,
+            "height": 720,
+            "cssHeight": "720px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 50,
+            "bottom": 770,
+            "height": 720,
+            "cssHeight": "720px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 50,
+            "bottom": 770,
+            "height": 720,
+            "cssHeight": "720px",
+            "minHeight": "0px",
+            "flex": "40 1 0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 50,
+            "bottom": 770,
+            "height": 720,
+            "cssHeight": "720px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 770,
+            "height": 770,
+            "cssHeight": "770px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 770,
+            "height": 770,
+            "cssHeight": "770px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 770,
+            "height": 770,
+            "cssHeight": "770px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "light",
+            "top": 0,
+            "bottom": 770,
+            "height": 770,
+            "cssHeight": "770px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "TTest Service Studio",
+            "left": 21,
+            "right": 175.859375,
+            "width": 154.859375
+          },
+          {
+            "name": "Home",
+            "left": 189.859375,
+            "right": 265.4375,
+            "width": 75.578125
+          },
+          {
+            "name": "Action items",
+            "left": 268.9375,
+            "right": 378.03125,
+            "width": 109.09375
+          },
+          {
+            "name": "Documents",
+            "left": 381.53125,
+            "right": 484.890625,
+            "width": 103.359375
+          },
+          {
+            "name": "Resources",
+            "left": 488.390625,
+            "right": 584.34375,
+            "width": 95.953125
+          },
+          {
+            "name": "Contact Advisor",
+            "left": 1110.515625,
+            "right": 1226.296875,
+            "width": 115.78125
+          },
+          {
+            "name": "",
+            "left": 1236.796875,
+            "right": 1271.796875,
+            "width": 35
+          },
+          {
+            "name": "signin@example.test",
+            "left": 1282.296875,
+            "right": 1422.8125,
+            "width": 140.515625
+          },
+          {
+            "name": "Sign Out",
+            "left": 1433.3125,
+            "right": 1515,
+            "width": 81.6875
+          }
+        ]
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "context": "b",
+      "result": "PASS",
+      "geometry": {
+        "width": 1366,
+        "height": 768,
+        "input": {
+          "top": 713.5,
+          "bottom": 757.5,
+          "width": 443.5,
+          "height": 44,
+          "font": "12.25px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 31.5,
+            "width": 31.5,
+            "bottom": 751.25
+          },
+          {
+            "name": "Send message",
+            "height": 35,
+            "width": 35,
+            "bottom": 753
+          }
+        ],
+        "documentHeight": 768,
+        "documentWidth": 1366,
+        "transcript": 504.859375,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 713.5,
+            "bottom": 757.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 713.5,
+            "bottom": 757.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 702,
+            "bottom": 768,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 50,
+            "bottom": 768,
+            "height": 718,
+            "cssHeight": "718px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 50,
+            "bottom": 768,
+            "height": 718,
+            "cssHeight": "718px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 50,
+            "bottom": 768,
+            "height": 718,
+            "cssHeight": "718px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 50,
+            "bottom": 768,
+            "height": 718,
+            "cssHeight": "718px",
+            "minHeight": "0px",
+            "flex": "40 1 0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 50,
+            "bottom": 768,
+            "height": 718,
+            "cssHeight": "718px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "dark",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "SSecond Test Business",
+            "left": 21,
+            "right": 189.578125,
+            "width": 168.578125
+          },
+          {
+            "name": "Home",
+            "left": 203.578125,
+            "right": 279.15625,
+            "width": 75.578125
+          },
+          {
+            "name": "Action items",
+            "left": 282.65625,
+            "right": 391.75,
+            "width": 109.09375
+          },
+          {
+            "name": "Documents",
+            "left": 395.25,
+            "right": 498.609375,
+            "width": 103.359375
+          },
+          {
+            "name": "Resources",
+            "left": 502.109375,
+            "right": 598.0625,
+            "width": 95.953125
+          },
+          {
+            "name": "Contact Advisor",
+            "left": 940.515625,
+            "right": 1056.296875,
+            "width": 115.78125
+          },
+          {
+            "name": "",
+            "left": 1066.796875,
+            "right": 1101.796875,
+            "width": 35
+          },
+          {
+            "name": "signin@example.test",
+            "left": 1112.296875,
+            "right": 1252.8125,
+            "width": 140.515625
+          },
+          {
+            "name": "Sign Out",
+            "left": 1263.3125,
+            "right": 1345,
+            "width": 81.6875
+          }
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "context": "b",
+      "result": "PASS",
+      "geometry": {
+        "width": 1024,
+        "height": 768,
+        "input": {
+          "top": 713.5,
+          "bottom": 757.5,
+          "width": 306.703125,
+          "height": 44,
+          "font": "12.25px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 31.5,
+            "width": 31.5,
+            "bottom": 751.25
+          },
+          {
+            "name": "Send message",
+            "height": 35,
+            "width": 35,
+            "bottom": 753
+          }
+        ],
+        "documentHeight": 768,
+        "documentWidth": 1024,
+        "transcript": 469.859375,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 713.5,
+            "bottom": 757.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 713.5,
+            "bottom": 757.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 702,
+            "bottom": 768,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 85,
+            "bottom": 768,
+            "height": 683,
+            "cssHeight": "683px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 85,
+            "bottom": 768,
+            "height": 683,
+            "cssHeight": "683px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 85,
+            "bottom": 768,
+            "height": 683,
+            "cssHeight": "683px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 85,
+            "bottom": 768,
+            "height": 683,
+            "cssHeight": "683px",
+            "minHeight": "0px",
+            "flex": "40 1 0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 85,
+            "bottom": 768,
+            "height": 683,
+            "cssHeight": "683px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "light",
+            "top": 0,
+            "bottom": 768,
+            "height": 768,
+            "cssHeight": "768px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "SSecond Test Business",
+            "left": 21,
+            "right": 189.578125,
+            "width": 168.578125
+          },
+          {
+            "name": "Home",
+            "left": 203.578125,
+            "right": 279.15625,
+            "width": 75.578125
+          },
+          {
+            "name": "Action items",
+            "left": 282.65625,
+            "right": 391.75,
+            "width": 109.09375
+          },
+          {
+            "name": "Documents",
+            "left": 395.25,
+            "right": 498.609375,
+            "width": 103.359375
+          },
+          {
+            "name": "Resources",
+            "left": 502.109375,
+            "right": 598.0625,
+            "width": 95.953125
+          },
+          {
+            "name": "Contact Advisor",
+            "left": 598.515625,
+            "right": 714.296875,
+            "width": 115.78125
+          },
+          {
+            "name": "",
+            "left": 724.796875,
+            "right": 759.796875,
+            "width": 35
+          },
+          {
+            "name": "signin@example.test",
+            "left": 770.296875,
+            "right": 910.8125,
+            "width": 140.515625
+          },
+          {
+            "name": "Sign Out",
+            "left": 921.3125,
+            "right": 1003,
+            "width": 81.6875
+          }
+        ]
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "context": "a",
+      "result": "PASS",
+      "geometry": {
+        "width": 900,
+        "height": 1000,
+        "input": {
+          "top": 945.5,
+          "bottom": 989.5,
+          "width": 257.09375,
+          "height": 44,
+          "font": "12.25px"
+        },
+        "buttons": [
+          {
+            "name": "Start voice typing",
+            "height": 31.5,
+            "width": 31.5,
+            "bottom": 983.25
+          },
+          {
+            "name": "Send message",
+            "height": 35,
+            "width": 35,
+            "bottom": 985
+          }
+        ],
+        "documentHeight": 1000,
+        "documentWidth": 900,
+        "transcript": 701.859375,
+        "layout": [
+          {
+            "tag": "TEXTAREA",
+            "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+            "top": 945.5,
+            "bottom": 989.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "44px",
+            "flex": "1 1 0%",
+            "padding": "7px 10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex gap-1.5 sm:gap-2 items-center",
+            "top": 945.5,
+            "bottom": 989.5,
+            "height": 44,
+            "cssHeight": "44px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+            "top": 934,
+            "bottom": 1000,
+            "height": 66,
+            "cssHeight": "66px",
+            "minHeight": "auto",
+            "flex": "0 0 auto",
+            "padding": "10.5px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+            "top": 85,
+            "bottom": 1000,
+            "height": 915,
+            "cssHeight": "915px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-full",
+            "top": 85,
+            "bottom": 1000,
+            "height": 915,
+            "cssHeight": "915px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "relative h-full min-h-0 min-w-0",
+            "top": 85,
+            "bottom": 1000,
+            "height": 915,
+            "cssHeight": "915px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "min-h-0 max-md:!flex-[1_1_100%]",
+            "top": 85,
+            "bottom": 1000,
+            "height": 915,
+            "cssHeight": "915px",
+            "minHeight": "0px",
+            "flex": "40 1 0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+            "top": 85,
+            "bottom": 1000,
+            "height": 915,
+            "cssHeight": "915px",
+            "minHeight": "0px",
+            "flex": "1 1 0%",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+            "top": 0,
+            "bottom": 1000,
+            "height": 1000,
+            "cssHeight": "1000px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "class": "",
+            "top": 0,
+            "bottom": 1000,
+            "height": 1000,
+            "cssHeight": "1000px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "BODY",
+            "class": "",
+            "top": 0,
+            "bottom": 1000,
+            "height": 1000,
+            "cssHeight": "1000px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          },
+          {
+            "tag": "HTML",
+            "class": "dark",
+            "top": 0,
+            "bottom": 1000,
+            "height": 1000,
+            "cssHeight": "1000px",
+            "minHeight": "0px",
+            "flex": "0 1 auto",
+            "padding": "0px"
+          }
+        ],
+        "headerControls": [
+          {
+            "name": "TTest Service Studio",
+            "left": 21,
+            "right": 175.859375,
+            "width": 154.859375
+          },
+          {
+            "name": "Home",
+            "left": 189.859375,
+            "right": 265.4375,
+            "width": 75.578125
+          },
+          {
+            "name": "Action items",
+            "left": 268.9375,
+            "right": 378.03125,
+            "width": 109.09375
+          },
+          {
+            "name": "Documents",
+            "left": 381.53125,
+            "right": 484.890625,
+            "width": 103.359375
+          },
+          {
+            "name": "Resources",
+            "left": 488.390625,
+            "right": 584.34375,
+            "width": 95.953125
+          },
+          {
+            "name": "Contact Advisor",
+            "left": 566.703125,
+            "right": 682.484375,
+            "width": 115.78125
+          },
+          {
+            "name": "",
+            "left": 692.984375,
+            "right": 727.984375,
+            "width": 35
+          },
+          {
+            "name": "signin@example.test",
+            "left": 738.484375,
+            "right": 879,
+            "width": 140.515625
+          }
+        ]
+      }
+    }
+  ],
+  "errors": []
+}

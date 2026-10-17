@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 import { recordCapabilityRun } from '../../supabase/functions/_shared/capability-record';
+import { parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT } from '../../supabase/functions/_shared/research-source-policy';
 
 const actor = '00000000-0000-4000-8000-000000000001';
 const tenant = 'aa000000-0000-4000-8000-000000000002';
@@ -29,6 +30,8 @@ type Options = {
   recorderError?: boolean; lostReceiptAck?: boolean;
   cited?: boolean; failedSynthesis?: boolean; scopeReadThrows?: boolean; strategyError?: boolean;
   scopeRpcError?: boolean; corruptScope?: 'actor' | 'tenant'; maxSources?: boolean; scopeBudgetAfterSearch?: boolean;
+  searchHits?: Array<{url:string;title:string;description:string}>;
+  searchBatches?: Array<Array<{url:string;title:string;description:string}>>;
 };
 
 function fixture(options: Options = {}) {
@@ -128,11 +131,12 @@ function fixture(options: Options = {}) {
   const admin = { from: query, rpc: (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args)
     : name === 'research_readback_persisted_run' ? readbackRpc(args) : adminRpc(name, args), auth: { admin: { getUserById: identityRead } } };
   const caller = { from: query, auth: { getUser: identityRead }, rpc: async (name: string, args: Row) => name === 'research_assert_current_scope' ? scopeRpc(args) : ({ data: name === 'current_user_tenant_id' ? active : options.member !== false, error: null }) };
-  const provider = vi.fn(async (url: string) => {
+  let searchNumber=0;
+  const provider = vi.fn(async (url: string, _init?: {body:string}) => {
     if (options.switchAt === 'search') active = other;
-    if (url.endsWith('/paige-web-search')) return Response.json({ configured: !options.unconfigured, results: options.maxSources ? Array.from({ length: 10 }, (_, n) => ({ url: `https://research-fixture.gov/evidence-${provider.mock.calls.length}-${n}`, title: `Protected evidence${n}`, description: 'Protected supporting fixture research establishes a reproducible baseline.' })) : options.cited ? [
+    if (url.endsWith('/paige-web-search')) return Response.json({ configured: !options.unconfigured, results: options.searchBatches?.[searchNumber++] ?? options.searchHits ?? (options.maxSources ? Array.from({ length: 10 }, (_, n) => ({ url: `https://research-fixture.gov/evidence-${provider.mock.calls.length}-${n}`, title: `Protected evidence${n}`, description: 'Protected supporting fixture research establishes a reproducible baseline.' })) : options.cited ? [
       { url: 'https://research-fixture.gov/evidence', title: 'Protected research fixture evidence', description: 'Protected supporting fixture research establishes a reproducible baseline.' },
-    ] : [] });
+    ] : []) });
     if (url.endsWith('/fetch-url-content')) return Response.json({ success: true, content: 'Protected supporting fixture research establishes a reproducible baseline.' });
     throw new Error('Unexpected fixture provider endpoint');
   });
@@ -153,7 +157,7 @@ function fixture(options: Options = {}) {
     }
     return { degraded: true };
   });
-  const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun, Date: options.scopeBudgetAfterSearch ? FixtureDate : Date,
+  const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun, parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT, Date: options.scopeBudgetAfterSearch ? FixtureDate : Date,
     createClient: (_url: string, key: string) => key === 'fixture-service' ? admin : caller,
     researchCompletion: model, strategizeBeforeReasoning: strategy, fetch: provider,
     Deno: { env: { get: (name: string) => ({ SUPABASE_URL: 'https://local.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-service', SUPABASE_ANON_KEY: 'fixture-anon' })[name] } } };
@@ -225,6 +229,71 @@ describe('incumbent native Research receipt contract', () => {
 });
 
 describe('actual native Research authenticated door', () => {
+  it.each([false, true])('enforces a requested source budget before reads and persists the same policy (service=%s)', async service => {
+    const test = fixture({ maxSources: true });
+    const {response,body} = await test.run({max_sources:3,max_hops:3},service);
+    expect(response.status).toBe(200); expect(body.sources).toHaveLength(3);
+    expect(body.coverage).toMatchObject({searches:1,reads:3,stop_reason:'budget',source_policy:{max_sources:3,admitted_sources:3,limit_reached:true}});
+    expect(test.rows.research_runs[0].coverage).toEqual(body.coverage);
+    expect(test.rows.research_sources).toHaveLength(3);
+    expect(body.persistence_verified).toBe(true);
+    expect(body.findings.length).toBeGreaterThan(0);
+    expect(body.findings.every((f:Row)=>(f.citations as number[]).every(index=>body.sources.some((s:Row)=>s.index===index)))).toBe(true);
+    expect(test.model.mock.calls.some(([phase])=>phase==='unit_synthesis')).toBe(true);
+    const search = test.provider.mock.calls.filter(([url])=>url.endsWith('/paige-web-search'));
+    expect(search).toHaveLength(1);
+    expect(JSON.parse(search[0][1]!.body).limit).toBe(3);
+  });
+  it.each([{max_sources:0},{max_sources:1.5},{max_sources:'3'},{max_sources:91},{allowed_domains:[]},{allowed_domains:['https://openai.com']},{allowed_domains:['openai.com.attacker/']},{allowed_domains:null}])('refuses malformed supplied constraints before any provider or strategy: %j', async policy=>{
+    const test=fixture({cited:true}); const {response}=await test.run(policy);
+    expect(response.status).toBe(400); expect(test.provider).not.toHaveBeenCalled(); expect(test.model).not.toHaveBeenCalled(); expect(test.strategy).not.toHaveBeenCalled();
+    expect(test.rows.research_runs).toHaveLength(0);
+  });
+  it.each(['ordinary','chat','delegated'] as const)('enforces normalized hostnames and unique sources across the %s entry path',async entry=>{
+    const hit=(url:string)=>({url,title:'Protected source',description:'Protected supporting fixture research establishes a reproducible baseline.'});
+    const test=fixture({searchHits:[hit('https://openai.com.attacker/source'),hit('https://attacker.invalid/?url=openai.com'),hit('https://OPENAI.COM:443/source#first'),hit('https://openai.com/source#duplicate'),hit('https://developers.openai.com/docs'),hit('ftp://openai.com/file'),hit('https://openai.com@attacker.invalid/source'),hit('https://openai.com/third')]});
+    const policy={max_sources:3,allowed_domains:['OpenAI.com','openai.com']};
+    const body=entry==='delegated'?{question:null,user_id:null,input:{question,...policy},context:{user_id:actor}}:policy;
+    const {response,body:result}=await test.run(body,entry!=='ordinary');
+    expect(response.status).toBe(200);
+    expect(result.sources.map((s:Row)=>s.url).sort()).toEqual(['https://developers.openai.com/docs','https://openai.com/source','https://openai.com/third']);
+    expect(result.coverage.source_policy).toEqual({max_sources:3,allowed_domains:['openai.com'],admitted_sources:3,limit_reached:true});
+    expect(test.rows.research_runs[0].coverage).toEqual(result.coverage); expect(result.persistence_verified).toBe(true);
+    const reads=test.provider.mock.calls.filter(([url])=>url.endsWith('/fetch-url-content'));
+    expect(reads).toHaveLength(3); expect(reads.every(([,init])=>result.sources.some((s:Row)=>s.url===JSON.parse(init!.body).url))).toBe(true);
+    expect(test.provider.mock.calls.filter(([url])=>url.endsWith('/paige-web-search')).every(([,init])=>JSON.parse(init!.body).allowed_domains[0]==='openai.com')).toBe(true);
+    expect(result.sources.every((s:Row)=>s.tier==='T4')).toBe(true); // allowlisting is not authority promotion
+  });
+  it('does not silently drop conflicting delegated source constraints',async()=>{
+    const test=fixture({cited:true}); const {response}=await test.run({max_sources:3,input:{max_sources:4}},true);
+    expect(response.status).toBe(400); expect(test.provider).not.toHaveBeenCalled(); expect(test.strategy).not.toHaveBeenCalled();
+  });
+  it('returns honest empty evidence when every provider hit is outside the allowed domains',async()=>{
+    const test=fixture({cited:true}); const {response,body}=await test.run({allowed_domains:['openai.com']});
+    expect(response.status).toBe(200); expect(body.sources).toEqual([]); expect(body.findings).toEqual([]);
+    expect(body.coverage.source_policy).toEqual({allowed_domains:['openai.com'],admitted_sources:0,limit_reached:false});
+    expect(test.provider.mock.calls.every(([url])=>url.endsWith('/paige-web-search'))).toBe(true);
+    expect(body.persistence_verified).toBe(true);
+  });
+  it('keeps dossier source caps narrowing while continuing its admitted page reads and synthesis',async()=>{
+    const test=fixture({maxSources:true});const {response,body}=await test.run({question:'Research the company Protected Fixture Labs',max_sources:1,max_hops:4});
+    expect(response.status).toBe(200);expect(body.sources).toHaveLength(1);expect(body.coverage).toMatchObject({reads:1,searches:1,source_policy:{max_sources:1,limit_reached:true}});
+    expect(test.model.mock.calls.some(([phase])=>phase==='dossier_synthesis')).toBe(true);
+  });
+  it('passes only the remaining source budget to the next search and admits no excess hits',async()=>{
+    const hit=(n:number)=>({url:`https://research-fixture.gov/${n}`,title:'Protected source',description:'Protected supporting fixture research establishes a reproducible baseline.'});
+    const test=fixture({searchBatches:[[hit(1),hit(2)],[hit(2),hit(3),hit(4)]]});
+    const {body}=await test.run({max_sources:3,max_hops:3});
+    expect(body.sources).toHaveLength(3);expect(body.coverage.reads).toBe(3);
+    const searches=test.provider.mock.calls.filter(([url])=>url.endsWith('/paige-web-search'));
+    expect(searches.map(([,init])=>JSON.parse(init!.body).limit)).toEqual([3,1]);
+    expect(body.findings.every((f:Row)=>(f.citations as number[]).every(index=>body.sources.some((s:Row)=>s.index===index)))).toBe(true);
+  });
+  it('cannot increase the incumbent general search bound with a larger valid requested source count',async()=>{
+    const test=fixture({maxSources:true});const {body}=await test.run({max_sources:90,max_hops:3});
+    expect(body.coverage.source_policy.max_sources).toBe(50);expect(body.sources.length).toBeLessThanOrEqual(50);
+    expect(test.provider.mock.calls.filter(([url])=>url.endsWith('/paige-web-search')).every(([,init])=>JSON.parse(init!.body).limit<=5)).toBe(true);
+  });
   it.each([false, true])('pairs every fresh Auth read with one parallel canonical scope request (service=%s)', async service => {
     const test = fixture({ cited: true }); const { response } = await test.run({}, service);
     expect(response.status).toBe(200); expect(test.scopeRpc.mock.calls.length).toBeGreaterThanOrEqual(test.provider.mock.calls.length * 2);

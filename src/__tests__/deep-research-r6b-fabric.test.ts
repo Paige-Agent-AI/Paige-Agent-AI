@@ -224,7 +224,7 @@ describe("R6-B — engine integration pins (the four call sites route through th
   it("the engine threads the server-resolved run context to every phase", () => {
     expect(core).toContain("const fabricCtx");
     expect(core).toContain("tenantId: resolvedTenantId");
-    expect(core).toContain("await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx)");
+    expect(core).toContain("await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx, sourcePolicy)");
     expect(core).toContain("planSynthesisUnits(question, domainHint, citable, fabricCtx)");
   });
   it("unit diagnostics gain served_route; the R6-A served_model readback survives", () => {

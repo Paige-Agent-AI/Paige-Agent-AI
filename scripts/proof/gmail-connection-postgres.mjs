@@ -16,8 +16,8 @@ const lit=x=>x===null?'NULL':`'${String(x).replaceAll("'","''")}'`;
 const service=sql=>`SET ROLE service_role;SELECT set_config('test.role','service_role',false);${sql};RESET ROLE;`;
 const value=sql=>db.run(sql).split(/\r?\n/).filter(Boolean).at(-1);
 const json=sql=>JSON.parse(db.run(service(sql)).split(/\r?\n/).find(x=>x.startsWith('{')));
-const call=(actor=A,tenant=T,address='fixture@example.invalid',purpose='inbox',token='fixture-token-A')=>
-  `SELECT public.provision_gmail_connection('${actor}','${tenant}','fixture-google',${lit(address)},'Fixture',${lit(purpose)},ARRAY['https://www.googleapis.com/auth/gmail.modify'],${lit(token)})`;
+const call=(actor=A,tenant=T,address='fixture@example.invalid',purpose='inbox',token='fixture-token-A',scopes="ARRAY['https://www.googleapis.com/auth/gmail.modify']")=>
+  `SELECT public.provision_gmail_connection('${actor}','${tenant}','fixture-google',${lit(address)},'Fixture',${lit(purpose)},${scopes},${lit(token)})`;
 const disconnect=(row,actor=A,tenant=T)=>`SELECT public.disconnect_gmail_connection('${actor}','${tenant}',${lit(row.id)},${lit(row.credentials_vault_ref)},${lit(row.updated_at)}::timestamptz)`;
 function functionSource(path,name) {
   const text=readFileSync(path,'utf8');
@@ -35,9 +35,14 @@ function rows(){return Number(value('SELECT count(*) FROM public.channel_connect
 function secrets(){return Number(value('SELECT count(*) FROM vault.secrets'));}
 function reset(){db.run(`TRUNCATE public.channel_connectors,vault.secrets;UPDATE public.tenants SET status='active';
   INSERT INTO public.profiles VALUES('${A}','${T}'),('${B}','${T}') ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=excluded.active_tenant_id;
-  INSERT INTO public.tenant_members VALUES('${A}','${T}','owner','active') ON CONFLICT DO NOTHING;
-  UPDATE public.tenant_members SET status='active',role='owner';DELETE FROM public.user_roles;UPDATE auth.users SET deleted_at=NULL,banned_until=NULL;`);}
+  DELETE FROM public.tenant_members;
+  INSERT INTO public.tenant_members VALUES('${A}','${T}','owner','active','2020-01-01'),('${B}','${T}','owner','active','2020-01-01'),('${B}','${U}','owner','active','2021-01-01');
+  DELETE FROM public.user_roles;UPDATE auth.users SET deleted_at=NULL,banned_until=NULL;`);}
 function connector(){return JSON.parse(value('SELECT row_to_json(c) FROM public.channel_connectors c LIMIT 1'));}
+function canonical(actor=A){
+  const raw=db.run(`SET ROLE authenticated;SELECT set_config('test.actor','${actor}',false);SELECT jsonb_build_object('tenant',public.current_user_tenant_id())::text;`);
+  return JSON.parse(raw.split(/\r?\n/).find(x=>x.startsWith('{'))).tenant;
+}
 try {
   db.run(`CREATE SCHEMA auth;CREATE SCHEMA vault;
     DO $$BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon;END IF;
@@ -48,13 +53,15 @@ try {
     GRANT USAGE ON SCHEMA public,auth TO anon,authenticated,service_role;
     CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
     CREATE TABLE public.tenants(id uuid PRIMARY KEY,status text,parent_tenant_id uuid,account_type text,features jsonb DEFAULT '{}');
-    CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
-    CREATE TABLE public.tenant_members(user_id uuid,tenant_id uuid,role text,status text,PRIMARY KEY(user_id,tenant_id));
-    CREATE TABLE public.user_roles(user_id uuid,role text,PRIMARY KEY(user_id,role));
+    CREATE TABLE public.profiles(user_id uuid PRIMARY KEY REFERENCES auth.users(id),active_tenant_id uuid);
+    CREATE TABLE public.tenant_members(user_id uuid,tenant_id uuid REFERENCES public.tenants(id),role text,status text,joined_at timestamptz DEFAULT now(),PRIMARY KEY(user_id,tenant_id));
+    CREATE TABLE public.user_roles(user_id uuid REFERENCES auth.users(id),role text,PRIMARY KEY(user_id,role));
+    CREATE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+    CREATE FUNCTION public.agency_team_role(uuid,uuid) RETURNS text LANGUAGE sql AS $$SELECT NULL::text$$;
     CREATE TABLE public.channel_connectors(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,channel_type text,
       provider text,inbound_address text,external_account_id text,from_address text,from_name text,display_name text,
       credentials_vault_ref text,status text,active boolean,updated_at timestamptz NOT NULL DEFAULT now(),
-      mailbox_class text NOT NULL DEFAULT 'shared_support',mailbox_owner_user_id uuid,mailbox_scopes text[] DEFAULT '{}');
+      mailbox_class text NOT NULL DEFAULT 'shared_support',mailbox_owner_user_id uuid,mailbox_scopes jsonb NOT NULL DEFAULT '[]'::jsonb);
     CREATE UNIQUE INDEX uq_channel_connectors_inbound_address ON public.channel_connectors(channel_type,lower(inbound_address)) WHERE inbound_address IS NOT NULL;
     CREATE TABLE vault.secrets(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),name text UNIQUE,secret text,description text);
     CREATE FUNCTION vault.create_secret(_secret text,_name text,_description text) RETURNS uuid LANGUAGE plpgsql AS $$DECLARE v uuid;BEGIN INSERT INTO vault.secrets(name,secret,description) VALUES(_name,_secret,_description) RETURNING id INTO v;RETURN v;END$$;
@@ -62,13 +69,17 @@ try {
     INSERT INTO auth.users(id) VALUES('${A}'),('${B}');
     INSERT INTO public.tenants(id,status,account_type,features) VALUES('${T}','active','standalone','{}'),('${U}','active','standalone','{}'),('${C}','active','standalone','{"system_workspace":true}');
     INSERT INTO public.profiles VALUES('${A}','${T}'),('${B}','${T}');
-    INSERT INTO public.tenant_members VALUES('${A}','${T}','owner','active'),('${B}','${T}','owner','active'),('${B}','${U}','owner','active');`);
+    INSERT INTO public.tenant_members VALUES('${A}','${T}','owner','active','2020-01-01'),('${B}','${T}','owner','active','2020-01-01'),('${B}','${U}','owner','active','2021-01-01');`);
   db.run(functionSource('supabase/migrations/20260714142258_tier_rail_phaseB.sql','is_platform_admin'));
   db.run(functionSource(actorMigration,'is_company_workspace'));
   db.run(functionSource(actorMigration,'is_tenant_admin_as'));
+  db.run(functionSource('supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql','current_user_tenant_id'));
   db.run(readFileSync('supabase/migrations/20260727120000_write_channel_secret_bridge.sql','utf8'));
   const migration=readFileSync('supabase/migrations/20271108200000_gmail_connection_authority.sql','utf8');
   db.run(migration);db.run(migration);
+  check('fixture retains the installed JSONB mailbox scopes contract',()=>{
+    assert.equal(value("SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='channel_connectors' AND column_name='mailbox_scopes'"),'jsonb');
+  });
   check('migration replay and service-only public door/helper ACL',()=>{
     assert.equal(value(`SELECT has_function_privilege('service_role','public.provision_gmail_connection(uuid,uuid,text,text,text,text,text[],text)','EXECUTE')`),'t');
     for(const role of ['anon','authenticated'])for(const signature of ['provision_gmail_connection(uuid,uuid,text,text,text,text,text[],text)','disconnect_gmail_connection(uuid,uuid,uuid,text,timestamp with time zone)'])
@@ -78,6 +89,7 @@ try {
   check('ordinary owner without global role saves one exact native connector and incumbent Vault secret',()=>{
     const result=json(call());assert.equal(result.connection_saved,true);assert.equal(result.tenant_id,T);
     assert.equal(rows(),1);assert.equal(secrets(),1);assert.equal(value('SELECT mailbox_owner_user_id FROM public.channel_connectors'),A);
+    assert.deepEqual(connector().mailbox_scopes,['https://www.googleapis.com/auth/gmail.modify']);
     assert.equal(value('SELECT secret FROM vault.secrets'),'fixture-token-A');
   });
   check('authenticated and anonymous callers cannot use the service credential setter',()=>{
@@ -92,6 +104,61 @@ try {
     assert.equal(result.reconnected,true);assert.equal(connector().id,before);assert.equal(rows(),1);assert.equal(secrets(),1);
     assert.equal(value('SELECT secret FROM vault.secrets'),'fixture-token-B');
   });
+  for(const [label,scopes]of[['null','NULL'],['empty','ARRAY[]::text[]']]){
+    check(`fresh ${label} scopes persist the canonical empty JSON array`,()=>{
+      reset();assert.equal(json(call(A,T,'fixture@example.invalid','inbox','fixture-token-B',scopes)).connection_saved,true);
+      assert.deepEqual(connector().mailbox_scopes,[]);assert.equal(rows(),1);assert.equal(secrets(),1);
+    });
+    check(`reconnect ${label} scopes replace an exact nonempty JSON array without duplicating identity`,()=>{
+      const id=connector().id;
+      json(call(A,T,'fixture@example.invalid','inbox','fixture-token-B',"ARRAY['gmail.modify','gmail.labels']"));
+      assert.deepEqual(connector().mailbox_scopes,['gmail.modify','gmail.labels']);
+      json(call(A,T,'fixture@example.invalid','inbox','fixture-token-B',scopes));
+      assert.deepEqual(connector().mailbox_scopes,[]);assert.equal(connector().id,id);assert.equal(rows(),1);assert.equal(secrets(),1);
+    });
+  }
+  check('null profile workspace uses the actual canonical earliest active membership',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}'`);
+    assert.equal(canonical(),T);assert.equal(json(call()).connection_saved,true);assert.equal(connector().tenant_id,T);
+  });
+  check('missing profile uses canonical membership fallback without creating a profile or changing actor claims',()=>{
+    reset();db.run(`DELETE FROM public.profiles WHERE user_id='${A}'`);
+    assert.equal(canonical(),T);assert.equal(json(call()).connection_saved,true);assert.equal(connector().tenant_id,T);
+    assert.equal(value(`SELECT count(*) FROM public.profiles WHERE user_id='${A}'`),'0');
+    assert.equal(value('SELECT auth.uid() IS NULL'),'t');
+  });
+  check('an invalid profile follows the actual canonical fallback rather than treating a raw foreign UUID as authority',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id='${U}' WHERE user_id='${A}'`);
+    assert.equal(canonical(),T);assert.equal(json(call()).connection_saved,true);assert.equal(connector().tenant_id,T);
+  });
+  check('valid profile wins over older memberships and an old expected workspace is refused',()=>{
+    reset();db.run(`INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2021-01-01');UPDATE public.profiles SET active_tenant_id='${U}' WHERE user_id='${A}'`);
+    assert.equal(canonical(),U);refuse(call(),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+    assert.equal(json(call(A,U)).tenant_id,U);assert.equal(connector().tenant_id,U);
+  });
+  check('earliest active membership matches canonical resolution and never uses an arbitrary requested fallback',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}';INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2019-01-01')`);
+    assert.equal(canonical(),U);refuse(call(),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+    assert.equal(json(call(A,U)).tenant_id,U);assert.equal(connector().tenant_id,U);
+  });
+  check('a revoked earliest membership is skipped exactly as the canonical resolver does',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}';INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','revoked','2019-01-01')`);
+    assert.equal(canonical(),T);refuse(call(A,U),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+    assert.equal(json(call()).tenant_id,T);
+  });
+  check('no active fallback refuses without creating a credential or connector',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}';UPDATE public.tenant_members SET status='revoked' WHERE user_id='${A}'`);
+    assert.equal(canonical(),null);refuse(call(),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+  });
+  check('fallback membership still needs canonical owner/admin authority',()=>{
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}';UPDATE public.tenant_members SET role='member' WHERE user_id='${A}'`);
+    assert.equal(canonical(),T);refuse(call(),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+  });
+  check('canonical platform-role scope selection never grants admin authority over an ordinary customer workspace',()=>{
+    reset();db.run(`DELETE FROM public.tenant_members WHERE user_id='${A}';INSERT INTO public.user_roles VALUES('${A}','platform_admin')`);
+    assert.equal(canonical(),T);refuse(call(),'42501');assert.equal(rows(),0);assert.equal(secrets(),0);
+  });
+  reset();json(call(A,T,'fixture@example.invalid','inbox','fixture-token-B'));
   for(const purpose of ['inbox','send'])check(`another personal owner ${purpose} refuses without overwriting credential`,()=>{
     refuse(call(B,T,'fixture@example.invalid',purpose,'forbidden-token'),'42501');assert.equal(value('SELECT secret FROM vault.secrets'),'fixture-token-B');assert.equal(connector().mailbox_owner_user_id,A);
   });
@@ -107,9 +174,8 @@ try {
     ['revoked owner',`UPDATE public.tenant_members SET status='revoked' WHERE user_id='${A}'`],
     ['deleted actor',`UPDATE auth.users SET deleted_at=now() WHERE id='${A}'`],
     ['banned actor',`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='${A}'`],
-    ['changed active workspace',`UPDATE public.profiles SET active_tenant_id='${U}' WHERE user_id='${A}'`],
+    ['changed active workspace',`INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2021-01-01');UPDATE public.profiles SET active_tenant_id='${U}' WHERE user_id='${A}'`],
     ['global admin without tenant authority',`DELETE FROM public.tenant_members WHERE user_id='${A}';INSERT INTO public.user_roles VALUES('${A}','admin')`],
-    ['missing profile',`DELETE FROM public.profiles WHERE user_id='${A}'`],
     ['inactive workspace',`UPDATE public.tenants SET status='archived' WHERE id='${T}'`],
   ])check(`${label} refuses before native persistence`,()=>{
     reset();db.run(`INSERT INTO public.tenant_members VALUES('${A}','${T}','owner','active') ON CONFLICT DO NOTHING;${change}`);
@@ -127,6 +193,16 @@ try {
   check('connector failure rolls back the earlier Vault write in the same transaction',()=>{
     reset();db.run(`CREATE FUNCTION public.fixture_refuse_connector() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.inbound_address='rollback@example.invalid' THEN RAISE EXCEPTION 'fixture rollback';END IF;RETURN NEW;END$$;CREATE TRIGGER fixture_refuse_connector BEFORE INSERT OR UPDATE ON public.channel_connectors FOR EACH ROW EXECUTE FUNCTION public.fixture_refuse_connector();`);
     refuse(call(A,T,'rollback@example.invalid'),'P0001');assert.equal(rows(),0);assert.equal(secrets(),0);
+  });
+  check('a contradictory JSONB scopes readback rolls back both connector and Vault writes',()=>{
+    reset();db.run(`CREATE FUNCTION public.fixture_change_scopes() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.inbound_address='scopes-rollback@example.invalid' THEN NEW.mailbox_scopes:='["unexpected-scope"]'::jsonb;END IF;RETURN NEW;END$$;CREATE TRIGGER fixture_change_scopes BEFORE INSERT OR UPDATE ON public.channel_connectors FOR EACH ROW EXECUTE FUNCTION public.fixture_change_scopes();`);
+    refuse(call(A,T,'scopes-rollback@example.invalid'),'P0001');assert.equal(rows(),0);assert.equal(secrets(),0);
+  });
+  check('a contradictory reconnect JSONB readback restores the exact existing connector and credential',()=>{
+    reset();json(call(A,T,'reconnect-scopes-rollback@example.invalid'));const before=connector();
+    db.run(`CREATE FUNCTION public.fixture_change_reconnect_scopes() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.inbound_address='reconnect-scopes-rollback@example.invalid' THEN NEW.mailbox_scopes:='["unexpected-scope"]'::jsonb;END IF;RETURN NEW;END$$;CREATE TRIGGER fixture_change_reconnect_scopes BEFORE UPDATE ON public.channel_connectors FOR EACH ROW EXECUTE FUNCTION public.fixture_change_reconnect_scopes();`);
+    refuse(call(A,T,'reconnect-scopes-rollback@example.invalid','inbox','fixture-token-B','ARRAY[]::text[]'),'P0001');
+    assert.deepEqual(connector(),before);assert.equal(value('SELECT secret FROM vault.secrets'),'fixture-token-A');assert.equal(secrets(),1);
   });
   reset();
   const providerCollision=await db.holdArchive(`INSERT INTO public.channel_connectors(tenant_id,channel_type,provider,inbound_address,status,active) VALUES('${T}','email','smtp','provider-race@example.invalid','active',true)`);
@@ -151,13 +227,47 @@ try {
     ['workspace switch',`UPDATE public.profiles SET active_tenant_id='${U}' WHERE user_id='${A}'`],
     ['membership revocation',`UPDATE public.tenant_members SET status='revoked' WHERE user_id='${A}' AND tenant_id='${T}'`],
   ]){
-    reset();const held=await db.holdArchive(sql);const start=Date.now();refuse(call(),'42501');await held.completed;
+    reset();if(label==='workspace switch')db.run(`INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2021-01-01')`);
+    const held=await db.holdArchive(sql);const start=Date.now();refuse(call(),'42501');await held.completed;
     check(`two-session ${label} wins before waiting native commit`,()=>{assert(Date.now()-start>=200);assert.equal(rows(),0);assert.equal(secrets(),0);});
   }
   reset();db.run(`UPDATE public.profiles SET active_tenant_id='${C}' WHERE user_id='${A}';INSERT INTO public.user_roles VALUES('${A}','platform_admin')`);
   const companyRevocation=await db.holdArchive(`DELETE FROM public.user_roles WHERE user_id='${A}'`);
   refuse(call(A,C),'42501');await companyRevocation.completed;
   check('existing company authority source revocation wins before a waiting native commit',()=>{assert.equal(rows(),0);assert.equal(secrets(),0);});
+  for(const [label,change,requested]of[
+    ['revoked first fallback',`UPDATE public.tenant_members SET status='revoked' WHERE user_id='${A}' AND tenant_id='${U}'`,U],
+    ['changed fallback order',`UPDATE public.tenant_members SET joined_at='2018-01-01' WHERE user_id='${A}' AND tenant_id='${T}'`,U],
+  ]){
+    reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}';INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2019-01-01')`);
+    assert.equal(canonical(),U);const held=await db.holdArchive(change);const start=Date.now();
+    refuse(call(A,requested),'42501');await held.completed;
+    check(`two-session ${label} commits before locked canonical resolution and refuses the stale target`,()=>{
+      assert(Date.now()-start>=200);assert.equal(canonical(),T);assert.equal(rows(),0);assert.equal(secrets(),0);
+    });
+  }
+  for(const [label,setup,change]of[
+    ['new earlier membership',`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}'`,`INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2019-01-01')`],
+    ['missing-profile insertion',`DELETE FROM public.profiles WHERE user_id='${A}';INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2021-01-01')`,`INSERT INTO public.profiles VALUES('${A}','${U}')`],
+  ]){
+    reset();db.run(setup);assert.equal(canonical(),T);
+    const held=await db.holdArchive(`SELECT pg_advisory_xact_lock(hashtextextended('gmail_refresh_token:${T}:fixture-google',141));${change}`);
+    const start=Date.now();refuse(call(),'42501');await held.completed;
+    check(`two-session ${label} during connector wait is re-read before any native write`,()=>{
+      assert(Date.now()-start>=200);assert.equal(canonical(),U);assert.equal(rows(),0);assert.equal(secrets(),0);
+    });
+  }
+  reset();db.run(`UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id='${A}'`);assert.equal(canonical(),T);
+  const admitted=await db.holdArchive(service(call()));
+  db.run(`INSERT INTO public.tenant_members VALUES('${A}','${U}','owner','active','2019-01-01')`);
+  assert.equal(canonical(),U);await admitted.completed;
+  check('overlapping later membership can linearize after admitted native writes without cross-tenant credential effects',()=>{
+    assert.equal(rows(),1);assert.equal(connector().tenant_id,T);assert.equal(secrets(),1);
+    assert.equal(value('SELECT name FROM vault.secrets'),`gmail_refresh_token:${T}:fixture-google`);
+    assert.equal(value(`SELECT count(*) FROM public.channel_connectors WHERE tenant_id='${U}'`),'0');
+    // Edge post-write canonical checks must withhold this now-former workspace.
+    assert.notEqual(canonical(),T);
+  });
   reset();json(call());let snapshot=connector();
   check('disconnect refuses a teammate personal mailbox without tombstone',()=>{
     refuse(disconnect(snapshot,B),'42501');assert.equal(value('SELECT secret FROM vault.secrets'),'fixture-token-A');assert.equal(connector().active,true);
@@ -181,6 +291,12 @@ try {
     assert.equal(json(disconnect(snapshot)).disconnected,true);assert.equal(value('SELECT secret FROM vault.secrets'),'revoked');
     assert.equal(connector().active,false);assert.equal(connector().credentials_vault_ref,null);snapshot=connector();
     assert.equal(json(disconnect(snapshot)).disconnected,false);assert.equal(secrets(),1);
+  });
+  check('canonical fallback also authorizes the existing native disconnect without creating profile state',()=>{
+    reset();json(call());const current=connector();db.run(`DELETE FROM public.profiles WHERE user_id='${A}'`);
+    assert.equal(canonical(),T);assert.equal(json(disconnect(current)).disconnected,true);
+    assert.equal(connector().active,false);assert.equal(value('SELECT secret FROM vault.secrets'),'revoked');
+    assert.equal(value(`SELECT count(*) FROM public.profiles WHERE user_id='${A}'`),'0');
   });
   reset();json(call());snapshot=connector();
   const disconnectRevocation=await db.holdArchive(`UPDATE public.tenant_members SET status='revoked' WHERE user_id='${A}' AND tenant_id='${T}'`);

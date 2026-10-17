@@ -310,6 +310,105 @@ SELECT is((SELECT contact_id::text FROM public.paige_chat_threads WHERE id=(SELE
 SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.paige_chat_thread_create(NULL,'customer','Return','{}')$$),
  (SELECT thread_id::text FROM e09_customer_chat),'returning customer resumes the same thread');
+-- Global staff classification in another business must not turn a linked
+-- customer relationship or its private thread into business-write authority.
+INSERT INTO public.user_roles(user_id,role) VALUES('e0911000-0000-0000-0000-000000000001','sales_rep');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status) VALUES
+ ('e0921000-0000-0000-0000-000000000002','e0911000-0000-0000-0000-000000000001','owner','active');
+SELECT ok(public.is_staff('e0911000-0000-0000-0000-000000000001'),
+ 'mixed-role negative control really passes the incumbent global staff gate');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.client_portal_relationship_id()$$),'e0931000-0000-0000-0000-000000000001',
+ 'a staff workspace elsewhere does not change the native customer relationship');
+SELECT ok(public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001'),
+ 'incumbent two-argument contact read preserves linked-customer access');
+SELECT ok(NOT public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'internal staff narrowing excludes the linked-customer-only permission');
+SELECT ok(NOT has_function_privilege('anon','public.can_access_contact(uuid,uuid,boolean)','EXECUTE')
+ AND NOT has_function_privilege('authenticated','public.can_access_contact(uuid,uuid,boolean)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.can_access_contact(uuid,uuid,boolean)','EXECUTE'),
+ 'internal actor-explicit narrowing is not a caller-accessible RPC');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false)$s$)$q$,
+ '42501','permission denied for function can_access_contact','authenticated callers cannot select the internal permission mode');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','client','Denied customer read escalation','{}')$s$)$q$,
+ '42501','workspace contact unavailable','customer read permission cannot authorize workspace thread creation');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','platform','Denied lens escalation','{}')$s$)$q$,
+ '42501','platform lens requires authorized self scope','a contact argument cannot bypass native platform authority');
+CREATE TEMP TABLE e09_private_effect_baseline AS SELECT
+ (SELECT count(*) FROM public.tasks) AS tasks,
+ (SELECT count(*) FROM public.client_notes) AS notes,
+ (SELECT count(*) FROM public.paige_audit_log) AS audit;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','mixed-role customer cannot use private Chat as staff task authority');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','mixed-role customer cannot use private Chat as staff note authority');
+UPDATE public.clients SET cs_primary_user_id='e0911000-0000-0000-0000-000000000001'
+ WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT ok(public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'explicit staff assignment remains canonical staff-contact authority');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','even assigned staff cannot authorize a task with customer-private Chat');
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-000000000001',%L)$q$,
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ 'P0001','thread not found','even assigned staff cannot authorize a note with customer-private Chat');
+SELECT ok((SELECT tasks=(SELECT count(*) FROM public.tasks)
+ AND notes=(SELECT count(*) FROM public.client_notes)
+ AND audit=(SELECT count(*) FROM public.paige_audit_log) FROM e09_private_effect_baseline),
+ 'all refused private-context staff calls leave no task, note or audit effect');
+-- The same canonical staff tools still work from genuinely authorized workspace
+-- conversations. These are rollback-only native writes, not provider actions.
+CREATE TEMP TABLE e09_staff_chat(thread_id uuid,purpose text);
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','coach','Assigned staff conversation','{}')$$)::uuid,'assigned';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000001','Authorized assigned staff note',NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='assigned')))::jsonb)->>'ok','true',
+ 'explicit assigned staff retain their canonical workspace note writer');
+UPDATE public.clients SET cs_primary_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+UPDATE public.paige_chat_threads SET is_archived=true WHERE id=(SELECT thread_id FROM e09_staff_chat WHERE purpose='assigned');
+-- Native agency ownership must also survive the shared predicate refactor.
+UPDATE public.tenants SET account_type='agency' WHERE id='e0921000-0000-0000-0000-000000000002';
+UPDATE public.tenants SET parent_tenant_id='e0921000-0000-0000-0000-000000000002' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT ok(public.agency_can_manage_child('e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001')
+ AND public.can_access_contact('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',false),
+ 'native parent-agency authority survives the shared contact narrowing');
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000001','coach','Agency staff conversation','{}')$$)::uuid,'agency';
+SELECT ok((SELECT audience='workspace' FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_staff_chat WHERE purpose='agency')),
+ 'native parent-agency staff retain workspace conversation creation');
+UPDATE public.tenants SET parent_tenant_id=NULL WHERE id='e0921000-0000-0000-0000-000000000001';
+UPDATE public.tenants SET account_type='standalone' WHERE id='e0921000-0000-0000-0000-000000000002';
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','client','Authorized owner conversation','{}')$$)::uuid,'owner';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_create_task(%L,'e0931000-0000-0000-0000-000000000002','Authorized workspace staff task',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')))::jsonb)->>'ok','true',
+ 'native business owner retains the canonical workspace task writer');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000002','Authorized workspace staff note',NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')))::jsonb)->>'ok','true',
+ 'native business owner retains the canonical workspace note writer');
+INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'coach','Authorized personal workspace','{}')$$)::uuid,'self';
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_tool_create_task(%L,NULL,'Authorized personal task',NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_staff_chat WHERE purpose='self')))::jsonb)->>'ok','true',
+ 'native member retains own-workspace Chat and personal task semantics');
+DELETE FROM public.tenant_members WHERE user_id='e0911000-0000-0000-0000-000000000001';
+DELETE FROM public.user_roles WHERE user_id='e0911000-0000-0000-0000-000000000001' AND role='sales_rep';
+SELECT throws_like($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create(NULL,'coach','Denied absent workspace','{}')$s$)$q$,
+ '%self-mode requires caller tenant%','absent native membership cannot borrow a self workspace');
 SELECT throws_like($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','customer','Forged','{}')$s$)$q$,
  '%customer subject is server resolved%','request cannot choose another customer');

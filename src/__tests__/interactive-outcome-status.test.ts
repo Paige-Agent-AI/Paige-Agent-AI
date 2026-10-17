@@ -82,14 +82,10 @@ describe('automatic lookup preserves ordinary status and ownership',()=>{
 describe('canonical closed-read interactive receipt truth', () => {
   const statuses = ['available', 'needs_input', 'refused', 'unavailable'] as const;
   const currentReads = ['read_business_metric', 'get_business_snapshot', 'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking'];
-  // Pending Task2324 uses this reviewed read contract. This is a test declaration,
-  // not a Task registration, offer, executor or claim of a current-main handler.
-  const pendingTask: Pick<SpineCapability, 'action' | 'outcome'> = {
-    action: { chatTool: 'crm_get_task', classification: 'read', executor: 'public.operations_crm_work_read',
-      riskPolicyKey: 'read_only', approvalAuthority: 'none', idempotency: 'Exact caller-JWT native read.' },
-    outcome: { kinds: statuses, projector: 'public.operations_crm_work_read', railVisibility: 'Read receipt only.' },
-  };
-  const spine = [...PAIGE_SPINE_CAPABILITIES, pendingTask];
+  // Task is now composed into the real server registry. Appending the former
+  // isolated declaration would correctly trigger the duplicate-registration refusal.
+  const spine = PAIGE_SPINE_CAPABILITIES;
+  const taskDeclaration: SpineCapability = spine.find(capability => capability.action?.chatTool === 'crm_get_task')!;
   const envelope = { status: 'available', message: 'Authorized lookup. No business action ran.' };
   const id = '00000000-0000-4000-8000-000000000001';
   it.each([...currentReads, 'crm_get_task'].flatMap(tool => statuses.map(status => ({ tool, status }))))(
@@ -112,17 +108,17 @@ describe('canonical closed-read interactive receipt truth', () => {
     { classification: 'mutate' }, { classification: 'external_effect' }, { riskPolicyKey: 'ordinary' },
     { riskPolicyKey: 'high' }, { approvalAuthority: 'chat-canonical' },
   ])('does not recognize a non-read canonical contract %j', patch => {
-    const changed = { ...pendingTask, action: { ...pendingTask.action!, ...patch } } as typeof pendingTask;
+    const changed = { ...taskDeclaration, action: { ...taskDeclaration.action!, ...patch } } as typeof taskDeclaration;
     expect(interactiveEffect('crm_get_task', envelope, [changed])?.outcome).toBe('outcome_unknown');
   });
   it.each([
     undefined, ['available'], [...statuses, 'no_pipeline'], ['available', 'available', 'refused', 'unavailable'],
   ].map(kinds => ({ kinds })))('requires the complete unique closed status vocabulary $kinds', ({ kinds }) => {
-    const changed = { ...pendingTask, outcome: kinds ? { ...pendingTask.outcome!, kinds } : undefined };
+    const changed = { ...taskDeclaration, outcome: kinds ? { ...taskDeclaration.outcome!, kinds } : undefined };
     expect(interactiveEffect('crm_get_task', envelope, [changed])?.outcome).toBe('outcome_unknown');
   });
   it('refuses ambiguous duplicate declarations', () => {
-    expect(interactiveEffect('crm_get_task', envelope, [pendingTask, pendingTask])?.outcome).toBe('outcome_unknown');
+    expect(interactiveEffect('crm_get_task', envelope, [taskDeclaration, taskDeclaration])?.outcome).toBe('outcome_unknown');
   });
   it.each([
     [{ outcome_unknown: true }, 'outcome_unknown'], [{ code: 'RESULT_UNKNOWN' }, 'outcome_unknown'],

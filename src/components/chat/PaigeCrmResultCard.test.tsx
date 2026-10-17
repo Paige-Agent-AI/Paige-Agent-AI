@@ -3,6 +3,15 @@ import { describe, expect, it } from "vitest";
 import { PaigeCrmResultCard } from "./PaigeCrmResultCard";
 
 describe("PaigeCrmResultCard", () => {
+  it("rebuilds a restored contact reference through the current workspace", () => {
+    const restored = { action: "contact.update", outcome: "succeeded", receipt_recorded: true,
+      readback: null, record_locator: null,
+      record_reference: { destination: "contacts" as const, record_id: "e4000000-0000-4000-8000-0000000c0001", subject: "CLT-1234" } };
+    const html = renderToStaticMarkup(<PaigeCrmResultCard result={restored} account={{ account_type: "standalone", parent_tenant_id: null, account_number: 200 }} />);
+    expect(html).toContain("CLT-1234");
+    expect(html).toContain('href="/solo/200/clients/people?person=e4000000-0000-4000-8000-0000000c0001"');
+    expect(html).toContain("Open exact record");
+  });
   it("renders server readback, durable receipt, and the exact router-owned link", () => {
     const html = renderToStaticMarkup(<PaigeCrmResultCard result={{
       action: "deal.move",

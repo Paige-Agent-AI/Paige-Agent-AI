@@ -96,6 +96,9 @@ export interface SoloBillingPlan {
  * Calling it a mailbox would claim a capability the OAuth grant does not carry.
  */
 export interface SoloMailbox {
+  /** Identity/version of the exact visible connection; preconditions, never authority. */
+  connectorId?: string | null;
+  updatedAt?: string | null;
   connected: boolean;
   address: string | null;
   displayName: string | null;
@@ -214,6 +217,8 @@ export function useSoloComms(): SoloCommsData {
   const [mailbox, setMailbox] = useState<SoloMailbox | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [loadedTenantId, setLoadedTenantId] = useState<string | null>(null);
+  const visibleGmail = useRef<SoloMailbox | null>(null);
+  visibleGmail.current = loadedTenantId === tenantId ? mailbox : null;
   const requestGate = useRef(createSettingsRequestGate());
 
   const load = useCallback(async () => {
@@ -270,11 +275,13 @@ export function useSoloComms(): SoloCommsData {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated types (repo-wide pattern, cf. OwnerWelcome/EmailIntegrationConfig)
         (supabase as any)
           .from("channel_connectors")
-          .select("provider, from_address, display_name, status, active")
+          .select("id, updated_at, provider, from_address, display_name, status, active")
           .eq("tenant_id", tenantId)
           .eq("channel_type", "email")
           .eq("provider", "gmail")
           .order("active", { ascending: false })
+          .order("updated_at", { ascending: false })
+          .order("id", { ascending: true })
           .limit(1),
         // Fail-closed authority for the write controls. The server re-checks on
         // every mutation regardless; this only decides whether to render them.
@@ -359,6 +366,8 @@ export function useSoloComms(): SoloCommsData {
         setMailbox(null);
       } else {
         setMailbox({
+          connectorId: str(mailboxRow.id),
+          updatedAt: str(mailboxRow.updated_at),
           connected: Boolean(mailboxRow.active) && str(mailboxRow.status) !== "revoked",
           address: str(mailboxRow.from_address),
           displayName: str(mailboxRow.display_name),
@@ -525,6 +534,7 @@ export function useSoloComms(): SoloCommsData {
   }, [tenantId, activeUserId, tenantLoading]);
 
   const disconnectGmail = useCallback(async (): Promise<SoloMutationResult> => {
+    const selected = mailbox;
     const epoch = gmailScope.current.epoch;
     const current = () => gmailMounted.current && gmailScope.current.epoch === epoch
       && gmailScope.current.tenantId === tenantId && gmailScope.current.activeUserId === activeUserId
@@ -533,16 +543,23 @@ export function useSoloComms(): SoloCommsData {
     const unknown = { ok: false, error: "The Google disconnect could not be confirmed. Inspect the original workspace before retrying." };
     const nativeFailure = (rec: Record<string, unknown>): SoloMutationResult | null => {
       const code = rec.error;
-      if (code === "workspace_changed" || code === "gmail_connection_changed") return changed;
+      if (code === "workspace_changed") return changed;
+      if (code === "gmail_connection_changed") return { ok: false,
+        error: "The Google connection changed. Refresh its current state before disconnecting it." };
       if (code === "gmail_disconnected_result_withheld") return rec.disconnected === true ? { ok: false,
         error: "PAIGE disconnected Google in the original workspace. Refresh that workspace to inspect the result." } : unknown;
       if (code === "gmail_disconnect_outcome_unknown") return unknown;
       return null;
     };
     if (!tenantId || !activeUserId || tenantLoading || !current()) return changed;
+    if (loadedTenantId !== tenantId || !selected?.connected || !selected.address || selected.provider !== "gmail" || !selected.connectorId || !selected.updatedAt
+      || !Number.isFinite(Date.parse(selected.updatedAt))
+      || visibleGmail.current?.connectorId !== selected.connectorId || visibleGmail.current?.updatedAt !== selected.updatedAt) {
+      return { ok: false, error: "The Google connection changed or could not be read. Refresh before disconnecting it." };
+    }
     try {
       const { data, error: fnError } = await supabase.functions.invoke("gmail-disconnect", {
-        body: { expected_tenant_id: tenantId },
+        body: { expected_tenant_id: tenantId, connector_id: selected.connectorId, expected_updated_at: selected.updatedAt },
       });
       if (!current()) return changed;
       const rec = asRecord(data ?? await readFunctionErrorBody(fnError, data));
@@ -564,13 +581,13 @@ export function useSoloComms(): SoloCommsData {
       if (rec.ok === true && rec.disconnected === false) {
         return { ok: false, error: "Nothing was disconnected — no connected Google account was found on this workspace." };
       }
-      if (rec.ok !== true || rec.disconnected !== true) return unknown;
+      if (rec.ok !== true || rec.disconnected !== true || rec.connector_id !== selected.connectorId) return unknown;
       await load();
       return current() ? { ok: true, error: null } : changed;
     } catch {
       return current() ? unknown : changed;
     }
-  }, [load, tenantId, activeUserId, tenantLoading]);
+  }, [load, tenantId, activeUserId, tenantLoading, mailbox, loadedTenantId]);
 
   return useMemo(
     () => ({

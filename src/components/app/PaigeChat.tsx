@@ -37,6 +37,10 @@ import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeReasoningStrip, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { PaigeThinkingIndicator } from "@/components/paige/chat/PaigeThinkingIndicator";
 import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTranscriptScroll";
+import {useClientPortalFrame} from "@/hooks/useClientPortalFrame";
+import {type ClientPortalFrame} from "@/lib/client-portal-frame";
+import {readCustomerChat} from "@/lib/customer-chat";
+import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
 
 type Message = {
   id: string;
@@ -64,22 +68,31 @@ interface PaigeChatProps {
   user: User;
   session: Session | null;
   clientId?: string;
+  customerFrame?: ClientPortalFrame;
+  customerAvailable?: boolean;
 }
 
-function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
+function PaigeChatInner({ user, session, clientId, customerFrame, customerAvailable = true }: PaigeChatProps) {
   // Persona + quick actions come from the tenant's active Playbook (doctrine
   // §7/§8) so the client-facing Paige is native to the tenant's practice — not
   // a hardcoded credit/funding script. Defaults to neutral coaching today.
-  const playbook = usePlaybook();
+  const tenantPlaybook = usePlaybook(!customerFrame);
+  const playbook = useMemo(() => customerFrame ? {...tenantPlaybook,persona:{
+    ...tenantPlaybook.persona,name:customerAgentName(customerFrame.config.assistant?.display_name),role:"AI client success agent for "+customerFrame.brand.tenant_name,
+    greeting:"Hi — I’m "+customerAgentName(customerFrame.config.assistant?.display_name)+", the AI client success agent for "+customerFrame.brand.tenant_name+". How can I help?",
+  }} : tenantPlaybook,[tenantPlaybook,customerFrame]);
   const quickActions = playbook.quickActions;
   // The chat header wears the TENANT's brand, not a hardcoded Paige face (§6/§9).
   // Same resolver the /app chrome uses (get_client_portal_brand); `loading` gates
   // a skeleton so the Paige avatar never flashes before the tenant's resolves.
-  const { brand: portalBrand, loading: portalBrandLoading } = useClientPortalBrandState();
-  const { contextBlock, isLoading: contextLoading, hasCreditData } = useClientChatContext(clientId, clientId ? null : user.id);
+  const brandState = useClientPortalBrandState();
+  const portalBrand = customerFrame?.brand ?? brandState.brand;
+  const portalBrandLoading = !customerFrame && brandState.loading;
+  const { contextBlock, isLoading: contextLoading, hasCreditData } = useClientChatContext(
+    customerFrame ? null : clientId, customerFrame || clientId ? null : user.id);
   // Snapshot of profile/business fields used by the conversational extractor
   // to skip already-populated values. Refreshed after every successful save.
-  const { snapshot: profileSnapshot, refresh: refreshProfileSnapshot } = useProfileSnapshot(user.id);
+  const { snapshot: profileSnapshot, refresh: refreshProfileSnapshot } = useProfileSnapshot(customerFrame ? null : user.id);
   // Tracks fields a client has explicitly declined in this session so we don't
   // re-prompt them with the same proposal again.
   const declinedFieldsRef = useRef<Set<string>>(new Set());
@@ -154,9 +167,31 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const [customerThread,setCustomerThread] = useState<string|null>(null);
+  const [historyState,setHistoryState] = useState<"loading"|"ready"|"error">(customerFrame?"loading":"ready");
+  const [historyRetry,setHistoryRetry] = useState(0);
+  const customerRequest = useRef({epoch:0,abort:null as AbortController|null});
+  const customerScope = customerFrame ? [customerFrame.actorId,customerFrame.profile.id,customerFrame.profile.tenant_id].join(":") : null;
+  useEffect(() => {
+    const lifetime=customerRequest.current;
+    const epoch=++lifetime.epoch;
+    lifetime.abort?.abort();
+    setIsLoading(false);
+    if(!customerFrame||!customerAvailable)return;
+    let cancelled=false;
+    setHistoryState("loading");
+    void readCustomerChat(customerFrame).then(result=>{
+      if(cancelled||lifetime.epoch!==epoch)return;
+      setCustomerThread(result.threadId);
+      if(result.messages.length)setMessages(result.messages);
+      setHistoryState("ready");
+    }).catch(()=>{if(!cancelled&&lifetime.epoch===epoch)setHistoryState("error");});
+    return ()=>{cancelled=true;++lifetime.epoch;lifetime.abort?.abort();};
+  },[customerScope,customerAvailable,historyRetry]);
 
   // When context loads, send a context-aware, PAGE-AWARE opening via the AI
   useEffect(() => {
+    if(customerFrame)return;
     if (contextInjectedRef.current || contextLoading || messages.length !== 1) return;
     if (!contextBlock) return;
 
@@ -251,6 +286,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
   useEffect(() => {
     const handleFactoryReset = () => {
+      if(customerFrame){setHistoryRetry(n=>n+1);return;}
       contextInjectedRef.current = false;
       resetSession();
       setInput("");
@@ -271,10 +307,11 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
   }, [messages, steps, isLoading, writingPhase]);
 
   const resetInactivityTimer = useCallback(() => {
+    if(customerFrame)return;
     trackActivity();
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
     inactivityTimerRef.current = setTimeout(() => {
-      if (messages.length > 2) {
+      if (!customerFrame && messages.length > 2) {
         generateSessionSummary(
           messages.map(m => ({ role: m.role, content: m.content })),
           sessionIdRef.current
@@ -286,7 +323,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
   useEffect(() => {
     return () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      if (messages.length > 2) {
+      if (!customerFrame && messages.length > 2) {
         generateSessionSummary(
           messages.map(m => ({ role: m.role, content: m.content })),
           sessionIdRef.current
@@ -337,9 +374,10 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
   };
 
   const handleSend = async (overrideInput?: string) => {
+    if(customerFrame&&(!customerAvailable||historyState!=="ready"||!customerThread))return;
     if (dictationActive) return;
     const messageText = overrideInput || input;
-    if ((!messageText.trim() && !attachedDoc) || isLoading) return;
+    if ((!messageText.trim() && !attachedDoc) || isLoading || (customerFrame && attachedDoc)) return;
 
     resetInactivityTimer();
 
@@ -366,9 +404,14 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
     const currentDoc = attachedDoc;
     setAttachedDoc(null);
     setIsLoading(true);
+    const requestEpoch=customerRequest.current.epoch;
+    const currentRequest=()=>!customerFrame||customerRequest.current.epoch===requestEpoch;
+    const customerAbort=customerFrame?new AbortController():null;
+    customerRequest.current.abort=customerAbort;
 
     try {
       const { data: { session: freshSession } } = await supabase.auth.getSession();
+      if(!currentRequest())return;
 
       if (!freshSession) {
         toast({ title: "Session Expired", description: "Please sign in again.", variant: "destructive" });
@@ -390,6 +433,12 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
         // so Paige can still tailor responses to the section the client is viewing.
         clientContext: buildContextWithPage(contextBlock || ""),
       };
+      if(customerFrame){
+        for(const key of Object.keys(payload))delete payload[key];
+        Object.assign(payload,{messages:[{role:"user",content:messageText.trim()}],
+          surfaceContext:{kind:"customer_portal"},threadId:customerThread,
+          requestIntentId:crypto.randomUUID(),interactive:{kind:"message"},...getUserClock()});
+      }
 
       if (currentDoc) {
         payload.document = {
@@ -408,10 +457,13 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             Authorization: `Bearer ${freshSession.access_token}`,
           },
           body: JSON.stringify(payload),
+          signal:customerAbort?.signal,
         }
       );
+      if(!currentRequest())return;
 
       if (!response.ok) {
+        if(customerFrame)setInput(value=>value||messageText);
         if (response.status === 429) {
           toast({ title: "Rate Limit Reached", description: "Please wait a moment.", variant: "destructive" });
           setMessages(messages);
@@ -440,6 +492,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
       // FIX (paige-turn): a non-JSON line is skipped; it used to stall the read and drop the rest of a "successful" reply.
       for await (const frame of readPaigeStream(response.body, { stopAtDone: true, malformed: "skip" })) {
+        if(!currentRequest())return;
         if (frame.type === "step") {
           // Live "watch her work" frame — upsert into the reasoning strip.
           setSteps((prev) => upsertStep(prev, frame.step as PaigeStepFrame));
@@ -483,7 +536,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
       // Run conversational extractor against the user message AFTER the assistant
       // reply renders. Attach an inline confirmation card to the last assistant message.
-      if (!currentDoc && messageText.trim()) {
+      if (!customerFrame && !currentDoc && messageText.trim()) {
         try {
           const proposal = extractFromMessage(messageText, profileSnapshot);
           if (proposal) {
@@ -512,6 +565,8 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
       setIsLoading(false);
     } catch (error) {
+      if(!currentRequest())return;
+      if(customerFrame)setInput(value=>value||messageText);
       console.error("Chat error:", error);
       toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
       setMessages(messages);
@@ -558,9 +613,9 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
   return (
     <div
       className={`flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ${isDragOver ? "ring-2 ring-primary ring-inset" : ""}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={customerFrame?undefined:handleDragOver}
+      onDragLeave={customerFrame?undefined:handleDragLeave}
+      onDrop={customerFrame?undefined:handleDrop}
     >
       {isDragOver && (
         <div className="absolute inset-0 bg-primary/10 z-10 flex items-center justify-center pointer-events-none">
@@ -570,10 +625,14 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
         </div>
       )}
 
-      <input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />
+      {!customerFrame&&<input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />}
 
       {/* Very short keyboard viewports scroll the chrome above the pinned composer. */}
       <div data-paige-content-scroll="true" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
+      {customerFrame&&historyState!=="ready"&&<div role="status" className="p-3 text-sm">
+        {historyState==="loading"?"Opening your conversation…":"Your conversation couldn’t be loaded."}
+        {historyState==="error"&&<Button variant="ghost" onClick={()=>setHistoryRetry(n=>n+1)}>Try again</Button>}
+      </div>}
       {/* Header — compact on mobile */}
       <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -586,11 +645,11 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       </div>
 
       {/* Messages */}
-      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label={customerFrame?`${personaName} conversation`:"PAIGE conversation"} tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
           <div key={message.id} data-paige-message-id={message.id} className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
             {message.role === "assistant" && (
-              <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
+              customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
             )}
             <div className={`max-w-[88%] sm:max-w-[85%] rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5 ${message.role === "user" ? "bg-accent text-accent-foreground" : "bg-muted/40 border border-border"}`}>
               {message.documentFileName && <DocumentMessageBubble fileName={message.documentFileName} />}
@@ -630,7 +689,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             NON-persisting portal → no compacting card (§13 — it never folds). */}
         {isLoading && messages.some((m) => m.role === "user") && (
           <div className="flex gap-2 sm:gap-3">
-            <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
+            {customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />}
             <PaigeThinkingIndicator
               active={isLoading}
               writing={writingPhase}
@@ -673,17 +732,17 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       {/* Input area — safe area padding on mobile */}
       <div className="p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]">
         <div className="flex gap-1.5 sm:gap-2 items-center">
-          <Button variant="ghost" size="icon" className="h-[44px] w-[44px] md:h-9 md:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
+          {!customerFrame&&<Button variant="ghost" size="icon" className="h-[44px] w-[44px] md:h-9 md:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
             <Paperclip className="w-4 h-4" />
-          </Button>
+          </Button>}
           <Textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder={isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
+            placeholder={customerFrame ? (isMobile ? `Message ${personaName}…` : `Ask ${personaName}… (Shift+Enter for new line)`) : isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
             rows={1}
-            aria-label="Message PAIGE"
+            aria-label={customerFrame?`Message ${personaName}`:"Message PAIGE"}
             className="flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2"
             disabled={isLoading}
           />
@@ -699,7 +758,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             variant="secondary"
             className={`flex-shrink-0 ${isMobile ? "h-[44px] w-[44px]" : "h-9 w-9"}`}
           />
-          <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
+          <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready")) || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>
@@ -709,5 +768,22 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 }
 
 export function PaigeChat(props: PaigeChatProps) {
-  return <PaigeChatInner {...props} />;
+  const customer=useClientPortalFrame(props.user.id,!props.clientId);
+  const frame=customer.frame;
+  const assistantEnabled=frame?.config.assistant?.enabled!==false;
+  const available=customer.phase==="ready"&&!customer.checking&&assistantEnabled;
+  if(customer.phase==="not-client")return <PaigeChatInner {...props}/>;
+  return <div className="relative h-full min-h-0 min-w-0">
+    {frame&&<div className="h-full" aria-hidden={!available}
+      {...(!available?{inert:""}:{})} style={!available?{visibility:"hidden"}:undefined}>
+      <PaigeChatInner {...props} key={[frame.actorId,frame.profile.id,frame.profile.tenant_id].join(":")}
+        customerFrame={frame} customerAvailable={available}/>
+    </div>}
+    {!available&&<div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-sm">
+      {customer.checking?"Checking your conversation…":!assistantEnabled
+        ?"This business has turned off its AI assistant. You can still use the rest of your portal.":customer.phase==="unavailable"
+        ?"Your customer access is no longer available.":"Your customer session couldn’t be checked."}
+      {!customer.checking&&assistantEnabled&&<Button variant="outline" onClick={()=>void customer.reload()}>Try again</Button>}
+    </div>}
+  </div>;
 }

@@ -31,9 +31,11 @@ import { ClientHomeTiles } from "@/components/client/ClientHomeTiles";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
 import { UpcomingWidget } from "@/components/planning/UpcomingWidget";
 import { usePlaybook } from "@/lib/playbook";
-import { useClientPortalConfig } from "@/hooks/useClientPortalConfig";
+import { useClientPortalConfig, type ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
+import { useClientPortalFrame } from "@/hooks/useClientPortalFrame";
+import { customerAgentName } from "../../supabase/functions/_shared/client-portal-identity";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -284,7 +286,8 @@ const AppShell = () => {
             maxSize={60}
             className={`min-h-0 ${location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
           >
-            <PaigeChat user={scopedUser} session={session} />
+            <PaigeChat user={activeUser} session={session}
+              clientId={isImpersonating ? impersonationTarget?.contactId : undefined} />
           </ResizablePanel>
           <ResizableHandle withHandle className="max-md:hidden" />
           <ResizablePanel
@@ -310,15 +313,19 @@ const AppShell = () => {
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
 function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
-  const pb = usePlaybook();
+  const customer = useClientPortalFrame(userId ?? null);
+  const pb = usePlaybook(customer.phase === "not-client");
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
   // every existing portal is byte-for-byte unchanged until a tenant sets one.
-  const portalConfig = useClientPortalConfig();
+  const savedConfig = useClientPortalConfig();
+  const portalConfig: ClientPortalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
+  const agentName = customer.frame ? customerAgentName(customer.frame.config.assistant?.display_name) : customer.phase === "not-client" ? pb.persona.name : "your client success agent";
+  const greeting = customer.frame ? `Hi — I’m ${agentName}, the AI client success agent for ${customer.frame.brand.tenant_name}. How can I help?` : customer.phase === "not-client" ? pb.persona.greeting : "Your conversation is available once your customer access is checked.";
   const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";
   const welcomeSubhead =
     portalConfig.welcome?.subhead?.trim() ||
-    `Ask ${pb.persona.name} anything — she's here to keep you moving toward your goals.`;
+    `Ask ${agentName} about your next steps.`;
   // `factors` is a real credit_factor_scores row — it only exists for a
   // credit-enabled tenant/client. It doubles as the "hasCreditData" signal, so
   // the credit-only factor grid below stays gated behind it. Coaching clients
@@ -359,9 +366,9 @@ function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | n
       ) : (
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-lg font-semibold text-foreground">
-            {pb.persona.name} is here to help
+            {agentName} is here to help
           </h2>
-          <p className="text-muted-foreground mt-2">{pb.persona.greeting}</p>
+          <p className="text-muted-foreground mt-2">{greeting}</p>
         </div>
       )}
 

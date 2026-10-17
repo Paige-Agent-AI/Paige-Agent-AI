@@ -10,6 +10,7 @@ const fixture = vi.hoisted(() => ({
   brand: { state: { effective: { product_name: "Test Service", primary_color: "#26362f", tagline: "A saved welcome", logo_url: null } }, isLoading: false, isError: false, refetch: vi.fn() },
   rail: { events: [] as unknown[], historyStatus: "ready" },
   allowed: true,
+  resourcesPending: false,
 }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: fixture.resolvedTheme }) }));
 vi.mock("@/hooks/useBrandKit", () => ({ useBrandKit: () => fixture.brand }));
@@ -18,6 +19,7 @@ vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [{ k
 vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => fixture.invitations }));
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => fixture.allowed ? <>{children}</> : <p>Configuration access required</p> }));
 vi.mock("./PortalInvitationManager", () => ({ PortalInvitationManager: ({ person }: { person: RelationshipPerson }) => <div data-invite-for={person.id}>{person.email}</div> }));
+vi.mock("./OwnerCustomerResources", () => ({OwnerCustomerResources:({onBack,onPendingChange}:{onBack:()=>void;onPendingChange:(blocked:boolean)=>void})=>{React.useEffect(()=>{onPendingChange(fixture.resourcesPending);return()=>onPendingChange(false);},[onPendingChange]);return <button onClick={onBack}>Back to client access</button>;}}));
 vi.mock("@/pages/admin/PortalStudio", () => ({ default: ({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) => <input aria-label="Welcome draft" defaultValue="Saved" onChange={() => onDirtyChange(true)} /> }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const person = { id: "client-a", name: "Test Client", email: "client@example.test", contactMethods: [{ kind: "email", value: "client@example.test" }], company: "Test Company", linkedUserId: null, primaryOffer: null, doNotContact: false, status: "active" } as RelationshipPerson;
@@ -33,6 +35,7 @@ beforeEach(() => {
   fixture.invitations = { data: [], isLoading: false, isError: false, refetch: vi.fn() };
   fixture.brand.isError = false; fixture.brand.isLoading = false;
   fixture.rail = { events: [], historyStatus: "ready" }; fixture.allowed = true;
+  fixture.resourcesPending = false;
   openClient.mockReset(); openPaige.mockReset();
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
@@ -69,6 +72,7 @@ describe("approved owner dashboard is a real scoped product surface", () => {
     expect(host.textContent).not.toMatch(/Fieldwork|Jordan|\bActive\b/);
   });
   it("opens the canonical selected client record", async () => { await show(); await click("TTest ClientTest Company"); expect(openClient).toHaveBeenCalledWith("client-a"); });
+  it("keeps an unresolved resource operation mounted by locking other local tabs",async()=>{fixture.resourcesPending=true;await show();await click("Client access");const entry=host.querySelector<HTMLButtonElement>('[aria-label="Manage resources for Test Client"]')!;await act(async()=>entry.click());expect(button("Overview").disabled).toBe(true);expect(button("Experience").disabled).toBe(true);expect(button("Activity").disabled).toBe(true);await click("Overview");expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Client access');expect(button('Back to client access')).not.toBeUndefined();});
   it("lets the primary invitation action select an existing client", async () => {
     await show(); await click("Invite client");
     const select = document.querySelector<HTMLSelectElement>('select[id$="dialog-client"]')!;

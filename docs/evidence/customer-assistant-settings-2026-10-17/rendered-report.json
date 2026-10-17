@@ -1,0 +1,421 @@
+{
+  "sourceHashNormalization": "UTF-8 with CRLF normalized to LF, matching committed source text",
+  "sourceHashes": [
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "file": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
+      "sha256": "912306ca64c4541a8cf34444053f823d33cda60e7da42f112e9601094ca7b46b"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "d0d1dbf045faccdba55ef767951be5d8415df476d1e8722ed826f8699dfc01bb"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
+      "sha256": "2f2bc7dd822cc7c3653de4009def21f23770cdb850c272d55a493911030441ca"
+    },
+    {
+      "file": "src/components/tenant-relationships/owner-portal-dashboard.css",
+      "sha256": "fdc4dee8b948f9d5b47c47a402db2679e09e03839774f133ee0dc4c9014f959e"
+    },
+    {
+      "file": "src/pages/admin/PortalStudio.tsx",
+      "sha256": "1b12919e4a8cb67d20aaf9d3d9ba4510f0cb3f9dd0793afb8d3100f12cca8ebf"
+    },
+    {
+      "file": "src/components/tenant-relationships/CustomerAssistantSettings.tsx",
+      "sha256": "8ded5285df4a0833177c0b016d9431c2efc52b431752a5fcef5c94a077903c91"
+    },
+    {
+      "file": "src/lib/portal/assistantSettings.ts",
+      "sha256": "49597fe6329717b8ec8732d1dc766a28d6f107a237d27b1f1f58a948ca76046e"
+    }
+  ],
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 1320,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1536-770-closed-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 1320,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1536-770-closed-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 797.765625,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1536-770-open-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 797.765625,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1536-770-open-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 1294,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1366-768-closed-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 1294,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1366-768-closed-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 829.5625,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1366-768-open-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 829.5625,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1366-768-open-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 952,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1024-768-closed-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 952,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "1024-768-closed-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 952,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1024-768-open-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 952,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "1024-768-open-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 828,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "900-1000-closed-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 828,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "900-1000-closed-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "light",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 828,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "900-1000-open-light-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "dark",
+      "tenant": "test-tenant-a",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 828,
+        "actualPaigeState": "open"
+      },
+      "screenshot": "900-1000-open-dark-test-tenant-a-content-Experience.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-b",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 844,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 318,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "390-844-closed-light-test-tenant-b-content-Experience.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-b",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 844,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 318,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "390-844-closed-dark-test-tenant-b-content-Experience.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "light",
+      "tenant": "test-tenant-b",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 568,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 248,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "320-568-closed-light-test-tenant-b-content-Experience.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "dark",
+      "tenant": "test-tenant-b",
+      "state": "content",
+      "tab": "Experience",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 568,
+        "scrollOwner": "auto",
+        "clientTableReachable": false,
+        "forbiddenHeadings": false,
+        "portalWidth": 248,
+        "actualPaigeState": "closed"
+      },
+      "screenshot": "320-568-closed-dark-test-tenant-b-content-Experience.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Actual Solo shell, workspace, dashboard and native editor source; read-only neutral test transports and placeholder PAIGE content. Network blocked. No real session, account acceptance, production read/write, provider send or owner acceptance is proven."
+}

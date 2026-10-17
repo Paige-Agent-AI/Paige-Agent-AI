@@ -12,6 +12,15 @@ const ACTOR = "11111111-1111-4111-8111-111111111111";
 const TENANT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const OTHER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const CONNECTOR = "44444444-4444-4444-8444-444444444444";
+const SECOND_CONNECTOR = "55555555-5555-4555-8555-555555555555";
+const VERSION = "2026-10-16T00:00:00.000000Z";
+const connectorRow = (id = CONNECTOR, extra: Record<string, unknown> = {}) => ({
+  id, tenant_id: TENANT, channel_type: "email", provider: "gmail", active: true, status: "active",
+  inbound_address: id === CONNECTOR ? "fixture@example.invalid" : "second@example.invalid",
+  credentials_vault_ref: `gmail_refresh_token:${TENANT}:${id === CONNECTOR ? "fixture-google" : "second-google"}`,
+  external_account_id: id === CONNECTOR ? "fixture-google" : "second-google", updated_at: VERSION,
+  mailbox_class: "personal", mailbox_owner_user_id: ACTOR, ...extra,
+});
 const ENV: Record<string, string> = {
   SUPABASE_URL: "https://unit-test.invalid", SUPABASE_ANON_KEY: "fixture-public",
   SUPABASE_SERVICE_ROLE_KEY: "fixture-service", CALENDAR_ENCRYPTION_KEY: "fixture-state-signing-only",
@@ -21,6 +30,7 @@ type Seat = "owner" | "admin" | "member" | null;
 type Options = {
   seat?: Seat; active?: string | null; globalAdmin?: boolean; authenticated?: boolean;
   connector?: boolean; providerAllowed?: boolean; scopeError?: boolean; adminError?: boolean;
+  connectors?: Record<string, unknown>[];
   switchAt?: "token" | "userinfo" | "vault" | "connector-read" | "secret-read" | "revoke";
   revokeAt?: "token" | "userinfo"; rejectCode?: boolean; missingGoogleClient?: boolean;
   switchAtProviderFloor?: boolean; switchActorAtToken?: boolean;
@@ -28,7 +38,7 @@ type Options = {
   membershipStatus?: "active" | "revoked";
   mailboxClass?: "personal" | "shared_support"; mailboxOwner?: string;
   foreignConnector?: boolean; lookupErrorAt?: "own" | "collision" | "mailbox";
-  nativeMode?: "refused" | "lost-ack" | "throw-ack" | "foreign-envelope";
+  nativeMode?: "refused" | "lost-ack" | "throw-ack" | "foreign-envelope" | "wrong-connector";
   auditFailure?: "error" | "throw";
 };
 
@@ -79,7 +89,7 @@ function fixture(options: Options = {}) {
         ? { ok: true, connection_saved: true, tenant_id: tenantId, connector_id: CONNECTOR,
           gmail_address: "fixture@example.invalid", reconnected: Boolean(options.connector),
           mailbox_class: options.mailboxClass ?? "personal" }
-        : { ok: true, disconnected: true, tenant_id: tenantId, connector_id: CONNECTOR });
+        : { ok: true, disconnected: true, tenant_id: tenantId, connector_id: options.nativeMode === "wrong-connector" ? OTHER : args?._connector_id });
     }
     throw new Error(`Unexpected RPC ${name}`);
   };
@@ -91,7 +101,8 @@ function fixture(options: Options = {}) {
     from(table: string) {
       const filters: Record<string, unknown> = {};
       let value: Record<string, unknown> | null = null;
-      const result = () => {
+      let limit: number | null = null;
+      const result = (single = false) => {
         if (value) {
           writes.push({ table, value, filters: { ...filters } });
           if (table === "audit_logs" && options.auditFailure === "throw") throw new Error("fixture audit lost acknowledgement");
@@ -107,10 +118,12 @@ function fixture(options: Options = {}) {
             || (options.lookupErrorAt === "collision" && !filters.tenant_id && !filters.id)
             || (options.lookupErrorAt === "mailbox" && filters.id)) return { data: null, error: { message: "fixture lookup failed" } };
           if (options.foreignConnector && !filters.tenant_id && !filters.id) return ok({ id: "foreign-connector", tenant_id: OTHER });
-          return ok(options.connector ? { id: CONNECTOR, tenant_id: TENANT,
-            inbound_address: "fixture@example.invalid", credentials_vault_ref: `gmail_refresh_token:${TENANT}:fixture-google`,
-            external_account_id: "fixture-google", updated_at: "2026-10-16T00:00:00.000000Z",
-            mailbox_class: options.mailboxClass ?? "personal", mailbox_owner_user_id: options.mailboxOwner ?? ACTOR } : null);
+          const rows = (options.connectors ?? (options.connector ? [connectorRow(CONNECTOR, {
+            mailbox_class: options.mailboxClass ?? "personal", mailbox_owner_user_id: options.mailboxOwner ?? ACTOR,
+          })] : [])).filter(row => Object.entries(filters).every(([key, value]) => row[key] === value));
+          const selected = limit === null ? rows : rows.slice(0, limit);
+          if (single && selected.length > 1) return { data: null, error: { code: "PGRST116", message: "JSON object requested, multiple rows returned" } };
+          return ok(single ? selected[0] ?? null : selected);
         }
         throw new Error(`Unexpected table ${table}`);
       };
@@ -118,7 +131,8 @@ function fixture(options: Options = {}) {
         select: () => builder, eq: (key: string, input: unknown) => { filters[key] = input; return builder; },
         update: (input: Record<string, unknown>) => { value = input; return builder; },
         insert: (input: Record<string, unknown>) => { value = input; return builder; },
-        maybeSingle: async () => result(),
+        limit: (input: number) => { limit = input; return builder; },
+        maybeSingle: async () => result(true),
         then: (done: (input: ReturnType<typeof ok>) => unknown) => Promise.resolve(result()).then(done),
       };
       return builder;
@@ -182,6 +196,70 @@ const callback = async (overrides: Record<string, unknown> = {}) => ({ code: "fi
   state: await signedState(), origin: "https://paigeagent.ai", ...overrides });
 
 describe("Gmail connections use the existing current-workspace admin authority", () => {
+  it("disconnects the exact displayed connector when two legitimate Gmail connections exist", async () => {
+    const f = fixture({ connectors: [connectorRow(), connectorRow(SECOND_CONNECTOR)], providerAllowed: false });
+    const result = await f.run("gmail-disconnect", { expected_tenant_id: TENANT, connector_id: CONNECTOR, expected_updated_at: VERSION });
+    expect(result).toMatchObject({ status: 200, body: { ok: true, disconnected: true, connector_id: CONNECTOR } });
+    expect(f.calls.filter(c => c.name === "disconnect_gmail_connection")).toEqual([{ name: "disconnect_gmail_connection", args: {
+      _actor_user_id: ACTOR, _expected_tenant_id: TENANT, _connector_id: CONNECTOR,
+      _expected_vault_ref: `gmail_refresh_token:${TENANT}:fixture-google`, _expected_updated_at: VERSION,
+    } }]);
+    expect(f.provider).toEqual([]);
+  });
+  it("refuses an ambiguous legacy disconnect before any credential read or native effect", async () => {
+    const f = fixture({ connectors: [connectorRow(), connectorRow(SECOND_CONNECTOR)] });
+    expect(await f.run("gmail-disconnect")).toMatchObject({ status: 409, body: { error: "gmail_connector_selection_required" } });
+    expect(f.calls.some(c => c.name === "read_channel_secret" || c.name === "disconnect_gmail_connection")).toBe(false);
+    expect(f.writes).toEqual([]); expect(f.provider).toEqual([]);
+  });
+  it("selecting the second visible identity reads only its bound credential and never the first", async () => {
+    const f = fixture({ connectors: [connectorRow(), connectorRow(SECOND_CONNECTOR)], providerAllowed: false });
+    expect(await f.run("gmail-disconnect",{expected_tenant_id:TENANT,connector_id:SECOND_CONNECTOR,expected_updated_at:VERSION})).toMatchObject({status:200,body:{disconnected:true,connector_id:SECOND_CONNECTOR}});
+    expect(f.calls.filter(c=>c.name==="read_channel_secret")).toEqual([{name:"read_channel_secret",args:{_ref:`gmail_refresh_token:${TENANT}:second-google`}}]);
+    expect(f.calls.filter(c=>c.name==="disconnect_gmail_connection")).toHaveLength(1);
+  });
+  for (const [label,selection,status] of [
+    ["missing id",{expected_updated_at:VERSION},400],
+    ["invalid id",{connector_id:"invalid",expected_updated_at:VERSION},400],
+    ["missing version",{connector_id:CONNECTOR},400],
+    ["invalid version",{connector_id:CONNECTOR,expected_updated_at:"invalid"},400],
+    ["caller actor override",{actor_user_id:OTHER},400],
+    ["caller credential override",{credentials_vault_ref:"foreign-secret"},400],
+    ["stale version",{connector_id:CONNECTOR,expected_updated_at:"2026-10-15T00:00:00Z"},409],
+    ["absent id",{connector_id:OTHER,expected_updated_at:VERSION},409],
+  ] as const) {
+    it(`${label} never falls back to the other connection or reads a secret`,async()=>{
+      const f=fixture({connectors:[connectorRow(),connectorRow(SECOND_CONNECTOR)]});
+      expect((await f.run("gmail-disconnect",{expected_tenant_id:TENANT,...selection})).status).toBe(status);
+      expect(f.calls.some(c=>c.name==="read_channel_secret"||c.name==="disconnect_gmail_connection")).toBe(false);
+      expect(f.writes).toEqual([]);expect(f.provider).toEqual([]);
+    });
+  }
+  it.each([
+    connectorRow(SECOND_CONNECTOR,{tenant_id:OTHER}),
+    connectorRow(SECOND_CONNECTOR,{provider:"smtp"}),
+    connectorRow(SECOND_CONNECTOR,{channel_type:"sms"}),
+  ])("a foreign or wrong-domain selector cannot fall back to the legitimate Gmail row",async(other)=>{
+    const f=fixture({connectors:[connectorRow(),other]});
+    expect((await f.run("gmail-disconnect",{connector_id:SECOND_CONNECTOR,expected_updated_at:VERSION})).status).toBe(409);
+    expect(f.calls.some(c=>c.name==="read_channel_secret"||c.name==="disconnect_gmail_connection")).toBe(false);
+    expect(f.writes).toEqual([]);expect(f.provider).toEqual([]);
+  });
+  it.each(["lost-ack","throw-ack","foreign-envelope","wrong-connector"] as const)("selected native %s remains unknown without retry or Google revocation",async(nativeMode)=>{
+    const f=fixture({connector:true,nativeMode});
+    expect(await f.run("gmail-disconnect",{connector_id:CONNECTOR,expected_updated_at:VERSION})).toMatchObject({status:503,body:{error:"gmail_disconnect_outcome_unknown",disconnected:null}});
+    expect(f.calls.filter(c=>c.name==="disconnect_gmail_connection")).toHaveLength(1);
+    expect(f.provider).toEqual([]);
+  });
+  it.each([
+    {membershipStatus:"revoked" as const}, {seat:"member" as const},
+    {mailboxOwner:OTHER}, {switchAt:"connector-read" as const},
+  ])("selected disconnect preserves current authority before credential access",async(options)=>{
+    const f=fixture({connector:true,...options});
+    expect((await f.run("gmail-disconnect",{connector_id:CONNECTOR,expected_updated_at:VERSION})).status).toBeGreaterThanOrEqual(400);
+    expect(f.calls.some(c=>c.name==="read_channel_secret"||c.name==="disconnect_gmail_connection")).toBe(false);
+    expect(f.writes).toEqual([]);expect(f.provider).toEqual([]);
+  });
   for (const seat of ["owner", "admin"] as const) {
     for (const purpose of ["send", "inbox"]) {
       it(`${seat} without global admin can request existing ${purpose} consent`, async () => {
@@ -230,7 +308,7 @@ describe("Gmail connections use the existing current-workspace admin authority",
     for (const name of ["gmail-oauth-start", "gmail-oauth-callback", "gmail-disconnect"]) {
       it(`${name} refuses ${label} before provider or writes`, async () => {
         const f = fixture({ ...options, connector: true });
-        const result = await f.run(name, name.endsWith("callback") ? await callback() : { origin: "https://paigeagent.ai" });
+        const result = await f.run(name, name.endsWith("callback") ? await callback() : name === "gmail-oauth-start" ? { origin: "https://paigeagent.ai" } : {});
         expect(result.status).toBeGreaterThanOrEqual(400);
         expect(f.provider).toEqual([]);
         expect(f.writes).toEqual([]);
@@ -253,13 +331,13 @@ describe("Gmail connections use the existing current-workspace admin authority",
     for (const expected of [OTHER, null, "invalid"]) {
       it(`${name} refuses mismatched or invalid expected tenant ${String(expected)} before effects`, async () => {
         const f = fixture({ connector: true });
-        expect((await f.run(name, { origin: "https://paigeagent.ai", expected_tenant_id: expected })).status).toBe(409);
+        expect((await f.run(name, { ...(name === "gmail-oauth-start" ? { origin: "https://paigeagent.ai" } : {}), expected_tenant_id: expected })).status).toBe(409);
         expect(f.provider).toEqual([]); expect(f.writes).toEqual([]);
       });
     }
     it(`${name} accepts a matching uppercase expected UUID without selecting another target`, async () => {
       const f = fixture({ connector: true });
-      expect((await f.run(name, { origin: "https://paigeagent.ai", expected_tenant_id: TENANT.toUpperCase() })).status).toBe(200);
+      expect((await f.run(name, { ...(name === "gmail-oauth-start" ? { origin: "https://paigeagent.ai" } : {}), expected_tenant_id: TENANT.toUpperCase() })).status).toBe(200);
       expect(f.writes.filter(w => w.table === "channel_connectors").every(w => w.filters.tenant_id === TENANT)).toBe(true);
     });
   }
@@ -276,7 +354,7 @@ describe("Gmail connections use the existing current-workspace admin authority",
   for (const name of ["gmail-oauth-start", "gmail-oauth-callback", "gmail-disconnect"]) {
     it(`${name} retires a workspace change while awaiting the provider authority floor`, async () => {
       const f = fixture({ switchAtProviderFloor: true, connector: true });
-      const result = await f.run(name, name.endsWith("callback") ? await callback() : { origin: "https://paigeagent.ai" });
+      const result = await f.run(name, name.endsWith("callback") ? await callback() : name === "gmail-oauth-start" ? { origin: "https://paigeagent.ai" } : {});
       expect(result.status).toBe(409); expect(f.provider).toEqual([]); expect(f.writes).toEqual([]);
     });
   }

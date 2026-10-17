@@ -448,6 +448,36 @@ class ReleaseFixtures(unittest.TestCase):
         self.recommit()
         self.assertEqual(self.select_as_workflow(before), ['crm-command'])
 
+    def test_explicit_true_sender_options_are_selected_without_changing_expected_source(self):
+        names = ['dispatch-stage-automation', 'send-message']
+        for name in names:
+            self.files[f'supabase/functions/{name}/index.ts'] = 'export const sender = "protected fixture";\n'
+        self.recommit()
+        before = self.commit
+        self.git('tag', '-f', 'edge-live', before)
+        _, previous = readback.expected_release(self.repo, before, names)
+        self.assertTrue(all(previous[name]['verify_jwt'] is True for name in names))
+
+        for name in names:
+            self.files['supabase/config.toml'] += f'\n[functions.{name}]\nverify_jwt = true\n'
+        self.recommit()
+        _, current = readback.expected_release(self.repo, self.commit, names)
+        self.assertEqual(current, previous, 'Explicit default must preserve every expected source/options identity')
+        self.assertEqual(self.select_as_workflow(before), names, 'Raw declarations must select both existing senders')
+        with self.assertRaisesRegex(readback.ReadbackError, 'function_configuration_not_verified'):
+            readback.configuration_selection(self.repo, before, self.commit, [], require_coverage=True)
+        self.assertEqual(readback.configuration_selection(self.repo, before, self.commit, names, require_coverage=True), names)
+
+        self.rows = [self.row(name) for name in names]
+        report = readback.verify(self.repo, self.commit, names, self.runner, self.sleeps.append)
+        self.assertTrue(report['all_pass'])
+        self.assertTrue(all(row['status'] == 'PASS' for row in report['functions']))
+        self.rows[0]['verify_jwt'] = False
+        self.calls, self.downloads = [], []
+        report = readback.verify(self.repo, self.commit, names, self.runner, self.sleeps.append)
+        self.assert_failed(report, 'jwt_configuration_mismatch', function=names[0])
+        self.assertNotIn(names[0], self.downloads, 'Wrong gateway posture must refuse before source download')
+
     def test_manual_config_and_unrelated_source_both_require_readback(self):
         before = self.commit
         self.git('tag', '-f', 'edge-live', before)
@@ -736,6 +766,17 @@ class ReleaseFixtures(unittest.TestCase):
 
 
 class RepositoryRuntimeContracts(unittest.TestCase):
+    def test_effectful_senders_explicitly_preserve_gateway_jwt_verification(self):
+        config = readback.tomllib.loads((ROOT / 'supabase/config.toml').read_text(encoding='utf-8'))
+        functions = config.get('functions', {})
+        for name in ['send-message', 'dispatch-stage-automation']:
+            with self.subTest(function=name):
+                self.assertTrue(name in functions,
+                                f'{name}: CLI2.116 preserves remote posture when the raw declaration is absent')
+                self.assertIs(functions[name].get('verify_jwt'), True)
+        self.assertIs(functions.get('skill-runner', {}).get('verify_jwt'), False,
+                      'Its separately reviewed authenticate-first handler posture must remain unchanged')
+
     def test_inbound_attachment_type_is_not_an_expected_runtime_asset(self):
         spec = importlib.util.spec_from_file_location('repository_graph', ROOT / '.github/scripts/edge-affected.py')
         graph = importlib.util.module_from_spec(spec)

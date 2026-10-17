@@ -4218,7 +4218,10 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
   const BUSINESS = "Northside Fitness";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  // This is an actual ordinary customer relationship, not a staff workspace
+  // pointer substituted for one. The production native resolver supplies it.
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const WITHHELD = withheldReplyForClient(BUSINESS);
   const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -5479,7 +5482,8 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
   const unread = await drive({
     stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
     tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, PLATFORM_SUMMARY) },
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).trim() === "tenant_id") ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" &&
+      ["tenant_id","tenant_id,audience"].includes(String(f[1]).trim())) ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("38.12 a thread in another tenant workspace is refused the same way, before any model call",
     foreign.status === 409 && foreign.modelEgress.length === 0 && foreign.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
@@ -8419,7 +8423,9 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       stream: true, text: "ok great", streamScript: opts.script,
       classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 },
       extraBody: { threadId: THREAD_FRESH },
-      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null }, ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null },
+        client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null},
+        ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
       tablesExtra: { paige_chat_turns: sH.table, paige_chat_threads: sH.threadsTable, client_memory: () => [], paige_pending_confirmations: cH.table },
       serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
       onInsert: mirrorConfirms(cH),
@@ -8803,7 +8809,8 @@ console.log("\npaige_turn — every stream says it started and ends once, before
 {
   const THREAD = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
   const turnsOf = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -9862,6 +9869,10 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
   {name:"forbidden",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:null,error:{code:"42501",message:"KNOWLEDGE_FORBIDDEN"}},outcome:"not_run",note:"It didn't go through."},
   {name:"transport",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{message:"network lost"}},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
   {name:"delete",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"canonical_source_binding_unavailable"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-source",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-unrecorded",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record could not be confirmed. Do not repeat it."},
+  {name:"delete-unsupported-cleanup",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"PRIVATE-UNSUPPORTED-REASON"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
+  {name:"delete-foreign-workspace",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:THREAD,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
  ];
  for(const test of cases) {
   const st=makeConfirmStore();
@@ -9876,6 +9887,12 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
   assert(`33 ${test.name}: card preserves operation truth`,JSON.stringify(frame)===JSON.stringify({actions:[{fingerprint:token,outcome:test.outcome}],...(test.note?{note:test.note}:{})}),JSON.stringify(frame));
   assert(`33 ${test.name}: no second Chat audit`,!approved.rec.inserts.some(i=>i.table==="paige_audit_log"&&i.row.action===test.tool));
   if(test.name==="unrecorded") assert("33 unrecorded: model retains verified change and missing receipt",approved.modelEgress.some(body=>body.includes("Canonical change verified, but its Rail receipt was not recorded"))&&!approved.modelEgress.some(body=>body.includes("you could not confirm whether it went through")));
+   if(test.name.startsWith("delete-bound")) {
+    assert(`33 ${test.name}: model preserves native deletion and retained-source truth`,approved.modelEgress.some(body=>body.includes('retained_by_policy')&&body.includes('document_absent')&&body.includes('chunks_absent')));
+    const replay=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[token]},toolCall:{name:test.tool,args:{...args,confirm:true}}});
+    assert(`33 ${test.name}: spent approval cannot repeat deletion`,!replay.rec.rpc.some(c=>c.name===test.rpc));
+   }
+   if(test.name==="delete-unsupported-cleanup") assert("33 unsupported cleanup reason never leaks into model outcome",!approved.modelEgress.some(body=>body.includes("PRIVATE-UNSUPPORTED-REASON")));
  }
 }
 

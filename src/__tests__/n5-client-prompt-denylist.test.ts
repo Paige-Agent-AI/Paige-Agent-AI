@@ -224,8 +224,11 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const writes: unknown[] = [];
     const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
     const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
-    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", append, client, async () => {}, { error() {} });
+    // This extracted receipt is the ordinary non-customer Live path. Bind the
+    // newly closed-over audience/interactive state without changing the real
+    // persistence seam or inventing a customer receipt/session in the fixture.
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", "customerPortal", "interactiveConversational", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async () => {}, { error() {} }, false, false);
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);

@@ -1,0 +1,56 @@
+{
+  "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD",
+  "mobileCancel": {
+    "bodyScrollTop": 0,
+    "focus": "Cancel",
+    "focusVisible": true,
+    "mainScrollTop": 478.3999938964844,
+    "outline": "rgb(111, 86, 54) solid 1.6px",
+    "rect": {
+      "height": 30,
+      "width": 66.5374984741211,
+      "x": 122.8000030517578,
+      "y": 441.6625061035156
+    }
+  },
+  "reactHandlerEffects": "Not hydrated; real handler assertions occur in renderer test",
+  "unknownRefresh": {
+    "bodyScrollTop": 0,
+    "focus": "Refresh",
+    "focusVisible": true,
+    "mainScrollTop": 0,
+    "outline": "rgb(111, 86, 54) solid 1.6px",
+    "rect": {
+      "height": 30,
+      "width": 70.86250305175781,
+      "x": 106.8000030517578,
+      "y": 217.46250915527344
+    }
+  },
+  "endScroll": {
+    "body": 0,
+    "main": 1135.199951171875,
+    "max": 1136
+  },
+  "homeScroll": {
+    "body": 0,
+    "main": 0
+  },
+  "reflowCancel": {
+    "bodyScrollTop": 0,
+    "focus": "Cancel",
+    "focusVisible": true,
+    "inner": [
+      768,
+      384
+    ],
+    "mainScrollTop": 361.6000061035156,
+    "rect": {
+      "height": 30,
+      "width": 66.5374984741211,
+      "x": 307.3999938964844,
+      "y": 210.1999969482422
+    },
+    "uncovered": true
+  }
+}

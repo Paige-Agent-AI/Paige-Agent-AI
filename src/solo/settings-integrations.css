@@ -306,6 +306,14 @@
 .sa-rule-copy { min-width: 0; flex: 1; }
 .sa-rule-sentence { margin: 0; font-size: 13.2px; line-height: 1.55; color: var(--pg-ink); }
 .sa-rule-meta { margin: 5px 0 0; font-size: 12.1px; color: var(--pg-muted); }
+.sa-owner-tasks, .sa-owner-task-rule { min-width: 0; }
+.sa-owner-task-step { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+.sa-owner-task-title, .sa-owner-task-description { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sa-owner-task-rule .sa-rule-controls { margin-top: 10px; }
+.sa-owner-task-rule .sa-editor { margin-top: 12px; }
+.sa-owner-task-config { margin-top: 10px; font-size: 12.2px; color: var(--pg-ink-2); }
+.sa-owner-task-config summary { cursor: pointer; }
+.sa-owner-task-config pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11.8px; line-height: 1.6; }
 .sa-rule-controls { display: flex; align-items: center; gap: 7px; flex: none; flex-wrap: wrap; }
 .sa-confirm { display: inline-flex; gap: 7px; }
 .sa-ctl {

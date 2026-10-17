@@ -1,0 +1,51 @@
+# ANT-21 / ANT-52 / ANT-147 — canonical read receipt truth
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: existing ordinary Chat request -> original authorized reader -> closed result -> canonical interactive settlement -> prior-turn context traced; no new business-action flow
+PAIGE_UI_DESIGN: PASS: incumbent Chat steps, Calendar reference and Conversations containers preserved; the shared result helper now supplies consistent step and receipt truth
+MATERIAL_FLOW_CHANGE: NO: correct the recorded result of an existing read; no additional human choice, approval, destination, execution contract or interface
+FLOW_PROTOTYPE: NOT_REQUIRED: backend result projection repair reuses existing read, refusal, settlement and recovery states without a new interface flow
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: all eligible existing and future SOLO customers can inspect authorized business data without a completed lookup being recorded as an uncertain business action
+VISUAL_DIRECTION: NOT_APPLICABLE: no frontend markup, styling, layout, theme or navigation changes; Impeccable craft review applied to truthful status and unchanged controls
+AUTOMATED_EVIDENCE: PASS:95 focused receipt/step cases,28 actual Calendar handler controls, existing degraded Chat proof plus four separate active-protocol read settlement controls,142 existing outcome cases with one inherited database-gated skip, scoped types and changed-path lint
+STATIC_EVIDENCE: PASS: unchanged native adapters, caller identity, roles, admission and action-risk contracts; Chat lint405 baseline/404 current with zero introduced diagnostics; guard calculations are explicitly unaccepted
+RENDERED_EVIDENCE: NOT_APPLICABLE: backend settlement projection and a helper extraction change no rendered geometry or controls
+BEHAVIORAL_EVIDENCE: PASS: actual Chat handler with isolated backend/model ports persists truthful available/visible-empty/refused/unavailable read results, preserving original degraded and authorization controls without customer effects
+AUTHENTICATED_RUNTIME: UNVERIFIED: this repair is not deployed; ordinary production read/reload, source readback and owner evaluation must verify the corrected interactive receipt before a live customer claim
+KEYBOARD_FOCUS: NOT_APPLICABLE: no control, event handler, tab order or focus behavior changes
+ZOOM_REFLOW: NOT_APPLICABLE: no dimensions, overflow, typography or frontend layout source changes
+REDUCED_MOTION: NOT_APPLICABLE: no animation, timer or motion preference behavior changes
+STATE_COVERAGE: PASS: all four closed statuses for five current Spine reads plus pending Task contract, visible-empty lookup, malformed envelopes, action spoof, wrong/duplicate declaration, uncertainty, approval and native identity contradictions
+TRUTHFUL_STATE_LABELS: PASS: reported_success means the authorized lookup completed, including found:false; it does not prove record existence, business execution, provider synchronization or a Rail write
+SOLO_UI: NO: shared backend-visible receipt correction changes no SOLO frontend source or interface geometry
+UNVERIFIED: required exact-head CI awaits root review and explicit fingerprint application; deployed Chat source and ordinary production positive/negative/reload behavior have not been exercised for this repair, and Live remains untested
+
+INTERNAL_BUILD_IDENTITY: base=88e544d5ad4a760b21b2845e3b570d23ae424a4e; exact candidate and source hashes in immutable Git/private handoff; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat); evidence=docs/evidence/ui-delivery/ant21-canonical-read-receipt-truth.md
+RELEASE_CHANNEL: development: isolated current-main implementation and synthetic transport ports only
+RELEASE_CLASSIFICATION: internal-only: confirmed shared result-projection regression repair, not a released customer capability or customer announcement
+CUSTOMER_RELEASE_IDENTITY: none: local engineering outcome has not received production or owner acceptance
+RELEASE_NOTE_REQUIRED: no: internal restoration slice; any later customer announcement follows the canonical publication policy
+RELEASE_TRUTH_BOUNDARY: PARTIAL: bounded local source/handler proof only; scope=canonical read settlement; blocker=source not deployed or authenticated; excluded-from-LIVE=corrected production receipt/reload and Chat/Live customer acceptance; evidence=docs/evidence/ui-delivery/ant21-canonical-read-receipt-truth.md
+RELEASE_RECOVERY: position=reviewed source release or forward correction through existing Chat deployment with native authority and unknown-action holds unchanged; reference=existing interactive settlement and original-operation recovery contracts
+
+## Canonical contract and scope
+
+The five current tools are read_business_metric (analytics.metric_read), get_business_snapshot (business.operating_snapshot), read_client_engagement_status (client.engagement_status), read_business_time_zone (business.time_zone) and read_calendar_booking (calendar.booking_read). Pending Task2324's crm_get_task/crm_clients.task_read has the same protocol. Its test declaration is explicitly pending: no Task registration, handler or admission is added here, and an actual Task wire result remains owed after root composition.
+
+The existing interactiveEffect receives the already imported server Spine declarations. A unique exact tool match must declare read/read_only/no approval and exactly the four canonical closed outcomes. The strict readEnvelopeStatus helper is moved, not reimplemented: both existing step wording and interactive result projection call the same shared helper. available maps to reported_success for the lookup; needs_input/refused/unavailable map to reported_failure for the lookup. No model-authored metadata, name prefix or status alone can opt in a consequential action. Existing uncertainty, durable-accepted and approval precedence remains; mixed error, outcome, confirmation, receipt or native identity fields cannot enter the closed-read mapping. Read contents and nested record identifiers are not copied into the effect.
+
+No SQL, RPC, role, entitlement, RLS, action-risk, approval, budget, provider, scheduler, domain writer, capability registration, frontend or history rewrite is included. The shared contract applies to every eligible current/future SOLO account. Existing canonical read adapters retain their source privacy, scope/ABA, cancellation and native permission enforcement.
+
+## Actual proof and retained failures
+
+The unmodified predecessor produced26 failed/38 passed/11 filtered targeted cases: all24 status/tool comparisons and two completed-lookup projections exposed the missing read mapping. The completed three-suite campaign is95 PASS/0 FAIL/0 skip. Actual Calendar proof passes28 controls, retaining all23 existing degraded/native-authority cases and adding five ACTIVE-protocol synthetic settlement cases. The incumbent conversational script retains all original degraded checks and adds four separate active settlement cases: available time-zone/client reads and needs-input metric/snapshot requests. These latter two prove actual dispatch/receipt semantics for invalid requests, not positive metric evidence or a fully populated business review.
+
+Existing write/Knowledge/Research/Planning/automation outcome campaign:142 PASS,0 FAIL, one pre-existing OWNER_TASK_NATIVE_DB-gated case skipped because that optional native test input is absent. This is not a native SQL rerun or a new skip. Incumbent receipt privacy, executor ownership, interruption and all nine shared agreement integration controls pass. Scoped application-options types and six-path lint exit0; full Chat's existing lint errors remain disclosed (405 to404, no added diagnostic multiset).
+
+Retained non-green attempts include: initial test fixture assertions looked for effects in degraded mode, where the executor/effects are intentionally absent; they were replaced with separate active-mode cases, preserving old checks. Shared-helper extraction required injection into two existing isolated source-test ports. A generic receipt-guidance phrase was initially mistaken for an actual unknown effect; the corrected assertion inspects the structured outcome. The first scoped typecheck exposed a parameterized-array fixture shape and was corrected with named objects. An inherited empty stream-close catch needed a comment-only explanation for changed-path lint; stream lifecycle is unchanged. No failed required check is waived or relabeled.
+
+## Grounding / Collision Check and release gates
+
+Observed current main88e544d5ad4a760b21b2845e3b570d23ae424a4e; ANT-21/52/147 and adjacent50/51/138, Master/Brain/portfolio and open work re-grounded. Freeze-time fetch confirms that head; the first sandbox DNS failure is retained, followed by a successful authorized fetch. Root owns Chat/interactive/C0b integration. Preserve Task2324/native46000, Knowledge2323/native45000 and consumer2327, personal-email2325/native47000, E01 readiness2326 and E09 Portal2320/shared CI/native10010000. No other worktree or source lease is modified.
+
+The guard file is unchanged and correctly refuses this unaccepted candidate. Calculation proposes only the reviewed interactive ancestor digest and29 exact dispatch fingerprint pairs, with107 other current ancestor pins and all frozen metadata/extractors intact. Root alone reviews/applies final composed fingerprints, then runs required exact-head CI and controlled release/readback. Old stored unknown-action or read receipts are not edited or cleared. A source-derived raw100-history saturation concern is recorded separately and was not reproduced or changed here. Source implementation, independent review, CI, merge, deployment, activation, authenticated Chat, Live and final owner acceptance remain separate states.

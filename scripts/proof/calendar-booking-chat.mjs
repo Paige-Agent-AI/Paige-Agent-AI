@@ -83,11 +83,13 @@ const booking = () => ({ id: bookingId, tenant_id: tenant, calendar_id: id(21), 
 const cases = [];
 const check = async (name, run) => { try { await run(); cases.push({ name, status: 'PASS' }); console.log('PASS ' + name); }
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
-async function execute({ role = 'owner', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification } = {}) {
+async function execute({ role = 'owner', args = { booking_id: bookingId }, result = { data: [booking()], error: null }, afterRead, tenantResult = tenant, nativeMember = true, nativeAdmin = true, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, activeProtocol = false } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
   modelCalls = 0; readToolUse = { name: 'read_calendar_booking', input: args };
   let active = tenant; let classificationRow = classification;
   const rec = scenario({ tables: { profiles: () => [{ active_tenant_id: active }], tenants: () => classificationRow ? [classificationRow] : [] }, rpcs: {
+    ...(activeProtocol ? { paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+      paige_chat_interactive_publication_context_v2: { data: true, error: null } } : {}),
     get_actor_access: { data: { tier }, error: null },
     get_team_authority_readiness: { data: [{ fact_key: 'viewer_permission', value: role, status: 'available', tenant_id: tenant }], error: null },
     current_user_tenant_id: { data: tenantResult, error: null },
@@ -99,6 +101,11 @@ async function execute({ role = 'owner', args = { booking_id: bookingId }, resul
   const tools = modelBodies.flatMap(body => body.messages ?? []).filter(message => message.role === 'user').flatMap(message => Array.isArray(message.content) ? message.content : []).filter(part => part.type === 'tool_result');
   let value = null;
   for (const part of tools) { try { const parsed = JSON.parse(part.content); if (parsed?.status) value = parsed; } catch {} }
+  if (activeProtocol && ['available', 'needs_input', 'refused', 'unavailable'].includes(value?.status)) {
+    assert.deepEqual(receipts.at(-1)?.bundle_ref?.interactive?.effects,
+      [{ tool: 'read_calendar_booking', outcome: value.status === 'available' ? 'reported_success' : 'reported_failure' }],
+      'the actual settled receipt must describe the read, including visible-empty and native refusal');
+  }
   return { rec, wire, value, shapes: [...queryShapes], offered: modelBodies[0]?.tools?.map(t => t.name) ?? [] };
 }
 await check('actual ordinary Chat dispatch reads exactly one native booking and persists only the Calendar reference', async () => {
@@ -148,6 +155,17 @@ await check('actual Chat classification changing after read suppresses a valid r
 for (const role of ['coach', 'unknown', null, '', { title: 'Owner' }]) await check('unrecognized or retired Team permission cannot offer or read: ' + JSON.stringify(role), async () => {
   const r = await execute({ role }); assert.ok(!r.offered.includes('read_calendar_booking')); assert.ok(!r.shapes.some(c => c.name === 'list_team_bookings'));
   assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting')); assert.ok(!r.wire.includes('"destination":"calendar"'));
+});
+for (const [label, options] of [
+  ['available record', {}], ['visible-empty', { result: { data: [], error: null } }],
+  ['needs input', { args: { booking_id: 'bad' } }], ['native refusal', { nativeMember: false }],
+  ['unavailable', { result: { data: null, error: { code: 'XX000' } } }],
+]) await check('active ordinary Chat persists closed-read truth: ' + label, async () => {
+  const r = await execute({ ...options, activeProtocol: true });
+  assert.ok(r.value?.status, 'the actual read result reaches the model');
+  assert.ok(!r.wire.includes("couldn't confirm whether the change went through"));
+  assert.equal(r.rec.functions.length, 0);
+  assert.ok(!r.rec.rpc.some(c => /create.*booking|execute_crm|send_|approve/.test(c.name)));
 });
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');
 if (cases.some(c => c.status === 'FAIL')) process.exitCode = 1;

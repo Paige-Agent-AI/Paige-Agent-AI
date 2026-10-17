@@ -44,7 +44,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
-import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
+import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
@@ -359,14 +359,9 @@ function toolResultReportsFailure(out: any, tool?: string): boolean {
  * get_business_snapshot, read_client_engagement_status, read_business_time_zone):
  * `{ status: available | needs_input | refused | unavailable, message, ... }` and NO `success` / `ok`.
  * Strict, so no other result shape changes meaning: a `success`/`ok` flag, a missing `message`, or any
- * other status is not an envelope. Producers are untouched; this only reads them.
+ * other status is not an envelope. Producers are untouched; the imported shared
+ * readEnvelopeStatus is also used by interactiveEffect, so receipts and wording agree.
  */
-function readEnvelopeStatus(out: any): "available" | "needs_input" | "refused" | "unavailable" | null {
-  if (!out || typeof out !== "object" || Array.isArray(out)) return null;
-  if ("success" in out || "ok" in out || typeof out.message !== "string") return null;
-  const s = out.status;
-  return s === "available" || s === "needs_input" || s === "refused" || s === "unavailable" ? s : null;
-}
 function describeStep(
   tc: any,
   res: any,
@@ -18170,7 +18165,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 try {
                   const parsed = JSON.parse(res?.content ?? "{}");
                   if (interactive) {
-                    const effect = interactiveEffect(String(tc.function?.name ?? ""), parsed);
+                    const effect = interactiveEffect(String(tc.function?.name ?? ""), parsed, PAIGE_SPINE_CAPABILITIES);
                     if (effect) interactiveEffects.push(effect);
                   }
                   ok = parsed?.success !== false;

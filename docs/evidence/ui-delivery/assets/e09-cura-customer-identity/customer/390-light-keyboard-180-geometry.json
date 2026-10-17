@@ -1,0 +1,162 @@
+{
+  "width": 390,
+  "height": 744,
+  "input": {
+    "top": 128,
+    "bottom": 172,
+    "width": 276.5,
+    "height": 44,
+    "font": "16px"
+  },
+  "buttons": [
+    {
+      "name": "Start voice typing",
+      "height": 44,
+      "width": 44,
+      "bottom": 172
+    },
+    {
+      "name": "Send message",
+      "height": 44,
+      "width": 44,
+      "bottom": 172
+    }
+  ],
+  "documentHeight": 744,
+  "documentWidth": 390,
+  "transcript": 56,
+  "ancestors": [
+    {
+      "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+      "style": "",
+      "top": 128,
+      "bottom": 172,
+      "height": "44px",
+      "minHeight": "44px",
+      "flex": "1 1 0%",
+      "display": "flex",
+      "visibility": "visible"
+    },
+    {
+      "class": "flex gap-1.5 sm:gap-2 items-center",
+      "style": null,
+      "top": 128,
+      "bottom": 172,
+      "height": "44px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "flex",
+      "visibility": "visible"
+    },
+    {
+      "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+      "style": null,
+      "top": 120,
+      "bottom": 180,
+      "height": "60px",
+      "minHeight": "auto",
+      "flex": "0 0 auto",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+      "style": null,
+      "top": 66,
+      "bottom": 180,
+      "height": "114px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "flex",
+      "visibility": "visible"
+    },
+    {
+      "class": "h-full",
+      "style": null,
+      "top": 66,
+      "bottom": 180,
+      "height": "114px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "relative h-full min-h-0 min-w-0",
+      "style": null,
+      "top": 66,
+      "bottom": 180,
+      "height": "114px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "min-h-0 max-md:!flex-[1_1_100%]",
+      "style": "flex: 40 1 0px; overflow: hidden;",
+      "top": 66,
+      "bottom": 180,
+      "height": "114px",
+      "minHeight": "0px",
+      "flex": "1 1 100%",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+      "style": "display: flex; flex-direction: row; height: 100%; overflow: hidden; width: 100%;",
+      "top": 66,
+      "bottom": 180,
+      "height": "114px",
+      "minHeight": "0px",
+      "flex": "1 1 0%",
+      "display": "flex",
+      "visibility": "visible"
+    },
+    {
+      "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+      "style": "height: 180px;",
+      "top": 0,
+      "bottom": 180,
+      "height": "180px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "flex",
+      "visibility": "visible"
+    },
+    {
+      "class": "",
+      "style": null,
+      "top": 0,
+      "bottom": 180,
+      "height": "180px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "",
+      "style": "",
+      "top": 0,
+      "bottom": 744,
+      "height": "744px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "block",
+      "visibility": "visible"
+    },
+    {
+      "class": "light",
+      "style": null,
+      "top": 0,
+      "bottom": 744,
+      "height": "744px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "display": "block",
+      "visibility": "visible"
+    }
+  ]
+}

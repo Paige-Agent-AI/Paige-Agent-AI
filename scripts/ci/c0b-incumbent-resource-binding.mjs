@@ -558,7 +558,12 @@ const SOURCES = {
 const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/client-portal-assistant-context.ts": "a19e19a393c6f0a71b7fdab1e8a9204372915fa38860abf4213c0d945eb01967",
  "supabase/functions/_shared/client-portal-chat-scope.ts": "f9f0cc67e17097d3e3f3c817793550acd6d35ecf436965c04851c90254555433",
- "supabase/functions/_shared/client-portal-persona.ts": "f40bdb7e89052844dd797b5b1d4ef3246fade0895fe22ece97d681540415f817",
+ // Cura identity review at36fd1031470aaaa1e0c0b364ecd57468b473bd2f:
+ // only the customer name resolver/import and role wording change. Native
+ // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
+ // identity dependency too; no dispatch scalar or verifier logic is renewed.
+ "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
+ "supabase/functions/_shared/client-portal-identity.ts": "e53e01aca7389c55565ceb7394498be64490760bc88c7b6b79e5f85cbbaf9d6a",
  "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.

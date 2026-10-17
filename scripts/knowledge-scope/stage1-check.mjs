@@ -4246,9 +4246,13 @@ group("31 Ordinary customer relationship at the protected Chat boundary");
     assert(`31.5 ${label} after capture: no stale provider dispatch`,r.status===409 && r.providerCalls.length===0,r.status);
   }
   let reads=0;
-  const during=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>({data:++reads<4?profile:null,error:null})}});
+  // Trigger revocation on observed provider egress, not a fixed read count:
+  // Model Fabric may add a legitimate protected-scope read before dispatch.
+  const during=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>{
+    reads++;return {data:providerCalls.length===0?profile:null,error:null};
+  }}});
   assert("31.6 relationship revoked during the provider round withholds the answer",
-    during.status===200 && !during.responseText.includes("Scoped response.") && during.responseText.includes("active workspace changed"),
+    during.providerCalls.length===1 && during.status===200 && !during.responseText.includes("Scoped response.") && during.responseText.includes("active workspace changed"),
     JSON.stringify({status:during.status,reads,providers:during.providerCalls.length}));
   const owner=await drive({personaTenant:CHILD,memberships:[CHILD],activeTenantId:null,
     bodyExtras:{clientContext:"Current page: Home"},rpcExtras:{client_portal_self_profile:{data:profile,error:null}}});

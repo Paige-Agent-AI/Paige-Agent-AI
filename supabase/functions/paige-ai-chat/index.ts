@@ -261,6 +261,7 @@ import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type 
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../_shared/paige-turn/record-links.ts";
+import { crmResultReferenceMetadata } from "../_shared/paige-turn/crm-result-reference.ts";
 import { answerClaim, answerClaimBound, answerTurnsAfterAdmission, answerTurnNote, ANSWER_STRANDED_AFTER_MINUTES, ANSWER_STRANDED_AFTER_MS, ASK_ALONGSIDE_CALLS_RESULT, askFrame, buildAskRecord, reopenAsk, resolveAskLiveness, type AskRecord } from "../_shared/paige-turn/resume.ts";
 import { resolveTurnRoute, type TurnClassification, type TurnRouteFacts } from "../_shared/paige-turn/route.ts";
 import { classifyTurn, routeNeedsClassifier } from "../_shared/paige-turn/classify-call.ts";
@@ -17370,6 +17371,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 outcome: result.outcome,
                 receipt_recorded: result.receipt_recorded,
                 ...(typeof result.external_effect === "boolean" ? { external_effect: result.external_effect } : {}),
+                ...crmResultReferenceMetadata(result),
               })),
               // R2b §12: the run REFERENCE only — the evidence rehydrates from
               // research_runs through the governed get RPC on reload (one citation

@@ -25,10 +25,10 @@ export function installPersonalSenderProof({ sql, baseline }) {
     sql(nativeFunction('20271031000100_paige_email_sendgrid_governed_door.sql', name));
   }
   if (!baseline) {
-    const migration = source('20271109040000_personal_email_sender_authority.sql');
+    const migration = source('20271109047000_personal_email_sender_authority.sql');
     sql(migration); sql(migration); // compatible CREATE OR REPLACE replay, no data rewrite.
   }
-  console.log(baseline ? 'Personal sender: incumbent pre-repair functions (expected refusal failures).' : 'Personal sender: current native40000 applied twice.');
+  console.log(baseline ? 'Personal sender: incumbent pre-repair functions (expected refusal failures).' : 'Personal sender: current native47000 applied twice.');
 }
 
 export function registerPersonalSenderCases({ scenario, sql, asService, prepareCall, selectResult, session, waitFor, q, A, op }) {

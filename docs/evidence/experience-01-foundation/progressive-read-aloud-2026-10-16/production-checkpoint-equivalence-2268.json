@@ -1,0 +1,22 @@
+{
+  "merge": "dd27f5a5a47b0e19d1a1ad8967be2538e1f93669",
+  "evidenceClass": "READ_ONLY_FUNCTION_METADATA_NOT_CUSTOMER_WORKFLOW",
+  "customerRecordsRead": 0,
+  "customerWrites": 0,
+  "functionInvocations": 0,
+  "functions": [
+    {
+      "name": "get_solo_business_interview_checkpoint",
+      "unchanged": true
+    },
+    {
+      "name": "save_solo_business_interview_checkpoint",
+      "unchanged": true
+    },
+    {
+      "name": "solo_business_interview_assert_thread",
+      "unchanged": true
+    }
+  ],
+  "passed": true
+}

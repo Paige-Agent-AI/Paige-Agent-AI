@@ -7,10 +7,12 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   secondDoc='e094a000-0000-4000-8000-000000000003';
  const peer='e091a000-0000-4000-8000-000000000006',peerContact='e093a000-0000-4000-8000-000000000003',peerDoc='e094a000-0000-4000-8000-000000000004';
  const clientScopeControl=unsafe&&process.env.E09_KNOWLEDGE_CONTROL==='client_scope';
+ const authorityLockControl=unsafe&&process.env.E09_KNOWLEDGE_CONTROL==='authority_lock';
  const source=name=>fs.readFileSync(path.join(root,'supabase/migrations',name),'utf8');
  const actorSource=source('20270531600000_knowledge_durable_authority.sql').match(/CREATE OR REPLACE FUNCTION public\.knowledge_actor_authorized\([\s\S]*?\$\$;/)?.[0];
  const contactSource=source('20271108201000_e09_customer_private_chat.sql').match(/CREATE OR REPLACE FUNCTION public\.can_access_contact\(_user_id uuid, _contact_id uuid, _allow_linked_customer boolean\)[\s\S]*?\$function\$;/)?.[0];
- assert(actorSource&&contactSource,'Use the current native Knowledge/contact permission bodies');
+ const lockSource=source('20270532000000_knowledge_extraction_work.sql').match(/CREATE OR REPLACE FUNCTION public\.lock_knowledge_extraction_authority\([\s\S]*?\$\$;/)?.[0];
+ assert(actorSource&&contactSource&&lockSource,'Use the current native Knowledge/contact permission and lock bodies');
  sql(`CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
   CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
   CREATE TABLE public.audit_logs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid,action text,entity text,entity_id uuid,data jsonb,created_at timestamptz DEFAULT now());
@@ -19,6 +21,8 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
     source_url text,metadata jsonb,pending_review jsonb,extraction_input text,created_by uuid);
   ALTER TABLE clients ADD COLUMN lead_owner_user_id uuid,ADD COLUMN cs_primary_user_id uuid,ADD COLUMN assigned_coach_user_id uuid;
   CREATE TABLE public.paige_coach_assignments(contact_id uuid,active boolean,rep_user_id uuid);
+  CREATE TABLE public.user_roles(user_id uuid,role text);
+  CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,status text);
   CREATE FUNCTION public.is_super_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
   CREATE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
   CREATE FUNCTION public.is_platform_owner(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
@@ -35,7 +39,9 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
    ('${secondDoc}','${tenant}','Second guide','Approved next steps',NULL,NULL,NULL,NULL,'${owner}');
   INSERT INTO tenant_knowledge_docs(id,tenant_id,title,content,created_by)
    VALUES('${peerDoc}','${tenant}','Peer program','ANOTHER CUSTOMER PROGRAM','${owner}');
-  ${actorSource} ${contactSource}
+  ${actorSource} ${contactSource} ${lockSource}
+  REVOKE ALL ON FUNCTION public.lock_knowledge_extraction_authority(uuid,uuid) FROM PUBLIC,anon,authenticated;
+  GRANT EXECUTE ON FUNCTION public.lock_knowledge_extraction_authority(uuid,uuid) TO service_role;
   REVOKE ALL ON FUNCTION public.knowledge_actor_authorized(uuid,uuid) FROM PUBLIC,anon,authenticated;
   GRANT EXECUTE ON FUNCTION public.knowledge_actor_authorized(uuid,uuid) TO service_role;
   REVOKE ALL ON FUNCTION public.can_access_contact(uuid,uuid,boolean) FROM PUBLIC,anon,authenticated,service_role;
@@ -70,7 +76,12 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   assert.equal(sql("SELECT to_regclass('public.tenant_knowledge_client_shares') IS NULL;"),'t');
  });
  sql(migration);
- if(clientScopeControl){
+ if(authorityLockControl){
+  const current=sql("SELECT pg_get_functiondef('public.set_client_portal_knowledge_share(uuid,uuid,uuid,boolean,integer,text,uuid)'::regprocedure);");
+  const region=/IF NOT public\.lock_knowledge_extraction_authority\(auth\.uid\(\),p_tenant_id\) THEN[\s\S]*?(?=SELECT \* INTO c FROM public\.clients)/;
+  assert(region.test(current),'Actual authority lock region must exist');
+  sql(current.replace(region,"PERFORM 1 FROM public.profiles WHERE user_id=auth.uid() AND active_tenant_id=p_tenant_id FOR SHARE; IF NOT FOUND OR NOT public._client_knowledge_owner_authorized(p_tenant_id,p_contact_id) THEN RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_FORBIDDEN' USING ERRCODE='42501'; END IF; "));
+ }else if(clientScopeControl){
   const current=sql("SELECT pg_get_functiondef('public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)'::regprocedure);");
   const guard='s.tenant_id=business AND s.contact_id=customer';assert.equal(current.split(guard).length-1,2,'Both native reader client predicates must exist');
   sql(current.replaceAll(guard,'s.tenant_id=business'));
@@ -173,11 +184,32 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
  });
  const background=(query)=>new Promise((resolve,reject)=>{const child=spawn(exe('psql'),['-X','-h','127.0.0.1','-p',String(port),'-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1'],{windowsHide:true});let stdout='',stderr='';child.stdout.on('data',d=>stdout+=d);child.stderr.on('data',d=>stderr+=d);child.on('error',reject);child.on('close',code=>{transcripts.push({command:'knowledge-authority-revoker',exitCode:code,stdout,stderr});resolve(code)});child.stdin.end(query)});
  const p=prepare(owner,tenant,contact,secondDoc),before=snapshot();
- const revoker=background(`BEGIN; SET LOCAL application_name='knowledge-authority-revoker'; SELECT id FROM tenant_knowledge_docs WHERE id='${secondDoc}' FOR UPDATE; UPDATE tenant_members SET status='inactive' WHERE user_id='${owner}' AND tenant_id='${tenant}'; SELECT pg_sleep(2); COMMIT;`);
+ const revoker=background(`BEGIN; SET LOCAL application_name='knowledge-authority-revoker'; UPDATE tenant_members SET status='inactive' WHERE user_id='${owner}' AND tenant_id='${tenant}'; SELECT pg_sleep(2); COMMIT;`);
  try{
   let locked=false;for(let i=0;i<40;i++){if(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='knowledge-authority-revoker' AND wait_event='PgSleep');")==='t'){locked=true;break}await new Promise(r=>setTimeout(r,20))}assert(locked,'Native revoker reached its lock barrier');
   let refused=false;try{save(p)}catch{refused=true}assert.equal(await revoker,0);
-  check('Owner authority withdrawn while waiting for the document prevents both grant and receipt',()=>{assert(refused);assert.equal(snapshot(),before)});
+  check('Owner authority withdrawn while acquiring canonical authority locks prevents both grant and receipt',()=>{assert(refused);assert.equal(snapshot(),before)});
  }finally{await revoker;sql(`UPDATE tenant_members SET status='active' WHERE user_id='${owner}' AND tenant_id='${tenant}';`)}
- return {knowledgeSharesMigrationSHA256:createHash('sha256').update(migration).digest('hex'),knowledgeSharesControl:clientScopeControl?'CLIENT_SCOPE_REMOVED':unsafe?'SOURCE_CURRENT_REMOVED':'NONE',knowledgeSharesProof:'isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified'};
+ sql(`INSERT INTO user_roles VALUES('${owner}','fixture-role');
+  INSERT INTO agency_team_members VALUES('${tenant}','${owner}','active');
+  INSERT INTO paige_coach_assignments VALUES('${contact}',true,'${owner}');`);
+ const lockProposal=prepare(owner,tenant,contact,secondDoc),lockOperation=randomUUID();
+ const writer=background(`BEGIN; SET LOCAL application_name='knowledge-share-lock-holder';
+  SELECT set_config('test.actor','${owner}',true); SET LOCAL ROLE authenticated;
+  SELECT set_client_portal_knowledge_share('${tenant}','${contact}','${secondDoc}',true,${lockProposal.expected_share_revision},'${lockProposal.proposal_hash}','${lockOperation}');
+  SELECT pg_sleep(4); COMMIT;`);
+ try{
+  let locked=false;for(let i=0;i<60;i++){if(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='knowledge-share-lock-holder' AND wait_event='PgSleep');")==='t'){locked=true;break}await new Promise(r=>setTimeout(r,20))}assert(locked,'Native writer reached its commit barrier');
+  for(const [label,change]of[
+   ['Auth',`UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='${owner}'`],
+   ['business',`UPDATE tenants SET status='suspended' WHERE id='${tenant}'`],
+   ['membership',`UPDATE tenant_members SET status='inactive' WHERE user_id='${owner}' AND tenant_id='${tenant}'`],
+   ['role',`UPDATE user_roles SET role='revoked' WHERE user_id='${owner}'`],
+   ['workspace',`UPDATE profiles SET active_tenant_id='${foreign}' WHERE user_id='${owner}'`],
+   ['agency assignment',`UPDATE agency_team_members SET status='inactive' WHERE user_id='${owner}'`],
+   ['coach assignment',`UPDATE paige_coach_assignments SET active=false WHERE rep_user_id='${owner}'`]])
+   check('Concurrent '+label+' revocation cannot pass the in-flight share commit',()=>assert.throws(()=>sql(`BEGIN; SET LOCAL lock_timeout='150ms'; ${change}; ROLLBACK;`),/lock timeout/));
+  assert.equal(await writer,0);
+ }finally{await writer}
+ return {knowledgeSharesMigrationSHA256:createHash('sha256').update(migration).digest('hex'),knowledgeSharesControl:authorityLockControl?'AUTHORITY_LOCK_REMOVED':clientScopeControl?'CLIENT_SCOPE_REMOVED':unsafe?'SOURCE_CURRENT_REMOVED':'NONE',knowledgeSharesProof:'isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified'};
 }

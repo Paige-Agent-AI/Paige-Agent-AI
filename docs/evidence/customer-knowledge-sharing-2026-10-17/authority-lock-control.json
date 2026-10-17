@@ -1,0 +1,577 @@
+{
+  "mode": "knowledge-shares-unsafe-control",
+  "evidenceClass": "synthetic-native-postgresql",
+  "fullSupabaseReplay": "UNVERIFIED",
+  "authenticatedAcceptance": "NOT_RUN",
+  "migrationSHA256": "3c88c08a3522361e0f6b0ec00db65b33184b69f7476918a95c43d082392695e8",
+  "presentationSHA256": "1ee70024c0733f2b1e73605ad4a92c9ea952793990522cc34a1f7e338799312a",
+  "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
+  "assistantSettingsMigrationSHA256": "7ceb5aa3ae8fcfebd656ec3ee36a153a6234a18b265fadddce314978ba9e420e",
+  "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
+  "knowledgeSharesMigrationSHA256": "b5cc826963062c95c98637757ba02e762e1ba252357a6f15c9b4f17eefabb752",
+  "knowledgeSharesControl": "AUTHORITY_LOCK_REMOVED",
+  "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
+  "results": [
+    {
+      "name": "Native fixture models the canonical global partial unique link index",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual authenticated caller gets canonical own profile without raw table SELECT",
+      "status": "PASS"
+    },
+    {
+      "name": "Complete explicit allowlist and no future/private CRM fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Primary addresses come from tenant-matching canonical contact methods",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign tenant argument supplies no authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign subject cannot select this tenant relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked authenticated caller gets no profile",
+      "status": "PASS"
+    },
+    {
+      "name": "No selected tenant resolves only the one legitimate relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous callable access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous helper access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Authenticated session without subject cannot call profile",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone is not a customer identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation keeps the valid native tenant brand, ABI and canonical overlay",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation switches only with the actual authenticated subject",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked and missing subjects receive no presentation",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous cannot execute either presentation reader",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation revocation is effective on the next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes archived and merged client relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes an inactive sponsoring business",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation preserves native ancestor inheritance and own legal-logo fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Link revocation takes effect on next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Reload reads actual updated profile and consent",
+      "status": "PASS"
+    },
+    {
+      "name": "Reads produce no client, address or tenant mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "Future cross-business fixture preserves the canonical per-tenant unique link",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous relationship refuses instead of earliest-row selection",
+      "status": "PASS"
+    },
+    {
+      "name": "Both presentation readers refuse future ambiguous business relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit future relationship selection stays isolated",
+      "status": "PASS"
+    },
+    {
+      "name": "Disposable future-shape cleanup restores the canonical global guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage advancement returns the unchanged three-column ABI and canonical saved state",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing durable stage audit attributes the exact actor and client",
+      "status": "PASS"
+    },
+    {
+      "name": "Same or earlier stage remains a no-op with no new audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Caller payload cannot redirect stage mutation to a foreign client",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous stage invocation refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing subject cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked identity cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone cannot become a customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Null stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked link cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous future relationship cannot advance an arbitrary row",
+      "status": "PASS"
+    },
+    {
+      "name": "A concurrent archive winning the lock prevents stage change and audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Source fixture uses the observed native ownership and brand permission bodies",
+      "status": "PASS"
+    },
+    {
+      "name": "Unexpected execute authority is refused before replacing the writer",
+      "status": "PASS"
+    },
+    {
+      "name": "Unexpected delegation authority is refused before replacing the writer",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical owner saves bounded customer-facing settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Partial assistant edit preserves disabled policy and unrelated saved fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Welcome update does not overwrite saved assistant policy",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin retains the existing native brand/configuration authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Native ownership flag remains authoritative without inventing an owner role",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary member cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign owner cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner naming foreign business cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed top-level patch preserves saved records",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed module patch preserves saved records",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical customer presentation reloads exactly the authorized saved assistant",
+      "status": "PASS"
+    },
+    {
+      "name": "Other feature data remains unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical writer owner, security mode, search path and ACL are preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing parent ownership can configure its child through the canonical predicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Two native concurrent partial assistant saves preserve both updates",
+      "status": "PASS"
+    },
+    {
+      "name": "Authority withdrawn while waiting for the tenant row refuses the save",
+      "status": "PASS"
+    },
+    {
+      "name": "A changed protected writer definition is refused by the source lease",
+      "status": "PASS"
+    },
+    {
+      "name": "Native source lease matches the observed current Knowledge and relationship authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed native authority source lease refuses before creating any sharing table",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed protected contact helper ownership refuses before creating any sharing table",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed protected Knowledge security mode refuses before creating any sharing table",
+      "status": "PASS"
+    },
+    {
+      "name": "Internal canonical Knowledge remains unavailable before an explicit share",
+      "status": "PASS"
+    },
+    {
+      "name": "Prepare binds actual owner, client, source and expected grant revision without writing",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer cannot prepare a Knowledge publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary staff cannot prepare a Knowledge publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign owner cannot prepare a Knowledge publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign recipient cannot prepare a Knowledge publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign source cannot prepare a Knowledge publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner publication and native audit receipt are one persistent operation",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer context comes from its own native relationship, never its staff workspace pointer",
+      "status": "PASS"
+    },
+    {
+      "name": "Returned Knowledge projection contains only the explicit closed fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Exact replay returns the saved receipt without writing or increasing revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Generic audit metadata cannot forge the revision returned by native replay",
+      "status": "PASS"
+    },
+    {
+      "name": "The same proposal is bound to the preparing actor",
+      "status": "PASS"
+    },
+    {
+      "name": "A stale share revision cannot be replayed under a new operation",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner readback reports the same native share and receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "An administrator uses the same native owner/configuration/CRM predicates",
+      "status": "PASS"
+    },
+    {
+      "name": "Another customer in the same business receives only its own authorized program",
+      "status": "PASS"
+    },
+    {
+      "name": "Same-business membership cannot list or name another customer grant",
+      "status": "PASS"
+    },
+    {
+      "name": "A customer cannot read staff sharing administration",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong client cannot obtain Knowledge context",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong business cannot obtain Knowledge context",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked actor cannot obtain Knowledge context",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing actor cannot obtain Knowledge context",
+      "status": "PASS"
+    },
+    {
+      "name": "anon cannot execute a customer reader or impersonate a customer",
+      "status": "PASS"
+    },
+    {
+      "name": "service_role cannot execute a customer reader or impersonate a customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Exact authorized source references validate without expanding authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Authorized UUID case aliases resolve the same exact canonical source",
+      "status": "PASS"
+    },
+    {
+      "name": "Duplicate UUID case aliases cannot masquerade as distinct source references",
+      "status": "PASS"
+    },
+    {
+      "name": "An empty exact reference set does not acquire newly shared content",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign share is refused instead of silently dropping or widening references",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong share revision is refused instead of silently dropping or widening references",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong fingerprint is refused instead of silently dropping or widening references",
+      "status": "PASS"
+    },
+    {
+      "name": "Extra ref property is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Duplicate source is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed refs is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Null ref property is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Pagination remains scoped and metadata-only reads omit body text",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed revision withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed content withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed title withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed generation withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Changed manifest withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Quarantined document withdraws the old grant on the next read and exact-ref validation",
+      "status": "PASS"
+    },
+    {
+      "name": "Source changed after preview cannot be published by its old proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Client-controlled shared workspace consent is not repurposed as a Knowledge publication grant",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked relationship retires the customer context",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived client retires the customer context",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business retires the customer context",
+      "status": "PASS"
+    },
+    {
+      "name": "Banned Auth user retires the customer context",
+      "status": "PASS"
+    },
+    {
+      "name": "A staff workspace switch retires the owner proposal without changing customer context",
+      "status": "PASS"
+    },
+    {
+      "name": "A forged generic audit row cannot establish a new native grant or successful replay",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit withdrawal removes context, invalidates references and records the actual owner",
+      "status": "PASS"
+    },
+    {
+      "name": "Replaying an older publication cannot reactivate a subsequently withdrawn grant",
+      "status": "PASS"
+    },
+    {
+      "name": "Returning users see the persisted remaining authorized source",
+      "status": "PASS"
+    },
+    {
+      "name": "Private helpers and raw grants are not executable/readable by external API roles",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner authority withdrawn while acquiring canonical authority locks prevents both grant and receipt",
+      "status": "FAIL",
+      "error": "The expression evaluated to a falsy value:\n\n  assert(refused)\n"
+    },
+    {
+      "name": "Concurrent Auth revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    },
+    {
+      "name": "Concurrent business revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    },
+    {
+      "name": "Concurrent membership revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    },
+    {
+      "name": "Concurrent role revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    },
+    {
+      "name": "Concurrent workspace revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent agency assignment revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    },
+    {
+      "name": "Concurrent coach assignment revocation cannot pass the in-flight share commit",
+      "status": "FAIL",
+      "error": "Missing expected exception."
+    }
+  ],
+  "passed": 131,
+  "failed": 7
+}

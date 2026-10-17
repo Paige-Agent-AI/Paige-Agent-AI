@@ -8,7 +8,7 @@
   "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
   "assistantSettingsMigrationSHA256": "7ceb5aa3ae8fcfebd656ec3ee36a153a6234a18b265fadddce314978ba9e420e",
   "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
-  "knowledgeSharesMigrationSHA256": "625f6d4e972be3b504b42dce530fe8f7b6f0d67b748aff072efbdcf5723cafc5",
+  "knowledgeSharesMigrationSHA256": "b5cc826963062c95c98637757ba02e762e1ba252357a6f15c9b4f17eefabb752",
   "knowledgeSharesControl": "SOURCE_CURRENT_REMOVED",
   "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
   "results": [
@@ -541,10 +541,38 @@
       "status": "PASS"
     },
     {
-      "name": "Owner authority withdrawn while waiting for the document prevents both grant and receipt",
+      "name": "Owner authority withdrawn while acquiring canonical authority locks prevents both grant and receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent Auth revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent business revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent membership revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent role revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent workspace revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent agency assignment revocation cannot pass the in-flight share commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent coach assignment revocation cannot pass the in-flight share commit",
       "status": "PASS"
     }
   ],
-  "passed": 123,
+  "passed": 130,
   "failed": 8
 }

@@ -25,6 +25,18 @@ BEGIN
  END IF;
 END $authority_lease$;
 
+DO $lock_lease$
+DECLARE p pg_proc;
+BEGIN
+ SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure('public.lock_knowledge_extraction_authority(uuid,uuid)');
+ IF p.prosrc IS NULL OR md5(p.prosrc)<>'788d27bc980fee58e6272c3e53ca6096'
+  OR pg_get_userbyid(p.proowner)<>'postgres' OR NOT p.prosecdef OR p.provolatile<>'v'
+  OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+  OR p.proacl::text IS DISTINCT FROM '{postgres=X/postgres,service_role=X/postgres}' THEN
+  RAISE EXCEPTION 'Customer Knowledge authority lock changed; review before composition' USING ERRCODE='42501';
+ END IF;
+END $lock_lease$;
+
 CREATE TABLE public.tenant_knowledge_client_shares (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id uuid NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
@@ -159,13 +171,37 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE d public.tenant_knowledge_docs; c public.clients;
  s public.tenant_knowledge_client_shares; prior public.audit_logs;
  source jsonb; fingerprint text; expected_hash text; request_hash text; current_revision integer;
+ authority_chain uuid[]; current_chain uuid[];
 BEGIN
  IF p_available IS NULL OR p_expected_share_revision IS NULL OR p_expected_share_revision<0
    OR p_proposal_hash IS NULL OR p_proposal_hash !~ '^[0-9a-f]{64}$' OR p_operation_id IS NULL THEN
    RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_ARGUMENTS_INVALID' USING ERRCODE='22023';
  END IF;
- PERFORM 1 FROM public.profiles WHERE user_id=auth.uid() AND active_tenant_id=p_tenant_id FOR SHARE;
- IF NOT FOUND OR NOT public._client_knowledge_owner_authorized(p_tenant_id,p_contact_id) THEN
+ IF NOT public.lock_knowledge_extraction_authority(auth.uid(),p_tenant_id) THEN
+   RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_FORBIDDEN' USING ERRCODE='42501';
+ END IF;
+ -- Brand authority may come from an ancestor; contact authority may also use
+ -- agency or coach assignment rows. Preserve those canonical rows until commit.
+ WITH RECURSIVE chain AS (
+  SELECT id,parent_tenant_id,0 depth FROM public.tenants WHERE id=p_tenant_id
+  UNION ALL SELECT t.id,t.parent_tenant_id,ancestor.depth+1 FROM public.tenants t
+   JOIN chain ancestor ON t.id=ancestor.parent_tenant_id WHERE ancestor.depth<10)
+ SELECT array_agg(DISTINCT id ORDER BY id) INTO authority_chain FROM chain;
+ PERFORM 1 FROM public.tenants WHERE id=ANY(authority_chain) ORDER BY id FOR SHARE;
+ WITH RECURSIVE chain AS (
+  SELECT id,parent_tenant_id,0 depth FROM public.tenants WHERE id=p_tenant_id
+  UNION ALL SELECT t.id,t.parent_tenant_id,ancestor.depth+1 FROM public.tenants t
+   JOIN chain ancestor ON t.id=ancestor.parent_tenant_id WHERE ancestor.depth<10)
+ SELECT array_agg(DISTINCT id ORDER BY id) INTO current_chain FROM chain;
+ IF current_chain IS DISTINCT FROM authority_chain THEN
+   RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_AUTHORITY_CHANGED' USING ERRCODE='40001';
+ END IF;
+ PERFORM 1 FROM public.tenant_members WHERE user_id=auth.uid() AND tenant_id=ANY(authority_chain)
+  ORDER BY tenant_id FOR SHARE;
+ PERFORM 1 FROM public.agency_team_members WHERE user_id=auth.uid() AND agency_tenant_id=ANY(authority_chain)
+  ORDER BY agency_tenant_id FOR SHARE;
+ PERFORM 1 FROM public.paige_coach_assignments WHERE rep_user_id=auth.uid() AND contact_id=p_contact_id FOR SHARE;
+ IF NOT public._client_knowledge_owner_authorized(p_tenant_id,p_contact_id) THEN
    RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_FORBIDDEN' USING ERRCODE='42501';
  END IF;
  SELECT * INTO c FROM public.clients WHERE id=p_contact_id AND tenant_id=p_tenant_id FOR SHARE;

@@ -32,16 +32,26 @@ GRANT EXECUTE ON FUNCTION public.paige_chat_customer_thread_authorized(uuid) TO 
 -- Freeze private audience/identity even for a customer who also owns a workspace.
 CREATE OR REPLACE FUNCTION public.paige_chat_customer_audience_guard()
 RETURNS trigger LANGUAGE plpgsql SET search_path=public,pg_temp AS $$
+DECLARE _contact_deleted boolean := false;
 BEGIN
   IF TG_OP='INSERT' THEN
     IF NEW.audience='customer_private' AND current_user<>'postgres' THEN
       RAISE EXCEPTION 'customer thread is server issued' USING ERRCODE='42501';
     END IF;
   ELSIF OLD.audience='customer_private' OR NEW.audience='customer_private' THEN
+    -- Preserve the existing clients FK ON DELETE SET NULL. Only its nested
+    -- referential action may detach a deleted contact; browser updates cannot.
+    _contact_deleted := OLD.audience='customer_private' AND OLD.contact_id IS NOT NULL
+      AND NEW.contact_id IS NULL AND pg_trigger_depth()>1
+      AND NOT EXISTS(SELECT 1 FROM public.clients c WHERE c.id=OLD.contact_id)
+      AND ROW(NEW.audience,NEW.caller_user_id,NEW.tenant_id,NEW.lens,NEW.studio_session_id)
+        IS NOT DISTINCT FROM ROW(OLD.audience,OLD.caller_user_id,OLD.tenant_id,OLD.lens,OLD.studio_session_id);
     IF ROW(NEW.audience,NEW.caller_user_id,NEW.contact_id,NEW.tenant_id,NEW.lens,NEW.studio_session_id)
-      IS DISTINCT FROM ROW(OLD.audience,OLD.caller_user_id,OLD.contact_id,OLD.tenant_id,OLD.lens,OLD.studio_session_id) THEN
+      IS DISTINCT FROM ROW(OLD.audience,OLD.caller_user_id,OLD.contact_id,OLD.tenant_id,OLD.lens,OLD.studio_session_id)
+      AND NOT _contact_deleted THEN
       RAISE EXCEPTION 'customer thread audience is immutable' USING ERRCODE='42501';
     END IF;
+    IF _contact_deleted THEN NEW.is_archived := true; END IF;
     IF current_user<>'postgres' AND NEW.auto_delete_at IS DISTINCT FROM OLD.auto_delete_at THEN
       RAISE EXCEPTION 'customer retention is server-owned' USING ERRCODE='42501';
     END IF;

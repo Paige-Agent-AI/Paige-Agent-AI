@@ -349,5 +349,13 @@ SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=(SE
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001'
  WHERE id='e0931000-0000-0000-0000-000000000001';
 
+-- Native referential cleanup must preserve the incumbent ON DELETE SET NULL
+-- disposition, archive detached private text and continue refusing identity edits.
+DELETE FROM public.clients WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT ok((SELECT contact_id IS NULL AND is_archived FROM public.paige_chat_threads
+ WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'canonical contact removal detaches and archives the private thread');
+SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=(SELECT thread_id FROM e09_customer_chat)),
+ 2,'contact removal retains private issued receipts without exposing them');
 SELECT * FROM finish();
 ROLLBACK;

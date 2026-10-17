@@ -37,6 +37,28 @@ RELEASE_RECOVERY: position=Hold activation until final reviewed composition and 
 
 ## Current bounded continuation — 2026-10-16
 
+### Hosted native proof output correction
+
+At composed head `efa158b8739120a388a3f3fd6c6fd9213858ea01`, hosted job117244772271
+reached the final engine/C5 check after its native controls. All43 child tests passed,
+including the real native SQL case, but terminal color sequences interrupted the proof's
+plain-text summary regex. That hosted job remains **FAIL**; passing inner assertions do
+not change its recorded result.
+
+The same incumbent proof now retains the raw child log and strips terminal presentation
+controls before checking the summary. It requires at least43 actual passes and still
+refuses any failed or skipped case; child assertion/loader/timeout failure still throws.
+An actual-parser counterfactual confirms the old expression rejects the observed colored
+summary and the corrected code accepts color/plain success while rejecting fewer, skipped,
+failed, zero and missing summaries.
+
+Fresh `FORCE_COLOR=1` execution passes all66 native controls and all43 actual engine/C5
+tests without skips, then stops only its owned disposable loopback cluster. Evidence is
+`work/owner-task-native-proof/run-5shyvg/` and `work/native-ci-color-successor-escalated.log`.
+The earlier sandbox TCP refusal is retained separately and is not passing evidence.
+No migration, authorization, runtime executor, provider or activation setting changed.
+The corrected exact head still requires its own hosted CI and production release proof.
+
 ### Root integration checkpoint — native Gateway and required CI
 
 The distinct successor review of `b53eb5211df1bfd1a8820054fc7202640f3cfa17`

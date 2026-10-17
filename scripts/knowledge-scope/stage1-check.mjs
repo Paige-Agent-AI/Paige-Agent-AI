@@ -4324,6 +4324,20 @@ group("32 Explicit customer audience uses native private history and customer pr
     rpcExtras:{...scenario.rpcExtras,client_portal_assistant_context:{data:null,error:{code:"42501"}}}});
   assert("32 Stop remains available after accepted program withdrawal without model dispatch",
     stopped.providerCalls.length===0&&stopped.rec.rpc.some(x=>x.name==="client_portal_assistant_begin"&&x.args.p_stop===true));
+  terminal=false;
+  const legacyProjection={...customerContext(),snapshot:null,sources:[],
+    history:[{role:"user",content:"My own earlier words",source_refs:[]}]};
+  const legacy=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
+    client_portal_assistant_context:{data:legacyProjection,error:null}},
+    tableExtras:{...scenario.tableExtras,paige_chat_turns:()=>[{role:"user",content:"My own earlier words",bundle_ref:{}},
+      {role:"assistant",content:"WITHDRAWN_PROGRAM_HISTORY",bundle_ref:{customer_knowledge:snapshot}}]}});
+  assert("32 compatible direct-admission retry stays knowledgeless at the real provider boundary",
+    legacy.status===200&&legacy.providerCalls.length===1&&legacy.responseText.includes("Scoped response.")
+    &&!JSON.stringify(legacy.providerCalls).includes("NATIVE_CUSTOMER_PROGRAM")
+    &&!JSON.stringify(legacy.providerCalls).includes("WITHDRAWN_PROGRAM_HISTORY"));
+  assert("32 compatible retry cannot manufacture source attestation in its terminal",
+    legacy.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1
+    &&!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge);
 }
 
 group("31 Ordinary customer relationship at the protected Chat boundary");

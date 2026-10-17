@@ -305,7 +305,14 @@ Deno.serve(async (req) => {
       if (!response.body) throw new Error("mouth_stream_missing");
       return response.body;
     },
-    usage: { emit() { /* Neutral UsageSink seam. Budget lane supplies persistence later. */ } },
+    usage: {
+      emit() { /* Neutral units still require canonical budget/usage binding; no billing claim. */ },
+      timing(event) {
+        // Existing server logs, numeric stages only: no transcript, actor,
+        // workspace, session, token, profile or raw provider error.
+        console.info("[paige-live-relay] timing", { phase: event.phase, elapsed_ms: event.elapsedMs });
+      },
+    },
     authorize: (force) => admission.check(force),
     runtimeProof: {
       readOutput: async (token) => await admission.check() ? runtimeProof.readOutput(token) : null,

@@ -1,0 +1,30 @@
+{
+  "observedBuildId": "6a2c4258033c6438deab211f56d5188f1b32c9ec-mvbtkny1",
+  "observedHead": "6a2c4258033c6438deab211f56d5188f1b32c9ec",
+  "at": "2026-10-17T03:13:12.9560304Z",
+  "releaseCommit": "6a2c4258033c6438deab211f56d5188f1b32c9ec",
+  "evidenceClass": "PUBLIC_SERVED_MODULE_GRAPH_NOT_AUTHENTICATED_BROWSER",
+  "entry": "/assets/main-D79G6knC.js",
+  "main": "/assets/main-BRiUvRRl.js",
+  "solo": "/assets/SoloEntry-BCYbEQvJ.js",
+  "chat": "/assets/PaigeAIChat-COjZCB7g.js",
+  "chatSha256": "b9e533bd61a406960bbe350e5b0a42032111b32d77d3f7a3f88a02293c11e627",
+  "soloSha256": "94cdf9c755804be16235ca4c26808f32f974cf89df93b3d67f64c863e7d22780",
+  "markers": {
+    "What can help?": true,
+    "What should I connect?": true,
+    "Choose a first action": true,
+    "Return to interview": true,
+    "Check saved Setup": true,
+    "Confirm and save to Setup": true,
+    "Stop loading voice": true,
+    "Voice playback returned an unsupported response.": true,
+    "MediaSource": true,
+    "paige.voice.message.": true,
+    "first_playback": true,
+    "voice_first_byte": true,
+    "Server-Timing": true
+  },
+  "passed": true,
+  "authenticatedAcceptance": false
+}

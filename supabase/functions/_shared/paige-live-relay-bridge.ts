@@ -5,7 +5,7 @@
  */
 import {
   createRelayState, reduceRelay, type RelayEffect, type RelayEvent,
-  type RelayFramePayload, type RelayState, type UsageSink,
+  type RelayFramePayload, type RelayState, type UsageSink, type LiveTimingObservation,
 } from "./paige-live-relay-contract.ts";
 import { sameLiveRuntimeScope, type LiveRuntimeScope, type LiveRuntimeOutput } from "./paige-live-runtime-proof.ts";
 
@@ -106,6 +106,8 @@ export class PaigeLiveRelayBridge {
   private issueQueue: Promise<void> = Promise.resolve();
   private readonly now: () => number;
   private pendingAudioBytes = 0;
+  private timingTurn: { id: string; finalAt: number; seen: Set<LiveTimingObservation["phase"]> } | null = null;
+  private interruptionAt: { id: string; at: number } | null = null;
 
   constructor(private readonly options: LiveBridgeOptions) {
     this.now = options.now ?? Date.now;
@@ -357,8 +359,39 @@ export class PaigeLiveRelayBridge {
   private apply(event: RelayEvent): RelayEffect[] {
     const transition = reduceRelay(this.state, event);
     this.state = transition.state;
+    // Observe only accepted events. Old epoch/turn/replay/interrupt rejections
+    // cannot seed a later turn's timing or manufacture a completion measurement.
+    if (!transition.effects.some(effect => effect.kind === "turn.rejected")) {
+      if (event.kind === "turn.start" || event.kind === "session.cancel") {
+        this.timingTurn = null;
+        this.interruptionAt = null;
+      } else if (event.kind === "turn.interrupt") {
+        this.interruptionAt = { id: event.turnId, at: event.at };
+      } else if (event.kind === "frame") {
+        if (event.payload.kind === "transcript.final") {
+          this.timingTurn = { id: event.turnId, finalAt: event.at, seen: new Set() };
+        } else if (this.timingTurn?.id === event.turnId) {
+          const phase = event.payload.kind === "runtime.chunk" && event.payload.text.trim()
+            ? "final_to_first_runtime_text_ms" : event.payload.kind === "audio.chunk"
+              ? "final_to_first_pcm_observed_ms" : null;
+          if (phase && !this.timingTurn.seen.has(phase)) {
+            this.timingTurn.seen.add(phase);
+            this.observeTiming(phase, this.timingTurn.finalAt, event.at);
+          }
+        }
+      }
+    }
     for (const effect of transition.effects) this.effect(effect);
     return transition.effects;
+  }
+
+  private observeTiming(phase: LiveTimingObservation["phase"], began: number, ended: number): void {
+    const elapsedMs = ended - began;
+    if (!Number.isFinite(began) || !Number.isFinite(ended) || !Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs > 86_400_000) return;
+    try {
+      const result = this.options.usage.timing?.({ phase, elapsedMs });
+      if (result) void Promise.resolve(result).catch(() => undefined);
+    } catch { /* Optional observation cannot interrupt or retry a live turn. */ }
   }
 
   private effect(effect: RelayEffect): void {
@@ -390,9 +423,13 @@ export class PaigeLiveRelayBridge {
         this.speechGeneration++;
         this.speechController?.abort();
         break;
-      case "client.clear_playback":
+      case "client.clear_playback": {
+        const interrupted = this.interruptionAt;
+        this.interruptionAt = null;
         this.send({ type: "clear_playback", turn_id: effect.turnId });
+        if (interrupted?.id === effect.turnId) this.observeTiming("interrupt_to_clear_effect_ms", interrupted.at, this.now());
         break;
+      }
       case "usage.emit":
         // Neutral measurement only. No budget, pricing, reserve or refusal.
         try {

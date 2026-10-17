@@ -91,7 +91,7 @@ if (process.env.PLANNING_PROOF_BASELINE) {
 }
 await db.exec(`DO $$ DECLARE f record; BEGIN FOR f IN SELECT oid::regprocedure AS signature,proname FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname LIKE 'plan_%' LOOP EXECUTE 'REVOKE ALL ON FUNCTION '||f.signature||' FROM PUBLIC,anon,authenticated,service_role'; EXECUTE 'GRANT EXECUTE ON FUNCTION '||f.signature||' TO authenticated'; IF f.proname IN ('plan_create','plan_add_milestone','plan_assign_task','plan_set_reminder','plan_update_item','plan_remove_item','plan_list') THEN EXECUTE 'GRANT EXECUTE ON FUNCTION '||f.signature||' TO service_role'; END IF; END LOOP; END $$;`);
 
-const migration = read('20271108190000_planning_native_receipts_history.sql');
+const migration = read('20271108191000_planning_native_receipts_history.sql');
 const writerMetadataSQL=`SELECT proname,pg_get_function_identity_arguments(oid) AS args,proowner::regrole::text AS owner,
  prosecdef,proconfig,proacl::text AS acl FROM pg_proc WHERE pronamespace='public'::regnamespace
  AND proname IN ('plan_create','plan_add_milestone','plan_assign_task','plan_set_reminder','plan_update_item','plan_remove_item') ORDER BY proname`;

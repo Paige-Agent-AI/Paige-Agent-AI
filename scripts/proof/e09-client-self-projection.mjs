@@ -16,10 +16,10 @@ const exe = name => bin ? path.join(bin, name + (process.platform === 'win32' ? 
 fs.mkdirSync(work, { recursive: true });
 const cluster = fs.mkdtempSync(path.join(work, 'cluster-'));
 const transcripts = [], results = [];
-function run(name,args,input) {
+function run(name,args,input,timeout=60000) {
   const out=path.join(work,`${transcripts.length}-${name}.stdout`),err=path.join(work,`${transcripts.length}-${name}.stderr`);
   const stdout=fs.openSync(out,'w'),stderr=fs.openSync(err,'w');let r;
-  try {r=spawnSync(exe(name),args,{input,encoding:'utf8',windowsHide:true,timeout:60000,stdio:['pipe',stdout,stderr]});}
+  try {r=spawnSync(exe(name),args,{input,encoding:'utf8',windowsHide:true,timeout,stdio:['pipe',stdout,stderr]});}
   finally {fs.closeSync(stdout);fs.closeSync(stderr);}
   r.stdout=fs.readFileSync(out,'utf8');r.stderr=fs.readFileSync(err,'utf8');
   transcripts.push({command:name,args,exitCode:r.status,stdout:r.stdout,stderr:r.stderr});
@@ -46,8 +46,10 @@ assert(brandCascade,'Incumbent native brand cascade must exist');
 const unsafeControl=process.argv.includes('--unsafe-control');
 const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
 const unsafeStage=process.argv.includes('--stage-unsafe-control');
-assert([unsafeControl,unsafePresentation,unsafeStage].filter(Boolean).length<=1,'Choose one negative control');
-const reportStem=unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control');
+const unsafeFrame=process.argv.includes('--frame-unsafe-control');
+assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame].filter(Boolean).length<=1,'Choose one negative control');
+const reportStem=unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
 function advance(actor=uid,stage='signing_agreement',payload={},role='authenticated') {
   const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT row_to_json(s) FROM public.client_advance_onboarding_stage(${stage===null?'NULL':`'${stage}'`},$payload$${JSON.stringify(payload)}$payload$::jsonb) s; COMMIT;`);
   return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
@@ -59,7 +61,9 @@ function presentation(actor=uid,role='authenticated') {
 }
 let started=false;
 try {
-  run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);
+  // Windows disk sync can exceed a minute even after successful bootstrap.
+  // Keep fsync enabled; only this disposable cluster initializer gets more time.
+  run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8'],undefined,180000);
   run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start']);started=true;
   sql(`CREATE ROLE authenticated NOLOGIN; CREATE ROLE anon NOLOGIN; CREATE ROLE service_role NOLOGIN;
     CREATE SCHEMA auth; CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
@@ -207,8 +211,13 @@ try {
       assert.equal(sql('SELECT count(*) FROM paige_audit_log;'),auditBefore);
     });
   }finally{await revoker;sql(`UPDATE clients SET status='active' WHERE id='${contact}';`);}
+  let frameEvidence={};
+  if(frame) {
+    const {frameProof}=await import('./e09-client-frame.mjs');
+    frameEvidence=frameProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact,otherContact,presentationMigration,unsafeFrame});
+  }
   const failed=results.filter(x=>x.status==='FAIL');
-  const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),results,passed:results.length-failed.length,failed:failed.length};
+  const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),...frameEvidence,results,passed:results.length-failed.length,failed:failed.length};
   fs.writeFileSync(path.join(work,`${reportStem}.json`),JSON.stringify(report,null,2));
   console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
   if(failed.length)process.exitCode=1;

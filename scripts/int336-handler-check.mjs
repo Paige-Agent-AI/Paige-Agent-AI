@@ -154,10 +154,10 @@ if(process.env.APPROVAL_RECOVERY_DATABASE_URL){
 // Reload authority comes only from a fresh server read of the immutable terminal
 // AND its still-live native confirmation. No history JSON, settlement or retry.
 const publicationRaces=[];
-const reloadVariants=['available','admin-current','contact-current','contact-create','company-create','contact-ref-current','contact-ref-missing','contact-ref-changed-id','company-current','task-current','equivalent-version','missing-terminal','terminal-removed','json-only','wrong-actor','wrong-tenant','wrong-intent','closed-terminal','unknown-effect','superseded','executor-held','member-refused','role-member','foreign-thread','archived-thread','scope-changed','member-revoked','expired','consumed','consumed-after-read','foreign-pending','missing-issuance','newer-issuance','newer-issuance-microsecond','newer-creation-microsecond','wrong-tool','wrong-command','wrong-key','wrong-fingerprint','duplicate-card','duplicate-pending','changed-version','changed-microsecond','missing-contact-version','company-changed-version','task-changed-version','unsupported-preview','unsupported-activity','protocol-paused','contact-race-before-final','consume-race-after-receipt','publication-false','publication-member','publication-actor','publication-error','publication-null','publication-shape','publication-scope','publication-latest','publication-held','publication-proof','publication-expired','consumed-during-publication','version-during-publication'];
+const reloadVariants=['available','admin-current','contact-current','contact-missing','contact-foreign','contact-read-error','contact-create','company-create','contact-ref-current','contact-ref-missing','contact-ref-changed-id','company-current','task-current','equivalent-version','missing-terminal','terminal-removed','json-only','wrong-actor','wrong-tenant','wrong-intent','closed-terminal','unknown-effect','superseded','executor-held','member-refused','role-member','foreign-thread','archived-thread','scope-changed','member-revoked','expired','consumed','consumed-after-read','foreign-pending','missing-issuance','newer-issuance','newer-issuance-microsecond','newer-creation-microsecond','wrong-tool','wrong-command','wrong-key','wrong-fingerprint','duplicate-card','duplicate-pending','changed-version','changed-microsecond','missing-contact-version','company-changed-version','task-changed-version','unsupported-preview','unsupported-activity','protocol-paused','contact-race-before-final','consume-race-after-receipt','publication-false','publication-member','publication-actor','publication-error','publication-null','publication-shape','publication-scope','publication-latest','publication-held','publication-proof','publication-expired','consumed-during-publication','version-during-publication'];
 for(const variant of reloadVariants){
  const isRef=variant.startsWith('contact-ref-');
- const isContact=isRef||['contact-current','equivalent-version','changed-version','changed-microsecond','missing-contact-version','contact-race-before-final','version-during-publication'].includes(variant);
+ const isContact=isRef||['contact-current','contact-missing','contact-foreign','contact-read-error','equivalent-version','changed-version','changed-microsecond','missing-contact-version','contact-race-before-final','version-during-publication'].includes(variant);
  const isCompany=variant.startsWith('company-'),isTask=variant.startsWith('task-');
  const revision='2026-10-16T12:00:00.123456Z';
  const command=variant==='contact-create'?{action:'contact.create',patch:{first_name:'Fixture',last_name:'Person'}}
@@ -205,8 +205,12 @@ for(const variant of reloadVariants){
   paige_chat_threads:[{id:thread,tenant_id:tenant,caller_user_id:variant==='foreign-thread'?id(99):actor,is_archived:variant==='archived-thread',interactive_latest_intent:variant==='superseded'?id(99):intent,interactive_executor_intent:variant==='executor-held'?intent:null}],
   paige_chat_turns:()=>{terminalReads++;if(terminalReads>1&&variant==='contact-race-before-final')versionChanged=true;if(terminalReads>1&&variant==='consume-race-after-receipt')consumed=true;return variant==='missing-terminal'||variant==='terminal-removed'&&terminalReads>1?[]:structuredClone([terminal]);},
   paige_pending_confirmations:()=>{const query=recoveryRec.from.length;if(query!==lastPendingQuery){pendingReads++;lastPendingQuery=query;}if(variant==='scope-changed')switched=true;return structuredClone(variant==='duplicate-pending'?[native,{...native,id:id(73)}]:consumed||variant==='consumed-after-read'&&pendingReads>1?[{...native,consumed_at:issued}]:[native]);},
-  contacts:()=>[{id:id(74),tenant_id:tenant,updated_at:variant==='missing-contact-version'?null:versionChanged?'2026-10-16T12:00:01.123456Z':currentRevision,created_at:currentRevision}],
-  clients:variant==='contact-ref-missing'?[]:[{id:variant==='contact-ref-changed-id'?id(75):id(74)}],
+  // The canonical CRM writer reads public.clients. public.contacts does not
+  // exist: fail like that schema instead of inventing a second contact store.
+  contacts:()=>{throw new Error('42P01: relation "public.contacts" does not exist');},
+  clients:()=>{if(variant==='contact-read-error')throw new Error('fixture canonical contact read unavailable');
+   return ['contact-ref-missing','contact-missing'].includes(variant)?[]:[{id:variant==='contact-ref-changed-id'?id(75):id(74),
+    tenant_id:variant==='contact-foreign'?id(99):tenant,updated_at:variant==='missing-contact-version'?null:versionChanged?'2026-10-16T12:00:01.123456Z':currentRevision,created_at:currentRevision}];},
   businesses:[{id:id(74),tenant_id:tenant,updated_at:null,created_at:currentRevision}],
   tasks:[{id:id(74),tenant_id:tenant,updated_at:null,created_at:currentRevision}],
  },rpcs:{paige_chat_interactive_publication_context_v2:args=>{
@@ -226,6 +230,18 @@ for(const variant of reloadVariants){
  else assert.equal(result.approval_recovery.confirmations,undefined,'refusal returns no executable proposal');
  if(['consumed-during-publication','version-during-publication'].includes(variant))publicationRaces.push({variant,card,args,native,command});
  if(publicationReads){assert.equal(recoveryRec.rpc.at(-1).name,'paige_chat_interactive_publication_context_v2','native context is the LAST awaited authority');assert.equal(recoveryRec.rpc.at(-1).client,'jwt');assert.equal(recoveryRec.from.length,publicationLastReadCount,'no query follows native publication context');}
+ assert.equal(recoveryRec.from.some(query=>query.table==='contacts'),false,'recovery must never query a nonexistent contact relation');
+ const contactReads=recoveryRec.from.filter(query=>query.table==='clients'&&query.filters.some(([op,columns])=>op==='select'&&columns==='id,tenant_id,updated_at,created_at'));
+ for(const query of contactReads){assert.ok(query.filters.some(([op,column,value])=>op==='eq'&&column==='id'&&value===id(74)),'contact revision binds the exact native record');assert.ok(query.filters.some(([op,column,value])=>op==='eq'&&column==='tenant_id'&&value===tenant),'contact revision remains tenant-scoped');}
+ if(isContact&&available)assert.equal(contactReads.length,2,'both revision observations read the canonical clients row');
+ if(variant==='contact-current'){
+  versionChanged=true;
+  const reloaded=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));
+  assert.equal(reloaded.status,200);assert.equal(reloaded.headers.get('cache-control'),'no-store');
+  const changed=await reloaded.json();assert.equal(changed.approval_recovery?.status,'unavailable','a fresh reload refuses a changed canonical contact revision');
+  assert.equal(changed.approval_recovery.confirmations,undefined,'a changed contact reload exposes no executable proposal');
+  assert.equal(publicationReads,1,'changed revision stops before publishing another recovery card');
+ }
  assert.equal(recoveryRec.inserts.length,0);assert.equal(recoveryRec.functions.length,0);
  assert.equal(recoveryRec.rpc.some(c=>/begin_v2|settle|turn_append|transition|prepare|submit|claim|execute_crm/.test(c.name)),false,'recovery never admits, settles or executes');
  assert.equal(recoveryRec.rpc.filter(c=>c.name==='paige_chat_interactive_executor_v2').every(c=>c.args.p_operation==='state'),true,'recovery never releases an executor');

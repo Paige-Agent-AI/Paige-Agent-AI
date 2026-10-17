@@ -12,6 +12,13 @@ export function interviewSetupPath(account: string | number, threadId: string | 
   return threadId && UUID.test(threadId) ? `${path}?interviewThread=${encodeURIComponent(threadId)}` : path;
 }
 
+// Existing Settings destinations only; this address conveys no connection,
+// credential, ownership or thread authority. Each destination re-resolves scope.
+export function interviewConnectionPath(account: string | number, destination: "integrations" | "connections" | "vault", threadId: string | null): string {
+  const path = `/solo/${encodeURIComponent(String(account))}/settings/${destination}`;
+  return threadId && UUID.test(threadId) ? `${path}?interviewThread=${encodeURIComponent(threadId)}` : path;
+}
+
 export function interviewReturnPath(account: string | number, search: string): string | null {
   const threadId = interviewThreadFromSearch(search);
   return threadId ? `/solo/${encodeURIComponent(String(account))}/paige/chat?interviewThread=${encodeURIComponent(threadId)}` : null;

@@ -16,7 +16,7 @@ import { WeeklyResponsibilityEntry } from "./weekly/WeeklyResponsibilityEntry";
 import { SoloBusinessInterview } from "./SoloBusinessInterview";
 import { supabase } from "@/integrations/supabase/client";
 import { interviewThreadFromSearch } from "./solo-interview-navigation";
-import { cleanInterviewCheckpoint } from "./solo-business-interview-contract";
+import { cleanInterviewCheckpoint, INTERVIEW_NEXT_PROMPTS } from "./solo-business-interview-contract";
 import { SoloOnboardingStage, type OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
@@ -326,7 +326,7 @@ export function SoloPaigeWorkspace({
   const [verifiedResume, setVerifiedResume] = useState<{ scope: string; state: "ready" | "failed" } | null>(null);
   const [profileStatus, setProfileStatus] = useState<OnboardingProfileStatus | null>(null);
   const observeProfile = useCallback((status: OnboardingProfileStatus) => {
-    setProfileStatus(previous => previous?.tenantId === status.tenantId && previous.state === status.state && previous.confirmedCount === status.confirmedCount ? previous : status);
+    setProfileStatus(previous => previous?.tenantId === status.tenantId && previous.state === status.state && previous.confirmedCount === status.confirmedCount && previous.hasConfirmedPriority === status.hasConfirmedPriority ? previous : status);
   }, []);
   const observeChat = useCallback((_steps: unknown, loading: boolean) => {
     setChatBusy(loading);
@@ -444,7 +444,9 @@ export function SoloPaigeWorkspace({
           activeThreadId={resumedThread}
           onTrace={observeChat}
           greeting={interviewFocused && firstRun ? "I'm PAIGE. What does your business do, and what would you most like to improve?" : interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
-          chips={interviewFocused ? [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
+          chips={interviewFocused ? profileStatus?.tenantId === activeTenantId && profileStatus.state === "ready" && profileStatus.hasConfirmedPriority
+            ? [...INTERVIEW_NEXT_PROMPTS, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }]
+            : [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
           clientId={clientScope?.clientId ?? null}
           surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
           businessMissionId={!clientScope ? planScope?.businessMissionId ?? null : null}

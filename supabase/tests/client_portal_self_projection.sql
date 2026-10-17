@@ -282,5 +282,72 @@ SELECT is(pg_temp.e09_frame_brand_control(true),'unsafe_mismatch_observed',
  'removing only the business predicate makes the deliberate mismatch observable');
 SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id',
  'e0921000-0000-0000-0000-000000000001','mutation control restores both actual native function definitions');
+-- Private AI conversation extends the same native tables/issued v2 receipts.
+-- Synthetic caller claims in this rollback-only, fully replayed database job.
+CREATE FUNCTION pg_temp.e09_chat(_actor uuid,_sql text,_role text DEFAULT 'authenticated')
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE _result text;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
+ IF _role='service_role' THEN SET LOCAL ROLE service_role; ELSE SET LOCAL ROLE authenticated; END IF;
+ EXECUTE _sql INTO _result;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _result;
+END $$;
+CREATE TEMP TABLE e09_customer_chat(thread_id uuid);
+-- Retained workspace history for the same actor/contact must not collide with
+-- or become readable as the newly created private customer audience.
+INSERT INTO public.paige_chat_threads(caller_user_id,contact_id,tenant_id,lens,title,consent_snapshot)
+ VALUES('e0911000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001',
+ 'e0921000-0000-0000-0000-000000000001','client','Synthetic staff-focused history','{}');
+INSERT INTO e09_customer_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Private customer conversation','{}')$$)::uuid;
+SELECT is((SELECT audience FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'customer_private','ordinary customer receives the canonical private audience');
+SELECT is((SELECT contact_id::text FROM public.paige_chat_threads WHERE id=(SELECT thread_id FROM e09_customer_chat)),
+ 'e0931000-0000-0000-0000-000000000001','thread subject is the native relationship');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Return','{}')$$),
+ (SELECT thread_id::text FROM e09_customer_chat),'returning customer resumes the same thread');
+SELECT throws_like($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $s$SELECT public.paige_chat_thread_create('e0931000-0000-0000-0000-000000000002','customer','Forged','{}')$s$)$q$,
+ '%customer subject is server resolved%','request cannot choose another customer');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_begin_v2(%L,'e0941000-0000-4000-8000-000000000001',
+ NULL,'Private customer question',false,false,false)$s$,(SELECT thread_id FROM e09_customer_chat)))::jsonb)->>'status',
+ 'accepted','existing staged v2 admits a non-effectful customer conversation');
+SELECT throws_like(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ %L)$q$,format($s$SELECT public.paige_chat_turn_append(%L,'assistant','Forged',NULL,NULL,NULL,NULL,NULL,NULL,NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ '%customer answers require a server-issued receipt%','customer cannot forge durable AI text');
+SELECT throws_like(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ %L)$q$,format($s$UPDATE public.paige_chat_threads SET audience='workspace' WHERE id=%L RETURNING id$s$,
+ (SELECT thread_id FROM e09_customer_chat))),
+ '%customer thread audience is immutable%','private history cannot be relabeled as business history');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_settle(%L,'e0911000-0000-0000-0000-000000000001',
+ 'e0921000-0000-0000-0000-000000000001','e0941000-0000-4000-8000-000000000001',
+ 'A private customer answer',NULL,NULL,'{"interactive":{"request_intent_id":"e0941000-0000-4000-8000-000000000001"},"turn_state":{"v":1,"state":"FINAL"}}',NULL)$s$,
+ (SELECT thread_id FROM e09_customer_chat)),'service_role') IS NOT NULL,
+ 'existing service-only settlement saves an issued customer answer');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '2','returning customer can read the two issued canonical turns');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '0','another legitimate customer cannot read private history');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT public.paige_chat_interactive_publication_context_v2(%L,'e0941000-0000-4000-8000-000000000001')$s$,
+ (SELECT thread_id FROM e09_customer_chat))),'true','native publication checks the customer relationship without a staff workspace');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '0','revoked relationship loses private-history access');
+SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=(SELECT thread_id FROM e09_customer_chat)),
+ 2,'revocation retains canonical receipts without granting access');
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001'
+ WHERE id='e0931000-0000-0000-0000-000000000001';
+
 SELECT * FROM finish();
 ROLLBACK;

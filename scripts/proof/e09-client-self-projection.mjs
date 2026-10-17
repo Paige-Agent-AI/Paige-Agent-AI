@@ -46,7 +46,7 @@ assert(brandCascade,'Incumbent native brand cascade must exist');
 const unsafeControl=process.argv.includes('--unsafe-control');
 const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
 const unsafeStage=process.argv.includes('--stage-unsafe-control');
-const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control');
+const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control')||process.argv.includes('--customer-chat');
 const unsafeFrame=process.argv.includes('--frame-unsafe-control');
 assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame].filter(Boolean).length<=1,'Choose one negative control');
 const reportStem=unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
@@ -215,6 +215,10 @@ try {
   if(frame) {
     const {frameProof}=await import('./e09-client-frame.mjs');
     frameEvidence=frameProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact,otherContact,presentationMigration,unsafeFrame});
+  }
+  if(process.argv.includes('--customer-chat')) {
+    const {customerChatProof}=await import('./e09-customer-chat.mjs');
+    Object.assign(frameEvidence,customerChatProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}));
   }
   const failed=results.filter(x=>x.status==='FAIL');
   const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),...frameEvidence,results,passed:results.length-failed.length,failed:failed.length};

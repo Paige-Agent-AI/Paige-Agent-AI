@@ -8,7 +8,7 @@
   "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
   "assistantSettingsMigrationSHA256": "7ceb5aa3ae8fcfebd656ec3ee36a153a6234a18b265fadddce314978ba9e420e",
   "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
-  "knowledgeSharesMigrationSHA256": "165dfdbfb072c288676eca02085760c506a77bcaa8e9913b2d68c31e3e5eb2bb",
+  "knowledgeSharesMigrationSHA256": "625f6d4e972be3b504b42dce530fe8f7b6f0d67b748aff072efbdcf5723cafc5",
   "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
   "results": [
     {
@@ -408,6 +408,14 @@
       "status": "PASS"
     },
     {
+      "name": "Authorized UUID case aliases resolve the same exact canonical source",
+      "status": "PASS"
+    },
+    {
+      "name": "Duplicate UUID case aliases cannot masquerade as distinct source references",
+      "status": "PASS"
+    },
+    {
       "name": "An empty exact reference set does not acquire newly shared content",
       "status": "PASS"
     },
@@ -528,6 +536,6 @@
       "status": "PASS"
     }
   ],
-  "passed": 119,
+  "passed": 121,
   "failed": 8
 }

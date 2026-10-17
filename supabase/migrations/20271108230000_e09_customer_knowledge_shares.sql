@@ -318,7 +318,7 @@ BEGIN
      END IF;
    END LOOP;
    expected_count:=jsonb_array_length(p_source_refs);
-   IF (SELECT count(DISTINCT value->>'share_id') FROM jsonb_array_elements(p_source_refs))<>expected_count THEN
+   IF (SELECT count(DISTINCT (value->>'share_id')::uuid) FROM jsonb_array_elements(p_source_refs))<>expected_count THEN
      RAISE EXCEPTION 'CUSTOMER_KNOWLEDGE_ARGUMENTS_INVALID' USING ERRCODE='22023';
    END IF;
    SELECT count(*) INTO matched FROM public.tenant_knowledge_client_shares s
@@ -337,7 +337,7 @@ BEGIN
    FROM public.tenant_knowledge_client_shares s
    JOIN public.tenant_knowledge_docs d ON d.id=s.document_id AND d.tenant_id=s.tenant_id
    WHERE s.tenant_id=business AND s.contact_id=customer AND public._client_knowledge_share_current(s)
-     AND (p_source_refs IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_source_refs) r WHERE r->>'share_id'=s.id::text))
+     AND (p_source_refs IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_source_refs) r WHERE (r->>'share_id')::uuid=s.id))
    ORDER BY s.updated_at DESC,s.id LIMIT p_limit OFFSET p_offset
  ) q;
  RETURN jsonb_build_object('actor_id',auth.uid(),'contact_id',customer,'tenant_id',business,

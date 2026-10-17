@@ -575,6 +575,16 @@ SELECT is((SELECT user_id::text FROM public.audit_logs WHERE id='e0951000-0000-4
 SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)#>>'{sources,0,content}',
  'Approved program guidance','customer reloads only explicitly shared canonical content');
+CREATE TEMP TABLE e09_knowledge_refs AS SELECT jsonb_build_object('share_id',upper(s.id::text),
+ 'share_revision',s.revision,'source_fingerprint',s.source_fingerprint) ref
+ FROM public.tenant_knowledge_client_shares s JOIN e09_knowledge_result r ON s.id=(r.result->>'share_id')::uuid;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_context(%L,%L::jsonb)','e0921000-0000-0000-0000-000000000001',jsonb_build_array(ref)::text))::jsonb)#>>'{sources,0,share_id}',
+ (SELECT result->>'share_id' FROM e09_knowledge_result),'an authorized UUID case alias resolves the canonical source') FROM e09_knowledge_refs;
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_context(%L,%L::jsonb)','e0921000-0000-0000-0000-000000000001',
+ jsonb_build_array(ref,ref||jsonb_build_object('share_id',lower(ref->>'share_id')))::text)) FROM e09_knowledge_refs$q$,
+ '22023','CUSTOMER_KNOWLEDGE_ARGUMENTS_INVALID','UUID case aliases cannot duplicate one source identity');
 SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
  $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)$q$,
  '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','wrong customer cannot read the shared business content');

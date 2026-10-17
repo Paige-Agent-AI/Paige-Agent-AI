@@ -100,6 +100,8 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   check(label+' cannot obtain Knowledge context',()=>assert.throws(()=>context(actor,business)));
  for(const role of ['anon','service_role'])check(role+' cannot execute a customer reader or impersonate a customer',()=>assert.throws(()=>context(uid,tenant,null,5,0,true,role)));
  check('Exact authorized source references validate without expanding authority',()=>assert.equal(context(uid,tenant,firstRefs).sources[0].share_id,saved.share_id));
+ check('Authorized UUID case aliases resolve the same exact canonical source',()=>assert.equal(context(uid,tenant,[{...firstRefs[0],share_id:firstRefs[0].share_id.toUpperCase()}]).sources[0].share_id,saved.share_id));
+ check('Duplicate UUID case aliases cannot masquerade as distinct source references',()=>assert.throws(()=>context(uid,tenant,[firstRefs[0],{...firstRefs[0],share_id:firstRefs[0].share_id.toUpperCase()}])));
  check('An empty exact reference set does not acquire newly shared content',()=>assert.deepEqual(context(uid,tenant,[]).sources,[]));
  for(const [label,ref]of[['Foreign share',{...firstRefs[0],share_id:randomUUID()}],['Wrong share revision',{...firstRefs[0],share_revision:50}],['Wrong fingerprint',{...firstRefs[0],source_fingerprint:'0'.repeat(64)}]])
   check(label+' is refused instead of silently dropping or widening references',()=>assert.throws(()=>context(uid,tenant,[ref])));

@@ -106,6 +106,8 @@ jobs:
         run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-approval-visibility --postgres
       - name: Native event enqueue, internal cron authentication, rollback and replay in disposable PostgreSQL
         run: node scripts/proof/native-event-enqueue.mjs --postgres
+      - name: Exact Calendar booking caller authority and 100k selective native read
+        run: node scripts/proof/calendar-booking-read.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -913,6 +915,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.

@@ -13,11 +13,10 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 //     ROLE (§9/§34 — the token is NEVER a column and NEVER logged). calendar's
 //     staff_calendar_settings.google_refresh_token_encrypted (column-AES via
 //     _shared/calendarCrypto.ts) is a DIFFERENT per-user table and is deliberately NOT reused.
-//   • tenant_id is resolved SERVER-SIDE from profiles by the state's user id (§9 — never from
-//     the request body/state), then a channel_connectors row (channel_type='email',
-//     provider='gmail') is upserted under service role with an explicit SAME-TENANT guard
-//     against the GLOBAL uq_channel_connectors_inbound_address unique index (a cross-tenant
-//     collision is reported HONESTLY as gmail_already_connected_elsewhere, never a 500).
+//   • tenant_id is current SERVER authority, checked against signed consent scope.
+//     The service-only native transaction rechecks actor/workspace/admin authority,
+//     mailbox privacy and collisions before writing Vault + channel_connectors
+//     together. Google exchange cannot be atomic with local persistence.
 //
 // CONFIG-GATED like the start fn (§13): no GOOGLE_OAUTH_CLIENT_ID/SECRET →
 // gmail_oauth_not_configured, never a crash. verify_jwt=true.
@@ -28,7 +27,7 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 // sensitive-scope verification. Until then the flow degrades to gmail_oauth_not_configured
 // (or Google rejects the scope at consent) — expected, not a bug.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { resolveTenantForUser } from "../_shared/tenant-for-user.ts";
+import { readGmailConnectionAuthority } from "../_shared/gmail-connection-authority.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,13 +70,11 @@ function gmailRedirectOrigin(fallbackOrigin: string): string {
   return (Deno.env.get("CALENDAR_OAUTH_REDIRECT_ORIGIN") || fallbackOrigin).replace(/\/$/, "");
 }
 
-/** A stable Vault secret NAME for a tenant's Gmail refresh token (§12 naming convention). */
-function gmailVaultRef(tenantId: string, googleAccountId: string): string {
-  return `gmail_refresh_token:${tenantId}:${googleAccountId}`;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  let nativeWriteAttempted = false;
+  let connectionSaved = false;
+  let auditConfirmed = false;
 
   try {
     // Honest config gate (§13): no OAuth client secret → the callback can't exchange.
@@ -104,18 +101,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // §9: provisioning the tenant-wide Gmail SENDING identity is an admin action —
-    // the SAME gate gmail-oauth-start and gmail-disconnect apply. Without it, a low-privilege
-    // member who completes the Google consent could bind their personal mailbox as the
-    // tenant's outbound sender. has_role is global; tenant is bound server-side below.
+    // Same canonical current-workspace owner/admin gate as start and disconnect.
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "forbidden" }), {
-        status: 403,
+    const authority = await readGmailConnectionAuthority(userSupa, admin, user.id);
+    if (!authority.ok) {
+      return new Response(JSON.stringify({ error: authority.error }), {
+        status: authority.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -129,7 +123,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify state (§18 clone)
-    let parsed: any;
+    let parsed: Record<string, unknown> | null;
     try { parsed = await verifyState(state); } catch {
       parsed = null;
     }
@@ -145,35 +139,46 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (Date.now() - Number(parsed.t) > 10 * 60 * 1000) {
+    if (!Number.isFinite(Number(parsed.t)) || Number(parsed.t) > Date.now()
+      || Date.now() - Number(parsed.t) > 10 * 60 * 1000) {
       return new Response(JSON.stringify({ error: "state_expired" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Resolve the tenant SERVER-SIDE from the state's user id (§9 — never body).
-    // `admin` (service-role) was created above for the has_role gate; reuse it.
-    //
-    // This used to read `profiles.tenant_id` keyed on `profiles.id`. That column
-    // does not exist and that key is a surrogate, so it returned null for every
-    // user and this endpoint could never succeed — see `_shared/tenant-for-user.ts`.
-    // `parsed.w` is the workspace the person was standing in, carried inside the
-    // SIGNED state, and it is honoured only after an active-membership check.
-    // (`t` is already the state's timestamp — see the expiry check above.)
-    const resolved = await resolveTenantForUser(admin, parsed.u, parsed.w ?? null);
-    const tenantId = resolved.tenantId;
-    if (!tenantId) {
-      return new Response(JSON.stringify({ error: "no_tenant_for_user", detail: resolved.error }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // A signed previous workspace is a guard, never a fallback target. In
+    // particular, a stale/revoked preference must not fall through to a different
+    // primary workspace while a person completes this consent round.
+    const signedWorkspace = parsed.w ?? null;
+    const stateIssuedAt = Number(parsed.t);
+    const currentAuthority = async () => {
+      const check = await readGmailConnectionAuthority(userSupa, admin, user.id, signedWorkspace);
+      if (!check.ok) return check;
+      if (Date.now() - stateIssuedAt > 10 * 60 * 1000) {
+        return { ok: false as const, status: 400, error: "state_expired" };
+      }
+      return check;
+    };
+    const refuseAuthority = (check: { status: number; error: string }) => new Response(JSON.stringify(connectionSaved ? {
+      error: "gmail_connection_saved_result_withheld", connection_saved: true, audit_confirmed: auditConfirmed,
+      note: "The connection was saved in the original workspace. Refresh that workspace to inspect it before reconnecting.",
+    } : { error: check.error }), {
+      status: check.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    const bound = await currentAuthority();
+    if (!bound.ok) return refuseAuthority(bound);
+    const tenantId = bound.tenantId;
+    if (parsed.r !== origin) return new Response(JSON.stringify({ error: "state_origin_mismatch" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
     // ── Store the refresh token ONLY in Vault (§9/§34) — never a column, never a log. ──
     if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) {
       return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    const beforeExchange = await currentAuthority();
+    if (!beforeExchange.ok) return refuseAuthority(beforeExchange);
 
     const redirectUri = `${gmailRedirectOrigin(String(origin))}/auth/gmail/callback`;
 
@@ -189,6 +194,8 @@ Deno.serve(async (req) => {
       }),
     });
     const tokenJson = await tokenRes.json();
+    const afterExchange = await currentAuthority();
+    if (!afterExchange.ok) return refuseAuthority(afterExchange);
     // Fail closed: no refresh_token means we can't send later (offline access wasn't granted).
     if (!tokenRes.ok || !tokenJson.refresh_token) {
       return new Response(JSON.stringify({ error: "token_exchange_failed", detail: tokenJson?.error ?? null }), {
@@ -212,6 +219,8 @@ Deno.serve(async (req) => {
         googleName = u.name ?? null;
       }
     } catch { /* non-fatal */ }
+    const beforePersist = await currentAuthority();
+    if (!beforePersist.ok) return refuseAuthority(beforePersist);
 
     if (!googleEmail) {
       // Without the address we cannot key the connector; honest failure, never a fake row (§13).
@@ -225,20 +234,6 @@ Deno.serve(async (req) => {
     const gmailAddr = googleEmail.toLowerCase();
     const accountId = googleSub ?? gmailAddr;
 
-    const ref = gmailVaultRef(tenantId, accountId);
-    const { error: vaultErr } = await admin.rpc("write_channel_secret", {
-      _ref: ref,
-      _secret: String(tokenJson.refresh_token),
-      _description: `Gmail refresh token for tenant ${tenantId} (${gmailAddr})`,
-    });
-    if (vaultErr) {
-      // Never echo the token; a vault failure is a real failure (§13).
-      return new Response(JSON.stringify({ error: "vault_write_failed", detail: vaultErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // ── Provision the channel_connectors row under service role with a §9 SAME-TENANT
     //    guard against the GLOBAL inbound_address unique index. supabase-js upsert can't
     //    express the partial-index + tenant WHERE the SQL trigger uses, so we do it
@@ -251,114 +246,116 @@ Deno.serve(async (req) => {
     const grantedScopes: string[] = typeof tokenJson.scope === "string"
       ? tokenJson.scope.split(" ").filter((scope: string) => scope.startsWith("https://"))
       : [];
-    const connectorFields = {
-      channel_type: "email",
-      provider: "gmail",
-      inbound_address: gmailAddr,
-      external_account_id: accountId,
-      from_address: gmailAddr,
-      from_name: googleName,
-      display_name: googleName ?? gmailAddr,
-      credentials_vault_ref: ref,
-      status: "active",
-      active: true,
-      ...(purpose === "inbox" ? {
-        mailbox_class: "personal" as const,
-        mailbox_owner_user_id: user.id,
-        mailbox_scopes: grantedScopes,
-      } : {}),
-    };
 
     // (1) Our tenant's existing Gmail connector for this address → reconnect (update).
-    const { data: ownRow } = await admin
+    const { data: ownRow, error: ownReadError } = await admin
       .from("channel_connectors")
-      .select("id")
+      .select("id,mailbox_class,mailbox_owner_user_id")
       .eq("tenant_id", tenantId)
       .eq("channel_type", "email")
       .eq("provider", "gmail")
       .eq("inbound_address", gmailAddr)
       .maybeSingle();
+    const afterConnectorRead = await currentAuthority();
+    if (!afterConnectorRead.ok) return refuseAuthority(afterConnectorRead);
+    if (ownReadError || (ownRow && typeof ownRow.id !== "string")) return new Response(
+      JSON.stringify({ error: "gmail_connector_lookup_failed" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
 
     if (ownRow?.id) {
       // #1140: an inbox consent must NEVER silently privatize a connector that is
       // currently the tenant's SHARED support mailbox — every other staff seat would
       // lose the shared history the moment the row flips to personal. Reconnecting
       // one's own personal mailbox (already personal) stays allowed.
-      if (purpose === "inbox") {
-        const { data: existingMailbox } = await admin
-          .from("channel_connectors")
-          .select("mailbox_class,mailbox_owner_user_id")
-          .eq("id", ownRow.id)
-          .maybeSingle();
-        if (existingMailbox?.mailbox_class === "personal" && existingMailbox.mailbox_owner_user_id !== user.id) {
+      if (ownRow.mailbox_class !== "personal" && ownRow.mailbox_class !== "shared_support") {
+        return new Response(JSON.stringify({ error: "gmail_connector_lookup_failed" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // A sending-only consent must not replace a teammate's private credential either.
+      if (ownRow.mailbox_class === "personal" && ownRow.mailbox_owner_user_id !== user.id) {
           return new Response(JSON.stringify({ error: "gmail_already_personal_to_another_user", detail: "This address is already a teammate's private inbox. One mailbox belongs to one person — it cannot be re-owned from a different account." }), {
             status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
-        }
-        if (existingMailbox?.mailbox_class === "shared_support") {
+      }
+      if (purpose === "inbox" && ownRow.mailbox_class === "shared_support") {
           return new Response(JSON.stringify({ error: "gmail_shared_connector_conflict", detail: "This address is the workspace's shared support mailbox. Connecting it as a personal inbox would hide it from the rest of the team — connect a different address, or ask the workspace owner to move the shared mailbox first." }), {
             status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
-        }
-      }
-
-      const { error: updErr } = await admin
-        .from("channel_connectors")
-        .update({ ...connectorFields, updated_at: new Date().toISOString() })
-        .eq("id", ownRow.id)
-        .eq("tenant_id", tenantId); // belt-and-suspenders §9 scope
-      if (updErr) {
-        return new Response(JSON.stringify({ error: "connector_update_failed", detail: updErr.message }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
       }
     } else {
       // (2) Is this Gmail address already an email connector under ANOTHER tenant?
       //     The GLOBAL unique index would 500 the insert — instead, report it honestly.
-      const { data: foreignRow } = await admin
+      const { data: foreignRow, error: collisionReadError } = await admin
         .from("channel_connectors")
         .select("tenant_id")
         .eq("channel_type", "email")
         .eq("inbound_address", gmailAddr)
         .maybeSingle();
-      if (foreignRow && foreignRow.tenant_id && foreignRow.tenant_id !== tenantId) {
-        return new Response(JSON.stringify({ error: "gmail_already_connected_elsewhere" }), {
+      const afterCollisionRead = await currentAuthority();
+      if (!afterCollisionRead.ok) return refuseAuthority(afterCollisionRead);
+      if (collisionReadError || (foreignRow && typeof foreignRow.tenant_id !== "string")) {
+        return new Response(JSON.stringify({ error: "gmail_connector_lookup_failed" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (foreignRow) {
+        return new Response(JSON.stringify({ error: foreignRow.tenant_id !== tenantId
+          ? "gmail_already_connected_elsewhere" : "gmail_address_connector_conflict" }), {
           status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // (3) Fresh insert. tenant_id is set EXPLICITLY (§9) — under service role the
-      //     set_channel_connector_tenant() trigger coalesces to new.tenant_id since
-      //     current_user_tenant_id() is null in a service-role context.
-      const { error: insErr } = await admin
-        .from("channel_connectors")
-        .insert({ ...connectorFields, tenant_id: tenantId });
-      if (insErr) {
-        // A race that lost the unique-index bet lands here — surface it honestly.
-        const collision = /uq_channel_connectors_inbound_address|duplicate key/i.test(insErr.message);
-        return new Response(
-          JSON.stringify({ error: collision ? "gmail_already_connected_elsewhere" : "connector_insert_failed", detail: collision ? null : insErr.message }),
-          { status: collision ? 409 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
     }
+
+    // The preflight above is only a readable early refusal. The native writer
+    // rechecks under locks and commits the existing Vault + connector together.
+    // A losing collision/policy transaction cannot overwrite the stable secret.
+    const beforeVault = await currentAuthority();
+    if (!beforeVault.ok) return refuseAuthority(beforeVault);
+    nativeWriteAttempted = true;
+    const { data: saved, error: saveError } = await admin.rpc("provision_gmail_connection", {
+      _actor_user_id: user.id, _expected_tenant_id: tenantId, _google_account_id: accountId,
+      _gmail_address: gmailAddr, _display_name: googleName, _purpose: purpose,
+      _granted_scopes: grantedScopes, _refresh_token: String(tokenJson.refresh_token),
+    });
+    if (saveError) {
+      const message = saveError.message ?? "";
+      const conflict = saveError.code === "23505" || /GMAIL_(?:ADDRESS|PERSONAL_MAILBOX|SHARED_MAILBOX)_CONFLICT/.test(message);
+      const authorityRefused = /GMAIL_(?:CONNECTION_FORBIDDEN|ACTOR_UNAVAILABLE|WORKSPACE_UNAVAILABLE|WORKSPACE_CHANGED|MAILBOX_POLICY_UNAVAILABLE)/.test(message);
+      if (conflict || authorityRefused) return new Response(JSON.stringify({
+        error: conflict ? "gmail_connection_conflict" : "workspace_changed", connection_saved: false,
+        note: "Google consent returned, but this workspace did not save a connection. Refresh the workspace before trying again.",
+      }), { status: conflict ? 409 : 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "gmail_connection_outcome_unknown", connection_saved: null,
+        note: "The connection write could not be confirmed. Inspect the original workspace before reconnecting." }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!saved || saved.ok !== true || saved.connection_saved !== true || saved.tenant_id !== tenantId
+      || saved.gmail_address !== gmailAddr || typeof saved.connector_id !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(saved.connector_id)
+      || typeof saved.reconnected !== "boolean"
+      || !["personal", "shared_support"].includes(saved.mailbox_class)) return new Response(JSON.stringify({
+        error: "gmail_connection_outcome_unknown", connection_saved: null,
+        note: "The connection write could not be confirmed. Inspect the original workspace before reconnecting.",
+      }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    connectionSaved = true;
 
     /**
      * Evidence that this workspace granted Paige permission to send as a Google
      * account. It is the counterpart of the disconnect entry, and the pair is
      * what makes the grant's lifetime answerable at all.
      *
-     * Placed AFTER both write branches so it records a grant that actually
+     * Placed AFTER native readback so it records a grant that actually
      * landed: every failure path above returns before reaching here, including
      * the two that report the address is already connected under another tenant.
      * `reconnected` distinguishes re-authorising an address this workspace
      * already held from granting one for the first time.
      *
-     * `entity_id` is null on a FIRST connect, honestly: the insert above does not
-     * return the new row's id, and widening it would change a write path whose
-     * error handling is load-bearing for the unique-index race below it. The row
-     * is still identified — tenant, provider and address pin it exactly — and a
-     * null here means "not captured", never "no connector".
+     * The transaction returns the actual saved connector identity; even a first
+     * connection now has an exact audit entity without another domain write.
      *
      * NEVER BLOCKING (the `comms-purchase-number` pattern): the grant exists and
      * the connector row is written by the time this runs, so a failed audit write
@@ -370,31 +367,44 @@ Deno.serve(async (req) => {
      * does, because an audit row that does not say WHICH account was granted is
      * not evidence of anything.
      */
-    const { error: auditErr } = await admin.from("audit_logs").insert({
-      user_id: user.id,
-      entity: "gmail_connection",
-      action: "comms:sending_account_connected",
-      entity_id: ownRow?.id ?? null,
-      data: {
-        tenant_id: tenantId,
-        address: gmailAddr,
-        provider: "gmail",
-        reconnected: Boolean(ownRow?.id),
-        // The scope actually granted, so the record cannot later be read as
-        // broader than it was. The send flow asks to SEND only; the #1140 inbox
-        // consent records the read/organize set Google actually returned.
-        scope: purpose === "inbox" ? (grantedScopes.join(" ") || "gmail.modify gmail.labels") : "gmail.send",
-        purpose,
-        mailbox_class: purpose === "inbox" ? "personal" : "shared_support",
-      },
-    });
-    if (auditErr) console.error("[gmail-oauth-callback] audit write failed:", auditErr.message);
+    try {
+      const { error: auditErr } = await admin.from("audit_logs").insert({
+        user_id: user.id,
+        entity: "gmail_connection",
+        action: "comms:sending_account_connected",
+        entity_id: saved.connector_id,
+        data: {
+          tenant_id: tenantId,
+          address: gmailAddr,
+          provider: "gmail",
+          reconnected: saved.reconnected,
+          // Actual returned grant, never a fallback to the requested scopes.
+          scope: grantedScopes.join(" ") || null,
+          purpose,
+          mailbox_class: saved.mailbox_class,
+        },
+      });
+      auditConfirmed = !auditErr;
+      if (auditErr) console.error("[gmail-oauth-callback] audit write was not confirmed");
+    } catch {
+      console.error("[gmail-oauth-callback] audit write was not confirmed");
+    }
+    const beforeResult = await currentAuthority();
+    if (!beforeResult.ok) return refuseAuthority(beforeResult);
 
     return new Response(
-      JSON.stringify({ ok: true, gmail_address: gmailAddr, return_origin: parsed.r ?? null }),
+      JSON.stringify({ ok: true, connection_saved: true, audit_confirmed: auditConfirmed,
+        gmail_address: gmailAddr, return_origin: parsed.r ?? null }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
+    if (nativeWriteAttempted) return new Response(JSON.stringify(connectionSaved ? {
+      error: "gmail_connection_saved_result_withheld", connection_saved: true, audit_confirmed: auditConfirmed,
+      note: "The connection was saved in the original workspace. Refresh that workspace before reconnecting.",
+    } : { error: "gmail_connection_outcome_unknown", connection_saved: null,
+      note: "The connection write could not be confirmed. Inspect the original workspace before reconnecting." }), {
+      status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
     return new Response(JSON.stringify({ error: String((err as Error).message ?? err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

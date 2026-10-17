@@ -33,6 +33,7 @@ const reset = () => {
   calls = { audits: [], inserts: [], updates: [], deletes: [], providerCalls: [], listClients: [] };
   authority = { actor: "user-1", activeTenant: "tenant-1", role: "owner", status: "active", globalAdmin: true,
     platformOwner: false, roleError: false, roleValue: undefined, throwRole: false, auditError: false, auditThrow: false,
+    clearError: false, clearThrow: false, defaultError: false, defaultThrow: false,
     onFloor: null, onProvider: null, onDomainRead: null, onUpdate: null, onDelete: null, onInsert: null, onRole: null };
 };
 
@@ -128,6 +129,14 @@ globalThis.__smoke = {
     if (st.table === "profiles") return { data: { active_tenant_id: authority.activeTenant }, error: null };
     if (st.table === "audit_logs") return { data: null, error: authority.auditError ? {message:"fixture audit error"} : null };
     if (st.op === "insert") return { data: { id: "dom-new", ...st.row }, error: null };
+    if (st.op === "update" && st.row.is_default === false) {
+      if (authority.clearThrow) throw new Error("fixture clear transport unavailable");
+      if (authority.clearError) return { data: null, error: { message:"fixture clear statement failed" } };
+    }
+    if (st.op === "update" && st.row.is_default === true) {
+      if (authority.defaultThrow) throw new Error("fixture set-default transport unavailable");
+      if (authority.defaultError) return { data: null, error: { message:"fixture set-default statement failed" } };
+    }
     if (st.op === "update" || st.op === "delete") return { data: null, error: null };
     authority.onDomainRead?.();
     // A default-domain probe asks for is_default=true; a row lookup asks for id.
@@ -283,7 +292,25 @@ const switchedRead = await post({ verb: "set_default", id: "dom-2" });
 ok("scope change during a domain read cannot precede a stale write", () => { assert.equal(switchedRead.status, 403); noEffects(); });
 reset(); rows = { existingDefault: null, byId: fixtureRow() }; authority.onUpdate = () => { authority.role = "member"; };
 const switchedWrite = await post({ verb: "set_default", id: "dom-2" }); const switchedBody = await switchedWrite.json();
-ok("role loss after first default write stops second write and preserves truthful partial audit", () => { assert.equal(switchedWrite.status, 403); assert.equal(calls.updates.length, 1); assert.equal(calls.audits.length, 1); assert.equal(audit().data.new_default_set, false); assert.equal(audit().data.operation_outcome, "unconfirmed"); assert.equal(switchedBody.error, "domain_operation_unconfirmed"); });
+ok("role loss after acknowledged first default write stops second write and preserves truthful partial audit", () => { assert.equal(switchedWrite.status, 403); assert.equal(calls.updates.length, 1); assert.equal(calls.audits.length, 1); assert.equal(audit().data.default_clear_acknowledged, true); assert.equal(audit().data.default_cleared, undefined); assert.equal(audit().data.new_default_set, false); assert.equal(audit().data.operation_outcome, "unconfirmed"); assert.equal(switchedBody.error, "domain_operation_unconfirmed"); });
+for (const fault of ["clearError","clearThrow"]) for (const changeRole of [false,true]) {
+  reset(); rows = { existingDefault: {id:"dom-old",domain:"old.example.invalid"}, byId: fixtureRow() }; authority[fault]=true;
+  if(changeRole) authority.onUpdate=()=>{authority.role="member";};
+  const response=await post({verb:"set_default",id:"dom-2"});const body=await response.json();
+  console.log(JSON.stringify({probe:"default-clear acknowledgement",fault,changeRole,status:response.status,updateAttempts:calls.updates.length,audits:calls.audits.map(a=>a.data),body}));
+  ok(`${fault}/role-change-${changeRole}: failed or unknown clear has no success/confirmed-clear audit`,()=>{
+    assert.equal(response.status,502);assert.equal(calls.updates.length,1);assert.equal(calls.audits.length,0);assert.equal(body.error,"domain_operation_unconfirmed");assert.equal(body.operation_outcome,"unconfirmed");
+  });
+  const {message}=await resolveFunctionError({data:null,error:{context:new Response(JSON.stringify(body),{status:response.status})},action:"change your sending domain"});
+  ok(`${fault}/role-change-${changeRole}: post-attempt DB error reaches no-repeat/readback copy`,()=>{assert.ok(message.includes("Don’t repeat"));assert.ok(message.includes("current sending-domain state"));assert.ok(!message.includes("try again in a moment"));});
+}
+for(const fault of ["defaultError","defaultThrow"]) {
+  reset(); rows={existingDefault:{id:"dom-old",domain:"old.example.invalid"},byId:fixtureRow()};authority[fault]=true;
+  const response=await post({verb:"set_default",id:"dom-2"});const body=await response.json();
+  ok(`${fault}: acknowledged clear remains evidenced without claiming second write completed`,()=>{
+    assert.equal(response.status,502);assert.equal(calls.updates.length,2);assert.equal(calls.audits.length,1);assert.equal(audit().data.default_clear_acknowledged,true);assert.equal(audit().data.default_cleared,undefined);assert.equal(audit().data.new_default_set,null);assert.equal(audit().data.operation_outcome,"unconfirmed");assert.equal(body.error,"domain_operation_unconfirmed");
+  });
+}
 for (const [verb, effect, complete] of [
   ["remove", "onDelete", "deletes"], ["add", "onInsert", "inserts"], ["refresh", "onUpdate", "updates"],
 ]) {

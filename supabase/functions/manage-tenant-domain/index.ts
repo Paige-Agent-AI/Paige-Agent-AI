@@ -249,17 +249,24 @@ Deno.serve(async (req) => {
         .from("tenant_email_domains").select("id, domain").eq("tenant_id", tenantId).eq("is_default", true).maybeSingle();
       await requireCurrentAuthority();
       operationAttempted = true;
-      await admin.from("tenant_email_domains").update({ is_default: false }).eq("tenant_id", tenantId);
+      const { error: clearError } = await admin.from("tenant_email_domains").update({ is_default: false }).eq("tenant_id", tenantId);
+      if (clearError) throw clearError;
+      let defaultSetAttempted = false;
       try {
         await requireCurrentAuthority();
+        defaultSetAttempted = true;
+        const { error: defaultError } = await admin.from("tenant_email_domains").update({ is_default: true }).eq("id", id).eq("tenant_id", tenantId);
+        if (defaultError) throw defaultError;
       } catch (error) {
         await writeDomainAudit("comms:sending_domain_set_default", id, {
           domain: target.domain, replaced_domain: previousDefault?.domain ?? null,
-          default_cleared: true, new_default_set: false, operation_outcome: "unconfirmed",
+          // Only the first statement was acknowledged. A second attempt may have
+          // an unknown outcome; neither affected rows nor rollback are inferred.
+          default_clear_acknowledged: true, new_default_set: defaultSetAttempted ? null : false,
+          operation_outcome: "unconfirmed",
         });
         throw error;
       }
-      await admin.from("tenant_email_domains").update({ is_default: true }).eq("id", id).eq("tenant_id", tenantId);
       await writeDomainAudit("comms:sending_domain_set_default", id, {
         domain: target.domain,
         // null when this workspace had no default yet, which is a different event
@@ -296,10 +303,11 @@ Deno.serve(async (req) => {
 
     return json({ error: "unknown_verb" }, 400);
   } catch (e) {
-    if (e instanceof DomainAuthorityError) return json({
-      error: operationAttempted ? "domain_operation_unconfirmed" : e.message,
-      ...(operationAttempted ? { authority_error: e.message, operation_outcome: "unconfirmed" } : {}),
-    }, e.status);
+    if (operationAttempted) return json({
+      error: "domain_operation_unconfirmed", operation_outcome: "unconfirmed",
+      ...(e instanceof DomainAuthorityError ? { authority_error: e.message } : {}),
+    }, e instanceof DomainAuthorityError ? e.status : 502);
+    if (e instanceof DomainAuthorityError) return json({ error: e.message }, e.status);
     return json({ error: (e as Error).message }, 502);
   }
 });

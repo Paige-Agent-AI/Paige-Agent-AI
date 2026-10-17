@@ -67,3 +67,18 @@ Source-author checks are AUTHOR-REVIEW / LOWER ASSURANCE. Distinct parent source
 The implementation is shared and tenant-neutral for existing/future eligible SOLO accounts. Actual current membership/workspace and incumbent job visibility decide access. The fixture cohort proves a bounded contract only. Authenticated cross-cohort, new-account provisioning, indexing/Rail/retrieval, separate Live and final owner product acceptance remain owed.
 
 Recovery: preserve original durable work and generation, inspect via the existing scoped reader/status path; repair source through a reviewed forward change. Never invent an intent or repeat an uncertain publication.
+
+## Unpublished legacy-idle successor (2026-10-17)
+
+The immutable6eaf9db0c predecessor and its125-control packet remain retained. Consumer integration exposed one additional first-correction boundary: an existing canonical document with no pending review, extraction work or active generation previously returned unavailable even when it had no local publication history. The forward45000 successor adds only that proven-idle not_submitted branch. It requires current native actor authority and zero tenant/document publication-kind OR publication-capability work of any status. Unknown, malformed, prior-terminal and capability-only local work still hold unavailable. This permits only explicit incumbent source input; Publish still requires a fresh saved review. No grant, writer, intent, dispatch, provider or engine changed.
+
+Fresh current-main grounding observedbf3ff94156ae4e06bcacd9e2abe7d9db9a2dc138, including receiver2322 and Master2321. Those paths are outside this native-only lease and remain untouched. The original45000 version remains unapplied and must still follow the applicable live/reserved frontier. Exact6eaf SQL can be selected by the existing driver's --recovery-migration argument for bounded regression proof; the default CI command continues using canonical45000.
+
+Actual PostgreSQL successor proof:134 PASS/0 FAIL = original125 unchanged plus9 legacy-idle controls. The exact6eaf predecessor produces125 PASS/1 FAIL at the new canonical legacy-idle assertion. A first successor run produced130 PASS then a test-only draft-fixture lifecycle constraint error; the fixture now uses the incumbent required empty draft content. A restricted-loopback retry was refused before database creation; the authorized same-owned-cluster rerun passed. All logs remain retained rather than relabeled:
+
+- native-idle-predecessor.log:652a55595df1610b892fc03bce4697903461f851ee676a0e8b2255faf448b171
+- native-idle-successor.log:cd490ae69c99e27881c0fb6df23472644a3aa8f44c5c6baf1dc40098f17d873d
+- native-idle-successor2.log:06c4fe88b31a6cd79216f3fad0162de79655f81655825c0ce46ca687aae0e2fe
+- native-idle-successor3.log:7ca2f8ca06650219011d87aad7d44e980080c0afbc9e7bb67f0e8aff41af51ae
+
+Successor static checks: migration lint1/0 warnings, Python syntax and diff whitespace PASS. Original fixture/provider/authenticated limitations and AUTHOR-REVIEW / LOWER ASSURANCE label remain. Distinct review, exact-head hosted CI, deployment and integrated authenticated recovery are still owed; neither predecessor nor successor is a live capability claim.

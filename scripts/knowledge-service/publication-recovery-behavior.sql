@@ -182,3 +182,61 @@ SELECT public.test_denied($q$SELECT public.read_tenant_knowledge_review(NULL,NUL
 RESET ROLE;
 SELECT public.test_assert(NOT has_function_privilege('service_role','public.read_tenant_knowledge_review(uuid,uuid)','EXECUTE') AND has_function_privilege('authenticated','public.read_tenant_knowledge_review(uuid,uuid)','EXECUTE'),'existing review reader ACL unchanged');
 SELECT public.test_assert((SELECT prosecdef AND proconfig=ARRAY['search_path=""'] FROM pg_proc WHERE oid='public.read_tenant_knowledge_review(uuid,uuid)'::regprocedure),'existing empty search path and definer contract retained');
+
+-- Successor: a proven legacy idle document may enter explicit correction input,
+-- but cannot Publish without a saved review. Any local publication history holds.
+INSERT INTO public.tenant_knowledge_docs(id,tenant_id,title,content,created_by)
+VALUES('20000000-0000-0000-0000-000000000040','00000000-0000-0000-0000-000000000001','Neutral legacy source','Existing canonical source','10000000-0000-0000-0000-000000000001');
+CREATE FUNCTION public.test_idle_publication_review() RETURNS jsonb LANGUAGE sql SECURITY INVOKER AS $$
+ SELECT public.read_tenant_knowledge_review('00000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000040')->'publication' $$;
+SET ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='not_submitted'
+ AND public.test_idle_publication_review()->'work_id'='null'::jsonb,'canonical legacy idle with zero local publication work can enter explicit correction input');
+RESET ROLE;
+CREATE FUNCTION public.test_idle_work(patch jsonb) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+ INSERT INTO public.paige_durable_work SELECT (jsonb_populate_record(NULL::public.paige_durable_work,to_jsonb(w)||
+  jsonb_build_object('id',gen_random_uuid(),'intent_id',gen_random_uuid(),'idempotency_key',gen_random_uuid()::text,
+  'request_payload',jsonb_set(w.request_payload,'{document_id}','"20000000-0000-0000-0000-000000000040"'))||patch)).*
+ FROM public.paige_durable_work w WHERE id=public.test_publication_ref();
+END $$;
+BEGIN;
+SELECT public.test_idle_work('{"status":"outcome_unknown","terminal_outcome":null,"settled_at":null}');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','legacy idle with unknown publication cannot become fresh');
+ROLLBACK;
+BEGIN;
+SELECT public.test_idle_work('{"request_payload":{"document_id":"20000000-0000-0000-0000-000000000040","version":"malformed"}}');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','legacy idle with malformed publication cannot become fresh');
+ROLLBACK;
+BEGIN;
+SELECT public.test_idle_work('{}');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','legacy idle with prior terminal publication cannot become fresh');
+ROLLBACK;
+BEGIN;
+SELECT public.test_idle_work('{"work_kind":"document_generate"}');
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','publication capability alone still blocks legacy idle');
+ROLLBACK;
+BEGIN;
+UPDATE public.tenant_knowledge_docs SET record_state='draft',content='' WHERE id='20000000-0000-0000-0000-000000000040';
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','noncanonical both-null record is never legacy idle');
+ROLLBACK;
+BEGIN;
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='10000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','legacy idle requires current authorized actor');
+ROLLBACK;
+BEGIN;
+UPDATE public.tenant_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT public.test_assert(public.test_idle_publication_review()->>'association'='unavailable','legacy idle refuses inactive native membership');
+ROLLBACK;
+BEGIN;
+UPDATE public.profiles SET active_tenant_id='00000000-0000-0000-0000-000000000002' WHERE user_id='10000000-0000-0000-0000-000000000001';
+SET LOCAL ROLE authenticated;
+SELECT public.test_denied($q$SELECT public.test_idle_publication_review()$q$,'KNOWLEDGE_SCOPE_CHANGED');
+ROLLBACK;

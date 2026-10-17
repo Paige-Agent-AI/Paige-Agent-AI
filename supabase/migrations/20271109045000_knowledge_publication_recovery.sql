@@ -117,6 +117,14 @@ BEGIN
       THEN publication:=jsonb_set(publication,'{association}','"unavailable"'); publication:=publication||jsonb_build_object('work_id',NULL,'work_status',NULL); EXIT association; END IF;
     publication:=publication||jsonb_build_object('generation_id',w.id,'outcome',w.terminal_outcome->>'outcome');
    END IF;
+  ELSIF v_doc.extraction_work_id IS NULL AND v_doc.record_state='canonical'
+    AND NOT EXISTS(SELECT 1 FROM public.paige_durable_work x WHERE x.tenant_id=v_tenant
+      AND (x.work_kind='knowledge_publish' OR x.capability_key='knowledge.publish')
+      AND x.request_payload->>'document_id'=v_doc.id::text) THEN
+   -- Verified idle legacy canonical content may enter the incumbent explicit
+   -- correction input. It is NOT a saved review and cannot enable Publish.
+   -- Any document-bound publication history, even malformed, prevents this path.
+   publication:=publication||jsonb_build_object('association','not_submitted');
   END IF;
  EXCEPTION WHEN data_exception THEN
   -- Malformed historic payloads are unreadable association, never proof of absence.

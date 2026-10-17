@@ -1,5 +1,7 @@
 # Lessons Learned — recurring traps
 
+**2026-10-16 E01 CI portability repair (#2262):** Node20 Response.blob() can return a valid Node Blob that is not an instance of jsdom’s Blob constructor. Two new fallback tests failed in hosted CI38982168086 while Node24 passed; the exact two failures reproduced locally on Node20.20.2. Assert same-response artifact identity, MIME and bytes instead of a cross-realm constructor. Keep one-fetch/one-body/cancel/refusal assertions; do not change production playback or retry CI as infrastructure. Before/after logs remain in the existing E01 evidence packet.
+
 The failures that have actually cost time/money, written as **symptom → root cause → rule** so the
 next session recognizes the trap before repeating it. These are the concrete instances behind the
 RED-LINE index and the §-doctrine; this file is the fast-lookup version.

@@ -51,3 +51,7 @@ Conversation -> existing spoken response capability -> same authorized TTS/cost 
 Message unmount/thread replacement additionally cancels only its own active output; cleanup never stops a newer differently identified message. This consumer lifecycle extension, including same-id request ownership, is unit-verified separately from the native controller-only fixture, which imports no MessageAudioButton. Captured controller bytes remain unchanged; no full native button or authenticated scope claim follows.
 
 Cleanup also uses the original request AbortSignal as its existing output lease. A regression reproduced two successive plays of the same visible message id; an old component must not stop the later request. The old signal is already aborted, so cleanup retires only its own still-live request, without a new ownership store or controller.
+
+## Hosted CI Node20 recovery
+
+Run38982168086/verify117245291080 Test104 failed exactly two new cross-realm Blob assertions (13,875/13,877 passed), not infrastructure. Node20.20.2 reproduced2FAIL/14PASS; Node24 passed16. The bounded test-only correction verifies exact same-response Blob identity, audio/mpeg MIME and original bytes; Node20 now16/16PASS. Production controller/button bytes remain unchanged. Main419fa4b1a Portal mobile/BUG contracts are preserved byte-for-byte. Prior type ratchet10/7 and full build3m55 passed; final successor hosted gates remain required. No provider/customer/voice/model/config effect occurred.

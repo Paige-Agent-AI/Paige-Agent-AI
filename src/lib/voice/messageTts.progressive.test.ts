@@ -38,8 +38,14 @@ describe("existing message controller progressive response",()=>{
  });
  it("falls back to one complete Blob from the SAME response when MPEG streaming is unsupported",async()=>{
    FakeMediaSource.isTypeSupported.mockReturnValue(false);const {messageTts}=await import("./messageTts");
-   const fetchAudio=vi.fn(async()=>new Response(new Uint8Array([1,2,3]),{headers:{"Content-Type":"audio/mpeg"}}));
-   await messageTts.toggle("fallback",fetchAudio);expect(fetchAudio).toHaveBeenCalledTimes(1);expect(urls[0]).toBeInstanceOf(Blob);messageTts.stop();
+   const response=new Response(new Uint8Array([1,2,3]),{headers:{"Content-Type":"audio/mpeg"}});
+   const readBody=vi.spyOn(response,"blob");const fetchAudio=vi.fn(async()=>response);
+   await messageTts.toggle("fallback",fetchAudio);expect(fetchAudio).toHaveBeenCalledTimes(1);expect(readBody).toHaveBeenCalledTimes(1);
+   // Node20's Response owns a different Blob constructor from jsdom. Verify the
+   // actual same-response artifact and bytes, not a test-environment realm.
+   const artifact=await readBody.mock.results[0].value;
+   expect(urls).toEqual([artifact]);expect(urls[0]).toBe(artifact);expect(artifact.type).toBe("audio/mpeg");
+   expect(Array.from(new Uint8Array(await artifact.arrayBuffer()))).toEqual([1,2,3]);messageTts.stop();
  });
  it("aborts the original request and cancels its reader synchronously on Stop",async()=>{
    const {messageTts}=await import("./messageTts");let signal:AbortSignal|undefined;const cancel=vi.fn();

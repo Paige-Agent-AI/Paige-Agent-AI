@@ -33,8 +33,13 @@ describe("incumbent read-aloud button transport",()=>{
    expect(state.message).toHaveBeenCalledTimes(1);expect(state.error).not.toHaveBeenCalled();expect(messageTts.getSnapshot().needsConfig).toBe(false);expect(URL.createObjectURL).not.toHaveBeenCalled();
  });
  it("passes the successful raw response to the same controller with one request",async()=>{
-   state.fetch.mockResolvedValue(new Response(new Uint8Array([1,2,3]),{headers:{"Content-Type":"audio/mpeg"}}));
-   await render();await act(async()=>host.querySelector('button')!.click());expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+   const response=new Response(new Uint8Array([1,2,3]),{headers:{"Content-Type":"audio/mpeg"}});const readBody=vi.spyOn(response,"blob");
+   state.fetch.mockResolvedValue(response);
+   await render();await act(async()=>host.querySelector('button')!.click());expect(readBody).toHaveBeenCalledTimes(1);
+   const artifact=await readBody.mock.results[0].value;
+   expect(URL.createObjectURL).toHaveBeenCalledTimes(1);expect(URL.createObjectURL).toHaveBeenCalledWith(artifact);
+   expect(vi.mocked(URL.createObjectURL).mock.calls[0][0]).toBe(artifact);expect(artifact.type).toBe("audio/mpeg");
+   expect(Array.from(new Uint8Array(await artifact.arrayBuffer()))).toEqual([1,2,3]);
    expect(state.fetch).toHaveBeenCalledTimes(1);expect(host.querySelector('[aria-label="Stop playback"]')).toBeTruthy();
  });
  it("cancels owned loading output when its message leaves the workspace",async()=>{

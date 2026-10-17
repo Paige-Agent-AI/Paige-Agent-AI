@@ -19,7 +19,9 @@ export interface ApprovalQueueRow {
   submitted_by_user_id: string | null;
   sla_due_at: string | null;
   created_at: string;
-  updated_at: string;
+  // Additive queue column: absent on the old view during rolling deployment.
+  // Native decisions require the actual returned version and never invent it.
+  updated_at?: string;
   reviewed_at: string | null;
   sent_at: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsonb draft payload, arbitrary shape (pre-existing; typed loosely by consumers)

@@ -286,6 +286,10 @@
       }
     },
     "typographyMeta": {
+      "data": {
+        "displayName": "Data",
+        "purpose": "Existing monospace treatment for timestamps and other data; does not establish a new size step or replace prose typography."
+      },
       "weekly-heading": {
         "displayName": "Weekly heading",
         "purpose": "Scoped weekly inspection heading; does not replace shared title."

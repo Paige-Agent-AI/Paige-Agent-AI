@@ -1,5 +1,5 @@
 export * from "../e09-auth-hydration-ui/adapter";
-type Seed = { context: "a" | "b"; state: string };
+type Seed = { context: "a" | "b"; state: string; agentName?: string };
 const seed = (window as unknown as { accountSeed: Seed }).accountSeed;
 const actor = "00000000-0000-4000-8000-000000000011";
 const tenant = seed.context === "a" ? "00000000-0000-4000-8000-000000000021" : "00000000-0000-4000-8000-000000000022";
@@ -32,7 +32,7 @@ export const supabase = {
         if (name === "client_portal_frame") return {data:{actor_id:actor,profile:row,
           brand:{tenant_id:tenant,tenant_name:seed.context==="a"?"Test Service Studio":"Second Test Business",
             tenant_slug:`test-${seed.context}`,primary_color:"#26483e",logo_url:null,support_email:null},
-          config:{}},error:null};
+          config:seed.agentName===undefined?{}:{assistant:{display_name:seed.agentName}}},error:null};
         if (name === "paige_chat_thread_create") return {data:"00000000-0000-4000-8000-000000000041",error:null};
         if (name === "client_portal_self_profile") {
           if (mode === "loading") return new Promise(() => {});
@@ -51,7 +51,7 @@ export const supabase = {
   },
   from: (table: string) => {
     if(table==="paige_chat_threads"||table==="paige_chat_turns"){
-      const query={select:()=>query,eq:()=>query,is:()=>query,order:()=>query,
+      const query={select:()=>query,eq:()=>query,filter:()=>query,is:()=>query,order:()=>query,
         maybeSingle:async()=>({data:{id:"00000000-0000-4000-8000-000000000041",caller_user_id:actor,
           contact_id:row.id,tenant_id:tenant,lens:"client"},error:null}),
         limit:async()=>({data:[],error:null})};

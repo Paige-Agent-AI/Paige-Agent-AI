@@ -48,8 +48,20 @@ test("unknown actor is refused before any native presentation read",async()=>{
 });
 test("malformed optional settings fall back to fixed customer defaults",async()=>{
   const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:{secret:privateMarker},tone:[],service_scope:42}}}).caller,actor);
-  assert.ok(input);assert.equal(input.enabled,true);assert.equal(input.assistantName,"PAIGE");
+  assert.ok(input);assert.equal(input.enabled,true);assert.equal(input.assistantName,"Cura");
   assert.equal(input.tone,"Warm, clear and professional");assert.equal(input.serviceScope,null);
+});
+for(const name of [undefined,"","   ","PAIGE"," Paige ","paige"])test(`legacy customer identity ${JSON.stringify(name)} resolves to Cura`,async()=>{
+  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:name}}}).caller,actor);
+  assert.ok(input);assert.equal(input.assistantName,"Cura");
+  const messages=buildClientPortalPersonaMessages(input);
+  assert.match(messages[0].content,/PAIGE is the business owner's COO/);
+  assert.match(messages[1].content,/"assistant_name":"Cura"/);
+});
+test("an existing custom customer name remains business-scoped presentation",async()=>{
+  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:"  River Guide  "}}}).caller,actor);
+  assert.ok(input);assert.equal(input.assistantName,"River Guide");
+  assert.equal(input.binding.tenantId,tenant);assert.equal(JSON.stringify(input).includes(privateMarker),false);
 });
 for(const enabled of [null,"false",0,{},[]])test(`invalid assistant control ${JSON.stringify(enabled)} cannot default to enabled`,async()=>{
   assert.equal(await readClientPortalPersonaInput(fixture({config:{assistant:{enabled}}}).caller,actor),null);

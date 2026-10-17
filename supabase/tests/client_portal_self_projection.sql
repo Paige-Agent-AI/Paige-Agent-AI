@@ -611,6 +611,8 @@ CREATE TEMP TABLE e09_peer_refs AS SELECT jsonb_build_array(jsonb_build_object('
 SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
  'SELECT public.client_portal_knowledge_context(%L,%L::jsonb)','e0921000-0000-0000-0000-000000000001',refs::text)) FROM e09_peer_refs$q$,
  '42501','CUSTOMER_KNOWLEDGE_SOURCE_WITHDRAWN','same-business membership cannot authorize another customer source reference');
+SELECT ok((SELECT NOT polpermissive FROM pg_policy WHERE polrelid='public.tenant_knowledge_client_shares'::regclass
+ AND polname='customer_knowledge_shares_no_direct_access'),'raw sharing metadata deny policy is restrictive');
 SELECT ok(NOT has_table_privilege('authenticated','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
  AND NOT has_table_privilege('anon','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
  AND NOT has_table_privilege('service_role','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE'),

@@ -60,7 +60,7 @@ ALTER TABLE public.tenant_knowledge_client_shares ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.tenant_knowledge_client_shares FROM PUBLIC,anon,authenticated,service_role;
 -- Deliberately RPC-only; callers receive closed projections, never raw share rows.
 CREATE POLICY customer_knowledge_shares_no_direct_access
- ON public.tenant_knowledge_client_shares FOR ALL TO authenticated
+ ON public.tenant_knowledge_client_shares AS RESTRICTIVE FOR ALL TO authenticated
  USING (false) WITH CHECK (false);
 
 CREATE FUNCTION public._client_knowledge_owner_authorized(_tenant uuid,_contact uuid)

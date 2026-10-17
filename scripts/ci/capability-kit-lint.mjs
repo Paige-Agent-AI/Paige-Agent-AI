@@ -129,7 +129,7 @@ function calendarBookingReadDoorBound(resolver) {
     && chat.includes('from "../_shared/paige-spine/domains/calendar_booking.ts"')
     && mounted.includes('toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)')
     && mounted.includes('accountShape:calendarBookingAccountShape')
-    && mounted.includes('actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
+    && mounted.includes('constcalendarIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
     && mounted.includes('awaitreadCalendarBooking(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
     && mounted.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
     && mounted.includes('awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,turnScopeTenantId,req.signal)')

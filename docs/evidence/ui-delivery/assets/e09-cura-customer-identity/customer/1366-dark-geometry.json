@@ -1,0 +1,219 @@
+{
+  "width": 1366,
+  "height": 768,
+  "input": {
+    "top": 713.5,
+    "bottom": 757.5,
+    "width": 443.5,
+    "height": 44,
+    "font": "12.25px"
+  },
+  "buttons": [
+    {
+      "name": "Start voice typing",
+      "height": 31.5,
+      "width": 31.5,
+      "bottom": 751.25
+    },
+    {
+      "name": "Send message",
+      "height": 35,
+      "width": 35,
+      "bottom": 753
+    }
+  ],
+  "documentHeight": 768,
+  "documentWidth": 1366,
+  "transcript": 504.859375,
+  "customerAgent": "River Guide",
+  "layout": [
+    {
+      "tag": "TEXTAREA",
+      "class": "flex w-full rounded-md border border-input bg-background px-3 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2",
+      "top": 713.5,
+      "bottom": 757.5,
+      "height": 44,
+      "cssHeight": "44px",
+      "minHeight": "44px",
+      "flex": "1 1 0%",
+      "padding": "7px 10.5px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex gap-1.5 sm:gap-2 items-center",
+      "top": 713.5,
+      "bottom": 757.5,
+      "height": 44,
+      "cssHeight": "44px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]",
+      "top": 702,
+      "bottom": 768,
+      "height": 66,
+      "cssHeight": "66px",
+      "minHeight": "auto",
+      "flex": "0 0 auto",
+      "padding": "10.5px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ",
+      "top": 50,
+      "bottom": 768,
+      "height": 718,
+      "cssHeight": "718px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "h-full",
+      "top": 50,
+      "bottom": 768,
+      "height": 718,
+      "cssHeight": "718px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "relative h-full min-h-0 min-w-0",
+      "top": 50,
+      "bottom": 768,
+      "height": 718,
+      "cssHeight": "718px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "min-h-0 max-md:!flex-[1_1_100%]",
+      "top": 50,
+      "bottom": 768,
+      "height": 718,
+      "cssHeight": "718px",
+      "minHeight": "0px",
+      "flex": "40 1 0px",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "flex h-full w-full data-[panel-group-direction=vertical]:flex-col flex-1 min-h-0",
+      "top": 50,
+      "bottom": 768,
+      "height": 718,
+      "cssHeight": "718px",
+      "minHeight": "0px",
+      "flex": "1 1 0%",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden",
+      "top": 0,
+      "bottom": 768,
+      "height": 768,
+      "cssHeight": "768px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "DIV",
+      "class": "",
+      "top": 0,
+      "bottom": 768,
+      "height": 768,
+      "cssHeight": "768px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "BODY",
+      "class": "",
+      "top": 0,
+      "bottom": 768,
+      "height": 768,
+      "cssHeight": "768px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    },
+    {
+      "tag": "HTML",
+      "class": "dark",
+      "top": 0,
+      "bottom": 768,
+      "height": 768,
+      "cssHeight": "768px",
+      "minHeight": "0px",
+      "flex": "0 1 auto",
+      "padding": "0px"
+    }
+  ],
+  "headerControls": [
+    {
+      "name": "SSecond Test Business",
+      "left": 21,
+      "right": 189.578125,
+      "width": 168.578125
+    },
+    {
+      "name": "Home",
+      "left": 203.578125,
+      "right": 279.15625,
+      "width": 75.578125
+    },
+    {
+      "name": "Action items",
+      "left": 282.65625,
+      "right": 391.75,
+      "width": 109.09375
+    },
+    {
+      "name": "Documents",
+      "left": 395.25,
+      "right": 498.609375,
+      "width": 103.359375
+    },
+    {
+      "name": "Resources",
+      "left": 502.109375,
+      "right": 598.0625,
+      "width": 95.953125
+    },
+    {
+      "name": "Contact Advisor",
+      "left": 940.515625,
+      "right": 1056.296875,
+      "width": 115.78125
+    },
+    {
+      "name": "",
+      "left": 1066.796875,
+      "right": 1101.796875,
+      "width": 35
+    },
+    {
+      "name": "signin@example.test",
+      "left": 1112.296875,
+      "right": 1252.8125,
+      "width": 140.515625
+    },
+    {
+      "name": "Sign Out",
+      "left": 1263.3125,
+      "right": 1345,
+      "width": 81.6875
+    }
+  ]
+}

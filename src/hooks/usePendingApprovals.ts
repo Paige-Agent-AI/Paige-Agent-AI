@@ -19,6 +19,7 @@ export interface ApprovalQueueRow {
   submitted_by_user_id: string | null;
   sla_due_at: string | null;
   created_at: string;
+  updated_at: string;
   reviewed_at: string | null;
   sent_at: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsonb draft payload, arbitrary shape (pre-existing; typed loosely by consumers)
@@ -31,6 +32,17 @@ export interface ApprovalQueueRow {
   contact_lifecycle_stage: string | null;
   age_seconds: number;
   sla_state: "overdue" | "due_soon" | "on_track" | "closed" | "unscheduled";
+}
+
+/** Presentation routing only. The native RLS predicate and decision/execution
+ * writers validate the stored immutable companion; client shape grants nothing. */
+export function isNativeOwnerTaskApproval(a: ApprovalQueueRow): boolean {
+  const object=(v: unknown):v is Record<string,unknown>=>!!v && typeof v==="object" && !Array.isArray(v);
+  const uuid=(v: unknown)=>typeof v==="string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+  return a.source==="paige_orchestration" && a.type==="other" && a.category==="owner.task" && uuid(a.id) && uuid(a.tenant_id)
+    && object(a.draft_content) && a.draft_content.capability==="owner.task" && object(a.draft_content.args)
+    && object(a.metadata) && a.metadata.source==="paige_orchestration" && a.metadata.capability_id==="owner.task"
+    && ["event_id","act_id","act_execution_id","automation_id"].every(k=>uuid(a.metadata[k]));
 }
 
 // Back-compat alias kept so old call sites keep working.

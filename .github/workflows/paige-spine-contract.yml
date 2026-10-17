@@ -533,6 +533,9 @@ jobs:
       - run: supabase test db supabase/tests/customer_invitation_delivery.sql
       - run: supabase test db supabase/tests/customer_invitation_catalogue.sql
         if: ${{ !cancelled() }}
+      # E09 portal channel: customer <-> business messages in the one canonical inbox.
+      - run: supabase test db supabase/tests/customer_portal_messages.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

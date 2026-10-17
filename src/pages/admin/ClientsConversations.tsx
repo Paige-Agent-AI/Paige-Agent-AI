@@ -15,7 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import {
   MessageCircle, Inbox, Send, Pencil, Loader2, Sparkles, AlertTriangle, Paperclip,
-  PanelRight, Bell, Plus, PlugZap, Trash2,
+  PanelRight, Bell, Plus, PlugZap, Trash2, CircleHelp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,12 @@ import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
 import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
+// E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
+import {
+  PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
+  portalBodyLength as countPortalBody, portalReplyErrorCopy, portalRequestScope, portalSenderName,
+  sendPortalReply,
+} from "./conversations/portalReply";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
@@ -222,12 +228,34 @@ function MessageBubble({
   // §49 — a voice-call row renders INLINE as the shared call bubble (direction/duration/recording/
   // transcript, each only when present, §13). Gold-free; the header Call button owns the act (§11).
   const isCall = m.channel_type === "voice";
+  // E09 — a portal message is named as one, so it reads apart from email/SMS in the same thread.
+  const isPortal = isPortalMessage(m);
+  const PortalIcon = CHANNEL_ICON.portal;
+  // A customer's "Contact your team" request is a help request, not an email: the server's
+  // "Help request" subject becomes a small chip in the meta line instead of a subject line.
+  const isHelpRequest = isPortalHelpRequest(m);
   return (
     <SharedMessageBubble
       direction={m.direction}
       body={body}
       timestamp={m.sent_at ?? m.created_at}
-      senderLabel={m.direction === "outbound" ? "You" : partyLabel(m.sender) || "Client"}
+      channelIcon={isPortal ? <PortalIcon className="h-3 w-3" aria-hidden /> : undefined}
+      badge={
+        isHelpRequest ? (
+          <span
+            data-portal-help-request
+            className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-background px-1.5 py-0.5 text-[11px] font-medium leading-none text-foreground"
+          >
+            <CircleHelp className="h-3 w-3 text-primary" aria-hidden />
+            Help request
+          </span>
+        ) : undefined
+      }
+      senderLabel={
+        isPortal
+          ? `Portal · ${m.direction === "outbound" ? "You" : portalSenderName(m)}`
+          : m.direction === "outbound" ? "You" : partyLabel(m.sender) || "Client"
+      }
       status={
         isCall ? voiceStatusPill(m)
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
@@ -248,7 +276,7 @@ function MessageBubble({
         : messageStatusPill(m)
       }
       error={m.status === "failed" && !governedOpen ? m.error : null}
-      subject={isCall ? undefined : (m.subject ?? undefined)}
+      subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
         isCall
@@ -377,6 +405,8 @@ export default function ClientsConversations() {
   // Synchronous, epoch-scoped lock: repeated keyboard/click submits cannot enqueue the same
   // reply before React paints `sending`, and an old account's completion cannot unlock a new one.
   const sendInFlightRef = useRef<AccountEpochToken | null>(null);
+  // E09 — one request id per portal message, reused when the same text is retried (idempotent).
+  const portalRequestIdsRef = useRef(createPortalRequestIds());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -428,6 +458,7 @@ export default function ClientsConversations() {
     setAppendSignature(true); setDragOver(false); setUndo(null);
     setHandlingMode("human"); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
     setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); suppReqRef.current += 1;
+    portalRequestIdsRef.current.clear();
   }, [activeTenantId, resetAttachments]);
 
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
@@ -778,8 +809,11 @@ export default function ClientsConversations() {
     if (!selectedThread) return null;
     const msgs = messagesByKey.get(selectedThread.thread_key) ?? [];
     const preview = msgs[msgs.length - 1] ?? null;
-    const lastInbound = [...msgs].reverse().find((m) => m.direction === "inbound");
-    const lastOutbound = [...msgs].reverse().find((m) => m.direction === "outbound");
+    // E09 — a portal row carries a name, never an address, so it can't tell us where to email or
+    // text. Only email/SMS rows feed the address: a later portal message never erases one we know.
+    const addressRows = [...msgs].reverse().filter((m) => !isPortalMessage(m));
+    const lastInbound = addressRows.find((m) => m.direction === "inbound");
+    const lastOutbound = addressRows.find((m) => m.direction === "outbound");
     const channel: ChannelType = preview?.channel_type ?? "email";
     const toAddress =
       selectedThread.clients?.email?.trim() ||
@@ -817,9 +851,31 @@ export default function ClientsConversations() {
     [loadSuppressionsFor, selectedThread?.contact_id],
   );
 
+  // E09 — the portal is offered as a send channel when the thread's contact is a client who has
+  // portal messages here or a linked portal login. Only a client who has JOINED the portal (a
+  // linked login) can receive a portal post — comms_portal_reply answers PORTAL_NOT_CONNECTED for
+  // anyone else — so Portal is never the default for an unlinked client, and if the owner picks it
+  // anyway the composer explains why it can't post and holds Send. The server stays authoritative.
+  const portalLinked = !!selectedThread?.clients?.linked_user_id;
+  const portalOffered = !!selected?.contactId
+    && (portalLinked || (selected?.messages.some(isPortalMessage) ?? false));
+  const portalMode = composeChannel === "portal";
+  const portalUnreachable = portalMode && !portalLinked;
+  // Which thread the composer was last set up for, and the channel it is on now — read by the
+  // default-channel effect without re-running it on every channel pick.
+  const composerThreadRef = useRef<string | null>(null);
+  const composeChannelRef = useRef<ChannelType | "">("");
+  useEffect(() => { composeChannelRef.current = composeChannel; }, [composeChannel]);
+
   // Default the composer channel to the thread's channel when a connector supports it.
   useEffect(() => {
     if (!selected) return;
+    // The same thread's messages reloading (a new message arriving, a send landing) is not a new
+    // conversation: a Portal reply the owner is writing keeps its channel and its text.
+    const composerThread = `${activeTenantId ?? ""}|${selected.key}`;
+    const sameThread = composerThreadRef.current === composerThread;
+    composerThreadRef.current = composerThread;
+    if (sameThread && portalOffered && composeChannelRef.current === "portal") return;
     const threadConnector = composerConnectors.find(
       (c) => c.id === selected.connectorId && c.channel_type === selected.channel,
     );
@@ -827,12 +883,19 @@ export default function ClientsConversations() {
       ?? composerConnectors[0]
       ?? null;
     const chosenConnector = threadConnector ?? fallbackConnector;
-    setComposeConnectorId(chosenConnector?.id ?? "");
-    setComposeChannel(chosenConnector?.channel_type ?? "");
+    // A portal conversation is answered in the portal; with no sending address at all, the portal
+    // is the only way to reply, so it is the default too.
+    if (portalOffered && portalLinked && (selected.channel === "portal" || !chosenConnector)) {
+      setComposeConnectorId(PORTAL_IDENTITY_ID);
+      setComposeChannel("portal");
+    } else {
+      setComposeConnectorId(chosenConnector?.id ?? "");
+      setComposeChannel(chosenConnector?.channel_type ?? "");
+    }
     setEditingDraftId(null);
     setSubject("");
     setBody("");
-  }, [selectedKey, selected, composerConnectors]);
+  }, [selectedKey, selected, composerConnectors, portalOffered, portalLinked, activeTenantId]);
   useEffect(() => {
     if (isSolo && handlingMode === "draft" && composeChannel !== "email") setHandlingMode("human");
   }, [composeChannel, handlingMode, isSolo]);
@@ -1173,11 +1236,58 @@ export default function ClientsConversations() {
     }
   }, [selected, body, subject, attachments]);
 
+  // ── E09 portal reply: comms_portal_reply only — never send-message, a provider, or governed send.
+  //    Sends immediately (no schedule/undo: the RPC has none), text only, one request id per
+  //    message reused on retry so a lost answer can be re-sent without posting twice. ─────────────
+  const sendPortal = async () => {
+    if (!selected) return;
+    const contactId = selected.contactId;
+    if (!contactId) { toast.error("Associate this participant with a client before sending."); return; }
+    // Nothing to post to: the client hasn't joined the portal. The composer already says so inline.
+    if (!portalLinked) { toast.error(portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)); return; }
+    const text = body.trim();
+    const bodyError = portalBodyError(text);
+    if (bodyError) { toast.error(bodyError); return; }
+    if (attachments.length) { toast.error("Portal messages are text only — remove the attachments first."); return; }
+    const tenantId = tenantIdRef.current;
+    if (!tenantId) { toast.error("Couldn't resolve your workspace — refresh and retry."); return; }
+
+    const activeSend = sendInFlightRef.current;
+    if (activeSend && accountEpochRef.current.accept(activeSend)) return;
+    const epoch = accountEpochRef.current.capture();
+    sendInFlightRef.current = epoch;
+    setSending(true);
+    const scope = portalRequestScope(tenantId, contactId, text);
+    try {
+      const r = await sendPortalReply({
+        tenantId, contactId, body: text, requestId: portalRequestIdsRef.current.idFor(scope),
+      });
+      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!("code" in r)) {
+        portalRequestIdsRef.current.settle(scope);
+        // Posted to the portal — not "read". The client gets an in-app notice; no email or text.
+        toast.success(`Posted to ${selected.name}'s client portal.`);
+        resetComposer();
+        void load(); void loadThreads();
+        return;
+      }
+      // A clashing id is spent; everything else keeps it so a retry of the same text is a replay.
+      if (r.code === "REQUEST_ID_CONFLICT") portalRequestIdsRef.current.settle(scope);
+      toast.error(portalReplyErrorCopy(r.code, selected.name));
+    } finally {
+      if (sendInFlightRef.current?.account === epoch.account && sendInFlightRef.current?.epoch === epoch.epoch) {
+        sendInFlightRef.current = null;
+      }
+      if (accountEpochRef.current.accept(epoch)) setSending(false);
+    }
+  };
+
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
+    if (composeChannel === "portal") { await sendPortal(); return; }
     if (!composeChannel) { toast.error("Connect a channel first — Paige needs a way to send."); return; }
     if (!selected.toAddress) { toast.error("No client address on this thread to send to."); return; }
     if (!body.trim()) { toast.error("Write a reply first."); return; }
@@ -1240,7 +1350,9 @@ export default function ClientsConversations() {
     }
   };
 
-  const noChannel = composerConnectors.length === 0;
+  // A portal-connected client can be answered in the portal even with no email/SMS connected. A
+  // client who hasn't joined the portal can't, so with no email/SMS either this is the connect CTA.
+  const noChannel = composerConnectors.length === 0 && !(portalOffered && portalLinked);
   // send-message only handles email|sms today, so "New conversation" needs a SENDABLE channel.
   // A whatsapp-only tenant HAS a connector (noChannel=false) but the compose modal would be a
   // dead-end — gate the CTA on a real sendable channel, not merely any channel (§13/§43).
@@ -1412,37 +1524,70 @@ export default function ClientsConversations() {
     void uploadFiles(files);
   };
 
+  // E09 — the portal is a pseudo-identity beside the real sending addresses (it has no connector).
+  const portalBodyLength = countPortalBody(body);
+  const portalNote = selected
+    ? `Posts in ${selected.name}'s client portal — no email or text goes out.`
+      + (portalBodyLength > PORTAL_BODY_MAX - 500
+        ? ` ${portalBodyLength.toLocaleString()} / ${PORTAL_BODY_MAX.toLocaleString()} characters.`
+        : "")
+    : "";
   const composerModel: ConversationsComposerModel | null = selected ? {
-    capabilities: { ...capabilities, canSchedule: capabilities.canSchedule && !(isSolo && handlingMode === "governed") },
+    capabilities: {
+      ...capabilities,
+      // The portal reply posts immediately and carries text only — no schedule/undo, no files.
+      canSchedule: capabilities.canSchedule && !(isSolo && handlingMode === "governed") && !portalMode,
+      hasAttachments: capabilities.hasAttachments && !portalMode,
+    },
     value: body,
     onChange: handleBodyChange,
     onSend: send,
     sending,
     disabled: drafting || uploading || (isSolo && handlingMode === "governed"),
+    // A client who hasn't joined the portal can't receive a portal post — Send is held for both
+    // inboxes (the trailing `|| portalUnreachable`), and the inline notice above the composer says why.
     sendDisabled: isSolo && (
       !canSendInSolo(handlingMode, composeChannel)
       || !composeChannel
       || !selected.contactId
-      || !selected.toAddress
+      || (!portalMode && !selected.toAddress)
       || !body.trim()
+      || (portalMode && portalBodyLength > PORTAL_BODY_MAX)
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ),
+    ) || portalUnreachable,
     sendOnEnter: isSolo,
-    placeholder: `Reply to ${selected.name}…  (drop a file to attach)`,
+    placeholder: portalMode
+      ? `Message ${selected.name} in their client portal…`
+      : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
-    sendLabel: scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    sendLabel: portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
+    note: portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
-    identities: composerConnectors.map((c) => ({
-      id: c.id,
-      label: c.display_name?.trim() || CHANNEL_LABEL[c.channel_type],
-      sublabel: c.from_address,
-      channel: c.channel_type,
-    })),
+    identities: [
+      ...composerConnectors.map((c) => ({
+        id: c.id,
+        label: c.display_name?.trim() || CHANNEL_LABEL[c.channel_type],
+        sublabel: c.from_address,
+        channel: c.channel_type,
+      })),
+      ...(portalOffered
+        ? [{ id: PORTAL_IDENTITY_ID, label: CHANNEL_LABEL.portal, sublabel: "Client portal", channel: "portal" as const }]
+        : []),
+    ],
     identityId: composeConnectorId,
     onIdentityChange: (id) => {
+      if (id === PORTAL_IDENTITY_ID) {
+        // Never drop staged files out of sight: the portal carries text only.
+        if (attachments.length) { toast.error("Portal messages are text only — remove the attachments first."); return; }
+        setComposeConnectorId(PORTAL_IDENTITY_ID);
+        setComposeChannel("portal");
+        // A portal message is a fresh post: it can't be scheduled or replace an email/SMS draft.
+        setScheduledFor(null);
+        setEditingDraftId(null);
+        return;
+      }
       const connector = composerConnectors.find((c) => c.id === id);
       setComposeConnectorId(id);
       setComposeChannel(connector?.channel_type ?? "");
@@ -1465,11 +1610,12 @@ export default function ClientsConversations() {
     snippets: isSolo ? snippets : [],
     onApplySnippet: applySnippet,
     showCombinedInsert: isSolo,
-    signatureAvailable: hasSignature,
+    // Email only — a portal post never carries a signature, so the toggle never shows there.
+    signatureAvailable: hasSignature && !portalMode,
     appendSignature,
     onToggleSignature: () => setAppendSignature((s) => !s),
     scheduledFor,
-    onSchedule: isSolo && handlingMode === "governed" ? undefined : setScheduledFor,
+    onSchedule: (isSolo && handlingMode === "governed") || portalMode ? undefined : setScheduledFor,
     showDictation: true,
     dictationScopeEpoch: `${activeTenantId ?? "resolving"}|${selected.key}|${editingDraftId ?? "new-reply"}`,
     onDictate: (seg) => handleBodyChange(appendDictation(bodyRef.current, seg)),
@@ -1571,7 +1717,7 @@ export default function ClientsConversations() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">{selected.name}</p>
               <p className="truncate text-[11px] text-muted-foreground select-text">
-                {CHANNEL_LABEL[selected.channel]}{selected.toAddress ? ` · ${selected.toAddress}` : ""}
+                {CHANNEL_LABEL[selected.channel]}{selected.toAddress && selected.channel !== "portal" ? ` · ${selected.toAddress}` : ""}
               </p>
             </div>
             {/* #482 Phase-2 — thread-level quick actions promoted to the open-thread header
@@ -1676,7 +1822,9 @@ export default function ClientsConversations() {
               canDraftWithPaige={composeChannel === "email" && !!selected.toAddress && sendableConnectors.some((connector) => connector.id === composeConnectorId && connector.channel_type === "email")}
               connectionsHref={connectionsHref}
               selectedClientName={selected.name}
-              selectedThreadLabel={`${CHANNEL_LABEL[selected.channel]} · ${selected.toAddress || "recipient not reported"}`}
+              selectedThreadLabel={`${CHANNEL_LABEL[selected.channel]} · ${
+                // A portal thread has no address of its own; an earlier email/SMS one is not its handle.
+                selected.channel === "portal" ? "client portal" : selected.toAddress || "recipient not reported"}`}
             />
           )}
 
@@ -1739,7 +1887,21 @@ export default function ClientsConversations() {
                 </div>
               </div>
             ) : composerModel ? (
-              <ConversationsRichComposer {...composerModel} />
+              <>
+                {portalUnreachable && (
+                  <div className="border-t border-border/60 bg-muted/30 px-3 pt-2">
+                    <p
+                      role="status"
+                      data-portal-not-connected
+                      className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground"
+                    >
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
+                      <span>{portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)}</span>
+                    </p>
+                  </div>
+                )}
+                <ConversationsRichComposer {...composerModel} />
+              </>
             ) : null}
           </div>
         </>

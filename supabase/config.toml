@@ -1,6 +1,12 @@
 project_id = "xygzykjyynhzqytbqnzu"
 
 [functions]
+  # Preserve the existing skill-runner gateway posture. The handler verifies user
+  # credentials and derives actor/workspace server-side; the canonical governed
+  # adapter still refuses unattended service mutations and requires exact send approval.
+  [functions.skill-runner]
+    verify_jwt = false
+
   [functions.public-booking]
     verify_jwt = false
 

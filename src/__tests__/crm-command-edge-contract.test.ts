@@ -21,9 +21,10 @@ describe("canonical CRM action door", () => {
     // still fails this test. Accept additional regressions, never fewer proven checks.
     const completed = output.match(/^PASS (\d+) actual CRM approval-summary checks:/m);
     expect(completed).not.toBeNull();
-    expect(Number(completed?.[1])).toBeGreaterThanOrEqual(59);
+    expect(Number(completed?.[1])).toBeGreaterThanOrEqual(90);
     expect(output).toContain("canonical task/deal titles");
     expect(output).toContain("task locators");
+    expect(output).toContain("truthful task assignment");
     expect(output).toContain("unchanged stored arguments/fingerprints");
   }, 65_000);
 

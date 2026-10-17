@@ -9,12 +9,12 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized business owner sends one re
 VISUAL_DIRECTION: PASS: Existing approved Portal presentation, tokens and dialog remain unchanged.
 AUTOMATED_EVIDENCE: PASS: Actual sender handler31/31 through the incumbent inspected-module-boundary harness and actual shared provider floor; no network or real email. The same final matrix against frozen prior main fails26 and passes5. Focused strict test-file TypeScript passes.
 STATIC_EVIDENCE: PASS: Caller Auth.getUser and the exact native create_tenant_invite_token permission predicates, evaluated through that caller's JWT. Preserve provider, brand, sender identity, email_sends correlation, transport recovery and JWT configuration. No service-role permission inference.
-RENDERED_EVIDENCE: NOT_REQUIRED: No rendered source changes; existing approved dashboard geometry is untouched.
+RENDERED_EVIDENCE: NOT_APPLICABLE: No rendered source changes; existing approved dashboard geometry is untouched.
 BEHAVIORAL_EVIDENCE: PASS: Admin, agency and platform-owner positives; missing/unverified/foreign caller, unavailable permission read, consumed/expired/revoked token, missing/foreign/inactive/merged/suppressed/joined contact, changed/ambiguous/foreign primary email, final authority/recipient/token/provider withdrawal, provider floor, existing team invite and unknown transport without retry.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Actual owner send and provider delivery following deployment remain separate from these synthetic source tests.
-KEYBOARD_FOCUS: NOT_REQUIRED: No control changes.
-ZOOM_REFLOW: NOT_REQUIRED: No geometry changes.
-REDUCED_MOTION: NOT_REQUIRED: No motion changes.
+KEYBOARD_FOCUS: NOT_APPLICABLE: No control changes.
+ZOOM_REFLOW: NOT_APPLICABLE: No geometry changes.
+REDUCED_MOTION: NOT_APPLICABLE: No motion changes.
 STATE_COVERAGE: PASS: Refusal produces no provider send or send receipt; authorized fixture uses the incumbent delivery path and actual email_sends.message_id correlation, with verified actor attribution.
 TRUTHFUL_STATE_LABELS: PASS: Delivered, opened, clicked and accepted are not inferred from source or provider request success. Unknown transport is not retried automatically.
 SOLO_UI: NO: Backend wrapper serves every eligible native business and client; no account allowlist or Solo component edit.

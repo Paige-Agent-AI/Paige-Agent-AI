@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PaigeAttribution } from "@/components/ui/page";
 import { cn } from "@/lib/utils";
 import { resolveVpForActionKind } from "@/lib/paige/vpDepartments";
-import type { ApprovalQueueRow } from "@/hooks/usePendingApprovals";
+import { isNativeOwnerTaskApproval, type ApprovalQueueRow } from "@/hooks/usePendingApprovals";
 
 const SLA_LABEL: Record<string,string> = { overdue:"Overdue",due_soon:"Due soon",on_track:"On track",closed:"Closed",unscheduled:"No SLA" };
 const TICK_COLOR: Record<string,string> = { overdue:"bg-destructive",due_soon:"bg-gradient-gold",on_track:"bg-muted-foreground/40",closed:"bg-muted-foreground/30",unscheduled:"bg-muted-foreground/30" };
@@ -121,16 +121,32 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
       await authority();let next:Report;
       if(decline) {
         const reason=rationale.trim();
-        // Same surviving RLS decision writer; no zero-row acknowledgement can imply a decision.
-        const result=await wait(()=>{
+        // Only the canonical native family uses the exact-version domain
+        // rejection writer. Other families retain their incumbent RLS writer.
+        const result=await wait<{data:unknown;error:unknown}>(()=>{
+          if(isNativeOwnerTaskApproval(a)) {
+            if(typeof a.updated_at!=="string" || !a.updated_at) throw new Error("review_version_required");
+            dispatched=true;
+            // Exact additive migration ABI until generated client types catch up;
+            // neither this port nor the UI supplies actor/tenant/task authority.
+            const caller=supabase as unknown as {rpc(name:"decline_owner_task_approval",args:{_approval_id:string;_expected_updated_at:string;_reason:string}):PromiseLike<{data:unknown;error:unknown}>};
+            return caller.rpc("decline_owner_task_approval",{_approval_id:a.id,_expected_updated_at:a.updated_at,_reason:reason});
+          }
           dispatched=true;
           let q=supabase.from("paige_pending_approvals").update({status:"rejected",decision_rationale:reason,reviewed_at:new Date().toISOString()})
             .eq("id",a.id).eq("status","pending");
           q=a.tenant_id ? q.eq("tenant_id",a.tenant_id) : q.is("tenant_id",null);
           return q.select("id,tenant_id,status,decision_rationale").maybeSingle();
         });
-        next=!result.error && result.data?.id===a.id && result.data.tenant_id===a.tenant_id
-          && result.data.status==="rejected" && result.data.decision_rationale===reason ? "declined":"unknown";
+        const native=isNativeOwnerTaskApproval(a);
+        const data=object(result.data)?result.data:null;
+        const uuid=(v:unknown)=>typeof v==="string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+        next=!result.error && data?.id===a.id && data.tenant_id===a.tenant_id && data.status==="rejected"
+          && (native ? data.receipt_recorded===true && data.act_outcome==="cancelled" && uuid(data.receipt_id) && uuid(data.reviewed_by_user_id)
+            && typeof data.reviewed_at==="string" && Number.isFinite(Date.parse(data.reviewed_at))
+            && typeof data.updated_at==="string" && Number.isFinite(Date.parse(data.updated_at))
+            && typeof data.decision_rationale==="string" && typeof data.replayed==="boolean"
+            && (data.replayed || data.reviewed_by_user_id===actorId && data.decision_rationale===reason) : data.decision_rationale===reason) ? "declined":"unknown";
       } else {
         const result=await wait(()=>{dispatched=true;return supabase.functions.invoke("execute-approval",{body:{approval_id:a.id}});});
         next=result.error || !object(result.data) || result.data.approval_id!==a.id
@@ -186,7 +202,8 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
           onKeyDown={e=>{if(e.key==="Escape" && !busy){e.preventDefault();cancel();}}}>
           <label htmlFor={id+"-reason"} className="text-sm">Reason for declining</label>
           <Textarea id={id+"-reason"} ref={reasonRef} value={rationale} onChange={e=>setRationale(e.target.value)} rows={2}
-            placeholder="What needs to change? Paige learns from this." className="text-sm"/>
+            maxLength={isNativeOwnerTaskApproval(a)?2000:undefined}
+            placeholder={isNativeOwnerTaskApproval(a)?"What needs to change? Your reason will be recorded.":"What needs to change? Paige learns from this."} className="text-sm"/>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
             <Button size="sm" variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
             <Button size="sm" variant="outline" onClick={()=>void decide(true)} disabled={busy || !!report || !rationale.trim()}>Decline action</Button>

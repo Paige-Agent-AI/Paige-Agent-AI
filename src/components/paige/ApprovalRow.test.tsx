@@ -172,3 +172,43 @@ describe("full exact task and honest inline inspection", () => {
     await click("Decline action"); expect(text()).toMatch(/could not be confirmed/i); expect(resolved).not.toHaveBeenCalled(); expect(button("Approve").disabled).toBe(true);
   });
 });
+
+describe("canonical native task rejection uses the existing exact-version domain seam",()=>{
+  const approval="00000000-0000-4000-8000-000000000210",tenant="00000000-0000-4000-8000-000000000211",actor="00000000-0000-4000-8000-000000000212";
+  const version="2026-10-17T18:30:41.123456+00:00";
+  const setup=(response?:Record<string,unknown>)=>{
+    row={...fixture(),id:approval,type:"other",tenant_id:tenant,updated_at:version,metadata:{source:"paige_orchestration",capability_id:"owner.task",
+      event_id:"00000000-0000-4000-8000-000000000213",act_id:"00000000-0000-4000-8000-000000000214",
+      act_execution_id:"00000000-0000-4000-8000-000000000215",automation_id:"00000000-0000-4000-8000-000000000216"}};
+    m.context.activeTenantId=tenant;m.context.activeUserId=actor;m.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
+    m.rpc.mockImplementation(async name=>({error:null,data:name==="current_user_tenant_id"?tenant:response??{
+      id:approval,tenant_id:tenant,status:"rejected",decision_rationale:"Needs correction",reviewed_by_user_id:actor,
+      act_outcome:"cancelled",receipt_recorded:true,receipt_id:"00000000-0000-4000-8000-000000000217",reviewed_at:version,updated_at:version,replayed:false}}));
+  };
+  const decline=async()=>{await click("Decline");const field=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(field,"  Needs correction  ");field.dispatchEvent(new Event("input",{bubbles:true}));});
+    await click("Decline action");};
+  it("sends only exact approval/version/reason; never direct UPDATE, caller identity, task args or approve",async()=>{
+    setup();view();await decline();expect(m.rpc).toHaveBeenCalledWith("decline_owner_task_approval",{_approval_id:approval,_expected_updated_at:version,_reason:"Needs correction"});
+    expect(m.query).not.toHaveBeenCalled();expect(m.invoke).not.toHaveBeenCalled();expect(text()).toContain("Decline confirmed");expect(text()).not.toContain("action completed");
+    expect(button("Approve").disabled).toBe(true);expect(resolved).not.toHaveBeenCalled();await click("Refresh status");expect(resolved).toHaveBeenCalledTimes(1);
+    expect(m.rpc.mock.calls.filter(([name])=>name==="decline_owner_task_approval")).toHaveLength(1);
+  });
+  it("requires the real version and never fabricates a browser timestamp",async()=>{
+    setup();row={...row,updated_at:undefined as unknown as string};view();await decline();expect(text()).toMatch(/could not be started/i);
+    expect(m.rpc.mock.calls.some(([name])=>name==="decline_owner_task_approval")).toBe(false);expect(m.query).not.toHaveBeenCalled();
+  });
+  it.each([{}, {id:approval,tenant_id:tenant,status:"rejected",decision_rationale:"Needs correction"},
+    {id:approval,tenant_id:tenant,status:"rejected",decision_rationale:"Needs correction",receipt_recorded:false,act_outcome:"cancelled"}])("does not confirm incomplete or unreceipted native decision %j",async result=>{
+    setup(result);view();await decline();expect(text()).toMatch(/could not be confirmed/i);expect(m.query).not.toHaveBeenCalled();
+  });
+  it("truthfully reports original already-declined result when another reviewer/reason exists",async()=>{
+    setup({id:approval,tenant_id:tenant,status:"rejected",decision_rationale:"Original reason",reviewed_by_user_id:"00000000-0000-4000-8000-000000000218",
+      act_outcome:"cancelled",receipt_recorded:true,receipt_id:"00000000-0000-4000-8000-000000000219",reviewed_at:version,updated_at:version,replayed:true});view();await decline();
+    expect(text()).toContain("Decline confirmed");expect(text()).not.toContain("Needs correction");expect(m.query).not.toHaveBeenCalled();
+  });
+  it("records bounded rationale without claiming an unverified learning outcome",async()=>{
+    setup();view();await click("Decline");expect(host.querySelector("textarea")?.maxLength).toBe(2000);
+    expect(host.querySelector("textarea")?.placeholder).toContain("reason will be recorded");expect(host.querySelector("textarea")?.placeholder).not.toContain("learn");
+  });
+});

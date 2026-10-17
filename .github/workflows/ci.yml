@@ -68,6 +68,7 @@ jobs:
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/send-portal-invite/canonical-delivery.test.mjs
           supabase/functions/_shared/operator-retirement-handler.test.mjs
       - name: Actual PostgreSQL migration replay and authorization restrictions in isolated database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
@@ -95,10 +96,14 @@ jobs:
         run: node scripts/proof/operator-generated-media-retirement.mjs --postgres 5432
       - name: Install locked source-contract parser dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical Portal command through the actual dispatcher and dependency graph
+        run: node --test supabase/functions/send-portal-invite/command.test.mjs
       - name: Weekly internal commitment check authority, receipt and recovery proof in disposable PostgreSQL
         run: node scripts/proof/weekly-commitment-check.mjs --postgres
       - name: Native approved internal task authority, exact approval, receipt and recovery in disposable PostgreSQL
         run: node scripts/proof/layer-c-native-vertical.mjs --owner-task-human-control --postgres
+      - name: Native event enqueue, internal cron authentication, rollback and replay in disposable PostgreSQL
+        run: node scripts/proof/native-event-enqueue.mjs --postgres
   verify:
     runs-on: ubuntu-latest
     steps:

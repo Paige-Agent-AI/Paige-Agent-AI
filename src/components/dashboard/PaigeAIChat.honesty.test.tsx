@@ -72,9 +72,10 @@ describe("PAIGE chat — no claim without a capability behind it", () => {
     // It read `access_token` off a locally-built `{ user: { id } }`, which has none — so every call
     // sent the literal string "Bearer undefined", was rejected 401, and the catch swallowed it.
     expect(memory).not.toContain("Bearer ${session.access_token}");
-    expect(memory).toContain("await supabase.auth.getSession()");
+    // Session resolution is now bounded by the captured view's cancellation fence.
+    expect(memory).toContain("await within(supabase.auth.getSession())");
     expect(memory).toContain("Bearer ${accessToken}");
     // And it stops rather than sending a request that cannot be attributed to anyone.
-    expect(memory).toContain("if (!accessToken) return null;");
+    expect(memory).toContain("if (!current() || controller.signal.aborted || !accessToken || session.user.id !== scope.actorId) return null;");
   });
 });

@@ -40,8 +40,11 @@ function assert(label, cond, detail) {
   else { failures += 1; console.log(`  FAIL ${label}`); if (detail !== undefined) console.log(`         ${detail}`); }
 }
 
+let legacySummaryFixture = null;
 globalThis.Deno = {
-  env: { get: (k) => ({
+  env: { get: (k) => legacySummaryFixture && ["OPENAI_CANARY_TENANTS", "OPENAI_BASE_URL"].includes(k) ? undefined
+    : legacySummaryFixture && k === "OPENAI_API_KEY" ? "synthetic-summary-test-key"
+    : ({
     SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key", VOYAGE_API_KEY: "test-voyage-key",
     ANTHROPIC_API_KEY: "test-anthropic-key",
@@ -239,9 +242,29 @@ globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("voyageai.com")) {
     embedCount += 1;
+    await legacySummaryFixture?.onEmbed?.(embedCount);
     return new Response(JSON.stringify({ data: [{ index: 0, embedding: VECTOR }] }), {
       status: 200, headers: { "Content-Type": "application/json" },
     });
+  }
+  if (legacySummaryFixture && (href.includes("openai.com") || href.includes("anthropic.com"))) {
+    const fixture = legacySummaryFixture;
+    const provider = href.includes("openai.com") ? "openai" : "anthropic";
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const prompt = JSON.stringify(body);
+    const job = prompt.includes("You are a session summarizer") ? "session_summary"
+      : prompt.includes("Business Foundation items") ? "session_milestone_extract" : "session_preference_extract";
+    fixture.calls.push({ provider, job, body, signal: init?.signal });
+    const plan = await fixture.onProvider?.(provider, job, fixture.calls.length) ?? {};
+    if (plan.status && plan.status !== 200) return new Response(JSON.stringify({ error: { type: plan.type ?? "rate_limit_error", message: "synthetic failure" } }),
+      { status: plan.status, headers: { "Content-Type": "application/json" } });
+    const text = job === "session_summary" ? "Origin-bound session summary"
+      : job === "session_milestone_extract" ? '["entity_formed"]'
+      : '{"preferences":["Prefers brief updates"],"commitments":["Will send the draft Friday"],"open_loops":["Draft review is pending"]}';
+    return new Response(JSON.stringify(provider === "openai"
+      ? { id: "resp_summary", model: body.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }], usage: { input_tokens: 9, output_tokens: 7 } }
+      : { id: "msg_summary", model: body.model, content: [{ type: "text", text }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }),
+    { status: 200, headers: { "Content-Type": "application/json" } });
   }
   if (href.includes("anthropic.com")) modelEgress.push(String(init?.body ?? ""));
   else if (!href.includes("voyageai.com")) {
@@ -430,6 +453,9 @@ async function drive({
   // INT-334 R4 — this turn's classifier answer (a label object, or null for a classifier that fails).
   // Left out, the fake answers as a real classifier would for the message (see the fetch fake).
   classification = NO_CLASSIFICATION,
+  summaryFixture = null,
+  authUser = { id: USER, email: "owner@example.test" },
+  requestSignal = undefined,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -454,6 +480,7 @@ async function drive({
   fetchUrlAnswer = fetchedPage;
   otherOutboundAnswers = outboundAnswers;
   modelStub = stream;
+  legacySummaryFixture = summaryFixture;
   readCheckReply = readCheck;
   const toolCalls = Array.isArray(toolCall) ? toolCall : toolCall ? [toolCall] : [];
   toolCallOnce = toolCalls.length > 0;
@@ -470,7 +497,7 @@ async function drive({
   const rec = fake.setScenario({
     onInsert,
     functions: functionsExtra,
-    authUser: { id: USER, email: "owner@example.test" },
+    authUser,
     // The declared-scope guard reads profiles.active_tenant_id on evidence-carrying turns.
     // This smoke's resolver DRIFTS by design (scope-mismatch cases script it per call), but the
     // user's DECLARED workspace stays put — so the unscripted profiles read defaults to the
@@ -499,6 +526,9 @@ async function drive({
       ...serviceTablesExtra,
     },
     tables: {
+      // These new origin-bound summary cases model an explicitly selected
+      // workspace, rather than the smoke's usual tenantless persona default.
+      ...(summaryFixture ? { profiles: () => [{ user_id: USER, active_tenant_id: CALLER_TENANT }] } : {}),
       // RLS emulation: only rows this caller may see, and only when the filters match.
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
@@ -551,6 +581,7 @@ async function drive({
       const res = await handler(new Request("http://local/paige-ai-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: authorization },
+      signal: requestSignal,
       body: JSON.stringify({
         messages: [{ role: "user", content: text }],
         ...(clientId !== undefined ? { clientId } : {}),
@@ -578,6 +609,7 @@ async function drive({
   const status = responses[0]?.status ?? null;
   const bodyText = responses.map((response) => response.bodyText).join("\n");
   modelStub = false;
+  legacySummaryFixture = null;
   toolCallOnce = false;
   selfApprove = false;
   scriptedReply = "ok";
@@ -927,7 +959,8 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
       { role: "assistant", content: "understood" },
     ],
   };
-  const ownSum = await drive({ clientId: OWN, stream: true, extraBody: sessionBody });
+  const ownSum = await drive({ clientId: OWN, stream: true, tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: CALLER_TENANT }] }, extraBody: { ...sessionBody,
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: OWN } } });
   assert("9.0 the summary branch DOES write on an authorized turn (guards this section)",
     ownSum.rec.inserts.some((i) => i.table === "client_memory"),
     JSON.stringify(ownSum.rec.inserts.map((i) => i.table)));
@@ -956,7 +989,8 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
   assert("9.3 …and writes NO client_memory row at all — the caller is not a fallback subject",
     refusedSum.rec.inserts.filter((i) => i.table === "client_memory").length === 0,
     JSON.stringify(refusedSum.rec.inserts.filter((i) => i.table === "client_memory").map((i) => i.row)));
-  const selfSum = await drive({ clientId: undefined, stream: true, extraBody: sessionBody,
+  const selfSum = await drive({ clientId: undefined, stream: true, extraBody: { ...sessionBody,
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: null } },
     rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } } });
   const selfSumWrite = selfSum.rec.rpc.filter((c) => c.name === "record_paige_memory");
   assert("9.3b …while the NO-CLIENT path still writes the caller's own summary (S5: through the governed seam, proposed)",
@@ -9896,6 +9930,147 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
  }
 }
 
+
+console.log("\nlegacy session summaries use attributable Fabric and fresh origin authority");
+{
+  const body = (client = null) => ({ generateSessionSummary: true,
+    sessionMessages: [{ role: "user", content: "Please keep updates brief. I formed my business." },
+      { role: "assistant", content: "We will review the draft." }, { role: "user", content: "I will send it Friday." }],
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: client } });
+  const writes = r => [...r.rec.inserts.filter(i => i.table === "client_memory"), ...r.rec.rpc.filter(c => c.name === "record_paige_memory")];
+  const fixture = extra => ({ calls: [], ...extra });
+  const scopeTables = state => ({ profiles: () => [{ user_id: USER, active_tenant_id: state.tenant }] });
+  const rpcScope = state => ({ current_user_tenant_id: () => ({ data: state.tenant, error: null }) });
+  const ownFixture = fixture();
+  const own = await drive({ summaryFixture: ownFixture, stream: true, extraBody: body() });
+  assert("LS1 all three actual summary jobs use OpenAI primary", ownFixture.calls.length === 3 && ownFixture.calls.every(c => c.provider === "openai")
+    && ownFixture.calls.map(c => c.job).sort().join() === "session_milestone_extract,session_preference_extract,session_summary");
+  const traces = own.rec.inserts.filter(i => i.table === "paige_llm_trace" && i.row?.job_kind === "session-summary");
+  assert("LS2 all three actual trace rows carry the captured tenant, operational class and real served model", traces.length === 3
+    && traces.every(t => t.row.tenant_id === CALLER_TENANT && t.row.metadata?.route_requested_class === "operational"
+      && t.row.metadata?.route_served_provider === "openai" && t.row.model && !t.row.model.includes("gemini")), JSON.stringify(traces.map(t => t.row)));
+  const ownWrites = own.rec.rpc.filter(c => c.name === "record_paige_memory");
+  assert("LS3 own summary, milestone and all fact kinds retain captured scope and proposed confirmation", ownWrites.length === 5
+    && ownWrites.every(c => c.args.p_user_id === USER && c.args.p_tenant_id === CALLER_TENANT && c.args.p_confirmation_state === "proposed"));
+  assert("LS4 owner summaries buy no embedding and return generation separately from checked writes", own.embeds === 0
+    && JSON.parse(own.bodyText).summary === "Origin-bound session summary" && JSON.parse(own.bodyText).memory_write_status === "acknowledged");
+  const clientFixture = fixture();
+  const clientResult = await drive({ clientId: OWN, summaryFixture: clientFixture, stream: true, extraBody: body(OWN) });
+  assert("LS4b authorized client summary, milestone and all facts use only that client with five embeddings", writes(clientResult).length === 5
+    && clientResult.rec.inserts.filter(i => i.table === "client_memory").every(i => i.row.client_id === OWN && i.row.client_user_id === OWN)
+    && clientResult.embeds === 5 && clientFixture.calls.length === 3);
+  const operatorFixture = fixture();
+  const operator = await drive({ clientId: OTHERTEN, ownerRpc: { data: true, error: null }, summaryFixture: operatorFixture,
+    stream: true, extraBody: body(OTHERTEN) });
+  assert("LS4c exact platform-owner exception retains foreign-client access and attributes the actual client tenant", writes(operator).length === 5
+    && operator.rec.inserts.filter(i => i.table === "paige_llm_trace").every(i => i.row.tenant_id === OTHER_TENANT));
+  const notOwnerFixture = fixture();
+  const notOwner = await drive({ clientId: OTHERTEN, ownerRpc: { data: false, error: null }, summaryFixture: notOwnerFixture,
+    rpcOverrides: { is_platform_operator: { data: true, error: null } }, stream: true, extraBody: body(OTHERTEN) });
+  assert("LS4d broader platform-operator status does not widen the exact owner bypass", notOwnerFixture.calls.length === 0 && writes(notOwner).length === 0);
+  const tenantlessOperatorFixture = fixture(); const operatorBody = body(OTHERTEN); operatorBody.sessionMemoryScope.tenant_id = null;
+  const tenantlessOperator = await drive({ clientId: OTHERTEN, ownerRpc: { data: true, error: null }, summaryFixture: tenantlessOperatorFixture,
+    tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: null }] },
+    rpcOverrides: { current_user_tenant_id: { data: null, error: null } }, stream: true, extraBody: operatorBody });
+  assert("LS4e tenantless platform-owner view can still summarize an authorized attributable client", writes(tenantlessOperator).length === 5
+    && tenantlessOperatorFixture.calls.length === 3 && tenantlessOperator.rec.inserts.filter(i => i.table === "paige_llm_trace").every(i => i.row.tenant_id === OTHER_TENANT));
+  const healthyFallback = fixture({ onProvider: provider => provider === "openai" ? { status: 429 } : {} });
+  const fallback = await drive({ summaryFixture: healthyFallback, stream: true, extraBody: body() });
+  assert("LS5 unchanged authority preserves health fallback for all three jobs", healthyFallback.calls.length === 6
+    && ["session_summary", "session_milestone_extract", "session_preference_extract"].every(job => healthyFallback.calls.filter(c => c.job === job).map(c => c.provider).join() === "openai,anthropic")
+    && writes(fallback).length === 5);
+  const invalid = fixture({ onProvider: () => ({ status: 400, type: "invalid_request_error" }) });
+  const invalidResult = await drive({ summaryFixture: invalid, stream: true, extraBody: body() });
+  assert("LS6 invalid request is terminal, never health fallback or persistence", invalid.calls.length === 3
+    && invalid.calls.every(c => c.provider === "openai") && writes(invalidResult).length === 0);
+  const hard = fixture();
+  const hardResult = await drive({ summaryFixture: hard, stream: true, extraBody: body(),
+    serviceTablesExtra: { paige_llm_trace: () => [{ cost_estimate_usd: 1_000 }] } });
+  assert("LS7 operational reasoning hard budget stops all providers and writes", hard.calls.length === 0 && writes(hardResult).length === 0);
+  for (const mode of ["missing", "actor", "tenant", "client", "version", "unattributed", "unattributed-owner", "malformed-canonical"]) {
+    const f = fixture(); const request = body();
+    if (mode === "missing") delete request.sessionMemoryScope;
+    if (mode === "actor") request.sessionMemoryScope.actor_id = FOREIGN;
+    if (mode === "tenant") request.sessionMemoryScope.tenant_id = OTHER_TENANT;
+    if (mode === "client") request.sessionMemoryScope.client_id = OWN;
+    if (mode === "version") request.sessionMemoryScope.v = 2;
+    if (mode === "malformed-canonical") request.sessionMemoryScope.tenant_id = "not-a-workspace";
+    const r = await drive({ summaryFixture: f, stream: true, extraBody: request,
+      ...(mode === "malformed-canonical" ? { tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: "not-a-workspace" }] },
+        rpcOverrides: { current_user_tenant_id: { data: "not-a-workspace", error: null } } } : {}),
+      ...(mode.startsWith("unattributed") ? { tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: null }] },
+        ...(mode === "unattributed-owner" ? { ownerRpc: { data: true, error: null } } : {}),
+        rpcOverrides: { current_user_tenant_id: { data: null, error: null } } } : {}) });
+    assert(`LS8 ${mode} origin is unavailable before any provider, embed or memory write`, f.calls.length === 0 && r.embeds === 0 && writes(r).length === 0 && !r.bodyText.includes("Origin-bound"));
+  }
+  for (const transition of ["budget", "fallback", "completion", "actor", "client-row", "embed", "owner-write", "client-write"]) {
+    const state = { tenant: CALLER_TENANT }; const actor = { id: USER }; let written = 0;
+    const client = ["client-row", "embed", "client-write"].includes(transition) ? OWN : null;
+    const f = fixture({
+      onProvider: (provider, _job, count) => {
+        if (transition === "fallback" && provider === "openai") { state.tenant = OTHER_TENANT; return { status: 429 }; }
+        if (transition === "completion" && count === 3) state.tenant = OTHER_TENANT;
+        if (transition === "actor" && count === 3) actor.id = FOREIGN;
+        return {};
+      },
+      onEmbed: () => { if (transition === "embed") state.tenant = OTHER_TENANT; },
+    });
+    let clientTenant = CALLER_TENANT;
+    if (transition === "client-row") f.onProvider = (_provider, _job, count) => { if (count === 3) clientTenant = OTHER_TENANT; return {}; };
+    const r = await drive({ clientId: client ?? undefined, summaryFixture: f, stream: true, extraBody: body(client), authUser: actor,
+      tablesExtra: { ...scopeTables(state), ...(client ? { clients: () => [{ id: OWN, tenant_id: clientTenant }] } : {}) },
+      rpcOverrides: { ...rpcScope(state), record_paige_memory: () => {
+        written++; if (transition === "owner-write") state.tenant = OTHER_TENANT;
+        return { data: "synthetic-memory-id", error: null };
+      } },
+      onInsert: table => { if (table === "client_memory" && transition === "client-write") { written++; state.tenant = OTHER_TENANT; } },
+      serviceTablesExtra: { paige_llm_trace: filters => {
+        if (transition === "budget" && filters.some(([op, column]) => op === "select" && column === "cost_estimate_usd")) state.tenant = OTHER_TENANT;
+        return [];
+      } },
+    });
+    assert(`LS9 ${transition} change releases no stale summary`, !r.bodyText.includes("Origin-bound session summary"));
+    assert(`LS10 ${transition} change permits no subsequent memory write`, writes(r).length === (["owner-write", "client-write"].includes(transition) ? 1 : 0), JSON.stringify(writes(r)));
+    if (transition === "budget") assert("LS11 changed scope during budget prevents all actual egress", f.calls.length === 0);
+    if (transition === "fallback") assert("LS12 changed scope is terminal before any Anthropic fallback", f.calls.every(c => c.provider === "openai"));
+    if (transition === "embed") assert("LS13 changed scope during embedding prevents the client insert", r.embeds === 1 && writes(r).length === 0);
+  }
+  for (let boundary = 1; boundary <= 5; boundary++) {
+    const state = { tenant: CALLER_TENANT }; const f = fixture(); let written = 0;
+    const r = await drive({ summaryFixture: f, stream: true, extraBody: body(), tablesExtra: scopeTables(state),
+      rpcOverrides: { ...rpcScope(state), record_paige_memory: () => {
+        written++; if (written === boundary) state.tenant = OTHER_TENANT;
+        return { data: "synthetic-memory-id", error: null };
+      } },
+    });
+    assert(`LS14 scope change after owner write ${boundary} prevents every later write and stale return`, writes(r).length === boundary && !r.bodyText.includes("Origin-bound"));
+    const clientState = { tenant: CALLER_TENANT }; const client = fixture({ onEmbed: count => { if (count === boundary) clientState.tenant = OTHER_TENANT; } });
+    const clientRun = await drive({ clientId: OWN, summaryFixture: client, stream: true, extraBody: body(OWN),
+      tablesExtra: scopeTables(clientState), rpcOverrides: rpcScope(clientState) });
+    assert(`LS15 scope change during client embedding ${boundary} prevents its write and every later step`, clientRun.embeds === boundary
+      && writes(clientRun).length === boundary - 1 && !clientRun.bodyText.includes("Origin-bound"));
+  }
+  const rejected = await drive({ summaryFixture: fixture(), stream: true, extraBody: body(),
+    rpcOverrides: { record_paige_memory: { data: null, error: { code: "synthetic-write-refused", message: "synthetic rejection" } } } });
+  assert("LS16 generated text is not represented as acknowledged memory when native writes reject", JSON.parse(rejected.bodyText).summary === "Origin-bound session summary"
+    && JSON.parse(rejected.bodyText).memory_write_status === "unconfirmed" && JSON.parse(rejected.bodyText).memory_writes_acknowledged === 0);
+  const aborted = new AbortController();
+  const abortFixture = fixture({ onProvider: () => { aborted.abort(); return { status: 429 }; } });
+  const abortRun = await drive({ summaryFixture: abortFixture, requestSignal: aborted.signal, stream: true, extraBody: body() });
+  assert("LS17 request abort is terminal before fallback, embeds, writes or returning generated text", abortFixture.calls.length > 0
+    && abortFixture.calls.every(c => c.provider === "openai" && c.signal.aborted) && writes(abortRun).length === 0 && abortRun.embeds === 0
+    && JSON.parse(abortRun.bodyText).code === "SESSION_SUMMARY_CANCELLED");
+  const realNow = Date.now;
+  try {
+    const expiredFixture = fixture({ onProvider: (_provider, _job, count) => {
+      if (count === 3) { const expiredAt = realNow() + 30_001; Date.now = () => expiredAt; }
+      return {};
+    } });
+    const expired = await drive({ summaryFixture: expiredFixture, stream: true, extraBody: body() });
+    assert("LS18 absolute deadline refuses late completion before delayed timer delivery", writes(expired).length === 0
+      && !expired.bodyText.includes("Origin-bound") && JSON.parse(expired.bodyText).code === "SESSION_SUMMARY_CANCELLED");
+  } finally { Date.now = realNow; }
+}
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

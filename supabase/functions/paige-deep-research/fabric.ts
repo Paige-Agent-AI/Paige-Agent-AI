@@ -5,35 +5,36 @@
 // candidate order, or a fallback rule. The fabric owns all of that (one CLASS_POLICY, one
 // mayFallback, one failure classifier — no second route table anywhere in this file).
 //
-// DORMANT BY CONSTRUCTION. RESEARCH_FABRIC_ENABLED ships false; while false every call is
-// byte-parity with the R5/R6-A shipped path (routedChatCompletion under the SAME job kinds,
-// the SAME body, no trace arg, no telemetry side-effects). Flipping it is an owner-gated
+// CLASS ROUTING REMAINS DORMANT. RESEARCH_FABRIC_ENABLED ships false; while false calls use
+// routedChatCompletion under the SAME job kinds, body and provider order. The server-owned
+// run trace also reaches that existing router, so its tenant budget and cost ledger apply.
+// A missing legacy tenant refuses dispatch rather than silently becoming system traffic.
+// Flipping the class-routing flag remains an owner-gated
 // release decision (#1851: the cheap planners move from the open-pool extract route to the
 // fabric's cheap class — a MATERIAL provider-economics change that needs a measured diff and
-// explicit authority first; the fabric path also makes research calls tenant-attributed and
-// budget-gated where today's tenantless calls are ungated).
+// explicit authority first; this attribution repair does not enable that route).
 //
-// WHAT RIDES THE FABRIC PATH WHEN ENABLED (and only then):
-//   • the request carries `cognitive_class` (from the call site's RESEARCH_COGNITIVE_CLASSES
+// ROUTE CONTRACTS:
+//   • when Fabric is enabled, the request carries `cognitive_class` (from the call site's RESEARCH_COGNITIVE_CLASSES
 //     value — this adapter never invents a class) and a stable research job identity;
-//   • the trace carries the SERVER-resolved tenant (M0 lineage), the research agent id, and
-//     the run correlation. An unresolved tenant stays NULL — never a membership guess, never
-//     a fabricated UUID (#1851 §5: no service-role subject invention);
-//   • the fabric's served-route evidence (served class carrier, fallback flag, closed reason)
+//   • both routes use the SERVER-resolved tenant (M0 lineage), research agent and run
+//     correlation. The dormant adapter retains nullable trace compatibility, never a guessed
+//     tenant; native execution still requires the handler's verified current-scope contract;
+//   • only enabled Fabric's served-route evidence (served class carrier, fallback flag, closed reason)
 //     is projected into CLOSED diagnostic values — no attempt detail, no raw provider error
 //     text, no model-choice guesses.
 import { routedChatCompletion } from "../_shared/model-router.ts";
 import { fabricCompletion } from "../_shared/model-fabric.ts";
 import type { TraceCtx } from "../_shared/llm-trace.ts";
 
-/** The release gate. False = the shipped R5/R6-A path, unchanged. Typed `boolean` so the
+/** The release gate. False = the legacy router with attributed tenant budget. Typed `boolean` so the
  * disabled branch does not narrow away at check time. */
 export const RESEARCH_FABRIC_ENABLED: boolean = false;
 
 /** The research phases that call a model. Deterministic phases never reach this adapter. */
 export type ResearchFabricPhase = "hop_query_planner" | "unit_planner" | "unit_synthesis" | "dossier_synthesis";
 
-/** The job kind each phase used before R6-B — the flag-OFF path must stay byte-identical. */
+/** The job kind each phase used before R6-B — flag OFF preserves its provider-routing policy. */
 const ROUTED_JOB_KINDS: Record<ResearchFabricPhase, Parameters<typeof routedChatCompletion>[0]> = {
   hop_query_planner: "extract",
   unit_planner: "extract",
@@ -51,7 +52,7 @@ const FABRIC_JOBS: Record<ResearchFabricPhase, string> = {
 
 /** Server-resolved run context (M0 lineage rules): what the engine may LAWFULLY report. */
 export interface RunRequestCtx {
-  /** M0-resolved tenant (JWT → current_user_tenant_id; service-role → active_tenant_id). NULL = unresolved — stays null. */
+  /** Server-resolved native tenant. NULL is never invented; legacy dispatch refuses it. */
   tenantId: string | null;
   /** The research run id for trace correlation. */
   runId: string | null;
@@ -115,11 +116,6 @@ export async function researchCompletion(
     // vocabulary the engine's own declaration, not this adapter's invention.
     throw new Error(`researchCompletion: phase ${phase} declared ${cognitiveClass}; deterministic phases never call a model`);
   }
-  if (!RESEARCH_FABRIC_ENABLED) {
-    // BYTE-PARITY: same job kind, same body, no trace arg — the R5/R6-A shipped path.
-    const resp = await deps.routed(ROUTED_JOB_KINDS[phase], body as unknown as Parameters<typeof routedChatCompletion>[1]);
-    return { resp, route: null };
-  }
   const job = FABRIC_JOBS[phase];
   const trace: TraceCtx = {
     tenant_id: ctx?.tenantId ?? null,
@@ -127,6 +123,13 @@ export async function researchCompletion(
     task_id: ctx?.runId ?? null,
     job_kind: job,
   };
+  if (!RESEARCH_FABRIC_ENABLED) {
+    // Only the native server context supplies attribution; body fields never select budget
+    // authority. Keep the existing job/body/provider policy and router's single trace layer.
+    if (typeof ctx?.tenantId !== "string" || !ctx.tenantId.trim()) throw new Error("research_tenant_required");
+    const resp = await deps.routed(ROUTED_JOB_KINDS[phase], body as unknown as Parameters<typeof routedChatCompletion>[1], trace);
+    return { resp, route: null };
+  }
   const result = await deps.fabric(
     { ...body, cognitive_class: cognitiveClass as "cheap" | "operational" | "frontier", job } as Parameters<typeof fabricCompletion>[0],
     { trace },

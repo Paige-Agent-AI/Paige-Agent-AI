@@ -22,6 +22,19 @@ interface QueryPort extends PromiseLike<Reply> {
 }
 const source = readFileSync('supabase/functions/paige-deep-research/index.ts', 'utf8');
 
+// A dormant-flag toggle exists only in this neutral in-memory module. Missing
+// native authority must stop before reaching either real adapter branch.
+function adapterForFlag(enabled: boolean) {
+  const original = readFileSync('supabase/functions/paige-deep-research/fabric.ts', 'utf8');
+  const flag = 'export const RESEARCH_FABRIC_ENABLED: boolean = false;';
+  if (!original.includes(flag)) throw new Error('Research release flag contract changed');
+  const ast = ts.createSourceFile('fabric.ts', original.replace(flag, `export const RESEARCH_FABRIC_ENABLED: boolean = ${enabled};`), ts.ScriptTarget.Latest, true);
+  const module = ast.statements.filter(node => !ts.isImportDeclaration(node)).map(node => node.getText(ast).replace(/^export\s+/, '')).join('\n');
+  const js = ts.transpileModule(module, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  const forbidden = async () => { throw new Error('Missing native authority reached a model transport'); };
+  return new Function('routedChatCompletion', 'fabricCompletion', `${js}; return researchCompletion;`)(forbidden, forbidden) as (...args: unknown[]) => Promise<unknown>;
+}
+
 type Options = {
   member?: boolean; actorMissing?: boolean; identityError?: boolean; profileError?: boolean;
   noTenant?: boolean; unconfigured?: boolean; switchAt?: 'search' | 'run-insert' | 'receipt' | 'synthesis' | 'strategy-error';
@@ -32,6 +45,7 @@ type Options = {
   scopeRpcError?: boolean; corruptScope?: 'actor' | 'tenant'; maxSources?: boolean; scopeBudgetAfterSearch?: boolean;
   searchHits?: Array<{url:string;title:string;description:string}>;
   searchBatches?: Array<Array<{url:string;title:string;description:string}>>;
+  fabricEnabled?: boolean;
 };
 
 function fixture(options: Options = {}) {
@@ -140,7 +154,9 @@ function fixture(options: Options = {}) {
     if (url.endsWith('/fetch-url-content')) return Response.json({ success: true, content: 'Protected supporting fixture research establishes a reproducible baseline.' });
     throw new Error('Unexpected fixture provider endpoint');
   });
-  const model = vi.fn(async (phase: string) => {
+  const adapter = options.fabricEnabled === undefined ? null : adapterForFlag(options.fabricEnabled);
+  const model = vi.fn(async (phase: string, ...args: unknown[]) => {
+    if (adapter) return adapter(phase, ...args);
     if (options.failedSynthesis && ['unit_synthesis', 'dossier_synthesis'].includes(phase)) {
       if (options.switchAt === 'synthesis') active = other;
       throw new Error('fixture synthesis failed');
@@ -229,6 +245,16 @@ describe('incumbent native Research receipt contract', () => {
 });
 
 describe('actual native Research authenticated door', () => {
+  it.each([[false, false], [false, true], [true, false], [true, true]])('missing tenant denies all model phases before either adapter mode (service=%s, fabric=%s)', async (service, fabricEnabled) => {
+    const test = fixture({ noTenant: true, fabricEnabled });
+    const { response } = await test.run({}, service);
+    expect(response.status).toBe(403);
+    expect(test.model).not.toHaveBeenCalled();
+    expect(test.strategy).not.toHaveBeenCalled();
+    expect(test.provider).not.toHaveBeenCalled();
+    expect(test.rows.research_runs).toHaveLength(0);
+    expect(test.adminRpc).not.toHaveBeenCalled();
+  });
   it.each([false, true])('enforces a requested source budget before reads and persists the same policy (service=%s)', async service => {
     const test = fixture({ maxSources: true });
     const {response,body} = await test.run({max_sources:3,max_hops:3},service);

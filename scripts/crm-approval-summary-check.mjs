@@ -115,22 +115,59 @@ async function proposed(command, expectedSummary, options = {}) {
   assert.ok(proposal.server_issued_at && proposal.issued_in_request, "server-issued approval provenance remains");
   const audit = result.rec.inserts.find(row => row.table === "paige_audit_log").row;
   assert.equal(audit.payload.decision, "propose");
-  assert.equal(audit.payload.risk, "ordinary");
+  assert.equal(audit.payload.risk, command.action === "task.assign" ? "high" : "ordinary");
   checks++;
   return { ...result, proposal };
 }
 
-const first = await proposed(task("Review the fixture plan"), 'Create a task "Review the fixture plan".');
-await proposed({ ...task("Canonical task title"), title: "Unexecuted top-level decoy" }, 'Create a task "Canonical task title".');
-await proposed(task("  Keep stored spacing  "), 'Create a task "Keep stored spacing".');
-await proposed(task("x".repeat(100)), `Create a task "${"x".repeat(80)}".`);
-for (const title of ["", "   ", 42, null]) await proposed(task(title), 'Create a task "Untitled".');
-await proposed({ action: "task.create", patch: { assignee_user_id: actor } }, 'Create a task "Untitled".');
+const first = await proposed(task("Review the fixture plan"), 'Create a task "Review the fixture plan", assigned to you.');
+await proposed({ ...task("Canonical task title"), title: "Unexecuted top-level decoy" }, 'Create a task "Canonical task title", assigned to you.');
+await proposed(task("  Keep stored spacing  "), 'Create a task "Keep stored spacing", assigned to you.');
+await proposed(task("x".repeat(100)), `Create a task "${"x".repeat(80)}", assigned to you.`);
+for (const title of ["", "   ", 42, null]) await proposed(task(title), 'Create a task "Untitled", assigned to you.');
+await proposed({ action: "task.create", patch: { assignee_user_id: actor } }, 'Create a task "Untitled", assigned to you.');
 await proposed({ ...deal("Actual deal title"), patch: { title: "Unexecuted patch decoy" } }, 'Add a deal "Actual deal title" to the pipeline.');
 await proposed(deal("y".repeat(100)), `Add a deal "${"y".repeat(80)}" to the pipeline.`);
-await proposed({ action: "task.create", patch: { title: "Other eligible workspace", assignee_user_id: id(11) } }, 'Create a task "Other eligible workspace".', {
+await proposed({ action: "task.create", patch: { title: "Other eligible workspace", assignee_user_id: id(11) } }, 'Create a task "Other eligible workspace", assigned to you.', {
   expectedTenant: id(12), options: { workspace: id(12), userId: id(11), role: "admin" },
 });
+
+// The actual native create defaults ONLY omitted/null/exact-empty assignees to its actor.
+// Task reassignment has no default: SQL requires an explicit authorized UUID. These cards
+// describe that distinction without turning missing/malformed values into a fictional person.
+for (const assignee of [undefined, null, ""]) {
+  const patch = { title: "Default assignment", ...(assignee === undefined ? {} : { assignee_user_id: assignee }) };
+  const command = { action: "task.create", patch };
+  const { proposal } = await proposed(command, 'Create a task "Default assignment", assigned to you by default.');
+  const stored = { ...proposal, consumed_at: null, expires_at: new Date(Date.now() + 300_000).toISOString() };
+  const redeemed = await request({ ...command, patch: { ...patch, assignee_user_id: id(99) } }, {
+    fingerprint: stored.fingerprint, options: { stored },
+  });
+  assert.equal(redeemed.status, 200);
+  assert.equal(executions(redeemed.rec).length, 1);
+  assert.deepEqual(executions(redeemed.rec)[0].args._command, { ...command, approval_channel: "operator_card" },
+    "native default and its exact approved shape reach the writer unchanged despite request substitution");
+  assert.deepEqual(redeemed.body.readback, { id: id(6) }, "exact native readback remains unchanged");
+  assert.equal(proposals(redeemed.rec).length, 0);
+  checks++;
+  await proposed({ action: "task.create", patch }, 'Create a task "Default assignment", assigned to you by default.', {
+    expectedTenant: id(12), options: { workspace: id(12), userId: id(11), role: "admin" },
+  });
+}
+const assignment = { action: "task.assign", task_id: id(6), expected_updated_at: "2026-10-10T12:00:00.123456Z" };
+await proposed({ ...assignment, patch: { assignee_user_id: actor } }, `Assign task ${id(6)} to you.`);
+await proposed({ ...assignment, patch: { assignee_user_id: id(11) } }, `Assign task ${id(6)} to user ${id(11)}.`);
+await proposed({ ...assignment, contact_id: id(8), company_id: id(9), patch: { assignee_user_id: id(11) } }, `Assign task ${id(6)} to user ${id(11)}.`);
+await proposed({ action: "task.create", patch: { title: "Explicit other", assignee_user_id: id(11) } }, `Create a task "Explicit other", assigned to user ${id(11)}.`);
+const namedActor = "00000000-0000-4000-8000-abcdefabcdef";
+await proposed({ action: "task.create", patch: { title: "Explicit requester", assignee_user_id: namedActor.toUpperCase() } }, 'Create a task "Explicit requester", assigned to you.', { options: { userId: namedActor } });
+for (const assignee of [undefined, null, "", "   ", "unassigned", "Not a user", 42, false, {}, []]) {
+  const patch = assignee === undefined ? {} : { assignee_user_id: assignee };
+  await proposed({ ...assignment, patch }, `Task ${id(6)} requires a valid assignee before it can be reassigned. Tasks cannot be unassigned.`);
+  if (assignee !== undefined && assignee !== null && assignee !== "") {
+    await proposed({ action: "task.create", patch: { title: "Invalid assignee", ...patch } }, 'Create a task "Invalid assignee"; the supplied assignee needs verification before assignment.');
+  }
+}
 const progress={action:"task.update",task_id:id(6),expected_updated_at:"2026-10-10T12:00:00.123456Z",patch:{status:"in_progress"}};
 const progressApproval=await proposed(progress,`Move task ${id(6)} to In progress.`);
 await proposed({...progress,contact_id:id(8),company_id:id(9)},`Move task ${id(6)} to In progress.`);
@@ -321,4 +358,4 @@ for (const [lane, code] of [['off', 'autonomy_off'], ['unresolved', 'autonomy_la
   checks++;
 }
 queryPrototype.maybeSingle=originalSingle;
-console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);
+console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles, truthful task assignment and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);

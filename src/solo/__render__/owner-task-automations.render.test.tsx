@@ -13,6 +13,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { SoloPaigeWorkspace } from "@/solo/SoloPaigeWorkspace";
 import { SoloSettings } from "@/solo/settings";
+import { SoloScreenBoundary } from "@/solo/SoloScreenBoundary";
 
 const h = vi.hoisted(() => ({
   theme: "light" as "light" | "dark", open: false,
@@ -100,8 +101,12 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-const output = process.env.OWNER_TASK_RENDER_DIR || "work/owner-task-render";
-const assets = `${output}/dist/assets`;
+const output = process.env.OWNER_TASK_RENDER_DIR || "work/owner-task-frame-render";
+if (!/^work\/owner-task-frame-[a-z0-9-]+$/i.test(output.replace(/\\/g, "/"))) {
+  throw new Error("Corrected frame output must use its separate work/owner-task-frame-* directory");
+}
+// Read the retained local build; never overwrite its earlier bounded evidence/assets.
+const assets = "work/owner-task-render/dist/assets";
 const scenes = ["draft", "review", "unknown"] as const;
 const sizes = [[1536, 770], [1366, 768], [1024, 768], [900, 1000], [390, 768]] as const;
 type Scene = typeof scenes[number];
@@ -112,13 +117,37 @@ const description = "Read the contact record and confirm the next internal task 
 const flush = async () => { for (let n = 0; n < 100; n++) await Promise.resolve(); };
 const controls = (host: Element, text: string) => [...host.querySelectorAll<HTMLButtonElement>("button")].filter(b => b.textContent?.trim() === text);
 const digest = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
+const sourcePaths = ["src/components/tenant-shell/TenantCommandCenterShell.tsx", "src/solo/SoloApp.tsx",
+  "src/solo/SoloScreenBoundary.tsx", "src/solo/solo-tokens.css", "src/solo/SoloPaigeWorkspace.tsx", "src/solo/settings.tsx",
+  "src/solo/settings-integrations.tsx", "src/solo/settings-automations.tsx", "src/solo/owner-task-automations.tsx",
+  "src/solo/data/useOwnerTaskAutomations.ts", "src/solo/data/ownerTaskAutomation.ts", "src/components/tenant-shell/tenant-command-center-shell.css",
+  "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css",
+  "src/solo/__render__/owner-task-automations.render.test.tsx",
+  "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2"];
+const sourceIdentity = () => sourcePaths.map(path => ({ path, sha256: digest(readFileSync(path)) }));
+
+function assertIncumbentFrame() {
+  const source = readFileSync("src/solo/SoloApp.tsx", "utf8");
+  const compact = (text: string) => text.replace(/\s+/g, "").replace(/'/g, '"');
+  // These are the exact current ancestors/styles. Fail if the real source moves;
+  // do not silently keep a convenient approximate shell around the native views.
+  for (const fragment of [
+    `<div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>`,
+    `<div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>`,
+    `<main key={route} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary`,
+    `const full=route==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';`,
+    `import { SoloScreenBoundary } from "./SoloScreenBoundary";`,
+    `import "./solo-tokens.css";`,
+    `settings:<SoloSettings openPaige={openPaige}/>`,
+  ]) expect(compact(source)).toContain(compact(fragment));
+}
 
 function compiledCss(): string {
   const files = readdirSync(assets).filter(f => f.endsWith(".css"));
   const picked = ["main-", "SoloEntry-", "PaigeAIChat-"].map(prefix => files.find(f => f.startsWith(prefix)));
   if (picked.some(f => !f)) throw new Error("Current build is missing a required shell/chat CSS bundle");
   return (picked as string[]).map(f => readFileSync(`${assets}/${f}`, "utf8")).join("\n") + "\n"
-    + ["src/components/tenant-shell/tenant-command-center-shell.css", "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css"]
+    + ["src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css", "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css"]
       .map(path => readFileSync(path, "utf8")).join("\n");
 }
 function page(html: string, css: string, theme: string): string {
@@ -152,10 +181,27 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
       root.render(<MemoryRouter initialEntries={["/solo/1234567/settings/integrations/automations"]}>
         <Routes><Route path="/solo/:account/*" element={<TenantCommandCenterShell accountName="Test services" accountType="standalone" userRole="admin" onSignOut={() => {}}
           soloPaigeWorkspace={<SoloPaigeWorkspace visible={open} />}>
-          <SoloSettings />
+          <div className="paige-solo" data-theme={theme} style={{ width: "100%", maxWidth: "none", height: "100%", minWidth: 0, minHeight: 0, alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+              <main key="settings" data-solo-screen-host style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>
+                <SoloScreenBoundary key={`${h.actor}:${h.tenant}:/solo/1234567/settings/integrations/automations`}>
+                  <SoloSettings />
+                </SoloScreenBoundary>
+              </main>
+            </div>
+          </div>
         </TenantCommandCenterShell>} /></Routes>
       </MemoryRouter>); await flush();
     });
+    const frame = host.querySelector<HTMLElement>(".paige-solo[data-theme]");
+    const screenHost = frame?.querySelector<HTMLElement>(":scope > div > main[data-solo-screen-host]");
+    expect(frame?.dataset.theme).toBe(theme);
+    expect(frame?.style.flexDirection).toBe("column");
+    expect(frame?.style.height).toBe("100%");
+    expect(screenHost).toBeTruthy();
+    expect(screenHost?.parentElement?.style.overflow).toBe("hidden");
+    expect(screenHost?.style.overflow).toBe("auto");
+    expect(screenHost?.style.minHeight).toBe("0px");
     expect(host.querySelector(".ss-content[data-settings-tab='integrations']")).toBeTruthy();
     expect(host.querySelector(".sa-owner-tasks")).toBeTruthy();
     expect(host.querySelector(".sa-owner-task-title")?.textContent).toBe(title);
@@ -197,7 +243,10 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
 
 describe("owner task full-shell rendered fixture", () => {
   it.skipIf(!existsSync(assets))("serializes actual draft/review/unknown trees with current styles and zero real effects", async () => {
+    assertIncumbentFrame();
+    const sources = sourceIdentity();
     mkdirSync(output, { recursive: true }); const css = compiledCss(); const records = [];
+    expect(css).toContain(readFileSync("src/solo/solo-tokens.css", "utf8"));
     expect(title.length).toBeLessThanOrEqual(500);
     for (const theme of ["light", "dark"] as const) for (const [width, height] of sizes) for (const open of [false, true]) for (const scene of scenes) {
       appendFileSync(`${output}/render-progress.jsonl`, JSON.stringify({ theme, width, height, open, scene, phase: "start" }) + "\n");
@@ -221,13 +270,12 @@ describe("owner task full-shell rendered fixture", () => {
         htmlSha256: digest(html), backendReads: captured.reads, simulatedControls: captured.simulatedControls, realEffects: captured.realEffects });
     }
     expect(reflowRecords).toHaveLength(4);
-    writeFileSync(`${output}/render-manifest.json`, JSON.stringify({ proofClass: "SYNTHETIC_RENDERED_FULL_SHELL",
-      components: ["TenantCommandCenterShell", "SoloPaigeWorkspace", "SoloSettings", "SoloIntegrationsView", "SoloAutomationsView", "OwnerTaskAutomations"],
-      sources: ["src/components/tenant-shell/TenantCommandCenterShell.tsx", "src/solo/SoloPaigeWorkspace.tsx", "src/solo/settings.tsx",
-        "src/solo/settings-integrations.tsx", "src/solo/settings-automations.tsx", "src/solo/owner-task-automations.tsx",
-        "src/solo/data/useOwnerTaskAutomations.ts", "src/solo/data/ownerTaskAutomation.ts", "src/components/tenant-shell/tenant-command-center-shell.css",
-        "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css",
-        "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2"].map(path => ({ path, sha256: digest(readFileSync(path)) })),
-      realOwnerTaskHookAndCaller: true, compiledCssSha256: digest(css), actualBrowserProof: "OWED_TO_CUA", authenticatedQa: "UNVERIFIED", records, reflowRecords }, null, 2));
+    expect(sourceIdentity()).toEqual(sources); // No mixed-source generation during parallel work.
+    writeFileSync(`${output}/render-manifest.json`, JSON.stringify({ proofClass: "SYNTHETIC_RENDERED_SOLO_APP_FRAME",
+      components: ["TenantCommandCenterShell", "SoloApp actual three-ancestor frame (not whole App authentication)", "SoloScreenBoundary", "SoloPaigeWorkspace", "SoloSettings", "SoloIntegrationsView", "SoloAutomationsView", "OwnerTaskAutomations"],
+      sources, retainedAssetDirectory: assets,
+      earlierEvidence: { path: "work/owner-task-render", retained: true,
+        boundary: "Earlier 64 renders omitted the SoloApp theme/flex/screen-host frame and are incomplete-frame evidence; no corrected-frame geometry claim is inherited." },
+      realOwnerTaskHookAndCaller: true, compiledCssSha256: digest(css), actualBrowserProof: "PENDING_ROOT_BROWSER_CAPTURE", authenticatedQa: "UNVERIFIED", records, reflowRecords }, null, 2));
   }, 180_000);
 });

@@ -460,7 +460,7 @@ export default function Messages() {
       {!blocked && (
         <form
           onSubmit={(e) => void submit(e)}
-          className="sticky bottom-0 -mx-1 mt-2 border-t border-border bg-background px-1 pb-1 pt-3 shadow-[0_2rem_0_0_hsl(var(--background))]"
+          className="sticky bottom-0 -mx-1 mt-2 border-t border-border bg-background px-1 pb-1 pt-3 shadow-[shadow:0_2rem_0_0_hsl(var(--background))]"
           aria-label={help ? "Send a help request" : "Send a message"}
         >
           <Label htmlFor="portal-message-body" className="sr-only">

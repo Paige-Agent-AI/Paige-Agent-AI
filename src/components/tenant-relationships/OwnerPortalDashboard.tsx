@@ -907,18 +907,6 @@ export function OwnerPortalDashboard({
                   </option>
                 ))}
               </select>
-              {selected && (
-                <div>
-                  <label htmlFor={`${id}-recipient`}>
-                    Invitation recipient
-                  </label>
-                  <input
-                    id={`${id}-recipient`}
-                    readOnly
-                    value={selected.email || "No email address saved"}
-                  />
-                </div>
-              )}
               {selected && invitationRows ? (
                 <PortalConfigurationGate tenantId={tenantId}>
                   <PortalInvitationManager

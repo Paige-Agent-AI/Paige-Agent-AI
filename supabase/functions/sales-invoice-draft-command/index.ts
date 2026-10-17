@@ -1,4 +1,4 @@
-import {aggregateInvoiceItems} from '../../../src/solo/sales/invoiceDraftSnapshot.ts';
+import {aggregateInvoiceItems} from '../_shared/sales-commercial/invoice-draft-snapshot.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import {confirmFingerprint} from '../_shared/confirm-fingerprint.ts';
 import {databaseAnswered} from '../_shared/approval-outcome.ts';

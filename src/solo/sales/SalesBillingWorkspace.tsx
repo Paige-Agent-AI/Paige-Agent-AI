@@ -4,7 +4,7 @@ import { useSalesInvoiceDrafts } from '../useSalesInvoiceDrafts';
 import { InvoiceDraftEditor, type InvoiceBrowseControls, type InvoiceCatalogChoice } from './InvoiceDraftEditor';
 import { useInvoiceBillingSources } from './useInvoiceBillingSources';
 import { useInvoiceCommercialTermsSources } from './useInvoiceCommercialTermsSources';
-import { snapshotEditInput, type InvoiceSnapshotInput } from './invoiceDraftSnapshot';
+import { snapshotEditInput, type InvoiceSnapshotInput } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 import type { InvoiceDraft, InvoiceDraftSaveRequest } from './invoiceDraftApi';
 import { useCatalogOffers } from '../useCatalogOffers';
 import { useSoloCommercialTerms } from '../useSoloCommercialTerms';

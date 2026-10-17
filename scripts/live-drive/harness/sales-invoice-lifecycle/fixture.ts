@@ -1,6 +1,6 @@
 // Local component/network fixtures only. They do not establish authenticated/provider capability.
 import {useState} from 'react';
-import {aggregateInvoiceItems,type InvoiceSnapshot} from '../../../../src/solo/sales/invoiceDraftSnapshot';
+import {aggregateInvoiceItems,type InvoiceSnapshot} from '../../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 import type {InvoiceDraftSaveRequest} from '../../../../src/solo/sales/invoiceDraftApi';
 const tenantId='11111111-1111-4111-8111-111111111111',clientId='33333333-3333-4333-8333-333333333333';
 const exactDeposit=new URLSearchParams(location.search).get('exact-deposit')==='true';

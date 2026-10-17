@@ -21,7 +21,7 @@ const runProof = (extra = '') => {
   return JSON.parse(result.split(/\r?\n/).findLast(line => line.startsWith('{"snapshot_roundtrip":'))).snapshot_roundtrip;
 };
 const payload = runProof();
-const source = readFileSync(new URL('../../src/solo/sales/invoiceDraftSnapshot.ts', import.meta.url),'utf8');
+const source = readFileSync(new URL('../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot.ts', import.meta.url),'utf8');
 const javascript = ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const api = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`);
 const decoded = api.normalizeInvoiceSnapshot(payload.row.billing_draft,payload.row.amount_total_cents);
@@ -41,11 +41,21 @@ CREATE TEMP TABLE snapshot_edit_result AS SELECT ${save} AS result;
 SELECT proof_assert((SELECT result FROM snapshot_edit_result)=${save},'actual client edit exact replay');
 SELECT jsonb_build_object('snapshot_roundtrip',jsonb_build_object('saved',(SELECT result FROM snapshot_edit_result),'listed',list_sales_billing_drafts('20000000-0000-0000-0000-000000000001')));`);
 const moduleURL = (name, replacements = {}) => {
-  let output = ts.transpileModule(readFileSync(new URL(`../../src/solo/sales/${name}.ts`,import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
-  for (const [key,url] of Object.entries(replacements)) output = output.replaceAll(`'./${key}'`,`'${url}'`).replaceAll(`"./${key}"`,`"${url}"`);
+  const modulePaths = {
+    invoiceDraftApi: '../../src/solo/sales/invoiceDraftApi.ts',
+    billingDrafts: '../../src/solo/sales/billingDrafts.ts',
+    invoiceDraftSnapshot: '../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot.ts',
+    conditions: '../../supabase/functions/_shared/sales-commercial/conditions.ts',
+    'terms-reference': '../../supabase/functions/_shared/sales-commercial/terms-reference.ts',
+    primitives: '../../supabase/functions/_shared/sales-collections/primitives.ts',
+  };
+  const path = modulePaths[name] ?? `../../src/solo/sales/${name}.ts`;
+  let output = ts.transpileModule(readFileSync(new URL(path,import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+  for (const [key,url] of Object.entries(replacements)) output = output.replaceAll(`'./${key}.ts'`,`'${url}'`).replaceAll(`'./${key}'`,`'${url}'`).replaceAll(`'../../../supabase/functions/_shared/sales-commercial/${key}'`,`'${url}'`);
   return `data:text/javascript;base64,${Buffer.from(output).toString('base64')}`;
 };
-const client = await import(moduleURL('invoiceDraftApi',{billingDrafts:moduleURL('billingDrafts'),invoiceDraftSnapshot:moduleURL('invoiceDraftSnapshot')}));
+const snapshotUrl = moduleURL('invoiceDraftSnapshot',{conditions:moduleURL('conditions'),'terms-reference':moduleURL('terms-reference',{primitives:moduleURL('primitives')})});
+const client = await import(moduleURL('invoiceDraftApi',{billingDrafts:moduleURL('billingDrafts'),invoiceDraftSnapshot:snapshotUrl}));
 const saved = await client.saveInvoiceDraft(async()=>({data:edited.saved,error:null}),{
   openedTenantId:'20000000-0000-0000-0000-000000000001',invoiceId:'60000000-0000-0000-0000-000000000077',expectedVersion:1,operationId:'70000000-0000-0000-0000-000000000080',draft,
 });

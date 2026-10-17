@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {InvoiceDraft,InvoiceDraftSaveRequest} from '../../../../src/solo/sales/invoiceDraftApi';
-import {aggregateInvoiceItems} from '../../../../src/solo/sales/invoiceDraftSnapshot';
+import {aggregateInvoiceItems} from '../../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 import {useSoloCommercialTerms} from './useSoloCommercialTerms-stub';
 import {useCatalogOffers} from './useCatalogOffers-stub';
 // Local network/auth fixture only; no production, provider or canonical account proof.

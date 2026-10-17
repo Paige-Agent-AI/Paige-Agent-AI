@@ -1,5 +1,5 @@
 import { billingDraftFailure, readBillingDraft, type BillingRpc, type DraftResult } from './billingDrafts';
-import { normalizeInvoiceSnapshot, type InvoiceSnapshot, type InvoiceSnapshotInput } from './invoiceDraftSnapshot';
+import { normalizeInvoiceSnapshot, type InvoiceSnapshot, type InvoiceSnapshotInput } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 
 export type InvoiceDraft = { id: string; tenantId: string; version: number; schemaVersion: 1 | 2 | 3; number: string; totalMinor: number; snapshot: InvoiceSnapshot };
 export type InvoiceDraftSaveRequest = { openedTenantId: string; invoiceId: string; expectedVersion: number; operationId: string; draft: InvoiceSnapshotInput };

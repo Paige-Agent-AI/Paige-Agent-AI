@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateInvoiceItems, normalizeInvoiceSnapshot, snapshotEditInput } from './invoiceDraftSnapshot';
-import type { InvoiceSnapshot } from './invoiceDraftSnapshot';
+import { aggregateInvoiceItems, normalizeInvoiceSnapshot, snapshotEditInput } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
+import type { InvoiceSnapshot } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 
 const client = '33333333-3333-4333-8333-333333333333';
 const item = { price_id: null, item: 'Setup', unit_minor: 999, quantity: 2, price_snapshot: null };

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { FileText, UserRound, Layers, Plus, X, CreditCard, Mail } from 'lucide-react';
 import type { ContactMethod } from '@/lib/contact-methods';
-import { aggregateInvoiceItems, type InvoiceAddress, type InvoiceSnapshotInput } from './invoiceDraftSnapshot';
+import { aggregateInvoiceItems, type InvoiceAddress, type InvoiceSnapshotInput } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 import { parseMinorAmount } from './billingAmounts';
 import './invoice-draft-editor.css';
 import { InvoiceCommercialConditions, commercialConditionsError } from './InvoiceCommercialConditions';

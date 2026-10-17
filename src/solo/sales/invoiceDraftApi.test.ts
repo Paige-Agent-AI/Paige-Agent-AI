@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { listInvoiceDrafts, readInvoiceDraft, saveInvoiceDraft } from './invoiceDraftApi';
-import { snapshotEditInput, type InvoiceSnapshot } from './invoiceDraftSnapshot';
+import { snapshotEditInput, type InvoiceSnapshot } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 const tenant='11111111-1111-4111-8111-111111111111', id='22222222-2222-4222-8222-222222222222', client='33333333-3333-4333-8333-333333333333';
 const snapshot: InvoiceSnapshot = {
   schema_version:2, client_id:client, items:[{price_id:null,item:'Service',unit_minor:999,quantity:2,price_snapshot:null}],

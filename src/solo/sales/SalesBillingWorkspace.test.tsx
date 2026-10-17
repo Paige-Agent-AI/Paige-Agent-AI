@@ -2,7 +2,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { SalesBillingWorkspace } from './SalesBillingWorkspace';
-import { normalizeInvoiceSnapshot } from './invoiceDraftSnapshot';
+import { normalizeInvoiceSnapshot } from '../../../supabase/functions/_shared/sales-commercial/invoice-draft-snapshot';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const h = vi.hoisted(() => ({ tenant: '11111111-1111-4111-8111-111111111111', phase: 'ready', save: vi.fn(), invoke:vi.fn(), rpc:vi.fn(), actor:'66666666-6666-4666-8666-666666666666', catalogOptions:vi.fn(), catalogRetry:vi.fn(), catalogMore:false, rows: [] as unknown[], offers: [] as unknown[], canManage: true, clients: [] as { id: string; name: string; primaryEmail?: string | null }[] }));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{invoke:h.invoke},auth:{getSession:async()=>({data:{session:{user:{id:h.actor}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}}}));

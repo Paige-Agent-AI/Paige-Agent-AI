@@ -7,9 +7,10 @@ import {useTenantContext} from '@/hooks/useTenantContext';
 import {useKnowledgeDocuments} from '@/hooks/useKnowledgeDocuments';
 import {useOwnerResourceShares} from '@/hooks/useOwnerResourceShares';
 import {useBeforeUnloadGuard} from '@/hooks/useBeforeUnloadGuard';
+import {useClientAccountExit} from '@/components/client/useClientAccountExit';
 import type {RelationshipPerson} from './useTenantRelationshipsData';
 
-export function OwnerCustomerResources({tenantId,person,onBack}:{tenantId:string;person:RelationshipPerson;onBack:()=>void}){
+export function OwnerCustomerResources({tenantId,person,onBack,onPendingChange}:{tenantId:string;person:RelationshipPerson;onBack:()=>void;onPendingChange?:(blocked:boolean)=>void}){
  const context=useTenantContext();
  const allowed=!context.accountContextLoading&&context.accountContextStatus==='ready'&&context.activeTenantId===tenantId&&!!context.activeUserId;
  const scope=allowed?{actor:context.activeUserId!,tenant:tenantId,contact:person.id}:null;
@@ -17,7 +18,10 @@ export function OwnerCustomerResources({tenantId,person,onBack}:{tenantId:string
  const [search,setSearch]=useState('');const heading=useRef<HTMLHeadingElement>(null),state=useRef<HTMLDivElement>(null);
  const entries=useRef(new Map<string,HTMLButtonElement>()),focus=useRef<string|null>(null),origin=useRef<string|null>(null);
  const busy=model.outcome==='saving',reviewing=['review','preparing','saving','unknown'].includes(model.outcome);
- useBeforeUnloadGuard(busy||model.outcome==='unknown');
+ const exitBlocked=busy||model.outcome==='unknown';
+ useBeforeUnloadGuard(exitBlocked);
+ useClientAccountExit(exitBlocked,exitBlocked);
+ useEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);
  useEffect(()=>{
   if(!focus.current||model.phase==='loading'||model.outcome==='preparing'||busy)return;
   const target=focus.current;focus.current=null;
@@ -28,11 +32,11 @@ export function OwnerCustomerResources({tenantId,person,onBack}:{tenantId:string
  const cancel=()=>{focus.current=origin.current??'list';model.cancel();};
  const proposal=model.proposal,docs=knowledge.docs.filter(doc=>doc.title.toLowerCase().includes(search.trim().toLowerCase()));
  return <section aria-labelledby="owner-customer-resources-title" className="min-w-0 space-y-6 [&_button]:min-h-[44px]">
-  <Button variant="ghost" disabled={busy} onClick={onBack}><ArrowLeft aria-hidden className="mr-2 h-4 w-4"/>Back to client access</Button>
+  <Button variant="ghost" disabled={exitBlocked} onClick={onBack}><ArrowLeft aria-hidden className="mr-2 h-4 w-4"/>Back to client access</Button>
   <header><h2 id="owner-customer-resources-title" ref={heading} tabIndex={-1} className="break-words text-2xl font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring">
    {model.outcome==='review'?(proposal?.available?'Review resource sharing':'Withdraw resource access'):'Customer resources'}</h2><p className="mt-2 break-words text-sm text-muted-foreground">{person.name}</p></header>
   {model.phase==='loading'?<div role="status" aria-label="Loading customer resources" className="space-y-4"><Skeleton className="h-16 w-full"/><Skeleton className="h-16 w-full"/></div>
-   :model.phase!=='ready'?<div ref={state} tabIndex={-1} role="alert" className="space-y-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"><p className="max-w-prose text-sm leading-6">{model.notice}</p><Button variant="outline" onClick={()=>void model.load()}>Check resource access</Button></div>
+   :model.phase!=='ready'?<div ref={state} tabIndex={-1} role="alert" className="space-y-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"><p className="max-w-prose text-sm leading-6">{model.notice}</p>{model.phase!=='unavailable'&&<Button variant="outline" onClick={()=>void model.load()}>Check resource access</Button>}</div>
    :<>
     {model.notice&&<div ref={state} tabIndex={-1} role={['unknown','conflict','refused'].includes(model.outcome)?'alert':'status'} className="space-y-3 outline-none focus-visible:ring-2 focus-visible:ring-ring"><p className="max-w-prose text-sm leading-6">{model.notice}</p>
      {model.outcome==='unknown'?<Button variant="outline" onClick={()=>{focus.current='status';void model.recover();}}>Check saved status</Button>

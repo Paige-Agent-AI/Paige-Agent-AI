@@ -160,6 +160,7 @@ export function OwnerPortalDashboard({
   const resourceBoundary = useRef({ tenantId });
   if (resourceBoundary.current.tenantId !== tenantId) resourceBoundary.current = { tenantId };
   const [resourceSelection, setResourceSelection] = useState<{ boundary: { tenantId: string }; id: string } | null>(null);
+  const [resourceExitBlocked, setResourceExitBlocked] = useState(false);
   const resourcePerson = resourceSelection?.boundary === resourceBoundary.current ? data.people.find(person => person.id === resourceSelection.id) : null;
   const resourceTriggers = useRef(new Map<string, HTMLButtonElement>());
   const resourceReturn = useRef<string | null>(null);
@@ -490,12 +491,14 @@ export function OwnerPortalDashboard({
             role="tab"
             aria-controls={`${id}-panel`}
             aria-selected={tab === label}
+            disabled={resourceExitBlocked && tab !== label}
             tabIndex={tab === label ? 0 : -1}
             ref={(node) => {
               tabRefs.current[index] = node;
             }}
             onClick={() => setTab(label)}
             onKeyDown={(e) => {
+              if (resourceExitBlocked) return;
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
                 return;
               e.preventDefault();
@@ -678,7 +681,7 @@ export function OwnerPortalDashboard({
         )}
         {tab === "Client access" && (
           resourcePerson ? <PortalConfigurationGate tenantId={tenantId}><OwnerCustomerResources key={`${tenantId}:${resourcePerson.id}`} tenantId={tenantId} person={resourcePerson}
-            onBack={() => { resourceReturn.current = resourcePerson.id; setResourceSelection(null); }}/></PortalConfigurationGate> : <>
+            onPendingChange={setResourceExitBlocked} onBack={() => { resourceReturn.current = resourcePerson.id; setResourceSelection(null); }}/></PortalConfigurationGate> : <>
             <div className="opd-page-heading">
               <h2>The right access, for each client.</h2>
               <p>

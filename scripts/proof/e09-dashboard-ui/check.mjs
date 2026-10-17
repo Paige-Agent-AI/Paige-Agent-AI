@@ -65,7 +65,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     assert.equal(await page.getByRole("button",{name:"Cancel",exact:true}).evaluate(node=>node===document.activeElement),true);
     if(width===390) await page.evaluate(()=>window.resourceProof.loseNextAcknowledgement());
     await share.click();
-    if(width===390){await page.getByRole("button",{name:"Check saved status",exact:true}).click();}
+    if(width===390){await page.getByRole("button",{name:"Check saved status",exact:true}).waitFor();assert(await page.getByRole("button",{name:"Back to client access",exact:true}).isDisabled());assert(await page.getByRole('tab',{name:'Overview',exact:true}).isDisabled());await page.getByRole("button",{name:"Check saved status",exact:true}).click();}
     await page.getByText("Resource shared with this customer.",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Reload resources",exact:true}).click();
     await page.getByRole("button",{name:"Withdraw access",exact:true}).click();
@@ -117,6 +117,11 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
   const name = `${width}-${height}-${open ? "open" : "closed"}-${theme}-${tenant}-${state}-${tab.replaceAll(" ", "-")}.png`;
   await page.screenshot({ path: path.join(output, name), fullPage: true });
   cases.push({ width, height, open, theme, tenant, state, tab, geometry, screenshot: name,...(resourcesOnly?{contrast:resourceContrast}:{}) });
+  if(resourcesOnly&&width===390){
+    await page.evaluate(()=>window.resourceProof.denyNextReadback());await page.getByRole('button',{name:'Share with customer',exact:true}).click();await page.getByText('Your permission to manage these resources changed. The earlier change may have been saved. An authorized owner must check its recorded status.',{exact:true}).waitFor();
+    assert(await page.getByRole('button',{name:'Back to client access',exact:true}).isEnabled());assert.equal(await page.getByRole('heading',{name:'Recorded sharing',exact:true}).count(),0);assert.equal(await page.getByRole('heading',{name:'Saved text preview',exact:true}).count(),0);assert(await page.getByRole('tab',{name:'Overview',exact:true}).isEnabled());
+    const accessLoss=`access-loss-${width}-${height}-${theme}.png`;await page.screenshot({path:path.join(output,accessLoss),fullPage:true});cases.at(-1).accessLoss={screenshot:accessLoss,outcome:'concealed-no-result-claim-safe-exit'};
+  }
   if (!assistantOnly && width === 1536 && !open && theme === "light" && state === "content" && tab === "Overview") {
     await page.getByRole("button", { name: "Preview portal", exact: true }).focus();
     await page.getByRole("button", { name: "Preview portal", exact: true }).click();

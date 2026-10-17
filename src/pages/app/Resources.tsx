@@ -59,9 +59,14 @@ export default function Resources(){
  const {user}=useOutletContext<{user?:{id:string}|null}>();
  const customer=useClientPortalFrame(user?.id??null,true,true),playbook=usePlaybook();
  if(!user?.id)return <p role="status">Checking your customer session…</p>;
- if(customer.checking||customer.phase==='loading')return <div role="status" aria-label="Checking resource access" className="space-y-4"><Skeleton className="h-12 w-full"/><Skeleton className="h-16 w-full"/></div>;
+ if(!customer.frame&&(customer.checking||customer.phase==='loading'))return <div role="status" aria-label="Checking resource access" className="space-y-4"><Skeleton className="h-12 w-full"/><Skeleton className="h-16 w-full"/></div>;
  if(customer.phase!=='ready'||!customer.frame)return <section className="space-y-4"><h1 className="text-2xl font-semibold">Resources</h1><p role="alert" className="text-sm">Your resource access could not be verified. Try again or contact your business.</p><Button variant="outline" onClick={()=>void customer.reload()}>Check access again</Button></section>;
  const frame=customer.frame;
  const configuredCourses=playbook.portal.modules.some(module=>module.key==='learn')&&!playbook.portal.modules.some(module=>module.key==='resources');
- return <CustomerResourcesView key={`${frame.actorId}:${frame.profile.tenant_id}:${frame.profile.id}`} frame={frame} configuredCourses={configuredCourses}/>;
+ return <>
+  {customer.checking&&<div role="status" aria-label="Checking resource access" className="space-y-4"><Skeleton className="h-12 w-full"/><Skeleton className="h-16 w-full"/></div>}
+  <div hidden={customer.checking} {...(customer.checking?{inert:''}:{})}>
+   <CustomerResourcesView key={`${frame.actorId}:${frame.profile.tenant_id}:${frame.profile.id}`} frame={frame} configuredCourses={configuredCourses}/>
+  </div>
+ </>;
 }

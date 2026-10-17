@@ -25,10 +25,10 @@ export function useCustomerResources(frame:ClientPortalFrame){
  const actions=useRef<{load:(append?:boolean)=>Promise<void>;open:(resource:CustomerResource,offset?:number)=>Promise<void>}|null>(null);
  useEffect(()=>{
   let alive=true,signedOut=false,request=0,offset=0;
-  let resources:CustomerResource[]=[];
+  let resources:CustomerResource[]=[],reading:{resource:CustomerResource;offset:number}|null=null;
   const current=(mine:number)=>alive&&!signedOut&&boundary.current===incarnation&&mine===request;
   const publish=(value:State)=>{if(alive&&boundary.current===incarnation)setState({boundary:incarnation,value});};
-  const retire=(phase:Phase,notice:string)=>{++request;offset=0;resources=[];publish({...initial(),phase,notice});};
+  const retire=(phase:Phase,notice:string)=>{++request;offset=0;resources=[];if(phase!=='loading')reading=null;publish({...initial(),phase,notice});};
   const verify=async(deadline:number)=>{
    const auth=await wait(supabase.auth.getUser(),deadline);
    if(auth.error||auth.data.user?.id!==incarnation.actor)throw new AccessFailure('Sign in with your invited customer account to continue.');
@@ -42,6 +42,7 @@ export function useCustomerResources(frame:ClientPortalFrame){
   };
   const load=async(append=false)=>{
    if(!alive||signedOut||boundary.current!==incarnation)return;
+   reading=null;
    const mine=++request,deadline=Date.now()+20_000,from=append?offset:0,previous=append?resources:[];
    publish(initial());
    try{
@@ -55,6 +56,7 @@ export function useCustomerResources(frame:ClientPortalFrame){
   };
   const open=async(resource:CustomerResource,from=0)=>{
    if(!alive||signedOut||boundary.current!==incarnation)return;
+   reading={resource,offset:from};
    const mine=++request,deadline=Date.now()+20_000;publish(initial());
    try{
     await verify(deadline);if(!current(mine))return;
@@ -71,10 +73,10 @@ export function useCustomerResources(frame:ClientPortalFrame){
    if(event==='SIGNED_OUT'||!session){signedOut=true;retire('signed_out','Sign in with your invited customer account to continue.');return;}
    if(session.user.id!==incarnation.actor){signedOut=true;retire('unavailable','Your customer session changed. Reopen the portal with your invited account.');return;}
    signedOut=false;retire('loading','');const scheduled=request;
-   queueMicrotask(()=>{if(current(scheduled))void load();});
+   queueMicrotask(()=>{if(current(scheduled)){if(reading)void open(reading.resource,reading.offset);else void load();}});
   });
-  const focus=()=>{if(alive&&!signedOut)void load();};window.addEventListener('focus',focus);void load();
-  return()=>{alive=false;++request;resources=[];subscription.unsubscribe();window.removeEventListener('focus',focus);};
+  const focus=()=>{if(alive&&!signedOut){if(reading)void open(reading.resource,reading.offset);else void load();}};window.addEventListener('focus',focus);void load();
+  return()=>{alive=false;++request;resources=[];reading=null;subscription.unsubscribe();window.removeEventListener('focus',focus);};
  },[incarnation]);
  const reload=useCallback(()=>actions.current?.load()??Promise.resolve(),[]);
  const loadMore=useCallback(()=>actions.current?.load(true)??Promise.resolve(),[]);

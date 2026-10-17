@@ -28,8 +28,10 @@ export function useOwnerResourceShares(scope:ResourceScope|null){
   if(!incarnation){publish({...initial(),phase:'unavailable',notice:'Select the current authorized business to manage resources.'});return()=>{alive=false;};}
   const verify=async(deadline:number)=>{
    const value=await wait(supabase.auth.getUser(),deadline);
-   if(value.error||value.data.user?.id!==incarnation.actor)throw new ResourceError('42501');
+   if(value.error)throw Error('Session could not be checked');
+   if(value.data.user?.id!==incarnation.actor)throw new ResourceError('42501');
   };
+  const lostAccess=()=>{retired=true;++request;pending=null;offset=0;publish({...initial(),phase:'unavailable',notice:'Your permission to manage these resources changed. The earlier change may have been saved. An authorized owner must check its recorded status.'});};
   const load=async(append=false)=>{
    if(!alive||retired||writing||pending||boundary.current!==incarnation)return;
    const mine=++request,deadline=Date.now()+20_000,from=append?offset:0,previous=append?model.rows:[];
@@ -83,7 +85,8 @@ export function useOwnerResourceShares(scope:ResourceScope|null){
     await reconcile(attempt,mine,deadline);
    }catch(error){if(current(mine)){
     const rejected=!received&&error instanceof ResourceError&&['42501','40001','22023'].includes(error.code);
-    if(!dispatched||rejected){pending=null;publish({...model,outcome:rejected&&error.code==='40001'?'conflict':'refused',proposal:null,notice:'The change was not accepted. Reload and review the current saved resource before trying again.'});}
+    if(received&&error instanceof ResourceError&&error.code==='42501')lostAccess();
+    else if(!dispatched||rejected){pending=null;publish({...model,outcome:rejected&&error.code==='40001'?'conflict':'refused',proposal:null,notice:'The change was not accepted. Reload and review the current saved resource before trying again.'});}
     else publish({...model,outcome:'unknown',notice:'The response was interrupted. This change may already be saved. Check its saved status before making another change.'});
    }}finally{writing=false;}
   };
@@ -91,7 +94,7 @@ export function useOwnerResourceShares(scope:ResourceScope|null){
    if(!alive||retired||writing||!pending||boundary.current!==incarnation)return;
    const attempt=pending,mine=++request,deadline=Date.now()+20_000;writing=true;publish({...model,outcome:'saving',notice:'Checking the saved operation…'});
    try{await verify(deadline);if(current(mine))await reconcile(attempt,mine,deadline);}
-   catch{if(current(mine))publish({...model,outcome:'unknown',notice:'Saved status is still unconfirmed. Check your connection and try the status check again.'});}
+   catch(error){if(current(mine)){if(error instanceof ResourceError&&error.code==='42501')lostAccess();else publish({...model,outcome:'unknown',notice:'Saved status is still unconfirmed. Check your connection and try the status check again.'});}}
    finally{writing=false;}
   };
   const cancel=()=>{if(!alive||retired||writing||pending||boundary.current!==incarnation)return;++request;publish({...model,outcome:'list',proposal:null,notice:''});};

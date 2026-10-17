@@ -11,8 +11,8 @@ const brand={tenant_id:tenant,tenant_name:`Test practice ${suffix==='1'?'A':'B'}
 const config={modules:[{key:'resources',visible:true,order:2}],assistant:{enabled:true}};
 const snapshot=()=>({actor_id:actor,profile:{id:contact,tenant_id:tenant,linked_user_id:actor,first_name:'Test',last_name:'Customer',entity_name:null,street_address:null,city:null,state:null,zip_code:null,onboarding_stage:'invited',is_signup_contact:false,paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,updated_at:null,email:user.email,phone:null,contact_methods:[]},brand,config});
 const source={share_id:share,share_revision:1,source_fingerprint:'a'.repeat(64),document_id:documentId,document_revision:3,generation_id:null,title,content:null,content_truncated:false};
-let available=true;
-Object.assign(window,{resourceProof:{withdraw:()=>{available=false;},restore:()=>{available=true;}}});
+let available=true;const reads:number[]=[];
+Object.assign(window,{resourceProof:{withdraw:()=>{available=false;},restore:()=>{available=true;},reads:()=>reads.slice()}});
 export const supabase={auth:{getSession:async()=>({data:{session},error:null}),getUser:async()=>({data:{user},error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
  rpc:async(name:string,args:Record<string,unknown>={})=>{
   if(name==='client_portal_frame')return {data:snapshot(),error:null};
@@ -21,6 +21,7 @@ export const supabase={auth:{getSession:async()=>({data:{session},error:null}),g
   if(name==='client_portal_knowledge_document'){
    if(!available)return {data:null,error:{code:'42501'}};
    const offset=Number(args.p_offset),next=Math.min(offset+12000,points.length);
+   reads.push(offset);
    return {data:{actor_id:actor,tenant_id:tenant,contact_id:contact,source_ref:{share_id:share,share_revision:1,source_fingerprint:'a'.repeat(64)},document:{id:documentId,revision:3,generation_id:null,title},content:points.slice(offset,next).join(''),offset,next_offset:next,total_characters:points.length,has_more:next<points.length},error:null};
   }
   throw Error('Offline source proof refuses unlisted RPC: '+name);

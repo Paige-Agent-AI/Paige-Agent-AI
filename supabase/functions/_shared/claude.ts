@@ -294,6 +294,8 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
     model,
     max_tokens: opts.maxTokens ?? 2048,
     messages: opts.messages,
+    // Match the existing streamed path's automatic caching; omitted TTL keeps the default 5m.
+    cache_control: { type: "ephemeral" },
   };
   if (opts.system) body.system = opts.system;
   if (opts.temperature != null && !modelRejectsSampling(model)) body.temperature = opts.temperature;

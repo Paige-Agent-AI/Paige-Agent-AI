@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AlertTriangle, Check, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { OwnerTaskAutomations } from "./owner-task-automations";
 import {
   outcomeLabel,
   useSoloAutomations,
@@ -62,6 +63,11 @@ function usePipelineHref(): string | null {
 }
 
 export function SoloAutomationsView() {
+  return <div className="sa-root"><OwnerTaskAutomations /><PipelineAutomationsView /></div>;
+}
+
+/** Pipeline message rules keep their own read/error state and off-only controls. */
+function PipelineAutomationsView() {
   const a = useSoloAutomations();
   const pipelineHref = usePipelineHref();
   const [editing, setEditing] = useState<AutomationRule | "new" | null>(null);

@@ -38,6 +38,12 @@ vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: context.tenantId, loading: context.loading }),
 }));
 
+// Existing pipeline-rule tests isolate the separately tested native-task leaf.
+// Its customer controls and authority fences have their own actual-component suites.
+vi.mock("./owner-task-automations", () => ({
+  OwnerTaskAutomations: () => <section aria-label="Contact task controls">Contact task controls</section>,
+}));
+
 vi.mock("@/integrations/supabase/client", () => {
   const rowsFor = (table: string) =>
     table === "stage_automation_rules" ? db.rules
@@ -112,6 +118,22 @@ beforeEach(() => {
 });
 
 describe("Automations sub-tab routing (owned locally by Integrations)", () => {
+  it("keeps contact task controls reachable when the pipeline reader fails", async () => {
+    db.failTable = "stage_automation_rules";
+    const { host } = await render(`${BASE}/automations`);
+    expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
+    expect(host.textContent).toContain("Couldn’t check your automations");
+    expect(db.writes).toHaveLength(0);
+  });
+
+  it("keeps contact task controls reachable while pipeline reads are pending", async () => {
+    db.holdReads = true;
+    const { host } = await render(`${BASE}/automations`);
+    expect(host.querySelector('[aria-label="Contact task controls"]')).toBeTruthy();
+    expect(host.textContent).toContain("Checking what is set up");
+    expect(db.writes).toHaveLength(0);
+  });
+
   it("shows the provider catalogue at the Integrations root", async () => {
     const { host } = await render(BASE);
     const selected = host.querySelector('[role="tab"][aria-selected="true"]');

@@ -1,5 +1,31 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## Owner full-completion resumption — 2026-10-14
+
+The owner requires all ten customer capabilities, including public-only PC-1 consumption, through independently reviewed release and protected authenticated acceptance. One bounded correction and one non-author final review are authorized for Back history, current-authority historical source access and ordinary Work draft loss; a new material final-review finding stops the affected release. Earlier repair-authorization holds are superseded at this scope. Recurring/real-obligation/PC-1 effect activation remains separately owner-approved.
+
+Stage A pre-edit gate, base5c90859ac1d4fe560200069c5a783e90fb21be19:
+1. Preserve the owner's draft and browser history, and inspect an exact historical Planning source under current lawful access; completing a check never completes work.
+2. E5 owns the three supplied repairs and the end-to-end customer integration. The owner's later October14 instruction retires older shared agents and directs this session to work without other agents. Preserve incumbent source contracts and concurrent Journey changes; do not make completion depend on retired lanes.
+3. REUSE Harness A/B/C authority, context, claims and receipt/reconciliation; this correction creates no kernel or executor. E/F continuity remains canonical, G protected QA unexecuted.
+4. REUSE automations.weekly_commitment_status/get_weekly_commitment_checks and existing Planning record contracts. No new Spine verb or admission.
+5. Provider/integration changes NONE in this correction. E5 will extend the existing PC-1 customer interface and runtime contracts directly; no external call or activation is performed here.
+6. No mutation verb, confirmation, budget, permission or autonomy-lane change. Existing manual Work confirmation and CAS remain intact.
+7. No durable job, scheduler, event producer or cron change. Reuse existing scoped ephemeral editor presentation only.
+8. REUSE existing Work readback/version and weekly event/act/receipt evidence; no optimistic save, unknown replay or new ledger.
+9. REPAIR operations.department and weekly consumer behavior; paige.workspace stays PARTIAL, Calendar's separate binding limitations unchanged. No LIVE promotion without customer proof.
+10. Focused failing-first history/retention/current-RLS tests, existing negative scope tests, rendered interaction proof, one independent final review, exact-head CI and dark release/readback; authenticated acceptance stays UNVERIFIED until Stage E.
+
+Earlier handoff requests ANT-6 comment42ec066d and ANT-55 bc733d83 are superseded as completion dependencies by the owner's no-other-agents instruction. This E5 session owns the integration directly. Existing customer matrix and Master Register remain the completion baseline; no replacement tracker. Independent non-author release evidence is still required; this session cannot certify its own changes as independently reviewed and has not consumed the authorized final review.
+
+### Bounded corrective source and proof
+
+Source `0f1941f6efd307914b03b715d2de4d94d26f1401`, based on main `5c90859ac1d4fe560200069c5a783e90fb21be19`, repairs the three authorized findings. Rejected indexed Back/Forward transitions return to the accepted router position instead of overwriting the popped destination. Ordinary dirty/interrupted Work intent reuses the existing actor/tenant/item-scoped ephemeral presentation and original CAS version; unknown submissions are not replayed. Historical Planning links use current caller RLS and retain exact tenant/item/session/membership/epoch fences rather than requiring old personal-assignment eligibility.
+
+Failing-first proof reproduced all three findings. Final product-source rerun passed34/34 across4 changed suites. The affected suite passed590/590 before adding the actual BrowserRouter proof; the expanded Route suite separately passed6/6, including Browser history indexes0→1→0 and preserved Back/Forward destinations. The existing Calendar assertions are unchanged: the tests wait for Radix's asynchronous close-autofocus callback. Types ratchet passes baseline10/current10, scoped ESLint and production build pass. A sandbox module-cache EPERM attempt executed zero tests, followed by the authorized unsandboxed34/34 run. Hosted exact-head CI, independent final review and guarded release remain pending; local focus synchronization does not prove the former hosted failure is resolved.
+
+The [accessible corrective rendered review](../evidence/experience-05-correctness-review/owner-rendered-review.md) shows actual React Calendar/Chat/Work components with synthetic transport, no records or effects. Ordinary blocked draft survives Calendar departure and Work return; mobile Escape restores `.sc-board` focus. Original QA and E5-CV1–9 remain NOT_RUN. PC-1 acceptance is additive to those cases; none of the ten customer outcomes is authenticated or accepted here.
+
 ## Resumed connected customer development — owner direction, 2026-10-13
 
 The owner accepted the matrix and delegated ordinary customer-interface engineering and inert, safely gated release preparation. This supersedes intermediate prototype/design approval pauses in earlier dated entries. The finished Chat/Calendar design, permission boundaries, protected fixture plan and activation proposal still require the owner's ruling before the first live recurring execution. Recurrence, weekly Chat/Live admission, provider effects and genuine authenticated acceptance remain separate gates.

@@ -21,16 +21,16 @@ const linkedDrafts = new Map<string, RetainedDraft>();
 
 /** Manual edits of existing work. No dispatch, approval bypass or alternate record store. */
 export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh, sourceError, proposedStage,
-  onNavigationGuardChange, retainDraftOnLeave = false }: {
+  onNavigationGuardChange }: {
   item: PlanItem; actorId: string; tenantId: string; members: TeamMemberRecord[];
   refresh: () => Promise<void>; sourceError: boolean;
   proposedStage?: PlanItemStatus;
   onNavigationGuardChange?: (guard: (() => string | null) | null) => void;
+  /** Compatibility with existing callers; every guarded draft now survives departure. */
   retainDraftOnLeave?: boolean;
 }) {
   const draftKey = `${actorId}:${tenantId}:${item.id}`;
   const retained = useRef(linkedDrafts.get(draftKey)).current;
-  const keepLinkedDraft = retainDraftOnLeave || Boolean(retained);
   const [staff, setStaff] = useState<boolean | null>(null);
   const [status, setStatus] = useState<PlanItemStatus>(retained?.status ?? (proposedStage && STATUSES.includes(proposedStage) ? proposedStage : item.status));
   const [due, setDue] = useState(retained?.due ?? "");
@@ -95,11 +95,12 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     return () => onNavigationGuardChange?.(null);
   }, [onNavigationGuardChange]);
   useLayoutEffect(() => {
-    if (!keepLinkedDraft) return;
+    // Reuse the same scoped ephemeral presentation for ordinary and linked work.
+    // Shell navigation may unmount before a route guard can run; it must not erase intent.
     if (navigationReason) linkedDrafts.set(draftKey, { status, due, assignee, priority, phase, message,
       version: draftVersion.current, submittedUpdate: submittedUpdate.current });
     else linkedDrafts.delete(draftKey);
-  }, [keepLinkedDraft, draftKey, navigationReason, status, due, assignee, priority, phase, message]);
+  }, [draftKey, navigationReason, status, due, assignee, priority, phase, message]);
   async function save() {
     if (busy || staff === null || !canStatus || !changed || item.tenant_id !== tenantId) return;
     const update: WorkUpdate = {};

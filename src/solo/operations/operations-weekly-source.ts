@@ -20,7 +20,7 @@ const nullableString = (value: unknown): value is string | null => value === nul
 const nullableUuid = (value: unknown) => value === null || uuid(value);
 const nullableInstant = (value: unknown) => value === null || (typeof value === "string" && Number.isFinite(Date.parse(value)));
 
-/** Caller-RLS point read of existing personal Planning work, not a second list or resolver authority. */
+/** Caller-RLS point read of the exact historical Planning source under current authority. */
 export async function readWeeklyPlanningSource(scope: { actorId: string; tenantId: string; itemId: string },
   isCurrent: () => boolean): Promise<WeeklyPlanningRead> {
   const unavailable: WeeklyPlanningRead = { kind: "unavailable" };
@@ -35,8 +35,7 @@ export async function readWeeklyPlanningSource(scope: { actorId: string; tenantI
     if (!matches() || memberBefore.error || memberBefore.data !== true) return unavailable;
     const read = await supabase.from("plan_items")
       .select("id,tenant_id,plan_id,item_type,assigned_to_user_id,contact_id,title,summary,status,priority,due_at,remind_at,remind_target,reminded_at,created_by,linked_action_id,updated_at")
-      .eq("tenant_id", scope.tenantId).eq("id", scope.itemId)
-      .or(`created_by.eq.${scope.actorId},assigned_to_user_id.eq.${scope.actorId}`).maybeSingle();
+      .eq("tenant_id", scope.tenantId).eq("id", scope.itemId).maybeSingle();
     if (!matches() || read.error || !read.data) return unavailable;
     const tenantAfter = await supabase.rpc("current_user_tenant_id");
     if (!matches() || tenantAfter.error || tenantAfter.data !== scope.tenantId) return unavailable;
@@ -46,7 +45,6 @@ export async function readWeeklyPlanningSource(scope: { actorId: string; tenantI
     if (!matches() || after.error || after.data.session?.user.id !== scope.actorId) return unavailable;
     const row = read.data;
     if (row.id !== scope.itemId || row.tenant_id !== scope.tenantId
-      || (row.created_by !== scope.actorId && row.assigned_to_user_id !== scope.actorId)
       || typeof row.title !== "string" || !nullableString(row.summary) || !nullableUuid(row.plan_id)
       || !nullableUuid(row.assigned_to_user_id) || !nullableUuid(row.created_by) || !nullableUuid(row.contact_id)
       || !nullableUuid(row.linked_action_id) || !nullableString(row.remind_target)

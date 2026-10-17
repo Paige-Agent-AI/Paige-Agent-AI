@@ -8,9 +8,11 @@ vi.mock("./operations-work-update", () => ({ submitOperationsWorkUpdate: mock.su
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 let container: HTMLDivElement;
 let root: Root;
+let fixtureSequence = 0;
 const item = { id: "item-a", tenant_id: "tenant-a", status: "open", created_by: "creator", assigned_to_user_id: "assignee", due_at: null, updated_at: "2026-10-10T12:00:00Z" } as PlanItem;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-beforeEach(() => { vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
+beforeEach(() => { item.id = `work-fixture-${++fixtureSequence}`;
+  vi.resetAllMocks(); mock.rpc.mockResolvedValue({ data: false, error: null });
   container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 async function render(value = item, actorId = "assignee", refresh = vi.fn().mockResolvedValue(undefined)) {
@@ -135,6 +137,42 @@ it("retains a linked dirty draft across route unmount without borrowing a newer 
   expect(container.querySelector("select")?.value).toBe("done");
   mock.submit.mockResolvedValue({ kind: "refused", message: "Stale edit refused" }); await save();
   expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { status: "done" });
+});
+
+it("retains ordinary dirty work after shell departure with its original CAS version", async () => {
+  const original = { ...item, id: "ordinary-dirty-retention", updated_at: "2026-10-10T12:00:00.123456Z" };
+  await render(original); await status("done");
+  await act(async () => root.render(<div />));
+  await render({ ...original, status: "in_progress", updated_at: "2026-10-10T12:01:00.123456Z" });
+  expect(container.querySelector("select")?.value).toBe("done");
+  mock.submit.mockResolvedValue({ kind: "refused", message: "Stale edit refused" });
+  await save();
+  expect(mock.submit).toHaveBeenCalledWith(expect.objectContaining({ expectedUpdatedAt: original.updated_at }), { status: "done" });
+});
+
+it("keeps an ordinary interrupted submission unknown after remount without replay", async () => {
+  const original = { ...item, id: "ordinary-uncertain-retention" };
+  const refresh = vi.fn(); let resolve: (value: { kind: "acknowledged" }) => void = () => {};
+  mock.submit.mockImplementation(() => new Promise(done => { resolve = done; }));
+  await render(original, "assignee", refresh); await status("done"); await save();
+  await act(async () => root.render(<div />));
+  await render(original, "assignee", refresh); await act(async () => resolve({ kind: "acknowledged" }));
+  expect(mock.submit).toHaveBeenCalledOnce(); expect(refresh).not.toHaveBeenCalled();
+  expect(container.textContent).toContain("earlier change is unconfirmed");
+  expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+  expect(container.textContent).not.toContain("Saved and confirmed");
+});
+
+it("never lends retained ordinary intent to another actor or tenant", async () => {
+  const original = { ...item, id: "ordinary-scope-retention" };
+  await render(original); await status("done"); await act(async () => root.render(<div />));
+  await render(original, "creator"); expect(container.querySelector("select")?.value).toBe("open");
+  await act(async () => root.render(<div />));
+  await act(async () => root.render(<OperationsWorkEditor item={{ ...original, tenant_id: "tenant-b" }} actorId="assignee"
+    tenantId="tenant-b" members={[]} refresh={vi.fn()} sourceError={false} />));
+  expect(container.querySelector("select")?.value).toBe("open"); expect(mock.submit).not.toHaveBeenCalled();
+  await act(async () => root.render(<div />)); await render(original);
+  expect(container.querySelector("select")?.value).toBe("done");
 });
 it("retains interrupted submission as unknown and does not replay it when the linked editor returns", async () => {
   const original = { ...item, id: "linked-uncertain-retention" };

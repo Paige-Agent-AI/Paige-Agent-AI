@@ -1253,12 +1253,15 @@ serve(async (req) => {
         validatedData.sessionMessages?.length || validatedData.liveRuntimeChallenge ||
         validatedData.businessMissionId || validatedData.canvasArtifact || validatedData.resume ||
         validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length) {
-        return new Response(JSON.stringify({code:"CUSTOMER_CHAT_UNAVAILABLE", message_accepted:false}),
+        return new Response(JSON.stringify({code:"CUSTOMER_CHAT_UNAVAILABLE", message_accepted:false,
+          reason:"Your customer conversation isn’t available right now.",
+          recommendation:"Try again, or contact the business through Support if this continues."}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
       }
       const bound = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:validatedData.threadId});
       if (bound.error || bound.data !== true) return new Response(JSON.stringify({
-        code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false}),
+        code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false,
+        reason:"Your customer access changed.",recommendation:"Reopen the portal to check your access."}),
         {status:409,headers:{...corsHeaders,"Content-Type":"application/json"}});
       // Browser system blocks and prior messages are never customer prompt authority.
       // The interactive contract below hydrates canonical, issued private history.

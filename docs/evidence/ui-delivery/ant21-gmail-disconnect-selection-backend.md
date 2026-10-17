@@ -39,7 +39,7 @@ RELEASE_CLASSIFICATION: patch: repair existing exact Gmail disconnect selection 
 CUSTOMER_RELEASE_IDENTITY: none: no customer completion or owner acceptance is asserted.
 RELEASE_NOTE_REQUIRED: no: technical restoration increment awaiting lead-owned release and separate frontend delivery.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source and protected fixtures are not deployed source, real canonical disconnect receipts, Google revocation or authenticated product completion.
-RELEASE_RECOVERY: position=retain the existing native record/credential/audit contract and use a reviewed forward correction; unconfirmed effects require inspection, not replay; reference=ant21-gmail-workspace-authority.md and native200000.
+RELEASE_RECOVERY: position=retain the existing native record/credential/audit contract and use a reviewed forward correction, inspecting unconfirmed effects without replay; reference=ant21-gmail-workspace-authority.md and native200000.
 
 ## Pre-edit routing and cross-version delivery — 2026-10-17
 
@@ -67,3 +67,5 @@ Fresh regression command: bundled Node24.19 invokes `node_modules/vitest/vitest.
 The reviewed endpoint/test blobs are copied exactly from7fc; their original pre-repair endpoint is also byte-identical between9413 and this8ff base, so the retained original82 PASS/2 FAIL source characterization remains applicable without claiming it was rerun. Callback source and tests remain byte-identical to8ff. This candidate changes no caller, SQL, native200000, role, provider, CI/workflow, Portal or protected source-pin file. Hosted checks, deployment, full Deno graph, native database concurrency/provider results and ordinary authenticated acceptance remain UNVERIFIED.
 
 Fresh static commands: bundled Node invokes existing `node_modules/eslint/bin/eslint.js supabase/functions/gmail-disconnect/index.ts src/lib/gmail-workspace-authority.contract.test.ts --max-warnings=0` and `scripts/ci/check-source-utf8.mjs` on those same files; both exit0. `git diff --check` passes. Git source blobs are endpoint `48b8ab329c431db530cfeaf935316653fa880533` and actual-handler test `f2d5b5b77830283397aafbda7b6ca36b594074f5`. No local Deno graph execution is claimed. The unchanged delivery-evidence guard runs on the frozen candidate with the declared backend-visible-flow trailer; its actual result is supplied in the lead's review packet.
+
+The first frozen delivery-evidence run failed solely because this record placed an extra semicolon-delimited sentence between the required recovery position and reference fields. That FAIL is retained in `work/gmail-disconnect-backend/ui-evidence-before.log`; the successor corrects the record grammar without modifying the guard, runtime or tests. This documentation-only successor reuses the byte-identical130-case source proof.

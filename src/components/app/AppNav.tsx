@@ -370,7 +370,7 @@ export function AppNav({ user }: AppNavProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs max-w-[220px]"
+            className="text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs max-w-[220px]"
             onClick={() => navigate("/app/messages")}
             aria-label={businessName ? `Message ${businessName}` : "Message your team"}
           >

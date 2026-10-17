@@ -135,8 +135,8 @@ function PendingBubble({
         </span>
       ) : (
         <div role="alert" className="mt-1.5 flex max-w-[85%] flex-col items-end gap-1.5 text-right">
-          <p className="inline-flex items-start gap-1.5 text-xs text-destructive">
-            <AlertCircle aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" />
+          <p className="text-xs text-foreground">
+            <AlertCircle aria-hidden="true" className="mr-1 inline h-3.5 w-3.5 -translate-y-px align-middle text-destructive" />
             {failed
               ? portalSendFailureCopy(entry.error)
               : "We couldn't confirm this was sent. Retrying won't send it twice."}
@@ -200,7 +200,7 @@ export default function Messages() {
   const setText = (value: string) => setDraft((prev) => ({
     epoch: thread.scopeEpoch,
     text: value,
-    help: prev.epoch === thread.scopeEpoch && prev.help && value.trim().length > 0,
+    help: value.trim().length > 0 && (help || (prev.epoch === thread.scopeEpoch && prev.help)),
   }));
   const [sending, setSending] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -240,6 +240,9 @@ export default function Messages() {
   const newest = thread.messages.length ? thread.messages[thread.messages.length - 1] : null;
   const newestId = newest?.id ?? null;
   const outboxCount = thread.outbox.length;
+  // A pending send that turns into a failure grows (its Retry row appears): follow that growth too.
+  const outboxShape = thread.outbox.map((o) => o.status).join(",");
+  const lastOutboxShape = useRef(outboxShape);
   useEffect(() => {
     // A new signed-in identity is a new conversation: its first load is a first load again, not
     // "new messages" to announce, and no scroll anchor from the old thread carries over.
@@ -254,6 +257,8 @@ export default function Messages() {
     const initial = !settled.current;
     if (!thread.loading) settled.current = true;
     const ownSend = outboxCount > lastOutbox.current;
+    const outboxGrew = outboxShape !== lastOutboxShape.current;
+    lastOutboxShape.current = outboxShape;
     lastSeen.current = newestId;
     lastOutbox.current = outboxCount;
     if (anchor.current) {
@@ -267,11 +272,11 @@ export default function Messages() {
     }
     const firstLoad = appended && initial;
     const followMine = appended && newest?.author === "customer";
-    if (ownSend || firstLoad || followMine || (appended && nearBottom.current)) {
+    if (ownSend || firstLoad || followMine || ((appended || outboxGrew) && nearBottom.current)) {
       end.current?.scrollIntoView?.({ block: "end" });
       nearBottom.current = true;
     }
-  }, [newestId, newest, outboxCount, businessName, thread.loading, thread.scopeEpoch]);
+  }, [newestId, newest, outboxCount, outboxShape, businessName, thread.loading, thread.scopeEpoch]);
 
   const length = portalBodyLength(text);
   const tooLong = length > PORTAL_MESSAGE_MAX;
@@ -342,6 +347,7 @@ export default function Messages() {
         {help && (
           <Link
             to="/app/messages"
+            replace
             className="mb-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-0"
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" /> All messages
@@ -394,7 +400,7 @@ export default function Messages() {
           </p>
         </div>
       ) : !showThread ? (
-        <ThreadSkeleton />
+        <div className="flex-1"><ThreadSkeleton /></div>
       ) : (
         <div className="flex flex-1 flex-col">
           {thread.hasMore && (
@@ -448,14 +454,13 @@ export default function Messages() {
             </div>
           )}
           <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
-          <div ref={end} />
         </div>
       )}
 
       {!blocked && (
         <form
           onSubmit={(e) => void submit(e)}
-          className="sticky bottom-0 -mx-1 mt-2 border-t border-border bg-background px-1 pb-1 pt-3"
+          className="sticky bottom-0 -mx-1 mt-2 border-t border-border bg-background px-1 pb-1 pt-3 shadow-[0_2rem_0_0_hsl(var(--background))]"
           aria-label={help ? "Send a help request" : "Send a message"}
         >
           <Label htmlFor="portal-message-body" className="sr-only">
@@ -483,7 +488,7 @@ export default function Messages() {
               disabled={!canSend}
               style={accentStyle}
               aria-label={help ? "Send request" : "Send message"}
-              className="shrink-0"
+              className={accentStyle ? "shrink-0 dark:ring-1 dark:ring-foreground/30" : "shrink-0"}
             >
               {sending ? (
                 <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" />
@@ -502,6 +507,9 @@ export default function Messages() {
           </p>
         </form>
       )}
+      {/* The end of the conversation sits BELOW the sticky composer, so scrolling it into view brings
+          the newest message (and any Retry) out from under the composer instead of behind it. */}
+      <div ref={end} aria-hidden="true" />
     </section>
   );
 }

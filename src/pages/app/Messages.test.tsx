@@ -340,3 +340,19 @@ it("treats a new signed-in identity as a first load: nothing announced, scrolled
   expect(scroll).toHaveBeenCalled();
   Element.prototype.scrollIntoView = original;
 });
+
+it("going from Contact your team to all messages keeps the page and never asks to discard", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  f.state.outbox = [{ localId: "h1", requestId: "r1", body: "Login broken", kind: "help", status: "failed", error: "REQUEST_ID_CONFLICT" }];
+  await render("/app/messages?topic=help");
+  await type("Also the invoice link");
+  const back = Array.from(host.querySelectorAll("a")).find(a => a.textContent?.includes("All messages"))!;
+  await act(async () => back.click());
+  expect(confirm).not.toHaveBeenCalled();
+  expect(host.querySelector("h1")?.textContent).toBe("Messages");
+  // The help text typed before switching is still a help request.
+  expect(host.textContent).toContain("This goes to Northwind Studio as a help request.");
+  f.state.outbox = [];
+  await act(async () => button("Send message").click());
+  expect(f.state.send).toHaveBeenCalledWith("Also the invoice link", "help");
+});

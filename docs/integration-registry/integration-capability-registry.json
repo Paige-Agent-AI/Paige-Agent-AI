@@ -1869,12 +1869,12 @@
         {
           "path": "supabase/functions/_shared/elevenlabs.ts",
           "role": "provider_adapter",
-          "note": "Exact Jessica/v3 guards; Live dialogue WSS requires explicit scoped default-retention policy, cancellable PCM and terminal marker. HTTP read-aloud transport unchanged; missing key refuses."
+          "note": "Exact Jessica/v3 guards; Live dialogue WSS retains scoped default-retention policy, cancellable PCM and terminal marker. E01 development extends the existing HTTP message seam to cancellable MPEG streaming with unchanged profile/model/retention; mocked proof only, not provider acceptance."
         },
         {
           "path": "supabase/functions/paige-tts/index.ts",
           "role": "provider_adapter",
-          "note": "Existing profile-resolved read-aloud seam; active profile remains OpenAI and no ElevenLabs playback is activated by the Jessica candidate correction."
+          "note": "Existing profile-resolved read-aloud seam; October16 production metadata selects approved active elevenlabs-jessica-r1, not the earlier OpenAI snapshot. E01 local stream delivery retains canonical reserve/settle/refusal, complete-only tenant cache and incumbent usage-stage measurements. No activation, provider audition or authenticated latency proof."
         },
         {
           "path": "supabase/functions/_shared/operator-storage-retirement.ts",

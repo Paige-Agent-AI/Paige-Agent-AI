@@ -309,6 +309,10 @@ not re-propose it.)* Module header `_shared/twilio.ts:24-35` states the model ex
 
 ## Voice / TTS / STT — Paige Voice Profile
 
+**2026-10-16 E01 streaming development:** existing HTTP read-aloud adapter/handler now have local first-byte delivery, original-request cancellation, complete-only cache and stage durations on incumbent usage records; model, approved voice, retention, budgets and Live dialogue transport remain unchanged. Provider-neutral56 checks and real Deno graph pass; production provider latency, activated transport and ordinary-customer acceptance are not established by this candidate. Cache remains provider:model:voice:text under existing tenant prefix, with revision attribution in cost/usage.
+
+**2026-10-16 E01 read-only production metadata:** active slot remains ElevenLabs revision `elevenlabs-jessica-r1`, approved/active/status approved. The separate `elevenlabs-jessica-take5-r1` candidate remains unapproved/inactive/pending-provider-proof. No profile, credential, readiness, routing or budget was changed. This supersedes the earlier activation snapshot below; it does not establish current provider latency, consented Live acceptance or full readiness. Local progressive message playback is unreleased and retains this existing server selection.
+
 **2026-09-08 full-audio continuation (development):** owner authority now permits existing-account
 inspection and server-only use of the existing credential, not purchase/upgrade or legal acceptance.
 The existing `paige-voice-profile-admin` gains `inspect-configured-account`: platform-owner JWT
@@ -331,12 +335,12 @@ voice reference. Profile rows carry an immutable revision, approval/effective me
 speech policy, and operator audit trail; a new session resolves the current revision while an active
 session retains its snapshot. Customer UI shows only Paige.
 
-The requested ElevenLabs reference is stored only in the service-owned profile table as a pending,
+Historical activation snapshot (2026-09-07; superseded above): the requested ElevenLabs reference was stored only in the service-owned profile table as a pending,
 inactive candidate. The separately approved OpenAI fallback is the initial active profile. Neither
 provider reference is a client setting, prompt value, or request override. Missing/deleted/
 unauthorized profiles fail closed unless a separately approved fallback resolves.
 
-**Provider-backed realtime audio: `PROOF OWED`.** The production readiness record is deliberately
+**Historical readiness snapshot (2026-09-08): `PROOF OWED`.** At that read the production readiness record was deliberately
 transport-disabled until an authorized operator independently verifies the existing account's
 minimum key scopes, exact voice authorization, realtime STT eligibility/concurrency, quota, Paige
 calendar-month UTC hard cost ceiling, approved maximum price per 1,000 characters, and retention

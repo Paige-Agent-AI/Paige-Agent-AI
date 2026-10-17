@@ -1,10 +1,21 @@
 # Lessons Learned — recurring traps
 
+### A streaming cache must obey the original cancellation (2026-10-16, E01)
+
+Starting playback early is incomplete if a second tee reader continues draining the paid provider after Stop. Keep one owned provider reader, cancel the original request/reader, count ambiguous dispatched spend, and upload only after complete EOF. Verify first chunk before EOF, caller/consumer abort, failed settlement, stalled first audio, malformed/empty response and no partial cache or automatic retry. Record provider-first-byte and whole-request readiness separately from audible speech; mocked timings are not provider p50/p95.
+
+**2026-10-16 E01 CI portability repair (#2262):** Node20 Response.blob() can return a valid Node Blob that is not an instance of jsdom’s Blob constructor. Two new fallback tests failed in hosted CI38982168086 while Node24 passed; the exact two failures reproduced locally on Node20.20.2. Assert same-response artifact identity, MIME and bytes instead of a cross-realm constructor. Keep one-fetch/one-body/cancel/refusal assertions; do not change production playback or retry CI as infrastructure. Before/after logs remain in the existing E01 evidence packet.
+
 The failures that have actually cost time/money, written as **symptom → root cause → rule** so the
 next session recognizes the trap before repeating it. These are the concrete instances behind the
 RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
+
+### Detach shared audio; do not load an empty URL (2026-10-16, E01)
+
+A progressive decoder fixture started correctly, but restarting after Stop went idle before playback. Clearing the shared element with an empty-string src can initiate a failing resource selection and deliver stale events into the next owner. Remove the source/load the detached element, fence media callbacks and play promises by the existing owner generation, and verify Stop followed by a real native restart. Preserve same-response fallback and request identity; mocks alone missed this. Synthetic decoder startup is not provider latency or an approved-voice audition.
+
 
 ### SOLO guidance must be reachable, and native pixels need compositor evidence (2026-10-16, E01)
 

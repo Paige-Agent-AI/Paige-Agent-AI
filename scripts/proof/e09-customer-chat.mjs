@@ -67,6 +67,12 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  }
  sql(`REVOKE ALL ON FUNCTION public.paige_tool_create_task(uuid,uuid,text,text,timestamptz,text),public.paige_tool_add_client_note(uuid,uuid,text,text) FROM PUBLIC,anon;
   GRANT EXECUTE ON FUNCTION public.paige_tool_create_task(uuid,uuid,text,text,timestamptz,text),public.paige_tool_add_client_note(uuid,uuid,text,text) TO authenticated,service_role;`);
+ const durableTable=read('20270417000000_paige_durable_work_envelope.sql').match(/create table public\.paige_durable_work \([\s\S]*?\n\);/i)?.[0];
+ const durableDefinition=read('20270531600000_knowledge_durable_authority.sql').match(/create or replace function public\.create_paige_durable_work\([\s\S]*?\$\$;/i)?.[0];
+ assert(durableTable&&durableDefinition,'Actual durable table and canonical creator must be present');
+ sql(durableTable);sql(durableDefinition);
+ sql(`REVOKE ALL ON FUNCTION public.create_paige_durable_work(uuid,uuid,uuid,uuid,text,text,jsonb,text,integer,integer) FROM PUBLIC,anon,authenticated;
+  GRANT EXECUTE ON FUNCTION public.create_paige_durable_work(uuid,uuid,uuid,uuid,text,text,jsonb,text,integer,integer) TO service_role;`);
  const candidate=read('20271108201000_e09_customer_private_chat.sql');
  const scopeLease=candidate.match(/DO \$scope_lease\$[\s\S]*?\$scope_lease\$;/)?.[0];
  assert(scopeLease,'Protected source lease must be present');
@@ -128,12 +134,25 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  }
  check('Rejected private-context staff tools leave no business task, note or audit effect',()=>assert.equal(legacySnapshot(),beforeLegacy));
  sql(`UPDATE public.clients SET cs_primary_user_id=NULL WHERE id='${contact}'`);
+ const durable=(threadId,workspace)=>`SELECT work_id FROM public.create_paige_durable_work('${workspace}','${uid}',gen_random_uuid(),'${threadId}',
+  'document_generate','document_authoring',jsonb_build_object('tenant_id','${workspace}','actor_user_id','${uid}'),'test-native-scope',60,5)`;
+ sql(`INSERT INTO public.tenant_members(tenant_id,user_id,role) VALUES('${tenant}','${uid}','owner')`);
+ const durableBefore=sql('SELECT count(*) FROM public.paige_durable_work');
+ check('Even current business members cannot use private Chat for canonical owner-work envelopes',()=>{
+  assert.throws(()=>sql('SET ROLE service_role;'+durable(thread,tenant)+';RESET ROLE;'),/DURABLE_WORK_THREAD_FORBIDDEN/);
+  assert.equal(sql('SELECT count(*) FROM public.paige_durable_work'),durableBefore);
+ });
+ sql(`DELETE FROM public.tenant_members WHERE user_id='${uid}' AND tenant_id='${tenant}'`);
  const selfThread=as("SELECT paige_chat_thread_create(NULL,'coach','Authorized own workspace','{}')",uid,foreign);
  check('Native workspace membership preserves self Chat and its personal task writer',()=>{
   assert.match(selfThread,/^[0-9a-f-]{36}$/);
   assert.equal(JSON.parse(as(`SELECT public.paige_tool_create_task('${selfThread}',NULL,'Authorized personal task',NULL,NULL,NULL)`,uid,foreign)).ok,true);
  });
  const staffThread=as(`SELECT paige_chat_thread_create('${legacySubject}','client','Authorized staff conversation','{}')`,uid,foreign);
+ check('Canonical durable owner-work still accepts a native authorized workspace thread',()=>{
+  assert.match(sql('SET ROLE service_role;'+durable(staffThread,foreign)+';RESET ROLE;'),/[0-9a-f-]{36}/);
+  assert.equal(Number(sql('SELECT count(*) FROM public.paige_durable_work')),Number(durableBefore)+1);
+ });
  for(const tool of ['paige_tool_create_task','paige_tool_add_client_note'])check('Authorized workspace preserves '+tool,()=>{
   const args=tool==='paige_tool_create_task'?`'${staffThread}','${legacySubject}','Authorized staff task',NULL,NULL,NULL`
    :`'${staffThread}','${legacySubject}','Authorized staff note',NULL`;

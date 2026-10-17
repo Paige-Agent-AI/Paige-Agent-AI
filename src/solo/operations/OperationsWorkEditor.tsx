@@ -8,8 +8,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
 
-// Canonical plan_list excludes cancelled work. Cancellation needs a separate
-// authorized detail/history readback before it can be offered in this editor.
+// Cancelled work remains inspect-only; status changes retain their existing path.
 const STATUSES: PlanItemStatus[] = ["open", "in_progress", "blocked", "done"];
 type Readback = { original: PlanItem; update: WorkUpdate; acknowledged: boolean };
 type EditPhase = "idle" | "saving" | "reading" | "uncertain" | "refused";
@@ -66,19 +65,25 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     if (phase !== "reading" || !expected) return;
     if (sourceError) { setPhase("uncertain"); setMessage("Current work couldn’t be read. Refresh before making another change."); return; }
     if (item === expected.original) return;
-    const matches = (!expected.update.status || item.status === expected.update.status)
+    const matches = item.id === expected.original.id && item.tenant_id === tenantId
+      && (!expected.update.status || item.status === expected.update.status)
       && (!expected.update.priority || item.priority === expected.update.priority)
       && (!expected.update.assigneeId || item.assigned_to_user_id === expected.update.assigneeId)
-      && (!expected.update.dueAt || new Date(item.due_at ?? "").getTime() === new Date(expected.update.dueAt).getTime());
+      && (!expected.update.dueAt || new Date(item.due_at ?? "").getTime() === new Date(expected.update.dueAt).getTime())
+      && (!expected.update.remindAt || item.item_type === "reminder" && !["done","cancelled"].includes(item.status)
+        && new Date(item.remind_at ?? "").getTime() === new Date(expected.update.remindAt).getTime());
     setPhase(matches ? "idle" : "uncertain");
     setMessage(matches ? (expected.acknowledged ? "Saved and confirmed in current work." : "Current work refreshed. Review the details before making another change.") : "Current work differs from the requested change. Review it before editing again.");
     if (matches) { setStatus(item.status); setPriority(item.priority); setAssignee(item.assigned_to_user_id ?? ""); setDue(""); draftVersion.current = item.updated_at; readback.current = null; }
-  }, [item, phase, sourceError]);
+  }, [item, phase, sourceError, tenantId]);
   const creator = item.created_by === actorId;
   const canStatus = staff === true || creator || item.assigned_to_user_id === actorId;
   const canDate = staff === true || creator;
+  const reminder = item.item_type === "reminder";
+  const canEditTime = canDate && (!reminder || !["done","cancelled"].includes(item.status));
   const busy = phase !== "idle";
   const changed = status !== item.status || priority !== item.priority || Boolean(due) || assignee !== (item.assigned_to_user_id ?? "");
+  const mixedReschedule = reminder && Boolean(due) && (status !== item.status || priority !== item.priority || assignee !== (item.assigned_to_user_id ?? ""));
   const navigationReason = phase === "saving" || phase === "reading" ? "Finish checking this work change before leaving."
     : phase === "uncertain" ? "Refresh and review the unconfirmed work change before leaving."
     : phase === "refused" ? "Refresh and review the refused work change before leaving."
@@ -102,13 +107,18 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   }, [keepLinkedDraft, draftKey, navigationReason, status, due, assignee, priority, phase, message]);
   async function save() {
     if (busy || staff === null || !canStatus || !changed || item.tenant_id !== tenantId) return;
+    if (mixedReschedule) { setMessage("Review reminder rescheduling separately from other work changes."); return; }
+    if (reminder && due && !canEditTime) { setMessage("This reminder can’t be rescheduled. Refresh and review its current state."); return; }
     const update: WorkUpdate = {};
     if (status !== item.status) update.status = status;
     if (canDate && priority !== item.priority) update.priority = priority;
-    if (due && canDate) {
+    if (due && canEditTime) {
       const date = new Date(due);
-      if (Number.isNaN(date.getTime())) { setMessage("Choose a valid due date and time."); return; }
-      update.dueAt = date.toISOString();
+      if (!Number.isFinite(date.getTime()) || reminder && date.getTime() <= Date.now()) {
+        setMessage(reminder ? "Choose a valid future reminder date and time." : "Choose a valid due date and time."); return;
+      }
+      if (reminder) update.remindAt = date.toISOString();
+      else update.dueAt = date.toISOString();
     }
     if (staff && assignee && assignee !== item.assigned_to_user_id) update.assigneeId = assignee;
     submittedUpdate.current = update;
@@ -138,6 +148,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
   return <form className="ops-work-editor" onSubmit={(event) => {
     event.preventDefault();
     if (busy || !changed) return;
+    if (mixedReschedule) { setMessage("Review reminder rescheduling separately from other work changes."); return; }
     if (status !== item.status || assignee !== (item.assigned_to_user_id ?? "")) setConfirming(true);
     else void save();
   }}>
@@ -145,7 +156,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
     <label>Status<select value={status} disabled={busy} onChange={(event) => setStatus(event.target.value as PlanItemStatus)}>
       {STATUSES.map(value => <option key={value} value={value}>{workStatusLabel(value)}</option>)}
     </select></label>
-    {canDate && <label>New due date and time<input type="datetime-local" value={due} disabled={busy} onChange={(event) => setDue(event.target.value)} /></label>}
+    {canEditTime && <label>{reminder ? "New reminder time" : "New due date and time"}<input type="datetime-local" value={due} disabled={busy} onChange={(event) => setDue(event.target.value)} /></label>}
     {canDate && <label>Priority<select aria-label="Priority" value={priority} disabled={busy} onChange={event => setPriority(event.target.value as PlanPriority)}>{["low", "normal", "high", "urgent"].map(value => <option key={value}>{value}</option>)}</select></label>}
     {staff && <label>Responsible person<select value={assignee} disabled={busy} onChange={(event) => setAssignee(event.target.value)}>
       {!members.some(member => member.user_id === assignee) && <option value={assignee}>{assignee ? "Current member unavailable" : "Unassigned"}</option>}
@@ -163,7 +174,7 @@ export function OperationsWorkEditor({ item, actorId, tenantId, members, refresh
           <AlertDialogDescription>
             {status !== item.status && <span>Stage: {workStatusLabel(item.status)} → {workStatusLabel(status)}. </span>}
             {assignee !== (item.assigned_to_user_id ?? "") && <span>Responsibility will move to {members.find(member => member.user_id === assignee)?.full_name ?? "the selected team member"}. </span>}
-            {due && <span>The due date will also change. </span>}
+            {due && <span>{reminder ? "The reminder time will change. " : "The due date will also change. "}</span>}
             {priority !== item.priority && <span>Priority: {item.priority} → {priority}. </span>}
             The change is saved only after permission checks and confirmed by reading current work.
           </AlertDialogDescription>

@@ -236,6 +236,9 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
+import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
+import { buildClientPortalPersonaMessages } from "../_shared/client-portal-persona.ts";
+import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -830,7 +833,8 @@ const messageSchema = z.object({
     kind: z.literal("public_presence"),
     step: z.enum(["confirm_facts", "verify_website", "connect_venues", "compare_facts", "set_authority", "maintain_presence"]),
     intendedAction: z.enum(["review", "plan", "prepare_connection", "resolve_mismatch"]),
-  }), z.object({ kind: z.literal("solo_business_interview") }).strict()]).optional(),
+  }), z.object({ kind: z.literal("solo_business_interview") }).strict(),
+  z.object({ kind: z.literal("customer_portal") }).strict()]).optional(),
   businessMissionId: z.string().uuid().nullable().optional(),
   // Owner "Your Paige" multi-chat: the persisted conversation this turn belongs to.
   // When set, paige-ai-chat persists both turns + rehydrates recall server-side (#94).
@@ -1119,14 +1123,18 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
+    let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
     const appendAssistant = async (args: Record<string, any>) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
+      const customerTerminal = customerTerminalSource(customerSourceSnapshot, args.p_content, args.p_bundle_ref ?? {});
+      const terminalBundle = { ...(args.p_bundle_ref ?? {}) };
+      if (customerSourceSnapshot) delete terminalBundle.customer_knowledge;
       const result = await supabase.rpc("paige_chat_interactive_settle", {
         p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
-        p_content: args.p_content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
-        p_bundle_ref: { ...(args.p_bundle_ref ?? {}), interactive: {
+        p_content: customerTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, interactive: {
           ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
         } }, p_tool_calls: args.p_tool_calls,
       });
@@ -1191,6 +1199,7 @@ serve(async (req) => {
       working_context_tenant_id: string | null;
       agent_id: string;
       job_kind: string;
+      content_policy?: "metadata_only";
     } = {
       tenant_id: null,
       working_context_tenant_id: null,
@@ -1205,6 +1214,7 @@ serve(async (req) => {
       working_context_tenant_id: traceCtx.working_context_tenant_id,
       agent_id: traceCtx.agent_id,
       job_kind: jobKind,
+      content_policy: traceCtx.content_policy,
     });
 
     // Rate limit
@@ -1235,6 +1245,45 @@ serve(async (req) => {
       throw error;
     }
 
+    // The surface narrows the audience; only the native customer frame proves it.
+    // It cannot supply a tenant/client identity or inherit a global owner role.
+    const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    if (customerPortal) {
+      // Zod accepts UUID case aliases; native identity/receipt text is canonical.
+      validatedData.threadId = validatedData.threadId?.toLowerCase();
+      validatedData.requestIntentId = validatedData.requestIntentId?.toLowerCase();
+      if (validatedData.interactive?.supersedesIntentId)
+        validatedData.interactive.supersedesIntentId = validatedData.interactive.supersedesIntentId.toLowerCase();
+    }
+    const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
+    const customerPersonaSource = customerPortal
+      ? await (customerControl ? readCustomerAssistantControlContext : readCustomerAssistantContext)(
+        supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId) : null;
+    const customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+    const customerPersona = customerAssistant?.persona ?? null;
+    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
+    if (customerPortal) {
+      if (!customerPersona || (!customerPersona.enabled && !customerControl) || !validatedData.threadId || !validatedData.interactive ||
+        validatedData.clientId || validatedData.document || validatedData.attachments?.length ||
+        validatedData.sessionDocumentContext?.length || validatedData.generateSessionSummary ||
+        validatedData.sessionMessages?.length || validatedData.liveRuntimeChallenge ||
+        validatedData.businessMissionId || validatedData.canvasArtifact || validatedData.resume ||
+        validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length) {
+        return new Response(JSON.stringify({code:"CUSTOMER_CHAT_UNAVAILABLE", message_accepted:false,
+          reason:"Your customer conversation isn’t available right now.",
+          recommendation:"Try again, or contact the business through Support if this continues."}),
+          {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      }
+      const bound = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:validatedData.threadId});
+      if (bound.error || bound.data !== true) return new Response(JSON.stringify({
+        code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false,
+        reason:"Your customer access changed.",recommendation:"Reopen the portal to check your access."}),
+        {status:409,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // Browser system blocks and prior messages are never customer prompt authority.
+      // The interactive contract below hydrates canonical, issued private history.
+      validatedData.clientContext = undefined;
+      traceCtx.content_policy = "metadata_only";
+    }
     let interactiveUnresolvedEffects: Array<{ tool: string; outcome: string }> = [];
     let interactiveReceiptScanSaturated = false;
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
@@ -1259,8 +1308,11 @@ serve(async (req) => {
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
-        .select("tenant_id").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
+        .select("tenant_id,audience").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
       if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
+      if ((thread.audience === "customer_private") !== customerPortal)
+        return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
+          {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
       interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
@@ -1358,7 +1410,7 @@ serve(async (req) => {
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const beginTurn = (effectful: boolean) => supabaseClient.rpc("paige_chat_interactive_begin_v2", {
+      const beginTurn = (effectful: boolean) => supabaseClient.rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -1431,7 +1483,10 @@ serve(async (req) => {
       const authoritative = rows.slice(first < 0 ? rows.length : first).map((m: any) => ({ role: m.role,
         content: m.content + (interactiveReceiptContext(m.bundle_ref) ? "\n\n" + interactiveReceiptContext(m.bundle_ref) : ""),
       }));
-      validatedData.messages = messageSchema.shape.messages.parse([...authoritative, { role: "user", content: userText }]);
+      const customerHistory = customerAssistant?.history.map(({role,content}) => ({role,content})) ?? [];
+      validatedData.messages = messageSchema.shape.messages.parse([
+        ...(customerPortal ? customerHistory : authoritative), { role: "user", content: userText },
+      ]);
     }
     let liveRuntimeScope: LiveRuntimeScope | null = null;
     let liveProof: ReturnType<typeof createLiveRuntimeProof> | null = null;
@@ -1807,7 +1862,7 @@ serve(async (req) => {
     // caller's OWN client-visible event for their OWN contact — the WHERE
     // linked_user_id = user.id lookup is the client's own identity, and
     // 'client.message' is a client_visible kind.
-    if (!generateSessionSummary && !payloadClientId) {
+    if (!customerPortal && !generateSessionSummary && !payloadClientId) {
       try {
         const lastUserMsg = [...messages].reverse().find((m: any) => m?.role === "user");
         const msgText = (lastUserMsg?.content ?? "").toString().trim();
@@ -2344,7 +2399,7 @@ JSON:`;
     // safe. The later site reuses this value instead of resolving a second time.
     let callerTier: Tier = "client";
     try {
-      callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
+      if (!customerPortal) callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
     } catch (e) {
       console.warn("[paige] actor tier unresolved before URL fetch — treating as client seat:", (e as Error)?.message);
     }
@@ -2429,7 +2484,7 @@ JSON:`;
       // its guard sample is the resolver the persona itself derives from, so a caller with a null
       // or stale DECLARED pointer keeps their legitimately-read client memory instead of having it
       // dropped for a mismatch their own declaration played no part in authorizing.
-      const memoryTenantSample: Promise<string | null> = clientScopeDenied
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied || customerPortal
         ? Promise.resolve(null)
         : scopedClientId
         ? callerActiveTenantId()
@@ -2600,7 +2655,7 @@ JSON:`;
     // switch from carrying the previous client's open work into the new scope (§S2).
     let operatingMemoryBlock = "";
     try {
-      const { data: om, error: omErr } = await supabaseClient.rpc("paige_operating_memory", {
+      const { data: om, error: omErr } = customerPortal ? {data:null,error:null} : await supabaseClient.rpc("paige_operating_memory", {
         p_contact_id: scopedClientId ?? null,
         p_limit: 8,
         // The thread being composed, so its own folded summary is not handed back to it — that
@@ -2777,7 +2832,7 @@ JSON:`;
 
     let personaCtx: { tenant_id: string | null; tenant_name: string | null; playbook_config: any; playbook_slug: string | null; funding_enabled: boolean; brand: Record<string, any> | null } =
       { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
-    try {
+    if (!customerPortal) try {
       const { data: pc, error: pcErr } = await supabaseClient.rpc("get_paige_persona_context");
       proposalScopeResolved = !pcErr && proposalScopeFrom(pc) !== null;
       if (pcErr) {
@@ -2798,6 +2853,16 @@ JSON:`;
     } catch (e) {
       console.warn("[paige-ai-chat] persona context resolution failed (defaulting to neutral):", e);
     }
+    // An external customer has an active CRM relationship, not a staff workspace
+    // selection. Pin that native caller-bound relationship before protected work;
+    // the same relationship must still exist at every later protected boundary.
+    if (customerPersona) {
+      personaCtx = {tenant_id:customerPersona.binding.tenantId,tenant_name:customerPersona.businessName,
+        playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
+      proposalScopeResolved = true;
+    }
+    const customerChatBinding = customerPersona?.binding ?? (callerTier === "client" && !payloadClientId
+      ? await readClientPortalChatBinding(supabaseClient, user.id) : null);
     const fundingEnabled = personaCtx.funding_enabled;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
@@ -2841,7 +2906,9 @@ JSON:`;
     //     (20261020100000), and the service-role writes are already pinned to the active tenant.
     if (payloadThreadId) {
       const { data: turnThread, error: turnThreadErr } = await supabaseClient
-        .from("paige_chat_threads").select("tenant_id").eq("id", payloadThreadId).maybeSingle();
+        .from("paige_chat_threads").select("tenant_id,audience").eq("id", payloadThreadId).maybeSingle();
+      if (turnThread?.audience === "customer_private" && !customerPortal)
+        return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH"}),{status:403,headers:corsHeaders});
       const threadTenantId = (turnThread as { tenant_id?: string | null } | null)?.tenant_id ?? null;
       if (turnThreadErr || (turnThread && (!proposalScopeResolved || threadTenantId !== (personaCtx.tenant_id ?? null)))) {
         console.error("[paige] thread is outside this turn's workspace — refused before use", JSON.stringify({
@@ -2882,11 +2949,11 @@ JSON:`;
     // QuickBooks — all service-role, all interpolated into the prompt. A refused client
     // falls back to the CALLER, never to the named id.
     const contextUserId = scopedClientId || user.id;
-    const userContext = await buildUserContext(supabase, contextUserId, fundingEnabled);
+    const userContext = customerPortal ? "" : await buildUserContext(supabase, contextUserId, fundingEnabled);
 
     // Knowledge base search
     let relevantKnowledge = "";
-    if (lastUserMessage) {
+    if (lastUserMessage && !customerPortal) {
       // Escape the backslash FIRST (include it in the class) so a pre-existing
       // backslash in the input is itself escaped, not left to combine with the
       // wildcard escapes below (js/incomplete-sanitization). Single global pass
@@ -2914,7 +2981,7 @@ JSON:`;
     // row for this user that hasn't been judged yet. Classify the new user message
     // and write back was_helpful + bump helpful_count on referenced documents.
     try {
-      if (lastUserMessage) {
+      if (!customerPortal && lastUserMessage) {
         const { data: prevLog } = await supabase
           .from("rag_retrieval_log")
           .select("id, retrieved_document_ids")
@@ -2968,7 +3035,7 @@ JSON:`;
     let ragContext = "";
     let ragRetrievedIds: string[] = [];
     try {
-      if (lastUserMessage && lastUserMessage.content?.trim()) {
+      if (!customerPortal && lastUserMessage && lastUserMessage.content?.trim()) {
         const queryText = lastUserMessage.content.trim();
         const queryEmbedding = await embedText(queryText);
         if (queryEmbedding) {
@@ -3026,7 +3093,7 @@ JSON:`;
     let tenantKbContext = "";
     let tenantKbScopeTenantId: string | null = null;
     let pendingTenantKbTelemetry: Record<string, unknown> | null = null;
-    try {
+    if (!customerPortal) try {
       // §9/§51 — the ONLY tenant this handler may search is the caller's ACTIVE one,
       // already resolved above by get_paige_persona_context() (migration 20260802133000),
       // which honours profiles.active_tenant_id. It is derived SERVER-SIDE from the verified
@@ -3520,6 +3587,14 @@ JSON:`;
     let revalidateSummaryBinding: (() => Promise<boolean>) | null = null;
     const revalidateTenantKnowledgeScope = async (required = false, summaryMaintenance = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
+      if (customerPortal) {
+        const source = await readCustomerAssistantContext(supabaseClient, user.id, payloadThreadId, validatedData.requestIntentId);
+        const scope = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
+        if (source.status === "available" && source.data?.persona.enabled === true && !scope.error && scope.data === true &&
+          JSON.stringify(source.data) === JSON.stringify(customerAssistant)) return true;
+        tenantKnowledgeScopeRevoked = true;
+        return false;
+      }
       // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
       // is what keeps live streaming free of added latency. A client seat's turn is held so its
       // answer can be read (R3), but holding is not evidence.
@@ -3559,7 +3634,11 @@ JSON:`;
         // clears. Re-read the selected workspace itself at the same protected
         // boundary. Tenantless operator turns retain their existing resolver path.
         let declaredScopeMatches = turnScopeTenantId === null;
-        if (turnScopeTenantId !== null) {
+        if (callerTier === "client" && !payloadClientId && (customerChatBinding || turnScopeTenantId !== null)) {
+          declaredScopeMatches = customerChatBinding?.tenantId === turnScopeTenantId &&
+            sameClientPortalChatBinding(customerChatBinding,
+              await readClientPortalChatBinding(supabaseClient, user.id));
+        } else if (turnScopeTenantId !== null) {
           const { data: declaredProfile, error: declaredError } = await supabaseClient
             .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
           declaredScopeMatches = !declaredError &&
@@ -3640,7 +3719,7 @@ ${buildStudioWhereYouAre(name, tenant)}`.trim()
     // "Configuration" there meant it is not chat history — a different axis, and the word
     // collided with the one the protection rule uses.
     let tenantDomainContext = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         // §9: read this through the CALLER'S JWT-scoped client, never the service-role one.
         // `admin` is not in scope here at all (the only `const admin` in this handler is declared
@@ -3725,7 +3804,7 @@ ${buildStudioWhereYouAre(name, tenant)}`.trim()
 
     let workingContextTenantId: string | null = null;
     let marketplaceTenantId: string | null = null;
-    try {
+    if (!customerPortal) try {
       const { data: wcProfile, error: wcProfileError } = await supabase
         .from("profiles")
         .select("active_tenant_id")
@@ -5552,7 +5631,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // for the authenticated speaker's active workspace. Any mismatch/error is a
     // fail-closed NO-OP; request-body context is never used as a fallback.
     let tenantTeamContext = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         // RPC is introduced by the Solo Team migration and may precede generated types.
         const { data: teamData, error: teamError } = await supabaseClient.rpc("get_paige_team_context" as never);
@@ -5572,7 +5651,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     let businessContextReadinessBlock = "";
     let publicPresenceContextBlock = "";
     let soloBusinessInterviewContextBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         businessContextReadinessBlock = await buildBusinessContextReadinessBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5597,7 +5676,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // ownership at once. supabaseClient is the caller's own JWT-scoped client (§9/§588/§59); the
     // RPC takes no tenant argument at all and derives everything from that identity.
     let teamAuthorityBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         teamAuthorityBlock = await buildTeamAuthorityBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5612,7 +5691,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // never a connection. supabaseClient is the caller's own JWT-scoped client (§9/§588/§59) — the
     // RPC derives the tenant from it and ignores any tenant argument.
     let socialPresenceBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         socialPresenceBlock = await buildSocialPresenceBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5652,7 +5731,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       }
     }
 
-    const n8nEvidence = personaCtx.tenant_id ? await loadN8nReadinessForChat(supabaseClient, personaCtx.tenant_id) : null;
+    const n8nEvidence = !customerPortal && personaCtx.tenant_id ? await loadN8nReadinessForChat(supabaseClient, personaCtx.tenant_id) : null;
     const n8nReadinessBlock = n8nEvidence ? renderN8nReadinessForChat(n8nEvidence) : "";
     // A fixed unavailable notice carries no workspace facts; verified evidence does.
     if (n8nEvidence?.status === "available") markProtectedLate("n8n_readiness");
@@ -5663,7 +5742,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // block that answers "what am I connected to" from verified state — the incident class it
     // prevents is real (2026-10-02: a capability question was answered from the wrong
     // provider's readiness block because no integrations-wide verified state was in context).
-    const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
+    const integrationsMind = !customerPortal && personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
     // Original C6: bounded prior Research metadata from its existing caller-JWT
@@ -6114,7 +6193,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         admissionMarkerId: answerHistory.ownAdmissionMarkerId };
     }
 
-    if (payloadThreadId) {
+    if (payloadThreadId && !customerPortal) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
       // DRAINING begin_v2 already appended the canonical intent-bound user row.
@@ -6324,7 +6403,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             }
           }
         } catch { /* title is a nicety, never block */ }
-        await maybeRefreshSummary(payloadThreadId);
+        if (!customerPortal) await maybeRefreshSummary(payloadThreadId);
       } catch (e) {
         console.error("[paige] persist assistant turn failed:", (e as Error)?.message);
         if (interactive || interactiveConversational) throw e;
@@ -6336,7 +6415,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // visibility tools (search contacts, read deals, list tasks, etc.).
     let isOperator = false;
     let operatorRoleLabel = "";
-    try {
+    if (!customerPortal) try {
       // The SAME authority the owner-ops tools are gated on (workspace owner/admin, or the Platform
       // Operator) — so the prompt never tells someone they operate this workspace while its tools
       // refuse them, and never withholds operator mode from a seated owner (owner ruling 2026-10-04).
@@ -7920,13 +7999,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_list",
-              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; admins/coaches see all. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Filter by horizon, a single plan, status, assignee, or a date window. Read-only.",
+              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; native permissions govern access. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Cancelled items are excluded by default; request include_cancelled:true or status:cancelled to inspect their saved history. A missing item alone does not prove cancellation. Read-only.",
               parameters: {
                 type: "object",
                 properties: {
                   horizon: { type: "string", enum: ["week", "month", "quarter", "semiannual", "year", "custom"], description: "Only plans on this horizon." },
                   plan_id: { type: "string", description: "Drill into one plan's items." },
                   status: { type: "string", description: "Filter items by status." },
+                  include_cancelled: { type: "boolean", description: "Include authorized cancelled Planning history; default false. This reads records and never reopens or repeats work." },
                   assigned_to_user_id: { type: "string", description: "Only items assigned to this teammate." },
                   from: { type: "string", description: "ISO date lower bound (plan window / item due)." },
                   to: { type: "string", description: "ISO date upper bound." },
@@ -9481,6 +9561,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // escalation) can widen the list, so a degraded turn stays non-effectful by construction, not
     // by prompt. (E2-2, 2026-10-12: the #1899 zero-tool contract narrows to exactly
     // CONVERSATIONAL_ADMITTED_READ_TOOLS under the owner's recorded ANT-23 delegation.)
+    if (customerPortal && customerPersona && customerAssistant) {
+      // Same runtime/provider/lifetime and server-issued receipt; a different audience.
+      // Only native private history and the closed customer presentation enter the model.
+      // Current native grants and source-attested history participate in the same
+      // full-source provider/output fence; no staff Knowledge or browser-history fallback.
+      aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
+        ...customerProgramMessages(customerAssistant),
+        ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
+      toolDefs.splice(0, toolDefs.length);
+    }
     if (interactiveConversational) {
       const before = toolDefs.length;
       for (let i = toolDefs.length - 1; i >= 0; i--) {
@@ -9584,7 +9674,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         && (r.availability === "live" || r.availability === "needs_approval"));
       return { rows, specialists: canDelegate ? specialists : [] };
     })());
-    if (!capabilityManifestEligible) await loadSpecialists();
+    if (!customerPortal && !capabilityManifestEligible) await loadSpecialists();
     if (capabilityManifestEligible) {
       try {
         const projection = await gatherCapabilityProjection();
@@ -10460,6 +10550,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
+        // Provider-authored tool names cannot cross the customer audience boundary.
+        // Future customer actions must be explicitly admitted by their native domain contract.
+        if (customerPortal) return {
+          toolResults: toolCalls.map((tc:any) => ({role:"tool",
+            tool_call_id:tc.id,content:JSON.stringify({error:"CUSTOMER_ACTION_UNAVAILABLE"})})),
+          executed: [], scopeInvalidated: false, interactiveError: null,
+        };
         // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
         // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
         // shows the attempt and why nothing changed. A held-for-approval proposal files none: the
@@ -16640,7 +16737,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 break;
               case "plan_list":
                 rpcName = "plan_list";
-                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
+                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid,
+                  p_contact_id: null, p_by_item_date: false, p_include_cancelled: args.include_cancelled === true || args.status === "cancelled" };
                 break;
             }
             planningWriteAttempted = planningIsWrite;
@@ -16676,6 +16774,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else {
               let verifiedRecord: Record<string, unknown> | null = null;
               let recordLocator: { table: string; id: string } | null = null;
+              if (!planningIsWrite) {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                if (!tid || scope.error || scope.data !== tid) throw new Error("planning_read_scope_changed");
+              }
               if (planningIsWrite) {
                 const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
                 const table = tc.function.name === "plan_create" ? "plans" : "plan_items";

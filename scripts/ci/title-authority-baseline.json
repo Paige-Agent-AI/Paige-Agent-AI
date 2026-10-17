@@ -96,7 +96,10 @@
       "origin_account_id",
       "actor_tier",
       "target_tier",
-      "archived_at"
+      "archived_at",
+      "portal_operation_id",
+      "portal_proposal_hash",
+      "portal_receipt_id"
     ]
   },
   "ts": [],

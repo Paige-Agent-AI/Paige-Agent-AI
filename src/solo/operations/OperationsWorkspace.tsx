@@ -21,7 +21,7 @@ import { nativeWorkStage, crmActionForStage, type CrmWorkRecord } from "./operat
 import { buildCrmWorkStageOperation, restoreCrmWorkOperation, type CrmWorkOperation } from "./operations-crm-work-command";
 import { OperationsCrmStageReview } from "./OperationsCrmStageReview";
 import { OperationsCrmWorkEditor } from "./OperationsCrmWorkEditor";
-import { workStatusLabel } from "./operations-presentation";
+import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
 import { OperationsCapacity } from "./OperationsCapacity";
@@ -96,7 +96,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; selectionEpoch.current += 1; }; }, []);
   const [weeklySource, setWeeklySource] = useState<{ id: string | null; phase: "idle" | "reading" | "verified" | "unavailable"; item: PlanItem | null }>({ id: null, phase: "idle", item: null });
   const inspectionInvoker = useRef<HTMLElement | null>(null);
-  const source = usePlanList({ scope: "team", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
+  const source = usePlanList({ scope: "team", includeCancelled: destination === "Work", tenantScopeKey: `${userId}:${tenantId}`, operationsActorId: userId, operationsTenantId: tenantId });
   const readsCrm = destination === "Work" || destination === "Capacity" || destination === "Overview";
   const crm = useOperationsCrmWork(readsCrm ? userId : null, readsCrm ? tenantId : null);
   const [crmReview,setCrmReview] = useState<CrmWorkOperation|null>(null);
@@ -321,7 +321,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>
             <div><dt>Priority</dt><dd>{selectedItem.priority}</dd></div>
-            <div><dt>Due date</dt><dd>{selectedItem.due_at ? new Date(selectedItem.due_at).toLocaleString() : "Not scheduled"}</dd></div>
+            <div><dt>{selectedItem.item_type === "reminder" ? "Reminder time" : "Due date"}</dt><dd>{workDateLabel(selectedItem, true)}</dd></div>
             <div><dt>Project</dt><dd>{plans.find((plan) => plan.id === selectedItem.plan_id)?.title ?? (selectedItem.plan_id ? "Project not loaded here" : "Standalone work")}</dd></div>
             <div><dt>Work type</dt><dd>{selectedItem.item_type}</dd></div></dl>
           {selectedItem.status === "done" && <p>Recorded as completed work. Client delivery acceptance is a separate outcome.</p>}

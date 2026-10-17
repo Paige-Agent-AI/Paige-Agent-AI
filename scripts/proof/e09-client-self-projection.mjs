@@ -48,15 +48,17 @@ assert(brandCascade,'Incumbent native brand cascade must exist');
 const unsafeControl=process.argv.includes('--unsafe-control');
 const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
 const unsafeStage=process.argv.includes('--stage-unsafe-control');
-const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control')||process.argv.includes('--customer-chat');
+const unsafeKnowledgeContext=process.argv.includes('--knowledge-context-unsafe-control');
+const knowledgeContext=process.argv.includes('--knowledge-context')||unsafeKnowledgeContext;
+const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control')||process.argv.includes('--customer-chat')||knowledgeContext;
 const unsafeFrame=process.argv.includes('--frame-unsafe-control');
 const unsafeAssistantSettings=process.argv.includes('--assistant-settings-unsafe-control');
 const unsafeKnowledge=process.argv.includes('--knowledge-shares-unsafe-control');
 const knowledgeResources=process.argv.includes('--knowledge-resources');
 const knowledgeShares=process.argv.includes('--knowledge-shares')||unsafeKnowledge||knowledgeResources;
 const assistantSettings=process.argv.includes('--assistant-settings')||unsafeAssistantSettings||knowledgeShares;
-assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame,unsafeAssistantSettings,unsafeKnowledge].filter(Boolean).length<=1,'Choose one negative control');
-const reportStem=knowledgeResources?'knowledge-resource-candidate':knowledgeShares?(unsafeKnowledge?'knowledge-shares-unsafe-control':'knowledge-shares-candidate'):assistantSettings?(unsafeAssistantSettings?'assistant-settings-unsafe-control':'assistant-settings-candidate'):unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame,unsafeAssistantSettings,unsafeKnowledge,unsafeKnowledgeContext].filter(Boolean).length<=1,'Choose one negative control');
+const reportStem=knowledgeResources?'knowledge-resource-candidate':knowledgeContext?(unsafeKnowledgeContext?'knowledge-context-unsafe-control':'knowledge-context-candidate'):knowledgeShares?(unsafeKnowledge?'knowledge-shares-unsafe-control':'knowledge-shares-candidate'):assistantSettings?(unsafeAssistantSettings?'assistant-settings-unsafe-control':'assistant-settings-candidate'):unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
 function advance(actor=uid,stage='signing_agreement',payload={},role='authenticated') {
   const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT row_to_json(s) FROM public.client_advance_onboarding_stage(${stage===null?'NULL':`'${stage}'`},$payload$${JSON.stringify(payload)}$payload$::jsonb) s; COMMIT;`);
   return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
@@ -223,7 +225,7 @@ try {
     const {frameProof}=await import('./e09-client-frame.mjs');
     frameEvidence=frameProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact,otherContact,presentationMigration,unsafeFrame});
   }
-  if(process.argv.includes('--customer-chat')) {
+  if(process.argv.includes('--customer-chat')||knowledgeContext) {
     const {customerChatProof}=await import('./e09-customer-chat.mjs');
     Object.assign(frameEvidence,customerChatProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}));
   }
@@ -238,6 +240,10 @@ try {
   if(knowledgeResources){
     const {resourceReadProof}=await import('./e09-customer-resource-read.mjs');
     Object.assign(frameEvidence,resourceReadProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}));
+  }
+  if(knowledgeContext){
+    const {knowledgeContextProof}=await import('./e09-customer-knowledge-context.mjs');
+    Object.assign(frameEvidence,await knowledgeContextProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact,otherContact,spawn,exe,port,transcripts,unsafe:unsafeKnowledgeContext}));
   }
   const failed=results.filter(x=>x.status==='FAIL');
   const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),...frameEvidence,results,passed:results.length-failed.length,failed:failed.length};

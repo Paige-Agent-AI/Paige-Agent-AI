@@ -575,6 +575,12 @@ SELECT is((SELECT user_id::text FROM public.audit_logs WHERE id='e0951000-0000-4
 SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)#>>'{sources,0,content}',
  'Approved program guidance','customer reloads only explicitly shared canonical content');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0941000-0000-4000-8000-000000000001'))::jsonb)->'sources',
+ '[]'::jsonb,'compatible direct admission cannot acquire later published program sources') FROM e09_customer_chat;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0941000-0000-4000-8000-000000000001'))::jsonb)->'snapshot',
+ 'null'::jsonb,'compatible native acceptance cannot be retrofitted with source attestation') FROM e09_customer_chat;
 CREATE TEMP TABLE e09_knowledge_refs AS SELECT jsonb_build_object('share_id',upper(s.id::text),
  'share_revision',s.revision,'source_fingerprint',s.source_fingerprint) ref
  FROM public.tenant_knowledge_client_shares s JOIN e09_knowledge_result r ON s.id=(r.result->>'share_id')::uuid;
@@ -682,6 +688,69 @@ SELECT lives_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003
  'owner can withdraw even after the source has changed');
 SELECT is((SELECT count(*)::int FROM public.audit_logs WHERE id IN('e0951000-0000-4000-8000-000000000001','e0951000-0000-4000-8000-000000000002')),
  2,'publication and withdrawal retain their distinct durable native receipts');
+
+-- Additive customer source/history admission; native protocol and provider
+-- admission stay unchanged. These synthetic rows roll back with the suite.
+CREATE TEMP TABLE e09_context_protocol AS SELECT active FROM public.paige_chat_interactive_rollout WHERE singleton;
+UPDATE public.paige_chat_interactive_rollout SET active=false WHERE singleton;
+CREATE TEMP TABLE e09_context_thread AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Customer source context','{}')$$)::uuid thread_id;
+CREATE TEMP TABLE e09_context_input AS SELECT thread_id,'e0961000-0000-4000-8000-000000000001'::uuid intent_id,
+ pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0961000-0000-4000-8000-000000000001'))::jsonb projection FROM e09_context_thread;
+SELECT is(jsonb_path_query_array(projection,'$.sources[*].document_id'),
+ '["e0941000-0000-4000-8000-000000000003"]'::jsonb,'native AI context contains only this actual customer program') FROM e09_context_input;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L)$q$,
+ format('SELECT public.client_portal_assistant_context(%L,%L)',thread_id,intent_id)),
+ '42501','CUSTOMER_CONTEXT_FORBIDDEN','another customer cannot select a private model context') FROM e09_context_input;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.client_portal_assistant_begin(%L,%L,NULL,%L,false,false,false)',thread_id,intent_id,'My customer question'))::jsonb)->>'status',
+ 'accepted','customer adapter delegates native admission exactly once') FROM e09_context_input;
+SELECT is((SELECT bundle_ref->'customer_knowledge' FROM public.paige_chat_turns WHERE thread_id=c.thread_id
+ AND interactive_intent_id=c.intent_id AND role='user'),projection->'snapshot',
+ 'accepted user receipt captures the exact native source snapshot') FROM e09_context_input c;
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,intent_id))::jsonb,projection,
+ 'native context remains stable across its own ordinary admission') FROM e09_context_input;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',%L,'service_role')$q$,
+ format('SELECT public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL)',thread_id,
+ 'e0911000-0000-0000-0000-000000000005','e0921000-0000-0000-0000-000000000001',intent_id,'Forged answer',
+ jsonb_build_object('interactive',jsonb_build_object('request_intent_id',intent_id),'turn_state',jsonb_build_object('v',1,'state','FINAL'),
+ 'customer_knowledge',jsonb_build_object('version',1,'retrieval_refs','[]'::jsonb,'source_refs','[]'::jsonb))::text)),
+ '42501','CUSTOMER_CONTEXT_BINDING_INVALID','terminal cannot forge the native accepted source set') FROM e09_context_input;
+CREATE TEMP TABLE e09_context_terminal AS SELECT c.*,jsonb_build_object('interactive',jsonb_build_object('request_intent_id',intent_id),
+ 'turn_state',jsonb_build_object('v',1,'state','FINAL'),'customer_knowledge',projection->'snapshot') bundle FROM e09_context_input c;
+SELECT lives_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',%L,'service_role')$q$,
+ format('SELECT public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL)',thread_id,
+ 'e0911000-0000-0000-0000-000000000005','e0921000-0000-0000-0000-000000000001',intent_id,'Approved customer program answer',bundle::text)),
+ 'canonical settlement accepts exact source-attested terminal metadata') FROM e09_context_terminal;
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.paige_chat_interactive_publication_context_v2(%L,%L)',thread_id,intent_id)),
+ 'true','current native source-attested terminal may publish') FROM e09_context_terminal;
+SELECT ok(jsonb_path_exists(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0961000-0000-4000-8000-000000000002'))::jsonb,
+ '$.history[*] ? (@.content == "Approved customer program answer")'),
+ 'returning model context uses the actual source-attested private answer') FROM e09_context_terminal;
+UPDATE public.tenant_knowledge_docs SET content='Changed unreviewed customer program'
+ WHERE id='e0941000-0000-4000-8000-000000000003';
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.paige_chat_interactive_publication_context_v2(%L,%L)',thread_id,intent_id)),
+ 'false','post-settlement source change retires current publication permission') FROM e09_context_terminal;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',%L)$q$,
+ format('SELECT public.client_portal_assistant_context(%L,%L)',thread_id,intent_id)),
+ '42501','CUSTOMER_CONTEXT_SOURCE_WITHDRAWN','accepted stale source cannot be reacquired for a model retry') FROM e09_context_terminal;
+SELECT ok(NOT jsonb_path_exists(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0961000-0000-4000-8000-000000000002'))::jsonb,
+ '$.history[*] ? (@.content == "Approved customer program answer")'),
+ 'withdrawn generated prose is excluded from new model history') FROM e09_context_terminal;
+SELECT is((SELECT count(*)::int FROM public.paige_chat_turns WHERE thread_id=c.thread_id AND content='Approved customer program answer'),
+ 1,'customer-owned canonical UI history persists after model-context withdrawal') FROM e09_context_terminal c;
+SELECT ok(has_function_privilege('authenticated','public.client_portal_assistant_context(uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_assistant_context(uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_assistant_context(uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_assistant_begin(uuid,uuid,uuid,text,boolean,boolean,boolean)','EXECUTE'),
+ 'customer context and admission require actual caller JWT authority');
+UPDATE public.paige_chat_interactive_rollout SET active=(SELECT active FROM e09_context_protocol) WHERE singleton;
 
 DELETE FROM public.clients WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT ok((SELECT contact_id IS NULL AND is_archived FROM public.paige_chat_threads

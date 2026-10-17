@@ -460,6 +460,36 @@ SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
 SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  format($s$SELECT public.paige_chat_interactive_publication_context_v2(%L,'e0941000-0000-4000-8000-000000000001')$s$,
  (SELECT thread_id FROM e09_customer_chat))),'true','native publication checks the customer relationship without a staff workspace');
+-- Exercise the current active-v2 protocol as well as staged conversation. This
+-- protocol flag is changed only in this disposable rollback transaction.
+CREATE TEMP TABLE e09_active_chat(thread_id uuid);
+CREATE TEMP TABLE e09_rollout_baseline AS SELECT active FROM public.paige_chat_interactive_rollout WHERE singleton;
+INSERT INTO e09_active_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ $$SELECT public.paige_chat_thread_create(NULL,'customer','Active protocol customer','{}')$$)::uuid;
+UPDATE public.paige_chat_interactive_rollout SET active=true WHERE singleton;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_begin_v2(%L,'e0941000-0000-4000-8000-000000000002',
+ NULL,'Active protocol question',false,false,true)$s$,(SELECT thread_id FROM e09_active_chat)))::jsonb)->>'status',
+ 'accepted','active v2 admits an ordinary customer without staff membership');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_executor_v2(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','acquire')$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role')::jsonb)->>'acquired','true',
+ 'active customer turn acquires the canonical service-only executor');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_settle(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','Active customer answer',NULL,NULL,
+ '{"interactive":{"request_intent_id":"e0941000-0000-4000-8000-000000000002"},"turn_state":{"v":1,"state":"FINAL"}}',NULL)$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role') IS NOT NULL,
+ 'active customer answer uses the existing service-only terminal writer');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_executor_v2(%L,'e0911000-0000-0000-0000-000000000002',
+ 'e0921000-0000-0000-0000-000000000002','e0941000-0000-4000-8000-000000000002','release')$s$,
+ (SELECT thread_id FROM e09_active_chat)),'service_role') IS NOT NULL,'active customer executor releases after terminal settlement');
+SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000002',
+ format($s$SELECT public.paige_chat_interactive_publication_context_v2(%L,'e0941000-0000-4000-8000-000000000002')$s$,
+ (SELECT thread_id FROM e09_active_chat))),'true','active customer publishes under native relationship authority');
+UPDATE public.paige_chat_interactive_rollout SET active=(SELECT active FROM e09_rollout_baseline) WHERE singleton;
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  format($s$SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=%L$s$,(SELECT thread_id FROM e09_customer_chat))),

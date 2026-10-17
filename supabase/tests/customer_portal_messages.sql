@@ -95,7 +95,10 @@ SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000001',
 SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
  $q$SELECT public.comms_portal_reply('e0924100-0000-4000-8000-000000000001','e0934100-0000-4000-8000-000000000001','self','e0954100-0000-4000-8000-000000000015')$q$)->>'sqlstate','42501','customer cannot write as the business');
 
--- Customer projection
+-- Customer projection. Every row above shares one transaction timestamp; give the reply its real
+-- later time so ordering is proven on created_at, not on the id tie-break.
+UPDATE public.messages SET created_at=now()+interval '1 second'
+ WHERE meta #>> '{portal,request_id}'='e0954100-0000-4000-8000-000000000010';
 SELECT is(jsonb_array_length(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
  $q$SELECT public.client_portal_conversation()$q$)->'messages'),3,'customer sees exactly their three portal messages');
 SELECT ok(strpos(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',

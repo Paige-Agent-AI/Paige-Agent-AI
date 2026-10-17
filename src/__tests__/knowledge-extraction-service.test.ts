@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
-import { submitKnowledgeExtraction, readKnowledgeExtractionReview, readKnowledgeExtractionStatus, readKnowledgeExtractionForDocument, type ExtractionInput, type ExtractionReference } from '@/lib/knowledge-extraction-service';
+import { submitKnowledgeExtraction, readKnowledgeExtractionReview, readKnowledgeExtractionStatus, readKnowledgeExtractionForDocument, readKnowledgePublicationForDocument, type ExtractionInput, type ExtractionReference } from '@/lib/knowledge-extraction-service';
 const tenant='11111111-1111-4111-8111-111111111111';
 const intent='22222222-2222-4222-8222-222222222222';
 const doc='33333333-3333-4333-8333-333333333333';
@@ -58,4 +58,92 @@ describe('existing document review discovery',()=>{
  it.each([{tenant_id:other},{document_id:other},{revision:1},{revision:3},{extraction_work_id:'invalid'},{extraction_work_id:null},{pending_review:{...pending,coverage:'invented'}},{source_binding:{...binding,object_name:other+'/x.txt'}}])('refuses stale or contradictory discovery %j',async(patch)=>{const c=client();c.rpc.mockResolvedValue({data:{...review,...patch},error:null});await expect(readKnowledgeExtractionForDocument(c,scope(),doc,2)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});expect(c.rpc).toHaveBeenCalledTimes(1);expect(c.functions.invoke).not.toHaveBeenCalled();});
  it('refuses discovery after scope retirement and never dispatches',async()=>{const c=client(),s=scope();c.rpc.mockImplementation(async()=>{s.isCurrent.mockReturnValue(false);return {data:review,error:null};});await expect(readKnowledgeExtractionForDocument(c,s,doc,2)).rejects.toMatchObject({code:'EXTRACTION_SCOPE_CHANGED'});expect(c.functions.invoke).not.toHaveBeenCalled();});
  it.each(['throw','error'])('keeps %s discovery unavailable without retry',async(mode)=>{const c=client();if(mode==='throw')c.rpc.mockRejectedValue(Error('offline'));else c.rpc.mockResolvedValue({data:null,error:{code:'42501'}});await expect(readKnowledgeExtractionForDocument(c,scope(),doc,2)).rejects.toMatchObject({code:'EXTRACTION_READ_UNAVAILABLE'});expect(c.rpc).toHaveBeenCalledTimes(1);expect(c.functions.invoke).not.toHaveBeenCalled();});
+});
+describe('native publication association recovery', () => {
+ const publication = { contract_version:1, association:'not_submitted', work_id:null, work_status:null, generation_id:null, outcome:null };
+ const saved = { ...review, revision:3, pending_review:{...pending,reviewed_content:'Saved exact text'}, publication };
+ const pub = '66666666-6666-4666-8666-666666666666';
+ it('retains exact native not-submitted proof only for a saved review', async () => {
+  const c=client(); c.rpc.mockResolvedValue({data:saved,error:null});
+  const actual=await readKnowledgeExtractionForDocument(c,scope(),doc,3);
+  expect(actual).toHaveProperty('publication',publication);
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it.each(['claimed','expired','blocked','outcome_unknown','failed','cancelled'])('retains the native %s publication reference without claiming promotion', async work_status => {
+  const c=client(); c.rpc.mockResolvedValue({data:{...saved,publication:{...publication,association:'matched',work_id:pub,work_status}},error:null});
+  const actual=await readKnowledgeExtractionForDocument(c,scope(),doc,3);
+  expect(actual).toHaveProperty('publication',{...publication,association:'matched',work_id:pub,work_status});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('validates native published proof after extraction/reference clear', async () => {
+  const c=client(); c.rpc.mockResolvedValue({data:{...saved,revision:4,record_state:'canonical',pending_review:null,extraction_work_id:null,publication:{...publication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_completed_unrecorded'}},error:null});
+  expect(await readKnowledgeExtractionForDocument(c,scope(),doc,4)).toHaveProperty('publication.outcome','capability_completed_unrecorded');
+ });
+ it.each([
+  {contract_version:2},{association:'published'},{association:'not_submitted',work_id:pub},
+  {association:'matched',work_id:'bad',work_status:'claimed'},
+  {association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_succeeded'},
+  {association:'matched',work_id:pub,work_status:'claimed',generation_id:pub},
+  {association:'unavailable',work_id:pub},{outcome:'capability_succeeded'},
+ ])('refuses malformed or conflicting pending association %j', async patch => {
+  const c=client();c.rpc.mockResolvedValue({data:{...saved,publication:{...publication,...patch}},error:null});
+  await expect(readKnowledgeExtractionForDocument(c,scope(),doc,3)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('does not infer publication authority from an unsolicited top-level label', async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...saved,publication:undefined,published:true},error:null});
+  const actual=await readKnowledgeExtractionForDocument(c,scope(),doc,3);
+  expect(actual).not.toHaveProperty('publication');expect(actual).not.toHaveProperty('published');
+ });
+ it('retains verified legacy idle for explicit source input without inventing a saved review',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...review,record_state:'canonical',pending_review:null,extraction_work_id:null,publication},error:null});
+  const actual=await readKnowledgeExtractionForDocument(c,scope(),doc,2);
+  expect(actual.publication?.association).toBe('not_submitted');expect(actual.pending_review).toBeNull();expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('rejects noncanonical idle publication proof',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...review,pending_review:null,extraction_work_id:null,publication},error:null});
+  await expect(readKnowledgeExtractionForDocument(c,scope(),doc,2)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+ });
+ const publicationRef={tenantId:tenant,documentId:doc,extractionWorkId:work,revision:3,workId:pub};
+ const active={...saved,publication:{...publication,association:'matched',work_id:pub,work_status:'outcome_unknown'}};
+ const promoted={...saved,revision:4,record_state:'canonical',pending_review:null,extraction_work_id:null,publication:{...publication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_succeeded'}};
+ it('reads original uncertain publication through exact document association, never generic status',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:active,error:null});
+  expect(await readKnowledgePublicationForDocument(c,scope(),publicationRef)).toHaveProperty('publication.work_id',pub);
+  expect(c.rpc).toHaveBeenCalledExactlyOnceWith('read_tenant_knowledge_review',{p_expected_tenant:tenant,p_doc_id:doc});expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('recovers lost acknowledgement by discovering native work without an invented intent',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:active,error:null});
+  expect(await readKnowledgePublicationForDocument(c,scope(),{...publicationRef,workId:undefined})).toHaveProperty('publication.work_id',pub);
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('accepts only the source-qualified next canonical generation',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:promoted,error:null});
+  expect(await readKnowledgePublicationForDocument(c,scope(),publicationRef)).toHaveProperty('publication.generation_id',pub);
+ });
+ it.each([{tenant_id:other},{document_id:other},{revision:2},{revision:4},{extraction_work_id:other},{pending_review:{...pending,reviewed_content:null}},
+  {publication:{...active.publication,work_id:other}}])('refuses current publication reference drift %j',async patch=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...active,...patch},error:null});
+  await expect(readKnowledgePublicationForDocument(c,scope(),publicationRef)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it.each([{revision:3},{revision:5},{publication:{...promoted.publication,generation_id:other}},
+  {publication:{...promoted.publication,outcome:'published'}},{publication:undefined}])('refuses stale, advanced or unproven promoted state %j',async patch=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...promoted,...patch},error:null});
+  await expect(readKnowledgePublicationForDocument(c,scope(),publicationRef)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+ });
+ it('fences retired actor/workspace incarnation after read',async()=>{
+  const c=client(),s=scope();c.rpc.mockImplementation(async()=>{s.isCurrent.mockReturnValue(false);return {data:promoted,error:null};});
+  await expect(readKnowledgePublicationForDocument(c,s,publicationRef)).rejects.toMatchObject({code:'EXTRACTION_SCOPE_CHANGED'});expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it('retains a known current-generation uncertain work reference without inventing a cleared extraction',async()=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...promoted,publication:{...active.publication}},error:null});
+  const current={tenantId:tenant,documentId:doc,revision:4,workId:pub};
+  expect(await readKnowledgePublicationForDocument(c,scope(),current)).toHaveProperty('publication.work_status','outcome_unknown');
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it.each([{workId:undefined},{revision:3},{workId:other}])('refuses an incomplete or stale current-generation reference %j',async patch=>{
+  const c=client();c.rpc.mockResolvedValue({data:promoted,error:null});
+  await expect(readKnowledgePublicationForDocument(c,scope(),{tenantId:tenant,documentId:doc,revision:4,workId:pub,...patch})).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
 });

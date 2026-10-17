@@ -8,7 +8,7 @@
   "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
   "assistantSettingsMigrationSHA256": "7ceb5aa3ae8fcfebd656ec3ee36a153a6234a18b265fadddce314978ba9e420e",
   "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
-  "knowledgeSharesMigrationSHA256": "04d1465b98e84c20d9ad552e0ed5d1d4ee2b96c7fc28681ea87ad761c26f5ec6",
+  "knowledgeSharesMigrationSHA256": "1cb2f42e8d17f9a0a592fd04536874dbe986dde6cc6640815845c4086b8795a8",
   "knowledgeSharesControl": "CLIENT_SCOPE_REMOVED",
   "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
   "results": [

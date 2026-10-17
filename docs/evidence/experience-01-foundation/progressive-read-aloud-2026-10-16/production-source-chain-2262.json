@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-17T01:23:56.243Z",
+  "releaseCommit": "aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511",
+  "reviewedHead": "a736009712f20b5254dc9bc7804a9a8873909ebc",
+  "publicDescendant": "e76eef0568f935b7bbc18f1c352a41dbf68d97a1",
+  "ancestorVerified": true,
+  "files": [
+    {
+      "path": "src/lib/voice/messageTts.ts",
+      "sha256": "946edf2812a2c82cb7f9a213bdeedc6a82e525ee48834d295fbf7ba9c49688ad",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    },
+    {
+      "path": "src/components/chat/MessageAudioButton.tsx",
+      "sha256": "af535b392a9bd1482020e320ccd4eff8901074e7714d87b8a358a95de70bc394",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    },
+    {
+      "path": "src/solo/SoloBusinessInterview.tsx",
+      "sha256": "913c180f66dba57042613c1027f45c98fcb0d9148cbaba4596e4df647463185a",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    },
+    {
+      "path": "src/solo/SoloOnboardingStage.tsx",
+      "sha256": "0643620f2f267f948118e97f093454751efeef47f77d981ec9fd25d0f4616fa3",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    },
+    {
+      "path": "src/solo/solo-interview-navigation.ts",
+      "sha256": "517f9a20edc7687c8b4ba6a48e1b43d75512d83d2d1e72d75f7548caf46b4cfd",
+      "reviewedEqualsMerge": true,
+      "reviewedEqualsObservedDescendant": true
+    }
+  ],
+  "passed": true
+}

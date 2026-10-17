@@ -1,6 +1,6 @@
-# E01 progressive ordinary read-aloud — development evidence
+# E01 progressive ordinary read-aloud — production source release
 
-October16 owner directive; NOT RELEASED. REPAIR/EXTEND the existing single controller and message button. REUSE authenticated paige-tts, server-selected voice, budget/refusal contracts, existing Live ownership and same-response fallback. No provider/voice identity, spend limit, model router, executor, store or activation change.
+October16 owner directive; PR #2262 MERGED and production source verified at aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511. Authenticated customer acceptance remains UNVERIFIED. REPAIR/EXTEND the existing single controller and message button. REUSE authenticated paige-tts, server-selected voice, budget/refusal contracts, existing Live ownership and same-response fallback. No provider/voice identity, spend limit, model router, executor, store or activation change.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 
@@ -10,8 +10,8 @@ MATERIAL_FLOW_CHANGE: NO: repair transport/ownership behind the existing read-al
 FLOW_PROTOTYPE: NOT_REQUIRED: no new interaction container or product flow; the already approved October16 directive explicitly requires progressive playback and interruption recovery.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an ordinary owner explicitly activates existing message playback, can stop it while loading, and hears valid audio without unnecessary full-download buffering where the browser supports it.
 VISUAL_DIRECTION: PASS: incumbent PAIGE message control; no visual redesign or new motion.
-AUTOMATED_EVIDENCE: PASS:77 focused controller/button/incumbent UI/output/voice-cost and refusal assertions use deterministic local doubles. Four original regressions failed before implementation; native reset repair adds retained regression coverage. Separate final-head review/CI remain required.
-STATIC_EVIDENCE: PASS: final consumer source at a7fb029868d793375d3b944e77fb344abfc07d49 passes scoped lint,77 focused regressions and full production build (3m55); current-main composition3d3364a262da440ffe21c2d9e52047c7baf0136c changes only the Master release log, retaining both E01 and Portal records. Prior type ratchet10/7 is not relabelled final-head; final hosted CI remains required.
+AUTOMATED_EVIDENCE: PASS:86 focused Node20 voice/cost/refusal/Portal checks; required exact-head CI38988374969 SUCCESS after reproducing/fixing two Blob-realm test assertions. Actual merged voice/BUG approval recovery/navigation79 checks PASS. Counts overlap and are not summed.
+STATIC_EVIDENCE: PASS: required exact-head lint/type/build and all six workflow groups pass; same exact reviewed runtime bytes survive actual merge and observed production descendant.
 RENDERED_EVIDENCE: UNVERIFIED: the actual controller decoded a synthetic WPT MPEG stream in the native browser before EOF, but the full authenticated Chat button flow and cross-browser rendering are not verified. See the native source manifest and confirmation traces.
 BEHAVIORAL_EVIDENCE: PASS: native synthetic decode before EOF, one-response Hold/resume, reader cancellation and restart after Stop confirmed after correcting empty-src cleanup. No provider request, approved-voice audition or customer acceptance.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary customer TTS request or paid provider synthesis performed.
@@ -22,8 +22,8 @@ STATE_COVERAGE: PASS: local tests cover progressive start, same-response unsuppo
 TRUTHFUL_STATE_LABELS: PASS: playing follows actual media startup; buffer waiting returns loading; loading is cancellable; failure never claims successful business action or receipt.
 SOLO_UI: YES: existing message read-aloud button shared by SOLO Chat and current output ownership.
 UNVERIFIED: Real Jessica/provider p50/p95, full streamed ElevenLabs backend, complete Live responsiveness, actual devices/browser matrix, authenticated continuity and all ten E01 outcomes.
-INTERNAL_BUILD_IDENTITY: local development successor of reviewed guidance dce4c51b19426948e1b65f6887db5a6fba25bc19; final source identity in Git/PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=linked native manifest and focused test logs.
-RELEASE_CHANNEL: development: local repair only, no release or activation.
+INTERNAL_BUILD_IDENTITY: aaa64da1f36b2fbfc143bb4086c8b52ad6a5e511; deployment=dpl_GEDMGU1HqMGsKS2amK54tX6n5rH6; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=../experience-01-foundation/progressive-read-aloud-2026-10-16/production-release-2262.json.
+RELEASE_CHANNEL: production: exact deployment READY and stable public descendant/readback verified; authenticated behavior remains proof owed.
 RELEASE_CLASSIFICATION: internal-only: progressive playback repair within the complete E01 journey.
 CUSTOMER_RELEASE_IDENTITY: none: no complete outcome or announcement earned.
 RELEASE_NOTE_REQUIRED: no: no separate customer announcement.
@@ -55,3 +55,7 @@ Cleanup also uses the original request AbortSignal as its existing output lease.
 ## Hosted CI Node20 recovery
 
 Run38982168086/verify117245291080 Test104 failed exactly two new cross-realm Blob assertions (13,875/13,877 passed), not infrastructure. Node20.20.2 reproduced2FAIL/14PASS; Node24 passed16. The bounded test-only correction verifies exact same-response Blob identity, audio/mpeg MIME and original bytes; Node20 now16/16PASS. Production controller/button bytes remain unchanged. Main419fa4b1a Portal mobile/BUG contracts are preserved byte-for-byte. Prior type ratchet10/7 and full build3m55 passed; final successor hosted gates remain required. No provider/customer/voice/model/config effect occurred.
+
+## Production source closeout
+
+#2262 revieweda736009712f20b5254dc9bc7804a9a8873909ebc -> mainaaa64da1f36b2fbfc143bb4086c8b52ad6a5e511, treec1d28f0e512a7b10eae5ffd35b1898d7a09b0de9. All six workflow groups/ten non-Preview checks and both Vercel statuses SUCCESS; no-SQL Preview SKIPPED, not PASS. Actual firstparent6c0d79597 preserves incoming BUG approval recovery;79 actual-merge composition checks PASS. Production READY exact merge, initial public buildaaa64da1f…-mvbpja0f, then stable observed modele76eef056 descendant. All six relevant E01 source blobs match review/merge/descendant and all nine served onboarding/voice markers verify. Three canonical checkpoint definitions/controls unchanged via metadata only; zero customer records read/written. No own Edge/schema change. Immutable version JSON was not accessible through the public endpoint; no protection bypass was attempted. Exact provider deployment metadata plus stable descendant/source-chain proof is retained in production-release-2262.json. This is source/deployment proof, not ordinary customer or owner acceptance.

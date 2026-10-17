@@ -19,7 +19,7 @@ const code=ts.transpileModule(names.map(name=>declarations.get(name)).join('\n')
 const {resolve,targets}=new Function(`${code};return {resolve:resolveWriteTargetId,targets:WRITE_TARGET}`)();
 const contact='11111111-1111-4111-8111-111111111111',invitation='22222222-2222-4222-8222-222222222222';
 it('attributes the new invitation to its canonical portal token',()=>{
-  expect(targets.client_portal_invitation_send).toBe('portal_tokens');
+  expect(targets.client_portal_invitation_send).toBe('tenant_invite_tokens');
   expect(resolve({contact_id:contact},{invitation_id:invitation,contact_id:contact},'client_portal_invitation_send')).toBe(invitation);
 });
 it.each([{}, {invitation_id:'invalid'}, {operation_id:invitation}, {readback:{id:contact}}])('does not substitute a contact or operation when invitation acknowledgement is absent: %j',out=>{

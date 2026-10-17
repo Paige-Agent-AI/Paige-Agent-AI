@@ -17133,7 +17133,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         smartcredit_pull_snapshot: "paige_owner_credit_snapshots",
         coach_update_profile: "profiles",
         team_invite_mint: "invitations",
-        client_portal_invitation_send: "portal_tokens",
+        client_portal_invitation_send: "tenant_invite_tokens",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",
         update_social_accounts: "tenants",

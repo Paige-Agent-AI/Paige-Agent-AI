@@ -3,7 +3,7 @@
   "sourceCommit": "936de0b7651886565176ab83c69823063db79c75",
   "mainCommit": "0e769dcbbd1d975ad7dce37cc9ae58e66f83e885",
   "exactDelta": "Two new invitation-attribution lines only; removing them restores main byte-for-byte.",
-  "effect": "Name portal_tokens and accept returned invitation_id only; never substitute contact/operation.",
+  "effect": "Name tenant_invite_tokens and accept returned invitation_id only; never substitute contact/operation.",
   "preserved": "All incumbent dispatch, authentication, scope, admission, policy, provider and execution bodies. Metadata, dependencies and extraction algorithm unchanged.",
   "scalars": [
     {

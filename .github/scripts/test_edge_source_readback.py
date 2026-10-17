@@ -58,6 +58,17 @@ class WorkflowContract(unittest.TestCase):
 
 
 class ReleaseFixtures(unittest.TestCase):
+    def test_frontend_runtime_import_is_rejected_before_provider_io(self):
+        self.files['src/solo/sales/invoiceDraftSnapshot.ts'] = 'export const amount = 100;\n'
+        self.files['supabase/functions/paige-ai-chat/index.ts'] = (
+            'import { amount } from "../../../src/solo/sales/invoiceDraftSnapshot.ts";\n'
+            'export const outcome = amount;\n')
+        self.recommit()
+        with self.assertRaisesRegex(readback.ReadbackError, 'unsupported_local_source_root'):
+            self.verify()
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.downloads, [])
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix='paige-edge-fixture-')
         self.addCleanup(self.temporary.cleanup)
@@ -766,6 +777,17 @@ class ReleaseFixtures(unittest.TestCase):
 
 
 class RepositoryRuntimeContracts(unittest.TestCase):
+    def test_invoice_calculation_has_a_verifiable_edge_source_closure(self):
+        spec = importlib.util.spec_from_file_location('invoice_repository_graph', ROOT / '.github/scripts/edge-affected.py')
+        graph = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(graph)
+        functions_root = (ROOT / 'supabase/functions').resolve()
+        entry = functions_root / 'sales-invoice-draft-command/index.ts'
+        closure = {Path(p).resolve() for p in readback.runtime_closure(graph, str(entry))}
+        self.assertEqual([str(p.relative_to(ROOT)) for p in sorted(closure)
+                          if not p.is_relative_to(functions_root)], [])
+        self.assertIn(functions_root / '_shared/sales-commercial/invoice-amounts.ts', closure)
+
     def test_effectful_senders_explicitly_preserve_gateway_jwt_verification(self):
         config = readback.tomllib.loads((ROOT / 'supabase/config.toml').read_text(encoding='utf-8'))
         functions = config.get('functions', {})

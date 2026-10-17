@@ -1,4 +1,5 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { handlePortalInvitationCommand } from "./command.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
@@ -99,8 +100,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ ok: false, error: "POST only" }, 405);
 
-  let body: { token?: string; email?: string; first_name?: string };
+  let body: { token?: string; email?: string; first_name?: string; operation_id?: unknown; contact_id?: unknown; expected_tenant_id?: unknown };
   try { body = await req.json(); } catch { return json({ ok: false, error: "bad request" }, 400); }
+  if (body && (Object.prototype.hasOwnProperty.call(body,"operation_id") || (!Object.prototype.hasOwnProperty.call(body,"token") && (Object.prototype.hasOwnProperty.call(body,"contact_id") || Object.prototype.hasOwnProperty.call(body,"expected_tenant_id"))))) {
+    return handlePortalInvitationCommand(req,body,{key:RESEND_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml});
+  }
   const token = String(body.token ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
   const firstName = body.first_name ? String(body.first_name).trim() : "";

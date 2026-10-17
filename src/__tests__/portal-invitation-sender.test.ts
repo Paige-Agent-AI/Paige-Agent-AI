@@ -3,10 +3,10 @@ import ts from "typescript";
 import {describe,expect,it} from "vitest";
 import {commsProviderExecutionAllowed} from "../../supabase/functions/_shared/comms-provider-boundary";
 
-// The incumbent actual-handler test pattern: replace the two inspected module
+// The incumbent actual-handler test pattern: replace the three inspected module
 // boundaries only, execute the real handler, never permit a network effect.
 const source=readFileSync("supabase/functions/send-portal-invite/index.ts","utf8");
-if((source.match(/^import .*;\r?$/gm)??[]).length!==2)throw Error("Review the changed invitation module boundary");
+if((source.match(/^import .*;\r?$/gm)??[]).length!==3)throw Error("Review the changed invitation module boundary");
 const javascript=ts.transpileModule(source.replace(/^import .*;\r?\n/gm,""),{
  compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
 const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-8000-000000000001",
@@ -67,7 +67,8 @@ async function drive(options:Options={}){
  }
  const env:Record<string,string>={SUPABASE_URL:"https://test.supabase.co",SUPABASE_ANON_KEY:"test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY:"test-service-key",RESEND_API_KEY:"synthetic-provider-key",PUBLIC_SITE_URL:"https://portal.tests.invalid"};
- new Function("createClient","commsProviderExecutionAllowed","Deno","fetch","console",javascript)(makeClient,commsProviderExecutionAllowed,
+ new Function("createClient","commsProviderExecutionAllowed","handlePortalInvitationCommand","Deno","fetch","console",javascript)(makeClient,commsProviderExecutionAllowed,
+  ()=>{throw Error("Legacy sender cases must not enter the canonical command branch");},
   {env:{get:(key:string)=>env[key]??""},serve:(value:typeof handler)=>{handler=value;}},
   async(url:string,request:{body:string})=>{
    if(url!=="https://api.resend.com/emails")throw Error("Unexpected network destination; network is forbidden");

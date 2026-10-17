@@ -171,6 +171,12 @@
   ],
   "entries": [
     {
+      "tool": "client_portal_invitation_send",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "send-portal-invite/command.ts records client.portal_invite through recordCapabilityRun after native operation/delivery readback. Original native audit and email_send_log receipts remain authoritative; a Rail failure cannot convert provider acceptance into retry permission."
+    },
+    {
       "tool": "knowledge_update",
       "risk": "ordinary",
       "receipt": "emits",

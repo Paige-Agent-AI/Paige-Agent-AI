@@ -5,12 +5,14 @@ import { createHash } from "node:crypto";
 import { build } from "esbuild";
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { inspectResourceContrast } from "../e09-resource-layout.mjs";
 const project = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const output = path.resolve(project, process.argv[2] ?? ".impeccable/review/e09-dashboard");
-const assistantOnly = process.argv.includes("--assistant-settings");
+const resourcesOnly = process.argv.includes("--customer-resources");
+const assistantOnly = process.argv.includes("--assistant-settings") || resourcesOnly;
 const assistantPhoneOnly = process.argv.includes("--assistant-phone-only");
 await fs.mkdir(output, { recursive: true });
-const adapter = path.join(project, "scripts/proof/e09-dashboard-ui/adapter.tsx");
+const adapter = path.join(project, `scripts/proof/e09-dashboard-ui/${resourcesOnly ? "resources-adapter" : "adapter"}.tsx`);
 const replace = /^(?:@\/(?:hooks\/(?:useTenantContext|useBrandKit|usePortalConfig|useRailEvents|useTierFeatures)|integrations\/supabase\/client|lib\/playbook|components\/ui\/paige|components\/admin\/voice\/DialPadTrigger|components\/dashboard\/PaigeAIChat|components\/tenant-calendar\/TenantCanonicalCalendarWorkspace)|\.\/(?:usePortalInvitations|useTenantRelationshipsData|ClientStanding|PeopleContactEditor))$/;
 const bundled = await build({ entryPoints: [path.join(project, "scripts/proof/e09-dashboard-ui/source.tsx")], outdir: path.join(output,"bundle"), bundle: true, write: false, format: "iife", jsx: "automatic", loader: assistantOnly ? {} : { ".css": "empty" }, define: { "process.env.NODE_ENV": '"production"', "import.meta.env.DEV": "false" }, plugins: [{ name: "read-only-source-fixtures", setup(api) {
   api.onResolve({ filter: replace }, () => ({ path: adapter }));
@@ -40,9 +42,12 @@ for (const match of [...css.matchAll(/url\(([^)]*\.woff2)\)/g)]) {
 const options = { headless: true }; try { await fs.access(chromium.executablePath()); } catch { options.executablePath = "C:/Program Files/Google/Chrome/Application/chrome.exe"; }
 const browser = await chromium.launch(options); const cases = []; const errors = [];
 async function renderCase({ width, height, open, theme, tenant, state = "content", tab = "Overview" }) {
+  let resourceContrast = null;
   const page = await browser.newPage({ viewport: { width, height }, reducedMotion: "reduce" });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.route("**/*", (route) => route.abort());
+  const offlineOrigin="https://resource-ui.tests.invalid/";
+  await page.route("**/*", (route) => resourcesOnly && route.request().url()===offlineOrigin ? route.fulfill({contentType:"text/html",body:"<!doctype html><html><head></head><body></body></html>"}) : route.abort());
+  if(resourcesOnly) await page.goto(offlineOrigin);
   await page.setContent(`<html${assistantOnly ? "" : ` data-pg="${theme}"`}><head></head><body><div id="root"${assistantOnly ? ` data-pg="${theme}"` : ""}></div></body></html>`);
   await page.addStyleTag({ content: css });
   await page.evaluate((proof) => { window.portalProof = proof; }, { open, theme, tenant, state });
@@ -52,7 +57,33 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
   const overlay = assistantOnly && open && await page.locator(".tcs-paige-backdrop").isVisible();
   if (overlay) await page.locator("#tenant-paige-workspace").getByRole("button", { name: "Fold PAIGE conversation", exact: true }).click();
   if (tab !== "Overview") await page.getByRole("tab", { name: tab, exact: true }).click();
-  if (assistantOnly) {
+  if (resourcesOnly) {
+    await page.getByRole("button", {name:"Manage resources for Test Client",exact:true}).click();
+    await page.getByRole("button",{name:/Review sharing Your program guide/}).click();
+    await page.waitForFunction(()=>document.activeElement?.textContent==="Review resource sharing");
+    const share=page.getByRole("button",{name:"Share with customer",exact:true});await share.focus();await page.keyboard.press("Tab");
+    assert.equal(await page.getByRole("button",{name:"Cancel",exact:true}).evaluate(node=>node===document.activeElement),true);
+    if(width===390) await page.evaluate(()=>window.resourceProof.loseNextAcknowledgement());
+    await share.click();
+    if(width===390){await page.getByRole("button",{name:"Check saved status",exact:true}).click();}
+    await page.getByText("Resource shared with this customer.",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Reload resources",exact:true}).click();
+    await page.getByRole("button",{name:"Withdraw access",exact:true}).click();
+    await page.getByRole("button",{name:"Confirm withdrawal",exact:true}).click();
+    await page.getByText("Resource access withdrawn. The original document and private conversation are retained.",{exact:true}).waitFor();
+    assert.equal((await page.evaluate(()=>window.resourceProof.calls())).filter(call=>call.name==="set_client_portal_knowledge_share").length,2);
+    await page.getByRole("button",{name:"Back to client access",exact:true}).click();
+    await page.waitForFunction(()=>document.activeElement?.getAttribute("aria-label")==="Manage resources for Test Client");
+    await page.getByRole("button",{name:"Manage resources for Test Client",exact:true}).click();
+    const search=page.getByRole("searchbox",{name:"Search loaded resources",exact:true});await search.waitFor();
+    const listContrast=await page.evaluate(inspectResourceContrast,'[aria-labelledby="owner-customer-resources-title"]');
+    assert.deepEqual(listContrast.failures,[],JSON.stringify({width,theme,listContrast}));
+    if(width<768) assert(parseFloat(await search.evaluate(node=>getComputedStyle(node).fontSize))>=16,"Phone resource search retains16px type");
+    await page.getByRole("button",{name:/Review sharing Your program guide/}).click();
+    await page.getByRole("button",{name:"Share with customer",exact:true}).waitFor();
+    const reviewContrast=await page.evaluate(inspectResourceContrast,'[aria-labelledby="owner-customer-resources-title"]');
+    assert.deepEqual(reviewContrast.failures,[],JSON.stringify({width,theme,reviewContrast}));resourceContrast={list:listContrast,review:reviewContrast};
+  } else if (assistantOnly) {
     await page.getByRole("button", { name: "Configure assistant", exact: true }).click();
     const name = page.getByRole("textbox", { name: "Assistant name", exact: true });
     await name.waitFor();
@@ -85,7 +116,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
   }
   const name = `${width}-${height}-${open ? "open" : "closed"}-${theme}-${tenant}-${state}-${tab.replaceAll(" ", "-")}.png`;
   await page.screenshot({ path: path.join(output, name), fullPage: true });
-  cases.push({ width, height, open, theme, tenant, state, tab, geometry, screenshot: name });
+  cases.push({ width, height, open, theme, tenant, state, tab, geometry, screenshot: name,...(resourcesOnly?{contrast:resourceContrast}:{}) });
   if (!assistantOnly && width === 1536 && !open && theme === "light" && state === "content" && tab === "Overview") {
     await page.getByRole("button", { name: "Preview portal", exact: true }).focus();
     await page.getByRole("button", { name: "Preview portal", exact: true }).click();
@@ -121,8 +152,8 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
 }
 try {
   if (assistantOnly) {
-    if(!assistantPhoneOnly) for (const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]]) for (const open of [false,true]) for (const theme of ["light","dark"]) await renderCase({width,height,open,theme,tenant:"test-tenant-a",tab:"Experience"});
-    for (const [width,height] of [[390,844],[320,568]]) for (const theme of ["light","dark"]) await renderCase({width,height,open:false,theme,tenant:"test-tenant-b",tab:"Experience"});
+    if(!assistantPhoneOnly) for (const [width,height] of [[1536,770],[1366,768],[1024,768],[900,1000]]) for (const open of [false,true]) for (const theme of ["light","dark"]) await renderCase({width,height,open,theme,tenant:"test-tenant-a",tab:resourcesOnly?"Client access":"Experience"});
+    for (const [width,height] of [[390,844],[320,568]]) for (const theme of ["light","dark"]) await renderCase({width,height,open:false,theme,tenant:"test-tenant-b",tab:resourcesOnly?"Client access":"Experience"});
   } else {
   for (const [width, height] of [[1536,770],[1366,768],[1024,768],[900,1000]]) for (const open of [false,true]) for (const theme of ["light","dark"]) await renderCase({width,height,open,theme,tenant:"test-tenant-a"});
   for (const tab of ["Overview","Experience","Client access","Activity"]) await renderCase({width:1536,height:900,open:false,theme:"light",tenant:"test-tenant-b",tab});
@@ -132,8 +163,8 @@ try {
   }
   assert.equal(errors.length, 0, JSON.stringify(errors));
 } finally { await browser.close(); }
-const sources = ["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/owner-portal-dashboard.css","src/pages/admin/PortalStudio.tsx",...(assistantOnly ? ["src/components/tenant-relationships/CustomerAssistantSettings.tsx","src/lib/portal/assistantSettings.ts"] : [])];
+const sources = ["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/owner-portal-dashboard.css","src/pages/admin/PortalStudio.tsx",...(resourcesOnly ? ["src/components/tenant-relationships/OwnerCustomerResources.tsx","src/hooks/useOwnerResourceShares.ts","src/lib/customer-resources.ts"] : assistantOnly ? ["src/components/tenant-relationships/CustomerAssistantSettings.tsx","src/lib/portal/assistantSettings.ts"] : [])];
 const sourceHashes = await Promise.all(sources.map(async (file) => ({file,sha256:createHash("sha256").update((await fs.readFile(path.join(project,file),"utf8")).replace(/\r\n/g,"\n")).digest("hex")})));
-const boundary = "Actual Solo shell, workspace, dashboard and native editor source; read-only neutral test transports and placeholder PAIGE content. Network blocked. No real session, account acceptance, production read/write, provider send or owner acceptance is proven.";
+const boundary = resourcesOnly ? "Actual Solo shell, workspace, dashboard, resource UI/hooks/client; explicitly simulated local-native receipts and placeholder PAIGE content. All network blocked. No real Auth, account, permission grant, production mutation, provider send, opened/read engagement or owner acceptance is proven." : "Actual Solo shell, workspace, dashboard and native editor source; read-only neutral test transports and placeholder PAIGE content. Network blocked. No real session, account acceptance, production read/write, provider send or owner acceptance is proven.";
 await fs.writeFile(path.join(output,"result.json"),JSON.stringify({sourceHashNormalization:"UTF-8 with CRLF normalized to LF, matching committed source text",sourceHashes,cases,errors,boundary},null,2));
 console.log(JSON.stringify({cases:cases.length,output,errors,boundary}));

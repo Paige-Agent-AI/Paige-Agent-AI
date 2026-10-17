@@ -8,8 +8,9 @@ import {useClientPortalFrame} from '@/hooks/useClientPortalFrame';
 import {useCustomerResources} from '@/hooks/useCustomerResources';
 import {readableTextOn} from '@/lib/brand/contrast';
 import type {ClientPortalFrame} from '@/lib/client-portal-frame';
+import {usePlaybook} from '@/lib/playbook';
 
-export function CustomerResourcesView({frame}:{frame:ClientPortalFrame}){
+export function CustomerResourcesView({frame,configuredCourses=false}:{frame:ClientPortalFrame;configuredCourses?:boolean}){
  const model=useCustomerResources(frame),heading=useRef<HTMLHeadingElement>(null),notice=useRef<HTMLDivElement>(null);
  const entries=useRef(new Map<string,HTMLButtonElement>()),focus=useRef<{kind:'reader'|'list';id:string}|null>(null);
  useEffect(()=>{
@@ -45,20 +46,22 @@ export function CustomerResourcesView({frame}:{frame:ClientPortalFrame}){
      </li>)}</ul>}
     {model.hasMore&&<Button variant="outline" onClick={()=>void model.loadMore()}>Load more resources</Button>}
     <p className="text-sm text-muted-foreground">For files and uploads, open <Link className="inline-flex min-h-[44px] items-center underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" to="/app/documents">Documents</Link>.</p>
+    {configuredCourses&&<section aria-label="Configured courses" className="border-t border-border pt-6"><LearningVault/></section>}
    </>}
  </section>;
 }
 
-/** Keep the established /app/learn route and non-customer course behavior.
- * A server-verified customer frame selects the customer source, never a role label.
+/** Keep the established /app/learn route and configured course implementation.
+ * A missing relationship cannot authorize a fallback into platform courses.
+ * Catalog keys affect presentation only; course data/enrollment keep their own native policies.
  */
 export default function Resources(){
  const {user}=useOutletContext<{user?:{id:string}|null}>();
- const customer=useClientPortalFrame(user?.id??null);
+ const customer=useClientPortalFrame(user?.id??null,true,true),playbook=usePlaybook();
  if(!user?.id)return <p role="status">Checking your customer session…</p>;
  if(customer.checking||customer.phase==='loading')return <div role="status" aria-label="Checking resource access" className="space-y-4"><Skeleton className="h-12 w-full"/><Skeleton className="h-16 w-full"/></div>;
- if(customer.phase==='not-client')return <LearningVault/>;
  if(customer.phase!=='ready'||!customer.frame)return <section className="space-y-4"><h1 className="text-2xl font-semibold">Resources</h1><p role="alert" className="text-sm">Your resource access could not be verified. Try again or contact your business.</p><Button variant="outline" onClick={()=>void customer.reload()}>Check access again</Button></section>;
  const frame=customer.frame;
- return <CustomerResourcesView key={`${frame.actorId}:${frame.profile.tenant_id}:${frame.profile.id}`} frame={frame}/>;
+ const configuredCourses=playbook.portal.modules.some(module=>module.key==='learn')&&!playbook.portal.modules.some(module=>module.key==='resources');
+ return <CustomerResourcesView key={`${frame.actorId}:${frame.profile.tenant_id}:${frame.profile.id}`} frame={frame} configuredCourses={configuredCourses}/>;
 }

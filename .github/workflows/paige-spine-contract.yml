@@ -527,6 +527,7 @@ jobs:
       - run: supabase test db supabase/tests/customer_invitation_operation.sql
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/customer_invitation_delivery.sql
+      - run: supabase test db supabase/tests/customer_invitation_catalogue.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

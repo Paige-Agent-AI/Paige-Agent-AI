@@ -117,6 +117,18 @@ export function parseChat(src, importedTools = []) {
   };
 }
 
+/** Follow E09's actual catalog through the existing mounted communications consumer. */
+export function portalInvitationCatalogTools(chat,aggregate,domain){
+  if (!/import\s*\{[^}]*COMMS_EMAIL_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/comms-email\/chat\.ts['"]/.test(chat)
+    || !chat.includes('toolDefs.push(...COMMS_EMAIL_TOOLS') || !chat.includes('await dispatchCommsEmailChat(')
+    || !/import\s*\{[^}]*PORTAL_INVITATION_TOOLS[^}]*dispatchPortalInvitationChat[^}]*\}\s*from\s*['"]\.\.\/client-portal-invitation\/chat\.ts['"]/.test(aggregate)
+    || !aggregate.includes('...PORTAL_INVITATION_TOOLS')
+    || !/if\s*\(PORTAL_INVITATION_TOOL_NAMES\.has\(ctx\.toolName\)\)\s*return dispatchPortalInvitationChat\(ctx, deps\)/.test(aggregate)) throw Error('Customer invitation lost its mounted outbound dispatcher');
+  const tools=[...domain.matchAll(/\bname:\s*"([a-z0-9_]+)"/g)].map(m=>m[1]);
+  if(tools.length!==1||tools[0]!=='client_portal_invitation_send')throw Error('Customer invitation catalog could not be parsed');
+  return tools;
+}
+
 /**
  * The canonical keys the MCP door points at, read from its capability policy. That file holds no
  * classification of its own — it is a tool-name → key mapping — so this only asks WHICH keys are
@@ -331,6 +343,16 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const portalChat=fs.readFileSync(CHAT,'utf8'),portalAggregate=fs.readFileSync('supabase/functions/_shared/comms-email/chat.ts','utf8'),portalDomain=fs.readFileSync('supabase/functions/_shared/client-portal-invitation/chat.ts','utf8');
+  bad+=ok('customer invitation follows its actual mounted domain catalog',portalInvitationCatalogTools(portalChat,portalAggregate,portalDomain).join()==='client_portal_invitation_send');
+  for(const [label,chat,aggregate,domain]of[
+    ['missing shared catalog mount',portalChat.replace('toolDefs.push(...COMMS_EMAIL_TOOLS','toolDefs.push(...OTHER_TOOLS'),portalAggregate,portalDomain],
+    ['missing shared dispatcher',portalChat.replace('await dispatchCommsEmailChat(','await missingDispatcher('),portalAggregate,portalDomain],
+    ['wrong invitation import',portalChat,portalAggregate.replace('../client-portal-invitation/chat.ts','../untrusted/chat.ts'),portalDomain],
+    ['missing invitation catalog spread',portalChat,portalAggregate.replace('...PORTAL_INVITATION_TOOLS','...OTHER_TOOLS'),portalDomain],
+    ['missing invitation delegation',portalChat,portalAggregate.replace('return dispatchPortalInvitationChat(ctx, deps)','return missingDispatcher(ctx, deps)'),portalDomain],
+    ['missing literal tool',portalChat,portalAggregate,portalDomain.replace('name:"client_portal_invitation_send"','name:"missing_tool"')],
+  ]){let refused=false;try{portalInvitationCatalogTools(chat,aggregate,domain)}catch{refused=true}bad+=ok('customer invitation refuses '+label,refused);}
   const merchantSources=MERCHANT_PATHS.map(path=>fs.readFileSync(path,'utf8'));
   bad += ok('merchant declarations discovered through mounted Chat and canonical edge gate',salesMerchantDoorBound(...merchantSources));
   for(const [index,token]of [[0,'toolDefs.push(...SALES_INVOICE_TOOLS'],[1,'...SALES_MERCHANT_TOOLS'],[1,'return dispatchMerchantChat(ctx,deps,'],[2,"invoke('tenant-stripe-connect'"],[3,'await admitMerchantCommand(body,context,'],[4,'decideDeclaredCapability(MERCHANT_KIT_BY_TOOL[tool],'],[4,'await port.claim(tool,req.approved_fingerprint)'],[5,"risk:'high'"],[6,'classifyAction(key) !== declaration.governance.risk']]){
@@ -517,6 +539,13 @@ if (chatSrc.includes('...KNOWLEDGE_TOOLS')) {
   const knowledgeTools = [...source.matchAll(/\bname:\s*"((?:read_tenant_knowledge|knowledge_update|knowledge_delete))"/g)].map(m => m[1]);
   if (knowledgeTools.length !== 3) throw new Error('Knowledge catalog could not be parsed');
   importedTools.push(...knowledgeTools);
+}
+// E09 joins the already mounted outbound communications consumer. Follow the
+// domain-owned catalog, not an exemption or a second runtime registry.
+const portalAggregate = fs.readFileSync('supabase/functions/_shared/comms-email/chat.ts','utf8');
+if (portalAggregate.includes('...PORTAL_INVITATION_TOOLS')) {
+  const portalSource=fs.readFileSync('supabase/functions/_shared/client-portal-invitation/chat.ts','utf8');
+  importedTools.push(...portalInvitationCatalogTools(chatSrc,portalAggregate,portalSource));
 }
 if (chatSrc.includes('...EMAIL_CAMPAIGN_TOOLS')) {
   if (!/import\s*\{[^}]*EMAIL_CAMPAIGN_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/email-campaign-chat\.ts['"]/.test(chatSrc)) throw new Error('Unresolved email campaign catalog import');

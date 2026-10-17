@@ -1575,7 +1575,7 @@
       "status": "PARTIAL",
       "owner": "Comms workstream",
       "dependency": "Per-tenant sending-identity wiring. The 2026-10-04 invoice.settings_update numbering/presentation and six-tab Opportunities List/Board changes are internal Sales contracts, not new provider connections or sender readiness. Frozen issued invoice presentation is reused by email. The 2026-10-04 PDF workspace derives a version-checked PDF attachment server-side through the existing paige-browser host; Resend/Gmail/SMTP share the existing transport. Missing PDF host or changed invoice refuses dispatch. Authenticated customization, hosted PDF and real attachment acceptance remain UNVERIFIED. The post-merge invoice dispatch repair uses the existing claim/finalize state and invoice lock to refuse concurrent financial mutations while dispatching; no sender authority or provider maturity is added.",
-      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing).",
+      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing). Customer portal invitation command/source is a separate bounded adapter over the incumbent send-portal-invite, native token producer and email_send_log; it uses canonical high-risk confirmation and preserves original-operation uncertainty. Its actual Dashboard/typed Chat/Live binding, released provider readback and authenticated invitation/customer return remain PROOF_OWED. No sender, domain verification, connection maturity or execution activation is inferred.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -1619,6 +1619,16 @@
           "path": "supabase/functions/_shared/email/providers.ts",
           "role": "provider_adapter",
           "note": "provider-specific: providers.ts carries the Resend send branch."
+        },
+        {
+          "path": "supabase/functions/send-portal-invite/command.ts",
+          "role": "provider_adapter",
+          "note": "Customer invitation adapter to the existing canonical high-risk confirmation/kernel, native recipient-bound token producer and incumbent sender. No Chat/Live activation or authenticated provider proof is inferred."
+        },
+        {
+          "path": "supabase/functions/send-portal-invite/canonical-delivery.ts",
+          "role": "provider_adapter",
+          "note": "Internal incumbent Resend invitation transport, using native email_send_log claims, identical-payload provider keys, current recipient/policy/provider-floor rechecks and durable outcome readback. Unknown recovery remains effectful and requires fresh canonical approval; no delivery/open/human-read claim."
         },
         {
           "path": "supabase/functions/handle-resend-webhook/index.ts",
@@ -1874,7 +1884,7 @@
         {
           "path": "supabase/functions/paige-tts/index.ts",
           "role": "provider_adapter",
-          "note": "Existing profile-resolved read-aloud seam; October16 production metadata selects approved active elevenlabs-jessica-r1, not the earlier OpenAI snapshot. E01 stream delivery is source-released in #2268 with bounded production source proof and shared global certification held on #2271; it retains canonical reserve/settle/refusal, complete-only tenant cache and incumbent usage-stage measurements. Local timing successor exposes only numeric same-response Server-Timing stages to optional native client measurements, without customer identity, new telemetry storage or provider request. Live readiness still records transport/pilot off and missing verification/cost limits. No activation, provider audition or authenticated latency proof."
+          "note": "Existing profile-resolved read-aloud seam; October16 production metadata selects approved active elevenlabs-jessica-r1, not the earlier OpenAI snapshot. E01 stream delivery is source-released in #2268 with bounded production source proof and shared global certification held on #2271; it retains canonical reserve/settle/refusal, complete-only tenant cache and incumbent usage-stage measurements. Timing #2273 is source-released with actual paige-tts76 source readback: numeric same-response Server-Timing and optional native client phases, without customer identity, new telemetry storage or provider request. Optional Live phase observation remains development, and the existing neutral Live unit/cost callback is unbound. Live readiness still records transport/pilot off and missing verification/cost limits. No activation, provider audition or authenticated latency proof."
         },
         {
           "path": "supabase/functions/_shared/operator-storage-retirement.ts",

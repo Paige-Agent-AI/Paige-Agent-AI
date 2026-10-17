@@ -17233,6 +17233,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         smartcredit_pull_snapshot: "paige_owner_credit_snapshots",
         coach_update_profile: "profiles",
         team_invite_mint: "invitations",
+        client_portal_invitation_send: "tenant_invite_tokens",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",
         update_social_accounts: "tenants",
@@ -17255,6 +17256,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const resolveWriteTargetId = (args: any, out: any, tool?: string): string | null => {
+        if (tool === "client_portal_invitation_send") return typeof out?.invitation_id === "string" && UUID.test(out.invitation_id) ? out.invitation_id : null;
         if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // A Planning item's parent plan/contact/action is not the record changed.

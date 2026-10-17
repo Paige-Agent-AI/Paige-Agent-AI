@@ -1,5 +1,8 @@
 # Config Registry — infra & integration state
 
+**2026-10-16 E01 timing source RELEASED:** PR [#2273](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2273), reviewed `00f9726e5a9c86da27ea4e625d0eaff1b69cac0c` -> main `6a2c4258033c6438deab211f56d5188f1b32c9ec`. All11 exact-head checks including Preview, six workflows and both Vercel statuses SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE. Production Vercel `dpl_FqwfkNiPWWdkzQVTfvoP5j36na5E` READY; stable served-module graph13/13. Actual paige-tts76 source/configuration matches7/7 merged files, separately from deployment artifact75. Three canonical checkpoint definitions/access controls unchanged. Optional native playback phases and same-response numeric Server-Timing are source-released, not actual Jessica/provider p50/p95 or customer acceptance. Global Edge certification remains HELD on shared BUG#2271 after the selected deployment/source checks passed and final baseline-record step failed; no tag bypass. No provider/customer operation. Original23 cases and all ten outcomes remain OPEN. Subsequent Live phase observation remains development-only; its neutral unit/cost binding is separately incomplete. No interim owner testing request.
+
+
 Durable record of the platform's integration configuration so no future session re-diagnoses
 "how is X wired / what's the account / which secret drives this."
 

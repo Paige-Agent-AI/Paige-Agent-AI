@@ -133,7 +133,7 @@ try {
   assert.equal(errors.length, 0, JSON.stringify(errors));
 } finally { await browser.close(); }
 const sources = ["src/components/tenant-shell/TenantCommandCenterShell.tsx","src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","src/components/tenant-relationships/OwnerPortalDashboard.tsx","src/components/tenant-relationships/PortalInvitationManager.tsx","src/components/tenant-relationships/owner-portal-dashboard.css","src/pages/admin/PortalStudio.tsx",...(assistantOnly ? ["src/components/tenant-relationships/CustomerAssistantSettings.tsx","src/lib/portal/assistantSettings.ts"] : [])];
-const sourceHashes = await Promise.all(sources.map(async (file) => ({file,sha256:createHash("sha256").update(await fs.readFile(path.join(project,file))).digest("hex")})));
+const sourceHashes = await Promise.all(sources.map(async (file) => ({file,sha256:createHash("sha256").update((await fs.readFile(path.join(project,file),"utf8")).replace(/\r\n/g,"\n")).digest("hex")})));
 const boundary = "Actual Solo shell, workspace, dashboard and native editor source; read-only neutral test transports and placeholder PAIGE content. Network blocked. No real session, account acceptance, production read/write, provider send or owner acceptance is proven.";
-await fs.writeFile(path.join(output,"result.json"),JSON.stringify({sourceHashes,cases,errors,boundary},null,2));
+await fs.writeFile(path.join(output,"result.json"),JSON.stringify({sourceHashNormalization:"UTF-8 with CRLF normalized to LF, matching committed source text",sourceHashes,cases,errors,boundary},null,2));
 console.log(JSON.stringify({cases:cases.length,output,errors,boundary}));

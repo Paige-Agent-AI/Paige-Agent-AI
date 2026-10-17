@@ -1,4 +1,5 @@
 {
+  "sourceHashNormalization": "UTF-8 with CRLF normalized to LF, matching committed source text",
   "sourceHashes": [
     {
       "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
@@ -22,7 +23,7 @@
     },
     {
       "file": "src/pages/admin/PortalStudio.tsx",
-      "sha256": "830170aa2b90e2c0db5ecc7f30c37bfb6802cecaf59cff24372dd8495c52294b"
+      "sha256": "1b12919e4a8cb67d20aaf9d3d9ba4510f0cb3f9dd0793afb8d3100f12cca8ebf"
     },
     {
       "file": "src/components/tenant-relationships/CustomerAssistantSettings.tsx",

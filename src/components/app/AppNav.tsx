@@ -112,17 +112,24 @@ export function AppNav({ user }: AppNavProps) {
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
   const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = useClientPortalBrandState();
-  // A customer of a business (an actual relationship resolved server-side) gets
+  // A customer of ONE business (an actual relationship resolved server-side) gets
   // help from THAT business ("Get help" → their own inbox), never Paige's platform
-  // support desk. Staff/owners without a customer relationship keep platform
-  // Support. Neither renders until the relationship resolves, so a customer never
-  // sees the platform desk flash in (E09 owner decision). A FAILED resolve is not
-  // "not a customer": it shows neither, rather than a destination that may be wrong.
+  // support desk. Everyone else whose relationship has resolved keeps platform
+  // Support — staff/owners, and a customer of MORE than one business, who has no
+  // thread that can send until choosing a business exists (Slice 8). Neither renders
+  // until the relationship resolves, so a customer never sees the platform desk flash
+  // in (E09 owner decision). A FAILED resolve is not "not a customer": it shows
+  // neither, rather than a destination that may be wrong.
   const relationshipKnown = !brandLoading && !brandError;
-  const isCustomer = relationshipKnown && (!!brand?.tenant_id || multipleBusinesses);
+  const isCustomer = relationshipKnown && !!brand?.tenant_id && !multipleBusinesses;
+  const isAnyCustomer = relationshipKnown && (!!brand?.tenant_id || multipleBusinesses);
   const showPlatformSupport = relationshipKnown && !isCustomer;
   const showGetHelp = isCustomer;
-  const businessName = brand?.tenant_name?.trim();
+  // Moving between the thread and its help mode is one page: replace, so the page's
+  // discard guard (which only intercepts push) never asks to leave a page it stays on.
+  const staysInThread = (href: string) =>
+    location.pathname === "/app/messages" && (href === "/app/messages" || href.startsWith("/app/messages?"));
+  const go = (href: string) => navigate(href, staysInThread(href) ? { replace: true } : undefined);
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
   // The tenant's PRESENTATION OVERLAY over the Playbook module catalog (§9/§10).
   // Purely subtractive/reordering — never introduces module keys. Resolves to {}
@@ -238,7 +245,7 @@ export function AppNav({ user }: AppNavProps) {
               {navItems.map((item) => (
                 <button
                   key={item.href}
-                  onClick={() => { navigate(item.href); setMobileMenuOpen(false); }}
+                  onClick={() => { go(item.href); setMobileMenuOpen(false); }}
                   className={`w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] transition-colors ${
                     location.pathname === item.href
                       ? "bg-sidebar-accent text-accent"
@@ -251,7 +258,7 @@ export function AppNav({ user }: AppNavProps) {
               ))}
               {showGetHelp && (
                 <button
-                  onClick={() => { navigate("/app/messages?topic=help"); setMobileMenuOpen(false); }}
+                  onClick={() => { go("/app/messages?topic=help"); setMobileMenuOpen(false); }}
                   className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
                 >
                   <CircleHelp className="w-4 h-4" />
@@ -335,6 +342,7 @@ export function AppNav({ user }: AppNavProps) {
             <Link
               key={item.href}
               to={item.href}
+              replace={staysInThread(item.href)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                 location.pathname === item.href
                   ? "bg-sidebar-accent text-accent font-medium"
@@ -365,19 +373,9 @@ export function AppNav({ user }: AppNavProps) {
           </Button>
         )}
 
-        {isCustomer ? (
-          // A customer reaches THEIR business in the portal thread (E09), by name.
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs max-w-[220px]"
-            onClick={() => navigate("/app/messages")}
-            aria-label={businessName ? `Message ${businessName}` : "Message your team"}
-          >
-            <MessageCircle aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline truncate">{businessName ? `Message ${businessName}` : "Message your team"}</span>
-          </Button>
-        ) : !isAdmin && relationshipKnown && (
+        {/* A customer reaches their business through the Messages nav item; a second
+            top-bar entry to the same page only crowded the bar. */}
+        {!isAnyCustomer && !isAdmin && relationshipKnown && (
           <Button
             variant="ghost"
             size="sm"
@@ -419,7 +417,7 @@ export function AppNav({ user }: AppNavProps) {
               </>
             )}
             {showGetHelp && (
-              <DropdownMenuItem onClick={() => navigate("/app/messages?topic=help")}>
+              <DropdownMenuItem onClick={() => go("/app/messages?topic=help")}>
                 <CircleHelp className="w-4 h-4 mr-2" />
                 Get help
               </DropdownMenuItem>

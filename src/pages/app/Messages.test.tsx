@@ -1,6 +1,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import Messages from "./Messages";
 import { hasUnsavedWork } from "@/hooks/useBeforeUnloadGuard";
@@ -10,13 +10,14 @@ const T = "e0923000-0000-0000-0000-000000000001";
 const f = vi.hoisted(() => ({
   state: null as unknown as ClientPortalMessagesState,
   modules: [{ key: "home", label: "Home" }, { key: "learn", label: "Resources" }],
+  color: "#26483e" as string | null,
 }));
 vi.mock("@/hooks/useClientPortalMessages", async (orig) => ({
   ...(await orig<typeof import("@/hooks/useClientPortalMessages")>()),
   useClientPortalMessages: () => f.state,
 }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
-  useClientPortalBrand: () => ({ tenant_id: T, tenant_name: "Northwind Studio", primary_color: "#26483e", logo_url: null }),
+  useClientPortalBrand: () => ({ tenant_id: T, tenant_name: "Northwind Studio", primary_color: f.color, logo_url: null }),
 }));
 vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: {}, loading: false }) }));
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: f.modules } }) }));
@@ -28,7 +29,9 @@ const render = async (path = "/app/messages") => act(async () => root.render(
     <Routes>
       <Route path="/app/messages" element={<Messages />} />
       <Route path="/app/learn" element={<p>Resources page</p>} />
+      <Route path="/app" element={<p>Home page</p>} />
     </Routes>
+    <Link to="/app">Elsewhere</Link>
   </MemoryRouter>,
 ));
 const button = (label: string) => Array.from(host.querySelectorAll("button"))
@@ -44,6 +47,7 @@ async function type(value: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   f.modules = [{ key: "home", label: "Home" }, { key: "learn", label: "Resources" }];
+  f.color = "#26483e";
   f.state = {
     messages: [], outbox: [], loading: false, error: null, unavailable: false, multipleBusinesses: false,
     hasMore: false, loadingMore: false,
@@ -98,6 +102,8 @@ it("explains honestly when the account has no customer relationship", async () =
   await render();
   expect(host.textContent).toContain("Messages aren't available on this account");
   expect(host.querySelector("textarea")).toBeNull();
+  const back = host.querySelector('section a[href="/app"]');
+  expect(back?.textContent).toContain("Back to Home");
 });
 
 it("renders customer and business messages with authors and no read receipts", async () => {
@@ -220,12 +226,100 @@ it("uses a non-live log wrapper around a plain list and announces only new incom
   expect(status()).toContain("New message from Northwind Studio: Thursday works");
 });
 
-it("shows the Help request label at full opacity on the customer's own bubble", async () => {
+it("marks the customer's own help request with a ringed pill and icon, not same-colour text", async () => {
   f.state.messages = [{ id: "h", author: "customer", kind: "help", body: "Locked out", created_at: "2026-10-01T10:00:00Z" }];
   await render();
-  const label = Array.from(host.querySelectorAll("span")).find(n => n.textContent === "Help request")!;
-  expect(label.className).toContain("text-primary-foreground");
-  expect(label.className).not.toContain("/80");
+  const pill = host.querySelector("[data-help-pill]") as HTMLElement;
+  expect(pill.textContent).toBe("Help request");
+  expect(pill.querySelector("svg")).not.toBeNull();
+  expect(pill.className).toContain("rounded-full");
+  expect(pill.className).toContain("ring-current");
+  expect(pill.className).not.toContain("/80");
+});
+
+const bubbleOf = (text: string) => Array.from(host.querySelectorAll("li > div"))
+  .find(n => n.textContent?.includes(text)) as HTMLElement;
+
+it("fills the customer's own sent and sending bubbles with the same accent as Send", async () => {
+  f.state.messages = [customer("a", "Confirmed words", "2026-10-01T10:00:00Z"), business("b", "Their reply", "2026-10-01T10:05:00Z")];
+  f.state.outbox = [{ localId: "l1", requestId: "r1", body: "Still going", kind: "message", status: "sending", error: null }];
+  await render();
+  const send = button("Send message").style;
+  const mine = bubbleOf("Confirmed words");
+  expect(mine.style.backgroundColor).toBe(send.backgroundColor);
+  expect(mine.style.color).toBe(send.color);
+  expect(mine.className).not.toContain("bg-primary");
+  const pending = bubbleOf("Still going");
+  expect(pending.style.backgroundColor).toBe(send.backgroundColor);
+  // Sending stays visibly distinct from sent.
+  expect(pending.className).toContain("opacity-70");
+  expect(mine.className).not.toContain("opacity-70");
+  // The business's words stay neutral.
+  expect(bubbleOf("Their reply").getAttribute("style")).toBeNull();
+  f.state.outbox = [];
+  await render();
+});
+
+it("falls back to the theme primary for the customer's bubbles when the business has no accent", async () => {
+  f.color = null;
+  f.state.messages = [customer("a", "Confirmed words", "2026-10-01T10:00:00Z")];
+  await render();
+  const mine = bubbleOf("Confirmed words");
+  expect(mine.getAttribute("style")).toBeNull();
+  expect(mine.className).toContain("bg-primary text-primary-foreground");
+});
+
+it("lets the composer grow with its content up to its cap, with rows as the fallback", async () => {
+  await render();
+  const field = host.querySelector("textarea")!;
+  expect(field.className).toContain("[field-sizing:content]");
+  expect(field.className).toContain("max-h-48");
+  expect(field.className).toContain("min-h-[44px]");
+  expect(field.getAttribute("rows")).toBe("2");
+});
+
+it("asks before leaving while a send is in flight, instead of silently refusing", async () => {
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  f.state.outbox = [{ localId: "l1", requestId: "r1", body: "On its way", kind: "message", status: "sending", error: null }];
+  await render();
+  const away = Array.from(host.querySelectorAll("a")).find(a => a.textContent === "Elsewhere")!;
+  await act(async () => away.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(host.textContent).not.toContain("Home page");
+  f.state.outbox = [];
+  await render();
+});
+
+it("keeps every button and link at a 44px touch target at every width", async () => {
+  f.state.outbox = [{ localId: "l1", requestId: "r1", body: "Lost", kind: "message", status: "unconfirmed", error: null }];
+  await render("/app/messages?topic=help");
+  const section = host.querySelector("section")!;
+  expect(section.className).toContain("[&_button]:min-h-[44px]");
+  expect(section.className).not.toMatch(/md:\[&_button\]:min-h/);
+  for (const a of Array.from(host.querySelectorAll("section a"))) {
+    expect(a.className).toContain("min-h-[44px]");
+    expect(a.className).not.toContain("md:min-h-0");
+  }
+  f.state.outbox = [];
+  await render();
+});
+
+it("balances the send-failure explanation across its lines", async () => {
+  f.state.outbox = [{ localId: "l1", requestId: "r1", body: "Lost", kind: "message", status: "unconfirmed", error: null }];
+  await render();
+  const reason = Array.from(host.querySelectorAll('[role="alert"] p')).find(p => p.textContent?.includes("couldn't confirm"))!;
+  expect(reason.className).toContain("text-balance");
+  f.state.outbox = [];
+  await render();
+});
+
+it("shows no send hint when the composer is off because the thread failed to load", async () => {
+  f.state.error = "We couldn't load your messages. Check your connection and try again.";
+  f.state.tenantId = null;
+  await render();
+  expect(host.querySelector("textarea")?.disabled).toBe(true);
+  expect(host.textContent).not.toContain("Enter to send");
+  expect(host.textContent).not.toContain("Up to 4,000 characters");
 });
 
 it("explains the multi-business limit instead of offering a composer", async () => {
@@ -234,6 +328,10 @@ it("explains the multi-business limit instead of offering a composer", async () 
   expect(host.textContent).toContain("Messaging for more than one business isn't available yet");
   expect(host.textContent).not.toContain("couldn't load");
   expect(host.querySelector("textarea")).toBeNull();
+  const back = host.querySelector('section a[href="/app"]') as HTMLAnchorElement;
+  expect(back?.textContent).toContain("Back to Home");
+  await act(async () => back.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));
+  expect(host.textContent).toContain("Home page");
 });
 
 it("offers Try again (not edit) for a rate-limited send, with honest copy", async () => {

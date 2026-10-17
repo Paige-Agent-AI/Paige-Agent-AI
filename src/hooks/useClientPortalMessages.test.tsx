@@ -112,12 +112,61 @@ it("pages older messages with p_before and the server's has_more", async () => {
   await mount();
   expect(state.hasMore).toBe(true);
   await act(async () => { await state.loadMore(); });
-  expect(conversationCalls()[1][1]).toMatchObject({ p_before: "2026-10-01T10:00:00Z" });
+  expect(conversationCalls()[1][1]).toEqual({ p_tenant_id: T, p_before: "2026-10-01T10:00:00Z", p_limit: 50, p_before_id: "a" });
   expect(state.messages.map(m => m.id)).toEqual(["z", "a"]);
   expect(state.hasMore).toBe(false);
   // A later refresh of the newest page keeps the loaded history.
   await act(async () => { await state.refresh(); });
   expect(state.messages.map(m => m.id)).toEqual(["z", "a"]);
+  expect(state.hasMore).toBe(false);
+});
+
+it("drops an unconfirmed send once a refresh shows it saved under its request id", async () => {
+  await mount();
+  const conversation = f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async (name: string, a: unknown) => name === "client_portal_send_message"
+    ? Promise.reject(new Error("network")) : conversation(name, a));
+  await act(async () => { await state.send("Did this arrive?", "message"); });
+  expect(state.outbox).toHaveLength(1);
+  expect(state.outbox[0].status).toBe("unconfirmed");
+  const requestId = sendCalls()[0][1].p_request_id as string;
+  // The send DID save; the thread now returns it, carrying the customer's own request id.
+  f.rpc.mockImplementation(async () => ({ data: { tenant_id: T, messages: [
+    { ...msg("saved", "customer", "2026-10-03T10:00:00Z", "Did this arrive?"), request_id: requestId },
+    { ...msg("b", "business", "2026-10-02T10:00:00Z"), request_id: "e0955000-0000-4000-8000-000000000009" },
+  ], has_more: false }, error: null }));
+  await act(async () => { await state.refresh(); });
+  expect(state.outbox).toEqual([]);
+  expect(state.messages.filter(m => m.body === "Did this arrive?")).toHaveLength(1);
+  expect(state.messages.find(m => m.id === "saved")?.request_id).toBe(requestId);
+  // A business row never carries a request id, even if the payload were to include one.
+  expect(state.messages.find(m => m.id === "b")?.request_id).toBeUndefined();
+});
+
+it("keeps an unconfirmed send whose request id the thread does not show", async () => {
+  await mount();
+  const conversation = f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async (name: string, a: unknown) => name === "client_portal_send_message"
+    ? Promise.reject(new Error("network")) : conversation(name, a));
+  await act(async () => { await state.send("Lost?", "message"); });
+  f.rpc.mockImplementation(async () => ({ data: { tenant_id: T, messages: [
+    { ...msg("other", "customer", "2026-10-03T10:00:00Z"), request_id: "e0955000-0000-4000-8000-000000000001" },
+  ], has_more: false }, error: null }));
+  await act(async () => { await state.refresh(); });
+  expect(state.outbox).toHaveLength(1);
+  expect(state.outbox[0].status).toBe("unconfirmed");
+});
+
+it("keeps a loaded older row that shares the newest page's oldest timestamp", async () => {
+  const tie = "2026-10-01T10:00:00.000500Z";
+  f.rpc.mockImplementation(async (name: string, a: { p_before: string | null }) => a.p_before
+    ? { data: { tenant_id: T, messages: [msg("m1", "customer", tie)], has_more: false }, error: null }
+    : { data: { tenant_id: T, messages: [msg("n", "business", "2026-10-02T10:00:00Z"), msg("m2", "customer", tie)], has_more: true }, error: null });
+  await mount();
+  await act(async () => { await state.loadMore(); });
+  expect(state.messages.map(m => m.id)).toEqual(["m1", "m2", "n"]);
+  await act(async () => { await state.refresh(); });
+  expect(state.messages.map(m => m.id)).toEqual(["m1", "m2", "n"]);
   expect(state.hasMore).toBe(false);
 });
 

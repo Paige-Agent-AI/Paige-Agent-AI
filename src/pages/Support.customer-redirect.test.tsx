@@ -71,9 +71,11 @@ it("does not guess when the relationship check fails", async () => {
   expect(host.querySelectorAll('[role="tab"]')).toHaveLength(0);
 });
 
-it("sends a customer of more than one business to Contact your team, not 'couldn't check'", async () => {
+it("keeps the platform desk for a customer of more than one business until choosing one exists", async () => {
   f.multiple = true;
   await render();
-  expect(where()).toBe("/app/messages?topic=help");
+  expect(where()).toBe("/app/support");
+  expect(host.textContent).not.toContain("Customer thread");
   expect(host.querySelector('[role="alert"]')).toBeNull();
+  expect(host.textContent).toContain("Sign in to access support.");
 });

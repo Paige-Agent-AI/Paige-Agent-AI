@@ -46,9 +46,10 @@ type FeatureFilter = "all" | "voted" | "recent" | "planned" | "shipped";
 
 /**
  * /app/support is Paige's PLATFORM help desk + feature board, for business owners and
- * staff. A customer of a business never lands here (E09 owner decision): their help
+ * staff. A customer of ONE business never lands here (E09 owner decision): their help
  * comes from that business, so they are sent to "Contact your team" in their portal
- * thread. Nothing platform-side renders until the relationship has resolved.
+ * thread. A customer of more than one business keeps this desk until picking a business
+ * exists (Slice 8). Nothing platform-side renders until the relationship has resolved.
  */
 export default function Support() {
   const { brand, loading, error, multipleBusinesses } = useClientPortalBrandState();
@@ -61,7 +62,10 @@ export default function Support() {
       </div>
     );
   }
-  if (brand?.tenant_id || multipleBusinesses) return <Navigate to="/app/messages?topic=help" replace />;
+  // Only a customer of exactly ONE business has a business thread to send help to. A customer of
+  // several keeps this desk until choosing a business exists: their help page would otherwise be one
+  // that cannot send anything.
+  if (brand?.tenant_id && !multipleBusinesses) return <Navigate to="/app/messages?topic=help" replace />;
   if (error) {
     return (
       <div role="alert" className="max-w-xl mx-auto space-y-3 py-12 text-center">

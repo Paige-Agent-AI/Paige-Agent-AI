@@ -15,7 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import {
   MessageCircle, Inbox, Send, Pencil, Loader2, Sparkles, AlertTriangle, Paperclip,
-  PanelRight, Bell, Plus, PlugZap, Trash2,
+  PanelRight, Bell, Plus, PlugZap, Trash2, CircleHelp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ import { readableMessageBody, shouldFoldEmail } from "./conversations/messageRea
 import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
 // E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
 import {
-  PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalMessage, portalBodyError,
+  PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
   portalBodyLength as countPortalBody, portalReplyErrorCopy, portalRequestScope, portalSenderName,
   sendPortalReply,
 } from "./conversations/portalReply";
@@ -231,12 +231,26 @@ function MessageBubble({
   // E09 — a portal message is named as one, so it reads apart from email/SMS in the same thread.
   const isPortal = isPortalMessage(m);
   const PortalIcon = CHANNEL_ICON.portal;
+  // A customer's "Contact your team" request is a help request, not an email: the server's
+  // "Help request" subject becomes a small chip in the meta line instead of a subject line.
+  const isHelpRequest = isPortalHelpRequest(m);
   return (
     <SharedMessageBubble
       direction={m.direction}
       body={body}
       timestamp={m.sent_at ?? m.created_at}
       channelIcon={isPortal ? <PortalIcon className="h-3 w-3" aria-hidden /> : undefined}
+      badge={
+        isHelpRequest ? (
+          <span
+            data-portal-help-request
+            className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-background px-1.5 py-0.5 text-[11px] font-medium leading-none text-foreground"
+          >
+            <CircleHelp className="h-3 w-3 text-primary" aria-hidden />
+            Help request
+          </span>
+        ) : undefined
+      }
       senderLabel={
         isPortal
           ? `Portal · ${m.direction === "outbound" ? "You" : portalSenderName(m)}`
@@ -262,7 +276,7 @@ function MessageBubble({
         : messageStatusPill(m)
       }
       error={m.status === "failed" && !governedOpen ? m.error : null}
-      subject={isCall ? undefined : (m.subject ?? undefined)}
+      subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
         isCall
@@ -838,11 +852,15 @@ export default function ClientsConversations() {
   );
 
   // E09 — the portal is offered as a send channel when the thread's contact is a client who has
-  // portal messages here or a linked portal login. The server stays authoritative: an unlinked
-  // client answers PORTAL_NOT_CONNECTED and the composer says so.
+  // portal messages here or a linked portal login. Only a client who has JOINED the portal (a
+  // linked login) can receive a portal post — comms_portal_reply answers PORTAL_NOT_CONNECTED for
+  // anyone else — so Portal is never the default for an unlinked client, and if the owner picks it
+  // anyway the composer explains why it can't post and holds Send. The server stays authoritative.
+  const portalLinked = !!selectedThread?.clients?.linked_user_id;
   const portalOffered = !!selected?.contactId
-    && (!!selectedThread?.clients?.linked_user_id || (selected?.messages.some(isPortalMessage) ?? false));
+    && (portalLinked || (selected?.messages.some(isPortalMessage) ?? false));
   const portalMode = composeChannel === "portal";
+  const portalUnreachable = portalMode && !portalLinked;
   // Which thread the composer was last set up for, and the channel it is on now — read by the
   // default-channel effect without re-running it on every channel pick.
   const composerThreadRef = useRef<string | null>(null);
@@ -867,7 +885,7 @@ export default function ClientsConversations() {
     const chosenConnector = threadConnector ?? fallbackConnector;
     // A portal conversation is answered in the portal; with no sending address at all, the portal
     // is the only way to reply, so it is the default too.
-    if (portalOffered && (selected.channel === "portal" || !chosenConnector)) {
+    if (portalOffered && portalLinked && (selected.channel === "portal" || !chosenConnector)) {
       setComposeConnectorId(PORTAL_IDENTITY_ID);
       setComposeChannel("portal");
     } else {
@@ -877,7 +895,7 @@ export default function ClientsConversations() {
     setEditingDraftId(null);
     setSubject("");
     setBody("");
-  }, [selectedKey, selected, composerConnectors, portalOffered, activeTenantId]);
+  }, [selectedKey, selected, composerConnectors, portalOffered, portalLinked, activeTenantId]);
   useEffect(() => {
     if (isSolo && handlingMode === "draft" && composeChannel !== "email") setHandlingMode("human");
   }, [composeChannel, handlingMode, isSolo]);
@@ -1225,6 +1243,8 @@ export default function ClientsConversations() {
     if (!selected) return;
     const contactId = selected.contactId;
     if (!contactId) { toast.error("Associate this participant with a client before sending."); return; }
+    // Nothing to post to: the client hasn't joined the portal. The composer already says so inline.
+    if (!portalLinked) { toast.error(portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)); return; }
     const text = body.trim();
     const bodyError = portalBodyError(text);
     if (bodyError) { toast.error(bodyError); return; }
@@ -1330,8 +1350,9 @@ export default function ClientsConversations() {
     }
   };
 
-  // A portal-connected client can be answered in the portal even with no email/SMS connected.
-  const noChannel = composerConnectors.length === 0 && !portalOffered;
+  // A portal-connected client can be answered in the portal even with no email/SMS connected. A
+  // client who hasn't joined the portal can't, so with no email/SMS either this is the connect CTA.
+  const noChannel = composerConnectors.length === 0 && !(portalOffered && portalLinked);
   // send-message only handles email|sms today, so "New conversation" needs a SENDABLE channel.
   // A whatsapp-only tenant HAS a connector (noChannel=false) but the compose modal would be a
   // dead-end — gate the CTA on a real sendable channel, not merely any channel (§13/§43).
@@ -1523,6 +1544,8 @@ export default function ClientsConversations() {
     onSend: send,
     sending,
     disabled: drafting || uploading || (isSolo && handlingMode === "governed"),
+    // A client who hasn't joined the portal can't receive a portal post — Send is held for both
+    // inboxes (the trailing `|| portalUnreachable`), and the inline notice above the composer says why.
     sendDisabled: isSolo && (
       !canSendInSolo(handlingMode, composeChannel)
       || !composeChannel
@@ -1533,7 +1556,7 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ),
+    ) || portalUnreachable,
     sendOnEnter: isSolo,
     placeholder: portalMode
       ? `Message ${selected.name} in their client portal…`
@@ -1864,7 +1887,21 @@ export default function ClientsConversations() {
                 </div>
               </div>
             ) : composerModel ? (
-              <ConversationsRichComposer {...composerModel} />
+              <>
+                {portalUnreachable && (
+                  <div className="border-t border-border/60 bg-muted/30 px-3 pt-2">
+                    <p
+                      role="status"
+                      data-portal-not-connected
+                      className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground"
+                    >
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
+                      <span>{portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)}</span>
+                    </p>
+                  </div>
+                )}
+                <ConversationsRichComposer {...composerModel} />
+              </>
             ) : null}
           </div>
         </>

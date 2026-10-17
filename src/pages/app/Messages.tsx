@@ -7,9 +7,9 @@
  * business's own inbox as help requests. A message shows as sent only once the
  * server returned its id; nothing here claims the business has read it.
  */
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AlertCircle, ArrowLeft, BookOpen, Loader2, MessageSquare, RotateCw, SendHorizontal } from "lucide-react";
+import { AlertCircle, ArrowLeft, BookOpen, CircleHelp, Home, Loader2, MessageSquare, RotateCw, SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -78,7 +78,31 @@ function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-function Bubble({ message, businessName, showAuthor }: { message: PortalMessage; businessName: string; showAuthor: boolean }) {
+/** The customer's own words wear the business's accent (the same fill as Send); without one, the theme primary. */
+type Accent = CSSProperties | undefined;
+const MINE_FALLBACK = "bg-primary text-primary-foreground";
+
+/**
+ * Marks a help request inside a bubble. On the customer's own (accent-filled) bubble the text is the
+ * same colour as the message, so the label is a ringed pill with an icon, never plain same-colour text.
+ */
+function HelpPill({ mine }: { mine: boolean }) {
+  return (
+    <span className="mb-1.5 block">
+      <span
+        data-help-pill=""
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+          mine ? "ring-current" : "bg-background text-muted-foreground ring-border"
+        }`}
+      >
+        <CircleHelp aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+        Help request
+      </span>
+    </span>
+  );
+}
+
+function Bubble({ message, businessName, showAuthor, accent }: { message: PortalMessage; businessName: string; showAuthor: boolean; accent: Accent }) {
   const mine = message.author === "customer";
   return (
     <li id={`portal-message-${message.id}`} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
@@ -87,14 +111,11 @@ function Bubble({ message, businessName, showAuthor }: { message: PortalMessage;
       )}
       <div
         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-base leading-relaxed whitespace-pre-wrap break-words ${
-          mine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"
+          mine ? `${accent ? "" : MINE_FALLBACK} rounded-br-md` : "bg-muted text-foreground rounded-bl-md"
         }`}
+        style={mine ? accent : undefined}
       >
-        {message.kind === "help" && (
-          <span className={`mb-1 block text-xs font-semibold ${mine ? "text-primary-foreground" : "text-muted-foreground"}`}>
-            Help request
-          </span>
-        )}
+        {message.kind === "help" && <HelpPill mine={mine} />}
         {message.body}
       </div>
       <time dateTime={message.created_at} className="mt-1 px-1 text-[11px] tabular-nums text-muted-foreground">
@@ -105,10 +126,11 @@ function Bubble({ message, businessName, showAuthor }: { message: PortalMessage;
 }
 
 function PendingBubble({
-  entry, blocked, onRetry, onDiscard, onEdit,
+  entry, blocked, accent, onRetry, onDiscard, onEdit,
 }: {
   entry: OutboxMessage;
   blocked: boolean;
+  accent: Accent;
   onRetry: () => void;
   onDiscard: () => void;
   onEdit: () => void;
@@ -119,14 +141,14 @@ function PendingBubble({
     <li className="flex flex-col items-end" aria-busy={sending}>
       <div
         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md px-4 py-2.5 text-base leading-relaxed whitespace-pre-wrap break-words ${
-          sending ? "bg-primary/70 text-primary-foreground" : "border border-destructive/50 bg-background text-foreground"
+          sending
+            // Still in flight: the same fill as a sent message, held back until the server confirms it.
+            ? `${accent ? "" : MINE_FALLBACK} opacity-70`
+            : "border border-destructive/50 bg-background text-foreground"
         }`}
+        style={sending ? accent : undefined}
       >
-        {entry.kind === "help" && (
-          <span className={`mb-1 block text-xs font-semibold ${sending ? "text-primary-foreground" : "text-muted-foreground"}`}>
-            Help request
-          </span>
-        )}
+        {entry.kind === "help" && <HelpPill mine={sending} />}
         {entry.body}
       </div>
       {sending ? (
@@ -135,7 +157,7 @@ function PendingBubble({
         </span>
       ) : (
         <div role="alert" className="mt-1.5 flex max-w-[85%] flex-col items-end gap-1.5 text-right">
-          <p className="text-xs text-foreground">
+          <p className="text-balance text-xs text-foreground">
             <AlertCircle aria-hidden="true" className="mr-1 inline h-3.5 w-3.5 -translate-y-px align-middle text-destructive" />
             {failed
               ? portalSendFailureCopy(entry.error)
@@ -219,7 +241,9 @@ export default function Messages() {
   const unresolved = thread.outbox.some((o) => o.status !== "sending");
   const guarded = text.trim().length > 0 || anyInFlight || unresolved;
   useBeforeUnloadGuard(guarded);
-  useClientAccountExit(guarded, anyInFlight);
+  // Never `busy`: a busy guard refuses navigation silently. Leaving mid-send asks instead, and the
+  // confirm copy already says an unconfirmed send may still have reached the business.
+  useClientAccountExit(guarded, false);
 
   // Track whether the reader is following the end of the conversation, whatever element scrolls.
   useEffect(() => {
@@ -334,6 +358,8 @@ export default function Messages() {
   };
 
   const showThread = !blocked && !(thread.loading && thread.messages.length === 0);
+  // The thread never loaded, so the composer is off: a "how to send" hint would point at nothing.
+  const loadFailed = !!thread.error && !canCompose;
   const empty = showThread && !thread.error && thread.messages.length === 0 && thread.outbox.length === 0;
   const counterId = "portal-message-count";
 
@@ -341,14 +367,14 @@ export default function Messages() {
     <section
       aria-labelledby="messages-title"
       aria-busy={thread.loading}
-      className="mx-auto flex min-h-full max-w-2xl flex-col [&_button]:min-h-[44px] [&_textarea]:text-[16px] md:[&_button]:min-h-[40px]"
+      className="mx-auto flex min-h-full max-w-2xl flex-col [&_button]:min-h-[44px] [&_textarea]:text-[16px]"
     >
       <header className="space-y-1 pb-4">
         {help && (
           <Link
             to="/app/messages"
             replace
-            className="mb-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-0"
+            className="mb-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" /> All messages
           </Link>
@@ -365,7 +391,7 @@ export default function Messages() {
           <p className="pt-1 text-sm">
             <Link
               to="/app/learn"
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md font-medium underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-0"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md font-medium underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <BookOpen aria-hidden="true" className="h-4 w-4" /> Browse resources first
             </Link>
@@ -390,6 +416,7 @@ export default function Messages() {
             Your account is connected to more than one business. Messages here work with one business at a time
             for now, so nothing can be sent from this page yet.
           </p>
+          <BackHome />
         </div>
       ) : thread.unavailable ? (
         <div className="rounded-xl border border-border p-8 text-center">
@@ -398,6 +425,7 @@ export default function Messages() {
           <p className="mt-1 text-sm text-muted-foreground">
             Messaging opens once your account is connected to a business. Sign in with the email your business invited.
           </p>
+          <BackHome />
         </div>
       ) : !showThread ? (
         <div className="flex-1"><ThreadSkeleton /></div>
@@ -436,7 +464,7 @@ export default function Messages() {
                   const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
                   return (
                     <FragmentWithDay key={m.id} label={newDay ? dayLabel(m.created_at) : null}>
-                      <Bubble message={m} businessName={businessName} showAuthor={newDay || prev.author !== m.author} />
+                      <Bubble message={m} businessName={businessName} showAuthor={newDay || prev.author !== m.author} accent={accentStyle} />
                     </FragmentWithDay>
                   );
                 })}
@@ -445,6 +473,7 @@ export default function Messages() {
                     key={o.localId}
                     entry={o}
                     blocked={anyInFlight}
+                    accent={accentStyle}
                     onRetry={() => void thread.retry(o.localId)}
                     onDiscard={() => thread.discard(o.localId)}
                     onEdit={() => editFailed(o)}
@@ -481,7 +510,7 @@ export default function Messages() {
               disabled={!canCompose}
               aria-invalid={tooLong || undefined}
               aria-describedby={counterId}
-              className="max-h-48 min-h-[44px] flex-1 resize-none"
+              className="max-h-48 min-h-[44px] flex-1 resize-none [field-sizing:content]"
             />
             <Button
               type="submit"
@@ -501,7 +530,9 @@ export default function Messages() {
           <p id={counterId} className={`mt-1.5 px-1 text-[11px] ${tooLong ? "text-destructive" : "text-muted-foreground"}`}>
             {tooLong
               ? `${(length - PORTAL_MESSAGE_MAX).toLocaleString()} characters over the 4,000 limit.`
-              : coarse
+              : loadFailed
+                ? null
+                : coarse
                 ? "Up to 4,000 characters."
                 : "Enter to send · Shift+Enter for a new line"}
           </p>
@@ -511,6 +542,18 @@ export default function Messages() {
           the newest message (and any Retry) out from under the composer instead of behind it. */}
       <div ref={end} aria-hidden="true" />
     </section>
+  );
+}
+
+/** The way out of a page that cannot be used on this account. */
+function BackHome() {
+  return (
+    <Link
+      to="/app"
+      className="mt-4 inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-border px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Home aria-hidden="true" className="h-4 w-4" /> Back to Home
+    </Link>
   );
 }
 

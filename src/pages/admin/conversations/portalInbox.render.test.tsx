@@ -406,6 +406,66 @@ describe.each([
     expect(composerBox(host).value).toBe("Half-written portal reply");
   });
 
+  it("shows a customer's help request as a help request chip, not an email subject line", async () => {
+    db.messages = [portalHelp];
+    db.threads = [thread("cust-user-1")];
+    const host = await mountInbox(path);
+    const chip = host.querySelector("[data-portal-help-request]");
+    expect(chip?.textContent?.trim()).toBe("Help request");
+    expect(chip?.querySelector("svg.lucide-circle-help")).toBeTruthy();
+    // The chip sits in the sender/meta line, next to the portal sender.
+    expect(chip?.parentElement?.textContent).toContain("Portal · Maya Ortiz");
+    // The server's "Help request" subject is not rendered as an email subject line.
+    const subjectLines = Array.from(host.querySelectorAll("p")).filter((p) => (p.textContent ?? "").trim() === "Help request");
+    expect(subjectLines).toHaveLength(0);
+    expect(host.textContent).toContain("I can't find my invoice.");
+  });
+
+  it("keeps an email subject line on email and adds no help chip to ordinary portal messages", async () => {
+    db.messages = [emailIn, portalIn];
+    db.threads = [thread("cust-user-1")];
+    const host = await mountInbox(path);
+    expect(host.querySelector("[data-portal-help-request]")).toBeNull();
+    const subjectLines = Array.from(host.querySelectorAll("p")).filter((p) => (p.textContent ?? "").trim() === "Spring planting");
+    expect(subjectLines).toHaveLength(1);
+  });
+
+  it("does not default to Portal for a client who hasn't joined the portal", async () => {
+    db.messages = [portalIn, portalHelp];
+    db.threads = [thread(null)];
+    const host = await mountInbox(path);
+    expect(composerBox(host).placeholder).toBe("Reply to Maya Ortiz…  (drop a file to attach)");
+    expect(host.textContent).not.toContain("Posts in Maya Ortiz's client portal");
+    expect(host.querySelector("[data-portal-not-connected]")).toBeNull();
+  });
+
+  it("explains inline and holds Send when the owner picks Portal for a client who hasn't joined", async () => {
+    db.messages = [portalIn, portalHelp];
+    db.threads = [thread(null)];
+    const host = await mountInbox(path);
+    await chooseIdentity(host, /Client portal/);
+    expect(composerBox(host).placeholder).toBe("Message Maya Ortiz in their client portal…");
+    const notice = host.querySelector("[data-portal-not-connected]");
+    expect(notice?.textContent).toContain("Maya Ortiz hasn't joined your client portal yet");
+    await type(host, "Are you there?");
+    expect(sendButton(host)?.disabled).toBe(true);
+    await clickSend(host);
+    expect(portalCalls()).toHaveLength(0);
+    expect(composerBox(host).value).toBe("Are you there?");
+    // Back on email, the notice goes and Send is the email send again.
+    await chooseIdentity(host, /jordan@northlightadvisory/);
+    expect(host.querySelector("[data-portal-not-connected]")).toBeNull();
+  });
+
+  it("offers the connect-a-channel step, not a dead Portal composer, for an unjoined client with no email or SMS", async () => {
+    db.connectors = [];
+    db.messages = [portalHelp];
+    db.threads = [thread(null)];
+    const host = await mountInbox(path);
+    expect(host.textContent).toContain("Connect a channel");
+    expect(Array.from(host.querySelectorAll("textarea")).some((t) => /client portal/.test(t.placeholder))).toBe(false);
+  });
+
   it("keeps the portal draft when a new message arrives in a portal conversation", async () => {
     db.messages = [portalHelp];
     db.threads = [thread("cust-user-1")];

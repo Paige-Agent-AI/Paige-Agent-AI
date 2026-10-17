@@ -105,8 +105,14 @@ $$;
 REVOKE ALL ON FUNCTION public.client_portal_send_message(text, uuid, text, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_send_message(text, uuid, text, uuid) TO authenticated, service_role;
 
+-- Keyset page of the caller's thread, newest first. p_before alone pages strictly before a
+-- timestamp (the original contract); with p_before_id the cursor is the exact (created_at, id) of
+-- the oldest row already held, so a row sharing that timestamp is never skipped. One extra row is
+-- read so has_more is true only when an older row actually exists.
+DROP FUNCTION IF EXISTS public.client_portal_conversation(uuid, timestamptz, integer);
 CREATE OR REPLACE FUNCTION public.client_portal_conversation(
-  p_tenant_id uuid DEFAULT NULL, p_before timestamptz DEFAULT NULL, p_limit integer DEFAULT 50)
+  p_tenant_id uuid DEFAULT NULL, p_before timestamptz DEFAULT NULL, p_limit integer DEFAULT 50,
+  p_before_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -117,6 +123,7 @@ DECLARE
   _tenant uuid;
   _limit integer := least(greatest(coalesce(p_limit, 50), 1), 100);
   _rows jsonb;
+  _has_more boolean;
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
@@ -124,6 +131,8 @@ BEGIN
   SELECT c.tenant_id INTO _tenant FROM public.clients c WHERE c.id = _client_id AND c.linked_user_id = _uid;
   -- Explicit allowlist: portal rows of THIS relationship only. Email/SMS/voice history, provider
   -- identifiers, staff identities and internal metadata are never projected to the customer.
+  -- request_id is the caller's OWN idempotency key: only on customer rows the caller authored, so a
+  -- retried send can be reconciled. Business rows, and rows another account wrote, never carry it.
   SELECT coalesce(jsonb_agg(m.item ORDER BY m.created_at DESC, m.id DESC), '[]'::jsonb) INTO _rows
   FROM (
     SELECT x.created_at, x.id, jsonb_build_object(
@@ -131,18 +140,26 @@ BEGIN
       'author', CASE WHEN x.direction = 'inbound' THEN 'customer' ELSE 'business' END,
       'kind', coalesce(x.meta #>> '{portal,kind}', 'message'),
       'body', x.body_text,
-      'created_at', x.created_at) AS item
+      'created_at', x.created_at)
+      || CASE WHEN x.direction = 'inbound' AND x.meta #>> '{portal,author_user_id}' = _uid::text
+           THEN jsonb_build_object('request_id', x.meta #>> '{portal,request_id}')
+           ELSE '{}'::jsonb END AS item
     FROM public.messages x
     WHERE x.channel_type = 'portal' AND x.tenant_id = _tenant AND x.contact_id = _client_id
-      AND (p_before IS NULL OR x.created_at < p_before)
+      AND (p_before IS NULL
+        OR (p_before_id IS NULL AND x.created_at < p_before)
+        OR (p_before_id IS NOT NULL AND (x.created_at, x.id) < (p_before, p_before_id)))
     ORDER BY x.created_at DESC, x.id DESC
-    LIMIT _limit
+    LIMIT _limit + 1
   ) m;
-  RETURN jsonb_build_object('tenant_id', _tenant, 'messages', _rows, 'has_more', jsonb_array_length(_rows) = _limit);
+  _has_more := jsonb_array_length(_rows) > _limit;
+  -- The extra row only proves an older one exists; it is not part of this page.
+  IF _has_more THEN _rows := _rows - _limit; END IF;
+  RETURN jsonb_build_object('tenant_id', _tenant, 'messages', _rows, 'has_more', _has_more);
 END;
 $$;
-REVOKE ALL ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer, uuid) TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION public.comms_portal_reply(
   p_tenant_id uuid, p_contact_id uuid, p_body text, p_request_id uuid)
@@ -220,8 +237,8 @@ GRANT EXECUTE ON FUNCTION public.comms_portal_reply(uuid, uuid, text, uuid) TO a
 
 COMMENT ON FUNCTION public.client_portal_send_message(text, uuid, text, uuid) IS
   'Customer -> business portal message (kind message|help) into the canonical inbox thread for the caller''s own relationship. Idempotent per request id; no provider.';
-COMMENT ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer) IS
-  'Customer-safe projection of the caller''s portal messages only. Never email/SMS/voice history, staff identity or internal metadata.';
+COMMENT ON FUNCTION public.client_portal_conversation(uuid, timestamptz, integer, uuid) IS
+  'Customer-safe projection of the caller''s portal messages only, keyset-paged on (created_at, id). Never email/SMS/voice history, staff identity or internal metadata; request_id only on the caller''s own rows.';
 COMMENT ON FUNCTION public.comms_portal_reply(uuid, uuid, text, uuid) IS
   'Business admin reply on the portal channel for a connected customer of the current workspace. Writes a delivered portal row and an in-app notice; no provider egress.';
 COMMIT;

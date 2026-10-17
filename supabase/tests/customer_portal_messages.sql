@@ -3,7 +3,7 @@
 -- the current-workspace admin; idempotent retries; cross-business, wrong-role and anonymous refusal;
 -- portal rows land in the canonical inbox thread; email history is never projected to the customer.
 BEGIN;
-SELECT no_plan();
+SELECT plan(63);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0914100-0000-4000-8000-000000000001','authenticated','authenticated','portal-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0914100-0000-4000-8000-000000000002','authenticated','authenticated','portal-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -113,6 +113,53 @@ SELECT ok(pg_temp.as_user('e0914100-0000-4000-8000-000000000001',
  $q$SELECT public.client_portal_conversation()$q$) IS NULL,'business owner gets no customer projection');
 SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_conversation()$q$,'anon')->>'sqlstate','42501','anonymous projection refused');
 
+-- Paging. Customer A's thread now holds three portal rows: the reply (now()+1s) and two customer
+-- rows that share the transaction timestamp exactly — a real boundary tie.
+SELECT is(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation(p_limit=>3)$q$)->>'has_more','false','a thread of exactly one page reports no older messages');
+SELECT is(jsonb_array_length(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation(p_limit=>3)$q$)->'messages'),3,'the exact page returns every row');
+CREATE TEMP TABLE portal_page1 AS SELECT pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation(p_limit=>2)$q$) AS r;
+SELECT is((SELECT jsonb_array_length(r->'messages')||'|'||(r->>'has_more') FROM portal_page1),'2|true','a short page returns its limit and reports an older row');
+SELECT is((SELECT (r->'messages'->1->>'created_at')::timestamptz FROM portal_page1),
+ (SELECT created_at FROM public.messages WHERE meta #>> '{portal,request_id}'='e0954100-0000-4000-8000-000000000002'),'page one ends inside the timestamp tie');
+CREATE TEMP TABLE portal_page2 AS SELECT pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ format($q$SELECT public.client_portal_conversation(p_before=>%L,p_limit=>2,p_before_id=>%L)$q$,
+  (SELECT r->'messages'->1->>'created_at' FROM portal_page1),(SELECT r->'messages'->1->>'id' FROM portal_page1))) AS r;
+SELECT is((SELECT jsonb_array_length(r->'messages')||'|'||(r->>'has_more') FROM portal_page2),'1|false','page two returns the tied row and nothing older');
+SELECT set_eq(
+ $q$SELECT e->>'id' FROM portal_page1, jsonb_array_elements(r->'messages') e
+    UNION ALL SELECT e->>'id' FROM portal_page2, jsonb_array_elements(r->'messages') e$q$,
+ $q$SELECT id::text FROM public.messages WHERE channel_type='portal' AND contact_id='e0934100-0000-4000-8000-000000000001'$q$,
+ 'two pages across a timestamp tie lose nothing');
+SELECT is((SELECT count(*) FROM (SELECT e->>'id' FROM portal_page1, jsonb_array_elements(r->'messages') e
+    UNION ALL SELECT e->>'id' FROM portal_page2, jsonb_array_elements(r->'messages') e) u),3::bigint,'and repeat nothing');
+
+-- request_id: the customer's own idempotency key, on their own rows only.
+SELECT is((SELECT e->>'request_id' FROM jsonb_array_elements(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation()$q$)->'messages') e
+ WHERE e->>'id'=(SELECT id::text FROM public.messages WHERE meta #>> '{portal,request_id}'='e0954100-0000-4000-8000-000000000001')),
+ 'e0954100-0000-4000-8000-000000000001','the customer''s own row carries its request id');
+SELECT is((SELECT count(*) FROM jsonb_array_elements(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation()$q$)->'messages') e WHERE e->>'author'='customer' AND e ? 'request_id'),2::bigint,'every own customer row carries a request id');
+SELECT is((SELECT count(*) FROM jsonb_array_elements(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation()$q$)->'messages') e WHERE e->>'author'='business' AND e ? 'request_id'),0::bigint,'a business row never carries a request id');
+SELECT ok(strpos(pg_temp.as_user('e0914100-0000-4000-8000-000000000003',
+ $q$SELECT public.client_portal_conversation()$q$)::text,'e0954100-0000-4000-8000-000000000010')=0,'the business reply''s request id is never projected');
+SELECT ok(strpos(pg_temp.as_user('e0914100-0000-4000-8000-000000000004',
+ $q$SELECT public.client_portal_conversation()$q$)::text,'e0954100-0000-4000-8000-0000000000')=0,'another customer never sees these request ids');
+-- If the relationship is relinked to a different account, that account sees the history but never
+-- the previous account's idempotency keys.
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0914100-0000-4000-8000-000000000006','authenticated','authenticated','portal-customer-relinked@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+UPDATE public.clients SET linked_user_id='e0914100-0000-4000-8000-000000000006' WHERE id='e0934100-0000-4000-8000-000000000001';
+SELECT is(jsonb_array_length(pg_temp.as_user('e0914100-0000-4000-8000-000000000006',
+ $q$SELECT public.client_portal_conversation()$q$)->'messages'),3,'a relinked account sees the relationship''s history');
+SELECT ok(strpos(pg_temp.as_user('e0914100-0000-4000-8000-000000000006',
+ $q$SELECT public.client_portal_conversation()$q$)::text,'request_id')=0,'but never the previous account''s request ids');
+UPDATE public.clients SET linked_user_id='e0914100-0000-4000-8000-000000000003' WHERE id='e0934100-0000-4000-8000-000000000001';
+
 -- Shape guard binds every writer, including the trusted backend.
 SELECT throws_ok($q$INSERT INTO public.messages(tenant_id,thread_key,contact_id,channel_type,direction,status,meta)
  VALUES('e0924100-0000-4000-8000-000000000001','x','e0934100-0000-4000-8000-000000000001','portal','outbound','queued','{"portal":{"request_id":"z","author_role":"business"}}')$q$,
@@ -142,5 +189,8 @@ SELECT is((SELECT count(*) FROM public.messages WHERE channel_type='portal' AND 
 
 SELECT ok(NOT has_function_privilege('anon','public.client_portal_send_message(text,uuid,text,uuid)','EXECUTE'),'anon cannot execute customer send');
 SELECT ok(NOT has_function_privilege('anon','public.comms_portal_reply(uuid,uuid,text,uuid)','EXECUTE'),'anon cannot execute business reply');
+SELECT ok(NOT has_function_privilege('anon','public.client_portal_conversation(uuid,timestamptz,integer,uuid)','EXECUTE'),'anon cannot execute the customer projection');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_conversation(uuid,timestamptz,integer,uuid)','EXECUTE'),'signed-in callers can execute the customer projection');
+SELECT hasnt_function('public','client_portal_conversation',ARRAY['uuid','timestamp with time zone','integer'],'the superseded three-argument projection is gone, so calls never resolve ambiguously');
 SELECT * FROM finish();
 ROLLBACK;

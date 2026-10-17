@@ -30,6 +30,11 @@ export interface PortalMessage {
   kind: PortalMessageKind;
   body: string;
   created_at: string;
+  /**
+   * The customer's own idempotency key, present only on rows this account sent. Lets a send whose
+   * outcome was unknown be recognised once the thread shows it was saved.
+   */
+  request_id?: string;
 }
 
 export type OutboxStatus = "sending" | "failed" | "unconfirmed";
@@ -105,7 +110,9 @@ function parseMessage(raw: unknown): PortalMessage | null {
   const r = raw as Record<string, unknown>;
   if (typeof r.id !== "string" || typeof r.body !== "string" || typeof r.created_at !== "string") return null;
   if (r.author !== "customer" && r.author !== "business") return null;
-  return { id: r.id, author: r.author, kind: r.kind === "help" ? "help" : "message", body: r.body, created_at: r.created_at };
+  const m: PortalMessage = { id: r.id, author: r.author, kind: r.kind === "help" ? "help" : "message", body: r.body, created_at: r.created_at };
+  if (r.author === "customer" && typeof r.request_id === "string") m.request_id = r.request_id;
+  return m;
 }
 
 function parseConversation(data: unknown): ConversationPayload | null {
@@ -120,14 +127,26 @@ function parseConversation(data: unknown): ConversationPayload | null {
   };
 }
 
+/** Microseconds past the millisecond, which Date.parse drops but the server orders by. */
+function subMillis(at: string): number {
+  const frac = /\.(\d+)/.exec(at)?.[1] ?? "";
+  return Number((frac + "000000").slice(3, 6));
+}
+
+/**
+ * The server's page order, ascending: (created_at, id). Rows may share a timestamp, so the id
+ * breaks the tie exactly as the keyset cursor does — anything looser drops or repeats a row.
+ */
+function compareMessages(a: PortalMessage, b: PortalMessage): number {
+  const t = Date.parse(a.created_at) - Date.parse(b.created_at) || subMillis(a.created_at) - subMillis(b.created_at);
+  return t !== 0 ? t : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
 /** Oldest first; ties broken by id so the order is stable across refreshes. */
 function mergeChronological(...lists: PortalMessage[][]): PortalMessage[] {
   const byId = new Map<string, PortalMessage>();
   for (const list of lists) for (const m of list) byId.set(m.id, m);
-  return [...byId.values()].sort((a, b) => {
-    const t = Date.parse(a.created_at) - Date.parse(b.created_at);
-    return t !== 0 ? t : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-  });
+  return [...byId.values()].sort(compareMessages);
 }
 
 export interface ClientPortalMessagesState {
@@ -209,6 +228,19 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     setMultipleBusinesses(true);
   }, []);
 
+  /**
+   * A send left "unconfirmed" (or still in flight) may in fact have been saved. Once the thread
+   * returns a row carrying its request id, the row is the truth and the outbox copy would only
+   * show the message twice.
+   */
+  const settleOutbox = useCallback((list: PortalMessage[]) => {
+    const saved = new Set(list.map((m) => m.request_id).filter((id): id is string => !!id));
+    if (!saved.size || !outboxRef.current.some((o) => saved.has(o.requestId))) return;
+    const next = outboxRef.current.filter((o) => !saved.has(o.requestId));
+    outboxRef.current = next;
+    setOutbox(next);
+  }, []);
+
   const refresh = useCallback(async () => {
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
@@ -229,13 +261,14 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
         setTenantId(payload.tenant_id);
         setUnavailable(false);
         // Keep earlier pages already loaded; the newest page is authoritative for its window.
-        const hadOlder = messagesRef.current.length > 0 && payload.messages.length > 0
-          && Date.parse(messagesRef.current[0].created_at) < Date.parse(payload.messages[payload.messages.length - 1].created_at);
-        const oldestNew = payload.messages.length ? payload.messages[payload.messages.length - 1].created_at : null;
-        const older = oldestNew ? messagesRef.current.filter((m) => Date.parse(m.created_at) < Date.parse(oldestNew)) : [];
+        // "Earlier" is the keyset order, so a loaded row sharing the page's oldest timestamp survives.
+        const oldestNew = payload.messages.length ? payload.messages[payload.messages.length - 1] : null;
+        const older = oldestNew ? messagesRef.current.filter((m) => compareMessages(m, oldestNew) < 0) : [];
+        const hadOlder = older.length > 0;
         const merged = mergeChronological(older, payload.messages);
         messagesRef.current = merged;
         setMessages(merged);
+        settleOutbox(payload.messages);
         // has_more describes what lies before the newest page; once older pages are loaded,
         // only loadMore() may clear it.
         setHasMore((prev) => (hadOlder ? prev : payload.has_more));
@@ -248,7 +281,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     } finally {
       if (current()) setLoading(false);
     }
-  }, [haltForMultiple]);
+  }, [haltForMultiple, settleOutbox]);
 
   const loadMore = useCallback(async () => {
     const oldest = messagesRef.current[0];
@@ -257,7 +290,8 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     setLoadingMore(true);
     try {
       const { data, error: rpcError } = await portalRpc("client_portal_conversation", {
-        p_tenant_id: tenantRef.current, p_before: oldest.created_at, p_limit: PORTAL_MESSAGES_PAGE,
+        // The exact (created_at, id) of the oldest row held: a row sharing its timestamp is never skipped.
+        p_tenant_id: tenantRef.current, p_before: oldest.created_at, p_limit: PORTAL_MESSAGES_PAGE, p_before_id: oldest.id,
       });
       if (rpcError) throw rpcError;
       const payload = parseConversation(data);
@@ -266,6 +300,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       const merged = mergeChronological(payload.messages, messagesRef.current);
       messagesRef.current = merged;
       setMessages(merged);
+      settleOutbox(payload.messages);
       setHasMore(payload.has_more);
       setError(null);
     } catch (err) {
@@ -275,7 +310,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     } finally {
       if (alive.current && myEpoch === epoch.current) setLoadingMore(false);
     }
-  }, [loadingMore, haltForMultiple]);
+  }, [loadingMore, haltForMultiple, settleOutbox]);
 
   const patchOutbox = (localId: string, patch: Partial<OutboxMessage> | null) => {
     const next = patch === null
@@ -306,6 +341,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
         const confirmed: PortalMessage = {
           id: result.message_id, author: "customer", kind: entry.kind, body: entry.body.trim(),
           created_at: typeof result.created_at === "string" ? result.created_at : new Date().toISOString(),
+          request_id: entry.requestId,
         };
         const merged = mergeChronological(messagesRef.current, [confirmed]);
         messagesRef.current = merged;

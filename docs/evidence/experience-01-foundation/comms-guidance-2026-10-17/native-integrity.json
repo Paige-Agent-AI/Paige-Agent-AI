@@ -1,0 +1,188 @@
+{
+ "capturedAt": "2026-10-17",
+ "headAtCapture": "4def6ce77ed1cbaa3d20f49c64775ae1e4ce827f (base main at capture time; frames and blob bindings reflect the post-change working tree that became commit 0b27f8a26a57efc96cfacd4cbc801f5c31fc4ca2)",
+ "process": "temporary vite harness (tmp-capture/, uncommitted) mounting the actual SoloBusinessInterview with synthetic context stubs; Playwright Chromium 1.62 reduced-motion; direct browser PNG captures (no crop/resize); dimensions verified by independent IHDR decode",
+ "syntheticOnly": "no auth, no network, no provider, no writes; synthetic context matches the committed vitest fixtures",
+ "sources": {
+  "src/solo/solo-business-interview-contract.ts": {
+   "gitBlobSha1": "ac4bedb1a5844c00b6cb0d5e979064e337419d86"
+  },
+  "src/solo/solo-interview-navigation.ts": {
+   "gitBlobSha1": "72e899d20049e59ece6dd7be4eefb2ee1c10b2ca"
+  },
+  "src/solo/SoloBusinessInterview.tsx": {
+   "gitBlobSha1": "4d81686c7de167629f683d79b90f4083d9989845"
+  },
+  "src/solo/solo-interview-navigation.test.ts": {
+   "gitBlobSha1": "6bf374c498a1f1d43c9018e791c06a061a4fc9c5"
+  },
+  "src/solo/SoloBusinessInterview.test.tsx": {
+   "gitBlobSha1": "a471069c955a583333b4e82239eef1b8f4d3d391"
+  },
+  "src/solo/SoloPaigeWorkspace.tsx": {
+   "gitBlobSha1": "6e3500e83a932eeac833645ec17158a744ace917"
+  },
+  "src/solo/SoloPaigeWorkspace.onboarding.test.tsx": {
+   "gitBlobSha1": "3c2a3e01024cd4796972d0c0d05dd794cf708465"
+  }
+ },
+ "frames": {
+  "comms-1024x768-dark-closed.png": {
+   "sha256": "10d65903960739ab6594bc30a0da5ae11fc966ba462376d4d0b3568d4cf9890d",
+   "bytes": 12072,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "comms-1024x768-dark-open.png": {
+   "sha256": "69f3d921e3db3e6b4739aee6669548f2706d8103eed3947abbf5783951ad23d7",
+   "bytes": 28411,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "comms-1024x768-light-closed.png": {
+   "sha256": "f9b625ad8ef0ea43ca5f8ad8e553c896a79c62e431b438c1510dff1360f250d8",
+   "bytes": 12147,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "comms-1024x768-light-open.png": {
+   "sha256": "9168aa40361115787e30ff033f749f130513c60553e2fbe51b02a87e8adfe260",
+   "bytes": 28782,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "comms-1366x768-dark-closed.png": {
+   "sha256": "db354429c4fef62fbf5c5e25eb34fdec3abfce2a8017cb64ade0e901b837add3",
+   "bytes": 13164,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "comms-1366x768-dark-open.png": {
+   "sha256": "23018e77e1ead190a0c18fb2e1c4ddc39b4a0ac667565b074beec936589be4a3",
+   "bytes": 34855,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "comms-1366x768-light-closed.png": {
+   "sha256": "aed829371adf8907c6b0f70427d557139e8067a9a3168afc5c9e2ba9500ae124",
+   "bytes": 13153,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "comms-1366x768-light-open.png": {
+   "sha256": "f2dd73840191ce8f170058b4c4b807de3c660e9571e7b329a0a531a48f7c3569",
+   "bytes": 35220,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "comms-1536x770-dark-closed.png": {
+   "sha256": "76e2a7ed472f7324877a5ff58c3aacdc5a12c9396a7381fdc28f06f8100f5544",
+   "bytes": 13414,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "comms-1536x770-dark-open.png": {
+   "sha256": "0254d97ff93173c01e780f47a90a03160d8cb889a33ff47ed1ed4c1462135c3a",
+   "bytes": 35403,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "comms-1536x770-light-closed.png": {
+   "sha256": "4798f6ac1662be9aaa32337361c84880711efbb06f7c3d84e90d0310f5c7708e",
+   "bytes": 13497,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "comms-1536x770-light-open.png": {
+   "sha256": "3c687d74f52741e5861fe68ac38bd01cde5db04f0bcb5077a89c03133a22ab4d",
+   "bytes": 35773,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "comms-320-dark-keyboard.json": {
+   "sha256": "dc4b729948da1e2dd690827282ce406e5ab2711c3bd3c0817bc3e53c45f0813d",
+   "bytes": 200
+  },
+  "comms-320x720-dark-keyboard.png": {
+   "sha256": "0e0999a799f38b9b096c91dcb98cb6a94ffa81d8e360ed4815288bd448fb80c6",
+   "bytes": 19094,
+   "ihdr": {
+    "width": 320,
+    "height": 720
+   }
+  },
+  "comms-900x1000-dark-closed.png": {
+   "sha256": "2b54b86811ca646c559209e9d9d5d555762bbb5965e5fde31ea96f09d0e60d10",
+   "bytes": 12948,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "comms-900x1000-dark-open.png": {
+   "sha256": "ff526f6916b7f43f09d5595ec6711e51ae51c8a387717b1d716e054e26c27f57",
+   "bytes": 36505,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "comms-900x1000-light-closed.png": {
+   "sha256": "b37364d2eaa81e1e54c6f49fb058400984355ac6368b3869298d63c39ccabee5",
+   "bytes": 12957,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "comms-900x1000-light-open.png": {
+   "sha256": "3c6f385d9d8e78c44c4cff1f8e3803df0d6daaf8c6c08b30dfaf16afa3e7a3ee",
+   "bytes": 37013,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  }
+ },
+ "domAssertions": {
+  "nextStepsAriaLabel": "Secure setup handoffs",
+  "promptButtons": [
+   "What can help?",
+   "What should I connect?",
+   "How should we reach you?",
+   "Choose a first action"
+  ],
+  "handoffButtons": [
+   "Open Integrations",
+   "Open Connections",
+   "Open Vault",
+   "Open Communications"
+  ],
+  "note": "Ask PAIGE what fits your business. Review connections and communications in Settings; keep passwords and tokens out of Chat. Opening a page makes no connection or business change.",
+  "keyboardTrail320": "Open Setup then per-field Correct/Add controls then Reload/Skip/Pause; matches incumbent order, no trap"
+ }
+}

@@ -30,10 +30,13 @@ describe("owner interview review over canonical Setup", () => {
     let composerDraft = "An existing unsent question";
     const stop = subscribePaigePromptHandoff(prompt => { composerDraft = mergeIntoDraft(composerDraft, prompt); });
     try {
-      await render(); await click(button("Choose a first action"));
-      expect(composerDraft).toMatch(/^An existing unsent question\n\nHelp me choose/);
-      expect(composerDraft).toContain("Do not execute it yet");
+      await render(); await click(button("How should we reach you?"));
+      expect(composerDraft).toMatch(/^An existing unsent question\n\nUsing my confirmed business profile, explain how I control/);
+      expect(composerDraft).toContain("Keep passwords and tokens out of Chat");
       expect(composerDraft).not.toContain("Improve delivery");
+      await click(button("Choose a first action"));
+      expect(composerDraft).toMatch(/Help me choose/);
+      expect(composerDraft).toContain("Do not execute it yet");
       expect(host.textContent).toContain("No action has been submitted");
       expect(takePendingPaigePrompt()).toBeNull(); expect(state.save).not.toHaveBeenCalled();
       expect(state.rpc.mock.calls.filter(([name]) => name !== "get_solo_business_interview_checkpoint")).toHaveLength(0);
@@ -47,6 +50,8 @@ describe("owner interview review over canonical Setup", () => {
       await click(button(label));
       expect(host.querySelector("output")?.textContent).toBe(`/solo/test-tenant-a/settings/${destination}?interviewThread=${threadId}`);
     }
+    await click(button("Open Communications"));
+    expect(host.querySelector("output")?.textContent).toBe(`/solo/test-tenant-a/settings/setup/people-email?interviewThread=${threadId}`);
     expect(state.save).not.toHaveBeenCalled();
     expect(state.rpc.mock.calls.filter(([name]) => name !== "get_solo_business_interview_checkpoint")).toHaveLength(0);
   });

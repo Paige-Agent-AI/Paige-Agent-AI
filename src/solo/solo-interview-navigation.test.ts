@@ -15,6 +15,13 @@ describe("existing interview record navigation", () => {
     expect(interviewReturnPath("test-tenant-b", search)).toBe(`/solo/test-tenant-b/paige/chat?interviewThread=${thread}`);
     expect(interviewConnectionPath("test-tenant-a", destination, "not-a-thread")).toBe(`/solo/test-tenant-a/settings/${destination}`);
   });
+  it("lands the communications handoff on the Setup People & email subtab with the same thread pointer and return", () => {
+    const path = interviewConnectionPath("test-tenant-a", "communications", thread);
+    expect(path).toBe(`/solo/test-tenant-a/settings/setup/people-email?interviewThread=${thread}`);
+    const search = path.slice(path.indexOf("?")) + "&tenantId=foreign&account=foreign&owner=true";
+    expect(interviewReturnPath("test-tenant-b", search)).toBe(`/solo/test-tenant-b/paige/chat?interviewThread=${thread}`);
+    expect(interviewConnectionPath("test-tenant-a", "communications", "not-a-thread")).toBe(`/solo/test-tenant-a/settings/setup/people-email`);
+  });
   it.each(["?interviewThread=bad", "?interviewThread=", `?interviewThread=${thread}&interviewThread=${thread}`, "?tenantId=other&owner=true"])("rejects ambiguous or invalid pointer %s", search => {
     expect(interviewThreadFromSearch(search)).toBeNull();
     expect(interviewReturnPath(42, search)).toBeNull();

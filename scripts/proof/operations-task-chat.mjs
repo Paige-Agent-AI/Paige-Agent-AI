@@ -38,6 +38,7 @@ proto.rpc = function(name, parameters) {
 };
 await import('../../supabase/functions/paige-ai-chat/index.ts');
 const { capturedHandler } = await import('../knowledge-scope/stub-serve.mjs');
+const { PAIGE_SPINE_CAPABILITIES } = await import('../../supabase/functions/_shared/paige-spine/registry.ts');
 const id = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const actor = id(1), tenant = id(2), thread = id(3), intent = id(4);
 const receipts = [];
@@ -85,11 +86,13 @@ const cases = [];
 const redOnly = process.argv.includes('--red-only');
 const check = async (name, run) => { try { await run(); cases.push({ name, status: 'PASS' }); console.log('PASS ' + name); }
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
-async function execute({ role = 'owner', args = { task_id: taskId }, result = { data: envelope(), error: null }, finalResult, afterRead, aba = false, teamFailureAt = 0, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, afterRole, hang = false, receiptError = false } = {}) {
+async function execute({ role = 'owner', args = { task_id: taskId }, result = { data: envelope(), error: null }, finalResult, afterRead, aba = false, teamFailureAt = 0, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, afterRole, hang = false, receiptError = false, activeProtocol = false } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
   modelCalls = 0; readToolUse = { name: 'crm_get_task', input: args };
   let active = tenant, classificationRow = classification, currentRole = role, reads = 0, teamReads = 0;
   const rec = scenario({ tables: { profiles: () => { const selected = active; if (aba && active !== tenant) active = tenant; return [{ active_tenant_id: selected }]; }, tenants: () => classificationRow ? [classificationRow] : [] }, rpcs: {
+    ...(activeProtocol ? { paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+      paige_chat_interactive_publication_context_v2: { data: true, error: null } } : {}),
     get_actor_access: { data: { tier }, error: null },
     get_team_authority_readiness: () => ++teamReads === teamFailureAt ? { data: null, error: { code: '57014' } } : { data: [{ fact_key: 'viewer_permission', value: currentRole, status: 'available', tenant_id: tenant }], error: null },
     current_user_tenant_id: { data: tenant, error: null },
@@ -187,6 +190,33 @@ if (!redOnly) {
     const r = await execute({ receiptError: true }); assert.equal(r.value?.status, 'available');
     assert.equal(r.shapes.filter(c => c.name === 'operations_crm_work_read').length, 2);
     assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1); noEffects(r);
+  });
+  // Separate active-protocol fixtures; all incumbent degraded controls above remain unchanged.
+  // Use the same actual server registry loaded by Chat, never a handwritten Task declaration.
+  for (const [label, options, expectedStatus, expectedFound] of [
+    ['available record', {}, 'available', true],
+    ['visible-empty', { result: { data: envelope([]), error: null } }, 'available', false],
+    ['needs input', { args: { task_id: 'not-uuid' } }, 'needs_input', undefined],
+    ['native refusal', { result: { data: null, error: { code: '42501' } } }, 'refused', undefined],
+    ['unavailable', { result: { data: null, error: { code: '57014' } } }, 'unavailable', undefined],
+  ]) await check('active ordinary Chat persists exact Task read truth: ' + label, async () => {
+    const declared = PAIGE_SPINE_CAPABILITIES.filter(capability => capability.action?.chatTool === 'crm_get_task');
+    assert.equal(declared.length, 1);
+    assert.equal(declared[0].key, 'crm_clients.task_read');
+    assert.equal(declared[0].action.classification, 'read');
+    assert.equal(declared[0].action.riskPolicyKey, 'read_only');
+    assert.equal(declared[0].action.approvalAuthority, 'none');
+    assert.deepEqual([...declared[0].outcome.kinds].sort(), ['available', 'needs_input', 'refused', 'unavailable']);
+    const r = await execute({ ...options, activeProtocol: true });
+    assert.equal(r.value?.status, expectedStatus, 'the existing Task reader supplies the closed status');
+    assert.equal(r.value?.found, expectedFound);
+    assert.deepEqual(receipts.at(-1)?.bundle_ref?.interactive?.effects,
+      [{ tool: 'crm_get_task', outcome: expectedStatus === 'available' ? 'reported_success' : 'reported_failure' }],
+      'the actual settled interactive receipt must reflect the lookup, without native record/effect identities');
+    assert.ok(!r.wire.includes("couldn't confirm whether the change went through"));
+    if (expectedFound === true) assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: null }]);
+    else assert.ok(!r.wire.includes('"destination":"operations_work"'));
+    noEffects(r);
   });
 }
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');

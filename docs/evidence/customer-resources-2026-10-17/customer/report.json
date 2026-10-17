@@ -1,0 +1,1432 @@
+{
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "panelWidth": 921,
+        "panelHeight": 717,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1536-770-light-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 770,
+        "scrollOwner": "auto",
+        "panelWidth": 921,
+        "panelHeight": 717,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1536-770-dark-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "panelWidth": 819,
+        "panelHeight": 715,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1366-768-light-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "panelWidth": 819,
+        "panelHeight": 715,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1366-768-dark-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "panelWidth": 613.796875,
+        "panelHeight": 675,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1024-768-light-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 768,
+        "scrollOwner": "auto",
+        "panelWidth": 613.796875,
+        "panelHeight": 675,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "1024-768-dark-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "panelWidth": 539.40625,
+        "panelHeight": 907,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "900-1000-light-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 1000,
+        "scrollOwner": "auto",
+        "panelWidth": 539.40625,
+        "panelHeight": 907,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "900-1000-dark-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 844,
+        "scrollOwner": "auto",
+        "panelWidth": 390,
+        "panelHeight": 775,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "390-844-light-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "business": "a",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 844,
+        "scrollOwner": "auto",
+        "panelWidth": 390,
+        "panelHeight": 775,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "390-844-dark-a.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 568,
+        "scrollOwner": "auto",
+        "panelWidth": 320,
+        "panelHeight": 499,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 5.6689670642570436,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(32, 30, 35)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 15.601089495244985,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(103, 97, 107)",
+            "background": [
+              251,
+              248,
+              244
+            ],
+            "ratio": 5.6689670642570436,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "320-568-light-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "business": "b",
+      "geometry": {
+        "documentOverflow": false,
+        "shellHeight": 568,
+        "scrollOwner": "auto",
+        "panelWidth": 320,
+        "panelHeight": 499,
+        "controls": [
+          {
+            "name": "Back to resources",
+            "height": 44,
+            "width": 174.765625,
+            "clipped": false
+          },
+          {
+            "name": "Read next section",
+            "height": 44,
+            "width": 143.703125,
+            "clipped": false
+          }
+        ],
+        "textWrap": true
+      },
+      "contrast": {
+        "measured": 6,
+        "minimum": 7.982807167958377,
+        "failures": [],
+        "measurements": [
+          {
+            "tag": "BUTTON",
+            "text": "Back to resources",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "H1",
+            "text": "Your program guide — a practical resource for the next stage",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 3,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "Saved version 3",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "DIV",
+            "text": "Begin with your weekly reflection. Bring the questions you want ",
+            "foreground": "rgb(246, 242, 234)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 17.05136243580958,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Read next section",
+            "foreground": "rgb(255, 255, 255)",
+            "background": [
+              48,
+              78,
+              66
+            ],
+            "ratio": 9.15391307349052,
+            "required": 4.5,
+            "pass": true
+          },
+          {
+            "tag": "P",
+            "text": "This is the saved text shared with you. If the business changes ",
+            "foreground": "rgb(173, 167, 159)",
+            "background": [
+              17,
+              15,
+              21
+            ],
+            "ratio": 7.982807167958377,
+            "required": 4.5,
+            "pass": true
+          }
+        ]
+      },
+      "shot": "320-568-dark-b.png",
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
+    }
+  ],
+  "errors": [],
+  "hashes": [
+    {
+      "file": "src/pages/AppShell.tsx",
+      "sha256": "7a835b99092b6e32b6ba3c8168ecdd2f04d66d7ad5db7fd0b93fd8b5e86c4701"
+    },
+    {
+      "file": "src/components/app/AppNav.tsx",
+      "sha256": "80a82b182d01bc7d39e8c1270fbd386f50ed7f0ab82735fd186a5ed4594ef500"
+    },
+    {
+      "file": "src/pages/app/Resources.tsx",
+      "sha256": "4aba23071841c3fee32427a3a4c5491a24b8b7dc097d7eb319681074c80b5639"
+    },
+    {
+      "file": "src/hooks/useCustomerResources.ts",
+      "sha256": "47076c4a606ac097cd8791bdba4b87ddbe54e2ddb2a6796a19abc7751551268b"
+    },
+    {
+      "file": "src/hooks/useClientPortalFrame.ts",
+      "sha256": "ebdbf6273e3041a8a805faa8e6cfadb44faccd3f46dc85a00b5257169b55810a"
+    },
+    {
+      "file": "src/lib/customer-resources.ts",
+      "sha256": "165e55a8f3eb00a2741bf5f7c464654b82bee2a34ba1275c8af52d06baa94e01"
+    },
+    {
+      "file": "scripts/proof/e09-customer-entry-ui/resources-source.tsx",
+      "sha256": "76854fcf0a451e1dc1ab7f93248b1cc131e1f2e6e4b4a97e7e696725be140457"
+    },
+    {
+      "file": "scripts/proof/e09-customer-entry-ui/resources-adapter.tsx",
+      "sha256": "8612d54520673cd8771815ac3135d6a2bed81ed3fdaf135dee34819297af766e"
+    }
+  ],
+  "boundary": "Actual existing customer AppShell, AppNav, router, frame/resource hooks and SDK client code. Explicit local Auth/domain/context doubles; private Chat transport and unrelated notification/consent/provider leaves are placeholders. All network blocked. Not hosted identity/RLS, model execution, actual customer read engagement, physical Safari or owner acceptance."
+}

@@ -284,7 +284,8 @@ const AppShell = () => {
             maxSize={60}
             className={`min-h-0 ${location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
           >
-            <PaigeChat user={scopedUser} session={session} />
+            <PaigeChat user={activeUser} session={session}
+              clientId={isImpersonating ? impersonationTarget?.contactId : undefined} />
           </ResizablePanel>
           <ResizableHandle withHandle className="max-md:hidden" />
           <ResizablePanel

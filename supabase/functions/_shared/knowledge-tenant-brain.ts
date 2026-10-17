@@ -76,10 +76,12 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
       if (doc.id !== args.document_id || doc.revision !== Number(args.expected_revision)+1 || !object(stored) || !object(args.patch) || Object.entries(args.patch).some(([k,v])=>JSON.stringify(stored[k]) !== JSON.stringify(v))) return failure('KNOWLEDGE_READBACK_MISMATCH',true);
       verified={document_id:doc.id,revision:doc.revision};
     } else {
-      if (data.document_id !== args.document_id || data.deleted_revision !== args.expected_revision || data.document_absent !== true || data.chunks_absent !== true || !object(data.source_cleanup) || data.source_cleanup.status !== 'not_attempted' || data.source_cleanup.reason !== 'canonical_source_binding_unavailable') return failure('KNOWLEDGE_READBACK_MISMATCH',true);
-      verified={document_id:data.document_id,deleted_revision:data.deleted_revision,document_absent:true,chunks_absent:true,source_cleanup:{status:'not_attempted',reason:'canonical_source_binding_unavailable'}};
+      if (data.document_id !== args.document_id || data.deleted_revision !== args.expected_revision || data.document_absent !== true || data.chunks_absent !== true || !object(data.source_cleanup) || data.source_cleanup.status !== 'not_attempted' || (data.source_cleanup.reason !== 'canonical_source_binding_unavailable' && data.source_cleanup.reason !== 'retained_by_policy')) return failure('KNOWLEDGE_READBACK_MISMATCH',true);
+      verified={document_id:data.document_id,deleted_revision:data.deleted_revision,document_absent:true,chunks_absent:true,source_cleanup:{status:'not_attempted',reason:data.source_cleanup.reason}};
     }
     const recorded=data.outcome === 'capability_succeeded';
-    return {success:recorded,verified:true,railRecorded:recorded,mutationMayHavePersisted:true,outcome:data.outcome,run_id:data.run_id,...verified,note:recorded ? 'Canonical operation verified; SQL recorded its receipt. No source-object cleanup or Memory change occurred.' : 'Canonical change verified, but its Rail receipt was not recorded. Do not repeat the operation; evidence repair is required.'};
+    const retainedSource = object(verified.source_cleanup) && verified.source_cleanup.reason === 'retained_by_policy'
+      ? ' The Knowledge document and its indexed chunks were deleted; its uploaded source was retained by policy.' : '';
+    return {success:recorded,verified:true,railRecorded:recorded,mutationMayHavePersisted:true,outcome:data.outcome,run_id:data.run_id,...verified,note:(recorded ? 'Canonical operation verified; SQL recorded its receipt. No source-object cleanup or Memory change occurred.' : 'Canonical change verified, but its Rail receipt was not recorded. Do not repeat the operation; evidence repair is required.')+retainedSource};
   } catch { return failure('KNOWLEDGE_OUTCOME_UNVERIFIED',mutation); }
 }

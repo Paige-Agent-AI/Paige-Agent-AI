@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
 const root=process.cwd(),folder='scripts/proof/e09-client-account-ui',baseline=process.argv.includes('--baseline');
-const output=path.resolve(root,'../../outputs',baseline?'e09-mobile-fit-baseline':'e09-mobile-fit-local');await fs.mkdir(output,{recursive:true});
+const output=path.resolve(root,'../../outputs',process.argv.includes('--customer-chat')?'e09-customer-chat-ui':baseline?'e09-mobile-fit-baseline':'e09-mobile-fit-local');await fs.mkdir(output,{recursive:true});
 const prior=await fs.readFile(`${folder}/check.mjs`,'utf8');
 const fixtureText=prior.match(/const fixtures = (\[[^;]+\]);/)[1];
 const fixtures=JSON.parse(fixtureText).filter(x=>!['components/app/PaigeChat','components/dashboard/NotificationBell'].includes(x));
@@ -41,8 +41,13 @@ try{
    for(const keyboardHeight of [350,180]){
     await page.evaluate(height=>{const viewport=new EventTarget();Object.assign(viewport,{width:innerWidth,height,scale:1,offsetTop:0});Object.defineProperty(window,'visualViewport',{configurable:true,value:viewport});window.dispatchEvent(new Event('resize'));},keyboardHeight);
     await page.waitForFunction(height=>document.querySelector('.h-dvh').style.height===`${height}px`,keyboardHeight);
+    await page.waitForFunction(height=>Math.abs(document.querySelector('.h-dvh').getBoundingClientRect().height-height)<1,keyboardHeight);
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-    const keyboard=await measure();await fs.writeFile(path.join(output,`${width}-${theme}-keyboard-${keyboardHeight}-geometry.json`),JSON.stringify(keyboard,null,2));
+    const keyboard=await measure();
+    keyboard.ancestors=await page.locator('textarea').evaluate(input=>{const rows=[];for(let e=input;e;e=e.parentElement){
+      const r=e.getBoundingClientRect(),s=getComputedStyle(e);rows.push({class:e.className,style:e.getAttribute('style'),
+        top:r.top,bottom:r.bottom,height:s.height,minHeight:s.minHeight,flex:s.flex,display:s.display,visibility:s.visibility});}return rows;});
+    await fs.writeFile(path.join(output,`${width}-${theme}-keyboard-${keyboardHeight}-geometry.json`),JSON.stringify(keyboard,null,2));
     assert(keyboard.input.bottom<=keyboardHeight+1&&keyboard.buttons.every(b=>b.bottom<=keyboardHeight+1),'Composer remains reachable in the short keyboard viewport');
     if(keyboardHeight===180){
      await page.getByRole('button',{name:'My progress',exact:true}).scrollIntoViewIfNeeded();

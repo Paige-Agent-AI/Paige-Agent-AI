@@ -29,6 +29,11 @@ export const supabase = {
         calls.push(name);
         if (name === "get_client_portal_brand") return { data: [{ tenant_id: tenant, tenant_name: seed.context === "a" ? "Test Service Studio" : "Second Test Business", tenant_slug: `test-${seed.context}`, primary_color: "#26483e", logo_url: null }], error: null };
         if (name === "get_client_portal_config") return { data: {}, error: null };
+        if (name === "client_portal_frame") return {data:{actor_id:actor,profile:row,
+          brand:{tenant_id:tenant,tenant_name:seed.context==="a"?"Test Service Studio":"Second Test Business",
+            tenant_slug:`test-${seed.context}`,primary_color:"#26483e",logo_url:null,support_email:null},
+          config:{}},error:null};
+        if (name === "paige_chat_thread_create") return {data:"00000000-0000-4000-8000-000000000041",error:null};
         if (name === "client_portal_self_profile") {
           if (mode === "loading") return new Promise(() => {});
           return { data: mode === "unavailable" ? null : mode === "read-error" ? null : row, error: mode === "read-error" ? { code: "08006" } : null };
@@ -45,6 +50,13 @@ export const supabase = {
     return request;
   },
   from: (table: string) => {
+    if(table==="paige_chat_threads"||table==="paige_chat_turns"){
+      const query={select:()=>query,eq:()=>query,is:()=>query,order:()=>query,
+        maybeSingle:async()=>({data:{id:"00000000-0000-4000-8000-000000000041",caller_user_id:actor,
+          contact_id:row.id,tenant_id:tenant,lens:"client"},error:null}),
+        limit:async()=>({data:[],error:null})};
+      return query;
+    }
     if (table !== "profiles") throw new Error("No raw CRM or domain proof read");
     return { select: (columns: string) => {
       if (columns !== "avatar_url") throw new Error("Legacy PII/settings loader must not mount in customer view");

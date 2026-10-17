@@ -132,3 +132,14 @@ for(const [label,from,to]of [
  ['owner refusal removed','if (risk === "owner_only") {','if (false) {'],
 ])test(`rejects retired owner automation ${label}`,()=>{const changed=chat.replace(from,to);assert.notEqual(changed,chat);assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
 test('rejects retired automation owner-only classification downgrade',()=>{const path='supabase/functions/_shared/action-risk.ts',raw=sources.get(path),changed=raw.replace('["automation_set_grant", "owner_only"','["automation_set_grant", "ordinary"');assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);});
+
+test('rejects missing customer source-context ancestry',()=>{
+ const altered=new Map(sources);altered.delete('supabase/functions/_shared/client-portal-assistant-context.ts');
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});
+test('rejects customer source-context authority widening',()=>{
+ const path='supabase/functions/_shared/client-portal-assistant-context.ts',raw=sources.get(path);
+ const changed=raw.replace('if(sources.length!==(snapshot?.retrieval_refs.length??0))','if(false)');
+ assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
+});

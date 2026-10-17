@@ -9,3 +9,5 @@ export const useDictation=()=>({supported:true,status:"idle",failure:null,notice
 export const appendDictation=(value:string,text:string)=>value+text;
 export const useNotifications=()=>({notifications:[],unreadCount:0,markAsRead:noop,markAllAsRead:noop,deleteNotification:noop});
 export const useCreditAlerts=()=>({alerts:[],unreadCount:0,highestSeverity:null,markAsRead:noop,markAllAsRead:noop});
+// Customer Chat geometry uses the real frame hook and Chat/history consumer.
+// Only the native SDK boundary is a deterministic, explicitly offline double.

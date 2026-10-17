@@ -11,12 +11,13 @@ let authListener: ((_event: string, next: TestSession | null) => void) | null;
 const getSession = vi.fn(), unsubscribe = vi.fn(), invalidateQueries = vi.fn(), landing = vi.fn();
 const channel = vi.fn(() => { throw new Error("Customer shell must not receive raw CRM rows"); });
 const queryClient = { invalidateQueries };
+const preview = vi.hoisted(() => ({target:null as null | {contactId:string;targetUserId:string;targetName:string},isImpersonating:false}));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   auth: { getSession: () => getSession(), onAuthStateChange: (callback: typeof authListener) => { authListener = callback; return { data: { subscription: { unsubscribe } } }; } },
   channel,
 } }));
 vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => queryClient }));
-vi.mock("@/components/app/PaigeChat", () => ({ PaigeChat: ({ user }: { user: { id: string } }) => <div data-testid="paige-chat">{user.id}</div> }));
+vi.mock("@/components/app/PaigeChat", () => ({ PaigeChat: ({ user, clientId }: { user: { id: string };clientId?:string }) => <div data-testid="paige-chat" data-contact={clientId}>{user.id}</div> }));
 vi.mock("@/components/app/AppNav", () => ({ AppNav: () => <nav>Existing navigation</nav> }));
 vi.mock("@/components/app/QuickStatsBar", () => ({ QuickStatsBar: () => null }));
 vi.mock("@/hooks/useCreditFactors", () => ({ useCreditFactors: () => ({ factors: null }) }));
@@ -32,7 +33,7 @@ vi.mock("@/hooks/useAnalytics", () => ({ trackEvent: () => Promise.resolve() }))
 vi.mock("@/lib/auth/resolveLandingRoute", () => ({ resolveLandingRoute: () => landing() }));
 vi.mock("@/lib/onboardingOffer", () => ({ shouldOfferOnboarding: () => Promise.resolve(false) }));
 vi.mock("@/components/legal/RequiredConsentsGate", () => ({ RequiredConsentsGate: () => null }));
-vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ target: null, isImpersonating: false }) }));
+vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => preview }));
 vi.mock("@/lib/scopedUser", () => ({ setScopedUserId: () => {} }));
 vi.mock("@/components/client/ClientHomeTiles", () => ({ ClientHomeTiles: () => <div>Existing client tiles</div> }));
 vi.mock("@/components/app/ClientActivityFeed", () => ({ ClientActivityFeed: () => <div>Existing canonical activity</div> }));
@@ -50,6 +51,7 @@ async function mount(initialPath = "/app") {
   await flush();
 }
 beforeEach(() => {
+  preview.target=null;preview.isImpersonating=false;
   session = { user: { id: actorId, email: "client@example.test" } }; authListener = null; mounted = false;
   getSession.mockReset(); getSession.mockImplementation(async () => ({ data: { session }, error: null }));
   unsubscribe.mockClear(); channel.mockClear(); invalidateQueries.mockClear(); landing.mockReset(); landing.mockResolvedValue("/app");
@@ -66,6 +68,15 @@ function deferInitialSession() {
 }
 
 describe("customer shell without raw CRM Realtime", () => {
+  it("keeps the actual staff Chat actor and canonical contact scope in View as Client",async()=>{
+    preview.target={contactId:"e0913000-0000-4000-8000-000000000003",targetUserId:nextActorId,targetName:"Test customer"};
+    preview.isImpersonating=true;
+    await mount();
+    const chat=host.querySelector('[data-testid="paige-chat"]')!;
+    expect(chat.textContent).toBe(actorId);
+    expect(chat.getAttribute("data-contact")).toBe(preview.target.contactId);
+    expect(chat.textContent).not.toContain(nextActorId);
+  });
   it("mounts existing navigation, single PAIGE and actual home without opening a CRM channel", async () => {
     await mount();
     expect(host.textContent).toContain("Existing navigation"); expect(host.textContent).toContain("Welcome Back");

@@ -46,7 +46,7 @@ describe("Solo Conversations page wiring", () => {
     expect(page).toContain("const composerConnectors = isSolo ? sendableConnectors : activeConnectors");
     expect(page).toContain("canSendInSolo(handlingMode, composeChannel)");
     expect(page).toContain("canSendInSolo(handlingMode, m.channel_type)");
-    expect(page).toContain('sendDisabled={isSolo && handlingMode === "governed"}');
+    expect(page).toContain('sendDisabled={leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}');
     expect(composer).toContain("disabled={disabled || uploading}");
     expect(composer).toContain("disabled={disabled || sending || drafting || uploading}");
     expect(composer).toContain("disabled={disabled || drafting || sending || uploading || !canDraft}");
@@ -60,7 +60,7 @@ describe("Solo Conversations page wiring", () => {
   it("opts Solo into Enter-to-send while keeping validation, IME, and duplicate-submit guards", () => {
     expect(page).toContain("onSend: send");
     expect(page).toContain("sendOnEnter: isSolo");
-    expect(page).toContain("sendDisabled: isSolo");
+    expect(page).toContain("sendDisabled: leadReplyReview.blocksSending || (isSolo");
     expect(page).toContain("!selected.contactId");
     expect(page).toContain("suppressions.some((suppression) => suppression.channel === composeChannel)");
     expect(page).toContain("sendInFlightRef.current = epoch");

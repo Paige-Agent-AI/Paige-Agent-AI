@@ -21,6 +21,7 @@ import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
 import { FormIntakePanel } from "./form-intake";
+import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { MarketingContent } from "./marketing-content";
 import { contentKindOf } from "./marketing-content-model";
 import { legacyAdsRoute } from "./ads-routing";
@@ -540,7 +541,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     title:panelForm.name,
     rows:[["Type","Form"],["State",panelForm.status==="active"?"Live":"Draft"],["Recent submissions",`${panelForm.recentSubmissions??0} in the latest ${SUBMISSION_READ_LIMIT} submissions`],["Where leads go",formRoute]],
     // A saved route re-reads Marketing, so the chain, Needs you and this row change in place (§70.1).
-    body:<FormIntakePanel key={panelForm.id} tenantId={data.tenantId} formId={panelForm.id} workspace={data.pipelineWorkspace} onOpenContact={openContact} onOpenDeal={openDeal} onSaved={()=>data.retry?.()}/>,
+    body:<FormIntakePanel key={panelForm.id} tenantId={data.tenantId} formId={panelForm.id} workspace={data.pipelineWorkspace} onOpenContact={openContact} onOpenDeal={openDeal} onOpenConversation={(contactId)=>{const root=tenantRoutePrefixForPath(location.pathname);if(root)navigate(`${root}/clients/conversations?contact=${encodeURIComponent(contactId)}`);}} onSaved={()=>data.retry?.()}/>,
     actions:<>{panelForm.publicHref&&<a className="btn btn-s" href={panelForm.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>}{overviewCanManage&&<StudioLauncher label="Edit in Vibe Studio"/>}</>,
     note:"The form itself is built in Vibe Studio. Its route saves here or in Vibe Studio’s form settings; both are the same setting. While the form has an automation turned on, leads follow the automations instead.",
   }:null;

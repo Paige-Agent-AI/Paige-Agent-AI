@@ -5,6 +5,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormIntake } from "../useFormIntake";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 
 interface Pipeline { id: string; name: string; stages: { id: string; label: string }[] }
 
@@ -41,8 +42,9 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
   tenantId: string; formId: string; onClose: () => void; onSaved: () => void;
 }) {
   const intake = useFormIntake(tenantId, formId, 1);
+  const features = useTierFeatures();
   const { pipelines, loaded } = usePipelines(tenantId);
-  const [draft, setDraft] = React.useState<{ autoCreateDeal: boolean; pipelineId: string | null; stageId: string | null; notifyEmail: string }>({ autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: "" });
+  const [draft, setDraft] = React.useState<{ autoCreateDeal: boolean; pipelineId: string | null; stageId: string | null; notifyEmail: string; leadReplyEnabled: boolean }>({ autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: "", leadReplyEnabled: false });
   const [saving, setSaving] = React.useState(false);
   const [message, setMessage] = React.useState<{ ok: boolean; text: string } | null>(null);
 
@@ -53,6 +55,7 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
       pipelineId: intake.settings.pipelineId,
       stageId: intake.settings.stageId,
       notifyEmail: intake.settings.notifyEmail ?? "",
+      leadReplyEnabled: intake.settings.leadReplyEnabled === true,
     });
   }, [intake.settings]);
 
@@ -61,7 +64,10 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
   const cantSave = draft.autoCreateDeal && !pipeline;
   const save = async () => {
     setSaving(true); setMessage(null);
-    const res = await intake.save({ ...draft, notifyEmail: draft.notifyEmail.trim() || null });
+    const { leadReplyEnabled, ...intakeDraft } = draft;
+    const res = await intake.save({ ...intakeDraft, notifyEmail: draft.notifyEmail.trim() || null,
+      ...(leadReplyEnabled !== (intake.settings?.leadReplyEnabled === true) ? { leadReplyEnabled } : {}),
+    });
     setSaving(false);
     setMessage({ ok: res.ok, text: res.ok ? "Saved." : res.message });
     if (res.ok) onSaved();
@@ -109,6 +115,15 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
               </>
             )
           )}
+          {!features.loading && features.has("lead_reply") && <div className="vs-toggle">
+            <div>
+              <span id="vs-reply-label">Have PAIGE prepare a reply</span>
+              <p className="vs-inspector-note" id="vs-reply-help">For new inquiries when business email is ready. You review and approve each message before it sends.</p>
+            </div>
+            <button type="button" role="switch" aria-checked={draft.leadReplyEnabled}
+              aria-labelledby="vs-reply-label" aria-describedby="vs-reply-help" disabled={saving}
+              onClick={() => setDraft((d) => ({ ...d, leadReplyEnabled: !d.leadReplyEnabled }))}><i aria-hidden="true" /></button>
+          </div>}
           <label className="vs-field">
             <span>Email each request to</span>
             <input type="email" value={draft.notifyEmail} placeholder="you@yourbusiness.com" onChange={(e) => setDraft((d) => ({ ...d, notifyEmail: e.target.value }))} />

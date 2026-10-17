@@ -1,0 +1,105 @@
+{
+  "packagedAt": "2026-10-15T01:47:41.469Z",
+  "status": "PARTIAL",
+  "proofClass": "Actual component tree with simulated boundaries; author evidence only",
+  "sourceGeometry": "430dff611c4b47a5579fb45d8c7c555bb6792c56",
+  "sourceCancellation": "f2a6676ead640610b7399983848da9367d054668",
+  "records": [
+    {
+      "file": "e03-actual-1366-closed.jpg",
+      "width": 1366,
+      "height": 768,
+      "sha256": "7898946dd5a8fcc6a1184c7db1224b0a840cfae320f94330f0e99074f15f65a9",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-1366-open.jpg",
+      "width": 1366,
+      "height": 768,
+      "sha256": "5707b9e7023231df0f6f19c5b152a14b03192549e271d0965df386dfcf1b8a75",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-1024-closed.jpg",
+      "width": 1024,
+      "height": 768,
+      "sha256": "d3dc54d453b1d73762cf95354c564315952224814ec3284ceaed7c913f48c97c",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-1024-open.jpg",
+      "width": 1024,
+      "height": 768,
+      "sha256": "f7a899994d81973365bb6e9bd673b10771b1100df188e1af23f47061867408ef",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-900-closed.jpg",
+      "width": 900,
+      "height": 1000,
+      "sha256": "8a804b14e795b59c2edbf9ec31b7e4a300186f260d131621eeac9457b8543a4e",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-900-open.jpg",
+      "width": 900,
+      "height": 1000,
+      "sha256": "925436c0dbbe3476c9dff42ad4ce146bcdbfb2ad4e54ee90a0b866360c92532e",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-1536-open.jpg",
+      "width": 1535,
+      "height": 770,
+      "sha256": "3801bc1832d0b675bc7e7c0d87d016b513a768978b4ade346c372be07245e533",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-1536-closed.jpg",
+      "width": 1535,
+      "height": 770,
+      "sha256": "f4e6327b525ec50c61a91a365d92aa6a72482ff1147e5a9f339a6590dd90b7ce",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-900-review.jpg",
+      "width": 900,
+      "height": 1000,
+      "sha256": "cf5085aed7d204ad37e54e187014d4d4c88af02e3c2b1f433c16606954e0c7a5",
+      "source": "430dff611c4b47a5579fb45d8c7c555bb6792c56"
+    },
+    {
+      "file": "e03-actual-cancellation-unconfirmed.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "733d681a98688daa3f3637f1c8a095e3ac545a392a8942ded5c4eb22e0a9b46e",
+      "source": "f2a6676ead640610b7399983848da9367d054668"
+    },
+    {
+      "file": "e03-actual-cancellation-confirmed.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "2a7a4985c135b370c4576497a8f5f314d30c0f852dc9b3ed74a23e0216538c90",
+      "source": "f2a6676ead640610b7399983848da9367d054668"
+    },
+    {
+      "file": "e03-actual-reopened-unknown.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d007c9dbcb9833995b856f95fa767c8133d6b74cb949697d42145feadffa722f",
+      "source": "50cbdc58203a5b20dc2678d810096ab903e5ba7e"
+    },
+    {
+      "file": "e03-actual-draft-thread-switch.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c7ed6ed89bc1fa2668269aee6dc3c7f181d1047eb5f3a708c603fb7c0abafe5e",
+      "source": "066dbda7f5588441301e71a45321e6a7b1e2f1e2"
+    }
+  ],
+  "fullSoloShellAndActualPaigePanel": "UNVERIFIED",
+  "authenticatedTenantRoleProviderAcceptance": "UNVERIFIED",
+  "privateOwnerScreenshot": "Excluded; no real customer data included",
+  "sourceReturnHistory": "50cbdc58203a5b20dc2678d810096ab903e5ba7e",
+  "sourceDraftAssist": "066dbda7f5588441301e71a45321e6a7b1e2f1e2"
+}

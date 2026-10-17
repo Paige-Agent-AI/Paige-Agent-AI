@@ -147,6 +147,21 @@ const followUpAutomation = (actionKind: string, where: "config" | "targetConfig"
 });
 const executors = (plan: PlanStep[]) => plan.map((p) => p.executor);
 
+test("an opted-in form without a pipeline reuses the contact resolver before its one reply draft", () => {
+  const plan: PlanStep[] = [];
+  appendLeadReply(plan, optedIn, soloBusiness);
+  appendLeadReply(plan, optedIn, soloBusiness);
+  assert.deepEqual(executors(plan), ["contact_upsert", "lead_reply_draft"]);
+  assert.equal(plan[0].automationId, null);
+});
+
+test("a form's own followup automation still resolves its contact exactly once", () => {
+  const plan: PlanStep[] = [followUpAutomation("owner.lead_followup")];
+  appendLeadReply(plan, optedIn, soloBusiness);
+  appendLeadReply(plan, optedIn, soloBusiness);
+  assert.deepEqual(executors(plan), ["contact_upsert", "paige_action"]);
+});
+
 test("the businesses that answer their own leads (§61 'lead_reply'): standalone, sub_account, enterprise — never agency or an unread row", () => {
   assert.equal(isLeadReplyBusiness(soloBusiness), true);
   assert.equal(isLeadReplyBusiness({ ...soloBusiness, account_type: "sub_account", parent_tenant_id: OTHER }), true);

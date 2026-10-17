@@ -1,0 +1,82 @@
+// Isolated fixture transport. No real Supabase client, auth session, provider or network call.
+import { tenantId } from "./tenant-stub";
+const contactId = "22222222-2222-4222-8222-222222222222";
+const connectorId = "33333333-3333-4333-8333-333333333333";
+const approvalId = "44444444-4444-4444-8444-444444444444";
+const key = `contact:${tenantId}:${contactId}`;
+const now = new Date().toISOString();
+const contact = { id: contactId, first_name: "Test", last_name: "Lead", entity_name: null, status: "active", lifecycle_stage: "new_lead", source: "paige_form", tags: [], created_at: now, created_by_channel_type: "form", dnd_active: false, client_contact_methods: [{ kind: "email", value: "lead@example.test", is_primary: true, position: 0 }] };
+const messages: Record<string, unknown>[] = [{ id: "55555555-5555-4555-8555-555555555555", tenant_id: tenantId, thread_key: key, contact_id: contactId, connector_id: null, channel_type: "form", direction: "inbound", status: "received", sender: { address: "lead@example.test", display_name: "Test Lead" }, recipients: [], subject: "Form inquiry: Website inquiry", body_text: "Website form inquiry. The visitor's identity has not been verified.\n\nQuestion: Could we arrange an introductory call?", attachments: [], sent_at: now, created_at: now, clients: contact }];
+const scenario = new URLSearchParams(location.search).get("case");
+const contacts = [contact];
+if (scenario === "draft-switch") {
+  const second = { ...contact, id:"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",first_name:"Second",last_name:"Lead",client_contact_methods:[{kind:"email",value:"second@example.test",is_primary:true,position:0}] };
+  contacts.push(second);
+  messages.push({ ...messages[0],id:"cccccccc-cccc-4ccc-8ccc-cccccccccccc",thread_key:`contact:${tenantId}:${second.id}`,contact_id:second.id,clients:second,subject:"Form inquiry: Second inquiry",body_text:"Could we discuss the second inquiry?",sender:{address:"second@example.test",display_name:"Second Lead"} });
+}
+if (scenario?.startsWith("cancel-")) messages.push({ id:"88888888-8888-4888-8888-888888888888",tenant_id:tenantId,thread_key:key,contact_id:contactId,connector_id:connectorId,channel_type:"email",direction:"outbound",status:"queued",sender:{address:"hello@business.example"},recipients:[{address:"lead@example.test"}],subject:"Scheduled introductory reply",body_text:"Thanks for your inquiry. We can arrange an introductory call.",attachments:[],scheduled_for:new Date(Date.now()+300000).toISOString(),created_at:now,clients:contact });
+if (scenario === "reopened-unknown") messages.push({ id:"99999999-9999-4999-8999-999999999999",tenant_id:tenantId,thread_key:key,contact_id:contactId,connector_id:connectorId,channel_type:"email",direction:"outbound",status:"draft",sender:{address:"hello@business.example"},recipients:[{address:"lead@example.test"}],subject:"Your introductory call",body_text:"Thanks for your inquiry. What time works for a short introductory call?",attachments:[],created_at:now,clients:contact,lead_reply_approval_id:approvalId,comms_email_operation:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",comms_email_state:"unknown",provider_message_id:null });
+const connector = { id: connectorId, tenant_id: tenantId, channel_type: "email", provider: "sendgrid", display_name: "PAIGE email", from_address: "hello@business.example", status: "active", active: true };
+let resolved = false;
+export const fixtureLog: string[] = [];
+const log = (entry: string) => { fixtureLog.push(entry); window.dispatchEvent(new Event("e03-fixture-log")); };
+let pendingDraft: ((value: {data:unknown;error:null}) => void) | null = null;
+export function completeFixtureDraft() {
+  if (!pendingDraft) return;
+  const finish = pendingDraft; pendingDraft = null;
+  log("SIMULATED original draft completed; no model/provider call");
+  finish({data:{draft:{subject:"Original inquiry reply",body_text:"This draft belongs only to the original lead."}},error:null});
+}
+function from(table: string) {
+  const filters: Array<[string, unknown]> = []; let head = false;
+  const result = () => {
+    let rows: Record<string, unknown>[] = table === "messages" ? messages
+      : table === "threads" ? contacts.map((person,index)=>({ id:index===0?"66666666-6666-4666-8666-666666666666":"dddddddd-dddd-4ddd-8ddd-dddddddddddd",tenant_id:tenantId,thread_key:`contact:${tenantId}:${person.id}`,contact_id:person.id,archived_at:null,snoozed_until:null,labels:[],unread_count:1,last_message_at:now,last_direction:"inbound",clients:person }))
+      : table === "channel_connectors" ? [connector]
+      : table === "paige_approval_queue_v" && !resolved ? [{ id: approvalId, tenant_id: tenantId, contact_id: contactId, category: "owner.lead_followup", status: "pending", draft_content: { channel: "email", subject: "Your introductory call", body: "Thanks for your inquiry. What time works for a short introductory call?" }, sla_state: "on_track" }]
+      : table === "clients" ? contacts : [];
+    rows = rows.filter((row) => filters.every(([field,value]) => {
+      if (field === "meta->comms_email_binding->>approval_id") return row.lead_reply_approval_id === value;
+      if (field === "meta->comms_email_binding->>operation_id") return row.comms_email_operation === value;
+      return row[field] === value;
+    }));
+    return { data: head ? null : rows, error: null, count: rows.length };
+  };
+  const chain: Record<string, unknown> = {};
+  chain.select = (_cols: string, opts?: { head?: boolean }) => { head = opts?.head === true; return chain; };
+  chain.eq = (field: string, value: unknown) => { filters.push([field,value]); return chain; };
+  for (const method of ["order","limit","range","is","not","gt","gte","lte","or","in"]) chain[method] = () => chain;
+  chain.maybeSingle = async () => ({ ...result(), data: result().data?.[0] ?? null });
+  chain.single = chain.maybeSingle;
+  chain.then = (ok: (v: unknown) => unknown, fail: (v: unknown) => unknown) => Promise.resolve(result()).then(ok,fail);
+  for (const method of ["update","insert","delete","upsert"]) chain[method] = () => { throw new Error("Fixture refuses unimplemented write"); };
+  return chain;
+}
+export const supabase = {
+  from,
+  rpc: async (name: string) => {
+    if (name === "cancel_scheduled_message") {
+      log("SIMULATED cancellation receipt; no provider call");
+      const confirmed = scenario === "cancel-confirmed";
+      if (confirmed) { const queued=messages.find(m=>m.status==="queued"); if (queued) {queued.status="draft";queued.scheduled_for=null;} }
+      return {data:confirmed?true:null,error:null};
+    }
+    return { data: name === "current_user_tenant_id" ? tenantId : name === "is_tenant_admin" ? true : null, error: null };
+  },
+  channel: () => { const channel = { on: () => channel, subscribe: () => channel }; return channel; }, removeChannel: () => {},
+  auth: { getUser: async () => ({ data: { user: { id: "77777777-7777-4777-8777-777777777777" } }, error: null }), getSession: async () => ({ data: { session: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
+  functions: { invoke: async (name: string, options: { body: { operation_id: string; approved_fingerprint?: string; command: { subject: string; body: string } } }) => {
+    if (name === "subagent-email-composer" && scenario === "draft-switch") {
+      log("SIMULATED draft waiting; no model/provider call");
+      return new Promise<{data:unknown;error:null}>(resolve=>{pendingDraft=resolve;});
+    }
+    if (name !== "comms-email-command") return { data: null, error: { message: "Fixture refuses unimplemented invocation" } };
+    const call = options.body;
+    log(call.approved_fingerprint ? "SIMULATED exact approval; no provider call" : "SIMULATED prepare; no send");
+    if (!call.approved_fingerprint) return { data: { ok: false, outcome: "approval_required", operation_id: call.operation_id, fingerprint: "abcdef0123456789", summary: "Email Test Lead", expires_at: new Date(Date.now()+300000).toISOString(), preview: { kind: "email", from_address: connector.from_address, to_address: "lead@example.test", subject: call.command.subject, body_text: call.command.body } }, error: null };
+    if (new URLSearchParams(location.search).get("case") === "unknown") return { data: null, error: { message: "Simulated interrupted response" } };
+    resolved = true;
+    messages.push({ id: crypto.randomUUID(), tenant_id: tenantId, contact_id: contactId, thread_key: key, channel_type: "email", direction: "outbound", status: "sent", body_text: call.command.body, subject: call.command.subject, recipients: [{ address: "lead@example.test" }], sender: { address: connector.from_address }, attachments: [], lead_reply_approval_id:approvalId, comms_email_operation: call.operation_id, comms_email_state: "provider_accepted", provider_message_id: "fixture-receipt", sent_at: new Date().toISOString(), created_at: new Date().toISOString(), clients: contact });
+    return { data: { ok: true, outcome: "provider_accepted", operation_id: call.operation_id, provider_receipt_available: true }, error: null };
+  } },
+};

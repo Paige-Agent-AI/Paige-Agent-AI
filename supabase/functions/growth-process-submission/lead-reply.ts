@@ -166,6 +166,11 @@ export function filesLeadReply(p: PlanStep): boolean {
 export function appendLeadReply(plan: PlanStep[], form: unknown, tenant: unknown): void {
   if (!leadReplyEnabled(form)) return;
   if (!isLeadReplyBusiness(tenant)) return;
+  // Opting in to a personal lead reply also needs the existing contact resolver. A
+  // form without pipeline routing must not silently create a no_contact dead end.
+  if (!plan.some((step) => step.executor === "contact_upsert")) {
+    plan.unshift({ automationId: null, slug: "contact_upsert", executor: "contact_upsert", lane: null, config: {}, targetConfig: {} });
+  }
   if (plan.some(filesLeadReply)) return;
   plan.push({ automationId: null, slug: "lead_reply", executor: LEAD_REPLY_STEP, lane: null, config: {}, targetConfig: {} });
 }

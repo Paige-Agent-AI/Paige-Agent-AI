@@ -34,7 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  useCommsAttachments,
+  useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
@@ -45,7 +45,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, isApprovableDraft } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedSendView, governedEmailReceiptLabel, isApprovableDraft } from "./conversations/governedSend";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
@@ -65,6 +65,8 @@ import type {
   ConversationsContactPanelModel, ShellThread, DraftTone,
 } from "./conversations/shell/conversationsAdapter";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
+import { useLeadReplyReview } from "./conversations/useLeadReplyReview";
 import type { SoloCommsReadinessEvidence } from "./conversations/solo/soloConversationModel";
 import { useAgentPresence } from "@/components/ui/paige";
 import {
@@ -131,6 +133,8 @@ function messageStatusPill(m: MessageRow) {
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
   if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
+  const receipt = governedEmailReceiptLabel(m);
+  if (receipt) return <StatePill state="success">{receipt}</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read")
     return <StatePill state="success">Sent</StatePill>;
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
@@ -379,6 +383,12 @@ export default function ClientsConversations() {
   const sendInFlightRef = useRef<AccountEpochToken | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [leadReplyApprovalId, setLeadReplyApprovalId] = useState<string | null>(null);
+  const composerThreadRef = useRef<string | null>(null);
+  const draftScopeKey = JSON.stringify([activeTenantId, selectedKey]);
+  const draftScopeRef = useRef({ key: draftScopeKey });
+  if (draftScopeRef.current.key !== draftScopeKey) draftScopeRef.current = { key: draftScopeKey };
+  const draftRequestRef = useRef<object | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Composer depth state. Attachments run through the ONE shared upload seam (§18) — the
@@ -416,7 +426,8 @@ export default function ClientsConversations() {
   // still carries an explicit epoch. A late response from account A can therefore never paint
   // into account B even if it resolves during the remount/route transition gap.
   useEffect(() => {
-    accountEpochRef.current.advance(activeTenantId);
+    const guard = accountEpochRef.current;
+    guard.advance(activeTenantId);
     tenantIdRef.current = null;
     setRows([]); setConnectors([]); setLoading(true); setRetrying(false); setMessageLoadFailure(null); setThreadLoadFailure(null); setConnectorReadReported(true); setSelectedKey(null);
     pendingSelectRef.current = null; contactSeekHandledRef.current = null;
@@ -427,7 +438,8 @@ export default function ClientsConversations() {
     setScheduledFor(null); resetAttachments(); setSnippets([]); setSignatures([]); setTemplates([]);
     setAppendSignature(true); setDragOver(false); setUndo(null);
     setHandlingMode("human"); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
-    setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); suppReqRef.current += 1;
+    setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); setLeadReplyApprovalId(null); suppReqRef.current += 1;
+    return () => { guard.advance(null); };
   }, [activeTenantId, resetAttachments]);
 
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
@@ -819,7 +831,12 @@ export default function ClientsConversations() {
 
   // Default the composer channel to the thread's channel when a connector supports it.
   useEffect(() => {
-    if (!selected) return;
+    if (!selected) { composerThreadRef.current = null; return; }
+    const threadScope = `${activeTenantId ?? ""}:${selected.key}`;
+    const changedThread = composerThreadRef.current !== threadScope;
+    // Realtime/readback refreshes rebuild `selected`; they must not erase an owner's
+    // unsent words or lead-approval link while the same contact thread remains open.
+    if (!changedThread && composerConnectors.some((c) => c.id === composeConnectorId)) return;
     const threadConnector = composerConnectors.find(
       (c) => c.id === selected.connectorId && c.channel_type === selected.channel,
     );
@@ -829,10 +846,14 @@ export default function ClientsConversations() {
     const chosenConnector = threadConnector ?? fallbackConnector;
     setComposeConnectorId(chosenConnector?.id ?? "");
     setComposeChannel(chosenConnector?.channel_type ?? "");
+    if (!changedThread) return; // Changed readiness/identity invalidates review, keeps the draft.
+    composerThreadRef.current = threadScope;
+    setDrafting(false); setDraftReadingDoc(false); setDraftFlags([]);
     setEditingDraftId(null);
+    setLeadReplyApprovalId(null);
     setSubject("");
     setBody("");
-  }, [selectedKey, selected, composerConnectors]);
+  }, [activeTenantId, selectedKey, selected, composerConnectors, composeConnectorId]);
   useEffect(() => {
     if (isSolo && handlingMode === "draft" && composeChannel !== "email") setHandlingMode("human");
   }, [composeChannel, handlingMode, isSolo]);
@@ -926,15 +947,15 @@ export default function ClientsConversations() {
   // Cancel a queued scheduled send (R3) — routed through the any handle (typed-RPC ratchet).
   const cancelScheduled = async (id: string) => {
     const epoch = accountEpochRef.current.capture();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: id });
+    const confirmed = await requestScheduledCancellation(id);
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
+    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
     toast.success("Canceled — back to your draft."); void load(); void loadThreads();
   };
 
   // ── One-click approve: send the existing draft row via the single outbound seam ──
   const approveDraft = async (m: MessageRow) => {
+    if (leadReplyReview.blocksSending) return;
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, m.channel_type)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (!selected.toAddress) {
@@ -975,6 +996,8 @@ export default function ClientsConversations() {
   };
 
   const editDraft = (m: MessageRow) => {
+    if (leadReplyReview.blocksSending) return;
+    setLeadReplyApprovalId(null);
     setEditingDraftId(m.id);
     setComposeChannel(m.channel_type);
     setSubject(m.subject ?? "");
@@ -1017,7 +1040,16 @@ export default function ClientsConversations() {
   const resetComposer = useCallback(() => {
     setBody(""); setSubject(""); resetAttachments();
     setScheduledFor(null); setEditingDraftId(null);
+    setLeadReplyApprovalId(null);
   }, [resetAttachments]);
+
+  const leadReplyReview = useLeadReplyReview({
+    tenantId: activeTenantId, contactId: selected?.contactId ?? null, threadKey: selected?.key ?? null,
+    approvalId: leadReplyApprovalId, connectorId: composeConnectorId, channel: composeChannel,
+    subject, body, attachmentCount: attachments.length, uploading, scheduledFor,
+    signatureEnabled: hasSignature && appendSignature,
+    disabled: drafting || (isSolo && !canSendInSolo(handlingMode, composeChannel)),
+  }, () => { resetComposer(); void load(); void loadThreads(); });
 
   // ── Insert a saved email template (ported from the retired ContactCommsPanel, §31) — resolves
   //    {{merge}} vars against the selected thread's contact and lands subject+body for review/edit.
@@ -1070,11 +1102,9 @@ export default function ClientsConversations() {
 
   const cancelUndo = useCallback(async (messageId: string) => {
     const epoch = accountEpochRef.current.capture();
-    // R4: cancel through the any handle so the typed-RPC ratchet doesn't break tsc.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("cancel_scheduled_message", { _id: messageId });
+    const confirmed = await requestScheduledCancellation(messageId);
     if (!accountEpochRef.current.accept(epoch)) return;
-    if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
+    if (!confirmed) { toast.error(CANCELLATION_UNCONFIRMED_COPY); return; }
     toast.success("Undone — back to your draft.");
     setUndo(null); void load();
   }, [load]);
@@ -1091,6 +1121,13 @@ export default function ClientsConversations() {
     }
     setDrafting(true);
     const epoch = accountEpochRef.current.capture();
+    const draftScope = draftScopeRef.current;
+    const request = {};
+    draftRequestRef.current = request;
+    // An account can keep the same identity while its selected conversation changes.
+    // The object incarnation also retires an old A response after an A-B-A switch.
+    const currentDraft = () => accountEpochRef.current.accept(epoch)
+      && draftScopeRef.current === draftScope && draftRequestRef.current === request;
     setDraftFlags([]);
     // #176 — the document(s) the coach wants Paige to consider are the attachments STAGED
     // into this composer (guaranteed comms-attachments object paths `${tenantId}/…`, so the
@@ -1121,7 +1158,7 @@ export default function ClientsConversations() {
           context: { contact_id: selected.contactId ?? undefined },
         },
       });
-      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!currentDraft()) return;
       // §13/§36 honest error: a non-2xx (compliance_blocked 422, reviewer_unavailable/timeout 503)
       // returns FunctionsHttpError whose `.message` is the generic "non-2xx status code" — the REAL
       // reason (summary/error) is in `.context`. Surface that so the coach knows to revise, never a
@@ -1163,10 +1200,10 @@ export default function ClientsConversations() {
         toast.success("Paige drafted a reply — review before you send.");
       }
     } catch (e) {
-      if (!accountEpochRef.current.accept(epoch)) return;
+      if (!currentDraft()) return;
       toast.error(e instanceof Error ? e.message : "Paige couldn't draft that — try again.");
     } finally {
-      if (accountEpochRef.current.accept(epoch)) {
+      if (currentDraft()) {
         setDrafting(false);
         setDraftReadingDoc(false);
       }
@@ -1175,6 +1212,8 @@ export default function ClientsConversations() {
 
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
+    if (leadReplyReview.blocksSending) return;
+    if (leadReplyApprovalId) { await leadReplyReview.prepare(); return; }
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
@@ -1417,9 +1456,9 @@ export default function ClientsConversations() {
     value: body,
     onChange: handleBodyChange,
     onSend: send,
-    sending,
-    disabled: drafting || uploading || (isSolo && handlingMode === "governed"),
-    sendDisabled: isSolo && (
+    sending: sending || leadReplyReview.busy,
+    disabled: drafting || uploading || leadReplyReview.busy || (isSolo && handlingMode === "governed"),
+    sendDisabled: leadReplyReview.blocksSending || (isSolo && (
       !canSendInSolo(handlingMode, composeChannel)
       || !composeChannel
       || !selected.contactId
@@ -1428,12 +1467,12 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ),
+    )),
     sendOnEnter: isSolo,
     placeholder: `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
-    sendLabel: scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    sendLabel: leadReplyApprovalId ? "Review reply" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksSending} onClick={resetComposer}>Cancel reply edit</button></> : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
     identities: composerConnectors.map((c) => ({
       id: c.id,
@@ -1691,7 +1730,7 @@ export default function ClientsConversations() {
                   onEdit={editDraft}
                   onCancelScheduled={cancelScheduled}
                   approving={approvingId === m.id}
-                  sendDisabled={isSolo && handlingMode === "governed"}
+                  sendDisabled={leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
                 />
               ) : (
                 <motion.div
@@ -1706,11 +1745,25 @@ export default function ClientsConversations() {
                     onEdit={editDraft}
                     onCancelScheduled={cancelScheduled}
                     approving={approvingId === m.id}
-                    sendDisabled={isSolo && handlingMode === "governed"}
+                    sendDisabled={leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
                   />
                 </motion.div>
               ),
             )}
+            {activeTenantId && selected.contactId ? <LeadReplyDrafts
+              key={`${activeTenantId}:${selected.contactId}`}
+              tenantId={activeTenantId} contactId={selected.contactId}
+              disabled={sending || leadReplyReview.blocksSending || (isSolo && handlingMode === "governed")}
+              onEdit={(approval, draft) => {
+                if (body.trim() || attachments.length || scheduledFor || editingDraftId || leadReplyApprovalId) { toast.error("Finish or clear the current draft before opening another reply."); return; }
+                if (approval.tenant_id !== activeTenantId || approval.contact_id !== selected.contactId) return;
+                setLeadReplyApprovalId(approval.id); setComposeChannel("email");
+                const connector = composerConnectors.find((c) => c.id === composeConnectorId && c.channel_type === "email") ?? composerConnectors.find((c) => c.channel_type === "email");
+                setComposeConnectorId(connector?.id ?? ""); setSubject(draft.subject); setBody(draft.body);
+                bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
+              }}
+            /> : null}
+            {leadReplyReview.panel}
             <div ref={bottomRef} />
           </div>
 

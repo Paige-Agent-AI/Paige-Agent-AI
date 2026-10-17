@@ -1,4 +1,5 @@
 import React from "react";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import "./form-intake.css";
 import {
   useFormIntake,
@@ -26,25 +27,28 @@ type Props = {
   workspace: PipelineWorkspace;
   onOpenContact: (contactId: string) => void;
   onOpenDeal: (dealId: string) => void;
+  onOpenConversation?: (contactId: string) => void;
   /** Called after a save succeeds, so the surface that opened the panel can re-read what changed. */
   onSaved?: () => void;
 };
 
-type Draft = { enabled: boolean; pipelineId: string; stageId: string; email: string };
+type Draft = { enabled: boolean; pipelineId: string; stageId: string; email: string; leadReplyEnabled: boolean };
 
 const toDraft = (s: FormIntakeSettings): Draft => ({
   enabled: s.autoCreateDeal,
   pipelineId: s.pipelineId ?? "",
   stageId: s.stageId ?? "",
   email: s.notifyEmail ?? "",
+  leadReplyEnabled: s.leadReplyEnabled === true,
 });
 
 const sameDraft = (a: Draft, b: Draft) =>
-  a.enabled === b.enabled && a.email.trim() === b.email.trim() &&
+  a.enabled === b.enabled && a.email.trim() === b.email.trim() && a.leadReplyEnabled === b.leadReplyEnabled &&
   (!a.enabled || (a.pipelineId === b.pipelineId && a.stageId === b.stageId));
 
-export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, onOpenDeal, onSaved }: Props) {
+export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, onOpenDeal, onOpenConversation, onSaved }: Props) {
   const intake = useFormIntake(tenantId, formId);
+  const features = useTierFeatures();
   const onSavedRef = React.useRef(onSaved);
   onSavedRef.current = onSaved;
   const intakeSave = intake.save;
@@ -70,7 +74,7 @@ export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, on
   return (
     <>
       {intake.canEdit
-        ? <IntakeEditor key={formId} settings={intake.settings} workspace={workspace} save={save} />
+        ? <IntakeEditor key={formId} settings={intake.settings} workspace={workspace} save={save} canDraftReplies={!features.loading && features.has("lead_reply")} />
         : <IntakeReadOnly settings={intake.settings} workspace={workspace} />}
       <Submissions
         fields={intake.fields}
@@ -82,6 +86,7 @@ export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, on
         workspace={workspace}
         onOpenContact={onOpenContact}
         onOpenDeal={onOpenDeal}
+        onOpenConversation={onOpenConversation}
       />
     </>
   );
@@ -102,15 +107,17 @@ function IntakeReadOnly({ settings, workspace }: { settings: FormIntakeSettings;
       <div className="intake-card intake-readonly">
         <div className="campaigns-detail-row"><span>Pipeline</span><strong>{routeLabel(workspace, settings)}</strong></div>
         <div className="campaigns-detail-row"><span>Email alerts</span><strong>{settings.notifyEmail ? "On" : "Off"}</strong></div>
+        <div className="campaigns-detail-row"><span>PAIGE reply drafts</span><strong>{settings.leadReplyEnabled ? "On" : "Off"}</strong></div>
       </div>
     </section>
   );
 }
 
-function IntakeEditor({ settings, workspace, save }: {
+function IntakeEditor({ settings, workspace, save, canDraftReplies }: {
   settings: FormIntakeSettings;
   workspace: PipelineWorkspace;
   save: (next: FormIntakeSettings) => Promise<{ ok: boolean; message: string }>;
+  canDraftReplies: boolean;
 }) {
   const saved = React.useMemo(() => toDraft(settings), [settings]);
   const [draft, setDraft] = React.useState<Draft>(saved);
@@ -153,6 +160,7 @@ function IntakeEditor({ settings, workspace, save }: {
       pipelineId: draft.enabled ? draft.pipelineId || null : null,
       stageId: draft.enabled ? draft.stageId || null : null,
       notifyEmail: draft.email.trim() || null,
+      ...(draft.leadReplyEnabled !== saved.leadReplyEnabled ? { leadReplyEnabled: draft.leadReplyEnabled } : {}),
     });
     setSaving(false);
     setStatus({ tone: result.ok ? "ok" : "bad", text: result.ok ? "Saved" : result.message });
@@ -209,6 +217,18 @@ function IntakeEditor({ settings, workspace, save }: {
           </div>
         ))}
         {triedSave && pipelineProblem && <p className="intake-error">{pipelineProblem}</p>}
+        {canDraftReplies && <>
+          <div className="intake-divider" />
+          <div className="intake-toggle">
+            <div>
+              <strong id="intake-reply-label">Have PAIGE prepare a reply</strong>
+              <small id="intake-reply-help">For new inquiries when business email is ready. You review and approve each message before it sends.</small>
+            </div>
+            <button type="button" className="intake-switch" role="switch"
+              aria-checked={draft.leadReplyEnabled} aria-labelledby="intake-reply-label" aria-describedby="intake-reply-help"
+              onClick={() => update({ leadReplyEnabled: !draft.leadReplyEnabled })} disabled={saving} />
+          </div>
+        </>}
         <div className="intake-divider" />
         <label htmlFor="intake-email">Email each submission to</label>
         <input
@@ -248,7 +268,7 @@ function when(iso: string) {
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function Submissions({ fields, submissions, hasMore, loadingMore, loadMoreFailed, loadMore, workspace, onOpenContact, onOpenDeal }: {
+function Submissions({ fields, submissions, hasMore, loadingMore, loadMoreFailed, loadMore, workspace, onOpenContact, onOpenDeal, onOpenConversation }: {
   fields: FormIntakeField[];
   submissions: FormIntakeSubmission[];
   hasMore: boolean;
@@ -258,6 +278,7 @@ function Submissions({ fields, submissions, hasMore, loadingMore, loadMoreFailed
   workspace: PipelineWorkspace;
   onOpenContact: (id: string) => void;
   onOpenDeal: (id: string) => void;
+  onOpenConversation?: (id: string) => void;
 }) {
   if (submissions.length === 0) {
     return (
@@ -301,6 +322,7 @@ function Submissions({ fields, submissions, hasMore, loadingMore, loadMoreFailed
               {(row.contactId || row.dealId) && (
                 <div className="sub-links">
                   {row.contactId && <button type="button" className="btn btn-s" onClick={() => onOpenContact(row.contactId!)}>Open contact</button>}
+                  {row.contactId && onOpenConversation && <button type="button" className="btn btn-s" onClick={() => onOpenConversation(row.contactId!)}>Open Conversations</button>}
                   {row.dealId && <button type="button" className="btn btn-s" onClick={() => onOpenDeal(row.dealId!)}>Open deal</button>}
                 </div>
               )}

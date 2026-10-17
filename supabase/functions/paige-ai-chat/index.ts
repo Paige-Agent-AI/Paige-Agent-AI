@@ -1183,12 +1183,13 @@ serve(async (req) => {
     // Attributed (all lexically below the stamp): the entry call, the tool-loop continuation, the
     // closing call, the rolling-summary fold, the credit-report extraction, the general-document
     // extraction.
-    // Untenanted (all lexically above it): the three session-summary folds, the document
-    // read-check.
+    // Historical pre-resolution split: three session-summary folds and the document read-check.
+    // The legacy summaries now resolve and revalidate their own existing memory/client scope
+    // before Fabric; only the document read-check keeps its original platform attribution.
     //
-    // Those four are not an oversight and not a claim of attribution; they are untenanted because
-    // at that point in the turn no tenant has been resolved, and inventing one would be worse than
-    // recording none. Moving persona resolution above them is a real reordering across ~700 lines
+    // The original four were untenanted because no tenant had been resolved there; inventing one
+    // would be worse than recording none. Summary mode now refuses an unattributable request.
+    // Moving persona resolution above the document read-check is a real reordering across ~700 lines
     // of turn setup and belongs to its own change. `job_kind` distinguishes them so a reader can
     // tell an untenanted pre-resolution row from an untenanted bug — and group 23 of the
     // knowledge-scope harness now asserts the exact split, so neither half can drift silently.
@@ -1664,6 +1665,8 @@ serve(async (req) => {
     // necessary, not sufficient. A platform operator is the one sanctioned cross-tenant caller.
     let authorizedClientId: string | null = null;
     let authorizedClientRef: string | null = null;
+    let authorizedClientTenantId: string | null = null;
+    let authorizedClientCallerTenantId: string | null = null;
     let clientScopeRefusal: string | null = null;
     if (payloadClientId) {
       try {
@@ -1707,6 +1710,8 @@ serve(async (req) => {
             clientScopeRefusal = "client belongs to a different workspace";
           } else {
             authorizedClientId = (authClientRow as any).id as string;
+            authorizedClientTenantId = typeof rowTenant === "string" ? rowTenant : null;
+            authorizedClientCallerTenantId = callerTenantId;
             const accountNumber = (authClientRow as any).account_number;
             authorizedClientRef = typeof accountNumber === "string" && accountNumber.trim()
               ? accountNumber.trim().toUpperCase()
@@ -1906,6 +1911,93 @@ serve(async (req) => {
 
     // === SESSION SUMMARY GENERATION MODE ===
     if (generateSessionSummary && sessionMessages && sessionMessages.length > 0) {
+      // A browser declaration only narrows this maintenance request. It grants
+      // no tenant/client authority and is required only by summary mode. Deploy
+      // the additive browser binding first; older tabs get an explicit refusal.
+      const origin = rawData.sessionMemoryScope;
+      if (!origin || origin.v !== 1 || origin.actor_id !== user.id ||
+        origin.client_id !== scopedClientId || !(origin.tenant_id === null || typeof origin.tenant_id === "string")) {
+        return new Response(JSON.stringify({ code: "SESSION_SUMMARY_SCOPE_REQUIRED", summary: "", memory_write_status: "not_attempted" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const summaryActorId = user.id;
+      const summaryAbort = new AbortController();
+      const abortSummary = () => summaryAbort.abort();
+      const summaryDeadline = Date.now() + 30_000;
+      const summaryTimer = setTimeout(abortSummary, 30_000);
+      const summaryCancelled = () => {
+        if (Date.now() >= summaryDeadline) summaryAbort.abort();
+        return summaryAbort.signal.aborted;
+      };
+      req.signal.addEventListener("abort", abortSummary, { once: true });
+      if (req.signal.aborted) abortSummary();
+      let summaryRefused = false;
+      let summaryWritesAttempted = 0;
+      let summaryWritesAcknowledged = 0;
+      const memoryWriteStatus = () => !summaryWritesAttempted ? "not_attempted"
+        : summaryWritesAcknowledged === summaryWritesAttempted ? "acknowledged" : "unconfirmed";
+      const summaryStopped = () => new Response(JSON.stringify({
+        code: summaryRefused ? "SESSION_SUMMARY_SCOPE_CHANGED" : "SESSION_SUMMARY_CANCELLED", summary: "",
+        memory_write_status: memoryWriteStatus(), memory_writes_attempted: summaryWritesAttempted,
+        memory_writes_acknowledged: summaryWritesAcknowledged,
+      }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Bound use of awaited authority/model/embed/write results even where an
+      // existing adapter cannot cancel its already-dispatched server operation.
+      const withinSummary = <T,>(work: PromiseLike<T>): Promise<T> => new Promise((resolve, reject) => {
+        const aborted = () => reject(new DOMException("Summary cancelled", "AbortError"));
+        if (summaryCancelled()) { void Promise.resolve(work).catch(() => {}); aborted(); return; }
+        summaryAbort.signal.addEventListener("abort", aborted, { once: true });
+        Promise.resolve(work).then(resolve, reject).finally(() => summaryAbort.signal.removeEventListener("abort", aborted));
+      });
+      try {
+      const summaryTenantId = scopedClientId ? authorizedClientTenantId : await withinSummary(memoryWorkspaceScope());
+      const summaryCallerTenantId = scopedClientId ? authorizedClientCallerTenantId : summaryTenantId;
+      let summarySelectedTenantId = summaryTenantId;
+      if (scopedClientId) {
+        const { data, error } = await withinSummary(supabaseClient.from("profiles").select("active_tenant_id")
+          .eq("user_id", summaryActorId).maybeSingle());
+        if (error || !data || !(data.active_tenant_id === null || typeof data.active_tenant_id === "string")) {
+          summaryRefused = true; return summaryStopped();
+        }
+        summarySelectedTenantId = data.active_tenant_id;
+      }
+      if (!z.string().uuid().safeParse(summaryTenantId).success ||
+        (summaryCallerTenantId !== null && !z.string().uuid().safeParse(summaryCallerTenantId).success) ||
+        origin.tenant_id !== summarySelectedTenantId) {
+        summaryRefused = true; return summaryStopped();
+      }
+      const summaryScopeCurrent = async (): Promise<boolean> => {
+        if (summaryRefused || summaryCancelled()) return false;
+        try {
+          const [auth, profile, tenant] = await withinSummary(Promise.all([
+            supabaseClient.auth.getUser(),
+            supabaseClient.from("profiles").select("active_tenant_id").eq("user_id", summaryActorId).maybeSingle(),
+            supabaseClient.rpc("current_user_tenant_id"),
+          ]));
+          let valid = !auth.error && auth.data?.user?.id === summaryActorId && !profile.error && !!profile.data &&
+            profile.data.active_tenant_id === summarySelectedTenantId && !tenant.error && tenant.data === summaryCallerTenantId;
+          if (valid && scopedClientId) {
+            const [owner, client] = await withinSummary(Promise.all([
+              supabaseClient.rpc("is_platform_owner"),
+              supabaseClient.from("clients").select("id, tenant_id").eq("id", scopedClientId).not("tenant_id", "is", null).maybeSingle(),
+            ]));
+            valid = !owner.error && !client.error && client.data?.id === scopedClientId && client.data.tenant_id === summaryTenantId &&
+              (owner.data === true || (!!tenant.data && client.data.tenant_id === tenant.data));
+          }
+          if (valid && !summaryCancelled() && !summaryRefused) return true;
+        } catch { /* unavailable authority never admits a summary leg */ }
+        if (summaryCancelled()) return false;
+        summaryRefused = true;
+        summaryAbort.abort();
+        return false;
+      };
+      const writeSummaryMemory = async (label: string, write: () => PromiseLike<unknown>): Promise<void> => {
+        if (!(await summaryScopeCurrent())) return;
+        summaryWritesAttempted += 1;
+        try {
+          if (await withinSummary(recordWrite(label, write()))) summaryWritesAcknowledged += 1;
+        } catch { /* an interrupted acknowledgement is unconfirmed, not rollback */ }
+      };
       const last20 = sessionMessages.slice(-20);
       // INT-325 (§2/§13): this branch runs BEFORE persona + funding resolution, so it cannot know the
       // tenant's assistant name or offer. The wording stays vertical-neutral and names no persona.
@@ -1950,23 +2042,16 @@ ${transcript}
 
 JSON:`;
 
-      const [summaryResponse, milestoneResponse, preferenceResponse] = await Promise.all([
-        gatewayCompat("anthropic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: [{ role: "user", content: summaryPrompt }] }),
-        }, traceFor("session-summary")),
-        gatewayCompat("anthropic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: [{ role: "user", content: milestonePrompt }] }),
-        }, traceFor("session-summary")),
-        gatewayCompat("anthropic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: [{ role: "user", content: preferencePrompt }] }),
-        }, traceFor("session-summary")),
-      ]);
+      const completeSummary = (job: string, prompt: string) => fabricCompletion({
+        cognitive_class: "operational", job, messages: [{ role: "user", content: prompt }],
+      }, { trace: { ...traceFor("session-summary"), tenant_id: summaryTenantId, working_context_tenant_id: summaryTenantId },
+        beforeProviderAttempt: summaryScopeCurrent, signal: summaryAbort.signal });
+      const [summaryResponse, milestoneResponse, preferenceResponse] = await withinSummary(Promise.all([
+        completeSummary("session_summary", summaryPrompt),
+        completeSummary("session_milestone_extract", milestonePrompt),
+        completeSummary("session_preference_extract", preferencePrompt),
+      ]));
+      if (!(await summaryScopeCurrent())) return summaryStopped();
 
       if (!summaryResponse.ok) {
         return new Response(
@@ -1975,8 +2060,8 @@ JSON:`;
         );
       }
 
-      const summaryData = await summaryResponse.json();
-      const summaryContent = summaryData.choices?.[0]?.message?.content || "";
+      const summaryData = summaryResponse.response as { choices?: { message?: { content?: string } }[] } | undefined;
+      const summaryContent = typeof summaryData?.choices?.[0]?.message?.content === "string" ? summaryData.choices[0].message.content : "";
 
       // §9 — a REFUSED turn must not file the named client's session into the CALLER's memory.
       // Falling back to `user.id` here is not a safe degrade: these rows are durable and are
@@ -2004,7 +2089,8 @@ JSON:`;
       // recall is the C6 projection's to build; nothing reads those vectors today.
       if (!skipScopedMemoryWrites && summaryContent.trim()) {
         if (scopedClientId) {
-          const summaryEmbedding = await embedText(summaryContent.trim());
+          if (!(await summaryScopeCurrent())) return summaryStopped();
+          const summaryEmbedding = await withinSummary(embedText(summaryContent.trim()));
           const memoryInsert: any = {
             client_user_id: scopedClientId || user.id,
             memory_type: "session_summary",
@@ -2014,18 +2100,18 @@ JSON:`;
             metadata: { channel: "text" },
           };
           memoryInsert.client_id = scopedClientId;
-          await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+          await writeSummaryMemory("client_memory:turn", () => supabase.from("client_memory").insert(memoryInsert));
         } else {
           const ownSummaryScope = await memoryWorkspaceScope();
           if (ownSummaryScope === null) {
             console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
           } else {
-            await recordWrite("paige_owner_memory:turn", supabase.rpc("record_paige_memory", {
+            await writeSummaryMemory("paige_owner_memory:turn", () => supabase.rpc("record_paige_memory", {
               p_memory_type: "session_summary",
               p_content: summaryContent.trim(),
               p_metadata: { audience: "owner_personal", channel: "text", source: "session_summary", ...(rawData.sessionId ? { legacy_session_id: String(rawData.sessionId) } : {}) },
               p_confirmation_state: "proposed",
-              p_user_id: user.id,
+              p_user_id: summaryActorId,
               p_tenant_id: ownSummaryScope,
             }));
           }
@@ -2035,8 +2121,8 @@ JSON:`;
       // Insert milestone memories if detected
       if (!skipScopedMemoryWrites && milestoneResponse.ok) {
         try {
-          const milestoneData = await milestoneResponse.json();
-          const milestoneRaw = milestoneData.choices?.[0]?.message?.content || "[]";
+          const milestoneData = milestoneResponse.response as { choices?: { message?: { content?: string } }[] } | undefined;
+          const milestoneRaw = milestoneData?.choices?.[0]?.message?.content || "[]";
           const cleaned = milestoneRaw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           const milestones: string[] = JSON.parse(cleaned);
 
@@ -2062,7 +2148,8 @@ JSON:`;
             if (!labelMap[m]) continue;
             const milestoneCopy = labelMap[m].replace("Client mentioned", `${subject} mentioned`);
             if (scopedClientId) {
-              const emb = await embedText(milestoneCopy);
+              if (!(await summaryScopeCurrent())) return summaryStopped();
+              const emb = await withinSummary(embedText(milestoneCopy));
               const milestoneMemory: any = {
                 client_user_id: scopedClientId,
                 memory_type: "milestone_completed",
@@ -2071,16 +2158,16 @@ JSON:`;
                 embedding: emb,
               };
               milestoneMemory.client_id = scopedClientId;
-              await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
+              await writeSummaryMemory("client_memory:milestone", () => supabase.from("client_memory").insert(milestoneMemory));
             } else if (ownMilestoneScope !== null && ownMilestoneScope !== undefined) {
-              await recordWrite("paige_owner_memory:milestone", supabase.rpc("record_paige_memory", {
+              await writeSummaryMemory("paige_owner_memory:milestone", () => supabase.rpc("record_paige_memory", {
                 p_memory_type: "milestone_completed",
                 p_content: milestoneCopy,
                 // 5-class audience: business entity milestones are ORGANIZATIONAL facts (shared-
                 // audience mechanics are a returned scope gap; person-scope is unchanged today).
                 p_metadata: { audience: "business_organizational", channel: "text", source: "session_summary" },
                 p_confirmation_state: "proposed",
-                p_user_id: user.id,
+                p_user_id: summaryActorId,
                 p_tenant_id: ownMilestoneScope,
               }));
             }
@@ -2093,8 +2180,8 @@ JSON:`;
       // Insert extracted user preferences (auto-extraction at session end)
       if (!skipScopedMemoryWrites && preferenceResponse.ok) {
         try {
-          const prefData = await preferenceResponse.json();
-          const prefRaw = prefData.choices?.[0]?.message?.content || "{}";
+          const prefData = preferenceResponse.response as { choices?: { message?: { content?: string } }[] } | undefined;
+          const prefRaw = prefData?.choices?.[0]?.message?.content || "{}";
           const cleaned = prefRaw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           // The combined fact pass (#93/#117): one extraction, three durable kinds —
           // preferences (the original), commitments, and open_loops (the two the memory
@@ -2128,7 +2215,8 @@ JSON:`;
               if (typeof p !== "string" || !p.trim()) continue;
               if (ownFactScope === null) continue;
               if (scopedClientId) {
-                const emb = await embedText(p.trim());
+                if (!(await summaryScopeCurrent())) return summaryStopped();
+                const emb = await withinSummary(embedText(p.trim()));
                 const factMemory: any = {
                   client_user_id: scopedClientId,
                   memory_type: memoryType,
@@ -2138,14 +2226,14 @@ JSON:`;
                   metadata: { channel: "text", source: "auto_extracted" },
                 };
                 factMemory.client_id = scopedClientId;
-                await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
+                await writeSummaryMemory(`client_memory:${memoryType}`, () => supabase.from("client_memory").insert(factMemory));
               } else if (ownFactScope !== undefined) {
-                await recordWrite(`paige_owner_memory:${memoryType}`, supabase.rpc("record_paige_memory", {
+                await writeSummaryMemory(`paige_owner_memory:${memoryType}`, () => supabase.rpc("record_paige_memory", {
                   p_memory_type: ownerType[memoryType] ?? memoryType,
                   p_content: p.trim(),
                   p_metadata: { audience: "owner_personal", channel: "text", source: "auto_extracted" },
                   p_confirmation_state: "proposed",
-                  p_user_id: user.id,
+                  p_user_id: summaryActorId,
                   p_tenant_id: ownFactScope,
                 }));
               }
@@ -2161,13 +2249,24 @@ JSON:`;
       // clean 200 while filing the summary of a session the caller believed was about their
       // focused client into the CALLER's own memory instead — the same silent-wrong-behaviour
       // the frames exist to end. Additive: existing consumers read `summary` and ignore the rest.
+      if (!(await summaryScopeCurrent())) return summaryStopped();
       return new Response(
         JSON.stringify({
           summary: summaryContent.trim(),
+          memory_write_status: memoryWriteStatus(), memory_writes_attempted: summaryWritesAttempted,
+          memory_writes_acknowledged: summaryWritesAcknowledged,
           ...(clientScopeDenied ? { client_scope: { status: "refused", kind: clientScopeKind, reason: clientScopeRefusal } } : {}),
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+      } catch (error) {
+        if (summaryCancelled() || summaryRefused) return summaryStopped();
+        summaryAbort.abort();
+        throw error;
+      } finally {
+        clearTimeout(summaryTimer);
+        req.signal.removeEventListener("abort", abortSummary);
+      }
     }
 
     // #587 — preflight the attachment (size + PDF page count) BEFORE any model call. On exceed,

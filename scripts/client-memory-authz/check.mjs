@@ -9862,6 +9862,10 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
   {name:"forbidden",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:null,error:{code:"42501",message:"KNOWLEDGE_FORBIDDEN"}},outcome:"not_run",note:"It didn't go through."},
   {name:"transport",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{message:"network lost"}},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
   {name:"delete",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"canonical_source_binding_unavailable"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-source",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-unrecorded",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record could not be confirmed. Do not repeat it."},
+  {name:"delete-unsupported-cleanup",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"PRIVATE-UNSUPPORTED-REASON"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
+  {name:"delete-foreign-workspace",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:THREAD,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
  ];
  for(const test of cases) {
   const st=makeConfirmStore();
@@ -9876,6 +9880,12 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
   assert(`33 ${test.name}: card preserves operation truth`,JSON.stringify(frame)===JSON.stringify({actions:[{fingerprint:token,outcome:test.outcome}],...(test.note?{note:test.note}:{})}),JSON.stringify(frame));
   assert(`33 ${test.name}: no second Chat audit`,!approved.rec.inserts.some(i=>i.table==="paige_audit_log"&&i.row.action===test.tool));
   if(test.name==="unrecorded") assert("33 unrecorded: model retains verified change and missing receipt",approved.modelEgress.some(body=>body.includes("Canonical change verified, but its Rail receipt was not recorded"))&&!approved.modelEgress.some(body=>body.includes("you could not confirm whether it went through")));
+   if(test.name.startsWith("delete-bound")) {
+    assert(`33 ${test.name}: model preserves native deletion and retained-source truth`,approved.modelEgress.some(body=>body.includes('retained_by_policy')&&body.includes('document_absent')&&body.includes('chunks_absent')));
+    const replay=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[token]},toolCall:{name:test.tool,args:{...args,confirm:true}}});
+    assert(`33 ${test.name}: spent approval cannot repeat deletion`,!replay.rec.rpc.some(c=>c.name===test.rpc));
+   }
+   if(test.name==="delete-unsupported-cleanup") assert("33 unsupported cleanup reason never leaks into model outcome",!approved.modelEgress.some(body=>body.includes("PRIVATE-UNSUPPORTED-REASON")));
  }
 }
 

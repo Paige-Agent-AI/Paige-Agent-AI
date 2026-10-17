@@ -11,7 +11,7 @@
   "knowledgeSharesMigrationSHA256": "1cb2f42e8d17f9a0a592fd04536874dbe986dde6cc6640815845c4086b8795a8",
   "knowledgeSharesControl": "NONE",
   "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
-  "resourceReadMigrationSHA256": "21e2780b4aeb934ac17e02e4856fe28ad42695a8727de3684bbc13db03cd551c",
+  "resourceReadMigrationSHA256": "47085377665db652998e0a0b79338a130a0cf07d56ac6ae369dd2344b79e7447",
   "resourceReadProof": "isolated actual native authority with synthetic metadata; no production resource view, customer session, provider or engagement receipt",
   "results": [
     {
@@ -575,6 +575,10 @@
       "status": "PASS"
     },
     {
+      "name": "The real canonical source-column shape catches an unqualified resource variable",
+      "status": "PASS"
+    },
+    {
       "name": "Authorized resource pages return the complete canonical text without splitting Unicode or inventing a complete excerpt",
       "status": "PASS"
     },
@@ -647,6 +651,6 @@
       "status": "PASS"
     }
   ],
-  "passed": 158,
+  "passed": 159,
   "failed": 0
 }

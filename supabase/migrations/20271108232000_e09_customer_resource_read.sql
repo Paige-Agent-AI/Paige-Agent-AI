@@ -17,6 +17,7 @@ CREATE FUNCTION public.client_portal_knowledge_document(
  p_tenant_id uuid,p_share_id uuid,p_share_revision integer,p_source_fingerprint text,
  p_offset integer DEFAULT 0,p_limit integer DEFAULT 12000)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+<<resource_read>>
 DECLARE context jsonb; source jsonb; d public.tenant_knowledge_docs; piece text; total integer; next_offset integer;
 BEGIN
  IF p_tenant_id IS NULL OR p_share_id IS NULL OR p_share_revision IS NULL OR p_share_revision<=0
@@ -32,8 +33,8 @@ BEGIN
   RAISE EXCEPTION 'CUSTOMER_RESOURCE_SOURCE_WITHDRAWN' USING ERRCODE='42501';
  END IF;
  source:=context#>'{sources,0}';
- SELECT * INTO d FROM public.tenant_knowledge_docs
-  WHERE id=(source->>'document_id')::uuid AND tenant_id=p_tenant_id;
+ SELECT canonical_doc.* INTO d FROM public.tenant_knowledge_docs canonical_doc
+  WHERE canonical_doc.id=(resource_read.source->>'document_id')::uuid AND canonical_doc.tenant_id=p_tenant_id;
  IF NOT FOUND OR d.content IS NULL OR d.record_state<>'canonical' OR d.revision IS DISTINCT FROM (source->>'document_revision')::integer
   OR public._client_knowledge_source(d)->>'source_fingerprint' IS DISTINCT FROM p_source_fingerprint THEN
   RAISE EXCEPTION 'CUSTOMER_RESOURCE_SOURCE_WITHDRAWN' USING ERRCODE='42501';

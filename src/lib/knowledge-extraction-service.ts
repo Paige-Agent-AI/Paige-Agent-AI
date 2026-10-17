@@ -80,21 +80,22 @@ function content(value: unknown): value is string { return text(value, 480000) &
 function publicationProjection(value: unknown, doc: Record<string, unknown>): KnowledgePublicationAssociation | undefined {
   // Rolling deployments may omit the additive field. Omission is not idle proof.
   if (value === undefined) return undefined;
-  if (!object(value) || value.contract_version !== 1 || !['not_submitted', 'matched', 'unavailable'].includes(String(value.association))) invalid();
+  if (!object(value) || value.contract_version !== 1 || typeof value.association !== 'string'
+    || !['not_submitted', 'matched', 'unavailable'].includes(value.association)) invalid();
   if (value.association !== 'matched') {
     if (value.work_id !== null || value.work_status !== null || value.generation_id !== null || value.outcome !== null) invalid();
     if (value.association === 'not_submitted' && !(object(doc.pending_review) && doc.pending_review.reviewed_content !== null)
       && !(doc.pending_review === null && doc.extraction_work_id === null && doc.record_state === 'canonical')) invalid();
   } else {
-    if (!uuid(value.work_id) || !statuses.includes(String(value.work_status))) invalid();
+    if (!uuid(value.work_id) || typeof value.work_status !== 'string' || !statuses.includes(value.work_status)) invalid();
     if (doc.pending_review !== null) {
       if (!object(doc.pending_review) || doc.pending_review.reviewed_content === null || value.work_status === 'succeeded'
         || value.generation_id !== null || value.outcome !== null) invalid();
     } else if (value.work_status === 'succeeded') {
       if (doc.record_state !== 'canonical' || doc.extraction_work_id !== null || value.generation_id !== value.work_id
-        || !['capability_succeeded', 'capability_completed_unrecorded'].includes(String(value.outcome))) invalid();
+        || typeof value.outcome !== 'string' || !['capability_succeeded', 'capability_completed_unrecorded'].includes(value.outcome)) invalid();
     } else if (doc.record_state !== 'canonical' || doc.extraction_work_id !== null
-      || ['failed', 'cancelled'].includes(String(value.work_status)) || value.generation_id !== null || value.outcome !== null) invalid();
+      || ['failed', 'cancelled'].includes(value.work_status) || value.generation_id !== null || value.outcome !== null) invalid();
   }
   return { contract_version: 1, association: value.association as KnowledgePublicationAssociation['association'],
     work_id: value.work_id as string | null, work_status: value.work_status as ExtractionStatus | null,

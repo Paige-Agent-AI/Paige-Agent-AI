@@ -79,6 +79,17 @@ describe('native publication association recovery', () => {
   const c=client(); c.rpc.mockResolvedValue({data:{...saved,revision:4,record_state:'canonical',pending_review:null,extraction_work_id:null,publication:{...publication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_completed_unrecorded'}},error:null});
   expect(await readKnowledgeExtractionForDocument(c,scope(),doc,4)).toHaveProperty('publication.outcome','capability_completed_unrecorded');
  });
+ it.each(['association','work_status','outcome'].flatMap(field =>
+  [[field === 'association' ? 'not_submitted' : field === 'work_status' ? 'claimed' : 'capability_completed_unrecorded'], {}, null, 42, true]
+   .map(value => ({field,value}))))('refuses non-string publication enum $field=$value without writes', async ({field,value}) => {
+  const base = field === 'association' ? saved : field === 'work_status'
+   ? {...saved,publication:{...publication,association:'matched',work_id:pub,work_status:'claimed'}}
+   : {...saved,revision:4,record_state:'canonical',pending_review:null,extraction_work_id:null,publication:{...publication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_completed_unrecorded'}};
+  const c=client();c.rpc.mockResolvedValue({data:{...base,publication:{...base.publication,[field]:value}},error:null});
+  await expect(readKnowledgeExtractionForDocument(c,scope(),doc,base.revision)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+  expect(c.rpc).toHaveBeenCalledExactlyOnceWith('read_tenant_knowledge_review',{p_expected_tenant:tenant,p_doc_id:doc});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
  it.each([
   {contract_version:2},{association:'published'},{association:'not_submitted',work_id:pub},
   {association:'matched',work_id:'bad',work_status:'claimed'},

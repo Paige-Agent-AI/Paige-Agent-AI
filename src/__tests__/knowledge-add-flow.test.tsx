@@ -200,6 +200,29 @@ describe('real SDK Knowledge read receiver', () => {
     expect(body()).toContain('activity receipt could not be recorded');expect(body()).toContain('Make another correction');
     expect(mocks.submitPublication).not.toHaveBeenCalled();expect(onPublished).not.toHaveBeenCalled();
   });
+  it('holds a malformed native terminal outcome after reopening without success or writes',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';
+    const {actual}=await sdkPorts(()=>({...nativeReview,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:['capability_completed_unrecorded']}}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Existing reading unavailable');expect(body()).not.toContain('Make another correction');
+    expect(body()).not.toContain('Published to Knowledge');expect(onPublished).not.toHaveBeenCalled();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('keeps the original work checkable after a malformed terminal read and preserves its later receipt warning',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';let malformed=false,valid=false;
+    const {actual}=await sdkPorts(()=>malformed
+      ? {...nativeReview,revision:6,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:valid?'capability_completed_unrecorded':['capability_completed_unrecorded']}}
+      : {...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:{...idlePublication,association:'matched',work_id:pub,work_status:'claimed'}});
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});malformed=true;await tick(1500);
+    expect(body()).toContain('Publication status failed');expect(body()).toContain('Check publication');
+    expect(body()).not.toContain('Published to Knowledge');expect(onPublished).not.toHaveBeenCalled();
+    expect(mocks.publicationRead.mock.calls.at(-1)?.[2]).toEqual({tenantId:tenant,documentId:doc,extractionWorkId:work,revision:5,workId:pub});
+    valid=true;await click('Check publication');
+    expect(body()).toContain('activity receipt could not be recorded');expect(onPublished).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
   it('publishes a saved recovered review only after an explicit click and fresh exact native proof',async()=>{
     const saved={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:idlePublication};
     const {actual}=await sdkPorts(()=>saved);

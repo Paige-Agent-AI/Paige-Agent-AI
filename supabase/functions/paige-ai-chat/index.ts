@@ -236,6 +236,7 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
+import { readClientPortalPersonaSource, buildClientPortalPersonaMessages } from "../_shared/client-portal-persona.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -830,7 +831,8 @@ const messageSchema = z.object({
     kind: z.literal("public_presence"),
     step: z.enum(["confirm_facts", "verify_website", "connect_venues", "compare_facts", "set_authority", "maintain_presence"]),
     intendedAction: z.enum(["review", "plan", "prepare_connection", "resolve_mismatch"]),
-  }), z.object({ kind: z.literal("solo_business_interview") }).strict()]).optional(),
+  }), z.object({ kind: z.literal("solo_business_interview") }).strict(),
+  z.object({ kind: z.literal("customer_portal") }).strict()]).optional(),
   businessMissionId: z.string().uuid().nullable().optional(),
   // Owner "Your Paige" multi-chat: the persisted conversation this turn belongs to.
   // When set, paige-ai-chat persists both turns + rehydrates recall server-side (#94).
@@ -1191,6 +1193,7 @@ serve(async (req) => {
       working_context_tenant_id: string | null;
       agent_id: string;
       job_kind: string;
+      content_policy?: "metadata_only";
     } = {
       tenant_id: null,
       working_context_tenant_id: null,
@@ -1205,6 +1208,7 @@ serve(async (req) => {
       working_context_tenant_id: traceCtx.working_context_tenant_id,
       agent_id: traceCtx.agent_id,
       job_kind: jobKind,
+      content_policy: traceCtx.content_policy,
     });
 
     // Rate limit
@@ -1235,6 +1239,31 @@ serve(async (req) => {
       throw error;
     }
 
+    // The surface narrows the audience; only the native customer frame proves it.
+    // It cannot supply a tenant/client identity or inherit a global owner role.
+    const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    const customerPersonaSource = customerPortal
+      ? await readClientPortalPersonaSource(supabaseClient, user.id) : null;
+    const customerPersona = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+    if (customerPortal) {
+      if (!customerPersona?.enabled || !validatedData.threadId || !validatedData.interactive ||
+        validatedData.clientId || validatedData.document || validatedData.attachments?.length ||
+        validatedData.sessionDocumentContext?.length || validatedData.generateSessionSummary ||
+        validatedData.sessionMessages?.length || validatedData.liveRuntimeChallenge ||
+        validatedData.businessMissionId || validatedData.canvasArtifact || validatedData.resume ||
+        validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length) {
+        return new Response(JSON.stringify({code:"CUSTOMER_CHAT_UNAVAILABLE", message_accepted:false}),
+          {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      }
+      const bound = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:validatedData.threadId});
+      if (bound.error || bound.data !== true) return new Response(JSON.stringify({
+        code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false}),
+        {status:409,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // Browser system blocks and prior messages are never customer prompt authority.
+      // The interactive contract below hydrates canonical, issued private history.
+      validatedData.clientContext = undefined;
+      traceCtx.content_policy = "metadata_only";
+    }
     let interactiveUnresolvedEffects: Array<{ tool: string; outcome: string }> = [];
     let interactiveReceiptScanSaturated = false;
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
@@ -1259,8 +1288,11 @@ serve(async (req) => {
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
       const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
-        .select("tenant_id").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
+        .select("tenant_id,audience").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
       if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
+      if ((thread.audience === "customer_private") !== customerPortal)
+        return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
+          {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
       interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
@@ -1807,7 +1839,7 @@ serve(async (req) => {
     // caller's OWN client-visible event for their OWN contact — the WHERE
     // linked_user_id = user.id lookup is the client's own identity, and
     // 'client.message' is a client_visible kind.
-    if (!generateSessionSummary && !payloadClientId) {
+    if (!customerPortal && !generateSessionSummary && !payloadClientId) {
       try {
         const lastUserMsg = [...messages].reverse().find((m: any) => m?.role === "user");
         const msgText = (lastUserMsg?.content ?? "").toString().trim();
@@ -2344,7 +2376,7 @@ JSON:`;
     // safe. The later site reuses this value instead of resolving a second time.
     let callerTier: Tier = "client";
     try {
-      callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
+      if (!customerPortal) callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
     } catch (e) {
       console.warn("[paige] actor tier unresolved before URL fetch — treating as client seat:", (e as Error)?.message);
     }
@@ -2429,7 +2461,7 @@ JSON:`;
       // its guard sample is the resolver the persona itself derives from, so a caller with a null
       // or stale DECLARED pointer keeps their legitimately-read client memory instead of having it
       // dropped for a mismatch their own declaration played no part in authorizing.
-      const memoryTenantSample: Promise<string | null> = clientScopeDenied
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied || customerPortal
         ? Promise.resolve(null)
         : scopedClientId
         ? callerActiveTenantId()
@@ -2600,7 +2632,7 @@ JSON:`;
     // switch from carrying the previous client's open work into the new scope (§S2).
     let operatingMemoryBlock = "";
     try {
-      const { data: om, error: omErr } = await supabaseClient.rpc("paige_operating_memory", {
+      const { data: om, error: omErr } = customerPortal ? {data:null,error:null} : await supabaseClient.rpc("paige_operating_memory", {
         p_contact_id: scopedClientId ?? null,
         p_limit: 8,
         // The thread being composed, so its own folded summary is not handed back to it — that
@@ -2778,7 +2810,8 @@ JSON:`;
     let personaCtx: { tenant_id: string | null; tenant_name: string | null; playbook_config: any; playbook_slug: string | null; funding_enabled: boolean; brand: Record<string, any> | null } =
       { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
     try {
-      const { data: pc, error: pcErr } = await supabaseClient.rpc("get_paige_persona_context");
+      const { data: pc, error: pcErr } = customerPortal ? {data:null,error:null}
+        : await supabaseClient.rpc("get_paige_persona_context");
       proposalScopeResolved = !pcErr && proposalScopeFrom(pc) !== null;
       if (pcErr) {
         console.warn("[paige-ai-chat] get_paige_persona_context error:", pcErr.message);
@@ -2801,8 +2834,13 @@ JSON:`;
     // An external customer has an active CRM relationship, not a staff workspace
     // selection. Pin that native caller-bound relationship before protected work;
     // the same relationship must still exist at every later protected boundary.
-    const customerChatBinding = callerTier === "client" && !payloadClientId
-      ? await readClientPortalChatBinding(supabaseClient, user.id) : null;
+    if (customerPersona) {
+      personaCtx = {tenant_id:customerPersona.binding.tenantId,tenant_name:customerPersona.businessName,
+        playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
+      proposalScopeResolved = true;
+    }
+    const customerChatBinding = customerPersona?.binding ?? (callerTier === "client" && !payloadClientId
+      ? await readClientPortalChatBinding(supabaseClient, user.id) : null);
     const fundingEnabled = personaCtx.funding_enabled;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
@@ -2846,7 +2884,9 @@ JSON:`;
     //     (20261020100000), and the service-role writes are already pinned to the active tenant.
     if (payloadThreadId) {
       const { data: turnThread, error: turnThreadErr } = await supabaseClient
-        .from("paige_chat_threads").select("tenant_id").eq("id", payloadThreadId).maybeSingle();
+        .from("paige_chat_threads").select("tenant_id,audience").eq("id", payloadThreadId).maybeSingle();
+      if (turnThread?.audience === "customer_private" && !customerPortal)
+        return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH"}),{status:403,headers:corsHeaders});
       const threadTenantId = (turnThread as { tenant_id?: string | null } | null)?.tenant_id ?? null;
       if (turnThreadErr || (turnThread && (!proposalScopeResolved || threadTenantId !== (personaCtx.tenant_id ?? null)))) {
         console.error("[paige] thread is outside this turn's workspace — refused before use", JSON.stringify({
@@ -2887,11 +2927,11 @@ JSON:`;
     // QuickBooks — all service-role, all interpolated into the prompt. A refused client
     // falls back to the CALLER, never to the named id.
     const contextUserId = scopedClientId || user.id;
-    const userContext = await buildUserContext(supabase, contextUserId, fundingEnabled);
+    const userContext = customerPortal ? "" : await buildUserContext(supabase, contextUserId, fundingEnabled);
 
     // Knowledge base search
     let relevantKnowledge = "";
-    if (lastUserMessage) {
+    if (lastUserMessage && !customerPortal) {
       // Escape the backslash FIRST (include it in the class) so a pre-existing
       // backslash in the input is itself escaped, not left to combine with the
       // wildcard escapes below (js/incomplete-sanitization). Single global pass
@@ -2919,7 +2959,7 @@ JSON:`;
     // row for this user that hasn't been judged yet. Classify the new user message
     // and write back was_helpful + bump helpful_count on referenced documents.
     try {
-      if (lastUserMessage) {
+      if (!customerPortal && lastUserMessage) {
         const { data: prevLog } = await supabase
           .from("rag_retrieval_log")
           .select("id, retrieved_document_ids")
@@ -2973,7 +3013,7 @@ JSON:`;
     let ragContext = "";
     let ragRetrievedIds: string[] = [];
     try {
-      if (lastUserMessage && lastUserMessage.content?.trim()) {
+      if (!customerPortal && lastUserMessage && lastUserMessage.content?.trim()) {
         const queryText = lastUserMessage.content.trim();
         const queryEmbedding = await embedText(queryText);
         if (queryEmbedding) {
@@ -3031,7 +3071,7 @@ JSON:`;
     let tenantKbContext = "";
     let tenantKbScopeTenantId: string | null = null;
     let pendingTenantKbTelemetry: Record<string, unknown> | null = null;
-    try {
+    if (!customerPortal) try {
       // §9/§51 — the ONLY tenant this handler may search is the caller's ACTIVE one,
       // already resolved above by get_paige_persona_context() (migration 20260802133000),
       // which honours profiles.active_tenant_id. It is derived SERVER-SIDE from the verified
@@ -3525,6 +3565,14 @@ JSON:`;
     let revalidateSummaryBinding: (() => Promise<boolean>) | null = null;
     const revalidateTenantKnowledgeScope = async (required = false, summaryMaintenance = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
+      if (customerPortal) {
+        const source = await readClientPortalPersonaSource(supabaseClient, user.id);
+        const scope = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
+        if (source.status === "available" && source.data.enabled && !scope.error && scope.data === true &&
+          JSON.stringify(source.data) === JSON.stringify(customerPersona)) return true;
+        tenantKnowledgeScopeRevoked = true;
+        return false;
+      }
       // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
       // is what keeps live streaming free of added latency. A client seat's turn is held so its
       // answer can be read (R3), but holding is not evidence.
@@ -3649,7 +3697,7 @@ ${buildStudioWhereYouAre(name, tenant)}`.trim()
     // "Configuration" there meant it is not chat history — a different axis, and the word
     // collided with the one the protection rule uses.
     let tenantDomainContext = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         // §9: read this through the CALLER'S JWT-scoped client, never the service-role one.
         // `admin` is not in scope here at all (the only `const admin` in this handler is declared
@@ -3734,7 +3782,7 @@ ${buildStudioWhereYouAre(name, tenant)}`.trim()
 
     let workingContextTenantId: string | null = null;
     let marketplaceTenantId: string | null = null;
-    try {
+    if (!customerPortal) try {
       const { data: wcProfile, error: wcProfileError } = await supabase
         .from("profiles")
         .select("active_tenant_id")
@@ -5561,7 +5609,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // for the authenticated speaker's active workspace. Any mismatch/error is a
     // fail-closed NO-OP; request-body context is never used as a fallback.
     let tenantTeamContext = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         // RPC is introduced by the Solo Team migration and may precede generated types.
         const { data: teamData, error: teamError } = await supabaseClient.rpc("get_paige_team_context" as never);
@@ -5581,7 +5629,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     let businessContextReadinessBlock = "";
     let publicPresenceContextBlock = "";
     let soloBusinessInterviewContextBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         businessContextReadinessBlock = await buildBusinessContextReadinessBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5606,7 +5654,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // ownership at once. supabaseClient is the caller's own JWT-scoped client (§9/§588/§59); the
     // RPC takes no tenant argument at all and derives everything from that identity.
     let teamAuthorityBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         teamAuthorityBlock = await buildTeamAuthorityBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5621,7 +5669,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // never a connection. supabaseClient is the caller's own JWT-scoped client (§9/§588/§59) — the
     // RPC derives the tenant from it and ignores any tenant argument.
     let socialPresenceBlock = "";
-    if (personaCtx.tenant_id) {
+    if (!customerPortal && personaCtx.tenant_id) {
       try {
         socialPresenceBlock = await buildSocialPresenceBlock(supabaseClient, personaCtx.tenant_id);
       } catch (e) {
@@ -5661,7 +5709,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       }
     }
 
-    const n8nEvidence = personaCtx.tenant_id ? await loadN8nReadinessForChat(supabaseClient, personaCtx.tenant_id) : null;
+    const n8nEvidence = !customerPortal && personaCtx.tenant_id ? await loadN8nReadinessForChat(supabaseClient, personaCtx.tenant_id) : null;
     const n8nReadinessBlock = n8nEvidence ? renderN8nReadinessForChat(n8nEvidence) : "";
     // A fixed unavailable notice carries no workspace facts; verified evidence does.
     if (n8nEvidence?.status === "available") markProtectedLate("n8n_readiness");
@@ -5672,7 +5720,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // block that answers "what am I connected to" from verified state — the incident class it
     // prevents is real (2026-10-02: a capability question was answered from the wrong
     // provider's readiness block because no integrations-wide verified state was in context).
-    const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
+    const integrationsMind = !customerPortal && personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
     // Original C6: bounded prior Research metadata from its existing caller-JWT
@@ -6123,7 +6171,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         admissionMarkerId: answerHistory.ownAdmissionMarkerId };
     }
 
-    if (payloadThreadId) {
+    if (payloadThreadId && !customerPortal) {
       const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content;
       // An answer's turn is appended once, as its claim, immediately before PAIGE is called (below).
       // DRAINING begin_v2 already appended the canonical intent-bound user row.
@@ -6333,7 +6381,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             }
           }
         } catch { /* title is a nicety, never block */ }
-        await maybeRefreshSummary(payloadThreadId);
+        if (!customerPortal) await maybeRefreshSummary(payloadThreadId);
       } catch (e) {
         console.error("[paige] persist assistant turn failed:", (e as Error)?.message);
         if (interactive || interactiveConversational) throw e;
@@ -6345,7 +6393,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // visibility tools (search contacts, read deals, list tasks, etc.).
     let isOperator = false;
     let operatorRoleLabel = "";
-    try {
+    if (!customerPortal) try {
       // The SAME authority the owner-ops tools are gated on (workspace owner/admin, or the Platform
       // Operator) — so the prompt never tells someone they operate this workspace while its tools
       // refuse them, and never withholds operator mode from a seated owner (owner ruling 2026-10-04).
@@ -9488,6 +9536,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // escalation) can widen the list, so a degraded turn stays non-effectful by construction, not
     // by prompt. (E2-2, 2026-10-12: the #1899 zero-tool contract narrows to exactly
     // CONVERSATIONAL_ADMITTED_READ_TOOLS under the owner's recorded ANT-23 delegation.)
+    if (customerPortal && customerPersona) {
+      // Same runtime/provider/lifetime and server-issued receipt; a different audience.
+      // Only native private history and the closed customer presentation enter the model.
+      // Published program Knowledge will extend this bundle through its own version-bound
+      // grants; no staff Knowledge fallback or owner capability manifest is permitted.
+      aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
+        ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
+      toolDefs.splice(0, toolDefs.length);
+    }
     if (interactiveConversational) {
       const before = toolDefs.length;
       for (let i = toolDefs.length - 1; i >= 0; i--) {
@@ -9591,7 +9648,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         && (r.availability === "live" || r.availability === "needs_approval"));
       return { rows, specialists: canDelegate ? specialists : [] };
     })());
-    if (!capabilityManifestEligible) await loadSpecialists();
+    if (!customerPortal && !capabilityManifestEligible) await loadSpecialists();
     if (capabilityManifestEligible) {
       try {
         const projection = await gatherCapabilityProjection();
@@ -10467,6 +10524,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
+        // Provider-authored tool names cannot cross the customer audience boundary.
+        // Future customer actions must be explicitly admitted by their native domain contract.
+        if (customerPortal) return toolCalls.map((tc:any) => ({role:"tool",
+          tool_call_id:tc.id,content:JSON.stringify({error:"CUSTOMER_ACTION_UNAVAILABLE"})}));
         // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
         // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
         // shows the attempt and why nothing changed. A held-for-approval proposal files none: the

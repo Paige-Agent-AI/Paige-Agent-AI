@@ -31,6 +31,7 @@ export interface PortalWelcome {
 export interface ClientPortalConfig {
   modules?: PortalModuleOverlay[];
   welcome?: PortalWelcome;
+  assistant?: {display_name?:string;enabled?:boolean};
 }
 
 export interface ClientPortalConfigState {
@@ -74,6 +75,13 @@ export function normalizePortalConfig(raw: unknown): ClientPortalConfig {
       : source;
 
   const out: ClientPortalConfig = {};
+  if(candidate.assistant&&typeof candidate.assistant==="object"&&!Array.isArray(candidate.assistant)){
+    const source=candidate.assistant as Record<string,unknown>;
+    const assistant:NonNullable<ClientPortalConfig["assistant"]>={};
+    if(typeof source.display_name==="string"&&source.display_name.trim())assistant.display_name=source.display_name.trim().slice(0,80);
+    if(typeof source.enabled==="boolean")assistant.enabled=source.enabled;
+    out.assistant=assistant;
+  }
 
   if (Array.isArray(candidate.modules)) {
     const modules = candidate.modules

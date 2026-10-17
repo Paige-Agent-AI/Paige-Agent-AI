@@ -27,6 +27,10 @@ vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/lib/playbook", () => ({
   usePlaybook: () => ({ persona: { greeting: "Harness greeting", name: "Paige", role: "AI COO" }, quickActions: [] }),
 }));
+const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,checking:false,
+  read:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
+vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture}));
+vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({
   useClientChatContext: () => ({ contextBlock: "", isLoading: false, hasCreditData: false }),
@@ -37,7 +41,7 @@ vi.mock("@/hooks/useAnalytics", () => ({ trackEvent: vi.fn() }));
 vi.mock("@/hooks/usePaigeMemory", () => ({
   usePaigeMemory: () => ({
     extractDocumentSummary: vi.fn(), getSessionDocumentContext: vi.fn(() => ""), trackActivity: vi.fn(),
-    generateSessionSummary: vi.fn(), resetSession: vi.fn(),
+    generateSessionSummary: portalFixture.summary, resetSession: vi.fn(),
   }),
 }));
 vi.mock("@/hooks/useChatDocumentUpload", () => ({
@@ -79,6 +83,8 @@ describe("normal PaigeChat remount scroll behavior", () => {
   let root: Root;
 
   beforeEach(() => {
+    portalFixture.phase="not-client";portalFixture.frame=null;portalFixture.checking=false;
+    portalFixture.read.mockReset();portalFixture.summary.mockClear();
     sessionStorage.clear();
     resizeCallbacks.length = 0;
     host = document.createElement("div");
@@ -127,5 +133,53 @@ describe("normal PaigeChat remount scroll behavior", () => {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     });
     expect(remount.scrollTop).toBe(1_050);
+  });
+
+  it("hydrates canonical customer history and keeps the same draft concealed during a session recheck",async()=>{
+    const actor="e0915000-0000-4000-8000-000000000001";
+    portalFixture.phase="ready";
+    portalFixture.frame={actorId:actor,profile:{id:"e0935000-0000-4000-8000-000000000001",
+      tenant_id:"e0925000-0000-4000-8000-000000000001"},
+      brand:{tenant_name:"Test customer practice",logo_url:null,primary_color:null},config:{}};
+    portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",
+      messages:[{id:"e0955000-0000-4000-8000-000000000001",role:"user",content:"Saved private question"},
+        {id:"e0955000-0000-4000-8000-000000000002",role:"assistant",content:"Saved private answer"}]});
+    const props={user:{id:actor,user_metadata:{}} as never,session:null};
+    await act(async()=>{root.render(<PaigeChat {...props}/>);for(let i=0;i<30;i++)await Promise.resolve();});
+    expect(host.textContent).toContain("Saved private answer");
+    expect(host.textContent).toContain("AI assistant for Test customer practice");
+    expect(host.querySelector('[data-paige-message-id="e0955000-0000-4000-8000-000000000002"]')).not.toBeNull();
+    const input=host.querySelector("textarea")!;
+    await act(async()=>{
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"My unsent private draft");
+      input.dispatchEvent(new Event("input",{bubbles:true}));
+    });
+    portalFixture.checking=true;
+    await act(async()=>root.render(<PaigeChat {...props}/>));
+    expect(host.querySelector("textarea")).toBe(input);
+    expect(input.value).toBe("My unsent private draft");
+    expect(host.querySelector("[inert]")).not.toBeNull();
+    expect(host.textContent).toContain("Checking your conversation");
+    portalFixture.checking=false;
+    await act(async()=>{root.render(<PaigeChat {...props}/>);for(let i=0;i<30;i++)await Promise.resolve();});
+    expect(host.querySelector("textarea")).toBe(input);
+    expect(input.value).toBe("My unsent private draft");
+    expect(portalFixture.summary).not.toHaveBeenCalled();
+  });
+
+  it("retires private customer text when relationship access is lost",async()=>{
+    const props={user:{id:"customer-test",user_metadata:{}} as never,session:null};
+    portalFixture.phase="ready";
+    portalFixture.frame={actorId:"customer-test",profile:{id:"customer-contact",tenant_id:"customer-business"},
+      brand:{tenant_name:"Test practice"},config:{}};
+    portalFixture.read.mockResolvedValue({threadId:"private-thread",
+      messages:[{id:"private-message",role:"assistant",content:"Customer-private saved answer"}]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);for(let i=0;i<30;i++)await Promise.resolve();});
+    expect(host.textContent).toContain("Customer-private saved answer");
+    portalFixture.phase="unavailable";portalFixture.frame=null;
+    await act(async()=>root.render(<PaigeChat {...props}/>));
+    expect(host.textContent).not.toContain("Customer-private saved answer");
+    expect(host.textContent).toContain("customer access is no longer available");
+    expect(host.querySelector("textarea")).toBeNull();
   });
 });

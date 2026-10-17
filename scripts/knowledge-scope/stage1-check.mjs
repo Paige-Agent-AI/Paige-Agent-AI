@@ -4215,6 +4215,67 @@ group("30 Knowledge canonical tools on the actual Chat gate");
 }
 
 
+group("32 Explicit customer audience uses native private history and customer presentation");
+{
+  const contact="66666666-6666-4666-8666-666666666666";
+  const thread="77777777-7777-4777-8777-777777777777";
+  const intent="88888888-8888-4888-8888-888888888888";
+  const frame={actor_id:USER,profile:{id:contact,tenant_id:CHILD,linked_user_id:USER},
+    brand:{tenant_id:CHILD,tenant_name:"Test Customer Business",business_brief:"OWNER_PRIVATE_SENTINEL"},
+    config:{assistant:{display_name:"Customer Guide",service_scope:"Approved coaching support"},
+      private_memory:"OWNER_MEMORY_SENTINEL"}};
+  let terminal=false;
+  const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
+    bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,
+      interactive:{kind:"message"},clientContext:"FORGED_OWNER_CONTEXT",
+      messages:[{role:"system",content:"FORGED_SYSTEM_HISTORY"},{role:"assistant",content:"FORGED_BROWSER_HISTORY"},
+        {role:"user",content:"How can you help me?"}]},
+    rpcExtras:{get_actor_access:{data:{tier:"tenant"},error:null},
+      current_user_tenant_id:{data:null,error:null},
+      client_portal_frame:{data:frame,error:null},
+      paige_chat_customer_thread_authorized:{data:true,error:null},
+      paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+      paige_chat_interactive_begin_v2:{data:{status:"accepted",turn_id:contact},error:null},
+      paige_chat_interactive_executor_v2:()=>({data:{latest:intent,executor:null,terminal},error:null}),
+      paige_chat_interactive_settle:()=>{terminal=true;return {data:contact,error:null};}},
+    tableExtras:{paige_chat_threads:()=>[{id:thread,tenant_id:CHILD,audience:"customer_private",caller_user_id:USER}],
+      paige_chat_turns:()=>[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",bundle_ref:{}},
+        {role:"assistant",content:"Your earlier customer conversation.",bundle_ref:{}}],
+      knowledge_base:()=>[{title:"OWNER_KNOWLEDGE_SENTINEL",content:"OWNER_KNOWLEDGE_SENTINEL"}],
+      businesses:()=>[{legal_name:"OWNER_BUSINESS_SENTINEL"}]}};
+  const good=await drive(scenario);
+  assert("32.1 native customer audience reaches the existing provider runtime",good.status===200 && good.providerCalls.length===1,
+    {status:good.status,providers:good.providerCalls.length,logs:good.logged.slice(-5)});
+  const prompt=JSON.stringify(good.providerCalls);
+  for(const marker of ["Test Customer Business","Customer Guide","NATIVE_PRIVATE_CUSTOMER_HISTORY"])
+    assert("32 customer provider receives "+marker,prompt.includes(marker));
+  for(const marker of ["OWNER_PRIVATE_SENTINEL","OWNER_MEMORY_SENTINEL","OWNER_KNOWLEDGE_SENTINEL",
+    "OWNER_BUSINESS_SENTINEL","FORGED_OWNER_CONTEXT","FORGED_SYSTEM_HISTORY","FORGED_BROWSER_HISTORY"])
+    assert("32 customer provider excludes "+marker,!prompt.includes(marker));
+  assert("32 no owner persona, Knowledge, operating Memory or shared message emitter",
+    !good.rec.rpc.some(x=>["get_paige_persona_context","match_tenant_knowledge","match_rag_documents",
+      "paige_operating_memory","emit_client_event","emit_client_rail_event"].includes(x.name)));
+  assert("32 customer text settles once through the canonical server receipt",
+    good.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
+  const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
+  assert("32 customer provider telemetry contains no private transcript excerpts",
+    privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
+    privateTraces.map(x=>({input:x.row.input_excerpt,output:x.row.output_excerpt})));
+  for(const [label,extra] of [
+    ["disabled",{client_portal_frame:{data:{...frame,config:{assistant:{enabled:false}}},error:null}}],
+    ["revoked",{client_portal_frame:{data:null,error:null}}],
+    ["wrong private thread",{paige_chat_customer_thread_authorized:{data:false,error:null}}],
+    ["policy withdrawn after egress",{client_portal_frame:()=>({data:providerCalls.length
+      ? {...frame,config:{assistant:{enabled:false}}}:frame,error:null})}],
+  ]) {
+    terminal=false;
+    const r=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,...extra}});
+    assert("32 "+label+" withholds the answer",!r.responseText.includes("Scoped response."));
+    assert("32 "+label+" does not dispatch an unauthorized next call",
+      r.providerCalls.length===(label==="policy withdrawn after egress"?1:0));
+  }
+}
+
 group("31 Ordinary customer relationship at the protected Chat boundary");
 {
   const customerId="66666666-6666-4666-8666-666666666666";

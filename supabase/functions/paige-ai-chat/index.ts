@@ -9,6 +9,9 @@ import { CRM_ACTION_CAPABILITY, CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
+import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingReadCaller } from "../_shared/calendar-booking-read.ts";
+import { CALENDAR_BOOKING_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
+import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
 import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
@@ -225,7 +228,7 @@ import { loadSpineEvidenceForChat } from "../_shared/paige-spine/chatEvidence.ts
 import { buildBusinessContextReadinessBlock } from "../_shared/paige-spine/domains/businessContextChatEvidence.ts";
 import { buildPublicPresenceContextBlock } from "../_shared/paige-spine/domains/publicPresenceChatContext.ts";
 import { buildSoloBusinessInterviewContextBlock } from "../_shared/paige-spine/domains/soloBusinessInterviewContext.ts";
-import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuthorityChatEvidence.ts";
+import { loadTeamAuthorityForChat, renderTeamAuthorityForChat } from "../_shared/paige-spine/domains/teamAuthorityChatEvidence.ts";
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
 import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
@@ -306,7 +309,7 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
 // narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone, read_calendar_booking for one exact saved booking), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
 // E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
 // conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
@@ -319,7 +322,9 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // read_client_engagement_status and read_business_time_zone, both caller-JWT reads whose SQL bodies re-prove the
 // active workspace and the owner/admin seat. Neither writes; the business time zone is saved only by
 // the owner in Setup (set_business_time_zone).
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone"]));
+// Owner restoration (2026-10-17): exact saved-booking read only; original caller JWT,
+// native membership/host visibility, no Calendar write or provider authority.
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -645,6 +650,7 @@ function describeStep(
     // E4-S3: a finished read says it finished. (The START keeps its present-tense label, step-start.ts.)
     // read_business_metric's wording is Exp02's and is deliberately not set here (no Exp02 sign-off).
     case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checked where that client stands", group: "shared" };
+    case "read_calendar_booking": return { label: failed ? "Couldn't check that booking" : "Checked that booking", group: "shared" };
     case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
@@ -5776,9 +5782,22 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // ownership at once. supabaseClient is the caller's own JWT-scoped client (§9/§588/§59); the
     // RPC takes no tenant argument at all and derives everything from that identity.
     let teamAuthorityBlock = "";
+    let calendarBookingRole: string | null = null;
+    let calendarBookingAccountShape: "solo" | null = null;
     if (!customerPortal && personaCtx.tenant_id) {
       try {
-        teamAuthorityBlock = await buildTeamAuthorityBlock(supabaseClient, personaCtx.tenant_id);
+        const teamAuthority = await loadTeamAuthorityForChat(supabaseClient, personaCtx.tenant_id);
+        teamAuthorityBlock = renderTeamAuthorityForChat(teamAuthority);
+        // Reuse this same caller-JWT, tenant-bound read. Permission is a native fact,
+        // never the rendered sentence, legal-owner fact, roster title or model input.
+        if (teamAuthority.status === "available") {
+          const seat = teamAuthority.rows.find(row => row.fact_key === "viewer_permission");
+          if (seat?.status === "available" && ["owner", "admin", "member"].includes(String(seat.value))) calendarBookingRole = seat.value;
+        }
+        if (callerTier === "tenant" && calendarBookingRole && !scopedClientId) {
+          const classification = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, req.signal);
+          if (classification.status === "available") calendarBookingAccountShape = classification.accountShape;
+        }
       } catch (e) {
         console.warn("[paige-ai-chat] team authority unavailable:", (e as Error)?.message);
       }
@@ -8488,6 +8507,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS);
     // E4-S2 client standing + business time zone: same Solo-workspace lens; caller-JWT reads only.
     if (callerTier === "tenant") toolDefs.push(...CLIENT_ENGAGEMENT_TOOLS);
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -16984,6 +17004,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(engagementForModel) });
+        } else if (tc.function.name === "read_calendar_booking") {
+          // Same original actor/tenant and request cancellation as this turn. The
+          // static identity is NOT a server-change detector: the incumbent context
+          // revalidation below re-reads the active profile/persona before and after
+          // the native read under its ONE 8-second deadline, with sticky revocation.
+          const calendarIdentity: ContextIdentity = {
+            actorId: user.id, tenantId: turnScopeTenantId, workspaceId: turnScopeTenantId,
+            // Shape is an exact caller-visible tenant-row read, never actor tier.
+            // The reader rechecks it on this original JWT before and after lookup.
+            role: calendarBookingRole, accountShape: calendarBookingAccountShape,
+            actAsClientId: scopedClientId ?? null, scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request",
+          };
+          const result = await readCalendarBooking(calendarIdentity, {
+            caller: supabaseClient as unknown as CalendarBookingReadCaller,
+            currentIdentity: () => req.signal.aborted || tenantKnowledgeScopeRevoked || customerPortal || callerTier !== "tenant"
+              ? null : { ...calendarIdentity, tenantId: personaCtx.tenant_id ?? null, workspaceId: personaCtx.tenant_id ?? null },
+            revalidateScope: () => revalidateTenantKnowledgeScope(true), signal: req.signal,
+          }, JSON.parse(tc.function.arguments || "{}"));
+          if (result.status === "available" && turnScopeTenantId) {
+            if (result.found) readRecordLinkSource.set(tc, [{ destination: "calendar", record_id: null }]);
+            try {
+              await recordCapabilityRun(supabase, {
+                tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",
+                runId: await stableRunId([tc.function.name, turnScopeTenantId, `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: { channel: "paige_chat", tool: tc.function.name },
+              });
+            } catch (e) { console.error("[paige] Calendar read receipt unavailable:", (e as Error)?.message); }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }

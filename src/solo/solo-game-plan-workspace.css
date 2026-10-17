@@ -89,7 +89,6 @@
 
 /* ── Plan Brief (the strategic spine's lead) ── */
 .paige-solo .sd-brief { border: 1px solid var(--violet-line); box-shadow: var(--sh-2); position: relative; overflow: hidden; }
-.paige-solo .sd-brief::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--violet), var(--violet-2), transparent); }
 .paige-solo .sd-brief-in { padding: 14px 16px 15px; display: flex; flex-direction: column; gap: 11px; }
 .paige-solo .sd-brief-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .paige-solo .sd-approved { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--ok); }

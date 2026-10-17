@@ -254,7 +254,7 @@ async function ownerTaskNativeProof() {
       const base = text("supabase/migrations/20261022000000_automations_the_process_record.sql");
       sql(base.slice(base.indexOf("ALTER TABLE public.paige_automations      ENABLE ROW LEVEL SECURITY;"), base.indexOf("-- ── 5."))+
         [...base.matchAll(/GRANT [^;]* ON public\.paige_(?:automations|automation_acts) TO authenticated;/g)].map(m=>m[0]).join("\n"));
-      sql(text("supabase/migrations/20271108220000_owner_task_human_control.sql"));
+      sql(text("supabase/migrations/20271108242000_owner_task_human_control.sql"));
       controlInstalled = true;
       check("human control exists as an authenticated-only exact five-argument domain writer", () => {
         const abi = "public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)";

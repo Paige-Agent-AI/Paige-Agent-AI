@@ -47,6 +47,8 @@ a workspace audience and the canonical contact predicate's internal staff-only
 narrowing. The existing two-argument contact read contract still includes linked
 customers; no new caller-executable actor selector is granted. Workspace creation
 proves native staff/contact or self-membership authority and platform self scope.
+The canonical service-only durable-work creator accepts workspace thread audience
+only; private customer Chat cannot become owner-work authority even for a member.
 This native seam alone does not activate customer model input, Knowledge
 publication, tools, Live or browser history; those consumers must bind the same
 audience, exclude owner context and preserve current publication permissions.

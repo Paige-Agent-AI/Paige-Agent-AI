@@ -365,6 +365,21 @@ SELECT ok((SELECT tasks=(SELECT count(*) FROM public.tasks)
  AND notes=(SELECT count(*) FROM public.client_notes)
  AND audit=(SELECT count(*) FROM public.paige_audit_log) FROM e09_private_effect_baseline),
  'all refused private-context staff calls leave no task, note or audit effect');
+-- Check the canonical owner-work root without invoking a worker or provider.
+-- The actor is genuinely a member of this business, so audience is the refusal.
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status) VALUES
+ ('e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000001','owner','active');
+CREATE TEMP TABLE e09_private_work_baseline AS SELECT count(*) AS work FROM public.paige_durable_work;
+SELECT throws_ok(format($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',%L,'service_role')$q$,
+ format($s$SELECT work_id FROM public.create_paige_durable_work('e0921000-0000-0000-0000-000000000001',
+ 'e0911000-0000-0000-0000-000000000001',gen_random_uuid(),%L,'document_generate','document_authoring',
+ '{"tenant_id":"e0921000-0000-0000-0000-000000000001","actor_user_id":"e0911000-0000-0000-0000-000000000001"}',
+ 'e09-private-native-check',60,5)$s$,(SELECT thread_id FROM e09_customer_chat))),
+ '42501','DURABLE_WORK_THREAD_FORBIDDEN','private Chat cannot authorize owner work even for a current member of its business');
+SELECT ok((SELECT work=(SELECT count(*) FROM public.paige_durable_work) FROM e09_private_work_baseline),
+ 'private-context owner-work refusal leaves no durable envelope or worker wake-up');
+DELETE FROM public.tenant_members WHERE user_id='e0911000-0000-0000-0000-000000000001'
+ AND tenant_id='e0921000-0000-0000-0000-000000000001';
 -- The same canonical staff tools still work from genuinely authorized workspace
 -- conversations. These are rollback-only native writes, not provider actions.
 CREATE TEMP TABLE e09_staff_chat(thread_id uuid,purpose text);
@@ -398,6 +413,12 @@ SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  format($s$SELECT public.paige_tool_add_client_note(%L,'e0931000-0000-0000-0000-000000000002','Authorized workspace staff note',NULL)$s$,
  (SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')))::jsonb)->>'ok','true',
  'native business owner retains the canonical workspace note writer');
+SELECT ok(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ format($s$SELECT work_id FROM public.create_paige_durable_work('e0921000-0000-0000-0000-000000000002',
+ 'e0911000-0000-0000-0000-000000000001',gen_random_uuid(),%L,'document_generate','document_authoring',
+ '{"tenant_id":"e0921000-0000-0000-0000-000000000002","actor_user_id":"e0911000-0000-0000-000000000001"}',
+ 'e09-workspace-native-check',60,5)$s$,(SELECT thread_id FROM e09_staff_chat WHERE purpose='owner')),'service_role') IS NOT NULL,
+ 'canonical durable-work root preserves genuine member workspace envelopes without running a provider');
 INSERT INTO e09_staff_chat SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.paige_chat_thread_create(NULL,'coach','Authorized personal workspace','{}')$$)::uuid,'self';
 SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',

@@ -1897,17 +1897,22 @@ async function persistRun(
     // identity before continuing; never blindly repeat this insert or the research.
     if (runErr) console.error("[paige-deep-research] persist run unconfirmed");
     await assertScope();
-    const runRead = await admin.from("research_runs")
-      .select("id, tenant_id, user_id, question, domain, caller, findings, coverage, stop_reason, configured, entity_profile")
-      .eq("id", runId).eq("tenant_id", tenantId).eq("user_id", req.user_id).maybeSingle();
-    const savedRun = runRead.data;
-    const parentVerified = !runRead.error && !!savedRun && savedRun.id === runId &&
+    // Base grants remain INSERT-only. This server-only RPC revalidates current
+    // authority and reads the exact native identity without broad table SELECT.
+    const readbackArgs = { _run_id: runId, _tenant_id: tenantId, _actor_id: req.user_id };
+    const runRead = await admin.rpc("research_readback_persisted_run", readbackArgs);
+    const matchesParent = (value: unknown): boolean => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+      const savedRun = value as Record<string, unknown>;
+      return savedRun.id === runId &&
       savedRun.tenant_id === tenantId && savedRun.user_id === req.user_id &&
       savedRun.question === req.question && savedRun.domain === (req.domain ?? "general") &&
       savedRun.caller === (req.caller ?? "chat") && savedRun.stop_reason === result.coverage.stop_reason &&
       savedRun.configured === result.coverage.configured && sameResearchJson(savedRun.coverage, result.coverage) &&
       sameResearchJson(savedRun.findings, result.findings) &&
       sameResearchJson(savedRun.entity_profile ?? null, result.entity_profile ?? null);
+    };
+    const parentVerified = !runRead.error && matchesParent(runRead.data);
 
     if (parentVerified && result.sources.length) {
       await assertScope();
@@ -1931,15 +1936,13 @@ async function persistRun(
       if (srcErr) console.error("[paige-deep-research] persist sources failed:", srcErr.message);
     }
     await assertScope();
-    const sourceRead = parentVerified ? await admin.from("research_sources")
-      .select("run_id, tenant_id, user_id, source_index, url, title, snippet, reliability_score, tier, reliability, published_at, fetched_at, excluded")
-      .eq("run_id", runId).eq("tenant_id", tenantId).eq("user_id", req.user_id)
-      .order("source_index", { ascending: true }).limit(result.sources.length + 1) : null;
-    const storedSources = sourceRead?.data;
+    const sourceRead = parentVerified
+      ? await admin.rpc("research_readback_persisted_run", readbackArgs) : null;
+    const storedSources = sourceRead?.data?.sources;
     const sourceFields = ["url", "title", "snippet", "reliability_score", "tier", "reliability", "excluded"] as const;
     const sameTime = (a: unknown, b: unknown) => a === null && b === null ||
       typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a) === Date.parse(b);
-    result.persistence_verified = parentVerified && !sourceRead?.error && Array.isArray(storedSources) &&
+    result.persistence_verified = parentVerified && !sourceRead?.error && matchesParent(sourceRead?.data) && Array.isArray(storedSources) &&
       storedSources.length === result.sources.length && result.sources.every((item, index) => {
         const stored = storedSources[index];
         return stored && stored.run_id === runId && stored.tenant_id === tenantId && stored.user_id === req.user_id &&

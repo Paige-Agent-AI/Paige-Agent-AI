@@ -8,6 +8,9 @@
         "content": "hi"
       }
     ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
     "system": "sys"
   },
   "callClaude_classification": {
@@ -19,6 +22,9 @@
         "content": "hi"
       }
     ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
     "temperature": 0.2
   },
   "compat_pro_tools": {
@@ -30,6 +36,9 @@
         "content": "q"
       }
     ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
     "system": "S",
     "tools": [
       {
@@ -61,6 +70,9 @@
         "content": "q"
       }
     ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
     "temperature": 0.4
   },
   "compat_flash_pdf": {
@@ -84,7 +96,10 @@
           }
         ]
       }
-    ]
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    }
   },
   "compat_json": {
     "model": "<MODEL>",
@@ -95,6 +110,9 @@
         "content": "json please"
       }
     ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
     "system": "Respond with a single valid JSON value only. No prose, no markdown fences."
   },
   "gateway_stream_reasoning": {
@@ -154,7 +172,10 @@
         "role": "user",
         "content": "summarise"
       }
-    ]
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    }
   },
   "routed_doc_draft": {
     "model": "<MODEL>",
@@ -164,6 +185,9 @@
         "role": "user",
         "content": "synthesise"
       }
-    ]
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    }
   }
 }

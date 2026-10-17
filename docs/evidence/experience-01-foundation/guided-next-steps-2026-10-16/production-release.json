@@ -1,0 +1,108 @@
+{
+  "at": "2026-10-16T23:18:54.335Z",
+  "pr": 2258,
+  "reviewedHead": "dce4c51b19426948e1b65f6887db5a6fba25bc19",
+  "merge": "943c3ab21b2f0830de21e82588944ccd0d4e2934",
+  "actualFirstParent": "92fc812401f3607d63a6e01ece58b39d63e98e5f",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE; zero unresolved material source findings",
+  "reviewComment": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2258#issuecomment-6226085223",
+  "premergeWorkflowGroups": 6,
+  "premergeChecks": [
+    {
+      "id": 117230782788,
+      "name": "Supabase Preview",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230422230,
+      "name": "Vercel Preview Comments",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230175433,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230175354,
+      "name": "web-fetch-hardening-smoke",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230175160,
+      "name": "comms-provider-boundary",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230089175,
+      "name": "lint",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230088233,
+      "name": "postgres-authority",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230087556,
+      "name": "audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230087401,
+      "name": "Validate UI delivery evidence",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230086456,
+      "name": "database-contract",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117230086133,
+      "name": "contract",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "premergeVercelStatuses": "both success",
+  "production": {
+    "deployment": "dpl_BcRxFnpkGTegreeYQZ4NYxfPdZCs",
+    "state": "READY",
+    "target": "production",
+    "build": "943c3ab21b2f0830de21e82588944ccd0d4e2934-mvbkzgcy",
+    "edgeRun": 38979959962,
+    "edgeConclusion": "success",
+    "chatVersion": 426,
+    "chatStatus": "ACTIVE",
+    "verifyJwt": true,
+    "bundleSha256": "6d809a5746a3afbe5b478a3048681b228b19cc9f42d3629062c535d62cac2b93",
+    "deployedChatFiles": 225,
+    "matchedChatFiles": 225,
+    "publicUiMarkersVerified": true,
+    "checkpointFunctionsReadBack": 3,
+    "checkpointInvocations": 0,
+    "newE1Migration": "NOT_APPLICABLE"
+  },
+  "native": {
+    "validFrames": 15,
+    "sourceAndAssetMatches": 194,
+    "invalidOriginalsRetained": true,
+    "class": "SYNTHETIC_NATIVE_ACTUAL_COMPONENT"
+  },
+  "actualMergeAuthTests": "44 passed; synthetic only",
+  "authenticatedCustomerCases": "23 NOT_RUN by E01",
+  "ownerAccepted": false,
+  "customerReleaseIdentity": null,
+  "remaining": "All ten integrated outcomes remain open; no first business action/provider effect/customer persistence claim"
+}

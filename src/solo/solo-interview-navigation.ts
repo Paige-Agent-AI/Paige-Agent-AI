@@ -14,8 +14,11 @@ export function interviewSetupPath(account: string | number, threadId: string | 
 
 // Existing Settings destinations only; this address conveys no connection,
 // credential, ownership or thread authority. Each destination re-resolves scope.
-export function interviewConnectionPath(account: string | number, destination: "integrations" | "connections" | "vault", threadId: string | null): string {
-  const path = `/solo/${encodeURIComponent(String(account))}/settings/${destination}`;
+export function interviewConnectionPath(account: string | number, destination: "integrations" | "connections" | "vault" | "communications", threadId: string | null): string {
+  // "communications" lands on the Setup People & email subtab — the native home of the
+  // owner's email preferences (the retired notifications page's landed destination).
+  const leaf = destination === "communications" ? "setup/people-email" : destination;
+  const path = `/solo/${encodeURIComponent(String(account))}/settings/${leaf}`;
   return threadId && UUID.test(threadId) ? `${path}?interviewThread=${encodeURIComponent(threadId)}` : path;
 }
 

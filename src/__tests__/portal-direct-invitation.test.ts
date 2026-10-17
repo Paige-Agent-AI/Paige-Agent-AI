@@ -16,7 +16,10 @@ async function drive(options: Options = {}) {
   const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { id: "test-client", tenant_id: options.foreignContact ? "test-business-b" : tenant }, error: options.readError ? Error("Client read unavailable") : null }) };
   const supabase = {
     from: (table: string) => { expect(table).toBe("clients"); return q; },
-    rpc: async (name: string, args: unknown) => {
+    rpc: async function (name: string, args: unknown) {
+      // The installed SDK's rpc method dispatches through this.rest.rpc.
+      // A detached typed method must not pass this fixture as a valid caller.
+      expect(this).toBe(supabase);
       calls.push({ name, args });
       if (name === "create_contact_v2") return { data: options.missingContact ? [] : [{ contact_id: "test-client" }], error: options.preparationError ? Error("Contact refused") : null };
       if (name === "create_tenant_invite_token") return { data: options.missingToken ? [] : [{ token: "synthetic-token" }], error: options.mintError ? Error("Mint refused") : null };

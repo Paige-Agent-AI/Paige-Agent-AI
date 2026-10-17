@@ -470,6 +470,7 @@ serve(async (req) => {
 
   const requestNonce = crypto.randomUUID();
   let claimedArgs: JsonObject | null | undefined;
+  let approvalClaimFailed = false;
   if (body.approved_fingerprint !== undefined) {
     claimedArgs = null;
     const { data: claimed, error: claimError } = await admin.from("paige_pending_confirmations")
@@ -488,10 +489,11 @@ serve(async (req) => {
       .select("args")
       .maybeSingle();
     const stored = object(claimed?.args);
+    approvalClaimFailed = !!claimError || !stored;
     if (!claimError && stored) claimedArgs = stored;
   }
 
-  const decision = decideGovernedExecution({
+  const gatewayDecision = decideGovernedExecution({
     caller: {
       authenticated: true,
       userId: user.id,
@@ -513,6 +515,16 @@ serve(async (req) => {
     },
     requestArgs,
   });
+  // An explicit approval whose native claim failed is not a fresh instruction
+  // or standing-autonomy fallback. Keep original-result readback above and all
+  // Gateway refusals; never manufacture a replacement proposal or run an effect.
+  const decision = approvalClaimFailed && gatewayDecision.kind !== "refuse"
+    ? { ...gatewayDecision, kind: "refuse" as const,
+      // An empty claim can also lose to another request after the original
+      // result read. It does not establish that the original effect is absent.
+      code: "CRM_APPROVAL_UNCONFIRMED",
+      message: "This approval could not be confirmed. Inspect the original record and result before requesting a fresh review." }
+    : gatewayDecision;
 
   const decidedRequest = decision.kind === "execute" ? object(decision.args) : null;
   const auditedCommand = object(decidedRequest?.command) ?? body.command;
@@ -545,7 +557,12 @@ serve(async (req) => {
   });
 
   if (decision.kind === "refuse") {
-    return response(403, { ok: false, outcome: "refused", code: decision.code, message: decision.message, audit_recorded: !auditError });
+    const unconfirmed = decision.code === "CRM_APPROVAL_UNCONFIRMED";
+    return response(unconfirmed ? 503 : 403,
+      { ok: false, outcome: "refused", code: decision.code, message: decision.message, audit_recorded: !auditError,
+        // A preserved Gateway denial cannot establish that another claimant
+        // has not already begun the original action.
+        ...(approvalClaimFailed ? { outcome_unknown: true, refused_before_run: false } : {}) });
   }
   if (auditError) {
     return response(503, { ok: false, outcome: "refused", code: "CRM_DECISION_RECEIPT_FAILED" });

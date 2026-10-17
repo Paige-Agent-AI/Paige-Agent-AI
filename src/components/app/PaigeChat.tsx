@@ -557,7 +557,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
   return (
     <div
-      className={`flex flex-col h-full bg-card border-r border-border relative ${isDragOver ? "ring-2 ring-primary ring-inset" : ""}`}
+      className={`flex flex-col h-full min-h-0 min-w-0 bg-card border-r border-border relative ${isDragOver ? "ring-2 ring-primary ring-inset" : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -572,6 +572,8 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
       <input ref={fileInputRef} type="file" accept="application/pdf" onChange={handleFileSelect} className="hidden" />
 
+      {/* Very short keyboard viewports scroll the chrome above the pinned composer. */}
+      <div data-paige-content-scroll="true" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
       {/* Header — compact on mobile */}
       <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -584,7 +586,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       </div>
 
       {/* Messages */}
-      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label="PAIGE conversation" tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
           <div key={message.id} data-paige-message-id={message.id} className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
             {message.role === "assistant" && (
@@ -653,12 +655,13 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
               key={action.label}
               onClick={() => handleSend(action.prompt)}
               disabled={isLoading || dictationActive}
-              className="text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border border-border bg-background hover:bg-accent/10 hover:border-accent/40 text-muted-foreground hover:text-gold-dark transition-colors disabled:opacity-50 whitespace-nowrap flex-shrink-0"
+              className="min-h-[44px] md:min-h-0 text-[13px] md:text-[11px] px-2.5 py-1 rounded-full border border-border bg-background hover:bg-accent/10 hover:border-accent/40 text-muted-foreground hover:text-gold-dark transition-colors disabled:opacity-50 whitespace-nowrap flex-shrink-0"
             >
               {action.label}
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       {attachedDoc && (
@@ -668,9 +671,9 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       )}
 
       {/* Input area — safe area padding on mobile */}
-      <div className="p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[env(safe-area-inset-bottom,8px)]">
+      <div className="p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]">
         <div className="flex gap-1.5 sm:gap-2 items-center">
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-9 sm:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
+          <Button variant="ghost" size="icon" className="h-[44px] w-[44px] md:h-9 md:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
             <Paperclip className="w-4 h-4" />
           </Button>
           <Textarea
@@ -678,9 +681,10 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder={attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)"}
+            placeholder={isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
             rows={1}
-            className="flex-1 text-sm min-h-[40px] max-h-[200px] resize-none py-2"
+            aria-label="Message PAIGE"
+            className="flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2"
             disabled={isLoading}
           />
           {/* Tap-to-dictate — neutral/indigo mic (never gold; Send owns the act, §11).
@@ -693,9 +697,9 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
             onError={(msg) => toast({ title: "Voice typing", description: msg, variant: "destructive" })}
             disabled={isLoading}
             variant="secondary"
-            className={`flex-shrink-0 ${isMobile ? "h-10 w-10" : "h-9 w-9"}`}
+            className={`flex-shrink-0 ${isMobile ? "h-[44px] w-[44px]" : "h-9 w-9"}`}
           />
-          <Button onClick={() => handleSend()} disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-10 w-10" size="icon">
+          <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>

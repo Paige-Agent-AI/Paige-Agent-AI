@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const legacyMode = process.argv.includes('--baseline');
 const cutoverBaseline = process.argv.includes('--cutover-baseline');
+const enteredFocus = process.argv.includes('--entered-claim-focus');
 assert.ok(!legacyMode || !cutoverBaseline, 'choose one failing baseline');
 const ci = process.argv.includes('--postgres');
 assert.ok(!ci || process.env.CI === 'true', '--postgres requires disposable CI');
@@ -80,7 +81,12 @@ try {
     if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role;end if;
   end$$;
   create schema auth;create schema vault;create schema net;
-  create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
+  create function auth.uid() returns uuid language plpgsql stable as $$begin
+    if current_setting('fixture.claim_barrier',true)='true' then
+      perform pg_catalog.pg_advisory_lock(4252306);perform pg_catalog.pg_advisory_unlock(4252306);
+    end if;
+    return (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid;
+  end$$;
   create function public.current_user_tenant_id() returns uuid language sql stable as $$select nullif(current_setting('fixture.tenant',true),'')::uuid$$;
   create table public.tenants(id uuid primary key);
   create table public.paige_automation_triggers(key text primary key);
@@ -158,6 +164,7 @@ try {
     crossingSession.stdin.end(service + `select public.paige_claim_event('${crossingEvent.id}');commit;\n`);
     crossingClaim = await crossingResult;crossingSession = null;
   }
+  if (!enteredFocus) {
   await check('ordinary actor insert reaches real native enqueue without legacy aliases', () => {
     const before = queueCount(); const event = contact();
     assert.equal(queueCount(), before + 1);
@@ -359,16 +366,26 @@ try {
         enqueue(event);assert.equal(queuedFor(event), count);assert.equal(claim(event).claimed, false);
         sql(service + 'select public.paige_sweep_stuck_events_before_weekly();');assert.equal(queuedFor(event), count);assert.equal(eventSnapshot(event), before);
       });
+      await check('row constraint prevents dropping its fixed cutoff dependency', () => {
+        const before = sql(`select pg_get_constraintdef(oid)||':'||convalidated::text from pg_constraint where conrelid='public.paige_native_events'::regclass and conname='paige_native_events_transport_cutover_claim';`);
+        assert.ok(before.endsWith(':false'), 'historical rows remain unvalidated and untouched');
+        const result = detailed(`drop function ${cutoverFunction};`);assert.notEqual(result.status, 0);
+        assert.match(result.stderr, /paige_native_events_transport_cutover_claim/);
+        assert.equal(sql(`select pg_get_constraintdef(oid)||':'||convalidated::text from pg_constraint where conrelid='public.paige_native_events'::regclass and conname='paige_native_events_transport_cutover_claim';`), before);
+      });
       await check('absent cutoff cannot enqueue, claim or sweep an attributable future row', () => {
         fixtureConstant(literal(fixtureCutover) + '::timestamptz');const event = contact();
-        const before = eventSnapshot(event), count = queuedFor(event);sql(`drop function ${cutoverFunction};`);
+        // Destructive fault injection is restricted to this owned disposable
+        // schema. Remove the dependent constraint explicitly; never CASCADE.
+        const before = eventSnapshot(event), count = queuedFor(event);
+        sql(`alter table public.paige_native_events drop constraint if exists paige_native_events_transport_cutover_claim;drop function ${cutoverFunction};`);
         enqueue(event);assert.equal(queuedFor(event), count);
         const result = detailed(service + `select public.paige_claim_event('${event.id}');`);
         assert.notEqual(result.status, 0);assert.match(result.stderr, /paige_native_event_transport_cutover_at/);
         const sweep = detailed(service + 'select public.paige_sweep_stuck_events_before_weekly();');assert.notEqual(sweep.status, 0);
         assert.equal(queuedFor(event), count);assert.equal(eventSnapshot(event), before);
       });
-    } finally { restoreConstant(); }
+    } finally { restoreConstant();sql(migration); }
     await check('pre-existing app-owned cutoff is rejected before migration evaluates it', () => {
       const event = historical[0], before = eventSnapshot(event), count = queueCount();
       try {
@@ -389,6 +406,45 @@ try {
       const before = sql(`select ${cutoverFunction};`);sql(migration);assert.equal(sql(`select ${cutoverFunction};`), before);
     });
   }
+  }
+  if (!legacyMode) await check('already-entered old claim frame cannot mutate history after migration commit', async () => {
+    const event = contact();sql(`update public.paige_native_events set occurred_at=now()-interval '1 day',created_at=now()-interval '1 day' where id='${event.id}';`);
+    // Model the pre-deployment generation. Only the fixture's Auth resolver
+    // supplies a barrier; there is no production hook or timing override.
+    sql(fn(legacy, 'paige_claim_event', true));
+    const before = eventSnapshot(event), count = queuedFor(event);
+    const holder = spawn(exe('psql'), args(database), { windowsHide: true });
+    let output = '';
+    holder.stdout.setEncoding('utf8');holder.stdout.on('data', chunk => { output += chunk; });
+    const ready = new Promise((yes, no) => {
+      const timer = setTimeout(() => { holder.kill();no(new Error('entered-frame barrier timeout')); }, 30000);
+      holder.stdout.on('data', () => { if (output.includes('ENTERED_FRAME_BARRIER_READY')) { clearTimeout(timer);yes(); } });
+      holder.once('error', error => { clearTimeout(timer);no(error); });
+    });
+    holder.stdin.write("select pg_advisory_lock(4252306);\n\\echo ENTERED_FRAME_BARRIER_READY\n");
+    await ready;
+    let oldChild;
+    const oldResult = new Promise(yes => {
+      oldChild = execFile(exe('psql'), args(database), { encoding: 'utf8', windowsHide: true, timeout: 30000 }, (error, stdout, stderr) => yes({ error: error ? String(error.message) : null, stdout, stderr }));
+      oldChild.stdin.end(service + `set fixture.claim_barrier='true';select public.paige_claim_event('${event.id}') /* ENTERED_OLD_CLAIM */;`);
+    });
+    let migrationError;
+    try {
+      const until = Date.now() + 15000;
+      while (sql("select exists(select 1 from pg_locks where locktype='advisory' and objid=4252306 and not granted);") !== 't') {
+        assert.ok(Date.now() < until, 'old frame entered Auth barrier before its UPDATE');
+        await new Promise(yes => setTimeout(yes, 25));
+      }
+      try { sql("set lock_timeout='3s';" + migration); } catch (error) { migrationError = error; }
+    } finally {
+      holder.stdin.end('select pg_advisory_unlock(4252306);\n');
+    }
+    const result = await oldResult;
+    assert.equal(migrationError, undefined, 'migration must commit while the already-entered frame is paused');
+    if (result.error) assert.match(result.stderr, /paige_native_events_transport_cutover_claim/);
+    else assert.equal(JSON.parse(result.stdout.trim()).claimed, false);
+    assert.equal(eventSnapshot(event), before);assert.equal(queuedFor(event), count);
+  });
 } catch (error) {
   cases.push({ name: 'proof setup or infrastructure', status: 'FAIL', error: String(error.message) });
   console.error('FAIL proof setup or infrastructure: ' + error.message);
@@ -399,7 +455,7 @@ try {
   } finally {
     if (started) call('pg_ctl', ['-D', data, '-m', 'fast', '-w', 'stop'], { stdio: 'ignore' });
   }
-  const report = { mode: legacyMode ? 'baseline' : cutoverBaseline ? 'cutover-baseline-8eb7e56d' : 'candidate', cases, passed: cases.filter(c => c.status === 'PASS').length, failed: cases.filter(c => c.status === 'FAIL').length, skipped: 0, cleanup: { ownedDatabaseCreated: created, ownedDatabaseDropped: created, ownedLocalClusterStarted: started, ownedLocalClusterStopped: started, sharedCIServiceStopped: false }, boundary: 'Actual native SQL producer/enqueue/claim/recovery/roles; synthetic transport/auth/weekly-publisher projection ports. No real HTTP, model/provider, task execution, ordinary customer, full-schema or Live proof.', migrationSha256: legacyMode ? null : createHash('sha256').update(migration).digest('hex') };
+  const report = { mode: (enteredFocus ? 'entered-claim-focus:' : '') + (legacyMode ? 'baseline' : cutoverBaseline ? 'cutover-baseline-8eb7e56d' : 'candidate'), cases, passed: cases.filter(c => c.status === 'PASS').length, failed: cases.filter(c => c.status === 'FAIL').length, skipped: 0, cleanup: { ownedDatabaseCreated: created, ownedDatabaseDropped: created, ownedLocalClusterStarted: started, ownedLocalClusterStopped: started, sharedCIServiceStopped: false }, boundary: 'Actual native SQL producer/enqueue/claim/recovery/roles; synthetic transport/auth/weekly-publisher projection ports. No real HTTP, model/provider, task execution, ordinary customer, full-schema or Live proof.', migrationSha256: legacyMode ? null : createHash('sha256').update(migration).digest('hex') };
   writeFileSync(resolve(scratch, 'report.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ report: resolve(scratch, 'report.json'), passed: report.passed, failed: report.failed, skipped: report.skipped }));
 }

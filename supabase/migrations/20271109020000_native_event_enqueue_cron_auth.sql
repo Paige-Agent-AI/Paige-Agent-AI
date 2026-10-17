@@ -36,6 +36,22 @@ revoke all on function public.paige_native_event_transport_cutover_at()
 grant execute on function public.paige_native_event_transport_cutover_at()
   to service_role;
 
+-- Enforce the same boundary at the row transition, including a pre-deployment
+-- function frame that entered before CREATE OR REPLACE invalidated its cache.
+-- NOT VALID leaves historical rows untouched while every new write is checked.
+-- The table lock and both DDL statements are inside this atomic transaction.
+alter table public.paige_native_events
+  drop constraint if exists paige_native_events_transport_cutover_claim;
+alter table public.paige_native_events
+  add constraint paige_native_events_transport_cutover_claim check (
+    processing_state <> 'claimed' or coalesce(
+      pg_catalog.isfinite(occurred_at) and pg_catalog.isfinite(created_at)
+      and pg_catalog.isfinite(public.paige_native_event_transport_cutover_at())
+      and occurred_at >= public.paige_native_event_transport_cutover_at()
+      and created_at >= public.paige_native_event_transport_cutover_at(), false
+    )
+  ) not valid;
+
 create or replace function public.paige_fire_event_processor(
   p_event_id uuid,
   p_tenant_id uuid

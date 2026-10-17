@@ -18,14 +18,30 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'GMAIL_ACTOR_UNAVAILABLE' USING ERRCODE='42501'; END IF;
   PERFORM 1 FROM public.tenants WHERE id=_tenant AND status IN ('trial','active','past_due') FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'GMAIL_WORKSPACE_UNAVAILABLE' USING ERRCODE='42501'; END IF;
-  SELECT active_tenant_id INTO active_tenant FROM public.profiles WHERE user_id=_actor FOR SHARE;
-  IF NOT FOUND OR active_tenant IS DISTINCT FROM _tenant THEN
+  -- Preserve the incumbent row-lock order. Lock every existing membership of
+  -- this actor: a fallback's earliest row can change outside the target tenant.
+  PERFORM 1 FROM public.profiles WHERE user_id=_actor FOR SHARE;
+  PERFORM 1 FROM public.tenant_members WHERE user_id=_actor ORDER BY tenant_id FOR SHARE;
+  PERFORM 1 FROM public.user_roles WHERE user_id=_actor ORDER BY role FOR SHARE;
+  -- Exact current_user_tenant_id selection (20260714144656), evaluated for the
+  -- already-authenticated actor. Never change auth.uid/JWT claims or invent a
+  -- public actor resolver. A null/missing/invalid profile falls back to the
+  -- earliest active membership; the target still requires canonical admin
+  -- authority below, including only its existing company-workspace exception.
+  SELECT COALESCE(
+    (SELECT p.active_tenant_id FROM public.profiles p
+      WHERE p.user_id=_actor AND p.active_tenant_id IS NOT NULL AND (
+        EXISTS (SELECT 1 FROM public.tenant_members m
+          WHERE m.user_id=_actor AND m.tenant_id=p.active_tenant_id AND m.status='active')
+        OR public.agency_can_manage_child(p.active_tenant_id,_actor)
+        OR public.agency_team_role(p.active_tenant_id,_actor) IS NOT NULL
+        OR public.is_platform_admin(_actor))),
+    (SELECT tenant_id FROM public.tenant_members
+      WHERE user_id=_actor AND status='active' ORDER BY joined_at ASC LIMIT 1)
+  ) INTO active_tenant;
+  IF active_tenant IS DISTINCT FROM _tenant THEN
     RAISE EXCEPTION 'GMAIL_WORKSPACE_CHANGED' USING ERRCODE='42501';
   END IF;
-  -- Lock both incumbent permission sources before evaluating the canonical
-  -- predicate. No role is granted or inferred from a title/client argument.
-  PERFORM 1 FROM public.tenant_members WHERE user_id=_actor AND tenant_id=_tenant FOR SHARE;
-  PERFORM 1 FROM public.user_roles WHERE user_id=_actor FOR SHARE;
   IF NOT coalesce(public.is_tenant_admin_as(_actor,_tenant),false) THEN
     RAISE EXCEPTION 'GMAIL_CONNECTION_FORBIDDEN' USING ERRCODE='42501';
   END IF;
@@ -80,14 +96,20 @@ BEGIN
   PERFORM 1 FROM public.channel_connectors WHERE credentials_vault_ref=secret_ref
     AND id IS DISTINCT FROM existing.id FOR UPDATE;
   IF FOUND THEN RAISE EXCEPTION 'GMAIL_ADDRESS_CONFLICT' USING ERRCODE='23505'; END IF;
+  -- Connector/advisory waits can outlive the first scope snapshot. Re-read the
+  -- canonical selection immediately before each native write. Existing source
+  -- rows stay locked; new membership/profile rows are snapshot changes, not a
+  -- global authority freeze. Edge pre/post checks withhold later scope changes.
+  PERFORM public._gmail_connection_actor(_actor_user_id,_expected_tenant_id);
   PERFORM public.write_channel_secret(secret_ref,_refresh_token,
     'Gmail refresh token for tenant '||_expected_tenant_id::text||' ('||address||')');
+  PERFORM public._gmail_connection_actor(_actor_user_id,_expected_tenant_id);
   IF reconnected THEN
     UPDATE public.channel_connectors SET
       external_account_id=_google_account_id,from_address=address,from_name=_display_name,
       display_name=coalesce(_display_name,address),credentials_vault_ref=secret_ref,
       status='active',active=true,updated_at=now(),
-      mailbox_scopes=coalesce(_granted_scopes,ARRAY[]::text[]),
+      mailbox_scopes=to_jsonb(coalesce(_granted_scopes,ARRAY[]::text[])),
       mailbox_class=CASE WHEN _purpose='inbox' THEN 'personal' ELSE existing.mailbox_class END,
       mailbox_owner_user_id=CASE WHEN _purpose='inbox' THEN _actor_user_id ELSE existing.mailbox_owner_user_id END
       WHERE id=existing.id AND tenant_id=_expected_tenant_id RETURNING * INTO saved;
@@ -99,13 +121,13 @@ BEGIN
       coalesce(_display_name,address),secret_ref,'active',true,
       CASE WHEN _purpose='inbox' THEN 'personal' ELSE 'shared_support' END,
       CASE WHEN _purpose='inbox' THEN _actor_user_id ELSE NULL END,
-      coalesce(_granted_scopes,ARRAY[]::text[])) RETURNING * INTO saved;
+      to_jsonb(coalesce(_granted_scopes,ARRAY[]::text[]))) RETURNING * INTO saved;
   END IF;
   IF saved.id IS NULL OR saved.tenant_id IS DISTINCT FROM _expected_tenant_id
     OR saved.provider IS DISTINCT FROM 'gmail' OR saved.credentials_vault_ref IS DISTINCT FROM secret_ref
     OR saved.status IS DISTINCT FROM 'active' OR saved.active IS DISTINCT FROM true
     OR saved.from_address IS DISTINCT FROM address OR saved.external_account_id IS DISTINCT FROM _google_account_id
-    OR saved.mailbox_scopes IS DISTINCT FROM coalesce(_granted_scopes,ARRAY[]::text[])
+    OR saved.mailbox_scopes IS DISTINCT FROM to_jsonb(coalesce(_granted_scopes,ARRAY[]::text[]))
     OR (_purpose='inbox' AND (saved.mailbox_class IS DISTINCT FROM 'personal'
       OR saved.mailbox_owner_user_id IS DISTINCT FROM _actor_user_id)) THEN
     RAISE EXCEPTION 'GMAIL_CONNECTION_WRITE_UNCONFIRMED' USING ERRCODE='P0001';
@@ -142,15 +164,18 @@ BEGIN
     RAISE EXCEPTION 'GMAIL_CREDENTIAL_SCOPE_UNAVAILABLE' USING ERRCODE='42501';
   END IF;
   IF existing.active IS NOT TRUE AND existing.credentials_vault_ref IS NULL THEN
+    PERFORM public._gmail_connection_actor(_actor_user_id,_expected_tenant_id);
     RETURN jsonb_build_object('ok',true,'disconnected',false,'connector_id',existing.id,'tenant_id',existing.tenant_id);
   END IF;
   IF existing.credentials_vault_ref IS NOT NULL THEN
     PERFORM 1 FROM public.channel_connectors WHERE credentials_vault_ref=existing.credentials_vault_ref
       AND id<>existing.id FOR UPDATE;
     IF FOUND THEN RAISE EXCEPTION 'GMAIL_CREDENTIAL_SCOPE_UNAVAILABLE' USING ERRCODE='42501'; END IF;
+    PERFORM public._gmail_connection_actor(_actor_user_id,_expected_tenant_id);
     PERFORM public.write_channel_secret(existing.credentials_vault_ref,'revoked',
       'Gmail refresh token disconnected for tenant '||_expected_tenant_id::text);
   END IF;
+  PERFORM public._gmail_connection_actor(_actor_user_id,_expected_tenant_id);
   UPDATE public.channel_connectors SET active=false,status='disabled',credentials_vault_ref=NULL,updated_at=now()
     WHERE id=existing.id AND tenant_id=_expected_tenant_id RETURNING * INTO saved;
   IF saved.id IS NULL OR saved.active IS DISTINCT FROM false

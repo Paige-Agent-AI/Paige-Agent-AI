@@ -21,7 +21,7 @@ SOLO_UI: NO: shared native adapter repair only, with no account-specific branch
 UNVERIFIED: distinct final review, explicit source-pin acceptance, hosted exact-head CI, native Deno compilation, deployment/readback, provider-backed budget/trace evidence, authenticated cancellation/reload/isolation, Live and owner acceptance
 OWNER_INTENT: preserve the full18-capability/50-parity restoration scope while repairing this confirmed native attribution defect; this increment does not certify the whole program
 PROTECTED_SEAMS: PASS: existing native Auth/current-workspace/member checks, canonical Research writer/readback/receipt, shared router/budget policy and all provider/flag/cohort configuration remain unchanged
-INTERNAL_BUILD_IDENTITY: 20a872db560ee140f1072ef119b37d2aff0f9861 source/test freeze; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/evidence/ui-delivery/ant21-research-tenant-budget.md
+INTERNAL_BUILD_IDENTITY: 20a872db560ee140f1072ef119b37d2aff0f9861 source/test freeze; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(separate reviewed native deployment/readback after source-pin acceptance and exact-head CI); evidence=docs/evidence/ui-delivery/ant21-research-tenant-budget.md
 RELEASE_CHANNEL: development: local source candidate only
 RELEASE_CLASSIFICATION: internal-only: native Research budget attribution repair
 CUSTOMER_RELEASE_IDENTITY: none: no announcement or restored customer journey claim

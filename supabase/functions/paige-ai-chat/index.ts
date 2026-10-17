@@ -237,7 +237,8 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
-import { readClientPortalPersonaSource, buildClientPortalPersonaMessages } from "../_shared/client-portal-persona.ts";
+import { buildClientPortalPersonaMessages } from "../_shared/client-portal-persona.ts";
+import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1122,14 +1123,18 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     let interactiveReceiptScope: { thread: string; tenant: string | null; intent: string } | null = null;
+    let customerSourceSnapshot: CustomerSourceSnapshot | null = null;
     const appendAssistant = async (args: Record<string, any>) => {
       if (!interactiveReceiptScope) return await supabaseClient.rpc("paige_chat_turn_append", args);
       const scope = interactiveReceiptScope;
       if (args.p_thread_id !== scope.thread || args.p_role !== "assistant") throw new Error("INTERACTIVE_RECEIPT_SCOPE_MISMATCH");
+      const customerTerminal = customerTerminalSource(customerSourceSnapshot, args.p_content, args.p_bundle_ref ?? {});
+      const terminalBundle = { ...(args.p_bundle_ref ?? {}) };
+      if (customerSourceSnapshot) delete terminalBundle.customer_knowledge;
       const result = await supabase.rpc("paige_chat_interactive_settle", {
         p_thread: scope.thread, p_actor: user.id, p_tenant: scope.tenant, p_intent: scope.intent,
-        p_content: args.p_content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
-        p_bundle_ref: { ...(args.p_bundle_ref ?? {}), interactive: {
+        p_content: customerTerminal.content, p_surfaces_used: args.p_surfaces_used, p_model: args.p_model,
+        p_bundle_ref: { ...terminalBundle, ...customerTerminal.metadata, interactive: {
           ...(args.p_bundle_ref?.interactive ?? {}), request_intent_id: scope.intent,
         } }, p_tool_calls: args.p_tool_calls,
       });
@@ -1243,11 +1248,15 @@ serve(async (req) => {
     // The surface narrows the audience; only the native customer frame proves it.
     // It cannot supply a tenant/client identity or inherit a global owner role.
     const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
     const customerPersonaSource = customerPortal
-      ? await readClientPortalPersonaSource(supabaseClient, user.id) : null;
-    const customerPersona = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+      ? await (customerControl ? readCustomerAssistantControlContext : readCustomerAssistantContext)(
+        supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId) : null;
+    const customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+    const customerPersona = customerAssistant?.persona ?? null;
+    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
     if (customerPortal) {
-      if (!customerPersona?.enabled || !validatedData.threadId || !validatedData.interactive ||
+      if (!customerPersona || (!customerPersona.enabled && !customerControl) || !validatedData.threadId || !validatedData.interactive ||
         validatedData.clientId || validatedData.document || validatedData.attachments?.length ||
         validatedData.sessionDocumentContext?.length || validatedData.generateSessionSummary ||
         validatedData.sessionMessages?.length || validatedData.liveRuntimeChallenge ||
@@ -1394,7 +1403,7 @@ serve(async (req) => {
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const beginTurn = (effectful: boolean) => supabaseClient.rpc("paige_chat_interactive_begin_v2", {
+      const beginTurn = (effectful: boolean) => supabaseClient.rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -1467,7 +1476,10 @@ serve(async (req) => {
       const authoritative = rows.slice(first < 0 ? rows.length : first).map((m: any) => ({ role: m.role,
         content: m.content + (interactiveReceiptContext(m.bundle_ref) ? "\n\n" + interactiveReceiptContext(m.bundle_ref) : ""),
       }));
-      validatedData.messages = messageSchema.shape.messages.parse([...authoritative, { role: "user", content: userText }]);
+      const customerHistory = customerAssistant?.history.map(({role,content}) => ({role,content})) ?? [];
+      validatedData.messages = messageSchema.shape.messages.parse([
+        ...(customerPortal ? customerHistory : authoritative), { role: "user", content: userText },
+      ]);
     }
     let liveRuntimeScope: LiveRuntimeScope | null = null;
     let liveProof: ReturnType<typeof createLiveRuntimeProof> | null = null;
@@ -3569,10 +3581,10 @@ JSON:`;
     const revalidateTenantKnowledgeScope = async (required = false, summaryMaintenance = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
       if (customerPortal) {
-        const source = await readClientPortalPersonaSource(supabaseClient, user.id);
+        const source = await readCustomerAssistantContext(supabaseClient, user.id, payloadThreadId, validatedData.requestIntentId);
         const scope = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
-        if (source.status === "available" && source.data?.enabled === true && !scope.error && scope.data === true &&
-          JSON.stringify(source.data) === JSON.stringify(customerPersona)) return true;
+        if (source.status === "available" && source.data?.persona.enabled === true && !scope.error && scope.data === true &&
+          JSON.stringify(source.data) === JSON.stringify(customerAssistant)) return true;
         tenantKnowledgeScopeRevoked = true;
         return false;
       }
@@ -9542,12 +9554,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // escalation) can widen the list, so a degraded turn stays non-effectful by construction, not
     // by prompt. (E2-2, 2026-10-12: the #1899 zero-tool contract narrows to exactly
     // CONVERSATIONAL_ADMITTED_READ_TOOLS under the owner's recorded ANT-23 delegation.)
-    if (customerPortal && customerPersona) {
+    if (customerPortal && customerPersona && customerAssistant) {
       // Same runtime/provider/lifetime and server-issued receipt; a different audience.
       // Only native private history and the closed customer presentation enter the model.
-      // Published program Knowledge will extend this bundle through its own version-bound
-      // grants; no staff Knowledge fallback or owner capability manifest is permitted.
+      // Current native grants and source-attested history participate in the same
+      // full-source provider/output fence; no staff Knowledge or browser-history fallback.
       aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
+        ...customerProgramMessages(customerAssistant),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
     }

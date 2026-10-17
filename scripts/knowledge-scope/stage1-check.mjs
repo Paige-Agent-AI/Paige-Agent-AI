@@ -4224,6 +4224,12 @@ group("32 Explicit customer audience uses native private history and customer pr
     brand:{tenant_id:CHILD,tenant_name:"Test Customer Business",business_brief:"OWNER_PRIVATE_SENTINEL"},
     config:{assistant:{display_name:"Customer Guide",service_scope:"Approved coaching support"},
       private_memory:"OWNER_MEMORY_SENTINEL"}};
+  const sourceRef={share_id:"99999999-9999-4999-8999-999999999999",share_revision:1,source_fingerprint:"a".repeat(64)};
+  const snapshot={version:1,retrieval_refs:[sourceRef],source_refs:[sourceRef]};
+  const customerContext=(currentFrame=frame)=>({frame:currentFrame,thread_id:thread,intent_id:intent,snapshot,
+    sources:[{...sourceRef,document_id:contact,document_revision:1,generation_id:null,title:"Approved customer guide",
+      content:"NATIVE_CUSTOMER_PROGRAM",content_truncated:false}],
+    history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false});
   let terminal=false;
   const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
     bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,
@@ -4233,9 +4239,11 @@ group("32 Explicit customer audience uses native private history and customer pr
     rpcExtras:{get_actor_access:{data:{tier:"tenant"},error:null},
       current_user_tenant_id:{data:null,error:null},
       client_portal_frame:{data:frame,error:null},
+      client_portal_assistant_context:{data:customerContext(),error:null},
       paige_chat_customer_thread_authorized:{data:true,error:null},
       paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
       paige_chat_interactive_begin_v2:{data:{status:"accepted",turn_id:contact},error:null},
+      client_portal_assistant_begin:args=>({data:{status:args.p_stop?"stopped":"accepted",turn_id:contact},error:null}),
       paige_chat_interactive_executor_v2:()=>({data:{latest:intent,executor:null,terminal},error:null}),
       paige_chat_interactive_settle:()=>{terminal=true;return {data:contact,error:null};}},
     tableExtras:{paige_chat_threads:()=>[{id:thread,tenant_id:CHILD,audience:"customer_private",caller_user_id:USER}],
@@ -4247,7 +4255,7 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32.1 native customer audience reaches the existing provider runtime",good.status===200 && good.providerCalls.length===1,
     {status:good.status,providers:good.providerCalls.length,logs:good.logged.slice(-5)});
   const prompt=JSON.stringify(good.providerCalls);
-  for(const marker of ["Test Customer Business","Customer Guide","NATIVE_PRIVATE_CUSTOMER_HISTORY"])
+  for(const marker of ["Test Customer Business","Customer Guide","NATIVE_PRIVATE_CUSTOMER_HISTORY","NATIVE_CUSTOMER_PROGRAM"])
     assert("32 customer provider receives "+marker,prompt.includes(marker));
   for(const marker of ["OWNER_PRIVATE_SENTINEL","OWNER_MEMORY_SENTINEL","OWNER_KNOWLEDGE_SENTINEL",
     "OWNER_BUSINESS_SENTINEL","FORGED_OWNER_CONTEXT","FORGED_SYSTEM_HISTORY","FORGED_BROWSER_HISTORY"])
@@ -4257,6 +4265,10 @@ group("32 Explicit customer audience uses native private history and customer pr
       "paige_operating_memory","emit_client_event","emit_client_rail_event"].includes(x.name)));
   assert("32 customer text settles once through the canonical server receipt",
     good.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
+  assert("32 customer uses the native source-binding adapter and exact terminal snapshot",
+    good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin")
+    &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
+    &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
   const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
   assert("32 customer provider telemetry contains no private transcript excerpts",
     privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
@@ -4293,18 +4305,25 @@ group("32 Explicit customer audience uses native private history and customer pr
     !untrustedTool.rec.inserts.some(x=>["tasks","client_notes","paige_acts","paige_processes","paige_events","paige_customer_actions","messages"].includes(x.table))
     &&!untrustedTool.rec.rpc.some(x=>["file_act","create_paige_act","emit_client_event","emit_client_rail_event"].includes(x.name)));
   for(const [label,extra] of [
-    ["disabled",{client_portal_frame:{data:{...frame,config:{assistant:{enabled:false}}},error:null}}],
-    ["revoked",{client_portal_frame:{data:null,error:null}}],
+    ["disabled",{client_portal_assistant_context:{data:customerContext({...frame,config:{assistant:{enabled:false}}}),error:null}}],
+    ["revoked",{client_portal_assistant_context:{data:null,error:{code:"42501"}}}],
     ["wrong private thread",{paige_chat_customer_thread_authorized:{data:false,error:null}}],
-    ["policy withdrawn after egress",{client_portal_frame:()=>({data:providerCalls.length
-      ? {...frame,config:{assistant:{enabled:false}}}:frame,error:null})}],
+    ["policy withdrawn after egress",{client_portal_assistant_context:()=>({data:customerContext(providerCalls.length
+      ? {...frame,config:{assistant:{enabled:false}}}:frame),error:null})}],
+    ["program withdrawn after egress",{client_portal_assistant_context:()=>providerCalls.length
+      ? {data:null,error:{code:"42501"}}:{data:customerContext(),error:null}}],
   ]) {
     terminal=false;
     const r=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,...extra}});
     assert("32 "+label+" withholds the answer",!r.responseText.includes("Scoped response."));
     assert("32 "+label+" does not dispatch an unauthorized next call",
-      r.providerCalls.length===(label==="policy withdrawn after egress"?1:0));
+      r.providerCalls.length===(label.endsWith("after egress")?1:0));
   }
+  terminal=false;
+  const stopped=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,interactive:{kind:"stop",supersedesIntentId:intent}},
+    rpcExtras:{...scenario.rpcExtras,client_portal_assistant_context:{data:null,error:{code:"42501"}}}});
+  assert("32 Stop remains available after accepted program withdrawal without model dispatch",
+    stopped.providerCalls.length===0&&stopped.rec.rpc.some(x=>x.name==="client_portal_assistant_begin"&&x.args.p_stop===true));
 }
 
 group("31 Ordinary customer relationship at the protected Chat boundary");

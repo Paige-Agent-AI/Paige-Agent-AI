@@ -6,9 +6,9 @@
   "keyboard": "synthetic VisualViewport event",
   "network": "blocked",
   "hashes": {
-    "src/pages/AppShell.tsx": "10ec05b8af98e23c0b3f83666e948fd5b80cc36e825ec9f367b402d38269c9a6",
+    "src/pages/AppShell.tsx": "7a835b99092b6e32b6ba3c8168ecdd2f04d66d7ad5db7fd0b93fd8b5e86c4701",
     "src/components/app/AppNav.tsx": "80a82b182d01bc7d39e8c1270fbd386f50ed7f0ab82735fd186a5ed4594ef500",
-    "src/components/app/PaigeChat.tsx": "586347389e0a84d98ed2d55b912004ec43255147f6ea6f0d6753ceef615f54fa",
+    "src/components/app/PaigeChat.tsx": "2b163ec70fe305a320a8ae43c0ab54a4b5d30484445e699e22f4f1031f287f70",
     "src/hooks/useClientViewportHeight.ts": "8042e70b918520caecf149785385030c7d1f595d0ca026e5fd40cbc4af50d488",
     "scripts/proof/e09-client-account-ui/mobile-source.tsx": "8db396dcd5ddde5d0c7edf0cbfc831fefd320e3f67acbfd4c04e48803339fb5a",
     "scripts/proof/e09-client-account-ui/mobile-adapter.tsx": "20d2f21d6f20abf81e9d5f4f8ade74ddfb8fdd05c0e0d20673c7d1cb9cf95e18",

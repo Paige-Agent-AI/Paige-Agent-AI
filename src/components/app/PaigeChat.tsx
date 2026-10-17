@@ -769,7 +769,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 export function PaigeChat(props: PaigeChatProps) {
   const customer=useClientPortalFrame(props.user.id,!props.clientId);
   const frame=customer.frame;
-  const available=customer.phase==="ready"&&!customer.checking;
+  const assistantEnabled=frame?.config.assistant?.enabled!==false;
+  const available=customer.phase==="ready"&&!customer.checking&&assistantEnabled;
   if(customer.phase==="not-client")return <PaigeChatInner {...props}/>;
   return <div className="relative h-full min-h-0 min-w-0">
     {frame&&<div className="h-full" aria-hidden={!available}
@@ -778,9 +779,10 @@ export function PaigeChat(props: PaigeChatProps) {
         customerFrame={frame} customerAvailable={available}/>
     </div>}
     {!available&&<div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-sm">
-      {customer.checking?"Checking your conversation…":customer.phase==="unavailable"
+      {customer.checking?"Checking your conversation…":!assistantEnabled
+        ?"This business has turned off its AI assistant. You can still use the rest of your portal.":customer.phase==="unavailable"
         ?"Your customer access is no longer available.":"Your customer session couldn’t be checked."}
-      {!customer.checking&&<Button variant="outline" onClick={()=>void customer.reload()}>Try again</Button>}
+      {!customer.checking&&assistantEnabled&&<Button variant="outline" onClick={()=>void customer.reload()}>Try again</Button>}
     </div>}
   </div>;
 }

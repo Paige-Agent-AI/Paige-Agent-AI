@@ -182,4 +182,17 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(host.textContent).toContain("customer access is no longer available");
     expect(host.querySelector("textarea")).toBeNull();
   });
+
+  it("shows explicit assistant disablement without offering a send or retry loop",async()=>{
+    portalFixture.phase="ready";
+    portalFixture.frame={actorId:"customer-test",profile:{id:"customer-contact",tenant_id:"customer-business"},
+      brand:{tenant_name:"Test practice"},config:{assistant:{enabled:false}}};
+    const props={user:{id:"customer-test",user_metadata:{}} as never,session:null};
+    await act(async()=>root.render(<PaigeChat {...props}/>));
+    expect(host.textContent).toContain("This business has turned off its AI assistant");
+    expect(host.querySelector("[inert]")).not.toBeNull();
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+    expect(portalFixture.read).not.toHaveBeenCalled();
+    expect([...host.querySelectorAll("button")].some(b=>b.textContent==="Try again")).toBe(false);
+  });
 });

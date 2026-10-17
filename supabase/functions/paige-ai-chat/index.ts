@@ -2813,9 +2813,8 @@ JSON:`;
 
     let personaCtx: { tenant_id: string | null; tenant_name: string | null; playbook_config: any; playbook_slug: string | null; funding_enabled: boolean; brand: Record<string, any> | null } =
       { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
-    try {
-      const { data: pc, error: pcErr } = customerPortal ? {data:null,error:null}
-        : await supabaseClient.rpc("get_paige_persona_context");
+    if (!customerPortal) try {
+      const { data: pc, error: pcErr } = await supabaseClient.rpc("get_paige_persona_context");
       proposalScopeResolved = !pcErr && proposalScopeFrom(pc) !== null;
       if (pcErr) {
         console.warn("[paige-ai-chat] get_paige_persona_context error:", pcErr.message);

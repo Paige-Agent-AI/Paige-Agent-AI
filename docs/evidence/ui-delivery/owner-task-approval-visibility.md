@@ -77,3 +77,18 @@ RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate source requires Independent Review
 RELEASE_RECOVERY: position=forward correction preserving canonical approvals, execution guards, records and restrictive isolation; reference=docs/evidence/ui-delivery/owner-task-approval-visibility.md
 
 Source, Independent Review, exact-head CI, merge, migration/deployment, authenticated QA, Live and owner acceptance remain separate and unclaimed here.
+
+
+## Observed release, governed decline and one internal task — 2026-10-17
+
+The candidate/unpublished fields above remain dated source history. Reviewed2317 c9211a9dfe395552badd4947d71dd5e864f9c361 passed distinct NON-AUTHOR review, all13 required checks and both deployment statuses, then merged4aea7a6323fbfa4619f31478ee5f0775e2b69eeb. Native20271109025000 is applied: both new function bodies, owners, empty search paths and authenticated-only execution ACLs match; all12 incumbent function bodies remain unchanged. The security-invoker queue preserves its27-column prefix and appends server updated_at. Its current projection/owner/ACL were read back, but pre-release view ACL was not captured, so historical view-ACL equality remains UNVERIFIED. Production web dpl_HB2CVQPbhU43TjtYZ9BxuLpfXsyR was READY/exact merge; own Edge deployment is NOT_APPLICABLE.
+
+One ordinary decline rejected the exact stale held approval, cancelled its existing execution, produced one capability_refused receipt and no task, and remained settled after reload. Private authoritative decline readback SHA2563f1b9a460e16cf91e7e93a658c451d6af4da75e02d5c2e6c7f7b9872d9797121 confirms rejected/cancelled/task_count0 and paused process. A separate genuinely future contact event then reached one frozen confirm-lane owner.task approval; an ordinary owner approved its exact arguments and executed one canonical pending task. One domain Rail and one distinct orchestration Rail agree with the same task/actor/tenant. Native Work confirms that task after fresh load. Final process state is PAUSED with no armed timestamp; no historical event replay, broad automation activation or external/provider effect is claimed.
+
+Existing consolidated verifier SHA25626c16597adc0bbef3d395d0d6d6f06dd6e3f3f0c10990ae720ad1d698f6f9f22 records this bounded J11 outcome. Original private post-approval and paired Rail packets are SHA256f72c8ec82cbdd684e374838b3b558173c207f8b19be845ac6388c3966ba85ae4 and2e0d42a82bf91500a6a97a83573afada3c50b3723bc4a201176e16d653b2752a. Their existing assertion body was replayed read-only with its evidence write disabled; no new approval or task ran during this closeout.
+
+AUTHENTICATED_RUNTIME: PASS: BOUNDED exact ordinary held-proposal decline/no-task/refusal receipt/reload and a separate future-event exact approval/one canonical internal task/two Rails/native Work; protected process paused afterward
+RELEASE_TRUTH_BOUNDARY: PARTIAL:2317 release and the named decline/internal-task outcomes are verified; this does not prove every automation, actor/role/tenant, interruption or recurrence class
+INTERNAL_BUILD_IDENTITY: reviewed=c9211a9dfe395552badd4947d71dd5e864f9c361; main=4aea7a6323fbfa4619f31478ee5f0775e2b69eeb; migration=20271109025000; deployment=dpl_HB2CVQPbhU43TjtYZ9BxuLpfXsyR READY/exact; environment=production; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/owner-task-approval-visibility.md
+RELEASE_CHANNEL: production: shared internal restoration for every eligible existing/future SOLO with normal server-controlled authority/configuration
+UNVERIFIED: Pre-release view-ACL equality, all automation/recurrence/replay/interruption/role/tenant/new-account classes, provider effects, separate Live, full18/50 and owner product acceptance remain unproven by these bounded outcomes

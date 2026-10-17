@@ -58,6 +58,7 @@ import { CalendarsView } from "./connections-calendars";
 import { SoloBusinessContextSetup } from "./SoloBusinessContextSetup";
 import { SoloBillingView } from "./settings-billing";
 import { SoloSettingsAnalytics } from "./settings-analytics";
+import { interviewReturnPath } from "./solo-interview-navigation";
 import "./settings.css";
 
 function OrthogonalConnectionState({ accountLabel, healthLabel, tone }: { accountLabel: string; healthLabel: string; tone: ConnectionStateTone }) {
@@ -1716,6 +1717,13 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
   const params = useParams();
   const account = params.account ?? "";
   const entry = useMemo(() => resolveSoloSettingsEntry(location.search, account), [location.search, account]);
+  const tenant = useTenantContext();
+  // A return address is navigation only. Do not carry it into an unresolved,
+  // different-account or Operator view; Chat independently verifies the thread.
+  const interviewReturn = !entry && ["integrations", "connections", "vault"].includes(tab) &&
+    !tenant.loading && !tenant.isPlatformStaff && tenant.activeTenantId &&
+    String(tenant.activeTenant?.account_number ?? "") === account && account
+    ? interviewReturnPath(account, location.search) : null;
   // BOTH ways in are one-shot, and neither can be expressed by deleting a
   // parameter alone.
   //
@@ -1851,6 +1859,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
         remains their sole heading. */}
     {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && tab !== "analytics" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
     {entry && <div className="ss-return"><span>Opened from {entry.origin === "calendar" ? "Calendar" : "Conversations"}</span>{entry.returnTo ? <Link to={entry.returnTo}>Return to {entry.origin === "calendar" ? "Calendar" : "Conversations"}</Link> : <span>Return address rejected</span>}</div>}
+    {interviewReturn && <nav className="ss-return ss-return--interview" aria-label="Interview navigation"><Link to={interviewReturn}>Return to interview</Link></nav>}
     {current.key === "setup" && <SettingsMoveNotice key={account}/>}
     <div className="ss-content" data-settings-tab={tab} data-tab-count={tabs.length}>{view}</div>
   </div>;

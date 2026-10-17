@@ -17,7 +17,14 @@ describe("canonical CRM action door", () => {
       cwd: process.cwd(), env, encoding: "utf8", windowsHide: true, timeout: 60_000,
       stdio: ["ignore", "pipe", "pipe"],
     });
-    expect(output).toContain("PASS 29 actual CRM approval-summary checks");
+    // execFileSync returns only for exit 0: an assertion, loader failure or timeout
+    // still fails this test. Accept additional regressions, never fewer proven checks.
+    const completed = output.match(/^PASS (\d+) actual CRM approval-summary checks:/m);
+    expect(completed).not.toBeNull();
+    expect(Number(completed?.[1])).toBeGreaterThanOrEqual(59);
+    expect(output).toContain("canonical task/deal titles");
+    expect(output).toContain("task locators");
+    expect(output).toContain("unchanged stored arguments/fingerprints");
   }, 65_000);
 
   it("accepts no tenant, actor, role, or account identity from the request", () => {

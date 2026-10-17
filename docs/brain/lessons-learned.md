@@ -6,6 +6,13 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### SOLO guidance must be reachable, and native pixels need compositor evidence (2026-10-16, E01)
+
+**Symptom → cause → rule.** Passing a shared Chat `chips` prop did not expose the intended questions in the ordinary SOLO interface: that branch uses its existing slash menu. Inspect the actual rendered consumer rather than assuming a shared prop creates a usable control. E01 extends its existing expanded profile with explicit questions and reuses `handOffPaigePrompt` to append an unsent draft and focus the incumbent composer; never auto-send or create a parallel conversation control.
+
+Raw captures can agree with reported CSS/DPR yet omit native compositor proof, and some captures lose a pixel. Decode untouched images, verify native layout metrics as well as CSS/DPR, bind source and assets, and preserve invalid originals. Reuse the established native capture process; missing metrics remain HOLD rather than a product PASS. Synthetic UI, source/deployment readback and authenticated ordinary-owner persistence are separate evidence classes. The current E01 extension still requires ten metric-bearing replacements; this lesson does not close that gate.
+
+
 ### "Approved" was a category string match, and no test asserted a send happened (2026-10-13, Experience 03 S3)
 
 **Symptom.** On production, six `client.followup` approvals read `approved` and their actions read `done`, between 2026-09-15 and 2026-10-07. Nothing was sent for any of them. Each row's own metadata said so (`executed:false`, "acknowledged — no automated executor for this category yet"), and nothing read that field.

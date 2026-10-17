@@ -39,6 +39,8 @@ typography:
     fontSize: "13px"
   label:
     fontSize: "11px"
+  data:
+    fontFamily: "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace"
   weekly-heading:
     fontSize: "20px"
     fontWeight: 650
@@ -121,14 +123,16 @@ Obsidian uses warm ink over violet-black layers; Mineral uses dark ink over warm
 
 **Display Font:** Schibsted Grotesk with the existing platform fallbacks.
 **Body Font:** Schibsted Grotesk with the existing text fallbacks.
+**Data Font:** JetBrains Mono with the existing monospace fallbacks from `--pg-font-data` in `src/index.css`.
 
-**Character:** One face connects headers, controls and prose. The shared label/body/lead/title tokens coexist with local component sizes; the record does not pretend every existing surface follows one exclusive ladder.
+**Character:** Schibsted Grotesk connects headers, controls and prose; the existing monospace role distinguishes data such as Chat timestamps. The shared label/body/lead/title tokens coexist with local component sizes; the record does not pretend every existing surface follows one exclusive ladder.
 
 ### Hierarchy
 - **Title:** shared title token for surface headings; weekly headings use the scoped weekly-heading role.
 - **Lead:** shared lead and weekly-section roles establish section hierarchy.
 - **Body:** root reading style; compact-body supports dense native controls and Operations detail.
 - **Label:** shared small labels; weekly-label is the larger scoped status/freshness role.
+- **Data:** existing monospace treatment for timestamps and other data; this font-family role does not establish a new size step or replace prose typography.
 - **Schedule:** weekly-schedule emphasizes a readable schedule within the inspection panel.
 
 ### Named Rules

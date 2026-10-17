@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { setScenario } from "./knowledge-scope/fake-supabase.mjs";
+import { setScenario, createClient } from "./knowledge-scope/fake-supabase.mjs";
 import { capturedHandler } from "./knowledge-scope/stub-serve.mjs";
 
 // Run the unchanged served CRM handler through the existing Deno/Supabase module-boundary
@@ -17,6 +17,20 @@ const { CRM_ACTION_CAPABILITY, crmApprovalSubject } = await import("../supabase/
 
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const actor = id(1), tenant = id(2);
+let claimReadError=false;
+let claimAcknowledgementLost=false;
+const queryPrototype=Object.getPrototypeOf(createClient('https://test.supabase.co','test-service').from('paige_pending_confirmations'));
+const originalSingle=queryPrototype.maybeSingle;
+queryPrototype.maybeSingle=async function(){
+ const isClaim=this._table==='paige_pending_confirmations'&&this._filters.some(([op,columns])=>op==='select'&&columns==='args');
+ if(isClaim&&(claimReadError||claimAcknowledgementLost)){
+  // The latter executes the real handler's claim port before discarding its acknowledgement.
+  // This models a committed claim with a lost response, not a real PostgreSQL transaction.
+  if(claimAcknowledgementLost)await originalSingle.call(this);else this._record(true);
+  return {data:null,error:{message:'fixture claim acknowledgement unavailable'}};
+ }
+ return originalSingle.call(this);
+};
 const task = title => ({ action: "task.create", patch: { title, assignee_user_id: actor } });
 const deal = title => ({ action: "deal.create", title, pipeline_id: id(4), stage_id: id(5), unlinked_reason: "anonymous_prospect" });
 const proposals = rec => rec.inserts.filter(row => row.table === "paige_pending_confirmations" && !row.update);
@@ -33,7 +47,10 @@ function matches(row, filters) {
 }
 
 function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "confirm", stored, cached = false,
-  accountType = "standalone", parentTenantId = null } = {}) {
+  accountType = "standalone", parentTenantId = null, claimError = false, cachedError = null, competingClaim = false,
+  lostClaimAcknowledgement = false } = {}) {
+  claimReadError = claimError;
+  claimAcknowledgementLost = lostClaimAcknowledgement;
   let rec;
   rec = setScenario({
     authUser: { id: userId },
@@ -43,6 +60,9 @@ function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "
       tenants: [{ account_type: accountType, account_number: "101", parent_tenant_id: parentTenantId }],
       paige_pending_confirmations: filters => {
         if (filters.some(([op, columns]) => op === "select" && columns === "args")) {
+          // A competing request can redeem after this handler's original-result
+          // read returned null, while its domain write has not committed yet.
+          if (competingClaim && stored) stored.consumed_at = new Date().toISOString();
           if (!stored || !matches(stored, filters)) return [];
           const args = stored.args;
           stored.consumed_at = new Date().toISOString();
@@ -54,7 +74,7 @@ function scenario({ workspace = tenant, userId = actor, role = "owner", lane = "
     },
     rpcs: {
       current_user_tenant_id: { data: workspace, error: null },
-      read_crm_command_result: { data: cached ? { ok: true, outcome: "succeeded", readback: { id: id(6) } } : null, error: null },
+      read_crm_command_result: { data: cached ? { ok: true, outcome: "succeeded", readback: { id: id(6) } } : null, error: cachedError },
       resolve_tool_autonomy: { data: lane, error: null },
       execute_crm_command: { data: { ok: true, outcome: "succeeded", readback: { id: id(6) } }, error: null },
     },
@@ -175,16 +195,52 @@ for (const options of [
     expectedTenant: options.workspace ?? tenant, fingerprint: stored.fingerprint,
     options: { ...options, stored: options.userId || options.workspace ? freshStored() : stored },
   });
-  assert.equal(denied.status, 202);
-  assert.equal(denied.body.revalidate, true);
+  assert.equal(denied.status, 503);
+  assert.equal(denied.body.code, "CRM_APPROVAL_UNCONFIRMED");
+  assert.equal(proposals(denied.rec).length, 0);
   assert.equal(executions(denied.rec).length, 0);
   checks++;
 }
 const forged = await request(task("Unapproved replacement"), { fingerprint: "0123456789abcdef", options: { stored: freshStored() } });
-assert.equal(forged.status, 202);
-assert.equal(forged.body.revalidate, true);
+assert.equal(forged.status, 503);
+assert.equal(forged.body.code, "CRM_APPROVAL_UNCONFIRMED");
+assert.equal(proposals(forged.rec).length, 0);
 assert.equal(executions(forged.rec).length, 0);
 checks++;
+
+// A supplied approval is a deliberate claim, not permission to fall back to
+// either fresh proposal or standing autonomy when the native claim is unavailable.
+for(const lane of ['confirm','auto']){
+ for(const state of ['missing','consumed','expired','unissued','unrequested','foreign-actor','foreign-tenant','forged']){
+  const pending=freshStored();
+  if(state==='consumed')pending.consumed_at=new Date().toISOString();
+  if(state==='expired')pending.expires_at=new Date(Date.now()-1000).toISOString();
+  if(state==='unissued')pending.server_issued_at=null;
+  if(state==='unrequested')pending.issued_in_request=null;
+  if(state==='foreign-actor')pending.user_id=id(99);
+  if(state==='foreign-tenant')pending.tenant_id=id(99);
+  const result=await request(first.proposal.args.command,{fingerprint:state==='forged'?'0123456789abcdef':pending.fingerprint,options:{lane,stored:state==='missing'?null:pending}});
+  assert.equal(result.status,503,`failed explicit claim ${state}/${lane}`);
+  assert.equal(result.body.code,'CRM_APPROVAL_UNCONFIRMED');
+  assert.equal(result.body.outcome,'refused');assert.equal(result.body.outcome_unknown,true);assert.equal(result.body.refused_before_run,false);assert.match(result.body.message,/original|record/i);
+  assert.equal(executions(result.rec).length,0);assert.equal(proposals(result.rec).length,0);
+  const audit=result.rec.inserts.find(row=>row.table==='paige_audit_log');assert.equal(audit.row.payload.decision,'refuse');
+  checks++;
+ }
+ const uncertain=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{lane,stored:freshStored(),claimError:true}});
+ assert.equal(uncertain.status,503);assert.equal(uncertain.body.code,'CRM_APPROVAL_UNCONFIRMED');
+ assert.equal(executions(uncertain.rec).length,0);assert.equal(proposals(uncertain.rec).length,0);checks++;
+}
+const validAuto=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{lane:'auto',stored:freshStored()}});
+assert.equal(validAuto.status,200);assert.equal(executions(validAuto.rec).length,1);assert.equal(proposals(validAuto.rec).length,0);checks++;
+const deniedRoleApproval=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{role:'staff',stored:freshStored()}});
+assert.equal(deniedRoleApproval.status,403);assert.equal(deniedRoleApproval.body.code,'access_denied');assert.equal(executions(deniedRoleApproval.rec).length,0);assert.equal(proposals(deniedRoleApproval.rec).length,0);checks++;
+const exactReplay=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{stored,cached:true}});
+assert.equal(exactReplay.status,200);assert.equal(executions(exactReplay.rec).length,0);assert.equal(proposals(exactReplay.rec).length,0);
+assert.equal(exactReplay.rec.from.some(row=>row.table==='paige_pending_confirmations'),false,'exact original result precedes a second claim');checks++;
+const uncertainOriginal=await request(first.proposal.args.command,{fingerprint:first.proposal.fingerprint,options:{stored:freshStored(),cachedError:{message:'fixture original result unavailable'}}});
+assert.equal(uncertainOriginal.status,503);assert.equal(executions(uncertainOriginal.rec).length,0);assert.equal(proposals(uncertainOriginal.rec).length,0);
+assert.equal(uncertainOriginal.rec.from.some(row=>row.table==='paige_pending_confirmations'),false,'uncertain original readback never consumes or retries');checks++;
 
 for (const [command, options, status, code] of [
   [{ action: "task.create", title: "Top-level title alone" }, {}, 400, "CRM_COMMAND_INVALID"],
@@ -200,4 +256,69 @@ for (const [command, options, status, code] of [
   assert.equal(refused.body.record_locator, undefined);
   checks++;
 }
+for (const lane of ['confirm', 'auto']) {
+  const competing = freshStored();
+  const losing = await request(first.proposal.args.command, {
+    fingerprint: competing.fingerprint, options: { lane, stored: competing, competingClaim: true },
+  });
+  assert.ok(competing.consumed_at, 'another request consumed after the result read and before this claim');
+  assert.equal(losing.status, 503, 'an empty losing claim cannot prove the original action absent');
+  assert.equal(losing.body.code, 'CRM_APPROVAL_UNCONFIRMED');
+  assert.equal(losing.body.outcome_unknown, true);
+  assert.equal(losing.body.refused_before_run, false);
+  assert.equal(executions(losing.rec).length, 0);
+  assert.equal(proposals(losing.rec).length, 0);
+  const completed = await request(first.proposal.args.command, {
+    fingerprint: competing.fingerprint, options: { lane, stored: competing, cached: true },
+  });
+  assert.equal(completed.status, 200, 'a later canonical result resolves the original action');
+  assert.equal(executions(completed.rec).length, 0);
+  assert.equal(proposals(completed.rec).length, 0);
+  checks++;
+  const lostStored = freshStored();
+  const lostAck = await request(first.proposal.args.command, {
+    fingerprint: lostStored.fingerprint, options: { lane, stored: lostStored, lostClaimAcknowledgement: true },
+  });
+  assert.ok(lostStored.consumed_at, 'the claim port consumed its row before the acknowledgement disappeared');
+  assert.equal(lostAck.status, 503);
+  assert.equal(lostAck.body.code, 'CRM_APPROVAL_UNCONFIRMED');
+  assert.equal(lostAck.body.outcome_unknown, true);
+  assert.equal(lostAck.body.refused_before_run, false);
+  assert.equal(executions(lostAck.rec).length, 0);
+  assert.equal(proposals(lostAck.rec).length, 0);
+  const retryLostAck = await request(first.proposal.args.command, {
+    fingerprint: lostStored.fingerprint, options: { lane, stored: lostStored },
+  });
+  assert.equal(retryLostAck.status, 503, 'an already-consumed uncertain claim is not a fresh authorization');
+  assert.equal(retryLostAck.body.outcome_unknown, true);
+  assert.equal(executions(retryLostAck.rec).length, 0);
+  assert.equal(proposals(retryLostAck.rec).length, 0);
+  checks++;
+}
+// A Gateway refusal is authoritative about this request's permission, but an
+// empty explicit claim still cannot rule out a competing original execution.
+for (const [lane, code] of [['off', 'autonomy_off'], ['unresolved', 'autonomy_lane_unrecognized']]) {
+  const competing = freshStored();
+  const losing = await request(first.proposal.args.command, {
+    fingerprint: competing.fingerprint, options: { lane, stored: competing, competingClaim: true },
+  });
+  assert.ok(competing.consumed_at);
+  assert.equal(losing.status, 403, 'retain the original Gateway refusal status');
+  assert.equal(losing.body.code, code, 'retain the original Gateway refusal code');
+  assert.equal(losing.body.outcome_unknown, true, 'a Gateway refusal cannot prove the competing original absent');
+  assert.equal(losing.body.refused_before_run, false);
+  assert.equal(executions(losing.rec).length, 0);
+  assert.equal(proposals(losing.rec).length, 0);
+  checks++;
+  const ordinary = await request(first.proposal.args.command, { options: { lane } });
+  assert.equal(ordinary.status, 403);
+  assert.equal(ordinary.body.code, code);
+  assert.equal(ordinary.body.message, losing.body.message, 'preserve the Gateway explanation');
+  assert.equal(ordinary.body.outcome_unknown, undefined, 'an ordinary refusal has no failed explicit claim');
+  assert.equal(ordinary.body.refused_before_run, undefined);
+  assert.equal(executions(ordinary.rec).length, 0);
+  assert.equal(proposals(ordinary.rec).length, 0);
+  checks++;
+}
+queryPrototype.maybeSingle=originalSingle;
 console.log(`PASS ${checks} actual CRM approval-summary checks: canonical task/deal titles and task locators, unchanged stored arguments/fingerprints, approval claim and tenant/actor/refusal negatives`);

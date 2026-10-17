@@ -143,10 +143,12 @@ SELECT ok(pg_temp.e09_stage_error(NULL,'completed','service_role')=ANY(ARRAY['42
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','revoked link cannot advance stage');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revocation is effective on reload');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revoked link has no frame');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'presentation revocation is effective on the next server read');
 UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001',status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','archived relationship cannot advance stage');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship cannot read profile');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship has no frame');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'archived relationship cannot resolve customer presentation');
 -- Trusted fixture executor uses the existing governed lineage convention; same
 -- tenant survivor and paired timestamp. Actual authenticated reads remain below.
@@ -158,6 +160,7 @@ SELECT set_config('app.crm_merge_lineage_write','off',true);
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship cannot read profile');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship has no frame');
 SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','merged relationship cannot advance stage');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'merged relationship cannot resolve customer presentation');
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
@@ -171,6 +174,7 @@ SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'first_n
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'paige_shared_context_consent','true','reload reads actual shared-context consent');
 UPDATE public.tenants SET status='suspended' WHERE id='e0921000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'P0001','inactive sponsoring business cannot advance stage');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'inactive business has no frame');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"brand":null,"config":{}}'::jsonb,'inactive sponsoring business cannot resolve customer presentation');
 UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'welcome'->>'headline','Saved greeting A','returning to an active legitimate relationship reloads its saved configuration');
@@ -232,17 +236,6 @@ SELECT throws_ok($$ SELECT pg_temp.e09_frame('e0911000-0000-0000-0000-0000000000
  '42501','permission denied for function client_portal_frame','service credential is not customer identity');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
-UPDATE public.clients SET status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
-SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship has no frame');
-UPDATE public.clients SET status='active',merged_into_contact_id='e0931000-0000-0000-0000-000000000003'
- WHERE id='e0931000-0000-0000-0000-000000000001';
-SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship has no frame');
-UPDATE public.clients SET merged_into_contact_id=NULL,linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
-SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revoked link has no frame');
-UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001' WHERE id='e0931000-0000-0000-0000-000000000001';
-UPDATE public.tenants SET status='suspended' WHERE id='e0921000-0000-0000-0000-000000000001';
-SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'inactive business has no frame');
-UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
 SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'profile'->>'first_name','Updated',
  'returning frame reloads the saved profile after legitimate access is restored');
 SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND target_id='e0931000-0000-0000-0000-000000000001'),2::bigint,

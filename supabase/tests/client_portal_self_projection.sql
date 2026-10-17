@@ -575,6 +575,12 @@ SELECT is((SELECT user_id::text FROM public.audit_logs WHERE id='e0951000-0000-4
 SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb)#>>'{sources,0,content}',
  'Approved program guidance','customer reloads only explicitly shared canonical content');
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0941000-0000-4000-8000-000000000001'))::jsonb)->'sources',
+ '[]'::jsonb,'compatible direct admission cannot acquire later published program sources') FROM e09_customer_chat;
+SELECT is((pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_assistant_context(%L,%L)',thread_id,'e0941000-0000-4000-8000-000000000001'))::jsonb)->'snapshot',
+ 'null'::jsonb,'compatible native acceptance cannot be retrofitted with source attestation') FROM e09_customer_chat;
 CREATE TEMP TABLE e09_knowledge_refs AS SELECT jsonb_build_object('share_id',upper(s.id::text),
  'share_revision',s.revision,'source_fingerprint',s.source_fingerprint) ref
  FROM public.tenant_knowledge_client_shares s JOIN e09_knowledge_result r ON s.id=(r.result->>'share_id')::uuid;

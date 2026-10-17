@@ -512,6 +512,10 @@
       "status": "PASS"
     },
     {
+      "name": "Direct compatible admission cannot attest or settle program sources missing from its native user receipt",
+      "status": "PASS"
+    },
+    {
       "name": "Unattested legacy assistant prose never becomes new model context",
       "status": "PASS"
     },
@@ -576,6 +580,6 @@
       "status": "PASS"
     }
   ],
-  "passed": 140,
+  "passed": 141,
   "failed": 0
 }

@@ -116,6 +116,11 @@ export async function knowledgeContextProof({sql,check,assert,fs,root,path,uid,o
   const legacy=context();assert.deepEqual(legacy.sources,[]);assert.equal(legacy.snapshot,null);
  });
  if(activeRollout==='t')sql(`SET ROLE service_role; SELECT paige_chat_interactive_executor_v2('${thread}','${uid}','${tenant}','${intent}','acquire'); RESET ROLE;`);
+ check('Direct compatible admission cannot attest or settle program sources missing from its native user receipt',()=>{
+  assert.throws(()=>sql(`SET ROLE service_role; SELECT paige_chat_interactive_settle('${thread}','${uid}','${tenant}','${intent}',
+   'Must not borrow program context',NULL,NULL,${json({interactive:{request_intent_id:intent},turn_state:{v:1,state:'FINAL'},customer_knowledge:captured.snapshot})},NULL);`),/CUSTOMER_CONTEXT_BINDING_INVALID/);
+  assert.equal(sql(`SELECT count(*) FROM paige_chat_turns WHERE thread_id='${thread}' AND interactive_intent_id='${intent}' AND role='assistant';`),'0');
+ });
  sql(`SET ROLE service_role; SELECT paige_chat_interactive_settle('${thread}','${uid}','${tenant}','${intent}',
   'UNATTESTED OLD ANSWER',NULL,NULL,'{"interactive":{"request_intent_id":"${intent}"},"turn_state":{"v":1,"state":"FINAL"}}',NULL); RESET ROLE;`);
  if(activeRollout==='t')sql(`SET ROLE service_role; SELECT paige_chat_interactive_executor_v2('${thread}','${uid}','${tenant}','${intent}','release'); RESET ROLE;`);

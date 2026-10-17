@@ -6,8 +6,8 @@ PAIGE_UI_DESIGN: PASS: skill and five modules read; incumbent compact Game Plan/
 MATERIAL_FLOW_CHANGE: NO: restore visibility and rejection in the existing queue, with the same Approve/View/Decline/Cancel/Refresh controls
 FLOW_PROTOTYPE: NOT_REQUIRED: installed skill read; this restores the same existing approval lifecycle and controls, with no new customer goal, flow or destination
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible ordinary SOLO active owner/admin can review the canonical native held task without a global app role
-AUTOMATED_EVIDENCE: PASS: predecessor native31 checks passed in disposable PostgreSQL; focused and mounted UI80 passed; separate existing styled serializer passed1 selected test and88 scenes with10 previously-passed tests intentionally filtered; final malformed-metadata refusal extension remains in flight
-STATIC_EVIDENCE: PASS: changed-path ESLint has zero errors/warnings; migration lint checks1 with0 warnings; scoped real compiler diagnostics for three changed product files are0 after additive version compatibility correction; full application compiler remains INTERRUPTED/UNVERIFIED; current Vite build passes4m43s
+AUTOMATED_EVIDENCE: PASS: final disposable native PostgreSQL32 checks passed with0 failures, including actual RLS/view, canonical cancellation/Rail and concurrency; focused/mounted UI80 passed; separate existing styled serializer passed1 selected test and88 scenes with10 previously-passed tests intentionally filtered
+STATIC_EVIDENCE: PASS: changed-path ESLint has zero errors/warnings; migration lint checks1 with0 warnings; scoped real compiler diagnostics are0 after additive version compatibility correction (GamePlan retains pre-existing ts-nocheck, so semantic typing is not claimed there); full application compiler remains INTERRUPTED/UNVERIFIED; current Vite build passes4m43s
 RENDERED_EVIDENCE: PASS: existing real-consumer source produced88 styled fixture scenes; isolated headless Chromium measured16 required viewport/theme/open-closed combinations with no global horizontal overflow, bounded controls and focused rationale; this is static fixture geometry, not hydrated/authenticated customer behavior
 BEHAVIORAL_EVIDENCE: PASS: actual native RLS/base/view, role and tenant negatives, paused-hold cancellation, original-decision replay, atomic Rail rollback and two-session lock refusal
 AUTHENTICATED_RUNTIME: UNVERIFIED: candidate not deployed; root owns ordinary owner/admin acceptance and wrong-tenant/stale controls after release
@@ -18,7 +18,7 @@ STATE_COVERAGE: PASS: loading/empty/error/retry/dismissal, active role/workspace
 TRUTHFUL_STATE_LABELS: PASS: cancellation is never execution; native rejection requires canonical cancelled result and actual receipt; replay does not claim the current reviewer authored the original decision
 SOLO_UI: YES: existing Business Game Plan approval rail, shared for every eligible existing and future SOLO business
 UNVERIFIED: Independent Review, final exact-head CI, production migration/deployment, ordinary authenticated QA, Live and owner product acceptance remain unclaimed
-SOLO_1536X770_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; work/approval-visibility-proof/geometry/result.json; not authenticated runtime
+SOLO_1536X770_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; work/approval-visibility-proof/geometry-final/result.json; not authenticated runtime
 SOLO_1536X770_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; existing PAIGE state preserved; not hydrated/authenticated runtime
 SOLO_1366X768_PAIGE_CLOSED: PASS: light/dark static source fixture Chromium bounds/focus; existing rail scroll owner preserved; not authenticated runtime
 SOLO_1366X768_PAIGE_OPEN: PASS: light/dark static source fixture Chromium bounds/focus; existing PAIGE presentation preserved; no unconditional underlying pointer-access claim
@@ -37,7 +37,7 @@ ACCEPTANCE_CRITERIA: An ordinary owner with no global app role reads the exact c
 
 ## Grounding / Collision Check
 
-ANT-21, ANT-52, ANT-147, ANT-50, ANT-51 and ANT-138 were reread at this boundary. Main is 9d824ab95cb57cba3c23f69963f55b11102940a1 / tree0814cae07b7ceb6e30ac9e2b003bcef1147db12b. E09#2310 packaging, published summary#2312, Knowledge#2313 and E01 continuation are preserved. Root granted only migration20271109025000, the existing queue view/hook, native-family ApprovalRow/GamePlan binding and focused proof/evidence; Calendar owns09030000 and shared Chat/Spine bindings elsewhere. No unrelated source is taken over.
+ANT-21, ANT-52, ANT-147, ANT-50, ANT-51 and ANT-138 were reread at this boundary. Starting main was 9d824ab95cb57cba3c23f69963f55b11102940a1; current main13cd23b653fa9d789630d3e2c57d708b908526ee is composed with E09 source packaging/invitation, summary#2312 and Master#2314 preserved. Knowledge#2313 and E01 continuation remain separate. The final composition changed only Master's eight released rows, with no runtime overlap. Root granted only migration20271109025000, the existing queue view/hook, native-family ApprovalRow/GamePlan binding and focused proof/evidence; Calendar owns09030000 and shared Chat/Spine bindings elsewhere. No unrelated source is taken over.
 
 ## Pre-edit capability routing
 
@@ -62,9 +62,13 @@ PROTECTED_SEAMS: Affected: tenant/workspace isolation; active authentication/sea
 
 ## Engineering and release evidence
 
-Automated/native/visual/interactive checks: NOT_RUN at pre-edit contract creation. Test doubles never establish authenticated customer capability.
+At pre-edit contract creation automated/native/visual checks were NOT_RUN. Final evidence now includes native32/0, focused/mounted80/0, one selected serializer/88 scenes and16 native fixture bounds/focus measurements. Test doubles never establish authenticated customer capability. Compact PAIGE-open presentations preserve the incumbent modal overlay: per-target pointer occlusion is recorded separately and those states do not claim underlying queue operability until the existing Fold PAIGE control is used. Actual native browser zoom, hydrated customer interaction, deployment and owner acceptance remain unverified.
 
-INTERNAL_BUILD_IDENTITY: base 0f495d297765498516ee28d0e29bfe31a238fd95; candidate=LOCAL_UNRELEASED; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271109025000 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/owner-task-approval-visibility.md
+The initial ordinary-owner native read regression was reproduced before the migration, and the added malformed cross-domain metadata control also failed against predecessor source. Both failed packets and two fixture-only setup errors remain retained privately. The first styled serializer attempt failed before any test because its fork worker did not start; the single-thread/isolated-temp successor passed. No failure was relabeled as a pass. The final native family refuses malformed metadata while preserving ordinary operational notes; existing cross-domain writers and triggers remain unchanged. Details and customer identities are excluded from public coordination.
+
+The hook's additive updated_at field is optional for old/new view rollout compatibility; the native decision refuses to dispatch without the actual returned version. No browser timestamp is fabricated. Independent Review and final exact-head CI remain the release gate, followed by normal migration/web readback and ordinary authenticated QA. Current source tests are not customer acceptance or Live proof.
+
+INTERNAL_BUILD_IDENTITY: source 1423001558c176b6ce83050649be67a51ead53a0; current-main composition b29dd73214dca7ef1aafc6e9e2e451a8e6afeffc; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271109025000 not applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/owner-task-approval-visibility.md
 RELEASE_CHANNEL: development: local implementation and protected synthetic engineering proof only
 RELEASE_CLASSIFICATION: internal-only: prelaunch restoration of existing ordinary SOLO approval queue
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement; candidate not merged/deployed

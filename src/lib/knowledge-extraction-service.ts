@@ -1,4 +1,5 @@
-/** Consumer contract frozen against extraction backend 007cc088e234848c1d73e3dc495b0cda940676f2.
+/** Incumbent extraction contract frozen against backend 007cc088e234848c1d73e3dc495b0cda940676f2.
+ * Additive publication recovery requires the reviewed native45000 association contract.
  * JWT clients only. These adapters neither poll nor retry, persist, publish or cancel work.
  * Callers must supply an incarnation guard (tenant equality alone cannot fence A -> B -> A).
  */

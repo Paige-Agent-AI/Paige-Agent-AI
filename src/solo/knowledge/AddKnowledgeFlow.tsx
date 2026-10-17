@@ -333,7 +333,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
 
   const correctAgain = async () => {
     if (!target || !openedPublication.current || busy.current || !current()) return;
-    busy.current = true;
+    busy.current = true; setNotice("Checking the current document…");
     try {
       const read = await readKnowledgeExtractionForDocument(client, extractionScope(), target.id, target.revision);
       if (!current()) return;

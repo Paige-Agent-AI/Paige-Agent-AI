@@ -34,5 +34,6 @@
     "No customer record or billable usage write",
     "No voice/profile/pricing/cost/pilot activation",
     "No UI geometry or state change"
-  ]
+  ],
+  "normalization": "SHA256 of committed git blob bytes (LF), not worktree CRLF"
 }

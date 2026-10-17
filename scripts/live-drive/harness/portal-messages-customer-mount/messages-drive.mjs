@@ -173,7 +173,7 @@ function measureInPage(opts) {
     const lr = last.getBoundingClientRect(), fr = form.getBoundingClientRect();
     const hit = document.elementFromPoint(lr.left + lr.width / 2, Math.min(lr.top + 12, innerHeight - 1));
     return { text: last.innerText.replace(/\s+/g, " ").slice(0, 60), top: Math.round(lr.top), bottom: Math.round(lr.bottom), composerTop: Math.round(fr.top),
-      coveredPx: Math.max(0, Math.round(lr.bottom - fr.top)), fullyHidden: lr.top >= fr.top - 1, topHitsComposer: !!hit?.closest("form") };
+      coveredPx: Math.max(0, Math.round(lr.bottom - fr.top)), scrollTop: Math.round(scroller.scrollTop), maxScroll: Math.round(scroller.scrollHeight - scroller.clientHeight), fullyHidden: lr.top >= fr.top - 1, topHitsComposer: !!hit?.closest("form") };
   })() : null;
   // Anything from the thread showing BELOW the composer (between it and the bottom of the page panel).
   const bleed = form && scroller ? (() => {
@@ -236,7 +236,9 @@ try {
     const m = await page.evaluate(measureInPage, { phone: !!s.phone });
     const smallTargets = s.phone ? m.targets.filter((t) => t.h < 44 || t.w < 44) : [];
     const composerOk = ["norelationship", "multiple"].includes(s.state) ? m.composer === null : !!m.composer?.inView;
-    const sendOk = !m.send || m.send.disabled || (m.send.iconRatio >= 3 && m.send.boundaryRatio >= 3);
+    // WCAG 1.4.11: the send glyph must clear 3:1 against its fill. The fill's own edge against the page
+    // (boundaryRatio) is reported, not graded: the glyph, not the fill, identifies the control.
+    const sendOk = !m.send || m.send.disabled || m.send.iconRatio >= 3;
     const phoneControls = !s.phone || !m.send || (m.send.h >= 44 && m.send.w >= 44 && m.textarea.h >= 44);
     const newestOk = !m.newest || m.newest.coveredPx === 0;
     const bleedOk = !m.bleed || m.bleed.showing.length === 0;

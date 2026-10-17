@@ -33,13 +33,13 @@ MUST_PRESERVE: original four-argument reader OID/defaults/projection/owner/searc
 ACCEPTANCE_CRITERIA: after separate reviewed integration/release, ordinary authorized Chat lookup returns the exact canonical saved booking, refuses wrong scope and truthfully settles uncertainty; Live requires its own actual test
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: original caller-JWT Calendar reader and existing ContextIdentity/epoch fences reused; canonical writers, SQL history, Chat/Spine/Kit/C0b pins, provider credentials and production activation unchanged
-INTERNAL_BUILD_IDENTITY: base=3e1b7471ed14bc6538e0a9536c96fdfcd3f9c097; exact successor and file hashes in frozen handoff; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271109030000); edge=NOT_APPLIED; evidence=docs/evidence/ui-delivery/ant21-calendar-booking-read.md
+INTERNAL_BUILD_IDENTITY: base=3e1b7471ed14bc6538e0a9536c96fdfcd3f9c097; exact successor and file hashes in frozen handoff; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271109030000); edge=PROOF_OWED(prepared shared reader has no deployed Chat binding); evidence=docs/evidence/ui-delivery/ant21-calendar-booking-read.md
 RELEASE_CHANNEL: development: isolated local implementation and disposable protected fixtures only
 RELEASE_CLASSIFICATION: internal-only: prepared canonical read/efficiency repair, not a released customer outcome
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version earned
 RELEASE_NOTE_REQUIRED: no: development candidate; final outcome announcement remains owner-controlled
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: native deployment before new five-argument caller, canonical Chat/Spine admission, real authorized record read/reload, Live and owner acceptance; local fixtures do not close the original 18-capability or 50-row program
-RELEASE_RECOVERY: position=forward correction preserving canonical records and old callers; retain the new native overload if rolling back a consumer, since old four-argument calls remain compatible; reference=docs/doctrine/release-governance-and-customer-update-policy.md
+RELEASE_RECOVERY: position=reviewed forward correction preserving canonical records and retaining the compatible native overload for old callers; reference=docs/doctrine/release-governance-and-customer-update-policy.md
 
 ## Scope, routing and collisions
 

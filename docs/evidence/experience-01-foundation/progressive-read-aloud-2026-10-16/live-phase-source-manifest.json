@@ -22,7 +22,7 @@
   "proof": {
     "bridgeSmoke": "123 PASS, network/provider calls0",
     "relaySmoke": "34 PASS, virtual time959ms/network0",
-    "existingRegressions": "92 PASS/4 files",
+    "existingRegressions": "author-attested 92 PASS/4 files (file set not recorded; not independently reproduced - independent 2026-10-17 review reproduced bridgeSmoke/relaySmoke exactly and 106 PASS across its own live/reducer selection; see PR 2277 review note)",
     "denoGraph": "PASS, Deno2.9.6",
     "eslint": "PASS for3 function files; .mts ignored by existing configuration",
     "authenticatedRuntime": "UNVERIFIED",

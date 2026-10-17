@@ -88,7 +88,7 @@ export async function readCustomerResource(client: ResourceRpc, scope: ResourceS
     || v.document.revision !== resource.document_revision || v.document.generation_id !== resource.generation_id
     || !text(v.document.title, 300) || !text(v.content, 12000) || v.offset !== offset
     || !integer(v.next_offset) || v.next_offset !== offset + Array.from(v.content).length
-    || !integer(v.total_characters) || v.next_offset > v.total_characters
+    || !integer(v.total_characters) || v.next_offset !== Math.min(offset + 12000, v.total_characters) || v.next_offset > v.total_characters
     || v.has_more !== (v.next_offset < v.total_characters)
     || (v.has_more && v.next_offset === offset)) bad();
   return v as unknown as ResourcePage;

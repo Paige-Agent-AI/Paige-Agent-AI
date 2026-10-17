@@ -1,4 +1,4 @@
-import { lazy, Suspense, useId, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -38,6 +38,7 @@ import { usePortalInvitations } from "./usePortalInvitations";
 import { PortalInvitationManager, type PortalInvitationActionLock } from "./PortalInvitationManager";
 import { PortalInvitationHistory } from "./PortalInvitationHistory";
 import { invitationDeliveryText } from "./portalInvitationEvidence";
+import { OwnerCustomerResources } from "./OwnerCustomerResources";
 import "./owner-portal-dashboard.css";
 
 const PortalStudio = lazy(() => import("@/pages/admin/PortalStudio"));
@@ -156,6 +157,16 @@ export function OwnerPortalDashboard({
   const [editorMounted, setEditorMounted] = useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const resourceBoundary = useRef({ tenantId });
+  if (resourceBoundary.current.tenantId !== tenantId) resourceBoundary.current = { tenantId };
+  const [resourceSelection, setResourceSelection] = useState<{ boundary: { tenantId: string }; id: string } | null>(null);
+  const resourcePerson = resourceSelection?.boundary === resourceBoundary.current ? data.people.find(person => person.id === resourceSelection.id) : null;
+  const resourceTriggers = useRef(new Map<string, HTMLButtonElement>());
+  const resourceReturn = useRef<string | null>(null);
+  useEffect(() => {
+    if (resourcePerson || !resourceReturn.current) return;
+    resourceTriggers.current.get(resourceReturn.current)?.focus(); resourceReturn.current = null;
+  }, [resourcePerson]);
   const invitationActions = useRef(new Set<string>());
   const [pendingInvitations, setPendingInvitations] = useState<ReadonlySet<string>>(new Set());
   const invitationActionLock: PortalInvitationActionLock = {
@@ -387,6 +398,9 @@ export function OwnerPortalDashboard({
                           </small>
                         </span>
                       </button>
+                      {accessView && <button type="button" className="opd-text-button" aria-label={`Manage resources for ${person.name}`}
+                        ref={node => { if (node) resourceTriggers.current.set(person.id, node); else resourceTriggers.current.delete(person.id); }}
+                        onClick={() => setResourceSelection({ boundary: resourceBoundary.current, id: person.id })}>Resources <ArrowRight /></button>}
                     </td>
                     <td>{accessView ? person.email || "No email address" : <button type="button" className="opd-text-button opd-next-step" onClick={() => openClient(person.id)}>{person.primaryOffer ? `${person.primaryOffer} · Recorded offer` : "View client standing"}<ArrowRight /></button>}</td>
                     <td>
@@ -663,7 +677,8 @@ export function OwnerPortalDashboard({
           </div>
         )}
         {tab === "Client access" && (
-          <>
+          resourcePerson ? <PortalConfigurationGate tenantId={tenantId}><OwnerCustomerResources key={`${tenantId}:${resourcePerson.id}`} tenantId={tenantId} person={resourcePerson}
+            onBack={() => { resourceReturn.current = resourcePerson.id; setResourceSelection(null); }}/></PortalConfigurationGate> : <>
             <div className="opd-page-heading">
               <h2>The right access, for each client.</h2>
               <p>

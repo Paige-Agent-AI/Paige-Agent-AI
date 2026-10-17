@@ -11,11 +11,11 @@
     },
     {
       "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
-      "sha256": "5ecc9b2986709f723a1abb40a3ae6b4331027863def34203205a8816edd5d9e1"
+      "sha256": "e3382deff545306a324ecaa550f43a2007d9f16434f895acdb824655b5e27eac"
     },
     {
       "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
-      "sha256": "36de8defda42d94a61e39e8014cf14b233083856aecec28cff0218ec505f81e5"
+      "sha256": "2f2bc7dd822cc7c3653de4009def21f23770cdb850c272d55a493911030441ca"
     },
     {
       "file": "src/components/tenant-relationships/owner-portal-dashboard.css",

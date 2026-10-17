@@ -31,7 +31,7 @@ import { ClientHomeTiles } from "@/components/client/ClientHomeTiles";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
 import { UpcomingWidget } from "@/components/planning/UpcomingWidget";
 import { usePlaybook } from "@/lib/playbook";
-import { useClientPortalConfig } from "@/hooks/useClientPortalConfig";
+import { useClientPortalConfig, type ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
 import { useClientPortalFrame } from "@/hooks/useClientPortalFrame";
@@ -319,7 +319,7 @@ function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | n
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
   // every existing portal is byte-for-byte unchanged until a tenant sets one.
   const savedConfig = useClientPortalConfig();
-  const portalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
+  const portalConfig: ClientPortalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
   const agentName = customer.frame ? customerAgentName(customer.frame.config.assistant?.display_name) : customer.phase === "not-client" ? pb.persona.name : "your client success agent";
   const greeting = customer.frame ? `Hi — I’m ${agentName}, the AI client success agent for ${customer.frame.brand.tenant_name}. How can I help?` : customer.phase === "not-client" ? pb.persona.greeting : "Your conversation is available once your customer access is checked.";
   const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";

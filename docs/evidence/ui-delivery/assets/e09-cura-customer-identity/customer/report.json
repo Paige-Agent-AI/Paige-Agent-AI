@@ -6,7 +6,7 @@
   "keyboard": "synthetic VisualViewport event",
   "network": "blocked",
   "hashes": {
-    "src/pages/AppShell.tsx": "b917d9a61610c7405b0e3dc3a96bde03247e4ba66608805348a2e3435768a588",
+    "src/pages/AppShell.tsx": "def53d346f42ebee8a4fcb0557f1ea497086ae5a088dccdce6bb0bbe0de0473f",
     "src/components/app/AppNav.tsx": "80a82b182d01bc7d39e8c1270fbd386f50ed7f0ab82735fd186a5ed4594ef500",
     "src/components/app/PaigeChat.tsx": "ef2e0c60176abcbc033f8868719249db85c90557af44ba108113f02577a578f3",
     "src/hooks/useClientViewportHeight.ts": "8042e70b918520caecf149785385030c7d1f595d0ca026e5fd40cbc4af50d488",
@@ -2701,5 +2701,13 @@
       }
     }
   ],
-  "errors": []
+  "errors": [],
+  "provenanceCorrections": [
+    {
+      "file": "src/pages/AppShell.tsx",
+      "sourceAtCapture": "b917d9a61610c7405b0e3dc3a96bde03247e4ba66608805348a2e3435768a588",
+      "currentSource": "def53d346f42ebee8a4fcb0557f1ea497086ae5a088dccdce6bb0bbe0de0473f",
+      "reason": "Explicit TypeScript annotation/import only; emitted JavaScript byte-identical to captured source36fd1031470aaaa1e0c0b364ecd57468b473bd2f."
+    }
+  ]
 }

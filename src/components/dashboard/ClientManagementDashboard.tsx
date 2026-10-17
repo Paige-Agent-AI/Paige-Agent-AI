@@ -445,7 +445,13 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
           return;
         }
         const recipient = inviteEmail.trim().toLowerCase();
-        const { data: contacts, error: contactError } = await supabase.rpc("create_contact_v2", {
+        // The canonical RPC predates the generated SDK catalogue. Keep its seam narrow;
+        // the returned client still receives an authorized tenant-scoped read below.
+        const prepareContact = supabase.rpc as unknown as (
+          name: "create_contact_v2",
+          args: { p_first_name: string; p_email: string; p_source: string; p_channel: string; p_tenant_id: string },
+        ) => Promise<{ data: { contact_id: string }[] | null; error: { message: string } | null }>;
+        const { data: contacts, error: contactError } = await prepareContact("create_contact_v2", {
           p_first_name: "", p_email: recipient, p_source: "invitation", p_channel: "portal",
           p_tenant_id: activeTenantId,
         });

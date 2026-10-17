@@ -211,14 +211,18 @@ serve(async (req: Request) => {
       const cachePath = `${storagePrefix}/${cacheKey}.mp3`; // §9 tenant-scoped (or _platform for the operator); provider is in the key
 
       // ── §14 CACHE LOOKUP (per-attempt key) — a HIT returns immediately ──
+      const cacheStarted = performance.now();
       try {
         const { data: cached } = await admin.storage.from(CACHE_BUCKET).download(cachePath);
         if (cached) {
           const buf = await cached.arrayBuffer();
+          if (!buf.byteLength) throw new Error("tts_cached_audio_empty");
           console.log("[paige-tts] cache HIT", { scope: storagePrefix, provider: attempt.provider, profile_revision: attempt.profileRevision, bytes: buf.byteLength });
           runAfter(meterChars(admin, meterTenantId, capped.length, {
             provider: attempt.provider, profile_revision: attempt.profileRevision, model: attempt.model,
             voice_source: voiceSource, fell_back: fellBack, cache_hit: true,
+            cache_lookup_ms: Math.round(performance.now() - cacheStarted),
+            response_ready_ms: Math.round(performance.now() - requestStarted),
           }));
           return new Response(buf, { headers: audioHeaders });
         }
@@ -266,12 +270,19 @@ serve(async (req: Request) => {
       // Commit once the provider answered OK. A failed commit leaves the reservation counting
       // against the cap: failing safe may over-count, but can never permit unrecorded spend.
       const commit = async (): Promise<boolean> => {
-        const { error: settleError } = await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "committed" });
-        if (settleError) {
-          console.error("[paige-tts] provider cost settlement failed closed", { provider: attempt.provider, code: settleError.code });
+        try {
+          const { error: settleError } = await admin.rpc("settle_paige_voice_cost_internal", { _reservation_id: reservationId, _actor_user_id: user.id, _outcome: "committed" });
+          if (settleError) {
+            console.error("[paige-tts] provider cost settlement failed closed", { provider: attempt.provider, code: settleError.code });
+            return false;
+          }
+          return true;
+        } catch {
+          // Network rejection is uncertain settlement too, never permission to
+          // expose audio or leave an unowned provider stream running.
+          console.error("[paige-tts] provider cost settlement unavailable", { provider: attempt.provider });
           return false;
         }
-        return true;
       };
 
 

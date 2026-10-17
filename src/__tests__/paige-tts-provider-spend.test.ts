@@ -48,6 +48,7 @@ let cached: Blob | null;
 let tenantFromJwt: string | null;
 let reserveResult: RpcResult;
 let settleResult: RpcResult;
+let settleThrows: boolean;
 // Taken from the SAME module registry the handler loaded after vi.resetModules(), so the handler's
 // `e instanceof NeedsConfigError` sees the class this test throws (a top-level import would be a
 // different class instance and would silently turn every typed failure into an ambiguous one).
@@ -79,7 +80,7 @@ function setupClients() {
           return { data: { provider: "x", provider_voice_ref: "y", revision: "r", approved: true, active: true }, error: null };
         }
         if (fn === "reserve_paige_voice_cost_internal") { log.push("reserve"); return reserveResult; }
-        if (fn === "settle_paige_voice_cost_internal") { log.push(`settle:${String(args._outcome)}`); return settleResult; }
+        if (fn === "settle_paige_voice_cost_internal") { log.push(`settle:${String(args._outcome)}`); if(settleThrows)throw new Error("synthetic settlement transport failure"); return settleResult; }
         throw new Error(`unexpected admin rpc ${fn}`);
       },
       storage: {
@@ -122,6 +123,7 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     tenantFromJwt = TENANT;
     reserveResult = { data: { reservation_id: RESERVATION }, error: null };
     settleResult = { data: null, error: null };
+    settleThrows = false;
     vi.stubGlobal("Deno", { env: { get: (name: string) => name } });
     for (const fn of [h.createClient, h.synthesizeSpeechStream, h.elevenlabsMessageStream, h.planTtsSynthesis, h.resolveProfileVoice, h.ttsCacheKey]) fn.mockReset();
     h.ttsCacheKey.mockResolvedValue("cache-key");
@@ -320,6 +322,29 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     usePlan(ELEVEN);const cancel=vi.fn();
     h.elevenlabsMessageStream.mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array(16*1024*1024+1));},cancel})));
     expect((await play()).status).toBe(502);expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();expect(settleCalls()).toHaveLength(0);
+  });
+
+  it("ElevenLabs a thrown settlement failure cancels the provider without releasing spend",async()=>{
+    usePlan(ELEVEN);settleThrows=true;let signal:AbortSignal|undefined;const cancel=vi.fn();const abort=new AbortController();
+    h.elevenlabsMessageStream.mockImplementation(async(_input,s)=>{signal=s;return new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array([4]));},cancel}));});
+    try {
+      const res=await play("Synthetic settlement failure",abort.signal);expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({error:"tts_cost_settlement_unavailable"});expect(signal?.aborted).toBe(true);expect(cancel).toHaveBeenCalledTimes(1);
+      expect(h.upload).not.toHaveBeenCalled();expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);
+    } finally {abort.abort();}
+  });
+
+  it("ElevenLabs an empty cached object is not returned as successful audio",async()=>{
+    usePlan(ELEVEN);cached=new Blob([]);const res=await play();await res.arrayBuffer();
+    expect(res.status).toBe(200);expect(h.elevenlabsMessageStream).toHaveBeenCalledTimes(1);expect(reserveCalls()).toHaveLength(1);
+  });
+
+  it("cached audio records cache readiness without fabricating provider timing or spend",async()=>{
+    usePlan(ELEVEN);cached=new Blob([new Uint8Array([7])]);const res=await play();await res.arrayBuffer();
+    await vi.waitFor(()=>expect(h.meter).toHaveBeenCalledTimes(1));const metadata=h.meter.mock.calls[0][0].metadata;
+    expect(metadata.cache_hit).toBe(true);expect(metadata.cache_lookup_ms).toBeGreaterThanOrEqual(0);
+    expect(metadata.response_ready_ms).toBeGreaterThanOrEqual(metadata.cache_lookup_ms);expect(metadata).not.toHaveProperty("provider_first_byte_ms");
+    expect(h.elevenlabsMessageStream).not.toHaveBeenCalled();expect(reserveCalls()).toHaveLength(0);expect(settleCalls()).toHaveLength(0);
   });
 
 });

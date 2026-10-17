@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: repair the existing approved speech transport and canc
 FLOW_PROTOTYPE: NOT_REQUIRED: transport-only completion under October16 approved progressive-audio direction; existing UI remains unchanged.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized owner explicitly plays an existing message and can stop loading or playback without continuing an unnecessary provider/cache drain.
 VISUAL_DIRECTION: PASS: preserve incumbent immersive onboarding, private conversation and message control.
-AUTOMATED_EVIDENCE: PASS: failing-first adapter5FAIL and governed-handler6FAIL retained. Final combined Node20 contracts56/56PASS, including current late-caller cancellation/first-chunk bound negatives and incumbent cost/profile/CORS. Existing Live interpreter102 checks PASS; relay/output19 plus component39 assertions pass after one worker-start retry, with incumbent React act warnings retained. Final exact-source review and hosted CI remain required.
+AUTOMATED_EVIDENCE: PASS: failing-first adapter5FAIL and governed-handler6FAIL retained. Final combined Node20 contracts59/59PASS, including current late-caller cancellation/first-chunk bound negatives and incumbent cost/profile/CORS. Existing Live interpreter102 checks PASS; relay/output19 plus component39 assertions pass after one worker-start retry, with incumbent React act warnings retained. Final exact-source review and hosted CI remain required.
 STATIC_EVIDENCE: PASS: scoped ESLint clean; TypeScript ratchet10/7 and real Deno2.9.6 full paige-tts import graph pass. Final head recheck/review and hosted CI remain required. The unstable ReturnType<typeof createClient> helper annotation was replaced with the incumbent SupabaseClient type without suppressing diagnostics.
 RENDERED_EVIDENCE: UNVERIFIED: no actual deployed provider stream or authenticated Chat/native speech capture exists for this backend candidate. Prior frontend decoder proof is not relabelled backend proof.
 BEHAVIORAL_EVIDENCE: PASS: deterministic handler tests prove first chunk before EOF, one original provider request, reservation/settlement ordering, Stop/request abort, failure without retry and complete-only cache.
@@ -43,7 +43,7 @@ The handler waits for a nonempty first chunk and successful canonical settlement
 
 Primary documentation checked: https://elevenlabs.io/docs/api-reference/text-to-speech/stream ; current Supabase changelog retained locally. Current docs require provider model support and preserve enterprise-only zero-retention eligibility; this patch does not assert either account fact or silently alter policy. Real provider acceptance remains separately required.
 
-#2262 frontend repair remains a separate reviewed/CI-gated release. This backend candidate is not included in its pushed head. Preserve all original23 authenticated cases and append streaming/cancel/cache/latency cases under their individual permissions. Do not request Antonio testing before the entire E01 is integrated and live.
+#2262 frontend is released/source verified ataaa64da1f36b2fbfc143bb4086c8b52ad6a5e511. This backend successor is not part of that released tree. Preserve all original23 authenticated cases and append streaming/cancel/cache/latency cases under their individual permissions. Do not request Antonio testing before the entire E01 is integrated and live.
 
 Cache truth: the existing key is SHA256(provider:model:voice:text), under the established tenant prefix. Profile revision is attributed in reservation/usage, not secretly added to that hash by this repair. The old source comment overstated the key; it is corrected without changing cache identity or creating another cache.
 
@@ -62,3 +62,5 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backe
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
 
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no geometry changes; actual deployed backend/provider/ordinary-session playback at this viewport is not established by synthetic controller evidence.
+
+Additional reproduced negatives: a thrown settlement transport failure must cancel provider output and retain counted spend; an empty cached object must not masquerade as successful audio. Both failed before repair, now pass in final59 contracts. Warm cache records cache/whole-request readiness without fabricating a provider timing or reservation. Existing shared commit catches transport rejection for either provider; no refund or automatic retry is introduced.

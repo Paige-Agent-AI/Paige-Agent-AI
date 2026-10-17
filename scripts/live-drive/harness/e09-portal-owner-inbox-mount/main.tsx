@@ -2,7 +2,7 @@
 // HARNESS RENDER · SYNTHETIC DATA · NOT LIVE (see stubs.ts). ?state=thread|help|notjoined|error
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relationships/TenantRelationshipsClientsWorkspace";
 import { AgentPresenceProvider } from "@/components/ui/paige";
@@ -30,7 +30,10 @@ createRoot(document.getElementById("root")!).render(
             <nav className="tcs-nav" />
             <section className="tcs-canvas">
               <main id="tenant-shell-main" className="tcs-main">
-                <TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={() => undefined} />
+                {/* The app mounts Solo under /solo/:account/* — useSubtabRoute reads the sub-tab from those params. */}
+                <Routes>
+                  <Route path="/solo/:account/*" element={<TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={() => undefined} />} />
+                </Routes>
               </main>
             </section>
             {/* The shell's PAIGE column, a placeholder only: `?paige=open` shows the dock region. It does not

@@ -55,6 +55,8 @@ try {
     const name = s.matrix
       ? `e09-inbox-matrix-${s.paige}-${s.theme}-${s.w}x${s.h}`
       : `e09-inbox-${s.state}-${s.theme}${s.phone ? "-phone" : ""}-${s.w}x${s.h}`;
+    // E09_ONLY=<substring> renders just the matching frames (for iterating); a full run renders all of them.
+    if (process.env.E09_ONLY && !name.includes(process.env.E09_ONLY)) continue;
     const ctx = await browser.newContext({ viewport: { width: s.w, height: s.h }, colorScheme: s.theme, reducedMotion: "reduce", hasTouch: !!s.phone });
     const page = await ctx.newPage();
     const errors = [];
@@ -101,53 +103,107 @@ try {
       const alphaOf = (c) => { const p = parse(c); return p.length > 3 ? p[3] : 1; };
       const over = (fg, bg) => { const f = parse(fg), b = parse(bg); const a = alphaOf(fg); return `rgb(${[0, 1, 2].map((i) => Math.round(f[i] * a + b[i] * (1 - a))).join(",")})`; };
       const transparent = (c) => !c || c === "transparent" || /rgba\(0, 0, 0, 0\)/.test(c) || alphaOf(c) === 0;
-      // Composite every translucent background from the element up to the first opaque one.
-      const bgOf = (el) => {
+      // Every colour a background layer can show: its background-color plus, for a gradient, each colour stop.
+      const layerColors = (n) => {
+        const cs = getComputedStyle(n);
+        const stops = /gradient/.test(cs.backgroundImage) ? (cs.backgroundImage.match(/(rgba?\([^)]*\)|color\([^)]*\))/g) ?? []) : [];
+        return [cs.backgroundColor, ...stops].filter((c) => !transparent(c));
+      };
+      // Composite every translucent layer from the element up to the first fully opaque one. A gradient makes
+      // the background a SET of colours; contrast is then judged against the worst of them.
+      const bgCandidates = (el) => {
         const layers = [];
         for (let n = el; n; n = n.parentElement) {
-          const c = getComputedStyle(n).backgroundColor;
-          if (transparent(c)) continue;
-          layers.push(c);
-          if (alphaOf(c) >= 1) break;
+          const cols = layerColors(n);
+          if (!cols.length) continue;
+          layers.push(cols);
+          if (cols.every((c) => alphaOf(c) >= 1)) break;
         }
-        let acc = layers.length && alphaOf(layers[layers.length - 1]) >= 1 ? layers.pop() : getComputedStyle(document.body).backgroundColor;
-        if (transparent(acc)) acc = "rgb(255,255,255)";
-        while (layers.length) acc = over(layers.pop(), acc);
+        let base = ["rgb(255,255,255)"];
+        if (layers.length && layers[layers.length - 1].every((c) => alphaOf(c) >= 1)) base = layers.pop();
+        else { const b = getComputedStyle(document.body).backgroundColor; if (!transparent(b)) base = [b]; }
+        let acc = base;
+        while (layers.length) { const top = layers.pop(); acc = top.flatMap((t) => acc.map((a) => over(t, a))).slice(0, 24); }
         return acc;
       };
+      const bgOf = (el) => bgCandidates(el)[0];
       const ratio = (a, b) => { const x = lum(a), y = lum(b); return Number(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)).toFixed(2)); };
       const visible = (n) => { const r = n.getBoundingClientRect(); if (!r.width || !r.height) return false; const cs = getComputedStyle(n); return cs.visibility !== "hidden" && cs.display !== "none" && Number(cs.opacity) > 0.05; };
       const inView = (n) => { const r = n.getBoundingClientRect(); return r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth; };
       const tag = document.querySelector("[data-harness-tag]");
       const scopes = [document.querySelector("#tenant-shell-main"), ...document.querySelectorAll("[data-sonner-toast]")].filter(Boolean);
       const textEls = scopes.flatMap((sc) => [sc, ...sc.querySelectorAll("*")]).filter((n) => n !== tag && [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()) && visible(n) && inView(n));
+      // The E09 elements themselves: every portal bubble (its "Portal · …" label's bubble), the Portal composer
+      // (textarea up to the block holding its "Posts in … client portal" note) and the outcome toasts. Each
+      // measurement is tagged, so E09's own surface can be told apart from the inbox chrome around it.
+      const e09Roots = [
+        ...[...document.querySelectorAll("#tenant-shell-main span")].filter((n) => /^Portal · /.test(n.textContent.trim()) && n.children.length <= 2).map((n) => n.parentElement?.parentElement).filter(Boolean),
+        (() => { const ta = document.querySelector("#tenant-shell-main textarea"); if (!ta) return null; let n = ta; while (n && !/Posts in .* client portal/.test(n.textContent)) n = n.parentElement; return n; })(),
+        ...document.querySelectorAll("[data-sonner-toast]"),
+      ].filter(Boolean);
+      const inE09 = (n) => e09Roots.some((r) => r.contains(n));
       const disabled = (n) => !!n.closest("button:disabled, [aria-disabled='true'], fieldset:disabled");
-      const contrast = textEls.filter((n) => !disabled(n)).map((n) => ({ text: n.textContent.trim().slice(0, 50), ratio: ratio(over(getComputedStyle(n).color, bgOf(n)), bgOf(n)), color: getComputedStyle(n).color, bg: bgOf(n) }));
+      const contrast = textEls.filter((n) => !disabled(n)).map((n) => {
+        const col = getComputedStyle(n).color;
+        const worst = bgCandidates(n).map((bg) => ({ bg, r: ratio(over(col, bg), bg) })).sort((a, b) => a.r - b.r)[0];
+        return { e09: inE09(n), text: n.textContent.trim().slice(0, 50), ratio: worst.r, color: col, bg: worst.bg, el: n.tagName.toLowerCase() + (typeof n.className === "string" && n.className ? "." + n.className.split(" ").slice(0, 4).join(".") : "") };
+      });
       // Placeholders are text too.
       for (const t of document.querySelectorAll("#tenant-shell-main textarea, #tenant-shell-main input")) {
         if (!visible(t) || !inView(t) || t.value || !t.placeholder) continue;
         const bg = bgOf(t); const col = getComputedStyle(t, "::placeholder").color;
-        contrast.push({ text: `placeholder: ${t.placeholder.slice(0, 40)}`, ratio: ratio(over(col, bg), bg), color: col, bg });
+        contrast.push({ e09: inE09(t), text: `placeholder: ${t.placeholder.slice(0, 40)}`, ratio: ratio(over(col, bg), bg), color: col, bg });
       }
       const low = contrast.filter((c) => c.ratio < 4.5);
 
-      // Gold: every brand gold token resolved to its computed colour; an element painting one in its text,
-      // fill or border is gold spent. The only place that may spend it is the primary act (Send).
-      const rootCs = getComputedStyle(document.querySelector("#tenant-shell-main"));
-      const probe = document.createElement("i"); document.body.append(probe);
-      const resolve = (v) => { probe.style.color = ""; probe.style.color = v; if (!probe.style.color) probe.style.color = `hsl(${v})`; return probe.style.color ? getComputedStyle(probe).color : null; };
+      // Gold: every brand gold token (and the gold gradient's stops) resolved to its computed colour INSIDE the
+      // inbox, so the tokens' own scoping applies — plus any paint in the gold hue band, so an off-token gold is
+      // caught too. Each element painting gold is then classed:
+      //   primaryAct — the composer's Send (the one act this surface exists for);
+      //   goldAct    — another control drawn with the gold Button variant (a declared act; reported, not failed);
+      //   warning    — the paint IS the --warning token (semantic status; in light theme it equals --gold-dark);
+      //   decorative — everything else: gold spent on a resting surface. Any of these fails the frame.
+      const main = document.querySelector("#tenant-shell-main");
+      const host = document.createElement("span"); host.style.color = "rgb(1, 2, 3)"; main.append(host);
+      const resolve = (expr) => { const probe = document.createElement("i"); host.append(probe); probe.style.color = expr; const c = getComputedStyle(probe).color; probe.remove(); return c === "rgb(1, 2, 3)" ? null : c; };
+      const tokenOf = (t) => resolve(`var(${t})`) ?? resolve(`hsl(var(${t}))`);
       const goldTokens = ["--pg-gold", "--pg-gold-core", "--pg-gold-fill", "--pg-gold-deep", "--cd-gold", "--gold", "--gold-dark", "--gold-light", "--accent"];
-      const goldRgb = [...new Set(goldTokens.map((t) => rootCs.getPropertyValue(t).trim()).filter(Boolean).map(resolve).filter(Boolean))];
-      probe.remove();
+      const gradProbe = document.createElement("i"); gradProbe.style.backgroundImage = "var(--gradient-gold)"; host.append(gradProbe);
+      const gradStops = getComputedStyle(gradProbe).backgroundImage.match(/rgba?\([^)]*\)/g) ?? [];
+      const goldRgb = [...new Set([...goldTokens.map(tokenOf), ...gradStops].filter(Boolean))];
+      const warningRgb = tokenOf("--warning");
+      host.remove();
       const strip = (c) => parse(c).slice(0, 3).map(Math.round).join(",");
       const goldKeys = new Set(goldRgb.map(strip));
+      const hueGold = (c) => {
+        if (alphaOf(c) < 0.15) return false;
+        const [r, g, b] = parse(c).slice(0, 3).map((v) => v / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+        if (!d) return false; const sat = d / (1 - Math.abs(2 * l - 1));
+        const h = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
+        return h >= 30 && h <= 52 && sat >= 0.4 && l >= 0.3 && l <= 0.85;
+      };
+      const isGold = (c) => goldKeys.has(strip(c)) || hueGold(c);
       const sendBtn = [...document.querySelectorAll("#tenant-shell-main button")].find((b) => b.textContent.trim() === "Send");
-      const goldEls = [...document.querySelectorAll("#tenant-shell-main *")].filter(visible).filter((n) => {
+      const goldEls = [...document.querySelectorAll("#tenant-shell-main *")].filter(visible).flatMap((n) => {
         const cs = getComputedStyle(n);
-        const paints = [cs.color, cs.backgroundColor, cs.borderTopWidth !== "0px" ? cs.borderTopColor : null, cs.borderLeftWidth !== "0px" ? cs.borderLeftColor : null].filter((c) => c && !transparent(c));
-        return paints.some((c) => goldKeys.has(strip(c)));
-      }).map((n) => ({ el: `${n.tagName.toLowerCase()}${n.className && typeof n.className === "string" ? "." + n.className.split(" ").slice(0, 3).join(".") : ""}`, text: n.textContent.trim().slice(0, 30), primaryAct: !!(sendBtn && (n === sendBtn || sendBtn.contains(n))) }));
-      const goldOutsideAct = goldEls.filter((g) => !g.primaryAct);
+        const stops = /gradient/.test(cs.backgroundImage) ? (cs.backgroundImage.match(/rgba?\([^)]*\)/g) ?? []) : [];
+        const svg = n instanceof SVGElement ? [cs.fill, cs.stroke].filter((c) => c && c.startsWith("rgb")) : [];
+        const paints = [n.childNodes.length && [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()) ? cs.color : null, cs.backgroundColor, ...stops, ...svg,
+          cs.borderTopWidth !== "0px" ? cs.borderTopColor : null, cs.borderLeftWidth !== "0px" ? cs.borderLeftColor : null].filter((c) => c && !transparent(c));
+        const hit = paints.find(isGold);
+        if (!hit) return [];
+        const act = n.closest("button");
+        const kind = sendBtn && (n === sendBtn || sendBtn.contains(n)) ? "primaryAct"
+          : act && /bg-gradient-gold/.test(act.className) ? "goldAct"
+          : warningRgb && strip(hit) === strip(warningRgb) ? "warning"
+          : alphaOf(hit) < 0.2 ? "wash"
+          : "decorative";
+        return [{ kind, e09: inE09(n), paint: hit, el: `${n.tagName.toLowerCase()}${typeof n.className === "string" && n.className ? "." + n.className.split(" ").slice(0, 4).join(".") : ""}`, text: (n.closest("button,[data-thread-key],span,div")?.textContent ?? "").trim().slice(0, 40) }];
+      });
+      const goldOutsideAct = goldEls.filter((g) => g.kind === "decorative");
+      const goldActs = [...new Set(goldEls.filter((g) => g.kind === "goldAct").map((g) => g.text))];
+      const goldWarning = goldEls.filter((g) => g.kind === "warning").length;
+      const goldWash = goldEls.filter((g) => g.kind === "wash").map((g) => g.el);
 
       // Horizontal overflow: the page, the inbox, and any visible element that runs past the viewport edge
       // without sitting inside its own horizontal scroller.
@@ -164,8 +220,9 @@ try {
       const has = (t) => text.includes(t);
       const helpRow = [...document.querySelectorAll("[data-thread-key]")].find((r) => r.textContent.includes("Jordan Rivera"));
       return {
-        contrastMin: contrast.length ? Math.min(...contrast.map((c) => c.ratio)) : null, textCount: contrast.length, low: low.slice(0, 8),
-        goldTokens: goldRgb, gold: goldEls.length, goldOutsideAct, overflowX, pastEdge, smallTargets,
+        contrastMin: contrast.length ? Math.min(...contrast.map((c) => c.ratio)) : null, textCount: contrast.length, low,
+        e09: { roots: e09Roots.length, textCount: contrast.filter((c) => c.e09).length, contrastMin: (() => { const e = contrast.filter((c) => c.e09); return e.length ? Math.min(...e.map((c) => c.ratio)) : null; })(), low: low.filter((c) => c.e09), goldOutsideAct: goldEls.filter((g) => g.e09 && g.kind === "decorative") },
+        goldTokens: goldRgb, warningToken: warningRgb, gold: goldEls.length, goldActs, goldWarning, goldWash, goldOutsideAct, overflowX, pastEdge, smallTargets,
         labels: { portalClient: has("Portal · Jordan Rivera"), portalYou: has("Portal · You"), help: has("Help request"), email: has("Before we sign off on phase two"), sms: has("Thursday works") },
         note: has(`Posts in Jordan Rivera's client portal`),
         railHelpPreview: helpRow ? helpRow.textContent.includes("Help request:") : null,
@@ -194,7 +251,7 @@ try {
     results[name] = { ok, ...m, checks, behaviour, errors, consoleErrors: consoleErrors.slice(0, 10) };
     await page.screenshot({ path: path.join(out, `${name}.png`) });
     await ctx.close();
-    console.log(name, ok ? "OK" : "FAIL", JSON.stringify({ contrastMin: m.contrastMin, low: m.low.slice(0, 3).map((l) => `${l.text}:${l.ratio}`), gold: m.gold, goldOutsideAct: m.goldOutsideAct.slice(0, 3), overflowX: m.overflowX, pastEdge: m.pastEdge, smallTargets: m.smallTargets.slice(0, 6), checks: Object.entries(checks).filter(([, v]) => !v).map(([k]) => k), errors: errors.slice(0, 2), consoleErrors: consoleErrors.length }));
+    console.log(name, ok ? "OK" : "FAIL", JSON.stringify({ e09: { contrastMin: m.e09.contrastMin, low: m.e09.low.map((l) => `${l.text}:${l.ratio}`), gold: m.e09.goldOutsideAct.length, roots: m.e09.roots }, contrastMin: m.contrastMin, low: m.low.slice(0, 3).map((l) => `${l.text}:${l.ratio}`), gold: m.gold, goldActs: m.goldActs, goldWarning: m.goldWarning, goldOutsideAct: m.goldOutsideAct.slice(0, 3), overflowX: m.overflowX, pastEdge: m.pastEdge, smallTargets: m.smallTargets.slice(0, 6), checks: Object.entries(checks).filter(([, v]) => !v).map(([k]) => k), errors: errors.slice(0, 2), consoleErrors: consoleErrors.length }));
   }
 } finally {
   await browser.close();

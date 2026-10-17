@@ -1,0 +1,70 @@
+# ANT-21 — Task and Deal receipt navigation after reload
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: confirmed native CRM result -> existing reduced assistant metadata -> existing history reader -> existing CRM result card -> current-workspace canonical destination
+PAIGE_UI_DESIGN: PASS: routed project UI modules, incumbent Operate card and Impeccable craft/hardening checks applied; no layout, style, motion, shell or department redesign
+MATERIAL_FLOW_CHANGE: NO: restore the incumbent Work/Pipeline receipt navigation after reload without adding an action, approval, route or data reader
+FLOW_PROTOTYPE: NOT_REQUIRED: bounded recovery of the existing navigation; the owner-directed Task surface-only limitation is preserved
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible existing/future Solo owner can reopen Work from a recorded Task result or the exact native Deal from its recorded Pipeline result
+VISUAL_DIRECTION: PASS: incumbent border, spacing, typography, icons, break-words and native anchor remain; Task says Open Work and never claims exact Task focus
+AUTOMATED_EVIDENCE: PASS: 145 cases across five actual test files, zero failures/skips, process exit0; original immutable runtime against the new tests produced68 PASS/21 FAIL; shared four-module candidate also has peer22 PASS
+STATIC_EVIDENCE: PASS: final scoped application compiler completed with zero diagnostics; final seven-file ESLint run exited0; pinned Impeccable engine0.1.5 returned an empty detector result
+RENDERED_EVIDENCE: UNVERIFIED: actual React server markup was checked; no new browser or authenticated shell capture was performed under this bounded lease
+BEHAVIORAL_EVIDENCE: PASS: actual assistantTurnMetadata AST, pure metadata reader, React card, shared grammar/router and native acknowledgement classifier exercised; this is local automated behavior, not authenticated native acceptance
+AUTHENTICATED_RUNTIME: UNVERIFIED: root owns reviewed release, ordinary Task/Deal history reload and current-tenant native readback; no customer or provider operation was performed
+KEYBOARD_FOCUS: UNVERIFIED: existing native anchor semantics and styling are unchanged; browser focus and assistive-technology evidence were not repeated
+ZOOM_REFLOW: UNVERIFIED: no CSS/geometry change; actual mounted shell zoom/reflow remains outside this local proof
+REDUCED_MOTION: NOT_APPLICABLE: no motion or animation change
+STATE_COVERAGE: PASS: closed native actions, positive receipt/success, agreeing UUIDs, malformed/conflicting/missing identities, absent/deleted records, false/unknown receipts, unsupported/bulk actions, raw historical payloads, no workspace, workspace replacement and incumbent non-Solo live surfaces
+TRUTHFUL_STATE_LABELS: PASS: Task is surface_only and persists a null record ID; Deal exact focus requires the existing native exact locator; references grant no read/execution authority and never establish completion independently
+SOLO_UI: YES: one shared current-workspace implementation for every eligible Solo; no account allowlist, role grant or customer-specific path
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new authenticated shell capture
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no new authenticated shell capture
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no new authenticated shell capture
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no new authenticated shell capture
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no new authenticated shell capture
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no new authenticated shell capture
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no new authenticated shell capture
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no new authenticated shell capture
+UNVERIFIED: distinct source/pin review, explicit root pin application, restrictive postapplication proof, hosted exact-head CI and reviewed release/authenticated reload acceptance remain owed
+
+OWNER_INTENT: Restore truthful durable receipt navigation through the existing Chat metadata/card and native destinations; preserve complete Task management as a separate owed journey rather than claiming an exact Task router exists.
+MUST_NOT_HAPPEN: No raw address/name/readback persistence, deleted or unconfirmed record link, exact Task claim, new reader/store/writer/route, automatic fingerprint acceptance, provider operation or cross-workspace stale address.
+MUST_PRESERVE: Native CRM commands, action-risk, JWT/tenant authorization, current-workspace tier helpers, canonical routing, department read RLS, contact history recovery, receipt/unknown semantics and incumbent non-Solo live locator behavior.
+ACCEPTANCE_CRITERIA: A confirmed supported Task result rehydrates Open Work without its ID; a confirmed supported Deal result rehydrates Open deal with its validated native UUID; invalid or legacy reduced history stays generic and current Solo addressing ignores old raw URLs.
+MOTION_PURPOSE: NONE_AFFECTED: existing receipt has no newly authored animation.
+PROTECTED_SEAMS: PASS: Chat source and all29 dispatch scalars are unchanged; native CRM/Spine/Kit/SQL/approval/provider/role/writers are unchanged; C0b refuses the one modified helper until reviewed explicit application.
+
+INTERNAL_BUILD_IDENTITY: 012de1d2e8aa2be5eb7eb1306d5eab4e2a2f505f source; 5de0c6f29af1401207870e309c6bc89b6b060f99 current-main composition; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed paige-ai-chat helper release and exact source readback); evidence=work/crm-task-deal-proof/receipt.json
+RELEASE_CHANNEL: development: local frozen candidate only; no publication or activation authorized until root review and protected-source gates
+RELEASE_CLASSIFICATION: internal-only: restore existing receipt navigation after reload through existing destinations
+CUSTOMER_RELEASE_IDENTITY: none: internal restoration increment; owner product acceptance remains PENDING
+RELEASE_NOTE_REQUIRED: no: internal restoration evidence only; root owns customer release communication
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local source and regression proof; exact Task routing remains unavailable and hosted/authenticated/Live acceptance is PROOF OWED
+RELEASE_RECOVERY: position=forward-fix or revert the bounded receipt projection; reference=original contact-only helper and existing root release governance
+
+## Source and routing boundary
+
+The source freeze is012de1d2e8aa2be5eb7eb1306d5eab4e2a2f505f on9d824ab95cb57cba3c23f69963f55b11102940a1. Calendar owner supplied the separate shared grammar commitbada3615248f048b41f27d21e0748e812dda1c98, consumed without manual module edits asce573148b. Its four mode/blobs remain identical to that source. It adds Calendar department/null and Pipeline UUID/no-subject normalization and labels, preserving sales_pipeline, the six-reference cap, contact and invoice behavior. Root's distinct review of that shared source is still required.
+
+The existing crm-command successfulResultResponse emits an exact Solo `pipeline?deal=UUID` route for surviving Deals, but explicitly emits Task surface_only with no native Task-ID focus router. The actual Operations workspace opens Task inspection from its current loaded list; this slice does not add a query parameter or claim an exact Task link. The Pipeline command desk already accepts `deal`, finds the matching record in the currently authorized workspace, and rejects absent/excluded focus. No department or canonical route map is changed.
+
+Only existing single-record actions can project: Task create/update/assign/reschedule/complete/reopen/cancel and Deal create/update/assign_owner/assign_contact/move/close/reopen. Native succeeded and receipt_recorded===true are required. Fresh Task/Deal payloads require valid agreeing readback/locator UUIDs and the native surface_only/exact status respectively. Deleted, unsupported, bulk, unknown, failed and malformed results produce no new reference. Task metadata contains only operations_work/null; Deal contains only pipeline/UUID. Neither permits subject, title, URL or extra reference keys. The existing history reader refuses raw historical payloads and never backfills old reduced rows.
+
+The card adopts these new references only through the existing genuine-Solo tier lens. It rebuilds the address from the current account and ignores raw locators for managed Solo Task/Deal families. Contacts retain the existing recovery behavior. Other live tiers retain the incumbent native locator branch; new stored Task/Deal references are not adopted there, and no non-Solo restoration claim is made.
+
+## Proof and retained failures
+
+The actual immutable9d helper/card runtime against the new regression tests produced68 PASS/21 FAIL/0 skip. The source hashes and finally-restored implementation bytes are captured in actual-baseline-source.json; this causal comparison was run after implementation began because the first sandbox attempt collected zero tests. That first attempt and the subsequent sandbox TEMP rename EPERM remain separate infrastructure failures, not product fail-first evidence.
+
+Before shared grammar composition, the implementation produced78 PASS/11 FAIL, all eleven failures being Deal cases awaiting the shared Pipeline destination. After consuming the exact shared commit and adding four more coverage cases, final-focused.json records145 PASS/0 FAIL/0 skip across five files: history helper/actual assistant projection75, actual card18, native acknowledgement30, frame grammar8 and workspace routing14. The command used the normal application Vitest config, existing cached dependencies and an isolated TEMP directory. Unit network guards remained installed.
+
+A broader six-file run was interrupted INCOMPLETE after the existing mounted Chat CRM cases had printed successful contact reload/current-workspace/late-A checks; no complete green result is inferred from that campaign. One duplicate diagnostic run was stopped INCOMPLETE when delayed tool output established that the final145 campaign had already completed successfully. No old count is substituted for new proof.
+
+The scoped compiler uses the normal application options and native Vite declaration, includes both changed frontend/test paths and the pure helper/transitive imports, and reports zero diagnostics. An earlier new fixture widened destination to string; explicit literal typing fixed that compile error without weakening a runtime assertion. Whole-application types, browser geometry/focus and authenticated RLS are not claimed. Source finish review checks incumbent layout/class preservation, truthful labels, no URL/name persistence and current-workspace addressing; full rendered finish proof remains owed. Impeccable's pre-existing stale design sidecar warning was retained without unrelated regeneration.
+
+## Protected-source proposal and coordination
+
+The actual incumbent validator/exporter finds one changed ANCESTRY_SOURCES pair for crm-result-reference.ts, from3c7d4f6c33c0a1a05044471f5ee9033a80d4c3eae51df26704a60a82126c14aa to8671158fb14f8d6b2e555a53951687180ab7be0c9061de458ecbc6fddc8842c2. All29 dispatch scalars and103 other existing dependency pins match. Chat, guard algorithms/extractors/maps/metadata/inventory and every guard byte are unchanged. The actual strict validator correctly refuses the changed helper. fingerprint-inputs-NOT-ACCEPTED.json is a review proposal, never acceptance or a permission grant. Root must independently review/apply only any explicitly approved pair; a distinct postapplication reviewer must then verify exact application and restrictive controls.
+
+The six Linear contracts ANT-21/52/147/50/51/138 and current Master/Brain/Harness/portfolio were grounded before edit. Calendar owns record-links/workspaceLinks; root owns shared Chat/C0b and release; native-approval and E09 workers retain their own source. Main advanced through de7dc5a650b0d00e1e10f6b0e47c5fe60510a84f invoice source and2a520832637c85a1964835d3e0afe5969217fda1 invitation UI. No path overlaps the eight product/test paths here. The normal conflict-free merge5de0c6f29af1401207870e309c6bc89b6b060f99 has the exact preflight tree3cb353dd11175af056a95146a82b71babf43bca9; all eight owned mode/blobs equal012de1d, all other tracked paths equal2a520 main, before this evidence-only addition. No manual resolution or pin renewal occurred. The145 local controls apply to the unchanged source; exact final-head CI is still owed. Knowledge2313 and legacy2312 are separate increments. No matrix, Linear, registry, credential, SQL, customer, provider, production or release action was taken by this slice.

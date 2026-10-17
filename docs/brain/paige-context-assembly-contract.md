@@ -35,6 +35,16 @@ Master §3's inventory: context assembly "remains distributed." Grounded:
 
 ## 2. The contract
 
+E09 customer-private Chat extends the existing thread/turn records with an explicit
+customer audience. Native identity comes from the caller-bound CRM relationship,
+never the staff active-workspace pointer. Private customer turns require issued
+actor/business/intent and terminal evidence; legacy admin/owner thread visibility
+does not grant access to this audience. The existing v2 admission/publication
+contracts consume that relationship without changing rollout or executor gates.
+This native seam alone does not activate customer model input, Knowledge
+publication, tools, Live or browser history; those consumers must bind the same
+audience, exclude owner context and preserve current publication permissions.
+
 **One ContextBundle per turn, many typed sources, zero silent degradation.**
 
 1. **Identity once, scope-checked continuously.** Actor, tenant, workspace, role, and

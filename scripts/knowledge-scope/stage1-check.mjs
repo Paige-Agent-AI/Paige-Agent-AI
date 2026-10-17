@@ -481,8 +481,9 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       // scenario that scripts `tenant_id` (including null) keeps exactly what it wrote.
       ...(typeof tableExtras.paige_chat_threads === "function" ? {
         paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
-          row && typeof row === "object" && !("tenant_id" in row)
-            ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null, ...row } : row),
+          row && typeof row === "object"
+            ? { id: bodyExtras.threadId, caller_user_id: USER,
+              ...(!("tenant_id" in row) ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null } : {}), ...row } : row),
       } : {}),
     },
   });
@@ -849,6 +850,10 @@ group("active-account changes after retrieval fail closed before provider egress
 // answer binding) now runs the turn classifier, and re-checks the account after it. That inserts ONE
 // boundary right after the pre-egress check — "post-classifier" — and every later index moves up by one.
 // The tables below are re-derived for it, not bumped.
+// Streaming authority now adds ONE post-budget scope boundary per provider attempt.
+// Measured controls: tool+text11, two-tools+text12, text7, tool+fail+text12,
+// credit-document11. Initial stream is index3 on fresh agentic turns; later stream
+// attempts add their own boundary after the existing pre-continuation/closing check.
 const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
 const assertShape = async (label, plan, expected) => {
   const control = await drive({
@@ -864,12 +869,12 @@ const assertShape = async (label, plan, expected) => {
 
 group("active-account changes during the agent loop stop later provider calls");
 {
-  await assertShape("grp13 tool+text", ["tool", "text"], 9);
+  await assertShape("grp13 tool+text", ["tool", "text"], 11);
   const r = await drive({
     personaTenant: CHILD,
-    // initial resolution → initial provider boundary → post-classifier boundary → post-round
-    // boundary → actual tool-dispatch boundary (where the switch occurs)
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    // initial resolution → pre-egress → post-classifier → stream-budget
+    // → post-round → actual tool dispatch
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1318,10 +1323,10 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
   // race that cannot be un-sent. This exercises the document stream's OWN close-boundary check
   // rather than either 409 above — the point at which the provider reply exists and
   // `holdDirectFramesForKnowledgeScope` is holding it back. The sequence carries one extra CHILD
-  // vs. 15.9d so the AGENCY switch lands at the close boundary (call 4), not the re-check (call 3).
+  // vs.15.9d plus the new stream-budget check: switch at close, after both providers.
   const lateSwitch = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     bodyExtras: { document },
@@ -1329,7 +1334,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
   });
   assert(
     "15.10a the late-switch case really reached the provider (else it is just the 409 again)",
-    lateSwitch.providerCalls.length > 0,
+    lateSwitch.providerCalls.length === 2,
     `provider calls: ${lateSwitch.providerCalls.length}`,
   );
   assert(
@@ -1353,7 +1358,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
 // ── 16 · The dispatch guard is asserted PER TOOL, not once per batch ──────────────
 group("tool dispatch re-asserts scope for every tool, not once per round");
 {
-  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 10);
+  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 12);
   // WHY THIS GROUP EXISTS. Reverting the dispatch check from per-tool back to per-batch
   // was undetectable by every other check in this file: a round with ONE tool behaves
   // identically either way, and every earlier group uses a one-tool round. A batch is not
@@ -1425,8 +1430,8 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // honest statement of the gap rather than a claim that one exists.
   assert(
     "16.0 the round first completes at the boundary a PER-TOOL guard implies",
-    firstComplete === 6,
-    `first complete at n=${firstComplete}; 6 means four refusal boundaries precede completion (post-classifier, post-round, tool-1, tool-2). 5 means only three — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
+    firstComplete === 7,
+    `first complete at n=${firstComplete}; 7 means five refusal boundaries precede completion (post-classifier, stream-budget, post-round, tool-1, tool-2). 6 means one was removed. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
   );
 
   const beforeFirst = await runTools(firstComplete - 2);
@@ -1463,7 +1468,7 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 // ── 17 · The durable record is written at the LAST boundary, not the first ────────
 group("Knowledge telemetry commits only after the reply has actually crossed");
 {
-  await assertShape("grp17 tool-less round", ["private-text"], 6);
+  await assertShape("grp17 tool-less round", ["private-text"], 7);
   // Telemetry is the one DURABLE row this mechanism writes, so it is committed after the
   // reply has been forwarded and the scope re-asserted a final time — not before the frames,
   // where a later cancellation would leave a permanent record claiming a retrieval grounded
@@ -1472,11 +1477,11 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // either way) or holds scope throughout (so telemetry either way).
   //
   // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-classifier,
-  // 3 post-round, 4 pre-emission, 5 post-drain. n=5 therefore switches the account at the post-drain
+  // 3 stream-budget,4 post-round,5 pre-emission,6 post-drain. n=6 switches at post-drain
   // boundary ALONE — the reply is already out, and only the durable write is left to refuse.
   const atPostDrain = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1520,7 +1525,7 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // its own reason rather than as a side effect of shifting later call indices.
   const atPreEmission = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1541,20 +1546,21 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
 // ── 18 · Each loop-continuation boundary is individually load-bearing ─────────────
 group("every provider re-entry in the agent loop re-asserts scope on its own");
 {
-  await assertShape("grp18a tool+text", ["tool", "text"], 9);
-  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 9);
+  await assertShape("grp18a tool+text", ["tool", "text"], 11);
+  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 12);
   // The loop re-asserts scope at three distinct points and, until this group existed, TWO of
   // them could be deleted with the suite still fully green — the surviving checks happened to
   // catch the switch at a neighbouring boundary instead. A guard that no check can distinguish
   // from its neighbour is a guard nobody will notice losing. Each assertion below pins ONE
   // boundary by timing the switch to land exactly on it (indices, single-tool round:
-  //   0 turn start · 1 pre-egress · 2 post-classifier · 3 post-round · 4 tool dispatch
-  //   · 5 pre-continuation · 6 pre-closing-call · 7 pre-emission · 8 post-drain)
+  //   0 turn start ·1 pre-egress ·2 post-classifier ·3 stream-budget ·4 post-round
+  //   ·5 tool dispatch ·6 pre-continuation ·7 continuation-budget ·8 pre-closing-call
+  //   ·9 closing-budget ·10 pre-emission ·11 post-drain)
   // and by counting provider calls, which is the only signal that separates "the next call was
   // never made" from "it was made and its result was later suppressed".
   //
   // THE TABLE ABOVE IS ONLY VALID FOR THE FAILED-CONTINUATION SHAPE both assertions below
-  // drive. When the continuation SUCCEEDS there is no closing call, and index 6 is the second
+  // drive. When the continuation SUCCEEDS there is no closing call, and index8 is the second
   // round's post-round check instead of the pre-closing-call one. No assertion here is wrong —
   // 18.3 proves the failed-continuation path was actually taken — but do not time a new switch
   // off this table without re-deriving it for the round shape you are driving. Groups 16 and 17
@@ -1565,7 +1571,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     after a switch re-sends the prior account's private content to the provider.
   const atContinuation = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1587,7 +1593,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     a different code path from (a) and cannot be covered by it.
   const atClosingCall = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "fail", "text"],
@@ -1755,7 +1761,8 @@ group("a document turn withholds its reply at every scope boundary, including a 
   // total happens to land where it started; a pin that only watched the total would have shown
   // green through both. It did not, because it failed at 9 and made the missing upload row
   // visible. NOT "bumped because the test failed": each change was found, named and driven.
-  const DOC_TURN_PERSONA_CALLS = 10;
+  // The gateway's new post-budget check adds exactly one to this one-stream shape.
+  const DOC_TURN_PERSONA_CALLS = 11;
   assert(
     "19.0 the control run makes enough persona calls for these timings to mean anything",
     TOTAL >= 9,
@@ -1949,6 +1956,13 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
   return true;
 });
 const personaCallsOf = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+// A thread now also checks scope in optional post-turn maintenance. Calibrate
+// publication refusals at the actual assistant-write boundary, not that later call.
+const personaCallsBeforeAssistantWrite = (r) => {
+  const write = r.rec.rpc.findIndex(c => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  if (write < 0) throw new Error("positive publication control did not persist its assistant turn");
+  return r.rec.rpc.slice(0, write).filter(c => c.name === "get_paige_persona_context").length;
+};
 
 group("safety-first streaming: protected turns buffer, ordinary turns stream");
 {
@@ -2446,7 +2460,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     choiceFrames(choiceClean.responseText).join("").includes("CHILD-PRIVATE-MARKER"),
     choiceFrames(choiceClean.responseText).join("").slice(0, 300),
   );
-  const choiceTotal = personaCallsOf(choiceClean);
+  const choiceTotal = personaCallsBeforeAssistantWrite(choiceClean);
   const choiceAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(choiceTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -2553,7 +2567,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     artifactFrames(studioClean.responseText).length === 0,
     studioClean.responseText.slice(0, 500),
   );
-  const studioTotal = personaCallsOf(studioClean);
+  const studioTotal = personaCallsBeforeAssistantWrite(studioClean);
   const studioAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(studioTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -3052,7 +3066,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     sumClean.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-SUMMARY-MARKER")),
     JSON.stringify(sumClean.providerCalls).slice(0, 200),
   );
-  const sumTotal = personaCallsOf(sumClean);
+  const sumTotal = personaCallsBeforeAssistantWrite(sumClean);
   assert(
     "21.s CONTROL — and a summary-bearing turn is protected",
     sumTotal >= 2,
@@ -3400,7 +3414,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     assistantAppends(persistClean).length > 0,
     JSON.stringify(persistClean.rec.rpc.map((c) => c.name)),
   );
-  const persistTotal = personaCallsOf(persistClean);
+  const persistTotal = personaCallsBeforeAssistantWrite(persistClean);
   const persistAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(persistTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -3874,7 +3888,7 @@ group("a turn that stops on a changed workspace still says what became of each a
   // approvals that was — or it can only guess.
   const token = "e".repeat(16);
   const r = await drive({
-    personaTenant: CHILD, personaSequence: [CHILD, CHILD, CHILD, AGENCY], memberships: [AGENCY, CHILD],
+    personaTenant: CHILD, personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY], memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER", provider: ["tool", "text"],
     bodyExtras: { approvedConfirmations: [token] },
   });

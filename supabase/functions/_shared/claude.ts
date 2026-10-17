@@ -294,6 +294,8 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
     model,
     max_tokens: opts.maxTokens ?? 2048,
     messages: opts.messages,
+    // Match the existing streamed path's automatic caching; omitted TTL keeps the default 5m.
+    cache_control: { type: "ephemeral" },
   };
   if (opts.system) body.system = opts.system;
   if (opts.temperature != null && !modelRejectsSampling(model)) body.temperature = opts.temperature;
@@ -772,6 +774,7 @@ export async function gatewayCompat(
   _url: string,
   init: { body?: string; method?: string; headers?: unknown },
   trace?: TraceCtx,
+  beforeProviderAttempt?: () => boolean | Promise<boolean>,
 ): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: string; json: () => Promise<any>; text: () => Promise<string> }> {
   const raw = init?.body ? JSON.parse(init.body) : {};
   // A body that parses to a non-object (`null`, a number) is treated as empty so the call fails as a
@@ -823,6 +826,18 @@ export async function gatewayCompat(
   }
   // ctx carries the gate hit into every downstream trace writer (both spread it).
   const ctx: TraceCtx = { ...(trace ?? {}), ...(budgetGateHits ? { doctrine_gate_hits: budgetGateHits } as TraceCtx : {}) };
+
+  // Trusted in-process authority runs AFTER this gateway's awaited budget reads.
+  // Refusal is a caller decision, never an Anthropic error or fallback reason.
+  if (beforeProviderAttempt) {
+    let current = false;
+    try { current = await beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+    if (!current) {
+      if (trace) trace.fabric_route = null;
+      return { ok: false, status: 0, failureClass: "caller_refused",
+        json: async () => ({ error: "Caller authority could not be verified.", code: "caller_refused" }), text: async () => "" };
+    }
+  }
 
   try {
     if (parsed.stream === true) {

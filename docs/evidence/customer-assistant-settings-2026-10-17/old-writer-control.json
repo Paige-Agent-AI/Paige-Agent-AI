@@ -1,0 +1,292 @@
+{
+  "mode": "assistant-settings-unsafe-control",
+  "evidenceClass": "synthetic-native-postgresql",
+  "fullSupabaseReplay": "UNVERIFIED",
+  "authenticatedAcceptance": "NOT_RUN",
+  "migrationSHA256": "3c88c08a3522361e0f6b0ec00db65b33184b69f7476918a95c43d082392695e8",
+  "presentationSHA256": "1ee70024c0733f2b1e73605ad4a92c9ea952793990522cc34a1f7e338799312a",
+  "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
+  "assistantSettingsMigrationSHA256": "b78dce549fe73151e5fdc349aeec41acad9bae5999d74cd985bb8d4b055f060e",
+  "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
+  "results": [
+    {
+      "name": "Native fixture models the canonical global partial unique link index",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual authenticated caller gets canonical own profile without raw table SELECT",
+      "status": "PASS"
+    },
+    {
+      "name": "Complete explicit allowlist and no future/private CRM fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Primary addresses come from tenant-matching canonical contact methods",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign tenant argument supplies no authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign subject cannot select this tenant relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked authenticated caller gets no profile",
+      "status": "PASS"
+    },
+    {
+      "name": "No selected tenant resolves only the one legitimate relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous callable access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous helper access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Authenticated session without subject cannot call profile",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone is not a customer identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation keeps the valid native tenant brand, ABI and canonical overlay",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation switches only with the actual authenticated subject",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked and missing subjects receive no presentation",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous cannot execute either presentation reader",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation revocation is effective on the next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes archived and merged client relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes an inactive sponsoring business",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation preserves native ancestor inheritance and own legal-logo fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Link revocation takes effect on next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Reload reads actual updated profile and consent",
+      "status": "PASS"
+    },
+    {
+      "name": "Reads produce no client, address or tenant mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "Future cross-business fixture preserves the canonical per-tenant unique link",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous relationship refuses instead of earliest-row selection",
+      "status": "PASS"
+    },
+    {
+      "name": "Both presentation readers refuse future ambiguous business relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit future relationship selection stays isolated",
+      "status": "PASS"
+    },
+    {
+      "name": "Disposable future-shape cleanup restores the canonical global guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage advancement returns the unchanged three-column ABI and canonical saved state",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing durable stage audit attributes the exact actor and client",
+      "status": "PASS"
+    },
+    {
+      "name": "Same or earlier stage remains a no-op with no new audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Caller payload cannot redirect stage mutation to a foreign client",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous stage invocation refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing subject cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked identity cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone cannot become a customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Null stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked link cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous future relationship cannot advance an arbitrary row",
+      "status": "PASS"
+    },
+    {
+      "name": "A concurrent archive winning the lock prevents stage change and audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Source fixture uses the observed native ownership and brand permission bodies",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical owner saves bounded customer-facing settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Partial assistant edit preserves disabled policy and unrelated saved fields",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- false\n"
+    },
+    {
+      "name": "Welcome update does not overwrite saved assistant policy",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- false\n"
+    },
+    {
+      "name": "Admin retains the existing native brand/configuration authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Native ownership flag remains authoritative without inventing an owner role",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary member cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign owner cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner naming foreign business cannot change configuration or another business",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed top-level patch preserves saved records",
+      "status": "PASS"
+    },
+    {
+      "name": "Malformed module patch preserves saved records",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical customer presentation reloads exactly the authorized saved assistant",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'New guide'\n"
+    },
+    {
+      "name": "Other feature data remains unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical writer owner, security mode, search path and ACL are preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing parent ownership can configure its child through the canonical predicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Two native concurrent partial assistant saves preserve both updates",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'Concurrent guide'\n"
+    },
+    {
+      "name": "Authority withdrawn while waiting for the tenant row refuses the save",
+      "status": "FAIL",
+      "error": "The expression evaluated to a falsy value:\n\n  assert(refused)\n"
+    }
+  ],
+  "passed": 63,
+  "failed": 5
+}

@@ -40,11 +40,29 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       business_game_plan: "Open Business Game Plan",
       trust_compass: "Open Trust Compass",
       mind: "Open Mind",
+      calendar: "Open Calendar",
+      pipeline: "Open pipeline",
     });
   });
 });
 
 describe("workspaceLinkTarget", () => {
+  it("canonical pipeline deal references re-resolve exact focus to the current SOLO workspace", () => {
+    const reference = { destination: "pipeline" as const, record_id: UUID };
+    expect(workspaceLinkTarget(reference, soloTenant)).toEqual({ label: "Open deal", to: "/solo/3855/growth/pipeline?deal=" + UUID, status: "exact" });
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_number: 9999 })?.to).toBe("/solo/9999/growth/pipeline?deal=" + UUID);
+    expect(workspaceLinkTarget({ ...reference, record_id: null }, soloTenant)).toEqual({ label: "Open pipeline", to: "/solo/3855/growth/pipeline", status: "surface_only" });
+    expect(workspaceLinkTarget({ ...reference, record_id: "malformed" }, soloTenant)?.status).toBe("surface_only");
+    expect(routeLinkTarget(reference, "solo", null)).toBeNull();
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_type: "agency" })).toBeNull();
+  });
+  it("Calendar re-resolves through the incumbent tier map, never exact booking focus", () => {
+    const reference = { destination: "calendar" as const, record_id: UUID };
+    expect(workspaceLinkTarget(reference, soloTenant)).toEqual({ label: "Open Calendar", to: "/solo/3855/calendar/week", status: "surface_only" });
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_number: 9999 })?.to).toBe("/solo/9999/calendar/week");
+    expect(workspaceLinkTarget(reference, subTenant)).toEqual({ label: "Open Calendar", to: "/business/3856/calendar/week", status: "surface_only" });
+    expect(routeLinkTarget(reference, "solo", null)).toBeNull();
+  });
   it("E2 references re-resolve to the CURRENT account and fail closed outside Solo", () => {
     const reference = { destination: "executive" as const, record_id: null };
     expect(workspaceLinkTarget(reference, soloTenant)?.to).toBe("/solo/3855/command-center/executive");

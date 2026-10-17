@@ -1,5 +1,5 @@
 import { CheckCircle2, ExternalLink } from "lucide-react";
-import { workspaceLinkTarget, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
+import { workspaceLinkTarget, workspaceLinkTier, type WorkspaceLinkTenant } from "@/lib/links/workspaceLinks";
 import { crmResultRecordReference, type CrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 
 export type PaigeCrmResult = CrmResultMetadata & {
@@ -21,11 +21,15 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
   // whenever the receipt is shown.
   const created = !absent && result.action.endsWith(".create");
   const label = result.action.replace(/\./g, " ");
-  const reference = crmResultRecordReference(result);
+  const soloTaskOrDeal = workspaceLinkTier(account) === "solo" && /^(task|deal)\./.test(result.action);
+  const projected = crmResultRecordReference(result);
+  // New Task/Deal history recovery is Solo-only; other live tiers keep their
+  // incumbent native locator contract, without adopting a new Work reference.
+  const reference = result.action.startsWith("contact.") || soloTaskOrDeal ? projected : null;
   const target = reference ? workspaceLinkTarget(reference, account) : null;
-  // Other live native families keep their incumbent locator behavior. The history
-  // reader never hydrates locators; contact references always use current workspace routing.
-  const liveLocator = !result.action.startsWith("contact.") ? result.record_locator : null;
+  // The history reader never hydrates locators. Managed Solo references always
+  // rebuild addresses from the current workspace, never a stored/live URL.
+  const liveLocator = !result.action.startsWith("contact.") && !soloTaskOrDeal ? result.record_locator : null;
   const href = target?.to || liveLocator?.deep_link || liveLocator?.surface_url || null;
   const exact = target?.status === "exact" || (!target && liveLocator?.deep_link_status === "exact");
   const record = String(reference?.subject || result.readback?.client_ref || result.readback?.title || result.record_locator?.record_id || "CRM record");
@@ -42,7 +46,8 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
           </p>
           {href && (
             <a className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline" href={href}>
-              {exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
+              {target && soloTaskOrDeal ? (reference?.destination === "operations_work" ? "Open Work" : target.label)
+                : exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
         </div>

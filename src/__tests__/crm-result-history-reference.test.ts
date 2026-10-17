@@ -37,7 +37,7 @@ describe("bounded CRM reference normalization", () => {
   it.each(["contact.create", "contact.update", "contact.archive", "contact.restore", "contact.link_company", "contact.unlink_company", "contact.assign_coach", "contact.assign_owner", "contact.merge"])("keeps a verified surviving contact for %s", action => {
     expect(crmResultRecordReference({ ...native(), action })).toEqual({ destination: "contacts", record_id: ID, subject: "CLT-1234" });
   });
-  it.each(["contact.hard_delete", "contact.bulk_update", "contact.future", "company.create", "deal.move", "task.create", "activity.log", "invoice.create"])("does not invent an exact reference for %s", action => {
+  it.each(["contact.hard_delete", "contact.bulk_update", "contact.future", "company.create", "deal.delete", "task.delete", "activity.log", "invoice.create"])("does not invent an exact reference for %s", action => {
     expect(crmResultRecordReference({ ...native(), action })).toBeNull();
   });
   it.each([false, "true", null, undefined])("requires a recorded native receipt (%j)", receipt_recorded => {
@@ -70,5 +70,70 @@ describe("bounded CRM reference normalization", () => {
     expect(readCrmResultMetadata([{ ...native(), record_reference: { destination: "contacts", record_id: ID }, url: "/foreign", profile: "private" }])).toEqual([reduced]);
     expect(readCrmResultMetadata([{ ...reduced, record_reference: { destination: "contacts", record_id: ID }, profile: "private" }])).toEqual([reduced]);
     expect(readCrmResultMetadata([null, false, { action: {} }])).toEqual([]);
+  });
+});
+
+const OTHER_ID = "e4000000-0000-4000-8000-0000000c0002";
+const taskActions = ["task.create", "task.update", "task.assign", "task.reschedule", "task.complete", "task.reopen", "task.cancel"];
+const dealActions = ["deal.create", "deal.update", "deal.assign_owner", "deal.assign_contact", "deal.move", "deal.close", "deal.reopen"];
+const nativeFamily = (family: "task" | "deal") => ({ action: `${family}.update`, outcome: "succeeded", receipt_recorded: true,
+  readback: { id: ID, title: "Private title", metadata: { private: true } },
+  record_locator: { record_id: ID, deep_link_status: family === "task" ? "surface_only" : "exact",
+    surface_url: "/solo/999/foreign", deep_link: family === "deal" ? `/solo/999/growth/pipeline?deal=${ID}` : null } });
+const familyReference = (family: "task" | "deal") => family === "task"
+  ? { destination: "operations_work", record_id: null }
+  : { destination: "pipeline", record_id: ID };
+
+describe("recorded Task and Deal history uses only native receipt references", () => {
+  it.each(taskActions)("keeps only a Work surface reference for %s", action => {
+    expect(crmResultRecordReference({ ...nativeFamily("task"), action })).toEqual(familyReference("task"));
+  });
+  it.each(dealActions)("keeps the existing exact Pipeline reference for %s", action => {
+    expect(crmResultRecordReference({ ...nativeFamily("deal"), action })).toEqual(familyReference("deal"));
+  });
+  it.each(["task", "deal"] as const)("persists and hydrates only the bounded %s projection through actual assistant metadata", family => {
+    const saved = JSON.parse(JSON.stringify(metadata(nativeFamily(family)))).bundleRef.paige_crm_result[0];
+    expect(saved).toEqual({ action: `${family}.update`, outcome: "succeeded", receipt_recorded: true, record_reference: familyReference(family) });
+    expect(readCrmResultMetadata([saved])).toEqual([saved]);
+    expect(JSON.stringify(saved)).not.toMatch(/Private|metadata|readback|locator|999|foreign/);
+  });
+  it.each(["task", "deal"] as const)("refuses missing, malformed, conflicting or removed native %s records", family => {
+    const result = nativeFamily(family);
+    for (const patch of [
+      { readback: null }, { readback: { id: ID, absent: true } }, { readback: { id: "legacy-id" } },
+      { record_locator: null }, { record_locator: { ...result.record_locator, record_id: null } },
+      { record_locator: { ...result.record_locator, record_id: OTHER_ID } },
+      { record_locator: { ...result.record_locator, deep_link_status: "unavailable" } },
+      { record_locator: { ...result.record_locator, deep_link_status: family === "task" ? "exact" : "surface_only" } },
+    ]) expect(crmResultRecordReference({ ...result, ...patch })).toBeNull();
+  });
+  it.each(["task", "deal"] as const)("requires true receipt and succeeded outcome for %s", family => {
+    for (const receipt_recorded of [false, "true", 1, null, undefined]) expect(crmResultRecordReference({ ...nativeFamily(family), receipt_recorded })).toBeNull();
+    for (const outcome of ["failed", "pending", "unknown", "success", undefined]) expect(crmResultRecordReference({ ...nativeFamily(family), outcome })).toBeNull();
+  });
+  it.each(["task.delete", "task.bulk_update", "task.future", "deal.delete", "deal.bulk_update", "deal.future"])("does not project deleted/bulk/unrecognized %s", action => {
+    expect(crmResultRecordReference({ ...nativeFamily(action.startsWith("task.") ? "task" : "deal"), action })).toBeNull();
+  });
+  it.each(["task", "deal"] as const)("rejects malformed stored %s references, extra fields and raw history", family => {
+    const row = { action: `${family}.update`, outcome: "succeeded", receipt_recorded: true };
+    const reference = familyReference(family);
+    for (const extra of [{ subject: "Private title" }, { subject: "CLT-1234" }, { path: "/foreign" }, { url: "https://example.invalid" },
+      { destination: family === "task" ? "pipeline" : "operations_work" }, { record_id: family === "task" ? ID : null }, { record_id: "legacy-id" }, { record_id: undefined }]) {
+      expect(readCrmResultMetadata([{ ...row, record_reference: { ...reference, ...extra } }])[0].record_reference).toBeUndefined();
+    }
+    expect(readCrmResultMetadata([nativeFamily(family)])).toEqual([row]);
+    expect(readCrmResultMetadata([{ ...row, record_reference: reference, readback: { id: ID } }])).toEqual([row]);
+    expect(readCrmResultMetadata([row])).toEqual([row]);
+  });
+  it("does not combine a stored projection with contradictory fresh evidence", () => {
+    expect(crmResultRecordReference({ ...nativeFamily("deal"), record_reference: { destination: "pipeline", record_id: OTHER_ID } })).toBeNull();
+    expect(crmResultRecordReference({ ...nativeFamily("task"), readback: { id: ID, absent: true }, record_reference: familyReference("task") })).toBeNull();
+    expect(crmResultRecordReference({ ...nativeFamily("task"), record_locator: { record_id: OTHER_ID, deep_link_status: "surface_only" }, record_reference: familyReference("task") })).toBeNull();
+  });
+  it("normalizes matching native UUIDs without retaining task identity or deal subject", () => {
+    for (const family of ["task", "deal"] as const) {
+      const result = nativeFamily(family);
+      expect(crmResultRecordReference({ ...result, readback: { id: ID.toUpperCase(), title: "Private title", client_ref: "CLT-1234" } })).toEqual(familyReference(family));
+    }
   });
 });

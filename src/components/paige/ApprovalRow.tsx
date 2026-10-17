@@ -1,15 +1,9 @@
-// The star row of the Live desk (cc-spec §1.2 group 1, closes B1). Inline
-// Approve calls the execute-approval seam (§10): it APPROVES AND ACTS — email/SMS
-// drafts get sent (send-message stamps the row approved+sent_at), and categories
-// with no executor yet are acknowledged (marked approved) as before. This closes
-// the old silent-drop where Approve flipped status but nothing ran. On success:
-// gold check flash + the row collapses (motion #2) and the realtime subscription
-// ticks the count down. On error: toast, keep the row.
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Check, Timer, User, Loader2 } from "lucide-react";
+// The existing approval door. Acknowledgement is not necessarily execution.
+import { useEffect, useId, useRef, useState } from "react";
+import { Timer, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useTenantContext } from "@/hooks/useTenantContext";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,181 +12,187 @@ import { cn } from "@/lib/utils";
 import { resolveVpForActionKind } from "@/lib/paige/vpDepartments";
 import type { ApprovalQueueRow } from "@/hooks/usePendingApprovals";
 
-const SLA_LABEL: Record<string, string> = {
-  overdue: "Overdue",
-  due_soon: "Due soon",
-  on_track: "On track",
-  closed: "Closed",
-  unscheduled: "No SLA",
-};
-
-// Left tick + chip color, never color-only (S4): the word rides along.
-const TICK_COLOR: Record<string, string> = {
-  overdue: "bg-destructive",
-  due_soon: "bg-gradient-gold",
-  on_track: "bg-muted-foreground/40",
-  closed: "bg-muted-foreground/30",
-  unscheduled: "bg-muted-foreground/30",
-};
-
-const CHIP_COLOR: Record<string, string> = {
-  overdue: "border-destructive/40 text-destructive",
-  due_soon: "border-accent/40 text-accent",
-  on_track: "text-muted-foreground",
-  closed: "text-muted-foreground",
-  unscheduled: "text-muted-foreground",
-};
-
+const SLA_LABEL: Record<string,string> = { overdue:"Overdue",due_soon:"Due soon",on_track:"On track",closed:"Closed",unscheduled:"No SLA" };
+const TICK_COLOR: Record<string,string> = { overdue:"bg-destructive",due_soon:"bg-gradient-gold",on_track:"bg-muted-foreground/40",closed:"bg-muted-foreground/30",unscheduled:"bg-muted-foreground/30" };
+const CHIP_COLOR: Record<string,string> = { overdue:"border-destructive/40 text-destructive",due_soon:"border-accent/40 text-accent",on_track:"text-muted-foreground",closed:"text-muted-foreground",unscheduled:"text-muted-foreground" };
 function contactLabel(a: ApprovalQueueRow): string {
-  if (a.contact_first_name || a.contact_last_name) {
-    return `${a.contact_first_name ?? ""} ${a.contact_last_name ?? ""}`.trim();
+  return a.contact_first_name || a.contact_last_name ? [a.contact_first_name,a.contact_last_name].filter(Boolean).join(" ") : a.contact_email ?? "—";
+}
+type Props = { a: ApprovalQueueRow; showDecline?: boolean; /** Explicit parent readback, never replay. */ onResolved?: () => void };
+const object = (v: unknown): v is Record<string,unknown> => !!v && typeof v==="object" && !Array.isArray(v);
+type Report = "executed"|"scheduled"|"queued"|"acknowledged"|"already"|"in_progress"|"unknown"|"refused"|"failed"|"unavailable"|"declined";
+const REPORT: Record<Report,string> = {
+  executed:"The reviewed action completed.",
+  scheduled:"Approved and scheduled. Nothing has been sent yet.",
+  queued:"Approved and queued. Execution has not been confirmed.",
+  acknowledged:"Approval recorded. No automated action was executed.",
+  already:"This approval was already handled. No new execution was confirmed.",
+  in_progress:"This approval is in progress. Execution has not been confirmed.",
+  unknown:"The outcome could not be confirmed. It may have gone through. Inspect the record and refresh before making another decision.",
+  refused:"The request was refused or your workspace changed. No completed action was reported. Refresh before making another decision.",
+  failed:"The action reported a failure. No completed action was confirmed. Refresh to inspect its current status.",
+  unavailable:"The request could not be started. Refresh before making another decision.",
+  declined:"Decline confirmed. The reviewed action was rejected.",
+};
+/** Only the incumbent endpoint protocol; exact identity is checked by the caller. */
+function executionReport(data: Record<string,unknown>): Report {
+  if(typeof data.ok!=="boolean" || typeof data.executed!=="boolean") return "unknown";
+  if(["scheduled","queued","acknowledged"].some(k=>k in data && typeof data[k]!=="boolean")
+    || "already" in data && typeof data.already!=="string") return "unknown";
+  const alternatives=[data.scheduled===true,data.queued===true,data.acknowledged===true,typeof data.already==="string"].filter(Boolean).length;
+  if(!data.ok) {
+    if(data.executed || alternatives) return "unknown";
+    return data.act_outcome==="failed" ? "failed" : data.act_outcome==="approval_pending" ? "refused" : "unknown";
   }
-  return a.contact_email ?? "—";
+  if(data.executed) return alternatives===0 && (data.act_outcome===undefined || data.act_outcome==="executed") ? "executed" : "unknown";
+  if(alternatives!==1 || data.act_outcome!==undefined) return "unknown";
+  if(data.scheduled===true) return "scheduled";
+  if(data.queued===true) return "queued";
+  if(data.acknowledged===true) return "acknowledged";
+  return data.already==="in_progress" ? "in_progress" : ["approved","sent"].includes(String(data.already)) ? "already" : "unknown";
 }
 
-export function ApprovalRow({
-  a,
-  showDecline = false,
-  onResolved,
-}: {
-  a: ApprovalQueueRow;
-  /** When true, render a ghost "Decline" control with a reason popover (1c-vii
-   *  Drafts panel). Defaults off so existing Live-desk callers are unchanged (§18). */
-  showDecline?: boolean;
-  /** Fired after a successful approve or decline, so a parent list can refresh. */
-  onResolved?: () => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [collapsing, setCollapsing] = useState(false);
-  const [approved, setApproved] = useState(false);
-  const [declining, setDeclining] = useState(false);
-  const [rationale, setRationale] = useState("");
-  const [rejectBusy, setRejectBusy] = useState(false);
-
-  const decline = async () => {
-    const reason = rationale.trim();
-    if (!reason) { toast.error("Add a quick reason so Paige learns what to change."); return; }
-    setRejectBusy(true);
-    // Reject-with-reason: a decline is a decision write (not the execute transition), so it uses
-    // this surviving surface's own tenant-scoped RLS-protected UPDATE directly (§18) —
-    // permissive admin|coach + RESTRICTIVE tenant policy gate it server-side.
-    const { error } = await supabase
-      .from("paige_pending_approvals")
-      .update({ status: "rejected", decision_rationale: reason, reviewed_at: new Date().toISOString() })
-      .eq("id", a.id);
-    setRejectBusy(false);
-    if (error) { toast.error(error.message ?? "Couldn't decline that."); return; }
-    setDeclining(false);
-    setCollapsing(true);
-    onResolved?.();
-  };
-
-  const dc = a.draft_content as Record<string, unknown> | string | null;
-  const fallback =
-    typeof dc === "object" && dc !== null
-      ? String(dc.subject ?? dc.body ?? dc.preview ?? "")
-      : String(dc ?? "");
-  const summary = a.summary ?? fallback;
-  const state = a.sla_state;
-  // VP attribution (§243/#245): credit the department's owning VP from the action_kind
-  // (`category`). Resolves to null for legacy categories that map to no department, so
-  // <PaigeAttribution> renders nothing — never a fabricated credit (§13).
-  const draftedVp = resolveVpForActionKind(a.category);
-
-  const approve = async () => {
-    setBusy(true);
-    // Approve AND act via the callable execute-approval seam (§10): email/SMS
-    // drafts are sent (send-message flips the row to approved+sent_at); other
-    // categories are acknowledged (marked approved) as before.
-    const { data, error } = await supabase.functions.invoke("execute-approval", {
-      body: { approval_id: a.id },
+export function ApprovalRow(props: Props) {
+  const tenant=useTenantContext(), { isImpersonating }=useImpersonation();
+  const generation=useRef(0), identityRef=useRef("");
+  const latest=useRef(props.a), invalidated=useRef<ApprovalQueueRow|null>(null);
+  const [,authChanged]=useState(0);
+  const scopeIdentity=JSON.stringify([tenant.activeUserId,tenant.activeTenantId,tenant.loading,tenant.accountContextLoading,tenant.accountContextStatus,isImpersonating]);
+  const previousScope=useRef(scopeIdentity);
+  if(previousScope.current!==scopeIdentity) { previousScope.current=scopeIdentity;invalidated.current=latest.current; }
+  if(invalidated.current && invalidated.current!==props.a) invalidated.current=null;
+  if(latest.current!==props.a) generation.current++;
+  latest.current=props.a;
+  const identity=JSON.stringify([scopeIdentity,
+    props.a.id,props.a.tenant_id,props.a.summary,props.a.draft_content,props.a.source,props.a.category,props.a.status]);
+  if(identityRef.current!==identity) { identityRef.current=identity; generation.current++; }
+  const captured=generation.current;
+  useEffect(()=>{
+    const {data:{subscription}}=supabase.auth.onAuthStateChange(event=>{
+      if(event==="INITIAL_SESSION") return;
+      generation.current++;invalidated.current=latest.current;authChanged(n=>n+1);
     });
-    setBusy(false);
-    if (error || (data && data.ok === false)) {
-      toast.error(error?.message ?? data?.error ?? "Couldn't complete that action."); // keep the row on failure
-      return;
-    }
-    // Success beat: flash the check, then collapse. Realtime refresh ticks count.
-    setApproved(true);
-    setTimeout(() => setCollapsing(true), 240);
-    onResolved?.();
-  };
+    return ()=>subscription.unsubscribe();
+  },[]);
+  const allowed=tenant.accountContextStatus==="ready" && !tenant.loading && !tenant.accountContextLoading && !isImpersonating
+    && !!tenant.activeUserId && (!tenant.activeTenantId || props.a.tenant_id===tenant.activeTenantId);
+  // A null platform workspace retains its incumbent backend gate, with no new tenant role.
+  if(!allowed || invalidated.current) return <div><p role="status">Refresh the approval in your current ordinary workspace to review it. Any previous request may already have gone through.</p>
+    {props.onResolved && <Button size="sm" variant="ghost" onClick={props.onResolved}>Refresh status</Button>}</div>;
+  return <ApprovalRowContent key={identity+":"+captured} {...props} actorId={tenant.activeUserId!} tenantId={tenant.activeTenantId}
+    current={()=>generation.current===captured && identityRef.current===identity}/>;
+}
 
-  return (
-    <div className={cn("cc-collapse", collapsing && "cc-collapsing")}>
-      <div>
-        <div className="relative flex items-start gap-2.5 rounded-md border p-2.5 pl-3 hover:bg-muted/40 transition-colors">
-          <span className={cn("absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full", TICK_COLOR[state] ?? "bg-muted-foreground/30")} />
-          {approved && (
-            <span className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-accent/10">
-              <Check className="h-6 w-6 text-accent" />
-            </span>
-          )}
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium line-clamp-2 min-w-0">{summary || "(no summary)"}</p>
-              <Badge variant="outline" className={cn("shrink-0 text-[10px] tabular-nums", CHIP_COLOR[state] ?? "")}>
-                <Timer className="mr-1 h-3 w-3" />
-                {SLA_LABEL[state] ?? state}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              {a.category && <span className="capitalize">{a.category.replace(/_/g, " ")}</span>}
-              {a.contact_id && (
-                <span className="inline-flex items-center gap-1 min-w-0">
-                  <User className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{contactLabel(a)}</span>
-                </span>
-              )}
-            </div>
-            {draftedVp && (
-              <PaigeAttribution
-                contributors={[{ vp: draftedVp }]}
-                size="sm"
-                showMark={false}
-                leadIn="Drafted by your Paige team"
-              />
-            )}
-            <div className="flex items-center justify-end gap-1.5 pt-0.5">
-              <Button
-                size="sm"
-                onClick={approve}
-                disabled={busy || approved || rejectBusy}
-                className="h-7 bg-gradient-gold text-accent-foreground hover:opacity-90"
-              >
-                {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
-              </Button>
-              {/* Edit-then-approve routes to the full detail surface (§18 — no inline
-                  duplicate editor); "Decline" is neutral/ghost (gold stays on Approve). */}
-              <Button asChild size="sm" variant="ghost" className="h-7">
-                <Link to={"/choose-account"}>{showDecline ? "Edit" : "View"}</Link>
-              </Button>
-              {showDecline && (
-                <Button size="sm" variant="ghost" className="h-7 text-muted-foreground" onClick={() => setDeclining((d) => !d)} disabled={busy || approved}>
-                  Decline
-                </Button>
-              )}
-            </div>
-            {showDecline && declining && (
-              <div className="space-y-2 rounded-md border border-border bg-muted/30 p-2">
-                <Textarea
-                  value={rationale}
-                  onChange={(e) => setRationale(e.target.value)}
-                  rows={2}
-                  placeholder="What needs to change? Paige learns from this."
-                  className="text-sm"
-                />
-                <div className="flex items-center justify-end gap-1.5">
-                  <Button size="sm" variant="ghost" className="h-7" onClick={() => setDeclining(false)} disabled={rejectBusy}>Cancel</Button>
-                  <Button size="sm" variant="outline" className="h-7" onClick={decline} disabled={rejectBusy || !rationale.trim()}>
-                    {rejectBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Decline draft"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,current}:Props & {
+  actorId:string;tenantId:string|null;current:()=>boolean;
+}) {
+  const id=useId(), mounted=useRef(false), flight=useRef(false);
+  const [busy,setBusy]=useState(false),[declining,setDeclining]=useState(false),[rationale,setRationale]=useState("");
+  const [detail,setDetail]=useState(false),[report,setReport]=useState<Report|null>(null);
+  const viewRef=useRef<HTMLButtonElement>(null),closeRef=useRef<HTMLButtonElement>(null),declineRef=useRef<HTMLButtonElement>(null),reasonRef=useRef<HTMLTextAreaElement>(null);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  useEffect(()=>{if(detail) closeRef.current?.focus();},[detail]);
+  useEffect(()=>{if(declining) reasonRef.current?.focus();},[declining]);
+  const live=()=>mounted.current && current();
+  const close=()=>{setDetail(false);viewRef.current?.focus();};
+  const cancel=()=>{setDeclining(false);declineRef.current?.focus();};
+  const decide=async(decline:boolean)=>{
+    if(flight.current || report || !live() || decline && !rationale.trim()) return;
+    flight.current=true;setBusy(true);
+    const expires=performance.now()+8_000;let dispatched=false;
+    const check=()=>{if(!live() || performance.now()>=expires) throw new Error("intent_expired");};
+    const wait=<T,>(start:()=>PromiseLike<T>):Promise<T>=>{
+      check();
+      return new Promise<T>((resolve,reject)=>{
+        const timer=setTimeout(()=>reject(new Error("intent_expired")),Math.max(0,expires-performance.now()));
+        Promise.resolve().then(()=>{check();return start();}).then(value=>{
+          clearTimeout(timer);try{check();resolve(value);}catch(error){reject(error);}
+        },error=>{clearTimeout(timer);reject(error);});
+      });
+    };
+    const authority=async()=>{
+      const user=await wait(()=>supabase.auth.getUser());
+      if(user.error || user.data.user?.id!==actorId) throw new Error("authority_changed");
+      const workspace=await wait(()=>supabase.rpc("current_user_tenant_id"));
+      if(workspace.error || workspace.data!==tenantId) throw new Error("authority_changed");
+      check();
+    };
+    try {
+      await authority();let next:Report;
+      if(decline) {
+        const reason=rationale.trim();
+        // Same surviving RLS decision writer; no zero-row acknowledgement can imply a decision.
+        const result=await wait(()=>{
+          dispatched=true;
+          let q=supabase.from("paige_pending_approvals").update({status:"rejected",decision_rationale:reason,reviewed_at:new Date().toISOString()})
+            .eq("id",a.id).eq("status","pending");
+          q=a.tenant_id ? q.eq("tenant_id",a.tenant_id) : q.is("tenant_id",null);
+          return q.select("id,tenant_id,status,decision_rationale").maybeSingle();
+        });
+        next=!result.error && result.data?.id===a.id && result.data.tenant_id===a.tenant_id
+          && result.data.status==="rejected" && result.data.decision_rationale===reason ? "declined":"unknown";
+      } else {
+        const result=await wait(()=>{dispatched=true;return supabase.functions.invoke("execute-approval",{body:{approval_id:a.id}});});
+        next=result.error || !object(result.data) || result.data.approval_id!==a.id
+          || a.source==="paige_orchestration" && result.data.executed===true && result.data.act_outcome!=="executed"
+          ? "unknown":executionReport(result.data);
+      }
+      await authority();
+      if(live()) {setReport(next);setDeclining(false);}
+    } catch {if(live()) setReport(dispatched?"unknown":"unavailable");}
+    // Latch this intent even before React paints its report. Only a newly read
+    // parent row remounts the control; refresh itself never replays the decision.
+    finally {if(live()) setBusy(false);}
+  };
+  const dc:unknown=a.draft_content;
+  const fallback=object(dc) ? [dc.subject,dc.body,dc.preview].find(x=>typeof x==="string") as string|undefined : typeof dc==="string" ? dc:"";
+  const summary=a.summary ?? fallback;
+  const args=a.source==="paige_orchestration" && a.category==="owner.task" && object(dc) && dc.capability==="owner.task" && object(dc.args) ? dc.args:null;
+  const state=a.sla_state,draftedVp=resolveVpForActionKind(a.category);
+  return <div className="cc-collapse" aria-busy={busy}><div>
+    <div className="relative flex items-start gap-2.5 rounded-md border p-2.5 pl-3 hover:bg-muted/40 transition-colors">
+      <span className={cn("absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full",TICK_COLOR[state] ?? "bg-muted-foreground/30")}/>
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-medium whitespace-pre-wrap break-words min-w-0">{summary || "(no summary)"}</p>
+          <Badge variant="outline" className={cn("shrink-0 text-[10px] tabular-nums",CHIP_COLOR[state] ?? "")}><Timer className="mr-1 h-3 w-3"/>{SLA_LABEL[state] ?? state}</Badge>
         </div>
+        {args && <div className="space-y-1 whitespace-pre-wrap break-words text-sm">
+          {typeof args.title==="string" && <p>{args.title}</p>}{typeof args.description==="string" && <p>{args.description}</p>}
+        </div>}
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          {a.category && <span className="capitalize">{a.category.replace(/_/g," ")}</span>}
+          {a.contact_id && <span className="inline-flex items-center gap-1 min-w-0"><User className="h-3 w-3 shrink-0"/><span className="break-words">{contactLabel(a)}</span></span>}
+        </div>
+        {draftedVp && <PaigeAttribution contributors={[{vp:draftedVp}]} size="sm" showMark={false} leadIn="Drafted by your Paige team"/>}
+        <div className="flex flex-wrap items-center justify-end gap-1.5 pt-0.5">
+          <Button size="sm" onClick={()=>void decide(false)} disabled={busy || !!report || a.status!=="pending"}
+            className="min-h-9 h-auto bg-gradient-gold text-accent-foreground hover:opacity-90">{busy?"Checking…":"Approve"}</Button>
+          <Button size="sm" variant="ghost" className="min-h-9 h-auto" ref={viewRef} aria-expanded={detail} aria-controls={detail?id+"-detail":undefined} onClick={()=>setDetail(true)}>View</Button>
+          {showDecline && <Button size="sm" variant="ghost" className="min-h-9 h-auto text-muted-foreground" ref={declineRef}
+            onClick={()=>setDeclining(true)} disabled={busy || !!report || a.status!=="pending"}>Decline</Button>}
+        </div>
+        {detail && <section id={id+"-detail"} className="space-y-2 rounded-md border p-2 text-sm whitespace-pre-wrap break-words" aria-label="Reviewed action details"
+          onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();close();}}}>
+          {object(dc) ? <>{typeof dc.subject==="string" && <p>{dc.subject}</p>}{typeof dc.body==="string" && <p>{dc.body}</p>}
+            {typeof dc.preview==="string" && dc.preview!==dc.body && <p>{dc.preview}</p>}</>:<p>{typeof dc==="string"?dc:summary}</p>}
+          <Button size="sm" variant="ghost" ref={closeRef} onClick={close}>Close details</Button>
+        </section>}
+        {busy && <p role="status" className="text-sm text-muted-foreground">Checking the reviewed action…</p>}
+        {report && <div className="space-y-1"><p role="status" className="text-sm">{REPORT[report]}</p>
+          {onResolved ? <Button size="sm" variant="ghost" onClick={()=>{if(live()) onResolved();}}>Refresh status</Button>
+            :<p className="text-sm text-muted-foreground">Refresh this view to inspect the current status.</p>}</div>}
+        {showDecline && declining && <div className="space-y-2 rounded-md border border-border bg-muted/30 p-2"
+          onKeyDown={e=>{if(e.key==="Escape" && !busy){e.preventDefault();cancel();}}}>
+          <label htmlFor={id+"-reason"} className="text-sm">Reason for declining</label>
+          <Textarea id={id+"-reason"} ref={reasonRef} value={rationale} onChange={e=>setRationale(e.target.value)} rows={2}
+            placeholder="What needs to change? Paige learns from this." className="text-sm"/>
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <Button size="sm" variant="ghost" onClick={cancel} disabled={busy}>Cancel</Button>
+            <Button size="sm" variant="outline" onClick={()=>void decide(true)} disabled={busy || !!report || !rationale.trim()}>Decline action</Button>
+          </div>
+        </div>}
       </div>
     </div>
-  );
+  </div></div>;
 }

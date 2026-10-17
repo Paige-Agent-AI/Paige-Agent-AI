@@ -1,0 +1,260 @@
+{
+  "proofClass": "SYNTHETIC_NATIVE_KEYBOARD_SCROLL",
+  "action": "ArrowUp from focused Refresh status",
+  "geometry": {
+    "bodyScrollTop": 0,
+    "buttons": [
+      {
+        "disabled": true,
+        "focusVisible": false,
+        "fullyVisible": false,
+        "outline": "rgb(23, 19, 49) none 2.4px",
+        "rect": {
+          "height": 36,
+          "width": 76.4000015258789,
+          "x": 526.2625122070312,
+          "y": 267
+        },
+        "text": "Approve",
+        "uncovered": false
+      },
+      {
+        "disabled": false,
+        "focusVisible": false,
+        "fullyVisible": false,
+        "outline": "rgb(23, 19, 49) none 2.4px",
+        "rect": {
+          "height": 36,
+          "width": 53.41250228881836,
+          "x": 608.6625366210938,
+          "y": 267
+        },
+        "text": "View",
+        "uncovered": false
+      },
+      {
+        "disabled": true,
+        "focusVisible": false,
+        "fullyVisible": false,
+        "outline": "rgb(23, 19, 49) none 2.4px",
+        "rect": {
+          "height": 36,
+          "width": 69.4375,
+          "x": 668.0750122070312,
+          "y": 267
+        },
+        "text": "Decline",
+        "uncovered": false
+      },
+      {
+        "disabled": false,
+        "focusVisible": true,
+        "fullyVisible": false,
+        "outline": "rgb(101, 90, 150) solid 1.6px",
+        "rect": {
+          "height": 36,
+          "width": 109.5875015258789,
+          "x": 102.4875030517578,
+          "y": 351
+        },
+        "text": "Refresh status",
+        "uncovered": false
+      }
+    ],
+    "client": [
+      768,
+      384
+    ],
+    "description": {
+      "scrollWidth": 635,
+      "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+      "width": 635
+    },
+    "fontLoaded": true,
+    "inner": [
+      768,
+      384
+    ],
+    "list": {
+      "rect": {
+        "height": 337.20001220703125,
+        "width": 658.625,
+        "x": 89.6875,
+        "y": 60.60000228881836
+      },
+      "scrollWidth": 659,
+      "width": 659
+    },
+    "page": [
+      768,
+      384
+    ],
+    "paige": "closed",
+    "scrollOwners": [
+      {
+        "clientHeight": 318,
+        "overflowY": "auto",
+        "rect": {
+          "height": 318,
+          "width": 696,
+          "x": 72,
+          "y": 66
+        },
+        "scrollHeight": 318,
+        "scrollTop": 0,
+        "selector": "#tenant-shell-main"
+      },
+      {
+        "clientHeight": 273,
+        "overflowY": "visible",
+        "rect": {
+          "height": 273.20001220703125,
+          "width": 696,
+          "x": 72,
+          "y": 110.8000030517578
+        },
+        "scrollHeight": 273,
+        "scrollTop": 0,
+        "selector": "#command-panel-plan"
+      },
+      {
+        "clientHeight": 273,
+        "overflowY": "hidden",
+        "rect": {
+          "height": 273.20001220703125,
+          "width": 696,
+          "x": 72,
+          "y": 110.8000030517578
+        },
+        "scrollHeight": 273,
+        "scrollTop": 0,
+        "selector": ".gp"
+      },
+      {
+        "clientHeight": 78,
+        "overflowY": "auto",
+        "rect": {
+          "height": 77.95000457763672,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": 290.0500183105469
+        },
+        "scrollHeight": 1044,
+        "scrollTop": 667.2000122070312,
+        "selector": ".sd-field"
+      },
+      {
+        "clientHeight": 695,
+        "overflowY": "visible",
+        "rect": {
+          "height": 695.2999877929688,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": -28.200000762939453
+        },
+        "scrollHeight": 695,
+        "scrollTop": 0,
+        "selector": ".sd-rail"
+      },
+      {
+        "clientHeight": 335,
+        "overflowY": "visible",
+        "rect": {
+          "height": 334.95001220703125,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": -377.1499938964844
+        },
+        "scrollHeight": 335,
+        "scrollTop": 0,
+        "selector": ".sd-col"
+      }
+    ],
+    "statuses": [
+      {
+        "fullyVisible": true,
+        "rect": {
+          "height": 40,
+          "width": 635.0250244140625,
+          "x": 102.4875030517578,
+          "y": 307
+        },
+        "text": "The outcome could not be confirmed. It may have gone through. Inspect the record and refresh before making another decision.",
+        "uncovered": true
+      }
+    ],
+    "theme": "light",
+    "title": {
+      "scrollWidth": 635,
+      "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+      "width": 635,
+      "wrap": "break-word"
+    },
+    "layout": {
+      "col": {
+        "lastChild": {
+          "bottom": -42.20000457763672,
+          "height": 80.0999984741211,
+          "width": 660.2250366210938,
+          "x": 88.88750457763672,
+          "y": -122.3000030517578
+        },
+        "rect": {
+          "bottom": -42.199981689453125,
+          "height": 334.95001220703125,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": -377.1499938964844
+        }
+      },
+      "field": {
+        "autoRows": "max-content",
+        "columns": "662.225px",
+        "rect": {
+          "bottom": 368.0000228881836,
+          "height": 77.95000457763672,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": 290.0500183105469
+        },
+        "scrollTop": 667.2000122070312
+      },
+      "header": {
+        "columns": "420.438px 227.788px",
+        "rect": {
+          "bottom": 214.8000030517578,
+          "height": 90,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": 124.8000030517578
+        },
+        "subtitle": {
+          "bottom": 214.8000030517578,
+          "height": 37.5,
+          "width": 420.4375,
+          "x": 88.88750457763672,
+          "y": 177.3000030517578
+        }
+      },
+      "incumbentFrame": true,
+      "innerTheme": "light",
+      "rail": {
+        "overflow": "visible",
+        "rect": {
+          "bottom": 667.0999870300293,
+          "height": 695.2999877929688,
+          "width": 662.2250366210938,
+          "x": 88.88750457763672,
+          "y": -28.200000762939453
+        },
+        "scrollTop": 0
+      }
+    }
+  },
+  "png": {
+    "name": "keyboard-reflow-unknown-readback.png",
+    "width": 1536,
+    "height": 768
+  },
+  "boundary": "At78px field height text and Refresh are reachable by vertical keyboard scroll, not simultaneously fully visible"
+}

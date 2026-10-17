@@ -117,3 +117,42 @@ Hosted verify job117290660434 at `be0e67b1a94e346e080698b8bf539633c6916ec0` repo
 The distinct `gmail_native_review` specialist returned NON-AUTHOR PASS for root's two-line followup (it authored the earlier authentication fix, not this followup). Reversing just these two edits exactly reconstructs be0 handler source. Same pure normalizer, one evaluation, same authority/effect ordering and401/403/service-null behavior; no material finding. Reviewed normalized handler SHA256 `826d3a78ebf3aabca34009a7abd87e62b989e4a779d30121c9d60c1f2b43b442`, canonical `9fb28bce94b9b23d668ab2186d047bc10a5562e5484d4db57fb805293d97cf74`.
 
 Actual preflight red exit1 is retained in `work/skill-normalizer-preflight-red.log`, SHA256 `dfd365660db83bd4f05d36c2b3409246431af8fe044c064486f66c69da3e335d`; corrected preflight exits0, `work/skill-normalizer-preflight-green.log` SHA256 `a86f0c38da0ae297797a7661120d559254fda82d8d73dae6450cb6fd0bbc20c0`. Root reran the actual handler/governed two-suite campaign on this exact source:48PASS/zero failures/skips,28.63s, `work/skill-normalizer-final-48.log`. No assertion or time budget changed. Earlier hosted failure remains FAIL. New exact-head CI is required; no production release, authorization weakening, browser/provider action or full restoration claim is inferred.
+
+## 2026-10-17 composition attestation
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: existing verified skill caller -> governed decision -> privileged registry -> additional browser authority -> original domain adapter; actual48 protected handler assertions preserve this ordering
+PAIGE_UI_DESIGN: PASS: existing Skills and shared SOLO control presentation retained; this supporting backend record adds no layout or interaction
+MATERIAL_FLOW_CHANGE: NO: repair the existing authentication and source certification contracts without a new customer flow
+FLOW_PROTOTYPE: NOT_REQUIRED: existing governed skill invocation is repaired without a new customer journey or destination
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO users retain verified workspace skill authority while ordinary release source is certified accurately
+VISUAL_DIRECTION: NOT_APPLICABLE: this supporting Edge repair changes no visual design or component
+AUTOMATED_EVIDENCE: PASS: actual48 handler cases and unchanged prerequisite smoke pass at40017a7dffcbe4206685db78a22624f7055f578f; earlier failing baselines are retained below
+STATIC_EVIDENCE: PASS: reviewed type-erasure normalization and credential-first handler ordering; verifier, affected graph, risk, approval and tenant authority retain their contracts
+RENDERED_EVIDENCE: NOT_APPLICABLE: no changed visual surface in this Edge repair; Human automation render campaigns are documented in their own records
+BEHAVIORAL_EVIDENCE: PASS: protected handler-port assertions cover missing and invalid credentials, service provenance, workspace denials and browser authority; synthetic ports do not establish hosted execution
+AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary hosted skill/browser behavior after the exact deployed repair requires customer-session verification
+KEYBOARD_FOCUS: NOT_APPLICABLE: the Edge repair adds no control or focus behavior
+ZOOM_REFLOW: NOT_APPLICABLE: the Edge repair changes no viewport geometry or layout
+REDUCED_MOTION: NOT_APPLICABLE: the Edge repair changes no motion or animation
+STATE_COVERAGE: PASS: handler-port assertions cover admitted caller, missing credential, invalid session, denied workspace, browser role mismatch and infrastructure identity without a human actor
+TRUTHFUL_STATE_LABELS: PASS: unauthorized requests receive their real denial and infrastructure credentials never acquire a body-named human identity
+SOLO_UI: YES: supporting shared backend repair composes with the tenant-neutral Human automation UI; this record claims no separate UI change
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: this Edge-only repair changes no layout; automation campaign evidence remains separate
+UNVERIFIED: exact release CI, deployed source/configuration, global edge-live certification, ordinary hosted skill behavior, Live and owner acceptance require their separate evidence
+INTERNAL_BUILD_IDENTITY: 40017a7dffcbe4206685db78a22624f7055f578f reviewed Edge source dependency; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(exact served source and configuration after controlled release); evidence=docs/evidence/ui-delivery/ant21-edge-runtime-readback.md
+RELEASE_CHANNEL: development: reviewed dependency source and protected handler ports; no customer deployment established by this composition record
+RELEASE_CLASSIFICATION: internal-only: supporting authentication and release certification repair without customer version publication
+CUSTOMER_RELEASE_IDENTITY: none: customer restoration acceptance is separate from this supporting source record
+RELEASE_NOTE_REQUIRED: NO: no independent customer release version or product publication
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source and protected handler tests pass; hosted deployment and customer behavior require separate readback
+RELEASE_RECOVERY: position=preserve credential-first refusal and use a reviewed forward repair; reference=PR2271 and the retained failing-first handler and prerequisite-smoke records
+
+This attestation was added only in the Human automation composition after the aggregate UI guard correctly rejected the supporting backend record's missing schema fields. It preserves the original dated pre-edit contract and later findings below, and does not alter PR2271 source, CI, permissions or release evidence.

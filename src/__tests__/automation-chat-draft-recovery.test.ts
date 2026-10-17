@@ -77,6 +77,30 @@ async function drive(fault = '', args: object = input) {
   return { state, result: JSON.parse(outputs[0].content), recovery };
 }
 describe('automation draft exact configuration and recovery', () => {
+  it('offers the native task action and human review path instead of a bare task tool or model activation', () => {
+    let declaration: ts.ObjectLiteralExpression | undefined;
+    const find = (node: ts.Node) => {
+      if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) &&
+          p.name.getText(ast) === 'name' && ts.isStringLiteral(p.initializer) && p.initializer.text === 'automation_draft')) declaration = node;
+      ts.forEachChild(node, find);
+    };
+    find(ast); expect(declaration).toBeDefined();
+    const definition = new Function(`return (${declaration!.getText(ast)});`)();
+    expect(definition.description).toContain('action_kind owner.task');
+    expect(definition.description).toContain('Settings > Integrations > Automations');
+    expect(definition.description).not.toMatch(/then offer to turn it on|add them and send/i);
+    expect(definition.parameters.properties.steps.items.properties.tool_key.description).not.toContain("e.g. 'crm_create_task'");
+  });
+
+  it('returns the human review handoff without enabling a saved native task draft', async () => {
+    const { state, result } = await drive('', { name: 'Review new contacts', trigger_key: 'contact.created',
+      steps: [{ action_kind: 'owner.task', config: { title: 'Review the new contact' } }] });
+    expect(result).toMatchObject({ success: true, state: 'draft', granted: 'confirm', execution_started: false });
+    expect(result.note).toContain('Settings > Integrations > Automations');
+    expect(state.processes[0].state).toBe('draft');
+    expect(state.acts[0]).toMatchObject({ action_kind: 'owner.task', tool_key: null, config: { title: 'Review the new contact' } });
+  });
+
   it('verifies the native process and ordered acts before claiming it was built', async () => {
     const { state, result } = await drive();
     expect(result).toMatchObject({ success: true, automation_id: process, state: 'draft', granted: 'confirm', verified_readback: true, execution_started: false });
@@ -192,10 +216,22 @@ async function ownerTask(fault = '') {
   const calls: Array<{ fn: string; args: Row }> = [], effects: Row[] = [], results: Row[] = [];
   if (fault === 'native-sql') {
     nativeSql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)
-      values('${process}','${tenant}','Internal contact review','contact.created','${actor}','confirm','live');
+      values('${process}','${tenant}','Internal contact review','contact.created','${actor}','confirm','draft');
       insert into paige_automation_acts(id,automation_id,position,action_kind,config)
-      values('${actId}','${process}',1,'owner.task','${JSON.stringify(saved.state.acts[0].config)}'::jsonb);
-      insert into clients(id,tenant_id,first_name,last_name,account_number,source)
+      values('${actId}','${process}',1,'owner.task','${JSON.stringify(saved.state.acts[0].config)}'::jsonb);`);
+    if (nativeSql("select to_regprocedure('public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)')is not null;") === 't') {
+      // Forward human-control proof uses the ACTUAL authenticated owner writer,
+      // with native timestamp precision and the complete stored review snapshot.
+      // The older core-only proof below deliberately has not installed that seam.
+      const review = JSON.parse(nativeSql(`select jsonb_build_object('updated_at',p.updated_at,'process',_owner_task_process_review(p),'acts',
+        (select jsonb_agg(jsonb_build_object('id',a.id,'position',a.position,'action_kind',a.action_kind,'tool_key',a.tool_key,'config',a.config)order by a.position,a.id)
+          from paige_automation_acts a where a.automation_id=p.id))from paige_automations p where id='${process}';`));
+      const quote = (value: unknown) => "'" + String(value).split("'").join("''") + "'";
+      nativeSql(`set role authenticated;set request.jwt.claims='{"role":"authenticated","sub":"${actor}"}';
+        select control_owner_task_automation('${process}','arm',${quote(review.updated_at)}::timestamptz,
+          ${quote(JSON.stringify(review.process))}::jsonb,${quote(JSON.stringify(review.acts))}::jsonb);`);
+    } else nativeSql(`update paige_automations set state='live'where id='${process}';`);
+    nativeSql(`insert into clients(id,tenant_id,first_name,last_name,account_number,source)
       values('${contact}','${tenant}','Synthetic','Engine native','engine-native','test');`);
     eventId = nativeSql(`select id from paige_native_events where subject_id='${contact}';`);
   }

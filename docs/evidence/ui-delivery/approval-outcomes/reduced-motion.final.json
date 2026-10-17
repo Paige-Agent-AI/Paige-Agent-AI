@@ -1,0 +1,27 @@
+{
+  "proofClass": "NATIVE_COMPUTED_CSS_ONLY",
+  "buttons": [
+    {
+      "animation": "0s",
+      "text": "Approve",
+      "transition": "0s"
+    },
+    {
+      "animation": "0s",
+      "text": "View",
+      "transition": "0s"
+    },
+    {
+      "animation": "0s",
+      "text": "Decline",
+      "transition": "0s"
+    },
+    {
+      "animation": "0s",
+      "text": "Refresh status",
+      "transition": "0s"
+    }
+  ],
+  "reduce": true,
+  "hydratedMotion": "UNVERIFIED"
+}

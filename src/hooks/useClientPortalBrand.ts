@@ -23,7 +23,23 @@ export interface ClientPortalBrandState {
    * tenant's (§6/§11 — no jarring hand-off).
    */
   loading: boolean;
+  /** The resolver failed: whether the caller is a customer is UNKNOWN (not "not a customer"). */
+  error: boolean;
+  /**
+   * The caller IS a customer, of more than one business. The resolver can't pick one for them
+   * (choosing a business isn't built yet), so there is no single brand — but this is a known
+   * answer, not a failure, and chrome must treat the caller as a customer.
+   */
+  multipleBusinesses: boolean;
 }
+
+interface BrandRead {
+  brand: ClientPortalBrand | null;
+  multipleBusinesses: boolean;
+}
+
+const NO_BRAND: BrandRead = { brand: null, multipleBusinesses: false };
+const MULTIPLE: BrandRead = { brand: null, multipleBusinesses: true };
 
 /**
  * Loading-aware resolver for the tenant brand. Prefer this in chrome that must
@@ -31,16 +47,22 @@ export interface ClientPortalBrandState {
  * tenant brand, then fall back to the platform brand only once resolved-empty.
  */
 export function useClientPortalBrandState(): ClientPortalBrandState {
-  const { data: brand, loading } = useClientPortalRead(readBrand, null);
-  return { brand, loading };
+  const { data, loading, error } = useClientPortalRead(readBrand, NO_BRAND);
+  return { brand: data.brand, loading, error, multipleBusinesses: data.multipleBusinesses };
 }
 
-async function readBrand(): Promise<ClientPortalBrand | null> {
+async function readBrand(): Promise<BrandRead> {
   const { data, error } = await supabase.rpc("get_client_portal_brand");
-  if (error) throw error;
+  if (error) {
+    // client_portal_relationship_id() refuses, rather than guesses, when the caller holds more than
+    // one customer relationship. That refusal is an answer about who they are.
+    const { code, message } = error as { code?: string; message?: string };
+    if (code === "42501" && /select an authorized customer relationship/i.test(message ?? "")) return MULTIPLE;
+    throw error;
+  }
   const row = Array.isArray(data) ? data[0] : data;
-  if (!row || typeof row !== "object" || typeof row.tenant_id !== "string" || !row.tenant_id) return null;
-  return row as ClientPortalBrand;
+  if (!row || typeof row !== "object" || typeof row.tenant_id !== "string" || !row.tenant_id) return NO_BRAND;
+  return { brand: row as ClientPortalBrand, multipleBusinesses: false };
 }
 
 /**

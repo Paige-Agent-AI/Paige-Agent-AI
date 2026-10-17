@@ -32,6 +32,21 @@ BEGIN
  RETURN _result;
 END;
 $$;
+-- Atomic composition consumes the same native readers and caller role.
+CREATE FUNCTION pg_temp.e09_frame(_actor uuid,_role text DEFAULT 'authenticated')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _result jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role',_role)::text,true);
+ IF _role='anon' THEN SET LOCAL ROLE anon;
+ ELSIF _role='service_role' THEN SET LOCAL ROLE service_role;
+ ELSE SET LOCAL ROLE authenticated; END IF;
+ SELECT public.client_portal_frame() INTO _result;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _result;
+END;
+$$;
 
 -- Same fully replayed contract job; no additional CI database or workflow lane.
 CREATE FUNCTION pg_temp.e09_presentation(_actor uuid)
@@ -170,6 +185,7 @@ SELECT set_config('request.jwt.claims','{"sub":"e0911000-0000-0000-0000-00000000
 SET LOCAL ROLE authenticated;
 SELECT throws_ok($$ SELECT * FROM public.get_client_portal_brand() $$,'42501','select an authorized customer relationship','ambiguous business brand refuses instead of choosing the oldest row');
 SELECT throws_ok($$ SELECT public.get_client_portal_config() $$,'42501','select an authorized customer relationship','ambiguous business configuration refuses instead of choosing the oldest row');
+SELECT throws_ok($$ SELECT public.client_portal_frame() $$,'42501','select an authorized customer relationship','atomic frame refuses ambiguous future customer relationships');
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);
 SELECT is(pg_temp.e09_stage_error('e0911000-0000-0000-0000-000000000001'),'42501','ambiguous future relationships cannot advance an arbitrary client stage');
@@ -178,5 +194,98 @@ CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_
 SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future-shape cleanup restores the canonical global guard before outer rollback');
 SELECT is(pg_temp.e09_profile('e0911000-0000-0000-0000-000000000001')->>'onboarding_stage','invited','all denied stage attempts preserve the last legitimate saved stage');
 SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND target_id='e0931000-0000-0000-0000-000000000001'),2::bigint,'no-op and refused stage requests add no success audit');
+
+-- Same fully replayed database-contract job. No new workflow or identity store.
+SELECT ok((SELECT provolatile='s' AND prosecdef AND pronargs=0
+ AND proconfig=ARRAY['search_path=public, pg_temp']::text[]
+ FROM pg_proc WHERE oid='public.client_portal_frame()'::regprocedure),
+ 'atomic frame is a zero-argument STABLE definer with fixed search path');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_frame()','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_frame()','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_frame()','EXECUTE'),
+ 'only the ordinary authenticated role receives frame execution');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->>'actor_id',
+ 'e0911000-0000-0000-0000-000000000001','frame actor comes from the actual caller claims');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'profile'->>'id',
+ 'e0931000-0000-0000-0000-000000000001','frame uses the caller canonical client record');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id',
+ 'e0921000-0000-0000-0000-000000000001','frame brand belongs to that client business');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'config'->'welcome'->>'headline',
+ 'Saved greeting A','frame reload reads the saved canonical portal configuration');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000002')->'brand'->>'tenant_id',
+ 'e0921000-0000-0000-0000-000000000002','another subject receives its own business frame');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(
+ pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')) k),
+ ARRAY['actor_id','brand','config','profile']::text[],'frame has the closed top-level contract');
+SELECT ok(position('PRIVATE CRM NOTE' in pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')::text)=0
+ AND position('Foreign greeting B' in pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')::text)=0,
+ 'frame excludes private CRM notes and the other business configuration');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000099'),NULL::jsonb,
+ 'unlinked authenticated subject receives no customer frame');
+SELECT throws_ok($$ SELECT pg_temp.e09_frame(NULL) $$,'42501','customer authentication required',
+ 'an absent subject cannot borrow a customer frame');
+SELECT throws_ok($$ SELECT pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001','anon') $$,
+ '42501','permission denied for function client_portal_frame','anonymous caller cannot execute the frame');
+SELECT throws_ok($$ SELECT pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001','service_role') $$,
+ '42501','permission denied for function client_portal_frame','service credential is not customer identity');
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{}',true);
+UPDATE public.clients SET status='archived' WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'archived relationship has no frame');
+UPDATE public.clients SET status='active',merged_into_contact_id='e0931000-0000-0000-0000-000000000003'
+ WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'merged relationship has no frame');
+UPDATE public.clients SET merged_into_contact_id=NULL,linked_user_id=NULL WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'revoked link has no frame');
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001' WHERE id='e0931000-0000-0000-0000-000000000001';
+UPDATE public.tenants SET status='suspended' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001'),NULL::jsonb,'inactive business has no frame');
+UPDATE public.tenants SET status='active' WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'profile'->>'first_name','Updated',
+ 'returning frame reloads the saved profile after legitimate access is restored');
+SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='onboarding_stage_advanced' AND target_id='e0931000-0000-0000-0000-000000000001'),2::bigint,
+ 'frame reads produce no new action-success audit');
+
+-- Mutation control in this disposable, rolled-back test transaction only:
+-- corrupt the native brand projection, then remove ONLY the frame's matching
+-- business predicate. The first case must refuse; the deliberately unsafe
+-- variant must compose the mismatch, proving that the assertion is meaningful.
+CREATE FUNCTION pg_temp.e09_frame_brand_control(_remove_guard boolean)
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE
+ _brand text := pg_get_functiondef('public.get_client_portal_brand()'::regprocedure);
+ _frame text := pg_get_functiondef('public.client_portal_frame()'::regprocedure);
+ _result jsonb;
+ _state text;
+ _guard text := 'WHERE b.tenant_id = (_profile->>''tenant_id'')::uuid';
+BEGIN
+ IF position('rb.tenant_id, rb.tenant_name, rb.tenant_slug' in _brand)=0
+    OR position(_guard in _frame)=0 THEN
+  RAISE EXCEPTION 'frame control source anchor missing';
+ END IF;
+ EXECUTE replace(_brand,'rb.tenant_id, rb.tenant_name, rb.tenant_slug',
+  '''e0921000-0000-0000-0000-000000000002''::uuid, rb.tenant_name, rb.tenant_slug');
+ IF _remove_guard THEN EXECUTE replace(_frame,_guard,''); END IF;
+ BEGIN
+  _result := pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001');
+  _state := CASE WHEN _result->'brand'->>'tenant_id' <> _result->'profile'->>'tenant_id'
+   THEN 'unsafe_mismatch_observed' ELSE 'unexpected_success' END;
+ EXCEPTION WHEN insufficient_privilege THEN _state := SQLSTATE;
+ END;
+ EXECUTE _brand;
+ EXECUTE _frame;
+ RETURN _state;
+EXCEPTION WHEN OTHERS THEN
+ EXECUTE _brand;
+ EXECUTE _frame;
+ RAISE;
+END;
+$$;
+SELECT is(pg_temp.e09_frame_brand_control(false),'42501',
+ 'native frame refuses a deliberately mismatched native brand');
+SELECT is(pg_temp.e09_frame_brand_control(true),'unsafe_mismatch_observed',
+ 'removing only the business predicate makes the deliberate mismatch observable');
+SELECT is(pg_temp.e09_frame('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id',
+ 'e0921000-0000-0000-0000-000000000001','mutation control restores both actual native function definitions');
 SELECT * FROM finish();
 ROLLBACK;

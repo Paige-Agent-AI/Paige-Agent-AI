@@ -265,14 +265,17 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const memoryIdentity = JSON.stringify([user.id, clientId ?? null, !!customerFrame]);
   const memoryView = JSON.stringify([user.id, activeTenantId, clientId ?? null, !!customerFrame]);
   const summaryOriginRef = useRef(memoryView);
+  const summaryGreetingRef = useRef(messages[0]);
   const summaryOriginRevokedRef = useRef(false);
   const summaryHydrationRef = useRef({ identity: memoryIdentity, pending: tenantLoading && activeTenantId === null });
   if (summaryOriginRef.current !== memoryView) {
     // Cold startup may resolve the first workspace while only its greeting is
-    // present. Never adopt a transcript or a later identity/tenant transition.
+    // present and no contextual opening has begun. Never adopt a replacement
+    // opening, transcript or a later identity/tenant transition.
     const hydration = summaryHydrationRef.current;
     if (!summaryOriginRevokedRef.current && hydration.pending && activeTenantId &&
-      hydration.identity === memoryIdentity && messages.length === 1 && messages[0].role === "assistant") {
+      hydration.identity === memoryIdentity && !contextInjectedRef.current &&
+      messages.length === 1 && messages[0] === summaryGreetingRef.current) {
       summaryOriginRef.current = memoryView;
     } else summaryOriginRevokedRef.current = true;
     hydration.pending = false;
@@ -319,7 +322,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       resetSession();
       setInput("");
       transcriptScrollRef.current?.jumpToBottom("auto");
-      setMessages([mkMessage({ role: "assistant", content: playbook.persona.greeting })]);
+      const greeting = mkMessage({ role: "assistant", content: playbook.persona.greeting });
+      summaryGreetingRef.current = greeting;
+      setMessages([greeting]);
     };
 
     window.addEventListener("paige-factory-reset", handleFactoryReset);

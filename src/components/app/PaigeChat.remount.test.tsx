@@ -32,13 +32,14 @@ const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,ch
 const memoryFixture = vi.hoisted(() => ({
   actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001" as string | null,
   loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(),
+  context: { block: "", loading: false, hasCreditData: false },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant, loading: memoryFixture.loading }) }));
 vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture}));
 vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({
-  useClientChatContext: () => ({ contextBlock: "", isLoading: false, hasCreditData: false }),
+  useClientChatContext: () => ({ contextBlock: memoryFixture.context.block, isLoading: memoryFixture.context.loading, hasCreditData: memoryFixture.context.hasCreditData }),
 }));
 vi.mock("@/hooks/useProfileSnapshot", () => ({ useProfileSnapshot: () => ({ snapshot: {}, refresh: vi.fn() }) }));
 vi.mock("@/hooks/useBeforeUnloadGuard", () => ({ useBeforeUnloadGuard: () => undefined }));
@@ -111,6 +112,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     memoryFixture.actor = "d2000000-0000-4000-8000-000000000001";
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
     memoryFixture.loading = false; memoryFixture.scope.mockClear();
+    memoryFixture.context = { block: "", loading: false, hasCreditData: false };
     memoryFixture.auth.mockReset().mockImplementation(async () => ({ data: { user: { id: memoryFixture.actor } }, error: null }));
     memoryFixture.session.mockReset().mockImplementation(async () => ({ data: { session: { user: { id: memoryFixture.actor }, access_token: "synthetic-session" } } }));
     sessionStorage.clear();
@@ -154,7 +156,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it.each(["actor", "tenant", "client"])("rejects delayed and retained callbacks after a %s Aâ†’Bâ†’A transition", async boundary => {
+  it.each(["actor", "tenant", "client"])("rejects delayed and retained callbacks after a %s A→B→A transition", async boundary => {
     memoryFetch(); const original = scope(); await renderMemory(original);
     const oldGenerate = memoryApi.generateSessionSummary;
     const session = pendingMemory<{ data: { session: { user: { id: string }; access_token: string } } }>();
@@ -259,6 +261,46 @@ describe("normal PaigeChat remount scroll behavior", () => {
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false;
     await renderOrdinaryChat(user); expect(observedScope().enabled).toBe(false);
     await sendOrdinary("Retained conversation after hydration");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).not.toHaveBeenCalled();
+  });
+
+  it("refuses an asynchronous context opening that replaced the initial greeting before tenant hydration", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response('data: {"choices":[{"delta":{"content":"Unscoped dynamic opening"}}]}\n\ndata: [DONE]\n\n',
+      { status: 200, headers: { "Content-Type": "text/event-stream" } })));
+    memoryFixture.tenant = null; memoryFixture.loading = true;
+    memoryFixture.context = { block: "Synthetic context supplied before workspace resolution", loading: false, hasCreditData: true };
+    await renderOrdinaryChat();
+    expect(host.textContent).toContain("Unscoped dynamic opening");
+    expect(host.textContent).not.toContain("Harness greeting");
+    memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false;
+    await renderOrdinaryChat(); expect(observedScope().enabled).toBe(false);
+    await sendOrdinary("This replaced opening must not be adopted");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).not.toHaveBeenCalled();
+    await act(async () => { window.dispatchEvent(new Event("paige-factory-reset")); });
+    await sendOrdinary("Fresh explicitly reset conversation");
+    await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
+    expect(portalFixture.summary).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a started opening that completes only after tenant hydration", async () => {
+    vi.useFakeTimers();
+    const opening = pendingMemory<Response>();
+    const response = () => new Response('data: {"choices":[{"delta":{"content":"Late unknown-context opening"}}]}\n\ndata: [DONE]\n\n',
+      { status: 200, headers: { "Content-Type": "text/event-stream" } });
+    vi.stubGlobal("fetch", vi.fn().mockReturnValueOnce(opening.promise).mockImplementation(async () => response()));
+    memoryFixture.tenant = null; memoryFixture.loading = true;
+    memoryFixture.context = { block: "Synthetic pending context before workspace resolution", loading: false, hasCreditData: true };
+    await renderOrdinaryChat(); expect(fetch).toHaveBeenCalledTimes(1);
+    expect(host.textContent).toContain("Harness greeting");
+    memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001"; memoryFixture.loading = false;
+    await renderOrdinaryChat(); const hydratedScope = observedScope();
+    opening.resolve(response()); await act(memoryFlush);
+    expect(host.textContent).toContain("Late unknown-context opening");
+    expect(hydratedScope.enabled).toBe(false);
+    await sendOrdinary("This late opening must not be adopted");
     await act(async () => { await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 1); });
     expect(portalFixture.summary).not.toHaveBeenCalled();
   });

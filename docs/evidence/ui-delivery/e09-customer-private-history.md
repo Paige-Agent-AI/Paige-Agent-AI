@@ -42,4 +42,3 @@ The native caller-bound helper enforces active, unmerged, unambiguous CRM member
 Run: node scripts/proof/e09-client-self-projection.mjs --customer-chat against its automatically created disposable local PostgreSQL fixture. These identities and surrounding table shapes are synthetic; this is not hosted JWT proof. Earlier failed SQL terminator, CRLF capture and invalid terminal-fixture runs are retained locally; guards were preserved. The actual fully replayed schema/ACL job executes supabase/tests/client_portal_self_projection.sql.
 
 No peer changes are copied over: this additive migration follows main's190000 frontier and extends the incumbent tests. No new capability registry, domain writer, provider, worker or message store is introduced. Exact merge/deployment/native readback will be recorded after green release.
-

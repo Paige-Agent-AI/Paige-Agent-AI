@@ -99,4 +99,3 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  });
  return {customerChatMigration:'20271108191000_e09_customer_private_chat.sql'};
 }
-

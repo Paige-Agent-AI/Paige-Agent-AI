@@ -305,4 +305,3 @@ GRANT EXECUTE ON FUNCTION public.paige_chat_interactive_begin_v2(uuid,uuid,uuid,
 REVOKE ALL ON FUNCTION public.paige_chat_interactive_publication_context_v2(uuid,uuid) FROM PUBLIC,anon,service_role;
 GRANT EXECUTE ON FUNCTION public.paige_chat_interactive_publication_context_v2(uuid,uuid) TO authenticated;
 COMMIT;
-

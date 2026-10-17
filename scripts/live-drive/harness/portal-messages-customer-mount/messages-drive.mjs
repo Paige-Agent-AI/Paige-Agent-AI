@@ -165,7 +165,27 @@ function measureInPage(opts) {
     return { disabled: sendBtn.disabled, bg, iconRatio: ratio(iconColor, bg), boundaryRatio: ratio(bg, around), h: Math.round(sendBtn.getBoundingClientRect().height), w: Math.round(sendBtn.getBoundingClientRect().width), opacity: getComputedStyle(sendBtn).opacity };
   })() : null;
 
+  // The newest item in the thread (a confirmed message or a pending send) must be readable above the sticky
+  // composer once the page has scrolled to the end — not underneath it.
+  const items = section ? [...section.querySelectorAll('[role="log"] ol > li:not([role="presentation"])')] : [];
+  const last = items[items.length - 1];
+  const newest = last && form ? (() => {
+    const lr = last.getBoundingClientRect(), fr = form.getBoundingClientRect();
+    const hit = document.elementFromPoint(lr.left + lr.width / 2, Math.min(lr.top + 12, innerHeight - 1));
+    return { text: last.innerText.replace(/\s+/g, " ").slice(0, 60), top: Math.round(lr.top), bottom: Math.round(lr.bottom), composerTop: Math.round(fr.top),
+      coveredPx: Math.max(0, Math.round(lr.bottom - fr.top)), fullyHidden: lr.top >= fr.top - 1, topHitsComposer: !!hit?.closest("form") };
+  })() : null;
+  // Anything from the thread showing BELOW the composer (between it and the bottom of the page panel).
+  const bleed = form && scroller ? (() => {
+    const fr = form.getBoundingClientRect(), sr = scroller.getBoundingClientRect(); const found = new Set();
+    for (let y = fr.bottom + 2; y < sr.bottom - 1; y += 4) for (let x = sr.left + 2; x < sr.right - 2; x += 16) {
+      const el = document.elementFromPoint(x, y); const li = el?.closest('[role="log"] li'); if (li) found.add(li.innerText.replace(/\s+/g, " ").slice(0, 40));
+    }
+    return { gapPx: Math.round(sr.bottom - fr.bottom), showing: [...found] };
+  })() : null;
+
   return {
+    newest, bleed,
     heading: section?.querySelector("h1")?.textContent ?? null,
     pageText: section?.innerText.replace(/\s+/g, " ").slice(0, 600) ?? null,
     navText: scopes.nav?.innerText.replace(/\s+/g, " ").slice(0, 300) ?? null,
@@ -173,9 +193,10 @@ function measureInPage(opts) {
     navContrastMin: min(navContrast), lowNav: graded(navContrast).filter((c) => c.ratio < 4.5),
     inactiveText: pageContrast.filter((c) => c.inactive).map((c) => `${c.text} (${c.ratio})`).slice(0, 6),
     goldPage: scopes.page ? goldIn(scopes.page) : [], goldNav: scopes.nav ? goldIn(scopes.nav) : [],
+    // Horizontal overflow that a person can actually scroll: the document and the page scroller. The section's
+    // own scrollWidth is reported, not graded — the composer's `-mx-1` bleeds 4px into the scroller's padding.
     overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 0.5
-      || (scroller ? scroller.scrollWidth > scroller.clientWidth + 1 : false)
-      || (section ? section.scrollWidth > section.clientWidth + 1 : false),
+      || (scroller ? scroller.scrollWidth > scroller.clientWidth + 1 : false),
     widths: { doc: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, scroller: scroller ? [scroller.scrollWidth, scroller.clientWidth] : null, section: section ? [section.scrollWidth, section.clientWidth] : null },
     targets, composer: vis(form), send, textarea: ta ? { h: Math.round(ta.getBoundingClientRect().height), w: Math.round(ta.getBoundingClientRect().width), fontSize: getComputedStyle(ta).fontSize } : null,
     counter: document.querySelector("#portal-message-count")?.textContent ?? null,
@@ -217,7 +238,9 @@ try {
     const composerOk = ["norelationship", "multiple"].includes(s.state) ? m.composer === null : !!m.composer?.inView;
     const sendOk = !m.send || m.send.disabled || (m.send.iconRatio >= 3 && m.send.boundaryRatio >= 3);
     const phoneControls = !s.phone || !m.send || (m.send.h >= 44 && m.send.w >= 44 && m.textarea.h >= 44);
-    const pageOk = !driveError && errors.length === 0 && m.lowPage.length === 0 && !m.overflowX && m.goldPage.length === 0 && smallTargets.filter((t) => t.region === "page").length === 0 && composerOk && sendOk && phoneControls && m.tag;
+    const newestOk = !m.newest || m.newest.coveredPx === 0;
+    const bleedOk = !m.bleed || m.bleed.showing.length === 0;
+    const pageOk = newestOk && bleedOk && !driveError && errors.length === 0 && m.lowPage.length === 0 && !m.overflowX && m.goldPage.length === 0 && smallTargets.filter((t) => t.region === "page").length === 0 && composerOk && sendOk && phoneControls && m.tag;
     // The chrome (AppNav) is measured with the same rules and reported on its own line: its findings are
     // product findings about AppNav, not about the Messages page, and are surfaced, never suppressed.
     const chromeOk = m.lowNav.length === 0 && m.goldNav.length === 0 && smallTargets.filter((t) => t.region === "nav").length === 0;
@@ -239,7 +262,7 @@ try {
     await ctx.close();
     console.log(`${name} ${ok ? "OK" : "FAIL"}${chromeOk ? "" : " (chrome findings)"}`, JSON.stringify({
       driveError, contrastMin: m.contrastMin, low: m.lowPage.slice(0, 3), navContrastMin: m.navContrastMin, lowNav: m.lowNav.slice(0, 3),
-      goldPage: m.goldPage.length, goldNav: m.goldNav.map((g) => `${g.text}:${g.hits}`), overflowX: m.overflowX, composer: m.composer, composerFromTop,
+      newest: m.newest, bleed: m.bleed, goldPage: m.goldPage.length, goldNav: m.goldNav.map((g) => `${g.text}:${g.hits}`), overflowX: m.overflowX, composer: m.composer, composerFromTop,
       send: m.send && { iconRatio: m.send.iconRatio, boundaryRatio: m.send.boundaryRatio, h: m.send.h, w: m.send.w, disabled: m.send.disabled }, textarea: m.textarea,
       smallTargets, errors: errors.slice(0, 3), consoleErrors: consoleErrors.slice(0, 2), dialogs, notes, tag: m.tag,
     }));

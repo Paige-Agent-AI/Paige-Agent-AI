@@ -591,6 +591,26 @@ SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-00000000000
 SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
  $$SELECT public.list_client_portal_knowledge_shares('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000001')$$)$q$,
  '42501','CUSTOMER_KNOWLEDGE_FORBIDDEN','customer cannot read owner sharing administration');
+INSERT INTO auth.users(id,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0911000-0000-0000-0000-000000000005','e09-peer-client@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000005'
+ WHERE id='e0931000-0000-0000-0000-000000000003';
+INSERT INTO public.tenant_knowledge_docs(id,tenant_id,title,content,created_by) VALUES
+ ('e0941000-0000-4000-8000-000000000003','e0921000-0000-0000-0000-000000000001','Peer program','OTHER CUSTOMER GUIDANCE','e0911000-0000-0000-0000-000000000003');
+CREATE TEMP TABLE e09_peer_proposal AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.prepare_client_portal_knowledge_share('e0921000-0000-0000-0000-000000000001','e0931000-0000-0000-0000-000000000003','e0941000-0000-4000-8000-000000000003')$$)::jsonb proposal;
+CREATE TEMP TABLE e09_peer_result AS SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',format(
+ 'SELECT public.set_client_portal_knowledge_share(%L,%L,%L,true,%s,%L,%L)',
+ proposal->>'tenant_id',proposal->>'contact_id',proposal->>'document_id',proposal->>'expected_share_revision',proposal->>'proposal_hash','e0951000-0000-4000-8000-000000000003'))::jsonb result FROM e09_peer_proposal;
+SELECT is(jsonb_path_query_array(pg_temp.e09_chat('e0911000-0000-0000-0000-000000000005',
+ $$SELECT public.client_portal_knowledge_context('e0921000-0000-0000-0000-000000000001')$$)::jsonb,'$.sources[*].document_id'),
+ '["e0941000-0000-4000-8000-000000000003"]'::jsonb,'another customer in the same business sees only its own program');
+CREATE TEMP TABLE e09_peer_refs AS SELECT jsonb_build_array(jsonb_build_object('share_id',s.id,
+ 'share_revision',s.revision,'source_fingerprint',s.source_fingerprint)) refs
+ FROM public.tenant_knowledge_client_shares s JOIN e09_peer_result p ON s.id=(p.result->>'share_id')::uuid;
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',format(
+ 'SELECT public.client_portal_knowledge_context(%L,%L::jsonb)','e0921000-0000-0000-0000-000000000001',refs::text)) FROM e09_peer_refs$q$,
+ '42501','CUSTOMER_KNOWLEDGE_SOURCE_WITHDRAWN','same-business membership cannot authorize another customer source reference');
 SELECT ok(NOT has_table_privilege('authenticated','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
  AND NOT has_table_privilege('anon','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE')
  AND NOT has_table_privilege('service_role','public.tenant_knowledge_client_shares','SELECT,INSERT,UPDATE,DELETE'),

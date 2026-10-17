@@ -9,6 +9,7 @@
   "assistantSettingsMigrationSHA256": "7ceb5aa3ae8fcfebd656ec3ee36a153a6234a18b265fadddce314978ba9e420e",
   "assistantSettingsProof": "synthetic-native-postgresql; platform ownership predicate modeled false; full-schema/hosted Auth remains unverified",
   "knowledgeSharesMigrationSHA256": "625f6d4e972be3b504b42dce530fe8f7b6f0d67b748aff072efbdcf5723cafc5",
+  "knowledgeSharesControl": "SOURCE_CURRENT_REMOVED",
   "knowledgeSharesProof": "isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified",
   "results": [
     {
@@ -376,6 +377,14 @@
       "status": "PASS"
     },
     {
+      "name": "Another customer in the same business receives only its own authorized program",
+      "status": "PASS"
+    },
+    {
+      "name": "Same-business membership cannot list or name another customer grant",
+      "status": "PASS"
+    },
+    {
       "name": "A customer cannot read staff sharing administration",
       "status": "PASS"
     },
@@ -536,6 +545,6 @@
       "status": "PASS"
     }
   ],
-  "passed": 121,
+  "passed": 123,
   "failed": 8
 }

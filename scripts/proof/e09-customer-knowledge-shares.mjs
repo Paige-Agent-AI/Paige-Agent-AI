@@ -5,6 +5,8 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   foreignOwner='e091a000-0000-4000-8000-000000000003',member='e091a000-0000-4000-8000-000000000004';
  const doc='e094a000-0000-4000-8000-000000000001',foreignDoc='e094a000-0000-4000-8000-000000000002',
   secondDoc='e094a000-0000-4000-8000-000000000003';
+ const peer='e091a000-0000-4000-8000-000000000006',peerContact='e093a000-0000-4000-8000-000000000003',peerDoc='e094a000-0000-4000-8000-000000000004';
+ const clientScopeControl=unsafe&&process.env.E09_KNOWLEDGE_CONTROL==='client_scope';
  const source=name=>fs.readFileSync(path.join(root,'supabase/migrations',name),'utf8');
  const actorSource=source('20270531600000_knowledge_durable_authority.sql').match(/CREATE OR REPLACE FUNCTION public\.knowledge_actor_authorized\([\s\S]*?\$\$;/)?.[0];
  const contactSource=source('20271108201000_e09_customer_private_chat.sql').match(/CREATE OR REPLACE FUNCTION public\.can_access_contact\(_user_id uuid, _contact_id uuid, _allow_linked_customer boolean\)[\s\S]*?\$function\$;/)?.[0];
@@ -22,11 +24,17 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   CREATE FUNCTION public.is_platform_owner(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
   CREATE FUNCTION public.is_tenant_admin_as(uuid,uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
   INSERT INTO auth.users(id) VALUES('${uid}'),('${other}'),('${owner}'),('${admin}'),('${foreignOwner}'),('${member}');
+  INSERT INTO auth.users(id) VALUES('${peer}');
   INSERT INTO profiles VALUES('${uid}','${foreign}'),('${other}','${tenant}'),('${owner}','${tenant}'),('${admin}','${tenant}'),('${foreignOwner}','${foreign}'),('${member}','${tenant}');
+  INSERT INTO profiles VALUES('${peer}','${foreign}');
+  INSERT INTO clients(id,tenant_id,linked_user_id,first_name,last_name,status,source)
+   VALUES('${peerContact}','${tenant}','${peer}','Peer','Customer','active','invitation');
   INSERT INTO tenant_knowledge_docs(id,tenant_id,title,content,source_url,metadata,pending_review,extraction_input,created_by) VALUES
    ('${doc}','${tenant}','Program guide','Approved customer program','https://internal.example.test/private','{"private":"SECRET METADATA"}','{"draft":"UNAPPROVED DRAFT"}','PRIVATE EXTRACTION','${owner}'),
    ('${foreignDoc}','${foreign}','Foreign program','FOREIGN SECRET',NULL,NULL,NULL,NULL,'${foreignOwner}'),
    ('${secondDoc}','${tenant}','Second guide','Approved next steps',NULL,NULL,NULL,NULL,'${owner}');
+  INSERT INTO tenant_knowledge_docs(id,tenant_id,title,content,created_by)
+   VALUES('${peerDoc}','${tenant}','Peer program','ANOTHER CUSTOMER PROGRAM','${owner}');
   ${actorSource} ${contactSource}
   REVOKE ALL ON FUNCTION public.knowledge_actor_authorized(uuid,uuid) FROM PUBLIC,anon,authenticated;
   GRANT EXECUTE ON FUNCTION public.knowledge_actor_authorized(uuid,uuid) TO service_role;
@@ -62,7 +70,11 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   assert.equal(sql("SELECT to_regclass('public.tenant_knowledge_client_shares') IS NULL;"),'t');
  });
  sql(migration);
- if(unsafe)sql('CREATE OR REPLACE FUNCTION public._client_knowledge_share_current(s public.tenant_knowledge_client_shares) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=\'\' AS $$SELECT true$$;');
+ if(clientScopeControl){
+  const current=sql("SELECT pg_get_functiondef('public.client_portal_knowledge_context(uuid,jsonb,integer,integer,boolean)'::regprocedure);");
+  const guard='s.tenant_id=business AND s.contact_id=customer';assert.equal(current.split(guard).length-1,2,'Both native reader client predicates must exist');
+  sql(current.replaceAll(guard,'s.tenant_id=business'));
+ }else if(unsafe)sql('CREATE OR REPLACE FUNCTION public._client_knowledge_share_current(s public.tenant_knowledge_client_shares) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=\'\' AS $$SELECT true$$;');
  check('Internal canonical Knowledge remains unavailable before an explicit share',()=>assert.deepEqual(context().sources,[]));
  check('Prepare binds actual owner, client, source and expected grant revision without writing',()=>{
   const before=snapshot(),p=prepare();assert.equal(p.contact_id,contact);assert.equal(p.document_id,doc);assert.equal(p.expected_share_revision,0);assert.equal(p.preview,'Approved customer program');assert.match(p.proposal_hash,/^[a-f0-9]{64}$/);assert.equal(snapshot(),before);
@@ -95,6 +107,12 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
  check('A stale share revision cannot be replayed under a new operation',()=>{const before=snapshot();assert.throws(()=>save(proposed));assert.equal(snapshot(),before)});
  check('Owner readback reports the same native share and receipt',()=>{const l=list();assert.equal(l.shares.length,1);assert.equal(l.shares[0].receipt_id,operation);assert.equal(l.shares[0].currently_available,true);assert(!JSON.stringify(l).includes('Approved customer program'))});
  check('An administrator uses the same native owner/configuration/CRM predicates',()=>assert.equal(save(prepare(admin,tenant,contact,secondDoc),admin).currently_available,true));
+ const peerShare=save(prepare(owner,tenant,peerContact,peerDoc));
+ const peerRefs=[{share_id:peerShare.share_id,share_revision:peerShare.current_revision,source_fingerprint:sql(`SELECT source_fingerprint FROM tenant_knowledge_client_shares WHERE id='${peerShare.share_id}';`)}];
+ check('Another customer in the same business receives only its own authorized program',()=>assert.deepEqual(context(peer).sources.map(s=>s.document_id),[peerDoc]));
+ check('Same-business membership cannot list or name another customer grant',()=>{
+  assert(!context().sources.some(s=>s.document_id===peerDoc));assert.throws(()=>context(uid,tenant,peerRefs));
+ });
  check('A customer cannot read staff sharing administration',()=>assert.throws(()=>list(uid)));
  for(const [label,actor,business]of[['Wrong client',other,tenant],['Wrong business',uid,foreign],['Unlinked actor',member,tenant],['Missing actor',null,tenant]])
   check(label+' cannot obtain Knowledge context',()=>assert.throws(()=>context(actor,business)));
@@ -161,5 +179,5 @@ export async function knowledgeSharesProof({sql,check,assert,fs,root,path,uid,ot
   let refused=false;try{save(p)}catch{refused=true}assert.equal(await revoker,0);
   check('Owner authority withdrawn while waiting for the document prevents both grant and receipt',()=>{assert(refused);assert.equal(snapshot(),before)});
  }finally{await revoker;sql(`UPDATE tenant_members SET status='active' WHERE user_id='${owner}' AND tenant_id='${tenant}';`)}
- return {knowledgeSharesMigrationSHA256:createHash('sha256').update(migration).digest('hex'),knowledgeSharesProof:'isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified'};
+ return {knowledgeSharesMigrationSHA256:createHash('sha256').update(migration).digest('hex'),knowledgeSharesControl:clientScopeControl?'CLIENT_SCOPE_REMOVED':unsafe?'SOURCE_CURRENT_REMOVED':'NONE',knowledgeSharesProof:'isolated native PostgreSQL; actual authority bodies, surrounding Auth/metadata shapes modeled; hosted customer/Chat integration unverified'};
 }

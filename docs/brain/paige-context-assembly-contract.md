@@ -41,6 +41,12 @@ never the staff active-workspace pointer. Private customer turns require issued
 actor/business/intent and terminal evidence; legacy admin/owner thread visibility
 does not grant access to this audience. The existing v2 admission/publication
 contracts consume that relationship without changing rollout or executor gates.
+Customer-private Chat is never staff action authority, including for a person
+with a legitimate staff role in another business. Incumbent staff writers require
+a workspace audience and the canonical contact predicate's internal staff-only
+narrowing. The existing two-argument contact read contract still includes linked
+customers; no new caller-executable actor selector is granted. Workspace creation
+proves native staff/contact or self-membership authority and platform self scope.
 This native seam alone does not activate customer model input, Knowledge
 publication, tools, Live or browser history; those consumers must bind the same
 audience, exclude owner context and preserve current publication permissions.

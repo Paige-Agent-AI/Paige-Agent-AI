@@ -1,7 +1,7 @@
 // Extends the existing isolated native customer projection proof; no new QA runtime.
 import {spawnSync} from 'node:child_process';
 export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}) {
- const read=name=>fs.readFileSync(path.join(root,'supabase/migrations',name),'utf8');
+ const read=name=>fs.readFileSync(path.join(root,'supabase/migrations',name),'utf8').replaceAll('\r\n','\n');
  const emit=spawnSync(process.execPath,[path.join(root,'scripts/int336-database-check.mjs'),'--emit-fixture','--emit-baseline'],
    {encoding:'utf8',windowsHide:true,env:{...process.env,INT336_DATABASE_URL:'postgres://localhost/int336_test_e09_emit'}});
  assert.equal(emit.status,0,emit.stderr);
@@ -18,6 +18,22 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
     WHERE is_archived=false AND studio_session_id IS NULL;
   CREATE TABLE profiles(user_id uuid,active_tenant_id uuid);
   CREATE TABLE auth.users(id uuid PRIMARY KEY);
+  CREATE TABLE public.user_roles(user_id uuid,role text);
+  CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text DEFAULT 'active');
+  CREATE TABLE public.paige_coach_assignments(contact_id uuid,rep_user_id uuid,active boolean);
+  ALTER TABLE public.clients ADD COLUMN lead_owner_user_id uuid,ADD COLUMN cs_primary_user_id uuid,ADD COLUMN assigned_coach_user_id uuid;
+  CREATE TYPE public.task_status AS ENUM('pending');
+  CREATE TABLE public.tasks(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid,title text,description text,due_date timestamptz,status task_status,metadata jsonb);
+  CREATE TABLE public.client_notes(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),contact_id uuid,author_user_id uuid,body text,tags text[]);
+  CREATE OR REPLACE FUNCTION public.is_staff(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+   SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=_user_id AND role::text IN('admin','super_admin','sales_rep','cs_rep','finance')) $$;
+  CREATE OR REPLACE FUNCTION public.is_super_admin(_user_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
+   SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=_user_id AND role='super_admin') $$;
+  CREATE OR REPLACE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
+  CREATE OR REPLACE FUNCTION public.is_tenant_owner(_user_id uuid,_tenant uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
+   SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_tenant AND user_id=_user_id AND role='owner' AND status='active') $$;
+  CREATE OR REPLACE FUNCTION public.is_tenant_member(_tenant uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
+   SELECT EXISTS(SELECT 1 FROM public.tenant_members WHERE tenant_id=_tenant AND user_id=auth.uid() AND status='active') $$;
   INSERT INTO auth.users VALUES('${uid}'),('${other}');
   ALTER TABLE paige_chat_threads ADD CONSTRAINT paige_chat_threads_caller_user_id_fkey
     FOREIGN KEY(caller_user_id) REFERENCES auth.users(id) ON DELETE RESTRICT;
@@ -41,14 +57,34 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  for(const name of ['20270601000008_int346_server_issued_interactive_receipts.sql',
   '20270602000301_int346_conversational_admission.sql','20271108110000_int346_database_executor_isolation.sql'])
    sql(read(name));
- sql(read('20271108201000_e09_customer_private_chat.sql'));
+ const legacySource=read('20260704224220_1238a682-6108-4fee-bca8-ba0f3e0e2b27.sql');
+ const contactSource=read('20260721020716_move2_can_access_contact_tenant_scope.sql');
+ const contactDefinition=contactSource.match(/CREATE OR REPLACE FUNCTION public\.can_access_contact\([\s\S]*?\$function\$;/)?.[0];
+ assert(contactDefinition,'Actual canonical contact predicate must be present');sql(contactDefinition);
+ for(const tool of ['paige_tool_create_task','paige_tool_add_client_note']){
+  const statement=legacySource.match(new RegExp('CREATE OR REPLACE FUNCTION public\\.'+tool+'\\([\\s\\S]*?END;\\$\\$;'))?.[0];
+  assert(statement,'Actual incumbent writer must be present: '+tool);sql(statement);
+ }
+ sql(`REVOKE ALL ON FUNCTION public.paige_tool_create_task(uuid,uuid,text,text,timestamptz,text),public.paige_tool_add_client_note(uuid,uuid,text,text) FROM PUBLIC,anon;
+  GRANT EXECUTE ON FUNCTION public.paige_tool_create_task(uuid,uuid,text,text,timestamptz,text),public.paige_tool_add_client_note(uuid,uuid,text,text) TO authenticated,service_role;`);
+ const candidate=read('20271108201000_e09_customer_private_chat.sql');
+ const scopeLease=candidate.match(/DO \$scope_lease\$[\s\S]*?\$scope_lease\$;/)?.[0];
+ assert(scopeLease,'Protected source lease must be present');
+ check('Migration refuses an unreviewed change to the canonical contact predicate',()=>{
+  sql(contactDefinition.replace('  SELECT','  -- unreviewed source mutation\n  SELECT'));
+  try {assert.throws(()=>sql(scopeLease),/canonical contact or staff writer source changed/);}
+  finally {sql(contactDefinition);}
+ });
+ sql(candidate);
  const quote=x=>x===null?'NULL':"'"+String(x).replaceAll("'","''")+"'";
  const auth=(actor=uid,workspace=null)=>`SELECT set_config('test.actor',${quote(actor??'')},false);SELECT set_config('test.tenant',${quote(workspace??'')},false);SET ROLE authenticated;`;
  const as=(statement,actor=uid,workspace=null)=>sql(auth(actor,workspace)+statement+';RESET ROLE;').split('\n').at(-2)?.trim();
  const create=()=>as("SELECT paige_chat_thread_create(NULL,'customer','Private customer conversation','{}'::jsonb)");
  check('Legacy staff-focused thread and private customer thread can coexist',()=>{
+  sql(`INSERT INTO public.tenant_members(tenant_id,user_id,role) VALUES('${tenant}','${uid}','owner')`);
   const legacy=as(`SELECT paige_chat_thread_create('${contact}','client','Staff-focused conversation','{}')`,uid,tenant);
   assert.match(legacy,/^[0-9a-f-]{36}$/);
+  sql(`DELETE FROM public.tenant_members WHERE user_id='${uid}'`);
  });
  let thread;
  check('Customer without staff membership creates its native private thread',()=>{
@@ -58,6 +94,52 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  });
  check('Returning customer resumes the same canonical thread',()=>assert.equal(create(),thread));
  check('A request cannot choose a different customer relationship',()=>assert.throws(()=>as(`SELECT paige_chat_thread_create('${contact}','customer','Forged','{}')`)));
+ const legacySubject=sql(`SELECT id FROM public.clients WHERE linked_user_id='${other}' AND tenant_id='${foreign}'`);
+ sql(`INSERT INTO public.user_roles VALUES('${uid}','sales_rep');
+  INSERT INTO public.tenant_members(tenant_id,user_id,role) VALUES('${foreign}','${uid}','owner');`);
+ const legacySnapshot=()=>sql('SELECT jsonb_build_object(\'tasks\',(SELECT count(*) FROM public.tasks),\'notes\',(SELECT count(*) FROM public.client_notes),\'audit\',(SELECT count(*) FROM public.paige_audit_log));');
+ const beforeLegacy=legacySnapshot();
+ check('Mixed-role fixture is native staff elsewhere and the customer in this relationship',()=>{
+  assert.equal(sql(`SELECT public.is_staff('${uid}')`),'t');
+  assert.equal(as('SELECT public.client_portal_relationship_id()',uid,foreign),contact);
+ });
+ check('Canonical contact reads preserve customer self-access without granting staff authority',()=>{
+  assert.equal(as(`SELECT public.can_access_contact('${uid}','${contact}')`,uid,foreign),'t');
+  assert.equal(sql(`SELECT public.can_access_contact('${uid}','${contact}',false)`),'f');
+ });
+ check('Internal contact narrowing grants no actor-selector RPC to browser or service callers',()=>{
+  for(const role of ['anon','authenticated','service_role'])assert.equal(sql(`SELECT has_function_privilege('${role}','public.can_access_contact(uuid,uuid,boolean)','EXECUTE')`),'f');
+  assert.throws(()=>as(`SELECT public.can_access_contact('${uid}','${contact}',false)`,uid,foreign),/permission denied for function can_access_contact/);
+ });
+ check('Linked-customer read permission cannot create a staff workspace conversation',()=>assert.throws(
+  ()=>as(`SELECT paige_chat_thread_create('${contact}','client','Must not borrow customer access','{}')`,uid,foreign),/workspace contact unavailable/));
+ check('A contact argument cannot bypass the native platform-lens authority check',()=>assert.throws(
+  ()=>as(`SELECT paige_chat_thread_create('${legacySubject}','platform','Must not borrow platform lens','{}')`,uid,foreign),/platform lens requires authorized self scope/));
+ check('A declared workspace without native membership cannot authorize self Chat',()=>assert.throws(
+  ()=>as("SELECT paige_chat_thread_create(NULL,'coach','Must not borrow workspace pointer','{}')",uid,tenant),/workspace membership unavailable/));
+ for(const assigned of [false,true]){
+  if(assigned)sql(`UPDATE public.clients SET cs_primary_user_id='${uid}' WHERE id='${contact}'`);
+  for(const tool of ['paige_tool_create_task','paige_tool_add_client_note'])check(
+   'Private audience cannot authorize incumbent '+tool+'; assigned staff='+assigned,()=>{
+    const args=tool==='paige_tool_create_task'?`'${thread}','${contact}','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL,NULL,NULL`
+     :`'${thread}','${contact}','PRIVATE_AUDIENCE_MUST_NOT_WRITE',NULL`;
+    assert.throws(()=>as(`SELECT public.${tool}(${args})`,uid,foreign),/thread not found/);
+   });
+ }
+ check('Rejected private-context staff tools leave no business task, note or audit effect',()=>assert.equal(legacySnapshot(),beforeLegacy));
+ sql(`UPDATE public.clients SET cs_primary_user_id=NULL WHERE id='${contact}'`);
+ const selfThread=as("SELECT paige_chat_thread_create(NULL,'coach','Authorized own workspace','{}')",uid,foreign);
+ check('Native workspace membership preserves self Chat and its personal task writer',()=>{
+  assert.match(selfThread,/^[0-9a-f-]{36}$/);
+  assert.equal(JSON.parse(as(`SELECT public.paige_tool_create_task('${selfThread}',NULL,'Authorized personal task',NULL,NULL,NULL)`,uid,foreign)).ok,true);
+ });
+ const staffThread=as(`SELECT paige_chat_thread_create('${legacySubject}','client','Authorized staff conversation','{}')`,uid,foreign);
+ for(const tool of ['paige_tool_create_task','paige_tool_add_client_note'])check('Authorized workspace preserves '+tool,()=>{
+  const args=tool==='paige_tool_create_task'?`'${staffThread}','${legacySubject}','Authorized staff task',NULL,NULL,NULL`
+   :`'${staffThread}','${legacySubject}','Authorized staff note',NULL`;
+  assert.equal(JSON.parse(as(`SELECT public.${tool}(${args})`,uid,foreign)).ok,true);
+ });
+ sql(`DELETE FROM public.tenant_members WHERE user_id='${uid}';DELETE FROM public.user_roles WHERE user_id='${uid}'`);
  const intent='e0941000-0000-4000-8000-000000000001';
  check('Existing v2 staged admission records exactly one issued user turn',()=>{
   assert(as(`SELECT paige_chat_interactive_begin_v2('${thread}','${intent}',NULL,'My private customer question',false,false,false)`).includes('accepted'));

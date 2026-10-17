@@ -80,6 +80,208 @@ CREATE POLICY turns_customer_private_isolation ON public.paige_chat_turns AS RES
      AND (role='user' OR (role='assistant' AND interactive_terminal_state IS NOT NULL))))))
  WITH CHECK (EXISTS(SELECT 1 FROM public.paige_chat_threads t WHERE t.id=thread_id));
 
+-- One canonical contact predicate: preserve the existing two-argument read
+-- contract, including the customer's own relationship. The internal third
+-- argument only narrows that predicate for staff operations. No new authority.
+DO $scope_lease$
+DECLARE expected record; actual_hash text; actual_owner oid;
+BEGIN
+  IF to_regprocedure('public.can_access_contact(uuid,uuid,boolean)') IS NOT NULL THEN
+    RAISE EXCEPTION 'canonical contact narrowing already exists' USING ERRCODE='42501';
+  END IF;
+  FOR expected IN SELECT * FROM (VALUES
+    ('public.can_access_contact(uuid,uuid)',ARRAY['2587335d53357f1d08f8fbc1329659d1','ea2788607d3d167b689cf63047837755']),
+    ('public.paige_tool_create_task(uuid,uuid,text,text,timestamptz,text)',ARRAY['3ac4174fa62a2fa83c86bbed89d763ac']),
+    ('public.paige_tool_add_client_note(uuid,uuid,text,text)',ARRAY['a2e866225d975ce73fcfa7ebeb999adb'])
+  ) x(signature,source_hashes) LOOP
+    SELECT md5(p.prosrc),p.proowner INTO actual_hash,actual_owner
+      FROM pg_proc p WHERE p.oid=to_regprocedure(expected.signature);
+    IF actual_hash IS NULL OR NOT actual_hash=ANY(expected.source_hashes)
+      OR actual_owner IS DISTINCT FROM current_user::regrole::oid THEN
+      RAISE EXCEPTION 'canonical contact or staff writer source changed' USING ERRCODE='42501';
+    END IF;
+  END LOOP;
+END;
+$scope_lease$;
+
+CREATE OR REPLACE FUNCTION public.can_access_contact(_user_id uuid, _contact_id uuid, _allow_linked_customer boolean)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT
+    public.is_super_admin(_user_id)
+    OR EXISTS (
+      SELECT 1
+      FROM public.clients c
+      WHERE c.id = _contact_id
+        AND (
+          public.agency_can_manage_child(c.tenant_id, _user_id)
+          OR EXISTS (
+            SELECT 1 FROM public.tenant_members tm
+            WHERE tm.tenant_id = c.tenant_id
+              AND tm.user_id = _user_id
+              AND tm.status = 'active'
+              AND tm.role IN ('owner','admin')
+          )
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.clients c
+      WHERE c.id = _contact_id
+        AND (
+          c.lead_owner_user_id = _user_id
+          OR c.cs_primary_user_id = _user_id
+          OR c.assigned_coach_user_id = _user_id
+          OR (_allow_linked_customer IS TRUE AND c.linked_user_id = _user_id)
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.paige_coach_assignments a
+      WHERE a.contact_id = _contact_id
+        AND a.active = true
+        AND a.rep_user_id = _user_id
+    );
+$function$;
+REVOKE ALL ON FUNCTION public.can_access_contact(uuid,uuid,boolean) FROM PUBLIC,anon,authenticated,service_role;
+
+-- Same signature, volatility, owner and existing ACL. Every old read uses the
+-- original complete predicate; staff writers use its explicit internal narrowing.
+CREATE OR REPLACE FUNCTION public.can_access_contact(_user_id uuid, _contact_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.can_access_contact(_user_id, _contact_id, true);
+$function$;
+
+-- Private customer threads never serve as staff authority, even for a person
+-- who legitimately has a staff role elsewhere or is assigned to this contact.
+-- Incumbent self-task behavior and authorized workspace/contact writers remain.
+CREATE OR REPLACE FUNCTION public.paige_tool_create_task(p_thread_id uuid, p_contact_id uuid, p_title text, p_description text DEFAULT NULL::text, p_due_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_priority text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_owner uuid;
+  v_tc uuid;
+  v_task uuid;
+  v_title text;
+BEGIN
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'auth required'; END IF;
+  IF NOT public.is_staff(v_uid) THEN RAISE EXCEPTION 'staff role required'; END IF;
+  IF p_title IS NULL OR length(btrim(p_title))=0 THEN RAISE EXCEPTION 'title required'; END IF;
+  IF p_priority IS NOT NULL AND p_priority NOT IN ('low','medium','high')
+    THEN RAISE EXCEPTION 'invalid priority'; END IF;
+
+  SELECT caller_user_id, contact_id INTO v_owner, v_tc
+    FROM public.paige_chat_threads WHERE id = p_thread_id
+      AND audience = 'workspace'
+      AND (contact_id IS NULL OR public.can_access_contact(v_uid, contact_id, false));
+  IF v_owner IS NULL THEN RAISE EXCEPTION 'thread not found'; END IF;
+  IF v_owner <> v_uid THEN RAISE EXCEPTION 'thread not owned by caller'; END IF;
+  IF v_tc IS DISTINCT FROM p_contact_id THEN RAISE EXCEPTION 'contact_id mismatch with thread'; END IF;
+
+  v_title := btrim(p_title);
+
+  INSERT INTO public.tasks (user_id, title, description, due_date, status, metadata)
+  VALUES (
+    v_uid,
+    v_title,
+    NULLIF(btrim(COALESCE(p_description,'')), ''),
+    p_due_date,
+    'pending'::task_status,
+    jsonb_build_object(
+      'contact_id', p_contact_id,
+      'source', 'paige_tool_call',
+      'thread_id', p_thread_id,
+      'priority', COALESCE(p_priority,'medium')
+    )
+  )
+  RETURNING id INTO v_task;
+
+  INSERT INTO public.paige_audit_log (actor_user_id, action, target_type, target_id, payload)
+  VALUES (
+    v_uid,
+    'tool_call:create_task',
+    'task',
+    v_task,
+    jsonb_build_object(
+      'thread_id', p_thread_id,
+      'contact_id', p_contact_id,
+      'tool_args', jsonb_build_object(
+        'title', v_title,
+        'description', p_description,
+        'due_date', p_due_date,
+        'priority', p_priority
+      ),
+      'tool_result', jsonb_build_object('task_id', v_task, 'ok', true)
+    )
+  );
+
+  RETURN jsonb_build_object('ok', true, 'task_id', v_task, 'title', v_title);
+END;$function$;
+
+CREATE OR REPLACE FUNCTION public.paige_tool_add_client_note(p_thread_id uuid, p_contact_id uuid, p_content text, p_category text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_owner uuid;
+  v_tc uuid;
+  v_note uuid;
+  v_body text;
+  v_tags text[];
+BEGIN
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'auth required'; END IF;
+  IF NOT public.is_staff(v_uid) THEN RAISE EXCEPTION 'staff role required'; END IF;
+  IF p_content IS NULL OR length(btrim(p_content))=0 THEN RAISE EXCEPTION 'content required'; END IF;
+
+  SELECT caller_user_id, contact_id INTO v_owner, v_tc
+    FROM public.paige_chat_threads WHERE id = p_thread_id
+      AND audience = 'workspace'
+      AND (contact_id IS NULL OR public.can_access_contact(v_uid, contact_id, false));
+  IF v_owner IS NULL THEN RAISE EXCEPTION 'thread not found'; END IF;
+  IF v_owner <> v_uid THEN RAISE EXCEPTION 'thread not owned by caller'; END IF;
+  IF v_tc IS DISTINCT FROM p_contact_id THEN RAISE EXCEPTION 'contact_id mismatch with thread'; END IF;
+
+  v_body := btrim(p_content);
+  v_tags := CASE WHEN p_category IS NOT NULL AND length(btrim(p_category)) > 0
+                 THEN ARRAY[btrim(lower(p_category))]
+                 ELSE ARRAY[]::text[] END;
+
+  INSERT INTO public.client_notes (contact_id, author_user_id, body, tags)
+  VALUES (p_contact_id, v_uid, v_body, v_tags)
+  RETURNING id INTO v_note;
+
+  INSERT INTO public.paige_audit_log (actor_user_id, action, target_type, target_id, payload)
+  VALUES (
+    v_uid,
+    'tool_call:add_client_note',
+    'client_note',
+    v_note,
+    jsonb_build_object(
+      'thread_id', p_thread_id,
+      'contact_id', p_contact_id,
+      'tool_args', jsonb_build_object(
+        'content_preview', left(v_body, 200),
+        'category', p_category
+      ),
+      'tool_result', jsonb_build_object('note_id', v_note, 'ok', true)
+    )
+  );
+
+  RETURN jsonb_build_object('ok', true, 'note_id', v_note, 'preview', left(v_body, 200));
+END;$function$;
+
 CREATE OR REPLACE FUNCTION public.paige_chat_thread_create(p_contact_id uuid, p_lens text, p_title text, p_consent_snapshot jsonb)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -92,7 +294,10 @@ DECLARE
   v_thread_id uuid;
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'auth required'; END IF;
-  IF p_lens NOT IN ('coach','client','platform','customer') THEN RAISE EXCEPTION 'invalid lens'; END IF;
+  IF p_lens IS NULL OR p_lens NOT IN ('coach','client','platform','customer') THEN RAISE EXCEPTION 'invalid lens'; END IF;
+  IF p_lens='platform' AND (p_contact_id IS NOT NULL OR public.is_platform_owner() IS NOT TRUE) THEN
+    RAISE EXCEPTION 'platform lens requires authorized self scope' USING ERRCODE='42501';
+  END IF;
 
   IF p_lens = 'customer' THEN
     IF p_contact_id IS NOT NULL THEN RAISE EXCEPTION 'customer subject is server resolved' USING ERRCODE='42501'; END IF;
@@ -111,9 +316,10 @@ BEGIN
         AND audience='customer_private' AND NOT is_archived AND auto_delete_at<=now();
   ELSIF p_contact_id IS NOT NULL THEN
     SELECT tenant_id INTO v_tenant_id
-      FROM public.clients WHERE id = p_contact_id;
+      FROM public.clients WHERE id = p_contact_id
+        AND (public.is_platform_owner() IS TRUE OR public.can_access_contact(v_uid,p_contact_id,false));
     IF v_tenant_id IS NULL THEN
-      RAISE EXCEPTION 'contact not found or has no tenant';
+      RAISE EXCEPTION 'workspace contact unavailable' USING ERRCODE='42501';
     END IF;
   ELSIF p_lens = 'platform' THEN
     IF NOT public.is_platform_owner() THEN
@@ -124,6 +330,10 @@ BEGIN
     v_tenant_id := public.current_user_tenant_id();
     IF v_tenant_id IS NULL THEN
       RAISE EXCEPTION 'self-mode requires caller tenant';
+    END IF;
+    IF NOT (public.is_platform_owner() IS TRUE OR public.is_tenant_member(v_tenant_id) IS TRUE
+      OR public.is_tenant_owner(v_uid,v_tenant_id) IS TRUE OR public.agency_can_manage_child(v_tenant_id,v_uid) IS TRUE) THEN
+      RAISE EXCEPTION 'workspace membership unavailable' USING ERRCODE='42501';
     END IF;
   END IF;
 

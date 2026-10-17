@@ -2,7 +2,7 @@
 import {createHash} from 'node:crypto';
 import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
 export function invitationCatalogueProof({sql,check,assert,fs,path,root,ids,lit}){
- const file='supabase/migrations/20271108235000_e09_invitation_tool_catalogue.sql',migration=fs.readFileSync(path.join(root,file),'utf8');
+ const file='supabase/migrations/20271109010000_e09_invitation_tool_catalogue.sql',migration=fs.readFileSync(path.join(root,file),'utf8');
  const declarations=catalogueDeclarations().filter(d=>d.file<file.split('/').at(-1));
  const start=declarations.findLastIndex(d=>!preservesCataloguePredecessor(d.sql));assert(start>=0);
  // Resolver/table infrastructure only; complete real catalogue bodies and their authority checks below.

@@ -562,7 +562,7 @@ const ANCESTRY_SOURCES = {
  // Independently reviewed completed-lifecycle publication reader; no effect authority.
  "supabase/functions/_shared/paige-turn/interactive.ts": "88d238f65d488277112b87d131ad122e4b28d534b43ca5803df97569a2c54ba5",
  // Independently reviewed canonical approval-status projection; no effect authority.
- "supabase/functions/_shared/paige-turn/interactive-approval.ts": "95e46a0538ae929e31396bb33b0da014a04e4736d1eeaf6b8f33a50201816d1c",
+ "supabase/functions/_shared/paige-turn/interactive-approval.ts": "4ab6bdbd41f2fc6b81e51ee1c286a859a8167db66f34ef66599c0dda55a9e03c",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

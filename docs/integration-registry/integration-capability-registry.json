@@ -371,7 +371,7 @@
         {
           "path": "supabase/functions/google-calendar-oauth-start/index.ts",
           "role": "provider_adapter",
-          "note": "Google OAuth consent start — the only Google Workspace provider code that exists in the repo today."
+          "note": "Google Calendar OAuth consent plumbing; this is not a Drive/Docs adapter. Gmail has its own separate communications entry and connection paths."
         },
         {
           "path": "supabase/functions/google-calendar-oauth-callback/index.ts",
@@ -381,7 +381,7 @@
         {
           "path": "supabase/functions/_shared/calendarCrypto.ts",
           "role": "provider_adapter",
-          "note": "OAuth token crypto. PARTIAL gap (§13): NO Drive/Docs (productivity_documents) adapter edge function is built — only Google Calendar OAuth exists; the native Drive/Docs create/read path is not yet wired, which is why this entry is PARTIAL, not LIVE."
+          "note": "Calendar OAuth token crypto only. This anchor does not establish native Drive/Docs create/read or Gmail readiness. Drive/Docs provider-path proof remains separate; the Gmail communications entry records its existing implementation without raising this entry's PARTIAL status."
         }
       ],
       "sources": [
@@ -1432,6 +1432,120 @@
         "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4 (Google Calendar OAuth)",
         "docs/binding-ledger/README.md (Clients -> Calendar)",
         "docs/doctrine/calendar-capability-contract.md"
+      ]
+    },
+    {
+      "id": "gmail",
+      "name": "Gmail (tenant mailbox connection / sending / inbox)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Eligible businesses connect their own Google sending identity and, through a separate consent purpose, a private mailbox. Gmail is distinct from Google Drive/Docs, Calendar and the owner's intended SendGrid PAIGE Email service.",
+      "paige_use_cases": [
+        "owner/admin explicitly starts, completes or disconnects the existing same-workspace Google connection",
+        "send an exactly approved business email through comms.email_send, the existing comms-email-command/send-message path and the Gmail transport",
+        "use separately authorized private inbox read/organization plumbing; this repair does not add the missing SOLO inbox-consent UI binding or activate it"
+      ],
+      "connection_prerequisite": "Genuine ordinary-user Google consent, configured Google OAuth application/redirect URI and Gmail API readiness; the relevant Google verification and actual granted scopes must be proven. Canonical server actor/current workspace and is_tenant_admin_as authorize connection management; a global admin title alone is insufficient. Personal mailbox ownership remains binding. Normal SOLO provisioning sets explicit active workspace; missing/stale native authority fails closed, without a per-account patch.",
+      "required_scopes": [
+        "https://www.googleapis.com/auth/gmail.send (default send purpose)",
+        "https://www.googleapis.com/auth/gmail.modify (separate inbox purpose)",
+        "https://www.googleapis.com/auth/gmail.labels (separate inbox purpose)",
+        "https://www.googleapis.com/auth/userinfo.email (both consent purposes)"
+      ],
+      "safe_readable_context": "Only authorized same-tenant connection metadata and permitted mailbox context. Personal mailbox content and its derivatives remain owner-private under incumbent authorization/RLS; secrets never enter the browser, logs, registry or another tenant's context.",
+      "allowed_writes_external_effects": "Person-initiated Google consent/token exchange and local connection/disconnect are the existing Connections flow, not blanket Chat authority. Business email remains exactly approved through comms.email_send and the existing governed sender with native readback/Rail. Separate inbox organization requires its existing consent/policy. No new OAuth scope, send, inbox activation or autonomous provider effect is authorized by this entry.",
+      "authority_lane": [
+        "read",
+        "draft",
+        "confirm"
+      ],
+      "m1_dependency": "none for a discretionary purchase in this connection repair; mailbox/API operating usage remains separately visible. Existing governed send approval, provider refusal floor and engagement limits are preserved; internal LLM-cost metering does not grant provider authority.",
+      "canonical_provider_receipt": "Gmail message id (and thread id when returned) establishes provider acceptance, not delivery, reading or payment. OAuth consent/native connector persistence is not an email-send receipt; native connector readback and connection audit are separate facts.",
+      "rail_mind_memory": "Business sends retain existing canonical message/readback and capability-run Rail outcomes. Connection/disconnect use the existing connector and connection audit, with audit acknowledgement separate from native persistence. Personal bodies/derivatives remain private; no raw content is promoted into Mind/Memory by connection metadata or this repair.",
+      "status": "PROOF_OWED",
+      "owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+      "dependency": "Reviewed source candidate 36c24022f6c311226a677fc5177bea73c46e1388 has independent 150 focused / 34 real local PostgreSQL checks; no production/provider acceptance is claimed. Apply 20271108200000_gmail_connection_authority before deploying the three Gmail endpoints, then pass exact-head hosted CI/full-schema checks and verify deployed SQL/Edge source. Google consent/exchange/revocation is external and not atomic with PostgreSQL. Actual credentials, consent/scopes, private inbox behavior, send receipt/delivery and ordinary authenticated customer QA remain UNVERIFIED.",
+      "next_slice": "Release the reviewed native connection-authority slice with native-first migration/endpoint readback; prove authorized ordinary owner/admin consent and refusal behavior without unapproved sends. Bind/prove separate inbox consent and the governed email outcome as subsequent work; no automatic retry after uncertain acknowledgement.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "tenant_direct",
+        "billing_owner": "tenant owns the mailbox/subscription; platform operates the shared Google OAuth application/quota project. No purchase or new billing arrangement is introduced.",
+        "operational_owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://developers.google.com/gmail/api/reference/quota",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Current Gmail API quotas, mailbox subscription terms and any applicable fees were not verified in this source-only slice. No price, free entitlement or quota headroom is inferred.",
+        "access_prerequisite": "Existing Google OAuth application and tenant-chosen consent; relevant Google app verification/API/redirect setup and actual granted scopes. Send and personal inbox purposes remain distinct; eligibility does not prove connection readiness.",
+        "expected_cost_driver": [
+          "api_calls",
+          "messages"
+        ],
+        "rate_limits_quotas": "Google project/user and mailbox limits require current verification; the local protected tests establish no live quota, provider rate or capacity claim.",
+        "usage_review_cadence": "On controlled activation and provider/quota incidents; review ongoing mailbox/API usage through existing operations evidence.",
+        "renewal_deprecation_review": "Track Google OAuth/Gmail API scope and policy changes; tenant mailbox subscription remains separately owned.",
+        "data_privacy_retention": "Refresh token remains in the incumbent Vault bridge; connector carries only its reference. Native actor/workspace/privacy/collision checks and Vault+connector writes are one transaction. Private mailbox data/derivatives are owner-scoped; no secret or raw mailbox content is copied into this registry.",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Connection, disconnect and ordinary email do not purchase a subscription or move customer money. Provider operating terms/usage and existing engagement controls remain separate."
+        },
+        "receipt_reconciliation": "Native connector identity/readback and audit acknowledgement establish only local connection facts. A governed send requires the existing message record, Gmail provider message id and Rail; unknown dispatch blocks resend, and acceptance is not delivery.",
+        "rail_outcome": "Existing governed email capability-run Rail; local connection audit is distinct and a missing audit acknowledgement must not rewrite a verified saved/disconnected result into absence.",
+        "pause_revoke_path": "Existing person-driven local disconnect atomically disables/unlinks the exact current connector and tombstones its exclusive canonical Vault reference. Optional Google revocation runs afterward and has a separate acknowledgement; lost native acknowledgement stays unknown and is not automatically retried. External grant retirement/concurrent provider outcomes are not proven by local absence.",
+        "next_owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+        "next_slice": "Native-first release and actual ordinary-account consent/readback; verify current provider quota/terms before making cost/readiness claims. SendGrid platform/tenant authority, existing Resend connections and generic SMTP/Apple limitations remain separate."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/gmail-oauth-start/index.ts",
+          "role": "provider_adapter",
+          "note": "Existing signed user/workspace/origin/time/nonce consent; default send and separate inbox purposes. No scope activation from this registry."
+        },
+        {
+          "path": "supabase/functions/gmail-oauth-callback/index.ts",
+          "role": "provider_adapter",
+          "note": "Google code exchange and the native provision_gmail_connection transaction; saved-but-withheld and unknown remain truthful, with no automatic native retry."
+        },
+        {
+          "path": "supabase/functions/gmail-disconnect/index.ts",
+          "role": "provider_adapter",
+          "note": "Native exact-version local disconnect before separately acknowledged optional external revoke."
+        },
+        {
+          "path": "supabase/functions/_shared/gmail-connection-authority.ts",
+          "role": "fail_closed_containment",
+          "note": "Fresh Auth/current-workspace observations and canonical tenant-admin predicate; not a new permission engine, atomic snapshot or future authorization lease."
+        },
+        {
+          "path": "supabase/migrations/20271108200000_gmail_connection_authority.sql",
+          "role": "provider_adapter",
+          "note": "Service-only native provision/disconnect over existing connector/Vault; actor/authority locks, personal ownership, address/stable-key collisions and rollback. Must precede endpoint release."
+        },
+        {
+          "path": "supabase/functions/_shared/gmail.ts",
+          "role": "provider_adapter",
+          "note": "Incumbent Gmail token/send transport used by send-message; code existence is not authenticated provider proof."
+        },
+        {
+          "path": "src/pages/GmailCallback.tsx",
+          "role": "provider_adapter",
+          "note": "Connection response consumer only, not provider delivery reconciliation; preserves saved/unknown/refused states and retires stale invocation results."
+        },
+        {
+          "path": "src/solo/data/useSoloComms.ts",
+          "role": "provider_adapter",
+          "note": "Existing Connections caller supplies expected workspace as a stale-request guard; current default purpose is send, not inbox activation."
+        }
+      ],
+      "sources": [
+        "docs/evidence/ui-delivery/ant21-gmail-workspace-authority.md (reviewed source/protected 150 focused and 34 PostgreSQL checks; hosted/provider/authenticated proof UNVERIFIED)",
+        "docs/doctrine/one-approval-gate.md",
+        "docs/brain/comms-capability-map.md",
+        "docs/integration-registry/README.md (Gmail proof and provider separation boundary)"
       ]
     },
     {
@@ -3285,7 +3399,6 @@
   "uncatalogued_wired_providers": {
     "note": "These providers are WIRED/CONFIGURED per master §4 but do NOT yet have a full catalogued entry above (including an expense_and_operations block). Their presence here is honest coverage (nothing hidden); the delivery rule requires the next PR that touches any of them to promote it to a full entry with its expense_and_operations block. Absence of a full entry is NOT a claim of absence of capability (§13).",
     "providers": [
-      "Gmail email (existing tenant channel_connectors/send-message + _shared/gmail.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, full expense/capability entry owed to Comms/Integrations; no platform sender fallback or new OAuth connection claimed)",
       "SMTP email (existing tenant channel_connectors/send-message + _shared/smtp.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, provider-specific expense/capability entry owed to Comms/Integrations; SMTP acceptance without a provider message receipt remains unknown, no delivered/paid claim)",
       "ElevenLabs (TTS/ConvAI voice)",
       "Zoom",

@@ -73,6 +73,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/comms_provider_execution_boundary.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
+      - name: Gmail native connection authority, private credential isolation and concurrent rollback
+        run: node scripts/proof/gmail-connection-postgres.mjs 5432
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
@@ -977,6 +979,7 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_publication" node scripts/int336-publication-context-db-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_approval_recovery
           PSQL_BIN="$PGBIN/psql" APPROVAL_RECOVERY_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_approval_recovery" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
+          OPERATOR_PROOF_PSQL="$PGBIN/psql" PLANNING_PROOF_PORT="$PORT" node scripts/planning-native/check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

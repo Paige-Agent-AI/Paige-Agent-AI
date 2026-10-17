@@ -7920,13 +7920,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_list",
-              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; admins/coaches see all. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Filter by horizon, a single plan, status, assignee, or a date window. Read-only.",
+              description: "Read plans and their items (milestones, tasks, reminders) for this workspace — the person sees their own plus any team plans; native permissions govern access. Use to answer 'what's on my plate', 'show my week', 'what reminders do I have', or to resolve a plan/item id before updating it. Cancelled items are excluded by default; request include_cancelled:true or status:cancelled to inspect their saved history. A missing item alone does not prove cancellation. Read-only.",
               parameters: {
                 type: "object",
                 properties: {
                   horizon: { type: "string", enum: ["week", "month", "quarter", "semiannual", "year", "custom"], description: "Only plans on this horizon." },
                   plan_id: { type: "string", description: "Drill into one plan's items." },
                   status: { type: "string", description: "Filter items by status." },
+                  include_cancelled: { type: "boolean", description: "Include authorized cancelled Planning history; default false. This reads records and never reopens or repeats work." },
                   assigned_to_user_id: { type: "string", description: "Only items assigned to this teammate." },
                   from: { type: "string", description: "ISO date lower bound (plan window / item due)." },
                   to: { type: "string", description: "ISO date upper bound." },
@@ -16640,7 +16641,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 break;
               case "plan_list":
                 rpcName = "plan_list";
-                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid };
+                rpcArgs = { p_horizon: args.horizon ?? null, p_plan_id: args.plan_id ?? null, p_status: args.status ?? null, p_assigned_to_user_id: args.assigned_to_user_id ?? null, p_from: args.from ?? null, p_to: args.to ?? null, p_limit: args.limit ?? 50, p_tenant_id: tid,
+                  p_contact_id: null, p_by_item_date: false, p_include_cancelled: args.include_cancelled === true || args.status === "cancelled" };
                 break;
             }
             planningWriteAttempted = planningIsWrite;
@@ -16676,6 +16678,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else {
               let verifiedRecord: Record<string, unknown> | null = null;
               let recordLocator: { table: string; id: string } | null = null;
+              if (!planningIsWrite) {
+                const scope = await supabaseClient.rpc("current_user_tenant_id");
+                if (!tid || scope.error || scope.data !== tid) throw new Error("planning_read_scope_changed");
+              }
               if (planningIsWrite) {
                 const ack = rpcData && typeof rpcData === "object" && !Array.isArray(rpcData) ? rpcData as Record<string, unknown> : null;
                 const table = tc.function.name === "plan_create" ? "plans" : "plan_items";

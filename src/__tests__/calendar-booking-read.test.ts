@@ -119,8 +119,8 @@ describe("canonical exact Calendar booking reader", () => {
     expect(await readCalendarBooking(identity, { ...f.deps, revalidateScope: async () => { throw new Error("scope unavailable"); } }, { booking_id: id(3) })).toMatchObject({ status: "unavailable" });
     expect(f.calls).toEqual([]);
   });
-  it("an active coach keeps native own-host visibility without acquiring admin authority", async () => {
-    const f = fixture(), scope = { ...identity, role: "coach" }; f.switchTo(scope);
+  it("an active member keeps native own-host visibility without acquiring admin authority", async () => {
+    const f = fixture(), scope = { ...identity, role: "member" }; f.switchTo(scope);
     expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "available", found: true });
     expect(f.calls.some(c => c.name === "is_tenant_admin")).toBe(false);
     f.responses.list_team_bookings.data = [{ ...record(), host_user_id: id(9) }]; f.responses.is_tenant_admin.data = false;
@@ -128,6 +128,13 @@ describe("canonical exact Calendar booking reader", () => {
     f.responses.is_tenant_member.data = false;
     expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "refused" });
   });
+  for (const role of ["coach", "unknown", "", null, { title: "Owner" }]) {
+    it("an unrecognized or retired permission cannot start a read: " + JSON.stringify(role), async () => {
+      const f = fixture(), scope = { ...identity, role } as ContextIdentity; f.switchTo(scope);
+      expect(await readCalendarBooking(scope, f.deps, { booking_id: id(3) })).toMatchObject({ status: "refused" });
+      expect(f.calls).toEqual([]); expect(f.classificationQueries).toEqual([]); expect(f.user).not.toHaveBeenCalled();
+    });
+  }
   it("reads the one canonical record with original caller JWT and exact bounded native query", async () => {
     const f = fixture(); const result = await f.read();
     expect(result).toMatchObject({ status: "available", found: true, booking: record() });

@@ -5792,7 +5792,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         // never the rendered sentence, legal-owner fact, roster title or model input.
         if (teamAuthority.status === "available") {
           const seat = teamAuthority.rows.find(row => row.fact_key === "viewer_permission");
-          if (seat?.status === "available" && ["owner", "admin", "member", "coach"].includes(String(seat.value))) calendarBookingRole = seat.value;
+          if (seat?.status === "available" && ["owner", "admin", "member"].includes(String(seat.value))) calendarBookingRole = seat.value;
         }
         if (callerTier === "tenant" && calendarBookingRole && !scopedClientId) {
           const classification = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, req.signal);

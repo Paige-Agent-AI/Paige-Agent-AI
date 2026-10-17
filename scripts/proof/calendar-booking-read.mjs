@@ -32,6 +32,7 @@ const paths = {
   seats: 'supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql',
   tenant: 'supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql',
   migration: 'supabase/migrations/20271109030000_calendar_booking_exact_read.sql',
+  retiredSeat: 'supabase/migrations/20270508000000_forbid_title_role_value.sql',
 };
 function extract(source, name, acl = false) {
   const match = source.match(new RegExp('create(?: or replace)? function public\\.' + name + '\\s*\\([\\s\\S]*?\\bas\\s+(\\$[a-z_0-9]*\\$)[\\s\\S]*?\\1;', 'i'));
@@ -44,6 +45,8 @@ const reader = extract(text(paths.reader).replace(/\r\n/g, '\n').replace(/^ *--[
 const member = extract(text(paths.seats), 'is_tenant_member');
 const admin = extract(text(paths.seats), 'is_tenant_admin');
 const tenant = extract(text(paths.tenant), 'current_user_tenant_id', true);
+const retiredSeatConstraint = text(paths.retiredSeat).match(/ALTER TABLE public\.tenant_members\s+ADD CONSTRAINT tenant_members_role_not_retired_title_role\s+CHECK \(role IS DISTINCT FROM 'coach'::public\.tenant_role\);/);
+assert.ok(retiredSeatConstraint, 'the actual current membership constraint must exist');
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const ta = id(1), tb = id(2), owner = id(3), staff = id(4), inactive = id(5), outsider = id(6), adminUser = id(7);
 const memberBooking = id(200001), foreignBooking = id(200002);
@@ -80,6 +83,7 @@ try {
     create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
     create table public.profiles(id uuid primary key default gen_random_uuid(),user_id uuid unique,full_name text,active_tenant_id uuid);
     create table public.tenant_members(id uuid primary key default gen_random_uuid(),tenant_id uuid,user_id uuid,status text,role text,joined_at timestamptz default now(),unique(tenant_id,user_id));
+    ${retiredSeatConstraint[0].replace('::public.tenant_role', '')}
     create index idx_tenant_members_tenant on public.tenant_members(tenant_id,status);
     create index idx_tenant_members_user on public.tenant_members(user_id,status);
     create index idx_tenant_members_team_workspace on public.tenant_members(tenant_id,status,role,user_id);
@@ -210,11 +214,15 @@ try {
     check('null exact ID retains the complete legacy listing contract', () => assert.equal(sql(claims(owner) + `select count(*) from public.list_team_bookings('-infinity','infinity',null,'${ta}',null);`), '100001'));
     check('migration replay retains the original wrapper OID and exact row outcome', () => { sql(text(paths.migration)); assert.equal(metadata(), compatibility.beforeMetadata); assert.equal(rows(owner, id(109999)).length, 1); });
   }
-  check('active coach retains own-host visibility and cannot read another host', () => {
-    sql(`update public.tenant_members set role='coach' where user_id='${staff}' and tenant_id='${ta}';`);
+  check('active member retains own-host visibility and cannot read another host', () => {
     assert.equal(rows(staff, memberBooking).length, 1); assert.equal(rows(staff, id(100000)).length, 0);
     sql(`update public.tenant_members set status='inactive' where user_id='${staff}' and tenant_id='${ta}';`);
     refusal(staff);
+  });
+  check('the incumbent retired-title constraint refuses a manufactured coach permission', () => {
+    const result = spawnSync(exe('psql'), args(database), { input: `update public.tenant_members set role='coach' where user_id='${staff}' and tenant_id='${ta}';`, encoding: 'utf8', windowsHide: true, timeout: 10000 });
+    assert.notEqual(result.status, 0); assert.match(result.stderr, /check constraint/);
+    assert.equal(sql(`select role from public.tenant_members where user_id='${staff}' and tenant_id='${ta}';`), 'member');
   });
   check('read operations preserve total fixture row count after intentional class-fixture preparation', () => assert.equal(Number(sql('select count(*) from public.internal_bookings;')), 100002));
 } catch (error) { cases.push({ name: 'proof setup/runtime', status: 'FAIL', error: String(error.stack) }); console.error(error); }

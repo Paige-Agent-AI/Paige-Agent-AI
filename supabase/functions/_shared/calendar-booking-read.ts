@@ -72,7 +72,7 @@ export async function readCalendarAccountShape(caller: CalendarBookingReadCaller
     // The UI's falsy-parent predicate is not a DB response validator. Require
     // exact ID, readable type and explicit native NULL before applying it.
     if (!object(row) || row.id !== tenantId || typeof row.account_type !== "string" || row.parent_tenant_id !== null ||
-      !isSoloStandalone({ account_type: row.account_type, parent_tenant_id: row.parent_tenant_id })) return { status: "refused" as const };
+      !isSoloStandalone({ account_type: row.account_type, parent_tenant_id: null })) return { status: "refused" as const };
     return { status: "available" as const, accountShape: "solo" as const };
   } catch { return { status: "unavailable" as const }; }
   finally { clearTimeout(timer); signal?.removeEventListener("abort", stop); }
@@ -87,7 +87,7 @@ export async function readCalendarBooking(identity: ContextIdentity, deps: Calen
   // A null ContextIdentity shape is unresolved, never implicitly SOLO. Resolve
   // it from the actual caller-visible row below; a non-SOLO context is refused.
   if (!uuid(origin.actorId) || !uuid(origin.tenantId) || (origin.accountShape !== null && origin.accountShape !== "solo") ||
-    !["owner", "admin", "member", "coach"].includes(String(origin.role)) || origin.actAsClientId !== null) return refused();
+    !["owner", "admin", "member"].includes(String(origin.role)) || origin.actAsClientId !== null) return refused();
   const tenantId = origin.tenantId;
   const current = () => sameScope(origin, deps.currentIdentity());
   const abort = new AbortController();

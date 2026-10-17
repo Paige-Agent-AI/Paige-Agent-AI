@@ -32,7 +32,7 @@ function visit(node) {
 visit(parsed);
 assert.ok(branch, 'canonical dispatch branch exists');
 assert.deepEqual(admittedReadTools, ['read_business_metric', 'get_business_snapshot',
-  'read_client_engagement_status', 'read_business_time_zone'], 'PRE-1 admits no additional tool');
+  'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking'], 'the closed read set includes only the reviewed Calendar successor; PRE-1 adds no action');
 let branchSource = branch.getText(parsed);
 // Deliberate in-memory defect controls: no production source is rewritten during falsification.
 const mutation = process.argv.find(arg => arg.startsWith('--mutate='))?.slice('--mutate='.length);

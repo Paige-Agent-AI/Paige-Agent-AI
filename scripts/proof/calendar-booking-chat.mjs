@@ -117,7 +117,7 @@ await check('actual ordinary Chat dispatch reads exactly one native booking and 
   assert.ok(classification.every(c => c.filters.some(f => f[0] === 'eq' && f[1] === 'id' && f[2] === tenant) && c.filters.some(f => f[0] === 'select' && f[1] === 'id,account_type,parent_tenant_id')));
 
 });
-await check('actual coach own-host read keeps native authority', async () => { const r = await execute({ role: 'coach', nativeAdmin: false }); assert.equal(r.value?.status, 'available'); assert.ok(r.offered.includes('read_calendar_booking')); assert.ok(!r.shapes.some(c => c.name === 'is_tenant_admin')); });
+await check('actual member own-host read keeps native authority', async () => { const r = await execute({ role: 'member', nativeAdmin: false }); assert.equal(r.value?.status, 'available'); assert.ok(r.offered.includes('read_calendar_booking')); assert.ok(!r.shapes.some(c => c.name === 'is_tenant_admin')); });
 await check('actual member other-host read stays native-visible-empty without a Calendar record claim', async () => { const r = await execute({ role: 'member', result: { data: [], error: null }, nativeAdmin: false }); assert.equal(r.value?.status, 'available'); assert.equal(r.value?.found, false); assert.ok(!r.wire.includes('"destination":"calendar"')); });
 for (const [label, options, expected] of [
   ['invalid model UUID', { args: { booking_id: 'not-a-uuid' } }, 'needs_input'],
@@ -145,8 +145,9 @@ for (const [label, classification] of [['missing', null], ['unknown', { id: tena
 await check('actual Chat classification changing after read suppresses a valid row', async () => {
   const r = await execute({ afterClassification: { id: tenant, account_type: 'agency', parent_tenant_id: null } }); assert.equal(r.value?.status, 'refused'); assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting')); assert.ok(!r.wire.includes('"destination":"calendar"'));
 });
-await check('unknown Team permission does not offer the new tool or start a booking read', async () => {
-  const r = await execute({ role: 'unknown' }); assert.ok(!r.offered.includes('read_calendar_booking')); assert.ok(!r.shapes.some(c => c.name === 'list_team_bookings'));
+for (const role of ['coach', 'unknown', null, '', { title: 'Owner' }]) await check('unrecognized or retired Team permission cannot offer or read: ' + JSON.stringify(role), async () => {
+  const r = await execute({ role }); assert.ok(!r.offered.includes('read_calendar_booking')); assert.ok(!r.shapes.some(c => c.name === 'list_team_bookings'));
+  assert.ok(!JSON.stringify(modelBodies).includes('Neutral saved meeting')); assert.ok(!r.wire.includes('"destination":"calendar"'));
 });
 console.log('RESULT ' + cases.filter(c => c.status === 'PASS').length + ' PASS / ' + cases.filter(c => c.status === 'FAIL').length + ' FAIL');
 if (cases.some(c => c.status === 'FAIL')) process.exitCode = 1;

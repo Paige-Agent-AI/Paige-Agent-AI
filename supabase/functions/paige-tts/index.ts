@@ -58,6 +58,7 @@ const MAX_TEXT_CHARS = 4096; // OpenAI TTS hard limit; cap here so a long messag
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, Idempotency-Key",
+  "Access-Control-Expose-Headers": "Server-Timing",
 };
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -217,14 +218,19 @@ serve(async (req: Request) => {
         if (cached) {
           const buf = await cached.arrayBuffer();
           if (!buf.byteLength) throw new Error("tts_cached_audio_empty");
+          const cacheTiming = {
+            cache_lookup_ms: Math.round(performance.now() - cacheStarted),
+            response_ready_ms: Math.round(performance.now() - requestStarted),
+          };
           console.log("[paige-tts] cache HIT", { scope: storagePrefix, provider: attempt.provider, profile_revision: attempt.profileRevision, bytes: buf.byteLength });
           runAfter(meterChars(admin, meterTenantId, capped.length, {
             provider: attempt.provider, profile_revision: attempt.profileRevision, model: attempt.model,
             voice_source: voiceSource, fell_back: fellBack, cache_hit: true,
-            cache_lookup_ms: Math.round(performance.now() - cacheStarted),
-            response_ready_ms: Math.round(performance.now() - requestStarted),
+            ...cacheTiming,
           }));
-          return new Response(buf, { headers: audioHeaders });
+          return new Response(buf, { headers: { ...audioHeaders,
+            "Server-Timing": `voice_cache;dur=${cacheTiming.cache_lookup_ms}, voice_ready;dur=${cacheTiming.response_ready_ms}`,
+          } });
         }
       } catch {
         // Not cached — fall through to synth. Never fatal.
@@ -394,7 +400,9 @@ serve(async (req: Request) => {
           },
           async cancel() { finished = true; detach(); await stopProvider(); },
         }, { highWaterMark: 0 });
-        return new Response(stream, { headers: audioHeaders });
+        return new Response(stream, { headers: { ...audioHeaders,
+          "Server-Timing": `voice_first_byte;dur=${timings.provider_first_byte_ms}, voice_settlement;dur=${timings.cost_settlement_ms}, voice_ready;dur=${timings.response_ready_ms}`,
+        } });
       }
 
       // ── OpenAI attempt — keep the STREAMING tee path (progressive playback) ──

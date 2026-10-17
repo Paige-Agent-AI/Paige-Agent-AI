@@ -50,8 +50,10 @@ const unsafePresentation=process.argv.includes('--presentation-unsafe-control');
 const unsafeStage=process.argv.includes('--stage-unsafe-control');
 const frame=process.argv.includes('--frame')||process.argv.includes('--frame-unsafe-control')||process.argv.includes('--customer-chat');
 const unsafeFrame=process.argv.includes('--frame-unsafe-control');
-assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame].filter(Boolean).length<=1,'Choose one negative control');
-const reportStem=unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
+const unsafeAssistantSettings=process.argv.includes('--assistant-settings-unsafe-control');
+const assistantSettings=process.argv.includes('--assistant-settings')||unsafeAssistantSettings;
+assert([unsafeControl,unsafePresentation,unsafeStage,unsafeFrame,unsafeAssistantSettings].filter(Boolean).length<=1,'Choose one negative control');
+const reportStem=assistantSettings?(unsafeAssistantSettings?'assistant-settings-unsafe-control':'assistant-settings-candidate'):unsafeFrame?'frame-unsafe-control':frame?'frame-candidate':unsafeStage?'stage-unsafe-control':unsafePresentation?'presentation-unsafe-control':unsafeControl?'unsafe-control':'candidate';
 function advance(actor=uid,stage='signing_agreement',payload={},role='authenticated') {
   const output=sql(`BEGIN; SELECT set_config('test.actor','${actor??''}',true); SET LOCAL ROLE ${role}; SELECT row_to_json(s) FROM public.client_advance_onboarding_stage(${stage===null?'NULL':`'${stage}'`},$payload$${JSON.stringify(payload)}$payload$::jsonb) s; COMMIT;`);
   return JSON.parse(output.split('\n').find(line=>line.startsWith('{')));
@@ -221,6 +223,10 @@ try {
   if(process.argv.includes('--customer-chat')) {
     const {customerChatProof}=await import('./e09-customer-chat.mjs');
     Object.assign(frameEvidence,customerChatProof({sql,check,assert,fs,root,path,uid,other,tenant,foreign,contact}));
+  }
+  if(assistantSettings){
+    const {assistantSettingsProof}=await import('./e09-customer-assistant-settings.mjs');
+    Object.assign(frameEvidence,await assistantSettingsProof({sql,check,assert,fs,root,path,uid,tenant,foreign,presentation,spawn,exe,port,transcripts,unsafe:unsafeAssistantSettings}));
   }
   const failed=results.filter(x=>x.status==='FAIL');
   const report={mode:reportStem,evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',migrationSHA256:createHash('sha256').update(migration).digest('hex'),presentationSHA256:createHash('sha256').update(presentationMigration).digest('hex'),stageSHA256:createHash('sha256').update(stageMigration).digest('hex'),...frameEvidence,results,passed:results.length-failed.length,failed:failed.length};

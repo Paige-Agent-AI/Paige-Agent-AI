@@ -501,6 +501,47 @@ UPDATE public.clients SET linked_user_id='e0911000-0000-0000-0000-000000000001'
 
 -- Native referential cleanup must preserve the incumbent ON DELETE SET NULL
 -- disposition, archive detached private text and continue refusing identity edits.
+-- Assistant settings use the existing writer and native tenant authority.
+INSERT INTO auth.users(id,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0911000-0000-0000-0000-000000000003','e09-config-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0911000-0000-0000-0000-000000000004','e09-config-foreign@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
+ ('e0921000-0000-0000-0000-000000000001','e0911000-0000-0000-0000-000000000003','owner','active',true),
+ ('e0921000-0000-0000-0000-000000000002','e0911000-0000-0000-0000-000000000004','admin','active',false);
+UPDATE public.tenants SET features=features || '{"unrelated_feature":{"keep":true}}'::jsonb
+ WHERE id='e0921000-0000-0000-0000-000000000001';
+SELECT lives_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000001',
+ '{"assistant":{"enabled":false,"display_name":"Saved client guide","tone":"Clear","future_setting":"keep"}}')$$)$q$,
+ 'native owner configures its customer assistant through the existing writer');
+SELECT lives_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000001','{"assistant":{"tone":"Warm"}}')$$)$q$,
+ 'a later partial assistant edit preserves saved policy');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'assistant',
+ '{"enabled":false,"display_name":"Saved client guide","tone":"Warm","future_setting":"keep"}'::jsonb,
+ 'ordinary customer reloads the same bounded saved assistant configuration');
+SELECT is((SELECT features->'unrelated_feature' FROM public.tenants WHERE id='e0921000-0000-0000-0000-000000000001'),
+ '{"keep":true}'::jsonb,'configuration leaves unrelated canonical features intact');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000001',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000001','{"assistant":{"enabled":true}}')$$)$q$,
+ '42501','portal_config_forbidden','customer relationship cannot configure its business assistant');
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000004',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000001','{"assistant":{"enabled":true}}')$$)$q$,
+ '42501','portal_config_forbidden','admin from another business cannot change customer assistant policy');
+SELECT lives_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000004',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000002','{"assistant":{"display_name":"Business B guide"}}')$$)$q$,
+ 'another legitimate business configures its own assistant through the same writer');
+SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config'->'assistant'->>'display_name',
+ 'Saved client guide','another business save cannot change this customer assistant');
+UPDATE public.tenant_members SET status='inactive' WHERE user_id='e0911000-0000-0000-0000-000000000003';
+SELECT throws_ok($q$SELECT pg_temp.e09_chat('e0911000-0000-0000-0000-000000000003',
+ $$SELECT public.set_tenant_portal_config('e0921000-0000-0000-0000-000000000001','{"assistant":{"enabled":true}}')$$)$q$,
+ '42501','portal_config_forbidden','revoked owner cannot save customer assistant settings');
+SELECT ok(NOT has_function_privilege('anon','public.set_tenant_portal_config(uuid,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.set_tenant_portal_config(uuid,jsonb)','EXECUTE')
+ AND has_function_privilege('authenticated','public.set_tenant_portal_config(uuid,jsonb)','EXECUTE'),
+ 'existing authenticated-only writer ACL remains exact');
+
 DELETE FROM public.clients WHERE id='e0931000-0000-0000-0000-000000000001';
 SELECT ok((SELECT contact_id IS NULL AND is_archived FROM public.paige_chat_threads
  WHERE id=(SELECT thread_id FROM e09_customer_chat)),

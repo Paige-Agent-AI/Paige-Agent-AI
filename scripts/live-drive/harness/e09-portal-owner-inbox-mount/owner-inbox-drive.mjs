@@ -213,6 +213,29 @@ try {
       const inbox = document.querySelector("[data-canonical-conversations]");
       const scrollsX = (n) => { for (let p = n.parentElement; p; p = p.parentElement) { const ox = getComputedStyle(p).overflowX; if ((ox === "auto" || ox === "scroll" || ox === "hidden" || ox === "clip") && p !== document.documentElement && p !== document.body) return true; } return false; };
       const pastEdge = [...document.querySelectorAll("#tenant-shell-main *")].filter(visible).filter((n) => { const r = n.getBoundingClientRect(); return r.right > innerWidth + 1 && !scrollsX(n); }).slice(0, 5).map((n) => ({ el: n.tagName.toLowerCase(), text: n.textContent.trim().slice(0, 30), right: Math.round(n.getBoundingClientRect().right) }));
+      // Clipped text: page-level overflow cannot see text that a narrow column squeezes away inside its own
+      // overflow:hidden box. Flag any text run cut to fewer than 4 visible characters (a name reduced to "J…" or
+      // to nothing), and any text pushed more than half outside its clipping ancestor. Elements under the
+      // PAIGE dock overlay (≤1080px, a harness placeholder) are skipped — they are covered, not clipped.
+      const dock = document.querySelector(".tcs-paige:not([hidden])")?.getBoundingClientRect();
+      const underDock = (r) => dock && dock.width > 0 && getComputedStyle(document.querySelector(".tcs-paige")).position === "absolute" && r.left >= dock.left - 1;
+      const clipped = [...document.querySelectorAll("#tenant-shell-main *")].filter((n) => {
+        const own = [...n.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent).join("").trim();
+        if (own.length < 4 || n.closest("[aria-hidden='true'], .sr-only")) return false;
+        const cs = getComputedStyle(n); if (cs.display === "none" || cs.visibility === "hidden" || !n.getClientRects().length) return false;
+        const r = n.getBoundingClientRect(); if (!r.height || !inView(n) || underDock(r)) return false;
+        if (n.scrollWidth > n.clientWidth + 1 && /ellipsis|clip/.test(cs.textOverflow + cs.overflow)) {
+          const vis = n.clientWidth ? Math.round(own.length * n.clientWidth / n.scrollWidth) : 0;
+          if (vis < 4) return true;
+        }
+        if (!r.width) return true;
+        for (let p = n.parentElement; p && p !== document.body; p = p.parentElement) {
+          const o = getComputedStyle(p); if (!/hidden|clip/.test(o.overflowX)) continue;
+          const pr = p.getBoundingClientRect(); const shown = Math.max(0, Math.min(r.right, pr.right) - Math.max(r.left, pr.left));
+          return shown < r.width * 0.5;
+        }
+        return false;
+      }).slice(0, 8).map((n) => ({ text: [...n.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent).join("").trim().slice(0, 30), w: Math.round(n.getBoundingClientRect().width), el: n.tagName.toLowerCase() + (typeof n.className === "string" && n.className ? "." + n.className.split(" ").slice(0, 3).join(".") : "") }));
       const overflowX = document.documentElement.scrollWidth > document.documentElement.clientWidth || (inbox ? inbox.scrollWidth > inbox.clientWidth + 1 : false) || pastEdge.length > 0;
 
       // Touch targets on the phone frames: every visible control inside the inbox at least 44×44.
@@ -225,7 +248,7 @@ try {
       return {
         contrastMin: contrast.length ? Math.min(...contrast.map((c) => c.ratio)) : null, textCount: contrast.length, low, lowIncidental,
         e09: { roots: e09Roots.length, textCount: contrast.filter((c) => c.e09).length, contrastMin: (() => { const e = contrast.filter((c) => c.e09); return e.length ? Math.min(...e.map((c) => c.ratio)) : null; })(), low: low.filter((c) => c.e09), goldOutsideAct: goldEls.filter((g) => g.e09 && g.kind === "decorative") },
-        goldTokens: goldRgb, warningToken: warningRgb, gold: goldEls.length, goldActs, goldWarning, goldWash, goldOutsideAct, overflowX, pastEdge, smallTargets,
+        goldTokens: goldRgb, warningToken: warningRgb, gold: goldEls.length, goldActs, goldWarning, goldWash, goldOutsideAct, overflowX, pastEdge, clipped, smallTargets,
         labels: { portalClient: has("Portal · Jordan Rivera"), portalYou: has("Portal · You"), help: has("Help request"), email: has("Before we sign off on phase two"), sms: has("Thursday works") },
         note: has(`Posts in Jordan Rivera's client portal`),
         railHelpPreview: helpRow ? helpRow.textContent.includes("Help request:") : null,
@@ -249,12 +272,12 @@ try {
       outcomeCopy: s.state === "notjoined" || s.state === "error" ? !!behaviour.toast : true,
       draftKept: s.state === "notjoined" || s.state === "error" ? behaviour.draftKept === true : true,
     };
-    const ok = errors.length === 0 && !m.overflowX && m.goldOutsideAct.length === 0 && m.low.length === 0 && m.smallTargets.length === 0 && Object.values(checks).every(Boolean);
+    const ok = errors.length === 0 && !m.overflowX && m.clipped.length === 0 && m.goldOutsideAct.length === 0 && m.low.length === 0 && m.smallTargets.length === 0 && Object.values(checks).every(Boolean);
     if (!ok) failed = true;
     results[name] = { ok, ...m, checks, behaviour, errors, consoleErrors: consoleErrors.slice(0, 10) };
     await page.screenshot({ path: path.join(out, `${name}.png`) });
     await ctx.close();
-    console.log(name, ok ? "OK" : "FAIL", JSON.stringify({ e09: { contrastMin: m.e09.contrastMin, low: m.e09.low.map((l) => `${l.text}:${l.ratio}`), gold: m.e09.goldOutsideAct.length, roots: m.e09.roots }, contrastMin: m.contrastMin, low: m.low.slice(0, 3).map((l) => `${l.text}:${l.ratio}`), gold: m.gold, goldActs: m.goldActs, goldWarning: m.goldWarning, goldOutsideAct: m.goldOutsideAct.slice(0, 3), overflowX: m.overflowX, pastEdge: m.pastEdge, smallTargets: m.smallTargets.slice(0, 6), checks: Object.entries(checks).filter(([, v]) => !v).map(([k]) => k), errors: errors.slice(0, 2), consoleErrors: consoleErrors.length }));
+    console.log(name, ok ? "OK" : "FAIL", JSON.stringify({ e09: { contrastMin: m.e09.contrastMin, low: m.e09.low.map((l) => `${l.text}:${l.ratio}`), gold: m.e09.goldOutsideAct.length, roots: m.e09.roots }, contrastMin: m.contrastMin, low: m.low.slice(0, 3).map((l) => `${l.text}:${l.ratio}`), gold: m.gold, goldActs: m.goldActs, goldWarning: m.goldWarning, goldOutsideAct: m.goldOutsideAct.slice(0, 3), overflowX: m.overflowX, pastEdge: m.pastEdge, clipped: m.clipped, smallTargets: m.smallTargets.slice(0, 6), checks: Object.entries(checks).filter(([, v]) => !v).map(([k]) => k), errors: errors.slice(0, 2), consoleErrors: consoleErrors.length }));
   }
 } finally {
   await browser.close();

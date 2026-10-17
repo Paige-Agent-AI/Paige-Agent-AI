@@ -13,34 +13,41 @@ export type FeatureCategory =
 export type FeatureStatus =
   | "submitted" | "under_review" | "planned" | "in_progress" | "shipped" | "declined";
 
+// Categories a person can choose. Finance/credit categories are not platform defaults (CLAUDE.md §2);
+// historical rows keep their stored values and still resolve a readable label below.
 export const TICKET_CATEGORIES: { value: TicketCategory; label: string }[] = [
   { value: "billing", label: "Billing Question" },
   { value: "technical_issue", label: "Technical Issue" },
   { value: "account_access", label: "Account Access" },
   { value: "paige_question", label: "Paige Question" },
-  { value: "credit_report", label: "Credit Report Issue" },
-  { value: "funding_question", label: "Funding Question" },
-  { value: "broker_issue", label: "Broker Issue" },
   { value: "general", label: "General Question" },
 ];
+const LEGACY_TICKET_LABELS: Record<string, string> = {
+  credit_report: "Credit Report Issue",
+  funding_question: "Funding Question",
+  broker_issue: "Broker Issue",
+};
 
 export const FEATURE_CATEGORIES: { value: FeatureCategory; label: string }[] = [
-  { value: "credit_intelligence", label: "Credit Intelligence" },
-  { value: "funding", label: "Funding Tools" },
   { value: "paige_ai", label: "Paige AI" },
   { value: "business_tools", label: "Business Tools" },
-  { value: "broker_workspace", label: "Broker Workspace" },
   { value: "mobile", label: "Mobile Experience" },
   { value: "integrations", label: "Integrations" },
   { value: "reporting", label: "Reporting" },
   { value: "other", label: "Other" },
 ];
 
+const LEGACY_FEATURE_LABELS: Record<string, string> = {
+  credit_intelligence: "Credit Intelligence",
+  funding: "Funding Tools",
+  broker_workspace: "Broker Workspace",
+};
+
 export function ticketCategoryLabel(c: string): string {
-  return TICKET_CATEGORIES.find((x) => x.value === c)?.label ?? c;
+  return TICKET_CATEGORIES.find((x) => x.value === c)?.label ?? LEGACY_TICKET_LABELS[c] ?? c;
 }
 export function featureCategoryLabel(c: string): string {
-  return FEATURE_CATEGORIES.find((x) => x.value === c)?.label ?? c;
+  return FEATURE_CATEGORIES.find((x) => x.value === c)?.label ?? LEGACY_FEATURE_LABELS[c] ?? c;
 }
 
 export const TICKET_STATUS_STYLES: Record<TicketStatus, string> = {

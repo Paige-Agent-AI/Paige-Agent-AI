@@ -21,8 +21,9 @@ const ref={share_id:"66666666-6666-4666-8666-666666666666",share_revision:1,sour
 function fixture(){return{frame:{actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user_id:actor},brand:{tenant_id:tenant,tenant_name:"Coaching business"},config:{assistant:{enabled:true,tone:"Warm"}}},thread_id:thread,intent_id:intent,
  snapshot:{version:1,retrieval_refs:[ref],source_refs:[ref]},sources:[{...ref,document_id:client,document_revision:1,generation_id:null,title:"Approved guide",content:"Approved program guidance",content_truncated:false}],
  history:[{role:"user",content:"Private earlier question",source_refs:[ref]}],history_limited:false}}
+type ContextFixture=ReturnType<typeof fixture>;
 async function guard(){
- let current:any=fixture(),error:any=null,authorized=true;const calls:string[]=[];
+ let current:ContextFixture=fixture(),error:{code:string;message:string}|null=null,authorized=true;const calls:string[]=[];
  const supabaseClient={rpc:vi.fn(async(name:string)=>{calls.push(name);return name==="paige_chat_customer_thread_authorized"?{data:authorized,error:null}:{data:current,error}})};
  const captured=await readCustomerAssistantContext(supabaseClient,actor,thread,intent);expect(captured.status).toBe("available");
  let guardDeclaration=declaration("revalidateTenantKnowledgeScope").getText(ast);
@@ -36,7 +37,7 @@ async function guard(){
   const ${guardDeclaration};
   return {check:revalidateTenantKnowledgeScope,retired:()=>tenantKnowledgeScopeRevoked};`));
  const actual=create({supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,readCustomerAssistantContext});
- return{...actual,calls,change:(fn:(r:any)=>void)=>fn(current),fail:()=>error={code:"42501",message:"PRIVATE DIAGNOSTIC"},restore:()=>{current=fixture();error=null;authorized=true},deny:()=>authorized=false};
+ return{...actual,calls,change:(fn:(r:ContextFixture)=>void)=>fn(current),fail:()=>{error={code:"42501",message:"PRIVATE DIAGNOSTIC"};},restore:()=>{current=fixture();error=null;authorized=true},deny:()=>{authorized=false;}};
 }
 describe("actual customer provider/output lifetime source fence",()=>{
  it("compares one native role/program/private-history snapshot and the actual private thread",async()=>{
@@ -44,22 +45,22 @@ describe("actual customer provider/output lifetime source fence",()=>{
   expect(g.calls).toEqual(["client_portal_assistant_context","client_portal_assistant_context","paige_chat_customer_thread_authorized"]);
  });
  for(const [label,change]of Object.entries({
-  "business role":(r:any)=>r.frame.config.assistant.tone="Changed",
-  "disablement":(r:any)=>r.frame.config.assistant.enabled=false,
-  "published source":(r:any)=>r.sources[0].content="Changed source",
-  "private history":(r:any)=>r.history[0].content="Changed history",
-  "history completeness":(r:any)=>r.history_limited=true,
-  "business":(r:any)=>r.frame.profile.tenant_id=client,
-  "customer":(r:any)=>r.frame.profile.linked_user_id=client,
+  "business role":(r:ContextFixture)=>r.frame.config.assistant.tone="Changed",
+  "disablement":(r:ContextFixture)=>r.frame.config.assistant.enabled=false,
+  "published source":(r:ContextFixture)=>r.sources[0].content="Changed source",
+  "private history":(r:ContextFixture)=>r.history[0].content="Changed history",
+  "history completeness":(r:ContextFixture)=>r.history_limited=true,
+  "business":(r:ContextFixture)=>r.frame.profile.tenant_id=client,
+  "customer":(r:ContextFixture)=>r.frame.profile.linked_user_id=client,
  }))it("retires "+label+" permanently for the current turn",async()=>{
   const g=await guard();expect(await g.check()).toBe(true);g.change(change);expect(await g.check()).toBe(false);
   g.restore();expect(await g.check()).toBe(false);expect(g.retired()).toBe(true);
  });
  for(const mode of ["native error","thread withdrawn"])it(mode+" refuses publication without fallback",async()=>{
-  const g=await guard();mode==="native error"?g.fail():g.deny();expect(await g.check()).toBe(false);g.restore();expect(await g.check()).toBe(false);
+  const g=await guard();if(mode==="native error")g.fail();else g.deny();expect(await g.check()).toBe(false);g.restore();expect(await g.check()).toBe(false);
  });
  it("internal business fields never enter the decoded source",async()=>{
-  const g=await guard();g.change(r=>r.frame.config.internal_private_notes="OWNER PRIVATE");expect(await g.check()).toBe(true);
+  const g=await guard();g.change(r=>{Object.assign(r.frame.config,{internal_private_notes:"OWNER PRIVATE"});});expect(await g.check()).toBe(true);
  });
 });
 describe("actual customer handler integration",()=>{
@@ -76,7 +77,7 @@ describe("actual customer handler integration",()=>{
   const result=await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent);const context=result.data!;
   const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal && customerPersona && customerAssistant");
   const run=new Function("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages",compile(block.getText(ast)));
-  const aiMessages:any[]=[{role:"system",content:"OWNER PRIVATE"}],tools:any[]=[{function:{name:"owner_only_write"}}];
+  const aiMessages:unknown[]=[{role:"system",content:"OWNER PRIVATE"}],tools:unknown[]=[{function:{name:"owner_only_write"}}];
   run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages);
   expect(tools).toEqual([]);expect(JSON.stringify(aiMessages)).not.toContain("OWNER PRIVATE");
   expect(JSON.stringify(aiMessages)).toContain("representing the business");expect(JSON.stringify(aiMessages)).toContain("Approved program guidance");
@@ -93,11 +94,11 @@ describe("actual customer handler integration",()=>{
   expect(value.messages).toEqual([{role:"user",content:"Private earlier question"},{role:"user",content:"Current question"}]);
  });
  it("passes exact native source metadata to settlement and strips withdrawn metadata during empty cleanup",async()=>{
-  const captured:any[]=[];const supabase={rpc:async(...args:any[])=>{captured.push(args);return{data:client,error:null}}};
+  const captured:Array<[string,Record<string,unknown>]>=[];const supabase={rpc:async(name:string,args:Record<string,unknown>)=>{captured.push([name,args]);return{data:client,error:null}}};
   const create=new Function("supabase","supabaseClient","user","interactiveReceiptScope","customerSourceSnapshot","customerTerminalSource","z",compile(`const ${declaration("appendAssistant").getText(ast)};return appendAssistant;`));
   const snapshot=fixture().snapshot;const append=create(supabase,{rpc:vi.fn()},{id:actor},{thread,tenant,intent},snapshot,customerTerminalSource,z);
   const args={p_thread_id:thread,p_role:"assistant",p_content:"Authorized answer",p_bundle_ref:{turn_state:{state:"FINAL"}}};
-  await append(args);expect(captured[0][0]).toBe("paige_chat_interactive_settle");expect(captured[0][1].p_bundle_ref.customer_knowledge).toEqual(snapshot);
+  await append(args);expect(captured[0][0]).toBe("paige_chat_interactive_settle");expect((captured[0][1].p_bundle_ref as Record<string,unknown>).customer_knowledge).toEqual(snapshot);
   await append({...args,p_content:"Must be withheld",p_bundle_ref:{customer_knowledge:snapshot,turn_state:{state:"WITHHELD"}}});
   expect(captured[1][1].p_content).toBe("");expect(captured[1][1].p_bundle_ref).not.toHaveProperty("customer_knowledge");
  });

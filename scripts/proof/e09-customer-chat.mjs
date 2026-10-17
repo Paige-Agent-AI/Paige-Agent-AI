@@ -41,7 +41,7 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
  for(const name of ['20270601000008_int346_server_issued_interactive_receipts.sql',
   '20270602000301_int346_conversational_admission.sql','20271108110000_int346_database_executor_isolation.sql'])
    sql(read(name));
- sql(read('20271108191000_e09_customer_private_chat.sql'));
+ sql(read('20271108201000_e09_customer_private_chat.sql'));
  const quote=x=>x===null?'NULL':"'"+String(x).replaceAll("'","''")+"'";
  const auth=(actor=uid,workspace=null)=>`SELECT set_config('test.actor',${quote(actor??'')},false);SELECT set_config('test.tenant',${quote(workspace??'')},false);SET ROLE authenticated;`;
  const as=(statement,actor=uid,workspace=null)=>sql(auth(actor,workspace)+statement+';RESET ROLE;').split('\n').at(-2)?.trim();
@@ -121,5 +121,5 @@ export function customerChatProof({sql,check,assert,fs,root,path,uid,other,tenan
   assert.equal(sql(`SELECT count(*) FROM clients WHERE tenant_id='${foreign}'`),'1');
   assert.equal(sql(`SELECT count(*) FROM auth.users WHERE id='${other}'`),'0');
  });
- return {customerChatMigration:'20271108191000_e09_customer_private_chat.sql'};
+ return {customerChatMigration:'20271108201000_e09_customer_private_chat.sql'};
 }

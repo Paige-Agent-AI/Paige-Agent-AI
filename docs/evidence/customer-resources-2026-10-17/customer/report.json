@@ -113,7 +113,8 @@
         ]
       },
       "shot": "1536-770-light-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 1536,
@@ -228,7 +229,8 @@
         ]
       },
       "shot": "1536-770-dark-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 1366,
@@ -343,7 +345,8 @@
         ]
       },
       "shot": "1366-768-light-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 1366,
@@ -458,7 +461,8 @@
         ]
       },
       "shot": "1366-768-dark-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 1024,
@@ -573,7 +577,8 @@
         ]
       },
       "shot": "1024-768-light-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 1024,
@@ -688,7 +693,8 @@
         ]
       },
       "shot": "1024-768-dark-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 900,
@@ -803,7 +809,8 @@
         ]
       },
       "shot": "900-1000-light-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 900,
@@ -918,7 +925,8 @@
         ]
       },
       "shot": "900-1000-dark-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 390,
@@ -1033,7 +1041,8 @@
         ]
       },
       "shot": "390-844-light-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 390,
@@ -1148,7 +1157,8 @@
         ]
       },
       "shot": "390-844-dark-a.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 320,
@@ -1263,7 +1273,8 @@
         ]
       },
       "shot": "320-568-light-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     },
     {
       "width": 320,
@@ -1378,7 +1389,8 @@
         ]
       },
       "shot": "320-568-dark-b.png",
-      "withdrawal": "source-hidden-after-native-list-revalidation"
+      "focus": "same-section-native-revalidation",
+      "withdrawal": "reader-denied-then-current-list-empty"
     }
   ],
   "errors": [],
@@ -1393,11 +1405,11 @@
     },
     {
       "file": "src/pages/app/Resources.tsx",
-      "sha256": "5eb2651b8998f5a0def9e0c86def215b608e8d11a94ef14365199c87f8bb6d88"
+      "sha256": "4aba23071841c3fee32427a3a4c5491a24b8b7dc097d7eb319681074c80b5639"
     },
     {
       "file": "src/hooks/useCustomerResources.ts",
-      "sha256": "476d0ad7a9a4b484da5d71e88de972881b77c586875547356f5c65ae8c8d0fe3"
+      "sha256": "47076c4a606ac097cd8791bdba4b87ddbe54e2ddb2a6796a19abc7751551268b"
     },
     {
       "file": "src/hooks/useClientPortalFrame.ts",
@@ -1413,7 +1425,7 @@
     },
     {
       "file": "scripts/proof/e09-customer-entry-ui/resources-adapter.tsx",
-      "sha256": "c302450f5618ab6b443fccc35aa1de2d83047e71a5bc202d881cea4c8ad1f96d"
+      "sha256": "8612d54520673cd8771815ac3135d6a2bed81ed3fdaf135dee34819297af766e"
     }
   ],
   "boundary": "Actual existing customer AppShell, AppNav, router, frame/resource hooks and SDK client code. Explicit local Auth/domain/context doubles; private Chat transport and unrelated notification/consent/provider leaves are placeholders. All network blocked. Not hosted identity/RLS, model execution, actual customer read engagement, physical Safari or owner acceptance."

@@ -11,7 +11,7 @@
     },
     {
       "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
-      "sha256": "c5eba142f13e22e0117c8cb2a331c9eab0e90e7218e2a75eb9e360c57a6932bb"
+      "sha256": "e3382deff545306a324ecaa550f43a2007d9f16434f895acdb824655b5e27eac"
     },
     {
       "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
@@ -27,11 +27,11 @@
     },
     {
       "file": "src/components/tenant-relationships/OwnerCustomerResources.tsx",
-      "sha256": "183845bb5692fb374b2bdf17885d70449d08246b27414591c61ec0157aa91b94"
+      "sha256": "da378399771ca91da94309c68fe20af8d69f6ad10b74b987d2dc7b4213d87b65"
     },
     {
       "file": "src/hooks/useOwnerResourceShares.ts",
-      "sha256": "f7078a6f5420c9165d19a1116d26b0c17667c2601d856dd37de4f23d043e9720"
+      "sha256": "58c2e55e0c24a645e9017a7844bbcbd8382f068da9c120a7de56d709575ec8a2"
     },
     {
       "file": "src/lib/customer-resources.ts",
@@ -208,7 +208,7 @@
             },
             {
               "tag": "DD",
-              "text": "ccb0ec9d-653e-454e-bc5b-e1f8b9cfb987",
+              "text": "ef3d5a60-94bb-4648-9ab1-3534e3adf17c",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -685,7 +685,7 @@
             },
             {
               "tag": "DD",
-              "text": "4fd2c06e-3cb0-4e46-8647-b16be04ef4d6",
+              "text": "afc06466-95bf-4449-9fb5-37c33db4e88e",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -1162,7 +1162,7 @@
             },
             {
               "tag": "DD",
-              "text": "834625e9-5f7f-40cd-a13f-67c089bc4d7e",
+              "text": "5055cb06-3b4d-43e5-b2cb-8c74feb5cb87",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -1639,7 +1639,7 @@
             },
             {
               "tag": "DD",
-              "text": "fd7594d5-4181-4fc0-969f-2b183ff6cdfa",
+              "text": "9fee68c0-cfd8-4334-85d7-51577c9951e4",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -2116,7 +2116,7 @@
             },
             {
               "tag": "DD",
-              "text": "e8ea1c07-ef36-4480-93eb-e9613413fe59",
+              "text": "39841b78-02fd-42ca-9ece-64c4bc12c6eb",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -2593,7 +2593,7 @@
             },
             {
               "tag": "DD",
-              "text": "a91d261f-3bad-4321-b472-93c40169d2e9",
+              "text": "18068334-cd74-49a7-852b-ba2bd783655f",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -3070,7 +3070,7 @@
             },
             {
               "tag": "DD",
-              "text": "5eb008c4-a224-4da0-9683-345f873636c9",
+              "text": "205a7c7a-bd37-4eeb-a8cb-25f810f1e05b",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -3547,7 +3547,7 @@
             },
             {
               "tag": "DD",
-              "text": "7d01756a-2bbd-48a6-8c3e-33204875d62b",
+              "text": "9e84395e-d47b-4635-a69e-3a89e24a72f7",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -4024,7 +4024,7 @@
             },
             {
               "tag": "DD",
-              "text": "54e668d2-abed-430e-97f2-0997eb842648",
+              "text": "89f008a9-8355-40e9-b346-1ed74903edc0",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -4501,7 +4501,7 @@
             },
             {
               "tag": "DD",
-              "text": "61e40fd4-1556-480a-8020-ee3c47ca277b",
+              "text": "e2b5923c-ac17-4f7c-aa58-cb549d04d65d",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -4978,7 +4978,7 @@
             },
             {
               "tag": "DD",
-              "text": "76a53f05-a3e3-4857-93f6-38486f3a648b",
+              "text": "5575791c-208b-4a1b-b2c5-a40bb8b3919d",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -5455,7 +5455,7 @@
             },
             {
               "tag": "DD",
-              "text": "a025f401-8bf0-4874-bb04-a1d461fe68b8",
+              "text": "471036f1-feef-4af1-a506-7bb18fbe8184",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -5932,7 +5932,7 @@
             },
             {
               "tag": "DD",
-              "text": "552e738f-cc3a-47b3-989a-283f1fab1d95",
+              "text": "9b0fed3c-7497-4b8e-9c79-d8754bcc7665",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -6409,7 +6409,7 @@
             },
             {
               "tag": "DD",
-              "text": "b336bf79-a422-4eeb-84d6-73b2e8f76545",
+              "text": "84320b0d-45b1-4e92-b77e-ff878c99c438",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -6886,7 +6886,7 @@
             },
             {
               "tag": "DD",
-              "text": "93528ec0-433f-4828-a597-c7008159c7f5",
+              "text": "2bb27987-fbdc-476e-83a3-f50db6acb041",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -7363,7 +7363,7 @@
             },
             {
               "tag": "DD",
-              "text": "1d2659de-7dda-4680-82e3-256fc0f194e9",
+              "text": "0c27a2df-6de9-4549-b523-a811f71e07a8",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -7840,7 +7840,7 @@
             },
             {
               "tag": "DD",
-              "text": "32f88edd-b2dc-4341-a27c-1b423a8e19be",
+              "text": "cfd55a5e-0c06-46f8-a61a-63c262f867ee",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -8146,6 +8146,10 @@
             }
           ]
         }
+      },
+      "accessLoss": {
+        "screenshot": "access-loss-390-844-light.png",
+        "outcome": "concealed-no-result-claim-safe-exit"
       }
     },
     {
@@ -8317,7 +8321,7 @@
             },
             {
               "tag": "DD",
-              "text": "4171a47a-f8eb-4ccd-8cbb-c80464d78856",
+              "text": "5a19a1e2-8ca8-49b1-8887-6810aaa99499",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,
@@ -8623,6 +8627,10 @@
             }
           ]
         }
+      },
+      "accessLoss": {
+        "screenshot": "access-loss-390-844-dark.png",
+        "outcome": "concealed-no-result-claim-safe-exit"
       }
     },
     {
@@ -8794,7 +8802,7 @@
             },
             {
               "tag": "DD",
-              "text": "825dcaa3-f216-4928-83f2-aa6b29de1a3a",
+              "text": "2230f25f-8a17-48c4-8012-d4817f3ebc61",
               "foreground": "rgb(32, 30, 35)",
               "background": [
                 247,
@@ -9271,7 +9279,7 @@
             },
             {
               "tag": "DD",
-              "text": "b4030b28-3d6d-44b4-9251-778a3dfef6db",
+              "text": "3383fed0-a7cf-45cb-9e8b-b5a38ddccd52",
               "foreground": "rgb(246, 242, 234)",
               "background": [
                 22,

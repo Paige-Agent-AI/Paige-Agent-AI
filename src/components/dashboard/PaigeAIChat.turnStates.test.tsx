@@ -22,6 +22,8 @@ const harness = vi.hoisted(() => ({
   tenant: "account-0",
   /** The props the Live surface was last given — so a case can drive a voice interruption. */
   live: null as null | { onVoiceInterrupt: () => void },
+  approvalRecovery: null as unknown,
+  readApproval: vi.fn(async (..._args: unknown[]) => null as unknown),
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
@@ -49,6 +51,7 @@ vi.mock("@/hooks/usePaigeThreads", () => ({
   usePaigeThreads: () => ({
     threads: harness.threads, isLoading: false, isFetched: true,
     loadTurns: vi.fn(async () => harness.turns), ensureThread: vi.fn(async () => "thread-a"),
+    loadApprovalRecovery: (...args: unknown[]) => harness.readApproval(...args),
     onTurnPersisted: vi.fn(), renameThread: vi.fn(), archiveThread: vi.fn(), deleteThread: vi.fn(),
   }),
 }));
@@ -121,6 +124,8 @@ beforeEach(() => {
   harness.threads = [];
   harness.turns = [];
   harness.tenant = `account-${Math.random().toString(36).slice(2)}`;
+  harness.approvalRecovery = null;
+  harness.readApproval.mockReset().mockImplementation(async () => harness.approvalRecovery);
   // Composer drafts persist per scope; every case starts from an empty one.
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -516,6 +521,97 @@ describe("native approval pause — EOF and canonical reload", () => {
     expect(reloaded.textContent).not.toContain(proposal.fingerprint);
     expect(sent).toHaveLength(1);
     expect(sent[0].approvedConfirmations).toBeUndefined();
+  });
+});
+
+describe("canonical approval recovery after reload", () => {
+  const thread = "00000000-0000-4000-8000-000000000003";
+  const intent = "00000000-0000-4000-8000-000000000004";
+  const turnId = "00000000-0000-4000-8000-000000000005";
+  const command = { action: "task.create", patch: { title: "Fixture restored work" } };
+  const card = { tool: "crm_create_task", summary: "Create fixture restored work", fingerprint: "1234567890abcdef", command, idempotency_key: "native-original-key" };
+  const fixture = () => {
+    harness.tenant = "00000000-0000-4000-8000-000000000002";
+    harness.threads = [{ id: thread, title: "Fixture pending work", updated_at: "2026-10-16T12:00:00Z" }];
+    harness.turns = [{ id: turnId, role: "assistant", content: "Review the proposed changes before approving.",
+      interactive_intent_id: intent, interactive_terminal_state: "WAIT_APPROVAL", bundle_ref: {
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1 },
+        paige_confirm: [{ ...card, fingerprint: "ffffffffffffffff", command: { action: "task.create", patch: { title: "Stored JSON is not authority" } }, idempotency_key: "forged-history-key" }],
+      } }];
+    harness.approvalRecovery = { v: 1, status: "available", thread_id: thread, turn_id: turnId,
+      intent_id: intent, tenant_id: harness.tenant, expires_at: new Date(Date.now() + 300000).toISOString(), confirmations: [card] };
+  };
+  it("restores only the server-issued card, then sends a new ordinary approval request on an explicit click", async () => {
+    fixture(); const sent = server(body([say("The native result is confirmed."), DONE]));
+    vi.mocked(supabase.functions.invoke).mockClear().mockResolvedValue({ data: { ok: true, outcome: "succeeded", readback: { id: "fixture-task" } }, error: null });
+    const host = await mount();
+    const approve = Array.from(host.querySelectorAll("button")).find(b => /^Approve/.test(b.textContent ?? ""));
+    expect(approve).toBeDefined(); expect(harness.readApproval).toHaveBeenCalledWith(thread, turnId, intent);
+    expect(sent).toHaveLength(0); expect(supabase.functions.invoke).not.toHaveBeenCalled();
+    await act(async () => { approve!.click(); await flush(); });
+    // SOLO sends the explicit decision through the shared governed Chat door;
+    // reload must not introduce the non-SOLO direct native execution path.
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
+    expect(sent).toHaveLength(1); expect(sent[0]).toMatchObject({ threadId: thread, approvedConfirmations: [card.fingerprint] });
+    expect((sent[0] as Record<string, unknown>).requestIntentId).toEqual(expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i));
+    expect((sent[0] as Record<string, unknown>).requestIntentId).not.toBe(intent);
+    expect(JSON.stringify(sent)).not.toContain("forged-history-key");
+    expect(JSON.stringify(sent)).not.toContain("ffffffffffffffff");
+    expect(host.textContent).not.toContain("This proposal is still waiting for your decision");
+  });
+  it.each(["unavailable", "null", "foreign", "expired"])("keeps a %s recovery as historical context without an executable token", async state => {
+    fixture(); server();
+    if (state === "unavailable") harness.approvalRecovery = { v: 1, status: "unavailable" };
+    if (state === "null") harness.approvalRecovery = null;
+    if (state === "foreign") harness.approvalRecovery = { ...(harness.approvalRecovery as object), tenant_id: "another-workspace" };
+    if (state === "expired") harness.approvalRecovery = { ...(harness.approvalRecovery as object), expires_at: new Date(Date.now() - 1).toISOString() };
+    const host = await mount();
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+    expect(host.textContent).toContain("couldn't be verified for approval");
+  });
+  it("never asks the reader to promote a JSON-only or interrupted historical card", async () => {
+    fixture(); harness.turns[0] = { ...harness.turns[0], interactive_terminal_state: "INTERRUPTED" }; server();
+    const host = await mount();
+    expect(harness.readApproval).not.toHaveBeenCalled();
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+  });
+  it("preserves historical-only behavior on non-SOLO mounts", async () => {
+    fixture(); server(); const host = await mount({soloTenantSafety: false});
+    expect(harness.readApproval).not.toHaveBeenCalled();
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+  });
+  it("keeps checking non-actionable and preserves composer focus when the fresh card arrives", async () => {
+    fixture(); const hold = deferred(); const projection = harness.approvalRecovery;
+    harness.readApproval.mockImplementation(async () => { await hold.promise; return projection; });
+    server(); const host = await mount(); const composer = host.querySelector("textarea")!;
+    composer.focus();
+    expect(host.textContent).toContain("Checking whether this proposal");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+    await act(async () => { hold.resolve(); await flush(); });
+    const approve = Array.from(host.querySelectorAll("button")).find(b => /^Approve/.test(b.textContent ?? ""));
+    expect(approve?.disabled).toBe(false); expect(approve?.tabIndex).toBe(0);
+    expect(document.activeElement).toBe(composer);
+  });
+  it.each(["workspace", "new-request"])("discards a late projection after a %s change", async change => {
+    fixture(); const hold = deferred(); const projection = harness.approvalRecovery;
+    harness.readApproval.mockImplementation(async () => { await hold.promise; return projection; });
+    server(); const host = await mount();
+    if (change === "workspace") {
+      harness.tenant = "00000000-0000-4000-8000-000000000099"; harness.threads = []; harness.turns = [];
+      await act(async () => { lastRoot!.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} />); await flush(); });
+    } else await ask(host, "Show my current work instead.");
+    await act(async () => { hold.resolve(); await flush(); });
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+    expect(host.textContent).not.toContain("This proposal is still waiting for your decision");
+    expect(host.textContent).not.toContain("Checking whether this proposal");
+  });
+  it("retires the recovered controls when their native expiry passes", async () => {
+    fixture(); harness.approvalRecovery = { ...(harness.approvalRecovery as object), expires_at: new Date(Date.now() + 1500).toISOString() };
+    server(); const host = await mount();
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(true);
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1600)); await flush(); });
+    expect(Array.from(host.querySelectorAll("button")).some(b => /^Approve/.test(b.textContent ?? ""))).toBe(false);
+    expect(host.textContent).toContain("couldn't be verified for approval");
   });
 });
 

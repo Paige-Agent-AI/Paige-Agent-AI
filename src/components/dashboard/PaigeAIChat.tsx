@@ -138,6 +138,8 @@ type Message = {
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
+  approvalRecovery?: "checking" | "unavailable";
+  recoveredApprovalExpiresAt?: string;
   /** Solo: what the person decided on this turn's card. The card settles into a record where it
    *  was asked, with no button left to press twice. Live session only; a reloaded turn shows the
    *  older settled line instead. */
@@ -186,6 +188,9 @@ type Message = {
 /** C4c — what "Skip, use your best guess" sends on the person's behalf (c6). The server is told it
  *  is a skip by the request (`resume.skipped`), never by these words. */
 const ASK_SKIP_REPLY = "Use your best guess.";
+const historicalConfirmItems = (items: Message["confirm"]): Message["confirm"] => items?.map(({tool,summary,preview}) => ({
+  tool, summary, ...(preview ? {preview} : {}),
+}));
 
 /** C3a — the answer being read right now (or just finished in this session). Keyed by the
  *  assistant message id it belongs to; cleared at every transcript reset. */
@@ -1177,8 +1182,48 @@ const PaigeAIChatInner = ({
           }
         })();
       }
-    return mapped;
+    // Historical tokens can explain an already-recorded outcome above, but are
+    // never retained as live approval inputs. Only the fresh server read restores them.
+    return mapped.map(message => ({...message, confirm: historicalConfirmItems(message.confirm)}));
   }
+
+  const restorePendingApproval = async (
+    threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
+  ) => {
+    const candidate = turns.at(-1);
+    if (!soloTenantSafety || platform || !activeTenantId || typeof threadsApi.loadApprovalRecovery !== "function"
+      || candidate?.role !== "assistant" || candidate.interactive_terminal_state !== "WAIT_APPROVAL"
+      || !candidate.interactive_intent_id || !scopeStillCurrent()) return;
+    const turnId = candidate.id;
+    const intentId = candidate.interactive_intent_id;
+    setMessages(previous => previous.map(message => message.id === turnId
+      ? {...message, approvalRecovery: "checking"} : message));
+    try {
+      const recovered = await threadsApi.loadApprovalRecovery(threadId, turnId, intentId);
+      if (!scopeStillCurrent()) return;
+      const valid = recovered?.v === 1 && recovered.status === "available" && recovered.thread_id === threadId
+        && recovered.turn_id === turnId && recovered.intent_id === intentId && recovered.tenant_id === activeTenantId
+        && Date.parse(recovered.expires_at) > Date.now() && Array.isArray(recovered.confirmations) && recovered.confirmations.length > 0;
+      setMessages(previous => previous.at(-1)?.id !== turnId ? previous : previous.map(message => message.id === turnId
+        ? valid ? {...message, confirm: recovered.confirmations, confirmResolved: false, approvalRecovery: undefined,
+          recoveredApprovalExpiresAt: recovered.expires_at}
+          : {...message, approvalRecovery: "unavailable"} : message));
+    } catch {
+      if (scopeStillCurrent()) setMessages(previous => previous.map(message => message.id === turnId
+        ? {...message, approvalRecovery: "unavailable"} : message));
+    }
+  };
+
+  useEffect(() => {
+    const expires = messages.filter(message => message.recoveredApprovalExpiresAt && !message.confirmResolved && !message.confirmDecision)
+      .map(message => Date.parse(message.recoveredApprovalExpiresAt!)).filter(Number.isFinite);
+    if (!expires.length) return;
+    const timer = window.setTimeout(() => setMessages(previous => previous.map(message =>
+      message.recoveredApprovalExpiresAt && Date.parse(message.recoveredApprovalExpiresAt) <= Date.now()
+        ? {...message, confirm: historicalConfirmItems(message.confirm), confirmResolved: true,
+          recoveredApprovalExpiresAt: undefined, approvalRecovery: "unavailable"} : message)), Math.max(0, Math.min(...expires) - Date.now()) + 1);
+    return () => window.clearTimeout(timer);
+  }, [messages]);
 
   const selectThread = async (
     id: string,
@@ -1252,6 +1297,7 @@ const PaigeAIChatInner = ({
       setMessages(hydrated.length ? hydrated : [mkMsg({ role: "assistant", content: openingGreeting })]);
       hydratedFromRef.current = id;
       applyConversationEvent({ type: "thread-loaded", id });
+      void restorePendingApproval(id, turns, () => ticketAccepted(requestTicket));
       if (!soloTenantSafety && !isThreadControlled) setActiveThreadId(id);
       setSteps([]);
       writeLiveTurn(null);
@@ -1672,7 +1718,10 @@ const PaigeAIChatInner = ({
             if (threadId && code !== "ASK_ANSWER_UNAVAILABLE") {
               try {
                 const turns = await threadsApi.loadTurns(threadId);
-                if (ticketAccepted(requestTicket) && turns.length) setMessages(turnsToMessages(turns));
+                if (ticketAccepted(requestTicket) && turns.length) {
+                  setMessages(turnsToMessages(turns));
+                  void restorePendingApproval(threadId, turns, () => ticketAccepted(requestTicket));
+                }
               } catch { /* the rollback stands */ }
             }
             return;
@@ -3208,7 +3257,7 @@ const PaigeAIChatInner = ({
                             disabled={composerSendBlocked}
                             // Solo: after "Ask Paige again" the button that was pressed is gone, so
                             // the fresh card takes focus — but only when nothing else holds it.
-                            focusOnMount={soloTenantSafety}
+                            focusOnMount={soloTenantSafety && !message.recoveredApprovalExpiresAt}
                             onApprove={(fps) => void handleSend(DECISION_REPLY.approved, fps)}
                             // Declining CANCELS the stored proposal, rather than only saying so in
                             // prose the model interprets. Without this the row stays live for its
@@ -3240,8 +3289,17 @@ const PaigeAIChatInner = ({
                             })()}
                           </div>
                         )}
-                        {/* Reloaded from history: the confirm moment already passed —
-                            show it settled, never a live Approve button (§15). */}
+                        {(message.approvalRecovery === "unavailable"
+                          || index === messages.length - 1 && (message.approvalRecovery === "checking"
+                            || message.recoveredApprovalExpiresAt && confirmCardLive(message, index))) && (
+                          <p role="status" className="mt-2 text-xs text-muted-foreground" data-paige-approval-recovery={message.approvalRecovery ?? "available"}>
+                            {message.approvalRecovery === "checking" ? "Checking whether this proposal is still available for approval…"
+                              : message.approvalRecovery === "unavailable" ? "This earlier proposal couldn't be verified for approval. Review the original record before asking again."
+                                : "This proposal is still waiting for your decision. Review the proposed changes before approving."}
+                          </p>
+                        )}
+                        {/* History remains context unless a fresh server read verified
+                            the canonical terminal and its still-live native proposal. */}
                         {!!message.confirm?.length && message.confirmResolved && (
                           <div className="mt-2 rounded-md border border-border bg-muted/30 p-2.5">
                             <p className="text-xs text-muted-foreground">

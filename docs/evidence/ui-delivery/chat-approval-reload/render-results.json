@@ -1,0 +1,437 @@
+{
+  "proof": "isolated static real-component render; no authenticated shell or effects",
+  "results": [
+    {
+      "theme": "light",
+      "width": 518,
+      "state": "available",
+      "file": "light-518-available.png",
+      "overflow": false,
+      "contrast": 5.648215514292389,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Approve",
+          "inside": true,
+          "width": 111.15625,
+          "height": 36
+        },
+        {
+          "text": " Not now",
+          "inside": true,
+          "width": 108.84375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This proposal is still waiting for your decision. Review the proposed changes before approving.",
+      "animations": [],
+      "nextFocus": " Not now"
+    },
+    {
+      "theme": "light",
+      "width": 518,
+      "state": "unavailable",
+      "file": "light-518-unavailable.png",
+      "overflow": false,
+      "contrast": 5.648215514292389,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+      "animations": []
+    },
+    {
+      "theme": "light",
+      "width": 518,
+      "state": "interrupted",
+      "file": "light-518-interrupted.png",
+      "overflow": false,
+      "contrast": null,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Ask again",
+          "inside": true,
+          "width": 113.609375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "animations": []
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "state": "available",
+      "file": "light-320-available.png",
+      "overflow": false,
+      "contrast": 5.648215514292389,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Approve",
+          "inside": true,
+          "width": 111.15625,
+          "height": 36
+        },
+        {
+          "text": " Not now",
+          "inside": true,
+          "width": 108.84375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This proposal is still waiting for your decision. Review the proposed changes before approving.",
+      "animations": [],
+      "nextFocus": " Not now"
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "state": "unavailable",
+      "file": "light-320-unavailable.png",
+      "overflow": false,
+      "contrast": 5.648215514292389,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+      "animations": []
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "state": "interrupted",
+      "file": "light-320-interrupted.png",
+      "overflow": false,
+      "contrast": null,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Ask again",
+          "inside": true,
+          "width": 113.609375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "animations": []
+    },
+    {
+      "theme": "dark",
+      "width": 518,
+      "state": "available",
+      "file": "dark-518-available.png",
+      "overflow": false,
+      "contrast": 7.929650249394989,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Approve",
+          "inside": true,
+          "width": 111.15625,
+          "height": 36
+        },
+        {
+          "text": " Not now",
+          "inside": true,
+          "width": 108.84375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This proposal is still waiting for your decision. Review the proposed changes before approving.",
+      "animations": [],
+      "nextFocus": " Not now"
+    },
+    {
+      "theme": "dark",
+      "width": 518,
+      "state": "unavailable",
+      "file": "dark-518-unavailable.png",
+      "overflow": false,
+      "contrast": 7.929650249394989,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+      "animations": []
+    },
+    {
+      "theme": "dark",
+      "width": 518,
+      "state": "interrupted",
+      "file": "dark-518-interrupted.png",
+      "overflow": false,
+      "contrast": null,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Ask again",
+          "inside": true,
+          "width": 113.609375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "animations": []
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "state": "available",
+      "file": "dark-320-available.png",
+      "overflow": false,
+      "contrast": 7.929650249394989,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Approve",
+          "inside": true,
+          "width": 111.15625,
+          "height": 36
+        },
+        {
+          "text": " Not now",
+          "inside": true,
+          "width": 108.84375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This proposal is still waiting for your decision. Review the proposed changes before approving.",
+      "animations": [],
+      "nextFocus": " Not now"
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "state": "unavailable",
+      "file": "dark-320-unavailable.png",
+      "overflow": false,
+      "contrast": 7.929650249394989,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "status": "This earlier proposal couldn't be verified for approval. Review the original record before asking again.",
+      "animations": []
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "state": "interrupted",
+      "file": "dark-320-interrupted.png",
+      "overflow": false,
+      "contrast": null,
+      "buttons": [
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "Ask again",
+          "inside": true,
+          "width": 113.609375,
+          "height": 36
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        },
+        {
+          "text": "",
+          "inside": true,
+          "width": 24,
+          "height": 24
+        }
+      ],
+      "animations": []
+    }
+  ]
+}

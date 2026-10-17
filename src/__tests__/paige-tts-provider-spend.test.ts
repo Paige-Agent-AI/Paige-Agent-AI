@@ -347,4 +347,11 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     expect(h.elevenlabsMessageStream).not.toHaveBeenCalled();expect(reserveCalls()).toHaveLength(0);expect(settleCalls()).toHaveLength(0);
   });
 
+  it("OpenAI thrown settlement also cancels its existing stream before tee or output",async()=>{
+    usePlan(OPENAI);settleThrows=true;const cancel=vi.fn();
+    h.synthesizeSpeechStream.mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array([1]));},cancel})));
+    const res=await play();expect(res.status).toBe(503);expect(await res.json()).toEqual({error:"tts_cost_settlement_unavailable"});
+    expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);
+  });
+
 });

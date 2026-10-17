@@ -4218,8 +4218,8 @@ group("30 Knowledge canonical tools on the actual Chat gate");
 group("32 Explicit customer audience uses native private history and customer presentation");
 {
   const contact="66666666-6666-4666-8666-666666666666";
-  const thread="77777777-7777-4777-8777-777777777777";
-  const intent="88888888-8888-4888-8888-888888888888";
+  const thread="77777777-7777-4777-8777-abcdefabcdef";
+  const intent="88888888-8888-4888-8888-abcdefabcdef";
   const frame={actor_id:USER,profile:{id:contact,tenant_id:CHILD,linked_user_id:USER},
     brand:{tenant_id:CHILD,tenant_name:"Test Customer Business",business_brief:"OWNER_PRIVATE_SENTINEL"},
     config:{assistant:{display_name:"Customer Guide",service_scope:"Approved coaching support"},
@@ -4338,6 +4338,13 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 compatible retry cannot manufacture source attestation in its terminal",
     legacy.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1
     &&!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge);
+  for(const [label,overrides]of [["thread",{threadId:thread.toUpperCase()}],["intent",{requestIntentId:intent.toUpperCase()}]]){
+    terminal=false;
+    const r=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,...overrides}});
+    assert("32 uppercase "+label+" UUID preserves customer reply and canonical receipt identity",
+      r.status===200&&r.providerCalls.length===1&&r.responseText.includes("Scoped response.")
+      &&r.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.interactive.request_intent_id===intent);
+  }
 }
 
 group("31 Ordinary customer relationship at the protected Chat boundary");

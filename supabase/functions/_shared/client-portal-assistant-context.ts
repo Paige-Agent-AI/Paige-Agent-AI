@@ -10,6 +10,9 @@ export type CustomerAssistantContext=Readonly<{persona:ClientPortalPersonaInput;
  history:Array<{role:"user"|"assistant";content:string;source_refs:CustomerSourceRef[]}>;historyLimited:boolean}>;
 type Caller={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
+const requestUuid=(value:unknown):string|null=>{
+ const normalized=typeof value==="string"?value.toLowerCase():null;return uuid(normalized)?normalized:null;
+};
 const obj=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:null;
 const closed=(v:unknown,keys:string[]):Record<string,unknown>|null=>{
  const o=obj(v);return o&&Object.keys(o).length===keys.length&&keys.every(k=>Object.prototype.hasOwnProperty.call(o,k))?o:null;
@@ -31,8 +34,9 @@ function refs(value:unknown,max=20):CustomerSourceRef[]|null{
 /** Decode only the native caller-JWT projection. No body/history selector,
  * service client, staff Knowledge read or fallback presentation source.
  */
-export async function readCustomerAssistantContext(caller:Caller,actorId:string,threadId:unknown,intentId:unknown):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
- if(!uuid(actorId)||!uuid(threadId)||!uuid(intentId))return contextDegraded("customer_context_scope_invalid");
+export async function readCustomerAssistantContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
+ const actorId=requestUuid(actorInput),threadId=requestUuid(threadInput),intentId=requestUuid(intentInput);
+ if(!actorId||!threadId||!intentId)return contextDegraded("customer_context_scope_invalid");
  try{
   const {data,error}=await caller.rpc("client_portal_assistant_context",{p_thread:threadId,p_intent:intentId});
   if(error)return obj(error)?.code==="42501"?contextUnavailable("customer_context_withdrawn"):contextDegraded("customer_context_read_failed");
@@ -76,8 +80,9 @@ export async function readCustomerAssistantContext(caller:Caller,actorId:string,
 /** Stop/status never send model context. Preserve their native thread and
  * publication checks even when an accepted turn's Knowledge was withdrawn.
  */
-export async function readCustomerAssistantControlContext(caller:Caller,actorId:string,threadId:unknown,intentId:unknown):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
- if(!uuid(actorId)||!uuid(threadId)||!uuid(intentId))return contextDegraded("customer_context_scope_invalid");
+export async function readCustomerAssistantControlContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
+ const actorId=requestUuid(actorInput),threadId=requestUuid(threadInput),intentId=requestUuid(intentInput);
+ if(!actorId||!threadId||!intentId)return contextDegraded("customer_context_scope_invalid");
  const source=await readClientPortalPersonaSource({rpc:name=>caller.rpc(name,{})},actorId);
  if(source.status!=="available"||!source.data)return contextUnavailable("customer_context_withdrawn");
  return contextAvailable({persona:source.data,threadId,intentId,snapshot:null,sources:[],history:[],historyLimited:false});

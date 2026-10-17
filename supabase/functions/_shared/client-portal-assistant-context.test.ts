@@ -2,8 +2,8 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readCustomerAssistantContext,readCustomerAssistantControlContext,customerProgramMessages,customerTerminalSource} from "./client-portal-assistant-context.ts";
 
-const actor="11111111-1111-4111-8111-111111111111",client="22222222-2222-4222-8222-222222222222";
-const tenant="33333333-3333-4333-8333-333333333333",thread="44444444-4444-4444-8444-444444444444",intent="55555555-5555-4555-8555-555555555555";
+const actor="11111111-1111-4111-8111-abcdefabcdef",client="22222222-2222-4222-8222-222222222222";
+const tenant="33333333-3333-4333-8333-333333333333",thread="44444444-4444-4444-8444-abcdefabcdef",intent="55555555-5555-4555-8555-abcdefabcdef";
 const ref={share_id:"66666666-6666-4666-8666-666666666666",share_revision:1,source_fingerprint:"a".repeat(64)};
 const snapshot={version:1 as const,retrieval_refs:[ref],source_refs:[ref]};
 const source={...ref,document_id:"77777777-7777-4777-8777-777777777777",document_revision:1,generation_id:null,title:"Shared program",content:"Your approved next step",content_truncated:false};
@@ -83,4 +83,16 @@ test("control context still requires the actual caller-bound business/customer f
  const frame=fixture().frame;frame.actor_id=client;
  const result=await readCustomerAssistantControlContext({rpc:async()=>({data:frame,error:null})},actor,thread,intent);
  assert.notEqual(result.status,"available");assert.equal(result.data,null);
+});
+test("valid UUID case aliases normalize before native RPC and exact output comparison",async()=>{
+ const calls:unknown[]=[];const result=await readCustomerAssistantContext({rpc:async(name,args)=>{
+  calls.push([name,args]);return{data:fixture(),error:null};
+ }},actor.toUpperCase(),thread.toUpperCase(),intent.toUpperCase());
+ assert.equal(result.status,"available");assert.equal(result.data?.threadId,thread);assert.equal(result.data?.intentId,intent);
+ assert.deepEqual(calls,[["client_portal_assistant_context",{p_thread:thread,p_intent:intent}]]);
+});
+test("control scope normalizes the same UUID spellings without admitting model sources",async()=>{
+ const result=await readCustomerAssistantControlContext({rpc:async()=>({data:fixture().frame,error:null})},
+  actor.toUpperCase(),thread.toUpperCase(),intent.toUpperCase());
+ assert.equal(result.status,"available");assert.equal(result.data?.threadId,thread);assert.equal(result.data?.intentId,intent);assert.deepEqual(result.data?.sources,[]);
 });

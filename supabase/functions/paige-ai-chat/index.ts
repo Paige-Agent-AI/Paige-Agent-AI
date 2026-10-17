@@ -1248,6 +1248,13 @@ serve(async (req) => {
     // The surface narrows the audience; only the native customer frame proves it.
     // It cannot supply a tenant/client identity or inherit a global owner role.
     const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    if (customerPortal) {
+      // Zod accepts UUID case aliases; native identity/receipt text is canonical.
+      validatedData.threadId = validatedData.threadId?.toLowerCase();
+      validatedData.requestIntentId = validatedData.requestIntentId?.toLowerCase();
+      if (validatedData.interactive?.supersedesIntentId)
+        validatedData.interactive.supersedesIntentId = validatedData.interactive.supersedesIntentId.toLowerCase();
+    }
     const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
     const customerPersonaSource = customerPortal
       ? await (customerControl ? readCustomerAssistantControlContext : readCustomerAssistantContext)(

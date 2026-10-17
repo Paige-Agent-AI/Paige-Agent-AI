@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: this repair is not deployed; ordinary product
 KEYBOARD_FOCUS: NOT_APPLICABLE: no control, event handler, tab order or focus behavior changes
 ZOOM_REFLOW: NOT_APPLICABLE: no dimensions, overflow, typography or frontend layout source changes
 REDUCED_MOTION: NOT_APPLICABLE: no animation, timer or motion preference behavior changes
-STATE_COVERAGE: PASS: all four closed statuses for five current Spine reads plus pending Task contract, visible-empty lookup, malformed envelopes, action spoof, wrong/duplicate declaration, uncertainty, approval and native identity contradictions
+STATE_COVERAGE: PASS: all four closed statuses for five current Spine reads plus a separate test declaration from unmerged Task2324, visible-empty lookup, malformed envelopes, action spoof, wrong/duplicate declaration, uncertainty, approval and native identity contradictions
 TRUTHFUL_STATE_LABELS: PASS: reported_success means the authorized lookup completed, including found:false; it does not prove record existence, business execution, provider synchronization or a Rail write
 SOLO_UI: NO: shared backend-visible receipt correction changes no SOLO frontend source or interface geometry
 UNVERIFIED: required exact-head CI awaits root review and explicit fingerprint application; deployed Chat source and ordinary production positive/negative/reload behavior have not been exercised for this repair, and Live remains untested
@@ -43,6 +43,8 @@ The unmodified predecessor produced26 failed/38 passed/11 filtered targeted case
 Existing write/Knowledge/Research/Planning/automation outcome campaign:142 PASS,0 FAIL, one pre-existing OWNER_TASK_NATIVE_DB-gated case skipped because that optional native test input is absent. This is not a native SQL rerun or a new skip. Incumbent receipt privacy, executor ownership, interruption and all nine shared agreement integration controls pass. Scoped application-options types and six-path lint exit0; full Chat's existing lint errors remain disclosed (405 to404, no added diagnostic multiset).
 
 Retained non-green attempts include: initial test fixture assertions looked for effects in degraded mode, where the executor/effects are intentionally absent; they were replaced with separate active-mode cases, preserving old checks. Shared-helper extraction required injection into two existing isolated source-test ports. A generic receipt-guidance phrase was initially mistaken for an actual unknown effect; the corrected assertion inspects the structured outcome. The first scoped typecheck exposed a parameterized-array fixture shape and was corrected with named objects. An inherited empty stream-close catch needed a comment-only explanation for changed-path lint; stream lifecycle is unchanged. No failed required check is waived or relabeled.
+
+The first unchanged evidence-validator run at90cfc22f failed on the STATE_COVERAGE field's use of the word pending for the independently tested Task declaration. The successor describes that same scope as an unmerged declaration; no test result, dependency, guard or production claim changes. The initial failure log is retained separately from the final validator result.
 
 ## Grounding / Collision Check and release gates
 

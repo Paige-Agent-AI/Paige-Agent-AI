@@ -86,6 +86,35 @@ describe("CRM patch schema is generated from the database allowlist", () => {
     expect(schema.additionalProperties).toBe(false);
   });
 
+  it("explains native task ownership defaults and requires clarification for unassigned intent", () => {
+    const create = CRM_COMMAND_TOOLS.find((tool) => tool.function.name === "crm_create_task").function;
+    const assign = CRM_COMMAND_TOOLS.find((tool) => tool.function.name === "crm_assign_task").function;
+    expect(create.description).toMatch(/omitted, null or empty.*requester/i);
+    for (const tool of [create, assign]) {
+      expect(tool.description).toMatch(/cannot be unassigned/i);
+      expect(tool.description).toMatch(/explicitly.*unassigned.*clarif.*before.*propos/i);
+    }
+    expect(assign.description).toMatch(/explicit.*authorized.*UUID/i);
+    const description = patchSchema("crm_create_task").properties.assignee_user_id.description;
+    expect(description).toMatch(/omitted, null or empty.*requester/i);
+    expect(description).toMatch(/unassigned.*clarif/i);
+    expect(CRM_PATCH_FIELDS["task.create"].find((field) => field.name === "assignee_user_id").description).toBe(description);
+  });
+
+  it("keeps valid native default and explicit assignment shapes accepted without new field constraints", () => {
+    const ajv = new Ajv({ strict: false });
+    const accepts = ajv.compile(patchSchema("crm_create_task"));
+    for (const patch of [{ title: "Own work" }, { title: "Own work", assignee_user_id: null },
+      { title: "Own work", assignee_user_id: "" }, { title: "Other work", assignee_user_id: "00000000-0000-4000-8000-000000000011" }]) {
+      expect(accepts(patch), JSON.stringify(patch)).toBe(true);
+    }
+    // Native assignment authorization/UUID checks still belong to the executor, not a
+    // parallel generated schema or a false requiredness rule in front of valid creates.
+    expect(patchSchema("crm_assign_task").additionalProperties).toBeUndefined();
+    expect(patchSchema("crm_create_task").properties.assignee_user_id.type).toBeUndefined();
+    expect(patchSchema("crm_create_task").required).toBeUndefined();
+  });
+
   it("keeps the seven allowlists separate rather than collapsing them into one", () => {
     // contact.create allows `notes`; contact.update allows `current_notes`. A single shared list
     // would be wrong for one of them, whichever way it was written.

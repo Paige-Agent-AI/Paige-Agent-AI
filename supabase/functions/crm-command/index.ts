@@ -176,7 +176,7 @@ function response(status: number, body: JsonObject): Response {
   return new Response(JSON.stringify(body), { status, headers: cors });
 }
 
-function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject | null): string {
+function summaryFor(command: z.infer<typeof commandSchema>, actorUserId: string, preview?: JsonObject | null): string {
   if (preview) {
     const affected = typeof preview.affected_count === "number" ? preview.affected_count
       : typeof preview.eligible_count === "number" ? preview.eligible_count : 1;
@@ -213,6 +213,14 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
   const target = (command.action.startsWith("deal.") ? command.deal_id : undefined)
     ?? contactName ?? command.company_id ?? command.task_id ?? command.deal_id ?? "a new record";
   const commandPatch = object(command.patch);
+  // Display only: mirror the native create default without rewriting approval args.
+  // Reassignment has no default, and malformed input must never be called unassigned.
+  const taskAssignee = commandPatch?.assignee_user_id;
+  const taskAssigneeLabel = command.action === "task.create" && (taskAssignee == null || taskAssignee === "")
+    ? "you by default"
+    : typeof taskAssignee === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskAssignee)
+      ? taskAssignee.toLowerCase() === actorUserId.toLowerCase() ? "you" : `user ${taskAssignee}`
+      : null;
   if (command.action === "task.update" && commandPatch?.status === "in_progress") {
     const otherChanges = Object.entries(commandPatch).filter(([field]) => field !== "status")
       .sort(([left], [right]) => left.localeCompare(right)).map(([field, value]) => `${field}=${JSON.stringify(value)}`);
@@ -234,7 +242,8 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
     case "deal.reopen":
       return `Reopen deal ${target} in stage ${command.target_stage_id}.`;
     case "task.assign":
-      return `Assign task ${target} to ${String(commandPatch?.assignee_user_id ?? "unassigned")}.`;
+      return taskAssigneeLabel ? `Assign task ${command.task_id} to ${taskAssigneeLabel}.`
+        : `Task ${command.task_id} requires a valid assignee before it can be reassigned. Tasks cannot be unassigned.`;
     case "task.cancel":
       return `Cancel task ${target}${command.reason ? `; reason: ${command.reason}` : ""}.`;
     case "deal.create":
@@ -251,7 +260,7 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
       return `Add "${name}" as a new company.`;
     }
     case "task.create":
-      return `Create a task "${typeof commandPatch?.title === "string" && commandPatch.title.trim() ? commandPatch.title.trim().slice(0, 80) : "Untitled"}".`;
+      return `Create a task "${typeof commandPatch?.title === "string" && commandPatch.title.trim() ? commandPatch.title.trim().slice(0, 80) : "Untitled"}"${taskAssigneeLabel ? `, assigned to ${taskAssigneeLabel}.` : "; the supplied assignee needs verification before assignment."}`;
     default: {
       // Never render the raw internal verb ("deal.create for …"). Compose from the action's
       // domain and verb so every catalogue action reads as a human sentence about the object.
@@ -614,7 +623,7 @@ serve(async (req) => {
       };
     }
     const fingerprint = await confirmFingerprint(capability, proposalArgs);
-    const summary = summaryFor(body.command, preview);
+    const summary = summaryFor(body.command, user.id, preview);
     // The canonical live-row uniqueness predicate includes expired-but-unconsumed confirmations.
     // Retire an exact expired server-issued row before insertion so abandonment can be retried; a
     // concurrent request either inserts the replacement or reads that same active replacement below.

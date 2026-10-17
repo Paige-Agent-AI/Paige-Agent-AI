@@ -58,6 +58,21 @@ class MessageTtsController {
   private held = false;
   private request: AbortController | null = null;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  // Ephemeral output timing only. Native Performance entries contain no business,
+  // thread, message or voice identity; there is no network reporter or second store.
+  private timing: { start: number; transport: "pending" | "legacy" | "buffered" | "progressive"; held: boolean; phases: Set<string>; serverTiming: Record<string, number> } | null = null;
+
+  private recordTiming(phase: "request_start" | "first_chunk" | "body_complete" | "first_playback") {
+    const timing = this.timing;
+    if (!timing || timing.phases.has(phase)) return;
+    timing.phases.add(phase);
+    try {
+      performance.measure(`paige.voice.message.${phase}`, {
+        start: timing.start, end: phase === "request_start" ? timing.start : performance.now(),
+        detail: { request: this.token, transport: timing.transport, held: timing.held, muted: this.audio?.muted === true || this.audio?.volume === 0, serverTiming: { ...timing.serverTiming } },
+      });
+    } catch { /* Optional measurement must never prevent or retry playback. */ }
+  }
 
   subscribe = (cb: Listener): (() => void) => {
     this.listeners.add(cb);
@@ -72,6 +87,7 @@ class MessageTtsController {
   pause = () => {
     if (!this.snapshot.activeId) return;
     this.held = true; this.playToken++;
+    if (this.timing) this.timing.held = true;
     this.audio?.pause();
     this.emit({ status: "paused" });
   };
@@ -99,7 +115,7 @@ class MessageTtsController {
     a.onended = () => { if (owner === this.token) this.stop(); };
     a.onerror = () => { if (owner === this.token) this.stop(); };
     a.onwaiting = () => { if (owner === this.token && this.snapshot.activeId && !this.held) this.emit({ status: "loading" }); };
-    a.onplaying = () => { if (owner === this.token && this.snapshot.activeId && !this.held) this.emit({ status: "playing" }); };
+    a.onplaying = () => { if (owner === this.token && this.snapshot.activeId && !this.held) { this.recordTiming("first_playback"); this.emit({ status: "playing" }); } };
     this.audio = a;
     return a;
   }
@@ -119,6 +135,7 @@ class MessageTtsController {
   /** Stop any current playback/loading and clear state. */
   stop = () => {
     this.token++; this.playToken++; this.held = false;
+    this.timing = null;
     this.request?.abort(); this.request = null;
     void this.reader?.cancel().catch(() => undefined); this.reader = null;
     if (this.audio) {
@@ -146,9 +163,28 @@ class MessageTtsController {
 
   private async playResponse(response: Response, myToken: number, signal: AbortSignal, onError?: (e: TtsFetchError) => void): Promise<void> {
     if (!response.ok || !response.body || !/^audio\/(mpeg|mp3)(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw new Error("Voice playback returned an unsupported response.");
+    // Correlate the SAME response's numeric stages without publishing a server
+    // request reference, voice/profile identity, raw header or customer content.
+    const rawTiming = response.headers.get("Server-Timing") ?? "";
+    if (this.timing && rawTiming.length <= 2048) {
+      const stages: Record<string, number> = {};
+      const duplicates = new Set<string>();
+      for (const match of rawTiming.matchAll(/(?:^|,)\s*(voice_first_byte|voice_settlement|voice_ready|voice_cache)\s*;\s*dur=([0-9]+(?:\.[0-9]+)?)(?=\s*(?:,|$))/g)) {
+        const value = Number(match[2]);
+        if (!Number.isFinite(value) || value > 86_400_000) continue;
+        if (match[1] in stages || duplicates.has(match[1])) { delete stages[match[1]]; duplicates.add(match[1]); }
+        else stages[match[1]] = value;
+      }
+      this.timing.serverTiming = stages;
+    }
     let progressive = false;
     try { progressive = typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg"); } catch { /* use same-response buffered fallback */ }
-    if (!progressive) { await this.playBlob(await response.blob(), myToken); return; }
+    if (this.timing) this.timing.transport = progressive ? "progressive" : "buffered";
+    if (!progressive) {
+      const blob = await response.blob();
+      if (myToken === this.token) this.recordTiming("body_complete");
+      await this.playBlob(blob, myToken); return;
+    }
     const reader = response.body.getReader(); this.reader = reader;
     try {
       const source = new MediaSource();
@@ -164,6 +200,7 @@ class MessageTtsController {
         if (myToken !== this.token || signal.aborted) return;
         if (chunk.done) break;
         if (!chunk.value.length) continue;
+        this.recordTiming("first_chunk");
         bytes += chunk.value.length;
         await mediaUpdate(buffer, "updateend", signal, () => buffer.appendBuffer(chunk.value.slice().buffer));
         if (!requestedPlay && !this.held && myToken === this.token) {
@@ -180,6 +217,7 @@ class MessageTtsController {
       }
       if (myToken !== this.token || signal.aborted) return;
       if (!bytes) throw new Error("Voice playback returned no audio.");
+      this.recordTiming("body_complete");
       if (source.readyState === "open") source.endOfStream();
     } finally {
       reader.releaseLock();
@@ -195,14 +233,22 @@ class MessageTtsController {
   ): Promise<void> => {
     if (this.snapshot.activeId === id && this.snapshot.status === "paused") { await this.resume(); return; }
     if (this.snapshot.activeId === id && this.snapshot.status !== "idle") { this.stop(); return; }
+    let started: number | null = null;
+    try { const at = performance.now(); if (Number.isFinite(at)) started = at; } catch { /* unsupported timing is harmless */ }
     this.stop();
     const myToken = ++this.token;
+    if (started !== null) this.timing = { start: started, transport: "pending", held: false, phases: new Set(), serverTiming: {} };
+    this.recordTiming("request_start");
     const request = new AbortController(); this.request = request;
     this.emit({ activeId: id, status: "loading" });
     try {
       const audio = await fetchAudio(request.signal);
       if (myToken !== this.token || request.signal.aborted) return;
-      if (audio instanceof Blob) await this.playBlob(audio, myToken);
+      if (audio instanceof Blob) {
+        if (this.timing) this.timing.transport = "legacy";
+        this.recordTiming("body_complete");
+        await this.playBlob(audio, myToken);
+      }
       else await this.playResponse(audio, myToken, request.signal, onError);
     } catch (e) {
       if (myToken !== this.token) return;

@@ -43,6 +43,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { researchCompletion, type RunRequestCtx } from "./fabric.ts";
 import { strategizeBeforeReasoning } from "../_shared/reasoning/strategize.ts";
 import { recordCapabilityRun, type CapabilityOutcome } from "../_shared/capability-record.ts";
+import { parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT, type ResearchSourcePolicy, type ResearchSourceCoverage } from "../_shared/research-source-policy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,6 +105,8 @@ interface DeepResearchRequest {
   client_user_id?: string | null;
   domain?: string;
   max_hops?: number;
+  max_sources?: number;
+  allowed_domains?: string[];
   freshness_days?: number;
   persist?: boolean;
   /** Optional CROSS-CHECK (never authority): when provided and ≠ the server-resolved
@@ -218,6 +221,7 @@ interface DeepResearchResult {
     reads: number;
     note: string;
     configured: boolean;
+    source_policy?: ResearchSourceCoverage;
     // Mirror of entity_profile.unverified_notes for consumers that read only
     // `coverage`. Canonical source is entity_profile.unverified_notes.
     unverified_notes?: string[];
@@ -381,13 +385,15 @@ async function callWebSearch(
   supabaseUrl: string,
   serviceKey: string,
   query: string,
+  policy: ResearchSourcePolicy = {},
+  limit = RESEARCH_SEARCH_LIMIT,
 ): Promise<WebSearchOut> {
   let body: any = {};
   try {
     const r = await fetch(`${supabaseUrl}/functions/v1/paige-web-search`, {
       method: "POST",
       headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, ...(policy.allowed_domains ? { allowed_domains: policy.allowed_domains } : {}), limit }),
     });
     if (!r.ok) {
       // A non-OK response is NOT "0 results" (§13). Most often the search
@@ -420,16 +426,18 @@ async function callWebSearch(
   };
 }
 
-function upsertSource(sources: SourceRec[], hit: { title: string; description: string; url: string; published_at?: string | null }): void {
-  if (!hit.url || sources.find((s) => s.url === hit.url)) return;
+function upsertSource(sources: SourceRec[], hit: { title: string; description: string; url: string; published_at?: string | null }, policy: ResearchSourcePolicy = {}): void {
+  if (policy.max_sources !== undefined && sources.length >= policy.max_sources) return;
+  const url = researchSourceUrl(hit.url, policy);
+  if (!url || sources.find((s) => s.url === url)) return;
   sources.push({
     index: -1,
-    url: hit.url,
+    url,
     title: hit.title || hit.url,
     snippet: (hit.description || "").slice(0, 600),
     content: "",
     read: false,
-    host: hostOf(hit.url),
+    host: hostOf(url),
     published_at: hit.published_at ?? null,
     fetched_at: new Date().toISOString(),
     authority: 0, recency: 0, corroboration: 0,
@@ -484,6 +492,7 @@ async function planHop(
   evidence: Array<{ index: number; title: string; snippet: string }>,
   strategyHint = "", // §34 L4: optional pre-reasoning steer, appended like domainHint (hop-0, non-degraded only)
   ctx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
+  sourcePolicy: ResearchSourcePolicy = {},
 ): Promise<PlanOut> {
   const sys =
     "You are a research planner. Break a research goal into orthogonal, specific web-search " +
@@ -499,6 +508,8 @@ async function planHop(
   const user =
     `RESEARCH GOAL: ${question}\n` +
     (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    (sourcePolicy.allowed_domains ? `ALLOWED HOSTNAMES (including their subdomains): ${sourcePolicy.allowed_domains.join(", ")}\n` : "") +
+    (sourcePolicy.max_sources !== undefined ? `MAXIMUM UNIQUE SOURCES: ${sourcePolicy.max_sources}\n` : "") +
     (strategyHint ? `${strategyHint}\n` : "") +
     `HOP: ${hop}\n\nEVIDENCE SO FAR:\n${evidenceBlock}`;
 
@@ -1986,6 +1997,7 @@ serve(async (req) => {
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid research request" }, 400);
 
   // ── INT-305: delegated-specialist envelope normalization ────────────────────
   // The orchestrator's invokeLocal contract posts { input, context } to every local
@@ -2001,6 +2013,16 @@ serve(async (req) => {
     const raw = body as unknown as Record<string, unknown>;
     const missingCanonical = typeof raw.question !== "string" || typeof raw.user_id !== "string";
     const env = typeof raw.input === "object" && raw.input !== null ? raw.input as Record<string, unknown> : null;
+    // Constraints may narrow any existing entry path; never discard supplied nested
+    // constraints when the caller also supplies canonical identity fields.
+    if (env) for (const key of ["max_sources", "allowed_domains"] as const) {
+      if (Object.prototype.hasOwnProperty.call(env, key)) {
+        if (Object.prototype.hasOwnProperty.call(raw, key) && JSON.stringify(raw[key]) !== JSON.stringify(env[key])) {
+          return json({ error: "Conflicting research source constraints" }, 400);
+        }
+        raw[key] = env[key];
+      }
+    }
     if (missingCanonical && env) {
       const ctx = typeof raw.context === "object" && raw.context !== null ? raw.context as Record<string, unknown> : null;
       if (typeof raw.question !== "string") {
@@ -2025,6 +2047,11 @@ serve(async (req) => {
   // bounds (A8), facet-driven planning (A4-A6), and the profile gate (Section C).
   const entityTarget = detectEntityTarget(question, domainHint);
   const BND: RunBounds = entityTarget ? DOSSIER_BOUNDS : DEFAULT_BOUNDS;
+  let sourcePolicy: ResearchSourcePolicy;
+  try { sourcePolicy = parseResearchSourcePolicy(body as unknown as Record<string, unknown>); }
+  catch { return json({ error: "Invalid research source constraints. Use an integer source limit of 1-90 and 1-20 bare allowed hostnames." }, 400); }
+  if (sourcePolicy.max_sources !== undefined) sourcePolicy.max_sources = Math.min(sourcePolicy.max_sources, BND.MAX_TOTAL_SEARCHES * RESEARCH_SEARCH_LIMIT);
+  const hasSourcePolicy = sourcePolicy.max_sources !== undefined || !!sourcePolicy.allowed_domains;
   // A7 — flavor injection MECHANISM only. Effective facets = the (empty) in-file
   // registry keyed by the opaque domain hint + any caller-supplied templates.
   // No vertical vocabulary lives in this file (§2/§9 grep must stay empty).
@@ -2174,7 +2201,7 @@ serve(async (req) => {
             : "")
         : "";
       await assertResearchScope();
-      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx);
+      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx, sourcePolicy);
       if (plan.done && hop > 0) { stop = "answered"; break; }
       queries = plan.queries.slice(0, BND.MAX_QUERIES_PER_HOP);
       if (queries.length === 0) {
@@ -2187,16 +2214,18 @@ serve(async (req) => {
     const searchesRun: string[] = [];
     const sourcesBeforeSearch = sources.length;
     for (const q of queries) {
+      if (sourcePolicy.max_sources !== undefined && sources.length >= sourcePolicy.max_sources) break;
       if (searches >= BND.MAX_TOTAL_SEARCHES) break;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       await assertResearchScope();
-      const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q);
+      const searchLimit = Math.min(RESEARCH_SEARCH_LIMIT, sourcePolicy.max_sources === undefined ? RESEARCH_SEARCH_LIMIT : sourcePolicy.max_sources - sources.length);
+      const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q, sourcePolicy, searchLimit);
       await assertResearchScope();
       if (!r.configured) { configured = false; stop = "unconfigured"; break outer; } // §13 — never fabricate
       searches++;
       searchesRun.push(q.slice(0, 160));
       costUSD += COST.search;
-      for (const hit of r.results) upsertSource(sources, hit);
+      for (const hit of r.results) upsertSource(sources, hit, sourcePolicy);
     }
 
     // (c) READ — top-ranked unread sources' full body
@@ -2232,6 +2261,9 @@ serve(async (req) => {
       budget: hopBudget(),
     });
 
+    // A full source budget stops gathering only AFTER reading admitted evidence.
+    // Synthesis below still runs and binds its citations to these exact sources.
+    if (sourcePolicy.max_sources !== undefined && sources.length >= sourcePolicy.max_sources) { stop = "budget"; break; }
     if (searches >= BND.MAX_TOTAL_SEARCHES && reads >= BND.MAX_READS) { stop = "budget"; break; }
     if (hop + 1 >= effectiveMaxHops) stop = "max_hops";
   }
@@ -2260,7 +2292,9 @@ serve(async (req) => {
     question,
     findings,
     sources: outSources,
-    coverage: { stop_reason: stopReason, hops_used: hopsUsed, searches, reads, note, configured },
+    coverage: { stop_reason: stopReason, hops_used: hopsUsed, searches, reads, note, configured,
+      ...(hasSourcePolicy ? { source_policy: { ...sourcePolicy, admitted_sources: outSources.length,
+        limit_reached: sourcePolicy.max_sources !== undefined && outSources.length >= sourcePolicy.max_sources } } : {}) },
   });
 
   // Unconfigured → no synthesis, findings [], persist NOTHING (test iii).
@@ -2407,6 +2441,7 @@ serve(async (req) => {
         reads,
         note: "Research hit an unexpected error; returning no findings rather than risk an unverified answer.",
         configured,
+        ...(hasSourcePolicy ? { source_policy: { ...sourcePolicy, admitted_sources: 0, limit_reached: false } } : {}),
       },
     });
   }

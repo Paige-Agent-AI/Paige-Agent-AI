@@ -354,4 +354,18 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);
   });
 
+  it("exposes only safe same-response timing durations for client playback correlation",async()=>{
+    usePlan(ELEVEN);const res=await play();await res.arrayBuffer();
+    expect(res.headers.get("Access-Control-Expose-Headers")).toBe("Server-Timing");
+    const timing=res.headers.get("Server-Timing")!;
+    expect(timing).toMatch(/^voice_first_byte;dur=\d+, voice_settlement;dur=\d+, voice_ready;dur=\d+$/);
+    expect(timing).not.toMatch(/elevenlabs|el-r1|Hello|22222222|11111111/);
+  });
+
+  it("does not invent provider timing on a warm cached response",async()=>{
+    usePlan(ELEVEN);cached=new Blob([new Uint8Array([7])]);const res=await play();await res.arrayBuffer();
+    expect(res.headers.get("Server-Timing")).toMatch(/^voice_cache;dur=\d+, voice_ready;dur=\d+$/);
+    expect(res.headers.get("Server-Timing")).not.toContain("voice_first_byte");expect(h.elevenlabsMessageStream).not.toHaveBeenCalled();
+  });
+
 });

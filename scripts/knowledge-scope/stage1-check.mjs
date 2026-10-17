@@ -4265,7 +4265,7 @@ group("32 Explicit customer audience uses native private history and customer pr
   // a customer conversation must not depend on the staged fallback being active.
   terminal=false;
   let activeExecutor=null;
-  const active=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
+  const activeRpcs={...scenario.rpcExtras,
     paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},
     paige_chat_interactive_executor_v2:args=>{
       let acquired=false;
@@ -4274,7 +4274,8 @@ group("32 Explicit customer audience uses native private history and customer pr
       return {data:{latest:intent,executor:activeExecutor,acquired,terminal,stopped:false},error:null};
     },
     paige_chat_interactive_publication_context_v2:()=>({data:terminal&&activeExecutor===null,error:null}),
-  }});
+  };
+  const active=await drive({...scenario,rpcExtras:activeRpcs});
   assert("32 active v2 customer reaches the canonical provider and returns its answer",
     active.status===200&&active.providerCalls.length===1&&active.responseText.includes("Scoped response."),
     {status:active.status,providers:active.providerCalls.length,response:active.responseText.slice(-600),logs:active.logged.slice(-5)});
@@ -4283,6 +4284,14 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 active customer provider still excludes private owner context and owner tools",
     !/OWNER_PRIVATE_SENTINEL|OWNER_MEMORY_SENTINEL|OWNER_KNOWLEDGE_SENTINEL|OWNER_BUSINESS_SENTINEL|FORGED_/.test(JSON.stringify(active.providerCalls))
     &&active.providerCalls.every(x=>!x.tools?.length));
+  terminal=false;activeExecutor=null;
+  const untrustedTool=await drive({...scenario,provider:["action-file","text"],rpcExtras:activeRpcs});
+  assert("32 unsolicited owner-tool output is refused without breaking the customer answer",
+    untrustedTool.status===200&&untrustedTool.responseText.includes("Scoped response."),
+    {status:untrustedTool.status,response:untrustedTool.responseText.slice(-600),logs:untrustedTool.logged.slice(-5)});
+  assert("32 unsolicited owner-tool output creates no business action or shared customer record",
+    !untrustedTool.rec.inserts.some(x=>["tasks","client_notes","paige_acts","paige_processes","paige_events","paige_customer_actions","messages"].includes(x.table))
+    &&!untrustedTool.rec.rpc.some(x=>["file_act","create_paige_act","emit_client_event","emit_client_rail_event"].includes(x.name)));
   for(const [label,extra] of [
     ["disabled",{client_portal_frame:{data:{...frame,config:{assistant:{enabled:false}}},error:null}}],
     ["revoked",{client_portal_frame:{data:null,error:null}}],

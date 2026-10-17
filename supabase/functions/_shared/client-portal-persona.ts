@@ -23,7 +23,7 @@ const text=(value:unknown,limit:number):string|null=>
  * The handler must still refuse disabled/unverified input and revalidate scope
  * at every protected dispatch/release boundary; this helper is not authority.
  */
-export async function readClientPortalPersonaSource(caller:Caller,actorId:string):Promise<ContextSourceResult<ClientPortalPersonaInput>>{
+export async function readClientPortalPersonaSource(caller:Caller,actorId:string):Promise<ContextSourceResult<ClientPortalPersonaInput|null>>{
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actorId))return contextDegraded("customer_actor_invalid");
   try{
     // One native STABLE snapshot prevents identity A / settings B / identity A

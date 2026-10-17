@@ -3571,7 +3571,7 @@ JSON:`;
       if (customerPortal) {
         const source = await readClientPortalPersonaSource(supabaseClient, user.id);
         const scope = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
-        if (source.status === "available" && source.data.enabled && !scope.error && scope.data === true &&
+        if (source.status === "available" && source.data?.enabled === true && !scope.error && scope.data === true &&
           JSON.stringify(source.data) === JSON.stringify(customerPersona)) return true;
         tenantKnowledgeScopeRevoked = true;
         return false;
@@ -10532,8 +10532,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>, stepHooks?: ToolStepHooks) => {
         // Provider-authored tool names cannot cross the customer audience boundary.
         // Future customer actions must be explicitly admitted by their native domain contract.
-        if (customerPortal) return toolCalls.map((tc:any) => ({role:"tool",
-          tool_call_id:tc.id,content:JSON.stringify({error:"CUSTOMER_ACTION_UNAVAILABLE"})}));
+        if (customerPortal) return {
+          toolResults: toolCalls.map((tc:any) => ({role:"tool",
+            tool_call_id:tc.id,content:JSON.stringify({error:"CUSTOMER_ACTION_UNAVAILABLE"})})),
+          executed: [], scopeInvalidated: false, interactiveError: null,
+        };
         // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
         // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
         // shows the attempt and why nothing changed. A held-for-approval proposal files none: the

@@ -25,13 +25,13 @@ MUST_PRESERVE: Existing owner/platform/agency/workspace thread semantics, INT-34
 ACCEPTANCE_CRITERIA: Ordinary customer signs in, receives the right business assistant, returns to the same authorized private history, and loses access on revocation. This PR supplies only the native record boundary; complete acceptance remains owed.
 MOTION_PURPOSE: NONE: No motion change.
 PROTECTED_SEAMS: Affected and tested: tenant/client isolation, canonical Chat writes/readback, private history and receipt authority, retention/revocation. Preserved native definitions: v2 rollout and executor/settlement. No Auth/signup/paywall/provisioning, effectful Spine action, Live state, Secure Browser/Vault, provider connection, external send/payment, scheduling, shell geometry or accessibility control change.
-INTERNAL_BUILD_IDENTITY: exact Git head is recorded in the PR review receipt; production migration191000 and readback are pending; Edge=NOT_APPLICABLE.
-RELEASE_CHANNEL: production: internal prelaunch prerequisite for every equivalently eligible current/future canonical customer relationship.
+INTERNAL_BUILD_IDENTITY: bef755493aaca66a7ad3e6839987fe682f685702; deployment=dpl_GRwmZ1LovB7UuyVb2KLiMDmsC1xb; environment=preview; migrations=PROOF_OWED(20271108191000_e09_customer_private_chat native deployment and source readback); edge=NOT_APPLICABLE; evidence=scripts/proof/e09-client-self-projection.mjs --customer-chat and supabase/tests/client_portal_self_projection.sql
+RELEASE_CHANNEL: preview: exact source checkpoint has a READY web preview; native Preview/CI and production release remain separately required for every equivalently eligible current/future canonical customer relationship.
 RELEASE_CLASSIFICATION: internal-only: no usable customer Chat claim from this prerequisite.
 CUSTOMER_RELEASE_IDENTITY: none: Complete customer Chat is not released by this change.
 RELEASE_NOTE_REQUIRED: no: No announcement or customer version.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: native customer-private Chat foundation; consumer, hosted conversation and acceptance remain PROOF OWED.
-RELEASE_RECOVERY: position=reviewed additive forward correction preserving canonical messages and protected execution; no migration history reset.
+RELEASE_RECOVERY: position=reviewed additive forward correction preserving canonical messages and protected execution; reference=AGENTS.md and docs/doctrine/release-governance-and-customer-update-policy.md
 
 ## Source and proof
 

@@ -56,7 +56,10 @@ set local role authenticated;
 select pg_temp.task_refused($s$select public.operations_crm_work_read('ed350000-0000-4000-8000-000000000001','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000010250')$s$,'actual workspace switch refuses prior expected tenant');
 reset role;
 update public.profiles set active_tenant_id='ed350000-0000-4000-8000-000000001111' where user_id='ed350000-0000-4000-8000-000000000001';
-insert into public.user_roles(user_id,role) values('ed350000-0000-4000-8000-000000000001','admin'),('ed350000-0000-4000-8000-000000000003','admin');
+-- The canonical tenant-member trigger already provisions an admin seat's app role.
+-- Keep setup valid both with that trigger and in the isolated caller-RLS fixture.
+insert into public.user_roles(user_id,role) values('ed350000-0000-4000-8000-000000000001','admin'),('ed350000-0000-4000-8000-000000000003','admin') on conflict(user_id,role) do nothing;
+select pg_temp.task_check(public.has_role('ed350000-0000-4000-8000-000000000001','admin'::public.app_role) and public.has_role('ed350000-0000-4000-8000-000000000003','admin'::public.app_role),'both exact-read admin test roles are established');
 set local role authenticated;
 select pg_temp.task_check(jsonb_array_length(public.operations_crm_work_read('ed350000-0000-4000-8000-000000000001','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000020002')->'tasks')=0,'global app admin cannot widen native current-tenant member row rule');
 reset role;

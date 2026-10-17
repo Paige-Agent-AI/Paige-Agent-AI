@@ -28,6 +28,9 @@ const paths = {
   seats: 'supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql',
   tenant: 'supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql',
   roles: 'supabase/migrations/20251009234919_3d7566f7-15b7-462f-90a3-b74b713298b6.sql',
+  roleMap: 'supabase/migrations/20270509000000_nothing_reads_the_retired_title_role.sql',
+  roleSync: 'supabase/migrations/20260721002907_move2_slice1_tenant_scope_pii_admin.sql',
+  roleTrigger: 'supabase/migrations/20260701012156_526687dc-9adb-46c8-bb99-ff3f0737dc1c.sql',
   migration: 'supabase/migrations/20271109046000_operations_crm_task_exact_read.sql',
   incumbent: 'supabase/tests/operations_native_crm_work_read.sql',
   proof: 'supabase/tests/operations_crm_task_exact_read.sql',
@@ -59,11 +62,12 @@ try {
   end$$;
   create schema auth;
   create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
-  create type public.app_role as enum('admin','super_admin','user');
+  create type public.app_role as enum('admin','super_admin','platform_admin','developer','user');
+  create type public.tenant_role as enum('owner','admin','member');
   create table auth.users(id uuid primary key,email text);
   create table public.profiles(id uuid primary key default gen_random_uuid(),user_id uuid unique,active_tenant_id uuid);
   create table public.tenants(id uuid primary key,slug text,name text,status text,account_type text,parent_tenant_id uuid,account_number_prefix text,account_number bigint,features jsonb);
-  create table public.tenant_members(id uuid primary key default gen_random_uuid(),tenant_id uuid,user_id uuid,status text,role text,joined_at timestamptz default now(),is_owner boolean,unique(tenant_id,user_id));
+  create table public.tenant_members(id uuid primary key default gen_random_uuid(),tenant_id uuid,user_id uuid,status text,role public.tenant_role,joined_at timestamptz default now(),is_owner boolean,unique(tenant_id,user_id));
   create table public.user_roles(user_id uuid,role public.app_role,unique(user_id,role));
   create table public.clients(id uuid primary key,tenant_id uuid,created_by uuid,first_name text,last_name text,account_number text,linked_user_id uuid,assigned_coach_user_id uuid);
   create table public.tasks(id uuid primary key default gen_random_uuid(),tenant_id uuid,user_id uuid,title text,description text,status text,due_date timestamptz,updated_at timestamptz default now(),created_at timestamptz default now(),deal_id uuid,biz_id uuid,metadata jsonb);
@@ -79,6 +83,9 @@ try {
   ${extract(text(paths.seats), 'is_tenant_admin')}
   ${extract(text(paths.tenant), 'current_user_tenant_id')}
   ${extract(text(paths.roles), 'has_role')}
+  ${extract(text(paths.roleMap), 'map_tenant_role_to_app_role')}
+  ${extract(text(paths.roleSync), 'sync_tenant_member_to_user_roles')}
+  ${text(paths.roleTrigger).match(/CREATE TRIGGER trg_sync_tenant_member_to_user_roles[\s\S]*?EXECUTE FUNCTION public\.sync_tenant_member_to_user_roles\(\);/i)?.[0] ?? assert.fail('actual canonical member-role trigger')}
   grant usage on schema public,auth to authenticated,anon,service_role;
   grant select on public.tasks,public.profiles,public.tenants,public.clients,public.tenant_members to authenticated;
   grant update on public.profiles to authenticated;

@@ -7,9 +7,11 @@
 // card. It resolves no recipient, sender, HTML, tenant or governance — the door does all of that on
 // the server — and it never calls a provider.
 //
-// Scope (§13): ONE business email to ONE existing contact. Never marketing, newsletters, invoices,
-// agreements or booking links — those keep their own tools.
+// Generic-email scope (§13): ONE business email to ONE existing contact. Marketing,
+// invoices, agreements and booking retain their own tools. The appended Portal invitation
+// tool delegates exclusively to its own adapter below; it never becomes a generic email.
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../paige-spine/domains/comms.ts";
+import { PORTAL_INVITATION_TOOLS, PORTAL_INVITATION_TOOL_NAMES, dispatchPortalInvitationChat } from "../client-portal-invitation/chat.ts";
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from "../crm-command/approval-resolution.ts";
 import { COMMS_EMAIL_ACTION, COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_TOOL, FINGERPRINT, UUID, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 
@@ -42,6 +44,9 @@ export const COMMS_EMAIL_TOOLS = [
       parameters: { type: "object", properties: toolProperties, required: [...COMMS_EMAIL_SEND_CAPABILITY.input.required], additionalProperties: false },
     },
   },
+  // E09 owns this recipient-bound invitation action. Reuse the existing outbound
+  // command dispatcher and approval-card consumer; no shared Chat handler edits.
+  ...PORTAL_INVITATION_TOOLS,
 ] as const;
 export const COMMS_EMAIL_TOOL_NAMES: ReadonlySet<string> = new Set(COMMS_EMAIL_TOOLS.map((t) => t.function.name));
 
@@ -184,8 +189,9 @@ const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id"]);
 /** Door outcomes that guarantee nothing was dispatched for this operation. */
 const NOT_SENT_OUTCOMES = new Set<unknown>(["refused", "held", "needs_setup", "failed"]);
 
-/** Selection only. comms-email-command alone claims the approval and executes the stored call. */
+/** Selection only. Each domain's incumbent command claims approval and executes its stored call. */
 export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: CommsEmailChatDependencies): Promise<CommsEmailChatResult> {
+  if (PORTAL_INVITATION_TOOL_NAMES.has(ctx.toolName)) return dispatchPortalInvitationChat(ctx, deps);
   if (ctx.toolName !== COMMS_EMAIL_TOOL) return { content: { success: false, error: "Email action unavailable." } };
   if (!ctx.tenantId || !UUID.test(ctx.tenantId)) return { content: { success: false, error: "Email workspace unavailable." } };
   if (!ctx.args || typeof ctx.args !== "object" || Array.isArray(ctx.args)) return { content: { success: false, error: "Invalid email request." } };

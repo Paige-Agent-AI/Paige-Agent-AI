@@ -164,15 +164,15 @@ BEGIN
   RETURN public.read_client_portal_invitation_operation(p_tenant_id,p_operation_id)||jsonb_build_object('replayed',false);
 END $$;
 
-REVOKE ALL ON FUNCTION public._client_portal_invitation_owner(uuid),
-  public._client_portal_invitation_target(uuid,uuid),
-  public._client_portal_invitation_binding_guard() FROM PUBLIC,anon,authenticated,service_role;
-REVOKE ALL ON FUNCTION public.prepare_client_portal_invitation(uuid,uuid),
-  public.read_client_portal_invitation_operation(uuid,uuid),
-  public.create_client_portal_invitation(uuid,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.prepare_client_portal_invitation(uuid,uuid),
-  public.read_client_portal_invitation_operation(uuid,uuid),
-  public.create_client_portal_invitation(uuid,uuid,text,uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public._client_portal_invitation_owner(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._client_portal_invitation_target(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public._client_portal_invitation_binding_guard() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.prepare_client_portal_invitation(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.read_client_portal_invitation_operation(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.create_client_portal_invitation(uuid,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.prepare_client_portal_invitation(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.read_client_portal_invitation_operation(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_client_portal_invitation(uuid,uuid,text,uuid) TO authenticated;
 COMMENT ON FUNCTION public.create_client_portal_invitation(uuid,uuid,text,uuid) IS
   'Owner-authorized, recipient/version-bound native preparation/recovery over the incumbent invitation producer. Does not send, approve Chat/Live, grant a staff seat or prove delivery.';
 COMMIT;

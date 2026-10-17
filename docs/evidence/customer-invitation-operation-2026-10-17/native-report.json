@@ -6,7 +6,7 @@
   "migrationSHA256": "b413224809bd9d101f1b202488203b63dedc5fb20f239bb257986affde47a9c7",
   "operationProof": {
     "migration": "supabase/migrations/20271108233000_e09_customer_invitation_operation.sql",
-    "migrationSHA256": "9b11aefe6ef317d9d1a49fca5f702b4df7c7b471b4dfa84bb2179faf8e74e72b",
+    "migrationSHA256": "0bba3d693c5dc056e4186bfc0eb72978d1787b891b5f34eebc160e3f4f0bb5bb",
     "authority": "actual consumer producer and native owner predicates; synthetic Auth/schema only",
     "hostedQA": "UNVERIFIED",
     "provider": "NOT_CALLED"

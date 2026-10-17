@@ -1,5 +1,11 @@
 # Codebase Map — shipped surface area (routes · components · edge functions · gates · integrations)
 
+## E09 recipient-bound invitation preparation/recovery (2026-10-17, candidate)
+
+Migration `20271108233000_e09_customer_invitation_operation.sql` exposes `prepare_client_portal_invitation`, `create_client_portal_invitation` and `read_client_portal_invitation_operation` to actual authenticated owners/admins under the existing native predicates. They review one CRM primary recipient, call the incumbent consumer-token producer once per actor/business/operation and verify its original canonical audit receipt on recovery. Three technical binding columns are explicitly non-identity metadata; they never describe a person's work/title or grant a role. Private helpers have no API EXECUTE, and the invoker trigger prevents raw API binding forgery while retaining legacy/lifecycle/cleanup behavior. No new token registry, staff seat, approval path, sender or receipt stream.
+
+[Delivery/proof packet](../delivery/e09-customer-invitation-operation.md), [native evidence](../evidence/customer-invitation-operation-2026-10-17/native-report.json) and full-schema `supabase/tests/customer_invitation_operation.sql`. This is a native prerequisite, not a current Dashboard/Chat/Live caller or delivery claim. Their common sender/canonical approval bindings remain UNAVAILABLE; actual production migration/body/ACL, authorized owner/client/provider behavior and all seven-pillar acceptance remain unverified until their corresponding release/runtime evidence exists.
+
 ## INT-340 / #1837 conversational Metric/Evidence binding
 
 `_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.

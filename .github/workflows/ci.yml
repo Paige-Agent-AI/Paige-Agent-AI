@@ -894,6 +894,8 @@ jobs:
         run: |
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs
           node --import ./scripts/client-memory-authz/register.mjs scripts/crm-contact-work-summary-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/thread-summary-fabric-check.mjs
+          node --import ./scripts/client-memory-authz/register.mjs scripts/chat-turn-model-metadata-check.mjs
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/interactive.test.ts \
             supabase/functions/_shared/paige-turn/interactive-approval.test.ts
@@ -973,6 +975,8 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_answer_admission" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs --native-db
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_publication
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_publication" node scripts/int336-publication-context-db-check.mjs
+          "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_approval_recovery
+          PSQL_BIN="$PGBIN/psql" APPROVAL_RECOVERY_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_approval_recovery" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-handler-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-database-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-original-discovery-check.mjs
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test" node scripts/int1807-non-application-check.mjs

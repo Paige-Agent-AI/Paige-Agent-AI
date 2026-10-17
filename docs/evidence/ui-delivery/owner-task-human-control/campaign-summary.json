@@ -1,0 +1,80 @@
+{
+  "proofClass": "SYNTHETIC_ENGINEERING_PROOF_ONLY",
+  "reviewedUiSource": "a4926477aa9cdd71eaa77b64ceed1d39e00f457c",
+  "composedHeadAtCapture": "988f77dd60b907571bfb308987fc423fe5d9b0e9",
+  "sourceHashesVerified": 13,
+  "sourceDrift": 0,
+  "htmlGeometryIdentityMismatches": 0,
+  "actualReactCampaign": {
+    "testFiles": 1,
+    "tests": 1,
+    "passed": 1,
+    "skipped": 0,
+    "trees": 64,
+    "requiredFourSizeTrees": 48,
+    "mobileTrees": 12,
+    "reflowTrees": 4,
+    "actualOwnerTaskHookAndCaller": true,
+    "simulatedControlAcknowledgements": 22,
+    "realEffects": 0,
+    "assertions": "Actual Review click, Cancel focus, exact complete stored process/step RPC arguments, unknown outcome, disabled repeat action and Refresh focus"
+  },
+  "browser": {
+    "engine": "Chrome via CUA",
+    "staticSerializedActualReact": true,
+    "hydration": false,
+    "nativePngs": 66,
+    "matrixPngs": 64,
+    "keyboardFocusPngs": 2,
+    "geometry": "native-summary.json",
+    "integrity": "png-integrity.json",
+    "keyboard": "keyboard-final.json",
+    "cssReducedMotion": "reduced-motion.final.json",
+    "cleanup": "browser-cleanup.json"
+  },
+  "correctedFindings": [
+    {
+      "before": "FAIL",
+      "after": "PASS",
+      "finding": "Pipeline-message scope",
+      "reviewedFix": "a4926477aa9cdd71eaa77b64ceed1d39e00f457c",
+      "beforeCapture": "before-pipeline-copy-light-1536x770-closed-draft.png",
+      "afterCapture": "shell-light-1536x770-closed-draft.png"
+    },
+    {
+      "before": "FAIL",
+      "after": "PASS",
+      "finding": "Unknown outcome visible before long mobile configuration",
+      "reviewedFix": "a4926477aa9cdd71eaa77b64ceed1d39e00f457c",
+      "beforeCapture": "before-copy-shell-light-390x768-closed-unknown.png",
+      "afterCapture": "shell-light-390x768-closed-unknown.png"
+    }
+  ],
+  "visualInspection": [
+    "shell-light-1536x770-closed-draft.png",
+    "shell-dark-1536x770-open-review.png",
+    "shell-light-1366x768-open-review.png",
+    "shell-dark-1366x768-closed-unknown.png",
+    "shell-light-1024x768-closed-review.png",
+    "shell-dark-1024x768-open-review.png",
+    "shell-light-900x1000-closed-unknown.png",
+    "shell-dark-900x1000-open-review.png",
+    "shell-light-390x768-closed-unknown.png",
+    "shell-dark-390x768-open-unknown.png",
+    "reflow-light-768x384-closed-review.png",
+    "reflow-dark-768x384-closed-unknown.png",
+    "keyboard-mobile-cancel.png",
+    "keyboard-reflow-cancel.png"
+  ],
+  "boundaries": {
+    "authenticatedCustomerQa": "UNVERIFIED",
+    "Live": "UNVERIFIED",
+    "productionDeployment": "NOT_PERFORMED_BY_THIS_WORKER",
+    "crossBrowser": "NOT_PROVEN",
+    "literalBrowserZoom": "NOT_PROVEN; native DPR2 equivalent CSS reflow only",
+    "nativeTaskAndReceipt": "Covered separately by native controls proof, not these synthetic pages",
+    "cssReducedMotion": "Native computed CSS only; hydrated motion behavior not claimed",
+    "narrowPaigeOverlay": "18 intentional covered Settings states; return to Settings required, not falsely counted as reachable task controls",
+    "fullAppCI": "ROOT_OWNED; isolated renderer source has no owned diagnostics, dependency diagnostics remain outside scoped claim"
+  }
+}

@@ -5482,7 +5482,8 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
   const unread = await drive({
     stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
     tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, PLATFORM_SUMMARY) },
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).trim() === "tenant_id") ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" &&
+      ["tenant_id","tenant_id,audience"].includes(String(f[1]).trim())) ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("38.12 a thread in another tenant workspace is refused the same way, before any model call",
     foreign.status === 409 && foreign.modelEgress.length === 0 && foreign.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),

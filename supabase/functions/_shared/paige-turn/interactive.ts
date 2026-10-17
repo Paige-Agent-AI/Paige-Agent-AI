@@ -1,4 +1,5 @@
 import { isKnowledgeCompletedUnrecorded } from "../approval-outcome.ts";
+import type { SpineCapability } from "../paige-spine/contracts.ts";
 
 /** INT-336: a lease over the canonical thread, never a second turn queue. */
 export class InteractiveSuperseded extends Error {
@@ -22,8 +23,33 @@ function recordReferences(r: Record<string, unknown>) {
   return Object.entries(RECORD_FIELDS).flatMap(([field, kind]) => typeof r[field] === "string" && UUID.test(r[field] as string)
     ? [{ kind, id: r[field] as string }] : []);
 }
+/** The same closed read envelope used by Chat's step wording. No result flags
+ * or tool-name prefix can turn another protocol into this one. */
+export function readEnvelopeStatus(out: unknown): "available" | "needs_input" | "refused" | "unavailable" | null {
+  if (!out || typeof out !== "object" || Array.isArray(out)) return null;
+  if ("success" in out || "ok" in out || !("message" in out) || typeof out.message !== "string") return null;
+  const s = "status" in out ? out.status : null;
+  return s === "available" || s === "needs_input" || s === "refused" || s === "unavailable" ? s : null;
+}
+type ReadDeclaration = Pick<SpineCapability, "action" | "outcome">;
+function declaresClosedRead(tool: string, spine: readonly ReadDeclaration[]) {
+  // These are existing server declarations, never metadata from the tool result.
+  // An ambiguous registration or a different result protocol is not an opt-in.
+  const matches = spine.filter(capability => capability.action?.chatTool === tool);
+  if (matches.length !== 1) return false;
+  const { action, outcome } = matches[0];
+  const kinds = outcome?.kinds;
+  return action?.classification === "read" && action.riskPolicyKey === "read_only" && action.approvalAuthority === "none"
+    && Array.isArray(kinds) && kinds.length === 4 && ["available", "needs_input", "refused", "unavailable"].every(status => kinds.includes(status));
+}
+function readHasEffectContradiction(r: Record<string, unknown>) {
+  return ["success", "ok", "outcome", "code", "error", "outcome_unknown", "accepted", "needs_confirm", "queued",
+    "refused_before_run", "not_applied", "work_id", "run_id", "approval_id", "confirm_command", "confirm_summary",
+    "confirm_fingerprint", "confirm_idempotency_key", "confirm_preview", "receipt_recorded", "verified_readback",
+    ...Object.keys(RECORD_FIELDS)].some(field => field in r);
+}
 /** Closed vocabulary and scoped references only: never copy arguments, provider payloads or model prose. */
-export function interactiveEffect(tool: string, result: unknown): InteractiveEffect | null {
+export function interactiveEffect(tool: string, result: unknown, spine: readonly ReadDeclaration[] = []): InteractiveEffect | null {
   if (!/^[a-z][a-z0-9_]{0,95}$/.test(tool) || !result || typeof result !== "object" || Array.isArray(result)) return null;
   const r = result as Record<string, unknown>;
   const uncertain = [r.outcome, r.status, r.code, r.error].some((v) => typeof v === "string" && /(?:unknown|uncertain)/i.test(v));
@@ -32,6 +58,8 @@ export function interactiveEffect(tool: string, result: unknown): InteractiveEff
   if (r.refused_before_run === true && r.not_applied === true && r.success === false && !uncertain
     && r.outcome_unknown !== true && r.ok !== true && r.accepted !== true && r.needs_confirm !== true && r.queued !== true
     && r.outcome !== "succeeded" && recordReferences(r).length === 0 && r.work_id == null && r.run_id == null) return null;
+  const readStatus = readEnvelopeStatus(r);
+  const closedRead = readStatus !== null && !readHasEffectContradiction(r) && declaresClosedRead(tool, spine);
   const outcome = uncertain || r.outcome_unknown === true ? "outcome_unknown"
     : r.accepted === true && typeof r.work_id === "string" && UUID.test(r.work_id) ? "durable_accepted"
     : r.needs_confirm === true || r.queued === true ? "approval_required"
@@ -40,6 +68,9 @@ export function interactiveEffect(tool: string, result: unknown): InteractiveEff
     // the unconfirmed-receipt outcome. Never generalize this opt-in to other capabilities.
     : ["save_to_knowledge_base", "knowledge_update", "knowledge_delete"].includes(tool)
       && isKnowledgeCompletedUnrecorded(r) ? "reported_success"
+    // Completion of an authorized lookup (including visible-empty), not a
+    // business mutation, record-existence claim or proof a Rail receipt exists.
+    : closedRead ? readStatus === "available" ? "reported_success" : "reported_failure"
     : r.success === true || r.ok === true || r.outcome === "succeeded" ? "reported_success"
     : r.success === false || r.outcome === "failed" || r.outcome === "refused" ? "reported_failure" : "outcome_unknown";
   return { tool, outcome,
@@ -171,7 +202,7 @@ export function keepInteractiveStreamAlive(source: ReadableStream<Uint8Array>, l
       } catch (error) { if (!disconnected) controller.error(error); }
       finally {
         await lifetime.streamFinished();
-        if (!disconnected) { try { controller.close(); } catch {} }
+        if (!disconnected) { try { controller.close(); } catch { /* The source may already have closed or errored. */ } }
       }
     },
     cancel() { disconnected = true; },

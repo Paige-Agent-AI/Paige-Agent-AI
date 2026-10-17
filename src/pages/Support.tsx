@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +44,41 @@ interface FeatureRow {
 
 type FeatureFilter = "all" | "voted" | "recent" | "planned" | "shipped";
 
+/**
+ * /app/support is Paige's PLATFORM help desk + feature board, for business owners and
+ * staff. A customer of ONE business never lands here (E09 owner decision): their help
+ * comes from that business, so they are sent to "Contact your team" in their portal
+ * thread. A customer of more than one business keeps this desk until picking a business
+ * exists (Slice 8). Nothing platform-side renders until the relationship has resolved.
+ */
 export default function Support() {
+  const { brand, loading, error, multipleBusinesses } = useClientPortalBrandState();
+  if (loading) {
+    return (
+      <div role="status" aria-busy="true" className="max-w-5xl mx-auto p-6 space-y-4">
+        <span className="sr-only">Loading support…</span>
+        <Skeleton className="h-8 w-48 motion-reduce:animate-none" />
+        <Skeleton className="h-32 w-full motion-reduce:animate-none" />
+      </div>
+    );
+  }
+  // Only a customer of exactly ONE business has a business thread to send help to. A customer of
+  // several keeps this desk until choosing a business exists: their help page would otherwise be one
+  // that cannot send anything.
+  if (brand?.tenant_id && !multipleBusinesses) return <Navigate to="/app/messages?topic=help" replace />;
+  if (error) {
+    return (
+      <div role="alert" className="max-w-xl mx-auto space-y-3 py-12 text-center">
+        <p className="text-sm font-medium">We couldn't check your account</p>
+        <p className="text-sm text-muted-foreground">Reload the page to try again.</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>Reload</Button>
+      </div>
+    );
+  }
+  return <PlatformSupportDesk />;
+}
+
+function PlatformSupportDesk() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
@@ -99,7 +136,7 @@ export default function Support() {
         .eq("user_id", userId),
     ]);
     setFeatures((rows ?? []) as FeatureRow[]);
-    setMyVotes(new Set((votes ?? []).map((v: any) => v.feature_request_id)));
+    setMyVotes(new Set((votes ?? []).map((v: { feature_request_id: string }) => v.feature_request_id)));
     setLoadingFeatures(false);
   };
 
@@ -117,8 +154,8 @@ export default function Support() {
       }
       // Optimistic — trigger keeps vote_count in sync
       void loadFeatures();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not update vote");
+    } catch (err) {
+      toast.error((err as { message?: string } | null)?.message || "Could not update vote");
     }
   };
 

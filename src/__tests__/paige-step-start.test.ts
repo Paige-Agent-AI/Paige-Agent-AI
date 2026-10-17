@@ -14,6 +14,7 @@
  * and transpiled on its own (its specialist label helper is injected from the real shared module).
  */
 import { specialistStepLabel } from "../../supabase/functions/_shared/paige-turn/specialist-step-label";
+import { readEnvelopeStatus } from "../../supabase/functions/_shared/paige-turn/interactive";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
@@ -52,7 +53,7 @@ const describeStep: DescribeStep = (() => {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const out: { describeStep?: DescribeStep } = {};
-  new Function("exports", "specialistStepLabel", js)(out, specialistStepLabel);
+  new Function("exports", "specialistStepLabel", "readEnvelopeStatus", js)(out, specialistStepLabel, readEnvelopeStatus);
   if (!out.describeStep) throw new Error("describeStep did not transpile");
   return out.describeStep;
 })();

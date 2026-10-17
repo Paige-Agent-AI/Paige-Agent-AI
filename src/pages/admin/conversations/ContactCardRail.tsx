@@ -540,7 +540,9 @@ export function ContactCardRail({
             {contact.phone && (
               <CopyRow icon={Phone} value={contact.phone} label="phone" action={<CallButton number={contact.phone} />} />
             )}
-            {toAddress && toAddress !== contact.email && toAddress !== contact.phone && (
+            {/* A portal thread's fallback address came from an earlier email/SMS, so it is not a
+                "Portal" handle — the portal has no address. Skip the row rather than mislabel it. */}
+            {channel !== "portal" && toAddress && toAddress !== contact.email && toAddress !== contact.phone && (
               <CopyRow icon={CHANNEL_ICON[channel]} value={toAddress} label={CHANNEL_LABEL[channel]} />
             )}
           </div>

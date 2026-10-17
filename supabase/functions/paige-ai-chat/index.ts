@@ -11,6 +11,8 @@ import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingReadCaller } from "../_shared/calendar-booking-read.ts";
 import { CALENDAR_BOOKING_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
+import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
+import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
@@ -44,7 +46,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
-import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
+import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
@@ -309,7 +311,7 @@ const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 // E2-2 (2026-10-12, ANT-23 delegation): the block now names the ONE thing that turned on — the
 // narrowly approved read-only lookups — while every action, approval and external effect stays off.
 const PAIGE_CONVERSATIONAL_MODE_BLOCK = `CONVERSATIONAL MODE — ACTIONS ARE OFF THIS TURN.
-A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone, read_calendar_booking for one exact saved booking), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
+A platform update is finishing, so in this conversation you cannot create, change, send, schedule or delete anything: no actions, approvals or external effects can be requested or run, and none have run. Where your read-only lookup tools are available in this conversation (get_business_snapshot for a whole-business review, read_business_metric for one measurement, read_client_engagement_status for where one client stands, read_business_time_zone for the business time zone, read_calendar_booking for one exact saved booking, crm_get_task for one exact saved Task), use them to answer questions about how the business and its clients are doing. A lookup is a read: it changes nothing and grants no action authority.
 If asked to create, change, send, schedule or delete anything: say plainly and briefly that you cannot run actions in this conversation right now, then give the answer, plan or wording in words. Never claim an action was performed, and never promise one for later.`;
 // E2-2 / ANT-23: the narrowly approved read-only Metric/Evidence admission set — the ONLY tools a
 // conversational turn may be offered and run while the interactive rollout stays staged (DRAINING).
@@ -324,7 +326,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // the owner in Setup (set_business_time_zone).
 // Owner restoration (2026-10-17): exact saved-booking read only; original caller JWT,
 // native membership/host visibility, no Calendar write or provider authority.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking"]));
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -359,14 +361,9 @@ function toolResultReportsFailure(out: any, tool?: string): boolean {
  * get_business_snapshot, read_client_engagement_status, read_business_time_zone):
  * `{ status: available | needs_input | refused | unavailable, message, ... }` and NO `success` / `ok`.
  * Strict, so no other result shape changes meaning: a `success`/`ok` flag, a missing `message`, or any
- * other status is not an envelope. Producers are untouched; this only reads them.
+ * other status is not an envelope. Producers are untouched; the imported shared
+ * readEnvelopeStatus is also used by interactiveEffect, so receipts and wording agree.
  */
-function readEnvelopeStatus(out: any): "available" | "needs_input" | "refused" | "unavailable" | null {
-  if (!out || typeof out !== "object" || Array.isArray(out)) return null;
-  if ("success" in out || "ok" in out || typeof out.message !== "string") return null;
-  const s = out.status;
-  return s === "available" || s === "needs_input" || s === "refused" || s === "unavailable" ? s : null;
-}
 function describeStep(
   tc: any,
   res: any,
@@ -651,6 +648,7 @@ function describeStep(
     // read_business_metric's wording is Exp02's and is deliberately not set here (no Exp02 sign-off).
     case "read_client_engagement_status": return { label: failed ? "Couldn't check where that client stands" : "Checked where that client stands", group: "shared" };
     case "read_calendar_booking": return { label: failed ? "Couldn't check that booking" : "Checked that booking", group: "shared" };
+    case "crm_get_task": return { label: failed ? "Couldn't check that Task" : "Checked that Task", group: "shared" };
     case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
@@ -5784,6 +5782,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     let teamAuthorityBlock = "";
     let calendarBookingRole: string | null = null;
     let calendarBookingAccountShape: "solo" | null = null;
+    let taskReadRole: string | null = null;
     if (!customerPortal && personaCtx.tenant_id) {
       try {
         const teamAuthority = await loadTeamAuthorityForChat(supabaseClient, personaCtx.tenant_id);
@@ -5793,6 +5792,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         if (teamAuthority.status === "available") {
           const seat = teamAuthority.rows.find(row => row.fact_key === "viewer_permission");
           if (seat?.status === "available" && ["owner", "admin", "member"].includes(String(seat.value))) calendarBookingRole = seat.value;
+          const taskSeats = teamAuthority.rows.filter(row => row.fact_key === "viewer_permission");
+          if (taskSeats.length === 1 && taskSeats[0].status === "available" && typeof taskSeats[0].value === "string" && ["owner", "admin", "member"].includes(taskSeats[0].value)) taskReadRole = taskSeats[0].value;
         }
         if (callerTier === "tenant" && calendarBookingRole && !scopedClientId) {
           const classification = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, req.signal);
@@ -8508,6 +8509,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // E4-S2 client standing + business time zone: same Solo-workspace lens; caller-JWT reads only.
     if (callerTier === "tenant") toolDefs.push(...CLIENT_ENGAGEMENT_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
+    if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -17033,6 +17035,48 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch (e) { console.error("[paige] Calendar read receipt unavailable:", (e as Error)?.message); }
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+        } else if (tc.function.name === "crm_get_task") {
+          const taskIdentity: ContextIdentity = {
+            actorId: user.id, tenantId: turnScopeTenantId, workspaceId: turnScopeTenantId,
+            role: taskReadRole, accountShape: calendarBookingAccountShape,
+            actAsClientId: scopedClientId ?? null, scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request",
+          };
+          let taskReadScopeRevoked = false;
+          const result = await readOperationsTask(taskIdentity, {
+            caller: supabaseClient as unknown as OperationsTaskReadCaller,
+            currentIdentity: () => req.signal.aborted || tenantKnowledgeScopeRevoked || taskReadScopeRevoked || customerPortal || callerTier !== "tenant"
+              ? null : { ...taskIdentity, tenantId: personaCtx.tenant_id ?? null, workspaceId: personaCtx.tenant_id ?? null },
+            revalidateScope: async (signal) => {
+              // This is live server validation, not the static turn snapshot. Each
+              // stage is fenced after awaiting so an expired preflight cannot
+              // start a later Team/classification/native read or release old data.
+              if (signal.aborted || taskReadScopeRevoked || customerPortal || callerTier !== "tenant" || scopedClientId ||
+                !taskReadRole || calendarBookingAccountShape !== "solo" || !(await revalidateTenantKnowledgeScope(true))) return false;
+              if (signal.aborted || tenantKnowledgeScopeRevoked) return false;
+              const authority = await loadTeamAuthorityForChat({ rpc: (name, args) => supabaseClient.rpc(name, args).abortSignal(signal) }, turnScopeTenantId);
+              if (signal.aborted) return false;
+              if (authority.status === "unavailable") throw new Error("Task authority read unconfirmed");
+              const seats = authority.status === "available" ? authority.rows.filter(row => row.fact_key === "viewer_permission") : [];
+              if (seats.length !== 1 || seats[0].status !== "available" || seats[0].value !== taskReadRole) {
+                taskReadScopeRevoked = true; return false;
+              }
+              const classification = await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller, turnScopeTenantId, signal);
+              if (classification.status === "unavailable") throw new Error("Task classification read unconfirmed");
+              if (classification.status !== "available") taskReadScopeRevoked = true;
+              return !signal.aborted && !taskReadScopeRevoked;
+            }, signal: req.signal,
+          }, JSON.parse(tc.function.arguments || "{}"));
+          if (result.status === "available" && turnScopeTenantId) {
+            if (result.found) readRecordLinkSource.set(tc, [{ destination: "operations_work", record_id: null }]);
+            try {
+              await recordCapabilityRun(supabase, {
+                tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",
+                runId: await stableRunId([tc.function.name, turnScopeTenantId, `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: { channel: "paige_chat", tool: tc.function.name },
+              });
+            } catch (e) { console.error("[paige] Task read receipt unavailable:", (e as Error)?.message); }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -18170,7 +18214,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 try {
                   const parsed = JSON.parse(res?.content ?? "{}");
                   if (interactive) {
-                    const effect = interactiveEffect(String(tc.function?.name ?? ""), parsed);
+                    const effect = interactiveEffect(String(tc.function?.name ?? ""), parsed, PAIGE_SPINE_CAPABILITIES);
                     if (effect) interactiveEffects.push(effect);
                   }
                   ok = parsed?.success !== false;

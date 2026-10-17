@@ -1,5 +1,7 @@
 # ANT-21: canonical exact booking read candidate
 
+<!-- Later result-projection successor is recorded additively below; original release evidence is preserved. -->
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing booking creation -> durable canonical record -> later exact-ID inspection -> current caller/workspace authority -> truthful found, not-visible, refused or unavailable outcome; prepared source only
 PAIGE_UI_DESIGN: PASS: existing Calendar/Conversations world and controls retained; no markup, layout, navigation or styling change; project overlay and routed modules read
@@ -135,3 +137,24 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL:2318 canonical read/native/Edge/web release and 
 INTERNAL_BUILD_IDENTITY: reviewed=f25be7dfeab80dd8d0e087de2a4923eb3138e8e8; main=88e544d5ad4a760b21b2845e3b570d23ae424a4e; migration=20271109030000; edge=Chat441 ACTIVE/JWTtrue237of237; deployment=dpl_8bKFaYcvQS2mx1DUovkVrVS5DiQY READY/exact; environment=production; evidence=docs/evidence/ui-delivery/ant21-calendar-booking-read.md
 RELEASE_CHANNEL: production: shared internal restoration for every eligible existing/future SOLO
 UNVERIFIED: Corrected interactive effects2330, broader host/role/recovery/provisioning cases, other booking operations and provider effects, complete Calendar rendering, separate Live, full18/50 and owner product acceptance remain unproven; no second account booking was created for this read proof
+
+## Shared read receipt successor — implementation, not production acceptance
+
+A later ordinary production Calendar lookup exposed a separate shared projection defect: the authorized closed read result was correct, while the existing interactive effect recorded `outcome_unknown`. The bounded successor is documented in [canonical read receipt truth](ant21-canonical-read-receipt-truth.md). It reuses the same strict read-envelope helper and existing server Spine declarations; available, including visible-empty, means a completed lookup, while needs-input/refused/unavailable mean a failed lookup. No Calendar reader, native permission, approval, record writer or historical receipt changes here.
+
+Local successor proof:95 focused receipt/step cases,28 actual Calendar-handler controls (the original23 plus five separate active-protocol settlement cases), four other active read settlement cases, and142 existing outcome cases pass; one inherited optional database-gated case remains skipped. The pending Task contract has explicit metadata-only coverage, not an additional current-main handler or customer proof. Required distinct review, explicit root source-binding renewal, exact-head CI, production source/readback and authenticated positive/negative/reload verification remain owed for this successor. Live and owner acceptance are not claimed; the original Calendar release evidence above is preserved.
+
+
+## Current production-source reconciliation — 2026-10-17T23:41:53.177541+00:00
+
+The preceding source-only and observed-release statements are retained historical snapshots, including the b552ed90 cutoff at2026-10-17T22:53:10Z. Their then-unshipped/underway wording is not the current deployment state. This additive update records source/native/web delivery only and does not invent later customer QA.
+
+Shared read-receipt correction [#2330](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2330), reviewed70a3cf8d8b7cd2fbd3685f677c0c505cd4240af7, is merged at2635c205d4214ed0380d21ce8a9958d09f9ecade. Production web dpl_Gbo5rUnZy2NZMrCxVXtAt13hq9Rt is READY/exact main. Existing Edge workflow39078562090 attempt1 failed its sales-invoice-delivery source check; the cause of that earlier mismatch remains UNPROVEN and the original failure is retained. Attempt2 job117531972617 succeeded with8of8 selected served sources/configurations matching2635 and advanced edge-live. Its final source packet is SHA256ea0988322809b30992562b475fd6da6a4c8725650164b4fa7a6b548f1b642ddf; Calendar's Chat closure is paige-ai-chat442/JWTtrue/239files. No Calendar native reader, existing30000 contract, booking, authority or historical receipt was rewritten.
+
+The earlier actual Calendar inspection and its stored outcome_unknown remain historical proof of the defect. Source delivery of the shared correction supersedes only the earlier implementation/deployment hold; new ordinary corrected receipt/reload/isolation verification remains root-owned and is not finalized by this closeout. No new booking, invitation, reminder, provider event, account-specific rule or separate receipt engine is introduced.
+
+AUTHENTICATED_RUNTIME: PASS: retained2318 bounded original-JWT saved-booking read/reload/native inspection and paired foreign-content non-disclosure only; corrected2330 interactive-effect customer proof remains UNVERIFIED
+RELEASE_TRUTH_BOUNDARY: PARTIAL:2330 production source/configuration is verified; the existing Calendar native authority and older bounded read proof remain valid, while new corrected receipt behavior is not inferred from CI/source readback
+INTERNAL_BUILD_IDENTITY: reviewed=70a3cf8d8b7cd2fbd3685f677c0c505cd4240af7; main=2635c205d4214ed0380d21ce8a9958d09f9ecade; deployment=dpl_Gbo5rUnZy2NZMrCxVXtAt13hq9Rt READY/exact; environment=production; migrations=APPLIED(20271109030000_calendar_booking_exact_read); edge=APPLIED(paige-ai-chat@442); evidence=docs/evidence/ui-delivery/ant21-calendar-booking-read.md
+RELEASE_CHANNEL: production: shared internal restoration source for every eligible existing/future SOLO; representative-account proof is never an implementation allowlist
+UNVERIFIED: New2330 ordinary corrected effect/reload/paired-isolation acceptance, full booking/host/role/provisioning/recovery/provider classes, complete Calendar geometry, separate Live, full18/50 and owner acceptance remain owed; old uncertain receipts are not backfilled or relabeled

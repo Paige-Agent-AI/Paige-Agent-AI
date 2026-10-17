@@ -8,7 +8,7 @@ import { readEmailSenderFacts } from '../comms-email/readiness.ts';
 type ObjectValue=Record<string,unknown>;
 const object=(v:unknown):ObjectValue=>v&&typeof v==='object'&&!Array.isArray(v)?v as ObjectValue:{};
 /** Caller must resolve authenticated actor/current tenant/admin first; this reads only safe setup metadata. */
-export async function readInvoiceDeliveryReadiness(admin:InvoiceReadinessAdmin,input:{tenantId:string;invoice:unknown;channel:'email'|'sms'|'imessage';connectorId:string|null},env:(key:string)=>string|undefined):Promise<InvoiceDeliveryReadiness> {
+export async function readInvoiceDeliveryReadiness(admin:InvoiceReadinessAdmin,input:{tenantId:string;actorUserId?:string|null;invoice:unknown;channel:'email'|'sms'|'imessage';connectorId:string|null},env:(key:string)=>string|undefined):Promise<InvoiceDeliveryReadiness> {
  if(input.channel==='imessage')return invoiceDeliveryReadiness({channel:'imessage',tenantMatches:true,recipient:null,resendConfigured:false,googleConfigured:false});
  const row=object(input.invoice),snapshot=object(object(row.document).snapshot),tenantMatches=row.tenant_id===input.tenantId;
  const recipient=snapshot[input.channel==='email'?'recipient_email':'recipient_phone'];
@@ -21,7 +21,7 @@ export async function readInvoiceDeliveryReadiness(admin:InvoiceReadinessAdmin,i
   if(input.channel==='email') {
    if(!input.connectorId)return invoiceDeliveryReadiness(facts);
    // §18: the ONE connector sender-fact read (also used by comms.email_send readiness). No row → no sender.
-   sender=await readEmailSenderFacts(admin as never,input.tenantId,input.connectorId)??undefined;
+   sender=await readEmailSenderFacts(admin as never,input.tenantId,input.connectorId,input.actorUserId)??undefined;
   }else {
    const [account,numbers,a2p]=await Promise.all([admin.from('tenant_twilio_subaccounts').select('subaccount_sid,api_key_sid,auth_token_vault_ref').eq('tenant_id',input.tenantId).maybeSingle(),admin.from('tenant_phone_numbers').select('phone_number,capabilities').eq('tenant_id',input.tenantId).eq('status','active'),admin.from('tenant_a2p_registrations').select('status').eq('tenant_id',input.tenantId).maybeSingle()]);
    if(account.error||numbers.error||a2p.error)throw Error('setup_read_failed');const a=object(account.data);

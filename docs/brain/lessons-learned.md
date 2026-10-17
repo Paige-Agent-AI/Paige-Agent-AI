@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### Recover a saved review through its native publication, never a guessed intent (2026-10-17, BUG)
+
+A browser-only publication work reference disappears on reload while native work can still be claimed or unknown. Pending review text is not proof that publication never started, and an earlier active generation is not proof a replacement published. Extend the incumbent scoped reader with the exact native document/extraction/revision/hash association and existing job visibility; distinguish no submitted publication from unreadable/ambiguous work. Preserve original work, unknown-result and unrecorded-receipt truth. Never create a second job or replay because the acknowledgement was lost. Native fixture proof remains separate from integrated authenticated recovery and owner acceptance.
+
 ### A streaming cache must obey the original cancellation (2026-10-16, E01)
 
 Starting playback early is incomplete if a second tee reader continues draining the paid provider after Stop. Keep one owned provider reader, cancel the original request/reader, count ambiguous dispatched spend, and upload only after complete EOF. Verify first chunk before EOF, caller/consumer abort, failed settlement, stalled first audio, malformed/empty response and no partial cache or automatic retry. Record provider-first-byte and whole-request readiness separately from audible speech; mocked timings are not provider p50/p95.
@@ -3507,3 +3511,7 @@ Component/SQL tests proved the canonical save/checkpoint contracts but did not e
 ### 2026-10-14 E1 native source and pixels require independent binding
 
 The bounded presentation repair preserved the shared transcript controller and makes the complete opening question fit native320x720. Local tests/DOM dimensions cannot certify other pixels: requested390x844 encoded390x843, and rapid open-state labels disagreed with folded/transition screenshots. Independently decode dimensions, inspect pixels against visible state, complete source/asset hashes before navigation and after, preserve invalid originals and stop bounded confirmation on another mismatch. Reset/new own tab/DPR1.25 did not establish a cause or repair; route the existing capture integration defect instead of changing pixels, assertions, product state or drivers. Desktop focus/resize cannot prove a real OS keyboard. The original fixture used state, so validate query semantics before navigation. Private canonical records/23 acceptance permissions stay separate from synthetic native proof.
+
+### 2026-10-17 — Preserve the original actor through personal email execution
+
+The governed email sender must retain the canonical personal-mailbox owner rule across readiness, approval, native admission and transport. A service-role transport identity is not the person who granted a mailbox. Reuse the existing mailbox policy and canonical domain records; carry the server-resolved original actor, recheck current authority and preserve uncertain outcomes. Shared/company senders and provider configuration remain separate. Tests must include mailbox classification/owner fields matching the real schema, actor-free background work, current ownership drift and provider-call absence. Source/local proof is not production exposure, live delivery or authenticated acceptance. The bounded candidate and remaining review/release obligations are in [the existing restoration evidence](../evidence/ui-delivery/ant21-personal-email-authority.md); Master closeout remains with the root BUG integrator.

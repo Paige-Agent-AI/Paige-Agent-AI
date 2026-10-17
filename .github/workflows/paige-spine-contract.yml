@@ -322,6 +322,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_native_crm_work_read.sql
 
+      - name: Operations exact Task caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_crm_task_exact_read.sql
+
       - name: Operations signed engagement evidence caller scope (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_evidence_read.sql
@@ -528,6 +532,9 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/customer_invitation_delivery.sql
       - run: supabase test db supabase/tests/customer_invitation_catalogue.sql
+        if: ${{ !cancelled() }}
+      # E09 portal channel: customer <-> business messages in the one canonical inbox.
+      - run: supabase test db supabase/tests/customer_portal_messages.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

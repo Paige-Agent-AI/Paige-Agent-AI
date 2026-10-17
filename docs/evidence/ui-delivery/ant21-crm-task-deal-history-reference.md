@@ -95,3 +95,18 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL:2316 source release and this task-reopen/history
 INTERNAL_BUILD_IDENTITY: reviewed=6dbb24e4e97c6d83c6c04d652506443e34b87cf6; main=289cd40335c7d2af67571c91950a109bf9665efd; environment=production; evidence=docs/evidence/ui-delivery/ant21-crm-task-deal-history-reference.md; exact release identity remains the original2316 log, with no new runtime release here
 RELEASE_CHANNEL: production: shared internal restoration for every eligible existing/future SOLO; no tenant-specific routing or record patch
 UNVERIFIED: Fresh Deal reload/exact pipeline continuation, Task exact-reader2330/focus route, broader assignment/interruption/recovery/role/new-account classes, separate Live, full18/50 and owner acceptance remain unproven here; prior approval-click evidence is not rewritten
+
+
+## Current production-source reconciliation — 2026-10-17T23:41:53.177541+00:00
+
+The preceding source-only and observed-release statements are retained historical snapshots, including the b552ed90 cutoff at2026-10-17T22:53:10Z. Their then-unshipped/underway wording is not the current deployment state. This additive update records source/native/web delivery only and does not invent later customer QA.
+
+Shared source [#2330](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2330) merged2635c205d4214ed0380d21ce8a9958d09f9ecade and native workflow39078417201 applied20271110012000 before the email13000 successor. Authoritative readback SHA256c39eefbcfdb69301caf40d8fc4feb6f5f86fb79eee143608259d8b2df9c661e8 matches the exact three-argument operations_crm_work_read body and compatible two-argument overload, with reviewed incumbent OID/owner/ACL/configuration/ABI preserved. Web dpl_Gbo5rUnZy2NZMrCxVXtAt13hq9Rt and the selected Edge source/configuration are verified; Chat remains442/JWTtrue/239files.
+
+The fresh Task reader is a separate canonical read binding, not a new exact Task navigation route. The2316 durable Work button remains surface_only/NULL record ID and its older receipt/reopen/foreign-unchanged proof is retained. Root's new ordinary Task/Deal read/receipt QA is not finalized here; no second approval, replay, task/deal write or foreign-row read was performed for this documentation change.
+
+AUTHENTICATED_RUNTIME: PASS: retained2316 bounded authorized status-only reopen/receipt/reload/native Work and foreign-task unchanged comparison only; new2330 exact Task read/receipt customer proof remains UNVERIFIED
+RELEASE_TRUTH_BOUNDARY: PARTIAL:2330 native Task read/source delivery is verified; exact Task UI focus, fresh Task/Deal outcome and broader customer classes are not inferred from deployment
+INTERNAL_BUILD_IDENTITY: reviewed=70a3cf8d8b7cd2fbd3685f677c0c505cd4240af7; main=2635c205d4214ed0380d21ce8a9958d09f9ecade; deployment=dpl_Gbo5rUnZy2NZMrCxVXtAt13hq9Rt READY/exact; environment=production; migrations=APPLIED(20271110012000_operations_crm_task_exact_read); edge=APPLIED(paige-ai-chat@442); evidence=docs/evidence/ui-delivery/ant21-crm-task-deal-history-reference.md
+RELEASE_CHANNEL: production: one shared implementation for every eligible existing/future SOLO with legitimate native visibility differences
+UNVERIFIED: New2330 ordinary Task read/receipt/reload/paired negatives, fresh Deal reload, exact Task navigation, assignment/interruption/recovery/role/new-account classes, separate Live, full18/50 and owner acceptance remain owed; earlier approval-click provenance is unchanged

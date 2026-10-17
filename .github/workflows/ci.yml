@@ -892,7 +892,7 @@ jobs:
           "$PGBIN/initdb" -D "$WORK/d" -U p --auth=trust >/dev/null
           "$PGBIN/pg_ctl" -D "$WORK/d" -o "-p $PORT -k $WORK -c listen_addresses=127.0.0.1" -l "$WORK/log" start >/dev/null
           for _ in $(seq 1 20); do "$PGBIN/pg_isready" -h 127.0.0.1 -p "$PORT" >/dev/null 2>&1 && break; sleep 0.5; done
-          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d"
+          node scripts/sql/comms-email-send-concurrency-proof.mjs "$PGBIN/psql" "$PORT" p "$WORK/d" --personal-sender
 
       - name: C0b — incumbent adapter authority bindings
         run: |
@@ -916,6 +916,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.
@@ -1001,6 +1002,7 @@ jobs:
           python3 scripts/knowledge-service/check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/delete-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
           python3 scripts/knowledge-service/catalogue-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres
+          python3 scripts/knowledge-service/publication-check.py --psql "$PGBIN/psql" --port "$PORT" --user postgres --expected-data-directory "$WORK/d" --publication-recovery
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_int346_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_int346_race" node scripts/int346-database-check.mjs --race
 

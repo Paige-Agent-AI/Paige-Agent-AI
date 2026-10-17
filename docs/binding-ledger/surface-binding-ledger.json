@@ -51,50 +51,19 @@
       "id": "operations.department",
       "surface": "Solo Operations — Overview, Work, Projects, Delivery, Playbooks and Capacity",
       "group": "operations",
-      "tier_scope": [
-        "solo standalone"
-      ],
+      "tier_scope": ["solo standalone"],
       "owner_component": "src/solo/operations/OperationsWorkspace.tsx",
       "canonical_source": "plan_list, get_solo_team_workspace, existing Sales commercial terms/signings and Knowledge documents",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "Canonical planning/team reads; Sales and SOP sources remain distinct from fulfillment and execution."
-        },
-        "tenant_scope": {
-          "status": "inherited_contract",
-          "note": "Server scope, actor/tenant fences and scoped writer delegation. Authenticated isolation proof owed."
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "Existing PAIGE draft handoff only; Chat reauthorization required, no automatic send."
-        },
-        "authority": {
-          "status": "inherited",
-          "note": "Canonical Planning creator/assignee/staff rules; manual confirmation is not a Trust grant."
-        },
-        "governed_write": {
-          "status": "partial",
-          "note": "Scoped status/date/reassignment delegates to plan_update_item; canonical readback required. Hosted proof owed."
-        },
-        "verified_outcome": {
-          "status": "proof_owed",
-          "note": "Fixture and isolated SQL checks do not establish customer runtime or client acceptance."
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "none",
-          "note": "Manual Planning updates preserve canonical audit; no new Rail producer or receipt stream. Governed Operations receipt integration remains owed."
-        },
-        "mind_eligibility": {
-          "axis_a": "n/a",
-          "axis_b": "NO",
-          "note": "Operations domain evidence composition remains required; no replacement Fabric or proven authenticated Mind promotion."
-        },
-        "memory_retention": {
-          "status": "none",
-          "note": "No automatic promotion of mutable work or profile facts to Memory."
-        }
+        "canonical_source": {"status": "partial", "note": "Canonical planning/team reads; Sales and SOP sources remain distinct from fulfillment and execution."},
+        "tenant_scope": {"status": "inherited_contract", "note": "Server scope, actor/tenant fences and scoped writer delegation. Authenticated isolation proof owed."},
+        "safe_context": {"status": "partial", "note": "Existing PAIGE draft handoff only; Chat reauthorization required, no automatic send."},
+        "authority": {"status": "inherited", "note": "Canonical Planning creator/assignee/staff rules; manual confirmation is not a Trust grant."},
+        "governed_write": {"status": "partial", "note": "Scoped status/date/reassignment delegates to plan_update_item; canonical readback required. Hosted proof owed."},
+        "verified_outcome": {"status": "proof_owed", "note": "Fixture and isolated SQL checks do not establish customer runtime or client acceptance."},
+        "rail_evidence": {"producer": "none", "read": "none", "note": "Manual Planning updates preserve canonical audit; no new Rail producer or receipt stream. Governed Operations receipt integration remains owed."},
+        "mind_eligibility": {"axis_a": "n/a", "axis_b": "NO", "note": "Operations domain evidence composition remains required; no replacement Fabric or proven authenticated Mind promotion."},
+        "memory_retention": {"status": "none", "note": "No automatic promotion of mutable work or profile facts to Memory."}
       },
       "intended_capability": {
         "read": "Authorized projects, work, milestones, delivery commitments, SOPs and sourced workload.",
@@ -107,17 +76,9 @@
       "state": "PROOF_OWED",
       "state_reason": "Initial UI and scoped manual edits implemented locally. Creation/history/concurrency, dependencies, deliverable acceptance, SOP runs, recorded capacity and governed COO capability integration remain required. No authenticated or production acceptance claimed.",
       "next_slice": "Complete canonical work creation, concurrency and stage/assignment flows, then project/delivery/capacity and intelligence contracts in bounded releases.",
-      "evidence_class": [
-        "source_read",
-        "automated_test",
-        "rendered_structural"
-      ],
+      "evidence_class": ["source_read", "automated_test", "rendered_structural"],
       "linked": [],
-      "sources": [
-        "src/solo/operations/OperationsWorkspace.tsx",
-        "src/solo/operations/OperationsWorkEditor.tsx",
-        "docs/evidence/ui-delivery/operations-v3.md"
-      ]
+      "sources": ["src/solo/operations/OperationsWorkspace.tsx", "src/solo/operations/OperationsWorkEditor.tsx", "docs/evidence/ui-delivery/operations-v3.md"]
     },
     {
       "id": "finance.department",
@@ -369,83 +330,27 @@
       },
       "surface": "Paige — the dedicated authenticated workspace (sole tenant-aware chat)",
       "group": "paige",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloPaigeWorkspace.tsx (Chat tab -> src/components/dashboard/PaigeAIChat.tsx -> src/components/paige/live/PaigeLiveConversation.tsx); handoff bridge src/solo/paigeClientScope.ts",
       "canonical_source": "paige-ai-chat edge function; paige-live-session control plane; scope bridge paigeClientScope.ts",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "PaigeAIChat is the one client that calls paige-ai-chat; Live Conversation is a portal over that exact thread/transcript, not another assistant; floating chat retired #981"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "paige-ai-chat resolves tenant + role from JWT; paige-live-session independently resolves the JWT actor, active tenant, and caller-owned thread and rejects a stale context epoch"
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "handoff carries only {clientId, clientLabel} (paigeClientScope.ts); clientId re-authorized server-side by tenant equality -> scopedClientId. Client ALSO sends raw clientContext prose (<=50k), a raw-payload path Phase 1 replaces with a server-resolved intent"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "action-risk classifier + paige_pending_confirmations remain the one gate. Live governed-action cards reuse the exact existing approval fingerprints and route confirmation back through PaigeAIChat; ordinary choices may be selected, but a casual spoken yes never bypasses policy"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "the inline governed sequence; governedExecution.ts seam exists but adopted only by the MCP door"
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "outcomes vary by tool; Live cards present the same canonical tool result/artifact/readback. Voice profile resolution rechecks canonical provider proof and uncached TTS reserves cost atomically before contact, but provider-backed audio remains PROOF OWED"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "resolver",
-          "note": "get_solo_rail_activity deployed + consumed by 4 owner-facing consumers; authenticated owner runtime proof owed (#746)"
-        },
-        "mind_eligibility": {
-          "axis_a": "n/a",
-          "axis_b": "NO",
-          "note": "the workspace is the consumer of Mind, not a Mind source; raw audio, transcript, and card text are never automatic evidence"
-        },
-        "memory_retention": {
-          "status": "seam_available",
-          "note": "record_/get_/forget_paige_memory shipped (Release C); raw chat/audio/transcripts/cards never auto-write; only separately owner-confirmed source-backed facts may use the existing canonical owner"
-        }
+        "canonical_source": {"status": "real", "note": "PaigeAIChat is the one client that calls paige-ai-chat; Live Conversation is a portal over that exact thread/transcript, not another assistant; floating chat retired #981"},
+        "tenant_scope": {"status": "server_resolved", "note": "paige-ai-chat resolves tenant + role from JWT; paige-live-session independently resolves the JWT actor, active tenant, and caller-owned thread and rejects a stale context epoch"},
+        "safe_context": {"status": "partial", "note": "handoff carries only {clientId, clientLabel} (paigeClientScope.ts); clientId re-authorized server-side by tenant equality -> scopedClientId. Client ALSO sends raw clientContext prose (<=50k), a raw-payload path Phase 1 replaces with a server-resolved intent"},
+        "authority": {"status": "governed", "note": "action-risk classifier + paige_pending_confirmations remain the one gate. Live governed-action cards reuse the exact existing approval fingerprints and route confirmation back through PaigeAIChat; ordinary choices may be selected, but a casual spoken yes never bypasses policy"},
+        "governed_write": {"status": "wired", "note": "the inline governed sequence; governedExecution.ts seam exists but adopted only by the MCP door"},
+        "verified_outcome": {"status": "partial", "note": "outcomes vary by tool; Live cards present the same canonical tool result/artifact/readback. Voice profile resolution rechecks canonical provider proof and uncached TTS reserves cost atomically before contact, but provider-backed audio remains PROOF OWED"},
+        "rail_evidence": {"producer": "partial", "read": "resolver", "note": "get_solo_rail_activity deployed + consumed by 4 owner-facing consumers; authenticated owner runtime proof owed (#746)"},
+        "mind_eligibility": {"axis_a": "n/a", "axis_b": "NO", "note": "the workspace is the consumer of Mind, not a Mind source; raw audio, transcript, and card text are never automatic evidence"},
+        "memory_retention": {"status": "seam_available", "note": "record_/get_/forget_paige_memory shipped (Release C); raw chat/audio/transcripts/cards never auto-write; only separately owner-confirmed source-backed facts may use the existing canonical owner"}
       },
-      "prohibited_context": [
-        "tenant id from client",
-        "role from client",
-        "raw consumer/own-row PII (the #981 leak reason)",
-        "provider secrets or voice references in customer UI",
-        "raw audio/transcript/card text as durable knowledge",
-        "arbitrary client-supplied prose as identity"
-      ],
+      "prohibited_context": ["tenant id from client", "role from client", "raw consumer/own-row PII (the #981 leak reason)", "provider secrets or voice references in customer UI", "raw audio/transcript/card text as durable knowledge", "arbitrary client-supplied prose as identity"],
       "state": "PARTIAL",
       "state_reason": "Sole chat surface established. Live Conversation UI and fail-closed session/profile control plane are deployed on exact main f8eb2362 and use the exact workspace/thread plus existing governed card path. Provider-backed realtime audio remains PROOF OWED and authenticated owner runtime remains UNVERIFIED. Existing handoff gaps (#771/raw clientContext) remain and are not widened by voice.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog",
-        "automated_test",
-        "rendered_structural"
-      ],
-      "linked": [
-        "#981",
-        "#771"
-      ],
+      "evidence_class": ["source_read", "production_catalog", "automated_test", "rendered_structural"],
+      "linked": ["#981", "#771"],
       "next_slice": "Independent account/privacy/cost proof may enable provider transport in a separate bounded change; authenticated owner proof remains owed. Separately adopt the Surface Context Handoff Contract to retire raw clientContext.",
-      "sources": [
-        "docs/doctrine/paige-modality-neutrality.md",
-        "docs/doctrine/surface-context-handoff-contract.md",
-        "src/solo/paigeClientScope.ts",
-        "src/components/dashboard/PaigeAIChat.tsx",
-        "src/components/paige/live/PaigeLiveConversation.tsx",
-        "supabase/functions/paige-ai-chat/index.ts",
-        "supabase/functions/paige-live-session/index.ts",
-        "supabase/migrations/20260907155052_paige_live_conversation_control_plane.sql",
-        "docs/delivery/paige-live-conversation-mvp.md"
-      ]
+      "sources": ["docs/doctrine/paige-modality-neutrality.md", "docs/doctrine/surface-context-handoff-contract.md", "src/solo/paigeClientScope.ts", "src/components/dashboard/PaigeAIChat.tsx", "src/components/paige/live/PaigeLiveConversation.tsx", "supabase/functions/paige-ai-chat/index.ts", "supabase/functions/paige-live-session/index.ts", "supabase/migrations/20260907155052_paige_live_conversation_control_plane.sql", "docs/delivery/paige-live-conversation-mvp.md"]
     },
     {
       "id": "command-center.executive",
@@ -459,79 +364,26 @@
       },
       "surface": "Command Center -> Executive — conversational COO review and business evidence",
       "group": "command-center",
-      "tier_scope": [
-        "solo standalone"
-      ],
+      "tier_scope": ["solo standalone"],
       "owner_component": "src/solo/ExecutiveOverview.tsx via src/solo/CommandCenter.tsx",
       "canonical_source": "business.operating_snapshot -> get_business_snapshot -> dispatchBusinessSnapshotChat -> composeBusinessReview; UI src/solo/data/useBusinessReview.ts invokes caller-JWT paige-business-review; list_business_missions, tenant-scoped paige_actions and get_solo_rail_activity remain their canonical owners",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "UI and Chat use the same Fabric composer and INT-340 issuer/resolver. Available Sales receipts/pipeline, Operations and Clients evidence is presented with its source semantics; absent producers and numeric goal KPIs remain explicitly unavailable."
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "The edge resolves caller/workspace on the caller JWT, and the issuer re-proves owner/admin authority. The UI rejects malformed/foreign-scope snapshots and hides prior workspace results; filed-work reads retain an explicit viewed-tenant filter. Integrated authenticated isolation proof remains owed."
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "Existing prompt handoff prefills the sole PAIGE composer without sending. Chat receives only the bounded review projection; E4 semantic record references are presentation metadata, resolved against the current account and re-authorized by the destination."
-        },
-        "authority": {
-          "status": "inherited",
-          "note": "business.operating_snapshot is read/read_only, approval none, workspace-admin seat. Existing consequential-action restrictions, Trust authority and the one Chat approval gate remain unchanged."
-        },
-        "governed_write": {
-          "status": "none",
-          "note": "The page introduces no business mutation. Filed confirm-lane work is prepared, not executed; viewing or navigating creates no approval or ACT receipt."
-        },
-        "verified_outcome": {
-          "status": "proof_owed",
-          "note": "The 2026-10-13 authenticated COO briefing baseline is 9 PASS / 0 FAIL (#2102). It does not prove this integrated Executive candidate, its navigation, persisted links or later-session recovery."
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "resolver",
-          "note": "Recorded activity reuses get_solo_rail_activity and names the recorded actor. Existing Chat settlement persists turn/bundle references; neither a read nor a link is reported as an executed business act."
-        },
-        "mind_eligibility": {
-          "axis_a": "n/a",
-          "axis_b": "NO",
-          "note": "Executive consumes bounded current-turn Fabric evidence; it adds no Mind producer, retention eligibility or authority path. The existing Mind visualization and Trust Compass retain their separate boundaries."
-        },
-        "memory_retention": {
-          "status": "none",
-          "note": "Changing business figures, review text and pending work never automatically become durable Memory. Later review re-reads canonical evidence."
-        }
+        "canonical_source": {"status": "partial", "note": "UI and Chat use the same Fabric composer and INT-340 issuer/resolver. Available Sales receipts/pipeline, Operations and Clients evidence is presented with its source semantics; absent producers and numeric goal KPIs remain explicitly unavailable."},
+        "tenant_scope": {"status": "server_resolved", "note": "The edge resolves caller/workspace on the caller JWT, and the issuer re-proves owner/admin authority. The UI rejects malformed/foreign-scope snapshots and hides prior workspace results; filed-work reads retain an explicit viewed-tenant filter. Integrated authenticated isolation proof remains owed."},
+        "safe_context": {"status": "partial", "note": "Existing prompt handoff prefills the sole PAIGE composer without sending. Chat receives only the bounded review projection; E4 semantic record references are presentation metadata, resolved against the current account and re-authorized by the destination."},
+        "authority": {"status": "inherited", "note": "business.operating_snapshot is read/read_only, approval none, workspace-admin seat. Existing consequential-action restrictions, Trust authority and the one Chat approval gate remain unchanged."},
+        "governed_write": {"status": "none", "note": "The page introduces no business mutation. Filed confirm-lane work is prepared, not executed; viewing or navigating creates no approval or ACT receipt."},
+        "verified_outcome": {"status": "proof_owed", "note": "The 2026-10-13 authenticated COO briefing baseline is 9 PASS / 0 FAIL (#2102). It does not prove this integrated Executive candidate, its navigation, persisted links or later-session recovery."},
+        "rail_evidence": {"producer": "none", "read": "resolver", "note": "Recorded activity reuses get_solo_rail_activity and names the recorded actor. Existing Chat settlement persists turn/bundle references; neither a read nor a link is reported as an executed business act."},
+        "mind_eligibility": {"axis_a": "n/a", "axis_b": "NO", "note": "Executive consumes bounded current-turn Fabric evidence; it adds no Mind producer, retention eligibility or authority path. The existing Mind visualization and Trust Compass retain their separate boundaries."},
+        "memory_retention": {"status": "none", "note": "Changing business figures, review text and pending work never automatically become durable Memory. Later review re-reads canonical evidence."}
       },
       "state": "PARTIAL",
       "state_reason": "E2-6 continuation is an in-flight extension of preserved PR #2128, reusing shipped E2-6a #2123 and E4 reference/navigation contracts. Source bindings are present; independent exact-head review, CI, deployment/readback, responsive interaction evidence and supplemental authenticated customer acceptance remain separate delivery gates. The dated 9/9 Chat baseline is preserved, not promoted to integrated Executive PASS or LIVE. Numeric goal metrics and missing departmental producers remain unavailable; INT-346 effects remain restricted.",
-      "evidence_class": [
-        "source_read"
-      ],
-      "linked": [
-        "#2128",
-        "#2123",
-        "#2102",
-        "ANT-138",
-        "ANT-147"
-      ],
+      "evidence_class": ["source_read"],
+      "linked": ["#2128", "#2123", "#2102", "ANT-138", "ANT-147"],
       "next_slice": "Complete candidate review and exact-head release gates, then prove ordinary authorized SOLO Chat -> same Fabric evidence -> Executive -> owning department, truthful states, persisted references/reload and existing receipts. Final owner product review remains pending; gated consequential actions are not activated by this surface.",
-      "sources": [
-        "docs/delivery/e2-6-continuation-contract.md",
-        "docs/delivery/e2-customer-experience-integration-matrix.md",
-        "src/solo/ExecutiveOverview.tsx",
-        "src/solo/data/useBusinessReview.ts",
-        "src/solo/data/useSoloPendingActions.ts",
-        "src/solo/data/useSoloActivityFeed.ts",
-        "src/solo/data/useBusinessGamePlanMissions.ts",
-        "supabase/functions/paige-business-review/index.ts",
-        "supabase/functions/_shared/paige-context/business-review-chat.ts",
-        "supabase/functions/_shared/paige-context/business-review.ts",
-        "supabase/functions/_shared/paige-turn/record-links.ts",
-        "supabase/functions/_shared/canonical-app-url.ts",
-        "src/lib/links/workspaceLinks.ts"
-      ]
+      "sources": ["docs/delivery/e2-6-continuation-contract.md", "docs/delivery/e2-customer-experience-integration-matrix.md", "src/solo/ExecutiveOverview.tsx", "src/solo/data/useBusinessReview.ts", "src/solo/data/useSoloPendingActions.ts", "src/solo/data/useSoloActivityFeed.ts", "src/solo/data/useBusinessGamePlanMissions.ts", "supabase/functions/paige-business-review/index.ts", "supabase/functions/_shared/paige-context/business-review-chat.ts", "supabase/functions/_shared/paige-context/business-review.ts", "supabase/functions/_shared/paige-turn/record-links.ts", "supabase/functions/_shared/canonical-app-url.ts", "src/lib/links/workspaceLinks.ts"]
     },
     {
       "id": "command-center.business-game-plan",
@@ -546,90 +398,27 @@
       },
       "surface": "Command Center -> Business Game Plan",
       "group": "command-center",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloGamePlanWorkspace.tsx with src/solo/PlanInMotion.tsx (CommandCenter.tsx)",
       "canonical_source": "owner Plan Brief via existing useSoloGamePlan/save_solo_setup_context; Strategic Plays via caller-scoped list_business_missions/get_business_mission and existing create/revise/transition Mission RPCs; canonical verification via the shared Business Mission Tenant Brain helper; LOCAL numeric-target consumer reuses business_mission_targets/immutable versions, owner target RPCs, the existing Analytics issuer/resolver and matching Mission receipt projection; no production or authenticated target claim",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "the Plan Brief retains its existing governed save seam; Plan in Motion reads and mutates canonical Business Mission records rather than campaign briefs or a parallel strategy store"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "each underlying DEFINER lens resolves tenant in-body; the business_mission executors are §10 callable seams"
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "a Business Game Plan card passes only its canonical Mission UUID plus tenant-stamped client-side selection; paige-ai-chat re-resolves the active tenant and full Mission server-side before reasoning, refuses invalid/foreign selection, and preserves source/revision/lifecycle/freshness metadata; Mind remains unavailable"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "business_mission.create/.revise/.transition are chat-canonical, approval-gated (classification mutate, risk high)"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "owner UI calls business-mission-action, which accepts no tenant id and composes the existing shared Mission mutation helper/RPCs; Paige continues through the registered chat-canonical Mission tools and existing authority gate"
-        },
-        "verified_outcome": {
-          "status": "wired",
-          "note": "both owner UI and Paige create/revise/transition paths share a fresh caller-scoped get_business_mission readback that compares canonical id, revision, lifecycle and requested persisted fields; mismatch/failed read writes no Rail and cannot claim success; authenticated runtime proof remains owed"
-        },
-        "rail_evidence": {
-          "producer": "wired",
-          "read": "resolver",
-          "note": "only a matching canonical readback calls the existing service-role record_capability_run writer with mission_create/mission_revise/mission_transition and the Mission request key as the stable run id; authenticated row/render proof remains owed"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "business_mission mindBinding is UNAVAILABLE; the composite plan's Mind lens needs SCR-1/2/3 (#647). The GOVERNED WRITE is chat-bound today; Mind EVIDENCE over it is not"
-        },
-        "memory_retention": {
-          "status": "UNAVAILABLE",
-          "note": "this slice writes no paige_owner_memory or client_memory record and makes no learned/remembered claim"
-        }
+        "canonical_source": {"status": "real", "note": "the Plan Brief retains its existing governed save seam; Plan in Motion reads and mutates canonical Business Mission records rather than campaign briefs or a parallel strategy store"},
+        "tenant_scope": {"status": "server_resolved", "note": "each underlying DEFINER lens resolves tenant in-body; the business_mission executors are §10 callable seams"},
+        "safe_context": {"status": "partial", "note": "a Business Game Plan card passes only its canonical Mission UUID plus tenant-stamped client-side selection; paige-ai-chat re-resolves the active tenant and full Mission server-side before reasoning, refuses invalid/foreign selection, and preserves source/revision/lifecycle/freshness metadata; Mind remains unavailable"},
+        "authority": {"status": "governed", "note": "business_mission.create/.revise/.transition are chat-canonical, approval-gated (classification mutate, risk high)"},
+        "governed_write": {"status": "wired", "note": "owner UI calls business-mission-action, which accepts no tenant id and composes the existing shared Mission mutation helper/RPCs; Paige continues through the registered chat-canonical Mission tools and existing authority gate"},
+        "verified_outcome": {"status": "wired", "note": "both owner UI and Paige create/revise/transition paths share a fresh caller-scoped get_business_mission readback that compares canonical id, revision, lifecycle and requested persisted fields; mismatch/failed read writes no Rail and cannot claim success; authenticated runtime proof remains owed"},
+        "rail_evidence": {"producer": "wired", "read": "resolver", "note": "only a matching canonical readback calls the existing service-role record_capability_run writer with mission_create/mission_revise/mission_transition and the Mission request key as the stable run id; authenticated row/render proof remains owed"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "business_mission mindBinding is UNAVAILABLE; the composite plan's Mind lens needs SCR-1/2/3 (#647). The GOVERNED WRITE is chat-bound today; Mind EVIDENCE over it is not"},
+        "memory_retention": {"status": "UNAVAILABLE", "note": "this slice writes no paige_owner_memory or client_memory record and makes no learned/remembered claim"}
       },
-      "prohibited_context": [
-        "approval titles/summaries/draft bodies",
-        "knowledge titles",
-        "finding interpretation text",
-        "check/run ids",
-        "tenant-authored stage labels"
-      ],
+      "prohibited_context": ["approval titles/summaries/draft bodies", "knowledge titles", "finding interpretation text", "check/run ids", "tenant-authored stage labels"],
       "state": "PARTIAL",
       "state_reason": "The #1016 Mission/Rail foundation remains LIVE. PR #1038 deployed the owner-complete Plan in Motion cards, lifecycle drawer, owner action door, safe selected-plan Paige handoff, and canonical readback-before-Rail ordering. Feature merge cc1e86f5 is confirmed by persisted migration 20260907001343, affected Edge deployments for business-mission-action and paige-ai-chat, db-live and edge-live, and both production build markers. Automated tenant-switch, refusal, lifecycle, readback and Rail-ordering proof is green, and 198 real-component state/theme/viewport checks pass without horizontal overflow; those records are fictional and no authenticated owner/browser flow has been captured. Therefore Business Game Plan and the Solo Tenant Brain remain PARTIAL; authenticated owner, denied-role, workspace-switch, canonical Mission and matching Rail proof remain PROOF OWED; Mind and Memory remain UNAVAILABLE.",
-      "evidence_class": [
-        "production_catalog",
-        "automated_test",
-        "rendered_structural",
-        "source_read"
-      ],
-      "linked": [
-        "#1038",
-        "#1016",
-        "#983",
-        "#647",
-        "#639"
-      ],
+      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "linked": ["#1038", "#1016", "#983", "#647", "#639"],
       "next_slice": "Release/verify the #2167 target foundation and local native measured-target controls with exact-head review/CI, canonical saved target and matching receipt, issued actual/variance, original-key recovery, immutable history on reload and native role/workspace/refusal proof; Executive/Chat/Live target integration remains required. Also drive the existing Mission create/edit/approve/pause/resume/complete/archive and Paige-selected-plan return with canonical revision/Rail verification. Mind/Memory remain separately scoped and unavailable. Full E02 outcome is not accepted.",
-      "sources": [
-        "src/solo/SoloGamePlanWorkspace.tsx",
-        "src/solo/PlanInMotion.tsx",
-        "src/solo/data/useBusinessGamePlanMissions.ts",
-        "supabase/functions/business-mission-action/index.ts",
-        "supabase/functions/_shared/business-mission-tenant-brain.ts",
-        "src/__tests__/business-mission-tenant-brain.test.ts",
-        "supabase/functions/paige-ai-chat/index.ts",
-        "supabase/functions/_shared/paige-spine/domains/business_mission.ts",
-        "supabase/functions/_shared/paige-spine/registry.ts",
-        "supabase/migrations/20260905221203_business_mission_foundation.sql",
-        "supabase/migrations/20270101000000_paige_thread_business_mission_context.sql",
-        "supabase/migrations/20260907001343_archive_completed_business_mission_history.sql",
-        "docs/architecture/paige-mind-integration-matrix.md#command-center (SUPERSEDED for the write — predates #983)",
-        "docs/doctrine/command-center-four-surfaces.md"
-      ]
+      "sources": ["src/solo/SoloGamePlanWorkspace.tsx", "src/solo/PlanInMotion.tsx", "src/solo/data/useBusinessGamePlanMissions.ts", "supabase/functions/business-mission-action/index.ts", "supabase/functions/_shared/business-mission-tenant-brain.ts", "src/__tests__/business-mission-tenant-brain.test.ts", "supabase/functions/paige-ai-chat/index.ts", "supabase/functions/_shared/paige-spine/domains/business_mission.ts", "supabase/functions/_shared/paige-spine/registry.ts", "supabase/migrations/20260905221203_business_mission_foundation.sql", "supabase/migrations/20270101000000_paige_thread_business_mission_context.sql", "supabase/migrations/20260907001343_archive_completed_business_mission_history.sql", "docs/architecture/paige-mind-integration-matrix.md#command-center (SUPERSEDED for the write — predates #983)", "docs/doctrine/command-center-four-surfaces.md"]
     },
     {
       "id": "command-center.systems-check",
@@ -643,66 +432,27 @@
       },
       "surface": "Command Center -> Systems Check",
       "group": "command-center",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloSystemsCheckWorkspace.tsx:278 (CommandCenter.tsx:116)",
       "canonical_source": "systems_check_snapshot(p_scope) RPC via useSystemsCheck; n8n readiness via useN8nSpineReadiness",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "caller-scoped DEFINER lens; tenant derived in-body, unknown scope raises"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "a Mind-shaped lens exists but is not wired into Paige; counts are unbounded"
-        },
-        "authority": {
-          "status": "none",
-          "note": "read-only surface"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "workspace-level; C1"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2 (workspace/platform subject, never per-client) AND C3 (check_count/pass_count/fail_count unbounded); needs SCR-2 + SCR-3"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "caller-scoped DEFINER lens; tenant derived in-body, unknown scope raises"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "eligible", "note": "a Mind-shaped lens exists but is not wired into Paige; counts are unbounded"},
+        "authority": {"status": "none", "note": "read-only surface"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "workspace-level; C1"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 (workspace/platform subject, never per-client) AND C3 (check_count/pass_count/fail_count unbounded); needs SCR-2 + SCR-3"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "finding text",
-        "check/run ids",
-        "registry internals",
-        "scan flavour",
-        "triggering actor"
-      ],
+      "prohibited_context": ["finding text", "check/run ids", "registry internals", "scan flavour", "triggering actor"],
       "state": "UNAVAILABLE",
       "state_reason": "A caller-scoped safe lens exists (systems_check_snapshot) but no Paige binding is built; blocked on SCR-2 (workspace subject) and SCR-3 (enumerate the counts). Isolation of C1/C2 is deliberate, not an oversight.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
       "next_slice": "Phase 4.4: bind Systems Check as read-only Paige context AFTER SCR-2+SCR-3 land. A setup save must not auto-become Memory.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#systems-check",
-        "docs/product/systems-check-operating-readiness-spec.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#systems-check", "docs/product/systems-check-operating-readiness-spec.md"]
     },
     {
       "id": "command-center.mind",
@@ -716,60 +466,27 @@
       },
       "surface": "Command Center -> Mind (the knowledge visualization tab)",
       "group": "command-center",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloMindWorkspace.tsx:83 (CommandCenter.tsx:120)",
       "canonical_source": "tenant_knowledge_docs via useSoloKnowledge",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "this tab is a visualization over hooks; it is NOT the PAIGE Mind contract and must not be read as one"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "knowledge titles are free text (C3); workspace subject (C2)"
-        },
-        "memory_retention": {
-          "status": "n/a",
-          "note": "the governed memory seam (record_/get_/forget_paige_memory) is the Memory home, not this tab"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none", "note": "this tab is a visualization over hooks; it is NOT the PAIGE Mind contract and must not be read as one"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "knowledge titles are free text (C3); workspace subject (C2)"},
+        "memory_retention": {"status": "n/a", "note": "the governed memory seam (record_/get_/forget_paige_memory) is the Memory home, not this tab"}
       },
-      "prohibited_context": [
-        "knowledge titles",
-        "document bodies"
-      ],
+      "prohibited_context": ["knowledge titles", "document bodies"],
       "state": "UNAVAILABLE",
       "state_reason": "Named 'Mind' but it is a knowledge visualization, not a Paige-safe evidence lens. No binding built.",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "None until the CC Change Request (#647) is raised. Do not conflate with the Memory seam.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#command-center",
-        "docs/brain/paige-memory-contract.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#command-center", "docs/brain/paige-memory-contract.md"]
     },
     {
       "id": "command-center.trust-compass",
@@ -783,64 +500,27 @@
       },
       "surface": "Trust Compass (top-level branch; governs Paige autonomy)",
       "group": "command-center",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/compass.tsx:459 (SoloApp.tsx:253)",
       "canonical_source": "useTrustDepartments (module fixtures); get_platform_trust_compass (platform ceiling); activity via get_solo_rail_activity",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "department numbers/sparkline/dial are module-level fixtures with no server seam; the platform ceiling read is real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "for the real reads only"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "Mind may CONSUME truthful availability signals but never becomes a path to RAISING authority"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "AUTHORITATIVE authority is the server action-risk policy + approval gate; the Solo dial is a NON-authoritative UI control that clamps at render only"
-        },
-        "governed_write": {
-          "status": "none",
-          "note": "raising autonomy is a non-Chat act; Mind must never drive it"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "resolver"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2 platform subject; any consumption of the availability signal is itself SCR-shaped"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "partial", "note": "department numbers/sparkline/dial are module-level fixtures with no server seam; the platform ceiling read is real"},
+        "tenant_scope": {"status": "server_resolved", "note": "for the real reads only"},
+        "safe_context": {"status": "none", "note": "Mind may CONSUME truthful availability signals but never becomes a path to RAISING authority"},
+        "authority": {"status": "governed", "note": "AUTHORITATIVE authority is the server action-risk policy + approval gate; the Solo dial is a NON-authoritative UI control that clamps at render only"},
+        "governed_write": {"status": "none", "note": "raising autonomy is a non-Chat act; Mind must never drive it"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "resolver"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 platform subject; any consumption of the availability signal is itself SCR-shaped"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "anything that could be read as authority to change the compass"
-      ],
+      "prohibited_context": ["anything that could be read as authority to change the compass"],
       "state": "PARTIAL",
       "state_reason": "Authority itself is governed server-side (real). But the visible dial/numbers are non-authoritative fixtures with no server seam (UI-REPAIR + SPINE per parity matrix). Phase 4.3: the visible controls must either perform the real governed action or be plainly read-only.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
       "next_slice": "Phase 4.3: reconcile the Trust Compass dial to the real governed autonomy functions, or mark it plainly read-only. No local-only approval/dial behavior.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#trust-compass-inputs",
-        "docs/brain/paige-spine-and-rail-state.md",
-        "docs/doctrine/autonomy-architecture.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#trust-compass-inputs", "docs/brain/paige-spine-and-rail-state.md", "docs/doctrine/autonomy-architecture.md"]
     },
     {
       "id": "campaigns.campaign-brief-planning",
@@ -855,73 +535,27 @@
       },
       "surface": "Dedicated Paige workspace -> Campaigns existing Campaign Brief card",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "supabase/functions/paige-ai-chat/index.ts plus existing Campaigns Campaign Brief card (unchanged)",
       "canonical_source": "public.campaign_briefs through caller-scoped public.get_campaign_briefs; writes through public.configure_campaign_brief; detailed idempotent receipt in public.campaign_brief_command_results",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "existing Campaign Brief planning records and versioned command receipts"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "caller JWT current_user_tenant_id before read/write and re-resolved after mutation; client tenant never grants authority"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "minimum source-labelled brief projection with canonical source, observed freshness, exact version and lifecycle; raw chat is not durable truth"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "existing ordinary-action classification, confirmation gate and valid standing delegated authority are consumed unchanged"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "existing configure_campaign_brief create-brief/update-brief commands only"
-        },
-        "verified_outcome": {
-          "status": "live_unproven_authenticated",
-          "note": "deployed fresh readback must match exact brief id, returned version, lifecycle and all intended fields; unknown or mismatch fails closed"
-        },
-        "rail_evidence": {
-          "producer": "live_after_verification",
-          "read": "workspace Rail projection",
-          "note": "deployed campaign_brief_create/revise capability success is recorded only after canonical match; wording says verified planning record only"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "this slice does not promote Campaign Briefs into Mind"
-        },
-        "memory_retention": {
-          "status": "UNAVAILABLE",
-          "note": "this slice adds no durable Paige Memory path"
-        }
+        "canonical_source": {"status": "real", "note": "existing Campaign Brief planning records and versioned command receipts"},
+        "tenant_scope": {"status": "server_resolved", "note": "caller JWT current_user_tenant_id before read/write and re-resolved after mutation; client tenant never grants authority"},
+        "safe_context": {"status": "wired", "note": "minimum source-labelled brief projection with canonical source, observed freshness, exact version and lifecycle; raw chat is not durable truth"},
+        "authority": {"status": "governed", "note": "existing ordinary-action classification, confirmation gate and valid standing delegated authority are consumed unchanged"},
+        "governed_write": {"status": "wired", "note": "existing configure_campaign_brief create-brief/update-brief commands only"},
+        "verified_outcome": {"status": "live_unproven_authenticated", "note": "deployed fresh readback must match exact brief id, returned version, lifecycle and all intended fields; unknown or mismatch fails closed"},
+        "rail_evidence": {"producer": "live_after_verification", "read": "workspace Rail projection", "note": "deployed campaign_brief_create/revise capability success is recorded only after canonical match; wording says verified planning record only"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "this slice does not promote Campaign Briefs into Mind"},
+        "memory_retention": {"status": "UNAVAILABLE", "note": "this slice adds no durable Paige Memory path"}
       },
-      "prohibited_context": [
-        "raw conversation transcripts as truth",
-        "another tenant's brief",
-        "credentials or provider material",
-        "campaign launch/spend/publication/performance claims"
-      ],
+      "prohibited_context": ["raw conversation transcripts as truth", "another tenant's brief", "credentials or provider material", "campaign launch/spend/publication/performance claims"],
       "state": "PARTIAL",
       "state_reason": "PR #1047 production-deployed the canonical create/revise/readback/receipt/Rail backend chain at referenced production build ae0a16a0, with persisted migration and matching db-live/edge-live/build markers. The owner-visible vertical remains PARTIAL because authenticated owner create/revise, denied-role, workspace-switch, card revision and matching Rail browser proof remain PROOF OWED.",
-      "evidence_class": [
-        "source_read",
-        "automated_test",
-        "production_catalog"
-      ],
-      "linked": [
-        "docs/delivery/solo-tenant-brain-campaign-brief-verified-mvp.md"
-      ],
+      "evidence_class": ["source_read", "automated_test", "production_catalog"],
+      "linked": ["docs/delivery/solo-tenant-brain-campaign-brief-verified-mvp.md"],
       "next_slice": "Capture the existing owner-authenticated production proof in this same record; do not add Mind, Memory, direct Campaign lifecycle, or live-campaign roster behavior.",
-      "sources": [
-        "docs/brain/solo-tenant-brain.md",
-        "docs/brain/paige-spine-and-rail-state.md",
-        "docs/delivery/solo-tenant-brain-campaign-brief-verified-mvp.md"
-      ]
+      "sources": ["docs/brain/solo-tenant-brain.md", "docs/brain/paige-spine-and-rail-state.md", "docs/delivery/solo-tenant-brain-campaign-brief-verified-mvp.md"]
     },
     {
       "id": "campaigns.overview",
@@ -936,55 +570,27 @@
       },
       "surface": "Campaigns -> Overview",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/campaign-desk.tsx (CampaignOverview)",
       "canonical_source": "none — useSoloCampaigns hard-assigns campaigns=[]",
       "chain": {
-        "canonical_source": {
-          "status": "none",
-          "note": "campaigns is hardcoded empty; the existing bridge is not tenant-authorized upstream so Solo deliberately does not call it"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "no source exists; Mind inherits the refusal"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "none", "note": "campaigns is hardcoded empty; the existing bridge is not tenant-authorized upstream so Solo deliberately does not call it"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "no source exists; Mind inherits the refusal"},
+        "memory_retention": {"status": "n/a"}
       },
       "prohibited_context": [],
       "state": "UNAVAILABLE",
       "state_reason": "No tenant-authorized campaign source exists; the surface deliberately shows nothing. Mind must be pointed away from it.",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "None; blocked on the absence of a tenant-authorized campaign source.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#campaigns-overview"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-overview"]
     },
     {
       "id": "campaigns.catalog",
@@ -999,66 +605,27 @@
       },
       "surface": "Campaigns -> Catalog (pages/funnels/forms) & Pipeline configuration",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/catalog-offers.tsx:535 (useCatalogOffers)",
       "canonical_source": "growth_pages, growth_funnels, growth_forms, growth_form_submissions; get_pipeline_workspace (operational read)",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "get_pipeline_routing_evidence is the correct SHAPE of a workspace lens; not wired to Paige"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "publishing writes only paige_audit_log, which has no Solo reader"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2; SCR-1+SCR-2, SCR-3 for anything list-shaped; capture counts are bounded-window, never lifetime"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "eligible", "note": "get_pipeline_routing_evidence is the correct SHAPE of a workspace lens; not wired to Paige"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "publishing writes only paige_audit_log, which has no Solo reader"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2; SCR-1+SCR-2, SCR-3 for anything list-shaped; capture counts are bounded-window, never lifetime"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "page/funnel/form ids, names, slugs",
-        "the public href (leaks tenant slug)",
-        "automation config",
-        "raw dispatch maps"
-      ],
+      "prohibited_context": ["page/funnel/form ids, names, slugs", "the public href (leaks tenant slug)", "automation config", "raw dispatch maps"],
       "state": "UNAVAILABLE",
       "state_reason": "Real canonical source, but no Paige-safe lens is wired; blocked on SCR-1/2 (and SCR-3 for list shapes).",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
-      "linked": [
-        "#760",
-        "PR #312",
-        "PR #706"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
+      "linked": ["#760", "PR #312", "PR #706"],
       "next_slice": "Cite get_pipeline_routing_evidence as the reference workspace-lens shape when SCR-2 is raised.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#campaigns-pipeline-configuration-catalog"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-pipeline-configuration-catalog"]
     },
     {
       "id": "campaigns.sales",
@@ -1073,67 +640,27 @@
       },
       "surface": "Campaigns -> Sales (form captures + agreements workbench)",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/sales-ops.tsx:772",
       "canonical_source": "growth_form_submissions; tenant_client_agreements",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "raw table read; a client subject is reachable in principle (row carries contact_id) but nothing resolves it to account_number"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "dead",
-          "read": "n/a",
-          "note": "the form-submission Rail automation posts surface='form', which the production CHECK has never permitted — zero rows ever per the cited Mind matrix's prod measurement (#787); not re-queried this session"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "Rail producer dead; the agreements source has a strict may-cross/never-cross classification (a count of one is an identity)"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none", "note": "raw table read; a client subject is reachable in principle (row carries contact_id) but nothing resolves it to account_number"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "dead", "read": "n/a", "note": "the form-submission Rail automation posts surface='form', which the production CHECK has never permitted — zero rows ever per the cited Mind matrix's prod measurement (#787); not re-queried this session"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "Rail producer dead; the agreements source has a strict may-cross/never-cross classification (a count of one is an identity)"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "all ids",
-        "source free text",
-        "submission payload",
-        "agreement legal terms/amounts (per sales-agreements-source-contract)"
-      ],
+      "prohibited_context": ["all ids", "source free text", "submission payload", "agreement legal terms/amounts (per sales-agreements-source-contract)"],
       "state": "UNAVAILABLE",
       "state_reason": "The Rail producer is dead (#787). No outcome to project until the Rail owner decides #787. Agreements disclosure boundary is Spine item 4 (#890).",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
-      "linked": [
-        "#787",
-        "#760",
-        "#890"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
+      "linked": ["#787", "#760", "#890"],
       "next_slice": "None until #787 is decided by the Rail owner. Sales usability itself remains PARTIAL (R1 PR #903, auth proof owed).",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#campaigns-sales-form-captures",
-        "docs/delivery/sales-agreements-source-contract.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-sales-form-captures", "docs/delivery/sales-agreements-source-contract.md"]
     },
     {
       "id": "campaigns.pipeline",
@@ -1148,81 +675,27 @@
       },
       "surface": "Campaigns -> Pipeline (deal-stage outcome)",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/PipelineCommandDesk.tsx (growth2.tsx:237)",
       "canonical_source": "get_pipeline_workspace, configure_tenant_pipeline, delete_empty_pipeline; Spine read get_pipeline_spine_evidence",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "the most complete Solo surface"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "get_pipeline_spine_evidence: DEFINER, pinned search_path, requires auth.uid(), current_user_tenant_id(), staff gate, subject by account_number"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "pipeline.deal_stage_evidence registered; injected into client-scoped chat via loadSpineEvidenceForChat; fixed 19-col contract"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "read-only; no chat write tool, no approval path"
-        },
-        "governed_write": {
-          "status": "none",
-          "note": "deal_move_stage writes deals directly with NO Rail row and never consults move_policy (#755)"
-        },
-        "verified_outcome": {
-          "status": "none",
-          "note": "PAIGE cannot see her own move in her own evidence (#755)"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "resolver",
-          "note": "emits only on a direct move of a contact-linked deal via configure_tenant_pipeline_core_identity; production holds ZERO campaigns_pipeline rows"
-        },
-        "mind_eligibility": {
-          "axis_a": "PARTIAL",
-          "axis_b": "NO",
-          "note": "the ONLY implemented Mind lens; unproven at runtime AND the signal it reads has never been produced"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "the most complete Solo surface"},
+        "tenant_scope": {"status": "server_resolved", "note": "get_pipeline_spine_evidence: DEFINER, pinned search_path, requires auth.uid(), current_user_tenant_id(), staff gate, subject by account_number"},
+        "safe_context": {"status": "wired", "note": "pipeline.deal_stage_evidence registered; injected into client-scoped chat via loadSpineEvidenceForChat; fixed 19-col contract"},
+        "authority": {"status": "governed", "note": "read-only; no chat write tool, no approval path"},
+        "governed_write": {"status": "none", "note": "deal_move_stage writes deals directly with NO Rail row and never consults move_policy (#755)"},
+        "verified_outcome": {"status": "none", "note": "PAIGE cannot see her own move in her own evidence (#755)"},
+        "rail_evidence": {"producer": "partial", "read": "resolver", "note": "emits only on a direct move of a contact-linked deal via configure_tenant_pipeline_core_identity; production holds ZERO campaigns_pipeline rows"},
+        "mind_eligibility": {"axis_a": "PARTIAL", "axis_b": "NO", "note": "the ONLY implemented Mind lens; unproven at runtime AND the signal it reads has never been produced"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "deal id",
-        "pipeline/stage ids",
-        "contact/client/user/tenant ids",
-        "deal title",
-        "stage labels",
-        "activity summaries",
-        "task titles",
-        "client name",
-        "provider bodies"
-      ],
+      "prohibited_context": ["deal id", "pipeline/stage ids", "contact/client/user/tenant ids", "deal title", "stage labels", "activity summaries", "task titles", "client name", "provider bodies"],
       "state": "PROOF_OWED",
       "state_reason": "The one implemented Mind capability. Read lens registered + chat-injected + tested. Not LIVE: authenticated two-Solo-tenant drive never run, AND no campaigns_pipeline Rail row has ever been produced, so the lens returns empty for every tenant today. Writes blocked on #755.",
-      "evidence_class": [
-        "production_catalog",
-        "automated_test",
-        "rendered_structural",
-        "source_read"
-      ],
-      "linked": [
-        "#755",
-        "#746",
-        "PR #729",
-        "PR #776"
-      ],
+      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "linked": ["#755", "#746", "PR #729", "PR #776"],
       "next_slice": "Authenticated drive of pipeline.deal_stage_evidence — prerequisite: produce one real campaigns_pipeline Rail row (a move_deal via configure_tenant_pipeline_as_paige on a contact-linked deal landing in the direct-move branch). Do NOT widen factValues before that drive exists.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#pipeline",
-        "docs/doctrine/surface-cards/pipeline.md",
-        "supabase/functions/_shared/paige-spine/domains/pipeline.ts"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#pipeline", "docs/doctrine/surface-cards/pipeline.md", "supabase/functions/_shared/paige-spine/domains/pipeline.ts"]
     },
     {
       "id": "campaigns.social",
@@ -1237,77 +710,27 @@
       },
       "surface": "Campaigns -> Social (accounts a business posts from)",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "Campaigns: src/solo/social-command.tsx (useSocialCommand/social-truth); connections catalogue: src/solo/settings-integrations.tsx + src/solo/social-platform-catalog.ts; platform drawer: src/solo/settings-integrations-social.tsx (useSocialConnections)",
       "canonical_source": "Declared handles remain capture-only through tenants.features->social_handles. Tenant-owned connection/account truth comes only from service-managed paige_social_connections + paige_social_accounts and the tenant-resolved social_connection_status/social_account_status projections. Each new connection is bound to one requested OAuth platform; multiple same-platform identities use separate connections. Provider profile correlations and callback attempts are never a browser source.",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "record-only handles plus tenant-owned Social connection/account status after provider readback; NO provider metrics"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "connection status RPCs resolve the active tenant from the authenticated caller; connection mutations resolve tenant/user/admin in-function and use body tenant only as a stale-workspace refusal"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "social.presence registered; buildSocialPresenceBlock injected per tenant turn; returns the raw handle (a PUBLIC identifier, deliberate)"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "handle capture and connection start/select/disconnect use the shared governed execution decision and exact single-use confirmation claims; only workspace owner/admin may mutate connections"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "connection mutations are tenant-resolved and fail closed on missing configuration, authority, consent, stored confirmation, provider readback, or tenant/account binding"
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "provider profile readback is required before an account becomes connected and no account is selected implicitly. Publishing, scheduling, analytics, comments, messaging, ads, and provider post receipts remain unavailable"
-        },
-        "rail_evidence": {
-          "producer": "record_capability_run for Social connection start/readback/select/disconnect",
-          "read": "owner-visible connection UI plus canonical Rail; authenticated production proof owed"
-        },
-        "mind_eligibility": {
-          "axis_a": "PARTIAL",
-          "axis_b": "NO",
-          "note": "read chat-injected, unit-tested, no authenticated drive. SUPERSEDES the Mind matrix, which recorded Social UNAVAILABLE at its 2026-09-03 grounding — social.presence shipped 2026-09-05"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "record-only handles plus tenant-owned Social connection/account status after provider readback; NO provider metrics"},
+        "tenant_scope": {"status": "server_resolved", "note": "connection status RPCs resolve the active tenant from the authenticated caller; connection mutations resolve tenant/user/admin in-function and use body tenant only as a stale-workspace refusal"},
+        "safe_context": {"status": "wired", "note": "social.presence registered; buildSocialPresenceBlock injected per tenant turn; returns the raw handle (a PUBLIC identifier, deliberate)"},
+        "authority": {"status": "governed", "note": "handle capture and connection start/select/disconnect use the shared governed execution decision and exact single-use confirmation claims; only workspace owner/admin may mutate connections"},
+        "governed_write": {"status": "wired", "note": "connection mutations are tenant-resolved and fail closed on missing configuration, authority, consent, stored confirmation, provider readback, or tenant/account binding"},
+        "verified_outcome": {"status": "partial", "note": "provider profile readback is required before an account becomes connected and no account is selected implicitly. Publishing, scheduling, analytics, comments, messaging, ads, and provider post receipts remain unavailable"},
+        "rail_evidence": {"producer": "record_capability_run for Social connection start/readback/select/disconnect", "read": "owner-visible connection UI plus canonical Rail; authenticated production proof owed"},
+        "mind_eligibility": {"axis_a": "PARTIAL", "axis_b": "NO", "note": "read chat-injected, unit-tested, no authenticated drive. SUPERSEDES the Mind matrix, which recorded Social UNAVAILABLE at its 2026-09-03 grounding — social.presence shipped 2026-09-05"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "any provider metric (none exist)",
-        "provider credentials/tokens"
-      ],
+      "prohibited_context": ["any provider metric (none exist)", "provider credentials/tokens"],
       "state": "PROOF_OWED",
       "state_reason": "Declared-handle presence remains PARTIAL. The tenant-owned platform-first, repeated-platform connection lifecycle, platform OAuth handoff, account discovery/readback, explicit selection, reconnect, disconnect, and connection receipts are implemented and tested but remain PROOF_OWED until deployment and authenticated owner consent. Publishing, scheduling, analytics, comments, messaging, ads, and recommendations remain UNAVAILABLE.",
-      "evidence_class": [
-        "production_catalog",
-        "automated_test",
-        "rendered_structural",
-        "source_read"
-      ],
-      "linked": [
-        "PR #1162",
-        "Social connection delivery candidate"
-      ],
+      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "linked": ["PR #1162", "Social connection delivery candidate"],
       "next_slice": "Deploy and run authenticated owner consent against an authorized Social identity; prove account discovery, explicit selection, account switching, reconnect, disconnect, denial, callback replay rejection, receipt/Rail visibility, and responsive UI. Do not publish.",
-      "sources": [
-        "docs/brain/paige-spine-and-rail-state.md",
-        "supabase/functions/_shared/paige-spine/domains/social.ts",
-        "supabase/functions/paige-social/index.ts",
-        "supabase/functions/paige-social-callback/index.ts",
-        "supabase/migrations/20270122000000_social_foundation_tenant_recovery.sql",
-        "supabase/migrations/20270127000000_social_connection_lifecycle.sql",
-        "docs/evidence/ui-delivery/social-operations-phase-0-truth-containment.md",
-        "docs/delivery/solo-social-command.md",
-        "docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance (SUPERSEDED — predates social.presence)"
-      ]
+      "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/social.ts", "supabase/functions/paige-social/index.ts", "supabase/functions/paige-social-callback/index.ts", "supabase/migrations/20270122000000_social_foundation_tenant_recovery.sql", "supabase/migrations/20270127000000_social_connection_lifecycle.sql", "docs/evidence/ui-delivery/social-operations-phase-0-truth-containment.md", "docs/delivery/solo-social-command.md", "docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance (SUPERSEDED — predates social.presence)"]
     },
     {
       "id": "campaigns.performance",
@@ -1322,59 +745,27 @@
       },
       "surface": "Campaigns -> Performance",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/growth2.tsx:305 (Performance)",
       "canonical_source": "none — a coverage map; the only scalar it touches is a published-artifact count",
       "chain": {
-        "canonical_source": {
-          "status": "none",
-          "note": "not a metrics surface; 3 of 4 cards are static"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "any statement would be inference, which the Mind contract forbids outright"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "none", "note": "not a metrics surface; 3 of 4 cards are static"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "any statement would be inference, which the Mind contract forbids outright"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "any inferred metric"
-      ],
+      "prohibited_context": ["any inferred metric"],
       "state": "UNAVAILABLE",
       "state_reason": "No metrics source exists. Performance is the right model for how Mind should DECLINE, and must not be given data to look otherwise. Mind must be pointed away from it.",
-      "evidence_class": [
-        "source_read"
-      ],
-      "linked": [
-        "ads.department"
-      ],
+      "evidence_class": ["source_read"],
+      "linked": ["ads.department"],
       "next_slice": "None. Mind must be pointed away from this surface.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#campaigns-social-performance"]
     },
     {
       "id": "campaigns.vibe-studio",
@@ -1389,62 +780,27 @@
       },
       "surface": "Campaigns -> Vibe Studio (creative overlay)",
       "group": "campaigns",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/vibe.tsx (SoloApp overlay) -> src/solo/studio/*",
       "canonical_source": "n/a (creative generation overlay)",
       "chain": {
-        "canonical_source": {
-          "status": "none",
-          "note": "creative overlay, not a bound data surface"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "server-resolved tenant, brand, canvas artifact and rolling thread summary reach the design agent; tenant Knowledge and memory are retrieved then dropped at the Studio persona swap (restored in V3)"
-        },
-        "authority": {
-          "status": "partial",
-          "note": "runtime-enforced (V1): the design-studio role capability_scope on the platform paige_subagents row filters the offered tools and refuses off-scope dispatch (outside_studio_scope); the growth save/build/publish tools require the workspace owner/admin (studio_role_ok, matching their RPCs); every write passes the autonomy lane, risk class and Trust Compass ceiling (V0: the Studio lift never exceeds it)"
-        },
-        "governed_write": {
-          "status": "partial",
-          "note": "pages, funnels, forms, images and content write through tenant-scoped RPCs; only forms and paige-media images declare Spine capabilities; the Publish panel calls the publish RPCs directly (one publish door is V2b)"
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "saves report a returned id; publish reports live only on a readback with the live status, publish time and public address (V0); a partial funnel build reports partial or unknown"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "get_solo_rail_activity",
-          "note": "record_capability_run receipts for forms and paige-media images only; pages, funnels, content and the Publish panel are V2a/V2b"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO"
-        },
-        "memory_retention": {
-          "status": "n/a",
-          "note": "creative memory is §26 prompt-forge, a separate contract"
-        }
+        "canonical_source": {"status": "none", "note": "creative overlay, not a bound data surface"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "partial", "note": "server-resolved tenant, brand, canvas artifact and rolling thread summary reach the design agent; tenant Knowledge and memory are retrieved then dropped at the Studio persona swap (restored in V3)"},
+        "authority": {"status": "partial", "note": "runtime-enforced (V1): the design-studio role capability_scope on the platform paige_subagents row filters the offered tools and refuses off-scope dispatch (outside_studio_scope); the growth save/build/publish tools require the workspace owner/admin (studio_role_ok, matching their RPCs); every write passes the autonomy lane, risk class and Trust Compass ceiling (V0: the Studio lift never exceeds it)"},
+        "governed_write": {"status": "partial", "note": "pages, funnels, forms, images and content write through tenant-scoped RPCs; only forms and paige-media images declare Spine capabilities; the Publish panel calls the publish RPCs directly (one publish door is V2b)"},
+        "verified_outcome": {"status": "partial", "note": "saves report a returned id; publish reports live only on a readback with the live status, publish time and public address (V0); a partial funnel build reports partial or unknown"},
+        "rail_evidence": {"producer": "partial", "read": "get_solo_rail_activity", "note": "record_capability_run receipts for forms and paige-media images only; pages, funnels, content and the Publish panel are V2a/V2b"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO"},
+        "memory_retention": {"status": "n/a", "note": "creative memory is §26 prompt-forge, a separate contract"}
       },
       "prohibited_context": [],
       "state": "UNAVAILABLE",
       "state_reason": "Corrected 2026-10-04: the Studio conversational binding is live through paige-ai-chat with a PARTIAL chain (see chain notes; the earlier none statuses were wrong). The bounded creative-role team and an end-to-end Studio Harness run remain UNAVAILABLE for activation.",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "V2a: page/funnel/content/image Spine declarations and receipts; V2b: one publish door; V3: Knowledge restored into the design agent.",
-      "sources": [
-        "docs/PAIGE-CREATIVE-MEMORY.md",
-        "supabase/functions/_shared/studio-scope.ts",
-        "supabase/migrations/20270541000000_design_studio_capability_scope.sql"
-      ]
+      "sources": ["docs/PAIGE-CREATIVE-MEMORY.md", "supabase/functions/_shared/studio-scope.ts", "supabase/migrations/20270541000000_design_studio_capability_scope.sql"]
     },
     {
       "id": "clients.people",
@@ -1459,83 +815,27 @@
       },
       "surface": "Clients -> People (the contact book)",
       "group": "clients",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx:246 (PeopleView)",
       "canonical_source": "clients table (read); upsert_contact (write)",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "clients.account_number is the Spine addressing scheme; client subject satisfies C2"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "list read is a raw table read (not Mind-safe); get_client_rail returns raw title/summary/payload/ids (not Mind-safe)"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "Chat has 17 tools incl. ordinary + high writes"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "Chat path emits (crm_create_contact/crm_update_contact); the owner's OWN UI write (upsert_contact) writes audit_logs only, emits NO Rail event"
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "evidence would reflect PAIGE's edits and not the owner's — a misleading partial history"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "client-scoped resolver",
-          "note": "the owner's own UI write emits nothing"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "the only other client-subject surface; no Mind-safe lens exists and the history is incomplete by construction"
-        },
-        "memory_retention": {
-          "status": "seam_available",
-          "note": "client_memory + record_/get_/forget_paige_memory (Release C)"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved", "note": "clients.account_number is the Spine addressing scheme; client subject satisfies C2"},
+        "safe_context": {"status": "none", "note": "list read is a raw table read (not Mind-safe); get_client_rail returns raw title/summary/payload/ids (not Mind-safe)"},
+        "authority": {"status": "governed", "note": "Chat has 17 tools incl. ordinary + high writes"},
+        "governed_write": {"status": "wired", "note": "Chat path emits (crm_create_contact/crm_update_contact); the owner's OWN UI write (upsert_contact) writes audit_logs only, emits NO Rail event"},
+        "verified_outcome": {"status": "partial", "note": "evidence would reflect PAIGE's edits and not the owner's — a misleading partial history"},
+        "rail_evidence": {"producer": "partial", "read": "client-scoped resolver", "note": "the owner's own UI write emits nothing"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "the only other client-subject surface; no Mind-safe lens exists and the history is incomplete by construction"},
+        "memory_retention": {"status": "seam_available", "note": "client_memory + record_/get_/forget_paige_memory (Release C)"}
       },
-      "prohibited_context": [
-        "every internal id",
-        "names",
-        "email",
-        "phone",
-        "title",
-        "website",
-        "address",
-        "source",
-        "tags",
-        "primary offer",
-        "current_notes",
-        "note/communication bodies"
-      ],
+      "prohibited_context": ["every internal id", "names", "email", "phone", "title", "website", "address", "source", "tags", "primary offer", "current_notes", "note/communication bodies"],
       "state": "UNAVAILABLE",
       "state_reason": "No Mind-safe lens exists, and the only available history (Chat-emitted) silently omits everything the owner did by hand — a capability built on it would be worse than none. Domain owned by #757 which says 'Do not start'.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
-      "linked": [
-        "#757",
-        "#756",
-        "#746",
-        "PR #591",
-        "#779",
-        "#772"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
+      "linked": ["#757", "#756", "#746", "PR #591", "#779", "#772"],
       "next_slice": "Not recommended until the producer gap (owner UI write emits no Rail event) is resolved. Then a single clients.contact_changed capability over the Chat-emitted subset with a constant summary.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#clients",
-        "docs/doctrine/relationship-context-and-governed-memory-contract.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#clients", "docs/doctrine/relationship-context-and-governed-memory-contract.md"]
     },
     {
       "id": "clients.conversations",
@@ -1550,63 +850,27 @@
       },
       "surface": "Clients -> Conversations (canonical inbox)",
       "group": "clients",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx:686 (ConversationsView, lazy canonical inbox)",
       "canonical_source": "conversations/messages (canonical inbox); send-message edge fn",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "message bodies are free text and never cross to Mind"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "send-message is a governed C-2 seam"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "send-message; a Rail producer exists (handle-inbound-sms, send-message)"
-        },
-        "verified_outcome": {
-          "status": "partial"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "client-scoped resolver"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "message bodies are forbidden to Mind outright"
-        },
-        "memory_retention": {
-          "status": "seam_available",
-          "note": "conversation memory = decision/commitment/correction only, NEVER raw transcript"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none", "note": "message bodies are free text and never cross to Mind"},
+        "authority": {"status": "governed", "note": "send-message is a governed C-2 seam"},
+        "governed_write": {"status": "wired", "note": "send-message; a Rail producer exists (handle-inbound-sms, send-message)"},
+        "verified_outcome": {"status": "partial"},
+        "rail_evidence": {"producer": "partial", "read": "client-scoped resolver"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "message bodies are forbidden to Mind outright"},
+        "memory_retention": {"status": "seam_available", "note": "conversation memory = decision/commitment/correction only, NEVER raw transcript"}
       },
-      "prohibited_context": [
-        "message/communication bodies",
-        "raw transcript",
-        "provider payloads"
-      ],
+      "prohibited_context": ["message/communication bodies", "raw transcript", "provider payloads"],
       "state": "UNAVAILABLE",
       "state_reason": "Conversation content is free text forbidden to Mind; no safe conversation-outcome lens is built. Awaiting exact-head release verification.",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "Future Conversations/Transcription evidence ingestion is a named layer in the relationship-context contract; unstarted.",
-      "sources": [
-        "docs/doctrine/relationship-context-and-governed-memory-contract.md",
-        "docs/comms/SEND-MESSAGE-CONTRACT.md"
-      ]
+      "sources": ["docs/doctrine/relationship-context-and-governed-memory-contract.md", "docs/comms/SEND-MESSAGE-CONTRACT.md"]
     },
     {
       "id": "clients.calendar",
@@ -1621,74 +885,27 @@
       },
       "surface": "Clients -> Calendar / Bookings",
       "group": "clients",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-calendar/ (TenantCanonicalCalendarWorkspace; SoloApp.tsx screens.cal)",
       "canonical_source": "internal_bookings (tenant-owned, per-client FK, Rail-emitting via trg_emit_booking_rail); list_team_bookings/admin_set_booking_status/create_internal_booking",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "paige_bookings has NO tenant_id; Cal.com proxy returns raw provider body under a global key — both ineligible"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "no Calendar lens exists; would be net-new"
-        },
-        "authority": {
-          "status": "governed"
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "four booking RPCs; but the emitter hardcodes actor_type='client' while 5 functions incl. PAIGE write bookings (#786 attribution defect)"
-        },
-        "verified_outcome": {
-          "status": "partial"
-        },
-        "rail_evidence": {
-          "producer": "wired",
-          "read": "client-scoped resolver",
-          "note": "emits on every event-eligible booking; but attribution is untruthful (#786)"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "FU-3 (Rail provenance/outcome contract) absent; a second Mind domain is a shared-primitive change (SCR); six-PR collision; #786"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "paige_bookings has NO tenant_id; Cal.com proxy returns raw provider body under a global key — both ineligible"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none", "note": "no Calendar lens exists; would be net-new"},
+        "authority": {"status": "governed"},
+        "governed_write": {"status": "wired", "note": "four booking RPCs; but the emitter hardcodes actor_type='client' while 5 functions incl. PAIGE write bookings (#786 attribution defect)"},
+        "verified_outcome": {"status": "partial"},
+        "rail_evidence": {"producer": "wired", "read": "client-scoped resolver", "note": "emits on every event-eligible booking; but attribution is untruthful (#786)"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "FU-3 (Rail provenance/outcome contract) absent; a second Mind domain is a shared-primitive change (SCR); six-PR collision; #786"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "start_at/status/booking_kind as they sit in the Rail payload",
-        "attendee name/email",
-        "provider bodies",
-        "all internal ids"
-      ],
+      "prohibited_context": ["start_at/status/booking_kind as they sit in the Rail payload", "attendee name/email", "provider bodies", "all internal ids"],
       "state": "UNAVAILABLE",
-      "state_reason": "Booking/Mind binding remains blocked by FU-3 and #786 attribution; those contracts are not repaired by E5. Owner2026-10-13 independently authorizes internal weekly responsibility visibility using the existing owner-only process/receipt projection in Calendar, with no booking, recurrence engine, Mind lens or authority grant. That connected UI is a development candidate; authenticated recurring acceptance remains UNVERIFIED.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
-      "linked": [
-        "#786",
-        "#673",
-        "#648",
-        "#646",
-        "#638",
-        "#644",
-        "#776",
-        "#777"
-      ],
+        "state_reason": "Booking/Mind binding remains blocked by FU-3 and #786 attribution; those contracts are not repaired by E5. Owner2026-10-13 independently authorizes internal weekly responsibility visibility using the existing owner-only process/receipt projection in Calendar, with no booking, recurrence engine, Mind lens or authority grant. That connected UI is a development candidate; authenticated recurring acceptance remains UNVERIFIED.",
+      "evidence_class": ["source_read", "production_catalog"],
+      "linked": ["#786", "#673", "#648", "#646", "#638", "#644", "#776", "#777"],
       "next_slice": "None; blocked. Resolve #786 (attribution) and FU-3 (Calendar Rail contract) first.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#calendar-bookings",
-        "docs/doctrine/calendar-capability-contract.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#calendar-bookings", "docs/doctrine/calendar-capability-contract.md"]
     },
     {
       "id": "clients.portal",
@@ -1703,81 +920,27 @@
       },
       "surface": "Clients -> Portal (Tenant Client Portal MVP through one Harness)",
       "group": "clients",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/OwnerPortalDashboard.tsx (Solo mount in TenantRelationshipsClientsWorkspace)",
       "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "approved owner dashboard replaces the six static capability cards; client, invitation, brand/config and shared-activity projections reuse canonical records; complete customer convergence and authenticated proof remain owed"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "partial",
-          "note": "real client-scoped reads exist, but no complete approved shared-item projection is proven"
-        },
-        "authority": {
-          "status": "partial",
-          "note": "a narrow client tool allowance and action-item RPC exist; complete per-action tenant policy is not proven"
-        },
-        "governed_write": {
-          "status": "partial",
-          "note": "client action responses exist; shared messages, documents, tasks and approve/decline are incomplete"
-        },
-        "verified_outcome": {
-          "status": "partial"
-        },
-        "rail_evidence": {
-          "producer": "partial",
-          "read": "client-scoped resolver",
-          "note": "client-visible activity exists; universal client action receipts are not proven"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "client context is a bounded projection through the shared Harness, never a separate Mind"
-        },
-        "memory_retention": {
-          "status": "partial",
-          "note": "The existing portal-chat path writes session summaries, milestones, preferences and extracted items to client_memory and reads active rows back into prompts. Harness convergence must add confirmed-only eligibility filtering, govern future writes through the shared Memory contract, and remediate legacy rows; this is not a separate permitted portal memory system."
-        }
+        "canonical_source": {"status": "partial", "note": "approved owner dashboard replaces the six static capability cards; client, invitation, brand/config and shared-activity projections reuse canonical records; complete customer convergence and authenticated proof remain owed"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "partial", "note": "real client-scoped reads exist, but no complete approved shared-item projection is proven"},
+        "authority": {"status": "partial", "note": "a narrow client tool allowance and action-item RPC exist; complete per-action tenant policy is not proven"},
+        "governed_write": {"status": "partial", "note": "client action responses exist; shared messages, documents, tasks and approve/decline are incomplete"},
+        "verified_outcome": {"status": "partial"},
+        "rail_evidence": {"producer": "partial", "read": "client-scoped resolver", "note": "client-visible activity exists; universal client action receipts are not proven"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "client context is a bounded projection through the shared Harness, never a separate Mind"},
+        "memory_retention": {"status": "partial", "note": "The existing portal-chat path writes session summaries, milestones, preferences and extracted items to client_memory and reads active rows back into prompts. Harness convergence must add confirmed-only eligibility filtering, govern future writes through the shared Memory contract, and remediate legacy rows; this is not a separate permitted portal memory system."}
       },
-      "prohibited_context": [
-        "tenant full Second Brain",
-        "private Mind or Memory",
-        "Vault or connected-account secrets",
-        "internal team conversations",
-        "other clients",
-        "financial controls",
-        "private strategy",
-        "credentials or private browser content",
-        "hidden prompts or reasoning traces"
-      ],
+      "prohibited_context": ["tenant full Second Brain", "private Mind or Memory", "Vault or connected-account secrets", "internal team conversations", "other clients", "financial controls", "private strategy", "credentials or private browser content", "hidden prompts or reasoning traces"],
       "state": "PARTIAL",
       "state_reason": "Recipient-bound single-use invitation acceptance and safe customer-profile/Welcome records exist. The current entry repair adds real consumer signup/confirmation, receipt reconciliation, private-CRM containment and exact service-agreement content checks; hosted production and actual external-customer proof remain owed. Accepted-access lifecycle, multi-workspace switching, complete canonical conversations/documents/tasks, deliverable decisions, tenant-facing support/booking, governed portal tools and full seven-pillar acceptance remain incomplete. Resource extension source817b21736454c90963aaf44a42978c108bb0e48b reuses native exact-version Knowledge grants/current-source reader and audit receipts. Owner review/share/withdraw/unknown recovery and customer complete-text paging have local test/render proof; actual authenticated grant/read/withdrawal/return remains UNVERIFIED. Existing Chat433 source connects customer role/current program Knowledge/native private history; actual customer exchange/reload remains UNVERIFIED.",
-      "evidence_class": [
-        "source_read"
-      ],
-      "linked": [
-        "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md",
-        "docs/handoff/two-way-client-portal-audit.md"
-      ],
+      "evidence_class": ["source_read"],
+      "linked": ["docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md"],
       "next_slice": "Continue the approved complete Portal: customer-safe entry/readers, relationship lifecycle and multi-business isolation, all seven pillars, governed assistance and authenticated acceptance; preserve active domain ownership.",
-      "sources": [
-        "docs/strategy/client-experience-workstream-2026-07-21.md",
-        "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md",
-        "docs/handoff/two-way-client-portal-audit.md",
-        "src/components/tenant-relationships/OwnerCustomerResources.tsx",
-        "src/pages/app/Resources.tsx",
-        "src/hooks/useOwnerResourceShares.ts",
-        "src/hooks/useCustomerResources.ts",
-        "src/lib/customer-resources.ts",
-        "docs/evidence/ui-delivery/e09-customer-resources.md"
-      ]
+      "sources": ["docs/strategy/client-experience-workstream-2026-07-21.md", "docs/product/customer-portal-owner-trilogy-taxonomy-matrix.md", "docs/handoff/two-way-client-portal-audit.md", "src/components/tenant-relationships/OwnerCustomerResources.tsx", "src/pages/app/Resources.tsx", "src/hooks/useOwnerResourceShares.ts", "src/hooks/useCustomerResources.ts", "src/lib/customer-resources.ts", "docs/evidence/ui-delivery/e09-customer-resources.md"]
     },
     {
       "id": "settings.setup",
@@ -1791,75 +954,27 @@
       },
       "surface": "Settings -> Setup (business context)",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/SoloBusinessContextSetup.tsx (settings.tsx:1774); 6 subtabs per settings-business-context-contract.ts: business-profile, public-presence, people-email, knowledge-bucket, direction, paige-brief",
       "canonical_source": "save_solo_business_context wraps canonical save_solo_setup_context (human UI write); Spine read get_business_context_readiness (business fields only). Other subtabs: knowledge-bucket authors tenant_knowledge_docs (same source as command-center.mind); direction/paige-brief author Paige's operating brief. Experience 01 source candidate reuses the same writer/readback for inline review; see docs/delivery/experience-01-foundation.md.",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "Setup is the source for four business fields (website, business_phone, industry, primary_business_email)"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "get_business_context_readiness: DEFINER, JWT->current_user_tenant_id else service _tenant_id, is_tenant_admin gate, returns status+provenance NOT raw values"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "business_context.readiness registered; buildBusinessContextReadinessBlock injected per tenant turn; derived from business_identity_readiness resolver"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "read-only capability"
-        },
-        "governed_write": {
-          "status": "none",
-          "note": "the read is the Spine entry; Setup save is the owner's UI flow, not a Paige write"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "workspace-level read, no Rail signal"
-        },
-        "mind_eligibility": {
-          "axis_a": "PARTIAL",
-          "axis_b": "NO",
-          "note": "status/provenance only, never a raw value; unit-tested, no authenticated drive; a setup save must NOT auto-become Memory"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "Setup is the source for four business fields (website, business_phone, industry, primary_business_email)"},
+        "tenant_scope": {"status": "server_resolved", "note": "get_business_context_readiness: DEFINER, JWT->current_user_tenant_id else service _tenant_id, is_tenant_admin gate, returns status+provenance NOT raw values"},
+        "safe_context": {"status": "wired", "note": "business_context.readiness registered; buildBusinessContextReadinessBlock injected per tenant turn; derived from business_identity_readiness resolver"},
+        "authority": {"status": "governed", "note": "read-only capability"},
+        "governed_write": {"status": "none", "note": "the read is the Spine entry; Setup save is the owner's UI flow, not a Paige write"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "workspace-level read, no Rail signal"},
+        "mind_eligibility": {"axis_a": "PARTIAL", "axis_b": "NO", "note": "status/provenance only, never a raw value; unit-tested, no authenticated drive; a setup save must NOT auto-become Memory"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "raw values of website/phone/industry/email (status+provenance only)",
-        "hostnames",
-        "sender/reply-to addresses",
-        "brand JSON",
-        "tenant slug/name"
-      ],
+      "prohibited_context": ["raw values of website/phone/industry/email (status+provenance only)", "hostnames", "sender/reply-to addresses", "brand JSON", "tenant slug/name"],
       "state": "PROOF_OWED",
       "state_reason": "business_context.readiness is LIVE on production as a deployed function and chat-injected; not LIVE by this ledger's bar because the owner's own authenticated UI-flow proof is still owed. First WORKSPACE-level Spine capability (a live read, no Rail). SCOPE NOTE: the readiness binding covers the four business fields only; the knowledge-bucket subtab's tenant_knowledge_docs authoring is the owner's UI write (not a Paige governed write, and its Mind lens is scoped-out with command-center.mind), and direction/paige-brief persona authoring is deliberately not a Paige-safe evidence lens.",
-      "evidence_class": [
-        "production_catalog",
-        "automated_test",
-        "rendered_structural",
-        "source_read"
-      ],
-      "linked": [
-        "PR #864",
-        "PR #958"
-      ],
+      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "linked": ["PR #864", "PR #958"],
       "next_slice": "Experience 01 foundation candidate: exact-head review/CI, normal release and protected approved ordinary SOLO customer authenticated interview/review/save/correction/resume proof. Private owner/thread operational projection is separate from this readiness/Mind binding; it grants no Memory or AI write authority. INT-346 remains DRAINING and fresh model proposal staging unavailable. Phase 4.4 owner runtime proof remains owed; keep readiness status+provenance narrow. Knowledge-bucket/persona Mind binding remains unscoped.",
-      "sources": [
-        "docs/brain/paige-spine-and-rail-state.md",
-        "supabase/functions/_shared/paige-spine/domains/business_context.ts",
-        "docs/doctrine/surface-cards/setup.md",
-        "docs/delivery/canonical-readiness-contract.md"
-      ]
+      "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/business_context.ts", "docs/doctrine/surface-cards/setup.md", "docs/delivery/canonical-readiness-contract.md"]
     },
     {
       "id": "settings.public-presence",
@@ -1873,74 +988,27 @@
       },
       "surface": "Settings -> Setup -> Public Presence",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/settings-public-presence.tsx mounted by src/solo/SoloBusinessContextSetup.tsx",
       "canonical_source": "Solo Business Profile via get_solo_business_context, narrowed by get_public_presence_paige_context; Public Presence does not create a second identity store",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "Reads Business Profile fields with per-field provenance; edits return to Business Profile"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "JWT-bound get_public_presence_paige_context accepts no tenant argument; paige-ai-chat rejects a projection whose tenant does not match its server-resolved tenant"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "Dedicated Paige workspace sends only step/action pointer; server emits allowlisted owner-confirmed facts, completed/missing steps, freshness, and explicit unavailable provider/authority states"
-        },
-        "authority": {
-          "status": "none",
-          "note": "No local permission toggle or standing provider authority is claimed"
-        },
-        "governed_write": {
-          "status": "none",
-          "note": "All external actions are rendered unavailable"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "No external action occurs in this slice"
-        },
-        "mind_eligibility": {
-          "axis_a": "NO",
-          "axis_b": "NO",
-          "note": "Safe chat context is turn-local; no Public Presence fact or provider state is promoted to Mind"
-        },
-        "memory_retention": {
-          "status": "none"
-        }
+        "canonical_source": {"status": "real", "note": "Reads Business Profile fields with per-field provenance; edits return to Business Profile"},
+        "tenant_scope": {"status": "server_resolved", "note": "JWT-bound get_public_presence_paige_context accepts no tenant argument; paige-ai-chat rejects a projection whose tenant does not match its server-resolved tenant"},
+        "safe_context": {"status": "wired", "note": "Dedicated Paige workspace sends only step/action pointer; server emits allowlisted owner-confirmed facts, completed/missing steps, freshness, and explicit unavailable provider/authority states"},
+        "authority": {"status": "none", "note": "No local permission toggle or standing provider authority is claimed"},
+        "governed_write": {"status": "none", "note": "All external actions are rendered unavailable"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "No external action occurs in this slice"},
+        "mind_eligibility": {"axis_a": "NO", "axis_b": "NO", "note": "Safe chat context is turn-local; no Public Presence fact or provider state is promoted to Mind"},
+        "memory_retention": {"status": "none"}
       },
-      "prohibited_context": [
-        "Vault secrets",
-        "provider tokens",
-        "raw billing data",
-        "private documents",
-        "unreviewed uploads",
-        "unconfirmed public facts"
-      ],
+      "prohibited_context": ["Vault secrets", "provider tokens", "raw billing data", "private documents", "unreviewed uploads", "unconfirmed public facts"],
       "state": "PROOF_OWED",
       "state_reason": "The safe Paige read handoff is implemented and fail-closed but requires CI real-Deno, migration/edge deployment, and authenticated owner proof. Google Search Console, Google Business Profile, all later providers, provider authority, external writes, verified outcomes, and Rail remain UNAVAILABLE. Registry or UI presence is not tenant connection evidence. The legacy business_public_presence path remains excluded.",
-      "evidence_class": [
-        "automated_test",
-        "source_read",
-        "rendered_structural"
-      ],
+      "evidence_class": ["automated_test", "source_read", "rendered_structural"],
       "linked": [],
       "next_slice": "Platform provider owner supplies Google project/OAuth setup and tenant authorization; then ship source-backed read-only Google Search Console evidence first. Google Business Profile follows only with provider-specific consent and receipt/readback. Integrations retains connection setup.",
-      "sources": [
-        "docs/PAIGE-MASTER-PROJECT-REFERENCE.md",
-        "docs/brain/decision-log.md",
-        "docs/doctrine/surface-cards/setup.md",
-        "docs/doctrine/autonomy-architecture.md",
-        "docs/integration-registry/integration-capability-registry.json",
-        "supabase/functions/_shared/paige-spine/domains/publicPresenceChatContext.ts"
-      ]
+      "sources": ["docs/PAIGE-MASTER-PROJECT-REFERENCE.md", "docs/brain/decision-log.md", "docs/doctrine/surface-cards/setup.md", "docs/doctrine/autonomy-architecture.md", "docs/integration-registry/integration-capability-registry.json", "supabase/functions/_shared/paige-spine/domains/publicPresenceChatContext.ts"]
     },
     {
       "id": "settings.team",
@@ -1955,68 +1023,27 @@
       },
       "surface": "Settings -> Team / Roles & Access",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/team.tsx:309 (TeamHub); settings.tsx:1774 TeamView",
       "canonical_source": "tenant_members; team-invite edge fn; Spine read get_team_authority_readiness",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "get_team_authority_readiness: DEFINER, JWT-only, NO tenant arg, NO service_role grant"
-        },
-        "safe_context": {
-          "status": "wired",
-          "note": "team.authority registered; buildTeamAuthorityBlock injected; exactly two facts about the CALLER (viewer_permission, viewer_is_legal_owner)"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "PAIGE can act on the team (LIVE chatBinding, capability PARTIAL); 4 writes incl. team-invite"
-        },
-        "governed_write": {
-          "status": "wired"
-        },
-        "verified_outcome": {
-          "status": "partial"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "Team writes reach paige_audit_log which has no Solo reader; a teammate is not a client so C1 forbids a Rail row"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2 + C3 (member identity is free text); shape-UNAVAILABLE; open owner decision on whether member identity may ever cross"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved", "note": "get_team_authority_readiness: DEFINER, JWT-only, NO tenant arg, NO service_role grant"},
+        "safe_context": {"status": "wired", "note": "team.authority registered; buildTeamAuthorityBlock injected; exactly two facts about the CALLER (viewer_permission, viewer_is_legal_owner)"},
+        "authority": {"status": "governed", "note": "PAIGE can act on the team (LIVE chatBinding, capability PARTIAL); 4 writes incl. team-invite"},
+        "governed_write": {"status": "wired"},
+        "verified_outcome": {"status": "partial"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "Team writes reach paige_audit_log which has no Solo reader; a teammate is not a client so C1 forbids a Rail row"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 + C3 (member identity is free text); shape-UNAVAILABLE; open owner decision on whether member identity may ever cross"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "member ids/emails/display names/job titles/responsibilities",
-        "invite ids and token material"
-      ],
+      "prohibited_context": ["member ids/emails/display names/job titles/responsibilities", "invite ids and token material"],
       "state": "PROOF_OWED",
       "state_reason": "team.authority read wired + injected; PAIGE can act on the team (capability PARTIAL). Not LIVE: authenticated runtime proof owed. Member identity crossing into Mind is an unresolved owner decision Mind must not pre-empt.",
-      "evidence_class": [
-        "production_catalog",
-        "automated_test",
-        "rendered_structural",
-        "source_read"
-      ],
-      "linked": [
-        "PR #876"
-      ],
+      "evidence_class": ["production_catalog", "automated_test", "rendered_structural", "source_read"],
+      "linked": ["PR #876"],
       "next_slice": "Phase 5: record-aware, permission-aware context for legitimate owner/admin work. No role escalation, no provider secrets.",
-      "sources": [
-        "docs/brain/paige-spine-and-rail-state.md",
-        "supabase/functions/_shared/paige-spine/domains/team.ts",
-        "docs/doctrine/surface-cards/team.md"
-      ]
+      "sources": ["docs/brain/paige-spine-and-rail-state.md", "supabase/functions/_shared/paige-spine/domains/team.ts", "docs/doctrine/surface-cards/team.md"]
     },
     {
       "id": "settings.connections",
@@ -2031,69 +1058,28 @@
       },
       "surface": "Settings -> Connections (calendar providers, A2P, comms)",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/connections-calendars.tsx (settings.tsx:1774 ConnectionsView)",
       "canonical_source": "useSoloComms, useSoloA2P, useCalendarConnections (direct table reads)",
       "chain": {
-        "canonical_source": {
-          "status": "real"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "tenant for calendars, per-USER for providers"
-        },
-        "safe_context": {
-          "status": "isolated",
-          "note": "safe subset hypothetically eligible (calendar counts, has_connected_provider, send-capability with unknown!=false) but nothing wired; provider state is a per-person fact"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2; Mind must NEVER assert a workspace-level 'Google is connected' (per-person fact)"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real"},
+        "tenant_scope": {"status": "server_resolved", "note": "tenant for calendars, per-USER for providers"},
+        "safe_context": {"status": "isolated", "note": "safe subset hypothetically eligible (calendar counts, has_connected_provider, send-capability with unknown!=false) but nothing wired; provider state is a per-person fact"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2; Mind must NEVER assert a workspace-level 'Google is connected' (per-person fact)"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "every credential and credential-derived value",
-        "provider sync state, endpoints, account/login identifiers",
-        "provider emails",
-        "booking page slug",
-        "availability JSON",
-        "brand JSON",
-        "all ids",
-        "raw provider/Postgres error strings"
-      ],
+      "prohibited_context": ["every credential and credential-derived value", "provider sync state, endpoints, account/login identifiers", "provider emails", "booking page slug", "availability JSON", "brand JSON", "all ids", "raw provider/Postgres error strings"],
       "isolation_note": "Provider credentials and per-person connection state are INTENTIONALLY_ISOLATED; a private credential-access finding (#788) is tracked separately and not restated here.",
       "state": "UNAVAILABLE",
       "state_reason": "No Paige-safe lens built; the safe subset is eligible but unwired, and the sensitive core (credentials, per-person provider state) is intentionally isolated. A private finding (#788) is owned by Connections/security.",
-      "evidence_class": [
-        "source_read"
-      ],
-      "linked": [
-        "#788"
-      ],
+      "evidence_class": ["source_read"],
+      "linked": ["#788"],
       "next_slice": "Phase 5: record-aware, permission-aware context. Never workspace-level 'Google is connected'; never provider secrets.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#connections",
-        "docs/doctrine/connections-rail-contract.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#connections", "docs/doctrine/connections-rail-contract.md"]
     },
     {
       "id": "settings.integrations",
@@ -2192,69 +1178,28 @@
       },
       "surface": "Settings -> Vault",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/vault.tsx + src/solo/vault/ (vault-contract.ts, useBusinessVault.ts); settings.tsx:1774 VaultView",
       "canonical_source": "Business Vault Phase 2 owner/admin foundation (PR #986, deployed PARTIAL at 809faec3): business_vault_* tables/migrations, vault-contract.ts + useBusinessVault.ts, edge fns business-vault-upload/download/reconcile. Binary PDF/image intake is quarantined and UNAVAILABLE (no approved OCR/DLP adapter or proven byte-copy worker).",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "Vault Phase 2 owner/admin foundation deployed PARTIAL (#986); library metadata, contracts, obligations, archive/fact-revocation lifecycle. Binary intake quarantined"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "server functions resolve the active workspace + current role; client-supplied tenant/authority never trusted"
-        },
-        "safe_context": {
-          "status": "isolated",
-          "note": "raw Vault documents/credentials are forbidden to Mind outright; no uninspected file can become Paige/Mind context, a shared artifact, a task, or a Rail outcome"
-        },
-        "authority": {
-          "status": "none",
-          "note": "no Paige write path into the Vault; owner/admin UI only"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "quarantined intake by design; only REVIEWED, ELIGIBLE facts may ever cross, after an OCR/DLP-inspected promotion"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "Vault Phase 2 owner/admin foundation deployed PARTIAL (#986); library metadata, contracts, obligations, archive/fact-revocation lifecycle. Binary intake quarantined"},
+        "tenant_scope": {"status": "server_resolved", "note": "server functions resolve the active workspace + current role; client-supplied tenant/authority never trusted"},
+        "safe_context": {"status": "isolated", "note": "raw Vault documents/credentials are forbidden to Mind outright; no uninspected file can become Paige/Mind context, a shared artifact, a task, or a Rail outcome"},
+        "authority": {"status": "none", "note": "no Paige write path into the Vault; owner/admin UI only"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "quarantined intake by design; only REVIEWED, ELIGIBLE facts may ever cross, after an OCR/DLP-inspected promotion"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "raw Vault documents",
-        "credentials",
-        "payment details",
-        "private provider payloads",
-        "uninspected/quarantined binary intake"
-      ],
+      "prohibited_context": ["raw Vault documents", "credentials", "payment details", "private provider payloads", "uninspected/quarantined binary intake"],
       "isolation_note": "The Vault's contents are INTENTIONALLY_ISOLATED. Phase 2 shipped the secure owner/admin foundation + private quarantine (#986), but no uninspected file may become a normal Vault record, download, Paige/Mind context, shared artifact, task, or Rail outcome. Only after a proven OCR/DLP-inspected promotion may Vault contribute REVIEWED, ELIGIBLE facts — never raw private documents.",
       "state": "INTENTIONALLY_ISOLATED",
       "state_reason": "Raw private documents, credentials and payment details must never enter Paige/Mind/Memory. Vault Phase 2 shipped the owner/admin foundation + quarantined intake (#986, deployed PARTIAL, production proof owed); the isolation posture is unchanged and binary intake stays UNAVAILABLE until an approved OCR/DLP adapter exists. Only reviewed eligible facts may cross (Phase 7).",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
-      "linked": [
-        "#986"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
+      "linked": ["#986"],
       "next_slice": "Phase 7: with the Phase 2 quarantine foundation in place, the remaining step is an approved OCR/DLP-inspected promotion so Vault contributes only reviewed, eligible facts. Never expose raw private documents.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md",
-        "docs/evidence/ui-delivery/business-vault-phase2-foundation.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md", "docs/evidence/ui-delivery/business-vault-phase2-foundation.md"]
     },
     {
       "id": "public.solo-beta-acquisition",
@@ -2269,77 +1214,27 @@
       },
       "surface": "Public website -> Solo Beta identity, checkout, verification, and current Solo handoff",
       "group": "public-acquisition",
-      "tier_scope": [
-        "anonymous",
-        "solo"
-      ],
+      "tier_scope": ["anonymous", "solo"],
       "owner_component": "src/pages/PaigeHome.tsx; src/pages/Pricing.tsx; src/pages/Auth.tsx; src/pages/Onboarding.tsx; src/pages/Welcome.tsx",
       "canonical_source": "solo-beta-enrollment-status plus dedicated fixed-offer checkout/webhook and atomic fulfillment receipt",
       "chain": {
-        "canonical_source": {
-          "status": "wired",
-          "note": "The canonical live Product/Price and receipt-backed status are production-bound; Checkout delegates payment-method eligibility to Stripe without browser/provider overrides, and provider catalog, webhook, database, Edge, and fail-closed readback are verified."
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "Tenant, account number, owner membership, subscription, and destination are service-resolved; route/query/local storage never confer authority."
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "Customer responses contain bounded state, message, reference id, retryability, and a strict current-Solo destination only when verified."
-        },
-        "authority": {
-          "status": "governed",
-          "note": "Ordinary identity/setup intent plus signed Stripe evidence; fixed offer, fencing, immutable event identity, and atomic readback."
-        },
-        "governed_write": {
-          "status": "wired",
-          "note": "Service-only standalone provisioning, subscription, receipt, evidence, and post-fulfillment welcome queue transaction; no Paige or browser callable action."
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "Database, provider configuration, deployment, fail-closed API, dynamic-payment contract, and receipt-derived welcome lifecycle are verified; first authorized live Checkout/fulfillment/current-shell, customer-specific payment-method presentation, and actual welcome delivery are owed."
-        },
-        "rail_evidence": {
-          "producer": "wired",
-          "read": "none",
-          "note": "One bounded usage evidence row per fulfillment/lifecycle event plus welcome delivery outcome; no customer/provider payload."
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "Enrollment and billing internals do not become Mind facts."
-        },
-        "memory_retention": {
-          "status": "n/a",
-          "note": "No signup, checkout, or provider payload enters Paige Memory."
-        }
+        "canonical_source": {"status": "wired", "note": "The canonical live Product/Price and receipt-backed status are production-bound; Checkout delegates payment-method eligibility to Stripe without browser/provider overrides, and provider catalog, webhook, database, Edge, and fail-closed readback are verified."},
+        "tenant_scope": {"status": "server_resolved", "note": "Tenant, account number, owner membership, subscription, and destination are service-resolved; route/query/local storage never confer authority."},
+        "safe_context": {"status": "eligible", "note": "Customer responses contain bounded state, message, reference id, retryability, and a strict current-Solo destination only when verified."},
+        "authority": {"status": "governed", "note": "Ordinary identity/setup intent plus signed Stripe evidence; fixed offer, fencing, immutable event identity, and atomic readback."},
+        "governed_write": {"status": "wired", "note": "Service-only standalone provisioning, subscription, receipt, evidence, and post-fulfillment welcome queue transaction; no Paige or browser callable action."},
+        "verified_outcome": {"status": "partial", "note": "Database, provider configuration, deployment, fail-closed API, dynamic-payment contract, and receipt-derived welcome lifecycle are verified; first authorized live Checkout/fulfillment/current-shell, customer-specific payment-method presentation, and actual welcome delivery are owed."},
+        "rail_evidence": {"producer": "wired", "read": "none", "note": "One bounded usage evidence row per fulfillment/lifecycle event plus welcome delivery outcome; no customer/provider payload."},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "Enrollment and billing internals do not become Mind facts."},
+        "memory_retention": {"status": "n/a", "note": "No signup, checkout, or provider payload enters Paige Memory."}
       },
-      "prohibited_context": [
-        "Stripe secrets or raw payloads",
-        "client-selected tenant or account type",
-        "return-URL payment assertions",
-        "unsupported account enrollment",
-        "raw legal/provider errors"
-      ],
+      "prohibited_context": ["Stripe secrets or raw payloads", "client-selected tenant or account type", "return-URL payment assertions", "unsupported account enrollment", "raw legal/provider errors"],
       "state": "PARTIAL",
       "state_reason": "Production-bound Solo-only flow: live provider offer, Stripe-eligible Checkout contract, database, Edge, Vercel, fail-closed API, and verified welcome lifecycle are deployed. First authorized customer Checkout/fulfillment/current-shell, actual method presentation and welcome delivery, lifecycle proof, and Billing Portal configuration remain owed.",
-      "evidence_class": [
-        "source_read",
-        "automated_test",
-        "rendered_structural",
-        "production_catalog"
-      ],
-      "linked": [
-        "PR #899 intent carried forward",
-        "PR #724 destination contract carried forward"
-      ],
+      "evidence_class": ["source_read", "automated_test", "rendered_structural", "production_catalog"],
+      "linked": ["PR #899 intent carried forward", "PR #724 destination contract carried forward"],
       "next_slice": "Observe the first authorized live enrollment and prove Stripe-selected method presentation, signed fulfillment, exactly-one tenant/membership/entitlement/receipt, actual welcome delivery, current Solo entry, lifecycle recovery, and the conservative Stripe Billing Portal configuration.",
-      "sources": [
-        "docs/evidence/ui-delivery/solo-beta-acquisition.md",
-        "docs/doctrine/tier-matrix.md",
-        "docs/handoff/platform-billing-spine-source-contract.md"
-      ]
+      "sources": ["docs/evidence/ui-delivery/solo-beta-acquisition.md", "docs/doctrine/tier-matrix.md", "docs/handoff/platform-billing-spine-source-contract.md"]
     },
     {
       "id": "platform.promotional-solo-access",
@@ -2354,78 +1249,27 @@
       },
       "surface": "Platform service grant -> existing Solo Billing and account switching",
       "group": "platform-governance",
-      "tier_scope": [
-        "platform",
-        "solo"
-      ],
+      "tier_scope": ["platform", "solo"],
       "owner_component": "public.platform_grant_promotional_solo; existing Solo Billing and account switcher",
       "canonical_source": "tenant_revenue_classification plus platform_subscriptions, tenant_members, profiles, platform_usage_events, and paige_audit_log",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "Production grant and retry readback verified exactly one canonical workspace/subscription/receipt set."
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "Recipient identity and existing topology are read server-side; no route, browser value, or active-tenant hint grants authority."
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "Customer surfaces receive only the resulting promotional status and authorized workspace list."
-        },
-        "authority": {
-          "status": "governed",
-          "note": "service_role execution plus separately proven platform-owner actor; authenticated and anon EXECUTE are revoked."
-        },
-        "governed_write": {
-          "status": "live",
-          "note": "One atomic, idempotent transaction; paid/provider conflicts and ambiguous topology fail closed."
-        },
-        "verified_outcome": {
-          "status": "partial",
-          "note": "Production migration, grant, canonical readback, membership preservation, and idempotent retry are verified; authenticated browser sign-in/Billing/account-switch proof is owed."
-        },
-        "rail_evidence": {
-          "producer": "live",
-          "read": "canonical",
-          "note": "Exactly one bounded promotional_solo_granted usage event and platform.promotional_solo.granted audit row."
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO",
-          "note": "Billing/grant internals do not become Mind facts."
-        },
-        "memory_retention": {
-          "status": "n/a",
-          "note": "No operator identity, billing details, or grant payload enters Paige Memory."
-        }
+        "canonical_source": {"status": "real", "note": "Production grant and retry readback verified exactly one canonical workspace/subscription/receipt set."},
+        "tenant_scope": {"status": "server_resolved", "note": "Recipient identity and existing topology are read server-side; no route, browser value, or active-tenant hint grants authority."},
+        "safe_context": {"status": "eligible", "note": "Customer surfaces receive only the resulting promotional status and authorized workspace list."},
+        "authority": {"status": "governed", "note": "service_role execution plus separately proven platform-owner actor; authenticated and anon EXECUTE are revoked."},
+        "governed_write": {"status": "live", "note": "One atomic, idempotent transaction; paid/provider conflicts and ambiguous topology fail closed."},
+        "verified_outcome": {"status": "partial", "note": "Production migration, grant, canonical readback, membership preservation, and idempotent retry are verified; authenticated browser sign-in/Billing/account-switch proof is owed."},
+        "rail_evidence": {"producer": "live", "read": "canonical", "note": "Exactly one bounded promotional_solo_granted usage event and platform.promotional_solo.granted audit row."},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO", "note": "Billing/grant internals do not become Mind facts."},
+        "memory_retention": {"status": "n/a", "note": "No operator identity, billing details, or grant payload enters Paige Memory."}
       },
-      "prohibited_context": [
-        "operator identifiers",
-        "provider secrets or IDs",
-        "client-selected tenant",
-        "implicit promotional classification",
-        "paid enrollment mutation"
-      ],
+      "prohibited_context": ["operator identifiers", "provider secrets or IDs", "client-selected tenant", "implicit promotional classification", "paid enrollment mutation"],
       "state": "PARTIAL",
       "state_reason": "Production service grant is live and one owner-authorized identity is verified exactly once with metering/audit evidence and no Stripe binding. Authenticated browser sign-in, Billing rendering, and account switching remain proof owed.",
-      "evidence_class": [
-        "source_read",
-        "automated_test",
-        "production_catalog",
-        "production_data"
-      ],
-      "linked": [
-        "PR #1202",
-        "PR #1210",
-        "deploy run 34743013452"
-      ],
+      "evidence_class": ["source_read", "automated_test", "production_catalog", "production_data"],
+      "linked": ["PR #1202", "PR #1210", "deploy run 34743013452"],
       "next_slice": "Exercise the granted identity through authenticated sign-in, truthful Billing rendering, current Solo destination, and account switching.",
-      "sources": [
-        "docs/evidence/ui-delivery/promotional-solo-grandfathering.md",
-        "docs/evidence/ui-delivery/promotional-solo-deployment-recovery.md",
-        "docs/doctrine/tier-matrix.md"
-      ]
+      "sources": ["docs/evidence/ui-delivery/promotional-solo-grandfathering.md", "docs/evidence/ui-delivery/promotional-solo-deployment-recovery.md", "docs/doctrine/tier-matrix.md"]
     },
     {
       "id": "settings.billing",
@@ -2440,67 +1284,28 @@
       },
       "surface": "Settings -> Billing",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/settings-billing.tsx (settings.tsx:1774 SoloBillingView)",
       "canonical_source": "read-only useWorkspaceBilling*/useSoloComms; Spine source contract get_billing_spine_evidence",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "no production write of any kind from the Solo Billing screen (presentation only)"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "a safe billing-status Spine read (get_billing_spine_evidence) has a shipped source contract but is NOT injected into Paige chat context"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "resolver",
-          "note": "billing-notice events have a defined vocabulary but no sender exists yet"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "no production write of any kind from the Solo Billing screen (presentation only)"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "eligible", "note": "a safe billing-status Spine read (get_billing_spine_evidence) has a shipped source contract but is NOT injected into Paige chat context"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "resolver", "note": "billing-notice events have a defined vocabulary but no sender exists yet"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "payment method details",
-        "Stripe/provider secrets",
-        "invoice line internals",
-        "the finance unit in the default plan JSON"
-      ],
+      "prohibited_context": ["payment method details", "Stripe/provider secrets", "invoice line internals", "the finance unit in the default plan JSON"],
       "isolation_note": "Payment-method and provider secrets are INTENTIONALLY_ISOLATED and are never merchant-of-record for tenant->client money (§38). Only safe billing-STATUS fields (per the source contract) are eligible.",
       "state": "PARTIAL",
       "state_reason": "A safe billing-status Spine source contract is shipped (get_billing_spine_evidence) but not wired into Paige context; payment/provider secrets are intentionally isolated. Billing screen is presentation-only (no production write).",
-      "evidence_class": [
-        "production_catalog",
-        "source_read"
-      ],
-      "linked": [
-        "PR #816",
-        "PR #870"
-      ],
+      "evidence_class": ["production_catalog", "source_read"],
+      "linked": ["PR #816", "PR #870"],
       "next_slice": "Phase 8: bind ONLY safe billing status. Billing/provider secrets stay isolated.",
-      "sources": [
-        "docs/handoff/platform-billing-spine-source-contract.md",
-        "docs/delivery/billing-foundation-a-design.md"
-      ]
+      "sources": ["docs/handoff/platform-billing-spine-source-contract.md", "docs/delivery/billing-foundation-a-design.md"]
     },
     {
       "id": "settings.security-data",
@@ -2514,65 +1319,28 @@
       },
       "surface": "Settings -> Security & data",
       "group": "settings",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "settings.tsx:1774 SecurityView (3 static prose cards)",
       "canonical_source": "none — static (UI-REPAIR)",
       "chain": {
-        "canonical_source": {
-          "status": "none"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "isolated",
-          "note": "autonomy posture may be described but never a path to changing it"
-        },
-        "authority": {
-          "status": "none",
-          "note": "raising PAIGE's own authority is a non-Chat act"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "Mind may describe the current posture but must never become a path toward changing it"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "none"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "isolated", "note": "autonomy posture may be described but never a path to changing it"},
+        "authority": {"status": "none", "note": "raising PAIGE's own authority is a non-Chat act"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "Mind may describe the current posture but must never become a path toward changing it"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "hostnames",
-        "sender/reply-to addresses",
-        "email domain",
-        "tenant slug/name",
-        "brand JSON",
-        "encrypted automation webhook URL"
-      ],
+      "prohibited_context": ["hostnames", "sender/reply-to addresses", "email domain", "tenant slug/name", "brand JSON", "encrypted automation webhook URL"],
       "isolation_note": "Autonomy/authority controls are INTENTIONALLY_ISOLATED from any Paige write path — raising PAIGE's authority is a non-Chat act (§67/§68).",
       "state": "INTENTIONALLY_ISOLATED",
       "state_reason": "The dominant binding posture is deliberate isolation: Mind may describe posture, never change it; sender addresses/hostnames are tenant-identifying and forbidden. Cards are static (UI-REPAIR).",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "None as a write binding. Autonomy stays non-Chat (§67/§68).",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#settings",
-        "docs/doctrine/autonomy-architecture.md"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#settings", "docs/doctrine/autonomy-architecture.md"]
     },
     {
       "id": "analytics",
@@ -2586,70 +1354,27 @@
       },
       "surface": "Settings → Analytics (Overview, Business Health, Operations, Team, AI & Usage, Data Health)",
       "group": "analytics",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/settings-analytics.tsx + src/solo/data/useSettingsAnalytics.ts",
       "canonical_source": "Shared issue_analytics_evidence_bundle seven-argument overload + resolve_analytics_evidence_reference(text), migration06 dispatcher and migration05 private Settings producer; 22 keys documented in docs/delivery/int340-metric-coverage.md",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "22 Settings keys have explicit producer semantics; readiness is per reading LIVE/PARTIAL/UNAVAILABLE. Retention, profitability, NPS, team scorecards and actual voice consumption remain UNAVAILABLE. This is source coverage, not Chat/Live acceptance."
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "Shared issuer/resolver revalidate active profile, actor, explicit active owner/admin seat, lifecycle, tenant epoch, expiry/revocation and recomputed source digest; platform role without tenant seat is denied on the new seam."
-        },
-        "safe_context": {
-          "status": "eligible",
-          "note": "#1837 uses the existing ContextSourceResult interface for closed, size-bounded current-turn metric interpretation after caller-JWT issuer/resolver verification. It does not generalize client-only Pipeline SpineSignal/Mind retrieval or implement Fabric snapshot composition."
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a",
-          "note": "an aggregate is not an event about a client"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "C2 (non-client subject) AND C3 (unbounded counts); needs SCR-2 AND SCR-3 — 'the cheapest to unblock'"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "partial", "note": "22 Settings keys have explicit producer semantics; readiness is per reading LIVE/PARTIAL/UNAVAILABLE. Retention, profitability, NPS, team scorecards and actual voice consumption remain UNAVAILABLE. This is source coverage, not Chat/Live acceptance."},
+        "tenant_scope": {"status": "server_resolved", "note": "Shared issuer/resolver revalidate active profile, actor, explicit active owner/admin seat, lifecycle, tenant epoch, expiry/revocation and recomputed source digest; platform role without tenant seat is denied on the new seam."},
+        "safe_context": {"status": "eligible", "note": "#1837 uses the existing ContextSourceResult interface for closed, size-bounded current-turn metric interpretation after caller-JWT issuer/resolver verification. It does not generalize client-only Pipeline SpineSignal/Mind retrieval or implement Fabric snapshot composition."},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a", "note": "an aggregate is not an event about a client"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "C2 (non-client subject) AND C3 (unbounded counts); needs SCR-2 AND SCR-3 — 'the cheapest to unblock'"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "raw customer/source records",
-        "actor/workspace identifiers",
-        "account epoch reference",
-        "provider secrets",
-        "unvalidated producer fields",
-        "changing KPI values promoted to durable Memory"
-      ],
+      "prohibited_context": ["raw customer/source records", "actor/workspace identifiers", "account epoch reference", "provider secrets", "unvalidated producer fields", "changing KPI values promoted to durable Memory"],
       "state": "PARTIAL",
       "state_reason": "Settings Analytics remains complete. #1837 registers analytics.metric_read and binds read_business_metric to the actual caller-JWT issuer/resolver in the shared Chat/Live handler; closed current-turn context preserves measurement truth and evidence. Authenticated natural-language Chat/Live acceptance remains PROOF OWED, not inferred from tests or prior Settings acceptance. Pipeline Mind subject/count restrictions and Fabric composition remain separately owned.",
-      "evidence_class": [
-        "source_read",
-        "production_catalog"
-      ],
+      "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
       "next_slice": "#1837: exact-head review/CI, deployment readback and authenticated Chat/Live proof through approved QA access. Current-turn context uses the existing generic source interface; Pipeline Mind SCR-2/SCR-3 are not bypassed or claimed complete.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#analytics",
-        "docs/product/interactive-analytics-ui-spec.md",
-        "docs/delivery/int340-metric-coverage.md",
-        "supabase/migrations/20270601000005_int340_settings_metric_producers.sql",
-        "supabase/migrations/20270601000006_int340_shared_metric_evidence.sql"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#analytics", "docs/product/interactive-analytics-ui-spec.md", "docs/delivery/int340-metric-coverage.md", "supabase/migrations/20270601000005_int340_settings_metric_producers.sql", "supabase/migrations/20270601000006_int340_shared_metric_evidence.sql"]
     },
     {
       "id": "marketplace",
@@ -2664,58 +1389,27 @@
       },
       "surface": "Marketplace",
       "group": "marketplace",
-      "tier_scope": [
-        "solo"
-      ],
+      "tier_scope": ["solo"],
       "owner_component": "src/solo/marketplace.tsx:85",
       "canonical_source": "marketplace_catalog_for_tenant RPC (marketplace-truth)",
       "chain": {
-        "canonical_source": {
-          "status": "real",
-          "note": "Updates tab UNAVAIL"
-        },
-        "tenant_scope": {
-          "status": "server_resolved"
-        },
-        "safe_context": {
-          "status": "none"
-        },
-        "authority": {
-          "status": "none"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "n/a"
-        },
-        "mind_eligibility": {
-          "axis_a": "BLOCKED",
-          "axis_b": "NO",
-          "note": "the most blocked — SCR-1 + SCR-2 + SCR-3; a catalogue is a list read the contract cannot express"
-        },
-        "memory_retention": {
-          "status": "n/a"
-        }
+        "canonical_source": {"status": "real", "note": "Updates tab UNAVAIL"},
+        "tenant_scope": {"status": "server_resolved"},
+        "safe_context": {"status": "none"},
+        "authority": {"status": "none"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "n/a"},
+        "mind_eligibility": {"axis_a": "BLOCKED", "axis_b": "NO", "note": "the most blocked — SCR-1 + SCR-2 + SCR-3; a catalogue is a list read the contract cannot express"},
+        "memory_retention": {"status": "n/a"}
       },
-      "prohibited_context": [
-        "name/tagline/description/icon/category/price/slug/version",
-        "publisher/release identity/approved scope/declared capabilities/prerequisites (all UNAVAILABLE at source — inferring any is fabrication)"
-      ],
+      "prohibited_context": ["name/tagline/description/icon/category/price/slug/version", "publisher/release identity/approved scope/declared capabilities/prerequisites (all UNAVAILABLE at source — inferring any is fabrication)"],
       "state": "UNAVAILABLE",
       "state_reason": "The most blocked surface for Mind: a catalogue is a list of free text the current contract cannot express (needs SCR-1/2/3). Marketplace is the App Store for the Paige OS (§35), governed separately.",
-      "evidence_class": [
-        "source_read"
-      ],
+      "evidence_class": ["source_read"],
       "linked": [],
       "next_slice": "None until SCR-1/2/3. Bind only safe install-state facts.",
-      "sources": [
-        "docs/architecture/paige-mind-integration-matrix.md#marketplace"
-      ]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#marketplace"]
     },
     {
       "id": "operator.platform",
@@ -2730,64 +1424,27 @@
       },
       "surface": "Operator / Platform console (intentionally separate)",
       "group": "operator",
-      "tier_scope": [
-        "operator"
-      ],
+      "tier_scope": ["operator"],
       "owner_component": "src/operator/OperatorEntry.tsx -> OperatorApp.tsx; surfaces under src/operator/surfaces/**",
       "canonical_source": "six-slot v3 console at /operator (operatorIA.ts mirrors the pack); Platform health view reads the systems-check/alerting seams directly",
       "chain": {
-        "canonical_source": {
-          "status": "partial",
-          "note": "six-slot v3 console; Platform health view reads systems_check_snapshot + paige_systems_check_run + paige_alert_firing"
-        },
-        "tenant_scope": {
-          "status": "server_resolved",
-          "note": "tenant-less operator lens; PaigePlatformDesk mounts with clientId=null"
-        },
-        "safe_context": {
-          "status": "none",
-          "note": "the operator lens is tenant-less; Spine evidence unreachable (C4)"
-        },
-        "authority": {
-          "status": "governed",
-          "note": "operator surfaces gate on is_platform_owner()/is_platform_operator()"
-        },
-        "governed_write": {
-          "status": "none"
-        },
-        "verified_outcome": {
-          "status": "none"
-        },
-        "rail_evidence": {
-          "producer": "none",
-          "read": "get_platform_rail (super_admin only)"
-        },
-        "mind_eligibility": {
-          "axis_a": "UNAVAILABLE",
-          "axis_b": "NO"
-        },
-        "memory_retention": {
-          "status": "seam_available",
-          "note": "operator (God) memory is tenant-less paige_owner_memory rows"
-        }
+        "canonical_source": {"status": "partial", "note": "six-slot v3 console; Platform health view reads systems_check_snapshot + paige_systems_check_run + paige_alert_firing"},
+        "tenant_scope": {"status": "server_resolved", "note": "tenant-less operator lens; PaigePlatformDesk mounts with clientId=null"},
+        "safe_context": {"status": "none", "note": "the operator lens is tenant-less; Spine evidence unreachable (C4)"},
+        "authority": {"status": "governed", "note": "operator surfaces gate on is_platform_owner()/is_platform_operator()"},
+        "governed_write": {"status": "none"},
+        "verified_outcome": {"status": "none"},
+        "rail_evidence": {"producer": "none", "read": "get_platform_rail (super_admin only)"},
+        "mind_eligibility": {"axis_a": "UNAVAILABLE", "axis_b": "NO"},
+        "memory_retention": {"status": "seam_available", "note": "operator (God) memory is tenant-less paige_owner_memory rows"}
       },
-      "prohibited_context": [
-        "cross-tenant data unless is_platform_owner",
-        "tenant secrets"
-      ],
+      "prohibited_context": ["cross-tenant data unless is_platform_owner", "tenant secrets"],
       "state": "PARTIAL",
       "state_reason": "Owner mandate 2026-09-12 (Platform Operator Command Center) released operator work. First Phase 2 slice: Analytics > Platform health renders the v3 pack's health view from real seams with honest absences; authenticated-runtime drive still PROOF OWED. Phase 0 map: docs/delivery/platform-operator-command-center.md.",
-      "evidence_class": [
-        "source_read",
-        "rendered_structural"
-      ],
+      "evidence_class": ["source_read", "rendered_structural"],
       "linked": [],
       "next_slice": "Phase 2 remainder per the mandate: deployment/release + migration proof state, provider/connection health, tenant lifecycle aggregate, incident/recovery state - each only when its real source is named. Then Phase 3 triage.",
-      "sources": [
-        "docs/design-references/OPERATOR-COMMAND-CENTER-IA.md",
-        "docs/delivery/platform-operator-command-center.md",
-        "docs/evidence/ui-delivery/operator-platform-health-view.md"
-      ]
+      "sources": ["docs/design-references/OPERATOR-COMMAND-CENTER-IA.md", "docs/delivery/platform-operator-command-center.md", "docs/evidence/ui-delivery/operator-platform-health-view.md"]
     }
   ]
 }

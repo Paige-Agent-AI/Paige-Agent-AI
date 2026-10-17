@@ -137,8 +137,24 @@ describe('native publication association recovery', () => {
   const c=client();c.rpc.mockResolvedValue({data:{...active,...patch},error:null});
   await expect(readKnowledgePublicationForDocument(c,scope(),publicationRef)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});expect(c.functions.invoke).not.toHaveBeenCalled();
  });
- it.each([{revision:3},{revision:5},{publication:{...promoted.publication,generation_id:other}},
-  {publication:{...promoted.publication,outcome:'published'}},{publication:undefined}])('refuses stale, advanced or unproven promoted state %j',async patch=>{
+ it.each([5,9])('accepts later metadata revision %s only for the original proven publication',async revision=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...promoted,revision},error:null});
+  const actual=await readKnowledgePublicationForDocument(c,scope(),publicationRef);
+  expect(actual.revision).toBe(revision);expect(actual.publication?.generation_id).toBe(pub);
+  expect(c.rpc).toHaveBeenCalledExactlyOnceWith('read_tenant_knowledge_review',{p_expected_tenant:tenant,p_doc_id:doc});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it.each([
+  {reference:{...publicationRef,workId:undefined},publication:promoted.publication},
+  {reference:publicationRef,publication:{...promoted.publication,work_id:other,generation_id:other}},
+  {reference:publicationRef,publication:{...active.publication}},
+ ])('holds an advanced revision without exact original terminal-generation proof %j',async ({reference,publication})=>{
+  const c=client();c.rpc.mockResolvedValue({data:{...promoted,revision:9,publication},error:null});
+  await expect(readKnowledgePublicationForDocument(c,scope(),reference)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
+  expect(c.functions.invoke).not.toHaveBeenCalled();
+ });
+ it.each([{revision:3},{publication:{...promoted.publication,generation_id:other}},
+  {publication:{...promoted.publication,outcome:'published'}},{publication:undefined}])('refuses stale or unproven promoted state %j',async patch=>{
   const c=client();c.rpc.mockResolvedValue({data:{...promoted,...patch},error:null});
   await expect(readKnowledgePublicationForDocument(c,scope(),publicationRef)).rejects.toMatchObject({code:'EXTRACTION_RESPONSE_INVALID'});
  });

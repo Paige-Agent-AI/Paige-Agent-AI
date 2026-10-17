@@ -191,7 +191,15 @@ export async function readKnowledgePublicationForDocument(client: ExtractionClie
   } else if (projected.pending_review !== null) {
     if (projected.revision !== ref.revision || projected.extraction_work_id !== ref.extractionWorkId
       || projected.pending_review.reviewed_content === null) invalid();
-  } else if (projected.revision !== ref.revision + 1 || p?.association !== 'matched') invalid();
+  } else {
+    // Native publication proof survives later metadata revisions. Only the known
+    // original terminal work/current generation can relax the next-revision bound;
+    // a lost acknowledgement must not adopt an unrelated later publication.
+    const samePublishedGeneration = ref.workId !== undefined && p?.association === 'matched'
+      && p.work_id === ref.workId && p.work_status === 'succeeded' && p.generation_id === ref.workId;
+    if (projected.revision <= ref.revision || p?.association !== 'matched'
+      || (projected.revision !== ref.revision + 1 && !samePublishedGeneration)) invalid();
+  }
   if (p?.association === 'matched' && ref.workId !== undefined && p.work_id !== ref.workId) invalid();
   return projected;
 }

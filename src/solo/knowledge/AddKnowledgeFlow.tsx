@@ -328,7 +328,12 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       return;
     }
     if (!current() || pollRun.current !== run) return;
-    presentPublication(read, attempt, run);
+    // A definitive native non-submission after a lost acknowledgement can return
+    // to the existing explicit Publish step. A known work ID disappearing or a
+    // changed saved source is still uncertainty, never permission to replay.
+    const ready = ref.workId === undefined && read.revision === ref.revision
+      && read.extraction_work_id === ref.extractionWorkId && read.pending_review?.reviewed_content === reviewContent;
+    presentPublication(read, attempt, run, ready);
   };
 
   const correctAgain = async () => {

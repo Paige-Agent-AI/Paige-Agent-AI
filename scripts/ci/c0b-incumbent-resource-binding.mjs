@@ -459,7 +459,8 @@ const SOURCES = {
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
   // E09: reviewed single new high-risk invitation key; every incumbent policy byte
-  // and the shared Chat handler remain exact main. No CONTRACTS/ancestry renewal.
+  // remain exact main. The shared handler only gains invitation attribution.
+  // No CONTRACTS/ancestry renewal.
   "supabase/functions/_shared/action-risk.ts": "110bcb6fd9ffb7364cedec7f063a484b8881ccc3f7e636de4e65f2732768d9cf",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",

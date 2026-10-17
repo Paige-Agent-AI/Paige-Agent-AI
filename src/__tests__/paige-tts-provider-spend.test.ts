@@ -15,10 +15,12 @@ const h = vi.hoisted(() => ({
   handler: null as ((request: Request) => Promise<Response>) | null,
   createClient: vi.fn(),
   synthesizeSpeechStream: vi.fn(),
-  elevenlabsTts: vi.fn(),
+  elevenlabsMessageStream: vi.fn(),
   planTtsSynthesis: vi.fn(),
   resolveProfileVoice: vi.fn(),
   ttsCacheKey: vi.fn(),
+  upload: vi.fn(),
+  meter: vi.fn(),
 }));
 
 vi.mock("https://deno.land/std@0.190.0/http/server.ts", () => ({
@@ -31,7 +33,7 @@ vi.mock("../../supabase/functions/_shared/tts-router.ts", () => ({
   synthesizeSpeechStream: h.synthesizeSpeechStream,
   ttsCacheKey: h.ttsCacheKey,
 }));
-vi.mock("../../supabase/functions/_shared/elevenlabs.ts", () => ({ elevenlabsTts: h.elevenlabsTts }));
+vi.mock("../../supabase/functions/_shared/elevenlabs.ts", () => ({ elevenlabsMessageStream: h.elevenlabsMessageStream }));
 
 const USER = "11111111-1111-4111-8111-111111111111";
 const TENANT = "22222222-2222-4222-8222-222222222222";
@@ -83,10 +85,10 @@ function setupClients() {
       storage: {
         from: () => ({
           download: async () => { log.push("cache"); return { data: cached, error: null }; },
-          upload: async () => ({ error: null }),
+          upload: h.upload,
         }),
       },
-      from: () => ({ insert: async () => ({ error: null }) }),
+      from: () => ({ insert: h.meter }),
     };
   });
 }
@@ -100,10 +102,11 @@ function usePlan(attempt: typeof OPENAI | typeof ELEVEN) {
   h.planTtsSynthesis.mockReturnValue({ ok: true, attempts: [attempt] });
 }
 
-const play = (text = "Hello from Paige") => h.handler!(new Request("https://edge.test/functions/v1/paige-tts", {
+const play = (text = "Hello from Paige", signal?: AbortSignal) => h.handler!(new Request("https://edge.test/functions/v1/paige-tts", {
   method: "POST",
   headers: { Authorization: "Bearer test", "Content-Type": "application/json" },
   body: JSON.stringify({ text }),
+  signal,
 }));
 
 const reserveCalls = () => rpcCalls.filter((c) => c.fn === "reserve_paige_voice_cost_internal");
@@ -120,17 +123,18 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     reserveResult = { data: { reservation_id: RESERVATION }, error: null };
     settleResult = { data: null, error: null };
     vi.stubGlobal("Deno", { env: { get: (name: string) => name } });
-    for (const fn of [h.createClient, h.synthesizeSpeechStream, h.elevenlabsTts, h.planTtsSynthesis, h.resolveProfileVoice, h.ttsCacheKey]) fn.mockReset();
+    for (const fn of [h.createClient, h.synthesizeSpeechStream, h.elevenlabsMessageStream, h.planTtsSynthesis, h.resolveProfileVoice, h.ttsCacheKey]) fn.mockReset();
     h.ttsCacheKey.mockResolvedValue("cache-key");
+    h.upload.mockReset().mockResolvedValue({error:null});h.meter.mockReset().mockResolvedValue({error:null});
     h.synthesizeSpeechStream.mockImplementation(async () => { log.push("provider:openai"); return audioResponse(); });
-    h.elevenlabsTts.mockImplementation(async () => { log.push("provider:elevenlabs"); return { artifact_bytes: new Uint8Array([9]) }; });
+    h.elevenlabsMessageStream.mockImplementation(async () => { log.push("provider:elevenlabs"); return audioResponse(); });
     setupClients();
     await vi.importActual("../../supabase/functions/paige-tts/index.ts");
     ({ NeedsConfigError } = await import("../../supabase/functions/_shared/provider-types.ts"));
     expect(h.handler).not.toBeNull();
   });
 
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   it("OpenAI: an uncached attempt reserves BEFORE the provider and commits once the provider answered", async () => {
     usePlan(OPENAI);
@@ -218,6 +222,7 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     const res = await play();
     expect(res.status).toBe(200);
     expect(log).toEqual(["resolve", "cache", "reserve", "provider:elevenlabs", "settle:committed"]);
+    await res.arrayBuffer();
   });
 
   it("ElevenLabs (regression): a refused reservation still never calls the provider", async () => {
@@ -226,17 +231,95 @@ describe("INT-324 Slice A — paige-tts reserves before either provider", () => 
     const res = await play();
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ error: "tts_platform_cost_limit" });
-    expect(h.elevenlabsTts).not.toHaveBeenCalled();
+    expect(h.elevenlabsMessageStream).not.toHaveBeenCalled();
   });
 
   it("ElevenLabs (regression): NeedsConfigError releases; an ambiguous failure does not", async () => {
     usePlan(ELEVEN);
-    h.elevenlabsTts.mockImplementationOnce(async () => { log.push("provider:elevenlabs"); throw new NeedsConfigError("elevenlabs"); });
+    h.elevenlabsMessageStream.mockImplementationOnce(async () => { log.push("provider:elevenlabs"); throw new NeedsConfigError("elevenlabs"); });
     expect((await play()).status).toBe(502);
     expect(log.at(-1)).toBe("settle:released");
     log = []; rpcCalls = [];
-    h.elevenlabsTts.mockImplementationOnce(async () => { log.push("provider:elevenlabs"); throw new Error("ElevenLabs 500"); });
+    h.elevenlabsMessageStream.mockImplementationOnce(async () => { log.push("provider:elevenlabs"); throw new Error("ElevenLabs 500"); });
     expect((await play()).status).toBe(502);
     expect(settleCalls()).toHaveLength(0);
   });
+  it("ElevenLabs streams its first chunk before EOF and caches only the complete artifact", async () => {
+    usePlan(ELEVEN);let body!:ReadableStreamDefaultController<Uint8Array>;
+    h.elevenlabsMessageStream.mockImplementation(async()=>{log.push("provider:elevenlabs");return new Response(new ReadableStream<Uint8Array>({start(c){body=c;c.enqueue(new Uint8Array([4,5]));}}));});
+    const res=await play();expect(res.status).toBe(200);expect(h.upload).not.toHaveBeenCalled();
+    const reader=res.body!.getReader();expect((await reader.read()).value).toEqual(new Uint8Array([4,5]));expect(h.upload).not.toHaveBeenCalled();
+    body.enqueue(new Uint8Array([6]));body.close();expect((await reader.read()).value).toEqual(new Uint8Array([6]));expect((await reader.read()).done).toBe(true);
+    await vi.waitFor(()=>expect(h.upload).toHaveBeenCalledTimes(1));
+    expect(h.upload.mock.calls[0][0]).toBe(TENANT+"/cache-key.mp3");expect(h.upload.mock.calls[0][1]).toEqual(new Uint8Array([4,5,6]));
+    expect(log).toEqual(["resolve","cache","reserve","provider:elevenlabs","settle:committed"]);
+  });
+
+  it("ElevenLabs client cancellation aborts the original provider and never caches a partial answer", async()=>{
+    usePlan(ELEVEN);let providerSignal:AbortSignal|undefined;const cancel=vi.fn();
+    h.elevenlabsMessageStream.mockImplementation(async(_input,signal)=>{providerSignal=signal;return new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array([4]));},cancel}));});
+    const res=await play();const reader=res.body!.getReader();await reader.read();await reader.cancel();
+    expect(providerSignal?.aborted).toBe(true);expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();
+    expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);expect(h.elevenlabsMessageStream).toHaveBeenCalledTimes(1);
+  });
+
+  it("ElevenLabs refuses empty provider audio without releasing ambiguous spend",async()=>{
+    usePlan(ELEVEN);h.elevenlabsMessageStream.mockResolvedValue(new Response(new Uint8Array()));
+    const res=await play();expect(res.status).toBe(502);expect(settleCalls()).toHaveLength(0);expect(h.upload).not.toHaveBeenCalled();
+  });
+
+  it("ElevenLabs failed settlement cancels the provider and returns no audio",async()=>{
+    usePlan(ELEVEN);const cancel=vi.fn();let signal:AbortSignal|undefined;
+    h.elevenlabsMessageStream.mockImplementation(async(_input,s)=>{signal=s;return new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array([4]));},cancel}));});
+    settleResult={data:null,error:{code:"PGRST000",message:"synthetic"}};
+    const res=await play();expect(res.status).toBe(503);expect(await res.json()).toEqual({error:"tts_cost_settlement_unavailable"});
+    expect(signal?.aborted).toBe(true);expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();
+  });
+
+  it("ElevenLabs mid-stream failure is audible failure, not a cached success or retry",async()=>{
+    usePlan(ELEVEN);let body!:ReadableStreamDefaultController<Uint8Array>;
+    h.elevenlabsMessageStream.mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){body=c;c.enqueue(new Uint8Array([4]));}})));
+    const res=await play();const reader=res.body!.getReader();await reader.read();body.error(new Error("synthetic interruption"));
+    await expect(reader.read()).rejects.toThrow();expect(h.upload).not.toHaveBeenCalled();expect(h.elevenlabsMessageStream).toHaveBeenCalledTimes(1);
+    expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);
+  });
+
+  it("ElevenLabs stalled first audio is bounded and keeps dispatched spend counted",async()=>{
+    vi.useFakeTimers();usePlan(ELEVEN);let signal:AbortSignal|undefined;const cancel=vi.fn();
+    h.elevenlabsMessageStream.mockImplementation(async(_input,s)=>{signal=s;return new Response(new ReadableStream<Uint8Array>({cancel}));});
+    const pending=play();await vi.advanceTimersByTimeAsync(60_001);const res=await pending;
+    expect(res.status).toBe(502);expect(signal?.aborted).toBe(true);expect(cancel).toHaveBeenCalledTimes(1);
+    expect(settleCalls()).toHaveLength(0);expect(h.upload).not.toHaveBeenCalled();
+  });
+
+  it("ElevenLabs records stage durations in the incumbent usage record without claiming audible completion",async()=>{
+    usePlan(ELEVEN);const res=await play();await res.arrayBuffer();
+    await vi.waitFor(()=>expect(h.meter).toHaveBeenCalledTimes(1));
+    const metadata=h.meter.mock.calls[0][0].metadata;
+    expect(metadata).toMatchObject({provider:"elevenlabs",profile_revision:"el-r1",cache_hit:false});
+    for(const key of ["provider_first_byte_ms","cost_settlement_ms","response_ready_ms"])expect(metadata[key]).toBeGreaterThanOrEqual(0);
+    expect(metadata).not.toHaveProperty("text");expect(metadata).not.toHaveProperty("completed");
+  });
+
+  it("ElevenLabs a late provider response cannot revive a cancelled caller",async()=>{
+    usePlan(ELEVEN);const abort=new AbortController();const cancel=vi.fn();
+    h.elevenlabsMessageStream.mockImplementation(async()=>{abort.abort();return new Response(new ReadableStream<Uint8Array>({cancel}));});
+    const res=await play("Synthetic cancellation",abort.signal);expect(res.status).toBe(502);
+    expect(cancel).toHaveBeenCalledTimes(1);expect(settleCalls()).toHaveLength(0);expect(h.upload).not.toHaveBeenCalled();
+  });
+
+  it("ElevenLabs caller abort after settlement stops output and cannot file a partial cache",async()=>{
+    usePlan(ELEVEN);const abort=new AbortController();const cancel=vi.fn();
+    h.elevenlabsMessageStream.mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array([4]));},cancel})));
+    const res=await play("Synthetic cancellation",abort.signal);const reader=res.body!.getReader();await reader.read();abort.abort();
+    await expect(reader.read()).rejects.toThrow("interrupted");await vi.waitFor(()=>expect(cancel).toHaveBeenCalledTimes(1));
+    expect(h.upload).not.toHaveBeenCalled();expect(settleCalls().map(x=>x.args._outcome)).toEqual(["committed"]);
+  });
+
+  it("ElevenLabs bounds an oversized first chunk before delivering or caching it",async()=>{
+    usePlan(ELEVEN);const cancel=vi.fn();
+    h.elevenlabsMessageStream.mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){c.enqueue(new Uint8Array(16*1024*1024+1));},cancel})));
+    expect((await play()).status).toBe(502);expect(cancel).toHaveBeenCalledTimes(1);expect(h.upload).not.toHaveBeenCalled();expect(settleCalls()).toHaveLength(0);
+  });
+
 });

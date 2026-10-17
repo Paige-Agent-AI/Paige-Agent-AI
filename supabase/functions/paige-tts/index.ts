@@ -13,7 +13,7 @@
 //      never cross-provider). HIT → return stored bytes (zero cost), meter cache_hit:true. MISS →
 //      RESERVE first (INT-324: every uncached attempt, whichever provider, reserves through the one
 //      reserve_paige_voice_cost_internal seam before any provider call; a refusal ends the request),
-//      then ElevenLabs (buffered bytes) or OpenAI (streamed + tee). Release ONLY on a typed
+//      then ElevenLabs (cancel-owned MPEG stream) or OpenAI (streamed + tee). Release ONLY on a typed
 //      pre-dispatch NeedsConfigError; commit once the provider answered OK (before streaming); a
 //      failed commit is 503 tts_cost_settlement_unavailable; any other failure stays reserved. On
 //      that attempt's failure, LOUD-log and fall to the NEXT attempt (§32). The cache key + meter
@@ -33,14 +33,14 @@
 // verify_jwt=true (config.toml): a normal authenticated fetch from the chat UI. The Authorization
 // header carries the caller's session; the tenant is derived server-side from it.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import {
   planTtsSynthesis,
   resolveProfileVoice,
   ttsCacheKey,
   synthesizeSpeechStream,
 } from "../_shared/tts-router.ts";
-import { elevenlabsTts } from "../_shared/elevenlabs.ts";
+import { elevenlabsMessageStream } from "../_shared/elevenlabs.ts";
 import { NeedsConfigError } from "../_shared/provider-types.ts";
 import {
   classifyVoiceCostRefusal,
@@ -81,7 +81,7 @@ function runAfter(p: Promise<void>): void {
  *  .tenant_id is NOT NULL REFERENCES tenants): we SKIP the meter and log it honestly (§13), never
  *  misattribute operator playback to a real tenant nor FK-violate on a fabricated sentinel. */
 async function meterChars(
-  admin: ReturnType<typeof createClient>,
+  admin: SupabaseClient,
   tenantId: string | null,
   chars: number,
   meta: Record<string, unknown>,
@@ -105,6 +105,7 @@ async function meterChars(
 }
 
 serve(async (req: Request) => {
+  const requestStarted = performance.now();
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
@@ -198,8 +199,9 @@ serve(async (req: Request) => {
       return json({ error: "tts_not_configured" }, 503);
     }
 
-    // The one selected attempt owns this request. Cache and metering include its profile revision;
-    // provider identity never appears in the browser response.
+    // The one selected attempt owns this request. The incumbent cache key binds
+    // provider/model/voice/text; metering additionally attributes its profile revision.
+    // Provider identity never appears in the browser response.
     let lastErr: string | null = null;
     for (let i = 0; i < plan.attempts.length; i++) {
       const attempt = plan.attempts[i];
@@ -272,30 +274,116 @@ serve(async (req: Request) => {
         return true;
       };
 
+
       if (attempt.provider === "elevenlabs") {
-        let res: Awaited<ReturnType<typeof elevenlabsTts>>;
+        const started = performance.now();
+        const providerAbort = new AbortController();
+        let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+        let output: ReadableStreamDefaultController<Uint8Array> | undefined;
+        let finished = false;
+        let deadline: ReturnType<typeof setTimeout> | undefined;
+        const maxBytes = 16 * 1024 * 1024; // bounded cache for capped4096-character input
+        const detach = () => { clearTimeout(deadline); req.signal.removeEventListener("abort", interrupted); };
+        const stopProvider = async () => {
+          providerAbort.abort();
+          if (reader) {
+            await reader.cancel().catch(() => {});
+            try { reader.releaseLock(); } catch { /* an interrupted pull owns the lock */ }
+          }
+        };
+        const interrupted = () => {
+          if (finished) return;
+          finished = true;
+          detach();
+          output?.error(new Error("Voice playback interrupted."));
+          void stopProvider();
+        };
+        const armDeadline = () => { clearTimeout(deadline); deadline = setTimeout(interrupted, 60_000); };
+        req.signal.addEventListener("abort", interrupted, { once: true });
+        armDeadline();
+        if (req.signal.aborted) interrupted();
+        let first: Uint8Array;
         try {
-          res = await elevenlabsTts({ text: capped, voiceId: attempt.voiceId, modelId: attempt.model });
+          const response = await elevenlabsMessageStream({ text: capped, voiceId: attempt.voiceId, modelId: attempt.model }, providerAbort.signal);
+          if (!response.body) throw new Error("elevenlabs_no_body");
+          if (providerAbort.signal.aborted) {
+            await response.body.cancel().catch(() => {});
+            throw new Error("elevenlabs_interrupted_before_body");
+          }
+          reader = response.body.getReader();
+          let initial = await reader.read();
+          while (!initial.done && !initial.value?.length) initial = await reader.read();
+          if (initial.done || !initial.value?.length || providerAbort.signal.aborted) throw new Error("elevenlabs_empty_or_interrupted_audio");
+          if (initial.value.byteLength > maxBytes) throw new Error("elevenlabs_audio_too_large");
+          first = initial.value;
+          armDeadline();
         } catch (e) {
+          finished = true; detach(); await stopProvider();
           await releaseIfPreDispatch(e);
-          lastErr = (e as Error)?.message ?? "elevenlabs_error";
-          console.error("[paige-tts] selected provider attempt failed:", lastErr);
+          lastErr = "elevenlabs_stream_unavailable";
+          console.error("[paige-tts] selected provider stream failed before output");
           continue;
         }
-        const bytes = res.artifact_bytes;
-        if (!bytes || bytes.length === 0) {
-          // Defensive only: the adapter already rejects empty bodies. Keep the reservation counted
-          // because the request crossed the provider boundary.
-          lastErr = "elevenlabs_empty_bytes";
-          continue;
+        const firstByteMs = performance.now() - started;
+        const settlementStarted = performance.now();
+        if (!(await commit())) {
+          finished = true; detach(); await stopProvider();
+          return json({ error: "tts_cost_settlement_unavailable" }, 503);
         }
-        if (!(await commit())) return json({ error: "tts_cost_settlement_unavailable" }, 503);
-        runAfter((async () => {
-          const { error: upErr } = await admin.storage.from(CACHE_BUCKET).upload(cachePath, bytes, { contentType: "audio/mpeg", upsert: true });
-          if (upErr) console.error("[paige-tts] EL cache upload failed", { message: upErr.message, scope: storagePrefix });
-          await meterChars(admin, meterTenantId, capped.length, { provider: "elevenlabs", profile_revision: attempt.profileRevision, model: attempt.model, voice_source: voiceSource, fell_back: fellBack, cache_hit: false });
-        })());
-        return new Response(bytes, { headers: audioHeaders });
+        if (finished || providerAbort.signal.aborted) {
+          await stopProvider();
+          return json({ error: "tts_synth_failed" }, 502);
+        }
+        const timings = {
+          provider_first_byte_ms: Math.round(firstByteMs),
+          cost_settlement_ms: Math.round(performance.now() - settlementStarted),
+          response_ready_ms: Math.round(performance.now() - requestStarted),
+        };
+        // Existing usage record, once, after canonical settlement. A partial/cancelled
+        // synthesis can still cost money; metering is not a claim of audible completion.
+        runAfter(meterChars(admin, meterTenantId, capped.length, {
+          provider: "elevenlabs", profile_revision: attempt.profileRevision, model: attempt.model,
+          voice_source: voiceSource, fell_back: fellBack, cache_hit: false, ...timings,
+        }));
+        console.log("[paige-tts] message stream prepared", timings);
+        const chunks = [first.slice()];
+        let total = first.byteLength;
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) { output = controller; controller.enqueue(first); },
+          async pull(controller) {
+            try {
+              const next = await reader!.read();
+              if (finished) return;
+              if (next.done) {
+                finished = true; detach(); reader!.releaseLock();
+                controller.close();
+                const bytes = new Uint8Array(total);
+                let offset = 0;
+                for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+                // No tee/background drain: Stop closes the original provider request,
+                // and only authoritative EOF can produce a reusable cached artifact.
+                runAfter((async () => {
+                  const { error } = await admin.storage.from(CACHE_BUCKET).upload(cachePath, bytes, { contentType: "audio/mpeg", upsert: true });
+                  if (error) console.error("[paige-tts] EL complete cache upload failed");
+                })());
+                return;
+              }
+              if (!next.value?.length) return;
+              armDeadline();
+              total += next.value.byteLength;
+              if (total > maxBytes) throw new Error("Voice response exceeded playback limit.");
+              chunks.push(next.value.slice());
+              controller.enqueue(next.value);
+            } catch {
+              if (finished) return;
+              finished = true; detach();
+              await stopProvider();
+              controller.error(new Error("Voice playback interrupted."));
+            }
+          },
+          async cancel() { finished = true; detach(); await stopProvider(); },
+        }, { highWaterMark: 0 });
+        return new Response(stream, { headers: audioHeaders });
       }
 
       // ── OpenAI attempt — keep the STREAMING tee path (progressive playback) ──

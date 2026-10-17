@@ -152,3 +152,8 @@ readback, authenticated ordinary Chat/Work parity, Live and owner acceptance rem
 ## Forward-only ordering correction - 2026-10-16
 
 Production records Portal migration `20271108150000` from main `5dfb5156785681ebb8fbad7237793a0bf0f9c92e`. This still-unpublished Planning migration is now `20271108190000_planning_native_receipts_history.sql`, after publication-context `20271108170000` and Research `20271108180000`. SQL bodies and runtime source are unchanged; the native fixture and receipt evidence reference the new filename. Earlier version references remain historical evidence. No applied history is edited and no `--include-all` is used. Fresh Independent Review, exact-head CI, normal deployment and authenticated proof remain required.
+
+
+## Applied-frontier continuation — 2026-10-17 UTC
+
+The unpublished migration is now `20271108191000_planning_native_receipts_history.sql`, after the lead's verified applied Portal190000. Its exact SQL SHA256 remains `f4777cfde82739f1c3749f24c79cc8f72678beab836eda98e866c39d7616b8f0`. Composition `3fb7bdcbc4c15b8ed82c9a03e33f43219721cf7e` preserves reviewed runtime, UI and assets plus released main `efd55ca6db1c563cf735cdea37258d4c654d0ef2`; earlier dated identities remain historical. Fresh native112 (current nine-function read-only baseline), focused217/ten suites, binding59/zero skips and migration1320/negative-control checks PASS. Complete source/ACL/proof hashes, setup limits and remaining release/authenticated/Live gates are recorded in [native Planning evidence](ant21-planning-native-receipts-history.md). No new rendered, production, delivery/recurrence or owner acceptance claim is made.

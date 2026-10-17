@@ -50,8 +50,9 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
   });
 
   it("persistRun writes tenant_id on the run and sources inherit it VERBATIM", () => {
-    // Exactly two writes carry the lineage: the run insert AND the sources insert.
-    expect(engine.match(/tenant_id: tenantId,/g)?.length).toBe(2);
+    // Match the exact record property, not the server reader's _tenant_id argument.
+    // The actual-handler suite independently observes both stored lineages.
+    expect(engine.match(/^\s+tenant_id: tenantId,/gm)?.length).toBe(2);
     expect(engine).toContain("// Sources inherit the parent run's lineage VERBATIM — never independently resolved.");
   });
 

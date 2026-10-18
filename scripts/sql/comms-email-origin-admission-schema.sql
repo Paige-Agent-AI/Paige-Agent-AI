@@ -15,7 +15,10 @@ CREATE TABLE public.paige_pending_approvals(
  source text,risk_level text,submitted_by_user_id uuid);
 CREATE TABLE public.paige_action_kinds(slug text PRIMARY KEY,executor text,requires_approval boolean,default_autonomy_lane text,approval_type text);
 CREATE TABLE public.paige_actions(
- id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,approval_id uuid,action_kind text,
+ id uuid PRIMARY KEY,tenant_id uuid NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+ contact_id uuid REFERENCES public.clients(id) ON DELETE SET NULL,
+ approval_id uuid REFERENCES public.paige_pending_approvals(id) ON DELETE SET NULL,
+ action_kind text NOT NULL REFERENCES public.paige_action_kinds(slug),
  status text NOT NULL CHECK(status IN('filed','assigned','drafting','drafted','pending_approval','approved','executing','done','dismissed','failed','blocked','expired')),
  title text,summary text,payload jsonb DEFAULT '{}',draft_content jsonb,result jsonb,error text,
  decision_rationale text,assigned_subagent_slug text,assigned_to_user_id uuid,assigned_at timestamptz,

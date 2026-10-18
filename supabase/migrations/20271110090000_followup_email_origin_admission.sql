@@ -468,6 +468,8 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
+  -- Lock every own backlink before message, including the strict legacy accepted-lead class.
+  PERFORM 1 FROM public.paige_actions a WHERE a.approval_id=_ap.id AND a.tenant_id=_ap.tenant_id ORDER BY a.id FOR UPDATE;
   -- The reply action: named by the approval AND pointing back at it, in the same business.
   _raw := btrim(_ap.metadata->>'action_id');
   BEGIN _named_action:=nullif(_raw,'')::uuid;

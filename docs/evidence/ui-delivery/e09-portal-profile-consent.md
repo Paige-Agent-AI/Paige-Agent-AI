@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: A signed-in customer opens Your account, adds a street addr
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: client_portal_update_self_profile and the exact-key self-profile reader are unchanged (byte-identical, §58); the new reads and writers are SECURITY DEFINER with in-body relationship scope (§59, migration 20271110100000, backend lane); set_contact_channel_suppression keeps its signature and return keys; the profile projection is not widened.
 
-INTERNAL_BUILD_IDENTITY: 8347652e252cf5fe9e467ee678deac193ff44f4a; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110100000 persisted apply on production after merge); edge=PROOF_OWED(pre-send-pipeline, skill-runner, dispatch-stage-automation and booking functions readback after merge); evidence=docs/evidence/ui-delivery/e09-portal-profile-consent.md
+INTERNAL_BUILD_IDENTITY: 0e917aa9e62e53a0cb3aa4a604fbf4db7e6a3bb0; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110100000 persisted apply on production after merge); edge=PROOF_OWED(pre-send-pipeline, skill-runner, dispatch-stage-automation and booking functions readback after merge); evidence=docs/evidence/ui-delivery/e09-portal-profile-consent.md
 RELEASE_CHANNEL: development: draft PR; production deployment, migration persisted-apply and edge readback are verified after merge.
 RELEASE_CLASSIFICATION: internal-only: sixth slice of the Customer Portal; no customer release until all seven pillars and authenticated proof exist.
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customer release is named until the seven pillars and authenticated proof exist.

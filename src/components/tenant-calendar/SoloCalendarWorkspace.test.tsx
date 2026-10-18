@@ -1,8 +1,10 @@
 import React, { act } from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SoloBooking, SoloCalendarMeta } from "./useSoloCalendar";
-import { findConflicts } from "./useSoloCalendar";
+import { UNASSIGNED_CALENDAR as UNASSIGNED, findConflicts } from "./useSoloCalendar";
 
 const setStatus = vi.fn(async () => ({ ok: true }) as { ok: boolean; message?: string });
 const createBooking = vi.fn(async () => ({ ok: true }) as { ok: boolean; message?: string; category?: string });
@@ -63,6 +65,23 @@ vi.mock("./useSoloCalendar", async () => {
     },
   };
 });
+
+// The client list is the Pipeline's own canonical read. Only its boundary is faked
+// here, the same way the Pipeline's tests fake it; the picker markup is real.
+const clientRead: {
+  phase: "loading" | "ready" | "error";
+  clients: { id: string; name: string; primaryEmail: string | null }[];
+  hasMore: boolean;
+} = { phase: "ready", clients: [], hasMore: false };
+const clientRetry = vi.fn();
+const clientLoadMore = vi.fn();
+const clientReadTenants: (string | null)[] = [];
+vi.mock("@/solo/deals/useSoloDealClients", () => ({
+  useSoloDealClients: (tenantId: string | null) => {
+    clientReadTenants.push(tenantId);
+    return { ...clientRead, retry: clientRetry, loadMore: clientLoadMore };
+  },
+}));
 
 const { SoloCalendarWorkspace } = await import("./SoloCalendarWorkspace");
 
@@ -154,6 +173,12 @@ beforeEach(() => {
   setStatus.mockClear();
   setStatus.mockResolvedValue({ ok: true });
   createBooking.mockClear();
+  clientRead.phase = "ready";
+  clientRead.clients = [];
+  clientRead.hasMore = false;
+  clientRetry.mockClear();
+  clientLoadMore.mockClear();
+  clientReadTenants.length = 0;
   reschedule.mockClear();
   reschedule.mockResolvedValue({ ok: true });
   edit.mockClear();
@@ -412,6 +437,418 @@ describe("Solo Calendar — the detail drawer", () => {
     mount();
     click(chip(/Discovery call/));
     expect(dialog()?.textContent).toMatch(/overlaps another appointment on the same host/i);
+  });
+});
+
+describe("Solo Calendar — a session booked for a client reaches that client", () => {
+  const NORTHWIND = [
+    { id: "client-jordan", name: "Jordan Rivera", primaryEmail: "jordan@northwind.example" },
+    { id: "client-sam", name: "Sam Okafor", primaryEmail: null },
+  ];
+  type CreateArg = { title: string; guestName: string | null; blocked: boolean; calendarId: string; contactId?: string | null };
+  const lastCreate = () => (createBooking.mock.calls.at(-1) as unknown as [CreateArg])[0];
+  const trigger = () => document.querySelector<HTMLButtonElement>('button[role="combobox"].sc-combo-trigger')!;
+  const listOpen = () => !!document.querySelector(".sc-combo-pop [cmdk-list]");
+  const openClients = () => { if (!listOpen()) click(trigger()); };
+  const options = () => [...document.querySelectorAll<HTMLElement>(".sc-combo-pop [cmdk-item]")];
+  /** Each row as the owner reads it: the name, then the muted email when there is one. */
+  const optionLabels = () => options().map((o) => {
+    const name = o.querySelector(".sc-combo-opt-name")?.textContent ?? o.textContent ?? "";
+    const email = o.querySelector(".sc-combo-opt-email")?.textContent;
+    return email ? `${name} · ${email}` : name;
+  });
+  const pick = (re: RegExp) => {
+    openClients();
+    click(options().find((o) => re.test(o.textContent ?? "")) ?? null);
+  };
+  const searchBox = () => document.querySelector<HTMLInputElement>(".sc-combo-pop [cmdk-input]")!;
+  const openCreate = () => { mount(); click(buttonByText(/New appointment/i, document.body)); };
+  const save = async () => {
+    click(buttonByText(/Save appointment/i, document.body));
+    await act(async () => { await Promise.resolve(); });
+  };
+  const key = (el: Element, k: string) => {
+    act(() => { el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true })); });
+  };
+
+  beforeAll(() => {
+    // jsdom has neither; the list (cmdk) and its positioning (Radix) both use them.
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
+    Element.prototype.scrollIntoView ??= () => {};
+  });
+
+  it("reads this account's own client list, and only once the form is opened", () => {
+    clientRead.clients = NORTHWIND;
+    mount();
+    expect(clientReadTenants).toEqual([]);
+    click(buttonByText(/New appointment/i, document.body));
+    expect(new Set(clientReadTenants)).toEqual(new Set(["tenant-1"]));
+    openClients();
+    expect(optionLabels()).toEqual([
+      "Not a client (guest only)", "Jordan Rivera · jordan@northwind.example", "Sam Okafor",
+    ]);
+  });
+
+  it("is ONE combobox placed directly under Title, with no native select and no second search box", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    const fields = [...dialog()!.querySelectorAll<HTMLElement>(".sc-drawer-body > .sc-field")];
+    const titleAt = fields.findIndex((f) => f.querySelector("#sc-title"));
+    expect(fields[titleAt + 1]?.querySelector('[role="combobox"]')).toBe(trigger());
+    expect(fields[titleAt + 1]?.querySelector("select")).toBeNull();
+    expect(byId("#sc-client")).toBeNull();
+    expect(byId("#sc-client-search")).toBeNull();
+    expect(trigger().getAttribute("aria-expanded")).toBe("false");
+    openClients();
+    expect(trigger().getAttribute("aria-expanded")).toBe("true");
+    // The list renders inside the drawer, so it sits above the form and inside its focus trap.
+    expect(dialog()!.contains(document.querySelector(".sc-combo-pop"))).toBe(true);
+    expect(document.activeElement).toBe(searchBox());
+  });
+
+  it("passes the chosen client's id, shows them as a chip, and prefills the guest name", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Strategy session");
+    pick(/Jordan Rivera/);
+    expect(listOpen()).toBe(false);
+    expect(trigger().querySelector(".sc-combo-chip-name")?.textContent).toBe("Jordan Rivera");
+    expect(trigger().querySelector(".sc-combo-chip-email")?.textContent).toBe("jordan@northwind.example");
+    expect(byId<HTMLInputElement>("#sc-guest")!.value).toBe("Jordan Rivera");
+    expect(dialog()?.textContent).toMatch(/see this session in their client portal/);
+    await save();
+    expect(createBooking).toHaveBeenCalledTimes(1);
+    expect(lastCreate()).toMatchObject({
+      title: "Strategy session", guestName: "Jordan Rivera", blocked: false, contactId: "client-jordan",
+    });
+    expect(dialog()).toBeNull();
+  });
+
+  it("removes the chosen client from the chip, and the booking then carries no client", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Intro call");
+    pick(/Jordan Rivera/);
+    click(document.querySelector('button[aria-label="Remove Jordan Rivera"]'));
+    expect(trigger().querySelector(".sc-combo-chip")).toBeNull();
+    expect(trigger().textContent).toContain("Not a client (guest only)");
+    expect(document.activeElement).toBe(trigger());
+    await save();
+    expect(lastCreate()).toMatchObject({ contactId: null, guestName: "Jordan Rivera" });
+  });
+
+  it("is operable from the keyboard: arrows move, Enter chooses, Escape closes the list but not the form", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    openClients();
+    key(searchBox(), "ArrowDown");
+    key(searchBox(), "Enter");
+    expect(trigger().querySelector(".sc-combo-chip-name")?.textContent).toBe("Jordan Rivera");
+    openClients();
+    key(searchBox(), "Escape");
+    expect(listOpen()).toBe(false);
+    expect(dialog()?.textContent).toContain("New appointment");
+    // A second Escape, with the list closed, is the drawer's again.
+    key(document.activeElement ?? document.body, "Escape");
+    expect(dialog()).toBeNull();
+  });
+
+  it("does not overwrite a guest name the owner typed, but follows a switch between clients", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    setValue(byId<HTMLInputElement>("#sc-guest")!, "J. Rivera (Northwind)");
+    pick(/Jordan Rivera/);
+    expect(byId<HTMLInputElement>("#sc-guest")!.value).toBe("J. Rivera (Northwind)");
+
+    setValue(byId<HTMLInputElement>("#sc-guest")!, "");
+    pick(/Jordan Rivera/);
+    expect(byId<HTMLInputElement>("#sc-guest")!.value).toBe("Jordan Rivera");
+    pick(/Sam Okafor/);
+    expect(byId<HTMLInputElement>("#sc-guest")!.value).toBe("Sam Okafor");
+  });
+
+  it("still books a free-text guest who is not a client, with no client attached", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Intro call");
+    setValue(byId<HTMLInputElement>("#sc-guest")!, "Riley from the referral");
+    await save();
+    expect(lastCreate()).toMatchObject({ guestName: "Riley from the referral", blocked: false, contactId: null });
+  });
+
+  it("clears the client again when the owner switches back to a guest", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Intro call");
+    pick(/Jordan Rivera/);
+    pick(/Not a client/);
+    await save();
+    expect(lastCreate()).toMatchObject({ contactId: null, guestName: "Jordan Rivera" });
+  });
+
+  it("leaves blocked-time creation exactly as it was", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    await save();
+    expect(lastCreate()).toMatchObject({ title: "", blocked: true, guestName: null, contactId: null });
+  });
+
+  it("refuses to save a client session with no title, rather than filing it as blocked time", async () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    pick(/Jordan Rivera/);
+    await save();
+    expect(createBooking).not.toHaveBeenCalled();
+    expect(dialog()?.textContent).toMatch(/Add a title for this session/);
+  });
+
+  it("narrows the list by name or email, and names a search that matches nobody", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    openClients();
+    setValue(searchBox(), "northwind.example");
+    // Once the owner types, the matches lead and the guest row follows them.
+    expect(optionLabels()).toEqual(["Jordan Rivera · jordan@northwind.example", "Not a client (guest only)"]);
+    setValue(searchBox(), "okafor");
+    expect(optionLabels()).toEqual(["Sam Okafor", "Not a client (guest only)"]);
+    setValue(searchBox(), "nobody");
+    expect(optionLabels()).toEqual(["Not a client (guest only)"]);
+    expect(document.querySelector(".sc-combo-status")?.textContent).toBe("No client matches “nobody”.");
+  });
+
+  it("chooses the first MATCH when the owner types a search and presses Enter, never the guest row", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    openClients();
+    // Nothing typed: "Not a client" leads, is the current value, and is highlighted.
+    expect(optionLabels()[0]).toBe("Not a client (guest only)");
+    setValue(searchBox(), "jor");
+    const highlighted = () => document.querySelector<HTMLElement>('.sc-combo-pop [cmdk-item][data-selected="true"]');
+    // The highlight follows the first visible match …
+    expect(highlighted()?.querySelector(".sc-combo-opt-name")?.textContent).toBe("Jordan Rivera");
+    // … while the current value (still the guest) keeps its own, different mark.
+    const guestRow = options().find((o) => /Not a client/.test(o.textContent ?? ""))!;
+    expect(guestRow.dataset.current).toBe("true");
+    expect(guestRow.dataset.selected).not.toBe("true");
+    key(searchBox(), "Enter");
+    expect(trigger().querySelector(".sc-combo-chip-name")?.textContent).toBe("Jordan Rivera");
+  });
+
+  it("reopens the list with the current client highlighted, so Enter keeps them, and names the booking field for a client", () => {
+    clientRead.clients = NORTHWIND;
+    openCreate();
+    expect(document.querySelector('label[for="sc-guest"]')?.textContent).toBe("Guest name");
+    openClients();
+    pick(/Jordan Rivera/);
+    expect(trigger().querySelector(".sc-combo-chip-name")?.textContent).toBe("Jordan Rivera");
+    expect(document.querySelector('label[for="sc-guest"]')?.textContent).toBe("Name on the booking");
+    openClients();
+    const highlighted = document.querySelector<HTMLElement>('.sc-combo-pop [cmdk-item][data-selected="true"]');
+    expect(highlighted?.querySelector(".sc-combo-opt-name")?.textContent).toBe("Jordan Rivera");
+    key(searchBox(), "Enter");
+    expect(trigger().querySelector(".sc-combo-chip-name")?.textContent).toBe("Jordan Rivera");
+  });
+
+  it("says plainly when the client list cannot be read, retries from the list, and still allows a guest booking", async () => {
+    clientRead.phase = "error";
+    openCreate();
+    expect(dialog()?.textContent).toMatch(/client list couldn’t be read/);
+    openClients();
+    expect(searchBox().disabled).toBe(true);
+    expect(document.querySelector(".sc-combo-status")?.textContent).toMatch(/couldn’t be read/);
+    pick(/Try again/);
+    expect(clientRetry).toHaveBeenCalledTimes(1);
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Intro call");
+    setValue(byId<HTMLInputElement>("#sc-guest")!, "Jordan Rivera");
+    await save();
+    expect(lastCreate()).toMatchObject({ contactId: null, guestName: "Jordan Rivera" });
+  });
+
+  it("names the loading and empty states in the list instead of showing an empty picker", () => {
+    clientRead.phase = "loading";
+    openCreate();
+    openClients();
+    expect(document.querySelector(".sc-combo-status")?.textContent).toBe("Loading your clients…");
+    expect(optionLabels()).toEqual(["Not a client (guest only)"]);
+    act(() => root.unmount());
+    container.remove();
+
+    clientRead.phase = "ready";
+    openCreate();
+    expect(dialog()?.textContent).toMatch(/No clients yet/);
+    openClients();
+    expect(document.querySelector(".sc-combo-status")?.textContent).toMatch(/No clients yet/);
+  });
+
+  it("offers more clients from the list footer when the list is paged", () => {
+    clientRead.clients = NORTHWIND;
+    clientRead.hasMore = true;
+    openCreate();
+    expect(buttonByText(/Load more clients/i, document.body)).toBeNull();
+    pick(/Load more clients/);
+    expect(clientLoadMore).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".sc-combo-foot")?.textContent).toContain("Load more clients");
+  });
+});
+
+describe("Solo Calendar — the drawer's form chrome meets the floor in both themes", () => {
+  const css = readFileSync(resolve(process.cwd(), "src/components/tenant-calendar/solo-calendar.css"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const tokens = readFileSync(resolve(process.cwd(), "src/index.css"), "utf8");
+  /** Every value a --pg token is given, in file order (Obsidian block, then Mineral). */
+  const values = (name: string) => [...tokens.matchAll(new RegExp(`--pg-${name}:\\s*(#[0-9a-fA-F]{6})`, "g"))].map((m) => m[1]);
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a: string, b: string) => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  /** The declarations of the first rule whose selector list contains `selector`. */
+  const ruleFor = (selector: string) => {
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (m[1].split(",").map((x) => x.trim()).includes(selector)) return m[2];
+    }
+    return null;
+  };
+
+  it("paints placeholders in the muted token at full opacity, which clears 4.5:1 on every field surface", () => {
+    mount(); // the shared teardown unmounts a root; the assertions themselves are on the stylesheet
+    for (const sel of [".sc-field input::placeholder", ".sc-field textarea::placeholder"]) {
+      const rule = ruleFor(sel);
+      expect(rule, `${sel} has a rule`).toBeTruthy();
+      expect(rule).toMatch(/color:\s*var\(--pg-muted\)/);
+      expect(rule).toMatch(/opacity:\s*1\b/);
+    }
+    const [muted, surface, raised] = [values("muted"), values("surface"), values("raised")];
+    expect(muted).toHaveLength(2);
+    for (let theme = 0; theme < 2; theme++) {
+      expect(contrast(muted[theme], surface[theme])).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(muted[theme], raised[theme])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("rings every focusable control in this drawer stylesheet indigo — no focus outline is gold", () => {
+    mount();
+    const focusRules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => /:focus(-visible)?\b/.test(m[1]) && /outline\s*:/.test(m[2]));
+    expect(focusRules.length).toBeGreaterThanOrEqual(8);
+    for (const m of focusRules) {
+      expect(m[2], m[1].trim()).not.toMatch(/gold/);
+    }
+    for (const sel of [".sc-btn:focus-visible", ".sc-seg button:focus-visible", ".sc-group-head:focus-visible",
+      ".sc-check:focus-visible", ".sc-ev:focus-visible", ".sc-dayrow:focus-visible"]) {
+      expect(ruleFor(sel), sel).toMatch(/outline:\s*2px solid hsl\(var\(--ring\)\)/);
+    }
+  });
+
+  it("gives both buttons inside the client box the box's full 44px — no border eating a dead edge", () => {
+    mount();
+    const box = ruleFor(".sc-combo")!;
+    expect(box).toMatch(/min-height:\s*44px/);
+    expect(box).not.toMatch(/(^|;|\s)border\s*:/);
+    expect(box).toMatch(/box-shadow:\s*inset 0 0 0 1px/);
+    expect(ruleFor(".sc-combo-trigger")).toMatch(/min-height:\s*44px/);
+    const clear = ruleFor(".sc-combo-clear")!;
+    expect(clear).toMatch(/width:\s*44px/);
+    expect(clear).toMatch(/min-height:\s*44px/);
+  });
+
+  it("marks the current client differently from the keyboard highlight", () => {
+    mount();
+    expect(ruleFor('.sc-combo-pop [cmdk-item].sc-combo-opt[data-selected="true"]')).toMatch(/--pg-violet/);
+    expect(ruleFor(".sc-combo-check")).not.toMatch(/--pg-violet/);
+    expect(ruleFor('.sc-combo-pop [cmdk-item].sc-combo-opt[data-current="true"] .sc-combo-opt-name')).toMatch(/font-weight:\s*600/);
+  });
+
+  it("rings a focused drawer field in the indigo ring token, never gold", () => {
+    mount();
+    const rule = ruleFor(".sc-field input:focus-visible");
+    expect(rule).toMatch(/outline:\s*2px solid hsl\(var\(--ring\)\)/);
+    expect(rule).not.toMatch(/gold/);
+  });
+});
+
+describe("Solo Calendar — a client session lands on a calendar the portal can change it on", () => {
+  const JORDAN = [{ id: "client-jordan", name: "Jordan Rivera", primaryEmail: "jordan@northwind.example" }];
+  const NO_CAL_HINT = /Pick a calendar so they can reschedule or cancel within its notice window\./;
+  const trigger = () => document.querySelector<HTMLButtonElement>('button[role="combobox"].sc-combo-trigger')!;
+  const pickJordan = () => {
+    if (!document.querySelector(".sc-combo-pop [cmdk-list]")) click(trigger());
+    click([...document.querySelectorAll(".sc-combo-pop [cmdk-item]")].find((o) => /Jordan/.test(o.textContent ?? "")) ?? null);
+  };
+  const calSelect = () => byId<HTMLSelectElement>("#sc-cal")!;
+  const openCreate = () => { mount(); click(buttonByText(/New appointment/i, document.body)); };
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
+    Element.prototype.scrollIntoView ??= () => {};
+  });
+  beforeEach(() => {
+    clientRead.clients = JORDAN;
+    state.calendars = [
+      calendarMeta({ id: "cal-paused", title: "Paused intake", enabled: false }),
+      calendarMeta({ id: "cal-strategy", title: "Strategy sessions", enabled: true }),
+      calendarMeta({ id: "cal-review", title: "Reviews", enabled: true }),
+    ];
+  });
+
+  it("fills an untouched Unassigned calendar with the first open one once a client is chosen", async () => {
+    openCreate();
+    expect(calSelect().value).toBe(UNASSIGNED);
+    pickJordan();
+    expect(calSelect().value).toBe("cal-strategy");
+    expect(dialog()?.textContent).not.toMatch(NO_CAL_HINT);
+    setValue(byId<HTMLInputElement>("#sc-title")!, "Strategy session");
+    click(buttonByText(/Save appointment/i, document.body));
+    await act(async () => { await Promise.resolve(); });
+    expect((createBooking.mock.calls.at(-1) as unknown as [{ calendarId: string }])[0].calendarId).toBe("cal-strategy");
+  });
+
+  it("never overwrites a calendar the owner already picked", () => {
+    openCreate();
+    setValue(calSelect(), "cal-review");
+    pickJordan();
+    expect(calSelect().value).toBe("cal-review");
+  });
+
+  it("keeps a calendar already in the field when the client changes, even if the calendar list has moved", () => {
+    openCreate();
+    pickJordan();
+    expect(calSelect().value).toBe("cal-strategy");
+    click(document.querySelector('button[aria-label="Remove Jordan Rivera"]'));
+    // A live refresh reorders the calendars; the field already holds a real calendar.
+    state.calendars = [state.calendars[2], state.calendars[1]];
+    act(() => {
+      root.render(<SoloCalendarWorkspace activeTenantId="tenant-1" connectionsHref="/solo/1/integrations" />);
+    });
+    pickJordan();
+    expect(calSelect().value).toBe("cal-strategy");
+  });
+
+  it("respects an owner who chose Unassigned on purpose, and says what that costs the client", () => {
+    openCreate();
+    setValue(calSelect(), "cal-review");
+    setValue(calSelect(), UNASSIGNED);
+    pickJordan();
+    expect(calSelect().value).toBe(UNASSIGNED);
+    expect(dialog()?.textContent).toMatch(NO_CAL_HINT);
+    const hint = [...dialog()!.querySelectorAll(".sc-field-hint")].find((p) => NO_CAL_HINT.test(p.textContent ?? ""))!;
+    expect(calSelect().getAttribute("aria-describedby")).toBe(hint.id);
+  });
+
+  it("says what is missing when there is no open calendar to offer", () => {
+    state.calendars = [calendarMeta({ id: "cal-paused", title: "Paused intake", enabled: false })];
+    openCreate();
+    pickJordan();
+    expect(calSelect().value).toBe(UNASSIGNED);
+    expect(dialog()?.textContent).toMatch(NO_CAL_HINT);
+  });
+
+  it("shows no calendar hint for a guest who is not a client", () => {
+    openCreate();
+    expect(dialog()?.textContent).not.toMatch(NO_CAL_HINT);
   });
 });
 

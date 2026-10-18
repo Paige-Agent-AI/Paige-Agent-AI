@@ -200,6 +200,20 @@ export function AppNav({ user }: AppNavProps) {
     });
   }
 
+  // Sessions is the customer's own bookings with their business (E09 Slice 2). The Playbook catalog
+  // places it, and the presentation overlay may hide it; it is shown ONLY to a customer of one
+  // business — staff and a customer of several businesses have no sessions this page can show.
+  // A Playbook that predates the key still gets it, after Messages, unless the overlay hides it.
+  const sessionsHidden = portalConfig.modules?.find((m) => m.key === "sessions")?.visible === false;
+  if (!isCustomer) {
+    for (let i = navItems.length - 1; i >= 0; i--) if (navItems[i].href === "/app/sessions") navItems.splice(i, 1);
+  } else if (!sessionsHidden && !navItems.some((i) => i.href === "/app/sessions")) {
+    const after = navItems.findIndex((i) => i.href === "/app/messages");
+    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
+      label: "Sessions", href: "/app/sessions", icon: CalendarClock,
+    });
+  }
+
   // Planning is the Task Manager — where every reminder/task/milestone Paige
   // sets actually lives, and the landing spot for a fired reminder's
   // notification. Staff always get it (plan_list is tenant-member scoped, so a

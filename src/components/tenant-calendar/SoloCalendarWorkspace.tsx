@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus, Settings2, SlidersHorizontal,
-  TriangleAlert, X,
+  AlertTriangle, CalendarDays, Check, ChevronLeft, ChevronRight, ChevronsUpDown, Plus, Settings2,
+  SlidersHorizontal, TriangleAlert, X,
 } from "lucide-react";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import {
-  DEFAULT_CALENDAR_COLOR, UNASSIGNED_CALENDAR, addDays, availabilityFor, hourOf,
+  DEFAULT_CALENDAR_COLOR, UNASSIGNED_CALENDAR, addDays, availabilityFor, defaultCalendarForClient, hourOf,
   parseIntakeQuestions, parseNotifyConfig, parseOverrides, parseWindows,
   rangeFor, rangeLabel, seatsHeld, startOfDay, startOfWeek, useSoloCalendar, wantsSms,
-  type CalendarReminder, type SoloBooking, type SoloCalendarMeta, type ViewMode,
+  type CalendarReminder, type CreateBookingInput, type SoloBooking, type SoloCalendarMeta, type ViewMode,
 } from "./useSoloCalendar";
+import { useSoloDealClients, type DealClient } from "@/solo/deals/useSoloDealClients";
 import "./solo-calendar.css";
 
 /**
@@ -158,7 +162,10 @@ function Drawer({ title, sub, onClose, children, foot, wide, focusFallbackRef }:
     const fallback = focusFallbackRef?.current ?? null;
     panelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
+      // A layer opened INSIDE the drawer (the client list) handles its own Escape
+      // first and marks the event handled. That press closes the list, not the
+      // whole form the owner is half-way through.
+      if (e.key === "Escape") { if (e.defaultPrevented) return; e.stopPropagation(); onClose(); return; }
       if (e.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;
@@ -860,6 +867,7 @@ export function SoloCalendarWorkspace({ activeTenantId, connectionsHref, openPai
 
       {creating && (
         <CreateDrawer
+          activeTenantId={activeTenantId}
           calendars={calendars}
           onClose={() => setCreating(false)}
           onCreate={cal.createBooking}
@@ -1088,13 +1096,207 @@ function AgendaView({ cursor, bookings, conflicts, phase, colorFor, onOpen }: Vi
 
 /* --------------------------------------------------------------- creating --- */
 
-function CreateDrawer({ calendars, onClose, onCreate }: {
-  calendars: { id: string; title: string }[];
+/**
+ * Who the appointment is for — one combobox.
+ *
+ * Reads the business's real CRM clients through the SAME read the Pipeline's client
+ * picker uses (`useSoloDealClients` — tenant-pinned, paged, read-only), so there is
+ * one client list on the platform, not a calendar-only copy of it.
+ *
+ * The control is the house Command-in-Popover pattern (`NewDealDialog`,
+ * `setup-business-time-zone`), with ONE deliberate difference: the list is not
+ * portalled. The house `PopoverContent` mounts into <body>, where its z-50 would sit
+ * underneath this drawer's z-80 scrim, outside the drawer's focus trap, and outside
+ * the surface's --pg tokens. Rendering the same Radix content in place keeps it
+ * above the form, inside the trap, and in the palette.
+ *
+ * Choosing a client is what lets that client see the session in their portal; a
+ * typed guest name links nothing. "Not a client (guest only)" is still a real,
+ * supported choice for someone who has no client record.
+ */
+const GUEST_VALUE = "__guest__";
+const MORE_VALUE = "__more__";
+const RETRY_VALUE = "__retry__";
+
+function ClientField({ tenantId, value, onChange }: {
+  tenantId: string;
+  value: string;
+  onChange: (client: DealClient | null) => void;
+}) {
+  const { phase, clients, retry, loadMore, hasMore } = useSoloDealClients(tenantId);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const labelId = useId();
+  const triggerId = useId();
+  const hintId = useId();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const needle = search.trim().toLocaleLowerCase();
+  const matches = (c: DealClient) =>
+    !needle || `${c.name} ${c.primaryEmail ?? ""}`.toLocaleLowerCase().includes(needle);
+  const visible = clients.filter(matches);
+  const selected = clients.find((c) => c.id === value) ?? null;
+  const hint =
+    phase === "error" ? "Your client list couldn’t be read, so no client can be chosen right now. Try again, or book them as a guest."
+    : phase === "loading" ? "Loading your clients…"
+    : !clients.length ? "No clients yet. You can still book this as a guest by name."
+    : selected ? "They’ll see this session in their client portal."
+    : "Choose a client and they’ll see this session in their portal. A guest name alone won’t show it to anyone.";
+  // What the open list says when it has no client rows to offer. Each state is its
+  // own sentence, so loading never reads as empty and empty never reads as broken.
+  const listStatus =
+    phase === "error" ? "Your client list couldn’t be read."
+    : phase === "loading" ? "Loading your clients…"
+    : !clients.length ? "No clients yet. Book them as a guest by name."
+    : needle && !visible.length ? `No client matches “${search.trim()}”.`
+    : null;
+
+  const choose = (next: DealClient | null) => {
+    onChange(next);
+    setOpen(false);
+    setSearch("");
+  };
+  const guestOption = (
+    <CommandItem
+      key={GUEST_VALUE}
+      value={GUEST_VALUE}
+      onSelect={() => choose(null)}
+      className="sc-combo-opt"
+      data-current={!selected ? "true" : undefined}
+    >
+      <Check className="sc-combo-check" data-on={!selected ? "true" : undefined} aria-hidden="true" />
+      <span className="sc-combo-opt-name">Not a client (guest only)</span>
+      {!selected && <span className="sr-only"> (chosen)</span>}
+    </CommandItem>
+  );
+
+  return (
+    <div className="sc-field">
+      <span id={labelId} className="sc-field-label">Client</span>
+      <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setSearch(""); }}>
+        <PopoverPrimitive.Anchor asChild>
+          <div className="sc-combo" data-chosen={selected ? "true" : undefined}>
+            <PopoverTrigger asChild>
+              <button
+                ref={triggerRef}
+                id={triggerId}
+                type="button"
+                role="combobox"
+                className="sc-combo-trigger"
+                aria-labelledby={`${labelId} ${triggerId}`}
+                aria-describedby={hintId}
+              >
+                {selected ? (
+                  <span className="sc-combo-chip">
+                    <span className="sc-combo-chip-name">{selected.name}</span>
+                    {selected.primaryEmail && <span className="sc-combo-chip-email">{selected.primaryEmail}</span>}
+                  </span>
+                ) : (
+                  <span className="sc-combo-guest">Not a client (guest only)</span>
+                )}
+                <ChevronsUpDown className="sc-combo-caret" aria-hidden="true" />
+              </button>
+            </PopoverTrigger>
+            {selected && (
+              <button
+                type="button"
+                className="sc-combo-clear"
+                aria-label={`Remove ${selected.name}`}
+                onClick={() => { onChange(null); triggerRef.current?.focus(); }}
+              >
+                <X aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </PopoverPrimitive.Anchor>
+        <PopoverPrimitive.Content
+          className="sc-combo-pop"
+          align="start"
+          sideOffset={4}
+          collisionPadding={12}
+          onOpenAutoFocus={(e) => {
+            // Land in the search box, ready to type. When there is nothing to search
+            // (loading, unreadable, no clients) the box is disabled, so focus the list
+            // itself: the arrow keys and Enter still reach "Not a client" and the
+            // footer action instead of stranding the keyboard on the trigger.
+            e.preventDefault();
+            const pop = e.currentTarget as HTMLElement | null;
+            const input = pop?.querySelector<HTMLInputElement>("[cmdk-input]");
+            if (input && !input.disabled) input.focus();
+            else pop?.querySelector<HTMLElement>("[cmdk-root]")?.focus();
+          }}
+        >
+          {/* Reopening starts the highlight on the current choice, so Enter keeps it rather than
+              quietly swapping the client for a guest. */}
+          <Command shouldFilter={false} defaultValue={value || GUEST_VALUE} label="Search your clients by name or email" className="sc-combo-cmd">
+            <CommandInput
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Name or email"
+              disabled={phase !== "ready" || !clients.length}
+            />
+            <CommandList className="sc-combo-list" label="Clients">
+              <CommandGroup>
+                {/* With nothing typed, "Not a client" leads the list. Once the owner types,
+                    they are looking for someone, so the matches lead and the guest row
+                    follows them: cmdk highlights the first row on every search change, and
+                    Enter must choose the first match, not quietly book a guest. */}
+                {!needle && guestOption}
+                {phase === "ready" && visible.map((c) => (
+                  <CommandItem
+                    key={c.id}
+                    value={c.id}
+                    onSelect={() => choose(c)}
+                    className="sc-combo-opt"
+                    data-current={c.id === value ? "true" : undefined}
+                  >
+                    <Check className="sc-combo-check" data-on={c.id === value ? "true" : undefined} aria-hidden="true" />
+                    <span className="sc-combo-opt-text">
+                      <span className="sc-combo-opt-name">{c.name}</span>
+                      {c.primaryEmail && <span className="sc-combo-opt-email">{c.primaryEmail}</span>}
+                    </span>
+                    {c.id === value && <span className="sr-only"> (chosen)</span>}
+                  </CommandItem>
+                ))}
+                {needle && guestOption}
+              </CommandGroup>
+              {listStatus && (
+                <p
+                  className={`sc-combo-status${phase === "error" ? " sc-combo-status--bad" : ""}`}
+                  role={phase === "loading" ? "status" : undefined}
+                >
+                  {listStatus}
+                </p>
+              )}
+              {(phase === "error" || (phase === "ready" && hasMore)) && (
+                <>
+                  <CommandSeparator />
+                  <CommandGroup className="sc-combo-foot">
+                    {phase === "error" ? (
+                      <CommandItem value={RETRY_VALUE} onSelect={retry} className="sc-combo-opt sc-combo-opt--action">
+                        Try again
+                      </CommandItem>
+                    ) : (
+                      <CommandItem value={MORE_VALUE} onSelect={loadMore} className="sc-combo-opt sc-combo-opt--action">
+                        Load more clients
+                      </CommandItem>
+                    )}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverPrimitive.Content>
+      </Popover>
+      <p id={hintId} className="sc-field-hint" role={phase === "error" ? "alert" : undefined}>{hint}</p>
+    </div>
+  );
+}
+
+function CreateDrawer({ activeTenantId, calendars, onClose, onCreate }: {
+  activeTenantId: string;
+  calendars: { id: string; title: string; enabled?: boolean | null }[];
   onClose: () => void;
-  onCreate: (input: {
-    title: string; startAt: Date; durationMinutes: number;
-    calendarId: string; guestName: string | null; blocked: boolean;
-  }) => Promise<{ ok: boolean; message?: string }>;
+  onCreate: (input: CreateBookingInput) => Promise<{ ok: boolean; message?: string }>;
 }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(() => {
@@ -1104,17 +1306,45 @@ function CreateDrawer({ calendars, onClose, onCreate }: {
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(30);
   const [calendarId, setCalendarId] = useState(UNASSIGNED_CALENDAR);
+  // Set the moment the owner touches the Calendar field, even to leave it
+  // Unassigned. A default is only ever offered into a field nobody has chosen.
+  const [calendarChosen, setCalendarChosen] = useState(false);
   const [guest, setGuest] = useState("");
+  const [client, setClient] = useState<DealClient | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const calendarHintId = useId();
+
+  // Prefill the guest name from the client, but never overwrite a name the owner
+  // typed: only an empty field, or one still holding the previous client's name,
+  // is replaced. Clearing the client leaves the name where it is.
+  // A client session on no calendar can't be moved or cancelled from the portal, so
+  // choosing a client also fills an untouched, Unassigned Calendar field.
+  const chooseClient = (next: DealClient | null) => {
+    if (next && (!guest.trim() || guest === client?.name)) setGuest(next.name);
+    if (next && !calendarChosen && calendarId === UNASSIGNED_CALENDAR) {
+      const fallback = defaultCalendarForClient(calendars.map((c) => ({ id: c.id, enabled: c.enabled ?? null })));
+      if (fallback) setCalendarId(fallback);
+    }
+    setClient(next);
+  };
+  const clientOnNoCalendar = !!client && calendarId === UNASSIGNED_CALENDAR;
 
   const submit = async () => {
     setBusy(true); setMsg(null);
     const startAt = new Date(`${date}T${time}`);
     if (Number.isNaN(startAt.getTime())) { setBusy(false); setMsg("That date and time could not be read."); return; }
+    // An empty title means "block this time". Blocked time is the owner's own and
+    // never a session with a client, so a chosen client with no title is refused
+    // here rather than silently dropped or saved as a blocked slot.
+    if (client && !title.trim()) {
+      setBusy(false);
+      setMsg("Add a title for this session. Leaving the title empty blocks the time, and blocked time can’t be booked for a client.");
+      return;
+    }
     const res = await onCreate({
       title, startAt, durationMinutes: duration, calendarId,
-      guestName: guest || null, blocked: !title.trim(),
+      guestName: guest || null, blocked: !title.trim(), contactId: client?.id ?? null,
     });
     setBusy(false);
     if (!res.ok) { setMsg(res.message ?? "That appointment was refused."); return; }
@@ -1140,6 +1370,7 @@ function CreateDrawer({ calendars, onClose, onCreate }: {
         <label htmlFor="sc-title">Title</label>
         <input id="sc-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Leave empty to block the time" />
       </div>
+      <ClientField tenantId={activeTenantId} value={client?.id ?? ""} onChange={chooseClient} />
       <div className="sc-field">
         <label htmlFor="sc-date">Date</label>
         <input id="sc-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -1156,14 +1387,24 @@ function CreateDrawer({ calendars, onClose, onCreate }: {
       </div>
       <div className="sc-field">
         <label htmlFor="sc-cal">Calendar</label>
-        <select id="sc-cal" value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>
+        <select
+          id="sc-cal"
+          value={calendarId}
+          onChange={(e) => { setCalendarChosen(true); setCalendarId(e.target.value); }}
+          aria-describedby={clientOnNoCalendar ? calendarHintId : undefined}
+        >
           <option value={UNASSIGNED_CALENDAR}>Unassigned</option>
           {calendars.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
         </select>
+        {clientOnNoCalendar && (
+          <p id={calendarHintId} className="sc-field-hint">
+            Pick a calendar so they can reschedule or cancel within its notice window.
+          </p>
+        )}
       </div>
       <div className="sc-field">
-        <label htmlFor="sc-guest">Guest name</label>
-        <input id="sc-guest" value={guest} onChange={(e) => setGuest(e.target.value)} placeholder="Optional" />
+        <label htmlFor="sc-guest">{client ? "Name on the booking" : "Guest name"}</label>
+        <input id="sc-guest" value={guest} onChange={(e) => setGuest(e.target.value)} placeholder={client ? "As the client should appear" : "Optional"} />
       </div>
       <p className="sc-note">
         The booking service refuses an appointment that overlaps one you already hold, so a clash

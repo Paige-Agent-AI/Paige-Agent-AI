@@ -112,6 +112,7 @@ try{
    OR proname LIKE 'paige_chat_interactive_%' OR proname IN('plan_set_reminder','resolve_tool_autonomy','set_tool_autonomy',
     'trust_effective_rung','platform_safety_proof_internal','trust_required_proof','trust_attestation_window'))`));
  const before=run(writer),beforeContract=existingContract();
+ const beforeExtensions=run('SELECT jsonb_agg(jsonb_build_object(\'name\',extname,\'version\',extversion,\'owner\',extowner) ORDER BY extname) FROM pg_extension');
  if(!baseline){
   let migration=read('20271110023000_reminder_approved_intent.sql');
   if(policyNegativeControl){
@@ -120,10 +121,12 @@ try{
    console.log('NEGATIVE CONTROL: only the native policy consult calls omitted; expected OFF refusal assertion must fail.');
   }
   run(migration);run(migration);
+  assert.equal(run('SELECT jsonb_agg(jsonb_build_object(\'name\',extname,\'version\',extversion,\'owner\',extowner) ORDER BY extname) FROM pg_extension'),beforeExtensions,
+   'Native builtin digest introduces no extension or extension-owner change');
   assert.equal(run(writer),before,'Incumbent writer identity/source/ABI/ACL/config unchanged');
   assert.deepEqual(existingContract(),beforeContract,'Every incumbent durable/Document/runtime/native-reminder ABI/body/ACL/config is preserved');
-  fs.mkdirSync(path.join(root,'work/reminder-approved-intent'),{recursive:true});
-  fs.writeFileSync(path.join(root,'work/reminder-approved-intent/incumbent-contract-preservation.json'),JSON.stringify({before:beforeContract,after:existingContract()},null,2));
+  fs.mkdirSync(path.join(root,'work/reminder-approved-intent/successor-digest-resolver'),{recursive:true});
+  fs.writeFileSync(path.join(root,'work/reminder-approved-intent/successor-digest-resolver/incumbent-contract-preservation.json'),JSON.stringify({before:beforeContract,after:existingContract()},null,2));
   run(fs.readFileSync(path.join(root,'supabase/tests/paige_durable_work_envelope.sql'),'utf8'));
   console.log('PASS unchanged incumbent rolled-back durable envelope regression and native contract catalog equality');
  }
@@ -173,11 +176,11 @@ try{
   assert.equal(run(`SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id=${q(tenant)} AND capability_key='plan_set_reminder'`),'1');
   assert.equal(run(`SELECT count(*) FROM public.paige_durable_work WHERE intent_id=${q(proposal)} AND status='succeeded'`),'1');
   console.log('PASS concurrent ACK-loss readback: same work/reminder/audit/native Rail/terminal, zero second writer');
-  function nextWork(n){
+  function nextWork(n,extraArgs={}){
    const p=id(n),fp=n.toString(16).padStart(16,'0');
    run(`INSERT INTO public.paige_pending_confirmations(id,user_id,tenant_id,thread_id,tool_name,fingerprint,args,summary,issued_in_request,server_issued_at)
     VALUES(${q(p)},${q(actor)},${q(tenant)},${q(thread)},'plan_set_reminder',${q(fp)},
-     '{"title":"Review one policy-bounded reminder","remind_at":"2030-01-03T10:00:00Z"}','Neutral policy race',${q(issued)},
+     ${q(JSON.stringify({title:'Review one policy-bounded reminder',remind_at:'2030-01-03T10:00:00Z',...extraArgs}))},'Neutral policy race',${q(issued)},
      (SELECT created_at-interval '1 second' FROM public.paige_chat_turns WHERE thread_id=${q(thread)} AND role='user'))`);
    return parse(run(service(`SELECT public.adopt_paige_reminder_approval(${[p,actor,tenant,thread].map(q).join(',')},NULL,${q(fp)},${[issued,request,intent,nonce].map(q).join(',')})`))).work_id;
   }
@@ -229,6 +232,17 @@ try{
   assert.equal(run(`SELECT status FROM public.paige_durable_work WHERE id=${q(executesFirst)}`),'succeeded');
   assert.equal(run(`SELECT count(*) FROM public.plan_items WHERE tenant_id=${q(tenant)}`),String(Number(countBeforeExpiry)+1));
   console.log('PASS actual execute-versus-expiry races: terminal success OR expired/no-effect; never expiry plus effect');
+  // Distinctive neutral content and an explicit OTHER target prove the new audit
+  // provenance does not replicate protected args into the retained audit home.
+  const retentionTitle='Neutral private retention title',retentionSummary='Neutral private retention detail',targetPerson=id(130);
+  run(`INSERT INTO auth.users(id)VALUES(${q(targetPerson)});
+   INSERT INTO public.tenant_members(tenant_id,user_id,status,role)VALUES(${q(tenant)},${q(targetPerson)},'active','member');
+   INSERT INTO public.user_roles VALUES(${q(actor)},'admin')`);
+  const retentionWork=nextWork(39,{title:retentionTitle,summary:retentionSummary,target_user_id:targetPerson});
+  const retentionResult=parse(run(executeWork(retentionWork))),retentionAuditId=retentionResult.original_result.receipt_run_id;
+  const auditBeforePurge=parse(run(`SELECT jsonb_build_object('id',id,'user_id',user_id,'entity',entity,'action',action,'entity_id',entity_id,
+   'baseline',data-'approved_reminder_work_id'-'approved_reminder_args'-'approved_reminder_args_sha256') FROM public.audit_logs WHERE id=${q(retentionAuditId)}`));
+  assert.equal(retentionResult.original_readback.assigned_to_user_id,targetPerson);
   // Reuse the canonical Operator proof's native functions and R0 registry. Empty
   // provider relations are explicit local infrastructure, not provider retirement.
   run(`CREATE TYPE public.tenant_status AS ENUM('trial','active','past_due','suspended','canceled');
@@ -305,6 +319,22 @@ try{
   assert.equal(run('SELECT count(*) FROM auth.users'),authCount,'Canonical retirement preserves shared Auth identities');
   assert.equal(run(`SELECT count(*) FROM public.tenant_members WHERE tenant_id=${q(survivor)} AND user_id=${q(actor)} AND status='active'`),'1');
   console.log('PASS actual canonical current archive/preflight/child-first purge: settled reminder+approval+work+thread removed, shared Auth/survivor membership retained; audit-refusal rollback preserved');
+  const retained=parse(run(`SELECT jsonb_build_object('id',id,'user_id',user_id,'entity',entity,'action',action,'entity_id',entity_id,'data',data,
+   'baseline',data-'approved_reminder_work_id'-'approved_reminder_args'-'approved_reminder_args_sha256') FROM public.audit_logs WHERE id=${q(retentionAuditId)}`));
+  const retainedOriginal=Object.fromEntries(Object.entries(retained).filter(([key])=>key!=='data'));
+  const retentionProof={auditId:retained.id,tenantRows:Number(run(`SELECT count(*) FROM public.tenants WHERE id=${q(tenant)}`)),
+   protectedWorkRows:Number(run(`SELECT count(*) FROM public.paige_durable_work WHERE id=${q(retentionWork)}`)),
+   baselinePreserved:JSON.stringify(retainedOriginal)===JSON.stringify(auditBeforePurge),
+   hasNewRawArgs:Object.hasOwn(retained.data,'approved_reminder_args'),
+   hasNewTitle:JSON.stringify(retained.data).includes(retentionTitle),hasNewSummary:JSON.stringify(retained.data).includes(retentionSummary),
+   hasNewTargetPerson:JSON.stringify(retained.data).includes(targetPerson),hasDigest:typeof retained.data.approved_reminder_args_sha256==='string'};
+  fs.writeFileSync(path.join(root,'work/reminder-approved-intent/successor-digest-resolver/retained-audit-after-purge.json'),JSON.stringify(retentionProof,null,2));
+  assert.deepEqual(retainedOriginal,auditBeforePurge,'Original native audit identity and inherited data survive unchanged');
+  assert(!retentionProof.hasNewTitle&&!retentionProof.hasNewSummary&&!retentionProof.hasNewTargetPerson&&!retentionProof.hasNewRawArgs,
+   'New raw approved title/summary/target args must not survive canonical purge in retained audit');
+  assert.equal(retained.data.approved_reminder_work_id,retentionWork);
+  assert.match(retained.data.approved_reminder_args_sha256,/^[0-9a-f]{64}$/);
+  console.log('PASS actual post-purge retained audit: original native fields/IDs retained, new provenance is work UUID plus SHA256 only; no new raw title/summary/target-person copy');
  }
  console.log('PASS native reminder approved-intent SQL controls; unchanged nine-argument writer and migration reapply');
 }finally{await db.close();}

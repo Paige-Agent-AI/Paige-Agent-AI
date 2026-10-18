@@ -373,5 +373,172 @@ do $$declare pid uuid; wid uuid; r jsonb; th uuid; consumed timestamptz; ver big
  update public.profiles set active_tenant_id='a2300000-0000-4000-8000-000000000010';
  r:=pg_temp.adopt(pid);perform pg_temp.assert_true(r->>'work_status'='expired','valid original workspace may observe no-effect expiry');
 end $$;
+create function pg_temp.resolve_reminder(pid uuid,ov jsonb default '{}') returns jsonb language plpgsql as $$
+declare p public.paige_pending_confirmations%rowtype;
+begin
+ select * into strict p from public.paige_pending_confirmations where id=pid;
+ return public.resolve_paige_reminder_approval(p.id,coalesce((ov->>'tenant')::uuid,p.tenant_id),
+  coalesce((ov->>'thread')::uuid,p.thread_id),(ov->>'client')::uuid);
+end $$;
+
+do $$declare pid uuid; wid uuid; th uuid; r jsonb; before_work jsonb; before_proposal jsonb; mode text; field text;
+ n integer:=400; made record; p public.paige_pending_confirmations%rowtype; seal jsonb; effect_counts jsonb; before_effects jsonb;
+begin
+ perform pg_temp.assert_true(to_regprocedure('pg_catalog.sha256(bytea)') is not null,'SHA256 is a pg_catalog builtin, not a new extension');
+ perform pg_temp.assert_true(pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to('abc','UTF8')),'hex')=
+  'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','actual builtin SHA256 known vector');
+ perform pg_temp.assert_true(has_function_privilege('authenticated','public.resolve_paige_reminder_approval(uuid,uuid,uuid,uuid)','EXECUTE'),'original-JWT resolver grant');
+ foreach mode in array array['anon','service_role'] loop
+  perform pg_temp.assert_true(not has_function_privilege(mode,'public.resolve_paige_reminder_approval(uuid,uuid,uuid,uuid)','EXECUTE'),'resolver has no '||mode||' grant');
+  perform pg_temp.assert_true(not has_table_privilege(mode,'public.paige_durable_work','SELECT'),'resolver adds no raw durable SELECT: '||mode);
+ end loop;
+ perform pg_temp.assert_true(not has_table_privilege('authenticated','public.paige_durable_work','SELECT'),'resolver adds no authenticated table SELECT');
+ pid:=pg_temp.reminder_case(400);r:=pg_temp.adopt(pid);wid:=(r->>'work_id')::uuid;
+ select thread_id,to_jsonb(w) into th,before_work from public.paige_durable_work w where id=wid;
+ select to_jsonb(p0) into before_proposal from public.paige_pending_confirmations p0 where id=pid;
+ select jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+  (select count(*) from public.paige_workspace_events)) into before_effects;
+ set local role authenticated;
+ r:=public.resolve_paige_reminder_approval(pid,'a2300000-0000-4000-8000-000000000010',th,null);
+ reset role;
+ perform pg_temp.assert_true(r=jsonb_build_object('v',1,'proposal_id',pid,'work_id',wid,'work_status','claimed'),'actual authenticated resolver returns only closed opaque binding/status');
+ perform pg_temp.assert_true((select to_jsonb(w)=before_work from public.paige_durable_work w where id=wid)
+  and (select to_jsonb(p0)=before_proposal from public.paige_pending_confirmations p0 where id=pid),'resolver does not consume/transition/normalize work');
+ perform pg_temp.assert_true(before_effects=jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+  (select count(*) from public.paige_workspace_events)),'resolver creates no reminder/audit/Rail');
+ perform pg_temp.refuses(format('insert into public.paige_durable_work select (jsonb_populate_record(null::public.paige_durable_work,
+  to_jsonb(w)||jsonb_build_object(''id'',gen_random_uuid(),''idempotency_key'',''local_duplicate_intent''))).* from public.paige_durable_work w where id=%L',wid),
+  '23505','native unique actor/tenant/proposal intent refuses ambiguous work identity');
+ foreach mode in array array['anon','service_role'] loop
+  begin
+   execute format('set local role %I',mode);
+   perform public.resolve_paige_reminder_approval(pid,'a2300000-0000-4000-8000-000000000010',th,null);
+   reset role;raise exception 'resolver unexpectedly callable by %',mode;
+  exception when insufficient_privilege then reset role;perform pg_temp.assert_true(true,'actual denied resolver role: '||mode);end;
+ end loop;
+ foreach field in array array['tenant','thread','client'] loop
+  perform pg_temp.refuses(format('select pg_temp.resolve_reminder(%L,%L)',pid,jsonb_build_object(field,'a2300000-0000-4000-8000-000000000002')),'42501','resolver exact '||field||' binding');
+ end loop;
+ foreach field in array array['actor','null_actor','profile','membership','tenant_status','audience','archive'] loop
+  begin
+   case field
+    when 'actor' then perform set_config('test.actor','a2300000-0000-4000-8000-000000000002',true);
+    when 'null_actor' then perform set_config('test.actor','',true);
+    when 'profile' then update public.profiles set active_tenant_id='a2300000-0000-4000-8000-000000000011';
+    when 'membership' then update public.tenant_members set status='inactive';
+    when 'tenant_status' then update public.tenants set status='suspended' where id='a2300000-0000-4000-8000-000000000010';
+    when 'audience' then update public.paige_chat_threads set audience='customer_private' where id=th;
+    when 'archive' then update public.paige_chat_threads set is_archived=true where id=th;
+   end case;
+   perform pg_temp.refuses(format('select pg_temp.resolve_reminder(%L)',pid),'42501','resolver fresh scope: '||field);
+   raise exception 'rollback resolver scope control' using errcode='Z0001';
+  exception when sqlstate 'Z0001' then null;end;
+ end loop;
+ -- Lookup remains observation, even under Stop/OFF/hold/expiry. It must not
+ -- activate policy/runtime, normalize expired claims or supply a terminal receipt.
+ update public.paige_pending_confirmations set expires_at=now()-interval '1 second' where id=pid;
+ update public.paige_durable_work set lease_until=now()-interval '1 second' where id=wid;
+ perform public.paige_chat_interactive_begin_v2(th,null,'a2300000-0000-4000-8000-000000000050','',false,true,true);
+ update public.paige_chat_threads set interactive_recovery_hold=gen_random_uuid(),interactive_executor_intent=null where id=th;
+ insert into public.tenant_tool_autonomy values('a2300000-0000-4000-8000-000000000010','plan_set_reminder','off');
+ select to_jsonb(w) into before_work from public.paige_durable_work w where id=wid;
+ r:=pg_temp.resolve_reminder(pid);
+ perform pg_temp.assert_true(r->>'work_status'='claimed' and (select to_jsonb(w)=before_work from public.paige_durable_work w where id=wid),'expired held/OFF/Stop lookup has no normalization/dispatch');
+ delete from public.tenant_tool_autonomy;
+ foreach mode in array array['claimed','blocked','expired','outcome_unknown','failed','cancelled','succeeded'] loop
+  n:=n+1;pid:=pg_temp.reminder_case(n);r:=pg_temp.adopt(pid);wid:=(r->>'work_id')::uuid;
+  if mode='succeeded' then perform pg_temp.execute_work(wid);
+  elsif mode<>'claimed' then
+   if mode='expired' then update public.paige_durable_work set lease_until=now()-interval '1 second' where id=wid;end if;
+   perform public.transition_paige_durable_work(wid,(select idempotency_key from public.paige_durable_work where id=wid),mode,
+    case when mode in('failed','cancelled') then '{"reason":"Local no-effect state control"}'::jsonb end,null,
+    case when mode='blocked' then 'Local native review required' end);
+  end if;
+  select to_jsonb(w) into before_work from public.paige_durable_work w where id=wid;
+  r:=pg_temp.resolve_reminder(pid);
+  perform pg_temp.assert_true(r=jsonb_build_object('v',1,'proposal_id',pid,'work_id',wid,'work_status',mode),'resolver projects exact canonical '||mode);
+  perform pg_temp.assert_true((select to_jsonb(w)=before_work from public.paige_durable_work w where id=wid),'lookup leaves '||mode||' unchanged');
+ end loop;
+ -- Deliberately malformed generic envelopes are written only by this disposable
+ -- database owner. There is no new caller grant or API to mint these seals.
+ foreach field in array array['unsealed','v','proposal_id','fingerprint','issued_nonce','client_id','original_thread_id',
+  'stored_args','native_args','consumed_at_epoch','scope_epoch','work_kind','capability_key','thread_id','intent_id'] loop
+  n:=n+1;pid:=pg_temp.reminder_case(n);select * into p from public.paige_pending_confirmations where id=pid;
+  update public.paige_pending_confirmations set consumed_at=clock_timestamp() where id=pid returning * into p;
+  select * into made from public.create_paige_durable_work(p.tenant_id,p.user_id,
+   case when field='intent_id' then gen_random_uuid() else pid end,
+   case when field='thread_id' then 'a2300000-0000-4000-8000-000000000020'::uuid else p.thread_id end,
+   case when field='capability_key' then 'document_generate' else 'planning.set_reminder' end,
+   case when field='work_kind' then 'document_authoring' else 'approved_reminder' end,
+   jsonb_build_object('tenant_id',p.tenant_id,'actor_user_id',p.user_id),
+   case when field='scope_epoch' then 'incorrect-scope' else pid::text end,300,1);
+  seal:=jsonb_build_object('v',1,'proposal_id',pid,'fingerprint',p.fingerprint,'issued_nonce',p.issued_in_request,
+   'client_id',null,'original_thread_id',p.thread_id,'stored_args',p.args,'native_args',private.paige_reminder_args(p.args,p.tenant_id),
+   'consumed_at_epoch',extract(epoch from p.consumed_at));
+  if field in('v','proposal_id','fingerprint','issued_nonce','client_id','original_thread_id','stored_args','native_args','consumed_at_epoch') then
+   seal:=seal||jsonb_build_object(field,case when field='v' then '2'::jsonb when field in('stored_args','native_args') then '{}'::jsonb else to_jsonb('incorrect'::text) end);
+  end if;
+  if field<>'unsealed' then update public.paige_durable_work set request_payload=seal where id=made.work_id;end if;
+  perform pg_temp.refuses(format('select pg_temp.resolve_reminder(%L)',pid),'42501','resolver refuses generic/mismatched seal: '||field);
+ end loop;
+ pid:=pg_temp.reminder_case(450);
+ perform pg_temp.refuses(format('select pg_temp.resolve_reminder(%L)',pid),'42501','unconsumed proposal cannot resolve work');
+ update public.paige_pending_confirmations set consumed_at=clock_timestamp() where id=pid;
+ perform pg_temp.refuses(format('select pg_temp.resolve_reminder(%L)',pid),'42501','old consumed proposal without bridge cannot resolve');
+ perform pg_temp.refuses('select public.resolve_paige_reminder_approval(gen_random_uuid(),''a2300000-0000-4000-8000-000000000010'',''a2300000-0000-4000-8000-000000000020'',null)','42501','missing proposal returns no binding');
+end $$;
+
+do $$declare pid uuid; wid uuid; th uuid; r jsonb; original jsonb; original_audit jsonb; audit_id uuid; mode text; field text;
+ before_work jsonb; before_effects jsonb; n integer:=500; begin
+ foreach mode in array array['claimed','blocked','expired','outcome_unknown','failed','cancelled'] loop
+  n:=n+1;pid:=pg_temp.reminder_case(n);r:=pg_temp.adopt(pid);wid:=(r->>'work_id')::uuid;
+  select thread_id into th from public.paige_durable_work where id=wid;
+  if mode<>'claimed' then
+   if mode='expired' then update public.paige_durable_work set lease_until=now()-interval '1 second' where id=wid;end if;
+   perform public.transition_paige_durable_work(wid,(select idempotency_key from public.paige_durable_work where id=wid),mode,
+    case when mode in('failed','cancelled') then '{"reason":"Local no-effect history control"}'::jsonb end,null,
+    case when mode='blocked' then 'Local native review required' end);
+  end if;
+  select to_jsonb(w) into before_work from public.paige_durable_work w where id=wid;
+  select jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+   (select count(*) from public.paige_workspace_events)) into before_effects;
+  perform pg_temp.refuses(format('select public.execute_paige_approved_reminder(%L,%L,%L,null,null,null)',wid,
+   'a2300000-0000-4000-8000-000000000010',th),case when mode='claimed' then '42501' else '55000' end,'NULL pair cannot execute native '||mode);
+  perform pg_temp.assert_true((select to_jsonb(w)=before_work from public.paige_durable_work w where id=wid),'NULL-pair history leaves '||mode||' envelope unchanged');
+  perform pg_temp.assert_true(before_effects=jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+   (select count(*) from public.paige_workspace_events)),'NULL pair has no reminder/audit/Rail effect for '||mode);
+ end loop;
+ pid:=pg_temp.reminder_case(510);r:=pg_temp.adopt(pid);wid:=(r->>'work_id')::uuid;
+ select thread_id into th from public.paige_durable_work where id=wid;
+ perform pg_temp.refuses(format('select public.execute_paige_approved_reminder(%L,%L,%L,null,null,%L)',wid,
+  'a2300000-0000-4000-8000-000000000010',th,'a2300000-0000-4000-8000-000000000060'),'42501','mixed NULL intent cannot dispatch');
+ perform pg_temp.refuses(format('select public.execute_paige_approved_reminder(%L,%L,%L,null,%L,null)',wid,
+  'a2300000-0000-4000-8000-000000000010',th,'a2300000-0000-4000-8000-000000000050'),'42501','mixed NULL runtime nonce cannot dispatch');
+ r:=pg_temp.execute_work(wid);original:=r;audit_id:=(r->'original_result'->>'receipt_run_id')::uuid;
+ select data into original_audit from public.audit_logs where id=audit_id;
+ perform pg_temp.assert_true(not original_audit?'approved_reminder_args' and original_audit->>'approved_reminder_work_id'=wid::text
+  and original_audit->>'approved_reminder_args_sha256'=pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(
+   (select (request_payload->'native_args')::text from public.paige_durable_work where id=wid),'UTF8')),'hex'),'new native audit stores opaque seal digest without raw normalized args');
+ foreach field in array array['missing_digest','wrong_digest','wrong_work','missing_audit','missing_rail'] loop
+  begin
+   case field
+    when 'missing_digest' then update public.audit_logs set data=data-'approved_reminder_args_sha256' where id=audit_id;
+    when 'wrong_digest' then update public.audit_logs set data=data||jsonb_build_object('approved_reminder_args_sha256',repeat('0',64)) where id=audit_id;
+    when 'wrong_work' then update public.audit_logs set data=data||jsonb_build_object('approved_reminder_work_id',gen_random_uuid()) where id=audit_id;
+    when 'missing_audit' then delete from public.audit_logs where id=audit_id;
+    when 'missing_rail' then delete from public.paige_workspace_events where source_id=audit_id;
+   end case;
+   perform pg_temp.refuses(format('select public.execute_paige_approved_reminder(%L,%L,%L,null,null,null)',wid,
+    'a2300000-0000-4000-8000-000000000010',th),'55000','native terminal history requires original work+digest+audit+Rail: '||field);
+   raise exception 'rollback digest control' using errcode='Z0001';
+  exception when sqlstate 'Z0001' then null;end;
+ end loop;
+ set local timezone='America/Los_Angeles';
+ r:=public.execute_paige_approved_reminder(wid,'a2300000-0000-4000-8000-000000000010',th,null,null,null);
+ reset timezone;
+ perform pg_temp.assert_true(r->>'historical'='true' and r->'original_result'=original->'original_result' and r->'original_readback'=original->'original_readback','opaque digest replay preserves original native receipt under another timezone');
+ perform pg_temp.assert_true((select pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(jsonb_object_agg(key,value order by key desc)::text,'UTF8')),'hex')
+  from jsonb_each((select request_payload->'native_args' from public.paige_durable_work where id=wid)))=original_audit->>'approved_reminder_args_sha256','canonical jsonb key order cannot change normalized-args digest');
+end $$;
 select 'REMINDER_APPROVED_INTENT_PASS='||last_value from pg_temp.reminder_assertion_count;
 rollback;

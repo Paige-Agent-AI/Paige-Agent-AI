@@ -84,7 +84,8 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
       // Honor the actual caller/id predicates. The recording fake deliberately
       // delegates filtering to fixtures; returning an invisible foreign row here
       // would bypass the very native/query boundary this negative exercises.
-      paige_chat_threads:filters=>[{id:THREAD,caller_user_id:mode==='foreign_thread'?OTHER:USER,tenant_id:mode==='foreign_thread'?OTHER:TENANT,title:'Neutral read guidance',message_count:1}]
+      paige_chat_threads:filters=>[{id:THREAD,caller_user_id:mode==='foreign_thread'?OTHER:USER,tenant_id:mode==='foreign_thread'?OTHER:TENANT,
+        audience:'workspace',interactive_recovery_hold:null,title:'Neutral read guidance',message_count:1}]
         .filter(row=>filters.every(([op,column,value])=>op!=='eq'||row[column]===value)),paige_chat_turns:()=>[]},
     serviceTables:{user_roles:()=>[],tenant_members:()=>[{tenant_id:TENANT,user_id:USER,role:'owner',status:'active'}],tenants:()=>[{id:TENANT,account_type:'standalone',parent_tenant_id:null}],client_memory:()=>[]},
   });

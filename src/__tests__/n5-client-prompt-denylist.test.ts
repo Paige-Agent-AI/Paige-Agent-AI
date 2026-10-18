@@ -221,21 +221,43 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
       expect(persisted).toEqual([]);
     }
   });
-  it("writes a receipt-only assistant turn without inventing spoken text", async () => {
+  const liveReceiptSeam = (permission: "allowed" | "held" | "unknown" = "allowed", lateHold = false) => {
     const writes: unknown[] = [];
+    const checks: unknown[] = [], holds: boolean[] = [], summaries: string[] = [], errors: unknown[][] = [];
     const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
     const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
     // This extracted receipt is the ordinary non-customer Live path. Bind the
-    // newly closed-over audience/interactive state without changing the real
-    // persistence seam or inventing a customer receipt/session in the fixture.
-    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", "customerPortal", "interactiveConversational", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", append, client, async () => {}, { error() {} }, false, false);
+    // actual persistence seam's lexical permission/hold ports explicitly. These
+    // deterministic port verdicts are not native thread/authorization proof.
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", "customerPortal", "interactiveConversational", "requireRecoveryPermission", "refreshRecoveryHold", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async (id: string) => { summaries.push(id); }, { error: (...args: unknown[]) => { errors.push(args); } }, false, false,
+      async (effect?: boolean) => { checks.push(effect); if (permission !== "allowed") throw Error(permission === "held" ? "INTERACTIVE_RECOVERY_READ_ONLY" : "INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE"); },
+      async () => { holds.push(lateHold); return lateHold; });
+    return { persist, writes, checks, holds, summaries, errors };
+  };
+  it("writes a receipt-only assistant turn without inventing spoken text", async () => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam();
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);
     expect(writes[0]).toMatchObject({ p_content: "", p_bundle_ref: bundleRef });
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([false]); expect(summaries).toEqual(["thread"]); expect(errors).toEqual([]);
     await persist("", { bundleRef: null });
     expect(writes).toHaveLength(1);
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([false]);
+  });
+  it.each(["held", "unknown"] as const)("refuses receipt persistence on %s recovery authority before append or maintenance", async permission => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam(permission);
+    await persist("", { bundleRef: { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] } });
+    expect(checks).toEqual([undefined]); expect(writes).toEqual([]); expect(holds).toEqual([]); expect(summaries).toEqual([]);
+    expect(errors).toHaveLength(1); expect(errors[0][1]).toBe(permission === "held" ? "INTERACTIVE_RECOVERY_READ_ONLY" : "INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE");
+  });
+  it("retains a real empty-prose receipt but suppresses title/summary maintenance on a later native hold", async () => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam("allowed", true);
+    const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
+    await persist("", { bundleRef });
+    expect(writes).toHaveLength(1); expect(writes[0]).toMatchObject({ p_content: "", p_bundle_ref: bundleRef });
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([true]); expect(summaries).toEqual([]); expect(errors).toEqual([]);
   });
   it("shares the success projection and drops CRM readback and locator from history", () => {
     // R2b: assistantTurnMetadata's bundleRef now also spreads the run REFERENCE from

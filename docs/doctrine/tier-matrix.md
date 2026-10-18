@@ -4928,7 +4928,7 @@ A business's customer sees the agreements that business sent them (`paige_agreem
 customer's one relationship, never a draft), opens one to sign through the existing, frozen `/sign/:token`
 page (§28), and downloads or opens the sealed signed copy. Owner ruling (2026-10-18): agreements stay in the
 portal and connect to Sales Agreements. Three SECURITY DEFINER functions with in-body scope (§59, migration
-`20271110090000`): `client_portal_agreements` (the list: exact keys, never a body, storage key, hash, token,
+`20271110220000`): `client_portal_agreements` (the list: exact keys, never a body, storage key, hash, token,
 signer, amount or offer), `client_portal_open_agreement_signing` (the only writer: re-mints the customer's own
 signer token, files one `paige_audit_log` row and NO agreement event, never writes `paige_agreements`) and
 `client_portal_agreement_document_scope` (the download door's scope check). The `agreement-document` edge

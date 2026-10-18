@@ -26,7 +26,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the own
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
-UNVERIFIED: authenticated customer list, sign and download on production; the Solo menu editor at the four owner widths and with PAIGE open; the `agreement-document` door 3 deployed readback; migration `20271110090000` persisted apply; Messages' `?draft=` prefill (Slice 5); screen reader; browser 400% zoom.
+UNVERIFIED: authenticated customer list, sign and download on production; the Solo menu editor at the four owner widths and with PAIGE open; the `agreement-document` door 3 deployed readback; migration `20271110220000` persisted apply; Messages' `?draft=` prefill (Slice 5); screen reader; browser 400% zoom.
 
 OWNER_INTENT: A customer opens their portal, sees the agreements their business sent them, signs digitally and downloads the signed copy, on the Sales Agreements the business already uses.
 MUST_NOT_HAPPEN: No draft, other customer's or other business's agreement reaches a customer; no body, signer, amount, storage key, hash or token is shown; no link outlives the emailed one or is minted over a revoked one; no agreement event is filed for a portal open; staff lose nothing at `/app/agreements`; the frozen signing page and owner screens are not edited.
@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: A customer with one waiting agreement sees "1 waiting for y
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: the three `client_portal_*agreement*` functions are SECURITY DEFINER with in-body relationship scope (§59) and no RLS policy changed; the only writer touches one signer's token fields and one audit row; the download door re-checks the session around a caller-JWT scope call; Paige's read capability `client.portal_agreements_read` binds no tool and writes nothing.
 
-INTERNAL_BUILD_IDENTITY: ddedea660000b4c914cad1525f921fadb41890a1 (backend head this frontend builds on); deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110090000 persisted apply on production after merge); edge=PROOF_OWED(agreement-document deploy readback after merge); evidence=scripts/live-drive/harness/portal-agreements-customer-mount/agreements-drive.mjs
+INTERNAL_BUILD_IDENTITY: ddedea660000b4c914cad1525f921fadb41890a1 (backend head this frontend builds on); deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110220000 persisted apply on production after merge); edge=PROOF_OWED(agreement-document deploy readback after merge); evidence=scripts/live-drive/harness/portal-agreements-customer-mount/agreements-drive.mjs
 RELEASE_CHANNEL: development: branch `sliceA-agreements`, not pushed; production deployment, migration persisted-apply and edge readback are verified after merge.
 RELEASE_CLASSIFICATION: internal-only: a Customer Portal slice; no customer release until all seven pillars and authenticated proof exist.
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch; no customer release named until the seven pillars and authenticated proof exist.
 RELEASE_NOTE_REQUIRED: NO: pre-launch internal increment.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local automated, database and harness-rendered proof; authenticated runtime proof owed.
-RELEASE_RECOVERY: position=forward-fix — the migration is additive (three SECURITY DEFINER functions and two internal helpers, no table, column, policy or trigger) and the frontend re-points one route and adds one; reference=supabase/migrations/20271110090000_e09_customer_portal_agreements.sql
+RELEASE_RECOVERY: position=forward-fix — the migration is additive (three SECURITY DEFINER functions and two internal helpers, no table, column, policy or trigger) and the frontend re-points one route and adds one; reference=supabase/migrations/20271110220000_e09_customer_portal_agreements.sql
 
 ## §58 call-outs (for owner sign-off)
 

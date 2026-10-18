@@ -153,7 +153,7 @@ export const CLIENT_PORTAL_PREFERENCES_READ={
 //
 // What a business's CUSTOMER may see of the agreements that business sent them: title, the linked
 // engagement's name, where it stands for them, and whether they can sign or download it. One reader
-// (public.client_portal_agreements, migration 20271110090000): SECURITY DEFINER, it re-proves the
+// (public.client_portal_agreements, migration 20271110220000): SECURITY DEFINER, it re-proves the
 // caller's one customer relationship from auth.uid() and returns only agreements whose contact IS
 // that relationship. No body, storage key, hash, token, signer identity or amount ever leaves it.
 //

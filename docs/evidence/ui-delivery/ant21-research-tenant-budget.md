@@ -1,5 +1,14 @@
 # Native Research: legacy tenant budget attribution
 
+## Prepared attempt-scope integration contract — 2026-10-17
+
+OWNER_INTENT: prepare all five existing Research model paths for the owner's OpenAI-primary/Anthropic-fallback direction using the original shared Fabric and original false Research release gate; this is not activation or measured provider acceptance.
+MUST_NOT_HAPPEN: no flag flip, hidden routing override, paid/provider request, new provider/model policy, invented strict spend cap, new tenant/account branch, blind fallback after unknown outcomes, historical rewrite or source-pin acceptance.
+MUST_PRESERVE: canonical Research authority, sources/citations and typed outcomes, native writer/readback/Rail, existing legacy provider/job/body/trace routing, shared budget/cache accounting, frozen Judge and frontier predicate, all18 historical capabilities and50 universal SOLO parity requirements. Authentication/signup/provisioning, approvals/autonomy, unrelated Spine executors, Chat/history/Live, shell geometry/accessibility, Vault and durable scheduling remain unchanged.
+ACCEPTANCE_CRITERIA: actual controlled source/transport tests prove enabled-path fresh authority after budget waits and before primary/fallback, cancellation/deadline refusal without late model dispatch, shared strategist recall fences, accurate trace/cache outcomes and unchanged flag-false route behavior. Legacy routed-text transport has no callback/signal option and must not be described as transport-cancelled. Paid24-case evaluation, deployment, authenticated activation, Live and owner acceptance remain UNVERIFIED.
+
+Current source baseline2635c205d4214ed0380d21ce8a9958d09f9ecade was grounded against ANT-21/147, Master, AGENTS, original #1851/#1855 and current open work. Root granted this bounded Research/shared-strategist lease after checking E01 and adjacent PR2040 for collision. No router, shared Fabric policy, credentials, provider settings or C0b pins are owned by this slice. Existing evidence below is preserved as dated history.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: verified actor/current workspace -> existing native Research phases -> existing routed-text budget and cost trace -> unchanged Research result/readback/receipt contract
 PAIGE_UI_DESIGN: PASS: native consumer wiring only; existing Conversations card and Research Home presentation, controls and recovery remain unchanged

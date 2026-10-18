@@ -40,7 +40,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { researchCompletion, type RunRequestCtx } from "./fabric.ts";
+import { researchCompletion, RESEARCH_FABRIC_ENABLED, type RunRequestCtx } from "./fabric.ts";
 import { strategizeBeforeReasoning } from "../_shared/reasoning/strategize.ts";
 import { recordCapabilityRun, type CapabilityOutcome } from "../_shared/capability-record.ts";
 import { parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT, type ResearchSourcePolicy, type ResearchSourceCoverage } from "../_shared/research-source-policy.ts";
@@ -2099,8 +2099,10 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
   let boundActor: string | null = null;
+  let modelAuthorityRefused = false;
   const assertResearchScope = async (): Promise<void> => {
     try {
+    if (modelAuthorityRefused || req.signal.aborted) throw new ResearchScopeError();
     if (!bearer) throw new ResearchScopeError(401);
     // Two fresh requests, ONE parallel network stage. Neither grants authority
     // alone: Auth validates the identity and the canonical SQL composes the exact
@@ -2132,11 +2134,35 @@ serve(async (req) => {
     error instanceof ResearchScopeError ? error.status : 403); }
   const refuseChangedScope = () => json({ error: "Research workspace changed or access could not be verified. Earlier authorized work may have run; inspect the original workspace before repeating it.", outcome_unknown: true }, 409);
 
+  // Immutable native context per phase. Match the existing provider's 120s maximum,
+  // narrowed by the incumbent gathering/synthesis deadline; never renew an expired
+  // phase on fallback. These options reach HTTP ONLY on the dormant Fabric path.
+  const modelContext = (phaseDeadline: number): RunRequestCtx => {
+    const deadline = Math.min(phaseDeadline, Date.now() + 120_000);
+    const signal = AbortSignal.any([req.signal, AbortSignal.timeout(Math.max(0, deadline - Date.now()))]);
+    const inTime = () => !signal.aborted && Date.now() < deadline;
+    return {
+      tenantId: resolvedTenantId,
+      runId,
+      signal,
+      beforeProviderAttempt: () => new Promise<boolean>(resolve => {
+        if (!inTime() || modelAuthorityRefused) { resolve(false); return; }
+        const stopped = () => resolve(false);
+        signal.addEventListener("abort", stopped, { once: true });
+        void assertResearchScope().then(() => resolve(inTime() && !modelAuthorityRefused), () => {
+          // A later A→B→A observation may not revive a refused run.
+          modelAuthorityRefused = true;
+          resolve(false);
+        }).finally(() => signal.removeEventListener("abort", stopped));
+      }),
+    };
+  };
+
   try {
   // §34 L4 phase-1: strategize BEFORE the research loop. Honest-degrade — it NEVER throws and can never
   // break the run (contract in strategize.ts); its one reason:strategize trace self-writes to L1 (§34).
   // Only the GENERAL path (planHop) consumes the strategy; dossier mode uses the deterministic
-  // planEntityHop and would discard it — so skip the frontier "plan" call there rather than pay for a
+  // planEntityHop and would discard it — so skip the shared strategy call there rather than pay for a
   // strategy nothing reads (§13/efficiency). General-path runs still land the trace + steer hop-0.
   const strategy = entityTarget
     ? null
@@ -2144,6 +2170,8 @@ serve(async (req) => {
         task: question,
         tenantId: resolvedTenantId,   // §9/#361: server-resolved, NEVER body.user_id
         taskId: runId,                // correlates the trace to this exact research run
+        fabricEnabled: RESEARCH_FABRIC_ENABLED,
+        ...modelContext(Date.now() + 120_000),
         // agentId omitted → defaults to "paige-strategist" (the first live paige-strategist trace row)
       });
   await assertResearchScope();
@@ -2201,7 +2229,7 @@ serve(async (req) => {
             : "")
         : "";
       await assertResearchScope();
-      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx, sourcePolicy);
+      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS) }, sourcePolicy);
       if (plan.done && hop > 0) { stop = "answered"; break; }
       queries = plan.queries.slice(0, BND.MAX_QUERIES_PER_HOP);
       if (queries.length === 0) {
@@ -2328,7 +2356,7 @@ serve(async (req) => {
   let synth: SynthOut;
   await assertResearchScope();
   if (entityTarget) {
-    const mono = await synthesize(question, domainHint, citable, entityTarget, fabricCtx);
+    const mono = await synthesize(question, domainHint, citable, entityTarget, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });
     if (!mono) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
       if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
@@ -2341,7 +2369,7 @@ serve(async (req) => {
     if (monoRoute) dossier.synthesis.served_route = monoRoute;
     synth = mono;
   } else {
-    const units = await planSynthesisUnits(question, domainHint, citable, fabricCtx);
+    const units = await planSynthesisUnits(question, domainHint, citable, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });
     for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
     costUSD += COST.cheapLLM; // the unit planner's extract call
     // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
@@ -2358,7 +2386,7 @@ serve(async (req) => {
         break;
       }
       const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
-      const outs = await Promise.all(lane.map(async (u) => { await assertResearchScope(); callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, fabricCtx); }));
+      const outs = await Promise.all(lane.map(async (u) => { await assertResearchScope(); callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, { ...fabricCtx, ...modelContext(synthDeadline) }); }));
       lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);

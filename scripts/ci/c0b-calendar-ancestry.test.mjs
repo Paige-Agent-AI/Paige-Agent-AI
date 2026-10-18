@@ -32,10 +32,12 @@ const changes = [
   ['control-body byte-limit refusal', controlTransportPath, 'if (length + value.byteLength > CHAT_CONTROL_MAX_BODY_BYTES)', 'if (false)'],
   ['reminder fresh acknowledgement runtime binding', reminderApprovalPath, "data.status === 'adopted' && (!hasRequestRuntime || data.work_status !== 'claimed')", "data.status === 'adopted' && data.work_status !== 'claimed'"],
   ['reminder exact stored argument identity', reminderApprovalPath, '!returnedArgs || !equalArgs(args, returnedArgs)', '!returnedArgs'],
+  ['original reminder succeeded-only history observation', 'supabase/functions/_shared/planning/original-reminder-outcome.ts', "if (resolved.state !== 'succeeded')", 'if (false)'],
+  ['original reminder canonical-card tenant binding', 'supabase/functions/_shared/paige-turn/interactive-reminder-history.ts', 'row.tenant_id !== tenantId', 'false'],
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 112);
+  assert.equal(incumbentSourcePaths.length, 114);
   assert.ok(incumbentSourcePaths.includes(controlTransportPath), 'bounded control reader must remain a restrictive ancestry input');
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);

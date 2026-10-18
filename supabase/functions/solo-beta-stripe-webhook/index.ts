@@ -6,9 +6,10 @@ import {
   validateSoloBetaOffer,
 } from "../_shared/solo-beta-offer.ts";
 import {
+  rawErrorDetail,
   readInvoiceSubscriptionId,
   readSubscriptionItemPeriod,
-  safeStageCode,
+  stageError,
 } from "../_shared/solo-beta-stripe-shapes.ts";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -38,6 +39,21 @@ const deliverVerifiedWelcome = async (supabaseUrl: string, serviceKey: string, f
     }),
   });
   if (!response.ok) throw new Error("welcome_delivery_failed");
+};
+
+// Success exits reset the operator-only diagnostic field so a later retry that
+// succeeds never leaves a stale "last error" behind (mirrors last_error_code's
+// NULL-on-completion semantics). Only this function writes the field.
+// (Structural type: the runtime client is schema-untyped in this function.)
+// deno-lint-ignore no-explicit-any
+type SupabaseAdmin = { from: (table: string) => any };
+const clearErrorDetail = async (admin: SupabaseAdmin, eventId: string) => {
+  await admin.from("stripe_event_log").update({ metadata: {} }).eq("event_id", eventId);
+};
+const persistErrorDetail = async (admin: SupabaseAdmin, eventId: string, detail: string) => {
+  await admin.from("stripe_event_log").update({
+    metadata: { last_error_detail: detail.slice(0, 300) },
+  }).eq("event_id", eventId);
 };
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -137,10 +153,11 @@ Deno.serve(async (req) => {
         _subscription_id: subscription.id, _customer_id: customerId,
         _provider_created_at: providerCreatedAt,
       });
-      if (claimError) throw new Error(safeStageCode("event_claim_failed", claimError));
+      if (claimError) throw stageError("event_claim_failed", claimError);
       const claim = Array.isArray(claimed) ? claimed[0] : claimed;
       if (!claim?.claimed) {
         if (claim?.lifecycle_state === "completed") {
+          await clearErrorDetail(admin, event.id);
           await deliverVerifiedWelcome(supabaseUrl, serviceKey, event.id);
           return json(200, { received: true, duplicate: true });
         }
@@ -151,7 +168,7 @@ Deno.serve(async (req) => {
       const { data: enrollment, error: enrollmentError } = await admin.from("solo_beta_enrollments")
         .select("checkout_attempt,checkout_fencing_token,checkout_session_id,stripe_customer_id")
         .eq("user_id", userId).maybeSingle();
-      if (enrollmentError) throw new Error(safeStageCode("enrollment_identity_mismatch", enrollmentError));
+      if (enrollmentError) throw stageError("enrollment_identity_mismatch", enrollmentError);
       if (!enrollment || enrollment.checkout_session_id !== session.id
         || enrollment.stripe_customer_id !== customerId || !enrollment.checkout_fencing_token) {
         throw new Error("enrollment_identity_mismatch");
@@ -170,7 +187,8 @@ Deno.serve(async (req) => {
         _trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         _cancel_at_period_end: subscription.cancel_at_period_end,
       });
-      if (fulfillError) throw new Error(safeStageCode("atomic_fulfillment_failed", fulfillError));
+      if (fulfillError) throw stageError("atomic_fulfillment_failed", fulfillError);
+      await clearErrorDetail(admin, event.id);
       await deliverVerifiedWelcome(supabaseUrl, serviceKey, event.id);
       return json(200, { received: true });
     }
@@ -226,10 +244,13 @@ Deno.serve(async (req) => {
         _subscription_id: subscription.id, _customer_id: customerId,
         _provider_created_at: providerCreatedAt,
       });
-      if (claimError) throw new Error(safeStageCode("event_claim_failed", claimError));
+      if (claimError) throw stageError("event_claim_failed", claimError);
       const claim = Array.isArray(claimed) ? claimed[0] : claimed;
       if (!claim?.claimed) {
-        if (claim?.lifecycle_state === "completed") return json(200, { received: true, duplicate: true });
+        if (claim?.lifecycle_state === "completed") {
+          await clearErrorDetail(admin, event.id);
+          return json(200, { received: true, duplicate: true });
+        }
         return json(409, { error: "event_processing_retry" });
       }
       eventClaimed = true;
@@ -247,18 +268,26 @@ Deno.serve(async (req) => {
         _trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         _cancel_at_period_end: subscription.cancel_at_period_end,
       });
-      if (syncError) throw new Error(safeStageCode("lifecycle_sync_failed", syncError));
+      if (syncError) throw stageError("lifecycle_sync_failed", syncError);
+      await clearErrorDetail(admin, event.id);
       return json(200, { received: true });
     }
     return json(200, { received: true, ignored: true });
   } catch (error) {
+    const rawDetail = rawErrorDetail(error) ?? (error instanceof Error ? error.message : String(error));
     console.error("solo_beta_stripe_webhook_failed", {
       eventId: typeof event !== "undefined" ? event.id : null,
       eventType: typeof event !== "undefined" ? event.type : null,
-      message: error instanceof Error ? error.message : String(error),
+      message: rawDetail,
     });
     if (eventClaimed) {
       await admin.rpc("solo_beta_fail_stripe_event", { _event_id: event.id, _error_code: safeCode(error) });
+      // Restricted diagnostic evidence: last_error_code keeps the stable snake_case
+      // name, but database/provider messages containing spaces or punctuation
+      // (constraint text, PGRST bodies) would otherwise be lost. Persist the raw
+      // detail on the operator-only event row so the real SQL failure is always
+      // identifiable without exposing it in any customer-facing surface.
+      await persistErrorDetail(admin, event.id, rawDetail);
     }
     return json(500, { error: "solo_beta_webhook_retry_required" });
   }

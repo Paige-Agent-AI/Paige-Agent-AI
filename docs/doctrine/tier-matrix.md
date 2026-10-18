@@ -4842,6 +4842,15 @@ arrives private. `client_file_owner_list` and `client_portal_documents` page by 
 cursor, so a file saved in the same instant as the last one shown is never skipped; the owner's "Load more"
 is on the Solo client record.
 
+Round 4 (2026-10-18, pgTAP 197 cases): a file's object and uploader are fixed once its row exists. No
+signed-in caller — the business owner, a member holding the global admin role, or the uploader — may change
+`storage_path` or `uploaded_by_user_id` (`FILE_IDENTITY_IMMUTABLE`); only the service role or a direct
+database session may. Before this, two REST updates could point a shared row at another file's object and
+show it to that client, or to another client of the same business, with no share writer and no audit row.
+Same rule on every tier that can write a `client_files` row; `tenant_id` is not covered (its foreign key is
+`ON DELETE SET NULL`). Still open (client_files policy follow-up): a member holding the global admin role,
+or the uploader, can delete a shared file over REST, which takes it away from the client with no audit row.
+
 The Operations Delivery "Client outcome" line uses the same release gate as the work item
 (`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
 project" only for a standalone business with a linked project and a second active member, "Releasing needs a

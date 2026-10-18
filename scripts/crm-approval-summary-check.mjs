@@ -197,9 +197,9 @@ assert.equal(proposals(approved.rec).length, 0);
 const taskLocator = {
   surface: "operations", tab: "work", record_id: id(6),
   surface_url: "https://paigeagent.ai/solo/101/operations/work",
-  deep_link: null, deep_link_status: "surface_only",
+  deep_link: `https://paigeagent.ai/solo/101/operations/work?task=${id(6)}`, deep_link_status: "exact",
 };
-assert.deepEqual(approved.body.record_locator, taskLocator, "fresh task result opens its existing native work owner without a made-up task query");
+assert.deepEqual(approved.body.record_locator, taskLocator, "fresh task result opens its existing exact native Work consumer");
 checks++;
 
 const replay = await request(first.proposal.args.command, { options: { cached: true } });
@@ -220,6 +220,7 @@ for (const [options, tree] of [
   assert.deepEqual(otherTier.body.record_locator, {
     ...taskLocator, surface: "command-center", tab: "tasks",
     surface_url: `https://paigeagent.ai/${tree}/101/calendar/tasks`,
+    deep_link: null, deep_link_status: "surface_only",
   }, "non-Solo task locator routing and metadata remain unchanged");
   checks++;
 }

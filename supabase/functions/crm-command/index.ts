@@ -16,7 +16,7 @@ import {
 } from "../_shared/crm-command/catalog.ts";
 import { parseExecutorError, executorFailureSpeech } from "../_shared/crm-command/executor-error.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
-import { canonicalAppUrl, type CanonicalTier } from "../_shared/canonical-app-url.ts";
+import { canonicalAppUrl, PAIGE_APP_ORIGIN, resolveCanonicalRecordLink, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 import { dealCreateRelationshipIssue, UNLINKED_DEAL_REASONS } from "../_shared/crm-command/deal-relationship-integrity.ts";
 import { resolveCommandContactRefs } from "../_shared/crm-command/contact-refs.ts";
 
@@ -398,14 +398,12 @@ serve(async (req) => {
     const tier: CanonicalTier = tenantRoute?.parent_tenant_id ? "sub_account"
       : accountType === "agency" ? "agency" : accountType === "enterprise" ? "enterprise" : "solo";
     const surfaceUrl = canonicalAppUrl({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination });
-    // The current Solo routers own unified People/business focus (`?person=`) and Pipeline deal
-    // focus (`?deal=`). Solo CRM tasks live in Operations Work, which has no native task-ID focus
-    // router, so task actions return only that list URL and explicitly label it surface_only.
+    // Only mounted Solo focus contracts produce exact links, through the one
+    // canonical route map. Every destination reauthorizes its own current read.
     const recordId = typeof readback?.id === "string" && readback.absent !== true ? readback.id : null;
-    const deepLink = surfaceUrl && tier === "solo" && recordId && action.startsWith("contact.")
-      ? `${surfaceUrl}?person=${encodeURIComponent(recordId)}`
-      : surfaceUrl && tier === "solo" && recordId && action.startsWith("deal.")
-        ? `${surfaceUrl}?deal=${encodeURIComponent(recordId)}` : null;
+    const recordLink = tier === "solo" && recordId && /^(contact|deal|task)\./.test(action)
+      ? resolveCanonicalRecordLink({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination, recordId }) : null;
+    const deepLink = recordLink?.status === "exact" ? `${PAIGE_APP_ORIGIN}${recordLink.path}` : null;
     return response(200, {
       ...resultObject,
       capability,

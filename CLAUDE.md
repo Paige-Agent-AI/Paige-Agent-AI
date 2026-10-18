@@ -1,5 +1,10 @@
 # Paige Agent AI — Working Doctrine
 
+## 00.a OWNER 2026-10-18 — SAAS ACCOUNT-SCOPE POLICY, ALL COORDINATORS AND AGENTS
+
+The owner permits coordinator **build directives only for exactly four PAIGE account experiences**: SOLO, Platform Operator, Agency, Agency Sub-Accounts. **SOLO AND PLATFORM OPERATOR ARE CURRENTLY AUTHORIZED ACTIVE BUILD; AGENCY AND AGENCY SUB-ACCOUNTS ARE OWNER-HOLD pending explicit future authorization.** Do not allocate new Agency/Sub-Account features or launch them from old BRD/pack references. Existing safe shared foundations remain maintained for the active shells. Personas/tenant-client portals/enterprise placeholders do not create a fifth authorized account shell. Universal SOLO for all eligible existing/future customers; Platform Operator for PAIGE Inc's own company operations. Follow owner charter `docs/product/SAAS-PLATFORM-FOUNDATION-AND-COORDINATOR-CHARTER-2026-10-18.md`, amended `docs/product/BRD-MVP-2026-08-08.md`, AGENTS and owner North Star. Owner 2026-10-18 staging supersedes August simultaneous-launch language. This section does not replace the UI precedence rule §00 or prelaunch risk-proportionate safe release policy.
+
+
 Standing rules for how work gets done in this repo. These persist across sessions.
 
 ## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.

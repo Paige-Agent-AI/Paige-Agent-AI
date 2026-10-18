@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PREF_ACTOR, PREF_OTHER_TENANT, PREF_TENANT, prefCard, prefUpdates, prefsPayload,
 } from "@/test/fixtures/clientPortalPreferences";
-import { PORTAL_PREFERENCE_DISCLOSURES, disclosureText, type PortalDisclosureId } from "@/lib/client-portal-preferences";
+import { PORTAL_PREFERENCE_DISCLOSURES, disclosureText, preferenceRefusal, type PortalDisclosureId } from "@/lib/client-portal-preferences";
 import { refusalText } from "./clientPreferencesCopy";
 
 // The page reads and writes only through the three E09 Slice 6 RPCs; raw tables are never touched.
@@ -64,7 +64,7 @@ describe("How {Business} can reach you — what each state says", () => {
     expect(stateOf("email")).toBe("On");
     expect(stateOf("sms")).toBe("Not set up");
     expect(switchOf("sms")?.disabled).toBe(true);
-    expect(row("sms").querySelector('[data-testid="pref-reason"]')?.textContent).toBe("Texts can only be turned on by replying START to a text from Northwind Studio.");
+    expect(row("sms").querySelector('[data-testid="pref-reason"]')?.textContent).toBe("Texts can't be turned on from your account.");
     expect(button("Don't text me")).toBeTruthy();
     expect(stateOf("updates")).toBe("Not subscribed");
     expect(switchOf("updates")?.disabled).toBe(false);
@@ -76,7 +76,13 @@ describe("How {Business} can reach you — what each state says", () => {
     ["email off by you", { email: prefCard("off", { set_by: "you", set_at: "2026-10-12T15:00:00Z", can_turn_on: true, can_turn_off: false }) }, "email", "Off · you turned email off on Oct 12, 2026"],
     ["email unsubscribed by link", { email: prefCard("off", { set_by: "unsubscribe_link", set_at: "2026-10-02T15:00:00Z", can_turn_on: true, can_turn_off: false }) }, "email", "Off · you unsubscribed using the link in an email on Oct 2, 2026"],
     ["email paused by the business", { email: prefCard("off", { set_by: "business", set_at: "2026-10-12T15:00:00Z" }) }, "email", "Paused by Northwind Studio"],
-    ["email delivery problem", { email: prefCard("off", { set_by: "delivery", can_turn_off: false }) }, "email", "Off · your email provider reported a problem with these messages"],
+    ["email delivery problem", { email: prefCard("off", { set_by: "delivery", can_turn_off: false }) }, "email", "Off · emails to your address weren't being delivered"],
+    ["email reported as spam by you", { email: prefCard("off", { set_by: "reported", set_at: "2026-10-03T15:00:00Z", can_turn_on: true, can_turn_off: false }) }, "email", "Off · you reported an email from Northwind Studio as spam on Oct 3, 2026"],
+    ["texts on, recorded by the business (D7)", { sms: prefCard("on", { set_by: "business", set_at: "2026-10-10T15:00:00Z" }) }, "sms", "On · set by Northwind Studio on Oct 10, 2026"],
+    ["texts on from a sign-up form", { sms: prefCard("on", { set_by: "form", set_at: "2026-10-10T15:00:00Z" }) }, "sms", "On · from a sign-up form on Oct 10, 2026"],
+    ["subscribed, recorded by the business (D7)", { updates: prefUpdates("subscribed", { set_by: "business", set_at: "2026-10-09T15:00:00Z" }) }, "updates", "Subscribed · set by Northwind Studio on Oct 9, 2026"],
+    ["subscribed from a sign-up form", { updates: prefUpdates("subscribed", { set_by: "form", set_at: "2026-10-09T15:00:00Z" }) }, "updates", "Subscribed · from a sign-up form on Oct 9, 2026"],
+    ["unsubscribed by you", { updates: prefUpdates("not_subscribed", { set_by: "you", set_at: "2026-10-09T15:00:00Z" }) }, "updates", "Not subscribed · you unsubscribed on Oct 9, 2026"],
     ["no email address", { email: prefCard("no_address", { can_turn_off: false }), updates: prefUpdates("no_address", { can_subscribe: false }) }, "email", "No email address on file"],
     ["texts on by START", { sms: prefCard("on", { set_by: "reply", set_at: "2026-10-10T15:00:00Z" }) }, "sms", "On · you replied START on Oct 10, 2026"],
     ["texts off by STOP", { sms: prefCard("off", { set_by: "reply", set_at: "2026-10-11T15:00:00Z", can_turn_off: false }) }, "sms", "Off · you replied STOP on Oct 11, 2026"],
@@ -99,18 +105,45 @@ describe("How {Business} can reach you — what each state says", () => {
     expect(button("Keep email off")).toBeTruthy();
   });
 
-  it("once the customer has also turned it off under a business pause, says so instead of offering it again", async () => {
+  it("once the customer has also turned it off under a business pause, says both must turn it on, once, without contradicting itself (Nice 1)", async () => {
     await mount(prefsPayload({ email: prefCard("off", { set_by: "business", can_turn_off: false }) }));
     expect(button("Keep email off")).toBeUndefined();
-    expect(row("email").textContent).toContain("You've turned email off too, so it stays off if Northwind Studio resumes it.");
+    expect(row("email").querySelector('[data-testid="pref-reason"]')?.textContent).toBe("Email comes back only when you and Northwind Studio both turn it back on.");
+    expect(row("email").textContent).not.toContain("Only Northwind Studio can resume");
+  });
+
+  it("the customer's own spam report: their act, and they can turn email back on here (integrator ruling)", async () => {
+    await mount(prefsPayload({ email: prefCard("off", { set_by: "reported", set_at: "2026-10-03T15:00:00Z", can_turn_on: true, can_turn_off: false }) }));
+    expect(switchOf("email")?.disabled).toBe(false);
+    expect(row("email").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Turn email back on here if you want it again.");
+    expect(row("email").textContent).not.toMatch(/delivery|provider|Message Northwind|Only Northwind/);
+    expect(button("Keep email off")).toBeUndefined();
+  });
+
+  it("texts not set up: START is named once, by the disclosure, and nothing promises a text will come (should-fix 1)", async () => {
+    await mount();
+    expect(row("sms").textContent!.match(/START/g)).toHaveLength(1);
+    expect(row("sms").textContent).toContain("reply START to a text from Northwind Studio");
+  });
+
+  it("no copy offers texts on: the no-number line only says why there are no texts (should-fix 6)", async () => {
+    await mount(prefsPayload({ sms: prefCard("no_number") }));
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio can't text you without a phone number.");
+    expect(row("sms").textContent).not.toMatch(/choose how|turn texts on/i);
+  });
+
+  it("business-recorded consent is labelled as the business's on every channel (D7)", async () => {
+    await mount(prefsPayload({ sms: prefCard("on", { set_by: "business" }), updates: prefUpdates("subscribed", { set_by: "business" }) }));
+    expect(stateOf("sms")).toBe("On · set by Northwind Studio");
+    expect(stateOf("updates")).toBe("Subscribed · set by Northwind Studio");
   });
 
   it("quiet hours copy depends on whether the business knows the customer's time zone (reviewer M3)", async () => {
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }), quiet_hours: { start: "20:00", end: "08:00", time_zone_known: true } }));
-    expect(row("sms").textContent).toContain("Texts only arrive between 8am and 8pm your time.");
+    expect(row("sms").textContent).toContain("Texts through Paige only arrive between 8am and 8pm your time.");
     act(() => root.unmount()); root = createRoot(host);
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }) }));
-    expect(row("sms").textContent).toContain("doesn't have your time zone, so those hours may not match yours");
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern time.");
     expect(row("sms").textContent).not.toContain("your time.");
   });
 
@@ -145,9 +178,18 @@ describe("How {Business} can reach you — what each state says", () => {
   it("shows each card's server-held disclosure sentence under its id", async () => {
     await mount();
     const shown = Array.from(host.querySelectorAll<HTMLElement>("[data-disclosure]")).map(el => [el.dataset.disclosure, el.textContent]);
-    expect(shown).toEqual((["email-pref:v1", "sms-pref:v1", "updates-optin:v1", "data-sharing:v1"] as PortalDisclosureId[])
+    expect(shown).toEqual((["email-pref:v2", "sms-pref:v1", "updates-optin:v2", "data-sharing:v1"] as PortalDisclosureId[])
       .map(id => [id, disclosureText(id, "Northwind Studio")]));
-    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(4);
+    // v1 of email and updates stay known (old evidence names them) but are never shown.
+    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(6);
+  });
+
+  it("section headings sit visibly above row labels (should-fix 8)", async () => {
+    await mount();
+    const h2 = host.querySelector("#client-preferences-title")!;
+    const label = row("email").querySelector('[data-testid="pref-label"]')!;
+    expect(h2.className).toContain("text-lg");
+    expect(label.className).not.toMatch(/text-lg|text-base font-semibold/);
   });
 
   it("spends no gold: nothing here is an act of approval (§11)", async () => {
@@ -209,13 +251,16 @@ describe("changing a preference", () => {
     expect(committed).not.toHaveBeenCalled();
   });
 
+  it("a retired refusal code (EMAIL_REPORTED) is never named: it reads as an unknown refusal", () => {
+    expect(preferenceRefusal({ ok: false, error: "EMAIL_REPORTED" }, null)).toBe("OTHER");
+  });
+
   it.each([
     ["EMAIL_PAUSED_BY_BUSINESS", "Northwind Studio paused email to you, so it stays off. Ask them to resume it."],
     ["EMAIL_UNDELIVERABLE", "Emails to your address weren't being delivered, so email stays off. Ask Northwind Studio to check your address."],
-    ["EMAIL_REPORTED", "An email from Northwind Studio was reported as spam, so email stays off. Message Northwind Studio if you want email again."],
     ["EMAIL_OFF", "Turn on email first."],
     ["NO_EMAIL_ADDRESS", "Northwind Studio needs an email address for you first."],
-    ["SMS_OPT_IN_UNAVAILABLE", "Texts can only be turned on by replying START to a text from Northwind Studio."],
+    ["SMS_OPT_IN_UNAVAILABLE", "Texts can't be turned on from your account."],
     ["BAD_PREFERENCE", "That change isn't available. Reload the page and try again."],
     ["OTHER", "That change wasn't made. Try again."],
   ] as const)("refusal %s reads in plain words", (code, text) => {

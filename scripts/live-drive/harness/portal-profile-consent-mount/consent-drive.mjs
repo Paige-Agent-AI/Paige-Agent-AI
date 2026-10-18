@@ -2,7 +2,8 @@
 // Privacy panel (/app/privacy) inside the real customer chrome, in every preference state, both themes, desktop
 // (1440x900) and phone (390x844), and MEASURE it: text contrast (AA 4.5:1 against the real composited
 // background), horizontal overflow, gold spent on the page (none: a preference is not an act of approval), touch
-// targets >= 44px on the phone (the switches reach 44px through a hit-tested ::after), clipped text, page errors /
+// targets >= 44px on the phone (the switches reach 44px through a hit-tested ::after), the 3:1 non-text contrast of
+// every enabled switch's edge and thumb (WCAG 1.4.11, round 2), clipped text, page errors /
 // failed responses / any request that tried to leave the machine (the network is blocked), and that the HARNESS
 // RENDER tag is on screen. It also reads what each state must SAY off the rendered page (the owner decisions D1,
 // D2, D4, D5, D6 and the reviewer's B2/M3/M9 copy) and drives the write states through the REAL switches.
@@ -33,8 +34,8 @@ const B = "Northwind Studio";
 // Nothing in the preferences sections may name an address, a number, an id or internal vocabulary.
 const NEVER = ["jordan.rivera@example.test", "+15035550142", "503", "e0960000", "customer_request", "customer_portal", "suppression", "consent_events", "evidence", "coach", "credit", "funding", "fundab"];
 
-const STATES = ["default", "email-off", "email-paused", "email-paused-held", "texts-on", "texts-off", "updates-subscribed", "sharing-on",
-  "no-address", "no-number", "multiple", "unavailable", "loading", "error", "pending", "refusal", "saved"];
+const STATES = ["default", "email-off", "email-paused", "email-paused-held", "email-reported", "reported-lift", "texts-on", "texts-on-no-tz", "texts-off",
+  "updates-subscribed", "business-recorded", "sharing-on", "no-address", "no-number", "multiple", "unavailable", "loading", "error", "pending", "refusal", "saved"];
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 function allShots() {
   const shots = [];
@@ -109,7 +110,7 @@ async function drive(page, s, notes) {
     if (s.state === "pending") await row("email").getByText("Saving…").waitFor({ timeout: 10_000 });
     else await row("email").locator('[data-testid="pref-notice"]').waitFor({ timeout: 10_000 });
   }
-  if (s.state === "refusal") {
+  if (s.state === "refusal" || s.state === "reported-lift") {
     await sw("email").click();
     await row("email").locator('[data-testid="pref-notice"]').waitFor({ timeout: 10_000 });
   }
@@ -122,6 +123,7 @@ async function drive(page, s, notes) {
         notice: await textOf(row(k).locator('[data-testid="pref-notice"]')),
         switch: (await sw(k).count()) ? { checked: await sw(k).getAttribute("data-state"), disabled: await sw(k).isDisabled() } : null,
         buttons: (await row(k).getByRole("button").allInnerTexts()).map(clean),
+        text: await textOf(row(k)),
         links: await row(k).getByRole("link").evaluateAll((as) => as.map((a) => `${a.textContent.trim()} -> ${a.getAttribute("href")}`)),
       };
     }
@@ -149,6 +151,8 @@ function unmet(s, n) {
     want(!/credit|fundab|financial|funding/i.test(n.pageText ?? ""), `finance wording on a customer's Data & Privacy: ${n.pageText}`);
     want(n.manage === "/app/settings?view=client-account#preferences", `Manage -> ${n.manage}`);
     want(n.deadManage === 0, "the dead ?tab=notifications link is still there");
+    want(!/Bank-Grade|PaigeAgent/.test(n.pageText ?? ""), `a customer sees the security pill or "PaigeAgent": ${n.pageText}`);
+    want(!/email or text you/i.test(n.pageText ?? ""), "Data & Privacy offers texts on");
     want((n.overlaps ?? []).length === 0, `a control is drawn over text: ${JSON.stringify(n.overlaps)}`);
     want(!/30 days|Processed within/.test(n.pageText ?? ""), "deletion promises a timeframe nothing keeps (D6)");
     want((n.pageText ?? "").includes(`To delete what ${B} holds about you, message ${B}.`), "deletion does not route the business's records to the business");
@@ -166,7 +170,8 @@ function unmet(s, n) {
   switch (s.state) {
     case "default":
       want(st("email") === "On" && st("sms") === "Not set up" && st("updates") === "Not subscribed" && st("sharing") === "Not allowed", `states ${JSON.stringify([st("email"), st("sms"), st("updates"), st("sharing")])}`);
-      want(n.sms.reason === `Texts can only be turned on by replying START to a text from ${B}.`, `texts reason "${n.sms.reason}"`);
+      want(n.sms.reason === "Texts can't be turned on from your account.", `texts reason "${n.sms.reason}"`);
+      want((n.sms.text.match(/START/g) ?? []).length === 1, `START named ${(n.sms.text.match(/START/g) ?? []).length} times in the texts row`);
       want(n.sms.buttons.includes("Don't text me"), `texts buttons ${JSON.stringify(n.sms.buttons)}`);
       want(/It has no effect yet/.test(n.prefsText ?? ""), "data sharing does not say it has no effect yet (D2/M3)");
       break;
@@ -182,12 +187,25 @@ function unmet(s, n) {
       want(n.email.reason === `Only ${B} can resume email they paused.`, `email reason "${n.email.reason}"`);
       break;
     case "email-paused-held":
-      want(/You've turned email off too/.test(n.email.detail), `held detail "${n.email.detail}"`);
+      want(n.email.reason === `Email comes back only when you and ${B} both turn it back on.` && !/Only Northwind/.test(n.email.text), `held reason "${n.email.reason}"`);
       want(!n.email.buttons.includes("Keep email off"), "Keep email off offered again after the customer recorded it");
       break;
     case "texts-on":
-      want(/^On · you replied START on Oct 9, 2026$/.test(st("sms")) && /8am and 8pm your time/.test(n.sms.detail), `texts "${st("sms")}" / "${n.sms.detail}"`);
+      want(/^On · you replied START on Oct 9, 2026$/.test(st("sms")) && n.sms.detail === "Texts through Paige only arrive between 8am and 8pm your time.", `texts "${st("sms")}" / "${n.sms.detail}"`);
       want(n.sms.switch?.checked === "checked" && n.sms.switch.disabled === false, "texts can't be turned off");
+      break;
+    case "texts-on-no-tz":
+      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern time.`, `no-tz "${n.sms.detail}"`);
+      break;
+    case "email-reported":
+      want(st("email") === `Off · you reported an email from ${B} as spam on Oct 3, 2026` && n.email.switch?.disabled === false, `reported "${st("email")}" switch=${JSON.stringify(n.email.switch)}`);
+      want(n.email.detail === "Turn email back on here if you want it again." && !/delivery|provider/i.test(n.email.text), `reported detail "${n.email.detail}"`);
+      break;
+    case "reported-lift":
+      want(n.email.notice === "Email is on." && st("email") === "On", `reported-lift "${n.email.notice}" / "${st("email")}"`);
+      break;
+    case "business-recorded":
+      want(st("sms") === `On · set by ${B} on Sep 28, 2026` && st("updates") === `Subscribed · set by ${B} on Sep 28, 2026`, `D7 "${st("sms")}" / "${st("updates")}"`);
       break;
     case "texts-off":
       want(/^Off · you replied STOP on Oct 16, 2026$/.test(st("sms")), `texts "${st("sms")}"`);
@@ -347,6 +365,17 @@ function measureInPage(opts) {
     return [...card.querySelectorAll("*")].some((c) => visible(c) && c.getBoundingClientRect().right > cr.right + 1);
   }).map((c) => c.textContent.trim().slice(0, 40));
 
+  // WCAG 1.4.11 (round 2): an ENABLED switch must be identifiable at 3:1 — its edge (or its fill) against what it
+  // sits on, and its thumb against its track — in both states. Disabled switches are exempt and carry a reason.
+  const switches = pageRoots.flatMap((root) => [...root.querySelectorAll('[role="switch"]')])
+    .filter((n) => n.getClientRects().length && !n.disabled).map((n) => {
+      const cs = getComputedStyle(n), outer = bgOf(n.parentElement);
+      const fill = transparent(cs.backgroundColor) ? outer : blend(cs.backgroundColor, outer);
+      const edge = (parseFloat(cs.borderTopWidth) || 0) > 0 && !transparent(cs.borderTopColor) ? blend(cs.borderTopColor, fill) : fill;
+      const thumbEl = n.querySelector("span"), tc = thumbEl ? getComputedStyle(thumbEl).backgroundColor : fill;
+      const thumb = transparent(tc) ? fill : blend(tc, fill);
+      return { label: n.getAttribute("aria-label"), state: n.getAttribute("data-state"), boundary: Math.max(ratio(edge, outer), ratio(fill, outer)), thumb: ratio(thumb, fill) };
+    });
   const h1 = sectionEl?.querySelector("h1");
   return {
     heading: h1?.textContent ?? null,
@@ -358,7 +387,7 @@ function measureInPage(opts) {
     overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 0.5
       || (wholePage ? wholePage.scrollWidth > wholePage.clientWidth + 1 : false),
     widths: { doc: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, scroller: wholePage ? [wholePage.scrollWidth, wholePage.clientWidth] : null },
-    clipped, spill, targets,
+    clipped, spill, targets, switches, lowSwitch: switches.filter((sw) => sw.boundary < 3 || sw.thumb < 3),
     homeTiles: opts.home ? homeTiles.length : undefined,
     tag: (() => { const t = document.querySelector("[data-harness-tag]"); const r = t?.getBoundingClientRect(); return !!r && r.width > 40 && r.height >= 10 && r.top >= 0 && getComputedStyle(t).visibility !== "hidden"; })(),
   };
@@ -406,7 +435,7 @@ async function runShots(browser, shots, label = "") {
     const inlineTargets = small.filter((t) => t.inline);
     const expectations = driveError ? [] : unmet(s, notes);
     const surfaceOk = !driveError && expectations.length === 0 && errors.length === 0 && blocked.length === 0 && m.lowPage.length === 0 && !m.overflowX
-      && m.goldPage.length === 0 && m.clipped.length === 0 && m.spill.length === 0
+      && m.goldPage.length === 0 && m.clipped.length === 0 && m.spill.length === 0 && m.lowSwitch.length === 0
       && smallTargets.filter((t) => t.region !== "nav").length === 0 && m.tag;
     const chromeOk = m.lowNav.length === 0 && m.goldNav.length === 0 && smallTargets.filter((t) => t.region === "nav").length === 0;
     if (!surfaceOk) failed = true;
@@ -414,7 +443,7 @@ async function runShots(browser, shots, label = "") {
     results[name] = { ok: surfaceOk, chromeOk, expectations, state: s.state, theme: s.theme, viewport: `${s.w}x${s.h}`, driveError, errors, consoleErrors, blocked, notes, smallTargets, inlineTargets, ...m, targets: undefined };
     await ctx.close();
     console.log(`${name} ${surfaceOk ? "OK" : "FAIL"}${chromeOk ? "" : " (chrome findings)"}`, JSON.stringify({
-      driveError, expectations, contrastMin: m.contrastMin, low: m.lowPage.slice(0, 3), navMin: m.navContrastMin, lowNav: m.lowNav.slice(0, 2),
+      driveError, expectations, contrastMin: m.contrastMin, low: m.lowPage.slice(0, 3), switchMin: m.switches.length ? Math.min(...m.switches.flatMap((x) => [x.boundary, x.thumb])) : null, lowSwitch: m.lowSwitch, navMin: m.navContrastMin, lowNav: m.lowNav.slice(0, 2),
       goldPage: m.goldPage.slice(0, 3), goldNav: m.goldNav.map((g) => `${g.text}:${g.hits}`).slice(0, 2), overflowX: m.overflowX, clipped: m.clipped, spill: m.spill.slice(0, 2),
       smallTargets, inlineTargets, errors: errors.slice(0, 3), consoleErrors: consoleErrors.slice(0, 2), blocked: blocked.slice(0, 3), tag: m.tag,
     }));
@@ -441,6 +470,8 @@ try {
       { mutant: "target", shot: base("default", "phone"), caught: (r) => r.smallTargets.some((t) => t.region === "page") },
       { mutant: "overflow", shot: base("default", "phone"), caught: (r) => r.overflowX === true || r.spill.length > 0 },
       { mutant: "reason", shot: base("default", "desktop"), caught: (r) => r.expectations.some((e) => /visible reason|texts reason/.test(e)) },
+      { mutant: "switch-contrast", shot: base("default", "desktop", "light"), caught: (r) => r.lowSwitch.length > 0 },
+      { mutant: "switch-contrast", shot: base("default", "desktop", "dark"), caught: (r) => r.lowSwitch.length > 0 },
     ];
     const verdicts = [];
     for (const c of controls) {

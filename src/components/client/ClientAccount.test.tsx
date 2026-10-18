@@ -64,6 +64,12 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); history.replaceState(null, "", "/"); vi.restoreAllMocks(); });
 
 describe("approved Account personal information", () => {
+  it("the subtitle covers the whole page, and section headings outrank row labels (round 2, Nice 8 / should-fix 8)", async () => {
+    await mount();
+    expect(host.querySelector("header p")?.textContent).toBe("Your details for this business, and how they can reach you.");
+    const h2 = Array.from(host.querySelectorAll("h2")).find(h => h.textContent === "Personal information")!;
+    expect(h2.className).toContain("text-lg");
+  });
   it("reads the checked relationship, keeps email read-only and preserves a Settings/security exit", async () => {
     await mount(); expect(input("First name").value).toBe("Test");
     expect(input("Email address").readOnly).toBe(true);

@@ -4885,7 +4885,12 @@ messaging preference: the existing ledger (`paige_consent_events` + `paige_suppr
 `_client_communication_state` for the customer read, the owner read and Paige (§18). Owner decisions
 (2026-10-18): texts can be turned OFF from the portal but only turned on by replying START (D1); staff
 lifting their own pause no longer writes `granted` (D3); email consent stays unenforced and the ConsentTab
-toggle says so (D8). The owner sees the same truth read-only on the Solo client record; there is no owner
+toggle says so (D8); anything the business recorded itself is labelled "set by {Business}" on the customer's
+cards and "Set by your business" on the owner's (D7). Round 2 (integrator rulings, 2026-10-18): a spam report is
+the customer's own act ("reported"), lifted only by that customer turning email back on in their portal; after a
+customer leaves Updates, staff cannot subscribe them again; booking confirmations and agreements the customer is
+asked to sign still send, and the email disclosure (`email-pref:v2`) says so, together with "email off also
+unsubscribes you from updates and offers". The owner sees the same truth read-only on the Solo client record; there is no owner
 control that creates a customer's consent, and ledger writes by staff can't forge customer-sourced rows
 or delete customer-held ones (restrictive guards, reviewer B1).
 
@@ -4897,8 +4902,10 @@ or delete customer-held ones (restrictive guards, reviewer B1).
 | Address editing on Your account (existing `client_portal_update_self_profile`) | — | — | — | — | ✓ blank address fields clear to NULL; phone and names stay required | 42501 | PROOF OWED |
 | Owner consent view "How {client} can be reached" (`read_client_communication_state`, read-only) | refused (no tenant admin of that workspace) | server allows for its own contacts; no screen mounted | ✓ mounted under `client_standing`, below "Shared with {client}" | server allows (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | — | 42501 | PROOF OWED |
 | Conversations DND pause/lift (`set_contact_channel_suppression`, restated) | refused (global-role path removed, §59) | own contacts only | ✓ owner/admin; lift refused while the contact holds the channel (`SUPPRESSION_HELD_BY_CONTACT`); rail shows the held reason | ✓ same | — | — | PROOF OWED |
+| Turn email back on after the customer's own spam report (`set_by` `reported`) | refused | refused (rail locked: "They reported email as spam. Only they can turn it back on.") | refused (same) | refused (same) | ✓ through `client_portal_set_communication_preference` email on | 42501 | PROOF OWED |
+| Subscribe a customer to Updates after they unsubscribed | refused | refused | refused (`NEWSLETTER_LEFT_BY_CONTACT`: any business-sourced newsletter grant, service context included, while the customer's own leaving stands) | refused | ✓ only the customer re-subscribes | 42501 | PROOF OWED |
 | Account entry in the customer menu | — | — | — | — | ✓ customer of one business only (was: any resolved brand); a customer of several businesses reaches the page by URL only until Slice 8 | — | PROOF OWED |
-| Data & Privacy panel | — | credit control only with `funding_readiness` | credit control only with `funding_readiness`; no dead Manage link | same as Solo | no credit control or finance wording (fail-safe); Manage → Your account preferences; deletion copy routes the business's records to the business (D6) | — | PROOF OWED |
+| Data & Privacy panel | — | credit control only with `funding_readiness` | credit control only with `funding_readiness`; no dead Manage link | same as Solo | no credit control or finance wording (fail-safe), no security pill; Manage → Your account preferences (customer of one business only — §58 call-out in the evidence record); deletion copy routes the business's records to the business (D6) | — | PROOF OWED |
 
 The customer surface is a §61 default (relationship-scoped, no tier filter, no new feature key); the owner
 view reuses `client_standing`. pgTAP (`supabase/tests/customer_portal_profile_consent.sql`) covers the

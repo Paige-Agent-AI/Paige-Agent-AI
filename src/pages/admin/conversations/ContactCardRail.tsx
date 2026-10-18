@@ -141,6 +141,9 @@ function CopyRow({ icon: Icon, value, label, action }: { icon: typeof Mail; valu
 /** One per-channel DND row. Email/SMS are live; Calls/Inbound are honestly disabled. */
 const CONTACT_HELD_REASONS = new Set(["customer_request", "user_stop", "unsubscribe_link", "complaint"]);
 const HELD_NOTE = "Turned off by the contact. Only they can turn it back on.";
+// A spam report is the contact's own act: only they can lift it, by turning email back on from their portal
+// account (integrator ruling 2026-10-18). Said in those words, never as a delivery problem.
+const REPORTED_NOTE = "They reported email as spam. Only they can turn it back on.";
 // The suppression writer is newer than the generated Database types; call it untyped, never as `any`.
 const rawRpc = (name: string, args: Record<string, unknown>) =>
   (supabase as unknown as SupabaseClient).rpc(name, args) as unknown as PromiseLike<{ data: unknown; error: { message: string } | null }>;
@@ -306,6 +309,8 @@ export function ContactCardRail({
   // A channel the CONTACT turned off (their portal account, a STOP reply, their unsubscribe link, a spam
   // report) can't be lifted from here: only they can turn it back on (E09 Slice 6, D3 / reviewer B1).
   const heldByContact = (ch: "email" | "sms") => suppressions.some((s) => s.channel === ch && CONTACT_HELD_REASONS.has(s.reason));
+  const heldNote = (ch: "email" | "sms") => !heldByContact(ch) ? undefined
+    : suppressions.some((s) => s.channel === ch && s.reason === "complaint") ? REPORTED_NOTE : HELD_NOTE;
   const dnd = !!contact?.dnd_active;
 
   // ── writes (all §9 RLS/RPC-guarded) ──────────────────────────────────────────
@@ -652,12 +657,12 @@ export function ContactCardRail({
             <TabsContent value="dnd" className="mt-3 space-y-2">
               <DndRow
                 channel="email" label="Email" checked={emailDnd || heldByContact("email")}
-                disabled={heldByContact("email")} note={heldByContact("email") ? HELD_NOTE : undefined}
+                disabled={heldByContact("email")} note={heldNote("email")}
                 busy={dndBusy === "email"} onToggle={(v) => void toggleDnd("email", v)}
               />
               <DndRow
                 channel="sms" label="SMS" checked={smsDnd || heldByContact("sms")}
-                disabled={heldByContact("sms")} note={heldByContact("sms") ? HELD_NOTE : undefined}
+                disabled={heldByContact("sms")} note={heldNote("sms")}
                 busy={dndBusy === "sms"} onToggle={(v) => void toggleDnd("sms", v)}
               />
               <DndRow channel="calls" label="Calls" checked={false} disabled note="Coming soon" />

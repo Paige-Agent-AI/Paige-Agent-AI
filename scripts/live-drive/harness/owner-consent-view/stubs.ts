@@ -5,7 +5,9 @@
 // 20271110100000 §10 returns:
 //   { schema_version:1, tenant_id, contact_id, email, sms, updates, data_sharing, quiet_hours, portal_joined,
 //     do_not_contact, dnd_active, read_at }   — owner/admin of the current workspace only; else 42501.
-//   ?consent=mixed|paused|defaults|refused|error|loading   (the Slice 3 ?state= stays "populated")
+//   ?consent=mixed|paused|reported|business|defaults|refused|error|loading   (the Slice 3 ?state= stays "populated")
+//   reported: the client reported an email as spam (set_by 'reported'); business: texts on and updates
+//   subscribed, both recorded by the business (D7).
 import * as base from "../owner-shared-work/stubs";
 
 export { TENANT, CLIENT, harness, useTenantContext, useUserRoles, useTenantRelationshipsData } from "../owner-shared-work/stubs";
@@ -26,6 +28,15 @@ function answer() {
   if (consent === "paused") {
     return { ...common, email: card("off", { set_by: "business", set_at: ago(3) }), sms: card("not_set"), updates: upd("paused", { set_by: "business", set_at: ago(3) }),
       data_sharing: { allowed: false, updated_at: null }, portal_joined: false, do_not_contact: true, dnd_active: false };
+  }
+  if (consent === "reported") {
+    return { ...common, email: card("off", { set_by: "reported", set_at: ago(15), can_turn_on: true, can_turn_off: false }), sms: card("not_set"),
+      updates: upd("not_subscribed", { set_by: "you", set_at: ago(15), can_subscribe: false }), data_sharing: { allowed: false, updated_at: null },
+      portal_joined: true, do_not_contact: false, dnd_active: false };
+  }
+  if (consent === "business") {
+    return { ...common, email: card("on"), sms: card("on", { set_by: "business", set_at: ago(20) }), updates: upd("subscribed", { set_by: "business", set_at: ago(20) }),
+      data_sharing: { allowed: false, updated_at: null }, portal_joined: false, do_not_contact: false, dnd_active: false };
   }
   if (consent === "defaults") {
     return { ...common, email: card("on"), sms: card("no_number"), updates: upd("not_subscribed"), data_sharing: { allowed: false, updated_at: null },

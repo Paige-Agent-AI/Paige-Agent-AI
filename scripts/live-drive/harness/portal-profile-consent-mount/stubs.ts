@@ -13,8 +13,13 @@
 //   client_portal_set_shared_context_consent(...)          -> { ok:true, replayed, preferences }
 //   client_portal_self_profile                             -> the exact 19-key shape readClientPortalSelfProfile accepts
 //
-//   ?state=default|email-off|email-paused|email-paused-held|texts-on|texts-off|updates-subscribed|sharing-on|
-//          no-address|no-number|multiple|unavailable|loading|error|pending|refusal|saved
+//   ?state=default|email-off|email-paused|email-paused-held|email-reported|reported-lift|texts-on|texts-on-no-tz|
+//          texts-off|updates-subscribed|business-recorded|sharing-on|no-address|no-number|multiple|unavailable|
+//          loading|error|pending|refusal|saved
+//   email-reported: the customer reported an email as spam (set_by 'reported'); only they can turn it back on.
+//   reported-lift:  the same, then the drive turns email back on through the real switch.
+//   texts-on-no-tz: texts on, the business has no usable time zone for them (the Eastern-time sentence).
+//   business-recorded: texts on and updates subscribed, both recorded by the business (D7 labels).
 //   error:   the first preferences read lands and every later one fails (reached by the page's own focus refresh).
 //   pending: every write hangs, so the row is framed mid-save.
 //   refusal: email is off by the customer, but the business has since paused it: turning it on is refused and
@@ -46,7 +51,10 @@ function initial() {
     case "email-paused": p.email = card("off", { set_by: "business", set_at: ago(3) }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
     case "email-paused-held": p.email = card("off", { set_by: "business", set_at: ago(3), can_turn_off: false }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
     case "refusal": p.email = card("off", { set_by: "you", set_at: ago(6), can_turn_on: true, can_turn_off: false }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
+    case "email-reported": case "reported-lift": p.email = card("off", { set_by: "reported", set_at: ago(15), can_turn_on: true, can_turn_off: false }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
     case "texts-on": p.sms = card("on", { set_by: "reply", set_at: ago(9) }); p.time_zone_known = true; break;
+    case "texts-on-no-tz": p.sms = card("on", { set_by: "reply", set_at: ago(9) }); p.time_zone_known = false; break;
+    case "business-recorded": p.sms = card("on", { set_by: "business", set_at: ago(20) }); p.updates = upd("subscribed", { set_by: "business", set_at: ago(20) }); p.time_zone_known = true; break;
     case "texts-off": p.sms = card("off", { set_by: "reply", set_at: ago(2), can_turn_off: false }); break;
     case "updates-subscribed": p.updates = upd("subscribed", { set_by: "you", set_at: ago(12) }); break;
     case "sharing-on": p.data_sharing = { allowed: true, updated_at: ago(4) }; break;

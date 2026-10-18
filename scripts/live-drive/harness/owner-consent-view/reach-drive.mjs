@@ -29,7 +29,7 @@ const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 function allShots() {
   const shots = [];
-  for (const theme of ["light", "dark"]) for (const state of ["mixed", "paused", "defaults", "refused", "error", "loading"]) for (const kind of ["desktop", "phone"]) shots.push({ state, theme, kind });
+  for (const theme of ["light", "dark"]) for (const state of ["mixed", "paused", "reported", "business", "defaults", "refused", "error", "loading"]) for (const kind of ["desktop", "phone"]) shots.push({ state, theme, kind });
   return shots.map((s) => ({ ...s, w: SIZES[s.kind][0], h: SIZES[s.kind][1], phone: s.kind === "phone" }));
 }
 
@@ -70,6 +70,7 @@ async function drive(page, s, n) {
   await page.waitForTimeout(300);
 }
 
+const FOOT = "What Jordan turns off stays off until they turn it back on. Texts come on only from a START reply, a sign-up form, or consent your business records itself, which shows as Set by your business. You can pause email or texts in Conversations, and lift any pause Jordan didn’t set.";
 function unmet(s, n) {
   const miss = [];
   const want = (ok, what) => { if (!ok) miss.push(what); };
@@ -83,17 +84,24 @@ function unmet(s, n) {
       "Email = Off Set by the client · Oct 12, 2026",
       "Texts = On Set by their START reply · Oct 9, 2026",
       "Updates and offers = Not subscribed Set by the client · Oct 12, 2026",
-      "Shared Paige context = Allowed by the client Oct 14, 2026",
+      "Shared Paige context = Allowed by the client · it has no effect yet Oct 14, 2026",
       "Portal = Joined",
       "Do not contact (marketing) = Off",
       "Do not disturb = On · Paige holds emails and texts while the hold lasts",
     ]), `rows ${JSON.stringify(n.rows)}`);
     want((n.links ?? []).includes(`Open Conversations -> /solo/42/clients/conversations?contact=${CLIENT}`), `links ${JSON.stringify(n.links)}`);
-    want(/Only Jordan can turn email, texts or updates on/.test(n.text ?? ""), "no read-only explanation");
+    want((n.text ?? "").includes(FOOT), "the footer is not the literally-true explanation (business pause, D1, D7)");
   }
   if (s.state === "paused") {
-    want(eq(n.rows.slice(0, 3), ["Email = Paused by your team Oct 15, 2026", "Texts = Not set up · no START reply on record, so texts are held", "Updates and offers = Paused by your team Oct 15, 2026"]), `rows ${JSON.stringify(n.rows)}`);
+    want(eq(n.rows.slice(0, 3), ["Email = Paused Set by your business · Oct 15, 2026", "Texts = Not set up · no START reply on record, so texts are held", "Updates and offers = Paused Set by your business · Oct 15, 2026"]), `rows ${JSON.stringify(n.rows)}`);
     want(n.rows.includes("Portal = Not joined yet") && n.rows.includes("Do not contact (marketing) = On · left out of marketing email"), `rows ${JSON.stringify(n.rows)}`);
+  }
+  if (s.state === "reported") {
+    want(n.rows[0] === "Email = Off · they reported email as spam Oct 3, 2026 Only they can turn it back on.", `reported row "${n.rows[0]}"`);
+    want(!/delivery/i.test(n.text ?? ""), "a spam report reads as a delivery problem");
+  }
+  if (s.state === "business") {
+    want(n.rows[1] === "Texts = On Set by your business · Sep 28, 2026" && n.rows[2] === "Updates and offers = Subscribed Set by your business · Sep 28, 2026", `D7 rows ${JSON.stringify(n.rows.slice(1, 3))}`);
   }
   if (s.state === "defaults") want(n.rows[0] === "Email = On" && n.rows[1] === "Texts = No phone number on file", `rows ${JSON.stringify(n.rows)}`);
   if (s.state === "refused") want(/Only the business owner or an admin can see how Jordan Rivera can be reached\./.test(n.text ?? "") && n.rows.length === 0, `refused "${n.text}"`);

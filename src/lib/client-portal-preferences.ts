@@ -15,10 +15,11 @@ export type SmsState = "on" | "off" | "not_set" | "no_number";
 export type UpdatesState = "subscribed" | "not_subscribed" | "paused" | "no_address";
 /**
  * Who made the deciding choice (_comms_set_by): the customer's portal account, the business, a STOP/START
- * reply, their emailed unsubscribe link, delivery failures, or a sign-up form. Never an address, an id or
- * staff identity.
+ * reply, their emailed unsubscribe link, a hard bounce ("delivery"), the customer's own spam report
+ * ("reported" — their act, which only they can undo, integrator ruling 2026-10-18), or a sign-up form.
+ * Never an address, an id or staff identity.
  */
-export type PreferenceSetBy = "you" | "business" | "reply" | "unsubscribe_link" | "delivery" | "form";
+export type PreferenceSetBy = "you" | "business" | "reply" | "unsubscribe_link" | "delivery" | "reported" | "form";
 
 export interface ChannelPreference<S extends string> {
   state: S;
@@ -59,7 +60,7 @@ const QUIET_KEYS = ["start", "end", "time_zone_known"];
 const EMAIL_STATES: readonly EmailState[] = ["on", "off", "no_address"];
 const SMS_STATES: readonly SmsState[] = ["on", "off", "not_set", "no_number"];
 const UPDATES_STATES: readonly UpdatesState[] = ["subscribed", "not_subscribed", "paused", "no_address"];
-const SET_BY: readonly PreferenceSetBy[] = ["you", "business", "reply", "unsubscribe_link", "delivery", "form"];
+const SET_BY: readonly PreferenceSetBy[] = ["you", "business", "reply", "unsubscribe_link", "delivery", "reported", "form"];
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
@@ -165,15 +166,25 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
  * with the evidence (`portal:<uid>:<id>:<md5 prefix of the sentence>`). The server holds the same text
  * (client_portal_consent_disclosure, 20271110100000); the Vitest suite pins each sentence here to that
  * SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
- * Changing a sentence means a new id (v2) on both sides, never an edit of v1.
+ * Changing a sentence means a new id (v2) on both sides, never an edit of v1. A superseded id stays here and on
+ * the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
+  // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
   "email-pref:v1": "Email from {business}. When email is off, {business} won't email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.",
+  "email-pref:v2": "Email from {business}. When email is off, {business} won't email you through Paige, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.",
+  // Superseded 2026-10-18 (round 2): repeated the row's own label.
   "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
+  "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
   "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.",
   "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
+
+/** The sentence each card shows today; the writer records the same id with the customer's choice. */
+export const CURRENT_DISCLOSURE = {
+  email: "email-pref:v2", sms: "sms-pref:v1", updates: "updates-optin:v2", sharing: "data-sharing:v1",
+} as const satisfies Record<string, PortalDisclosureId>;
 
 export function disclosureText(id: PortalDisclosureId, business: string): string {
   return PORTAL_PREFERENCE_DISCLOSURES[id].split("{business}").join(business);
@@ -181,9 +192,10 @@ export function disclosureText(id: PortalDisclosureId, business: string): string
 
 /** The server's named refusals. Codes never reach the screen; the component turns them into words. */
 export type PreferenceRefusal =
-  | "EMAIL_PAUSED_BY_BUSINESS" | "EMAIL_UNDELIVERABLE" | "EMAIL_REPORTED" | "EMAIL_OFF" | "NO_EMAIL_ADDRESS"
+  | "EMAIL_PAUSED_BY_BUSINESS" | "EMAIL_UNDELIVERABLE" | "EMAIL_OFF" | "NO_EMAIL_ADDRESS"
   | "SMS_OPT_IN_UNAVAILABLE" | "BAD_PREFERENCE";
-const REFUSALS: readonly PreferenceRefusal[] = ["EMAIL_PAUSED_BY_BUSINESS", "EMAIL_UNDELIVERABLE", "EMAIL_REPORTED", "EMAIL_OFF", "NO_EMAIL_ADDRESS", "SMS_OPT_IN_UNAVAILABLE", "BAD_PREFERENCE"];
+// EMAIL_REPORTED was retired in round 2: the customer's own spam report is theirs to lift (owner ruling 2026-10-18).
+const REFUSALS: readonly PreferenceRefusal[] = ["EMAIL_PAUSED_BY_BUSINESS", "EMAIL_UNDELIVERABLE", "EMAIL_OFF", "NO_EMAIL_ADDRESS", "SMS_OPT_IN_UNAVAILABLE", "BAD_PREFERENCE"];
 
 /** A refusal named in a writer's answer: `{ok:false, error:CODE, ...}`, or a raised message that starts with the code. */
 export function preferenceRefusal(data: unknown, error: unknown): PreferenceRefusal | "OTHER" | null {

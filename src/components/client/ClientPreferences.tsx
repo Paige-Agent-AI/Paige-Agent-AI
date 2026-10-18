@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { PauseCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { disclosureText } from "@/lib/client-portal-preferences";
+import { CURRENT_DISCLOSURE, disclosureText } from "@/lib/client-portal-preferences";
 import { useClientPortalPreferences, type PreferenceKey } from "@/hooks/useClientPortalPreferences";
 import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } from "./clientPreferencesCopy";
 
@@ -17,9 +17,10 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
  * Nothing here is an act of approval, so there is no gold (§11): switches are the indigo primary.
  *
  * Owner decisions this copy states: texts can be turned OFF here but only turned on by replying START
- * (D1); email off also unsubscribes from updates and offers (D4); confirmations and receipts for
- * sessions the customer books or changes still arrive (D5); data sharing changes nothing reachable
- * today and says so (D2, reviewer M3).
+ * (D1); email off also unsubscribes from updates and offers and email back on does not re-subscribe (D4,
+ * disclosure email-pref:v2); booking confirmations and agreements the customer is asked to sign still
+ * arrive (D5, integrator ruling 2026-10-18); a spam report is the customer's own act, which they can undo
+ * here and the business never can; data sharing changes nothing reachable today and says so (D2, M3).
  */
 
 const SWITCH_TARGET = "relative after:absolute after:inset-x-0 after:-inset-y-[12px] after:content-['']";
@@ -41,7 +42,7 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
   return (
     <>
       <section ref={section} id="preferences" aria-labelledby="client-preferences-title" aria-busy={prefs.phase === "loading" || busy} className="mt-12 max-w-2xl scroll-mt-6">
-        <h2 id="client-preferences-title" className="mb-2 text-base font-semibold">How {business} can reach you</h2>
+        <h2 id="client-preferences-title" className="mb-2 text-lg font-semibold tracking-tight">How {business} can reach you</h2>
         <p className="mb-5 text-sm text-muted-foreground">
           {ready ? `These choices apply to messages ${business} sends you through Paige.` : "Your messaging choices for this business."}
         </p>
@@ -72,7 +73,7 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
 
       {ready && prefs.preferences && (
         <section aria-labelledby="client-sharing-title" className="mt-12 max-w-2xl">
-          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-base font-semibold">What {business} can use</h2>
+          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">What {business} can use</h2>
           <ul className="divide-y divide-border border-b border-border">
             <PreferenceRow business={business} locked={busy} savingId={savingId} notice={noticeFor("sharing")}
               pending={prefs.pending?.key === "sharing" ? prefs.pending.enabled : undefined}
@@ -80,7 +81,7 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
               card={{
                 key: "sharing",
                 label: "Let Paige use your account information",
-                disclosure: "data-sharing:v1",
+                disclosure: CURRENT_DISCLOSURE.sharing,
                 state: prefs.preferences.data_sharing.allowed ? `Allowed${on(day(prefs.preferences.data_sharing.updated_at))}` : "Not allowed",
                 detail: `It never changes what ${business} can already see in its own records.`,
                 control: { checked: prefs.preferences.data_sharing.allowed, enabled: true, aria: "Let Paige use your account information" },
@@ -118,7 +119,7 @@ function PreferenceRow({ card, business, pending, locked, savingId, notice, onCh
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-5 gap-y-2 py-4" data-testid={`pref-${card.key}`} aria-busy={pending !== undefined || undefined}>
       <div className="min-w-0 space-y-1">
-        <p className="text-base font-semibold [overflow-wrap:anywhere]">{card.label}</p>
+        <p className="text-base font-medium [overflow-wrap:anywhere]" data-testid="pref-label">{card.label}</p>
         <p id={stateId} className="flex items-start gap-1.5 text-sm text-foreground" data-testid="pref-state">
           {card.paused && <PauseCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />}
           <span>{pending !== undefined ? "Saving…" : card.state}</span>

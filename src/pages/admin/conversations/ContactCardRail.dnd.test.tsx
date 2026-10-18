@@ -54,12 +54,19 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
 describe("Conversations DND — the one staff pause", () => {
-  it.each(["customer_request", "user_stop", "unsubscribe_link", "complaint"])("a %s row is held by the contact: switch locked on, with the reason shown", async reason => {
+  it.each(["customer_request", "user_stop", "unsubscribe_link"])("a %s row is held by the contact: switch locked on, with the reason shown", async reason => {
     await mount([{ channel: "email", reason }]);
     expect(sw("Email").getAttribute("data-state")).toBe("checked");
     expect(sw("Email").disabled).toBe(true);
     expect(host.textContent).toContain("Turned off by the contact. Only they can turn it back on.");
     expect(sw("SMS").disabled).toBe(false);
+  });
+
+  it("a spam report is the contact's own act: locked, and said in those words (integrator ruling)", async () => {
+    await mount([{ channel: "email", reason: "complaint" }]);
+    expect(sw("Email").disabled).toBe(true);
+    expect(host.textContent).toContain("They reported email as spam. Only they can turn it back on.");
+    expect(host.textContent).not.toContain("Turned off by the contact.");
   });
 
   it("the business's own pause can still be lifted from here", async () => {

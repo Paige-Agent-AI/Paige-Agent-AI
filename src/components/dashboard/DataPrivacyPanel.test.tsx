@@ -11,7 +11,10 @@ const f = vi.hoisted(() => ({
 }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: f.brand, loading: f.loading, error: f.error, multipleBusinesses: f.multiple }) }));
 vi.mock("@/hooks/useTenantFeature", () => ({ useTenantFeature: (key: string) => ({ enabled: key === "funding_readiness" && f.funding, loading: f.fundingLoading }) }));
-vi.mock("@/components/security/SecurityBadge", () => ({ SecurityBadge: () => null }));
+vi.mock("@/components/security/SecurityBadge", async () => {
+  const { createElement } = await import("react");
+  return { SecurityBadge: () => createElement("span", { "data-testid": "security-badge" }, "Bank-Grade Security") };
+});
 vi.mock("@/lib/downloadMyUserData", () => ({ downloadMyUserData: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 const { DataPrivacyPanel } = await import("./DataPrivacyPanel");
@@ -82,5 +85,22 @@ describe("Data & Privacy", () => {
   it("no hardcoded amber and no decorative gold (§11)", async () => {
     f.funding = true; await render();
     expect(host.innerHTML).not.toMatch(/amber-|text-accent|bg-accent/);
+  });
+
+  it("for a customer: no security pill, Paige by its name, one divided list with no nested cards, and no texts-on promise (should-fix 6/7)", async () => {
+    customer(); await render();
+    expect(host.querySelector('[data-testid="security-badge"]')).toBeNull();
+    expect(host.textContent).not.toContain("PaigeAgent");
+    // One bordered card holds one divided list: no bordered box nested inside it (buttons aside).
+    const card = host.firstElementChild!;
+    expect(Array.from(card.querySelectorAll("div, li")).filter(el => /(^|\s)border(\s|$)|rounded-lg/.test(el.className))).toHaveLength(0);
+    expect(card.querySelectorAll("ul.divide-y > li").length).toBeGreaterThanOrEqual(4);
+    expect(host.textContent).not.toMatch(/email or text you|choose how .* texts/i);
+  });
+
+  it("staff keep the security pill (§58)", async () => {
+    await render();
+    expect(host.querySelector('[data-testid="security-badge"]')).toBeTruthy();
+    expect(host.textContent).not.toContain("PaigeAgent");
   });
 });

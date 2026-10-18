@@ -81,12 +81,15 @@ export function ClientCommunicationState({ contactId, clientName, account }: Pro
                   {(row.by || day(row.at ?? null)) && (
                     <span className="trc-reach-by">{[row.by ? `Set by ${row.by}` : null, day(row.at ?? null)].filter(Boolean).join(" · ")}</span>
                   )}
+                  {row.note && <span className="trc-reach-note">{row.note}</span>}
                 </dd>
               </div>
             ))}
           </dl>
           <div className="trc-reach-foot">
-            <p>Only {first} can turn email, texts or updates on, from their portal account or by replying START. You can pause email or texts from Conversations.</p>
+            {/* True for a business pause (you lift it), D1 (texts are never turned on from the portal) and D7
+                (consent the business records itself is labelled as the business's). */}
+            <p>What {first} turns off stays off until they turn it back on. Texts come on only from a START reply, a sign-up form, or consent your business records itself, which shows as Set by your business. You can pause email or texts in Conversations, and lift any pause {first} didn’t set.</p>
             {conversations && <Link className="trc-reach-quiet" to={conversations}>Open Conversations</Link>}
           </div>
         </>

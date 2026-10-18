@@ -39,7 +39,7 @@ describe("How {client} can be reached — the owner's read-only view", () => {
       Email: "OffSet by the client · Oct 12, 2026",
       Texts: "OnSet by their START reply · Oct 10, 2026",
       "Updates and offers": "SubscribedSet by the client · Oct 9, 2026",
-      "Shared Paige context": "Allowed by the clientOct 8, 2026",
+      "Shared Paige context": "Allowed by the client · it has no effect yetOct 8, 2026",
       Portal: "Joined",
       "Do not contact (marketing)": "On · left out of marketing email",
       "Do not disturb": "On · Paige holds emails and texts while the hold lasts",
@@ -49,21 +49,39 @@ describe("How {client} can be reached — the owner's read-only view", () => {
   it("is read-only: no switch, no checkbox, and it points the one staff control to Conversations", async () => {
     await mount({ data: ownerStatePayload(), error: null });
     expect(host.querySelector('[role="switch"], input, [role="checkbox"]')).toBeNull();
-    expect(host.textContent).toContain("Only Jordan can turn email, texts or updates on");
+    const foot = host.querySelector(".trc-reach-foot p")!.textContent;
+    expect(foot).toBe("What Jordan turns off stays off until they turn it back on. Texts come on only from a START reply, a sign-up form, or consent your business records itself, which shows as Set by your business. You can pause email or texts in Conversations, and lift any pause Jordan didn’t set.");
     expect(host.querySelector("a")?.getAttribute("href")).toBe(`/solo/42/clients/conversations?contact=${PREF_CONTACT}`);
     expect(host.innerHTML).not.toMatch(/\bgold\b/);
   });
 
   it("names who held it, never as the client's choice when the business made it", async () => {
     await mount({ data: ownerStatePayload({ email: prefCard("off", { set_by: "business" }), sms: prefCard("not_set"), portal_joined: false }), error: null });
-    expect(rows().Email).toBe("Paused by your team");
+    expect(rows().Email).toBe("PausedSet by your business");
     expect(rows().Texts).toBe("Not set up · no START reply on record, so texts are held");
     expect(rows().Portal).toBe("Not joined yet");
     expect(host.querySelector('[data-paused] svg')).toBeTruthy();
   });
 
+  it("business-recorded consent reads Set by your business on every channel (D7)", async () => {
+    await mount({ data: ownerStatePayload({
+      sms: prefCard("on", { set_by: "business", set_at: "2026-10-10T15:00:00Z" }),
+      updates: prefUpdates("subscribed", { set_by: "business", set_at: "2026-10-09T15:00:00Z" }),
+      email: prefCard("off", { set_by: "business", set_at: "2026-10-08T15:00:00Z" }),
+    }), error: null });
+    expect(rows().Texts).toBe("OnSet by your business · Oct 10, 2026");
+    expect(rows()["Updates and offers"]).toBe("SubscribedSet by your business · Oct 9, 2026");
+    expect(rows().Email).toBe("PausedSet by your business · Oct 8, 2026");
+  });
+
+  it("a spam report reads as the client's own, and only they can lift it (integrator ruling)", async () => {
+    await mount({ data: ownerStatePayload({ email: prefCard("off", { set_by: "reported", set_at: "2026-10-03T15:00:00Z", can_turn_off: false }) }), error: null });
+    expect(rows().Email).toBe("Off · they reported email as spamOct 3, 2026Only they can turn it back on.");
+    expect(host.textContent).not.toMatch(/delivery/);
+  });
+
   it.each([
-    ["you", "off", "the client"], ["business", "off", "your team"], ["reply", "on", "their START reply"], ["reply", "off", "their STOP reply"],
+    ["you", "off", "the client"], ["business", "off", "your business"], ["reported", "off", "their spam report"], ["reply", "on", "their START reply"], ["reply", "off", "their STOP reply"],
     ["unsubscribe_link", "off", "their unsubscribe link"], ["delivery", "off", "delivery failures"], ["form", "on", "a sign-up form"], [null, "on", null],
   ] as const)("set by %s (%s) reads as %s", (by, state, text) => {
     expect(ownerSetBy(by, state)).toBe(text);

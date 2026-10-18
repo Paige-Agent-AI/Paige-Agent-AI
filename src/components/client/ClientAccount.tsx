@@ -17,10 +17,10 @@ export function ClientAccount() {
     <section aria-labelledby="client-account-title" className="mx-auto w-full max-w-3xl text-foreground">
       <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
         <div><h1 id="client-account-title" className="text-2xl font-semibold tracking-tight">Your account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Your personal information for this business.</p></div>
+          <p className="mt-2 text-sm text-muted-foreground">Your details for this business, and how they can reach you.</p></div>
         <Link to="/app/settings?tab=personal" className="inline-flex min-h-[44px] items-center rounded-md px-2 text-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Settings and security</Link>
       </header>
-      <h2 className="mb-6 border-b border-border pb-4 text-base font-semibold">Personal information</h2>
+      <h2 className="mb-6 border-b border-border pb-4 text-lg font-semibold tracking-tight">Personal information</h2>
       {account.phase === "loading" ? (
         <div role="status" aria-live="polite" className="space-y-4 py-3"><p className="text-sm text-muted-foreground">Loading your information…</p>
           <div aria-hidden="true" className="h-11 rounded-md bg-muted" /><div aria-hidden="true" className="h-11 rounded-md bg-muted" /></div>

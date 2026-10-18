@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Download, Trash2, ShieldOff, Bell, FileText, Loader2, ExternalLink } from "lucide-react";
+import { Download, Trash2, Bell, FileText, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadMyUserData } from "@/lib/downloadMyUserData";
 import { toast } from "sonner";
@@ -93,59 +93,58 @@ export function DataPrivacyPanel() {
     }
   };
 
+  // One divided list, never cards inside the card (Impeccable refuse-list; the same rhythm as Your account).
+  const row = "flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4";
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="p-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <ShieldOff className="w-5 h-5 text-muted-foreground" />
-            Data &amp; Privacy
-          </h3>
+          <h3 className="text-lg font-semibold tracking-tight">Data &amp; Privacy</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your data, exercise your privacy rights, and review how PaigeAgent protects you.
+            Download your data, ask for it to be deleted, and read how Paige handles it.
           </p>
         </div>
-        {/* The shared badge spends gold at 1.8:1 in light; here it reads in ink (§11, AA). */}
-        <SecurityBadge className="!min-h-[44px] !border-border !bg-transparent !text-foreground hover:!bg-muted" />
+        {/* Staff only (§58: unchanged for them). A customer is not shown an unverifiable security claim. */}
+        {known && !customer && <SecurityBadge className="!min-h-[44px] !border-border !bg-transparent !text-foreground hover:!bg-muted" />}
       </div>
 
-      <div className="grid gap-4">
+      <ul className="mt-6 divide-y divide-border border-t border-border">
         {/* Download */}
-        <div className="rounded-lg border border-border p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-muted-foreground" />
               <p className="font-medium">Download My Data</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {showCredit
-                ? "Export all data PaigeAgent holds about you as JSON — credit scores, fundability scores, account data, Paige session summaries, and financial profile."
+                ? "Export all data Paige holds about you as JSON — credit scores, fundability scores, account data, Paige session summaries, and financial profile."
                 : customer
                   ? `Download a JSON file of what your Paige login holds: your profile, your contact details, recent Paige chats and anything else tied to your login. It doesn't include the records ${business} keeps about you. Message ${business} for a copy of those.`
                   : "Download a JSON file of what your Paige login holds: your profile, your contact details, businesses you own, recent Paige chats and anything else tied to your login. Your workspace's client records aren't included."}
             </p>
           </div>
-          <Button onClick={handleDownloadData} disabled={isDownloading} variant="outline" size="sm" className="min-h-[44px]">
+          <Button onClick={handleDownloadData} disabled={isDownloading} variant="outline" size="sm" className="min-h-[44px] self-start">
             {isDownloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
             Download JSON
           </Button>
-        </div>
+        </li>
 
         {/* Delete Credit Data — funding preset only (§2). */}
-        {showCredit && <div className="rounded-lg border border-border p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        {showCredit && <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-warning" />
               <p className="font-medium">Delete Credit Data</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Removes all extracted credit report data and resets your fundability scores to a
               locked state. Your account stays active. This cannot be undone without re-uploading.
             </p>
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="min-h-[44px] text-foreground">
+              <Button variant="outline" size="sm" className="min-h-[44px] self-start text-foreground">
                 <Trash2 className="w-4 h-4 mr-1" /> Delete Credit Data
               </Button>
             </AlertDialogTrigger>
@@ -170,64 +169,64 @@ export function DataPrivacyPanel() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>}
+        </li>}
 
         {/* Delete Account */}
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-destructive" />
               <p className="font-medium">Delete Account</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {customer
                 ? `Email privacy@paigeagent.ai to close your Paige login. To delete what ${business} holds about you, message ${business}.`
                 : "Email privacy@paigeagent.ai to ask us to close your Paige login and delete the data tied to it. We reply to confirm each step. Nothing is deleted automatically."}
             </p>
           </div>
-          <Button asChild variant="destructive" size="sm" className="min-h-[44px]">
+          <Button asChild variant="destructive" size="sm" className="min-h-[44px] self-start">
             <a href="mailto:privacy@paigeagent.ai?subject=Account%20Deletion%20Request">
               Email us
             </a>
           </Button>
-        </div>
+        </li>
 
         {/* Communication preferences — a customer's own choices for their business, on Your account. */}
-        {customerOfOne && <div className="rounded-lg border border-border p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        {customerOfOne && <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-muted-foreground" />
               <p className="font-medium">Communication Preferences</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Choose whether {business} can email or text you, and whether you get their updates and offers.
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose whether {business} can email you, turn their texts off, and decide on their updates and offers.
             </p>
           </div>
-          <Button asChild variant="outline" size="sm" className="min-h-[44px]">
+          <Button asChild variant="outline" size="sm" className="min-h-[44px] self-start">
             <Link to="/app/settings?view=client-account#preferences">Manage</Link>
           </Button>
-        </div>}
+        </li>}
 
         {/* Privacy Policy */}
-        <div className="rounded-lg border border-border p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <li className={row}>
           <div className="min-w-0 sm:flex-1">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
               <p className="font-medium">Privacy Policy</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {customer
                 ? `Read how Paige collects, uses and protects your data. ${business} may have its own policy too.`
                 : "Read how Paige collects, uses and protects your data."}
             </p>
           </div>
-          <Button asChild variant="outline" size="sm" className="min-h-[44px]">
+          <Button asChild variant="outline" size="sm" className="min-h-[44px] self-start">
             <Link to="/privacy" target="_blank" rel="noreferrer">
               View Policy <ExternalLink className="w-3.5 h-3.5 ml-1" />
             </Link>
           </Button>
-        </div>
-      </div>
+        </li>
+      </ul>
     </Card>
   );
 }

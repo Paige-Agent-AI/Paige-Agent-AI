@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  CURRENT_DISCLOSURE,
   PORTAL_PREFERENCE_DISCLOSURES,
   disclosureText,
   preferenceRefusal,
@@ -39,6 +40,10 @@ describe("customer preferences read (exact keys)", () => {
       updates: { state: "no_address", set_by: null, set_at: null, can_subscribe: false, can_unsubscribe: false } });
     expect(readClientPortalPreferences(row)?.email.set_by).toBe("form");
   });
+  it("accepts the customer's own spam report as its own setter, apart from delivery (round 2)", () => {
+    const row = prefs({ email: card("off", { set_by: "reported", set_at: "2026-10-03T00:00:00Z", can_turn_on: true, can_turn_off: false }) });
+    expect(readClientPortalPreferences(row)?.email.set_by).toBe("reported");
+  });
 });
 
 describe("owner read", () => {
@@ -69,6 +74,13 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
   it("every server id is known to the page", () => {
     const ids = [...body.slice(0, body.indexOf("END $$")).matchAll(/WHEN '([^']+)' THEN/g)].map(m => m[1]);
     expect(ids.sort()).toEqual(Object.keys(PORTAL_PREFERENCE_DISCLOSURES).sort());
+  });
+  it("the page shows v2 for email and updates: email off also unsubscribes, back on does not re-subscribe, agreements are named, the label is not repeated", () => {
+    expect(CURRENT_DISCLOSURE).toEqual({ email: "email-pref:v2", sms: "sms-pref:v1", updates: "updates-optin:v2", sharing: "data-sharing:v1" });
+    const email = disclosureText("email-pref:v2", "Northwind Studio");
+    expect(email).toContain("except booking confirmations and agreements you're asked to sign");
+    expect(email).toContain("Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.");
+    expect(disclosureText("updates-optin:v2", "Northwind Studio")).not.toMatch(/^Updates and offers/);
   });
   it("fills the business name everywhere it appears", () => {
     const text = disclosureText("sms-pref:v1", "Northwind Studio");

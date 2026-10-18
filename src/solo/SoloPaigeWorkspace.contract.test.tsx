@@ -387,7 +387,7 @@ describe("Solo PAIGE workspace contract", () => {
     expect(chat).toMatch(/acceptedEpochRef\.current = scopeEpoch;(?:[^\n]*\n){0,16}\s*abortActiveRequest\(\);/);
     // Bind this check to the callback body: additional owned-read cleanup must not
     // make it depend on line count or let a later handler satisfy invalidation.
-    const abortBody = /const abortActiveRequest = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/.exec(chat)?.[1];
+    const abortBody = /const abortActiveRequest = useCallback\(\(\) => \{([\s\S]*?)\n {2}\}, \[\]\);/.exec(chat)?.[1];
     expect(abortBody).toBeDefined();
     expect(abortBody).toContain("if (requestFenceRef.current.invalidate()) setIsLoading(false);");
     // §13 — THIS ASSERTION HAD GONE VACUOUS. The reset now seeds `scopeNotice ?? openingGreeting`,

@@ -1248,6 +1248,10 @@ describe("tenant Relationships / Clients workspace", () => {
     // E09 Slice 3: sharing lives on the Solo client record only, so this non-Solo card must not claim it.
     expect(html).toContain("UNAVAILABLE here · sharing work with a client is on the Solo client record");
     expect(html).toContain("Files and agreements");
+    // E09 Documents + Slice A: one line, true after both slices — shared files land in Documents, sent agreements in Agreements.
+    expect(html).toContain("PARTIAL · once your client has joined their portal, files you share on their Solo client record appear in Documents, and agreements you send them from Sales appear in Agreements to sign and download.");
+    expect(html).not.toContain("agreements unchanged");
+    expect(html).not.toContain("other files vary by authorized account");
     expect(html).toContain("Configuration remains owner/admin gated");
     expect(html).toContain("Choose a client to manage access");
     const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");

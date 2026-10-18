@@ -25,24 +25,28 @@ const shape = (sections: ReturnType<typeof assemblePortalNav>) =>
 const generic = generalDefault.portal.modules;
 const set = (items: { href: string | null; label: string }[]) => items.map((i) => `${i.label}>${i.href}`).sort();
 
-// The deliberate differences (§58, called out in the evidence record):
-//   - Agreements' route is still the platform-terms page, so it is held back from every viewer who is not staff
-//     until Slice A. Staff keep it.
+// The deliberate differences (§58, called out in the evidence records):
 //   - ADDITION: Resources is core for customers, so a customer of one business has it on every Playbook — including
 //     the ones whose catalog never listed it (fitness, consultant, agency, funding). Nobody loses it.
+//   - ADDITION (Slice A, owner decision D-A1): Agreements is core for customers too — the customer's own Sales
+//     Agreements — on every Playbook. Every other viewer keeps the catalog rule, as before Slice M (Slice M had held
+//     it from every viewer who is not staff while its route was still the platform-terms page).
 const AGREEMENTS = "/app/agreements";
 const RESOURCES = { href: "/app/learn", label: "Resources" };
+const AGREEMENTS_ITEM = { href: AGREEMENTS, label: "Agreements" };
 
 describe("no overlay: the same destinations main renders today, per viewer kind (§58)", () => {
   for (const [cname, pb] of Object.entries(catalogs)) {
     for (const [vname, viewer] of Object.entries(viewers)) {
       it(`${cname} · ${vname}`, () => {
         const before = APPNAV_BEFORE_SLICE_M[cname][vname];
-        const today = before.filter((i) => viewer.isStaff || i.href !== AGREEMENTS);
-        const gained = viewer.isCustomer && !before.some((i) => i.href === RESOURCES.href) ? [RESOURCES] : [];
+        const today = before;
+        const gained = viewer.isCustomer
+          ? [RESOURCES, AGREEMENTS_ITEM].filter((g) => !before.some((i) => i.href === g.href))
+          : [];
         const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer }));
         expect(set(now)).toEqual(set([...today, ...gained]));
-        // Nothing main rendered is missing (§58), apart from Agreements held from non-staff.
+        // Nothing main rendered before Slice M is missing (§58).
         for (const i of today) expect(now.map((n) => n.href), `${cname} · ${vname} lost ${i.href}`).toContain(i.href);
         // Every destination appears once.
         expect(new Set(now.map((i) => i.href)).size).toBe(now.length);
@@ -54,7 +58,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(shape(assemblePortalNav({ catalog: generic, viewer: CUSTOMER }))).toEqual([
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions",
-      "Paperwork: Documents",
+      "Paperwork: Documents, Agreements",
       "Learn: Resources",
     ]);
   });
@@ -63,7 +67,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(shape(assemblePortalNav({ catalog: generic, viewer: STAFF }))).toEqual(["top: Home", "Your work: Planning", "Learn: Resources"]);
     expect(shape(assemblePortalNav({ catalog: generic, viewer: viewers.multiBusiness }))).toEqual(["top: Home", "Your work: Action items", "Learn: Resources"]);
     expect(shape(assemblePortalNav({ catalog: generic, viewer: viewers.staffWithBrand }))).toEqual([
-      "top: Home, Messages", "Your work: Progress, Sessions, Planning", "Paperwork: Documents", "Learn: Resources",
+      "top: Home, Messages", "Your work: Progress, Sessions, Planning", "Paperwork: Documents, Agreements", "Learn: Resources",
     ]);
   });
 
@@ -71,7 +75,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER }))).toEqual([
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions, Funding Journey, Credit, Funding, Financial Profile, Business",
-      "Paperwork: Documents",
+      "Paperwork: Documents, Agreements",
       "Learn: Resources",
     ]);
   });
@@ -98,13 +102,20 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(portalMenuEditorEntries(catalog).filter((e) => e.group === "learn").map((e) => e.key)).toEqual(["learn"]);
   });
 
-  it("holds Agreements back from every viewer who is not staff until Slice A, and keeps it for staff (§58)", () => {
-    const overlay = [{ key: "agreements", visible: true, label: "Contracts" }];
-    for (const [vname, viewer] of Object.entries(viewers)) {
-      const hrefs = flattenPortalNav(assemblePortalNav({ catalog: funding.portal.modules, overlay, viewer })).map((i) => i.href);
-      expect(hrefs.includes(AGREEMENTS), vname).toBe(viewer.isStaff);
+  it("gives every customer of one business Agreements whatever the catalog lists; everyone else keeps the catalog rule (D-A1, §58)", () => {
+    for (const [cname, pb] of Object.entries(catalogs)) {
+      for (const [vname, viewer] of Object.entries(viewers)) {
+        const hrefs = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer })).map((i) => i.href);
+        const listed = pb.portal.modules.some((m) => m.key === "agreements");
+        expect(hrefs.includes(AGREEMENTS), `${cname} · ${vname}`).toBe(viewer.isCustomer || listed);
+      }
     }
-    expect(PORTAL_MENU_ENTRIES.find((e) => e.key === "agreements")?.clientsLive).toBe(false);
+    // Live for clients now: the owner's rename reaches the customer, and only the owner's overlay hides it.
+    const renamed = assemblePortalNav({ catalog: generic, overlay: [{ key: "agreements", label: "Contracts" }], viewer: CUSTOMER });
+    expect(shape(renamed)).toContain("Paperwork: Documents, Contracts");
+    const hidden = assemblePortalNav({ catalog: funding.portal.modules, overlay: [{ key: "agreements", visible: false }], viewer: CUSTOMER });
+    expect(flattenPortalNav(hidden).map((i) => i.href)).not.toContain(AGREEMENTS);
+    expect(PORTAL_MENU_ENTRIES.find((e) => e.key === "agreements")?.clientsLive).not.toBe(false);
   });
 });
 
@@ -119,9 +130,12 @@ describe("floors the overlay can never cross", () => {
   });
 
   it("never shows a catalog-only key the catalog does not list, even when the overlay names it", () => {
-    const overlay = ["credit", "funding", "agreements", "approvals", "business", "affiliate"].map((key) => ({ key, visible: true }));
+    const overlay = ["credit", "funding", "approvals", "business", "affiliate"].map((key) => ({ key, visible: true }));
     const hrefs = flattenPortalNav(assemblePortalNav({ catalog: generic, overlay, viewer: CUSTOMER })).map((i) => i.href);
-    for (const h of ["/app/credit", "/app/funding", "/app/agreements", "/app/approvals", "/app/business", "/app/affiliate"]) expect(hrefs).not.toContain(h);
+    for (const h of ["/app/credit", "/app/funding", "/app/approvals", "/app/business", "/app/affiliate"]) expect(hrefs).not.toContain(h);
+    // Agreements is not catalog-only for a customer (D-A1), but staff still need the catalog to list it.
+    const staff = flattenPortalNav(assemblePortalNav({ catalog: generic, overlay: [{ key: "agreements", visible: true }], viewer: STAFF })).map((i) => i.href);
+    expect(staff).not.toContain(AGREEMENTS);
   });
 
   it("never renders an entry whose route is not live (Payments until Slice 5)", () => {
@@ -173,12 +187,12 @@ describe("the overlay: hide, rename, reorder", () => {
   it("orders within a group by the overlay, and never moves an entry to another group", () => {
     const overlay = [{ key: "sessions", order: 0 }, { key: "progress", order: 2 }, { key: "actions", order: 1 }, { key: "resources", order: -5 }];
     expect(shape(assemblePortalNav({ catalog: generic, overlay, viewer: CUSTOMER }))).toEqual([
-      "top: Home, Messages", "Your work: Sessions, Action items, Progress", "Paperwork: Documents", "Learn: Resources",
+      "top: Home, Messages", "Your work: Sessions, Action items, Progress", "Paperwork: Documents, Agreements", "Learn: Resources",
     ]);
   });
 
   it("omits a group whose items are all hidden", () => {
-    const overlay = [{ key: "resources", visible: false }, { key: "documents", visible: false }];
+    const overlay = [{ key: "resources", visible: false }, { key: "documents", visible: false }, { key: "agreements", visible: false }];
     expect(shape(assemblePortalNav({ catalog: generic, overlay, viewer: CUSTOMER }))).toEqual([
       "top: Home, Messages", "Your work: Progress, Action items, Sessions",
     ]);
@@ -205,10 +219,10 @@ describe("the registry", () => {
   });
 
   it("offers the owner one row per configurable live entry the catalog can show, never a funding key it does not list", () => {
-    expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "resources"]);
+    expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "resources"]);
     expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual([
-      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "resources",
+      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "agreements", "resources",
     ]);
-    expect(portalMenuEditorEntries(businessConsultant.portal.modules).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "resources"]);
+    expect(portalMenuEditorEntries(businessConsultant.portal.modules).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "resources"]);
   });
 });

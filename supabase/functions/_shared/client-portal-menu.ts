@@ -27,7 +27,7 @@ export interface PortalMenuKey {
   /** The destination. Two keys with the same route (resources/learn, the funding aliases) are ONE menu entry. */
   route: string;
   group: PortalMenuSlot; fixed: boolean; live: boolean;
-  /** False while the page behind the entry is not yet the client's own (Agreements until Slice A). */
+  /** False while the page behind the entry is not yet the client's own (Agreements was, until Slice A). */
   clientsLive: boolean;
   floor: PortalMenuFloor; defaultVisibility: "shown" | "catalog";
   /** A catalog entry every customer of one business gets anyway (Resources), unless a listed route alias speaks. */
@@ -61,8 +61,8 @@ export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("affiliate", "Affiliate", "/app/affiliate", "work", "everyone"),
   k("planning", "Planning", "/app/planning", "work", "staff", { fixed: true, defaultVisibility: "shown" }),
   k("documents", "Documents", "/app/documents", "paperwork", "brand", { defaultVisibility: "shown" }),
-  // The route is still the platform-terms page, so no client gets it until Slice A (clientsLive:false).
-  k("agreements", "Agreements", "/app/agreements", "paperwork", "everyone", { clientsLive: false }),
+  // E09 Slice A: the customer's own agreements; every customer of one business has it by default (D-A1).
+  k("agreements", "Agreements", "/app/agreements", "paperwork", "everyone", { shownToCustomers: true }),
   k("billing", "Payments", "/app/billing", "paperwork", "customer", { live: false, catalogLabel: false }),
   // Core for customers (§58): every customer of one business has Resources, whatever the catalog lists.
   k("resources", "Resources", "/app/learn", "learn", "everyone", { shownToCustomers: true }),

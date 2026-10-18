@@ -833,7 +833,7 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
         <article><UserRound aria-hidden /><div><strong>Requests and action items</strong><span>UNAVAILABLE · no aggregate workflow contract is connected.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Portal access</strong><span>PARTIAL · invite and access state remains on the selected client record.</span></div></article>
         <article><UserRound aria-hidden /><div><strong>Engagement progress</strong><span>UNAVAILABLE here · sharing work with a client is on the Solo client record; this account's client record does not offer it yet.</span></div></article>
-        <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · files you share on each Solo client record appear in their portal; agreements unchanged.</span></div></article>
+        <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · once your client has joined their portal, files you share on their Solo client record appear in Documents, and agreements you send them from Sales appear in Agreements to sign and download.</span></div></article>
       </div>
       <div className="trc-integrity"><ShieldCheck aria-hidden /><p><strong>Preview is not impersonation.</strong> Client-facing projection never grants staff a client session.</p></div>
       <div className="trc-portal-links">

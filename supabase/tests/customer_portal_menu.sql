@@ -10,7 +10,7 @@
 --     accepts every payload today's producers send, and keeps its authority and merge unchanged.
 --   * grants are unchanged on both functions.
 BEGIN;
-SELECT plan(83);
+SELECT plan(104);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
  ('e0915a00-0000-4000-8000-000000000001','authenticated','authenticated','menu-owner-a@tests.invalid',now()),
@@ -159,12 +159,24 @@ SELECT is(pg_temp.refused('{"modules":[{"key":"sessions","label":"   "}]}'),'220
 SELECT is(pg_temp.refused(jsonb_build_object('modules',jsonb_build_array(jsonb_build_object('key','sessions','label',repeat('x',41))))),'22023|invalid_portal_config','label longer than 40 refused');
 SELECT is(pg_temp.refused(jsonb_build_object('modules',jsonb_build_array(jsonb_build_object('key','sessions','label',E'Meet\nings')))),'22023|invalid_portal_config','label with a control character refused');
 SELECT is(pg_temp.refused('{"modules":[{"key":"sessions","label":5}]}'),'22023|invalid_portal_config','label must be a string');
+-- Invisible characters that change how a name reads (bidi overrides/isolates, zero-width, marks, BOM)
+-- and a C1 control: each one refused, one assertion per code point, so a dropped range is named.
+SELECT is(pg_temp.refused(jsonb_build_object('modules',jsonb_build_array(jsonb_build_object('key','sessions','label','Cal'||chr(cp)||'ls')))),
+  '22023|invalid_portal_config', format('label with U+%s refused', upper(to_hex(cp))))
+FROM unnest(ARRAY[x'202A'::int, x'202B'::int, x'202C'::int, x'202D'::int, x'202E'::int,
+                  x'2066'::int, x'2067'::int, x'2068'::int, x'2069'::int,
+                  x'200B'::int, x'200C'::int, x'200D'::int, x'200E'::int, x'200F'::int,
+                  x'2060'::int, x'FEFF'::int, x'0085'::int]) AS cp;
 SELECT is(pg_temp.refused('{"modules":[{"key":"home","visible":false}]}'),'22023|invalid_portal_config','Home cannot be hidden');
 SELECT is(pg_temp.refused('{"modules":[{"key":"messages","visible":false}]}'),'22023|invalid_portal_config','Messages cannot be hidden');
 SELECT is(pg_temp.refused('{"modules":[{"key":"home","label":"Start"}]}'),'22023|invalid_portal_config','Home cannot be renamed');
 SELECT is(pg_temp.refused('{"modules":[{"key":"messages","label":"Chat"}]}'),'22023|invalid_portal_config','Messages cannot be renamed');
 SELECT is((SELECT features->'portal_config'->'modules' FROM public.tenants WHERE id='e0925a00-0000-4000-8000-00000000000a'),
  '[{"key":"home","order":0,"visible":true}]'::jsonb,'every refusal left the stored overlay untouched');
+-- Ordinary non-Latin names, accents and emoji stay allowed (each replaces the overlay; the next section sets its own).
+SELECT is(pg_temp.set_a(jsonb_build_object('modules',jsonb_build_array(jsonb_build_object('key','sessions','label',l))))#>>'{modules,0,label}',
+  l, 'an ordinary name is accepted: '||l)
+FROM unnest(ARRAY['Séances','جلسات','セッション','Calls 📞']) AS l;
 
 -- Accepted: the shapes today's producers send, and the new label.
 SELECT is(pg_temp.set_a('{"modules":[{"key":"home","visible":true,"order":0},{"key":"resources","visible":true,"order":1}]}')->'modules',

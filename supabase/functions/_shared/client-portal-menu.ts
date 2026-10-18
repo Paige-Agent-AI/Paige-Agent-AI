@@ -24,16 +24,18 @@ export type PortalMenuSlot = "top" | "work" | "paperwork" | "learn";
 export type PortalMenuFloor = "everyone" | "customer" | "not_staff" | "brand" | "staff";
 export interface PortalMenuKey {
   key: string; label: string; group: PortalMenuSlot; fixed: boolean; live: boolean;
+  /** False while the page behind the entry is not yet the client's own (Agreements until Slice A). */
+  clientsLive: boolean;
   floor: PortalMenuFloor; defaultVisibility: "shown" | "catalog"; catalogLabel: boolean;
 }
 const k = (key: string, label: string, group: PortalMenuSlot, floor: PortalMenuFloor,
-  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "defaultVisibility" | "catalogLabel">> = {}): PortalMenuKey =>
-  Object.freeze({ key, label, group, floor, fixed: false, live: true, defaultVisibility: "catalog" as const, catalogLabel: true, ...o });
+  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "clientsLive" | "defaultVisibility" | "catalogLabel">> = {}): PortalMenuKey =>
+  Object.freeze({ key, label, group, floor, fixed: false, live: true, clientsLive: true, defaultVisibility: "catalog" as const, catalogLabel: true, ...o });
 
 /**
  * Mirror of src/lib/portal/portalMenu.ts PORTAL_MENU_ENTRIES, in the same order: key, default name,
- * group, who may ever see it, fixed, live, whether it shows without the Playbook listing it, and
- * whether the Playbook's own name for it wins. Drift-tested field by field.
+ * group, who may ever see it, fixed, live, live for clients, whether it shows without the Playbook listing
+ * it, and whether the Playbook's own name for it wins. Drift-tested field by field.
  */
 export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("home", "Home", "top", "everyone", { fixed: true, defaultVisibility: "shown" }),
@@ -52,7 +54,8 @@ export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("affiliate", "Affiliate", "work", "everyone"),
   k("planning", "Planning", "work", "staff", { fixed: true, defaultVisibility: "shown" }),
   k("documents", "Documents", "paperwork", "brand", { defaultVisibility: "shown" }),
-  k("agreements", "Agreements", "paperwork", "everyone"),
+  // The route is still the platform-terms page, so no client gets it until Slice A (clientsLive:false).
+  k("agreements", "Agreements", "paperwork", "everyone", { clientsLive: false }),
   k("billing", "Payments", "paperwork", "customer", { live: false, catalogLabel: false }),
   k("resources", "Resources", "learn", "everyone"),
   k("learn", "Resources", "learn", "everyone"),
@@ -64,10 +67,37 @@ export const PORTAL_MENU_FIXED_KEYS: readonly string[] = Object.freeze(PORTAL_ME
 export const PORTAL_MENU_CONFIGURABLE_KEYS: readonly string[] = Object.freeze(
   PORTAL_MENU_KEYS.filter((e) => !e.fixed && e.floor !== "staff").map((e) => e.key));
 
+/**
+ * The configurable entries every business's customers can have (owner ruling 2026-10-18: Progress, Action
+ * items, Sessions, Documents, Agreements, Payments, Resources). These are the only keys Paige is told about
+ * up front. Every OTHER configurable key — Approvals, the funding preset's entries, Business, Affiliate — is
+ * OPT-IN: it is catalog-only, it exists for a business only when that business's own Playbook catalog lists
+ * it, and Paige learns of it only from that business's portal_menu_read (§2: funding/credit wording is a
+ * chosen option, never a default every tenant's Paige recites).
+ */
+export const PORTAL_MENU_CORE_KEYS: readonly string[] = Object.freeze(
+  ["progress", "actions", "sessions", "documents", "agreements", "billing", "resources", "learn"]);
+const isCore = (key: string) => PORTAL_MENU_CORE_KEYS.includes(key);
+/**
+ * Whether a client can be shown the entry at all: its page exists (`live`) and is the client's own
+ * (`clientsLive`). Everything this module answers is about what a business's CLIENTS see, so an entry that
+ * fails either is "not available yet" here — never offered, never changed, reported as such.
+ */
+const customerLive = (e: PortalMenuKey) => e.live && e.clientsLive;
+/** Core keys a customer can actually be shown today (live), in registry order: the tool description's list. */
+export const PORTAL_MENU_OFFERED_CORE_KEYS: readonly string[] = Object.freeze(
+  PORTAL_MENU_KEYS.filter((e) => customerLive(e) && isCore(e.key) && PORTAL_MENU_CONFIGURABLE_KEYS.includes(e.key)).map((e) => e.key));
+
 const KEY = /^[a-z0-9_-]{1,40}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+/**
+ * Characters a menu name may never carry: C0/C1 controls and DEL, plus the invisible ones that change how
+ * the name reads without being seen — zero-width space/non-joiner/joiner, the left-to-right and
+ * right-to-left marks, the bidi embedding/override controls U+202A–U+202E, the word joiner, the bidi
+ * isolates U+2066–U+2069 and the byte-order mark. Same set as set_tenant_portal_config's label check.
+ */
 // deno-lint-ignore no-control-regex
-const CONTROL = /[\u0000-\u001f\u007f]/;
+export const LABEL_FORBIDDEN = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/;
 const MAX_ENTRIES = 40;
 
 export interface OverlayEntry { key: string; visible?: boolean; order?: number; label?: string }
@@ -98,7 +128,7 @@ export function sanitizeStoredOverlay(raw: unknown): { entries: OverlayEntry[]; 
     if (typeof item.order === "number" && Number.isFinite(item.order) && item.order >= 0 && item.order <= 1000) e.order = item.order;
     else if ("order" in item) normalized.push(item.key);
     const label = typeof item.label === "string" ? item.label.trim() : null;
-    if (label && !fixed && label.length <= 40 && !CONTROL.test(label)) e.label = label;
+    if (label && !fixed && label.length <= 40 && !LABEL_FORBIDDEN.test(label)) e.label = label;
     else if ("label" in item) normalized.push(item.key);
     entries.push(e);
   }
@@ -108,10 +138,9 @@ export function sanitizeStoredOverlay(raw: unknown): { entries: OverlayEntry[]; 
 export type MenuRequestEntry = { key: string; visible?: boolean; order?: number; label?: string | null };
 export type MenuParseFailure = { reason: "bad_request" | "fixed_entry" | "unknown_entry" | "not_available_yet"; key?: string };
 
-/** The Playbook catalog keys this tenant's menu draws on, or null when only a starter slug decides them. */
-export function catalogKeysOf(catalog: unknown): Set<string> | null {
-  const m = projectCatalog(catalog).effectiveModules;
-  return m ? new Set(m.map((x) => x.key)) : null;
+/** The Playbook catalog keys this tenant's customers' menu draws on (authored, else starter, else general). */
+export function catalogKeysOf(catalog: unknown): Set<string> {
+  return new Set(projectCatalog(catalog).effectiveModules.map((x) => x.key));
 }
 
 /** Parses the model's `entries`. Anything but `entries` (a tenant id, an actor) is ignored. */
@@ -129,7 +158,7 @@ export function parseMenuRequest(args: unknown): { ok: true; entries: MenuReques
     const known = PORTAL_MENU_KEYS.find((e) => e.key === key);
     if (known?.fixed && known.floor !== "staff") return { ok: false, reason: "fixed_entry", key };
     if (!known || !PORTAL_MENU_CONFIGURABLE_KEYS.includes(key)) return { ok: false, reason: "unknown_entry", key };
-    if (!known.live) return { ok: false, reason: "not_available_yet", key };
+    if (!customerLive(known)) return { ok: false, reason: "not_available_yet", key };
     const e: MenuRequestEntry = { key };
     if ("visible" in raw) {
       if (typeof raw.visible !== "boolean") return { ok: false, reason: "bad_request", key };
@@ -146,7 +175,7 @@ export function parseMenuRequest(args: unknown): { ok: true; entries: MenuReques
         const label = raw.label.trim();
         // An empty name puts back the default one (the tool schema says so); the writer never stores "".
         if (label.length === 0) e.label = null;
-        else if (label.length > 40 || CONTROL.test(label)) return { ok: false, reason: "bad_request", key };
+        else if (label.length > 40 || LABEL_FORBIDDEN.test(label)) return { ok: false, reason: "bad_request", key };
         else e.label = label;
       }
     }
@@ -238,16 +267,17 @@ export async function configurePortalMenu(input: {
   const tenant = input.expectedTenantId;
   if (typeof tenant !== "string" || !UUID.test(tenant)) return fail("no_workspace");
   const request = parseMenuRequest(input.args);
-  if (!request.ok) return fail(request.reason, request.key);
+  if (request.ok === false) return fail(request.reason, request.key);
 
   const before = await readSnapshot(input.caller, tenant);
-  if (!before.ok) return fail(before.reason);
+  if (before.ok === false) return fail(before.reason);
   // A catalog-only entry the Playbook does not list never renders; saying it was changed would be false.
-  // A starter slug's catalog is defined in the frontend presets; when it is unknown here, do not guess.
+  // That includes every opt-in entry (the funding preset's keys among them) for a business that did not
+  // choose it: refused here, before any write, without naming anything the business does not have.
   const offeredKeys = catalogKeysOf(before.snapshot.catalog);
   for (const e of request.entries) {
     const meta = PORTAL_MENU_KEYS.find((m) => m.key === e.key);
-    if (meta?.defaultVisibility === "catalog" && offeredKeys && !offeredKeys.has(e.key)) return fail("not_offered", e.key);
+    if (meta?.defaultVisibility === "catalog" && !offeredKeys.has(e.key)) return fail("not_offered", e.key);
   }
   const { entries: current, normalized } = sanitizeStoredOverlay(before.snapshot.modules);
   const merged = mergeMenuOverlay(current, request.entries);
@@ -275,64 +305,103 @@ export async function configurePortalMenu(input: {
     return fail("refused");
   }
   const after = await readSnapshot(input.caller, tenant);
-  if (!after.ok || !sameOverlay(after.snapshot.modules, merged)) return fail("outcome_unknown");
+  if (after.ok === false || !sameOverlay(after.snapshot.modules, merged)) return fail("outcome_unknown");
   return { success: true, tenantId: tenant, modules: merged, changed, normalized, replayed: false };
 }
 
 export interface PortalMenuRow {
   key: string; group: PortalMenuSlot; default_label: string; label: string; fixed: boolean;
-  /**
-   * Shown to a customer of this one business (after the Playbook, the overlay and the fixed rule).
-   * null: the entry depends on a starter Playbook's catalog, which this read does not hold.
-   */
-  shown: boolean | null;
+  /** Shown to a customer of this one business (after the Playbook, the overlay and the fixed rule). */
+  shown: boolean;
   /** Why it is not shown, when it is not. */
-  hidden_because: "owner_hid_it" | "playbook_does_not_list_it" | null;
+  hidden_because: "owner_hid_it" | "playbook_does_not_list_it" | "not_available_yet" | null;
   order: number | null;
 }
 
-/** The generic Playbook's portal catalog keys (src/lib/playbook/presets.ts GENERIC_MODULES; drift-tested). */
-export const GENERIC_PORTAL_MODULE_KEYS: readonly string[] = Object.freeze(["home", "sessions", "progress", "messages", "resources", "billing"]);
+type CatalogModule = { key: string; label: string };
+const mods = (...pairs: [string, string][]): readonly CatalogModule[] =>
+  Object.freeze(pairs.map(([key, label]) => Object.freeze({ key, label })));
+const GENERIC_MODULES = mods(["home", "Home"], ["sessions", "Sessions"], ["progress", "Progress"], ["messages", "Messages"],
+  ["resources", "Resources"], ["billing", "Billing"]);
 
-export type PortalCatalogInputs = { slug: string | null; authored_usable: boolean; modules: { key: string; label: string }[] | null };
+/**
+ * Mirror of the starter Playbooks' portal catalogs (src/lib/playbook/presets.ts, every slug in
+ * RESOLVABLE_PLAYBOOKS — including the opt-in funding vertical, which a tenant only has by choosing it).
+ * Drift-tested slug by slug. getPlaybookBySlug resolves an unknown slug to the general one, and so does
+ * starterCatalog below, so the catalog a business's customers get is always known here — no guessing.
+ */
+export const STARTER_PORTAL_CATALOGS: Readonly<Record<string, readonly CatalogModule[]>> = Object.freeze({
+  "general": GENERIC_MODULES,
+  "coaching-default": GENERIC_MODULES,
+  "fitness": mods(["home", "Home"], ["program", "My Program"], ["check_ins", "Check-ins"], ["progress", "Progress"],
+    ["messages", "Messages"], ["billing", "Billing"]),
+  "consultant": mods(["home", "Home"], ["engagement", "Engagement"], ["deliverables", "Deliverables"], ["sessions", "Sessions"],
+    ["messages", "Messages"], ["billing", "Billing"]),
+  "agency": mods(["home", "Home"], ["campaigns", "Campaigns"], ["approvals", "Approvals"], ["assets", "Assets"],
+    ["messages", "Messages"], ["billing", "Billing"]),
+  "funding": mods(["home", "Home"], ["funding-journey", "Funding Journey"], ["credit", "Credit"], ["funding", "Funding"],
+    ["financial-profile", "Financial Profile"], ["business", "Business"], ["agreements", "Agreements"]),
+});
+const starterCatalog = (slug: string | null): readonly CatalogModule[] =>
+  (slug && Object.prototype.hasOwnProperty.call(STARTER_PORTAL_CATALOGS, slug) ? STARTER_PORTAL_CATALOGS[slug] : GENERIC_MODULES);
+
+/** The generic Playbook's portal catalog keys (src/lib/playbook/presets.ts GENERIC_MODULES; drift-tested). */
+export const GENERIC_PORTAL_MODULE_KEYS: readonly string[] = Object.freeze(GENERIC_MODULES.map((m) => m.key));
+
+export type PortalCatalogInputs = { slug: string | null; authored_usable: boolean; modules: CatalogModule[] | null };
 
 /**
  * The catalog inputs exactly as public.portal_menu_catalog returns them (to the customer and to the owner),
- * plus the modules the frontend's catalog resolution uses: the authored list when the authored Playbook is
- * usable (or the generic list when it has none), the generic list when nothing is set, and null for a
- * starter slug, whose catalog is defined in the frontend presets — the caller says so rather than guess.
+ * plus the modules the frontend's resolvePortalCatalog resolves them to: the authored list when the authored
+ * Playbook is usable (or the generic list when it has none), else the starter slug's list (an unknown or
+ * absent slug is the general one).
  */
-export function projectCatalog(catalog: unknown): PortalCatalogInputs & { effectiveModules: { key: string; label: string }[] | null } {
+export function projectCatalog(catalog: unknown): PortalCatalogInputs & { effectiveModules: CatalogModule[] } {
   const c = isObject(catalog) ? catalog : {};
   const authoredUsable = c.authored_usable === true;
   const modules = Array.isArray(c.modules)
-    ? c.modules.filter((m): m is { key: string; label: string } => isObject(m) && typeof m.key === "string" && typeof m.label === "string")
+    ? c.modules.filter((m): m is CatalogModule => isObject(m) && typeof m.key === "string" && typeof m.label === "string")
       .slice(0, MAX_ENTRIES).map((m) => ({ key: m.key.slice(0, 80), label: m.label.slice(0, 80) }))
     : null;
   const slug = typeof c.slug === "string" ? c.slug.slice(0, 80) : null;
-  const generic = GENERIC_PORTAL_MODULE_KEYS.map((key) => ({ key, label: "" }));
-  const effectiveModules = authoredUsable ? (modules ?? generic) : slug ? null : generic;
+  const effectiveModules = authoredUsable && modules ? modules : (authoredUsable ? GENERIC_MODULES : starterCatalog(slug)).map((m) => ({ ...m }));
   return { slug, authored_usable: authoredUsable, modules, effectiveModules };
 }
 
-/** What this tenant's customers are offered: each customer-facing live entry, and what is stored for it. */
+/**
+ * Whether Paige may mention this key to this business at all: a fixed or core entry always; an opt-in
+ * entry (Approvals, the funding preset's keys, Business, Affiliate) only when this business's own catalog
+ * lists it. Nothing outside this set ever appears in a read row (§2).
+ */
+const mentionable = (e: PortalMenuKey, listed: ReadonlySet<string>) => e.fixed || isCore(e.key) || listed.has(e.key);
+
+/**
+ * What this tenant's customers are offered, entry by entry. Fixed and core entries are always listed (a core
+ * entry whose page does not exist yet as `not_available_yet`); an opt-in entry is listed only when this
+ * business's catalog lists it. `catalog.modules` is the catalog this business's customers actually get.
+ */
 export function projectPortalMenu(snapshot: Snapshot): { entries: PortalMenuRow[]; catalog: PortalCatalogInputs } {
   const cat = projectCatalog(snapshot.catalog);
   const overlay = sanitizeStoredOverlay(snapshot.modules).entries;
-  const listed = cat.effectiveModules ? new Set(cat.effectiveModules.map((m) => m.key)) : null;
-  const entries = PORTAL_MENU_KEYS.filter((e) => e.live && e.floor !== "staff").map((e): PortalMenuRow => {
-    const o = e.fixed ? undefined : overlay.find((x) => x.key === e.key);
-    const fromCatalog = e.catalogLabel ? cat.effectiveModules?.find((m) => m.key === e.key)?.label?.trim() || undefined : undefined;
-    const offered: boolean | null = e.defaultVisibility === "shown" ? true : listed ? listed.has(e.key) : null;
-    const hiddenByOwner = o?.visible === false;
-    return {
-      key: e.key, group: e.group, default_label: e.label, label: o?.label ?? fromCatalog ?? e.label, fixed: e.fixed,
-      shown: hiddenByOwner ? false : offered,
-      hidden_because: hiddenByOwner ? "owner_hid_it" : offered === false ? "playbook_does_not_list_it" : null,
-      order: o?.order ?? null,
-    };
-  });
-  return { entries, catalog: { slug: cat.slug, authored_usable: cat.authored_usable, modules: cat.modules } };
+  const listed = new Set(cat.effectiveModules.map((m) => m.key));
+  const entries = PORTAL_MENU_KEYS.filter((e) => e.floor !== "staff" && mentionable(e, listed) && (customerLive(e) || isCore(e.key)))
+    .map((e): PortalMenuRow => {
+      const o = e.fixed ? undefined : overlay.find((x) => x.key === e.key);
+      const fromCatalog = e.catalogLabel ? cat.effectiveModules.find((m) => m.key === e.key)?.label?.trim() || undefined : undefined;
+      if (!customerLive(e)) {
+        return { key: e.key, group: e.group, default_label: e.label, label: e.label, fixed: e.fixed, shown: false,
+          hidden_because: "not_available_yet", order: null };
+      }
+      const offered = e.defaultVisibility === "shown" || listed.has(e.key);
+      const hiddenByOwner = o?.visible === false;
+      return {
+        key: e.key, group: e.group, default_label: e.label, label: o?.label ?? fromCatalog ?? e.label, fixed: e.fixed,
+        shown: hiddenByOwner ? false : offered,
+        hidden_because: hiddenByOwner ? "owner_hid_it" : offered ? null : "playbook_does_not_list_it",
+        order: o?.order ?? null,
+      };
+    });
+  return { entries, catalog: { slug: cat.slug, authored_usable: cat.authored_usable, modules: cat.effectiveModules } };
 }
 
 export type PortalMenuReadResult =
@@ -343,7 +412,7 @@ export async function readPortalMenu(input: { caller: PortalMenuCaller; expected
   const tenant = input.expectedTenantId;
   if (typeof tenant !== "string" || !UUID.test(tenant)) return { success: false, reason: "no_workspace", message: PORTAL_MENU_MESSAGES.no_workspace };
   const read = await readSnapshot(input.caller, tenant);
-  if (!read.ok) return { success: false, reason: read.reason, message: PORTAL_MENU_MESSAGES[read.reason] };
+  if (read.ok === false) return { success: false, reason: read.reason, message: PORTAL_MENU_MESSAGES[read.reason] };
   const p = projectPortalMenu(read.snapshot);
   return { success: true, tenantId: tenant, entries: p.entries, catalog: p.catalog };
 }

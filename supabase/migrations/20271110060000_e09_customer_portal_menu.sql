@@ -12,7 +12,8 @@
 --    and it carries no persona, intake, probing or other Playbook field.
 -- 2. set_tenant_portal_config(uuid,jsonb) — the one writer — validates the shape of every module
 --    overlay entry before the merge, reserves `_catalog`, keeps Home and Messages always on and
---    unrenamed (owner ruling 2026-10-18), and stores labels trimmed. Authority (the double
+--    unrenamed (owner ruling 2026-10-18), refuses a name carrying a control, bidi-override/isolate or
+--    zero-width character, and stores labels trimmed. Authority (the double
 --    can_manage_tenant_brand check around FOR UPDATE), the shallow merge, the assistant deep-merge,
 --    the owner and the ACL are unchanged.
 --
@@ -171,7 +172,13 @@ BEGIN
       END IF;
       IF _m ? 'label' THEN
         _label := btrim(_m->>'label');
-        IF char_length(_label) NOT BETWEEN 1 AND 40 OR _label ~ '[[:cntrl:]]' THEN
+        -- No control character (C0, DEL, C1), and none of the invisible characters that change how a
+        -- name reads without being seen: zero-width space/non-joiner/joiner, the left-to-right and
+        -- right-to-left marks, the bidi embedding/override controls U+202A-U+202E, the word joiner, the
+        -- bidi isolates U+2066-U+2069 and the byte-order mark. The same set as the chat executor's
+        -- LABEL_FORBIDDEN (_shared/client-portal-menu.ts).
+        IF char_length(_label) NOT BETWEEN 1 AND 40 OR _label ~ '[[:cntrl:]]'
+           OR _label ~ '[\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]' THEN
           RAISE EXCEPTION 'invalid_portal_config' USING ERRCODE='22023';
         END IF;
         _m := jsonb_set(_m, '{label}', to_jsonb(_label));

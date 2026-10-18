@@ -385,7 +385,11 @@ describe("Solo PAIGE workspace contract", () => {
     // unbounded `[\s\S]*` version could not fail: inverting the accept/abort order left the
     // whole 507-test suite green.
     expect(chat).toMatch(/acceptedEpochRef\.current = scopeEpoch;(?:[^\n]*\n){0,16}\s*abortActiveRequest\(\);/);
-    expect(chat).toMatch(/const abortActiveRequest = useCallback\(\(\) => \{(?:[^\n]*\n){0,6}\s*if \(requestFenceRef\.current\.invalidate\(\)\) setIsLoading\(false\);/);
+    // Bind this check to the callback body: additional owned-read cleanup must not
+    // make it depend on line count or let a later handler satisfy invalidation.
+    const abortBody = /const abortActiveRequest = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/.exec(chat)?.[1];
+    expect(abortBody).toBeDefined();
+    expect(abortBody).toContain("if (requestFenceRef.current.invalidate()) setIsLoading(false);");
     // §13 — THIS ASSERTION HAD GONE VACUOUS. The reset now seeds `scopeNotice ?? openingGreeting`,
     // so the old literal no longer matched the reset at all — it was satisfied by the unrelated
     // `startNewChat` and controlled-sync sites, and deleting the reset's `setMessages` entirely

@@ -1313,7 +1313,6 @@ const PaigeAIChatInner = ({
     const scope = requestScopeRef.current;
     const generation = submissionGenerationRef.current;
     let closed = false;
-    let timer: number | undefined;
     const owner = { scope, cancel: () => {
       closed = true; controller.abort(); window.clearTimeout(timer);
       if (originalReminderHydrationRef.current === owner) originalReminderHydrationRef.current = null;
@@ -1325,9 +1324,9 @@ const PaigeAIChatInner = ({
       && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle);
     const markUnverified = () => setMessages(previous => previous.map(message => message.id === turnId
       ? { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
+    const timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
     setMessages(previous => previous.map(message => message.id === turnId
       ? { ...message, originalReminderHistoryStatus: "checking" } : message));
-    timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
     try {
       const raw = await threadsApi.loadOriginalReminderHistory(threadId, turnId, intentId, controller.signal);
       if (!current()) return;

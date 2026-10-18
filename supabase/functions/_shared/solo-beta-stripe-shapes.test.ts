@@ -1,8 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  rawErrorDetail,
   readInvoiceSubscriptionId,
   readSubscriptionItemPeriod,
   safeStageCode,
+  stageError,
 } from "./solo-beta-stripe-shapes.ts";
 
 Deno.test("reads Basil subscription periods from the subscription item", () => {
@@ -66,6 +68,25 @@ Deno.test("safeStageCode reads the production Postgrest error shape (plain objec
     safeStageCode("event_claim_failed", { message: "solo_beta_" + "x".repeat(120) }),
     "event_claim_failed",
   );
+});
+
+Deno.test("stageError carries the raw message out-of-band while the code stays stable", () => {
+  const named = stageError("atomic_fulfillment_failed", { code: "P0001", message: "solo_beta_tenant_invariant_failed" });
+  assertEquals(named.message, "solo_beta_tenant_invariant_failed");
+  assertEquals(rawErrorDetail(named), "solo_beta_tenant_invariant_failed");
+
+  const messy = stageError("atomic_fulfillment_failed", {
+    code: "23503",
+    message: "insert or update on table \"platform_subscriptions\" violates foreign key constraint",
+  });
+  assertEquals(messy.message, "atomic_fulfillment_failed");
+  assertEquals(
+    rawErrorDetail(messy),
+    "insert or update on table \"platform_subscriptions\" violates foreign key constraint",
+  );
+
+  assertEquals(rawErrorDetail(new Error("plain")), null);
+  assertEquals(rawErrorDetail(stageError("event_claim_failed", {})), null);
 });
 
 Deno.test("safeStageCode falls back to the stage code for uninformative causes", () => {

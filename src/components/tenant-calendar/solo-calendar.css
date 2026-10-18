@@ -63,7 +63,8 @@
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 .sc-btn:hover { color: var(--pg-ink); border-color: var(--pg-line-strong); background: var(--pg-raised); }
-.sc-btn:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 1px; }
+/* Rings are indigo, never gold: gold is spent on the act alone (§11). */
+.sc-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 .sc-btn[disabled] { opacity: .5; cursor: not-allowed; }
 .sc-btn svg { width: 14px; height: 14px; }
 .sc-btn--icon { width: 32px; padding: 0; justify-content: center; }
@@ -83,7 +84,7 @@
   cursor: pointer;
 }
 .sc-seg button[aria-pressed="true"] { color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-e1); }
-.sc-seg button:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: -1px; }
+.sc-seg button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -1px; }
 
 /* ---- truth notice ---- */
 
@@ -156,7 +157,7 @@
   cursor: pointer;
 }
 .sc-group-head:hover { color: var(--pg-ink-2); background: var(--pg-lift); }
-.sc-group-head:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: -2px; }
+.sc-group-head:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
 .sc-group-head svg { width: 13px; height: 13px; flex: none; transition: transform 160ms ease; }
 .sc-group-head[aria-expanded="true"] svg.sc-chev { transform: rotate(90deg); }
 .sc-group-body { padding: 4px 2px 10px; display: grid; gap: 2px; }
@@ -177,7 +178,7 @@
   cursor: pointer;
 }
 .sc-check:hover { background: var(--pg-lift); }
-.sc-check:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: -2px; }
+.sc-check:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
 .sc-check span.sc-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sc-swatch { width: 11px; height: 11px; flex: none; border-radius: 3px; border: 1px solid var(--pg-line-strong); }
 .sc-check[aria-pressed="false"] { color: var(--pg-faint); }
@@ -276,7 +277,6 @@
   gap: 5px;
   padding: 3px 6px;
   border: 1px solid var(--sc-ev-color, var(--pg-line));
-  border-left-width: 3px;
   border-radius: 6px;
   color: var(--pg-ink-2);
   background: color-mix(in srgb, var(--sc-ev-color, var(--pg-line)) 13%, var(--pg-surface));
@@ -286,7 +286,7 @@
   transition: background 130ms ease, transform 130ms ease;
 }
 .sc-ev:hover { background: color-mix(in srgb, var(--sc-ev-color, var(--pg-line)) 24%, var(--pg-surface)); }
-.sc-ev:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 1px; }
+.sc-ev:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 .sc-ev-time { flex: none; color: var(--pg-muted); font-family: var(--pg-font-data); font-size: 10px; }
 .sc-ev-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The compact state for the week grid. Hidden until the container query below swaps
@@ -378,7 +378,13 @@
 /* The notes field is the one multi-line control; it wears the same box as the
    inputs above, only taller and vertically resizable so it never sets its own look. */
 .sc-field textarea { min-height: 68px; padding: 8px 10px; line-height: 1.45; resize: vertical; }
-.sc-field input:focus-visible, .sc-field select:focus-visible, .sc-field textarea:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 1px; }
+/* Placeholders are text and are held to the same 4.5:1 floor as body copy. The
+   browser default is a translucent grey that measured 2.27:1 on the Mineral
+   surface. --pg-muted at full opacity, computed from the token hexes: 5.37:1 on
+   --pg-surface and 5.90:1 on --pg-raised in Mineral; 7.40:1 and 6.85:1 in Obsidian. */
+.sc-field input::placeholder, .sc-field textarea::placeholder { color: var(--pg-muted); opacity: 1; }
+/* Rings are indigo, never gold: gold is spent on the act alone (§11). */
+.sc-field input:focus-visible, .sc-field select:focus-visible, .sc-field textarea:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 
 .sc-msg { margin-bottom: 12px; padding: 9px 11px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: var(--pg-t-body); line-height: 1.5; }
 .sc-msg--bad { color: var(--pg-negative); border-color: color-mix(in srgb, var(--pg-negative) 42%, transparent); }
@@ -480,7 +486,7 @@
   transition: background 130ms ease, border-color 130ms ease;
 }
 .sc-dayrow:hover { background: var(--pg-raised); border-color: var(--pg-line); }
-.sc-dayrow:focus-visible { outline: 2px solid var(--pg-gold-core); outline-offset: 1px; }
+.sc-dayrow:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 .sc-dayrow-time { margin-left: auto; flex: none; color: var(--pg-muted); font-size: var(--pg-t-label); }
 
 .sc-sub { margin-top: 14px; }
@@ -526,3 +532,132 @@
   text-underline-offset: 2px;
 }
 [data-pg] a.sc-inline-link:hover { text-decoration-thickness: 2px; }
+
+/* ---- New appointment: the client field ---- */
+
+/* The hint is the field's own help text: muted, never a colour signal, so it reads
+   the same in both themes. */
+.sc-field-label { color: var(--pg-muted); font-size: var(--pg-t-label); }
+.sc-field-hint { margin: 0; color: var(--pg-muted); font-size: var(--pg-t-label); line-height: 1.45; }
+
+/* One control, the height of a touch target. The chosen client sits in it as a
+   chip; the remove button is its own 44px target at the end of the same box, so
+   "change who" and "remove who" never share a hit area. The box's edge is an inset
+   hairline, not a border: a 1px border would shrink both buttons to 42px and leave
+   a dead edge around them, so the buttons own the box's full 44px instead. */
+.sc-combo {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: stretch;
+  border-radius: var(--pg-r-chip);
+  background: var(--pg-surface);
+  box-shadow: inset 0 0 0 1px var(--pg-line);
+}
+.sc-combo:hover { box-shadow: inset 0 0 0 1px var(--pg-line-strong); }
+.sc-combo-trigger {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--pg-r-chip);
+  color: var(--pg-ink);
+  background: transparent;
+  font: 400 var(--pg-t-body) var(--pg-font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+.sc-combo-guest { min-width: 0; overflow: hidden; color: var(--pg-ink-2); text-overflow: ellipsis; white-space: nowrap; }
+.sc-combo-caret { width: 16px; height: 16px; margin-left: auto; flex: none; color: var(--pg-muted); }
+.sc-combo-chip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--pg-line);
+  border-radius: var(--pg-r-pill);
+  background: var(--pg-raised);
+}
+.sc-combo-chip-name { min-width: 0; overflow: hidden; color: var(--pg-ink); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.sc-combo-chip-email { min-width: 0; overflow: hidden; color: var(--pg-muted); font-size: var(--pg-t-label); text-overflow: ellipsis; white-space: nowrap; }
+.sc-combo-clear {
+  display: grid;
+  width: 44px;
+  min-height: 44px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid var(--pg-line-soft);
+  border-radius: 0 var(--pg-r-chip) var(--pg-r-chip) 0;
+  color: var(--pg-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.sc-combo-clear svg { width: 16px; height: 16px; }
+.sc-combo-clear:hover { color: var(--pg-ink); }
+.sc-combo-trigger:focus-visible, .sc-combo-clear:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+
+/* The list. Rendered in place (not portalled), so it stacks inside the drawer. */
+.sc-combo-pop {
+  z-index: 2;
+  width: var(--radix-popover-trigger-width);
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  border: 1px solid var(--pg-line);
+  border-radius: var(--pg-r-chip);
+  color: var(--pg-ink);
+  background: var(--pg-raised);
+  box-shadow: var(--pg-e2), var(--pg-e4);
+}
+.sc-combo-pop .sc-combo-cmd { color: var(--pg-ink); background: transparent; }
+.sc-combo-pop [cmdk-root]:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+.sc-combo-pop [cmdk-input-wrapper] { border-bottom: 1px solid var(--pg-line-soft); }
+/* `.sc-field input` would otherwise box the search field a second time. */
+.sc-field .sc-combo-pop [cmdk-input] {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--pg-ink);
+  background: transparent;
+  font: 400 var(--pg-t-body) var(--pg-font-ui);
+  outline: none;
+}
+.sc-combo-list { max-height: min(320px, var(--radix-popover-content-available-height, 320px)); overscroll-behavior: contain; }
+.sc-combo-pop [cmdk-item].sc-combo-opt {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: calc(var(--pg-r-chip) - 3px);
+  color: var(--pg-ink);
+  font-size: var(--pg-t-body);
+  cursor: pointer;
+}
+/* The keyboard/pointer highlight. The house item paints --accent, which inside
+   the console is gold; a highlighted row is not the act, so it takes indigo. */
+.sc-combo-pop [cmdk-item].sc-combo-opt[data-selected="true"] {
+  color: var(--pg-ink);
+  background: color-mix(in srgb, var(--pg-violet) 16%, transparent);
+}
+.sc-combo-opt-text { display: grid; min-width: 0; }
+.sc-combo-opt-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-combo-opt-email { min-width: 0; overflow: hidden; color: var(--pg-muted); font-size: var(--pg-t-label); text-overflow: ellipsis; white-space: nowrap; }
+/* The CURRENT value and the keyboard HIGHLIGHT are two different facts, so they
+   look different: the highlight is the violet row fill above; the current value is
+   a neutral ink check and a heavier name, which reads the same on a highlighted
+   row and a plain one. */
+.sc-combo-check { width: 15px; height: 15px; flex: none; color: var(--pg-ink); opacity: 0; }
+.sc-combo-check[data-on="true"] { opacity: 1; }
+.sc-combo-pop [cmdk-item].sc-combo-opt[data-current="true"] .sc-combo-opt-name { font-weight: 600; }
+.sc-combo-opt--action { padding-left: 33px; color: var(--pg-ink-2); font-weight: 500; }
+.sc-combo-status { margin: 0; padding: 10px 12px 12px 33px; color: var(--pg-muted); font-size: var(--pg-t-label); line-height: 1.45; }
+.sc-combo-status--bad { color: var(--pg-negative); }
+.sc-combo-pop [cmdk-separator] { height: 1px; background: var(--pg-line-soft); }

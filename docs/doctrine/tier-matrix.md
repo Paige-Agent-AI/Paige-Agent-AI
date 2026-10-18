@@ -4705,4 +4705,31 @@ relationship keep the platform desk.
 
 pgTAP (`supabase/tests/customer_portal_messages.sql`) covers cross-business, staff-member and
 anonymous refusals, and the multi-relationship refusal. Authenticated customer and owner
-send/read/reply on production are owed; the row becomes LIVE only after that drive.
+send/read/reply on production are owed; the row becomes LIVE only after that drive. Deployed
+2026-10-17: PR #2320 merged as `eaeaf80d6`, migration `20271110010000` persisted on production,
+web deployment READY at that commit; the authenticated drive is still owed, so the rows stay PROOF OWED.
+
+### Customer Portal — Sessions, `/app/sessions` + the Solo New appointment client link (E09 Slice 2, 2026-10-18)
+
+A customer sees the sessions booked for them with the business they are a customer of
+(`client_portal_sessions`, SECURITY DEFINER, scoped in-body to the caller's own relationship) and
+can reschedule or cancel inside the calendar's notice window (`calendars.min_notice_min`). Every
+change goes through the one booking engine, `booking-manage` in `mode: 'customer'`, after
+`client_portal_session_change_admit` checks it as the caller; slot rules, notifications and Zoom
+stay in one place. Owner decision (2026-10-17): reschedule or cancel within the notice window,
+through the existing booking engine. A session reaches a customer only when its booking is linked
+to their client record; the Solo New appointment drawer now offers that link. Existing bookings
+are not backfilled.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Customer sessions list `/app/sessions` (`client_portal_sessions`) | — | — | — | — | ✓ own relationship only; host, staff, intake and other guests are never projected; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer reschedule / cancel inside the notice window (`booking-manage` customer mode) | — | — | — | — | ✓ own bookings on a calendar of that business, before `start − min_notice_min`; outside it the page offers Message the business | 401 | PROOF OWED |
+| Link a new booking to a client (Solo New appointment client picker → `create_internal_booking._contact_id`) | — | — (Solo calendar surface) | ✓ | ✓ | — | — | PROOF OWED |
+| Next session home tile (keeps Book a session) | — | — | — | — | ✓ single-business customer | — | PROOF OWED |
+| Guest manage link `/manage/:token` (`booking-manage` token path) | unchanged | unchanged | unchanged | unchanged | unchanged | ✓ unchanged | LIVE (unchanged) |
+
+pgTAP (`supabase/tests/customer_portal_sessions.sql`, 93 cases) covers other-customer,
+other-business, merged-contact, multi-relationship and anonymous refusals, the notice window and
+admission replay; the edge boundary suite drives customer mode, concurrent duplicates and guest
+equivalence. Authenticated customer change and owner client-linked booking on production are owed.

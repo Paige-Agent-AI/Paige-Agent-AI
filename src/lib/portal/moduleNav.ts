@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Home, BookOpen, ListChecks, ClipboardList, FileText,
-  CreditCard, Landmark, Compass, Wallet, Building2, FileSignature, Handshake,
+  CreditCard, Landmark, Compass, Wallet, Building2, FileSignature, Handshake, CalendarClock,
 } from "lucide-react";
 import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 
@@ -26,6 +26,11 @@ export const MODULE_ROUTES: Record<string, { href: string; icon: LucideIcon }> =
   approvals: { href: "/app/approvals", icon: ListChecks },
   actions: { href: "/app/actions", icon: ClipboardList },
   documents: { href: "/app/documents", icon: FileText },
+  // E09 Slice 2 — the customer's own sessions. Every default/coaching/consultant Playbook already
+  // lists `sessions`, so this key is what turns that catalog entry into a link (and lets the
+  // presentation overlay hide or reorder it). AppNav still shows it only to a single-business
+  // customer; the page re-resolves the relationship server-side.
+  sessions: { href: "/app/sessions", icon: CalendarClock },
   // Funding-vertical surfaces — keys match the /app route paths in App.tsx.
   // Gated by the funding Playbook's portal.modules (opt-in preset), never shown
   // to a coaching-generic tenant.

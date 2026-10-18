@@ -418,6 +418,13 @@ export interface CreateBookingInput {
   calendarId: string;
   guestName: string | null;
   blocked: boolean;
+  /** The business's own CRM client this appointment is FOR (`clients.id`), or null
+   *  for a guest who is not a client. It is what lets that client see the session
+   *  in their portal: the customer read matches `internal_bookings.contact_id`, and
+   *  a free-text guest name links nothing. The server re-checks that the client
+   *  belongs to this tenant (`BOOKING_BAD_CONTACT`), so this is a choice, never a
+   *  grant. Optional so a caller that has no client to name changes nothing. */
+  contactId?: string | null;
 }
 
 export interface EditBookingInput {
@@ -496,6 +503,8 @@ export function classifyBookingWriteError(
       if (message.includes("BOOKING_TITLE_REQUIRED")) return { category: "invalid", message: "An appointment needs a title." };
       if (message.includes("BOOKING_BAD_CALENDAR")) return { category: "invalid", message: "That calendar is no longer available." };
       if (message.includes("BOOKING_BAD_HOST")) return { category: "invalid", message: "That host isn’t on this workspace." };
+      // create_internal_booking refuses a client that is not this tenant's own.
+      if (message.includes("BOOKING_BAD_CONTACT")) return { category: "invalid", message: "That client isn’t in this workspace. Choose the client again, or book them as a guest." };
       return { category: "invalid", message: "That time could not be used." };
     default:
       // No SQLSTATE usually means the request never reached Postgres — a transport
@@ -518,6 +527,60 @@ export function bookingWriteMessage(err: { code?: string; message: string }): st
  *  that the schedule is current before anyone looks away. Matches the interval
  *  the admin calendar has used since the live schedule shipped. */
 const LIVE_REFRESH_DEBOUNCE_MS = 400;
+
+/**
+ * The exact `create_internal_booking` payload for one New appointment.
+ *
+ * Pure, so the contract with the server can be asserted without a network double.
+ * Two rules live here rather than in the drawer:
+ *
+ *  - A chosen client goes through as `_contact_id`. Without it a booking the
+ *    business makes for a client is invisible to that client — the portal read
+ *    keys on `contact_id`, never on a typed name.
+ *  - Blocked time never carries a client. It is the owner holding their own time,
+ *    not a session with anyone, and its payload stays exactly what it was before
+ *    clients could be chosen (no `_contact_id` key at all), as does a booking for a
+ *    guest who is not a client.
+ */
+export function buildCreateBookingArgs(
+  input: CreateBookingInput,
+  ctx: { uid: string; tenantId: string; timezone: string },
+): Record<string, unknown> {
+  const end = new Date(input.startAt.getTime() + Math.max(5, input.durationMinutes) * 60000);
+  const args: Record<string, unknown> = {
+    _title: input.blocked ? "Blocked" : input.title.trim(),
+    _start_at: input.startAt.toISOString(),
+    _end_at: end.toISOString(),
+    _timezone: ctx.timezone,
+    _host_user_id: ctx.uid,
+    _guest_name: input.guestName?.trim() || null,
+    _tenant_id: ctx.tenantId,
+    _calendar_id: input.calendarId === UNASSIGNED_CALENDAR ? null : input.calendarId,
+    _status: input.blocked ? "blocked" : "scheduled",
+    _source: "manual",
+  };
+  const contactId = input.contactId?.trim();
+  if (!input.blocked && contactId) args._contact_id = contactId;
+  return args;
+}
+
+/**
+ * The calendar a client session lands on when the owner has not chosen one.
+ *
+ * A session the client can see but that sits on no calendar can never be moved or
+ * cancelled from their portal: the portal's change rules (notice window, whether
+ * the calendar is open) come from the calendar row, so with no calendar there is
+ * nothing to admit the change against. So once a client is chosen the drawer
+ * offers the first calendar that is not paused. A calendar stored as
+ * `enabled = false` is skipped, because the portal refuses a reschedule on a
+ * paused one; `null` (never recorded) counts as open, matching the read. Returns
+ * null when no calendar qualifies, and the drawer then says why it matters.
+ */
+export function defaultCalendarForClient(
+  calendars: ReadonlyArray<Pick<SoloCalendarMeta, "id" | "enabled">>,
+): string | null {
+  return calendars.find((c) => c.enabled !== false)?.id ?? null;
+}
 
 export function useSoloCalendar(
   activeTenantId: string | null,
@@ -846,19 +909,14 @@ export function useSoloCalendar(
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth?.user?.id ?? null;
     if (!uid) return { ok: false, message: "This session is not signed in." };
-    const end = new Date(input.startAt.getTime() + Math.max(5, input.durationMinutes) * 60000);
-    const { error: err } = await supabase.rpc("create_internal_booking" as never, {
-      _title: input.blocked ? "Blocked" : input.title.trim(),
-      _start_at: input.startAt.toISOString(),
-      _end_at: end.toISOString(),
-      _timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      _host_user_id: uid,
-      _guest_name: input.guestName?.trim() || null,
-      _tenant_id: activeTenantId,
-      _calendar_id: input.calendarId === UNASSIGNED_CALENDAR ? null : input.calendarId,
-      _status: input.blocked ? "blocked" : "scheduled",
-      _source: "manual",
-    } as never);
+    const { error: err } = await supabase.rpc(
+      "create_internal_booking" as never,
+      buildCreateBookingArgs(input, {
+        uid,
+        tenantId: activeTenantId,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }) as never,
+    );
     if (err) {
       // Every refusal is classified into an honest, actionable category and
       // sentence (never a raw PostgREST/SQLSTATE dump, never a false success): an

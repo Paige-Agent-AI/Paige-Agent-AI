@@ -16,7 +16,7 @@
  *  - the IA: Research sits in the PAIGE workspace (Chat · Knowledge ·
  *    Research · Helpers · Capabilities) and the canonical route registry.
  */
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -47,6 +47,7 @@ import { ResearchView } from "./paige-research";
 import { useDeepResearch } from "./data/deepResearch";
 import { projectResearchHistoryRun, readResearchHistoryRun } from "@/lib/paigeResearchReadback";
 import ts from "typescript";
+import postcss from "postcss";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const flush = async () => { for (let i = 0; i < 30; i += 1) await Promise.resolve(); };
@@ -74,6 +75,61 @@ describe("actual Research Home governed history projection and display fences", 
     host = document.createElement("div"); document.body.append(host); root = createRoot(host);
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
+
+  it.each([
+    ["short", "Competitor landscape"],
+    ["long-request", `${"Compare the current official service documentation, explain the limits, and retain supporting citations. ".repeat(40)}Final question detail.`],
+    ["unbroken", `https://example.org/${"LongUnbrokenResearchRequest".repeat(80)}`],
+    ["multilingual", `${"市場調査と根拠 — تحليل المصادر — investigación verificada 🔎 ".repeat(35)}結論`],
+  ])("preserves the complete %s question and exact full-detail reading path", async (name, question) => {
+    port.rpc.mockImplementation(async (rpc: string, args: { _run_id?: string }) => ({
+      data: rpc === "list_workspace_research" ? [historyRow("run-a", question)] : completeRun(args._run_id, question), error: null,
+    }));
+    await render();
+    const heading = host.querySelector(".dr-run-card h3");
+    const button = host.querySelector<HTMLButtonElement>(".dr-run-card button")!;
+    expect(heading?.textContent).toBe(question);
+    expect(button.getAttribute("aria-label")).toBe(`Open research: ${question}`);
+    expect(button.textContent).toBe("Review findings");
+    expect(host.textContent).toContain("2 sources");
+    const captureDir = process.env.RESEARCH_CARD_CAPTURE_DIR;
+    if (captureDir) {
+      mkdirSync(captureDir, { recursive: true });
+      writeFileSync(join(captureDir, `${name}.library.dom.html`), host.innerHTML);
+      writeFileSync(join(captureDir, `${name}.fixture.json`), JSON.stringify({ name, question, runId: "run-a" }));
+    }
+    await act(async () => { button.click(); await flush(); });
+    const detail = host.querySelector<HTMLElement>(".dr-detail-card")!;
+    expect(detail.querySelector("h3")?.textContent).toBe(question);
+    expect(document.activeElement).toBe(detail);
+    expect(port.rpc.mock.calls.filter(([rpc]) => rpc === "get_workspace_research_run")).toEqual([
+      ["get_workspace_research_run", { _run_id: "run-a" }],
+    ]);
+    if (captureDir) writeFileSync(join(captureDir, `${name}.detail.dom.html`), host.innerHTML);
+    const back = Array.from(detail.querySelectorAll("button")).find(b => b.textContent?.includes("Back to research history"))!;
+    await act(async () => { back.click(); await flush(); });
+    expect(host.querySelector(".dr-detail-card")).toBeNull();
+    expect(host.querySelector(".dr-run-card h3")?.textContent).toBe(question);
+    expect(port.invoke).not.toHaveBeenCalled();
+  });
+  it("distinguishes saved runs whose long questions share the same prefix", async () => {
+    const prefix = "The same opening request with distinct saved evidence. ".repeat(25);
+    const questions = [`${prefix}First result`, `${prefix}Second result`];
+    port.rpc.mockImplementation(async (rpc: string, args: { _run_id?: string }) => ({
+      data: rpc === "list_workspace_research"
+        ? questions.map((question, i) => historyRow(`run-${i}`, question))
+        : completeRun(args._run_id, questions[1]), error: null,
+    }));
+    await render();
+    const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>(".dr-run-card button"));
+    expect(buttons.map(b => b.getAttribute("aria-label"))).toEqual(questions.map(q => `Open research: ${q}`));
+    await act(async () => { buttons[1].click(); await flush(); });
+    expect(host.querySelector(".dr-detail-card h3")?.textContent).toBe(questions[1]);
+    expect(port.rpc.mock.calls.filter(([rpc]) => rpc === "get_workspace_research_run")).toEqual([
+      ["get_workspace_research_run", { _run_id: "run-1" }],
+    ]);
+    expect(port.invoke).not.toHaveBeenCalled();
+  });
 
   it("withholds the observed ten unsupported claims and contradictory coverage while retaining original history metadata", async () => {
     const value = { ...completeRun(), findings: Array.from({ length: 10 }, (_, i) => ({ text: `Unsupported claim ${i}`, citations: [1, 5, 6, 11], confidence: "high" })), sources: [], coverage: { note: "Verified 10 findings from 23 citable sources", hops_used: 3 } };
@@ -282,6 +338,46 @@ const view = readFileSync(join(root, "src/solo/paige-research.tsx"), "utf8");
 const workspace = readFileSync(join(root, "src/solo/SoloPaigeWorkspace.tsx"), "utf8");
 const routes = readFileSync(join(root, "src/lib/routing/tierBranches.ts"), "utf8");
 const css = readFileSync(join(root, "src/solo/solo-paige-workspace.css"), "utf8");
+
+describe("available Research panel width contract", () => {
+  // CSS structure guards only. Real layout/scroll/focus is measured by the
+  // private actual-SoloApp Chromium drive; jsdom does not evaluate containers.
+  const css = postcss.parse(readFileSync(join(root, "src/solo/solo-paige-workspace.css"), "utf8"));
+  it("uses the actual Research panel as an inline-size container", () => {
+    const declarations: Array<[string, string]> = [];
+    css.walkRules("#spw-panel-research", rule => {
+      rule.walkDecls(decl => { declarations.push([decl.prop, decl.value]); });
+    });
+    expect(declarations).toContainEqual(["container", "spw-research / inline-size"]);
+  });
+  it("stacks the library and explanation in a narrow panel even in a wide window", () => {
+    const scoped: Array<{ condition: string; selectors: string[]; columns: string[] }> = [];
+    css.walkAtRules("container", rule => {
+      if (!rule.params.startsWith("spw-research ")) return;
+      const selectors: string[] = [], columns: string[] = [];
+      rule.walkRules(child => { selectors.push(child.selector); });
+      rule.walkDecls("grid-template-columns", decl => { columns.push(decl.value); });
+      scoped.push({ condition: rule.params, selectors, columns });
+    });
+    expect(scoped).toEqual([{ condition: "spw-research (max-width:780px)", selectors: [".dr-layout"], columns: ["minmax(0,1fr)"] }]);
+  });
+  it("wraps the original detail question while preserving its uncapped text", () => {
+    const wrap: string[] = [];
+    css.walkRules(".dr-detail-card .spw-card-copy", rule => {
+      rule.walkDecls("overflow-wrap", decl => { wrap.push(decl.value); });
+    });
+    expect(wrap).toEqual(["anywhere"]);
+    // The library's visual limit must never migrate into the full detail path.
+    const ast = ts.createSourceFile("paige-research.tsx", view, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const detailHeadings: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxElement(node) && node.openingElement.tagName.getText(ast) === "h3" && node.children.some(child => ts.isJsxExpression(child) && child.expression?.getText(ast) === "detail.question")) detailHeadings.push(node.openingElement.getText(ast));
+      ts.forEachChild(node, visit);
+    };
+    visit(ast);
+    expect(detailHeadings).toEqual(["<h3>"]);
+  });
+});
 
 describe("one canonical substrate — no second research stack", () => {
   it("reads go through the governed RPCs only, never the tables", () => {

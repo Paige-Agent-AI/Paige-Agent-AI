@@ -12,6 +12,9 @@ import { OperationsAssignee } from "./OperationsAssignee";
 import { OperationsWorkEditor } from "./OperationsWorkEditor";
 import { OperationsWorkCreator } from "./OperationsWorkCreator";
 import { OperationsWorkActivity } from "./OperationsWorkActivity";
+import { OperationsItemRelease } from "./OperationsItemRelease";
+import { canReleaseItem, releasesAvailable } from "./operations-item-release";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { OperationsProjectCreator } from "./OperationsProjectCreator";
 import { OperationsProjectEditor } from "./OperationsProjectEditor";
 import { useOperationsPeople } from "./useOperationsPeople";
@@ -134,6 +137,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   },[destination,userId,tenantId]);
   const closeCrmReview = () => {setCrmReview(null);setPendingCrmRecovery(readRetainedCrm());};
   const people = useOperationsPeople();
+  const { soloStandalone } = useTierFeatures();
   const matches = operationsBundleMatchesTenant(source.plans, source.allItems, tenantId);
   const planningAvailable = matches && !source.error && !source.forbidden;
   const crmMatches = crm.tasks.every(task => task.tenant_id === tenantId);
@@ -287,6 +291,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     <p className="ops-source-limit">Workload reflects loaded project work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."} Recorded effort is an estimate, not confirmed availability.</p>
   </>;
   const member = people.members.find((person) => person.user_id === selectedItem?.assigned_to_user_id);
+  // Releases exist only for a standalone, top-level business and only for client work inside a project.
+  const releasable = releasesAvailable(soloStandalone) && canReleaseItem(selectedItem);
   const portalTheme = contentRef.current?.closest<HTMLElement>("[data-pg]")?.getAttribute("data-pg") ?? "dark";
   const reviewWithPaige = () => {
     if (!openPaige) return;
@@ -416,7 +422,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
             <div><dt>{selectedItem.item_type === "reminder" ? "Reminder time" : "Due date"}</dt><dd>{workDateLabel(selectedItem, true)}</dd></div>
             <div><dt>Project</dt><dd>{plans.find((plan) => plan.id === selectedItem.plan_id)?.title ?? (selectedItem.plan_id ? "Project not loaded here" : "Standalone work")}</dd></div>
             <div><dt>Work type</dt><dd>{selectedItem.item_type}</dd></div></dl>
-          {selectedItem.status === "done" && <p>Recorded as completed work. Client delivery acceptance is a separate outcome.</p>}
+          {selectedItem.status === "done" && <p>{releasable ? "Recorded as completed work. Releasing it to the client, and their acceptance, are below." : "Recorded as completed work. Client delivery acceptance is a separate outcome."}</p>}
           {selectedItem.linked_action_id && <p>A linked action exists. Its execution result has not been verified here.</p>}
           <OperationsWorkEditor key={`${selectedItem.id}:${inspection?.kind === "item" ? inspection.proposedStage ?? "inspect" : "inspect"}`} item={selectedItem} actorId={userId} tenantId={tenantId}
             proposedStage={inspection?.kind === "item" ? inspection.proposedStage : undefined}
@@ -425,6 +431,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
             refresh={refreshSelectedWork} />
           <OperationsWorkActivity key={`${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
             itemId={selectedItem.id} members={people.members} version={selectedItem.updated_at} />
+          {/* E09 Slice 4 (4B): the existing release flow, for client work in a project (standalone businesses, D3).
+              Its key is its own: the Activity sibling above already uses `${tenantId}:${id}`. */}
+          {releasesAvailable(soloStandalone) && canReleaseItem(selectedItem) && <OperationsItemRelease key={`release:${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
+            item={selectedItem} members={people.members} peopleReady={!people.loading && !people.error} theme={portalTheme} />}
         </div>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>
           <OperationsAssignee member={people.members.find(person => person.user_id === selectedPlan.owner_user_id)} />

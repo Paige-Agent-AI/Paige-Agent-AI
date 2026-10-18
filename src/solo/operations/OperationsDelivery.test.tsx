@@ -6,11 +6,12 @@ import { OperationsEngagementHandoff } from "./OperationsEngagementHandoff";
 import type { ClientAgreement } from "@/solo/useSoloCommercialTerms";
 import type { AgreementSigning } from "@/solo/useSoloAgreementSignings";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
+import type { Plan } from "@/hooks/usePlanList";
 import type { OperationsEngagementEvidence } from "./OperationsEngagementEvidence";
 import { prepareEngagementHandoff } from "./operations-engagement-handoff";
 import { retainPendingHandoff } from "./operations-handoff-intent";
 
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),write:vi.fn(),recover:vi.fn()}));
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),write:vi.fn(),recover:vi.fn(),standalone:false}));
 const id=(n:number)=>`eb820000-0000-4000-8000-${n.toString().padStart(12,"0")}`;
 const agreement={id:id(4),contactId:id(3),offerId:id(5),title:"Synthetic engagement",status:"active",updatedAt:"2026-10-09T12:00:00Z"} as ClientAgreement;
 const documents=[6,7].map(n=>({id:id(n),agreementId:id(4),contactId:id(3),documentTitle:`Signed scope ${n}`,signatureState:"completed",displayState:"completed",hasSealedCopy:true})) as AgreementSigning[];
@@ -18,12 +19,13 @@ vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>({activeTenantId:i
 vi.mock("@/solo/useSoloCommercialTerms",()=>({useSoloCommercialTerms:()=>({tenantId:id(2),phase:"ready",agreements:[agreement],agreementsReadable:true,clientsReadable:true,clients:[{id:id(3),name:"Synthetic client"}],retry:vi.fn()})}));
 vi.mock("@/solo/useSoloAgreementSignings",()=>({useSoloAgreementSignings:()=>({tenantId:id(2),phase:"ready",readable:true,signings:documents,retry:vi.fn()})}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:mocks.rpc}}));
+vi.mock("@/hooks/useTierFeatures",()=>({useTierFeatures:()=>({has:()=>true,tierKey:"solo",soloStandalone:mocks.standalone,loading:false})}));
 vi.mock("./operations-engagement-handoff-write",()=>({writeEngagementHandoff:mocks.write}));
 vi.mock("./operations-handoff-recovery",()=>({inspectOriginalHandoff:mocks.recover}));
 vi.mock("./OperationsEngagementEvidence",()=>({OperationsEngagementEvidence:(props:Parameters<typeof OperationsEngagementEvidence>[0])=>props.handoff?<OperationsEngagementHandoff {...props.handoff} evidence={{tenantId:id(2),agreementId:props.signingId,contactId:id(3),commercialTermsId:id(4),offerId:id(5),version:3,status:"completed",completedAt:agreement.updatedAt,contentSha256:"a".repeat(64),sealedSha256:"b".repeat(64),sealedCopyRecorded:true}}/>:<p>Signing evidence</p>}));
 const members=[{user_id:id(1),status:"active",full_name:"Synthetic owner",avatar_url:null}] as TeamMemberRecord[];
 let host:HTMLDivElement,root:Root;
-beforeEach(()=>{vi.clearAllMocks();sessionStorage.clear();mocks.rpc.mockResolvedValue({data:true,error:null});host=document.createElement("div");document.body.append(host);root=createRoot(host);});
+beforeEach(()=>{vi.clearAllMocks();mocks.standalone=false;sessionStorage.clear();mocks.rpc.mockResolvedValue({data:true,error:null});host=document.createElement("div");document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 const buttons=(name:string)=>Array.from(document.querySelectorAll<HTMLButtonElement>("button")).filter(b=>b.textContent===name);
 it("two eligible signings expose one selected draft and refuse switching until its explicit discard",async()=>{
@@ -57,4 +59,23 @@ it("verified work remains inspectable with recovery feedback when the workspace 
  expect(onVerified).toHaveBeenCalledWith(id(9));
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("The original project was verified. Refresh current work.");
  expect(mocks.write).not.toHaveBeenCalled();
+});
+
+// E09 Slice 4 (compliance S2): the "Client outcome" line uses the work item's own release gate.
+const linkedProject={id:id(9),tenant_id:id(2),title:"Synthetic project",items:[],metadata:{operations_engagement:{commercial_terms_id:id(4),contact_id:id(3),offer_id:id(5),agreement_id:id(6),version:3}}} as unknown as Plan;
+const outcome=()=>Array.from(host.querySelectorAll(".op-delivery-path li")).find(li=>li.textContent?.startsWith("Client outcome"))?.querySelector("span")?.textContent;
+const reviewer={user_id:id(11),status:"active",full_name:"Synthetic reviewer",avatar_url:null} as TeamMemberRecord;
+it.each([
+ ["a business that cannot release (sub-account or agency)",false,[...members,reviewer],"Acceptance unavailable"],
+ ["a standalone business with nobody else to review",true,members,"Releasing needs a second reviewer on your team"],
+ ["a standalone business with a second reviewer",true,[...members,reviewer],"Released and accepted on each work item in the project"],
+] as const)("reports the client outcome for %s",async(_label,standalone,team,text)=>{
+ mocks.standalone=standalone;
+ await act(async()=>root.render(<OperationsDelivery plans={[linkedProject]} items={[]} planningReady members={[...team]} peopleReady onVerified={vi.fn()}/>));
+ expect(outcome()).toBe(text);
+});
+it("never claims a client outcome without a linked project, even for a standalone business",async()=>{
+ mocks.standalone=true;
+ await act(async()=>root.render(<OperationsDelivery plans={[]} items={[]} planningReady members={[...members,reviewer]} peopleReady onVerified={vi.fn()}/>));
+ expect(outcome()).toBe("Acceptance unavailable");
 });

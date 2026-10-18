@@ -1090,6 +1090,18 @@ jobs:
             supabase/functions/schedule-automated-tasks/index.ts \
             supabase/functions/voice-command-processor/index.ts
 
+      - name: E09 Documents — Paige files and shares a client document only through the one share writer
+        if: ${{ !cancelled() }}
+        run: |
+          # crm_file_document (supabase/functions/_shared/crm/client-file-share.ts): a same-client
+          # visibility change goes to public.client_file_set_client_share at the version read; a move or
+          # description change never writes visibility, a shared file is withdrawn through the share
+          # writer before it moves to another client, and anything that ends shared goes through the
+          # share writer at the version the move produced. Success only on a verified
+          # readback; an unanswered reply is unknown, never "not applied". Reads the chat source only.
+          deno test --allow-read=supabase/functions --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/crm/client-file-share.test.ts
+
       - name: The platform email sender is not an open relay (who may send, and to whom)
         if: ${{ !cancelled() }}
         run: |

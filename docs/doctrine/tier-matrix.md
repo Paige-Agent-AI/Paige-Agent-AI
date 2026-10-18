@@ -4801,3 +4801,75 @@ consultant, agency, funding) gain it. Agreements is the one entry held back from
 was never theirs: its route is still the platform-terms page. Harness frames
 (`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
 in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.
+
+### Customer Portal — Documents, `/app/documents` + "Files for {client}" on the Solo client record + client release in the Operations work item (E09 Slice 4, 2026-10-18)
+
+Owner decision (2026-10-17): the customer sees only what the business explicitly shares. Files stay in
+the one canonical store (`client_files` + the private `client-files` bucket); released work stays in
+`operations_delivery_client_releases`. A file the business adds starts private (D1) and is shared one
+file at a time (`client_file_set_client_share`, SECURITY DEFINER, owner/admin of the current workspace via
+`is_tenant_admin`, version-checked, audited, no notification — D4). The customer read is
+`client_portal_documents` (shared and finished files, plus the customer's own uploads; no description,
+uploader or private file); files open through 60-second signed links. Released work is reviewed and
+accepted on `/app/documents` through the existing client review; releasing needs a second team member
+as reviewer (D2) and exists only for standalone, top-level businesses (D3). Paige's `crm_file_document`
+routes a same-client visibility change to the same share writer, and re-files a shared file only after
+withdrawing it through that writer (no signed-in caller may move a shared file to another client). Both
+lists page by (`created_at`, `id`), so the owner's "Load more" reaches every file (round 3).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Owner file library / share (`client_file_owner_list`, `_begin_upload`, `_finish_upload`, `client_file_set_client_share`) | None: no membership, refused at the caller step | None: `CLIENT_FILES_UNAVAILABLE`, nothing mounted | ✓ owner/admin, on the client record ("Files for {client}", `client_standing` gate); a plain member is refused | Allowed by the server (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | Allowed by the server; not mounted | — | no grant | PROOF OWED |
+| Owner upload reservation in the company workspace (`client_file_owner_begin_upload` → staff Storage PUT → `_finish_upload`; God / platform-admin reserve row, rounds 2–3) | super_admin: reserve, store and finish allowed — `is_tenant_admin` admits a platform operator in the company workspace and the reservation also needs `is_platform_owner()` or the global admin role (read from the function body; not driven in pgTAP). platform_admin: may list and share there, but reserving an upload is refused 42501 with no pending row left (pgTAP), because the staff Storage PUT would refuse it; outside the company workspace, refused at the caller step like any non-member | None: `CLIENT_FILES_UNAVAILABLE` | ✓ owner/admin (a tenant owner/admin membership is synced the global admin role, so the two checks agree); a plain member is refused | Allowed by the server; not mounted | Allowed by the server; not mounted | — | no grant | PROOF OWED |
+| Owner release work (prepare, internal review, release to the client) | None | None: release RPCs require a standalone business | ✓ in the Operations work item for client work inside a project, only with 2 or more active members; one-member teams see "Releasing work needs a second person on your team to review it." | None: release RPCs refuse child tenants | None: release RPCs refuse it | — | — | PROOF OWED |
+| Customer documents `/app/documents` and the Home Documents tile (`client_portal_documents`) | — | — | — | — | — | ✓ own relationship: shared and finished files plus their own uploads; uploads back (unchanged); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer released work on `/app/documents` (`operations_delivery_client_reviews_scoped` / `_read_scoped` / `_decide_scoped`) | — | — | — | — | — | ✓ reads and decides only their own releases, from a standalone business; the section is hidden where releases are not offered; client and business must be active | denied | PROOF OWED |
+| Paige files / shares a document from chat (`crm_file_document` → the share writer for a visibility-only change) | — | — | ✓ business accounts (risk high, owner confirms) | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_documents.sql`) covers the share stamp, owner and customer reads,
+other-client and other-business refusals, the version check, state replay, the customer upload pipeline,
+the customer-delete fold-in and the reservation-required staff PUT. §58: the unreachable admin
+`ContactFilesPanel` upload (PUT then direct insert) no longer works because a staff PUT now needs a
+reservation; the panel is not deleted. Authenticated owner upload/share and customer read/decide on
+production are owed.
+
+Round 3 (2026-10-18, pgTAP 188 cases): deleting a user who shared a still-shared file succeeds and leaves
+the file shared with `shared_by` NULL (the stamp follows the `ON DELETE SET NULL`); no signed-in caller —
+business owner, a member holding the global admin role, or a write inside the share writer's gate — may
+move a shared file to another client (`FILE_SHARED_MOVE_REFUSED`), so the share is withdrawn first through
+`client_file_set_client_share` (one audit row) and the private file then moves; the service role's move
+arrives private. `client_file_owner_list` and `client_portal_documents` page by a (`created_at`, `id`)
+cursor, so a file saved in the same instant as the last one shown is never skipped; the owner's "Load more"
+is on the Solo client record.
+
+Round 4 (2026-10-18, pgTAP 197 cases): a file's object and uploader are fixed once its row exists. No
+signed-in caller — the business owner, a member holding the global admin role, or the uploader — may change
+`storage_path` or `uploaded_by_user_id` (`FILE_IDENTITY_IMMUTABLE`); only the service role or a direct
+database session may. Before this, two REST updates could point a shared row at another file's object and
+show it to that client, or to another client of the same business, with no share writer and no audit row.
+Same rule on every tier that can write a `client_files` row; `tenant_id` is not covered (its foreign key is
+`ON DELETE SET NULL`). Still open (client_files policy follow-up): a member holding the global admin role,
+or the uploader, can delete a shared file over REST, which takes it away from the client with no audit row.
+
+Round 5 (2026-10-18, pgTAP 229 cases): the only ways a customer gains a file are the audited share writer
+and their own upload, proven by a matrix of every signed-in role (owner, business admin, member holding the
+global admin role, plain member, customer, another business's owner, platform owner) against every write on
+`client_files` and the client-files bucket. A signed-in write may make a row `client_upload` only when its
+uploader is the contact's linked login (`FILE_CLIENT_UPLOAD_PROVENANCE`); a file's `id` and `tenant_id` are
+now fixed for signed-in writers too (`FILE_IDENTITY_IMMUTABLE`), with only the tenants foreign key's
+`ON DELETE SET NULL` passing. Same rule on every tier. Still open with the policy follow-up: a member can
+rename a shared file (MINOR-J) as well as delete one.
+
+Round 6 (2026-10-18, pgTAP 244 cases): a customer reads, and so opens, only files the business shared to
+their contact (once ready) and the uploads their own login made. Storage serves an object to anyone who can
+see a ready row whose uploader owns it, so the customer read policy now shows a `client_upload` row only to
+the login that uploaded it: never to another login on the same contact, and never to the next person linked
+to the contact after a former person's link is cleared (the former person's uploads stay with the contact,
+visible to the business). Files the business shared stay with the contact across that change (product
+decision, filed for Slice 7). Same rule on every tier.
+
+The Operations Delivery "Client outcome" line uses the same release gate as the work item
+(`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
+project" only for a standalone business with a linked project and a second active member, "Releasing needs a
+second reviewer on your team" for a one-member standalone business, and "Acceptance unavailable" everywhere
+else — a sub-account, agency or enterprise never sees an outcome it cannot produce (round 2, 2026-10-18).

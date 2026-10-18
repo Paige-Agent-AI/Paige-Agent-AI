@@ -22,6 +22,10 @@ vi.mock("@/hooks/usePlanList", () => ({ usePlanList: (options: unknown) => { har
     plan_id: null, title: `${harness.tenant} assigned work`, summary: "Test source", status: "open", priority: "normal",
     item_type: "task", assigned_to_user_id: null, due_at: null,...harness.planningOverrides }] }); } }));
 vi.mock("./OperationsDelivery", () => ({ default: () => <div>Delivery test seam</div> }));
+const release = vi.hoisted(() => ({ standalone: false }));
+vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => true, tierKey: "solo", soloStandalone: release.standalone, loading: false }) }));
+vi.mock("./OperationsItemRelease", () => ({
+  OperationsItemRelease: ({ item }: { item: { id: string } }) => <div data-testid="release-flow">Release flow for {item.id}</div> }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
 vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onNavigationGuardChange }: {
   refresh: () => Promise<void>; onNavigationGuardChange?: (guard: (() => string | null) | null) => void;
@@ -40,7 +44,7 @@ let root: Root;
 beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harness.user = "test-user"; harness.status = "ready";
   vi.clearAllMocks();
   harness.planningOptions=[];
-  harness.planningOverrides={};
+  harness.planningOverrides={};release.standalone=false;
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
@@ -287,4 +291,21 @@ it("opens an exact Task independently of failed bounded lists",async()=>{
  expect(weekly.taskRead).toHaveBeenCalledWith(id,expect.any(AbortSignal));
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Exact beyond-window task");
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Native assignment/date edit test seam");
+});
+
+it.each([
+  ["a standalone business, client work in a project", true, { contact_id: "test-contact", plan_id: "test-plan", updated_at: "2099-01-01T00:00:00Z" }, true],
+  ["work with no client", true, { contact_id: null, plan_id: "test-plan", updated_at: "2099-01-01T00:00:00Z" }, false],
+  ["client work outside a project", true, { contact_id: "test-contact", plan_id: null, updated_at: "2099-01-01T00:00:00Z" }, false],
+  ["work with no row version", true, { contact_id: "test-contact", plan_id: "test-plan", updated_at: undefined }, false],
+  ["a business that is not standalone", false, { contact_id: "test-contact", plan_id: "test-plan", updated_at: "2099-01-01T00:00:00Z" }, false],
+])("mounts the client release flow in the work item only for %s", async (_label, standalone, overrides, mounted) => {
+  release.standalone = standalone; harness.planningOverrides = overrides;
+  const errors = vi.spyOn(console, "error");
+  await act(async () => root.render(<OperationsWorkspace view="work" />));
+  await act(async () => container.querySelector<HTMLButtonElement>(".ops-work-card")!.click());
+  expect(Boolean(document.querySelector('[data-testid="release-flow"]'))).toBe(mounted);
+  // The release flow sits beside the Activity read in the same sheet: it must not reuse its React key.
+  expect(errors.mock.calls.some(call => String(call[0]).includes("same key"))).toBe(false);
+  errors.mockRestore();
 });

@@ -24,7 +24,7 @@ export const CRM_TASK_READ = {
     riskPolicyKey: "read_only", approvalAuthority: "none",
     idempotency: "Original caller JWT; exact UUID before source cap; current native actor/tenant/standalone/member and own/assigned-client/admin row rule intersected with tasks RLS. No writer, list fallback or action replay." },
   outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.operations_crm_work_read",
-    railVisibility: "One available Chat read records a capability read receipt, not Task execution. Work navigation is department surface-only; no exact Task route is claimed." },
+    railVisibility: "One available Chat read records a capability read receipt, not Task execution. The bounded Task reference opens the current Operations Task inspector, which reauthorizes its own read." },
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 

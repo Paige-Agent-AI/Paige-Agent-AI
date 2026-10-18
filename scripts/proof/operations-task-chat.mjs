@@ -127,8 +127,8 @@ await check('actual ordinary Chat reads exact late completed Task through origin
   assert.equal(r.value?.status, 'available'); assert.equal(r.value?.found, true); assert.deepEqual(r.value.task, task());
   assert.ok(r.offered.includes('crm_get_task')); const native = r.shapes.filter(c => c.name === 'operations_crm_work_read'); assert.equal(native.length, 2);
   for (const call of native) { assert.equal(call.client, 'jwt'); assert.deepEqual(call.parameters, { p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_task_id: taskId }); assert.ok(call.signal instanceof AbortSignal); }
-  assert.ok(r.wire.includes('"destination":"operations_work","record_id":null'));
-  assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: null }]);
+  assert.ok(r.wire.includes(`"destination":"operations_work","record_id":"${taskId}"`));
+  assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: taskId }]);
   assert.ok(!JSON.stringify(r.value).includes('record_links')); assert.ok(!JSON.stringify(r.value).includes('/solo/'));
   assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1);
   assert.equal(r.rec.rpc.filter(c => c.name === 'get_team_authority_readiness').length, 3, 'initial native Team fact plus fresh pre/post checks');
@@ -214,7 +214,7 @@ if (!redOnly) {
       [{ tool: 'crm_get_task', outcome: expectedStatus === 'available' ? 'reported_success' : 'reported_failure' }],
       'the actual settled interactive receipt must reflect the lookup, without native record/effect identities');
     assert.ok(!r.wire.includes("couldn't confirm whether the change went through"));
-    if (expectedFound === true) assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: null }]);
+    if (expectedFound === true) assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: taskId }]);
     else assert.ok(!r.wire.includes('"destination":"operations_work"'));
     noEffects(r);
   });

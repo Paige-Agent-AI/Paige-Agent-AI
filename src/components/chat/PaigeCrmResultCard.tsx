@@ -46,7 +46,7 @@ export function PaigeCrmResultCard({ result, account }: { result: PaigeCrmResult
           </p>
           {href && (
             <a className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-2 hover:underline" href={href}>
-              {target && soloTaskOrDeal ? (reference?.destination === "operations_work" ? "Open Work" : target.label)
+              {target && soloTaskOrDeal ? (reference?.destination === "operations_work" && !exact ? "Open Work" : target.label)
                 : exact ? "Open exact record" : "Open CRM surface"}<ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}

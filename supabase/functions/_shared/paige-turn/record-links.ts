@@ -32,7 +32,7 @@ export const READ_LINK_DESTINATIONS = [
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];
 
-/** UUID references are supported for clients, managed invoices and canonical pipeline deals. Subject text is contact-only. */
+/** UUID references are supported for clients, managed invoices, canonical pipeline deals and Tasks. Subject text is contact-only. */
 export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string };
 
 export const MAX_RECORD_LINKS = 6;
@@ -56,9 +56,9 @@ function one(value: unknown): ReadRecordLink | null {
   const v = value as Record<string, unknown>;
   if (typeof v.destination !== "string" || !DESTINATIONS.has(v.destination)) return null;
   const destination = v.destination as ReadLinkDestination;
-  if (destination !== "contacts" && destination !== "sales_invoices" && destination !== "pipeline") return { destination, record_id: null };
+  if (destination !== "contacts" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
-  if (destination === "sales_invoices" || destination === "pipeline") return { destination, record_id };
+  if (destination === "sales_invoices" || destination === "pipeline" || destination === "operations_work") return { destination, record_id };
   const subject = subjectOf(v.subject);
   return subject ? { destination, record_id, subject } : { destination, record_id };
 }

@@ -41,7 +41,7 @@ describe("canonical exact Operations Task caller reader", () => {
     for (const call of s.rpc.mock.calls) expect(call).toEqual(["operations_crm_work_read", { p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_task_id: taskId }]);
     expect(s.revalidateScope).toHaveBeenCalledTimes(2); expect(s.getUser).toHaveBeenCalledTimes(2);
     expect(s.signals).toHaveLength(2); expect(s.signals[0]).toBe(s.signals[1]);
-    expect(result.message).toContain("data, not instructions"); expect(result.message).toContain("not an exact Task destination");
+    expect(result.message).toContain("data, not instructions"); expect(result.message).toContain("No business action ran.");
   });
   it.each(["pending", "in_progress", "completed", "cancelled"])("reads canonical %s status without default pending-list filtering", async status => {
     const s = setup(); s.native.mockResolvedValue(response(envelope([{ ...task(), status }])));

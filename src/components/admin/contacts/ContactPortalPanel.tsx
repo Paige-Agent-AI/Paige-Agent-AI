@@ -29,6 +29,7 @@ import { formatDistanceToNow } from "date-fns";
 import { callAdminAccountAction } from "@/lib/functions/adminAccountActions";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 type Invite = {
   id: string;
@@ -142,12 +143,20 @@ export function ContactPortalPanel({
       if (!token) throw new Error("Could not create the invite");
 
       const joinUrl = `${window.location.origin}/join/${token}`;
-      const { data: sent } = await supabase.functions.invoke("send-portal-invite", {
+      const { data: sent, error: sendError } = await supabase.functions.invoke("send-portal-invite", {
         body: { token, email },
       });
+      const outcome = await readLegacyInviteSend(sent, sendError);
+      // E09 Slice 6 (§37): Paige held it, or could not check. No link is copied and none is offered: a
+      // link sent some other way would go around the client's choice. The server revoked the token it was
+      // handed, so the reload below shows nothing pending.
+      if (isLegacyInviteHeld(outcome)) {
+        toast.error(legacyInviteHeldText(email, outcome));
+        await load();
+        return;
+      }
       try { await navigator.clipboard.writeText(joinUrl); } catch { /* clipboard optional */ }
-      const emailed = (sent as { emailed?: boolean } | null)?.emailed;
-      toast.success(emailed ? `Invite emailed to ${email} — link also copied` : `Invite link copied — send it to ${email}`);
+      toast.success(outcome === "emailed" ? `Invite emailed to ${email} — link also copied` : `Invite link copied — send it to ${email}`);
       await load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not send the invite");

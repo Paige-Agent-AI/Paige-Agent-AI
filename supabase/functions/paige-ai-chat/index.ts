@@ -7279,7 +7279,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   notes: { type: "string" },
                   status: { type: "string", enum: ["pending","active","inactive","archived"] },
                   assigned_coach_user_id: { type: "string", description: "Auth user UUID of the coach to assign; empty string clears the assignment." },
-                  do_not_contact: { type: "boolean", description: "True suppresses outbound email and SMS; false removes that suppression." }
+                  do_not_contact: { type: "boolean", description: "True excludes this contact from marketing email (campaigns, newsletters and series); one-to-one emails and texts still send. To stop those, the owner pauses Email or Texts for this contact in Conversations. False clears the flag." }
                 },
                 required: ["client_ref"]
               }

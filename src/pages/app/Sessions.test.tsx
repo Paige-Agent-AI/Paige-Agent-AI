@@ -216,6 +216,10 @@ it("on a calendar with rescheduling off still allows cancelling and points the m
 });
 
 it("reschedules from the drawer: slots for the booked service, day then time, the business accent on the act", async () => {
+  // Fixed same-day UTC slots: relative-to-now slots straddle midnight at certain
+  // wall-clock hours (CI-evenning flake), leaving the first day group with one
+  // time button and times[1] undefined.
+  f.slots.mockResolvedValue({ slots: ["2026-12-01T14:00:00.000Z", "2026-12-01T15:30:00.000Z"], timezone: "UTC" });
   await render();
   await click(button("Reschedule", host)!);
   expect(f.slots).toHaveBeenCalledTimes(1);
@@ -259,6 +263,8 @@ it("reschedules from the drawer: slots for the booked service, day then time, th
 
 it("keeps the drawer open and reloads open times when the move is refused", async () => {
   (f.state.reschedule as ReturnType<typeof vi.fn>).mockResolvedValue(false);
+  // Fixed same-day UTC slots (same wall-clock determinism as the drawer test above).
+  f.slots.mockResolvedValue({ slots: ["2026-12-01T14:00:00.000Z", "2026-12-01T15:30:00.000Z"], timezone: "UTC" });
   await render();
   await click(button("Reschedule", host)!);
   const dialog = document.querySelector('[role="dialog"]')!;

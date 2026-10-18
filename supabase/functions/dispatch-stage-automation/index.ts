@@ -16,10 +16,12 @@
 // Marketing consent is the business's own ledger (paige_consent_events via _shared/tenant-consent.ts):
 // default-deny, and a ledger that cannot be read holds the event rather than sending.
 
+// Contact opt-outs (E09 Slice 6): see gate.ts. A contact who turned a channel off themselves is skipped
+// for every intent; channels the business has paused are named in the payload.
+
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { emitAutomationRail } from "../_shared/railAutomation.ts";
-import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
-import { tenantConsent } from "../_shared/tenant-consent.ts";
+import { INTENT_TO_CONSENT, stageAutomationGate } from "./gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,13 +46,6 @@ interface Payload {
   to_stage_id: string | null;
   rule: Rule;
 }
-
-const INTENT_TO_CONSENT: Record<Rule["compose_intent"], "transactional" | "marketing"> = {
-  transactional: "transactional",
-  notification: "transactional",
-  marketing: "marketing",
-  nurture: "marketing",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -84,34 +79,13 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // Consent gate. Transactional follow-ups ride the existing relationship. Marketing needs the business's
-    // own recorded consent for this contact: no contact, no address, nothing on record, a revocation, or a
-    // ledger that cannot be read all skip the send (never a silent pass).
-    const consentKind = INTENT_TO_CONSENT[body.rule.compose_intent];
-    if (consentKind === "marketing") {
-      let email: string | null = null;
-      if (body.contact_id) {
-        const { data: client, error: clientErr } = await supabase
-          .from("clients")
-          .select(`tenant_id, linked_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
-          .eq("id", body.contact_id)
-          .maybeSingle();
-        // The contact must belong to the business the event names.
-        if (!clientErr && client && client.tenant_id === body.tenant_id) {
-          // Consent is checked against the contact's PRIMARY email — the address a send goes to.
-          email = clientAddresses(client)?.email?.toLowerCase().trim() || null;
-        }
-      }
-      const consent = email
-        ? await tenantConsent(supabase, { tenantId: body.tenant_id, channel: "email", contactId: body.contact_id, address: email })
-        : "none";
-      if (consent !== "granted") {
-        const reason = consent === "unknown" ? "marketing consent could not be checked" : "marketing consent missing";
-        await mark("skipped_no_consent", { error: reason });
-        return new Response(JSON.stringify({ status: "skipped_no_consent" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // Opt-out gate, then the marketing consent gate (gate.ts). A skip is recorded, never silent.
+    const gate = await stageAutomationGate(supabase, body);
+    if (gate.kind === "skip") {
+      await mark(gate.status, { error: gate.error });
+      return new Response(JSON.stringify({ status: gate.status, reason: gate.reason }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Normalize payload for downstream (n8n / Zapier / Make / custom endpoint)
@@ -123,6 +97,9 @@ Deno.serve(async (req) => {
       contact_id: body.contact_id,
       from_stage_id: body.from_stage_id,
       to_stage_id: body.to_stage_id,
+      // Channels this contact must not be messaged on (a business pause or a delivery block). The outside
+      // sender never sees the suppression list, so it is told here.
+      contact_opted_out_channels: gate.optedOutChannels,
       rule: {
         id: body.rule.id,
         compose_intent: body.rule.compose_intent,

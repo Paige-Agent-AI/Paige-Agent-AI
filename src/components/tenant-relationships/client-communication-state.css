@@ -1,0 +1,48 @@
+/* E09 Slice 6 — "How {client} can be reached" on the Solo client record, under "Shared with {client}".
+   Operate mode in the record's own pg-token world, the same rhythm as the shared-work section above it:
+   one quiet definition list (label · state · who set it and when), no switches — this section is read-only
+   by design — no card grid, no eyebrow, no coloured stripe, no gold. A pause the business set carries the
+   warning hue on its icon only; the words stay in ink so they keep AA contrast in both themes. Controls are scoped under .trc-reach so the shell's
+   `[data-pg] a` gold link colour never reaches them. */
+.trc-reach { container-type: inline-size; }
+.trc-reach-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 13px 14px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.trc-reach-heading { display: grid; gap: 4px; min-width: 0; flex: 1 1 18rem; }
+.trc-reach-heading h3 { margin: 0; overflow-wrap: anywhere; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
+.trc-reach-heading p { margin: 0; max-width: 62ch; color: var(--pg-muted); font-size: 12.5px; line-height: 1.45; }
+
+.trc-reach-rows { margin: 0; padding: 0; list-style: none; }
+.trc-reach-row { display: grid; grid-template-columns: minmax(9rem, 13rem) minmax(0, 1fr); align-items: baseline; gap: 2px 16px; padding: 10px 14px; }
+.trc-reach-row + .trc-reach-row { border-top: 1px solid var(--pg-line-soft); }
+.trc-reach-row dt { color: var(--pg-ink-2); font-size: 12.5px; font-weight: 600; }
+.trc-reach-row dd { display: grid; gap: 2px; margin: 0; min-width: 0; }
+.trc-reach-value { display: inline-flex; align-items: flex-start; gap: 6px; color: var(--pg-ink); font-size: 13.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.trc-reach-value svg { flex: none; width: 15px; height: 15px; margin-top: 2px; color: var(--pg-warning); }
+.trc-reach-by { color: var(--pg-muted); font-size: 12px; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.trc-reach-note { color: var(--pg-ink-2); font-size: 12px; line-height: 1.45; }
+
+.trc-reach .trc-reach-refresh, .trc-reach .trc-reach-quiet { display: inline-flex; width: max-content; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; gap: 6px; border-radius: var(--pg-r-chip); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; text-decoration: none; }
+.trc-reach .trc-reach-refresh { padding: 0 8px; border: 0; background: transparent; color: var(--pg-muted); font-weight: 500; }
+.trc-reach .trc-reach-quiet { padding: 0 12px; border: 1px solid var(--pg-line); background: var(--pg-surface); color: var(--pg-ink); font-size: 12px; }
+.trc-reach .trc-reach-refresh svg, .trc-reach .trc-reach-quiet svg { width: 13px; height: 13px; }
+.trc-reach .trc-reach-refresh:hover { color: var(--pg-ink); background: var(--pg-surface); }
+.trc-reach .trc-reach-quiet:hover { border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.trc-reach .trc-reach-refresh:focus-visible, .trc-reach .trc-reach-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+.trc-reach-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); }
+.trc-reach-foot p { margin: 0; max-width: 62ch; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; }
+
+.trc-reach-state { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-reach-state p { margin: 0; max-width: 62ch; }
+
+.trc-reach-skeleton { min-height: 44px; }
+.trc-reach-skeleton b { display: block; height: 12px; border-radius: 6px; background: var(--pg-line-soft); }
+.trc-reach-skeleton b:first-child { width: 60%; }
+.trc-reach-skeleton b:last-child { width: 40%; }
+
+@container (max-width: 420px) {
+  /* A phone's record pane: the label sits above its value. */
+  .trc-reach-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trc-reach .trc-reach-refresh, .trc-reach .trc-reach-quiet { transition: none; }
+}

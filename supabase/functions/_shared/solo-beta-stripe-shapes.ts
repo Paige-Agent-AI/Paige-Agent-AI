@@ -31,3 +31,13 @@ export function readInvoiceSubscriptionId(invoice: {
   if (typeof subscription === "string") return subscription || null;
   return subscription?.id || null;
 }
+
+/**
+ * Stable non-sensitive error code for persistence (stripe_event_log.last_error_code):
+ * a provider/Postgres raise name passes through verbatim; everything else falls back
+ * to a caller-named stage code so the recorded code always names where recovery must look.
+ */
+export function safeStageCode(stage: string, cause: unknown): string {
+  const raw = cause instanceof Error ? cause.message : "";
+  return /^[a-z0-9_]{1,120}$/i.test(raw) ? raw : stage;
+}

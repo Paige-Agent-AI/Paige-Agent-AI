@@ -2,6 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   readInvoiceSubscriptionId,
   readSubscriptionItemPeriod,
+  safeStageCode,
 } from "./solo-beta-stripe-shapes.ts";
 
 Deno.test("reads Basil subscription periods from the subscription item", () => {
@@ -32,4 +33,32 @@ Deno.test("reads a Basil invoice subscription only from subscription_details", (
 Deno.test("rejects invoices without a subscription parent", () => {
   assertEquals(readInvoiceSubscriptionId({ parent: { type: "quote_details" } }), null);
   assertEquals(readInvoiceSubscriptionId({}), null);
+});
+
+Deno.test("safeStageCode passes a Postgres raise name through verbatim", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("solo_beta_provider_contract_mismatch")),
+    "solo_beta_provider_contract_mismatch",
+  );
+  assertEquals(
+    safeStageCode("event_claim_failed", new Error("solo_beta_checkout_fence_lost")),
+    "solo_beta_checkout_fence_lost",
+  );
+});
+
+Deno.test("safeStageCode falls back to the stage code for uninformative causes", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("Failed to fetch")),
+    "atomic_fulfillment_failed",
+  );
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("column x of relation y does not exist")),
+    "atomic_fulfillment_failed",
+  );
+  assertEquals(safeStageCode("lifecycle_sync_failed", "not an error"), "lifecycle_sync_failed");
+  assertEquals(safeStageCode("lifecycle_sync_failed", null), "lifecycle_sync_failed");
+  assertEquals(
+    safeStageCode("event_claim_failed", new Error("a".repeat(121))),
+    "event_claim_failed",
+  );
 });

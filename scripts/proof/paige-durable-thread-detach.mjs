@@ -110,7 +110,7 @@ try {
   const before = (await snapshot()).rows[0];
   assert.equal(before.definer, false);
   if (!baseline) {
-    const migration = read('supabase/migrations/20271110022000_durable_work_thread_detach.sql');
+    const migration = read('supabase/migrations/20271110031000_durable_work_thread_detach.sql');
     assert.ok(migration.trim(), 'Successor migration must be populated before green proof');
     fixture.run(migration);
     fixture.run(migration); // CREATE OR REPLACE is safely repeatable; no rows rewritten.

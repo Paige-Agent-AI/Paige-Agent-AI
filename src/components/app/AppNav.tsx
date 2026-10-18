@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText, MessagesSquare, CircleHelp } from "lucide-react";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText, MessagesSquare, CircleHelp, ListChecks } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { catalogRoutableItems, applyPortalOverlay } from "@/lib/portal/moduleNav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -211,6 +211,22 @@ export function AppNav({ user }: AppNavProps) {
     const after = navItems.findIndex((i) => i.href === "/app/messages");
     navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
       label: "Sessions", href: "/app/sessions", icon: CalendarClock,
+    });
+  }
+
+  // Progress is the work the business explicitly shared with the customer (E09 Slice 3). Same rule as
+  // Sessions: the Playbook catalog places it and the overlay may hide it; it is shown ONLY to a
+  // customer of one business. A Playbook that predates the key still gets it, after Sessions.
+  const progressHidden = portalConfig.modules?.find((m) => m.key === "progress")?.visible === false;
+  if (!isCustomer) {
+    for (let i = navItems.length - 1; i >= 0; i--) if (navItems[i].href === "/app/progress") navItems.splice(i, 1);
+  } else if (!progressHidden && !navItems.some((i) => i.href === "/app/progress")) {
+    const after = Math.max(
+      navItems.findIndex((i) => i.href === "/app/sessions"),
+      navItems.findIndex((i) => i.href === "/app/messages"),
+    );
+    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
+      label: "Progress", href: "/app/progress", icon: ListChecks,
     });
   }
 

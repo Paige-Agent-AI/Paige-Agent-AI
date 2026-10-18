@@ -4733,3 +4733,31 @@ pgTAP (`supabase/tests/customer_portal_sessions.sql`, 93 cases) covers other-cus
 other-business, merged-contact, multi-relationship and anonymous refusals, the notice window and
 admission replay; the edge boundary suite drives customer mode, concurrent duplicates and guest
 equivalence. Authenticated customer change and owner client-linked booking on production are owed.
+Deployed 2026-10-18: PR #2335 merged as `d2bad7f07` (migration `20271110020000` persisted, `db-live` at
+`d2bad7f07`), and the `booking-manage` readback certified after #2337 (`edge-live` at `52c4dc471`); the
+authenticated drive is still owed, so the rows stay PROOF OWED.
+
+### Customer Portal — Progress, `/app/progress` + "Shared with {client}" on the Solo client record (E09 Slice 3, 2026-10-18)
+
+A business shares individual work items (milestones and tasks in the canonical `plan_items` store)
+with the client they belong to; the client sees only what was shared, at `/app/progress` and on the
+Home "Your progress" tile. Owner decision (2026-10-17): show only items the business shares. Sharing
+is an explicit per-item act (`plan_item_set_client_share`, SECURITY DEFINER, workspace owner/admin of
+the current workspace via `is_tenant_admin`, never a global role); new work is private; cancelling a
+shared item unshares it; the client sees title, state (Not started / In progress / Done — blocked
+reads as In progress) and due date only. The client read is `client_portal_progress` (SECURITY
+DEFINER, the caller's own relationship). Paige can propose a share from chat (`plan_item_set_client_share`,
+risk high, owner confirms on the card; catalogued in `list_tool_autonomy` so the owner can switch it off).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Share / unshare a work item with its client (`plan_item_set_client_share`) | Only inside the company (system) workspace it administers; refused for any other business | Refused (`CLIENT_SHARE_UNAVAILABLE` for a top-level agency) | ✓ owner/admin; a plain member is refused | Allowed by the server (pgTAP); no screen mounted (same gap as `client_standing`, D1) | — | 42501 | PROOF OWED |
+| "Shared with {client}" section + "Add work for {client}" on the client record | — | — | ✓ (mounted under ClientStanding, `client_standing` gate) | Not mounted | — | — | PROOF OWED |
+| Customer progress `/app/progress` and Home tile (`client_portal_progress`) | — | — | — | — | ✓ own relationship, shared and not cancelled only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Paige proposes a share from chat (risk high, owner confirms) | — | — | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+| Customer action items `/app/actions` | unchanged | unchanged | unchanged | unchanged | ✓ unchanged; the table read narrows to the 10 columns the page uses (staff id and payload no longer readable) | anon SELECT revoked | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_progress.sql`, 110 cases) covers other-customer, other-business,
+unshared, cancelled, reminder and merged-contact refusals, the version check, state replay, the
+unshare-on-cancel and unshare-on-client-change trigger, the catalogue row and the column grants.
+Authenticated owner share and customer read on production are owed.

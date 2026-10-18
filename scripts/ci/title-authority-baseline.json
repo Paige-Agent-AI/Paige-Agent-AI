@@ -106,9 +106,9 @@
   "retired_role_sql": [
     {
       "function": "public.accept_invitation(text, uuid)",
-      "reason": "Refuses an invitation that carries the retired role before any role is written.",
-      "defined_in": "20270506000000_close_title_role_grant_paths.sql",
-      "fingerprint": "8fb3b591476d8fec"
+      "reason": "Refuses an invitation that carries the retired role before any role is written. Re-read and re-pinned for 20271110040000, which only schema-qualifies digest() as extensions.digest(); the refusal is unchanged.",
+      "defined_in": "20271110040000_fix_pgcrypto_search_path_signing.sql",
+      "fingerprint": "ca845b189e11837b"
     },
     {
       "function": "public.grant_tenant_member_role(uuid, app_role, uuid, text)",

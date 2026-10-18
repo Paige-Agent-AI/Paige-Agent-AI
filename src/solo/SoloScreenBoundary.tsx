@@ -2,8 +2,11 @@ import { Component, type ReactNode } from "react";
 import { EmptyState } from "@/components/ui/page/EmptyState";
 
 /** Keep a failed departmental render inside its screen, away from navigation and PAIGE. */
-export class SoloScreenBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+export class SoloScreenBoundary extends Component<{ children: ReactNode; resetKey?: string }, { failed: boolean; resetKey?: string }> {
+  state = { failed: false, resetKey: this.props.resetKey };
+  static getDerivedStateFromProps(props: { resetKey?: string }, state: { resetKey?: string }) {
+    return props.resetKey !== state.resetKey ? { failed: false, resetKey: props.resetKey } : null;
+  }
 
   static getDerivedStateFromError() {
     return { failed: true };

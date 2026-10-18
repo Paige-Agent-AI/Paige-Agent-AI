@@ -17,10 +17,10 @@ describe("SOLO departmental render recovery", () => {
     host?.remove(); root = null; host = null;
     vi.restoreAllMocks();
   });
-  const mount = async (screen: React.ReactNode, epoch = "test-actor:test-tenant-a:/clients/conversations") => {
+  const mount = async (screen: React.ReactNode, epoch = "test-actor:test-tenant-a:/clients/conversations", resetKey?: string) => {
     if (!host) { host = document.createElement("div"); document.body.append(host); root = createRoot(host); }
     // Stable sibling type, just as SoloApp renders PAIGE outside the screen host.
-    await act(async () => root?.render(<><nav>Existing navigation</nav><main><SoloScreenBoundary key={epoch}><Suspense fallback="Opening page">{screen}</Suspense></SoloScreenBoundary></main><Paige /><div aria-label="Application update">Existing update surface</div></>));
+    await act(async () => root?.render(<><nav>Existing navigation</nav><main><SoloScreenBoundary key={epoch} resetKey={resetKey}><Suspense fallback="Opening page">{screen}</Suspense></SoloScreenBoundary></main><Paige /><div aria-label="Application update">Existing update surface</div></>));
     return { host: host! };
   };
 
@@ -63,5 +63,25 @@ describe("SOLO departmental render recovery", () => {
     expect(host.querySelector("[role=alert]")).toBeNull();
     act(() => host.querySelector("button")?.click());
     expect(save).toHaveBeenCalledOnce();
+  });
+
+  it("retains a healthy native subtree and input when only the reset path changes", async () => {
+    function Native() { return <input aria-label="Native detail" defaultValue="Original" />; }
+    await mount(<Native />, "actor:tenant:operations", "/operations/work");
+    const input = host!.querySelector<HTMLInputElement>('[aria-label="Native detail"]')!;
+    input.value = "Unsaved native value"; input.focus();
+    await mount(<Native />, "actor:tenant:operations", "/operations/capacity");
+    expect(host!.querySelector('[aria-label="Native detail"]')).toBe(input);
+    expect(input.value).toBe("Unsaved native value"); expect(document.activeElement).toBe(input);
+  });
+
+  it("recovers a failed stable boundary on a new reset path without exposing the private error", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    function Failed(): React.ReactNode { throw new Error("Private native failure"); }
+    await mount(<Failed />, "actor:tenant:operations", "/operations/work");
+    expect(host!.querySelector('[role="alert"]')).toBeTruthy();
+    await mount(<p>Current native view</p>, "actor:tenant:operations", "/operations/capacity");
+    expect(host!.querySelector('[role="alert"]')).toBeNull(); expect(host!.textContent).toContain("Current native view");
+    expect(host!.textContent).not.toContain("Private native failure");
   });
 });

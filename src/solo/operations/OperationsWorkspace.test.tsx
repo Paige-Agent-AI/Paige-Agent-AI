@@ -7,7 +7,7 @@ import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
   crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown> }));
-const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn() }));
+const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn(), taskRead: vi.fn() }));
 vi.mock("./operations-weekly-source", async importOriginal => ({ ...await importOriginal<typeof import("./operations-weekly-source")>(), readWeeklyPlanningSource: weekly.read }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: paige.handoff }));
@@ -31,7 +31,7 @@ vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onN
 } }));
 vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:()=> <div>Native assignment/date edit test seam</div>}));
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
-vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:false,error:harness.crmError,forbidden:false,hasMore:false,refresh:vi.fn()})}));
+vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:false,error:harness.crmError,forbidden:false,hasMore:false,refresh:vi.fn(),readTask:weekly.taskRead})}));
 vi.mock("./OperationsCrmStageReview",()=>({OperationsCrmStageReview:({operation}:{operation:{taskId:string}})=><div>Recovery test seam: {operation.taskId}</div>}));
 import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
@@ -199,7 +199,7 @@ it("shows the original pending task before confirmation instead of the newly sel
  const select=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]');
  await act(async()=>{if(select){select.value="done";select.dispatchEvent(new Event("change",{bubbles:true}));}});
  const dialog=document.querySelector('[role="dialog"]');
- expect(dialog?.querySelector("h2")?.textContent).toBe("Original pending task A");
+ expect(dialog?.querySelector("h2")?.textContent).toBe("Recover the earlier task change: Original pending task A");
  expect(dialog?.textContent).toContain("Recovery test seam: task-a");
  expect(dialog?.textContent).not.toContain(task.title);
 });
@@ -276,4 +276,15 @@ it("preserves dirty work through a repeated link, URL Back removal, destination 
   const close = document.querySelector<HTMLButtonElement>('[role="dialog"] button:has(.sr-only)');
   expect(close).toBeTruthy(); await act(async () => close!.click());
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain("unsaved work");
+});
+
+it("opens an exact Task independently of failed bounded lists",async()=>{
+ const id="33333333-3333-4333-8333-333333333333";
+ const task={id,tenant_id:harness.tenant,user_id:harness.user,title:"Exact beyond-window task",description:"Current native task",status:"pending",due_date:null,updated_at:"2026-10-18T00:00:00.123456Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null};
+ harness.crmError="List unavailable";harness.planningError="List unavailable";
+ weekly.taskRead.mockResolvedValue({status:"available",found:true,task});
+ await act(async()=>root.render(<OperationsWorkspace view="work" weeklySourceSearch={`?task=${id}`} weeklySourceKey="task-1"/>));
+ expect(weekly.taskRead).toHaveBeenCalledWith(id,expect.any(AbortSignal));
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Exact beyond-window task");
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Native assignment/date edit test seam");
 });

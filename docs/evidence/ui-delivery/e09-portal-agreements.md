@@ -17,16 +17,16 @@ ZOOM_REFLOW: PASS: 390px frames reflow without horizontal overflow; browser 400%
 REDUCED_MOTION: PASS: skeleton and spinners carry `motion-reduce:animate-none`; no other motion added.
 STATE_COVERAGE: PASS: loading, nothing sent, waiting (signable, signable only from the email), waiting for the business, waiting for others, signed with and without a sealed copy, declined, expired, withdrawn, refresh failed with the list kept, more than one business, not a customer (MyAgreements), opening, each refusal, download busy and failed; Home with and without something waiting, and with Agreements hidden from the menu.
 TRUTHFUL_STATE_LABELS: PASS: a button is drawn only when the server says the customer can sign or download; a failed read is never shown as zero; the page says, beside the act, that opening here replaces the emailed link; the expired row's prefilled words reach Messages only once Slice 5's `?draft=` prefill ships (until then Messages opens plain — stated, not claimed).
-SOLO_UI: NO: the customer pages are the client portal, not Solo; the one owner-side change is copy on the non-Solo Clients → Portal card and a hint on the menu editor's Agreements row (Solo's Customize experience).
-SOLO_1536X770_PAIGE_CLOSED: N/A: no Solo surface changed.
-SOLO_1536X770_PAIGE_OPEN: N/A: no Solo surface changed.
-SOLO_1366X768_PAIGE_CLOSED: N/A: no Solo surface changed.
-SOLO_1366X768_PAIGE_OPEN: N/A: no Solo surface changed.
-SOLO_1024X768_PAIGE_CLOSED: N/A: no Solo surface changed.
-SOLO_1024X768_PAIGE_OPEN: N/A: no Solo surface changed.
-SOLO_900X1000_PAIGE_CLOSED: N/A: no Solo surface changed.
-SOLO_900X1000_PAIGE_OPEN: N/A: no Solo surface changed.
-UNVERIFIED: authenticated customer list, sign and download on production; the `agreement-document` door 3 deployed readback; migration `20271110090000` persisted apply; Messages' `?draft=` prefill (Slice 5); screen reader; browser 400% zoom.
+SOLO_UI: YES: two owner-side touches only — the menu editor in Solo Clients → Portal → Customize experience gains an "Agreements" row with the hint "Agreements you send from Sales" (registry change, no editor code change), and one line of copy on the "Files and agreements" card in `TenantRelationshipsClientsWorkspace.tsx`'s PortalView (rendered for Agency, Sub-account and Enterprise, not Solo's OwnerPortalDashboard); the customer pages are the client portal, not Solo.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: the Slice M menu harness renders the owner editor (now with the Agreements row) at 1440x900 and 390x844 only, without the PAIGE dock; owed to an authenticated Solo drive.
+UNVERIFIED: authenticated customer list, sign and download on production; the Solo menu editor at the four owner widths and with PAIGE open; the `agreement-document` door 3 deployed readback; migration `20271110090000` persisted apply; Messages' `?draft=` prefill (Slice 5); screen reader; browser 400% zoom.
 
 OWNER_INTENT: A customer opens their portal, sees the agreements their business sent them, signs digitally and downloads the signed copy, on the Sales Agreements the business already uses.
 MUST_NOT_HAPPEN: No draft, other customer's or other business's agreement reaches a customer; no body, signer, amount, storage key, hash or token is shown; no link outlives the emailed one or is minted over a revoked one; no agreement event is filed for a portal open; staff lose nothing at `/app/agreements`; the frozen signing page and owner screens are not edited.

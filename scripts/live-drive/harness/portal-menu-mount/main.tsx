@@ -1,5 +1,6 @@
 // E09 Slice M — the customer portal menu (AppNav, the real customer chrome) and the owner's "Customer portal menu"
-// editor (the real PortalStudio, embedded the way Solo's Clients → Portal → Customize experience mounts it).
+// editor (the real PortalStudio, embedded the way Solo's Clients → Portal → Customize experience mounts it, or with
+// `mount=standalone` the way the non-Solo Clients workspace mounts it: <PortalStudio /> in a trc-canonical-mount).
 // HARNESS RENDER · SYNTHETIC DATA · NOT LIVE (see stubs.ts).
 //
 // THEME: the customer /app is themed by next-themes — only a `light`/`dark` class on <html>. The owner view sits in
@@ -15,10 +16,12 @@ import { harnessUser } from "./stubs";
 import "@/index.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
 import "@/components/tenant-relationships/owner-portal-dashboard.css";
+import "@/components/tenant-relationships/tenant-relationships-clients-workspace.css";
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get("theme") === "dark" ? "dark" : "light";
 const view = params.get("view") ?? "customer";
+const standalone = params.get("mount") === "standalone";
 document.documentElement.classList.remove("light", "dark");
 document.documentElement.classList.add(theme);
 document.documentElement.style.colorScheme = theme;
@@ -60,9 +63,15 @@ function Owner() {
       <nav className="tcs-nav" />
       <section className="tcs-canvas">
         <main id="tenant-shell-main" className="tcs-main">
-          <div className="opd-editor" data-harness-region="page">
-            <PortalStudio embedded />
-          </div>
+          {standalone ? (
+            <div className="trc-canonical-mount" data-portal-configuration data-harness-region="page">
+              <PortalStudio />
+            </div>
+          ) : (
+            <div className="opd-editor" data-harness-region="page">
+              <PortalStudio embedded />
+            </div>
+          )}
         </main>
       </section>
       <aside className="tcs-paige" hidden aria-label="PAIGE dock (harness placeholder)" />

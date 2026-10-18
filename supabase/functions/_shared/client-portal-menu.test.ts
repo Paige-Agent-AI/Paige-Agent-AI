@@ -192,15 +192,55 @@ Deno.test("an unknown key, a bad shape or an over-long name is refused before an
 Deno.test("a catalog-only entry the authored Playbook does not list is refused as having no effect", async () => {
   const catalog = { slug: null, authored_usable: true, modules: [{ key: "home", label: "Home" }, { key: "sessions", label: "Meetings" }] };
   const f = fakeCaller({ modules: [], catalog });
-  const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "resources", visible: true }] } });
-  assert(!r.success && r.reason === "not_offered" && r.key === "resources");
-  // A starter slug's catalog is the mirrored preset: fitness does not list Resources, generic does.
-  const g = fakeCaller({ modules: [], catalog: { slug: "fitness", authored_usable: false, modules: null } });
-  const no = await configurePortalMenu({ caller: g.caller, expectedTenantId: TENANT, args: { entries: [{ key: "resources", label: "Library" }] } });
-  assert(!no.success && no.reason === "not_offered" && !no.writeAttempted);
-  const h = fakeCaller({ modules: [], catalog: { slug: "general", authored_usable: false, modules: null } });
-  const ok = await configurePortalMenu({ caller: h.caller, expectedTenantId: TENANT, args: { entries: [{ key: "resources", label: "Library" }] } });
+  const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "learn", visible: true }] } });
+  assert(!r.success && r.reason === "not_offered" && r.key === "learn" && !r.writeAttempted);
+});
+
+// ── Resources is core for customers (§58: no customer loses it) ─────────────────────────────────
+Deno.test("Resources is offered to every business's customers whatever the catalog lists, and changeable", async () => {
+  const catalogs: unknown[] = [
+    { slug: null, authored_usable: true, modules: [{ key: "home", label: "Home" }, { key: "sessions", label: "Meetings" }] },
+    ...Object.keys(STARTER_PORTAL_CATALOGS).map((slug) => ({ slug, authored_usable: false, modules: null })),
+  ];
+  for (const catalog of catalogs) {
+    const f = fakeCaller({ modules: [], catalog });
+    const read = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
+    assert(read.success, JSON.stringify(catalog));
+    const learnRows = read.entries.filter((e) => e.key === "resources" || e.key === "learn");
+    assertEquals(learnRows.map((e) => [e.key, e.shown, e.hidden_because]), [["resources", true, null]], JSON.stringify(catalog));
+    const ok = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "resources", visible: false }] } });
+    assert(ok.success, JSON.stringify(catalog));
+    const after = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
+    assert(after.success);
+    const row = after.entries.find((e) => e.key === "resources")!;
+    assertEquals([row.shown, row.hidden_because], [false, "owner_hid_it"], JSON.stringify(catalog));
+  }
+});
+
+Deno.test("a catalog that lists only the learn alias: learn speaks for the route, with its name; resources does nothing", async () => {
+  const catalog = { slug: null, authored_usable: true, modules: [{ key: "home", label: "Home" }, { key: "learn", label: "Guides" }] };
+  const f = fakeCaller({ modules: [], catalog });
+  const read = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
+  assert(read.success);
+  assertEquals(read.entries.filter((e) => e.group === "learn").map((e) => [e.key, e.label, e.shown]), [["learn", "Guides", true]]);
+  const no = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "resources", label: "Library" }] } });
+  assert(!no.success && no.reason === "not_offered" && no.key === "resources" && !no.writeAttempted);
+  const ok = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "learn", label: "Library" }] } });
   assert(ok.success);
+});
+
+Deno.test("a shared route is ONE read row: the key the customer sees, hidden when that key is hidden", async () => {
+  // Both aliases listed, resources ranked first by the owner and hidden: the customer sees no Resources entry.
+  const catalog = { slug: null, authored_usable: true, modules: [{ key: "home", label: "Home" }, { key: "learn", label: "Library" }, { key: "resources", label: "Resources" }] };
+  const f = fakeCaller({ modules: [{ key: "resources", visible: false, order: 0 }], catalog });
+  const read = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
+  assert(read.success);
+  assertEquals(read.entries.filter((e) => e.group === "learn").map((e) => [e.key, e.shown, e.hidden_because]), [["resources", false, "owner_hid_it"]]);
+  // No owner order: the catalog's first listed alias speaks.
+  const g = fakeCaller({ modules: [], catalog });
+  const r2 = await readPortalMenu({ caller: g.caller, expectedTenantId: TENANT });
+  assert(r2.success);
+  assertEquals(r2.entries.filter((e) => e.group === "learn").map((e) => [e.key, e.label, e.shown]), [["learn", "Library", true]]);
 });
 
 // ── §2: an opt-in entry exists only for a business whose own catalog lists it ───────────────────
@@ -319,6 +359,7 @@ Deno.test("the read projects each customer entry with the owner's name and why i
   assertEquals([by.sessions.label, by.sessions.shown], ["Calls", true]);
   assertEquals([by.progress.shown, by.progress.hidden_because], [false, "owner_hid_it"]);
   assertEquals([by.resources.label, by.resources.shown], ["Library", true]);
+  assert(!("learn" in by), "the learn alias shares Resources' route: one row, not two");
   assertEquals([by.agreements.shown, by.agreements.hidden_because], [false, "not_available_yet"]);
   assertEquals([by.messages.label, by.messages.fixed, by.messages.shown], ["Messages", true, true]);
   // A core entry whose page does not exist yet is reported as such, never as shown.
@@ -372,13 +413,19 @@ Deno.test("PORTAL_MENU_KEYS matches src/lib/portal/portalMenu.ts PORTAL_MENU_ENT
   const entries = [...block.matchAll(/^\s*entry\(\{(.*)\}\),\s*$/gm)].map(([, body]) => {
     const str = (f: string) => body.match(new RegExp(`\\b${f}:\\s*"([^"]*)"`))?.[1];
     return {
-      key: str("key"), label: str("defaultLabel"), group: str("group"), floor: str("floor"),
+      key: str("key"), label: str("defaultLabel"), route: str("route"), group: str("group"), floor: str("floor"),
       fixed: /\bfixed:\s*true\b/.test(body), live: !/\blive:\s*false\b/.test(body), clientsLive: !/\bclientsLive:\s*false\b/.test(body),
-      defaultVisibility: str("defaultVisibility") ?? "catalog", catalogLabel: !/\bcatalogLabel:\s*false\b/.test(body),
+      defaultVisibility: str("defaultVisibility") ?? "catalog", shownToCustomers: /\bshownToCustomers:\s*true\b/.test(body),
+      catalogLabel: !/\bcatalogLabel:\s*false\b/.test(body),
+      catalogOrdered: /\bcatalogOrdered:\s*true\b/.test(body),
     };
   });
   assert(entries.length > 0, "no entries parsed");
-  assertEquals(PORTAL_MENU_KEYS.map((e) => ({ ...e })), entries);
+  assertEquals(PORTAL_MENU_KEYS.map((e) => ({ ...e })), entries.map(({ catalogOrdered: _o, ...e }) => e));
+  // The read's route-speaker ranking assumes every route alias is catalog-ordered in the frontend.
+  for (const e of entries) {
+    if (entries.some((a) => a !== e && a.route === e.route)) assert(e.catalogOrdered, `route alias ${e.key} must be catalogOrdered`);
+  }
 });
 
 Deno.test("PORTAL_MENU_CONFIGURABLE_KEYS uses the frontend's rule (not fixed, not staff-only)", async () => {

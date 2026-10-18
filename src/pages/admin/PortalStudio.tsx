@@ -45,7 +45,9 @@ import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
  *
  * GOLD DISCIPLINE (§11): one gold act per page — the menu card's "Save menu".
  * The header's save is scoped to what it writes ("Save brand, greeting & agent")
- * and stays outline; toggles use the Switch's own styling; the mock's single
+ * and stays outline in BOTH mounts: embedded it takes the dashboard's neutral
+ * `opd-button` chrome and never `opd-primary` (an unlayered gold fill that would
+ * beat the outline variant); toggles use the Switch's own styling; the mock's single
  * "Get started" CTA wears the tenant's OWN accent (brand data), never a resting
  * decoration.
  */
@@ -233,7 +235,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                 {dirty && menuDirty ? "Unsaved changes here and in the menu" : dirty ? "Unsaved changes" : "Unsaved menu changes — use Save menu"}
               </span>
             )}
-            <Button variant="outline" className={embedded ? "opd-button opd-primary" : undefined} onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
+            <Button variant="outline" className={embedded ? "opd-button" : undefined} data-testid="portal-studio-header-save" onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : null}
               Save brand, greeting &amp; agent
             </Button>

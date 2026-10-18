@@ -16,8 +16,10 @@ import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 //   1. FLOORS (hard rules). Who may ever see an entry: a customer of one business, anyone who is not staff,
 //      anyone whose business brand resolved, staff only. The tenant overlay can never reveal past a floor.
 //   2. The Playbook CATALOG (`portal.modules`). Catalog-only entries — the funding preset's keys, Approvals,
-//      Agreements, Resources — render only when the catalog lists them (§2: funding wording is a chosen
-//      opt-in, never a default). The catalog also supplies an entry's default name.
+//      Agreements — render only when the catalog lists them (§2: funding wording is a chosen opt-in, never a
+//      default). Resources is core for customers: a customer of one business always has it, whatever the
+//      catalog lists (§58: no customer loses it), unless the owner hides it. The catalog also supplies an
+//      entry's default name.
 //   3. The tenant OVERLAY (`portal_config.modules`): hide, rename, reorder. Purely presentational: unknown
 //      keys are inert, so the overlay can never create a link, and a fixed entry ignores it entirely.
 //
@@ -53,6 +55,12 @@ export interface PortalMenuEntry {
   clientsLive?: boolean;
   /** "shown": present unless hidden. "catalog": present only when the Playbook catalog lists the key. */
   defaultVisibility: "shown" | "catalog";
+  /**
+   * A "catalog" entry that a customer of one business gets even when the catalog does not list it (Resources).
+   * Everyone else keeps the catalog rule. It yields only to a route alias the catalog DOES list (`learn`), so
+   * the business's own name for the destination wins and the route is never offered twice.
+   */
+  shownToCustomers?: boolean;
   /** Catalog-only extras sort after the group's core entries, in the catalog's own order. */
   catalogOrdered?: boolean;
   /** Sorts after everything else in its group (staff Planning, as before Slice M). */
@@ -108,7 +116,9 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", live: false, catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 
   // ── Learn ──
-  entry({ key: "resources", defaultLabel: "Resources", route: "/app/learn", icon: BookOpen, group: "learn", floor: "everyone", catalogOrdered: true }),
+  // Core for customers (§58): shown to a customer of one business whatever the catalog lists, hideable only by the
+  // owner's overlay. Staff and every other viewer keep the catalog rule, exactly as on main.
+  entry({ key: "resources", defaultLabel: "Resources", route: "/app/learn", icon: BookOpen, group: "learn", floor: "everyone", catalogOrdered: true, shownToCustomers: true }),
   entry({ key: "learn", defaultLabel: "Resources", route: "/app/learn", icon: BookOpen, group: "learn", floor: "everyone", catalogOrdered: true }),
 ];
 
@@ -175,9 +185,18 @@ export function defaultPortalMenuLabel(e: PortalMenuEntry, catalog: readonly { k
   return cleanLabel(fromCatalog) ?? e.defaultLabel;
 }
 
-/** Whether the entry can show for this catalog and viewer at all (live, and listed when it is catalog-only). */
+/** True when the catalog lists another key for this entry's route but not this one (learn listed, resources not). */
+const yieldsToListedAlias = (e: PortalMenuEntry, catalogKeys: Set<string>) =>
+  !catalogKeys.has(e.key) && PORTAL_MENU_ENTRIES.some((a) => a !== e && a.route === e.route && catalogKeys.has(a.key));
+
+/**
+ * Whether the entry can show for this catalog and viewer at all: live (for this viewer), and either listed by the
+ * catalog or shown by default — "shown" for everyone, `shownToCustomers` for a customer of one business — unless a
+ * listed route alias speaks for the destination instead.
+ */
 const offered = (e: PortalMenuEntry, catalogKeys: Set<string>, v: PortalViewer) =>
-  e.live && (e.clientsLive !== false || v.isStaff) && (e.defaultVisibility === "shown" || catalogKeys.has(e.key));
+  e.live && (e.clientsLive !== false || v.isStaff) && (catalogKeys.has(e.key)
+    || ((e.defaultVisibility === "shown" || (e.shownToCustomers === true && v.isCustomer)) && !yieldsToListedAlias(e, catalogKeys)));
 
 interface Ranked { e: PortalMenuEntry; pos: number; label: string; hidden: boolean }
 
@@ -247,8 +266,8 @@ export interface PortalMenuEditorEntry {
 
 /**
  * The rows an owner can configure for this catalog: every configurable, live entry a customer of one
- * business could see — core entries always, catalog-only entries only when the catalog lists them (§2),
- * and never one whose route is not live. Route aliases appear once.
+ * business could see — core entries always (Resources included), catalog-only entries only when the catalog
+ * lists them (§2), and never one whose route is not live. Route aliases appear once.
  */
 export function portalMenuEditorEntries(catalog: readonly { key: string; label: string }[]): PortalMenuEditorEntry[] {
   const ranked = rank({ catalog, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER }, true);

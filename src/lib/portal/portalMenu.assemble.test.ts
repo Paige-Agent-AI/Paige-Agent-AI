@@ -25,17 +25,25 @@ const shape = (sections: ReturnType<typeof assemblePortalNav>) =>
 const generic = generalDefault.portal.modules;
 const set = (items: { href: string | null; label: string }[]) => items.map((i) => `${i.label}>${i.href}`).sort();
 
-// The one deliberate difference (§58, called out in the evidence record): Agreements' route is still the
-// platform-terms page, so it is held back from every viewer who is not staff until Slice A. Staff keep it.
+// The deliberate differences (§58, called out in the evidence record):
+//   - Agreements' route is still the platform-terms page, so it is held back from every viewer who is not staff
+//     until Slice A. Staff keep it.
+//   - ADDITION: Resources is core for customers, so a customer of one business has it on every Playbook — including
+//     the ones whose catalog never listed it (fitness, consultant, agency, funding). Nobody loses it.
 const AGREEMENTS = "/app/agreements";
+const RESOURCES = { href: "/app/learn", label: "Resources" };
 
 describe("no overlay: the same destinations main renders today, per viewer kind (§58)", () => {
   for (const [cname, pb] of Object.entries(catalogs)) {
     for (const [vname, viewer] of Object.entries(viewers)) {
       it(`${cname} · ${vname}`, () => {
-        const today = APPNAV_BEFORE_SLICE_M[cname][vname].filter((i) => viewer.isStaff || i.href !== AGREEMENTS);
+        const before = APPNAV_BEFORE_SLICE_M[cname][vname];
+        const today = before.filter((i) => viewer.isStaff || i.href !== AGREEMENTS);
+        const gained = viewer.isCustomer && !before.some((i) => i.href === RESOURCES.href) ? [RESOURCES] : [];
         const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer }));
-        expect(set(now)).toEqual(set(today));
+        expect(set(now)).toEqual(set([...today, ...gained]));
+        // Nothing main rendered is missing (§58), apart from Agreements held from non-staff.
+        for (const i of today) expect(now.map((n) => n.href), `${cname} · ${vname} lost ${i.href}`).toContain(i.href);
         // Every destination appears once.
         expect(new Set(now.map((i) => i.href)).size).toBe(now.length);
       });
@@ -64,7 +72,30 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions, Funding Journey, Credit, Funding, Financial Profile, Business",
       "Paperwork: Documents",
+      "Learn: Resources",
     ]);
+  });
+
+  it("gives every customer of one business Resources whatever the catalog lists; everyone else keeps the catalog rule", () => {
+    for (const [cname, pb] of Object.entries(catalogs)) {
+      for (const [vname, viewer] of Object.entries(viewers)) {
+        const hrefs = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer })).map((i) => i.href);
+        const listed = pb.portal.modules.some((m) => m.key === "resources" || m.key === "learn");
+        expect(hrefs.includes("/app/learn"), `${cname} · ${vname}`).toBe(viewer.isCustomer || listed);
+      }
+    }
+    // Only the owner's overlay hides it.
+    const hidden = assemblePortalNav({ catalog: fitnessCoach.portal.modules, overlay: [{ key: "resources", visible: false }], viewer: CUSTOMER });
+    expect(flattenPortalNav(hidden).map((i) => i.href)).not.toContain("/app/learn");
+    const renamed = assemblePortalNav({ catalog: businessConsultant.portal.modules, overlay: [{ key: "resources", label: "Library" }], viewer: CUSTOMER });
+    expect(shape(renamed).at(-1)).toBe("Learn: Library");
+  });
+
+  it("lets a catalog that lists only the learn alias speak for the route with its own name, once", () => {
+    const catalog = [{ key: "home", label: "Home" }, { key: "learn", label: "Guides" }];
+    const items = flattenPortalNav(assemblePortalNav({ catalog, viewer: CUSTOMER })).filter((i) => i.href === "/app/learn");
+    expect(items.map((i) => [i.key, i.label])).toEqual([["learn", "Guides"]]);
+    expect(portalMenuEditorEntries(catalog).filter((e) => e.group === "learn").map((e) => e.key)).toEqual(["learn"]);
   });
 
   it("holds Agreements back from every viewer who is not staff until Slice A, and keeps it for staff (§58)", () => {
@@ -176,7 +207,8 @@ describe("the registry", () => {
   it("offers the owner one row per configurable live entry the catalog can show, never a funding key it does not list", () => {
     expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "resources"]);
     expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual([
-      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents",
+      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "resources",
     ]);
+    expect(portalMenuEditorEntries(businessConsultant.portal.modules).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "resources"]);
   });
 });

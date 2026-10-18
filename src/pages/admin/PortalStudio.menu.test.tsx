@@ -206,8 +206,12 @@ describe("Customer portal menu editor", () => {
   });
 
   it("spends gold on Save menu alone — on the whole page, and the header save names what it writes", async () => {
-    const gold = Array.from(container.querySelectorAll("button")).filter((b) => /bg-gradient-gold|\bbg-accent\b/.test(b.className));
+    // opd-primary is the dashboard's unlayered gold fill: it beats the outline variant, so it counts as gold here.
+    const gold = Array.from(container.querySelectorAll("button")).filter((b) => /bg-gradient-gold|\bbg-accent\b|\bopd-primary\b/.test(b.className));
     expect(gold.map((b) => b.textContent?.trim())).toEqual(["Save menu"]);
+    const headerSave = container.querySelector<HTMLButtonElement>('[data-testid="portal-studio-header-save"]')!;
+    expect(headerSave.className).toMatch(/\bopd-button\b/);
+    expect(headerSave.className).not.toMatch(/\bopd-primary\b/);
     expect(Array.from(container.querySelectorAll("button")).map((b) => b.textContent?.trim())).toContain("Save brand, greeting & agent");
     expect(container.textContent).not.toContain("Save portal");
   });
@@ -241,7 +245,8 @@ describe("Customer portal menu editor", () => {
     db.features = { playbook_config: { persona: { name: "Guide", greeting: "Hi" }, portal: { modules: [{ key: "home", label: "Home" }, { key: "approvals", label: "Sign-offs" }, { key: "agreements", label: "Agreements" }] } } };
     await render();
     // Agreements is listed, but its route is still the platform-terms page: no row until Slice A (held from clients).
-    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents"]);
+    // Resources is core for customers (§58): a row even though this Playbook does not list it.
+    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "# Learn", "resources"]);
     expect(byLabel<HTMLInputElement>("Name for Sign-offs").value).toBe("Sign-offs");
   });
 });

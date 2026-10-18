@@ -43,7 +43,8 @@ describe("C0b canonical read declaration convergence", () => {
         continue;
       }
       // E09 Slice M: the newly registered owner/admin-only customer-menu read and writer, likewise absent
-      // from the frozen roster. Their SQL admits only is_tenant_admin, so the Chat gate must say admin too.
+      // from the frozen roster. Their SQL admits only can_manage_tenant_brand (owner/admin of the tenant or an
+      // ancestor agency), so the Chat gate must say admin too.
       if (tool === "portal_menu_read" || tool === "portal_menu_update") {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;

@@ -240,7 +240,7 @@ async function picker(out) {
           focusOnTrigger: document.activeElement?.id === "portal-brand-typeface",
         }));
         await page.screenshot({ path: path.join(out, "picker-selected-bodoni-dark-1366x768.png") });
-        await page.getByRole("button", { name: "Save portal" }).click();
+        await page.getByRole("button", { name: "Save brand, greeting & agent" }).click();
         await page.waitForTimeout(500);
         summary.selection = { ...after, writes: await page.evaluate(() => window.__brandWrites) };
       }

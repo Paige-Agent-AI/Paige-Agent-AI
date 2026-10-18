@@ -26,6 +26,7 @@ import { usePlaybook } from "@/lib/playbook";
 import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
+import "./app-nav.css";
 
 // Renders the brand mark in the /app chrome. Prefers the TENANT's brand (logo, or
 // a monogram + name driven by the tenant's primary color) so a client sees THEIR

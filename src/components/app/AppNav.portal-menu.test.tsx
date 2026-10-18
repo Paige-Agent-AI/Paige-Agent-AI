@@ -102,7 +102,8 @@ describe("desktop bar", () => {
     f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "approvals", label: "Approvals" }] } };
     await render();
     // Agreements is listed, but its route is still the platform-terms page: held from customers until Slice A.
-    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents"]);
+    // Resources is core for customers (§58): present though this catalog does not list it.
+    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/learn"]);
   });
 
   it("keeps Agreements for staff whose Playbook lists it, exactly as before Slice M", async () => {
@@ -120,9 +121,9 @@ describe("desktop bar", () => {
     expect(nav().querySelector("[data-portal-nav-skeleton]")).not.toBeNull();
     expect(nav().querySelectorAll("a, button[data-portal-group]").length).toBe(0);
     expect(nav().textContent).not.toContain("Resources");
-    // Resolved: the business's catalog omits Resources, so it never appears at all.
+    // Resolved, with the owner having hidden Resources: it never appears at all (no flash of it while loading).
     f.configLoading = false;
-    f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }] } };
+    f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }] }, modules: [{ key: "resources", visible: false }] };
     await render();
     expect(nav().querySelector("[data-portal-nav-skeleton]")).toBeNull();
     expect(await desktopNavHrefs(host)).not.toContain("/app/learn");

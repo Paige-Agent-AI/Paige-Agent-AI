@@ -23,42 +23,50 @@
 export type PortalMenuSlot = "top" | "work" | "paperwork" | "learn";
 export type PortalMenuFloor = "everyone" | "customer" | "not_staff" | "brand" | "staff";
 export interface PortalMenuKey {
-  key: string; label: string; group: PortalMenuSlot; fixed: boolean; live: boolean;
+  key: string; label: string;
+  /** The destination. Two keys with the same route (resources/learn, the funding aliases) are ONE menu entry. */
+  route: string;
+  group: PortalMenuSlot; fixed: boolean; live: boolean;
   /** False while the page behind the entry is not yet the client's own (Agreements until Slice A). */
   clientsLive: boolean;
-  floor: PortalMenuFloor; defaultVisibility: "shown" | "catalog"; catalogLabel: boolean;
+  floor: PortalMenuFloor; defaultVisibility: "shown" | "catalog";
+  /** A catalog entry every customer of one business gets anyway (Resources), unless a listed route alias speaks. */
+  shownToCustomers: boolean;
+  catalogLabel: boolean;
 }
-const k = (key: string, label: string, group: PortalMenuSlot, floor: PortalMenuFloor,
-  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "clientsLive" | "defaultVisibility" | "catalogLabel">> = {}): PortalMenuKey =>
-  Object.freeze({ key, label, group, floor, fixed: false, live: true, clientsLive: true, defaultVisibility: "catalog" as const, catalogLabel: true, ...o });
+const k = (key: string, label: string, route: string, group: PortalMenuSlot, floor: PortalMenuFloor,
+  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "clientsLive" | "defaultVisibility" | "shownToCustomers" | "catalogLabel">> = {}): PortalMenuKey =>
+  Object.freeze({ key, label, route, group, floor, fixed: false, live: true, clientsLive: true, defaultVisibility: "catalog" as const, shownToCustomers: false, catalogLabel: true, ...o });
 
 /**
- * Mirror of src/lib/portal/portalMenu.ts PORTAL_MENU_ENTRIES, in the same order: key, default name,
+ * Mirror of src/lib/portal/portalMenu.ts PORTAL_MENU_ENTRIES, in the same order: key, default name, route,
  * group, who may ever see it, fixed, live, live for clients, whether it shows without the Playbook listing
- * it, and whether the Playbook's own name for it wins. Drift-tested field by field.
+ * it (for everyone, or for customers only), and whether the Playbook's own name for it wins. Drift-tested
+ * field by field.
  */
 export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
-  k("home", "Home", "top", "everyone", { fixed: true, defaultVisibility: "shown" }),
-  k("messages", "Messages", "top", "customer", { fixed: true, defaultVisibility: "shown", catalogLabel: false }),
-  k("progress", "Progress", "work", "customer", { defaultVisibility: "shown" }),
-  k("actions", "Action items", "work", "not_staff", { defaultVisibility: "shown" }),
-  k("sessions", "Sessions", "work", "customer", { defaultVisibility: "shown" }),
-  k("approvals", "Approvals", "work", "everyone"),
-  k("funding-journey", "Funding Journey", "work", "everyone"),
-  k("funding_journey", "Funding Journey", "work", "everyone"),
-  k("credit", "Credit", "work", "everyone"),
-  k("funding", "Funding", "work", "everyone"),
-  k("financial-profile", "Financial Profile", "work", "everyone"),
-  k("financial_profile", "Financial Profile", "work", "everyone"),
-  k("business", "Business", "work", "everyone"),
-  k("affiliate", "Affiliate", "work", "everyone"),
-  k("planning", "Planning", "work", "staff", { fixed: true, defaultVisibility: "shown" }),
-  k("documents", "Documents", "paperwork", "brand", { defaultVisibility: "shown" }),
+  k("home", "Home", "/app", "top", "everyone", { fixed: true, defaultVisibility: "shown" }),
+  k("messages", "Messages", "/app/messages", "top", "customer", { fixed: true, defaultVisibility: "shown", catalogLabel: false }),
+  k("progress", "Progress", "/app/progress", "work", "customer", { defaultVisibility: "shown" }),
+  k("actions", "Action items", "/app/actions", "work", "not_staff", { defaultVisibility: "shown" }),
+  k("sessions", "Sessions", "/app/sessions", "work", "customer", { defaultVisibility: "shown" }),
+  k("approvals", "Approvals", "/app/approvals", "work", "everyone"),
+  k("funding-journey", "Funding Journey", "/app/funding-journey", "work", "everyone"),
+  k("funding_journey", "Funding Journey", "/app/funding-journey", "work", "everyone"),
+  k("credit", "Credit", "/app/credit", "work", "everyone"),
+  k("funding", "Funding", "/app/funding", "work", "everyone"),
+  k("financial-profile", "Financial Profile", "/app/financial-profile", "work", "everyone"),
+  k("financial_profile", "Financial Profile", "/app/financial-profile", "work", "everyone"),
+  k("business", "Business", "/app/business", "work", "everyone"),
+  k("affiliate", "Affiliate", "/app/affiliate", "work", "everyone"),
+  k("planning", "Planning", "/app/planning", "work", "staff", { fixed: true, defaultVisibility: "shown" }),
+  k("documents", "Documents", "/app/documents", "paperwork", "brand", { defaultVisibility: "shown" }),
   // The route is still the platform-terms page, so no client gets it until Slice A (clientsLive:false).
-  k("agreements", "Agreements", "paperwork", "everyone", { clientsLive: false }),
-  k("billing", "Payments", "paperwork", "customer", { live: false, catalogLabel: false }),
-  k("resources", "Resources", "learn", "everyone"),
-  k("learn", "Resources", "learn", "everyone"),
+  k("agreements", "Agreements", "/app/agreements", "paperwork", "everyone", { clientsLive: false }),
+  k("billing", "Payments", "/app/billing", "paperwork", "customer", { live: false, catalogLabel: false }),
+  // Core for customers (§58): every customer of one business has Resources, whatever the catalog lists.
+  k("resources", "Resources", "/app/learn", "learn", "everyone", { shownToCustomers: true }),
+  k("learn", "Resources", "/app/learn", "learn", "everyone"),
 ]);
 
 /** Always in a customer's menu, never renamed or hidden (owner ruling 2026-10-18), plus staff-only Planning. */
@@ -84,6 +92,16 @@ const isCore = (key: string) => PORTAL_MENU_CORE_KEYS.includes(key);
  * fails either is "not available yet" here — never offered, never changed, reported as such.
  */
 const customerLive = (e: PortalMenuKey) => e.live && e.clientsLive;
+/**
+ * Whether a customer of one business is offered the entry for this catalog: listed by it, or shown by default
+ * ("shown", or `shownToCustomers`) — unless the catalog lists another key for the same route and not this one,
+ * in which case that listed alias speaks for the destination (the frontend's offered()).
+ */
+function offeredToCustomers(e: PortalMenuKey, listed: ReadonlySet<string>): boolean {
+  if (listed.has(e.key)) return true;
+  if (e.defaultVisibility !== "shown" && !e.shownToCustomers) return false;
+  return !PORTAL_MENU_KEYS.some((a) => a !== e && a.route === e.route && listed.has(a.key));
+}
 /** Core keys a customer can actually be shown today (live), in registry order: the tool description's list. */
 export const PORTAL_MENU_OFFERED_CORE_KEYS: readonly string[] = Object.freeze(
   PORTAL_MENU_KEYS.filter((e) => customerLive(e) && isCore(e.key) && PORTAL_MENU_CONFIGURABLE_KEYS.includes(e.key)).map((e) => e.key));
@@ -271,13 +289,14 @@ export async function configurePortalMenu(input: {
 
   const before = await readSnapshot(input.caller, tenant);
   if (before.ok === false) return fail(before.reason);
-  // A catalog-only entry the Playbook does not list never renders; saying it was changed would be false.
+  // An entry this business's customers are never offered never renders; saying it was changed would be false.
   // That includes every opt-in entry (the funding preset's keys among them) for a business that did not
-  // choose it: refused here, before any write, without naming anything the business does not have.
-  const offeredKeys = catalogKeysOf(before.snapshot.catalog);
+  // choose it — refused here, before any write, without naming anything the business does not have — and a
+  // route alias the catalog does not list while it lists the other one (learn listed: resources does nothing).
+  const listedKeys = catalogKeysOf(before.snapshot.catalog);
   for (const e of request.entries) {
     const meta = PORTAL_MENU_KEYS.find((m) => m.key === e.key);
-    if (meta?.defaultVisibility === "catalog" && !offeredKeys.has(e.key)) return fail("not_offered", e.key);
+    if (meta && !offeredToCustomers(meta, listedKeys)) return fail("not_offered", e.key);
   }
   const { entries: current, normalized } = sanitizeStoredOverlay(before.snapshot.modules);
   const merged = mergeMenuOverlay(current, request.entries);
@@ -376,15 +395,42 @@ export function projectCatalog(catalog: unknown): PortalCatalogInputs & { effect
 const mentionable = (e: PortalMenuKey, listed: ReadonlySet<string>) => e.fixed || isCore(e.key) || listed.has(e.key);
 
 /**
+ * Which key speaks for each route that more than one key shares, the way the frontend's assemblePortalNav
+ * picks it: among the keys a customer is offered, the lowest position wins — the owner's order, else the
+ * catalog's (an unlisted key ranks just before the listed ones), ties in registry order. Every route alias in
+ * the registry is catalog-ordered in the frontend (drift-tested), which is why the catalog index is the base.
+ */
+function routeSpeakers(listed: ReadonlySet<string>, catalog: readonly CatalogModule[], overlay: readonly OverlayEntry[]): Map<string, string> {
+  const speakers = new Map<string, string>();
+  const byRoute = new Map<string, PortalMenuKey[]>();
+  for (const e of PORTAL_MENU_KEYS) byRoute.set(e.route, [...(byRoute.get(e.route) ?? []), e]);
+  for (const [route, keys] of byRoute) {
+    if (keys.length < 2) continue;
+    const pos = (e: PortalMenuKey) => {
+      const o = overlay.find((x) => x.key === e.key)?.order;
+      return typeof o === "number" ? o : 1000 + catalog.findIndex((m) => m.key === e.key);
+    };
+    const offered = keys.filter((e) => customerLive(e) && offeredToCustomers(e, listed))
+      .sort((a, b) => pos(a) - pos(b) || PORTAL_MENU_KEYS.indexOf(a) - PORTAL_MENU_KEYS.indexOf(b));
+    speakers.set(route, (offered[0] ?? keys[0]).key);
+  }
+  return speakers;
+}
+
+/**
  * What this tenant's customers are offered, entry by entry. Fixed and core entries are always listed (a core
  * entry whose page does not exist yet as `not_available_yet`); an opt-in entry is listed only when this
- * business's catalog lists it. `catalog.modules` is the catalog this business's customers actually get.
+ * business's catalog lists it. Keys that share a route are ONE row — the key that speaks for the destination,
+ * exactly as the customer sees it (hidden by the owner when that key is). `catalog.modules` is the catalog this
+ * business's customers actually get.
  */
 export function projectPortalMenu(snapshot: Snapshot): { entries: PortalMenuRow[]; catalog: PortalCatalogInputs } {
   const cat = projectCatalog(snapshot.catalog);
   const overlay = sanitizeStoredOverlay(snapshot.modules).entries;
   const listed = new Set(cat.effectiveModules.map((m) => m.key));
-  const entries = PORTAL_MENU_KEYS.filter((e) => e.floor !== "staff" && mentionable(e, listed) && (customerLive(e) || isCore(e.key)))
+  const speakers = routeSpeakers(listed, cat.effectiveModules, overlay);
+  const entries = PORTAL_MENU_KEYS.filter((e) => e.floor !== "staff" && mentionable(e, listed) && (customerLive(e) || isCore(e.key))
+      && (!speakers.has(e.route) || speakers.get(e.route) === e.key))
     .map((e): PortalMenuRow => {
       const o = e.fixed ? undefined : overlay.find((x) => x.key === e.key);
       const fromCatalog = e.catalogLabel ? cat.effectiveModules.find((m) => m.key === e.key)?.label?.trim() || undefined : undefined;
@@ -392,7 +438,7 @@ export function projectPortalMenu(snapshot: Snapshot): { entries: PortalMenuRow[
         return { key: e.key, group: e.group, default_label: e.label, label: e.label, fixed: e.fixed, shown: false,
           hidden_because: "not_available_yet", order: null };
       }
-      const offered = e.defaultVisibility === "shown" || listed.has(e.key);
+      const offered = offeredToCustomers(e, listed);
       const hiddenByOwner = o?.visible === false;
       return {
         key: e.key, group: e.group, default_label: e.label, label: o?.label ?? fromCatalog ?? e.label, fixed: e.fixed,

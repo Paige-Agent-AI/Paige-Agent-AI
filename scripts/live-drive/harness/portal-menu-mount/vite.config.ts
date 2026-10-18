@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react-swc";
 // Solo mounts it). Only the data boundary is stubbed (stubs.ts): the Supabase transport, the DashboardMode context
 // and the tenant context. Its own root: never part of the app build (§9).
 //   /?view=customer&variant=default|renamed|hidden|reordered|staff|multi|stored&theme=light|dark
-//   /?view=owner&variant=default|saving|mismatch&theme=light|dark
+//   /?view=owner&variant=default|saving|mismatch&theme=light|dark[&mount=standalone]
 // HARNESS_MENU_MUTANT=<name> (drive self-test only) swaps in harness-only defects through a transform; no product
 // file is edited. See menu-drive.mjs --selftest.
 const repo = path.resolve(import.meta.dirname, "../../../..");
@@ -38,6 +38,15 @@ export default defineConfig({
           if (mutant === "navgold") return swap(`const DRAWER_ACTIVE = "bg-sidebar-accent text-primary-foreground font-medium";`, `const DRAWER_ACTIVE = "bg-sidebar-accent text-accent font-medium";`);
           // Inline styles, not new utility classes: Tailwind only generates classes it finds in the source on disk.
           if (mutant === "navtarget") return swap(`onClick={() => { go(item.href); setMobileMenuOpen(false); }}`, `style={{ minHeight: 0, height: 28, paddingTop: 0, paddingBottom: 0 }} onClick={() => { go(item.href); setMobileMenuOpen(false); }}`);
+          return null;
+        }
+        if (id.endsWith("/src/pages/admin/PortalStudio.tsx")) {
+          const anchor = `className={embedded ? "opd-button" : undefined} data-testid="portal-studio-header-save"`;
+          // The round-2 regression: the embedded header save back on the dashboard's unlayered gold fill.
+          if (mutant === "headergold") return swap(anchor, `className={embedded ? "opd-button opd-primary" : undefined} data-testid="portal-studio-header-save"`);
+          // Gold with no gold class at all: only computed colours can catch these.
+          if (mutant === "inlinegold") return swap(anchor, `${anchor} style={{ background: "var(--pg-gold-fill)" }}`);
+          if (mutant === "bordergold") return swap(anchor, `${anchor} style={{ borderColor: "hsl(var(--accent))" }}`);
           return null;
         }
         if (id.endsWith("/src/pages/admin/PortalMenuEditor.tsx")) {

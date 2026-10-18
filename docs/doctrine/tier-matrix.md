@@ -4774,8 +4774,10 @@ shows no row for it. One registry and one assembly (`src/lib/portal/portalMenu.t
 `assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
 with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
 the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
-catalog-only entries (funding keys, Approvals, Agreements, Resources) render only when the Playbook
-catalog lists them (§2). An entry whose route is not live (Payments until Slice 5) never renders and is
+catalog-only entries (funding keys, Approvals, Agreements) render only when the Playbook catalog lists them
+(§2). Resources is core for customers: a customer of one business always has it, whatever the catalog
+lists, and only the owner's overlay hides it (staff and other viewers keep the catalog rule, as on main).
+When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live (Payments until Slice 5) never renders and is
 never offered. The customer's catalog now comes from the server's `_catalog` in
 `get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
 exception. The owner dashboard's "Customer portal menu" summary and the customer's Messages "Browse
@@ -4789,11 +4791,13 @@ resources first" hint read the same assembly, so neither can tell a different st
 | "Customize Paige" → Portal catalog list (PortalSection) | unchanged | unchanged | ✓ renaming keeps the key; points to Clients → Portal | ✓ (plain-text pointer) | ✓ (plain-text pointer) | — | — | PROOF OWED |
 
 Vitest pins the menu destinations per Playbook preset and viewer kind against a capture of the real
-AppNav at `571ab923e`. §58: that pin holds for a viewer whose catalog is the one the capture used, but
-production customers did not have that catalog before — they could not read their business's Playbook,
-so every customer got the generic default. Now each customer gets their own business's catalog (the §57
-fix), and that is a visible change: customers of a business whose own catalog omits Resources no longer
-see Resources, and customers of a business that opted into the funding Playbook now see that business's
-own funding entries. Agreements is the one entry held back from customers (above). Harness frames
+AppNav at `571ab923e`, and asserts nothing main rendered is missing. §58: before Slice M production
+customers could not read their business's Playbook, so every customer got the generic default (which
+lists Resources). Now each customer gets their own business's catalog (the §57 fix). Nothing a customer
+had is removed: Resources is core for customers, so a customer whose business's catalog omits it keeps it.
+The visible changes are additions — customers of a business that opted into the funding Playbook gain that
+business's own funding entries, and customers on Playbooks whose catalog never listed Resources (fitness,
+consultant, agency, funding) gain it. Agreements is the one entry held back from customers (above), and it
+was never theirs: its route is still the platform-terms page. Harness frames
 (`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
 in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.

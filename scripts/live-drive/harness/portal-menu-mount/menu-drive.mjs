@@ -1,12 +1,16 @@
 // E09 Slice M — render the customer portal menu (the real AppNav: phone drawer and desktop bar with a group menu
 // open) and the owner's "Customer portal menu" editor (the real PortalStudio, embedded as Solo mounts it) in every
 // state, both themes, 1440 and 390 wide, and MEASURE them: text contrast (AA against the real composited
-// background), horizontal overflow, gold spent anywhere but the owner's Save menu, touch targets >= 44px, page
+// background), horizontal overflow, gold spent anywhere but the owner's Save menu — read from COMPUTED background,
+// gradient and border colours against the gold tokens (--accent/--gold* and the tenant shell's --pg-gold*), over
+// the whole owner page, so a gold fill that arrives by any class or style is caught — touch targets >= 44px, page
 // errors / failed responses / any request that tried to leave the machine (the network is blocked), and that the
 // HARNESS RENDER tag is on screen. It also reads the menu off the rendered page and checks it against the owner
 // rulings (fixed Home + Messages, ruled groups, overlay names/order/hiding, Payments never shown while not live).
 // The PERSISTENCE run (§70.1) saves through the real editor, RELOADS the page and reads the saved menu back off the
 // reloaded editor, then opens the customer view in the same tab and checks the customer gets exactly that menu.
+// The owner page renders in BOTH mounts: embedded (Solo) and standalone (the non-Solo Clients workspace), and each
+// must spend gold on exactly one act — Save menu.
 //
 // HARNESS RENDER ≠ AUTHENTICATED RUNTIME (§32/§70.1): the data boundary is stubbed (stubs.ts). The signed-in
 // customer portal and Solo editor on the deployed app, against a seeded test tenant, are owed to a capable session.
@@ -31,6 +35,8 @@ const PORT = 5246;
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 const CUSTOMER = ["default", "renamed", "hidden", "reordered", "staff", "multi"];
 const OWNER = ["default", "renamed", "hidden", "reordered", "saving", "saved", "mismatch"];
+/** The non-Solo mount (<PortalStudio /> in the Clients workspace), framed in the states that matter for gold. */
+const OWNER_STANDALONE = ["default", "saved"];
 
 function allShots() {
   const shots = [];
@@ -38,6 +44,7 @@ function allShots() {
     for (const kind of ["desktop", "phone"]) {
       for (const variant of CUSTOMER) shots.push({ view: "customer", variant, theme, kind });
       for (const variant of OWNER) shots.push({ view: "owner", variant, theme, kind });
+      for (const variant of OWNER_STANDALONE) shots.push({ view: "owner", variant, theme, kind, mount: "standalone" });
     }
   }
   return shots.map((s) => ({ ...s, w: SIZES[s.kind][0], h: SIZES[s.kind][1], phone: s.kind === "phone" }));
@@ -254,9 +261,23 @@ function measureInPage(opts) {
   const graded = [...contrast, ...placeholders].filter((c) => !c.inactive);
   const low = graded.filter((c) => c.ratio < c.need);
 
-  const probe = document.createElement("i"); document.body.append(probe);
+  // The gold tokens, resolved where the page's own tokens apply (the tenant shell defines --pg-gold*): the app's HSL
+  // triplets (--accent, --gold*) and the shell's colour values (--pg-gold*). A token not defined here is skipped, so an
+  // undefined var can never resolve to an inherited colour and pose as gold.
+  const page = opts.owner ? document.querySelector('[data-harness-region="page"]') : null;
+  const probe = document.createElement("i"); (page ?? document.body).append(probe);
   probe.style.setProperty("transition", "none", "important");
-  const golds = ["--accent", "--gold", "--gold-light", "--gold-dark", "--accent-glow"].map((t) => { probe.style.color = `hsl(var(${t}))`; return parse(getComputedStyle(probe).color).slice(0, 3).join(","); });
+  const resolve = (t, wrap) => {
+    if (!getComputedStyle(probe).getPropertyValue(t).trim()) return null;
+    probe.style.color = ""; probe.style.color = wrap ? `hsl(var(${t}))` : `var(${t})`;
+    return parse(getComputedStyle(probe).color).slice(0, 3).map(Math.round).join(",");
+  };
+  const goldTokens = {
+    hsl: ["--accent", "--gold", "--gold-light", "--gold-dark", "--accent-glow"],
+    color: ["--pg-gold", "--pg-gold-fill", "--pg-gold-deep", "--pg-gold-core", "--pg-gold-bloom"],
+  };
+  const resolvedGold = [...goldTokens.hsl.map((t) => [t, resolve(t, true)]), ...goldTokens.color.map((t) => [t, resolve(t, false)])].filter(([, v]) => v);
+  const golds = resolvedGold.map(([, v]) => v);
   probe.remove();
   // The gold gradient's stops are literal hsl() values, not the tokens: recognise them by hue.
   const goldHue = (c) => {
@@ -267,16 +288,23 @@ function measureInPage(opts) {
     return h >= 30 && h <= 55 && sat > 0.45 && l > 0.35 && l < 0.85;
   };
   const isGold = (c) => !transparent(c) && golds.includes(parse(c).slice(0, 3).map(Math.round).join(","));
-  const gold = roots.flatMap((root) => [...root.querySelectorAll("*")].filter((n) => n.getClientRects().length && !n.closest("[data-harness-tag]")).flatMap((n) => {
+  // Gold is graded over the WHOLE owner page (every card PortalStudio renders, header included), and over the
+  // customer menu surfaces for the customer view. Computed colours only: no class name is trusted either way.
+  const goldRoots = opts.owner ? [page].filter(Boolean) : roots;
+  const borderGold = (cs) => ["Top", "Right", "Bottom", "Left"].some((side) => parseFloat(cs[`border${side}Width`]) > 0 && isGold(cs[`border${side}Color`]));
+  const goldHits = goldRoots.flatMap((root) => [...root.querySelectorAll("*")].filter((n) => n.getClientRects().length && !n.closest("[data-harness-tag]")).flatMap((n) => {
     const cs = getComputedStyle(n); const hits = [];
     if (isGold(cs.color) && [...n.childNodes].some((c) => (c.nodeType === 3 && c.textContent.trim()) || c.nodeName === "svg")) hits.push("text");
     const stops = /gradient/.test(cs.backgroundImage) ? cs.backgroundImage.match(/rgba?\([^)]*\)/g) ?? [] : [];
     if (isGold(cs.backgroundColor) || stops.some((c) => isGold(c) || goldHue(c))) hits.push("background");
-    if (parseFloat(cs.borderTopWidth) > 0 && isGold(cs.borderTopColor)) hits.push("border");
-    // The one permitted act: the owner's Save menu.
-    const act = n.closest("button")?.textContent?.trim() === "Save menu";
-    return hits.length && !act ? [{ el: n.tagName.toLowerCase(), text: n.textContent.trim().slice(0, 30), hits }] : [];
+    if (borderGold(cs)) hits.push("border");
+    const act = n.closest("button, a, [role='button']");
+    return hits.length ? [{ el: n.tagName.toLowerCase(), text: n.textContent.trim().slice(0, 30), act: act ? act.textContent.trim().slice(0, 40) : null, hits }] : [];
   }));
+  // The one permitted act: the owner's Save menu. Everything else wearing gold is a finding.
+  const gold = goldHits.filter((g) => g.act !== "Save menu").map(({ act: _a, ...g }) => g);
+  // Every control on the page that wears a gold FILL or BORDER (text-only gold is reported through `gold`).
+  const goldActs = [...new Set(goldHits.filter((g) => g.act && (g.hits.includes("background") || g.hits.includes("border"))).map((g) => g.act))];
   const saveMenuGold = opts.owner ? (() => { const b = [...document.querySelectorAll('[data-testid="portal-menu-editor"] button')].find((x) => x.textContent.trim() === "Save menu"); return !!b && /gradient-gold/.test(b.className); })() : null;
 
   const targetSel = 'a, button, input, [role="switch"], [role="menuitem"]';
@@ -311,7 +339,7 @@ function measureInPage(opts) {
   return {
     chrome,
     contrastMin: graded.length ? Math.min(...graded.map((c) => c.ratio)) : null, low,
-    gold, saveMenuGold,
+    gold, goldActs, goldTokens: Object.fromEntries(resolvedGold), saveMenuGold,
     overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth + 0.5
       || (scroller ? scroller.scrollWidth > scroller.clientWidth + 1 : false),
     smallTargets: targets.filter((t) => t.h < 44 || t.w < 44),
@@ -323,7 +351,7 @@ async function runShots(browser, shots, label = "") {
   const results = {};
   let failed = false;
   for (const s of shots) {
-    const name = `e09-menu-${s.view}-${s.variant}-${s.theme}-${s.w}x${s.h}${label}`;
+    const name = `e09-menu-${s.view}${s.mount ? `-${s.mount}` : ""}-${s.variant}-${s.theme}-${s.w}x${s.h}${label}`;
     if (only && !name.includes(only)) continue;
     const ctx = await browser.newContext({
       viewport: { width: s.w, height: s.h }, colorScheme: s.theme, reducedMotion: "reduce", locale: "en-US",
@@ -341,11 +369,14 @@ async function runShots(browser, shots, label = "") {
     page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text().slice(0, 200)); });
     page.on("response", (r) => { if (r.status() >= 400 && !r.url().endsWith("/favicon.ico")) errors.push(`${r.status()} ${r.url()}`); });
     const variantParam = s.view === "owner" ? ownerVariantParam(s.variant) : s.variant;
-    await page.goto(`http://127.0.0.1:${PORT}/${s.view === "owner" ? "solo/1234567/clients/portal" : "app"}?${new URLSearchParams({ view: s.view, variant: variantParam, theme: s.theme })}`, { timeout: 180_000 });
+    await page.goto(`http://127.0.0.1:${PORT}/${s.view === "owner" ? "solo/1234567/clients/portal" : "app"}?${new URLSearchParams({ view: s.view, variant: variantParam, theme: s.theme, ...(s.mount ? { mount: s.mount } : {}) })}`, { timeout: 180_000 });
     let driveError = null;
     try { await drive(page, s, notes); } catch (e) { driveError = String(e).slice(0, 400); }
     const m = await page.evaluate(measureInPage, { owner: s.view === "owner" });
     const expectations = driveError ? [] : unmet(s, notes);
+    // One gold act per page (§11), from computed colours: exactly Save menu on the owner page, none in the customer menu.
+    const wantActs = s.view === "owner" ? ["Save menu"] : [];
+    if (JSON.stringify(m.goldActs) !== JSON.stringify(wantActs)) expectations.push(`computed gold acts ${JSON.stringify(m.goldActs)} (want ${JSON.stringify(wantActs)})`);
     const ok = !driveError && expectations.length === 0 && errors.length === 0 && blocked.length === 0 && m.low.length === 0 && !m.overflowX
       && m.gold.length === 0 && m.smallTargets.length === 0 && m.tag && (s.view !== "owner" || m.saveMenuGold === true);
     if (!ok) failed = true;
@@ -354,7 +385,7 @@ async function runShots(browser, shots, label = "") {
     if (s.view === "owner" && !driveError && ["default", "renamed"].includes(s.variant)) await page.locator('[data-testid="portal-view-as-client"]').screenshot({ path: path.join(out, `${name}-viewasclient.png`) }).catch(() => undefined);
     results[name] = { ok, driveError, expectations, errors, consoleErrors, blocked, notes, ...m };
     await ctx.close();
-    console.log(`${name} ${ok ? "OK" : "FAIL"}`, JSON.stringify({ driveError, expectations, contrastMin: m.contrastMin, low: m.low.slice(0, 3), gold: m.gold.slice(0, 3), saveMenuGold: m.saveMenuGold, overflowX: m.overflowX, smallTargets: m.smallTargets.slice(0, 4), errors: errors.slice(0, 3), consoleErrors: consoleErrors.slice(0, 2), blocked: blocked.slice(0, 3), tag: m.tag, chrome: m.chrome }));
+    console.log(`${name} ${ok ? "OK" : "FAIL"}`, JSON.stringify({ driveError, expectations, contrastMin: m.contrastMin, low: m.low.slice(0, 3), gold: m.gold.slice(0, 3), goldActs: m.goldActs, saveMenuGold: m.saveMenuGold, overflowX: m.overflowX, smallTargets: m.smallTargets.slice(0, 4), errors: errors.slice(0, 3), consoleErrors: consoleErrors.slice(0, 2), blocked: blocked.slice(0, 3), tag: m.tag, chrome: m.chrome }));
   }
   return { results, failed };
 }
@@ -428,7 +459,7 @@ async function runPersistence(browser, label = "", filter = () => true) {
       const measured = [mOwner, mCustomer].filter(Boolean);
       const ok = !driveError && miss.length === 0 && errors.length === 0 && blocked.length === 0 && measured.length === 2
         && measured.every((m) => m.low.length === 0 && !m.overflowX && m.gold.length === 0 && m.smallTargets.length === 0 && m.tag)
-        && mOwner.saveMenuGold === true;
+        && mOwner.saveMenuGold === true && JSON.stringify(mOwner.goldActs) === JSON.stringify(["Save menu"]) && mCustomer.goldActs.length === 0;
       if (!ok) failed = true;
       results[`${reloaded}+${after}`] = { ok, driveError, expectations: miss, errors, blocked, notes, owner: mOwner, customer: mCustomer };
       console.log(`${reloaded} + ${after} ${ok ? "OK" : "FAIL"}`, JSON.stringify({ driveError, expectations: miss, errors: errors.slice(0, 3), ownerLow: mOwner?.low?.slice(0, 2), customerLow: mCustomer?.low?.slice(0, 2), ownerMin: mOwner?.contrastMin, customerMin: mCustomer?.contrastMin }));
@@ -453,11 +484,19 @@ try {
   } else {
     // Negative controls: each defect is injected by the harness's own vite transform (no product file edited) and
     // the drive MUST report it through the named check. A control that passes means the drive is blind to it.
-    const shot = (view, variant, kind, theme = "light") => ({ view, variant, theme, kind, w: SIZES[kind][0], h: SIZES[kind][1], phone: kind === "phone" });
+    const shot = (view, variant, kind, theme = "light", mount = undefined) => ({ view, variant, theme, kind, w: SIZES[kind][0], h: SIZES[kind][1], phone: kind === "phone", ...(mount ? { mount } : {}) });
+    const headerGold = (r, hit) => r.gold.some((g) => /Save brand/.test(g.text) && g.hits.includes(hit)) && r.goldActs.length > 1;
     const controls = [
       { mutant: "navgold", shot: shot("customer", "default", "phone"), caught: (r) => r.gold.length > 0 },
       { mutant: "navtarget", shot: shot("customer", "default", "phone"), caught: (r) => r.smallTargets.length > 0 },
       { mutant: "editorgold", shot: shot("owner", "default", "desktop"), caught: (r) => r.gold.length > 0 },
+      // The round-2 regression itself: the embedded header save wearing the dashboard's unlayered opd-primary fill
+      // (no gradient-gold/bg-accent class anywhere, so only the computed check can see it). Both themes.
+      { mutant: "headergold", shot: shot("owner", "default", "desktop"), caught: (r) => headerGold(r, "background") },
+      { mutant: "headergold", shot: shot("owner", "default", "phone", "dark"), caught: (r) => headerGold(r, "background") },
+      // Class-free gold by inline style: a --pg-gold-fill background (embedded), an --accent border (standalone).
+      { mutant: "inlinegold", shot: shot("owner", "default", "desktop", "dark"), caught: (r) => headerGold(r, "background") },
+      { mutant: "bordergold", shot: shot("owner", "default", "desktop", "light", "standalone"), caught: (r) => headerGold(r, "border") },
       { mutant: "contrast", shot: shot("owner", "default", "desktop", "dark"), caught: (r) => r.low.length > 0 },
       { mutant: "overflow", shot: shot("owner", "default", "phone"), caught: (r) => r.overflowX === true },
       { mutant: "target", shot: shot("owner", "default", "desktop"), caught: (r) => r.smallTargets.some((t) => /^Move /.test(t.text)) },
@@ -474,7 +513,7 @@ try {
           : await runShots(browser, [c.shot], `-MUTANT-${c.mutant}`);
         const r = Object.values(results)[0];
         const caught = !!r && !r.ok && c.caught(r);
-        verdicts.push({ mutant: c.mutant, caught, ok: r?.ok, driveError: r?.driveError ?? null });
+        verdicts.push({ mutant: c.mutant, shot: c.shot ? `${c.shot.view}${c.shot.mount ? `-${c.shot.mount}` : ""}-${c.shot.theme}-${c.shot.kind}` : "persistence", caught, ok: r?.ok, driveError: r?.driveError ?? null });
         if (!caught) exitCode = 1;
       } finally { try { process.kill(-vite.pid); } catch { /* already gone */ } await new Promise((res) => setTimeout(res, 800)); }
     }

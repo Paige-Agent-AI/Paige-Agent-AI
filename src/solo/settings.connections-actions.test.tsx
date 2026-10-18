@@ -2,6 +2,8 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { SoloSettings } from "./settings";
 import type { SoloDomain } from "./data/useSoloComms";
 
@@ -65,6 +67,16 @@ vi.mock("./data/useSoloOwner", () => ({
   useSoloOwner: () => ({ owner: { name: null, email: null, phone: null, website: null }, loading: false, error: null, refresh: vi.fn() }),
 }));
 vi.mock("./data/useSoloComms", () => ({ useSoloComms: () => state.comms }));
+// These other destinations are not mounted by this Connections-only suite.
+// Keep the real Settings host, domain panel and data/permission contract under test.
+vi.mock("./vault", () => ({ VaultView: () => null }));
+vi.mock("./settings-integrations", () => ({ SoloIntegrationsView: () => null }));
+vi.mock("./team-workspace", () => ({ SoloTeamWorkspace: () => null }));
+vi.mock("./settings-security-data", () => ({ SoloSecurityDataView: () => null }));
+vi.mock("./connections-calendars", () => ({ CalendarsView: () => null }));
+vi.mock("./SoloBusinessContextSetup", () => ({ SoloBusinessContextSetup: () => null }));
+vi.mock("./settings-billing", () => ({ SoloBillingView: () => null }));
+vi.mock("./settings-analytics", () => ({ SoloSettingsAnalytics: () => null }));
 
 const READINESS = {
   tenant_id: "tenant-1971670",
@@ -98,18 +110,27 @@ function comms(over: Record<string, unknown> = {}) {
 }
 
 let host: HTMLDivElement;
+function settingsView() {
+  return <MemoryRouter initialEntries={["/solo/1971670/settings/connections"]}>
+    <Routes><Route path="/solo/:account/settings/*" element={<SoloSettings/>}/></Routes>
+  </MemoryRouter>;
+}
 async function mount() {
   host = document.createElement("div");
   document.body.appendChild(host);
+  const root = createRoot(host);
   await act(async () => {
-    createRoot(host).render(
-      <MemoryRouter initialEntries={["/solo/1971670/settings/connections"]}>
-        <Routes><Route path="/solo/:account/settings/*" element={<SoloSettings/>}/></Routes>
-      </MemoryRouter>,
-    );
+    root.render(settingsView());
   });
+  return root;
 }
 const text = () => host.textContent ?? "";
+function captureActualComponent(name: string) {
+  const output = process.env.DOMAIN_RENDER_DIR;
+  if (!output) return;
+  mkdirSync(output, { recursive: true });
+  writeFileSync(path.join(output, `${name}.html`), host.innerHTML);
+}
 async function openRegistration() {
   await act(async () => { findButton("Registration").click(); });
 }
@@ -161,6 +182,49 @@ describe("Sending domains can be operated, not only listed", () => {
   // Typed as the real contract so a newly required field fails the typecheck here, not a render
   // at runtime (#1138 added dnsRecords; this fixture went stale and crashed three tests).
   const DOMAIN: SoloDomain = { id: "d1", domain: "mail.example.com", fromEmailLocal: "no-reply", fromName: "Example", status: "pending", isDefault: false, dnsRecords: [] };
+
+  it("shows permitted current-member rows and statuses without management or DNS setup controls", async () => {
+    const current = comms({ canManage: false, domains: [
+      { ...DOMAIN, dnsRecords: [{ type: "TXT", name: "private-dns.example", record: "dns-setup-value" }] },
+      { ...DOMAIN, id: "d2", domain: "verified.example.com", status: "verified", isDefault: true },
+    ] });
+    state.comms = current;
+    await mount();
+    expect(text()).toContain("mail.example.com");
+    expect(text()).toContain("no-reply@mail.example.com");
+    expect(text()).toContain("pending");
+    expect(text()).toContain("verified.example.com · default");
+    expect(text()).toContain("verified");
+    for (const label of ["Check DNS", "Make default", "Remove", "Add a domain", "Register domain", "Copy"]) {
+      expect(() => findButton(label)).toThrow();
+    }
+    expect(text()).not.toContain("Publish these at your DNS host");
+    expect(text()).not.toContain("dns-setup-value");
+    for (const fn of [current.addDomain, current.refreshDomain, current.setDefaultDomain, current.removeDomain]) expect(fn).not.toHaveBeenCalled();
+    captureActualComponent("member-populated");
+  });
+
+  it("keeps a read-only empty state visible without offering registration", async () => {
+    state.comms = comms({ canManage: false });
+    await mount();
+    expect(text()).toContain("No custom sending domain yet");
+    expect(() => findButton("Add a domain")).toThrow();
+    captureActualComponent("member-empty");
+  });
+
+  it("removes an open management form and DNS controls when the current seat becomes read-only", async () => {
+    const current = comms({ domains: [DOMAIN] });
+    state.comms = current;
+    const root = await mount();
+    await act(async () => { findButton("Add a domain").click(); });
+    expect(host.querySelector('input[placeholder="mail.yourbusiness.com"]')).toBeTruthy();
+    state.comms = { ...current, canManage: false };
+    await act(async () => { root.render(settingsView()); });
+    expect(text()).toContain("mail.example.com");
+    expect(host.querySelector('input[placeholder="mail.yourbusiness.com"]')).toBeNull();
+    for (const label of ["Check DNS", "Remove", "Register domain", "Add a domain"]) expect(() => findButton(label)).toThrow();
+    expect(current.addDomain).not.toHaveBeenCalled();
+  });
 
   it("registers a domain through the existing edge seam", async () => {
     const add = vi.fn(async (_input: { domain: string; fromEmailLocal: string; fromName: string }) => ({ ok: true, error: null }));
@@ -218,6 +282,7 @@ describe("Sending domains can be operated, not only listed", () => {
     expect(text()).toContain("resend._domainkey.mail");
     expect(text()).toContain("p=MIGfMA0GCSqGSIb3");
     expect(host.querySelector('[aria-label="Copy the TXT record"]')).toBeTruthy();
+    captureActualComponent("manager-dns");
   });
 });
 

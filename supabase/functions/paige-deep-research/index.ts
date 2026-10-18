@@ -2137,13 +2137,11 @@ serve(async (req) => {
   // Immutable native context per phase. Match the existing provider's 120s maximum,
   // narrowed by the incumbent gathering/synthesis deadline; never renew an expired
   // phase on fallback. These options reach HTTP ONLY on the dormant Fabric path.
-  const modelContext = (phaseDeadline: number): RunRequestCtx => {
+  const modelContext = (phaseDeadline: number): Pick<RunRequestCtx, "beforeProviderAttempt" | "signal"> => {
     const deadline = Math.min(phaseDeadline, Date.now() + 120_000);
     const signal = AbortSignal.any([req.signal, AbortSignal.timeout(Math.max(0, deadline - Date.now()))]);
     const inTime = () => !signal.aborted && Date.now() < deadline;
     return {
-      tenantId: resolvedTenantId,
-      runId,
       signal,
       beforeProviderAttempt: () => new Promise<boolean>(resolve => {
         if (!inTime() || modelAuthorityRefused) { resolve(false); return; }

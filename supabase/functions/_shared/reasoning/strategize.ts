@@ -24,7 +24,7 @@
 //
 // §34: pure in-repo (model-router + prompt-forge). No vendor reasoning SDK.
 import { routedChatCompletion } from "../model-router.ts";
-import { fabricCompletion } from "../model-fabric.ts";
+import { fabricCompletion, type FabricCompletionRequest } from "../model-fabric.ts";
 import { recallSimilar, type RecalledArtifact } from "../prompt-forge.ts";
 import type { TraceCtx } from "../llm-trace.ts";
 
@@ -172,7 +172,7 @@ export async function strategizeBeforeReasoning(opts: StrategizeOpts): Promise<S
       ],
       temperature: 0.3,
       max_tokens: 1000, // headroom so a rich strategy doesn't truncate mid-JSON → avoidable silent degrade
-    };
+    } satisfies Pick<FabricCompletionRequest, "messages" | "temperature" | "max_tokens">;
     if (!(await current())) return fallback(task, anchors.length);
     const resp = await within(async () => {
       if (opts.fabricEnabled === true) {

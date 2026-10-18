@@ -32,9 +32,15 @@ import {
   type SignupPhoneCountry,
 } from "@/lib/auth/signupMobile";
 
-const authSchema = z.object({
+export const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" })
+    .refine(
+      (v) => /[a-z]/.test(v) && /[A-Z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v),
+      { message: "Password needs a lowercase letter, an uppercase letter, a number, and a symbol (like !@#$%)." },
+    ),
   fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).optional(),
 });
 
@@ -398,9 +404,14 @@ const Auth = () => {
             signupPlanIntentRef.current = null;
             clearPlanIntent();
             const exists = /already registered|already exists/i.test(signupError.message);
+            const weakPassword = signupError.code === "weak_password" || /password should contain/i.test(signupError.message);
             toast({
-              title: exists ? "Account exists" : "Couldn't create your account",
-              description: exists ? "Sign in with this email to continue safely." : "We could not create the account. Check your details and try again, or contact support.",
+              title: exists ? "Account exists" : weakPassword ? "Password needs more variety" : "Couldn't create your account",
+              description: exists
+                ? "Sign in with this email to continue safely."
+                : weakPassword
+                  ? "Use at least one lowercase letter, one uppercase letter, one number, and one symbol (like !@#$%)."
+                  : "We could not create the account. Check your details and try again, or contact support.",
               variant: "destructive",
             });
             return;

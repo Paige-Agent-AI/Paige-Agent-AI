@@ -342,7 +342,7 @@ BEGIN
  SELECT old_definition INTO STRICT definition FROM historical_comms_origin_guard;
  EXECUTE definition;
  UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding}',
-   (meta->'comms_email_binding'-ARRAY['origin_action_id','origin_action_kind'])
+   ((meta->'comms_email_binding')-ARRAY['origin_action_id','origin_action_kind'])
    ||jsonb_build_object('approval_id',pg_temp.ap('five'),
       'governance',(meta#>'{comms_email_binding,governance}')||jsonb_build_object('approval_id',pg_temp.ap('five'))))
   WHERE id=pg_temp.msg(118) AND meta#>>'{comms_email_binding,state}'='provider_accepted';

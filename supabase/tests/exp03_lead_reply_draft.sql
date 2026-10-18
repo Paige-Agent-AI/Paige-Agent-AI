@@ -412,7 +412,10 @@ SELECT pg_temp.refused(format($$SELECT pg_temp.approve_with(%L,8)$$,pg_temp.ap('
 SELECT pg_temp.refused(format($$SELECT pg_temp.approve_with(%L,7)$$,pg_temp.ap('a1')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','an accepted send to another person is not proof for this lead');
 SELECT pg_temp.refused(format($$SELECT pg_temp.approve_with(%L,9,6)$$,pg_temp.ap('a1')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','a governed_send whose operation does not match its message is refused');
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','a governed_send whose operation does not match its bound message is refused before completion');
+SELECT pg_temp.check_true((SELECT status='pending' AND NOT (metadata ? 'governed_send') FROM public.paige_pending_approvals WHERE id=pg_temp.ap('a1'))
+  AND (SELECT meta->'comms_email_binding'->'approval_id'='null'::jsonb FROM public.messages WHERE id=pg_temp.msg(9)),
+  'the operation-mismatch refusal rolls back both the trial approval correlation and message binding');
 -- Round-3 H1/M1: an accepted email of THIS business to THIS lead that was not prepared for this reply.
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(9) WHERE id=%L$$,pg_temp.ap('a1')),
   '42501','SEND_REQUIRES_GOVERNED_SEND%','an accepted email to this lead that answered NO reply (chat/support) is not proof this reply went out');
@@ -522,22 +525,23 @@ SELECT public.advance_action((SELECT (result->>'action_id')::uuid FROM filed WHE
 INSERT INTO ap VALUES ('legacy',(SELECT approval_id FROM public.paige_actions WHERE id=(SELECT (result->>'action_id')::uuid FROM filed WHERE label='legacy')));
 SELECT pg_temp.check_true(pg_temp.ap('legacy') IS NOT NULL,'fixture: the legacy client.followup draft is a pending approval');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id=%L$$,pg_temp.ap('legacy')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','a legacy nested-shape client.followup approval can never be approved into a false completion');
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','a legacy nested-shape client.followup without a native original binding cannot be approved into a false completion');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='sent' WHERE id=%L$$,pg_temp.ap('legacy')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','nor marked sent');
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','nor marked sent without that original binding');
 -- Round-3 security H1, reproduced: an unrelated accepted email to the same person, cited by the legacy
--- approval (and even marked as prepared for it) — the false completion stays closed: decline_only.
-SELECT pg_temp.refused_detail(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(11) WHERE id=%L$$,pg_temp.ap('legacy')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send','(H1) a legacy client.followup citing an unrelated accepted email to the same lead is refused, decline_only');
-SELECT pg_temp.refused_detail(format($$SELECT pg_temp.approve_with(%L,11)$$,pg_temp.ap('legacy')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','reason_code=review_and_send','(H1) … even with that unrelated email marked as prepared for it: an unsealed send cannot complete this follow-up');
+-- approval (and even marked as prepared for it) — the false completion stays closed. This supported
+-- kind now requires its native exact original action seal; unrelated/unsealed legacy DATA is not it.
+SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(11) WHERE id=%L$$,pg_temp.ap('legacy')),
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','(H1) a legacy client.followup citing an unrelated accepted email to the same lead lacks its native original binding');
+SELECT pg_temp.refused(format($$SELECT pg_temp.approve_with(%L,11)$$,pg_temp.ap('legacy')),
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','(H1) … even with that unrelated email marked as prepared for it: an unsealed send cannot complete this follow-up');
 -- Production grants authenticated SELECT on clients (the approvals RLS policies read it); a bare local
 -- stack does not, so grant it here (rolled back) to drive the real policy path.
 GRANT SELECT ON public.clients TO authenticated;
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('e3000000-0000-4000-8000-000000000001');
 SELECT pg_temp.refused(format($$UPDATE public.paige_pending_approvals SET status='approved', metadata=metadata||pg_temp.gs(11) WHERE id=%L$$,pg_temp.ap('legacy')),
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','(H1) … and the business owner''s own direct write (the RLS-admitted path) is refused the same way');
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','(H1) … and the business owner''s own direct write (the RLS-admitted path) is refused the same way');
 RESET ROLE;
 SELECT pg_temp.as_service();
 SELECT pg_temp.check_true((SELECT status='pending' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('legacy'))
@@ -995,7 +999,7 @@ SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',36,NULL)$$,'42501','LEAD_REPLY
 SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',36,'e3000000-0000-4000-8000-000000000005')$$,'42501','LEAD_REPLY_NOT_YOUR_SEND%','… and refuses an actor who did not make the send');
 SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',36,'e3000000-0000-4000-8000-000000000003')$$,'42501','LEAD_REPLY_FORBIDDEN%','… a plain member as actor');
 SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',36,'e3000000-0000-4000-8000-000000000002')$$,'42501','LEAD_REPLY_FORBIDDEN%','… another business''s owner as actor');
-SELECT pg_temp.refused($$SELECT pg_temp.svc('legacy',36,'e3000000-0000-4000-8000-000000000001')$$,'22023','LEAD_REPLY_WRONG_KIND%','… and a legacy client.followup');
+SELECT pg_temp.refused($$SELECT pg_temp.svc('legacy',36,'e3000000-0000-4000-8000-000000000001')$$,'55000','LEAD_REPLY_NOT_PENDING%','… and an already-declined legacy client.followup cannot borrow another reply''s send');
 SELECT pg_temp.refused($$SELECT pg_temp.svc('x1',40,'e3000000-0000-4000-8000-000000000001')$$,'42501','LEAD_REPLY_NOT_THIS_APPROVAL%','… and, like the reply screen''s door, an email that answered no reply');
 SELECT set_config('request.jwt.claim.sub','e3000000-0000-4000-8000-000000000001',true);
 SELECT pg_temp.refused($$SELECT pg_temp.svc('svc',36,'e3000000-0000-4000-8000-000000000001')$$,'42501','LEAD_REPLY_FORBIDDEN%','a call carrying a signed-in subject is refused (the twin is for the server only)');

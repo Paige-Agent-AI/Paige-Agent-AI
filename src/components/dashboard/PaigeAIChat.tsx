@@ -35,6 +35,7 @@ import {
 } from "@/components/chat/approvalOutcome";
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
 import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -608,6 +609,11 @@ const PaigeAIChatInner = ({
     : "identity-unresolved";
   const requestScopeRef = useRef({ handle: requestScopeHandle, epoch: requestScopeEpoch });
   requestScopeRef.current = { handle: requestScopeHandle, epoch: requestScopeEpoch };
+  // A new scope gets new control state. Object identity also fences A→B→A replies;
+  // a former actor/workspace must not install its retry delay in the current view.
+  const controlScopeRef = useRef({ epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 });
+  if (controlScopeRef.current.epoch !== scopeEpoch)
+    controlScopeRef.current = { epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 };
   const researchHydrationRef = useRef<{
     scope: typeof requestScopeRef.current;
     cancel: () => void;
@@ -792,28 +798,46 @@ const PaigeAIChatInner = ({
     if (!enableHistory || !liveConversation) return;
     const target = interactiveRequestRef.current;
     if (!target?.threadId) return;
+    const controlScope = controlScopeRef.current;
     const generation = ++authorityPollRef.current.generation;
     window.clearTimeout(authorityPollRef.current.timer);
-    const current = () => generation === authorityPollRef.current.generation
+    const current = () => controlScope === controlScopeRef.current && generation === authorityPollRef.current.generation
       && interactiveRequestRef.current?.intentId === target.intentId
       && composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle);
+    let failures = 0;
     const poll = async () => {
       if (!current()) return;
+      const remaining = controlScope.statusNotBefore - Date.now();
+      if (remaining > 0) {
+        authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, remaining);
+        return;
+      }
       let settled = false;
+      let delay = CHAT_CONTROL_POLL_MS;
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!current() || !session) return;
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "status" },
           body: JSON.stringify({ threadId: target.threadId, requestIntentId: target.intentId,
             messages: [{ role: "user", content: "Status" }], interactive: { kind: "status" } }),
         });
-        if (response.ok) settled = (await response.json()).settled === true;
-      } catch { /* Unknown settlement keeps Live guarded; text remains available. */ }
+        if (!current()) return;
+        if (response.status === 429) {
+          delay = chatControlRetryDelay(response.headers?.get("Retry-After"));
+          controlScope.statusNotBefore = Date.now() + delay;
+        } else if (response.ok) {
+          settled = (await response.json()).settled === true;
+          failures = 0;
+        } else delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      } catch {
+        // Unknown settlement keeps Live guarded; a failing transport must not flood ingress.
+        delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      }
       if (!current()) return;
       if (settled) setInteractiveAuthorityPending(false);
-      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, 1000);
+      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, delay);
     };
     void poll();
   }, [enableHistory, liveConversation]);
@@ -857,19 +881,28 @@ const PaigeAIChatInner = ({
     const cancelledTurn = retryTurnRef.current;
     const interactive = !opts?.fromVoice ? interactiveRequestRef.current : null;
     if (interactive?.threadId) {
+      const controlScope = controlScopeRef.current;
+      const current = () => controlScope === controlScopeRef.current
+        && interactiveRequestRef.current?.intentId === interactive.intentId
+        && composerDraftHandlesMatch(interactive.handle, requestScopeRef.current.handle);
       void (async () => {
+        if (!current()) return;
+        if (Date.now() < controlScope.stopRetryAt) throw new Error("stop_unconfirmed");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!current()) return;
+        if (!session) throw new Error("stop_unconfirmed");
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "stop" },
           body: JSON.stringify({ threadId: interactive.threadId, requestIntentId: interactive.intentId,
             messages: [{ role: "user", content: "Stop" }],
             interactive: { kind: "stop", supersedesIntentId: interactive.intentId } }),
         });
+        if (!current()) return;
+        if (response.status === 429) controlScope.stopRetryAt = Date.now() + chatControlRetryDelay(response.headers?.get("Retry-After"));
         if (!response.ok) throw new Error("stop_unconfirmed");
-        if (interactiveRequestRef.current?.intentId === interactive.intentId) refreshInteractiveAuthority();
-      })().catch(() => toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }));
+        refreshInteractiveAuthority();
+      })().catch(() => { if (current()) toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }); });
     }
     // C3a — the answer's line says "Stopped by you" and keeps the step that had started, marked as
     // possibly still finishing. Settled BEFORE the abort, which would otherwise drop that step.

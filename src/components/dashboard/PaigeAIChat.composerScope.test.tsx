@@ -1053,4 +1053,62 @@ data: [DONE]
     expect(harness.rail!.activeThreadId).toBe(createdThreadId);
     expect(textarea().value).toBe("focused failed draft");
   });
+
+  // Reviewer's corrected actual-component fixture: publish a new query array to
+  // hydrate the legitimate switched scope before testing its explicit controls.
+  it.each(["actor", "workspace", "late actor", "late ABA"])("control scope review: %s keeps its own explicit Stop", async (mode) => {
+    const original = { user: harness.userId, tenant: harness.tenantId };
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    const stops: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (body.interactive?.kind === "stop") {
+        stops.push(`${harness.userId}:${harness.tenantId}`);
+        return stops.length === 1 ? mode.startsWith("late") ? pending : new Response("{}", { status: 429, headers: { "Retry-After": "60" } }) : new Response("{}", { status: 200 });
+      }
+      if (body.interactive?.kind === "status") return Response.json({ settled: true });
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    }));
+    const stop = async () => act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    await render(); await type("Original actor request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(stops).toHaveLength(1);
+    harness.userId = mode === "workspace" ? original.user : "other-current-actor";
+    harness.tenantId = "other-current-workspace";
+    harness.ensureThread.mockResolvedValue("thread-other"); harness.threads = [...harness.threads];
+    await render(); await waitForWritable();
+    if (mode === "late ABA") {
+      harness.userId = original.user; harness.tenantId = original.tenant;
+      harness.ensureThread.mockResolvedValue("thread-returned"); harness.threads = [...harness.threads];
+      await render(); await waitForWritable();
+    }
+    if (mode.startsWith("late")) await act(async () => { release(new Response("{}", { status: 429, headers: { "Retry-After": "60" } })); await settle(); });
+    await type("Current actor request"); await act(async () => { send().click(); await settle(); }); await stop();
+    expect(stops).toEqual([`${original.user}:${original.tenant}`, `${harness.userId}:${harness.tenantId}`]);
+  });
+
+  it.each(["actor", "workspace"])("control scope review: status cooldown does not carry to another %s", async mode => {
+    const statuses: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (body.interactive?.kind === "status") {
+        statuses.push(`${harness.userId}:${harness.tenantId}`);
+        return statuses.length === 1 ? new Response("{}", { status: 429, headers: { "Retry-After": "60" } }) : Response.json({ settled: true });
+      }
+      if (body.interactive?.kind === "stop") return new Response("{}", { status: 200 });
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    }));
+    const stop = async () => act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    await render({ liveConversation: true }); await type("Original request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(statuses).toHaveLength(1);
+    if (mode === "actor") harness.userId = "new-status-actor";
+    harness.tenantId = "new-status-workspace";
+    harness.ensureThread.mockResolvedValue("thread-status-new"); harness.threads = [...harness.threads];
+    await render({ liveConversation: true }); await waitForWritable(); await type("New scope request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(statuses).toHaveLength(2);
+    expect(statuses[1]).toBe(`${harness.userId}:${harness.tenantId}`);
+  });
 });

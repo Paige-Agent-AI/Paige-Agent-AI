@@ -49,6 +49,7 @@ import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
+import { CHAT_CONTROL_HEADER, chatIngressPolicy, matchesChatControlHint, readChatControlBody } from "../_shared/paige-turn/control-transport.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
@@ -329,7 +330,8 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, ${CHAT_CONTROL_HEADER}`,
+  "Access-Control-Expose-Headers": "Retry-After",
 };
 
 // "Watch Paige work" (#95): turn one executed tool call into a friendly, present-tense,
@@ -1223,13 +1225,20 @@ serve(async (req) => {
       content_policy: traceCtx.content_policy,
     });
 
-    // Rate limit
-    const { data: rateLimitCheck } = await supabase.rpc('check_rate_limit', {
+    // Bound ingress before reading JSON. A control hint selects a quota, never authority;
+    // the canonical schema plus strict control-only shape below must agree before any work.
+    const controlHint = req.headers.get(CHAT_CONTROL_HEADER);
+    const ingress = chatIngressPolicy(controlHint);
+    const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
       _user_id: user.id,
-      _function_name: 'paige-ai-chat',
-      _max_requests: 20,
+      _function_name: ingress.key,
+      _max_requests: ingress.maxRequests,
       _window_minutes: 1
     });
+    if (rateLimitError || (rateLimitCheck !== true && rateLimitCheck !== false)) {
+      return new Response(JSON.stringify({ code: 'CHAT_INGRESS_UNAVAILABLE', message_accepted: false }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '30' } });
+    }
     if (rateLimitCheck === false) {
       return new Response(
         JSON.stringify({ error: 'Rate limit exceeded.' }),
@@ -1237,7 +1246,20 @@ serve(async (req) => {
       );
     }
 
-    const rawData = await req.json();
+    let rawData;
+    try {
+      if (controlHint === "status" || controlHint === "stop") {
+        const body = await readChatControlBody(req);
+        if ("status" in body) return new Response(JSON.stringify({
+          code: body.status === 413 ? 'CHAT_CONTROL_BODY_TOO_LARGE' : 'CHAT_CONTROL_BODY_INVALID', message_accepted: false,
+        }), { status: body.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        rawData = JSON.parse(body.text);
+      } else rawData = await req.json();
+    }
+    catch {
+      return new Response(JSON.stringify({ error: 'Invalid input format', message_accepted: false }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     let validatedData;
     try {
       validatedData = messageSchema.parse(rawData);
@@ -1249,6 +1271,10 @@ serve(async (req) => {
         );
       }
       throw error;
+    }
+    if (!matchesChatControlHint(controlHint, rawData, validatedData.interactive?.kind)) {
+      return new Response(JSON.stringify({ code: 'CHAT_CONTROL_HINT_MISMATCH', message_accepted: false }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // The surface narrows the audience; only the native customer frame proves it.

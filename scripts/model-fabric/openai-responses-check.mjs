@@ -431,5 +431,123 @@ console.log("8. review round 2 — served-id tag in the stream, {} in non-stream
   ok(args === "{\"q\":1}" && f.some((p) => p.choices[0].finish_reason === "tool_calls"), "8.5 an early empty .done does not pre-empt the arguments that arrive later");
 }
 
+console.log("9. transport-read batching preserves the existing SSE protocol and bounded delivery");
+{
+  const enc = new TextEncoder();
+  const line = (value) => `data: ${JSON.stringify(value)}\n\n`;
+  const chunk = (delta, finish_reason = null) => line({ choices: [{ index: 0, delta, finish_reason }] });
+  const complete = { type: "response.completed", response: { status: "completed", model: "gpt-6.1-sol", usage: { input_tokens: 9, output_tokens: 256 } } };
+  const events = [{ type: "response.created", response: { model: "gpt-6.1-sol" } },
+    ...Array.from({ length: 256 }, () => ({ type: "response.output_text.delta", delta: "é🙂 neutral " })), complete];
+  const wire = events.map(line).join("");
+  const expected = chunk({ role: "assistant" }) + Array.from({ length: 256 }, () => chunk({ content: "é🙂 neutral " })).join("")
+    + chunk({}, "stop") + "data: [DONE]\n\n";
+  const collect = async (body) => {
+    const reader = body.getReader(), chunks = [];
+    for (;;) { const next = await reader.read(); if (next.done) break; chunks.push(next.value); }
+    const bytes = Buffer.concat(chunks);
+    return { chunks, bytes, text: bytes.toString("utf8") };
+  };
+  const source = (packets) => new Response(new ReadableStream({ start(c) { for (const p of packets) c.enqueue(p); c.close(); } }), { status: 200 });
+  const from = traceCount();
+  const packed = transport(() => source([enc.encode(wire)]));
+  const packedResponse = await ad.responsesStream({ messages: [{ role: "user", content: "Neutral guidance" }] }, { model: "gpt-6.1-sol", fetchImpl: packed }, TRACE);
+  const result = await collect(packedResponse.body);
+  ok(result.text === expected, "9.1 packed provider data retains every SSE record and exact byte order");
+  ok(result.chunks.length <= 5, "9.2 one packed provider read does not create one downstream read per text delta");
+  ok(result.chunks.every((p) => p.byteLength <= 16 * 1024), "9.3 emitted batches have a fixed byte bound");
+  const [row] = await tracesSince(from);
+  ok(row?.status === "success" && row.tokens_in === 9 && row.tokens_out === 256 && packed.calls.length === 1,
+    "9.4 batching preserves actual usage, trace and exactly one transport attempt");
+
+  // Split UTF8 and SSE lines across transport reads; output remains the same byte protocol.
+  const bytes = enc.encode(wire);
+  const packets = [];
+  for (let n = 0; n < bytes.length; n += 37) packets.push(bytes.slice(n, n + 37));
+  const splitResponse = await ad.responsesStream({ messages: [{ role: "user", content: "Neutral guidance" }] },
+    { model: "gpt-6.1-sol", fetchImpl: transport(() => source(packets)) });
+  const split = await collect(splitResponse.body);
+  ok(split.text === expected, "9.5 fragmented UTF8 and SSE records preserve the same exact output");
+
+  // A single large record can cross byte-batch boundaries without changing its JSON/text.
+  const large = "🙂".repeat(12_000);
+  const largeResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: transport(() => source([enc.encode(line({ type: "response.output_text.delta", delta: large }) + line(complete))])) });
+  const largeResult = await collect(largeResponse.body);
+  ok(largeResult.text === chunk({ role: "assistant" }) + chunk({ content: large }) + chunk({}, "stop") + "data: [DONE]\n\n",
+    "9.6 one oversized encoded record is preserved across bounded byte chunks");
+  ok(largeResult.chunks.every((p) => p.byteLength <= 16 * 1024), "9.7 oversized records cannot create an unbounded output batch");
+
+  // Do not wait for another provider packet to release records already received.
+  let release, waiting = false;
+  const gate = new Promise((accept) => { release = accept; });
+  const delayed = transport(() => new Response(new ReadableStream({ async start(c) {
+    c.enqueue(enc.encode(line({ type: "response.output_text.delta", delta: "first" })));
+    waiting = true; await gate;
+    c.enqueue(enc.encode(line(complete))); c.close();
+  } }), { status: 200 }));
+  const opened = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] }, { model: "gpt-6.1-sol", fetchImpl: delayed });
+  const reader = opened.body.getReader();
+  await reader.read(); // incumbent role record is immediate
+  let first;
+  const ready = reader.read().then((part) => { first = part; });
+  await new Promise((accept) => setImmediate(accept));
+  ok(waiting && first && !first.done && new TextDecoder().decode(first.value) === chunk({ content: "first" }),
+    "9.8 an already-received record flushes before awaiting the next provider read");
+  release(); await ready;
+  for (;;) { if ((await reader.read()).done) break; }
+
+  const interruptedFrom = traceCount();
+  const interrupted = transport(() => new Response(new ReadableStream({ start(c) {
+    c.enqueue(enc.encode(line({ type: "response.output_text.delta", delta: "partial" })));
+  }, pull(c) { c.error(new DOMException("neutral interrupted transport", "AbortError")); } }), { status: 200 }));
+  const interruptedResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: interrupted }, TRACE);
+  const interruptedWire = (await collect(interruptedResponse.body)).text;
+  const [interruptedTrace] = await tracesSince(interruptedFrom);
+  ok(interruptedWire.includes(chunk({ content: "partial" })) && interruptedWire.endsWith("data: [DONE]\n\n")
+    && !frames(interruptedWire).filter((p) => p !== "[DONE]").some((p) => JSON.parse(p).choices?.[0]?.finish_reason)
+    && interruptedTrace?.status === "error" && interrupted.calls.length === 1,
+    "9.9 interrupted transport preserves received text, no successful finish and no retry");
+
+  const reasoning = { type: "reasoning", id: "neutral-r", encrypted_content: "neutral-ciphertext", summary: [] };
+  const mixed = [
+    { type: "response.output_text.delta", delta: "Looking. " },
+    { type: "response.output_item.added", output_index: 0, item: { type: "function_call", id: "neutral-f", call_id: "neutral-c", name: "crm_contact_lookup", arguments: "" } },
+    { type: "response.function_call_arguments.delta", item_id: "neutral-f", delta: '{"q":' },
+    { type: "response.output_item.done", item: reasoning },
+    { type: "response.function_call_arguments.done", item_id: "neutral-f", arguments: '{"q":"neutral"}' },
+    complete,
+  ];
+  const mixedResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }], tools: [TOOL] },
+    { model: "gpt-6.1-sol", fetchImpl: transport(() => sse(mixed)) });
+  const mixedWire = (await collect(mixedResponse.body)).text;
+  const expectedMixed = chunk({ role: "assistant" }) + chunk({ content: "Looking. " })
+    + chunk({ tool_calls: [{ index: 0, id: "neutral-c", type: "function", function: { name: "crm_contact_lookup", arguments: "" } }] })
+    + chunk({ tool_calls: [{ index: 0, function: { arguments: '{"q":' } }] })
+    + chunk({ paige_provider_items: [reasoning], paige_provider: "openai:gpt-6.1-sol" })
+    + chunk({ tool_calls: [{ index: 0, function: { arguments: '"neutral"}' } }] }) + chunk({}, "tool_calls") + "data: [DONE]\n\n";
+  ok(mixedWire === expectedMixed, "9.10 mixed text/tool/reasoning records retain exact identities, boundaries, argument reconciliation and order");
+
+  const malformedResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: transport(() => source([enc.encode('data: {not-json}\n\n' + line({ type: "response.output_text.delta", delta: "valid" }) + line(complete))])) });
+  ok((await collect(malformedResponse.body)).text === chunk({ role: "assistant" }) + chunk({ content: "valid" }) + chunk({}, "stop") + "data: [DONE]\n\n",
+    "9.11 malformed provider records retain incumbent skip behavior without dropping valid neighbors");
+
+  let finishCancelled;
+  const cancelledGate = new Promise((accept) => { finishCancelled = accept; });
+  const cancelledTransport = transport(() => new Response(new ReadableStream({ async start(c) {
+    c.enqueue(enc.encode(line({ type: "response.output_text.delta", delta: "held" })));
+    await cancelledGate; c.enqueue(enc.encode(line(complete))); c.close();
+  } }), { status: 200 }));
+  const cancelledResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: cancelledTransport });
+  const cancelledReader = cancelledResponse.body.getReader();
+  await cancelledReader.read(); await cancelledReader.cancel(); finishCancelled();
+  await new Promise((accept) => setImmediate(accept));
+  ok((await cancelledReader.read()).done && cancelledTransport.calls.length === 1,
+    "9.12 a cancelled consumer receives no later success or retry; no stronger upstream cancellation contract is claimed");
+}
+
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

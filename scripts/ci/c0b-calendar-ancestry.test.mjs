@@ -6,6 +6,7 @@ import { incumbentSourcePaths, matchesIncumbentDeclaration, validateIncumbentRes
 
 const chat = readFileSync('supabase/functions/paige-ai-chat/index.ts', 'utf8');
 const sources = new Map(incumbentSourcePaths.map(path => [path, readFileSync(path, 'utf8')]));
+const controlTransportPath = 'supabase/functions/_shared/paige-turn/control-transport.ts';
 // Exercise the actual admission consumer. The validator's tools map retains
 // diagnostic progress; findings, rather than an empty map, invalidate admission.
 const consumerSource = ts.createSourceFile('registry-lint.mjs', readFileSync('scripts/ci/paige-spine-registry-lint.mjs', 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -27,10 +28,12 @@ const changes = [
   ['final email sender freshness', 'supabase/functions/send-message/index.ts', 'await assertCurrentEmailSender();', 'void 0;'],
   ['closed-read declaration authority', 'supabase/functions/_shared/paige-turn/interactive.ts', 'action?.classification === "read" && action.riskPolicyKey === "read_only" && action.approvalAuthority === "none"', 'true'],
   ['closed-read effect contradiction refusal', 'supabase/functions/_shared/paige-turn/interactive.ts', '!readHasEffectContradiction(r) && declaresClosedRead(tool, spine)', 'declaresClosedRead(tool, spine)'],
+  ['control-body byte-limit refusal', controlTransportPath, 'if (length + value.byteLength > CHAT_CONTROL_MAX_BODY_BYTES)', 'if (false)'],
 ];
 
 test('reviewed Calendar, Task, email and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 110);
+  assert.equal(incumbentSourcePaths.length, 111);
+  assert.ok(incumbentSourcePaths.includes(controlTransportPath), 'bounded control reader must remain a restrictive ancestry input');
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);
   assert.equal(baseline.tools.size, 29);

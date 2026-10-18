@@ -37,7 +37,7 @@ begin
  perform 1 from public.paige_chat_interactive_rollout where singleton and active for share;
  if not found then raise exception 'REMINDER_RUNTIME_UNAVAILABLE' using errcode='42501'; end if;
  select * into t from public.paige_chat_threads where id=p_thread for update;
- if not found or p_intent is null or p_runtime_request_nonce is null
+ if not found or p_intent is null
   or t.caller_user_id is distinct from p_actor or t.tenant_id is distinct from p_tenant
   or t.interactive_latest_intent is distinct from p_intent
   or t.interactive_executor_intent is distinct from p_intent
@@ -57,9 +57,11 @@ begin
  -- exclusion. A malformed/stale/non-normal binding is an authority refusal.
  if b is null then
   if u.interactive_runtime_binding is not null then raise exception 'REMINDER_RUNTIME_UNAVAILABLE' using errcode='42501'; end if;
+  -- A missing nonce is truthful only for the proved incumbent unbound pair.
+  -- This returns compatibility before consumption/work; it never permits effect.
   return null;
  end if;
- if b->>'v' is distinct from '1' or b->>'intent_id' is distinct from p_intent::text
+ if p_runtime_request_nonce is null or b->>'v' is distinct from '1' or b->>'intent_id' is distinct from p_intent::text
   or b->>'request_nonce' is distinct from p_runtime_request_nonce::text
   or b->>'function_slug' is distinct from 'paige-ai-chat' or b->>'mode' is distinct from 'normal' then
   raise exception 'REMINDER_RUNTIME_UNAVAILABLE' using errcode='42501'; end if;

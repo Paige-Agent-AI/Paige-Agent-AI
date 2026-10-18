@@ -141,7 +141,7 @@ async function drive(options = {}) {
     paige_chat_interactive_publication_context_v2: { data: true, error: null },
     paige_chat_interactive_settle: a => { receipts.push({ role: 'assistant', content: a.p_content, bundle_ref: a.p_bundle_ref }); return { data: id(16), error: null }; },
     record_capability_run: { data: id(17), error: null },
-    adopt_paige_reminder_approval: () => {
+    adopt_paige_reminder_approval: a => {
       if (options.afterAdopt === 'scope') state.tenant = id(99);
       if (options.afterAdopt === 'stop') state.stopped = true;
       if (options.afterAdopt === 'hold') state.hold = id(97);
@@ -149,6 +149,11 @@ async function drive(options = {}) {
       if (options.afterAdopt === 'abort') controller.abort('Neutral request withdrawal');
       if (options.adoptThrow) throw Error('PRIVATE_ADOPTION_LOST_ACK');
       if (Object.hasOwn(options, 'adoptReply')) return clone(options.adoptReply);
+      // The native ordinary-unbound exclusion still proves the actual current
+      // intent. A missing binding is not permission to omit that identity.
+      if (options.unsupported === 'unbound_runtime_compatibility'
+        && (a.p_intent !== intent || a.p_runtime_request_nonce !== null))
+        return { data: null, error: { code: '42501', message: 'PRIVATE_NATIVE_UNBOUND_INTENT_REFUSAL' } };
       if (options.unsupported) return { data: { v: 1, status: 'unsupported', proposal_id: proposal, unsupported_reason: options.unsupported }, error: null };
       state.proposals[0].consumed_at = new Date().toISOString();
       return { data: { v: 1, status: options.existing ? 'existing' : 'adopted', proposal_id: proposal, work_id: work,
@@ -227,8 +232,8 @@ if (!redOnly) {
     const r = await drive(options); assert.equal(r.calls('adopt_paige_reminder_approval').length, 1); assert.equal(r.calls('execute_paige_approved_reminder').length, 0);
     assert.ok(claims(r).length > 0, 'incumbent scoped CAS remains required');
     assert.equal(r.calls('plan_set_reminder').length, options.tenantless ? 0 : 1, 'same incumbent Planning scope gate');
-    if (options.threadless || options.tenantless) {
-      assert.equal(r.calls('adopt_paige_reminder_approval')[0].args.p_intent, null, 'absent bound runtime stays an actual NULL pair');
+    if (options.threadless || options.tenantless || options.unbound) {
+      assert.equal(r.calls('adopt_paige_reminder_approval')[0].args.p_intent, options.threadless ? null : intent, 'actual current intent is preserved independently of the binding');
       assert.equal(r.calls('adopt_paige_reminder_approval')[0].args.p_runtime_request_nonce, null, 'no fabricated runtime');
     }
     return { recording: recorded(r) };

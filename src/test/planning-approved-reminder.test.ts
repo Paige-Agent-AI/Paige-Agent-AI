@@ -43,6 +43,32 @@ function unavailable(result: ReminderAdoptionResult | ReminderExecutionResult | 
 
 describe('approved reminder adoption transport', () => {
   describe('absent interactive runtime', () => {
+    it('preserves the actual unbound intent and absent nonce for native compatibility', async () => {
+      const p = service({ v: 1, status: 'unsupported', proposal_id: selected.id,
+        unsupported_reason: 'unbound_runtime_compatibility' });
+      const result = await adoptApprovedReminder({ ...adoptInput(p),
+        runtime: { intentId: runtime.intentId, requestNonce: null } } as Parameters<typeof adoptApprovedReminder>[0]);
+      expect(result).toMatchObject({ kind: 'unsupported', reason: 'unbound_runtime_compatibility',
+        legacyFallbackEligible: true, retryAllowed: false });
+      expect(p.rpc).toHaveBeenCalledExactlyOnceWith('adopt_paige_reminder_approval', expect.objectContaining({
+        p_intent: runtime.intentId, p_runtime_request_nonce: null,
+      }));
+    });
+    it('never accepts a fresh adopted acknowledgement for an intent without a bound nonce', async () => {
+      const p = service();
+      unavailable(await adoptApprovedReminder({ ...adoptInput(p),
+        runtime: { intentId: runtime.intentId, requestNonce: null } } as Parameters<typeof adoptApprovedReminder>[0]), 'adoption');
+      expect(p.rpc).toHaveBeenCalledTimes(1);
+    });
+    it('does not borrow a later nonce for an originally unbound intent', async () => {
+      const p = service();
+      const input = { ...adoptInput(p), runtime: { intentId: runtime.intentId, requestNonce: null } } as Parameters<typeof adoptApprovedReminder>[0];
+      p.rpc.mockImplementation(async () => { input.runtime = runtime; return { data: adoption(), error: null }; });
+      unavailable(await adoptApprovedReminder(input), 'adoption');
+      expect(p.rpc).toHaveBeenCalledExactlyOnceWith('adopt_paige_reminder_approval', expect.objectContaining({
+        p_intent: runtime.intentId, p_runtime_request_nonce: null,
+      }));
+    });
     it.each(['tenantless_native_compatibility', 'threadless_native_compatibility', 'nonmember_native_compatibility'] as const)(
       'passes actual NULLs to native %s eligibility without inventing an executor', async reason => {
         const p = service({ v: 1, status: 'unsupported', proposal_id: selected.id, unsupported_reason: reason });

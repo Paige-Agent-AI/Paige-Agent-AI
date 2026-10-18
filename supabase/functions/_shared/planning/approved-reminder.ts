@@ -16,6 +16,9 @@ export type ReminderResolutionPort = {
   rpc(name: 'resolve_paige_reminder_approval', args: Record<string, unknown>): PromiseLike<RpcReply>;
 };
 export type ReminderRuntime = { intentId: string; requestNonce: string };
+// Adoption may inspect an ordinary current intent whose native executor binding
+// is absent. Its real intent remains mandatory; absence never supplies a nonce.
+export type ReminderAdoptionRuntime = { intentId: string; requestNonce: string | null };
 export type ReminderScope = { actorId: string; tenantId: string | null; threadId: string | null; clientId: string | null };
 export type ReminderStoredArgs = Readonly<{ title: string; remind_at: string;
   target?: string | null; target_user_id?: string | null; channel?: string | null;
@@ -97,13 +100,13 @@ const sameInstant = (a: string, b: string) => Date.parse(a) === Date.parse(b)
 const current = (read: unknown) => { try { return typeof read === 'function' && read() === true; } catch { return false; } };
 const failure = (phase: ReminderAdapterFailure['phase'], rpcAttempted: boolean, reason: ReminderAdapterFailure['reason']): ReminderAdapterFailure =>
   ({ kind: 'unavailable', outcome: 'unverified', phase, rpcAttempted, reason, legacyFallbackEligible: false, retryAllowed: false });
-const validRuntime = (r: ReminderRuntime | null | undefined): r is ReminderRuntime => !!r && uuid(r.intentId) && uuid(r.requestNonce);
+const validRuntime = (r: ReminderAdoptionRuntime | null | undefined): r is ReminderRuntime => !!r && uuid(r.intentId) && uuid(r.requestNonce);
 const validScope = (s: ReminderScope) => !!s && uuid(s.actorId) && nullableUuid(s.tenantId)
   && nullableUuid(s.threadId) && nullableUuid(s.clientId);
 
 export async function adoptApprovedReminder(input: {
   service: ReminderAdoptionPort; selectedProposal: SelectedReminderProposal; scope: ReminderScope;
-  confirmationRequestNonce: string; runtime: ReminderRuntime | null;
+  confirmationRequestNonce: string; runtime: ReminderAdoptionRuntime | null;
   /** Withdrawal only: never interpreted as authentication, approval or authority. */
   current(): boolean;
 }): Promise<ReminderAdoptionResult> {
@@ -117,16 +120,17 @@ export async function adoptApprovedReminder(input: {
     const hasRequestRuntime = validRuntime(requestRuntime);
     if (!p || !uuid(p.id) || !uuid(p.issuedNonce) || typeof p.fingerprint !== 'string' || !/^[0-9a-f]{16}$/.test(p.fingerprint)
       || !uuid(input.confirmationRequestNonce) || sameId(p.issuedNonce, input.confirmationRequestNonce)
-      || (requestRuntime !== null && !hasRequestRuntime) || !validScope(s) || !args || typeof input.service?.rpc !== 'function')
+      || (requestRuntime !== null && (!requestRuntime || !uuid(requestRuntime.intentId) || !nullableUuid(requestRuntime.requestNonce)))
+      || !validScope(s) || !args || typeof input.service?.rpc !== 'function')
       return failure('adoption', false, 'invalid_input');
     const proposalId = p.id.toLowerCase();
     const rpcArgs = { p_proposal_id: proposalId, p_actor: s.actorId.toLowerCase(), p_tenant: s.tenantId?.toLowerCase() ?? null,
       p_thread: s.threadId?.toLowerCase() ?? null, p_client: s.clientId?.toLowerCase() ?? null,
       p_fingerprint: p.fingerprint, p_issued_nonce: p.issuedNonce.toLowerCase(), p_request_nonce: input.confirmationRequestNonce.toLowerCase(),
-      // Some incumbent compatibility classes have no interactive executor. Pass
-      // that actual absence to the native eligibility check; never mint a pair.
+      // Preserve the actual intent even when its executor is genuinely unbound.
+      // Native scope/current-intent checks decide compatibility; never mint a nonce.
       p_intent: requestRuntime?.intentId.toLowerCase() ?? null,
-      p_runtime_request_nonce: requestRuntime?.requestNonce.toLowerCase() ?? null };
+      p_runtime_request_nonce: requestRuntime?.requestNonce?.toLowerCase() ?? null };
     if (!current(fence)) return failure('adoption', false, 'stale');
     attempted = true;
     const reply = await input.service.rpc('adopt_paige_reminder_approval', rpcArgs);

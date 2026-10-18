@@ -8978,8 +8978,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             scope: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null,
               threadId: payloadThreadId ?? null, clientId: scopedClientId ?? null },
             confirmationRequestNonce: requestNonce,
-            runtime: validatedData.requestIntentId && runtimeIdentity
-              ? { intentId: validatedData.requestIntentId, requestNonce: runtimeIdentity.requestNonce } : null,
+            runtime: validatedData.requestIntentId
+              ? { intentId: validatedData.requestIntentId, requestNonce: runtimeIdentity?.requestNonce ?? null } : null,
             current: () => !req.signal.aborted,
           });
           stoppedReminderClaims.set(fp, { rpcAttempted: adoption.kind !== "unavailable" || adoption.rpcAttempted });

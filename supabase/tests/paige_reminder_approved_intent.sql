@@ -540,5 +540,85 @@ do $$declare pid uuid; wid uuid; th uuid; r jsonb; original jsonb; original_audi
  perform pg_temp.assert_true((select pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(jsonb_object_agg(key,value order by key desc)::text,'UTF8')),'hex')
   from jsonb_each((select request_payload->'native_args' from public.paige_durable_work where id=wid)))=original_audit->>'approved_reminder_args_sha256','canonical jsonb key order cannot change normalized-args digest');
 end $$;
+-- Pass actual absence, never a fixture-generated runtime nonce. This differs from
+-- pg_temp.adopt's incumbent non-NULL default and exercises the real ten-arg ABI.
+create function pg_temp.adopt_nullable_nonce(pid uuid, current_intent uuid, runtime_nonce uuid)
+returns jsonb language plpgsql as $$
+declare p public.paige_pending_confirmations%rowtype;
+begin
+ select * into strict p from public.paige_pending_confirmations where id=pid;
+ return public.adopt_paige_reminder_approval(p.id,p.user_id,p.tenant_id,p.thread_id,p.scoped_client_id,
+  p.fingerprint,p.issued_in_request,'a2300000-0000-4000-8000-000000000041',current_intent,runtime_nonce);
+end $$;
+
+do $$declare pid uuid; th uuid; wid uuid; r jsonb; field text; n integer:=600; selected public.paige_pending_confirmations%rowtype;
+ current_intent uuid:='a2300000-0000-4000-8000-000000000050'; supplied_intent uuid;
+ before_effects jsonb; before_proposal jsonb; before_work jsonb;
+begin
+ pid:=pg_temp.reminder_case(n,'{}',false);
+ select thread_id,to_jsonb(p) into th,before_proposal from public.paige_pending_confirmations p where id=pid;
+ perform pg_temp.assert_true((select interactive_runtime_binding is null from public.paige_chat_threads where id=th)
+  and (select count(*)=1 and bool_and(interactive_runtime_binding is null) from public.paige_chat_turns
+   where thread_id=th and role='user' and interactive_intent_id=current_intent),'real incumbent thread AND admitted user turn are unbound');
+ select jsonb_build_array((select count(*) from public.paige_durable_work),(select count(*) from public.plan_items),
+  (select count(*) from public.audit_logs),(select count(*) from public.paige_workspace_events)) into before_effects;
+ select * into strict selected from public.paige_pending_confirmations where id=pid;
+ set local role service_role;
+ r:=public.adopt_paige_reminder_approval(selected.id,selected.user_id,selected.tenant_id,selected.thread_id,selected.scoped_client_id,
+  selected.fingerprint,selected.issued_in_request,'a2300000-0000-4000-8000-000000000041',current_intent,null);
+ reset role;
+ perform pg_temp.assert_true(r=jsonb_build_object('v',1,'status','unsupported','unsupported_reason','unbound_runtime_compatibility','proposal_id',pid),
+  'current unbound intent with actual NULL nonce returns only named compatibility');
+ perform pg_temp.assert_true((select to_jsonb(p)=before_proposal from public.paige_pending_confirmations p where id=pid),'NULL-nonce compatibility never consumes or rewrites approval');
+ perform pg_temp.assert_true(before_effects=jsonb_build_array((select count(*) from public.paige_durable_work),(select count(*) from public.plan_items),
+  (select count(*) from public.audit_logs),(select count(*) from public.paige_workspace_events)),'NULL-nonce compatibility creates no work/reminder/audit/Rail');
+
+ foreach field in array array['bound','no_intent','wrong_intent','latest','executor','admitted','admission','hold','stop','rollout',
+  'turn_binding_only','thread_binding_only','missing_turn','consumed','expired','policy_off'] loop
+  n:=n+1;pid:=pg_temp.reminder_case(n,'{}',field='bound');
+  select thread_id into th from public.paige_pending_confirmations where id=pid;
+  supplied_intent:=current_intent;
+  begin
+   case field
+    when 'no_intent' then supplied_intent:=null;
+    when 'wrong_intent' then supplied_intent:='a2300000-0000-4000-8000-000000000099';
+    when 'latest' then update public.paige_chat_threads set interactive_latest_intent=gen_random_uuid() where id=th;
+    when 'executor' then update public.paige_chat_threads set interactive_executor_intent=null where id=th;
+    when 'admitted' then update public.paige_chat_threads set interactive_admitted_intent=gen_random_uuid() where id=th;
+    when 'admission' then update public.paige_chat_threads set interactive_admission='conversational' where id=th;
+    when 'hold' then update public.paige_chat_threads set interactive_recovery_hold=gen_random_uuid(),interactive_executor_intent=null where id=th;
+    when 'stop' then perform public.paige_chat_interactive_begin_v2(th,null,current_intent,'',false,true,true);
+    when 'rollout' then update public.paige_chat_interactive_rollout set active=false;
+    when 'turn_binding_only' then update public.paige_chat_turns set interactive_runtime_binding='{"v":1}' where thread_id=th and role='user';
+    when 'thread_binding_only' then update public.paige_chat_threads set interactive_runtime_binding='{"v":1}' where id=th;
+    when 'missing_turn' then delete from public.paige_chat_turns where thread_id=th and role='user';
+    when 'consumed' then update public.paige_pending_confirmations set consumed_at=clock_timestamp() where id=pid;
+    when 'expired' then update public.paige_pending_confirmations set expires_at=clock_timestamp()-interval '1 second' where id=pid;
+    when 'policy_off' then insert into public.tenant_tool_autonomy values('a2300000-0000-4000-8000-000000000010','plan_set_reminder','off');
+    else null;
+   end case;
+   select to_jsonb(p) into before_proposal from public.paige_pending_confirmations p where id=pid;
+   select jsonb_build_array((select count(*) from public.paige_durable_work),(select count(*) from public.plan_items),
+    (select count(*) from public.audit_logs),(select count(*) from public.paige_workspace_events)) into before_effects;
+   perform pg_temp.refuses(format('select pg_temp.adopt_nullable_nonce(%L,%L,null)',pid,supplied_intent),'42501','NULL nonce preserves native refusal: '||field);
+   perform pg_temp.assert_true((select to_jsonb(p)=before_proposal from public.paige_pending_confirmations p where id=pid),'NULL-nonce refusal leaves exact proposal unchanged: '||field);
+   perform pg_temp.assert_true(before_effects=jsonb_build_array((select count(*) from public.paige_durable_work),(select count(*) from public.plan_items),
+    (select count(*) from public.audit_logs),(select count(*) from public.paige_workspace_events)),'NULL-nonce refusal has no work/reminder/audit/Rail effect: '||field);
+   raise exception 'rollback NULL-nonce refusal fixture' using errcode='Z0001';
+  exception when sqlstate 'Z0001' then null;end;
+ end loop;
+ -- Compatibility observation never becomes permission for native execution.
+ pid:=pg_temp.reminder_case(620);r:=pg_temp.adopt(pid);wid:=(r->>'work_id')::uuid;
+ select thread_id,to_jsonb(w) into th,before_work from public.paige_durable_work w where id=wid;
+ update public.paige_chat_threads set interactive_runtime_binding=null where id=th;
+ update public.paige_chat_turns set interactive_runtime_binding=null where thread_id=th and role='user';
+ select jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+  (select count(*) from public.paige_workspace_events)) into before_effects;
+ perform pg_temp.refuses(format('select public.execute_paige_approved_reminder(%L,%L,%L,null,%L,null)',wid,
+  'a2300000-0000-4000-8000-000000000010',th,current_intent),'42501','unbound NULL-nonce compatibility cannot dispatch a sealed reminder');
+ perform pg_temp.assert_true((select to_jsonb(w)=before_work from public.paige_durable_work w where id=wid),'unbound execution leaves claim/dispatch marker/terminal unchanged');
+ perform pg_temp.assert_true(before_effects=jsonb_build_array((select count(*) from public.plan_items),(select count(*) from public.audit_logs),
+  (select count(*) from public.paige_workspace_events)),'unbound execution creates no reminder/audit/Rail');
+end $$;
 select 'REMINDER_APPROVED_INTENT_PASS='||last_value from pg_temp.reminder_assertion_count;
 rollback;

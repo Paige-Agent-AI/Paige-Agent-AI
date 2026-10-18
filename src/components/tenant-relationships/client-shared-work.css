@@ -1,0 +1,94 @@
+/* E09 Slice 3 — "Shared with {client}" on the Solo client record, under "Where {client} stands".
+   Operate mode in the record's own pg-token world: one list of this client's work, each row naming
+   the item, its state and due date, and a switch for whether the client sees it. No card grid, no
+   eyebrow, no coloured stripe, no gold — sharing is a visibility setting, not an approval, so the
+   switch is the record's indigo violet. Every transition sits behind prefers-reduced-motion. */
+.trc-shared { container-type: inline-size; }
+.trc-shared-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 13px 14px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.trc-shared-heading { display: grid; gap: 4px; min-width: 0; flex: 1 1 18rem; }
+.trc-shared-heading h3 { margin: 0; overflow-wrap: anywhere; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
+.trc-shared-heading p { margin: 0; max-width: 62ch; color: var(--pg-muted); font-size: 12.5px; line-height: 1.45; }
+.trc-shared-meta { display: flex; flex-wrap: nowrap; align-items: center; gap: 2px 6px; color: var(--pg-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* "Shared N · Private M": the count leads, and each half narrows the list. Quiet text, not chips —
+   the pressed half takes the ink colour and a hairline underline, never a fill or a second accent. */
+.trc-shared-filter { display: inline-flex; align-items: center; gap: 0; }
+.trc-shared-filter > span { color: var(--pg-muted); padding: 0 1px; }
+.trc-shared-filter-btn, .trc-shared-refresh { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 0; border-radius: var(--pg-r-chip); background: transparent; color: var(--pg-ink-2); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.trc-shared-filter-btn .trc-shared-count { color: var(--pg-ink); font-variant-numeric: tabular-nums; }
+.trc-shared-filter-btn { color: var(--pg-muted); }
+.trc-shared-filter-btn[aria-pressed="true"] { color: var(--pg-ink); box-shadow: inset 0 -2px 0 -1px currentColor; border-radius: 0; }
+.trc-shared-refresh { color: var(--pg-muted); font-weight: 500; }
+.trc-shared-refresh svg { width: 13px; height: 13px; }
+.trc-shared-filter-btn:hover, .trc-shared-refresh:hover:not([aria-disabled="true"]) { color: var(--pg-ink); background: var(--pg-surface); }
+.trc-shared-refresh[aria-disabled="true"] { cursor: progress; }
+.trc-shared-filter-btn:focus-visible, .trc-shared-refresh:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+.trc-shared-connect { margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--pg-line-soft); background: var(--pg-surface); color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; }
+
+.trc-shared-rows { margin: 0; padding: 0; list-style: none; }
+.trc-shared-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "item control" "note note"; align-items: center; gap: 4px 16px; padding: 8px 14px; }
+.trc-shared-row + .trc-shared-row { border-top: 1px solid var(--pg-line-soft); }
+.trc-shared-item { grid-area: item; display: grid; gap: 2px; min-width: 0; padding: 4px 0; }
+.trc-shared-item strong { color: var(--pg-ink); font: 600 14px/1.35 var(--pg-font-ui, inherit); overflow-wrap: anywhere; }
+.trc-shared-item span { color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trc-shared-item .trc-shared-quiet-line { color: var(--pg-muted); }
+.trc-shared-control { grid-area: control; justify-self: end; }
+
+/* The whole label is the target: 44px tall, so the 24px switch is never the only thing to hit. */
+.trc-shared-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 2px 0 8px; border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: 12.5px; font-weight: 600; cursor: pointer; user-select: none; }
+.trc-shared-toggle > span { min-width: 4.5rem; text-align: right; }
+.trc-shared-row[data-shared] .trc-shared-toggle > span { color: var(--pg-ink); }
+.trc-shared .trc-shared-switch[data-state="unchecked"] { border-color: var(--pg-muted); background: transparent; }
+.trc-shared .trc-shared-switch > span { background: var(--pg-muted); box-shadow: 0 1px 2px color-mix(in srgb, var(--pg-env) 40%, transparent); }
+.trc-shared .trc-shared-switch[data-state="checked"] { border-color: var(--pg-violet); background: var(--pg-violet); }
+.trc-shared .trc-shared-switch[data-state="checked"] > span { background: var(--pg-canvas); }
+.trc-shared .trc-shared-switch:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; box-shadow: none; }
+.trc-shared .trc-shared-switch:disabled { opacity: .6; cursor: progress; }
+.trc-shared-private { display: inline-flex; align-items: center; min-height: 44px; color: var(--pg-muted); font-size: 12px; }
+
+.trc-shared-note { grid-area: note; margin: 0 0 6px; padding: 8px 10px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-surface); color: var(--pg-ink); font-size: 12.5px; line-height: 1.45; }
+.trc-shared-note[data-tone="ok"] { border-color: color-mix(in srgb, var(--pg-positive) 45%, var(--pg-line)); }
+.trc-shared-note[data-tone="warn"] { border-color: color-mix(in srgb, var(--pg-warning) 50%, var(--pg-line)); }
+.trc-shared-note[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative) 55%, var(--pg-line)); }
+
+.trc-shared-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); }
+.trc-shared-foot p { margin: 0; color: var(--pg-muted); font-size: 11.5px; line-height: 1.45; }
+.trc-shared-add, .trc-shared-quiet { display: inline-flex; width: max-content; min-height: 44px; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-surface); font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.trc-shared-add { margin-left: auto; }
+.trc-shared-add svg, .trc-shared-quiet svg { width: 13px; height: 13px; }
+.trc-shared-add:hover, .trc-shared-quiet:hover:not([aria-disabled="true"]) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.trc-shared-quiet[aria-disabled="true"] { opacity: .55; cursor: progress; }
+.trc-shared-add:focus-visible, .trc-shared-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+.trc-shared-empty, .trc-shared-state { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-shared-empty p, .trc-shared-state p { margin: 0; max-width: 62ch; }
+.trc-shared-empty strong { color: var(--pg-ink); font-size: 13.5px; }
+.trc-shared-empty .trc-shared-add { margin: 4px 0 0; }
+
+.trc-shared-skeleton b, .trc-shared-skeleton i { display: block; height: 12px; border-radius: 6px; background: var(--pg-line-soft); }
+.trc-shared-skeleton { grid-template-areas: "item control" "meta control"; min-height: 56px; }
+.trc-shared-skeleton b:first-child { grid-area: item; width: 55%; height: 14px; }
+.trc-shared-skeleton b:nth-child(2) { grid-area: meta; width: 35%; }
+.trc-shared-skeleton i { grid-area: control; width: 44px; height: 24px; border-radius: var(--pg-r-pill); }
+
+.trc-shared-nowrap { white-space: nowrap; }
+.trc-shared-item .trc-shared-fact { display: inline; color: inherit; }
+@container (max-width: 420px) {
+  /* A phone's record pane: the facts take the full width and the switch sits beneath them, left-aligned. */
+  .trc-shared-row { grid-template-columns: minmax(0, 1fr); grid-template-areas: "item" "control" "note"; gap: 0; }
+  .trc-shared-control { justify-self: start; }
+  .trc-shared-toggle { flex-direction: row-reverse; padding: 0; }
+  .trc-shared-toggle > span { min-width: 0; text-align: left; }
+  .trc-shared-private { min-height: 32px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .trc-shared-content > * { animation: trc-shared-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-shared-note { animation: trc-shared-in 160ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-shared-skeleton b, .trc-shared-skeleton i { animation: trc-shared-pulse 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trc-shared .trc-shared-switch, .trc-shared .trc-shared-switch > span { transition: none; }
+}
+@keyframes trc-shared-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes trc-shared-pulse { 50% { opacity: .55; } }

@@ -174,6 +174,12 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // act where the visibility decision belongs." This IS that separate act. The two entries are the
   // two halves of one sentence, and they only stay coherent together.
   ["crm_file_document", "high", "can put a document in front of the client, which cannot be undone"],
+  // E09 Slice 3. Sharing a work item puts its title, state and due date in front of the client in
+  // their portal; unsharing takes it away from someone who may already be relying on it. Both
+  // directions change what a client sees, so the tool is `high` whatever its `shared` argument says
+  // (rule 2: nothing in a request lowers a class). Its RPC re-proves owner/admin of the caller's own
+  // active workspace and refuses a reminder, an unlinked or cancelled item, and a stale version.
+  ["plan_item_set_client_share", "high", "changes what a client can see in their portal"],
 
   // ── high: spends money ────────────────────────────────────────────────────────────────────
   ["marketplace_install", "high", "installs a paid capability"],

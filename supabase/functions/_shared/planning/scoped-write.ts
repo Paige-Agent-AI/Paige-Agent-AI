@@ -63,9 +63,17 @@ function spec(tool: string, a: Record<string, unknown>, scope: PlanningScope): S
     plan_add_milestone: ['title', 'summary', 'plan_id', 'assigned_to_user_id', 'priority', 'due_at'],
     plan_assign_task: ['title', 'summary', 'assigned_to_user_id', 'priority', 'plan_id', 'milestone_id', 'due_at', 'contact_id'],
     plan_update_item: ['item_id', 'expected_updated_at', 'status', 'due_at', 'assigned_to_user_id', 'priority'],
+    plan_item_set_client_share: ['item_id', 'shared', 'expected_updated_at'],
   };
   requireInput(allowed[tool] && Object.keys(a).every(k => allowed[tool].includes(k)));
   const common = { p_expected_actor_id: scope.actorId, p_expected_tenant_id: scope.tenantId };
+  if (tool === 'plan_item_set_client_share') {
+    const share = clientShareArgs(a);
+    requireInput(share);
+    return { rpc: 'plan_item_set_client_share', table: 'plan_items',
+      args: { ...common, p_item_id: share.itemId, p_shared: share.shared, p_expected_updated_at: share.expectedUpdatedAt },
+      expected: { shared: share.shared }, itemId: share.itemId, sourceVersion: share.expectedUpdatedAt };
+  }
   if (tool === 'plan_update_item') {
     requireInput(instant(a.expected_updated_at));
     const expected: Record<string, unknown> = {};
@@ -128,11 +136,31 @@ export async function writeScopedPlanning(input: {
       return fail('refused', 'This change has not been admitted for the current person and workspace.');
     if (typeof input.operationIdentity !== 'string' || !/^[a-zA-Z0-9:._-]{1,200}$/.test(input.operationIdentity))
       return fail('unavailable', 'The original change could not be identified safely. Review it again.');
-    if (!['plan_create', 'plan_add_milestone', 'plan_assign_task', 'plan_update_item'].includes(a.capability))
+    if (!['plan_create', 'plan_add_milestone', 'plan_assign_task', 'plan_update_item', 'plan_item_set_client_share'].includes(a.capability))
       return fail('unavailable', 'This kind of planning change is not supported through this path yet.');
     const args = object(input.decision.args);
     if (!args) return fail('refused', 'The requested work details are incomplete or unsupported.');
     const request = spec(a.capability, args, input.scope);
+    if (a.capability === 'plan_item_set_client_share') {
+      // The allowlist above has already refused any extra key (a tenant_id included). The share
+      // path then owns its own write and readback; this adapter only re-proves scope around it.
+      const initial = await input.caller.getScope();
+      if (!isCurrent() || !matchesScope(initial)) return fail('scope_changed', 'The current person or workspace changed.');
+      const shared = await setPlanItemClientShare({
+        caller: { rpc: (n, x) => input.caller.rpc(n, x), readItem: (itemId) => input.caller.readRecord('plan_items', itemId, input.scope) },
+        expectedActorId: input.scope.actorId, expectedTenantId: input.scope.tenantId, args, current: isCurrent,
+      });
+      attempted = shared.success === true || shared.writeAttempted;
+      const after = await input.caller.getScope();
+      if (!isCurrent() || !matchesScope(after)) return fail('scope_changed', 'The result belongs to the original request, not the current workspace.');
+      if (shared.success === true) return { outcome: 'source_verified', operationIdentity: input.operationIdentity,
+        record: { table: 'plan_items', id: shared.itemId },
+        readback: { id: shared.itemId, shared: shared.shared, shared_at: shared.sharedAt, updated_at: shared.updatedAt },
+        proofBoundary: 'planning_record_only', retryAllowed: false };
+      const outcome = shared.reason === 'outcome_unknown' ? 'unverified' : shared.reason === 'scope_changed' ? 'scope_changed'
+        : shared.reason === 'changed' ? 'conflict' : 'refused';
+      return fail(outcome, shared.message);
+    }
     const initialScope = await input.caller.getScope();
     if (!isCurrent() || !matchesScope(initialScope)) return fail('scope_changed', 'The current person or workspace changed.');
     if (request.itemId) {
@@ -181,4 +209,116 @@ export async function writeScopedPlanning(input: {
     if (!isCurrent()) return fail('scope_changed', 'The active request changed.');
     return attempted ? uncertain() : fail('unavailable', 'The original work context could not be inspected.');
   }
+}
+
+// ─── E09 Slice 3: share one client-linked work item with that client's portal ───────────────────
+//
+// ONE implementation, two callers: paige-ai-chat calls it directly once its confirm gate has cleared
+// the approval card (the tool is `high` in action-risk.ts), and writeScopedPlanning delegates to it
+// after its own admission checks. It runs on the CALLER's JWT: public.plan_item_set_client_share is
+// SECURITY DEFINER and re-proves, from auth.uid(), that the caller is the expected actor, that the
+// expected tenant is their active workspace, and that they are its owner or admin.
+//
+// THE TENANT AND ACTOR NEVER COME FROM THE MODEL. Only `item_id`, `shared` and `expected_updated_at`
+// are read from the arguments; anything else (a `tenant_id`, an actor id) is ignored here and never
+// reaches the RPC. The expected tenant and actor are the server-resolved caller.
+//
+// SUCCESS IS A READBACK, NOT AN ACKNOWLEDGEMENT. `ok:true` alone proves nothing reached the row; the
+// item is re-read on the caller's own session and its `client_shared_at` must be in the asked state.
+// A refusal the database answered (`ok:false`, or an error carrying a SQLSTATE) proves nothing was
+// written. Anything else after the call was sent is `outcome_unknown`, and is never retried here.
+
+export type ClientShareCaller = {
+  rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: unknown }>;
+  /** Caller-JWT (RLS) read of one plan_items row in the given tenant: id, tenant_id, client_shared_at, updated_at. */
+  readItem(itemId: string, tenantId: string): PromiseLike<{ data: unknown; error: unknown }>;
+};
+export type ClientShareFailure =
+  | 'bad_request' | 'no_workspace' | 'scope_changed' | 'not_for_account' | 'not_found' | 'not_client_linked'
+  | 'not_shareable' | 'client_not_found' | 'changed' | 'refused' | 'outcome_unknown';
+export type ClientShareResult =
+  | { success: true; itemId: string; shared: boolean; replayed: boolean; sharedAt: string | null;
+      updatedAt: string; portalConnected: boolean | null }
+  | { success: false; reason: ClientShareFailure; message: string; writeAttempted: boolean; currentUpdatedAt?: string };
+
+const CLIENT_SHARE_MESSAGES: Record<ClientShareFailure, string> = {
+  bad_request: 'That needs the work item id, whether to share it, and the exact updated_at you read it at. Nothing was changed.',
+  no_workspace: 'The current workspace could not be confirmed. Nothing was changed.',
+  scope_changed: 'Only the owner or an admin of this workspace can change what a client sees, and only in the workspace they are working in now. Nothing was changed.',
+  not_for_account: 'Sharing work with a client is not available for this kind of account. Nothing was changed.',
+  not_found: 'That work item was not found in this workspace. Nothing was changed.',
+  not_client_linked: 'That work item is not linked to a client, so there is nobody to share it with. Nothing was changed.',
+  not_shareable: 'That item cannot be shared: reminders and cancelled work stay private. Nothing was changed.',
+  client_not_found: 'The client this item belongs to is no longer an active client here. Nothing was changed.',
+  changed: 'The item changed since it was read. Read it again (plan_list) and confirm the current version before sharing. Nothing was changed.',
+  refused: 'That change was not allowed. Nothing was changed.',
+  outcome_unknown: 'The change could not be confirmed. Check the item (plan_list) before doing anything else, and do not retry automatically.',
+};
+const SHARE_REFUSALS: Record<string, ClientShareFailure> = {
+  INVALID_REQUEST: 'bad_request', CLIENT_SHARE_UNAVAILABLE: 'not_for_account', ITEM_NOT_FOUND: 'not_found', ITEM_NOT_CLIENT_LINKED: 'not_client_linked',
+  ITEM_NOT_SHAREABLE: 'not_shareable', CONTACT_NOT_FOUND: 'client_not_found', ITEM_CHANGED: 'changed',
+};
+
+/** The only three arguments the share reads. Every other key — a tenant_id included — is ignored. */
+export function clientShareArgs(v: unknown): { itemId: string; shared: boolean; expectedUpdatedAt: string } | null {
+  const a = object(v);
+  if (!a || !uuid(a.item_id) || typeof a.shared !== 'boolean' || !instant(a.expected_updated_at)) return null;
+  return { itemId: a.item_id.toLowerCase(), shared: a.shared, expectedUpdatedAt: a.expected_updated_at };
+}
+
+export async function setPlanItemClientShare(input: {
+  caller: ClientShareCaller; expectedActorId: string | null | undefined; expectedTenantId: string | null | undefined;
+  args: unknown; current?: () => boolean;
+}): Promise<ClientShareResult> {
+  let attempted = false;
+  const fail = (reason: ClientShareFailure, extra: { currentUpdatedAt?: string } = {}): ClientShareResult =>
+    ({ success: false, reason, message: CLIENT_SHARE_MESSAGES[reason], writeAttempted: attempted, ...extra });
+  const isCurrent = () => { try { return input.current ? input.current() === true : true; } catch { return false; } };
+  const actor = input.expectedActorId, tenant = input.expectedTenantId;
+  if (!uuid(actor) || !uuid(tenant)) return fail('no_workspace');
+  const request = clientShareArgs(input.args);
+  if (!request) return fail('bad_request');
+  if (!isCurrent()) return fail('scope_changed');
+  let reply: { data: unknown; error: unknown };
+  try {
+    attempted = true;
+    reply = await input.caller.rpc('plan_item_set_client_share', {
+      p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_item_id: request.itemId,
+      p_shared: request.shared, p_expected_updated_at: request.expectedUpdatedAt,
+    });
+  } catch {
+    return fail('outcome_unknown');
+  }
+  if (reply.error) {
+    const code = String(object(reply.error)?.code ?? '');
+    // Only an answered SQL refusal proves its transaction rolled back. A gateway or network error
+    // can arrive after the database committed, so it is reported as unknown, never as "not applied".
+    if (!/^[0-9A-Z]{5}$/.test(code)) return fail('outcome_unknown');
+    attempted = false;
+    if (code === '42501') return fail('scope_changed');
+    if (code === '40001') return fail('changed');
+    if (['22023', '22P02', '23514', '23503'].includes(code)) return fail('bad_request');
+    return fail('refused');
+  }
+  const ack = object(reply.data);
+  if (ack?.ok === false) {
+    // The function answered with a named refusal and wrote nothing
+    // (public.plan_item_set_client_share, migration 20271110030000, steps 2-8).
+    attempted = false;
+    const reason = SHARE_REFUSALS[String(ack.error)] ?? 'refused';
+    return fail(reason, reason === 'changed' && instant(ack.updated_at) ? { currentUpdatedAt: ack.updated_at } : {});
+  }
+  if (!ack || ack.ok !== true || typeof ack.item_id !== 'string' || ack.item_id.toLowerCase() !== request.itemId
+    || ack.shared !== request.shared || typeof ack.replayed !== 'boolean') return fail('outcome_unknown');
+  if (!isCurrent()) return fail('outcome_unknown');
+  let read: { data: unknown; error: unknown };
+  try { read = await input.caller.readItem(request.itemId, tenant); } catch { return fail('outcome_unknown'); }
+  const row = object(read.data);
+  const sharedAt = row?.client_shared_at;
+  if (read.error || !row || typeof row.id !== 'string' || row.id.toLowerCase() !== request.itemId || row.tenant_id !== tenant
+    || !instant(row.updated_at) || !(sharedAt === null || instant(sharedAt)) || (sharedAt !== null) !== request.shared)
+    return fail('outcome_unknown');
+  return { success: true, itemId: request.itemId, shared: request.shared, replayed: ack.replayed,
+    sharedAt: sharedAt as string | null, updatedAt: row.updated_at as string,
+    portalConnected: typeof ack.portal_connected === 'boolean' ? ack.portal_connected : null };
 }

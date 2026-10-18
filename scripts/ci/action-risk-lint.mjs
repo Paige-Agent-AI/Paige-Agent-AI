@@ -596,6 +596,14 @@ if (chatSrc.includes('...AGREEMENT_TOOLS')) {
   if (!agreementTools.length) throw new Error('Agreement catalog could not be parsed');
   importedTools.push(...agreementTools);
 }
+// E09 Slice 3: the client-share planning tool enters Chat through its domain catalog, the same way.
+if (chatSrc.includes('...PLANNING_CLIENT_SHARE_TOOLS')) {
+  if (!/import\s*\{[^}]*PLANNING_CLIENT_SHARE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/planning_writes\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Planning client-share catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/planning_writes.ts', 'utf8');
+  const shareTools = [...source.matchAll(/\bname:\s*"(plan_item_set_client_share)"/g)].map(m => m[1]);
+  if (!shareTools.length) throw new Error('Planning client-share catalog could not be parsed');
+  importedTools.push(...shareTools);
+}
 if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
   if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/growth_form.ts', 'utf8');

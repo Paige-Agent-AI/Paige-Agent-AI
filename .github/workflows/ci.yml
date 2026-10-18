@@ -94,6 +94,10 @@ jobs:
         env:
           DURABLE_THREAD_PROOF_PORT: '5432'
         run: node scripts/proof/paige-durable-thread-detach.mjs
+      - name: Canonical exact reminder approval, native receipts and recovery controls in disposable PostgreSQL
+        env:
+          REMINDER_APPROVAL_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-reminder-approved-intent.mjs
       - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-projection.mjs --postgres
       - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof
@@ -930,6 +934,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.

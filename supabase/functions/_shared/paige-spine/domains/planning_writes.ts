@@ -10,7 +10,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 export const PLANNING_WRITE_CAPABILITIES = [
   {
     key: "planning.set_reminder", tool: "plan_set_reminder", selfDescribe: true,
-    idempotency: "Not idempotent: each call inserts a new reminder. Its native audit/receipt identity is not a request key; a blind retry can create another reminder. Existing SQL restricts team/other reminders to staff.",
+    idempotency: "Not idempotent as a general tool: the canonical nine-argument writer inserts on every call. Exact server-issued approvals in an ordinary owned thread with a bound runtime use one sealed durable intent and one atomic invocation; existing or uncertain claims are not blindly dispatched again. AUTO and explicitly excluded compatibility contexts retain the original writer and can duplicate on blind retry. Native staff checks for team/other reminders stay controlling.",
   },
   {
     key: "planning.create", tool: "plan_create", selfDescribe: true,

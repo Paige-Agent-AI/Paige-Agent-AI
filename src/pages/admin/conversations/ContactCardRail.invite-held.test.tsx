@@ -56,7 +56,7 @@ afterEach(() => { act(() => root.unmount()); host.remove(); });
 describe("Conversations card — a held portal invitation", () => {
   it("names the client, says Paige didn't send it, and offers no link to share", async () => {
     invoke.mockResolvedValue({ data: null, error: { message: "Edge Function returned a non-2xx status code",
-      context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }) } } });
+      context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD", hold: "contact" }) } } });
     await sendFromActions();
     expect(invoke).toHaveBeenCalledWith("send-portal-invite", { body: { token: "synthetic-token", email: contact.email } });
     expect(t.error).toHaveBeenCalledWith("Jordan Rivera has email turned off or on hold, so Paige didn't send the invitation.");

@@ -18,7 +18,7 @@ function harness(name, allowed, {providerOk=true,remindChannel='email',calendarT
  // suite; these controls must still reach and exercise the real provider floor.
  const data={internal_bookings:[booking],calendars:[calendar],tenants:[{id:'tenant',name:'Brand'}],plan_items:[reminder],tenant_invite_tokens:[{id:'invite',tenant_id:'tenant',contact_id:'contact',expires_at:'2099-01-01',email:'guest@example.test',kind:'consumer',revoked_at:null,uses:0,max_uses:1,last_used_at:null}],clients:[{id:'contact',tenant_id:'tenant',status:'active',merged_into_contact_id:null,do_not_contact:false,linked_user_id:null}],client_contact_methods:[{client_id:'contact',tenant_id:'tenant',kind:'email',is_primary:true,value:'guest@example.test'}]};
  fixtures?.({booking,calendar,data});
- const admin={rpc:async(rpc,args)=>{ if(rpc==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:rpc==='verify_cron_token'||(name==='send-portal-invite'&&rpc==='is_tenant_admin')?true:null,error:null};}, auth:{...(name==='send-portal-invite'?{getUser:async()=>({data:{user:{id:'controlled-owner'}},error:null})}:{}),admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null,payload=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(payload?.reminded_at){if(planFired)return {data:null,error:null};planFired=true;reminder.updated_at='2026-01-02T00:00:00Z';}return {data:{id:'reminder',updated_at:reminder.updated_at},error:null};}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;payload=args[0];writes.push({table,kind:prop,payload});}return query;};}});return query;}};
+ const admin={rpc:async(rpc,args)=>{ if(rpc==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:rpc==='verify_cron_token'||(name==='send-portal-invite'&&rpc==='is_tenant_admin')?true:null,error:null};}, auth:{...(name==='send-portal-invite'?{getUser:async()=>({data:{user:{id:'controlled-owner'}},error:null})}:{}),admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null,payload=null,write=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(payload?.reminded_at){if(planFired)return {data:null,error:null};planFired=true;reminder.updated_at='2026-01-02T00:00:00Z';}return {data:{id:'reminder',updated_at:reminder.updated_at},error:null};}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;payload=args[0];write={table,kind:prop,payload};writes.push(write);}else if(write&&['eq','is'].includes(prop))(write.filters??=[]).push([prop,...args]);return query;};}});return query;}};
  const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerOk?200:503});}});
  const helper=readFileSync(new URL('_shared/comms-provider-boundary.ts',base),'utf8').replace(/\bexport /g,'');
  vm.runInContext(stripTypeScriptTypes(helper),ctx);
@@ -643,4 +643,49 @@ test('send-portal-invite: the legacy token path holds an invitation to a client 
  const h=harness('send-portal-invite',true,{fixtures:optedOut});
  const res=await h.run({token:'valid',email:'guest@example.test'});const out=await res.json();
  assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');assert.equal(h.effects.length,0);
+});
+
+// E09 Slice 6 round 4 (verifier MEDIUM 1): a held legacy send must not leave the token it was handed live
+// for 30 days, or staff see "Invite pending" / "Cancel pending invitation" for an email that never went.
+// The revoke is the same lifecycle write the staff cancel path makes (PortalInvitationManager): stamp
+// revoked_at on that exact, still-unused consumer row.
+const revokeOf=(h)=>h.writes.filter(w=>w.table==='tenant_invite_tokens'&&w.kind==='update');
+function assertExactRevoke(h){
+ const revokes=revokeOf(h);assert.equal(revokes.length,1,'the minted token is revoked exactly once');
+ assert.deepEqual(Object.keys(revokes[0].payload),['revoked_at']);assert.ok(Number.isFinite(Date.parse(revokes[0].payload.revoked_at)));
+ const filters=JSON.stringify(revokes[0].filters);
+ for(const f of [['eq','id','invite'],['eq','tenant_id','tenant'],['eq','contact_id','contact'],['eq','kind','consumer'],['is','revoked_at',null],['is','last_used_at',null],['eq','uses',0],['is','portal_operation_id',null]])
+  assert.ok(filters.includes(JSON.stringify(f)),`revoke is scoped by ${JSON.stringify(f)}`);
+}
+const quietHours=({data})=>{const h=new Date().getUTCHours(),hm=(x)=>`${String((x+24)%24).padStart(2,'0')}:00:00`;
+ data.tenant_comms_preferences=[{autosend_dnd_enabled:true,autosend_dnd_start:hm(h-1),autosend_dnd_end:hm(h+2),autosend_dnd_timezone:'UTC',autosend_dnd_channels:['email']}];};
+test('send-portal-invite: a held send (first check) revokes the token it was handed and keeps the 409 shape',async()=>{
+ const h=harness('send-portal-invite',true,{fixtures:optedOut});const errs=console.error;console.error=()=>{};
+ let res;try{res=await h.run({token:'valid',email:'guest@example.test'});}finally{console.error=errs;}const out=await res.json();
+ assert.equal(res.status,409);assert.deepEqual(out,{ok:false,emailed:false,status:'held',code:'INVITATION_POLICY_HELD',hold:'contact'});
+ assert.equal(h.effects.length,0);assertExactRevoke(h);
+});
+test('send-portal-invite: a hold that appears at the final pre-provider check also revokes the token',async()=>{
+ let reads=0;const lateOptOut=({data})=>{Object.defineProperty(data,'paige_suppressions',{enumerable:true,get:()=>++reads>1?[{tenant_id:'tenant',contact_id:'contact',channel:'email',reason:'customer_request'}]:[]});};
+ const h=harness('send-portal-invite',true,{fixtures:lateOptOut});const errs=console.error;console.error=()=>{};
+ let res;try{res=await h.run({token:'valid',email:'guest@example.test'});}finally{console.error=errs;}const out=await res.json();
+ assert.equal(reads,2,'both pre-send checks ran');assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');
+ assert.equal(h.effects.length,0);assertExactRevoke(h);
+});
+test('send-portal-invite: the business\'s own email quiet hours are named as the cause, not the client',async()=>{
+ const h=harness('send-portal-invite',true,{fixtures:quietHours});const errs=console.error;console.error=()=>{};
+ let res;try{res=await h.run({token:'valid',email:'guest@example.test'});}finally{console.error=errs;}const out=await res.json();
+ assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');assert.equal(out.hold,'business_quiet_hours');
+ assert.equal(h.effects.length,0);assertExactRevoke(h);
+});
+test('send-portal-invite (verifier MINOR 2): a pre-send check that fails is not reported as a client hold, and nothing is sent',async()=>{
+ const broken=({data})=>{Object.defineProperty(data,'paige_suppressions',{enumerable:true,get:()=>{throw Error('suppression read unavailable');}});};
+ const h=harness('send-portal-invite',true,{fixtures:broken});const errs=console.error;console.error=()=>{};
+ let res;try{res=await h.run({token:'valid',email:'guest@example.test'});}finally{console.error=errs;}const out=await res.json();
+ assert.equal(res.status,503);assert.deepEqual(out,{ok:false,emailed:false,status:'unavailable',code:'INVITATION_POLICY_UNAVAILABLE'});
+ assert.equal(h.effects.length,0);assertExactRevoke(h);
+});
+test('send-portal-invite: an ordinary send revokes nothing',async()=>{
+ const h=harness('send-portal-invite',true);const res=await h.run({token:'valid',email:'guest@example.test'});
+ assert.equal(res.status,200);assert.equal(h.effects.length,1);assert.equal(revokeOf(h).length,0);
 });

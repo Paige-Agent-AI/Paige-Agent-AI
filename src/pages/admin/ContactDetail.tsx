@@ -49,7 +49,7 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { CATEGORY_LABEL, RISK_COLOR, type ApprovalCategory } from "@/lib/approvals";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
-import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 // Widened to string: the generated types do not know the contact-methods embed yet.
 const CONTACT_DETAIL_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
@@ -237,9 +237,9 @@ export default function ContactDetail() {
         body: { token, email: client.email },
       });
       const outcome = await readLegacyInviteSend(sent, sendError);
-      // E09 Slice 6 (§37): the client can't be emailed; say so, with no hand-off.
-      if (outcome === "held") {
-        toast.error(legacyInviteHeldText(client.email));
+      // E09 Slice 6 (§37): Paige held it, or could not check; say which, with no hand-off.
+      if (isLegacyInviteHeld(outcome)) {
+        toast.error(legacyInviteHeldText(client.email, outcome));
       } else if (outcome !== "emailed") {
         toast.warning(`Invite created for ${client.email}, but the email didn't send. Check delivery.`);
       } else {

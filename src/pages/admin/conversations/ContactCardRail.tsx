@@ -52,7 +52,7 @@ import { AgentsLog } from "./AgentsLog";
 import { TagPicker } from "@/components/admin/contacts/TagPicker";
 import { ContactDealsSection } from "@/components/admin/contacts/ContactDealsSection";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
-import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 interface Coach { user_id: string; name: string; roles: string[] }
 
@@ -403,8 +403,8 @@ export function ContactCardRail({
         body: { token, email: contact.email },
       });
       const outcome = await readLegacyInviteSend(sent, sendError);
-      // E09 Slice 6 (§37): the client can't be emailed; say so, and never offer the link to share instead.
-      if (outcome === "held") { toast.error(legacyInviteHeldText(contactNameFromClient(contact) || contact.email)); return; }
+      // E09 Slice 6 (§37): Paige held it, or could not check; say which, and never offer the link to share instead.
+      if (isLegacyInviteHeld(outcome)) { toast.error(legacyInviteHeldText(contactNameFromClient(contact) || contact.email, outcome)); return; }
       toast.success(outcome === "emailed" ? `Portal invite emailed to ${contact.email}.` : "Invite created — link ready to share.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't send the portal invite.");

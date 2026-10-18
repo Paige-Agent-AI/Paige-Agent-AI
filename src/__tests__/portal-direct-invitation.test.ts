@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 // Execute the actual legacy caller closure, with no UI/network or replacement writer.
 const file = ts.createSourceFile("ClientManagementDashboard.tsx", readFileSync("src/components/dashboard/ClientManagementDashboard.tsx", "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -26,12 +26,12 @@ async function drive(options: Options = {}) {
       if (name === "create_tenant_invite_token") return { data: options.missingToken ? [] : [{ token: "synthetic-token" }], error: options.mintError ? Error("Mint refused") : null };
       throw Error("Unexpected RPC");
     },
-    functions: { invoke: async (name: string, args: unknown) => { calls.push({ name, args }); if (options.held) return { data: null, error: Object.assign(Error("Edge Function returned a non-2xx status code"), { context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }) } }) }; return { data: options.emailed === undefined ? {} : { emailed: options.emailed }, error: options.sendError ? Error("Delivery unavailable") : null }; } },
+    functions: { invoke: async (name: string, args: unknown) => { calls.push({ name, args }); if (options.held) return { data: null, error: Object.assign(Error("Edge Function returned a non-2xx status code"), { context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD", hold: "contact" }) } }) }; return { data: options.emailed === undefined ? {} : { emailed: options.emailed }, error: options.sendError ? Error("Delivery unavailable") : null }; } },
     auth: { getSession: async () => ({ data: { session: { access_token: "synthetic-only" } } }) },
   };
   const toast = Object.fromEntries(["error", "warning", "success"].map(level => [level, (message: string) => notices.push({ level, message })]));
-  const run = new Function("supabase", "toast", "inviteEmail", "inviteRole", "canInvitePortal", "activeTenantId", "setInviteSending", "setInviteOpen", "setInviteEmail", "setInviteRole", "console", "readLegacyInviteSend", "legacyInviteHeldText", js + ";return sendInvite;")(
-    supabase, toast, options.email ?? " Client@tests.invalid ", options.role ?? "user", options.allowed !== false, tenant, () => {}, () => {}, () => {}, () => {}, { error() {} }, readLegacyInviteSend, legacyInviteHeldText);
+  const run = new Function("supabase", "toast", "inviteEmail", "inviteRole", "canInvitePortal", "activeTenantId", "setInviteSending", "setInviteOpen", "setInviteEmail", "setInviteRole", "console", "readLegacyInviteSend", "legacyInviteHeldText", "isLegacyInviteHeld", js + ";return sendInvite;")(
+    supabase, toast, options.email ?? " Client@tests.invalid ", options.role ?? "user", options.allowed !== false, tenant, () => {}, () => {}, () => {}, () => {}, { error() {} }, readLegacyInviteSend, legacyInviteHeldText, isLegacyInviteHeld);
   await run(); return { calls, notices };
 }
 describe("Existing direct Client invitation compatibility", () => {
@@ -62,5 +62,35 @@ describe("Existing direct Client invitation compatibility", () => {
   });
   it("keeps the existing staff invitation path separate", async () => {
     const r = await drive({ role: "moderator" }); expect(r.calls.map(c => c.name)).toEqual(["send-admin-invitation"]);
+  });
+});
+
+// E09 Slice 6 round 4 (verifier MINOR 2): the shared reader names only the cause the server reported.
+describe("legacy invitation reader", () => {
+  const refused = (status: number, body: Record<string, unknown>) => ({ message: "non-2xx", context: { status, json: async () => body } });
+  it.each([
+    [{ status: "held", code: "INVITATION_POLICY_HELD", hold: "contact" }, 409, "held", "Sam Lee has email turned off or on hold, so Paige didn't send the invitation."],
+    [{ status: "held", code: "INVITATION_POLICY_HELD", hold: "business_quiet_hours" }, 409, "held_business_quiet_hours", "Paige held this invitation because your business's email quiet hours are on. Send it again after they end."],
+    [{ status: "held", code: "INVITATION_POLICY_HELD" }, 409, "held_unspecified", "Paige held this invitation because of an email hold (the client's preference or your quiet hours)."],
+    [{ status: "unavailable", code: "INVITATION_POLICY_UNAVAILABLE" }, 503, "check_unavailable", "Paige couldn't check Sam Lee's email preferences, so she didn't send the invitation. Try again in a few minutes."],
+  ])("%j reads as a hold with its own words", async (body, status, outcome, text) => {
+    const read = await readLegacyInviteSend(null, refused(status, { ok: false, emailed: false, ...body }));
+    expect(read).toBe(outcome);
+    expect(isLegacyInviteHeld(read)).toBe(true);
+    if (isLegacyInviteHeld(read)) expect(legacyInviteHeldText("Sam Lee", read)).toBe(text);
+  });
+  it("the business's quiet hours and an unrun check never blame the client", async () => {
+    for (const body of [{ code: "INVITATION_POLICY_HELD", hold: "business_quiet_hours" }, { code: "INVITATION_POLICY_UNAVAILABLE" }]) {
+      const read = await readLegacyInviteSend(null, refused(409, body));
+      expect(isLegacyInviteHeld(read) && legacyInviteHeldText("Sam Lee", read)).not.toMatch(/turned off/);
+    }
+  });
+  it("an ordinary failure or delivery is not a hold", async () => {
+    expect(isLegacyInviteHeld(await readLegacyInviteSend({ ok: true, emailed: true }, null))).toBe(false);
+    expect(isLegacyInviteHeld(await readLegacyInviteSend(null, refused(500, { error: "x" })))).toBe(false);
+  });
+  it("the dashboard does not hand off a link when the check could not run", async () => {
+    // A 503 that is not a hold used to fall through to "Invite prepared … delivery is unconfirmed".
+    expect(await readLegacyInviteSend(null, refused(503, { code: "INVITATION_POLICY_UNAVAILABLE" }))).toBe("check_unavailable");
   });
 });

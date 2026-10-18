@@ -29,7 +29,7 @@ import { formatDistanceToNow } from "date-fns";
 import { callAdminAccountAction } from "@/lib/functions/adminAccountActions";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
-import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 type Invite = {
   id: string;
@@ -147,10 +147,11 @@ export function ContactPortalPanel({
         body: { token, email },
       });
       const outcome = await readLegacyInviteSend(sent, sendError);
-      // E09 Slice 6 (§37): the client can't be emailed. No link is copied and none is offered: a link
-      // sent some other way would go around their choice.
-      if (outcome === "held") {
-        toast.error(legacyInviteHeldText(email));
+      // E09 Slice 6 (§37): Paige held it, or could not check. No link is copied and none is offered: a
+      // link sent some other way would go around the client's choice. The server revoked the token it was
+      // handed, so the reload below shows nothing pending.
+      if (isLegacyInviteHeld(outcome)) {
+        toast.error(legacyInviteHeldText(email, outcome));
         await load();
         return;
       }

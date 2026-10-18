@@ -21,7 +21,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const EMAIL = "jordan.rivera@example.test";
 const held = () => ({ data: null, error: { message: "Edge Function returned a non-2xx status code",
-  context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }) } } });
+  context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD", hold: "contact" }) } } });
 let root: Root, host: HTMLDivElement;
 const writeText = vi.fn(async () => undefined);
 async function flush() { await act(async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); }); }

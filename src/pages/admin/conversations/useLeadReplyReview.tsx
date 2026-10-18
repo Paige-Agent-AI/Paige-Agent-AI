@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PaigeConfirmCard, type ConfirmActionState } from "@/components/chat/PaigeConfirmCard";
 import { parseConfirmPreview, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
 import { Button } from "@/components/ui/button";
-import { parseCommsEmailCommand, FINGERPRINT, UUID, type CommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
+import { parseCommsEmailCommand, commsEmailBodyHtml, normalizeCommsEmailAddress, FINGERPRINT, UUID, type CommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
 import { GOVERNED_SEND_COLS } from "./governedSend";
 
 export const isFollowupEmailKind = (kind: unknown) => kind === "owner.lead_followup" || kind === "client.followup" || kind === "owner.followup_email";
@@ -36,6 +36,8 @@ type Input = {
   disabled: boolean;
   /** Captured monotonic parent fence, never a replacement for server authority. */
   current?: () => boolean;
+  /** Historical protected read only. Presence can never enable preparation/approval. */
+  originalRecord?: unknown;
 };
 type Call = { expected_tenant_id: string; operation_id: string; approval_id: string; command: CommsEmailCommand };
 type Wait = <T>(start: () => PromiseLike<T>) => Promise<T>;
@@ -57,19 +59,75 @@ type Review = {
   canCheck?: boolean;
   recordPending?: boolean;
   acceptedMessageId?: string;
+  originalRecord?: OriginalReplyRecord;
 };
 const object = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+
+type OriginalContext = Pick<Input,"actorId"|"tenantId"|"contactId"|"threadKey"|"approvalId">;
+type OriginalReplyRecord = { call:Call; messageId:string; actionId:string; kind:string; actorId:string; threadKey:string; recorded:boolean; deliveryConfirmed:boolean;
+  approvedFingerprint:string; connectorId:string; recipient:string; sender:string; providerReceipt:string; preview:ConfirmEmailPreview };
+export const ORIGINAL_REPLY_COLS=`id,tenant_id,contact_id,thread_key,connector_id,channel_type,direction,status,provider_message_id,sender,recipients,subject,body_text,body_html,original_binding:meta->comms_email_binding,lead_reply_approval_id:meta->comms_email_binding->>approval_id,${GOVERNED_SEND_COLS}`;
+/** A protected original read is historical evidence, never a new approval token. */
+export function parseOriginalReplyRecord(value:unknown,context:OriginalContext):OriginalReplyRecord|null {
+  try{
+    const v=object(value),m=object(v?.message),ap=object(v?.approval),a=object(v?.action),b=object(m?.original_binding),g=object(b?.governance);
+    const actor=context.actorId,tenant=context.tenantId,contact=context.contactId,approval=context.approvalId;
+    if(![actor,tenant,contact,approval].every(id=>typeof id==="string"&&UUID.test(id))||!context.threadKey
+      ||context.threadKey!==`contact:${tenant}:${contact}`||!m||!ap||!a||!b||!g)return null;
+    const id=m.id,operation=b.operation_id,action=a.id,connector=m.connector_id;
+    if(typeof id!=="string"||!UUID.test(id)||typeof operation!=="string"||!UUID.test(operation)||typeof action!=="string"||!UUID.test(action)||typeof connector!=="string"||!UUID.test(connector)
+      ||m.tenant_id!==tenant||m.contact_id!==contact||m.thread_key!==context.threadKey||m.channel_type!=="email"||m.direction!=="outbound"
+      ||!['sent','read','delivered'].includes(String(m.status))||typeof m.provider_message_id!=="string"||!m.provider_message_id.trim()
+      ||m.comms_email_operation!==operation||m.comms_email_state!=="provider_accepted"||m.lead_reply_approval_id!==approval
+      ||b.state!=="provider_accepted"||b.provider_message_id!==m.provider_message_id||b.tenant_id!==tenant||b.actor_user_id!==actor||b.contact_id!==contact
+      ||b.connector_id!==connector||b.approval_id!==approval||b.origin_action_id!==action||b.origin_action_kind!==a.action_kind
+      ||!isFollowupEmailKind(a.action_kind)||a.tenant_id!==tenant||a.contact_id!==contact||a.approval_id!==approval
+      ||ap.id!==approval||ap.tenant_id!==tenant||(ap.contact_id!==null&&ap.contact_id!==contact)||!["pending","approved"].includes(String(ap.status))
+      ||ap.category!==a.action_kind||object(ap.metadata)?.action_id!==action)return null;
+    const prior=object(object(ap.metadata)?.governed_send),recorded=ap.status==="approved";
+    if(recorded&&(prior?.operation_id!==operation||prior.message_id!==id||prior.state!=="provider_accepted"))return null;
+    const command=parseCommsEmailCommand(b.command),sender=normalizeCommsEmailAddress(b.from_address),recipient=normalizeCommsEmailAddress(b.recipient);
+    const parties=Array.isArray(m.recipients)?m.recipients:null;
+    if(command.contact_id!==contact||(command.connector_id!==null&&command.connector_id!==connector)||command.subject!==m.subject||command.subject!==b.subject
+      ||command.body!==m.body_text||command.body!==b.body_text||m.body_html!==b.body_html||m.body_html!==commsEmailBodyHtml(command.body)
+      ||!sender||!recipient||b.from_address!==sender||b.recipient!==recipient||object(m.sender)?.address!==sender||parties?.length!==1||object(parties[0])?.address!==recipient
+      ||typeof b.content_digest!=="string"||!/^[0-9a-f]{64}$/.test(b.content_digest)
+      ||g.actor_user_id!==actor||g.tenant_id!==tenant||g.tool!=="comms_send_email"||g.action!=="comms.email_send"||g.approval_channel!=="operator_card"
+      ||g.decision_receipt_recorded!==true||g.approval_id!==approval||typeof g.approved_fingerprint!=="string"||!FINGERPRINT.test(g.approved_fingerprint))return null;
+    return {call:{expected_tenant_id:tenant!,operation_id:operation,approval_id:approval!,command},messageId:id,actionId:action,kind:a.action_kind as string,actorId:actor!,threadKey:context.threadKey,recorded,deliveryConfirmed:m.status==="delivered",
+      approvedFingerprint:g.approved_fingerprint,connectorId:connector,recipient,sender,providerReceipt:m.provider_message_id,
+      preview:{kind:"email",to_address:recipient,from_address:sender,subject:command.subject,body_text:command.body}};
+  }catch{return null;}
+}
+/** Exact existing records only. Callers provide their captured current-scope await fence. */
+export async function readOriginalReplyRecord(context:OriginalContext,rows:unknown,wait:Wait):Promise<unknown|null>{
+  if(!context.threadKey||context.threadKey!==`contact:${context.tenantId}:${context.contactId}`||![context.actorId,context.tenantId,context.contactId,context.approvalId].every(id=>typeof id==="string"&&UUID.test(id)))return null;
+  if(!Array.isArray(rows)||!rows.length||rows.length>=21)return null;
+  const live:Record<string,unknown>[]=[];
+  for(const raw of rows){const row=object(raw);if(!row||typeof row.id!=="string"||!UUID.test(row.id)||typeof row.comms_email_operation!=="string"||!UUID.test(row.comms_email_operation)||typeof row.comms_email_state!=="string"||row.tenant_id!==context.tenantId||row.contact_id!==context.contactId||row.lead_reply_approval_id!==context.approvalId||row.channel_type!=="email"||row.direction!=="outbound")return null;
+    if(!(["failed","refused"].includes(String(row.comms_email_state))&&["draft","blocked","failed"].includes(String(row.status))&&row.provider_message_id===null))live.push(row);}
+  if(live.length!==1)return null;
+  const message=structuredClone(live[0]);
+  const ap=await wait(()=>supabase.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,category,metadata").eq("id",context.approvalId!).eq("tenant_id",context.tenantId!).limit(2));
+  const actions=await wait(()=>supabase.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind").eq("tenant_id",context.tenantId!).eq("approval_id",context.approvalId!).limit(2));
+  if(ap.error!==null||!Array.isArray(ap.data)||ap.data.length!==1||actions.error!==null||!Array.isArray(actions.data)||actions.data.length!==1)return null;
+  const result={message,approval:structuredClone(ap.data[0]),action:structuredClone(actions.data[0])};return parseOriginalReplyRecord(result,context)?result:null;
+}
 
 // A surface adapter for the existing command door, confirmation card and record-only RPC.
 // It grants no authority and performs no direct table writes. Only the exact preview is approvable.
 export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const input={...sourceInput};
+  const historyOnly=Object.prototype.hasOwnProperty.call(sourceInput,"originalRecord");
+  // Copy the closed original before any await; mutable response/input cannot lend later authority.
+  const originalKey=JSON.stringify(historyOnly?parseOriginalReplyRecord(input.originalRecord,input):null);
+  const originalRecord=useMemo<OriginalReplyRecord|null>(()=>JSON.parse(originalKey),[originalKey]);
   const [authEpoch, setAuthEpoch] = useState(0);
   const withdrawn = useRef(false);
   const identity=JSON.stringify([input.actorId,input.tenantId,input.contactId,input.threadKey]);
   const latestInput=useRef(input);latestInput.current=input;
-  const scopeKey = JSON.stringify([identity, authEpoch]);
+  const scopeKey = JSON.stringify([identity, authEpoch,...historyOnly?[originalKey]:[]]);
   const scopeRef = useRef({ key: scopeKey });
   if (scopeRef.current.key !== scopeKey) scopeRef.current = { key: scopeKey };
   const scope = scopeRef.current;
@@ -79,6 +137,11 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const revisionRef = useRef({ key: revisionKey });
   if (revisionRef.current.key !== revisionKey) revisionRef.current = { key: revisionKey };
   const revision = revisionRef.current;
+  const originalReport=useMemo<Review|null>(()=>originalRecord?{scope,identity,revision,call:originalRecord.call,phase:"report",state:originalRecord.recorded?"done":"unconfirmed",
+    summary:"Original reply",preview:originalRecord.preview,approvedFingerprint:originalRecord.approvedFingerprint,acceptedMessageId:originalRecord.messageId,
+    originalRecord,recordPending:!originalRecord.recorded,canCheck:!originalRecord.recorded,
+    note:originalRecord.recorded?"The original accepted reply is recorded. "+(originalRecord.deliveryConfirmed?"Delivery confirmed in this conversation.":"Delivery is not confirmed."):
+      (originalRecord.deliveryConfirmed?"Delivery confirmed in this conversation.":"Accepted by the email service. Delivery is not confirmed.")+" The approval record is still unconfirmed. Don't resend."}:null,[originalRecord,scope,identity,revision]);
   let currentEligible=false;
   try{currentEligible=!input.disabled&&(input.current===undefined||input.current()===true);}catch{ /* a failed parent fence withdraws eligibility */ }
   const eligibilityRef=useRef({scope,revision,eligible:currentEligible});
@@ -119,7 +182,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const authWithdrawn=withdrawn.current;
   const current=useMemo<Review|null>(()=>review?.scope===scope&&!releasedWorking?review:!authWithdrawn&&originalAfterRefresh
     ?{...review,scope,phase:"report",state:"unconfirmed",fingerprint:undefined,preview:undefined,summary:"Original reply",canCheck:true,
-      note:releasedWorking?"Couldn't confirm whether this reply went out. Don't resend. Check its recorded status.":"Your session changed while an original reply outcome was retained. Don't resend. Check its recorded status."}:null,[review,scope,authWithdrawn,originalAfterRefresh,releasedWorking]);
+      note:releasedWorking?"Couldn't confirm whether this reply went out. Don't resend. Check its recorded status.":"Your session changed while an original reply outcome was retained. Don't resend. Check its recorded status."}:originalReport,[review,scope,authWithdrawn,originalAfterRefresh,releasedWorking,originalReport]);
   const busy = busyScope?.scope === scope;
   const currentScope = (requestScope: object) => {
     try{return live.current&&!withdrawn.current&&scopeRef.current===requestScope&&(input.current===undefined||input.current()===true)
@@ -143,9 +206,9 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     check();
     const caller = supabase;
     const user = await wait(()=>caller.auth.getUser()); check();
-    if (user.error || !input.actorId || user.data.user?.id !== input.actorId) throw new Error("actor_changed");
+    if ((historyOnly&&user.error!==null) || user.error || !input.actorId || user.data.user?.id !== input.actorId) throw new Error("actor_changed");
     const tenant = await wait(()=>caller.rpc("current_user_tenant_id")); check();
-    if (tenant.error || tenant.data !== input.tenantId) throw new Error("tenant_changed");
+    if ((historyOnly&&tenant.error!==null) || tenant.error || tenant.data !== input.tenantId) throw new Error("tenant_changed");
   };
   const hasUnsettledSend = current?.phase === "report" && (current.state === "working" || current.state === "unconfirmed");
   useEffect(() => {
@@ -158,7 +221,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const dismiss = () => { setReview(null); if (triggerRef.current?.isConnected) triggerRef.current.focus(); };
 
   const prepare = async () => {
-    if (input.disabled || hasUnsettledSend || current?.state === "done" || lock.current?.scope === scope || !currentScope(scope)) return;
+    if (historyOnly || input.disabled || hasUnsettledSend || current?.state === "done" || lock.current?.scope === scope || !currentScope(scope)) return;
     triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setError(null);
     const refuse = (text: string) => setError({ scope, text });
@@ -202,7 +265,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   };
 
   const approve = async (fingerprints: string[]) => {
-    if (!current || current.phase !== "decide" || input.disabled || lock.current?.scope === scope || !currentScope(scope)) return;
+    if (historyOnly || !current || current.phase !== "decide" || input.disabled || lock.current?.scope === scope || !currentScope(scope)) return;
     if (current.revision !== revision || current.expiresAt! <= Date.now() || fingerprints.length !== 1 || fingerprints[0] !== current.fingerprint) {
       dismiss(); setError({ scope, text: "The draft or sending identity changed, or this review expired. Review the current reply again." }); return;
     }
@@ -244,8 +307,26 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     if(!current?.recordPending||!current.acceptedMessageId||!current.approvedFingerprint||!FINGERPRINT.test(current.approvedFingerprint)||busy||input.disabled||lock.current?.scope===scope||!currentScope(scope))return;
     const owner={scope};lock.current=owner;setBusyScope(owner);
     const wait=waitFor(scope,actionEligibility());
+    let deliveryConfirmed=current.originalRecord?.deliveryConfirmed===true;
     try{
       await authority(scope,wait);
+      if(current.originalRecord){
+        const role=await wait(()=>supabase.rpc("is_tenant_admin" as never,{_tenant:current.call.expected_tenant_id} as never));
+        if(role.error!==null||role.data!==true)throw new Error("record_authority_unavailable");
+        // The persisted fingerprint remains historical: read the whole exact protected original again.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const messages=await wait<{data:unknown;error:unknown}>(()=>(supabase as any).from("messages").select(ORIGINAL_REPLY_COLS)
+          .eq("tenant_id",current.call.expected_tenant_id).eq("contact_id",current.call.command.contact_id)
+          .eq("meta->comms_email_binding->>approval_id",current.call.approval_id).limit(21));
+        if(messages.error!==null)throw new Error("original_receipt_unverified");
+        const context={actorId:input.actorId,tenantId:current.call.expected_tenant_id,contactId:current.call.command.contact_id,threadKey:input.threadKey,approvalId:current.call.approval_id};
+        const raw=await readOriginalReplyRecord(context,messages.data,wait),proof=parseOriginalReplyRecord(raw,context);
+        if(!proof||JSON.stringify({...proof,recorded:current.originalRecord.recorded,deliveryConfirmed:current.originalRecord.deliveryConfirmed})!==JSON.stringify(current.originalRecord))throw new Error("original_receipt_changed");
+        deliveryConfirmed=proof.deliveryConfirmed;
+        await authority(scope,wait);
+        const currentRole=await wait(()=>supabase.rpc("is_tenant_admin" as never,{_tenant:current.call.expected_tenant_id} as never));
+        if(currentRole.error!==null||currentRole.data!==true)throw new Error("record_authority_unavailable");
+      }else{
       // Recheck the exact accepted original before the existing record-only native door.
       // Never re-enter comms-email-command: its absent/unknown paths can propose/reconcile.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -262,16 +343,17 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
         ||row.channel_type!=="email"||row.direction!=="outbound"||row.comms_email_state!=="provider_accepted"
         ||!["sent","read","delivered"].includes(String(row.status))||typeof row.provider_message_id!=="string"||!row.provider_message_id.trim()
         ||row.connector_id!==current.call.command.connector_id||row.subject!==current.call.command.subject||row.body_text!==current.call.command.body)throw new Error("original_receipt_unverified");
+      }
       // The installed authenticated two-UUID RPC predates its generated client declaration.
       const recorder=supabase as unknown as {rpc(name:"lead_reply_record_send",args:{_approval_id:string;_operation_id:string}):PromiseLike<{data:unknown;error:unknown}>};
       const response=await wait(()=>recorder.rpc("lead_reply_record_send",{_approval_id:current.call.approval_id,_operation_id:current.call.operation_id}));
       await authority(scope,wait);if(!currentScope(scope))return;
-      const result=response.error?null:object(response.data);
+      const result=response.error||(current.originalRecord&&response.error!==null)?null:object(response.data);
       const recorded=result?.ok===true&&result.state==="provider_accepted"&&result.operation_id===current.call.operation_id
         &&result.approval_id===current.call.approval_id&&result.message_id===current.acceptedMessageId
         &&result.delivery_confirmed===false;
       setReview({...current,state:recorded?"done":"unconfirmed",recordPending:!recorded,canCheck:!recorded,
-        note:recorded?"The original accepted reply is recorded. Delivery is not confirmed.":"The original email was accepted, but approval recording is still unconfirmed. Don't resend."});
+        note:recorded?"The original accepted reply is recorded. "+(deliveryConfirmed?"Delivery confirmed in this conversation.":"Delivery is not confirmed."):"The original email was accepted, but approval recording is still unconfirmed. Don't resend."});
     }catch{if(currentScope(scope))setReview({...current,note:"The original email was accepted, but approval recording is still unconfirmed. Don't resend."});}
     finally{releaseOwned(owner);}
   };
@@ -316,6 +398,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const panel = withdrawn.current ? <p role="status" className="px-3 py-2 text-sm">Your account changed. Reopen the original reply to inspect its outcome before another decision.</p>
     :!currentScope(scope)?<p role="status" className="px-3 py-2 text-sm">The original reply is held while this workspace is unavailable. Return to its current authorized scope before another decision.</p>:<>
     {error?.scope === scope ? <p role="alert" className="px-3 py-2 text-sm text-destructive">{error.text}</p> : null}
+    {historyOnly&&!current?<p role="status" className="px-3 py-2 text-sm text-muted-foreground">The original reply's recording evidence is unavailable. Don't resend. Check its recorded status in this conversation.</p>:null}
     {stale ? <p role="status" className="px-3 py-2 text-sm text-muted-foreground">The draft changed. Review the current reply again before approving.</p> : current ? (
       <div ref={panelRef} className="space-y-2 border-t border-border px-3 py-3">
         {current.phase === "decide" ? <PaigeConfirmCard actions={[{ summary: current.summary, fingerprint: current.fingerprint, preview: current.preview }]} disabled={busy || input.disabled} focusOnMount onApprove={(fps) => { void approve(fps); }} onDeny={dismiss} />

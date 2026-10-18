@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Palette, LayoutTemplate, MessageSquareText, Type as TypeIcon,
-  ChevronUp, ChevronDown, Loader2, ClipboardList, Eye,
+  Palette, MessageSquareText, Type as TypeIcon, Loader2, Eye,
 } from "lucide-react";
 import { PageShell } from "@/components/ui/page/PageShell";
 import { PageHeader } from "@/components/ui/page/PageHeader";
@@ -10,7 +9,6 @@ import { EmptyState } from "@/components/ui/page/EmptyState";
 import { ColorField, LogoUploader, BrandFontPicker } from "@/components/ui/page/BrandControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -18,11 +16,10 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 import { useBrandKit } from "@/hooks/useBrandKit";
 import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import { brandFontStack, resolveBrandFontPair } from "@/lib/brand-fonts";
-import { usePortalConfig } from "@/hooks/usePortalConfig";
-import { usePlaybook } from "@/lib/playbook";
-import {
-  catalogRoutableItems, applyPortalOverlay, type PortalCatalogItem,
-} from "@/lib/portal/moduleNav";
+import { usePortalCatalogInput, usePortalConfig } from "@/hooks/usePortalConfig";
+import { resolvePortalCatalog } from "@/lib/playbook/resolve";
+import { PORTAL_CUSTOMER_PREVIEW_VIEWER, assemblePortalNav, flattenPortalNav } from "@/lib/portal/portalMenu";
+import { PortalMenuEditor } from "./PortalMenuEditor";
 import {
   readableTextOn, isValidHex, PRIMARY_FLOOR, ACCENT_FLOOR,
 } from "@/lib/brand/resolveBrand";
@@ -37,48 +34,19 @@ import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
  * the client-facing portal (/app): brand (logo, colors, type), which tabs a client
  * sees + their order, the welcome greeting, and a live "View as Client" preview.
  *
- * Two existing native data seams (governed Chat/Live configuration is not registered yet):
+ * Two existing native data seams:
  *   - Brand  → set_tenant_brand (via useBrandKit).
  *   - Portal → set_tenant_portal_config (via usePortalConfig): a PRESENTATION
- *     OVERLAY over the Playbook module CATALOG — subtractive/reordering only,
- *     never new keys. The preview computes its tab list from the SAME shared
- *     merge (@/lib/portal/moduleNav) the live AppNav uses, so it can't drift (§13).
+ *     OVERLAY over the customer portal menu — hide, rename, reorder, never new
+ *     keys (E09 Slice M, "Customer portal menu"; Paige reaches the same seam
+ *     through client.portal_menu_configure). Every preview computes its menu with
+ *     assemblePortalNav (@/lib/portal/portalMenu), the function the live AppNav
+ *     runs, so it can't drift (§13).
  *
  * GOLD DISCIPLINE (§11): gold is spent only on the Save act; toggles use the
  * Switch's own styling; the mock's single "Get started" CTA wears the tenant's
  * OWN accent (brand data), never a resting decoration.
  */
-
-interface TabRow {
-  key: string;
-  label: string;
-  icon: PortalCatalogItem["icon"];
-  visible: boolean;
-}
-
-/** Order the FULL catalog (visible + hidden) the way the overlay resolves it, so
- *  the editor shows tabs in the exact order a client sees them, hidden ones in
- *  place. Mirrors applyPortalOverlay's sort, but keeps hidden rows. */
-function seedRows(catalog: PortalCatalogItem[], overlay: PortalModuleOverlay[] | undefined): TabRow[] {
-  const byKey = new Map<string, PortalModuleOverlay>();
-  if (Array.isArray(overlay)) {
-    for (const o of overlay) if (o && typeof o.key === "string") byKey.set(o.key, o);
-  }
-  return [...catalog]
-    .sort((a, b) => {
-      const ao = byKey.get(a.key)?.order;
-      const bo = byKey.get(b.key)?.order;
-      const aEff = typeof ao === "number" && Number.isFinite(ao) ? ao : a.catalogIndex;
-      const bEff = typeof bo === "number" && Number.isFinite(bo) ? bo : b.catalogIndex;
-      return aEff !== bEff ? aEff - bEff : a.catalogIndex - b.catalogIndex;
-    })
-    .map((item) => ({
-      key: item.key,
-      label: item.label,
-      icon: item.icon,
-      visible: byKey.get(item.key)?.visible !== false,
-    }));
-}
 
 type PortalStudioProps = { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void; assistantFocusRequest?: number };
 export default function PortalStudio(props: PortalStudioProps = {}) {
@@ -91,12 +59,13 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
   const { toast } = useToast();
   const bk = useBrandKit(activeTenantId);
   const pc = usePortalConfig(activeTenantId);
-  const playbook = usePlaybook();
+  // The owner's own catalog inputs — the same ones the server hands customers as `_catalog` (§57).
+  const catalogInput = usePortalCatalogInput(activeTenantId);
 
   const own = bk.state?.own ?? {};
   const eff = bk.state?.effective ?? null;
 
-  const catalog = useMemo(() => catalogRoutableItems(playbook.portal.modules), [playbook]);
+  const catalog = useMemo(() => resolvePortalCatalog(catalogInput.data), [catalogInput.data]);
 
   // ── Brand form (subset: colors, type, name, tagline; logos save on upload) ──
   const [brandForm, setBrandForm] = useState({
@@ -123,31 +92,30 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bk.state?.own]);
 
-  // ── Portal overlay editor (tabs + welcome) ──
-  const [rows, setRows] = useState<TabRow[]>([]);
+  // ── Portal overlay editor (welcome + assistant; the menu has its own card and its own Save) ──
   const [welcome, setWelcome] = useState({ headline: "", subhead: "" });
   const [assistant, setAssistant] = useState(() => assistantFields());
-  const [portalBaseline, setPortalBaseline] = useState<{ rows: TabRow[]; welcome: typeof welcome; assistant: typeof assistant } | null>(null);
+  const [portalBaseline, setPortalBaseline] = useState<{ welcome: typeof welcome; assistant: typeof assistant } | null>(null);
+  const [menuDirty, setMenuDirty] = useState(false);
+  const [menuDraft, setMenuDraft] = useState<PortalModuleOverlay[] | undefined>(undefined);
 
-  const initialRows = useMemo(() => seedRows(catalog, pc.config.modules), [catalog, pc.config]);
   const initialWelcome = useMemo(
     () => ({ headline: pc.config.welcome?.headline ?? "", subhead: pc.config.welcome?.subhead ?? "" }),
     [pc.config],
   );
-  const rowsKey = (value: TabRow[]) => JSON.stringify(value.map(r => ({ k: r.key, v: r.visible })));
-  const modulesDirty = !!portalBaseline && rowsKey(rows) !== rowsKey(portalBaseline.rows);
   const welcomeDirty = !!portalBaseline && JSON.stringify(welcome) !== JSON.stringify(portalBaseline.welcome);
   const changedAssistant = portalBaseline ? assistantPatch(portalBaseline.assistant, assistant) : undefined;
-  const portalDirty = modulesDirty || welcomeDirty || !!changedAssistant;
-  const savedPortalKey = JSON.stringify({ rows: initialRows.map(r => ({ key: r.key, visible: r.visible })), welcome: initialWelcome, assistant: assistantFields(pc.config.assistant) });
+  const portalDirty = welcomeDirty || !!changedAssistant;
+  const savedPortalKey = JSON.stringify({ welcome: initialWelcome, assistant: assistantFields(pc.config.assistant) });
   const seedPortal = (config: ClientPortalConfig) => {
     const next = {
-      rows: seedRows(catalog, config.modules),
       welcome: { headline: config.welcome?.headline ?? "", subhead: config.welcome?.subhead ?? "" },
       assistant: assistantFields(config.assistant),
     };
-    setRows(next.rows); setWelcome(next.welcome); setAssistant(next.assistant); setPortalBaseline(next);
+    setWelcome(next.welcome); setAssistant(next.assistant); setPortalBaseline(next);
   };
+  const saveMenu = useCallback((modules: PortalModuleOverlay[]) => pc.save({ modules }), [pc]);
+  const rereadMenu = useCallback(async () => (await pc.refetch()).data?.modules, [pc]);
 
   useEffect(() => {
     if (pc.isLoading || pc.isError || portalDirty) return;
@@ -176,22 +144,12 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     (!!brandForm.primary_color.trim() && !isValidHex(brandForm.primary_color)) ||
     (!!brandForm.accent_color.trim() && !isValidHex(brandForm.accent_color));
 
-  // Preview nav = the SAME overlay merge the live portal runs, fed from the live
-  // editor rows so it updates on every toggle/reorder. "Action items" is force-
-  // injected after Home for the client exactly as AppNav does it (§8), so the
-  // preview reflects what a client truly sees.
-  const previewNav = useMemo(() => {
-    const overlay = rows.map((r, i): PortalModuleOverlay => ({ key: r.key, visible: r.visible, order: i }));
-    const nav = applyPortalOverlay(catalog, overlay);
-    const withActions = [...nav];
-    if (!withActions.some((i) => i.href === "/app/actions")) {
-      const homeIdx = withActions.findIndex((i) => i.href === "/app");
-      withActions.splice(homeIdx >= 0 ? homeIdx + 1 : 0, 0, {
-        key: "actions", label: "Action items", href: "/app/actions", icon: ClipboardList,
-      });
-    }
-    return withActions;
-  }, [catalog, rows]);
+  // Preview nav = assemblePortalNav, the function the live AppNav runs, over the menu editor's unsaved draft,
+  // for a customer of this one business — so the preview can never differ from the live menu (§13).
+  const previewNav = useMemo(
+    () => flattenPortalNav(assemblePortalNav({ catalog, overlay: menuDraft ?? pc.config.modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER })),
+    [catalog, menuDraft, pc.config.modules],
+  );
 
   const headlineText = welcome.headline.trim() || "Welcome back";
   const subheadText = welcome.subhead.trim()
@@ -200,18 +158,8 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
 
   const dirty = brandDirty || portalDirty;
   const busy = bk.saving || pc.saving;
-  useBeforeUnloadGuard(dirty || busy);
-  useEffect(() => { onDirtyChange?.(dirty || busy); }, [dirty, busy, onDirtyChange]);
-
-  const move = (index: number, delta: number) => {
-    setRows((prev) => {
-      const next = [...prev];
-      const target = index + delta;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  };
+  useBeforeUnloadGuard(dirty || busy || menuDirty);
+  useEffect(() => { onDirtyChange?.(dirty || busy || menuDirty); }, [dirty, busy, menuDirty, onDirtyChange]);
 
   const handleSave = async () => {
     if (brandDirty && invalidHex) {
@@ -231,7 +179,6 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
       }
       if (portalDirty) {
         const patch: Partial<ClientPortalConfig> = {};
-        if (modulesDirty) patch.modules = rows.map((r, i) => ({ key: r.key, visible: r.visible, order: i }));
         const w: { headline?: string; subhead?: string } = {};
         if (welcome.headline.trim()) w.headline = welcome.headline.trim();
         if (welcome.subhead.trim()) w.subhead = welcome.subhead.trim();
@@ -240,6 +187,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
         const saved = await pc.save(patch);
         if (!mounted.current) return;
         seedPortal(saved);
+        // The menu card keeps its own draft; this save never sends `modules`.
       }
       toast({ title: "Portal saved", description: "Your clients will see this next time they sign in." });
     } catch (e) {
@@ -260,10 +208,10 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     );
   }
 
-  if (bk.isError || pc.isError) return <section role="alert" className="p-6 space-y-3">
+  if (bk.isError || pc.isError || catalogInput.isError) return <section role="alert" className="p-6 space-y-3">
     <h2 className="text-lg font-semibold">We couldn’t load the saved experience</h2>
     <p className="text-sm text-muted-foreground">Try again before editing the portal’s appearance or content.</p>
-    <Button variant="outline" onClick={() => { void bk.refetch(); void pc.refetch(); }}>Retry experience</Button>
+    <Button variant="outline" onClick={() => { void bk.refetch(); void pc.refetch(); void catalogInput.refetch(); }}>Retry experience</Button>
   </section>;
 
   return (
@@ -285,12 +233,22 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
         }
       />
 
-      {bk.isLoading || pc.isLoading ? (
+      {bk.isLoading || pc.isLoading || catalogInput.isLoading ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           <div className="space-y-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 w-full rounded-xl" />)}</div>
           <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       ) : (
+        <div className="space-y-8">
+        {/* ── Customer portal menu (E09 Slice M): its own draft and its own Save ── */}
+        <PortalMenuEditor
+          catalog={catalog}
+          saved={pc.config.modules}
+          save={saveMenu}
+          reread={rereadMenu}
+          onDirtyChange={setMenuDirty}
+          onDraftChange={setMenuDraft}
+        />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
           {/* ── Authoring ── */}
           <fieldset disabled={busy} className="min-w-0 space-y-4" aria-label="Portal experience settings">
@@ -348,62 +306,6 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                   />
                 </div>
               </div>
-            </SectionCard>
-
-            {/* TABS */}
-            <SectionCard
-              icon={LayoutTemplate}
-              title="What they see"
-              description="Turn tabs on or off and set their order. This is what shows in your client's portal menu."
-            >
-              {rows.length === 0 ? (
-                <EmptyState
-                  icon={LayoutTemplate}
-                  title="No portal tabs yet"
-                  description="Your portal menu comes from your Playbook. Author your modules in Your Paige, then arrange them here."
-                />
-              ) : (
-                <div className="space-y-2">
-                  {rows.map((row, i) => {
-                    const RowIcon = row.icon;
-                    return (
-                      <div
-                        key={row.key}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
-                      >
-                        <div className="flex flex-col">
-                          <button
-                            type="button" onClick={() => move(i, -1)} disabled={i === 0}
-                            aria-label={`Move ${row.label} up`}
-                            className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
-                          >
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button" onClick={() => move(i, 1)} disabled={i === rows.length - 1}
-                            aria-label={`Move ${row.label} down`}
-                            className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
-                          >
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                        <RowIcon className={cn("h-4 w-4 shrink-0", row.visible ? "text-foreground" : "text-muted-foreground")} />
-                        <span className={cn("flex-1 text-sm", row.visible ? "text-foreground" : "text-muted-foreground line-through")}>
-                          {row.label}
-                        </span>
-                        <Switch
-                          checked={row.visible}
-                          onCheckedChange={(v) => setRows((prev) => prev.map((r, j) => (j === i ? { ...r, visible: v } : r)))}
-                          aria-label={`Show ${row.label} in the portal`}
-                        />
-                      </div>
-                    );
-                  })}
-                  <p className="pt-1 text-xs text-muted-foreground">
-                    Home and Action items always show for clients — that's how Paige hands work back and forth.
-                  </p>
-                </div>
-              )}
             </SectionCard>
 
             {/* WELCOME */}
@@ -502,6 +404,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
               </div>
             </SectionCard>
           </div>
+        </div>
         </div>
       )}
     </PageShell>

@@ -1,60 +1,29 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  Home, BookOpen, ListChecks, ClipboardList, FileText,
-  CreditCard, Landmark, Compass, Wallet, Building2, FileSignature, Handshake, CalendarClock,
-} from "lucide-react";
 import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
+import { PORTAL_MENU_ENTRIES } from "./portalMenu";
 
 // ---------------------------------------------------------------------------
-// Client-portal nav — the ONE source of truth for how the Playbook module
-// CATALOG + the tenant PRESENTATION OVERLAY resolve into the /app nav (§9/§10).
+// Client-portal nav — the flat catalog helpers, kept for their existing callers.
 // ---------------------------------------------------------------------------
-// AppNav (the live client chrome) and Client Portal's "View as Client" preview
-// both compute their tab list from these helpers, so the preview can never drift
-// from what a client actually sees (§13 — no fork, one merge rule).
+// E09 Slice M: the customer menu is assembled by assemblePortalNav() in ./portalMenu, the ONE registry of
+// portal destinations (floors, groups, fixed entries, the tenant overlay incl. labels). AppNav, the owner's
+// menu editor and PortalStudio's "View as client" all call it. These flat helpers remain for callers that
+// only ask "which catalog keys route anywhere" (Messages' Resources hint, the owner dashboard's module
+// list); their route map is DERIVED from the registry so the two can never disagree (§18).
 //
-// The funding-vertical surfaces below are routable ONLY for a tenant whose
-// OPT-IN funding Playbook lists those keys (§2 clarification, 2026-07-09) — they
-// are absent from every coaching-generic / fitness / agency / consulting preset,
-// so a non-funding client never sees a funding tab.
+// The funding-vertical surfaces are routable ONLY for a tenant whose OPT-IN funding Playbook lists those
+// keys (§2 clarification, 2026-07-09) — they are absent from every coaching-generic preset.
 
-/** A module key renders in the portal ONLY if it maps to a route that exists. */
-export const MODULE_ROUTES: Record<string, { href: string; icon: LucideIcon }> = {
-  home: { href: "/app", icon: Home },
-  learn: { href: "/app/learn", icon: BookOpen },
-  resources: { href: "/app/learn", icon: BookOpen },
-  approvals: { href: "/app/approvals", icon: ListChecks },
-  actions: { href: "/app/actions", icon: ClipboardList },
-  documents: { href: "/app/documents", icon: FileText },
-  // E09 Slice 2 — the customer's own sessions. Every default/coaching/consultant Playbook already
-  // lists `sessions`, so this key is what turns that catalog entry into a link (and lets the
-  // presentation overlay hide or reorder it). AppNav still shows it only to a single-business
-  // customer; the page re-resolves the relationship server-side.
-  sessions: { href: "/app/sessions", icon: CalendarClock },
-  // E09 Slice 3 — the work the business explicitly shared with the customer. The generic and fitness
-  // Playbooks already list `progress`; this key turns that entry into a link the overlay can hide or
-  // reorder. AppNav shows it only to a single-business customer; the page re-resolves server-side.
-  progress: { href: "/app/progress", icon: ListChecks },
-  // Funding-vertical surfaces — keys match the /app route paths in App.tsx.
-  // Gated by the funding Playbook's portal.modules (opt-in preset), never shown
-  // to a coaching-generic tenant.
-  credit: { href: "/app/credit", icon: CreditCard },
-  funding: { href: "/app/funding", icon: Landmark },
-  "funding-journey": { href: "/app/funding-journey", icon: Compass },
-  "financial-profile": { href: "/app/financial-profile", icon: Wallet },
-  business: { href: "/app/business", icon: Building2 },
-  agreements: { href: "/app/agreements", icon: FileSignature },
-  affiliate: { href: "/app/affiliate", icon: Handshake },
-  // Defensive aliases: the Playbook editor's slugify() emits underscores
-  // ("Funding Journey" → "funding_journey"), so a tenant who authors these
-  // modules by hand still routes to the same funding surfaces.
-  funding_journey: { href: "/app/funding-journey", icon: Compass },
-  financial_profile: { href: "/app/financial-profile", icon: Wallet },
-  // NOTE: 'planning' is intentionally NOT here. plan_list is tenant-member
-  // scoped (a client gets PLAN_FORBIDDEN), so Planning must never be added to a
-  // client's Playbook module list — it's surfaced via the staff-only fallback
-  // in AppNav instead (§9 keeps the client seam clean).
-};
+/**
+ * A catalog key renders ONLY if it maps to a live route. Derived from PORTAL_MENU_ENTRIES: every live entry a
+ * Playbook catalog can place (Messages is fixed chrome, Planning is staff-only; neither is a catalog key, and
+ * a non-live entry such as Payments has no page yet).
+ */
+export const MODULE_ROUTES: Record<string, { href: string; icon: LucideIcon }> = Object.fromEntries(
+  PORTAL_MENU_ENTRIES
+    .filter((e) => e.live && e.key !== "messages" && e.floor !== "staff")
+    .map((e) => [e.key, { href: e.route, icon: e.icon }]),
+);
 
 /** A catalog module resolved to a real route, carrying its authored position. */
 export interface PortalCatalogItem {

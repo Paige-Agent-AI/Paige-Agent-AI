@@ -13,7 +13,7 @@ import type { Playbook } from "./types";
 
 export * from "./types";
 export { generalDefault, coachingDefault, fitnessCoach, businessConsultant, marketingAgency, PLAYBOOK_LIBRARY, RESOLVABLE_PLAYBOOKS } from "./presets";
-export { getPlaybookBySlug, resolveActivePlaybook } from "./resolve";
+export { getPlaybookBySlug, resolveActivePlaybook, resolvePortalCatalog, catalogInputFromFeatures } from "./resolve";
 
 /**
  * The synchronous neutral default. Use this only where a non-reactive default

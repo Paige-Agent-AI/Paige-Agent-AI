@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { AppNav } from "./AppNav";
+import { closeMenus, desktopNavHrefs, openGroup } from "./appNavTestUtils";
 
 // Synthetic test tenant (Northwind Studio); never a real account.
 const f = vi.hoisted(() => ({
@@ -35,8 +36,16 @@ let root: Root, host: HTMLDivElement;
 const render = async () => {
   await act(async () => root.render(<MemoryRouter initialEntries={["/app"]}><AppNav user={user} /></MemoryRouter>));
 };
-const sessionsLinks = () => host.querySelectorAll('a[href="/app/sessions"]');
-const navOrder = () => Array.from(host.querySelectorAll("a")).map(a => a.getAttribute("href")).filter(h => h?.startsWith("/app"));
+// Slice M: the desktop bar groups entries; a group of two or more is a menu whose links mount only while open,
+// so these read every destination by opening each group (appNavTestUtils), as a keyboard user would.
+const navOrder = () => desktopNavHrefs(host);
+const sessionsCount = async () => (await navOrder()).filter(h => h === "/app/sessions").length;
+const sessionsLabel = async () => {
+  const items = await openGroup("Your work");
+  const text = items.find(i => i.getAttribute("href") === "/app/sessions")?.textContent?.trim();
+  await closeMenus();
+  return text;
+};
 
 beforeEach(() => {
   f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.brandError = false; f.multiple = false;
@@ -45,21 +54,23 @@ beforeEach(() => {
   f.brand = { tenant_id: "e0923000-0000-0000-0000-000000000002", tenant_name: "Northwind Studio", logo_url: null, primary_color: null };
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+afterEach(async () => { await closeMenus(); act(() => root.unmount()); host.remove(); });
 
-it("gives a customer of one business a Sessions entry, after Messages, even when the Playbook predates the key", async () => {
+// Slice M (owner ruling 2026-10-18): Sessions sits in "Your work" after Progress and Action items. Before
+// Slice M it was injected right after Messages; the destination set is unchanged (§58, presentation only).
+it("gives a customer of one business a Sessions entry in Your work, even when the Playbook predates the key", async () => {
   await render();
-  expect(sessionsLinks()).toHaveLength(1);
-  expect(sessionsLinks()[0].textContent).toContain("Sessions");
-  const order = navOrder();
-  expect(order.indexOf("/app/sessions")).toBe(order.indexOf("/app/messages") + 1);
+  expect(await sessionsCount()).toBe(1);
+  expect(await sessionsLabel()).toContain("Sessions");
+  const order = await navOrder();
+  expect(order.indexOf("/app/sessions")).toBe(order.indexOf("/app/actions") + 1);
 });
 
 it("places Sessions where the Playbook lists it, exactly once", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }, { key: "learn", label: "Resources" }];
   await render();
-  expect(sessionsLinks()).toHaveLength(1);
-  const order = navOrder();
+  expect(await sessionsCount()).toBe(1);
+  const order = await navOrder();
   expect(order.indexOf("/app/sessions")).toBeLessThan(order.indexOf("/app/learn"));
 });
 
@@ -67,37 +78,37 @@ it("respects the business's portal overlay hiding Sessions", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }];
   f.overlay = [{ key: "sessions", visible: false }];
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
 });
 
 it("respects the overlay even when the Playbook predates the key", async () => {
   f.overlay = [{ key: "sessions", visible: false }];
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
 });
 
 it("never shows Sessions to staff, even when the Playbook lists it", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }];
   f.brand = null; f.isAdmin = true;
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
 });
 
 it("never shows Sessions to a customer of more than one business", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }];
   f.brand = null; f.multiple = true;
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
 });
 
 it("shows no Sessions while the relationship resolves or after it failed to", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }];
   f.brandLoading = true;
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
   f.brandLoading = false; f.brandError = true;
   await render();
-  expect(sessionsLinks()).toHaveLength(0);
+  expect(await sessionsCount()).toBe(0);
 });
 
 it("lists Sessions in the customer's mobile menu", async () => {
@@ -112,7 +123,7 @@ it("lets the business's overlay reorder Sessions, which only a routed catalog ke
   f.modules = [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }];
   f.overlay = [{ key: "sessions", order: -1 }];
   await render();
-  const order = navOrder();
+  const order = await navOrder();
   expect(order.indexOf("/app/sessions")).toBeGreaterThanOrEqual(0);
   expect(order.indexOf("/app/sessions")).toBeLessThan(order.indexOf("/app/actions"));
 });

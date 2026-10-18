@@ -1211,6 +1211,12 @@ describe("tenant Relationships / Clients workspace", () => {
     act(() => root.unmount());
   });
 
+  it("says on the Client-visible home card where the customer menu is configured (E09 Slice M)", () => {
+    useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
+    const html = render("/business/2/clients/portal", "sub_account");
+    expect(html).toContain("Your customers’ menu follows the order and names you set in Portal configuration.");
+  });
+
   it("retains the incumbent non-Solo Portal audience boundaries", () => {
     useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
     const html = render("/business/2/clients/portal", "sub_account");

@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation, useNavigationType } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { AppNav } from "./AppNav";
+import { desktopNavHrefs } from "./appNavTestUtils";
 
 const f = vi.hoisted(() => ({
   mobile: false,
@@ -62,7 +63,8 @@ it("gives a customer an always-on Messages entry in the desktop nav", async () =
   await render();
   const link = host.querySelector('a[href="/app/messages"]');
   expect(link?.textContent).toContain("Messages");
-  expect(host.querySelector('a[href="/app/actions"]')).not.toBeNull();
+  // Slice M: Action items is inside the "Your work" menu on the desktop bar.
+  expect(await desktopNavHrefs(host)).toContain("/app/actions");
 });
 
 it("replaces platform Support with Get help in the customer's mobile menu", async () => {

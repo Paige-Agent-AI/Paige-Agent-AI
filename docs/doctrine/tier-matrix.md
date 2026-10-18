@@ -4761,3 +4761,31 @@ pgTAP (`supabase/tests/customer_portal_progress.sql`, 110 cases) covers other-cu
 unshared, cancelled, reminder and merged-contact refusals, the version check, state replay, the
 unshare-on-cancel and unshare-on-client-change trigger, the catalogue row and the column grants.
 Authenticated owner share and customer read on production are owed.
+
+### Customer Portal — per-tenant customer menu (E09 Slice M, 2026-10-18)
+
+Every business chooses which entries its customers see in the portal menu, in what order within each
+group, and what each is called. Owner rulings (2026-10-18): Home and Messages are fixed at the top; Get
+help, Account, Settings and Sign out are fixed at the bottom; Progress, Action items and Sessions ("Your
+work"), Documents, Agreements and Payments ("Paperwork") and Resources ("Learn") are configurable within
+their group; the group order is fixed. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
+`assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
+with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
+the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
+catalog-only entries (funding keys, Approvals, Agreements, Resources) render only when the Playbook
+catalog lists them (§2). An entry whose route is not live (Payments until Slice 5) never renders and is
+never offered. The customer's catalog now comes from the server's `_catalog` in
+`get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
+exception.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Configure the customer menu (`set_tenant_portal_config`, Clients → Portal → Customize experience → "Customer portal menu") | Can write any tenant's config (`is_platform_owner` inside `can_manage_tenant_brand`); Paige's tool uses only the caller's current tenant | Its own and its sub-accounts' config (the ancestor chain); its own customers: none, by §61 | ✓ owns it (Solo Clients → Portal) | ✓ owns it (same gate); same PortalStudio in the non-Solo workspace | Same as Sub-account | Reads the menu only (`get_client_portal_config`) | Denied | PROOF OWED |
+| Customer menu rendered from the business's catalog + overlay (`assemblePortalNav`) | — | — | — | — | — | ✓ own relationship; fixed Home/Messages, grouped entries, floors enforced | — | PROOF OWED |
+| Paige reads / changes the menu from chat (`client.portal_menu_read`, `client.portal_menu_configure`, risk high, owner confirms) | Current workspace only | Current workspace only | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
+| "Customize Paige" → Portal catalog list (PortalSection) | unchanged | unchanged | ✓ renaming keeps the key; points to Clients → Portal | ✓ (plain-text pointer) | ✓ (plain-text pointer) | — | — | PROOF OWED |
+
+Vitest pins today's menu destinations per Playbook preset and viewer kind against a capture of the real
+AppNav at `571ab923e` (§58: the set is unchanged; the grouping is presentation only). Harness frames
+(`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
+in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.

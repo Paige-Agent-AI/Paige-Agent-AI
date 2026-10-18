@@ -1,4 +1,7 @@
 -- ISOLATED database only (local stack or CI clone); never execute on production.
+-- Current-contract continuation: preserve historical replay/ACL/index oracles, then restore the
+-- six exact current bodies. Rejected/malformed historical DATA never becomes a new current claim.
+-- The original outer ROLLBACK remains the sole transaction end; no provider call occurs here.
 -- Experience 03 · S3 — truthful PAIGE Email receipts and one connected history
 -- (20271031000200_paige_email_sendgrid_receipts_and_history.sql).
 --
@@ -52,6 +55,29 @@ CREATE FUNCTION pg_temp.as_service() RETURNS void LANGUAGE sql AS $$
  SELECT set_config('request.jwt.claims','{"role":"service_role"}',true), set_config('request.jwt.claim.sub','',true) $$;
 
 -- ── 0. Migrations (the reply migration this builds on, then this one twice: replay is a no-op). ────
+-- Historical migration replay below must not leave a mixed generation of native functions.
+-- Snapshot the exact CURRENT six contracts inside this proof's existing transaction. No migration
+-- BEGIN/COMMIT is included: the outer ROLLBACK remains the only termination of this proof.
+CREATE TEMP TABLE current_comms_origin_contract ON COMMIT DROP AS
+SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expected_md5,
+ jsonb_build_object('identity_args',pg_get_function_identity_arguments(p.oid),
+  'arguments',pg_get_function_arguments(p.oid),'returns',pg_get_function_result(p.oid),
+  'owner',pg_get_userbyid(p.proowner),'acl',p.proacl::text,'settings',p.proconfig,
+  'definer',p.prosecdef,'language',p.prolang,'volatility',p.provolatile,
+  'parallel',p.proparallel,'strict',p.proisstrict,'leakproof',p.proleakproof,
+  'cost',p.procost,'rows',p.prorows) AS metadata
+FROM (VALUES
+ ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'66dcedb5e40dd43a54373c0e0ded1884'),
+ ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'34fe39ac8f870cbcc6887f3e2fc3a8e0'),
+ ('public.read_comms_email_send_binding(uuid)'::regprocedure,'b1afe7cd33a951738c2f49c6660a5023'),
+ ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'b457bccb225454101baba2355ee6baa6'),
+ ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'0018e0f9a1b5c63b836cb4ef72558332'),
+ ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'f0ecd87330486f154d5ffec709a5b579')
+) AS e(function_oid,expected_md5) JOIN pg_proc p ON p.oid=e.function_oid;
+SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expected_md5)
+ FROM current_comms_origin_contract s JOIN pg_proc p ON p.oid=s.function_oid),
+ 'fixture begins with all six exact reviewed current origin-admission bodies');
+
 \ir ../migrations/20271031000000_exp03_lead_reply_once_per_submission.sql
 \ir ../migrations/20271031000100_paige_email_sendgrid_governed_door.sql
 \ir ../migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql
@@ -79,6 +105,30 @@ SELECT pg_temp.check_true(NOT has_function_privilege('anon','public._paige_email
 SELECT pg_temp.check_true((SELECT count(*)=1 FROM pg_trigger WHERE tgname='trg_paige_email_history_on_message' AND tgrelid='public.messages'::regclass)
   AND (SELECT count(*)=1 FROM pg_trigger WHERE tgname='trg_paige_email_history_on_approval' AND tgrelid='public.paige_pending_approvals'::regclass),
   'one history trigger on each side after a replay');
+
+-- Retain the replayed guard solely for the explicitly named historical DATA setup below.
+CREATE TEMP TABLE historical_comms_origin_guard ON COMMIT DROP AS
+ SELECT pg_get_functiondef('public.paige_guard_send_approval_requires_governed_send()'::regprocedure) AS old_definition;
+-- All original historical replay/index/ACL assertions above remain intact. Restore only the
+-- exact current definitions captured before replay; no grants, role changes, disabled guards or
+-- transaction boundary is introduced. CREATE OR REPLACE retains these existing object identities.
+DO $restore_current_comms_origin$
+DECLARE saved record;
+BEGIN
+ FOR saved IN SELECT * FROM current_comms_origin_contract ORDER BY function_oid LOOP
+  EXECUTE saved.definition;
+ END LOOP;
+END $restore_current_comms_origin$;
+SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(
+ md5(p.prosrc)=s.expected_md5 AND pg_get_functiondef(p.oid)=s.definition AND
+ jsonb_build_object('identity_args',pg_get_function_identity_arguments(p.oid),
+  'arguments',pg_get_function_arguments(p.oid),'returns',pg_get_function_result(p.oid),
+  'owner',pg_get_userbyid(p.proowner),'acl',p.proacl::text,'settings',p.proconfig,
+  'definer',p.prosecdef,'language',p.prolang,'volatility',p.provolatile,
+  'parallel',p.proparallel,'strict',p.proisstrict,'leakproof',p.proleakproof,
+  'cost',p.procost,'rows',p.prorows)=s.metadata)
+ FROM current_comms_origin_contract s JOIN pg_proc p ON p.oid=s.function_oid),
+ 'all six current bodies, exact definitions, ABI, owner, ACL and settings restored after historical replay');
 
 -- ── Fixtures ───────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,email) VALUES
@@ -269,9 +319,53 @@ SELECT pg_temp.check_true(pg_temp.cl(17)=1
 SELECT pg_temp.prep_a(18,'e5000000-0000-4000-8000-0000000c0005','lead.five@example.invalid',pg_temp.ap('five'));
 SELECT pg_temp.check_true(public.lead_reply_record_send_service(pg_temp.ap('five'),pg_temp.op(18),'e5000000-0000-4000-8000-000000000001')->>'state'='prepared',
   'fixture: Lead Five''s reply approval cites its prepared send');
+-- Current counterpart: cancellation committed before admission forbids a new provider outcome.
 UPDATE public.paige_pending_approvals SET status='rejected' WHERE id=pg_temp.ap('five');
-SELECT pg_temp.accept(18,'sgLeadFive18');
-SELECT pg_temp.check_true(pg_temp.cl(18)=0 AND pg_temp.da(18)=0,
+SELECT pg_temp.check_true((public.claim_comms_email_send(pg_temp.msg(18),pg_temp.op(18))->>'admitted')::boolean IS FALSE,
+ 'current rejected-before-admission origin is not admitted');
+SELECT pg_temp.check_true(pg_temp.b(18)->>'state'='refused' AND (pg_temp.b(18)->>'attempts')::int=0
+ AND pg_temp.b(18)->>'provider_message_id' IS NULL AND pg_temp.status(18)='blocked',
+ 'current cancellation retains zero attempts and no provider outcome');
+-- Separately model the explicitly historical accepted/rejected pair for the original history
+-- filter oracle. This is DATA setup, not a claim or invented native origin identity.
+-- A separate unrelated accepted message supplies canonical historical columns. Only the exact
+-- known approval/operation correlation below is seeded as old unsealed DATA; there is no new
+-- admission for the rejected approval and no reactivation of its status.
+SELECT pg_temp.prep_a(118,'e5000000-0000-4000-8000-0000000c0005','lead.five@example.invalid');
+SELECT pg_temp.accept(118,'sgLeadFive118');
+-- Historical DATA fixture only: the known accepted118/rejected-five historical pair, with current admission untouched.
+-- The bounded setup uses the already-replayed historical guard, then immediately restores the
+-- captured CURRENT guard. It never changes current claim/prepare, invents a seal, or sends.
+DO $historical_origin_data$
+DECLARE definition text; affected integer;
+BEGIN
+ SELECT old_definition INTO STRICT definition FROM historical_comms_origin_guard;
+ EXECUTE definition;
+ UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding}',
+   (meta->'comms_email_binding'-ARRAY['origin_action_id','origin_action_kind'])
+   ||jsonb_build_object('approval_id',pg_temp.ap('five'),
+      'governance',(meta#>'{comms_email_binding,governance}')||jsonb_build_object('approval_id',pg_temp.ap('five'))))
+  WHERE id=pg_temp.msg(118) AND meta#>>'{comms_email_binding,state}'='provider_accepted';
+ GET DIAGNOSTICS affected = ROW_COUNT;
+ IF affected<>1 THEN RAISE EXCEPTION 'FIXTURE: expected one known historical accepted message'; END IF;
+ UPDATE public.paige_pending_approvals SET metadata=metadata||jsonb_build_object('governed_send',
+   jsonb_build_object('message_id',pg_temp.msg(118),'operation_id',pg_temp.op(118),'state','provider_accepted'))
+  WHERE id=pg_temp.ap('five') AND status='rejected';
+ GET DIAGNOSTICS affected = ROW_COUNT;
+ IF affected<>1 THEN RAISE EXCEPTION 'FIXTURE: expected exactly one named historical row'; END IF;
+ SELECT s.definition INTO STRICT definition FROM current_comms_origin_contract s
+  WHERE s.function_oid='public.paige_guard_send_approval_requires_governed_send()'::regprocedure;
+ EXECUTE definition;
+ IF md5((SELECT prosrc FROM pg_proc WHERE oid='public.paige_guard_send_approval_requires_governed_send()'::regprocedure))
+  IS DISTINCT FROM (SELECT expected_md5 FROM current_comms_origin_contract WHERE function_oid='public.paige_guard_send_approval_requires_governed_send()'::regprocedure)
+ THEN RAISE EXCEPTION 'FIXTURE: current guard was not restored'; END IF;
+END $historical_origin_data$;
+
+SELECT pg_temp.check_true(pg_temp.b(118)->>'state'='provider_accepted'
+ AND (SELECT status='rejected' FROM public.paige_pending_approvals WHERE id=pg_temp.ap('five'))
+ AND pg_temp.cl(118)=0 AND pg_temp.da(118)=0,
+ 'historical REJECTED approval citing accepted118 writes no history (original approval-status filter)');
+SELECT pg_temp.check_true(pg_temp.cl(118)=0 AND pg_temp.da(118)=0,
   'a REJECTED reply approval citing the accepted send writes no history (approval-status filter)');
 -- X7: an approval whose reply action is about ANOTHER contact (Lead Two) citing Lead Five's send. The
 -- binding is forged to name that approval too (the door would refuse to prepare it), so ONLY the
@@ -296,8 +390,9 @@ UPDATE public.paige_pending_approvals
 SELECT pg_temp.check_true(pg_temp.cl(21)=0 AND pg_temp.da(21)=0,
   'a reply approval pointed at an email prepared for ANOTHER approval writes no history (binding approval_id equality)');
 SELECT pg_temp.prep_a(20,'e5000000-0000-4000-8000-0000000c0005','lead.five@example.invalid');
-UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,approval_id}','"not-a-uuid"') WHERE id=pg_temp.msg(20);
 SELECT pg_temp.accept(20,'sgLeadFive20');
+-- Historical malformed binding is seeded AFTER real admission; it never requests a fresh claim.
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,approval_id}','"not-a-uuid"') WHERE id=pg_temp.msg(20);
 UPDATE public.paige_pending_approvals
    SET metadata=metadata||jsonb_build_object('governed_send',jsonb_build_object('message_id',pg_temp.msg(20),'operation_id',pg_temp.op(20)))
  WHERE id=pg_temp.ap('x8');
@@ -626,4 +721,36 @@ SELECT pg_temp.check_true(pg_temp.j('af1')->>'state'='processed' AND pg_temp.j('
 RESET ROLE;
 
 SELECT 'PAIGE_EMAIL_SENDGRID_RECEIPTS_PROVEN' AS result;
+-- Current native counterparts are fresh real writer calls, not the historical DATA fixtures.
+RESET ROLE;
+SELECT pg_temp.as_service();
+CREATE TEMP TABLE current_origin_probe(label text PRIMARY KEY,id uuid) ON COMMIT DROP;
+INSERT INTO current_origin_probe VALUES ('980',pg_temp.reply_approval('e5000000-0000-4000-8000-00000000aaaa','e5000000-0000-4000-8000-0000000c0001','e5000000-0000-4000-8000-00000005ef80')),('981',pg_temp.reply_approval('e5000000-0000-4000-8000-00000000aaaa','e5000000-0000-4000-8000-0000000c0001','e5000000-0000-4000-8000-00000005ef81'));
+SELECT pg_temp.prep_a(980,'e5000000-0000-4000-8000-0000000c0001','lead.one@example.invalid',(SELECT id FROM current_origin_probe WHERE label='980'));
+SELECT pg_temp.check_true((SELECT b->>'origin_action_id'=a.id::text
+ AND b->>'origin_action_kind'='owner.lead_followup' AND b->>'approval_id'=p.id::text
+ FROM current_origin_probe p JOIN public.paige_actions a ON a.approval_id=p.id
+ CROSS JOIN LATERAL (SELECT meta->'comms_email_binding' AS b FROM public.messages WHERE id=pg_temp.msg(980)) m
+ WHERE p.label='980') AND (public.read_comms_email_send_binding(pg_temp.msg(980))->>'origin_eligible')::boolean,
+ 'fresh native prepare derives its exact own action seal and current origin readback');
+SELECT pg_temp.check_true((public.claim_comms_email_send(pg_temp.msg(980),pg_temp.op(980))->>'admitted')::boolean,
+ 'fresh native sealed origin is admitted by the unchanged current claim');
+SELECT public.finalize_comms_email_send(pg_temp.msg(980),pg_temp.op(980),'failed',NULL,'fixture_provider_refused',1);
+SELECT pg_temp.prep_a(981,'e5000000-0000-4000-8000-0000000c0001','lead.one@example.invalid',(SELECT id FROM current_origin_probe WHERE label='981'));
+-- Explicit old prepared-row DATA shape: remove the seal, never manufacture one or claim it historical success.
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding}',
+ (meta->'comms_email_binding')-ARRAY['origin_action_id','origin_action_kind']) WHERE id=pg_temp.msg(981);
+SELECT pg_temp.check_true((public.claim_comms_email_send(pg_temp.msg(981),pg_temp.op(981))->>'admitted')::boolean IS FALSE,
+ 'legacy unsealed zero-attempt prepared origin receives no fresh admission');
+SELECT pg_temp.check_true((SELECT meta#>>'{comms_email_binding,state}'='refused'
+ AND (meta#>>'{comms_email_binding,attempts}')::int=0 AND provider_message_id IS NULL
+ AND meta#>>'{comms_email_binding,provider_message_id}' IS NULL
+ AND NOT (meta->'comms_email_binding' ? 'origin_action_id')
+ AND NOT (meta->'comms_email_binding' ? 'origin_action_kind')
+ FROM public.messages WHERE id=pg_temp.msg(981)),
+ 'unsealed refusal retains zero attempts, no provider outcome and no native identity backfill');
+SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expected_md5 AND pg_get_functiondef(p.oid)=s.definition)
+ FROM current_comms_origin_contract s JOIN pg_proc p ON p.oid=s.function_oid),
+ 'proof exits with all six exact current native definitions; outer ROLLBACK alone cleans fixtures');
+
 ROLLBACK;

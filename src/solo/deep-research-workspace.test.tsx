@@ -47,6 +47,7 @@ import { ResearchView } from "./paige-research";
 import { useDeepResearch } from "./data/deepResearch";
 import { projectResearchHistoryRun, readResearchHistoryRun } from "@/lib/paigeResearchReadback";
 import ts from "typescript";
+import postcss from "postcss";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const flush = async () => { for (let i = 0; i < 30; i += 1) await Promise.resolve(); };
@@ -337,6 +338,46 @@ const view = readFileSync(join(root, "src/solo/paige-research.tsx"), "utf8");
 const workspace = readFileSync(join(root, "src/solo/SoloPaigeWorkspace.tsx"), "utf8");
 const routes = readFileSync(join(root, "src/lib/routing/tierBranches.ts"), "utf8");
 const css = readFileSync(join(root, "src/solo/solo-paige-workspace.css"), "utf8");
+
+describe("available Research panel width contract", () => {
+  // CSS structure guards only. Real layout/scroll/focus is measured by the
+  // private actual-SoloApp Chromium drive; jsdom does not evaluate containers.
+  const css = postcss.parse(readFileSync(join(root, "src/solo/solo-paige-workspace.css"), "utf8"));
+  it("uses the actual Research panel as an inline-size container", () => {
+    const declarations: Array<[string, string]> = [];
+    css.walkRules("#spw-panel-research", rule => {
+      rule.walkDecls(decl => { declarations.push([decl.prop, decl.value]); });
+    });
+    expect(declarations).toContainEqual(["container", "spw-research / inline-size"]);
+  });
+  it("stacks the library and explanation in a narrow panel even in a wide window", () => {
+    const scoped: Array<{ condition: string; selectors: string[]; columns: string[] }> = [];
+    css.walkAtRules("container", rule => {
+      if (!rule.params.startsWith("spw-research ")) return;
+      const selectors: string[] = [], columns: string[] = [];
+      rule.walkRules(child => { selectors.push(child.selector); });
+      rule.walkDecls("grid-template-columns", decl => { columns.push(decl.value); });
+      scoped.push({ condition: rule.params, selectors, columns });
+    });
+    expect(scoped).toEqual([{ condition: "spw-research (max-width:780px)", selectors: [".dr-layout"], columns: ["minmax(0,1fr)"] }]);
+  });
+  it("wraps the original detail question while preserving its uncapped text", () => {
+    const wrap: string[] = [];
+    css.walkRules(".dr-detail-card .spw-card-copy", rule => {
+      rule.walkDecls("overflow-wrap", decl => { wrap.push(decl.value); });
+    });
+    expect(wrap).toEqual(["anywhere"]);
+    // The library's visual limit must never migrate into the full detail path.
+    const ast = ts.createSourceFile("paige-research.tsx", view, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const detailHeadings: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxElement(node) && node.openingElement.tagName.getText(ast) === "h3" && node.children.some(child => ts.isJsxExpression(child) && child.expression?.getText(ast) === "detail.question")) detailHeadings.push(node.openingElement.getText(ast));
+      ts.forEachChild(node, visit);
+    };
+    visit(ast);
+    expect(detailHeadings).toEqual(["<h3>"]);
+  });
+});
 
 describe("one canonical substrate — no second research stack", () => {
   it("reads go through the governed RPCs only, never the tables", () => {

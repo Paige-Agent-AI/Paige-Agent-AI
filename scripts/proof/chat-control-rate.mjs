@@ -13,7 +13,7 @@ const payload=(kind='status',extra={})=>({messages:[{role:'user',content:kind===
 let buckets,rec;
 function scenario(options={}) {
   network=0;buckets=new Map();
-  rec=fake.setScenario({authUser:options.expired?null:{id:actor},tables:{paige_chat_threads:options.unowned?[]:[{id:thread,tenant_id:tenant,caller_user_id:actor,audience:options.audience??'owner'}]},rpcs:{
+  rec=fake.setScenario({authUser:options.expired?null:{id:actor},tables:{paige_chat_threads:options.unowned?[]:[{id:thread,tenant_id:tenant,caller_user_id:actor,audience:options.audience??'workspace'}]},rpcs:{
     check_rate_limit:args=>{const key=args._function_name;buckets.set(key,(buckets.get(key)??0)+1);return options.rateError?{data:null,error:{code:'57014'}}:options.rateNull?{data:null,error:null}:{data:buckets.get(key)<=args._max_requests,error:null};},
     paige_chat_interactive_protocol:{data:{version:2,active:options.active??true},error:null},
     paige_chat_interactive_executor_v2:{data:{latest:intent,executor:null,terminal:true,stopped:false},error:null},

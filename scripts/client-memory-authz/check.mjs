@@ -472,6 +472,11 @@ async function drive({
     const answer = typeof seat === "function" ? seat({}) : seat;
     return answer?.data === true;
   })();
+  const personaFixture = rpcOverrides.get_paige_persona_context;
+  const fixturePersona = personaFixture === undefined
+    ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
+    : typeof personaFixture === "function" ? null : personaFixture;
+  const fixtureOwnTenant = typeof fixturePersona?.data?.[0]?.tenant_id === "string" ? fixturePersona.data[0].tenant_id : null;
   const logged = [];
   embedCount = 0;
   modelEgress = [];
@@ -550,6 +555,14 @@ async function drive({
         if (isDedupe) return [];
         return [{ memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }];
       },
+      // Positive legacy drives historically assumed an existing OWN thread but
+      // did not script its row. Declare that fixture state explicitly; this is
+      // not a production fallback. Any own scripted value (even undefined/[]),
+      // malformed scope or native error remains controlling and is never filled.
+      ...(!Object.hasOwn(tablesExtra, "paige_chat_threads") && typeof extraBody?.threadId === "string"
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(extraBody.threadId)
+        ? { paige_chat_threads: [{ id: extraBody.threadId.toLowerCase(), caller_user_id: USER, tenant_id: fixtureOwnTenant,
+          audience: "workspace", interactive_recovery_hold: null }] } : {}),
       ...tablesExtra,
       // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
       // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
@@ -558,17 +571,14 @@ async function drive({
       // scenario that scripts `tenant_id` (including null, a platform thread) keeps exactly what it wrote.
       ...(typeof tablesExtra.paige_chat_threads === "function" ? {
         paige_chat_threads: (filters) => {
-          const persona = rpcOverrides.get_paige_persona_context;
-          const answer = persona === undefined
-            ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
-            : typeof persona === "function" ? null : persona; // a scripted function is not called twice
-          const own = typeof answer?.data?.[0]?.tenant_id === "string" ? answer.data[0].tenant_id : null;
           // Native thread rows always have these immutable bindings, including
           // narrow summary/Studio fixtures. Preserve explicitly foreign values.
           return (tablesExtra.paige_chat_threads(filters) ?? []).map((row) =>
-            row && typeof row === "object" ? {
+            row && typeof row === "object" && !Array.isArray(row) ? {
               id: extraBody?.threadId, caller_user_id: USER,
-              ...(!("tenant_id" in row) ? { tenant_id: own } : {}), ...row,
+              ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+              ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}),
+              ...(!("tenant_id" in row) ? { tenant_id: fixtureOwnTenant } : {}), ...row,
             } : row);
         },
       } : {}),
@@ -3420,7 +3430,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 {
  const THREAD='cccccccc-cccc-4ccc-8ccc-cccccccccccc';const args={updates:{goal:'ROOT-SCOPE-ACTION'}};
  const tenant={tenant_id:CALLER_TENANT};const rpc=data=>({data,error:null});
- const run=(st,resolve=()=>rpc([tenant]),extra={})=>drive({stream:true,extraBody:{threadId:THREAD},toolCall:{name:'update_client_data',args},rpcOverrides:{get_paige_persona_context:resolve,resolve_tool_autonomy:rpc('confirm'),get_actor_access:rpc({tier:'tenant'})},tablesExtra:{paige_pending_confirmations:st.table,user_roles:()=>[{role:'admin'}]},onInsert:mirrorConfirms(st),...extra});
+ const run=(st,resolve=()=>rpc([tenant]),extra={},initialTenant=CALLER_TENANT)=>drive({stream:true,extraBody:{threadId:THREAD},toolCall:{name:'update_client_data',args},rpcOverrides:{get_paige_persona_context:resolve,resolve_tool_autonomy:rpc('confirm'),get_actor_access:rpc({tier:'tenant'})},tablesExtra:{paige_pending_confirmations:st.table,user_roles:()=>[{role:'admin'}],paige_chat_threads:[{id:THREAD,caller_user_id:USER,tenant_id:initialTenant,audience:'workspace',interactive_recovery_hold:null}]},onInsert:mirrorConfirms(st),...extra});
  const writes=r=>r.outboundCalls.filter(x=>x.url.includes('paige-write-back'));
  const pending=r=>r.rec.from.filter(x=>x.table==='paige_pending_confirmations');
  for(const [name,result] of Object.entries({rpc_error:{data:null,error:{code:'57014',message:'scope unavailable'}},null_result:rpc(null),object:rpc({tenant_id:CALLER_TENANT}),malformed:rpc([{}]),bad_id:rpc([{tenant_id:'junk'}]),multiple:rpc([tenant,tenant])})){
@@ -3428,7 +3438,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  assert('24.1 invalid persona cannot issue '+name,st.rows.length===0&&writes(r).length===0&&pending(r).length===0);
  }
  for(const data of [[],[{tenant_id:null}]]){
- const st=makeConfirmStore();const r=await run(st,()=>rpc(data));assert('24.2 proven legitimate null scope still proposes '+JSON.stringify(data),st.rows.length===1&&!!st.rows[0].server_issued_at);
+ const st=makeConfirmStore();const r=await run(st,()=>rpc(data),{},null);assert('24.2 proven legitimate null scope still proposes '+JSON.stringify(data),st.rows.length===1&&!!st.rows[0].server_issued_at);
  }
  const initial=makeConfirmStore();await run(initial);const issued=initial.rows[0];
  assert('24.3 valid no-KB tenant proposal reaches store',!!issued);
@@ -8208,8 +8218,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   assert("43.8a F7 a thread from another workspace: the turn is refused before PAIGE is reached — no note, no model call, no door call",
     !told(r8a).includes("ANSWERING YOUR OFFER") && streamed(r8a).length === 0 && doorCalls(r8a).length === 0,
     JSON.stringify({ status: r8a.status, calls: streamed(r8a).length, door: doorCalls(r8a).length }));
-  assert("43.8b F8 another person's thread: their offer is invisible (RLS) and never continued — no note, cheap tier, nothing proposed",
-    !told(r8b).includes("ANSWERING YOUR OFFER") && modelOf(r8b, 0) === CLAUDE_CLASSIFICATION && doorCalls(r8b).length === 0 && c8.rows.length === 0,
+  assert("43.8b F8 an explicitly named invisible thread is refused before model, memory, provider or approval continuation",
+    r8b.status === 409 && !told(r8b).includes("ANSWERING YOUR OFFER") && r8b.modelEgress.length === 0
+      && r8b.outboundCalls.length === 0 && doorCalls(r8b).length === 0 && c8.rows.length === 0 && r8b.rec.inserts.length === 0
+      && !r8b.rec.rpc.some(c => c.name === "record_paige_memory"),
     JSON.stringify({ status: r8b.status, model: modelOf(r8b, 0), door: doorCalls(r8b).length, rows: c8.rows.length }));
 
   // ── 43.9 F9 — the offered act can't be done: a truthful refusal is a terminal answer (no loop, no fallback).
@@ -9390,7 +9402,8 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   for (let k = 1; k <= 12 && !midBatch; k++) {
     const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
       toolCall: { batch: [search("client onboarding checklist", "toolu_m1"), search("retainer agreement template", "toolu_m2")] },
-      rpcOverrides: { ...AS_OWNER, get_paige_persona_context: switchingPersona(k) } });
+      rpcOverrides: { ...AS_OWNER, get_paige_persona_context: switchingPersona(k) },
+      tablesExtra: { paige_chat_threads: [{ id: THREAD, caller_user_id: USER, tenant_id: CALLER_TENANT, audience: "workspace", interactive_recovery_hold: null }] } });
     const ids = [...new Set(actionFrames(r).map((x) => x.id))];
     if (ids.length === 1 && r.bodyText.includes("active workspace changed")) midBatch = { k, r };
   }
@@ -10070,6 +10083,43 @@ console.log("\nlegacy session summaries use attributable Fabric and fresh origin
     assert("LS18 absolute deadline refuses late completion before delayed timer delivery", writes(expired).length === 0
       && !expired.bodyText.includes("Origin-bound") && JSON.parse(expired.bodyText).code === "SESSION_SUMMARY_CANCELLED");
   } finally { Date.now = realNow; }
+}
+
+console.log("\nJ19 native thread fixture defaults preserve real omissions and explicit invalid projections");
+{
+  const fixtureThread = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const persona = { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null,
+    funding_enabled: false, brand: null }], error: null };
+  const baseRow = { id: fixtureThread, caller_user_id: USER, tenant_id: CALLER_TENANT };
+  const run = (rows, tableErrorsExtra = {}, ownerPositive = false) => drive({ stream: true, extraBody: { threadId: fixtureThread },
+    rpcOverrides: { get_paige_persona_context: persona, ...(ownerPositive ? { get_actor_access: { data: { tier: "tenant" }, error: null } } : {}) },
+    tablesExtra: { paige_chat_threads: () => rows }, tableErrorsExtra });
+  const defaultOwn = await drive({ stream: true, extraBody: { threadId: fixtureThread },
+    rpcOverrides: { get_paige_persona_context: persona, get_actor_access: { data: { tier: "tenant" }, error: null } } });
+  assert("J19 explicit default OWN-thread fixture reaches an ordinary model turn", defaultOwn.status === 200 && defaultOwn.modelEgress.length > 0,
+    JSON.stringify({status:defaultOwn.status,body:defaultOwn.bodyText.slice(0,400),logged:defaultOwn.logged.slice(-3)}));
+  const explicitMissing = await drive({ stream: true, extraBody: { threadId: fixtureThread }, rpcOverrides: { get_paige_persona_context: persona },
+    tablesExtra: { paige_chat_threads: undefined } });
+  assert("J19 explicit undefined thread table never acquires the default OWN fixture", explicitMissing.status === 409
+    && explicitMissing.bodyText.includes("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE") && explicitMissing.modelEgress.length === 0);
+  const omitted = await run([baseRow], {}, true);
+  assert("J19 fixture genuinely omitted native columns retain an ordinary model turn", omitted.status === 200 && omitted.modelEgress.length > 0,
+    JSON.stringify({status:omitted.status,body:omitted.bodyText.slice(0,400),logged:omitted.logged.slice(-3)}));
+  assert("J19 fixture filling does not mutate the original stored-row input", !Object.hasOwn(baseRow, "audience") && !Object.hasOwn(baseRow, "interactive_recovery_hold"));
+  for (const [label, rows, errors] of [
+    ["explicit undefined audience", [{ ...baseRow, audience: undefined }]],
+    ["explicit undefined hold", [{ ...baseRow, interactive_recovery_hold: undefined }]],
+    ["malformed hold", [{ ...baseRow, interactive_recovery_hold: [] }]],
+    ["malformed row", [[]]],
+    ["private audience", [{ ...baseRow, audience: "customer_private" }]],
+    ["foreign actor", [{ ...baseRow, caller_user_id: FOREIGN }]],
+    ["missing row", []],
+    ["native read error", [baseRow], { paige_chat_threads: { code: "42501", message: "synthetic scope refusal" } }],
+  ]) {
+    const r = await run(rows, errors);
+    assert(`J19 fixture ${label} remains refused before a model or memory effect`, r.status === 409 && r.bodyText.includes("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE") && r.modelEgress.length === 0
+      && !r.rec.rpc.some(c => c.name === "record_paige_memory") && !r.rec.inserts.some(c => c.table === "client_memory"));
+  }
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

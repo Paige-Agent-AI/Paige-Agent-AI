@@ -46,7 +46,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";
 import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure.ts";
-import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
+import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, interactiveRuntimeIdentity, interactiveRecoveryReadAllowed, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
 import { CHAT_CONTROL_HEADER, chatIngressPolicy, matchesChatControlHint, readChatControlBody } from "../_shared/paige-turn/control-transport.ts";
@@ -1103,6 +1103,9 @@ serve(async (req) => {
   // no executor claim and no approval consumption — non-effectful by server enforcement —
   // and still settles through a server-issued receipt.
   let interactiveConversational = false;
+  let interactiveRecoveryReadOnly = false;
+  let interactiveRecoveryReadLane = false;
+  const runtimeIdentity = interactiveRuntimeIdentity(Deno.env.get("SB_EXECUTION_ID"), Deno.env.get("DENO_DEPLOYMENT_ID"), crypto.randomUUID());
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -1316,6 +1319,39 @@ serve(async (req) => {
       validatedData.clientContext = undefined;
       traceCtx.content_policy = "metadata_only";
     }
+    // Every work-capable workspace-thread entry, including legacy/summary callers,
+    // reads the SAME server-owned hold under the original JWT and native thread RLS.
+    // No invented intent is needed to observe it. Only bound native acquisition may
+    // admit read continuation; a later observation never upgrades an old request.
+    let recoveryThreadScope: { tenant: string | null; audience: string } | null = null;
+    const refreshRecoveryHold = async (): Promise<boolean> => {
+      if (!validatedData.threadId || customerPortal) return false;
+      if (req.signal.aborted) throw new Error("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE");
+      const { data: row, error } = await supabaseClient.from("paige_chat_threads")
+        .select("id,caller_user_id,tenant_id,audience,interactive_recovery_hold").eq("id", validatedData.threadId)
+        .eq("caller_user_id", user.id).maybeSingle();
+      if (error || !row || typeof row.id !== "string" || row.id.toLowerCase() !== validatedData.threadId.toLowerCase()
+        || row.caller_user_id !== user.id || row.audience !== "workspace"
+        || !(row.tenant_id === null || z.string().uuid().safeParse(row.tenant_id).success)
+        || !(row.interactive_recovery_hold === null || z.string().uuid().safeParse(row.interactive_recovery_hold).success))
+        throw new Error("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE");
+      if (recoveryThreadScope && (recoveryThreadScope.tenant !== row.tenant_id || recoveryThreadScope.audience !== row.audience))
+        throw new Error("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE");
+      recoveryThreadScope ??= { tenant: row.tenant_id, audience: row.audience };
+      interactiveRecoveryReadOnly ||= row.interactive_recovery_hold !== null;
+      return interactiveRecoveryReadOnly;
+    };
+    const requireRecoveryPermission = async (effect = false): Promise<void> => {
+      if (await refreshRecoveryHold()) {
+        if (effect || !interactiveRecoveryReadLane) throw new Error("INTERACTIVE_RECOVERY_READ_ONLY");
+      }
+    };
+    const embedForTurn = async (text: string): Promise<number[] | null> => {
+      await requireRecoveryPermission();
+      return embedText(text);
+    };
+    if (!validatedData.interactive && await refreshRecoveryHold())
+      throw new Error("INTERACTIVE_RECOVERY_READ_ONLY");
     let interactiveUnresolvedEffects: Array<{ tool: string; outcome: string }> = [];
     let interactiveReceiptScanSaturated = false;
     // INT-336 acceptance uses the tested canonical adapter, including uncertain acceptance.
@@ -1345,14 +1381,30 @@ serve(async (req) => {
       if ((thread.audience === "customer_private") !== customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // Dedicated status/Stop return through their existing native control paths.
+      // They cannot reach model/pre-tool work and must retain their error ordering.
+      if (interactiveInput.kind === "message") await refreshRecoveryHold();
+      if (degraded && interactiveRecoveryReadOnly) throw new Error("INTERACTIVE_RECOVERY_READ_ONLY");
       interactiveReceiptScope = { thread: validatedData.threadId, tenant: thread.tenant_id, intent: validatedData.requestIntentId };
       const userText = [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content;
       const executor = async (operation: string) => {
-        const { data, error } = await supabase.rpc("paige_chat_interactive_executor_v2", {
+        const bound = runtimeIdentity && thread.audience === "workspace" && thread.tenant_id;
+        const rpc = bound && operation === "acquire" ? "paige_chat_interactive_acquire_bound"
+          : bound && operation === "state" ? "paige_chat_interactive_runtime_context" : "paige_chat_interactive_executor_v2";
+        const { data, error } = await supabase.rpc(rpc, {
           p_thread: validatedData.threadId, p_actor: user.id, p_tenant: thread.tenant_id,
-          p_intent: validatedData.requestIntentId, p_operation: operation,
+          p_intent: validatedData.requestIntentId,
+          ...(rpc === "paige_chat_interactive_acquire_bound" ? { p_request_nonce: runtimeIdentity!.requestNonce,
+            p_execution_id: runtimeIdentity!.executionId, p_deployment_id: runtimeIdentity!.deploymentId }
+            : rpc === "paige_chat_interactive_executor_v2" ? { p_operation: operation } : {}),
         });
         if (error || !data) throw new Error("INTERACTIVE_AUTHORITY_UNAVAILABLE");
+        if (bound && (operation === "state" || operation === "acquire")) {
+          if (typeof data.recovery_read_only !== "boolean") throw new Error("INTERACTIVE_AUTHORITY_UNAVAILABLE");
+          interactiveRecoveryReadOnly ||= data.recovery_read_only;
+          if (operation === "acquire" && data.acquired === true && data.recovery_read_only === true)
+            interactiveRecoveryReadLane = true;
+        }
         return data;
       };
       if (validatedData.interactive.kind === "status") {
@@ -1448,6 +1500,15 @@ serve(async (req) => {
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
         p_stop: interactiveInput.kind === "stop", ...(effectful ? {} : { p_effectful: false }),
       });
+      if (interactiveInput.kind === "stop") {
+        const stopped = await beginTurn(true);
+        // Even malformed/uncertain native Stop output cannot become a message
+        // admission or acquire an executor. Observe uncertainty; never fall through.
+        const boundary = interactiveAcceptanceBoundary(stopped.data?.status === "accepted" ? null : stopped.data, !!stopped.error);
+        return new Response(JSON.stringify(boundary), {
+          status: boundary.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (degraded) {
         // A conversational turn never holds executor authority: no acquire, and settlement
         // owns the live intent rather than the executor token. Stop/supersede still applies
@@ -1493,6 +1554,15 @@ serve(async (req) => {
         });
         interactive = started.execution;
         interactiveLifetime = started.lifetime;
+      }
+      // Client and Play identifiers remain read scope; their existing caller-JWT
+      // authorization below still applies. Only effect-bearing inputs are refused.
+      if (interactiveRecoveryReadOnly && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length
+        || validatedData.resume || validatedData.document || validatedData.attachments?.length
+        || validatedData.sessionDocumentContext?.length || validatedData.canvasArtifact)) {
+        return new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true,
+          reason: "An earlier answer was interrupted and its business outcomes still need checking. This conversation can answer and read existing records; it cannot submit approvals, documents or actions." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Re-read only after the preceding executor has finished its receipts.
       const { data: history, error: historyError } = await supabaseClient.from("paige_chat_turns")
@@ -1898,7 +1968,7 @@ serve(async (req) => {
     // caller's OWN client-visible event for their OWN contact — the WHERE
     // linked_user_id = user.id lookup is the client's own identity, and
     // 'client.message' is a client_visible kind.
-    if (!customerPortal && !generateSessionSummary && !payloadClientId) {
+    if (!interactiveRecoveryReadOnly && !customerPortal && !generateSessionSummary && !payloadClientId) {
       try {
         const lastUserMsg = [...messages].reverse().find((m: any) => m?.role === "user");
         const msgText = (lastUserMsg?.content ?? "").toString().trim();
@@ -1910,6 +1980,7 @@ serve(async (req) => {
             .maybeSingle();
           if (selfContact?.id && selfContact?.tenant_id) {
             const preview = msgText.length > 140 ? msgText.slice(0, 137) + "…" : msgText;
+            await requireRecoveryPermission(true);
             await supabase.rpc("record_rail_event", {
               p_contact_id: selfContact.id,
               p_event_kind: "client.message",
@@ -1993,6 +2064,7 @@ serve(async (req) => {
       const summaryScopeCurrent = async (): Promise<boolean> => {
         if (summaryRefused || summaryCancelled()) return false;
         try {
+          await requireRecoveryPermission(true);
           const [auth, profile, tenant] = await withinSummary(Promise.all([
             supabaseClient.auth.getUser(),
             supabaseClient.from("profiles").select("active_tenant_id").eq("user_id", summaryActorId).maybeSingle(),
@@ -2008,7 +2080,10 @@ serve(async (req) => {
             valid = !owner.error && !client.error && client.data?.id === scopedClientId && client.data.tenant_id === summaryTenantId &&
               (owner.data === true || (!!tenant.data && client.data.tenant_id === tenant.data));
           }
-          if (valid && !summaryCancelled() && !summaryRefused) return true;
+          if (valid && !summaryCancelled() && !summaryRefused) {
+            await requireRecoveryPermission(true);
+            return true;
+          }
         } catch { /* unavailable authority never admits a summary leg */ }
         if (summaryCancelled()) return false;
         summaryRefused = true;
@@ -2114,7 +2189,7 @@ JSON:`;
       if (!skipScopedMemoryWrites && summaryContent.trim()) {
         if (scopedClientId) {
           if (!(await summaryScopeCurrent())) return summaryStopped();
-          const summaryEmbedding = await withinSummary(embedText(summaryContent.trim()));
+          const summaryEmbedding = await withinSummary(embedForTurn(summaryContent.trim()));
           const memoryInsert: any = {
             client_user_id: scopedClientId || user.id,
             memory_type: "session_summary",
@@ -2173,7 +2248,7 @@ JSON:`;
             const milestoneCopy = labelMap[m].replace("Client mentioned", `${subject} mentioned`);
             if (scopedClientId) {
               if (!(await summaryScopeCurrent())) return summaryStopped();
-              const emb = await withinSummary(embedText(milestoneCopy));
+              const emb = await withinSummary(embedForTurn(milestoneCopy));
               const milestoneMemory: any = {
                 client_user_id: scopedClientId,
                 memory_type: "milestone_completed",
@@ -2240,7 +2315,7 @@ JSON:`;
               if (ownFactScope === null) continue;
               if (scopedClientId) {
                 if (!(await summaryScopeCurrent())) return summaryStopped();
-                const emb = await withinSummary(embedText(p.trim()));
+                const emb = await withinSummary(embedForTurn(p.trim()));
                 const factMemory: any = {
                   client_user_id: scopedClientId,
                   memory_type: memoryType,
@@ -2375,6 +2450,7 @@ JSON:`;
       // Only run the credit-report read-check on PDFs — images/docx can't be credit reports here.
       if (docKind === "pdf" && attachedDocument.base64) {
         try {
+          await requireRecoveryPermission(true);
           documentReadCheck = await runDocumentReadCheck(attachedDocument.base64, traceFor("document-read-check"));
           isCreditReportPdf = !!(documentReadCheck?.can_read_document
             && documentReadCheck?.document_kind === "credit_report"
@@ -2417,11 +2493,13 @@ JSON:`;
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
 
+          await requireRecoveryPermission(true);
           const { error: storageErr } = await supabase.storage
             .from("credit-report-uploads")
             .upload(storagePath, bytes.buffer, { contentType: "application/pdf" });
 
           if (!storageErr) {
+            await requireRecoveryPermission(true);
             const { data: uploadRec, error: insertErr } = await supabase
               .from("credit_report_uploads")
               .insert({
@@ -2492,6 +2570,7 @@ JSON:`;
             const binaryString = atob(attachedDocument.base64);
             const genBytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) genBytes[i] = binaryString.charCodeAt(i);
+            await requireRecoveryPermission(true);
             const { error: genStoreErr } = await supabase.storage
               .from("credit-report-uploads")
               .upload(generalPath, genBytes.buffer, { contentType: "application/pdf" });
@@ -2541,6 +2620,7 @@ JSON:`;
       const urls = lastUserMessage.content.match(urlRegex);
       if (urls && urls.length > 0) {
         try {
+          await requireRecoveryPermission(true);
           const urlResponse = await fetch(`${supabaseUrl}/functions/v1/fetch-url-content`, {
             method: 'POST',
             headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
@@ -2649,7 +2729,7 @@ JSON:`;
       // memories in parallel with the recent-memory pull.
       const lastUserContent = lastUserMessage?.content?.slice(0, 4000) || "";
       const semanticPromise = (lastUserContent && scopedClientId !== null)
-        ? embedText(lastUserContent).then(async (queryEmbedding) => {
+        ? embedForTurn(lastUserContent).then(async (queryEmbedding) => {
             if (!queryEmbedding) return [] as any[];
             const { data, error } = await supabase.rpc("match_paige_memory", {
               _query_embedding: queryEmbedding,
@@ -2854,7 +2934,7 @@ JSON:`;
     // (no extra AI call) — auto-extraction at session end catches subtler ones.
     try {
       const text = (lastUserMessage?.content || "").toLowerCase();
-      if (text && text.length < 600) {
+      if (!interactiveRecoveryReadOnly && text && text.length < 600) {
         const preferenceTriggers = [
           /\b(be|stay|keep it)\s+(brief|short|concise|terse)\b/,
           /\b(stop|don'?t|do not)\s+(explain|lecture|repeat|summari[sz]e|give me bullets|use bullets)/,
@@ -2905,6 +2985,7 @@ JSON:`;
           if (dup) {
             // already remembered in this workspace within the window
           } else if (scopedClientId) {
+            await requireRecoveryPermission(true);
             const emb = await embedText(dedupeContent);
             const row: any = {
               client_user_id: targetUserId,
@@ -2914,8 +2995,10 @@ JSON:`;
               metadata: { source: "explicit_signal", channel: "text" },
             };
             row.client_id = scopedClientId;
+            await requireRecoveryPermission(true);
             await recordWrite("client_memory:extracted", supabase.from("client_memory").insert(row));
           } else if (dedupeTenant) {
+            await requireRecoveryPermission(true);
             await recordWrite("paige_owner_memory:explicit_signal", supabase.rpc("record_paige_memory", {
               p_memory_type: "preference",
               p_content: dedupeContent,
@@ -3111,7 +3194,7 @@ JSON:`;
     // row for this user that hasn't been judged yet. Classify the new user message
     // and write back was_helpful + bump helpful_count on referenced documents.
     try {
-      if (!customerPortal && lastUserMessage) {
+      if (!interactiveRecoveryReadOnly && !customerPortal && lastUserMessage) {
         const { data: prevLog } = await supabase
           .from("rag_retrieval_log")
           .select("id, retrieved_document_ids")
@@ -3135,6 +3218,7 @@ JSON:`;
           const hasNegative = negativeSignals.some((sig) => txt.includes(sig));
           const helpful = hasPositive && !hasNegative;
 
+          await requireRecoveryPermission(true);
           await recordWrite("rag_retrieval_log:feedback", supabase
             .from("rag_retrieval_log")
             .update({ was_helpful: helpful })
@@ -3148,6 +3232,7 @@ JSON:`;
                 .eq("id", docId)
                 .maybeSingle();
               if (doc) {
+                await requireRecoveryPermission(true);
                 await recordWrite("rag_documents:helpful_count", supabase
                   .from("rag_documents")
                   .update({ helpful_count: (doc.helpful_count ?? 0) + 1 })
@@ -3167,7 +3252,7 @@ JSON:`;
     try {
       if (!customerPortal && lastUserMessage && lastUserMessage.content?.trim()) {
         const queryText = lastUserMessage.content.trim();
-        const queryEmbedding = await embedText(queryText);
+        const queryEmbedding = await embedForTurn(queryText);
         if (queryEmbedding) {
           const { data: ragProfile } = await supabase
             .from("profiles")
@@ -3313,7 +3398,7 @@ JSON:`;
       if (lastUserMessage && lastUserMessage.content?.trim() && tkTenantId && tkScopeIsDeclaredActive) {
         const tkQuery = lastUserMessage.content.trim();
         // Reuse the embedding from the rag block when available, else compute.
-        const tkEmbedding = await embedText(tkQuery);
+        const tkEmbedding = await embedForTurn(tkQuery);
         if (tkEmbedding) {
           // Live signature is (p_tenant_id, p_query_embedding, p_match_count)
           // RETURNS (source_tier, doc_id, chunk_id, title, content, similarity).
@@ -3793,10 +3878,17 @@ JSON:`;
       return false;
     };
 
+    const revalidateTurnProvider = async (): Promise<boolean> => {
+      if (!(await revalidateTenantKnowledgeScope())) return false;
+      try { await requireRecoveryPermission(); }
+      catch { return false; }
+      return true;
+    };
     const commitTenantKnowledgeTelemetry = async (): Promise<void> => {
       if (!pendingTenantKbTelemetry) return;
       const row = pendingTenantKbTelemetry;
       pendingTenantKbTelemetry = null;
+      if (await refreshRecoveryHold()) return;
       await recordWrite("kb_query_telemetry", supabase.from("kb_query_telemetry").insert(row));
     };
 
@@ -5990,6 +6082,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(capabilityManifestEligible ? [capabilityStatusMessage] : []),
       { role: "system", content: systemPrompt },
       ...(interactiveConversational ? [{ role: "system", content: PAIGE_CONVERSATIONAL_MODE_BLOCK }] : []),
+      ...(interactiveRecoveryReadOnly ? [{ role: "system", content: "An earlier answer in this conversation was interrupted. Its business effects remain unconfirmed and have not been retried. Read existing records and answer only. A successful lookup does not resolve that uncertainty or authorize a new action, approval, send, schedule, document or memory write." }] : []),
       ...(liveRuntimeScope ? [{ role: "system", content: PAIGE_LIVE_SPOKEN_STYLE }] : []),
       // "Watch Paige work" narration (#152): when she's about to USE tools, she first
       // writes one short backstage line saying what she's doing and why. It streams to
@@ -6101,6 +6194,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const readSummaryThread = async (threadId: string, checkWorkspace = true) => {
       if (summaryScopeRefused) return null;
       try {
+        await requireRecoveryPermission(true);
         let query = supabaseClient.from("paige_chat_threads")
           .select("id, caller_user_id, tenant_id, message_count, summary, summary_through_seq, last_compacted_at, studio_session_id, last_image_content_id, last_image_anchor_at")
           .eq("id", threadId).eq("caller_user_id", user.id);
@@ -6113,6 +6207,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           if (ownerError || owner !== true) throw new Error("Platform thread authority unavailable");
         }
         if (checkWorkspace && !(await revalidateTenantKnowledgeScope(true, true))) throw new Error("Summary workspace unavailable");
+        await requireRecoveryPermission(true);
         return row;
       } catch (error) {
         summaryScopeRefused = true;
@@ -6523,6 +6618,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // The canonical turn RPC accepts empty content; never invent an answer.
       if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
       try {
+        await requireRecoveryPermission();
         const writeAssistant = async () => await appendAssistant({
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
           p_surfaces_used: meta.surfaces ?? null, p_load_id: null,
@@ -6534,7 +6630,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         if (interactiveSettlement) await interactiveSettlement.persist(writeAssistant); else await writeAssistant();
         // A governed approval pause must hand off after its receipt, before
         // optional title/summary work can spend another provider/runtime budget.
-        if (receiptOnly) return;
+        if (receiptOnly || await refreshRecoveryHold()) return;
         try {
           const { data: th } = await supabaseClient.from("paige_chat_threads")
             .select("title, message_count").eq("id", payloadThreadId).maybeSingle();
@@ -6545,6 +6641,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             const raw = String(firstU?.content ?? "").trim().replace(/\s+/g, " ");
             if (raw) {
               const title = raw.split(" ").slice(0, 7).join(" ").slice(0, 60);
+              await requireRecoveryPermission(true);
               await recordWrite("paige_chat_threads:title", supabaseClient.from("paige_chat_threads").update({ title }).eq("id", payloadThreadId));
             }
           }
@@ -8626,6 +8723,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           proposalScopeInvalidated = true;
           return false;
         }
+        await requireRecoveryPermission(true);
         return true;
       } catch {
         proposalScopeInvalidated = true;
@@ -8697,6 +8795,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (reusable.length === 1) return { state: "exists", ...reusable[0] };
         if (!(await revalidateProposalScope())) return { state: "failed" };
         const fingerprint = await scopedConfirmationFingerprint(tool, fp);
+        await requireRecoveryPermission(true);
         let expired = supabase.from("paige_pending_confirmations")
           .update({ consumed_at: new Date().toISOString() }).eq("user_id", user.id)
           .eq("fingerprint", fingerprint).eq("tool_name", tool).is("consumed_at", null)
@@ -8706,6 +8805,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         expired = scopedClientId ? expired.eq("scoped_client_id", scopedClientId) : expired.is("scoped_client_id", null);
         const { error: expiryError } = await expired;
         if (expiryError) return { state: "failed" };
+        await requireRecoveryPermission(true);
         const { error } = await supabase.from("paige_pending_confirmations").insert({
           user_id: user.id,
           tenant_id: personaCtx?.tenant_id ?? null,
@@ -8778,6 +8878,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const nonce = await selectedConfirmationNonce(token);
           if (!nonce) continue;
           await interactive?.check();
+          await requireRecoveryPermission(true);
           let cancellation = supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id)
@@ -8803,6 +8904,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         const legacyFps = fps.filter((token) => /^[0-9a-f]{16}$/.test(token));
         if (personaCtx?.tenant_id && legacyFps.length > 0) {
           await interactive?.check();
+          await requireRecoveryPermission(true);
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
@@ -8832,6 +8934,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         const nonce = await selectedConfirmationNonce(fp, tool);
         if (!nonce) return null;
 
+        await requireRecoveryPermission(true);
         let q = supabase.from("paige_pending_confirmations")
           .update({ consumed_at: new Date().toISOString() })
           .eq("user_id", user.id)
@@ -9729,6 +9832,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const withheldCount = before - toolDefs.length;
       console.log(`[paige] conversational mode: ${withheldCount} tools withheld, ${toolDefs.length} read-only admitted (interactive rollout staged, not active)`);
     }
+    if (interactiveRecoveryReadOnly) {
+      for (let i = toolDefs.length - 1; i >= 0; i--) {
+        const name = (toolDefs[i] as { function?: { name?: string } })?.function?.name;
+        if (!name || !interactiveRecoveryReadAllowed(name, CONVERSATIONAL_ADMITTED_READ_TOOLS, PAIGE_SPINE_CAPABILITIES)) toolDefs.splice(i, 1);
+      }
+    }
     // Advertise the confirm flag on every mutating tool so the model knows the
     // second (confirm:true) step exists. Read-only tools are untouched.
     for (const def of toolDefs) {
@@ -9919,6 +10028,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // turn.
     if (deferGeneralDocExtraction) {
       try {
+        await requireRecoveryPermission(true);
         // #1255 Option A (Codex P2) — this deferred extraction runs AFTER active-account
         // resolution, so it egresses through the SAME tenant-attributed trace/budget seam as the
         // chat dispatch below (`traceFor("chat")`): its provider call is attributed to the resolved
@@ -9960,6 +10070,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // round-trip to the time to first token, bounded by TURN_CLASSIFY_DEADLINE_MS. It is advisory: a
     // timeout, an error or a malformed reply is `null`, and the route takes its conservative default.
     const classifierRuns = routeNeedsClassifier(turnRouteFacts) && !!lastUserText.trim();
+    await requireRecoveryPermission();
     const classificationPromise: Promise<TurnClassification | null> = classifierRuns
       ? classifyTurn(lastUserText, offerAccepted && foreground.offer.kind === "accepted" ? foreground.offer.offer : null, traceFor("turn-classify"))
       : Promise.resolve(null);
@@ -10469,7 +10580,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // §18 — the ONE trace idiom, same as every other call site. `traceCtx.agent_id` is set to
         // "studio-design-agent" at the Studio-session branch above, which runs before this line.
         trace: traceFor("chat"),
-        beforeProviderAttempt: () => revalidateTenantKnowledgeScope(),
+        beforeProviderAttempt: revalidateTurnProvider,
         // U2/§14 — the dormant Studio extended-thinking flag rides only to the Anthropic candidate.
         anthropicExtras: paigeThinkingOn ? { paige_thinking: true } : undefined,
       }));
@@ -10817,6 +10928,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { await interactive?.check(); }
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
+        if (interactiveRecoveryReadOnly && !interactiveRecoveryReadAllowed(tc.function.name, CONVERSATIONAL_ADMITTED_READ_TOOLS, PAIGE_SPINE_CAPABILITIES)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+            refused_before_run: true, not_applied: true, code: "INTERACTIVE_RECOVERY_READ_ONLY",
+            message: "An earlier interrupted answer has unresolved business outcomes. Only authorized existing-record reads can run in this conversation. Nothing was submitted or retried." }) });
+          continue;
+        }
         // INT-346 conversational mode — the dispatch-side refusal. A degraded turn offers the
         // model only the ANT-23-admitted read-only lookups, so any other call here means a
         // provider emitted one anyway; it is refused BEFORE any executor, provider or store is
@@ -10847,6 +10964,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (!(await revalidateTenantKnowledgeScope())) {
           return { toolResults, executed, scopeInvalidated: true, interactiveError: null };
         }
+        try { await requireRecoveryPermission(); }
+        catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         executed.push(tc);
         // C2b — the per-call FINISH wraps everything from here to the end of the iteration (see the
         // `finally` below the last dispatch branch). The body is deliberately NOT re-indented under
@@ -18322,7 +18441,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             await interactive?.check();
-            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
+            currentResponse = noteFabric("chat-tool-loop", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-tool-loop"), beforeProviderAttempt: revalidateTurnProvider }));
             if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
@@ -18412,7 +18531,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // turn escalates here too: the manifest the correction round was sent and the manifest
               // its calls are graded against stay the same set.
               escalateTurn("claim correction");
-              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
+              const correctionResponse = noteFabric("chat-claim-correction", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-claim-correction"), beforeProviderAttempt: revalidateTurnProvider }));
               if (correctionResponse.ok) {
                 currentResponse = correctionResponse;
                 finalChunks = null; finalAssistantText = "";
@@ -18459,7 +18578,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // operational class with the full set: a cheap misread never keeps the turn's tools
                 // narrowed once the turn is KNOWN to be action work.
                 escalateTurn("action-intent continuation");
-                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
+                const continuationResponse = noteFabric("chat-continuation", await fabricChatStream(roundClassNow(), { messages: liveDecisionMessages(convo), tools: roundTools(), tool_choice: "auto" }, { trace: traceFor("chat-continuation"), beforeProviderAttempt: revalidateTurnProvider }));
                 if (continuationResponse.ok) {
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
@@ -18606,7 +18725,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             turnTracker.closingCallStarted();
             await interactive?.check();
-            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"), beforeProviderAttempt: () => revalidateTenantKnowledgeScope() }));
+            finalStreamResponse = noteFabric(liveAnswerPending ? "chat-live-answer" : "chat-close", await fabricChatStream(roundClassNow(), { messages: convo }, { trace: traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"), beforeProviderAttempt: revalidateTurnProvider }));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME
@@ -19593,6 +19712,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
+    if (error instanceof Error && /^(INTERACTIVE_RECOVERY_READ_ONLY|INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE)$/.test(error.message))
+      return new Response(JSON.stringify({ code: error.message,
+        message_accepted: Boolean(interactive || interactiveConversational),
+        reason: "An earlier answer in this conversation was interrupted. Its business outcomes still need checking. No action was submitted or retried by this refusal." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const errorId = crypto.randomUUID();
     console.error(`[AI-CHAT-ERROR-${errorId}] Function error:`, { message: error instanceof Error ? error.message : 'Unknown', timestamp: new Date().toISOString() });
     // #587 — the outer catch returns a STRUCTURED reason-class, never a bare "An error occurred", so

@@ -15,6 +15,8 @@ import { tenantConsent } from "./tenant-consent.ts";
 type Row = {
   table: "suppression" | "event"; channel: "email" | "sms"; key: "contact" | "address" | "both";
   reason?: string; source: string; action?: string; topic?: string | null; at: number;
+  /** A raw address used instead of the client's primary one (the shape a merge leaves). */
+  address?: string;
 };
 type Fixture = {
   client: { email: string; phone: string };
@@ -45,7 +47,8 @@ function admin(rows: Row[]) {
       id: `${r.table}-${r.at}-${r.channel}`,
       tenant_id: TENANT,
       contact_id: r.key === "address" ? null : CLIENT,
-      address_normalized: r.key === "contact" ? null : normalizeAddress(r.channel, r.channel === "sms" ? fixture.client.phone : fixture.client.email),
+      address_normalized: r.key === "contact" ? null
+        : normalizeAddress(r.channel, r.address ?? (r.channel === "sms" ? fixture.client.phone : fixture.client.email)),
       channel: r.channel,
       created_at: new Date(BASE + r.at * 60_000).toISOString(),
     };
@@ -88,7 +91,7 @@ function admin(rows: Row[]) {
 describe("consent parity: the TypeScript deciders against the shared fixture", () => {
   it("has a fixture to test", () => {
     assert.equal(fixture.normalizer.length, 30);
-    assert.ok(fixture.cases.length >= 16);
+    assert.ok(fixture.cases.length >= 22);
   });
 
   for (const n of fixture.normalizer) {

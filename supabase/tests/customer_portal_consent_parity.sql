@@ -4,7 +4,7 @@
 -- public._client_communication_state against the SAME rows and expectations the TypeScript deciders
 -- (runPreSend, tenantConsent, normalizeAddress) are held to in _shared/consent-parity.test.ts.
 BEGIN;
-SELECT plan(174);
+SELECT plan(228);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0971000-0000-4000-8000-000000000001','authenticated','authenticated','parity-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
 INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features) VALUES
@@ -313,6 +313,99 @@ SELECT is(public._client_communication_state('e0972000-0000-4000-8000-0000000000
 SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'proceed','the business records a newsletter grant (D7): presend email');
 SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','the business records a newsletter grant (D7): presend sms');
 SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'granted','the business records a newsletter grant (D7): tenantConsent email');
+-- the customer's own spam report (contactless, on their address)
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001',NULL,public._comms_normalize_address('email','Parity.Client+portal@Tests.invalid'),'email','complaint','webhook',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','off','the customer''s own spam report (contactless, on their address): email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}','reported','the customer''s own spam report (contactless, on their address): email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','not_set','the customer''s own spam report (contactless, on their address): sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}',NULL,'the customer''s own spam report (contactless, on their address): sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','the customer''s own spam report (contactless, on their address): updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}',NULL,'the customer''s own spam report (contactless, on their address): updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'blocked_suppressed','the customer''s own spam report (contactless, on their address): presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','the customer''s own spam report (contactless, on their address): presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'none','the customer''s own spam report (contactless, on their address): tenantConsent email');
+-- the customer's own spam report (on their contact)
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',NULL,'email','complaint','webhook',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','off','the customer''s own spam report (on their contact): email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}','reported','the customer''s own spam report (on their contact): email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','not_set','the customer''s own spam report (on their contact): sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}',NULL,'the customer''s own spam report (on their contact): sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','the customer''s own spam report (on their contact): updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}',NULL,'the customer''s own spam report (on their contact): updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'blocked_suppressed','the customer''s own spam report (on their contact): presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','the customer''s own spam report (on their contact): presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'none','the customer''s own spam report (on their contact): tenantConsent email');
+-- the customer took back their spam report
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('email','Parity.Client+portal@Tests.invalid'),'email','newsletter','granted','signup_form',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('email','Parity.Client+portal@Tests.invalid'),'email',NULL,'granted','customer_portal',timestamptz '2026-10-01 00:00:00+00' + 3 * interval '1 minute');
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('email','Parity.Client+portal@Tests.invalid'),'email','newsletter','revoked','customer_portal',timestamptz '2026-10-01 00:00:00+00' + 4 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','on','the customer took back their spam report: email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}',NULL,'the customer took back their spam report: email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','not_set','the customer took back their spam report: sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}',NULL,'the customer took back their spam report: sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','the customer took back their spam report: updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}','you','the customer took back their spam report: updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'proceed','the customer took back their spam report: presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','the customer took back their spam report: presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'revoked','the customer took back their spam report: tenantConsent email');
+-- a merge moved an opt-out recorded on the other record's address
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('email','Parity.Old+work@Tests.invalid'),'email','customer_request','customer_portal',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('email','Parity.Old+work@Tests.invalid'),'email',NULL,'revoked','customer_portal',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','off','a merge moved an opt-out recorded on the other record''s address: email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}','you','a merge moved an opt-out recorded on the other record''s address: email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','not_set','a merge moved an opt-out recorded on the other record''s address: sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}',NULL,'a merge moved an opt-out recorded on the other record''s address: sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','a merge moved an opt-out recorded on the other record''s address: updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}',NULL,'a merge moved an opt-out recorded on the other record''s address: updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'blocked_suppressed','a merge moved an opt-out recorded on the other record''s address: presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','a merge moved an opt-out recorded on the other record''s address: presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'revoked','a merge moved an opt-out recorded on the other record''s address: tenantConsent email');
+-- a merge moved a texts opt-out recorded on the other record's number
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001',public._comms_normalize_address('sms','(555) 010-7777'),'sms','user_stop','inbound_message',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','on','a merge moved a texts opt-out recorded on the other record''s number: email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}',NULL,'a merge moved a texts opt-out recorded on the other record''s number: email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','off','a merge moved a texts opt-out recorded on the other record''s number: sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}','reply','a merge moved a texts opt-out recorded on the other record''s number: sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','a merge moved a texts opt-out recorded on the other record''s number: updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}',NULL,'a merge moved a texts opt-out recorded on the other record''s number: updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'proceed','a merge moved a texts opt-out recorded on the other record''s number: presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_suppressed','a merge moved a texts opt-out recorded on the other record''s number: presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'none','a merge moved a texts opt-out recorded on the other record''s number: tenantConsent email');
+-- a contactless opt-out on some other address is not this client's
+DELETE FROM public.paige_suppressions WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+DELETE FROM public.paige_consent_events WHERE tenant_id='e0972000-0000-4000-8000-000000000001';
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0973000-0000-4000-8000-000000000001',true);
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('e0972000-0000-4000-8000-000000000001',NULL,public._comms_normalize_address('email','someone.else@tests.invalid'),'email','unsubscribe_link','webhook',timestamptz '2026-10-01 00:00:00+00' + 1 * interval '1 minute');
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,state}','on','a contactless opt-out on some other address is not this client''s: email');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{email,set_by}',NULL,'a contactless opt-out on some other address is not this client''s: email set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,state}','not_set','a contactless opt-out on some other address is not this client''s: sms');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{sms,set_by}',NULL,'a contactless opt-out on some other address is not this client''s: sms set_by');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,state}','not_subscribed','a contactless opt-out on some other address is not this client''s: updates');
+SELECT is(public._client_communication_state('e0972000-0000-4000-8000-000000000001','e0973000-0000-4000-8000-000000000001')#>>'{updates,set_by}',NULL,'a contactless opt-out on some other address is not this client''s: updates set_by');
+SELECT is(pg_temp.presend('email','Parity.Client+portal@Tests.invalid'),'proceed','a contactless opt-out on some other address is not this client''s: presend email');
+SELECT is(pg_temp.presend('sms','(555) 010-9999'),'blocked_no_consent','a contactless opt-out on some other address is not this client''s: presend sms');
+SELECT is(pg_temp.tenant_consent('Parity.Client+portal@Tests.invalid'),'none','a contactless opt-out on some other address is not this client''s: tenantConsent email');
 
 SELECT * FROM finish();
 ROLLBACK;

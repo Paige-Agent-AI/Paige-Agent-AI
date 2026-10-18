@@ -639,3 +639,8 @@ test('booking-manage: a missing server secret is a coded generic 500 for a custo
  assert.equal(gres.status, 500); assert.deepEqual(await gres.json(), { error: 'server not configured' });
  assert.equal(g.writes.length, 0);
 });
+test('send-portal-invite: the legacy token path holds an invitation to a client who turned email off',async()=>{
+ const h=harness('send-portal-invite',true,{fixtures:optedOut});
+ const res=await h.run({token:'valid',email:'guest@example.test'});const out=await res.json();
+ assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');assert.equal(h.effects.length,0);
+});

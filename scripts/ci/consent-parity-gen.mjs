@@ -86,7 +86,9 @@ export function generate(fixture) {
     );
     for (const r of c.rows) {
       const contact = r.key === "address" ? "NULL" : `'${CLIENT}'`;
-      const addr = r.key === "contact" ? "NULL" : `public._comms_normalize_address(${lit(r.channel)},${lit(r.channel === "sms" ? client.phone : client.email)})`;
+      // A row's own `address` (a merge moved another record's opt-out here) replaces the primary one.
+      const raw = r.address ?? (r.channel === "sms" ? client.phone : client.email);
+      const addr = r.key === "contact" ? "NULL" : `public._comms_normalize_address(${lit(r.channel)},${lit(raw)})`;
       const at = `timestamptz '2026-10-01 00:00:00+00' + ${Number(r.at)} * interval '1 minute'`;
       if (r.table === "suppression") {
         out.push(`INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source,created_at) VALUES ('${TENANT}',${contact},${addr},${lit(r.channel)},${lit(r.reason)},${lit(r.source)},${at});`);

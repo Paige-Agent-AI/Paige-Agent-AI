@@ -4,9 +4,13 @@
 -- forge, override or delete a customer's choice by any path (B1); another client's phone rows are never
 -- touched or shown (M1); a merge keeps the opt-out (M5); data sharing is customer-only on INSERT and
 -- UPDATE (M4); the owner reads the same truth read-only; the marketing dashboard counts portal opt-outs
--- as unsubscribes (M6).
+-- as unsubscribes (M6). Round 2: deleting a contact keeps the opt-outs they hold (MAJOR 1); a merge
+-- moves them to the winner so the card and the send gate agree (MAJOR 2); only the customer takes back
+-- their own spam report; after leaving Updates only the customer can subscribe again; a raw DELETE of
+-- every row class the contact holds is refused (MEDIUM 4); quiet hours say "your time" only for a zone
+-- the send gate can use.
 BEGIN;
-SELECT plan(152);
+SELECT plan(219);
 
 -- Production grants these table privileges to authenticated through project default privileges that
 -- no migration writes (fact 4: has_column_privilege('authenticated','clients',...,'UPDATE') = true).
@@ -388,6 +392,196 @@ SELECT is((pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT publ
 SELECT ok((pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT public.read_email_marketing_dashboard(30,'UTC')$q$)#>>'{stats,unsubscribes}')::int >= 2,'and there are at least two of them here');
 SELECT ok(EXISTS (SELECT 1 FROM jsonb_array_elements(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT public.read_email_marketing_dashboard(30,'UTC')$q$)->'activity') a
   WHERE a->>'kind'='unsubscribed' AND a->>'detail'='customer_request'),'the activity feed lists a portal opt-out as unsubscribed');
+
+-- ══ Round 2 ═══════════════════════════════════════════════════════════════════════════════════
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0961000-0000-4000-8000-000000000013','authenticated','authenticated','blair.ng@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0961000-0000-4000-8000-000000000014','authenticated','authenticated','kai.moreno@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0961000-0000-4000-8000-000000000015','authenticated','authenticated','reese.park@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0961000-0000-4000-8000-000000000016','authenticated','authenticated','lee.adams@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status,timezone) VALUES
+ ('e0963000-0000-4000-8000-000000000012','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000013','e0961000-0000-4000-8000-000000000001','Blair','Ng','active',NULL),
+ ('e0963000-0000-4000-8000-000000000013','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000014','e0961000-0000-4000-8000-000000000001','Kai','Moreno','active',NULL),
+ ('e0963000-0000-4000-8000-000000000014','e0962000-0000-4000-8000-000000000001',NULL,'e0961000-0000-4000-8000-000000000001','Kai','Moreno (work)','active',NULL),
+ ('e0963000-0000-4000-8000-000000000015','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000015','e0961000-0000-4000-8000-000000000001','Reese','Park','active','america/new_york'),
+ ('e0963000-0000-4000-8000-000000000016','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000016','e0961000-0000-4000-8000-000000000001','Lee','Adams','active','Mars/Olympus_Mons'),
+ ('e0963000-0000-4000-8000-000000000017','e0962000-0000-4000-8000-000000000001',NULL,'e0961000-0000-4000-8000-000000000001','Lee','Adams (new)','active',NULL),
+ ('e0963000-0000-4000-8000-000000000018','e0962000-0000-4000-8000-000000000001',NULL,'e0961000-0000-4000-8000-000000000001','Rowan','Held','active',NULL);
+INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000012','email','blair.ng@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000013','email','kai.moreno@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000013','phone','555 010 0013',true,1),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','email','kai.work@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','phone','555 010 0014',true,1),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000015','email','reese.park@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000016','email','lee.adams@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017','email','lee.new@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017','phone','555 010 0017',true,1),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000018','email','rowan.held@tests.invalid',true,0),
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000018','phone','555 010 0018',true,1);
+
+-- ── R2-1. Deleting a contact never deletes the opt-out they hold (verifier MAJOR 1) ───────────────
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000013','email',NULL,false)->>'ok','true','Blair turns email off');
+SELECT is(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000012','sms',true)->>'changed','true','the business also pauses Blair''s texts (its own row)');
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000012','blair.ng@tests.invalid','email','manual','api');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000005',$q$WITH d AS (DELETE FROM public.clients WHERE id='e0963000-0000-4000-8000-000000000012' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$)::text,'1',
+  'a staff raw DELETE of the client goes through (the attack the verifier ran)');
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE tenant_id='e0962000-0000-4000-8000-000000000001' AND channel='email'
+  AND contact_id IS NULL AND address_normalized='blair.ng@tests.invalid' AND reason='customer_request' AND source='customer_portal'),1::bigint,
+  'the customer''s opt-out survives, address-keyed (contact_id set to NULL, address kept)');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000004','email','Blair.Ng+again@tests.invalid'),'blocked_suppressed',
+  'a send to that address, from any contact, is still blocked');
+SELECT is((SELECT count(*) FROM public.paige_consent_events WHERE tenant_id='e0962000-0000-4000-8000-000000000001' AND contact_id IS NULL
+  AND address_normalized='blair.ng@tests.invalid' AND action='revoked' AND source='customer_portal'),1::bigint,'and so does the evidence of it');
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE tenant_id='e0962000-0000-4000-8000-000000000001' AND reason='manual'
+  AND (address_normalized='blair.ng@tests.invalid' OR (contact_id IS NULL AND channel='sms'))),0::bigint,
+  'the business''s own pauses go with the contact, as before, even one that carries the address');
+INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status) VALUES
+ ('e0963000-0000-4000-8000-000000000019','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001','Blair','Ng (re-imported)','active');
+INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000019','email','blair.ng@tests.invalid',true,0);
+SELECT is(public._client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000019')#>>'{email,state}','off',
+  'a re-imported contact on that address reads email off');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000019','email','blair.ng@tests.invalid'),'blocked_suppressed',
+  'and the send gate agrees');
+SELECT ok(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000019','email',false)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%',
+  'the business cannot lift it through the re-imported contact');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$WITH d AS (DELETE FROM public.paige_suppressions WHERE address_normalized='blair.ng@tests.invalid' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%',
+  'nor delete the detached row raw');
+
+-- ── R2-2. A merge moves the opt-out to the winner; card and send gate agree (verifier MAJOR 2) ────
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000014','email',NULL,false)->>'ok','true','Kai turns email off');
+SELECT is(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000013','sms',true)->>'changed','true','the business pauses Kai''s texts');
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,action,source,evidence_ref,created_at)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000013','+15550100013','sms','granted','inbound_message','SMkai',now()-interval '1 hour');
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT set_config('app.crm_merge_lineage_write','on',true);
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0963000-0000-4000-8000-000000000013';
+UPDATE public.clients SET merged_into_contact_id='e0963000-0000-4000-8000-000000000014',merged_at=now(),status='archived' WHERE id='e0963000-0000-4000-8000-000000000013';
+UPDATE public.clients SET linked_user_id='e0961000-0000-4000-8000-000000000014' WHERE id='e0963000-0000-4000-8000-000000000014';
+SELECT set_config('app.crm_merge_lineage_write','off',true);
+SELECT set_config('request.jwt.claims','{}',true);
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000014')#>>'{email,state}','off','after a merge onto a different email, the card says off');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','email','kai.work@tests.invalid'),'blocked_suppressed',
+  'and a send to the winner''s own address is blocked too (they agree)');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','email','kai.moreno@tests.invalid'),'blocked_suppressed',
+  'the old address stays blocked');
+SELECT is((SELECT contact_id::text||'|'||address_normalized FROM public.paige_suppressions WHERE channel='email' AND reason='customer_request' AND address_normalized='kai.moreno@tests.invalid'),
+  'e0963000-0000-4000-8000-000000000014|kai.moreno@tests.invalid','the row now names the winner and keeps the address');
+SELECT is((SELECT count(*) FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000014' AND action='revoked'),2::bigint,
+  'the opt-out events move with it (email off, texts paused)');
+SELECT is((SELECT count(*) FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000013' AND action='granted'),1::bigint,
+  'a START given for the old number stays with the archived contact');
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000014')#>>'{sms,state}','off','texts read off on the winner (the business pause moved)');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','sms','555 010 0014'),'blocked_suppressed','and the send gate agrees');
+SELECT is(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','sms',false)->>'changed','true','the business can lift its own moved pause on the winner');
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000014')#>>'{sms,state}','off','the old number''s START never turns texts on for the new number (the moved pause event is the latest)');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000014','sms','555 010 0014'),'blocked_no_consent','nor in the send gate');
+-- The winner already holds the same slot: the archived contact's row stays, address-keyed.
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017','lee.new@tests.invalid','email','unsubscribe_link','webhook');
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000016','email',NULL,false)->>'ok','true','Lee turns email off');
+-- Lee also replied START from an old number (contact-keyed): consent for that number only.
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,action,source,evidence_ref)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000016','+15550100016','sms','granted','inbound_message','SMlee');
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SELECT set_config('app.crm_merge_lineage_write','on',true);
+UPDATE public.clients SET merged_into_contact_id='e0963000-0000-4000-8000-000000000017',merged_at=now(),status='archived' WHERE id='e0963000-0000-4000-8000-000000000016';
+SELECT set_config('app.crm_merge_lineage_write','off',true);
+SELECT set_config('request.jwt.claims','{}',true);
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE contact_id IS NULL AND address_normalized='lee.adams@tests.invalid' AND reason='customer_request'),1::bigint,
+  'a slot the winner already holds keeps the old row address-keyed');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017','email','lee.adams@tests.invalid'),'blocked_suppressed','the old address stays blocked');
+SELECT is(public._client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017')#>>'{email,state}','off','the winner reads off');
+SELECT is(public._client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017')#>>'{sms,state}','not_set',
+  'the archived contact''s START is not read as consent for the winner''s number (one derivation: no merged-contact rows)');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000017','sms','555 010 0017'),'blocked_no_consent','and the send gate agrees');
+
+-- ── R2-3. A spam report: only the customer takes it back (owner ruling) ──────────────────────────
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000003','riley.chen@tests.invalid','email','newsletter','granted','signup_form',now()-interval '2 hours');
+SELECT ok(pg_temp.as_user(NULL,$q$INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source)
+  VALUES ('e0962000-0000-4000-8000-000000000001',NULL,'riley.chen@tests.invalid','email','complaint','webhook') RETURNING to_jsonb(id)$q$,'service_role') ? 'sqlstate' = false,'a contactless spam report lands (service)');
+SELECT is((pg_temp.prefs('e0961000-0000-4000-8000-000000000008')->'email') - 'set_at'::text,
+  jsonb_build_object('state','off','set_by','reported','can_turn_on',true,'can_turn_off',false),'the card reads it as the customer''s own report, and offers them the way back');
+SELECT is(public._client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000003')#>>'{email,set_by}','reported','the owner reads "reported", never "delivery"');
+SELECT ok(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000003','email',false)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%','the business cannot lift a spam report');
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000008','email',NULL,true)->>'replayed','false','the customer turns email back on');
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE address_normalized='riley.chen@tests.invalid' AND channel='email'),0::bigint,'their report is lifted');
+SELECT is((SELECT string_agg(coalesce(topic,'-')||':'||action, ',' ORDER BY created_at) FROM public.paige_consent_events
+  WHERE contact_id='e0963000-0000-4000-8000-000000000003' AND channel='email' AND source='customer_portal'),'-:granted,newsletter:revoked',
+  'evidence of the act (granted), then out of Updates and offers (revoked), in that order');
+SELECT ok((SELECT evidence_ref FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000003' AND channel='email' AND topic IS NULL AND action='granted')
+  LIKE 'portal:e0961000-0000-4000-8000-000000000008:email-pref:v1:%','the lift names the session and the email disclosure');
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000008')#>>'{email,state}','on','email is on');
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000008')#>>'{updates,state}','not_subscribed','taking back a spam report never re-subscribes them');
+SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000003','email','riley.chen@tests.invalid'),'proceed','the send gate agrees email is on');
+SELECT is((SELECT action FROM public.paige_consent_events WHERE tenant_id='e0962000-0000-4000-8000-000000000001' AND channel='email'
+  AND (contact_id='e0963000-0000-4000-8000-000000000003' OR address_normalized='riley.chen@tests.invalid') ORDER BY created_at DESC, id DESC LIMIT 1),'revoked',
+  'marketing automations stay closed (tenantConsent reads revoked)');
+-- A contact-keyed report (process_resend_receipt writes contact_id, no address).
+SELECT ok(pg_temp.as_user(NULL,$q$INSERT INTO public.paige_suppressions(tenant_id,contact_id,channel,reason,source)
+  VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000015','email','complaint','webhook') RETURNING to_jsonb(id)$q$,'service_role') ? 'sqlstate' = false,'a contact-keyed spam report lands');
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000015')#>>'{email,set_by}','reported','it reads as reported');
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000015','email',NULL,true)->>'ok','true','and the customer can take it back');
+-- A report under a business pause: the pause still decides.
+SELECT is(pg_temp.lift('e0961000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000015','email',true)->>'changed','true','the business pauses Reese');
+SELECT ok(pg_temp.as_user(NULL,$q$INSERT INTO public.paige_suppressions(tenant_id,contact_id,channel,reason,source)
+  VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000015','email','complaint','webhook') RETURNING to_jsonb(id)$q$,'service_role') ? 'sqlstate' = false,'and Reese reports again');
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000015','email',NULL,true)->>'error','EMAIL_PAUSED_BY_BUSINESS','under a business pause the customer cannot turn email on');
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE contact_id='e0963000-0000-4000-8000-000000000015' AND reason='complaint'),1::bigint,'and their report is untouched');
+
+-- ── R2-4. After a customer leaves Updates, only they can come back (owner ruling) ────────────────
+-- Jordan unsubscribed from Updates in the portal (section 8).
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000001',true))$q$)->>'sqlstate','42501',
+  'the owner cannot subscribe them again through the newsletter setter');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000001',true))$q$)->>'error' LIKE 'NEWSLETTER_LEFT_BY_CONTACT%','with NEWSLETTER_LEFT_BY_CONTACT');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
+  $q$INSERT INTO public.paige_consent_events(contact_id,channel,topic,action,source) VALUES ('e0963000-0000-4000-8000-000000000001','email','newsletter','granted','admin_ui') RETURNING to_jsonb(id)$q$)->>'sqlstate','42501',
+  'nor with a raw insert');
+SELECT is(pg_temp.as_user(NULL,
+  $q$INSERT INTO public.paige_consent_events(tenant_id,contact_id,channel,topic,action,source) VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','email','newsletter','granted','api') RETURNING to_jsonb(id)$q$,'service_role')->>'sqlstate','42501',
+  'nor can Paige acting for the business (service, api)');
+SELECT is(pg_temp.as_user(NULL,
+  $q$INSERT INTO public.paige_consent_events(tenant_id,address_normalized,channel,topic,action,source) VALUES ('e0962000-0000-4000-8000-000000000001','jordan.rivera@tests.invalid','email','newsletter','granted','admin_ui') RETURNING to_jsonb(id)$q$,'service_role')->>'sqlstate','42501',
+  'nor by address alone');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000001',false))$q$)::text,'true',
+  'the business can still record an unsubscribe');
+-- Taking back a spam report also counts as leaving Updates (R2-3): Riley.
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000003',true))$q$)->>'sqlstate','42501',
+  'after a spam report the business cannot subscribe them');
+-- A held unsubscribe click counts too: Rowan.
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source)
+VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000018','rowan.held@tests.invalid','email','unsubscribe_link','webhook');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000018',true))$q$)->>'sqlstate','42501',
+  'while they hold their unsubscribe click, the business cannot subscribe them');
+-- The customer comes back themselves (Riley, whose email is on again); then the business may record it.
+SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000008','email','newsletter',true)->>'ok','true','Riley subscribes again themselves');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000003',true))$q$)::text,'true',
+  'after which the business''s own grant is accepted');
+SELECT ok(pg_temp.as_user(NULL,$q$INSERT INTO public.paige_consent_events(tenant_id,contact_id,channel,topic,action,source) VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000018','email','newsletter','granted','signup_form') RETURNING to_jsonb(id)$q$,'service_role') ? 'sqlstate' = false,
+  'a sign-up form (the person''s own act) is never refused');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT to_jsonb(public.email_newsletter_consent_set('e0963000-0000-4000-8000-000000000004',true))$q$) ? 'sqlstate' = false,
+  'a contact who never left Updates can be recorded by the business (D7 unchanged)');
+
+-- ── R2-5. Raw DELETE of every row class the contact holds (verifier MEDIUM 4) ────────────────────
+INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source) VALUES
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000018','+15550100018','sms','user_stop','inbound_message'),
+ ('e0962000-0000-4000-8000-000000000001',NULL,'nobody.report@tests.invalid','email','complaint','webhook');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$WITH d AS (DELETE FROM public.paige_suppressions WHERE contact_id='e0963000-0000-4000-8000-000000000018' AND reason='user_stop' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%',
+  'an owner raw DELETE of a STOP is refused');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$WITH d AS (DELETE FROM public.paige_suppressions WHERE contact_id='e0963000-0000-4000-8000-000000000018' AND reason='unsubscribe_link' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%',
+  'an owner raw DELETE of an unsubscribe click is refused');
+SELECT ok(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$WITH d AS (DELETE FROM public.paige_suppressions WHERE address_normalized='nobody.report@tests.invalid' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$)->>'error' LIKE 'SUPPRESSION_HELD_BY_CONTACT%',
+  'an owner raw DELETE of a contactless spam report is refused');
+SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE (contact_id='e0963000-0000-4000-8000-000000000018' AND reason IN ('user_stop','unsubscribe_link')) OR address_normalized='nobody.report@tests.invalid'),3::bigint,
+  'all three rows survive');
+
+-- ── R2-6. Quiet hours: "your time" only when the send gate can use the zone (compliance should-fix 5)
+SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000015')#>>'{quiet_hours,time_zone_known}','true','a valid zone in any case is known (the gate''s Intl accepts it)');
+SELECT is(public._client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000016')#>>'{quiet_hours,time_zone_known}','false',
+  'an invalid zone is not known: the gate falls back to its default, so it is not their time');
 
 SELECT * FROM finish();
 ROLLBACK;

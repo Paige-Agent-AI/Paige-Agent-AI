@@ -1,5 +1,5 @@
 {
- "_doc": "E09 Slice 6 consent parity fixture. ONE source for two implementations of one rule: the SQL derivation public._client_communication_state (pgTAP, generated into supabase/tests/customer_portal_consent_parity.sql by scripts/ci/consent-parity-gen.mjs) and the TypeScript deciders runPreSend + tenantConsent + normalizeAddress (supabase/functions/_shared/consent-parity.test.ts). Edit this file, then run `node scripts/ci/consent-parity-gen.mjs`; CI runs it with --check and fails on drift. Every case is one client of one business whose primary email is client.email and primary phone is client.phone. `at` orders rows (minutes after a fixed base). key: contact = contact_id only, address = contactless on the normalized address, both = contact_id plus the normalized address. presend_* is runPreSend's disposition for a send to the primary address with the contact id (proceed = it would send); tenant_consent_email is tenantConsent for marketing email.",
+ "_doc": "E09 Slice 6 consent parity fixture. ONE source for two implementations of one rule: the SQL derivation public._client_communication_state (pgTAP, generated into supabase/tests/customer_portal_consent_parity.sql by scripts/ci/consent-parity-gen.mjs) and the TypeScript deciders runPreSend + tenantConsent + normalizeAddress (supabase/functions/_shared/consent-parity.test.ts). Edit this file, then run `node scripts/ci/consent-parity-gen.mjs`; CI runs it with --check and fails on drift. Every case is one client of one business whose primary email is client.email and primary phone is client.phone. `at` orders rows (minutes after a fixed base). key: contact = contact_id only, address = contactless on the normalized address, both = contact_id plus the normalized address. A row's optional `address` is a raw address on the same channel used instead of the client's primary one (normalized the same way): the shape a merge leaves when it moves another record's opt-out onto this client. presend_* is runPreSend's disposition for a send to the primary address with the contact id (proceed = it would send); tenant_consent_email is tenantConsent for marketing email.",
  "client": {
   "email": "Parity.Client+portal@Tests.invalid",
   "phone": "(555) 010-9999"
@@ -637,6 +637,182 @@
     "presend_email": "proceed",
     "presend_sms": "blocked_no_consent",
     "tenant_consent_email": "granted"
+   }
+  },
+  {
+   "name": "the customer's own spam report (contactless, on their address)",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "address",
+     "reason": "complaint",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "reported",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "the customer's own spam report (on their contact)",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "contact",
+     "reason": "complaint",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "reported",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "the customer took back their spam report",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "signup_form",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 3
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 4
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": "you",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "a merge moved an opt-out recorded on the other record's address",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "both",
+     "address": "Parity.Old+work@Tests.invalid",
+     "reason": "customer_request",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "address": "Parity.Old+work@Tests.invalid",
+     "topic": null,
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "you",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "a merge moved a texts opt-out recorded on the other record's number",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "sms",
+     "key": "both",
+     "address": "(555) 010-7777",
+     "reason": "user_stop",
+     "source": "inbound_message",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "off",
+    "sms_set_by": "reply",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_suppressed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "a contactless opt-out on some other address is not this client's",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "address",
+     "address": "someone.else@tests.invalid",
+     "reason": "unsubscribe_link",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
    }
   }
  ]

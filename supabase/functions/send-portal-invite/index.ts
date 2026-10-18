@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { handlePortalInvitationCommand } from "./command.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
@@ -218,6 +219,21 @@ Deno.serve(async (req) => {
   if (!(await eligible()))
     return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
 
+  // A consumer invitation is an email to one of the business's clients, so it passes the same runPreSend
+  // as the canonical command (command.ts): a client who turned email off, bounced or was paused by the
+  // business is not emailed (E09 Slice 6, M2a). Team and owner invitations are not client sends.
+  const policyHeld = async (): Promise<boolean> => {
+    if (String(tok.kind ?? "consumer") !== "consumer") return false;
+    try {
+      const gate = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
+        tenantId: tok.tenant_id, channel: "email", to: recipient, contactId: tok.contact_id ?? null,
+      });
+      return !gate.proceed;
+    } catch { return true; }
+  };
+  if (await policyHeld())
+    return json({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }, 409);
+
   // §6/§9: resolve the brand UP the parent chain so a sub-account invite wears its
   // AGENCY's logo + accent (not the child's empty stub, never Paige). The resolver
   // floors unset colors to the platform tokens (#150C31 / #EBB94C) — never a
@@ -299,6 +315,8 @@ Deno.serve(async (req) => {
     // invitation and recipient changes cannot be hidden by a stale dashboard.
     if (!(await authorized()) || !(await eligible()))
       return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
+    if (await policyHeld())
+      return json({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }, 409);
     if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id, actorUserId, recipientEmail: recipient })))
       return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
     const res = await fetch("https://api.resend.com/emails", {

@@ -27,6 +27,12 @@
 --      tenant-admin guard, reason forced to 'manual'), load_contact_context (refusal message literal
 --      only), read_email_marketing_dashboard (customer_request counts as an unsubscribe).
 --   7. Grants: anon loses EXECUTE on load_contact_context and admin_propose_paige_actions (§59).
+--   8. Opt-outs follow the person, not the row (round 2): a merge moves the archived contact's
+--      suppressions and opt-out events to the winner (address kept); deleting a contact detaches the
+--      opt-outs the contact holds (contact_id NULL, address kept) instead of cascading them away.
+--   9. Owner rulings (round 2): a customer's own spam report is lifted only by that customer turning
+--      email back on in their portal; after a customer leaves Updates, staff cannot subscribe them
+--      again (only the customer can).
 --
 -- Nothing here depends on 20271110040000..090000 (parallel slices). No backfill.
 BEGIN;
@@ -55,6 +61,17 @@ AS $$ SELECT coalesce(p_source = 'customer_portal', false)
 REVOKE ALL ON FUNCTION public._suppression_customer_held(text, text) FROM PUBLIC, anon, authenticated;
 COMMENT ON FUNCTION public._suppression_customer_held(text, text) IS
   'E09 Slice 6: a suppression the CONTACT holds (portal choice, STOP, unsubscribe link, complaint). Only the contact, or a trusted service context acting on their own message, may lift one.';
+
+-- The rows a customer may lift THEMSELVES by turning email back on in their portal: their own portal
+-- choice, their own unsubscribe click, and their own spam report (owner ruling, round 2: only the
+-- customer, by an affirmative act, can take back a report they made; the business never can). A STOP
+-- is lifted by replying START (D1), never from the portal; a business pause or a hard bounce is not
+-- the customer's to lift.
+CREATE OR REPLACE FUNCTION public._suppression_customer_liftable(p_source text, p_reason text)
+RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
+AS $$ SELECT coalesce(p_source = 'customer_portal', false)
+          OR coalesce(p_reason IN ('unsubscribe_link','complaint'), false) $$;
+REVOKE ALL ON FUNCTION public._suppression_customer_liftable(text, text) FROM PUBLIC, anon, authenticated;
 
 DROP INDEX public.uq_paige_suppressions_recipient_channel;
 CREATE UNIQUE INDEX uq_paige_suppressions_recipient_channel ON public.paige_suppressions
@@ -126,17 +143,16 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION public._comms_contact_address(uuid, uuid, text) FROM PUBLIC, anon, authenticated;
 
--- Is a ledger row (suppression or event) THIS contact's? Their own id; a contact merged into them
--- (a merge moves the portal login but not the ledger, 20270204000000:1478-1493); or a contactless
--- row on an address that is theirs alone.
+-- Is a ledger row (suppression or event) THIS contact's? Their own id, or a contactless row on an
+-- address that is theirs alone. That is the same match runPreSend makes (contact id OR normalized
+-- address), so the card and the send gate read ONE derivation. A merged contact's rows are not read
+-- here: a merge MOVES them to the winner (section 4b), so they already carry the winner's id.
 CREATE OR REPLACE FUNCTION public._comms_row_is_contacts(p_tenant uuid, p_client uuid, p_address text,
   p_address_unique boolean, p_row_contact uuid, p_row_address text)
-RETURNS boolean LANGUAGE sql STABLE SET search_path = public, pg_temp
+RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
 AS $$
   SELECT CASE
-    WHEN p_row_contact IS NOT NULL THEN p_row_contact = p_client OR EXISTS (
-      SELECT 1 FROM public.clients m WHERE m.id = p_row_contact AND m.tenant_id = p_tenant
-         AND m.merged_into_contact_id = p_client)
+    WHEN p_row_contact IS NOT NULL THEN p_row_contact = p_client
     ELSE coalesce(p_address_unique, false) AND p_address IS NOT NULL AND p_row_address = p_address
   END
 $$;
@@ -149,11 +165,36 @@ AS $$ SELECT CASE
   WHEN p_source = 'customer_portal' THEN 'you'
   WHEN p_reason = 'user_stop' OR p_source = 'inbound_message' THEN 'reply'
   WHEN p_reason = 'unsubscribe_link' THEN 'unsubscribe_link'
-  WHEN p_reason IN ('bounce_hard','complaint') THEN 'delivery'
+  WHEN p_reason = 'complaint' THEN 'reported'
+  WHEN p_reason = 'bounce_hard' THEN 'delivery'
   WHEN p_source = 'signup_form' THEN 'form'
   WHEN p_source IN ('admin_ui','api','webhook') THEN 'business'
   ELSE NULL END $$;
 REVOKE ALL ON FUNCTION public._comms_set_by(text, text) FROM PUBLIC, anon, authenticated;
+
+-- Has the contact left Updates and offers themselves, and not come back? (Owner ruling, round 2,
+-- CAN-SPAM-conservative.) True when their latest OWN newsletter choice — the portal, a sign-up form,
+-- a reply — is an unsubscribe, or while they hold an email opt-out of their own (their portal email
+-- off, their unsubscribe click, their spam report). While it is true the business cannot subscribe
+-- them; only the customer can, by subscribing again themselves. Matched by contact id or the
+-- normalized email, the same way _email_newsletter_subscribed reads the topic.
+CREATE OR REPLACE FUNCTION public._newsletter_left_by_contact(p_tenant uuid, p_contact uuid, p_address text)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+  WITH a AS (
+    SELECT coalesce(nullif(p_address, ''),
+      (SELECT x.address FROM public._comms_contact_address(p_tenant, p_contact, 'email') x WHERE p_contact IS NOT NULL)) AS addr)
+  SELECT coalesce((SELECT e.action = 'revoked' FROM public.paige_consent_events e, a
+            WHERE e.tenant_id = p_tenant AND e.channel = 'email' AND e.topic = 'newsletter'
+              AND e.source IN ('customer_portal','signup_form','inbound_message')
+              AND (e.contact_id = p_contact OR (a.addr IS NOT NULL AND e.address_normalized = a.addr))
+            ORDER BY e.created_at DESC, e.id DESC LIMIT 1), false)
+      OR EXISTS (SELECT 1 FROM public.paige_suppressions s, a
+            WHERE s.tenant_id = p_tenant AND s.channel = 'email'
+              AND public._suppression_customer_held(s.source, s.reason)
+              AND (s.contact_id = p_contact OR (a.addr IS NOT NULL AND s.address_normalized = a.addr)))
+$$;
+REVOKE ALL ON FUNCTION public._newsletter_left_by_contact(uuid, uuid, text) FROM PUBLIC, anon, authenticated;
 
 -- ── 4. Ledger write guards (B1) ────────────────────────────────────────────────────────────────
 -- Trusted context = no signed-in end user: service role, cron, migrations. A signed-in session that
@@ -171,6 +212,12 @@ DECLARE
   -- short-circuit a record field reference behind a table-name test.
   _reason text := to_jsonb(NEW)->>'reason';
 BEGIN
+  -- A merge or a contact deletion re-keys a row to the person it belongs to (section 4b). That is the
+  -- only UPDATE this guard admits on its own terms, and only when nothing but contact_id changes.
+  IF TG_OP = 'UPDATE' AND current_setting('paige.ledger_rekey', true) = 'on'
+     AND (to_jsonb(NEW) - 'contact_id') = (to_jsonb(OLD) - 'contact_id') THEN
+    RETURN NEW;
+  END IF;
   IF NEW.source = 'customer_portal' THEN
     IF NOT _customer_gate OR NEW.contact_id IS NULL OR NEW.contact_id::text IS DISTINCT FROM _customer_contact THEN
       RAISE EXCEPTION 'LEDGER_CUSTOMER_SOURCE_FORBIDDEN: only the contact can record their own portal choice'
@@ -184,6 +231,15 @@ BEGIN
   END IF;
   IF TG_TABLE_NAME = 'paige_suppressions' AND _reason = 'customer_request' THEN
     RAISE EXCEPTION 'LEDGER_REASON_FORBIDDEN: customer_request is recorded only from the contact''s portal'
+      USING ERRCODE = '42501';
+  END IF;
+  -- The business (staff UI, its API, Paige acting for it) never subscribes someone to Updates who
+  -- left them. Service context included: the rule is about whose choice it is, not who is signed in.
+  IF TG_OP = 'INSERT' AND TG_TABLE_NAME = 'paige_consent_events'
+     AND NEW.channel = 'email' AND to_jsonb(NEW)->>'topic' = 'newsletter' AND to_jsonb(NEW)->>'action' = 'granted'
+     AND NEW.source IN ('admin_ui','api')
+     AND public._newsletter_left_by_contact(NEW.tenant_id, NEW.contact_id, NEW.address_normalized) THEN
+    RAISE EXCEPTION 'NEWSLETTER_LEFT_BY_CONTACT: they unsubscribed from updates and offers; only they can subscribe again'
       USING ERRCODE = '42501';
   END IF;
   IF auth.uid() IS NOT NULL THEN
@@ -206,9 +262,11 @@ CREATE TRIGGER trg_paige_suppressions_write_guard BEFORE INSERT OR UPDATE ON pub
 CREATE TRIGGER trg_paige_consent_events_write_guard BEFORE INSERT OR UPDATE ON public.paige_consent_events
   FOR EACH ROW EXECUTE FUNCTION public._paige_ledger_write_guard();
 
--- A row the contact holds is lifted only by the contact: their portal RPC (only their own portal row
--- or their own unsubscribe-link row), or a trusted service context (a START reply from that number).
--- The cascade from deleting the contact or the business itself is allowed: the row's owner is gone.
+-- A row the contact holds is lifted only by the contact: their portal RPC (only their own portal row,
+-- their own unsubscribe-link row or their own spam report), or a trusted service context (a START
+-- reply from that number). The cascade from deleting the business is allowed; deleting the contact
+-- first detaches every held row that has an address (section 4b), so only an address-less row, which
+-- nothing could match any more, goes with the contact.
 CREATE OR REPLACE FUNCTION public._paige_suppression_delete_guard()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
 AS $$
@@ -217,7 +275,9 @@ DECLARE
   _addr text;
   _uniq boolean;
 BEGIN
-  IF NOT public._suppression_customer_held(OLD.source, OLD.reason) OR auth.uid() IS NULL THEN
+  IF NOT public._suppression_customer_held(OLD.source, OLD.reason) OR auth.uid() IS NULL
+     OR current_setting('paige.ledger_rekey', true) = 'on' THEN
+    -- (The re-key only deletes a duplicate of a slot the same person already holds, section 4b.)
     RETURN OLD;
   END IF;
   IF (OLD.contact_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.clients c WHERE c.id = OLD.contact_id))
@@ -225,7 +285,7 @@ BEGIN
     RETURN OLD;
   END IF;
   IF current_setting('paige.customer_consent_write', true) = 'on'
-     AND (OLD.source = 'customer_portal' OR OLD.reason = 'unsubscribe_link') THEN
+     AND public._suppression_customer_liftable(OLD.source, OLD.reason) THEN
     _contact := nullif(current_setting('paige.customer_consent_contact', true), '')::uuid;
     SELECT a.address, a.address_unique INTO _addr, _uniq
       FROM public._comms_contact_address(OLD.tenant_id, _contact, OLD.channel) a;
@@ -240,6 +300,95 @@ END $$;
 REVOKE ALL ON FUNCTION public._paige_suppression_delete_guard() FROM PUBLIC, anon, authenticated;
 CREATE TRIGGER trg_paige_suppressions_delete_guard BEFORE DELETE ON public.paige_suppressions
   FOR EACH ROW EXECUTE FUNCTION public._paige_suppression_delete_guard();
+
+-- ── 4b. Opt-outs follow the person (round 2: verifier MAJOR 1 and MAJOR 2) ─────────────────────
+-- An opt-out belongs to a PERSON, and two things used to separate it from them:
+--   * a merge archived the contact the customer opted out on, so the winner's sends (matched by the
+--     winner's id and address) went out while the card, which read merged contacts, said "off";
+--   * deleting the contact cascaded the opt-out away, so re-importing the same address emailed them.
+-- _paige_ledger_rekey moves a contact's rows to the person they now belong to, keeping the address:
+--   merge  (p_to = the winner): every suppression, and every opt-out (revoked) event, moves to the
+--          winner. Granted events stay with the archived contact: consent given for one number or
+--          mailbox is never stretched to another (it can only block more, never send more).
+--   delete (p_to NULL): suppressions the contact HOLDS and opt-out events that carry an address are
+--          detached (contact_id NULL, address kept), so runPreSend still blocks by address. Business
+--          pauses and grants go with the contact, as before.
+-- When the destination slot is already held by an equal row (same person, channel and holder
+-- class), the row is kept as an address-keyed row if it has an address, else dropped as a duplicate.
+-- paige_consent_events is append-only evidence: the re-key changes contact_id and nothing else, and
+-- the write guard admits exactly that (paige.ledger_rekey), from these two triggers only.
+CREATE OR REPLACE FUNCTION public._paige_ledger_rekey(p_tenant uuid, p_from uuid, p_to uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE
+  r record;
+  _held boolean;
+  _prev text := coalesce(current_setting('paige.ledger_rekey', true), '');
+BEGIN
+  IF p_from IS NULL OR p_tenant IS NULL OR p_from IS NOT DISTINCT FROM p_to THEN RETURN; END IF;
+  PERFORM set_config('paige.ledger_rekey', 'on', true);
+  FOR r IN SELECT s.id, s.channel, s.source, s.reason, s.address_normalized FROM public.paige_suppressions s
+            WHERE s.tenant_id = p_tenant AND s.contact_id = p_from ORDER BY s.created_at, s.id LOOP
+    _held := public._suppression_customer_held(r.source, r.reason);
+    CONTINUE WHEN p_to IS NULL AND NOT _held;
+    IF p_to IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.paige_suppressions o
+         WHERE o.tenant_id = p_tenant AND o.channel = r.channel AND o.contact_id = p_to
+           AND public._suppression_customer_held(o.source, o.reason) = _held) THEN
+      UPDATE public.paige_suppressions SET contact_id = p_to WHERE id = r.id;
+    ELSIF r.address_normalized IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.paige_suppressions o
+         WHERE o.tenant_id = p_tenant AND o.channel = r.channel AND o.contact_id IS NULL
+           AND o.address_normalized = r.address_normalized
+           AND public._suppression_customer_held(o.source, o.reason) = _held) THEN
+      UPDATE public.paige_suppressions SET contact_id = NULL WHERE id = r.id;
+    ELSIF p_to IS NOT NULL THEN
+      DELETE FROM public.paige_suppressions WHERE id = r.id;
+    END IF;
+  END LOOP;
+  UPDATE public.paige_consent_events e SET contact_id = p_to
+   WHERE e.tenant_id = p_tenant AND e.contact_id = p_from AND e.action = 'revoked'
+     AND (p_to IS NOT NULL OR e.address_normalized IS NOT NULL);
+  PERFORM set_config('paige.ledger_rekey', _prev, true);
+END $$;
+REVOKE ALL ON FUNCTION public._paige_ledger_rekey(uuid, uuid, uuid) FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public._clients_ledger_follow_person()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    PERFORM public._paige_ledger_rekey(OLD.tenant_id, OLD.id, NULL);
+    RETURN OLD;
+  END IF;
+  PERFORM public._paige_ledger_rekey(NEW.tenant_id, NEW.id, NEW.merged_into_contact_id);
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._clients_ledger_follow_person() FROM PUBLIC, anon, authenticated;
+-- BEFORE DELETE: runs before the foreign-key cascade, which then removes only what was not detached.
+CREATE TRIGGER trg_clients_ledger_keep_opt_outs BEFORE DELETE ON public.clients
+  FOR EACH ROW EXECUTE FUNCTION public._clients_ledger_follow_person();
+CREATE TRIGGER trg_clients_ledger_follow_merge AFTER UPDATE OF merged_into_contact_id ON public.clients
+  FOR EACH ROW WHEN (NEW.merged_into_contact_id IS NOT NULL
+                     AND NEW.merged_into_contact_id IS DISTINCT FROM OLD.merged_into_contact_id)
+  EXECUTE FUNCTION public._clients_ledger_follow_person();
+
+-- Contacts merged before this migration: their rows move the same way (production has one ledger row,
+-- so this touches little). Ordered by merge time so a chain lands on its last winner; repeated until
+-- no merged contact still holds a row (a chain merged out of order needs a second pass).
+DO $$
+DECLARE r record; _pass integer := 0;
+BEGIN
+  LOOP
+    _pass := _pass + 1;
+    EXIT WHEN _pass > 10 OR NOT EXISTS (
+      SELECT 1 FROM public.clients c WHERE c.merged_into_contact_id IS NOT NULL
+         AND (EXISTS (SELECT 1 FROM public.paige_suppressions s WHERE s.contact_id = c.id)
+              OR EXISTS (SELECT 1 FROM public.paige_consent_events e WHERE e.contact_id = c.id AND e.action = 'revoked')));
+    FOR r IN SELECT c.tenant_id, c.id, c.merged_into_contact_id FROM public.clients c
+              WHERE c.merged_into_contact_id IS NOT NULL ORDER BY c.merged_at NULLS FIRST, c.id LOOP
+      PERFORM public._paige_ledger_rekey(r.tenant_id, r.id, r.merged_into_contact_id);
+    END LOOP;
+  END LOOP;
+END $$;
 
 -- ── 5. The one derivation (§1a). Mirrors runPreSend steps 2-3 and tenantConsent ───────────────────
 -- Returns {email, sms, updates, data_sharing, quiet_hours}. Never an address, an evidence pointer,
@@ -266,12 +415,12 @@ BEGIN
   SELECT s.source, s.reason, s.created_at INTO _e_blk FROM public.paige_suppressions s
    WHERE s.tenant_id = p_tenant AND s.channel = 'email'
      AND public._comms_row_is_contacts(p_tenant, p_client, _e_addr, _e_uniq, s.contact_id, s.address_normalized)
-   ORDER BY (s.source = 'customer_portal' OR s.reason = 'unsubscribe_link') ASC, s.created_at DESC, s.id DESC LIMIT 1;
+   ORDER BY public._suppression_customer_liftable(s.source, s.reason) ASC, s.created_at DESC, s.id DESC LIMIT 1;
   SELECT EXISTS (SELECT 1 FROM public.paige_suppressions s
     WHERE s.tenant_id = p_tenant AND s.channel = 'email' AND public._suppression_customer_held(s.source, s.reason)
       AND public._comms_row_is_contacts(p_tenant, p_client, _e_addr, _e_uniq, s.contact_id, s.address_normalized)) INTO _e_held;
   SELECT EXISTS (SELECT 1 FROM public.paige_suppressions s
-    WHERE s.tenant_id = p_tenant AND s.channel = 'email' AND NOT (s.source = 'customer_portal' OR s.reason = 'unsubscribe_link')
+    WHERE s.tenant_id = p_tenant AND s.channel = 'email' AND NOT public._suppression_customer_liftable(s.source, s.reason)
       AND public._comms_row_is_contacts(p_tenant, p_client, _e_addr, _e_uniq, s.contact_id, s.address_normalized)) INTO _e_fixed;
   IF _e_blk.created_at IS NOT NULL THEN
     _e_state := 'off'; _e_by := public._comms_set_by(_e_blk.source, _e_blk.reason); _e_at := _e_blk.created_at;
@@ -341,8 +490,12 @@ BEGIN
       'can_unsubscribe', _u_state IN ('subscribed','paused')),
     'data_sharing', jsonb_build_object('allowed', coalesce(_c.paige_shared_context_consent, false),
       'updated_at', _c.paige_shared_context_consent_updated_at),
+    -- Known only when the stored zone is one runPreSend can use: an invalid string makes the send
+    -- gate fall back to its default zone (pre-send-pipeline.ts safeTz), so it is not "your time".
+    -- Intl accepts IANA names case-insensitively; so does this match.
     'quiet_hours', jsonb_build_object('start', '20:00', 'end', '08:00',
-      'time_zone_known', nullif(btrim(coalesce(_c.timezone, '')), '') IS NOT NULL));
+      'time_zone_known', EXISTS (SELECT 1 FROM pg_catalog.pg_timezone_names z
+                                  WHERE lower(z.name) = lower(btrim(coalesce(_c.timezone, ''))))));
 END $$;
 REVOKE ALL ON FUNCTION public._client_communication_state(uuid, uuid) FROM PUBLIC, anon, authenticated;
 
@@ -429,6 +582,8 @@ DECLARE
   _disclosure text;
   _err text;
   _changed boolean := false;
+  _took_back boolean := false;
+  _at timestamptz;
   _after jsonb;
 BEGIN
   IF _uid IS NULL THEN
@@ -487,20 +642,35 @@ BEGIN
           WHEN count(*) = 0 THEN NULL
           WHEN bool_or(s.reason = 'manual') THEN 'EMAIL_PAUSED_BY_BUSINESS'
           WHEN bool_or(s.reason = 'bounce_hard') THEN 'EMAIL_UNDELIVERABLE'
-          WHEN bool_or(s.reason = 'complaint') THEN 'EMAIL_REPORTED'
           ELSE 'EMAIL_PAUSED_BY_BUSINESS'
         END INTO _err
         FROM public.paige_suppressions s
        WHERE s.tenant_id = _c.tenant_id AND s.channel = 'email'
-         AND NOT (s.source = 'customer_portal' OR s.reason = 'unsubscribe_link')
+         AND NOT public._suppression_customer_liftable(s.source, s.reason)
          AND public._comms_row_is_contacts(_c.tenant_id, _c.id, _addr, _uniq, s.contact_id, s.address_normalized);
       IF _err IS NULL THEN
-        -- Resuming email to someone the business already serves is not marketing consent: no
-        -- 'granted' event is written (it would open tenantConsent for marketing automations).
+        SELECT coalesce(bool_or(s.reason IN ('complaint','unsubscribe_link')), false) INTO _took_back
+          FROM public.paige_suppressions s
+         WHERE s.tenant_id = _c.tenant_id AND s.channel = 'email'
+           AND public._comms_row_is_contacts(_c.tenant_id, _c.id, _addr, _uniq, s.contact_id, s.address_normalized);
         DELETE FROM public.paige_suppressions s
          WHERE s.tenant_id = _c.tenant_id AND s.channel = 'email'
-           AND (s.source = 'customer_portal' OR s.reason = 'unsubscribe_link')
+           AND public._suppression_customer_liftable(s.source, s.reason)
            AND public._comms_row_is_contacts(_c.tenant_id, _c.id, _addr, _uniq, s.contact_id, s.address_normalized);
+        IF _took_back THEN
+          -- The customer took back their own spam report or unsubscribe click (owner ruling, round 2).
+          -- Two events, in this order: the 'granted' is the evidence of that affirmative act; the
+          -- newsletter 'revoked' after it keeps them out of Updates and offers, and keeps marketing
+          -- automations (tenantConsent reads the latest email event of any topic) closed until they
+          -- subscribe again themselves. Email back on is never a marketing opt-in (D4).
+          _at := clock_timestamp();
+          INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
+          VALUES (_c.id, _row_addr, 'email', NULL, 'granted', 'customer_portal', public._client_portal_evidence_ref(_uid, _disclosure), NULL, _at);
+          INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
+          VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v1'), NULL, _at + interval '1 microsecond');
+        END IF;
+        -- Otherwise (their own portal choice) no event: resuming email to someone the business already
+        -- serves is not marketing consent, and a 'granted' would open tenantConsent.
         _changed := true;
       END IF;
     END IF;
@@ -562,7 +732,7 @@ END $$;
 REVOKE ALL ON FUNCTION public.client_portal_set_communication_preference(text, text, boolean, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_set_communication_preference(text, text, boolean, uuid) TO authenticated, service_role;
 COMMENT ON FUNCTION public.client_portal_set_communication_preference(text, text, boolean, uuid) IS
-  'E09 Slice 6: the customer''s own email / texts / Updates choice. Off is always allowed; email back on only lifts the customer''s own rows; texts on is not offered (D1). Evidence is an authenticated portal session by uid; no IP is stored (M7).';
+  'E09 Slice 6: the customer''s own email / texts / Updates choice. Off is always allowed; email back on only lifts the customer''s own rows (their portal choice, unsubscribe click or spam report); texts on is not offered (D1). Evidence is an authenticated portal session by uid; no IP is stored (M7).';
 
 -- ── 9. The customer's data-sharing writer: the first and only legitimate writer of the flag ──────
 CREATE OR REPLACE FUNCTION public.client_portal_set_shared_context_consent(p_allow boolean, p_tenant_id uuid DEFAULT NULL)
@@ -1028,5 +1198,9 @@ COMMENT ON TRIGGER trg_clients_shared_context_consent_guard ON public.clients IS
   'E09 Slice 6: only the client''s own portal RPC turns paige_shared_context_consent on. Staff, service and imports may only turn it off.';
 COMMENT ON TRIGGER trg_paige_suppressions_delete_guard ON public.paige_suppressions IS
   'E09 Slice 6 (B1): a row the contact holds is lifted only by the contact (their portal RPC) or a trusted service context (their START reply).';
+COMMENT ON TRIGGER trg_clients_ledger_keep_opt_outs ON public.clients IS
+  'E09 Slice 6 (round 2): deleting a contact keeps the opt-outs they hold, address-keyed, so a re-imported address stays blocked.';
+COMMENT ON TRIGGER trg_clients_ledger_follow_merge ON public.clients IS
+  'E09 Slice 6 (round 2): a merge moves the archived contact''s suppressions and opt-out events to the winner, so the card and every send gate read one derivation.';
 
 COMMIT;

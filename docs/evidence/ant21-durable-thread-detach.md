@@ -154,3 +154,43 @@ transition, fixture adapter, caller grants and the unconditional hosted CI invoc
 byte-identical to d07. Earlier lint limitations remain explicit; fresh exact-head hosted CI,
 non-author review and release are owed. No source binding, provider, actor/tenant deletion policy,
 reminder adoption or production operation changed. Strict totals remain 1/18 and 2/50.
+
+## 2026-10-18 CI repair: wait for complete child output
+
+Hosted CI39101947941/job117599899520 remains FAILED. Its earlier durable-thread-detach
+107-assertion step passed; the later incumbent owner-task human-control proof failed while
+parsing empty stdout from its sole successful concurrent process. This is an output-capture
+failure, not new evidence of a native database defect. Node's [child-process contract](https://nodejs.org/api/child_process.html#event-close)
+allows stdio to remain open after `exit`; `close` follows closure of those streams.
+
+The repair changes only that eight-way capture callback to settle on `close`, and clears its
+existing timeout when spawn reports an error. Eight actual concurrent psql processes, exactly
+one successful changed result, every loser stale-or-NOWAIT refusal, exactly one audit and
+unchanged idempotent replay assertions remain intact. No native assertion is removed or skipped.
+
+Failing-first private proof extracts the exact callback and uses a real Node child with actual
+stdout/stderr pipes, deliberately paused until actual process exit. The old callback returns
+empty stdout and raises the same JSON SyntaxError; the repair observes exit, both pipe data
+events, then close and parses the complete result. A separate actual ENOENT spawn control
+preserves the error and proves the real timeout is cleared. Private
+`work/durable-thread-detach/ci-output-close/` retains both results and the extracted source.
+
+On the normal composition with current main `b54d7c8dcada98f71ad7a34190a4f29a32ecc412`, the
+actual `--owner-task-human-control` proof passes **119 native controls**, including **51 human-control
+cases** and the eight-process race. Its actual engine/C5 suite passes **45/45 tests, zero skips**
+(the incumbent minimum remains 43). Native and owned-cluster-stop exits are 0. Syntax, scoped
+ESLint and diff hygiene pass. The four frozen native/workflow/test/runner blobs remain byte-identical
+to cabebaa97436cea5c8f48fa2bf161d242b7e4e0a; this append preserves all earlier evidence bytes.
+
+The first private helper had a path-only ENOENT setup error. An inherited-grandchild pipe fixture
+did not deliver output on Windows and is INVALID, not accepted regression proof. The initial
+sandbox native attempt hit loopback denial 10013 before assertions and stopped its owned cluster;
+the approved disposable rerun above supplies the native proof. The sandbox DNS fetch failure
+is retained; exact current main was already available locally for normal composition.
+
+This is selected native SQL plus disclosed local fixture ports on Windows, not full Supabase
+schema/JWT integration, provider execution, authenticated customer proof or capability acceptance.
+The existing hosted107 proof and source review5561645457 remain prior evidence. Root non-author
+review of this exact repair, fresh exact-head hosted CI and eventual production release/readback
+remain owed. No push, PR merge, production operation, grant, native writer, provider, workflow or
+pin change is performed by this repair. Strict restoration totals remain 1/18 and 2/50.

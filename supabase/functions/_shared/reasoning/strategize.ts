@@ -4,7 +4,7 @@
 // raw prompt at a model and hoping (§26). This is the "measure twice" step: given a task brief, it
 //   (a) recalls what worked for THIS tenant before (recallSimilar — the §14 "get smarter from constant
 //       data" loop: past approved wins become few-shot anchors), and
-//   (b) makes ONE frontier reasoning call to produce a STRATEGY — decompose the task, pick an approach,
+//   (b) makes ONE governed reasoning call to produce a STRATEGY — decompose the task, pick an approach,
 //       name the risks, and state the success criteria the downstream generation/verifier will be held to.
 //
 // It sits beside the Phase-4 bounded loop (engine.ts) and the trace/learning seam (trace.ts) as one home
@@ -16,13 +16,15 @@
 // error, unparseable reply) returns a `degraded` strategy and the caller proceeds exactly as it would
 // have without this step.
 //
-// §17: the reasoning call is `routedChatCompletion("plan", …)` — "plan" is a reasoning JobKind that
+// §17: the default reasoning call is `routedChatCompletion("plan", …)` — "plan" is a reasoning JobKind that
 // routes to Claude's reasoning tier and can NEVER route to an open model. That call ALSO writes its own
 // paige_llm_trace row (L1.1), so this module wires NO second trace (no double-count) — it just threads
-// the correlation ctx onto routedChatCompletion's `trace` param.
+// the correlation ctx onto routedChatCompletion's `trace` param. The existing Research gate may
+// select the shared operational Fabric consumer instead; no provider/model policy lives here.
 //
 // §34: pure in-repo (model-router + prompt-forge). No vendor reasoning SDK.
 import { routedChatCompletion } from "../model-router.ts";
+import { fabricCompletion, type FabricCompletionRequest } from "../model-fabric.ts";
 import { recallSimilar, type RecalledArtifact } from "../prompt-forge.ts";
 import type { TraceCtx } from "../llm-trace.ts";
 
@@ -52,6 +54,11 @@ export interface StrategizeOpts {
   taskId?: string | null;
   /** How many past-win anchors to seed with (default 3). */
   topN?: number;
+  /** Trusted caller's existing release gate, never request/model JSON. Omitted or
+   * false preserves the incumbent plan route; Research supplies its ONE false flag. */
+  fabricEnabled?: boolean;
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
+  signal?: AbortSignal;
 }
 
 /** A safe, non-null strategy that lets the caller proceed unblocked when this pass can't add lift (§13). */
@@ -114,18 +121,40 @@ export async function strategizeBeforeReasoning(opts: StrategizeOpts): Promise<S
   const task = (opts.task ?? "").trim();
   if (!task) return fallback("");
 
+  // The recall helper has no cancellation API. Stop waiting on abort and fence
+  // every continuation; do not claim that its already-started IO was cancelled.
+  const within = <T>(start: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {
+    const signal = opts.signal;
+    const stop = () => reject(new Error("strategy_attempt_stopped"));
+    if (signal?.aborted) { stop(); return; }
+    signal?.addEventListener("abort", stop, { once: true });
+    Promise.resolve().then(() => {
+      if (signal?.aborted) throw new Error("strategy_attempt_stopped");
+      return start();
+    }).then(resolve, reject).finally(() => signal?.removeEventListener("abort", stop));
+  });
+  const current = async (): Promise<boolean> => {
+    if (opts.signal?.aborted) return false;
+    try {
+      const permitted = !opts.beforeProviderAttempt || await within(async () => await opts.beforeProviderAttempt!() === true);
+      return permitted && !opts.signal?.aborted;
+    } catch { return false; }
+  };
+  if (!(await current())) return fallback(task);
+
   // (a) Seed with past wins — §9 explicit tenant, honest-degrade to [] on any miss (recallSimilar never throws).
   let anchors: RecalledArtifact[] = [];
   if (opts.tenantId) {
     try {
-      anchors = await recallSimilar(task, opts.tenantId, Math.max(1, Math.min(opts.topN ?? 3, 10)));
+      anchors = await within(() => recallSimilar(task, opts.tenantId!, Math.max(1, Math.min(opts.topN ?? 3, 10))));
     } catch {
       anchors = []; // belt-and-suspenders: recall is already non-throwing, but never let it break pre-reasoning
     }
   }
+  if (!(await current())) return fallback(task);
 
-  // (b) One frontier reasoning call. routedChatCompletion("plan") → Claude reasoning tier (§17) and writes
-  //     its OWN paige_llm_trace row (L1.1) — we thread ctx, we do NOT trace again (no double-count).
+  // (b) One shared reasoning request. The legacy plan route or gated operational Fabric writes
+  //     its OWN paige_llm_trace rows — we thread ctx, never add a second trace writer.
   const trace: TraceCtx = {
     tenant_id: opts.tenantId ?? null,
     agent_id: opts.agentId ?? "paige-strategist",
@@ -143,8 +172,20 @@ export async function strategizeBeforeReasoning(opts: StrategizeOpts): Promise<S
       ],
       temperature: 0.3,
       max_tokens: 1000, // headroom so a rich strategy doesn't truncate mid-JSON → avoidable silent degrade
-    };
-    const resp = await routedChatCompletion("plan", body, trace);
+    } satisfies Pick<FabricCompletionRequest, "messages" | "temperature" | "max_tokens">;
+    if (!(await current())) return fallback(task, anchors.length);
+    const resp = await within(async () => {
+      if (opts.fabricEnabled === true) {
+        const result = await fabricCompletion({ ...body, cognitive_class: "operational", job: "reason_strategize" },
+          { trace, beforeProviderAttempt: current, signal: opts.signal });
+        if (!result.ok) throw new Error(`strategy_fabric_failed:${result.route.reason}`);
+        return result.response;
+      }
+      // No callback/signal parameter exists on the legacy transport. The fences
+      // here bound waiting and use of results, not its internal budget/HTTP leg.
+      return await routedChatCompletion("plan", body, trace);
+    });
+    if (!(await current())) return fallback(task);
     content = resp?.choices?.[0]?.message?.content ?? "";
   } catch (e) {
     console.error("[strategize] reasoning call failed (non-fatal):", (e as Error)?.message);

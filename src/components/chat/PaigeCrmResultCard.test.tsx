@@ -65,6 +65,19 @@ describe("PaigeCrmResultCard", () => {
 });
 
 describe("Task and Deal receipt reload links", () => {
+  it("opens a fresh exact Task and its reduced history through the current SOLO account", () => {
+    const fresh = { action: "task.update", outcome: "succeeded", receipt_recorded: true,
+      readback: { id: ID, title: "Neutral saved Task" },
+      record_locator: { record_id: ID, deep_link_status: "exact", deep_link: "/solo/999/foreign" } };
+    const [saved] = readCrmResultMetadata([{ action: fresh.action, outcome: fresh.outcome, receipt_recorded: true,
+      record_reference: { destination: "operations_work", record_id: ID } }]);
+    for (const result of [fresh, saved]) {
+      const html = renderToStaticMarkup(<PaigeCrmResultCard result={result} account={solo(300)} />);
+      expect(html).toContain(`href="/solo/300/operations/work?task=${ID}"`);
+      expect(html).toContain("Open task"); expect(html).not.toContain("/solo/999");
+      expect(html).toContain("Recorded in Paige activity.");
+    }
+  });
   const stored = (family: "task" | "deal") => ({ action: `${family}.update`, outcome: "succeeded", receipt_recorded: true,
     record_reference: family === "task" ? { destination: "operations_work" as const, record_id: null } : { destination: "pipeline" as const, record_id: ID } });
   it.each(["task", "deal"] as const)("rehydrates a %s link using the current workspace without restoring payloads", family => {

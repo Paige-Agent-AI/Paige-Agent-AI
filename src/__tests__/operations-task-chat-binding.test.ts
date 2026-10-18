@@ -34,10 +34,10 @@ describe("exact Task shared Chat binding", () => {
     const serviceSet = ast.statements.find(n => ts.isVariableStatement(n) && n.getText(ast).includes("const CRM_SERVICE_TOOLS"));
     expect(serviceSet?.getText(ast)).not.toContain("crm_get_task");
   });
-  it("reuses only the incumbent Work department link, stripping any purported exact Task route", () => {
+  it("reuses the incumbent exact Task consumer and strips any injected address", () => {
     const links = readRecordLinks([{ destination: "operations_work", record_id: "00000000-0000-4000-8000-000000000003", url: "https://foreign.invalid" }]);
-    expect(links).toEqual([{ destination: "operations_work", record_id: null }]);
-    expect(workspaceLinkTarget(links[0], { account_type: "standalone", parent_tenant_id: null, account_number: "7001" })).toEqual({ label: "Open delivery work", to: "/solo/7001/operations/work", status: "surface_only" });
+    expect(links).toEqual([{ destination: "operations_work", record_id: "00000000-0000-4000-8000-000000000003" }]);
+    expect(workspaceLinkTarget(links[0], { account_type: "standalone", parent_tenant_id: null, account_number: "7001" })).toEqual({ label: "Open task", to: "/solo/7001/operations/work?task=00000000-0000-4000-8000-000000000003", status: "exact" });
   });
   it("persisted reference survives the actual shared decoder without claiming Task detail focus", () => {
     const historical = JSON.parse(JSON.stringify({ paige_record_links: [{ destination: "operations_work", record_id: null }] }));

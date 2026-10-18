@@ -133,7 +133,8 @@ describe("canonical CRM action door", () => {
     for (const action of ["contact.assign_coach", "contact.assign_owner", "deal.assign_owner", "deal.assign_contact", "deal.move", "deal.close", "deal.reopen", "task.assign", "task.cancel"]) {
       expect(edge).toContain(`case "${action}"`);
     }
-    expect(edge).toContain('recordId && action.startsWith("contact.")');
+    expect(edge).toContain('resolveCanonicalRecordLink({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination, recordId })');
+    expect(edge).toContain('/^(contact|deal|task)\\./.test(action)');
     expect(edge).not.toContain('action.startsWith("contact.") || action.startsWith("company.")');
     expect(edge).toContain('At least one reversible deal field is required for deal.update.');
     expect(edge).toContain('Contact tags must be an array of 1-80 character strings.');

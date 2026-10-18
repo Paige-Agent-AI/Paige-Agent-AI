@@ -1032,8 +1032,6 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
     return res.ok;
   };
 
-  if (!comms.canManage) return <NotYours what="sending domains"/>;
-
   return <>
     {comms.domains.length > 0 && <div className="ss-list">
       {comms.domains.map((d) => <div key={d.id}>
@@ -1042,7 +1040,7 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
           <small>{d.fromEmailLocal}@{d.domain}</small>
         </span>
         <Status tone={d.status === "verified" ? "ok" : "warn"}>{d.status}</Status>
-        <div className="ss-row-actions">
+        {comms.canManage && <div className="ss-row-actions">
           {/* "Check DNS" rather than "Verify": this asks the provider what the
               records currently say. It cannot make an unpublished record exist,
               and a button that implied otherwise would promise a result the
@@ -1059,12 +1057,12 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
             onClick={() => { if (window.confirm(`Remove ${d.domain}? Mail already sent is unaffected, but this domain stops being available as a sender.`)) void run(`remove:${d.id}`, () => comms.removeDomain(d.id), `${d.domain} removed.`); }}>
             Remove
           </button>
-        </div>
+        </div>}
         {/* DNS RECORDS: the copy-paste-able record set Resend returned for this
             domain — what the tenant publishes at their registrar (Namecheap,
             GoDaddy, Cloudflare, Vercel, etc). Shown whenever records exist,
             especially while status is pending (the tenant is mid-publish). */}
-        {d.dnsRecords.length > 0 && <div className="ss-dns-records" style={{ marginTop: 8, marginBottom: 4 }}>
+        {comms.canManage && d.dnsRecords.length > 0 && <div className="ss-dns-records" style={{ marginTop: 8, marginBottom: 4 }}>
           <p className="ss-note" style={{ marginBottom: 6 }}>
             <strong>Publish these at your DNS host ({d.status === "verified" ? "verified — already live" : "then click Check DNS above"}):</strong>
           </p>
@@ -1087,13 +1085,15 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
 
     {comms.domains.length === 0 && <div className="ss-empty"><WifiOff aria-hidden/>No custom sending domain yet — mail goes out on the PAIGE-managed identity above.</div>}
 
-    {!showAdd && <div className="ss-form-actions" style={{ marginTop: 11 }}>
+    {!comms.canManage && <NotYours what="sending domains"/>}
+
+    {comms.canManage && !showAdd && <div className="ss-form-actions" style={{ marginTop: 11 }}>
       <button type="button" className="ss-btn" onClick={() => { setShowAdd(true); setOutcome(null); }}>
         <Globe2 aria-hidden/>Add a domain
       </button>
     </div>}
 
-    {showAdd && <form className="ss-form" onSubmit={async (e) => {
+    {comms.canManage && showAdd && <form className="ss-form" onSubmit={async (e) => {
       e.preventDefault();
       if (!form.domain.trim() || !form.fromName.trim()) { setOutcome({ tone: "bad", message: "A domain and a From name are both required." }); return; }
       const ok = await run("add", () => comms.addDomain(form), "Registered. Publish the DNS records it returns, then Check DNS.");

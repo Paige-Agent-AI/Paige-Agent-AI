@@ -39,6 +39,8 @@ import {
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { ComposeThreadDialog } from "./conversations/ComposeThreadDialog";
+import { LeadReplyDrafts } from "./conversations/LeadReplyDrafts";
+import { useLeadReplyReview, canReplaceFollowupDraft, parseFollowupLocator } from "./conversations/useLeadReplyReview";
 import { FirstRunOnboarding } from "./conversations/FirstRunOnboarding";
 import { ThreadRow } from "./conversations/ThreadRow";
 import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
@@ -71,6 +73,7 @@ import type {
   ConversationsContactPanelModel, ShellThread, DraftTone,
 } from "./conversations/shell/conversationsAdapter";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import type { SoloCommsReadinessEvidence } from "./conversations/solo/soloConversationModel";
 import { useAgentPresence } from "@/components/ui/paige";
 import {
@@ -343,7 +346,8 @@ function SoloConversationOperatingBarWithPaige(
 export default function ClientsConversations() {
   const reduce = useReducedMotion();
   const location = useLocation();
-  const { activeTenantId } = useTenantContext();
+  const tenantContext = useTenantContext();
+  const { activeTenantId, activeUserId } = tenantContext;
   const soloRoute = /^\/solo\/([^/]+)\/clients\/conversations(?:\/|$)/.exec(location.pathname);
   const isSolo = !!soloRoute;
   const soloAccountAddress = soloRoute?.[1] ?? "";
@@ -387,6 +391,10 @@ export default function ClientsConversations() {
   const [composeOpen, setComposeOpen] = useState(false);
   // When the composer is opened from a Client-360 "Message {name}" deep-link, pre-address it.
   const [composeContact, setComposeContact] = useState<{ id: string; name?: string } | null>(null);
+  const [composeApprovalId,setComposeApprovalId]=useState<string|undefined>(undefined);
+  const [leadReplyApprovalId,setLeadReplyApprovalId]=useState<string|null>(null);
+  const followupHoldRef=useRef(false);
+  const dialogFollowupHoldRef=useRef(false);
   // Gate the ?contact deep-link on a real first threads pull, so an empty (not-yet-loaded)
   // dbThreads never gets read as "no thread exists" (which would wrongly open the composer).
   const [threadsReady, setThreadsReady] = useState(false);
@@ -456,13 +464,14 @@ export default function ClientsConversations() {
     setComposeChannel(""); setComposeConnectorId(""); setSubject(""); setBody("");
     setScheduledFor(null); resetAttachments(); setSnippets([]); setSignatures([]); setTemplates([]);
     setAppendSignature(true); setDragOver(false); setUndo(null);
-    setHandlingMode("human"); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
+    setHandlingMode("human"); setLeadReplyApprovalId(null); setComposeApprovalId(undefined); setUserId(null); setDrafting(false); setDraftReadingDoc(false);
     setDraftFlags([]); setSending(false); sendInFlightRef.current = null; setApprovingId(null); setEditingDraftId(null); suppReqRef.current += 1;
     portalRequestIdsRef.current.clear();
   }, [activeTenantId, resetAttachments]);
 
   // ── Deep-link: read ?filter=<view> once; unknown slug → keep default (never blank). ─
-  const [searchParams] = useSearchParams();
+  const [searchParams,setSearchParams] = useSearchParams();
+  const followupLocator=useMemo(()=>parseFollowupLocator(searchParams),[searchParams]);
   useEffect(() => {
     const v = searchParams.get("filter");
     if (v && (INBOX_VIEWS as string[]).includes(v) && (v !== "attention" || isSolo)) setView(v as InboxView);
@@ -580,10 +589,11 @@ export default function ClientsConversations() {
   // don't re-fire it (mirrors the ?filter= pattern above). ─────────────────────────────────────
   useEffect(() => {
     const cid = searchParams.get("contact");
-    if (!cid || !cid.trim()) return;
+    if (!cid || !cid.trim() || followupLocator.kind === "invalid" || followupHoldRef.current) return;
     if (!threadsReady) return;                          // wait for a real first threads pull
-    if (contactSeekHandledRef.current === cid) return;  // act on each contact-param exactly once
-    contactSeekHandledRef.current = cid;
+    const contactIntent = JSON.stringify([cid,followupLocator]);
+    if (contactSeekHandledRef.current === contactIntent) return;  // act on each contact-param exactly once
+    contactSeekHandledRef.current = contactIntent;
     const match = dbThreads.find((t) => t.contact_id === cid);
     if (match) {
       pendingSelectRef.current = match.thread_key;
@@ -598,21 +608,23 @@ export default function ClientsConversations() {
     void (async () => {
       const epoch = accountEpochRef.current.capture();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from("threads")
+      const { data, error: contactThreadError } = await (supabase as any).from("threads")
         .select("thread_key").eq("contact_id", cid)
         .order("last_message_at", { ascending: false, nullsFirst: false }).limit(1);
       if (!accountEpochRef.current.accept(epoch)) return;
+      if(followupLocator.kind === "bound" && (contactThreadError || !Array.isArray(data))) { toast.error("The original conversation could not be verified. No replacement was opened."); return; }
       const key = (data as { thread_key: string }[] | null)?.[0]?.thread_key ?? null;
       if (key) {
         pendingSelectRef.current = key;
         setView("all"); setLabelFilter(null); setSearch("");
         void loadThreads();
       } else {
+        setComposeApprovalId(followupLocator.kind === "bound" ? followupLocator.approvalId : undefined);
         setComposeContact({ id: cid });
         setComposeOpen(true);
       }
     })();
-  }, [searchParams, threadsReady, dbThreads, loadThreads]);
+  }, [searchParams, followupLocator, threadsReady, dbThreads, loadThreads]);
 
   // ── realtime: messages + threads (§7 two-way, live unread/snooze/archive) ───────────
   useEffect(() => {
@@ -783,6 +795,7 @@ export default function ClientsConversations() {
   useEffect(() => {
     // Hold a just-composed selection until its thread arrives in dbThreads — don't clobber it
     // to visibleThreads[0] in the gap (compose selection race). Honor it the moment it lands.
+    if (followupHoldRef.current && selectedKey) return;
     if (pendingSelectRef.current) {
       if (dbThreads.some((t) => t.thread_key === pendingSelectRef.current)) {
         const key = pendingSelectRef.current;
@@ -875,7 +888,7 @@ export default function ClientsConversations() {
     const composerThread = `${activeTenantId ?? ""}|${selected.key}`;
     const sameThread = composerThreadRef.current === composerThread;
     composerThreadRef.current = composerThread;
-    if (sameThread && portalOffered && composeChannelRef.current === "portal") return;
+    if (sameThread) return;
     const threadConnector = composerConnectors.find(
       (c) => c.id === selected.connectorId && c.channel_type === selected.channel,
     );
@@ -892,7 +905,7 @@ export default function ClientsConversations() {
       setComposeConnectorId(chosenConnector?.id ?? "");
       setComposeChannel(chosenConnector?.channel_type ?? "");
     }
-    setEditingDraftId(null);
+    setEditingDraftId(null); setLeadReplyApprovalId(null);
     setSubject("");
     setBody("");
   }, [selectedKey, selected, composerConnectors, portalOffered, portalLinked, activeTenantId]);
@@ -979,6 +992,7 @@ export default function ClientsConversations() {
   };
 
   const selectThread = (key: string) => {
+    if (followupHoldRef.current && key !== selectedKey) { toast.error("Finish or cancel the original reply before changing conversation."); return; }
     setSelectedKey(key);
     // The Gmail-style keyboard cursor lives in ConversationsThreadList and follows the open
     // thread there; multi-select, bulk, and keyboard nav are all list-internal now (§18).
@@ -1081,6 +1095,23 @@ export default function ClientsConversations() {
     setBody(""); setSubject(""); resetAttachments();
     setScheduledFor(null); setEditingDraftId(null);
   }, [resetAttachments]);
+
+  const followupEpoch=accountEpochRef.current.capture();
+  const followupLocatorConflict=followupLocator.kind==="invalid"||!!leadReplyApprovalId&&(followupLocator.kind!=="bound"
+    ||followupLocator.approvalId!==leadReplyApprovalId||followupLocator.contactId!==selected?.contactId);
+  const restoreFollowupOrigin=(contactId:string,approvalId:string)=>setSearchParams(params=>{const next=new URLSearchParams(params);next.set("contact",contactId);next.set("approval",approvalId);return next;},{replace:true});
+  const leadReplyReview=useLeadReplyReview({actorId:activeUserId,tenantId:activeTenantId,contactId:selected?.contactId??null,
+    threadKey:selected?.key??null,approvalId:leadReplyApprovalId,connectorId:composeConnectorId,channel:composeChannel,subject,body,
+    attachmentCount:attachments.length,uploading,scheduledFor,signatureEnabled:hasSignature&&appendSignature,
+    disabled:followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"||(isSolo&&handlingMode==="governed"),
+    current:()=>accountEpochRef.current.accept(followupEpoch)},()=>{void load();void loadThreads();});
+  followupHoldRef.current=!!leadReplyApprovalId||dialogFollowupHoldRef.current;
+  useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
+  const cancelLeadReply=()=>{
+    if(!leadReplyReview.reset())return;
+    resetComposer();setLeadReplyApprovalId(null);
+    setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true});
+  };
 
   // ── Insert a saved email template (ported from the retired ContactCommsPanel, §31) — resolves
   //    {{merge}} vars against the selected thread's contact and lands subject+body for review/edit.
@@ -1284,6 +1315,8 @@ export default function ClientsConversations() {
 
   // ── Send a fresh reply (or an edited draft) into the selected thread ──────────────
   const send = async () => {
+    if (leadReplyApprovalId) { if(followupLocatorConflict){toast.error("Return to the original reply before approving it.");return;}await leadReplyReview.prepare(); return; }
+    if (followupLocator.kind !== "none") { toast.error("Open the selected original reply before sending. No replacement was selected."); return; }
     if (!selected) return;
     if (isSolo && !canSendInSolo(handlingMode, composeChannel)) { toast.error("This handling mode or channel cannot send. Hand back to Human reply and use a ready email or SMS identity."); return; }
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
@@ -1543,7 +1576,7 @@ export default function ClientsConversations() {
     onChange: handleBodyChange,
     onSend: send,
     sending,
-    disabled: drafting || uploading || (isSolo && handlingMode === "governed"),
+    disabled: drafting || uploading || leadReplyReview.blocksEditing || (isSolo && handlingMode === "governed"),
     // A client who hasn't joined the portal can't receive a portal post — Send is held for both
     // inboxes (the trailing `|| portalUnreachable`), and the inline notice above the composer says why.
     sendDisabled: isSolo && (
@@ -1556,14 +1589,14 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ) || portalUnreachable,
+    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId),
     sendOnEnter: isSolo,
     placeholder: portalMode
       ? `Message ${selected.name} in their client portal…`
       : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
-    sendLabel: portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    sendLabel: leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
     identities: [
       ...composerConnectors.map((c) => ({
@@ -1859,6 +1892,27 @@ export default function ClientsConversations() {
                 </motion.div>
               ),
             )}
+            {followupLocatorConflict&&leadReplyApprovalId&&selected.contactId?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. <button type="button" className="underline" onClick={()=>restoreFollowupOrigin(selected.contactId!,leadReplyApprovalId)}>Return to original reply</button></p>
+              :followupLocator.kind==="invalid"?<p role="alert" className="text-sm text-destructive">The selected reply link is invalid. No replacement was selected.</p>:null}
+            {activeTenantId&&selected.contactId&&followupLocator.kind!=="invalid"?<LeadReplyDrafts
+              key={`${activeUserId}:${activeTenantId}:${selected.contactId}`}
+              actorId={activeUserId} tenantId={activeTenantId} contactId={selected.contactId}
+              approvalId={followupLocator.kind==="bound"?followupLocator.approvalId:undefined}
+              current={()=>accountEpochRef.current.accept(followupEpoch)}
+              disabled={sending||leadReplyReview.blocksSending||(isSolo&&handlingMode==="governed")}
+              onEdit={(approval,draft)=>{
+                if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){
+                  toast.error("Finish or cancel the current draft before opening another reply.");return;
+                }
+                if(approval.tenant_id!==activeTenantId||approval.contact_id!==selected.contactId
+                  ||followupLocator.kind==="bound"&&(followupLocator.contactId!==selected.contactId||followupLocator.approvalId!==approval.id))return;
+                setLeadReplyApprovalId(approval.id);setComposeChannel("email");setAppendSignature(false);
+                restoreFollowupOrigin(selected.contactId!,approval.id);
+                const connector=composerConnectors.find(c=>c.id===composeConnectorId&&c.channel_type==="email")??composerConnectors.find(c=>c.channel_type==="email");
+                setComposeConnectorId(connector?.id??"");setSubject(draft.subject);setBody(draft.body);
+                bottomRef.current?.scrollIntoView({behavior:reduce?"auto":"smooth",block:"end"});
+              }}/>:null}
+            {leadReplyReview.panel}
             <div ref={bottomRef} />
           </div>
 
@@ -1961,9 +2015,14 @@ export default function ClientsConversations() {
           thread key so it merges cleanly with any later inbound reply). */}
       <ComposeThreadDialog
         open={composeOpen}
-        onOpenChange={(v) => { setComposeOpen(v); if (!v) setComposeContact(null); }}
+        onOpenChange={(v) => { setComposeOpen(v); if (!v) { setComposeContact(null); setComposeApprovalId(undefined); if(followupLocator.kind!=="none")setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true}); } }}
         activeConnectors={composerConnectors}
         tenantId={tenantIdRef.current}
+        actorId={activeUserId}
+        approvalId={composeApprovalId}
+        locatorConflicted={composeApprovalId!==undefined&&(followupLocator.kind!=="bound"||followupLocator.approvalId!==composeApprovalId||followupLocator.contactId!==composeContact?.id)}
+        onRestoreOrigin={()=>{if(composeContact&&composeApprovalId)restoreFollowupOrigin(composeContact.id,composeApprovalId);}}
+        onHoldChange={held=>{dialogFollowupHoldRef.current=held;followupHoldRef.current=!!leadReplyApprovalId||held;}}
         initialContact={composeContact ?? undefined}
         emailTemplates={templates}
         onSent={(key) => {

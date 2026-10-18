@@ -39,6 +39,12 @@ const click = async (name: string) => { await act(async () => button(name).click
 const text = () => host.textContent ?? "";
 
 describe("shared approval row reports canonical outcomes", () => {
+  it.each(["owner.lead_followup","client.followup","owner.followup_email"])("routes %s to the exact existing composer without executing",async category=>{
+    row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category};
+    act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));
+    const link=host.querySelector('a');expect(link?.textContent).toBe("Review reply");expect(link?.getAttribute("href")).toBe("/solo/123/clients/conversations?contact=22222222-2222-4222-8222-222222222222&approval=44444444-4444-4444-8444-444444444444");
+    expect(button("Approve")).toBeUndefined();expect(m.invoke).not.toHaveBeenCalled();
+  });
   it.each([null, {}, { ok: true }, { ok: true, executed: true }, { ok: true, executed: true, approval_id: "foreign" },
     { ok: true, executed: true, approval_id: "approval" },
     { ok: true, executed: true, approval_id: "approval", act_outcome: "executed", scheduled: "yes" },

@@ -13,6 +13,7 @@ import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingRead
 import { CALENDAR_BOOKING_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
+import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
@@ -8759,6 +8760,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       client: scopedClientId ?? null,
     });
     type PendingConfirmation = { fingerprint: string; issued_in_request: string; args: Record<string, unknown>; summary?: string; tool_name?: string };
+    // Server-only links between one exact consumed proposal and its owning call.
+    // Neither model arguments nor a duplicate textual tool-call ID carry this binding.
+    const approvedReminderClaims = new Map<string, { binding: ReminderExecutionBinding; owner: object | null }>();
+    const stoppedReminderClaims = new Map<string, { rpcAttempted: boolean; alreadyHandled?: boolean }>();
     const confirmationToken = async (row: PendingConfirmation, tool: string): Promise<string | null> => {
       if (!/^[0-9a-f]{16}$/.test(row.fingerprint) || !row.args || typeof row.args !== "object" || Array.isArray(row.args)) return null;
       const scoped = await scopedConfirmationFingerprint(tool, await confirmFingerprint(tool, row.args));
@@ -8938,9 +8943,58 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;
         await interactive?.check();
 
+        if (tool === "plan_set_reminder") {
+          stoppedReminderClaims.set(fp, { rpcAttempted: false });
+          if (approvedReminderClaims.has(fp)) {
+            stoppedReminderClaims.set(fp, { rpcAttempted: false, alreadyHandled: true });
+            return null;
+          }
+        }
         const nonce = await selectedConfirmationNonce(fp, tool);
         if (!nonce) return null;
 
+        let reminderCompatibilityProposalId: string | null = null;
+        if (tool === "plan_set_reminder") {
+          // Once this approval is selected, an uncertain claim is a terminal here,
+          // never generic null -> replacement proposal. The native transaction owns
+          // consumption and work creation; it must precede the incumbent CAS.
+          await requireRecoveryPermission(true);
+          let selected = supabase.from("paige_pending_confirmations")
+            .select("id,fingerprint,args,issued_in_request,tool_name")
+            .eq("user_id", user.id).eq("tool_name", tool)
+            .eq("fingerprint", fp.split(":")[0]).eq("issued_in_request", nonce)
+            .is("consumed_at", null).not("server_issued_at", "is", null)
+            .gt("expires_at", new Date().toISOString()).neq("issued_in_request", requestNonce);
+          selected = personaCtx?.tenant_id ? selected.eq("tenant_id", personaCtx.tenant_id) : selected.is("tenant_id", null);
+          selected = payloadThreadId ? selected.eq("thread_id", payloadThreadId) : selected.is("thread_id", null);
+          selected = scopedClientId ? selected.eq("scoped_client_id", scopedClientId) : selected.is("scoped_client_id", null);
+          const { data: proposals, error: proposalError } = await selected.limit(2);
+          const proposal = !proposalError && proposals?.length === 1 ? proposals[0] : null;
+          if (!proposal || await confirmationToken(proposal, tool) !== fp) return null;
+          await interactive?.check();
+          const adoption = await adoptApprovedReminder({ service: supabase,
+            selectedProposal: { id: proposal.id, fingerprint: proposal.fingerprint,
+              issuedNonce: proposal.issued_in_request, args: proposal.args },
+            scope: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null,
+              threadId: payloadThreadId ?? null, clientId: scopedClientId ?? null },
+            confirmationRequestNonce: requestNonce,
+            runtime: validatedData.requestIntentId && runtimeIdentity
+              ? { intentId: validatedData.requestIntentId, requestNonce: runtimeIdentity.requestNonce } : null,
+            current: () => !req.signal.aborted,
+          });
+          stoppedReminderClaims.set(fp, { rpcAttempted: adoption.kind !== "unavailable" || adoption.rpcAttempted });
+          if (adoption.kind === "adopted" && adoption.state === "claimed"
+            && personaCtx?.tenant_id && payloadThreadId && !scopedClientId) {
+            approvedReminderClaims.set(fp, { binding: { workId: adoption.workId, proposalId: adoption.proposalId,
+              actorId: user.id, tenantId: personaCtx.tenant_id, threadId: payloadThreadId, clientId: null }, owner: null });
+            stoppedReminderClaims.delete(fp);
+            return { ...adoption.storedArgs };
+          }
+          if (adoption.kind !== "unsupported") return null;
+          // Only the native closed, named compatibility response may keep this
+          // exact proposal on its unchanged incumbent path. Errors never do.
+          reminderCompatibilityProposalId = adoption.proposalId;
+        }
         await requireRecoveryPermission(true);
         let q = supabase.from("paige_pending_confirmations")
           .update({ consumed_at: new Date().toISOString() })
@@ -8962,12 +9016,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         q = personaCtx?.tenant_id ? q.eq("tenant_id", personaCtx.tenant_id) : q.is("tenant_id", null);
         q = payloadThreadId ? q.eq("thread_id", payloadThreadId) : q.is("thread_id", null);
         q = scopedClientId ? q.eq("scoped_client_id", scopedClientId) : q.is("scoped_client_id", null);
+        if (reminderCompatibilityProposalId) q = q.eq("id", reminderCompatibilityProposalId);
         const { data, error } = await q.select("args").maybeSingle();
         if (error) {
           console.error("[paige] confirm claim failed", JSON.stringify({ tool, code: error.code ?? null, message: error.message ?? null }));
           return null;
         }
         const args = (data as { args?: unknown } | null)?.args;
+        if (tool === "plan_set_reminder" && args && typeof args === "object" && !Array.isArray(args)) stoppedReminderClaims.delete(fp);
         return args && typeof args === "object" && !Array.isArray(args)
           ? args as Record<string, unknown>
           : null;
@@ -12070,6 +12126,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               pipelineClaimToken.set(tc.id, approvedFingerprint);
             }
 
+            const reminderClaimStop = tc.function.name === "plan_set_reminder" && approvedFingerprint
+              ? stoppedReminderClaims.get(approvedFingerprint) : null;
+            if (!approvedArgs && reminderClaimStop) {
+              if (!reminderClaimStop.alreadyHandled) requestExecutionState.needsReview = true;
+              const resumed = approvedFingerprint ? resumeTokens.get(approvedFingerprint) : null;
+              if (resumed) resumed.state = reminderClaimStop.alreadyHandled || reminderClaimStop.rpcAttempted ? "lost" : "unavailable";
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(reminderClaimStop.alreadyHandled
+                ? { success: false, not_applied: true, refused_before_run: true,
+                    error: "This approval was already handled in this answer. No second reminder was requested." }
+                : { success: false, outcome_unknown: true,
+                    error: "The original reminder approval could not be verified. Check the original reminder before asking again; it has not been retried.",
+                    note: "Do not claim the reminder was created or failed, request another approval, or repeat this action." }) });
+              continue;
+            }
             if (!approvedArgs) {
               // C4a — A RESUMED ACT WHOSE CLAIM FAILED never becomes a fresh card. Read the row once
               // more to tell the two causes apart: still live means the claim itself could not run
@@ -12151,6 +12221,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             tc.function.arguments = JSON.stringify(approvedArgs);
             approvalChannel.set(tc.id, "operator_card");
             approvalSpend.set(approvedFingerprint as string, tc.id);
+            const reminderClaim = approvedFingerprint ? approvedReminderClaims.get(approvedFingerprint) : null;
+            if (tc.function.name === "plan_set_reminder" && reminderClaim) reminderClaim.owner = tc;
           } else {
             // `auto` — the operator's standing decision in their autonomy settings, not an
             // approval given in this conversation. Recorded as what it is, so a later reader can
@@ -16987,6 +17059,31 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             if (planningIsWrite) {
               const scope = await supabaseClient.rpc("current_user_tenant_id");
               if (!tid || scope.error || scope.data !== tid) throw new Error("planning_scope_changed");
+            }
+            const approvedReminder = tc.function.name === "plan_set_reminder"
+              ? [...approvedReminderClaims.entries()].find(([token, claim]) => claim.owner === tc && approvalSpend.get(token) === tc.id)?.[1]
+              : null;
+            if (approvedReminder) {
+              if (!runtimeIdentity || !validatedData.requestIntentId) throw new Error("reminder_runtime_unavailable");
+              planningWriteAttempted = true;
+              const outcome = await executeApprovedReminder({ caller: supabaseClient, binding: approvedReminder.binding,
+                runtime: { intentId: validatedData.requestIntentId, requestNonce: runtimeIdentity.requestNonce },
+                current: () => !req.signal.aborted });
+              // A prior native success is not a new mutation. Until the separate
+              // read-only continuation handles its bookkeeping, fail closed here.
+              if (outcome.kind !== "succeeded" || outcome.historical || outcome.replayed) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(planningUnknown()) });
+                continue;
+              }
+              if (!(await revalidateTenantKnowledgeScope())) throw new Error("reminder_scope_changed");
+              await interactive?.check();
+              const original = outcome.originalReadback;
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ ...outcome.originalResult,
+                success: true, verified_readback: true,
+                readback: { ...original, id: original.item_id, updated_at: original.source_version },
+                record_locator: { table: "plan_items", id: original.item_id }, plan_item_id: original.item_id,
+                note: "The reminder record is saved and verified. Scheduled does not mean delivered; do not promise a future ping or email delivery." }) });
+              continue;
             }
             let rpcName = "", rpcArgs: Record<string, unknown> = {};
             switch (tc.function.name) {

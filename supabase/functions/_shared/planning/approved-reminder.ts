@@ -103,7 +103,7 @@ const validScope = (s: ReminderScope) => !!s && uuid(s.actorId) && nullableUuid(
 
 export async function adoptApprovedReminder(input: {
   service: ReminderAdoptionPort; selectedProposal: SelectedReminderProposal; scope: ReminderScope;
-  confirmationRequestNonce: string; runtime: ReminderRuntime;
+  confirmationRequestNonce: string; runtime: ReminderRuntime | null;
   /** Withdrawal only: never interpreted as authentication, approval or authority. */
   current(): boolean;
 }): Promise<ReminderAdoptionResult> {
@@ -113,15 +113,20 @@ export async function adoptApprovedReminder(input: {
     if (!current(fence)) return failure('adoption', false, 'stale');
     const p = input.selectedProposal, s = input.scope;
     const args = storedArgs(p?.args);
+    const requestRuntime = input.runtime;
+    const hasRequestRuntime = validRuntime(requestRuntime);
     if (!p || !uuid(p.id) || !uuid(p.issuedNonce) || typeof p.fingerprint !== 'string' || !/^[0-9a-f]{16}$/.test(p.fingerprint)
       || !uuid(input.confirmationRequestNonce) || sameId(p.issuedNonce, input.confirmationRequestNonce)
-      || !validRuntime(input.runtime) || !validScope(s) || !args || typeof input.service?.rpc !== 'function')
+      || (requestRuntime !== null && !hasRequestRuntime) || !validScope(s) || !args || typeof input.service?.rpc !== 'function')
       return failure('adoption', false, 'invalid_input');
     const proposalId = p.id.toLowerCase();
     const rpcArgs = { p_proposal_id: proposalId, p_actor: s.actorId.toLowerCase(), p_tenant: s.tenantId?.toLowerCase() ?? null,
       p_thread: s.threadId?.toLowerCase() ?? null, p_client: s.clientId?.toLowerCase() ?? null,
       p_fingerprint: p.fingerprint, p_issued_nonce: p.issuedNonce.toLowerCase(), p_request_nonce: input.confirmationRequestNonce.toLowerCase(),
-      p_intent: input.runtime.intentId.toLowerCase(), p_runtime_request_nonce: input.runtime.requestNonce.toLowerCase() };
+      // Some incumbent compatibility classes have no interactive executor. Pass
+      // that actual absence to the native eligibility check; never mint a pair.
+      p_intent: requestRuntime?.intentId.toLowerCase() ?? null,
+      p_runtime_request_nonce: requestRuntime?.requestNonce.toLowerCase() ?? null };
     if (!current(fence)) return failure('adoption', false, 'stale');
     attempted = true;
     const reply = await input.service.rpc('adopt_paige_reminder_approval', rpcArgs);
@@ -141,7 +146,8 @@ export async function adoptApprovedReminder(input: {
     if (!closed(data, ['v', 'status', 'work_id', 'proposal_id', 'work_status', 'stored_args'])
       || data.status !== 'adopted' && data.status !== 'existing' || !uuid(data.work_id)
       || !DURABLE_JOB_STATES.includes(data.work_status as DurableJobState)
-      || data.status === 'adopted' && data.work_status !== 'claimed' || !returnedArgs || !equalArgs(args, returnedArgs))
+      || data.status === 'adopted' && (!hasRequestRuntime || data.work_status !== 'claimed')
+      || !returnedArgs || !equalArgs(args, returnedArgs))
       return failure('adoption', true, 'malformed_response');
     const observed = { workId: data.work_id.toLowerCase(), proposalId, state: data.work_status as DurableJobState,
       storedArgs: returnedArgs, legacyFallbackEligible: false as const, retryAllowed: false as const };

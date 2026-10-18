@@ -42,6 +42,47 @@ function unavailable(result: ReminderAdoptionResult | ReminderExecutionResult | 
 }
 
 describe('approved reminder adoption transport', () => {
+  describe('absent interactive runtime', () => {
+    it.each(['tenantless_native_compatibility', 'threadless_native_compatibility', 'nonmember_native_compatibility'] as const)(
+      'passes actual NULLs to native %s eligibility without inventing an executor', async reason => {
+        const p = service({ v: 1, status: 'unsupported', proposal_id: selected.id, unsupported_reason: reason });
+        const result = await adoptApprovedReminder({ ...adoptInput(p), runtime: null });
+        expect(result).toEqual({ kind: 'unsupported', proposalId: selected.id, reason,
+          legacyFallbackEligible: true, retryAllowed: false });
+        expect(p.rpc).toHaveBeenCalledExactlyOnceWith('adopt_paige_reminder_approval', expect.objectContaining({
+          p_intent: null, p_runtime_request_nonce: null, p_request_nonce: id(8), p_issued_nonce: selected.issuedNonce,
+        }));
+      });
+    it('keeps an answered refusal unverified and never turns runtime absence into fallback', async () => {
+      const p = service(); p.rpc.mockResolvedValue({ data: null, error: { code: '42501' } });
+      unavailable(await adoptApprovedReminder({ ...adoptInput(p), runtime: null }), 'adoption');
+      expect(p.rpc).toHaveBeenCalledTimes(1);
+    });
+    it('refuses a fresh adopted acknowledgement without a real runtime pair', async () => {
+      const p = service();
+      unavailable(await adoptApprovedReminder({ ...adoptInput(p), runtime: null }), 'adoption');
+      expect(p.rpc).toHaveBeenCalledTimes(1);
+    });
+    it('does not borrow a later runtime to validate an acknowledgement for a NULL-pair request', async () => {
+      const p = service();
+      const input: Parameters<typeof adoptApprovedReminder>[0] = { ...adoptInput(p), runtime: null };
+      p.rpc.mockImplementation(async () => {
+        input.runtime = runtime;
+        return { data: adoption(), error: null };
+      });
+      unavailable(await adoptApprovedReminder(input), 'adoption');
+      expect(p.rpc).toHaveBeenCalledExactlyOnceWith('adopt_paige_reminder_approval', expect.objectContaining({
+        p_intent: null, p_runtime_request_nonce: null,
+      }));
+    });
+    it('returns existing work only as observation even without a current execution pair', async () => {
+      const p = service({ ...adoption(), status: 'existing' });
+      expect(await adoptApprovedReminder({ ...adoptInput(p), runtime: null })).toMatchObject({
+        kind: 'existing', observationOnly: true, freshDispatchAllowed: false, retryAllowed: false,
+      });
+      expect(p.rpc).toHaveBeenCalledTimes(1);
+    });
+  });
   it('calls only service adoption with exact selected identity and both separate nonces', async () => {
     const p = service();
     expect(await adoptApprovedReminder(adoptInput(p))).toEqual({ kind: 'adopted', workId: binding.workId,

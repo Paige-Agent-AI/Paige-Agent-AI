@@ -134,8 +134,8 @@ function assertIncumbentFrame() {
   for (const fragment of [
     `<div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>`,
     `<div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>`,
-    `<main key={route} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary`,
-    `const full=route==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';`,
+    `<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary`,
+    `const full=screenRoute==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';`,
     `import { SoloScreenBoundary } from "./SoloScreenBoundary";`,
     `import "./solo-tokens.css";`,
     `settings:<SoloSettings openPaige={openPaige}/>`,

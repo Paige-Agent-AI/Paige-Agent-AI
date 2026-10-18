@@ -209,12 +209,46 @@ describe('canonical original Reminder history reader with actual observer/adapte
     unavailable(await run(f), f); expect(f.calls).toHaveLength(0);
   });
 
-  it.each(['live', 'expired_unconsumed', 'consumed_after_expiry'] as const)('never observes %s as a used original effect', async state => {
+  it.each(['live', 'expired_unconsumed'] as const)('never observes %s as a used original effect', async state => {
     const f = await fixture();
-    if (state === 'consumed_after_expiry') f.rows[0].consumed_at = '2026-10-18T00:11:00Z';
-    else { change(f.rows[0], 'consumed_at', null); f.rows[0].expires_at = state === 'live' ? '2099-01-01T00:00:00Z' : '2000-01-01T00:00:00Z'; }
+    change(f.rows[0], 'consumed_at', null);
+    f.rows[0].expires_at = state === 'live' ? '2099-01-01T00:00:00Z' : '2000-01-01T00:00:00Z';
     unavailable(await run(f), f); expect(f.calls).toHaveLength(0);
   });
+
+  it('verifies sealed consumption one microsecond before expiry without using the action-resume classifier', async () => {
+    const f = await fixture();
+    f.rows[0].expires_at = '2026-10-18T00:10:00.123456Z';
+    f.rows[0].consumed_at = '2026-10-18T00:10:00.123455Z';
+    expect(Date.parse(f.rows[0].consumed_at)).toBe(Date.parse(f.rows[0].expires_at));
+    const result = await run(f);
+    expect(result).toMatchObject({ status: 'verified_original', historical: true, replayed: true,
+      new_effect_possible: false, confirmations_restored: false });
+    expect(f.calls.map(c => c.name)).toEqual([resolveName, historyName]); noEffects(f);
+  });
+
+  it('verifies sealed original history long after the proposal expired on the current clock', async () => {
+    const f = await fixture();
+    f.turn.created_at = '2000-01-01T00:00:00.123456Z';
+    f.rows[0].created_at = f.rows[0].server_issued_at = '1999-12-31T23:59:00Z';
+    f.rows[0].consumed_at = '2000-01-01T00:02:00Z'; f.rows[0].expires_at = '2000-01-01T00:10:00Z';
+    expect(Date.parse(f.rows[0].expires_at)).toBeLessThan(Date.now());
+    expect(await run(f)).toMatchObject({ status: 'verified_original', historical: true,
+      new_effect_possible: false, confirmations_restored: false });
+    expect(f.calls.map(c => c.name)).toEqual([resolveName, historyName]); noEffects(f);
+  });
+
+  it('an expiry-sweep consumption without matching sealed work is refused by native resolution, never guessed from expiry', async () => {
+    const f = await fixture(); f.rows[0].consumed_at = '2026-10-18T00:11:00Z';
+    f.onRpc = name => name === resolveName ? { data: null, error: { code: '42501', message: 'PRIVATE_NATIVE_NO_SEALED_WORK' } } : undefined;
+    unavailable(await run(f), f); expect(f.calls.map(c => c.name)).toEqual([resolveName]);
+  });
+
+  it.each([null, undefined, '', 'invalid', 'infinity', '2026-10-18T00:02:00.1234567Z'])(
+    'refuses non-finite or malformed consumption %s before native RPC', async consumed => {
+      const f = await fixture(); change(f.rows[0], 'consumed_at', consumed);
+      unavailable(await run(f), f); expect(f.calls).toHaveLength(0);
+    });
 
   it.each(['server_issued_at', 'created_at'] as const)('refuses future or invalid proposal %s including microsecond ordering', async field => {
     for (const value of ['2026-10-18T00:00:01Z', 'invalid', '2026-10-18T00:00:00.123457Z']) {

@@ -56,6 +56,12 @@ export interface RunRequestCtx {
   tenantId: string | null;
   /** The research run id for trace correlation. */
   runId: string | null;
+  /** Native in-process authority; never copied from request/model JSON. The shared
+   * Fabric checks it after budget awaits before every primary/fallback attempt. */
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
+  /** Native request/phase deadline. Legacy routed text has no signal option;
+   * forwarding cancellation below applies to the dormant Fabric path only. */
+  signal?: AbortSignal;
 }
 
 /** CLOSED served-route telemetry for dossier/unit diagnostics. No attempt detail, no errors. */
@@ -130,10 +136,22 @@ export async function researchCompletion(
     const resp = await deps.routed(ROUTED_JOB_KINDS[phase], body as unknown as Parameters<typeof routedChatCompletion>[1], trace);
     return { resp, route: null };
   }
-  const result = await deps.fabric(
-    { ...body, cognitive_class: cognitiveClass as "cheap" | "operational" | "frontier", job } as Parameters<typeof fabricCompletion>[0],
-    { trace },
-  );
+  // A budget read can itself be delayed. Bound the consumer's wait as well as
+  // forwarding the signal: the existing Fabric rechecks that SAME signal after
+  // budget awaits, so a late budget response cannot start a provider attempt.
+  const result = await new Promise<Awaited<ReturnType<typeof fabricCompletion>>>((accept, reject) => {
+    const signal = ctx.signal;
+    const stopped = () => reject(new Error("research_fabric_route_failed:aborted"));
+    if (signal?.aborted) { stopped(); return; }
+    signal?.addEventListener("abort", stopped, { once: true });
+    (async () => {
+      if (signal?.aborted) throw new Error("research_fabric_route_failed:aborted");
+      return deps.fabric(
+        { ...body, cognitive_class: cognitiveClass as "cheap" | "operational" | "frontier", job } as Parameters<typeof fabricCompletion>[0],
+        { trace, beforeProviderAttempt: ctx.beforeProviderAttempt, signal },
+      );
+    })().then(accept, reject).finally(() => signal?.removeEventListener("abort", stopped));
+  });
   if (!result.ok) {
     // The closed route reason only — provider text and identifiers never cross this line.
     throw new Error(`research_fabric_route_failed:${result.route?.reason ?? "failed"}`);

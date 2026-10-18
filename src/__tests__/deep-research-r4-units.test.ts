@@ -186,7 +186,7 @@ describe("R4 — the unchanged-validator guarantee (causal measurement)", () => 
 
   it("dossier (entity) mode keeps its single specialized call — no silent behavior fork", () => {
     expect(core).toContain("if (entityTarget) {");
-    expect(core).toContain("await synthesize(question, domainHint, citable, entityTarget, fabricCtx);");
+    expect(core).toContain("await synthesize(question, domainHint, citable, entityTarget, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });");
   });
 
   it("same route/model class for every unit call (doc_draft tier; R6-B: through the research adapter, dormant)", () => {

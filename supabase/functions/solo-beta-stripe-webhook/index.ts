@@ -252,13 +252,22 @@ Deno.serve(async (req) => {
     }
     return json(200, { received: true, ignored: true });
   } catch (error) {
+    const rawDetail = error instanceof Error ? error.message : String(error);
     console.error("solo_beta_stripe_webhook_failed", {
       eventId: typeof event !== "undefined" ? event.id : null,
       eventType: typeof event !== "undefined" ? event.type : null,
-      message: error instanceof Error ? error.message : String(error),
+      message: rawDetail,
     });
     if (eventClaimed) {
       await admin.rpc("solo_beta_fail_stripe_event", { _event_id: event.id, _error_code: safeCode(error) });
+      // Restricted diagnostic evidence: last_error_code keeps the stable snake_case
+      // name, but database/provider messages containing spaces or punctuation
+      // (constraint text, PGRST bodies) would otherwise be lost. Persist the raw
+      // detail on the operator-only event row so the real SQL failure is always
+      // identifiable without exposing it in any customer-facing surface.
+      await admin.from("stripe_event_log").update({
+        metadata: { last_error_detail: rawDetail.slice(0, 300) },
+      }).eq("event_id", event.id);
     }
     return json(500, { error: "solo_beta_webhook_retry_required" });
   }

@@ -39,6 +39,12 @@ try {
    inbound_domain text,inbound_address text,from_name text,from_address text,reply_to text,display_name text,status text,active boolean,
    credentials_vault_ref text,config jsonb,updated_at timestamptz DEFAULT now());
   CREATE UNIQUE INDEX uq_channel_connectors_inbound_domain ON public.channel_connectors(channel_type,inbound_domain) WHERE inbound_domain IS NOT NULL;`);
+ // Include the current native role-retirement floor instead of manufacturing a
+ // seat the complete schema no longer permits. Execute its exact existing DDL.
+ const retiredRoleDDL=readFileSync(migration('20270508000000_forbid_title_role_value'),'utf8')
+  .match(/ALTER TABLE public\.tenant_members\s+ADD CONSTRAINT tenant_members_role_not_retired_title_role\s+CHECK \(role IS DISTINCT FROM 'coach'::public\.tenant_role\);/);
+ assert(retiredRoleDDL,'existing tenant membership role-retirement constraint');
+ db.run(retiredRoleDDL[0]);
  const platform=migration('20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c');
  const actor=migration('20270521000000_operator_authority_in_company_workspaces');
  const initial=migration('20251009234919_3d7566f7-15b7-462f-90a3-b74b713298b6');

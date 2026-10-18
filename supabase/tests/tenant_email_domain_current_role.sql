@@ -139,12 +139,26 @@ SELECT pg_temp.ok(current_setting('domain_role.member_insert')='42501','mixed-se
 SELECT pg_temp.ok(current_setting('domain_role.member_update')='0','mixed-seat member UPDATE affects no rows despite global app admin');
 SELECT pg_temp.ok(current_setting('domain_role.member_delete')='0','mixed-seat member DELETE affects no rows despite global app admin');
 
--- Reuse the same real actor for changed-role/status and current-workspace negative cases.
+-- Current native schema forbids the retired title as a membership role. Test
+-- that floor directly; never drop it to manufacture a nonexistent seat.
+SELECT set_config('request.jwt.claims','{}',true);
+SELECT pg_temp.ok((SELECT convalidated AND pg_get_constraintdef(oid) LIKE '%coach%'
+ FROM pg_constraint WHERE conrelid='public.tenant_members'::regclass
+ AND conname='tenant_members_role_not_retired_title_role'),
+ 'the native retired-title membership constraint remains validated');
+SELECT pg_temp.ok(pg_temp.probe($q$UPDATE public.tenant_members SET role='coach'
+ WHERE user_id='ffffffff-3140-4000-8000-000000000001'
+ AND tenant_id='aaaaaaaa-3140-4000-8000-000000000002'$q$)='23514',
+ 'the existing native constraint refuses changing a member to the retired title');
+SELECT pg_temp.ok(pg_temp.probe($q$INSERT INTO public.tenant_members(tenant_id,user_id,status,role,is_owner)
+ VALUES('aaaaaaaa-3140-4000-8000-000000000002','ffffffff-3140-4000-8000-000000000003','active','coach',false)$q$)='23514',
+ 'the existing native constraint refuses provisioning a retired-title seat');
+
+-- Reuse the same real actor for changed-status and current-workspace negatives.
 DO $$DECLARE state text; n text; ins text; del text; BEGIN
- FOR state IN SELECT unnest(ARRAY['coach','inactive','revoked']) LOOP
+ FOR state IN SELECT unnest(ARRAY['inactive','revoked']) LOOP
   PERFORM set_config('request.jwt.claims','{}',true);
-  UPDATE public.tenant_members SET role=CASE WHEN state='coach' THEN 'coach'::public.tenant_role ELSE 'member'::public.tenant_role END,
-    status=CASE WHEN state='coach' THEN 'active' ELSE state END
+  UPDATE public.tenant_members SET role='member',status=state
    WHERE user_id='ffffffff-3140-4000-8000-000000000001' AND tenant_id='aaaaaaaa-3140-4000-8000-000000000002';
   PERFORM pg_temp.actor('ffffffff-3140-4000-8000-000000000001');
   EXECUTE 'SET LOCAL ROLE authenticated';

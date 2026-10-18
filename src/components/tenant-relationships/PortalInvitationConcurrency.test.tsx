@@ -9,7 +9,7 @@ vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUs
 vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => true }) }));
 vi.mock("@/hooks/useBrandKit", () => ({ useBrandKit: () => ({ state: { effective: { product_name: "Test Service", primary_color: "#26362f", logo_url: null } }, isLoading: false, isError: false }) }));
 vi.mock("@/hooks/useRailEvents", () => ({ useRailEvents: () => ({ events: [], historyStatus: "ready" }) }));
-vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [] } }) }));
+vi.mock("@/hooks/usePortalConfig", () => ({ usePortalCatalogInput: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }) }));
 vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => ({ data: [], isLoading: false, isError: false, invalidate: fixture.readback }) }));
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {

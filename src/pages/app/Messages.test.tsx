@@ -16,11 +16,19 @@ vi.mock("@/hooks/useClientPortalMessages", async (orig) => ({
   ...(await orig<typeof import("@/hooks/useClientPortalMessages")>()),
   useClientPortalMessages: () => f.state,
 }));
-vi.mock("@/hooks/useClientPortalBrand", () => ({
-  useClientPortalBrand: () => ({ tenant_id: T, tenant_name: "Northwind Studio", primary_color: f.color, logo_url: null }),
+vi.mock("@/hooks/useClientPortalBrand", () => {
+  const brand = () => ({ tenant_id: T, tenant_name: "Northwind Studio", tenant_slug: "northwind-studio", primary_color: f.color, logo_url: null });
+  return {
+    useClientPortalBrand: brand,
+    useClientPortalBrandState: () => ({ brand: brand(), loading: false, error: null, multipleBusinesses: false }),
+  };
+});
+// A customer's menu is built from their business's `_catalog` (E09 Slice M); the staff Playbook read is a decoy
+// that must never decide a customer's Resources hint.
+vi.mock("@/hooks/useClientPortalConfig", () => ({
+  useClientPortalConfigState: () => ({ config: { catalog: { slug: null, authoredUsable: true, modules: f.modules } }, loading: false }),
 }));
-vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: {}, loading: false }) }));
-vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: f.modules } }) }));
+vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [{ key: "home", label: "Home" }, { key: "resources", label: "Resources" }] }, persona: { name: "Paige" } }) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root, host: HTMLDivElement;

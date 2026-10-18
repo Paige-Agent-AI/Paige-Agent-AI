@@ -18,8 +18,8 @@ import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import { brandFontStack, resolveBrandFontPair } from "@/lib/brand-fonts";
 import { usePortalCatalogInput, usePortalConfig } from "@/hooks/usePortalConfig";
 import { resolvePortalCatalog } from "@/lib/playbook/resolve";
-import { PORTAL_CUSTOMER_PREVIEW_VIEWER, assemblePortalNav, flattenPortalNav } from "@/lib/portal/portalMenu";
-import { PortalMenuEditor } from "./PortalMenuEditor";
+import { PORTAL_CUSTOMER_PREVIEW_VIEWER, assemblePortalNav } from "@/lib/portal/portalMenu";
+import { PortalMenuEditor, PortalMenuPreview } from "./PortalMenuEditor";
 import {
   readableTextOn, isValidHex, PRIMARY_FLOOR, ACCENT_FLOOR,
 } from "@/lib/brand/resolveBrand";
@@ -43,9 +43,11 @@ import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
  *     assemblePortalNav (@/lib/portal/portalMenu), the function the live AppNav
  *     runs, so it can't drift (§13).
  *
- * GOLD DISCIPLINE (§11): gold is spent only on the Save act; toggles use the
- * Switch's own styling; the mock's single "Get started" CTA wears the tenant's
- * OWN accent (brand data), never a resting decoration.
+ * GOLD DISCIPLINE (§11): one gold act per page — the menu card's "Save menu".
+ * The header's save is scoped to what it writes ("Save brand, greeting & agent")
+ * and stays outline; toggles use the Switch's own styling; the mock's single
+ * "Get started" CTA wears the tenant's OWN accent (brand data), never a resting
+ * decoration.
  */
 
 type PortalStudioProps = { embedded?: boolean; onDirtyChange?: (dirty: boolean) => void; assistantFocusRequest?: number };
@@ -147,7 +149,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
   // Preview nav = assemblePortalNav, the function the live AppNav runs, over the menu editor's unsaved draft,
   // for a customer of this one business — so the preview can never differ from the live menu (§13).
   const previewNav = useMemo(
-    () => flattenPortalNav(assemblePortalNav({ catalog, overlay: menuDraft ?? pc.config.modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER })),
+    () => assemblePortalNav({ catalog, overlay: menuDraft ?? pc.config.modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER }),
     [catalog, menuDraft, pc.config.modules],
   );
 
@@ -223,11 +225,17 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
         title={embedded ? "Customize experience" : "Your client's portal"}
         description={embedded ? undefined : "Everything your clients see when they sign in — brand, tabs, and greeting. Set it once; Paige carries it everywhere."}
         actions={
-          <div className="flex items-center gap-3">
-            {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
-            <Button variant={embedded ? "outline" : "gold"} className={embedded ? "opd-button opd-primary" : undefined} onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+            {/* Scoped to what this button writes. The menu has its own card and its own Save menu, the page's
+                one gold act (§11); its unsaved state is named here too, so nothing reads as saved when it isn't. */}
+            {(dirty || menuDirty) && (
+              <span data-testid="portal-unsaved" className="text-xs text-muted-foreground">
+                {dirty && menuDirty ? "Unsaved changes here and in the menu" : dirty ? "Unsaved changes" : "Unsaved menu changes — use Save menu"}
+              </span>
+            )}
+            <Button variant="outline" className={embedded ? "opd-button opd-primary" : undefined} onClick={() => void handleSave()} disabled={!dirty || busy || (brandDirty && invalidHex)}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : null}
-              Save portal
+              Save brand, greeting &amp; agent
             </Button>
           </div>
         }
@@ -337,7 +345,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
           </fieldset>
 
           {/* ── View as Client (live preview) ── */}
-          <div className="min-w-0 lg:sticky lg:top-4 lg:self-start">
+          <div data-testid="portal-view-as-client" className="min-w-0 lg:sticky lg:top-4 lg:self-start">
             <SectionCard
               padded={false}
               icon={Eye}
@@ -362,31 +370,12 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                       {previewName}
                     </span>
                   </div>
-                  {/* nav */}
-                  <div
-                    className="flex items-center gap-1 overflow-x-auto border-b border-border bg-muted/40 px-2.5 py-2"
-                    style={{ fontFamily: previewFont }}
-                  >
-                    {previewNav.map((item, i) => {
-                      const NavIcon = item.icon;
-                      return (
-                        <span
-                          key={item.key}
-                          className={cn(
-                            "flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs",
-                            i === 0
-                              ? "bg-background font-medium text-foreground shadow-sm"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          <NavIcon className="h-3.5 w-3.5" />
-                          {item.label}
-                        </span>
-                      );
-                    })}
-                  </div>
+                  <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,172px)_minmax(0,1fr)]" style={{ fontFamily: previewFont }}>
+                  {/* nav: the grouped menu a customer of this business sees — the same component and the same
+                      assemblePortalNav() as the menu card's preview, over its unsaved draft. */}
+                  <PortalMenuPreview sections={previewNav} testId="portal-view-as-client-nav" dense />
                   {/* home card */}
-                  <div className="space-y-3 p-5" style={{ fontFamily: previewFont }}>
+                  <div className="min-w-0 space-y-3 p-2 sm:p-3">
                     <p className="text-base font-semibold text-foreground" style={{ fontFamily: previewDisplayFont }}>{headlineText}</p>
                     <p className="text-sm text-muted-foreground">{subheadText}</p>
                     <button
@@ -396,6 +385,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                     >
                       Get started
                     </button>
+                  </div>
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">

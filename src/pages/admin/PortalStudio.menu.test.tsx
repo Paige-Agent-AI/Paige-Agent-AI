@@ -14,6 +14,8 @@ const db = vi.hoisted(() => ({
   calls: [] as ConfigArgs[],
   // When set, the server stores something other than what was sent (e.g. it drops labels).
   corrupt: null as null | ((modules: PortalModuleOverlay[]) => PortalModuleOverlay[]),
+  // When set, the writer refuses with this PostgREST-shaped error.
+  refuse: null as null | { code: string; message: string },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: "test-business-a", activeUserId: "test-owner" }) }));
 vi.mock("@/integrations/supabase/client", () => {
@@ -21,6 +23,7 @@ vi.mock("@/integrations/supabase/client", () => {
   return { supabase: { from: () => chain, auth: { getUser: async () => ({ data: { user: null } }) }, rpc: async (fn: string, args: ConfigArgs) => {
     if (fn === "resolve_tenant_brand") return { data: {}, error: null };
     db.calls.push(structuredClone(args));
+    if (db.refuse) return { data: null, error: db.refuse };
     const patch = structuredClone(args._patch);
     if (patch.modules && db.corrupt) patch.modules = db.corrupt(patch.modules);
     db.config = { ...db.config, ...patch };
@@ -46,10 +49,12 @@ const preview = () => Array.from(card().querySelectorAll('[data-testid="portal-m
 const editorRows = () => Array.from(card().querySelectorAll<HTMLElement>("[data-menu-heading], [data-menu-row]")).map((el) =>
   el.hasAttribute("data-menu-heading") ? `# ${el.textContent?.trim()}` : el.getAttribute("data-menu-row"));
 const status = () => card().querySelector('[data-testid="portal-menu-status"]');
+const blur = (name: string) => act(() => { byLabel<HTMLInputElement>(name).dispatchEvent(new FocusEvent("focusout", { bubbles: true })); });
+const row = (key: string) => card().querySelector<HTMLElement>(`[data-menu-row="${key}"]`)!;
 const render = async () => { await act(() => { root.render(<QueryClientProvider client={qc}><PortalStudio embedded /></QueryClientProvider>); }); await flush(); };
 
 beforeEach(async () => {
-  db.config = {}; db.features = {}; db.calls = []; db.corrupt = null;
+  db.config = {}; db.features = {}; db.calls = []; db.corrupt = null; db.refuse = null;
   container = document.createElement("div"); document.body.append(container); root = createRoot(container);
   qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   await render();
@@ -92,15 +97,52 @@ describe("Customer portal menu editor", () => {
     expect(editorRows().slice(3, 7)).toEqual(["# Your work", "progress", "sessions", "actions"]);
   });
 
+  it("shows each entry's real name as the field's value, and clearing it returns to the default", async () => {
+    const input = byLabel<HTMLInputElement>("Name for Sessions");
+    expect(input.value).toBe("Sessions");
+    expect(input.placeholder).toBe("");
+    await type("Name for Sessions", "");
+    await blur("Name for Sessions");
+    expect(byLabel<HTMLInputElement>("Name for Sessions").value).toBe("Sessions");
+    expect(row("sessions").textContent).not.toContain("Renamed from");
+    // Typing the default back is not a rename, and is not stored as one.
+    await type("Name for Sessions", "Coaching calls");
+    await type("Name for Sessions", "Sessions");
+    expect(button("Save menu").disabled).toBe(true);
+  });
+
+  it("dims a hidden row and says it is hidden", async () => {
+    expect(row("documents").getAttribute("data-hidden")).toBeNull();
+    await click(byLabel("Show Documents"));
+    expect(row("documents").getAttribute("data-hidden")).toBe("true");
+    expect(row("documents").className).toMatch(/bg-muted/);
+    const dimText = /(^|\s)text-muted-foreground(\s|$)/;
+    expect(byLabel<HTMLInputElement>("Name for Documents").className).toMatch(dimText);
+    expect(row("documents").textContent).toContain("Hidden from clients");
+    expect(byLabel<HTMLInputElement>("Name for Progress").className).not.toMatch(dimText);
+  });
+
   it("bounds a name to 40 characters, counts from 30, and says what it was renamed from", async () => {
     const input = byLabel<HTMLInputElement>("Name for Sessions");
     expect(input.maxLength).toBe(40);
-    expect(input.placeholder).toBe("Sessions");
     await type("Name for Sessions", "Calls");
     expect(card().querySelector('[data-menu-row="sessions"]')?.textContent).toContain("Renamed from Sessions");
     expect(card().querySelector('[data-menu-row="sessions"] [data-testid="label-counter"]')).toBeNull();
     await type("Name for Sessions", "x".repeat(30));
     expect(card().querySelector('[data-menu-row="sessions"] [data-testid="label-counter"]')?.textContent).toBe("30/40");
+  });
+
+  it("never lets an old bad stored row block the save: one entry per key, and only names the writer accepts", async () => {
+    db.config = { modules: [
+      { key: "legacy-key", visible: false }, { key: "legacy-key", visible: true },
+      { key: "other-key", label: "Tab\there" }, { key: "third-key", label: "y".repeat(39) },
+    ] };
+    await act(async () => { await qc.invalidateQueries(); }); await flush();
+    await click(byLabel("Show Resources"));
+    await click(button("Save menu"));
+    const kept = db.calls[0]._patch.modules!.slice(5);
+    expect(kept).toEqual([{ key: "legacy-key", visible: false }, { key: "other-key" }, { key: "third-key", label: "y".repeat(39) }]);
+    expect(status()?.textContent).toMatch(/Menu saved/);
   });
 
   it("saves the full modules array, re-reads it, and says saved only when the read-back matches (§70.1)", async () => {
@@ -136,25 +178,70 @@ describe("Customer portal menu editor", () => {
     expect(button("Save menu").disabled).toBe(false);
   });
 
-  it("resets to the default menu without saving", async () => {
+  it("maps a refused save to a plain sentence — never backend wording — and keeps the draft", async () => {
+    for (const [refuse, expected] of [
+      [{ code: "42501", message: "portal_config_forbidden" }, "Your account can't change this menu."],
+      [{ code: "22023", message: "invalid_portal_config" }, "One of the names isn't accepted."],
+      [{ code: "XX000", message: "relation \"tenants\" does not exist" }, "Couldn't save the menu. Try again. Your changes are still here."],
+    ] as const) {
+      db.refuse = refuse;
+      await type("Name for Sessions", `Calls ${refuse.code}`);
+      await click(button("Save menu"));
+      expect(status()?.getAttribute("role")).toBe("alert");
+      expect(status()?.textContent).toContain(expected);
+      expect(status()?.textContent).not.toMatch(/portal_config|invalid_|relation|tenants|42501|22023|XX000/);
+      expect(byLabel<HTMLInputElement>("Name for Sessions").value).toBe(`Calls ${refuse.code}`);
+    }
+  });
+
+  it("resets to the default menu without saving, and offers no reset when already at default", async () => {
+    expect(button("Reset to default").disabled).toBe(true);
     await type("Name for Sessions", "Coaching calls");
     await click(byLabel("Show Documents"));
+    expect(button("Reset to default").disabled).toBe(false);
     await click(button("Reset to default"));
-    expect(byLabel<HTMLInputElement>("Name for Sessions").value).toBe("");
+    expect(byLabel<HTMLInputElement>("Name for Sessions").value).toBe("Sessions");
     expect(byLabel("Show Documents").getAttribute("aria-checked")).toBe("true");
     expect(db.calls).toEqual([]);
   });
 
-  it("spends gold on Save menu alone", async () => {
-    const gold = Array.from(card().querySelectorAll("button")).filter((b) => /bg-gradient-gold|\bbg-accent\b/.test(b.className));
+  it("spends gold on Save menu alone — on the whole page, and the header save names what it writes", async () => {
+    const gold = Array.from(container.querySelectorAll("button")).filter((b) => /bg-gradient-gold|\bbg-accent\b/.test(b.className));
     expect(gold.map((b) => b.textContent?.trim())).toEqual(["Save menu"]);
+    expect(Array.from(container.querySelectorAll("button")).map((b) => b.textContent?.trim())).toContain("Save brand, greeting & agent");
+    expect(container.textContent).not.toContain("Save portal");
+  });
+
+  it("names unsaved menu edits in the header too, so nothing reads as saved when it isn't", async () => {
+    expect(container.querySelector('[data-testid="portal-unsaved"]')).toBeNull();
+    await type("Name for Sessions", "Coaching calls");
+    expect(container.querySelector('[data-testid="portal-unsaved"]')?.textContent).toBe("Unsaved menu changes — use Save menu");
+  });
+
+  it("renders View as client as the grouped menu, from the same assembly as the editor's preview", async () => {
+    await type("Name for Sessions", "Coaching calls");
+    const nav = container.querySelector('[data-testid="portal-view-as-client-nav"]')!;
+    const headings = Array.from(nav.querySelectorAll("p")).map((p) => p.textContent);
+    expect(headings).toEqual(["Your work", "Paperwork", "Learn"]);
+    expect(Array.from(nav.querySelectorAll("[data-portal-label]")).map((e) => e.textContent)).toEqual(preview());
+  });
+
+  it("hides both keys of a shared route when the owner hides the row that speaks for it", async () => {
+    act(() => root.unmount()); qc.clear(); root = createRoot(container);
+    db.features = { playbook_config: { persona: { name: "Guide", greeting: "Hi" }, portal: { modules: [{ key: "home", label: "Home" }, { key: "learn", label: "Library" }, { key: "resources", label: "Resources" }] } } };
+    await render();
+    expect(editorRows().slice(-2)).toEqual(["# Learn", "learn"]);
+    await click(byLabel("Show Library"));
+    expect(preview()).not.toContain("Library");
+    expect(preview()).not.toContain("Resources");
   });
 
   it("offers the rows the business's own Playbook lists (owner-side catalog read)", async () => {
     act(() => root.unmount()); qc.clear(); root = createRoot(container);
     db.features = { playbook_config: { persona: { name: "Guide", greeting: "Hi" }, portal: { modules: [{ key: "home", label: "Home" }, { key: "approvals", label: "Sign-offs" }, { key: "agreements", label: "Agreements" }] } } };
     await render();
-    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "agreements"]);
-    expect(byLabel<HTMLInputElement>("Name for Sign-offs").placeholder).toBe("Sign-offs");
+    // Agreements is listed, but its route is still the platform-terms page: no row until Slice A (held from clients).
+    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents"]);
+    expect(byLabel<HTMLInputElement>("Name for Sign-offs").value).toBe("Sign-offs");
   });
 });

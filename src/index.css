@@ -39,6 +39,9 @@ All colors MUST be HSL.
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
+    /* Destructive TEXT on the brand-ink fill (the customer portal chrome, bg-primary). Light: 6.8:1 on the
+       12% indigo. Redefined in .dark, where the fill lifts to a 56% violet and --destructive measures 1.2:1. */
+    --destructive-on-ink: 0 91% 71%;
 
     /* Light control seams (owner 2026-07-19, §23 "light must not read flat gray"): repointed OFF the
        near-neutral 265°/14%S gray onto the INDIGO brand family with more saturation + a touch less
@@ -437,6 +440,8 @@ All colors MUST be HSL.
        3:1 component bar against --background. Token-only, no hex. */
     --primary: 258 65% 56%;
     --primary-light: 258 60% 66%;
+    /* A pale coral that keeps the destructive cue on the lifted violet chrome: 4.7:1 (AA). */
+    --destructive-on-ink: 8 100% 93%;
 
     /* Gold-as-TEXT flips to the bright brand gold on dark — the light theme's
        --gold-dark (32% lightness) sinks below AA against a 5%-lightness surface. */

@@ -25,11 +25,15 @@ const shape = (sections: ReturnType<typeof assemblePortalNav>) =>
 const generic = generalDefault.portal.modules;
 const set = (items: { href: string | null; label: string }[]) => items.map((i) => `${i.label}>${i.href}`).sort();
 
+// The one deliberate difference (§58, called out in the evidence record): Agreements' route is still the
+// platform-terms page, so it is held back from every viewer who is not staff until Slice A. Staff keep it.
+const AGREEMENTS = "/app/agreements";
+
 describe("no overlay: the same destinations main renders today, per viewer kind (§58)", () => {
   for (const [cname, pb] of Object.entries(catalogs)) {
     for (const [vname, viewer] of Object.entries(viewers)) {
       it(`${cname} · ${vname}`, () => {
-        const today = APPNAV_BEFORE_SLICE_M[cname][vname];
+        const today = APPNAV_BEFORE_SLICE_M[cname][vname].filter((i) => viewer.isStaff || i.href !== AGREEMENTS);
         const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer }));
         expect(set(now)).toEqual(set(today));
         // Every destination appears once.
@@ -59,8 +63,17 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER }))).toEqual([
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions, Funding Journey, Credit, Funding, Financial Profile, Business",
-      "Paperwork: Documents, Agreements",
+      "Paperwork: Documents",
     ]);
+  });
+
+  it("holds Agreements back from every viewer who is not staff until Slice A, and keeps it for staff (§58)", () => {
+    const overlay = [{ key: "agreements", visible: true, label: "Contracts" }];
+    for (const [vname, viewer] of Object.entries(viewers)) {
+      const hrefs = flattenPortalNav(assemblePortalNav({ catalog: funding.portal.modules, overlay, viewer })).map((i) => i.href);
+      expect(hrefs.includes(AGREEMENTS), vname).toBe(viewer.isStaff);
+    }
+    expect(PORTAL_MENU_ENTRIES.find((e) => e.key === "agreements")?.clientsLive).toBe(false);
   });
 });
 
@@ -99,6 +112,26 @@ describe("the overlay: hide, rename, reorder", () => {
     const overlay = [{ key: "home", visible: false, label: "Start" }, { key: "messages", visible: false, label: "Inbox" }];
     const top = assemblePortalNav({ catalog: generic, overlay, viewer: CUSTOMER })[0];
     expect(top.items.map((i) => i.label)).toEqual(["Home", "Messages"]);
+  });
+
+  it("never lets a Playbook label rename Home or Messages either", () => {
+    const catalog = [{ key: "home", label: "Start here" }, { key: "messages", label: "Inbox" }, ...generic.filter((m) => m.key !== "home")];
+    for (const viewer of [CUSTOMER, STAFF]) {
+      expect(assemblePortalNav({ catalog, viewer })[0].items[0].label).toBe("Home");
+    }
+    expect(assemblePortalNav({ catalog, viewer: CUSTOMER })[0].items.map((i) => i.label)).toEqual(["Home", "Messages"]);
+  });
+
+  it("hiding the row that speaks for a shared route hides the route, not just that key", () => {
+    const catalog = [{ key: "home", label: "Home" }, { key: "learn", label: "Library" }, { key: "resources", label: "Resources" }];
+    const rows = portalMenuEditorEntries(catalog).filter((e) => e.group === "learn");
+    expect(rows.map((e) => e.key)).toEqual(["learn"]);
+    const overlay = [{ key: "learn", visible: false }];
+    const hrefs = flattenPortalNav(assemblePortalNav({ catalog, overlay, viewer: CUSTOMER })).map((i) => i.href);
+    expect(hrefs).not.toContain("/app/learn");
+    // A stale hide on an alias the catalog does not list leaves the listed key alone.
+    const onlyResources = [{ key: "home", label: "Home" }, { key: "resources", label: "Resources" }];
+    expect(flattenPortalNav(assemblePortalNav({ catalog: onlyResources, overlay, viewer: CUSTOMER })).map((i) => i.href)).toContain("/app/learn");
   });
 
   it("applies a label to a configurable entry and hides one", () => {
@@ -143,7 +176,7 @@ describe("the registry", () => {
   it("offers the owner one row per configurable live entry the catalog can show, never a funding key it does not list", () => {
     expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "resources"]);
     expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual([
-      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "agreements",
+      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents",
     ]);
   });
 });

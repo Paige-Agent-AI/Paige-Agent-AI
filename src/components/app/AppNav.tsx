@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, CircleHelp, ChevronDown } from "lucide-react";
-import { assemblePortalNav, type PortalNavItem, type PortalNavSection, type PortalViewer } from "@/lib/portal/portalMenu";
-import { resolvePortalCatalog } from "@/lib/playbook/resolve";
+import type { PortalNavItem, PortalNavSection } from "@/lib/portal/portalMenu";
+import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -23,8 +23,7 @@ import { performSignOut, customerSignOutTarget, cachePortalSlug } from "@/lib/au
 import { useUnreadSupportCount } from "@/hooks/useUnreadSupportCount";
 import { isAvatarBucketUrl } from "@/components/ui/avatar-uploader";
 import { usePlaybook } from "@/lib/playbook";
-import { useClientPortalBrandState, type ClientPortalBrand } from "@/hooks/useClientPortalBrand";
-import { useClientPortalConfigState } from "@/hooks/useClientPortalConfig";
+import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 
@@ -132,6 +131,17 @@ function PortalGroupMenu({ section, isActive }: { section: PortalNavSection; isA
   );
 }
 
+/** The menu's place while the read that decides it is in flight: quiet bars, never a menu that then changes. */
+function PortalNavSkeleton({ drawer }: { drawer: boolean }) {
+  return (
+    <div data-portal-nav-skeleton aria-hidden="true" className={drawer ? "space-y-2 px-3 py-2" : "flex items-center gap-2"}>
+      {[0, 1, 2, 3].map((i) => (
+        <span key={i} className={cn("block rounded bg-primary-foreground/10 animate-pulse motion-reduce:animate-none", drawer ? "h-[28px] w-full" : "h-[20px] w-[72px]")} />
+      ))}
+    </div>
+  );
+}
+
 interface AppNavProps {
   user: User;
 }
@@ -147,7 +157,10 @@ export function AppNav({ user }: AppNavProps) {
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
-  const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = useClientPortalBrandState();
+  // The menu (E09 Slice M) and the relationship it is built for come from ONE hook, so a customer page that
+  // asks "is Resources in my menu?" reads the same answer (§18/§57).
+  const { sections, ready: menuReady, brandState } = useCustomerPortalNav();
+  const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = brandState;
   // A customer of ONE business (an actual relationship resolved server-side) gets
   // help from THAT business ("Get help" → their own inbox), never Paige's platform
   // support desk. Everyone else whose relationship has resolved keeps platform
@@ -166,11 +179,6 @@ export function AppNav({ user }: AppNavProps) {
     location.pathname === "/app/messages" && (href === "/app/messages" || href.startsWith("/app/messages?"));
   const go = (href: string) => navigate(href, staysInThread(href) ? { replace: true } : undefined);
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
-  // The tenant's PRESENTATION OVERLAY over the Playbook module catalog (§9/§10).
-  // Purely subtractive/reordering — never introduces module keys. Resolves to {}
-  // while loading / for staff / on error, so the nav is fail-open: an
-  // absent/empty overlay leaves the tab list byte-for-byte unchanged.
-  const { config: portalConfig } = useClientPortalConfigState();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   useEffect(() => {
     let cancelled = false;
@@ -191,13 +199,10 @@ export function AppNav({ user }: AppNavProps) {
     cachePortalSlug(brand?.tenant_slug ?? null);
   }, [isAdmin, brandLoading, brand]);
 
-  // The menu (E09 Slice M). A customer cannot read their business's `tenants` row (RLS), so their catalog
-  // comes from the server's `_catalog` in the portal config (§57 — the owner edits the list the customer
-  // sees); staff, who have no customer relationship, keep their own Playbook read. FAIL-OPEN: an absent
-  // overlay or catalog gives the default menu, never fewer entries.
-  const viewer: PortalViewer = { isStaff: isAdmin, isCustomer, brandResolved: !!brand };
-  const catalog = portalConfig.catalog ? resolvePortalCatalog(portalConfig.catalog) : pb.portal.modules;
-  const sections = assemblePortalNav({ catalog, overlay: portalConfig.modules, viewer });
+  // A customer's catalog is their business's `_catalog` (§57); staff keep their own Playbook read. Until the
+  // read that decides THIS viewer's menu returns, the menu is a skeleton — never the generic catalog that then
+  // changes under them (Resources appearing and vanishing). FAIL-OPEN once resolved: an absent overlay or
+  // catalog gives the default menu, never fewer entries.
   const isActive = (href: string) => location.pathname === href;
 
   const userRoleLabel = isAdmin ? "Admin" : "Client";
@@ -232,8 +237,9 @@ export function AppNav({ user }: AppNavProps) {
                 nameClassName="font-bold text-lg truncate min-w-0"
               />
             </div>
-            <nav aria-label="Customer navigation" className="p-2 pb-[max(8px,env(safe-area-inset-bottom))] space-y-1 flex-1 min-h-0 overflow-y-auto">
-              {sections.map((section) => {
+            <nav aria-label="Customer navigation" aria-busy={!menuReady || undefined} className="p-2 pb-[max(8px,env(safe-area-inset-bottom))] space-y-1 flex-1 min-h-0 overflow-y-auto">
+              {!menuReady && <PortalNavSkeleton drawer />}
+              {menuReady && sections.map((section) => {
                 const drawerItem = (item: PortalNavItem) => (
                   <button
                     key={item.href}
@@ -301,7 +307,7 @@ export function AppNav({ user }: AppNavProps) {
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-red-400 dark:text-primary-foreground hover:bg-red-500/10 disabled:opacity-60"
+                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-[hsl(var(--destructive-on-ink))] hover:bg-sidebar-accent/50 disabled:opacity-60"
               >
                 <LogOut className="w-4 h-4" />
                 {isSigningOut ? "Signing Out..." : "Sign Out"}
@@ -339,8 +345,9 @@ export function AppNav({ user }: AppNavProps) {
             skeletonClassName="h-7 w-24"
           />
         </Link>
-        <nav aria-label="Customer navigation" className="flex flex-wrap min-w-0 items-center gap-1">
-          {sections.flatMap((section) => {
+        <nav aria-label="Customer navigation" aria-busy={!menuReady || undefined} className="flex flex-wrap min-w-0 items-center gap-1">
+          {!menuReady && <PortalNavSkeleton drawer={false} />}
+          {menuReady && sections.flatMap((section) => {
             const link = (item: PortalNavItem) => (
               <Link
                 key={item.href}

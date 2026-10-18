@@ -16,6 +16,7 @@ const f = vi.hoisted(() => ({
   multiple: false,
   // What usePlaybook() returns: the viewer's own tenant read (a customer's is RLS-denied, so the generic default).
   modules: [] as { key: string; label: string }[],
+  configLoading: false,
   config: {} as { modules?: Overlay[]; catalog?: { slug: string | null; authoredUsable: boolean; modules: { key: string; label: string }[] | null } },
 }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => f.mobile }));
@@ -24,7 +25,7 @@ vi.mock("@/components/dashboard/NotificationBell", () => ({ NotificationBell: ()
 vi.mock("@/components/brand/PaigeCommandMark", () => ({ PaigeCommandMark: () => <span>Paige</span> }));
 vi.mock("@/hooks/useUnreadSupportCount", () => ({ useUnreadSupportCount: () => ({ count: 0 }) }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: false, multipleBusinesses: f.multiple }) }));
-vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: f.config, loading: false }) }));
+vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: f.config, loading: f.configLoading }) }));
 vi.mock("@/lib/playbook", async (orig) => ({ ...(await orig<typeof import("@/lib/playbook")>()), usePlaybook: () => ({ portal: { modules: f.modules }, persona: { name: "Paige" } }) }));
 vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn(), customerSignOutTarget: vi.fn(), cachePortalSlug: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({
@@ -47,7 +48,7 @@ const openDrawer = async () => { await act(async () => (document.querySelector('
 const drawer = () => document.querySelector('nav[aria-label="Customer navigation"]')!;
 
 beforeEach(() => {
-  f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.multiple = false;
+  f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.multiple = false; f.configLoading = false;
   f.modules = GENERIC; f.config = {};
   f.brand = { tenant_id: "e0923000-0000-0000-0000-000000000002", tenant_name: "Northwind Studio", logo_url: null, primary_color: null };
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
@@ -100,7 +101,31 @@ describe("desktop bar", () => {
   it("reads the customer's catalog from the portal config, not the RLS-denied tenant read (§57)", async () => {
     f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "approvals", label: "Approvals" }] } };
     await render();
-    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/agreements"]);
+    // Agreements is listed, but its route is still the platform-terms page: held from customers until Slice A.
+    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents"]);
+  });
+
+  it("keeps Agreements for staff whose Playbook lists it, exactly as before Slice M", async () => {
+    f.isAdmin = true; f.brand = null; f.config = {};
+    f.modules = [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }];
+    await render();
+    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/planning", "/app/agreements"]);
+  });
+
+  it("shows a skeleton, not the generic menu, until a customer's own config has resolved (no Resources flicker)", async () => {
+    f.configLoading = true;
+    f.config = {};
+    await render();
+    expect(nav().getAttribute("aria-busy")).toBe("true");
+    expect(nav().querySelector("[data-portal-nav-skeleton]")).not.toBeNull();
+    expect(nav().querySelectorAll("a, button[data-portal-group]").length).toBe(0);
+    expect(nav().textContent).not.toContain("Resources");
+    // Resolved: the business's catalog omits Resources, so it never appears at all.
+    f.configLoading = false;
+    f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "sessions", label: "Sessions" }] } };
+    await render();
+    expect(nav().querySelector("[data-portal-nav-skeleton]")).toBeNull();
+    expect(await desktopNavHrefs(host)).not.toContain("/app/learn");
   });
 
   it("keeps staff on their own Playbook read", async () => {

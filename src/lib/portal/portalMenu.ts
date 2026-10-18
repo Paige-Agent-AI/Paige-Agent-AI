@@ -26,7 +26,9 @@ import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 // "Your work", "Paperwork", "Learn" — in a fixed group order, configurable within its group.
 //
 // `live` is the route gate: an entry whose page does not exist yet never renders and is never offered in
-// the editor (no "Coming soon" — §70.1). Slices 5 and A flip `billing` / move `agreements` here.
+// the editor (no "Coming soon" — §70.1). Slice 5 flips `billing`. `clientsLive` is the same gate for every
+// viewer who is not staff: Agreements' route is still the platform-terms page, so until Slice A points it at
+// the customer's own agreements, staff keep it exactly as on main and no client reaches it through the menu.
 
 export type PortalMenuGroupId = "work" | "paperwork" | "learn";
 export type PortalMenuSlot = "top" | PortalMenuGroupId;
@@ -44,6 +46,11 @@ export interface PortalMenuEntry {
   floor: PortalMenuFloor;
   /** False until the page behind `route` exists. A non-live entry never renders. */
   live: boolean;
+  /**
+   * False while the page behind `route` is not yet the client's own (Agreements until Slice A): staff keep the
+   * entry as before, a viewer who is not staff never gets it, and the owner's editor never offers it.
+   */
+  clientsLive?: boolean;
   /** "shown": present unless hidden. "catalog": present only when the Playbook catalog lists the key. */
   defaultVisibility: "shown" | "catalog";
   /** Catalog-only extras sort after the group's core entries, in the catalog's own order. */
@@ -94,9 +101,9 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   // ── Paperwork ──
   // Available to anyone whose business brand resolved, even when an older Playbook predates the key.
   entry({ key: "documents", defaultLabel: "Documents", route: "/app/documents", icon: FileText, group: "paperwork", floor: "brand", defaultVisibility: "shown", description: "Files shared with you" }),
-  // Today this route is the platform-terms page (MyAgreements), shown only when the catalog lists it, exactly
-  // as before Slice M. Slice A points it at the customer's Sales Agreements and changes its default.
-  entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", description: "Agreements on record" }),
+  // Today this route is the platform-terms page (MyAgreements). Staff see it when the catalog lists it, exactly
+  // as before Slice M; clients never do (clientsLive:false). Slice A points it at the customer's own agreements.
+  entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", clientsLive: false, description: "Agreements on record" }),
   // Slice 5 builds /app/billing; until then this never renders and is never offered (live:false).
   entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", live: false, catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 
@@ -157,16 +164,20 @@ const cleanLabel = (label: unknown) => {
   return t ? t : null;
 };
 
-/** The name an entry shows when the overlay does not rename it: the catalog's, else the registry's. */
+/**
+ * The name an entry shows when the overlay does not rename it: the catalog's, else the registry's. A fixed entry
+ * (Home, Messages) always keeps its registry name — neither the overlay nor a Playbook label renames it (owner
+ * ruling 2026-10-18).
+ */
 export function defaultPortalMenuLabel(e: PortalMenuEntry, catalog: readonly { key: string; label: string }[]): string {
-  if (e.catalogLabel === false) return e.defaultLabel;
+  if (e.fixed || e.catalogLabel === false) return e.defaultLabel;
   const fromCatalog = catalog.find((m) => m.key === e.key)?.label;
   return cleanLabel(fromCatalog) ?? e.defaultLabel;
 }
 
-/** Whether the entry can show for this catalog at all (live, and listed when it is catalog-only). */
-const offered = (e: PortalMenuEntry, catalogKeys: Set<string>) =>
-  e.live && (e.defaultVisibility === "shown" || catalogKeys.has(e.key));
+/** Whether the entry can show for this catalog and viewer at all (live, and listed when it is catalog-only). */
+const offered = (e: PortalMenuEntry, catalogKeys: Set<string>, v: PortalViewer) =>
+  e.live && (e.clientsLive !== false || v.isStaff) && (e.defaultVisibility === "shown" || catalogKeys.has(e.key));
 
 interface Ranked { e: PortalMenuEntry; pos: number; label: string; hidden: boolean }
 
@@ -183,7 +194,7 @@ function rank(input: AssemblePortalNavInput, includeHidden: boolean): Map<Portal
     const inSlot = PORTAL_MENU_ENTRIES.filter((e) => e.group === slot);
     const ranked: Ranked[] = [];
     inSlot.forEach((e, registryIndex) => {
-      if (!floorAllows(e.floor, input.viewer) || !offered(e, catalogKeys)) return;
+      if (!floorAllows(e.floor, input.viewer) || !offered(e, catalogKeys, input.viewer)) return;
       const o = e.fixed ? undefined : overlayByKey.get(e.key);
       const hidden = o?.visible === false;
       if (hidden && !includeHidden) return;
@@ -201,15 +212,17 @@ function rank(input: AssemblePortalNavInput, includeHidden: boolean): Map<Portal
 /**
  * The customer portal menu for one viewer: the fixed top entries, then each group that has anything to
  * show, in the ruled group order. Two keys that share a route (learn/resources, the funding aliases) render
- * once — the first in order wins.
+ * once: the first in order — hidden or not — speaks for the route, exactly the row the owner's editor shows
+ * (portalMenuEditorEntries), so hiding that row hides the destination rather than letting its alias through.
  */
 export function assemblePortalNav(input: AssemblePortalNavInput): PortalNavSection[] {
-  const ranked = rank(input, false);
+  const ranked = rank(input, true);
   const seen = new Set<string>();
   const sections: PortalNavSection[] = [];
-  const toItems = (list: Ranked[]) => list.flatMap(({ e, label }): PortalNavItem[] => {
+  const toItems = (list: Ranked[]) => list.flatMap(({ e, label, hidden }): PortalNavItem[] => {
     if (seen.has(e.route)) return [];
     seen.add(e.route);
+    if (hidden) return [];
     return [{ key: e.key, label, href: e.route, icon: e.icon, ...(e.description ? { description: e.description } : {}) }];
   });
   sections.push({ id: "top", label: null, items: toItems(ranked.get("top") ?? []) });

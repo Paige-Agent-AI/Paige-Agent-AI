@@ -12,8 +12,12 @@
 //   set_tenant_portal_config(_tenant_id, _patch) -> the merged portal_config (shallow merge: modules replaced whole)
 //   tenants.select("features" | "name,slug,brand") for the owner's own workspace
 //
-//   ?view=customer&variant=default|renamed|hidden|reordered|staff|multi
+//   ?view=customer&variant=default|renamed|hidden|reordered|staff|multi|stored
 //   ?view=owner&variant=default|saving|mismatch   (saving: the write never returns; mismatch: the server drops labels)
+//
+// PERSISTENCE: the business's stored portal_config lives in sessionStorage, so it survives a reload of the owner page
+// and a navigation in the same tab to the customer view (`variant=stored` reads exactly what the owner saved). That
+// is the §70.1 shape — save, reload, see it hold, see the customer get it — over a stub, not production.
 const params = new URLSearchParams(window.location.search);
 const view = params.get("view") ?? "customer";
 const variant = params.get("variant") ?? "default";
@@ -37,13 +41,24 @@ const OVERLAYS: Record<string, unknown[]> = {
   reordered: [{ key: "sessions", order: 0 }, { key: "actions", order: 1 }, { key: "progress", order: 2 }],
 };
 
-let stored: Record<string, unknown> = { modules: [] };
+const STORE_KEY = "e09-portal-menu-harness:portal_config";
+function readStored(): Record<string, unknown> {
+  try {
+    const raw = window.sessionStorage.getItem(STORE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === "object" ? parsed : { modules: [] };
+  } catch { return { modules: [] }; }
+}
+function writeStored(next: Record<string, unknown>) {
+  try { window.sessionStorage.setItem(STORE_KEY, JSON.stringify(next)); } catch { /* the drive reports a reload that lost it */ }
+}
 export const harnessCalls = { writes: [] as unknown[] };
 
 function customerConfig() {
   if (variant === "staff") return Promise.resolve({ data: {}, error: null });
   if (variant === "multi") return Promise.resolve({ data: null, error: MULTI });
-  return Promise.resolve({ data: { modules: OVERLAYS[variant] ?? [], _catalog: { slug: null, authored_usable: false, modules: null } }, error: null });
+  const modules = variant === "stored" ? (readStored().modules ?? []) : (OVERLAYS[variant] ?? []);
+  return Promise.resolve({ data: { modules, _catalog: { slug: null, authored_usable: false, modules: null } }, error: null });
 }
 
 function brand() {
@@ -59,13 +74,14 @@ function setConfig(args: Record<string, unknown>) {
   if (variant === "mismatch" && Array.isArray(patch.modules)) {
     patch.modules = (patch.modules as Record<string, unknown>[]).map(({ label: _dropped, ...rest }) => rest);
   }
-  stored = { ...stored, ...patch };
+  const stored = { ...readStored(), ...patch };
+  writeStored(stored);
   return Promise.resolve({ data: structuredClone(stored), error: null });
 }
 
 function chain(table: string): unknown {
   const row = table === "tenants"
-    ? { name: "Northwind Studio", slug: "northwind-studio", brand: {}, features: { playbook: null, portal_config: structuredClone(stored) } }
+    ? { name: "Northwind Studio", slug: "northwind-studio", brand: {}, features: { playbook: null, portal_config: readStored() } }
     : null;
   const proxy: unknown = new Proxy({}, {
     get(_t, key) {

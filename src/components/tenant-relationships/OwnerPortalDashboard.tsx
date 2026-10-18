@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import { useBrandKit } from "@/hooks/useBrandKit";
 import { useRailEvents } from "@/hooks/useRailEvents";
-import { usePlaybook } from "@/lib/playbook";
+import { usePortalCatalogInput } from "@/hooks/usePortalConfig";
+import { resolvePortalCatalog } from "@/lib/playbook/resolve";
 import {
-  applyPortalOverlay,
-  catalogRoutableItems,
-} from "@/lib/portal/moduleNav";
+  PORTAL_CUSTOMER_PREVIEW_VIEWER,
+  assemblePortalNav,
+  flattenPortalNav,
+} from "@/lib/portal/portalMenu";
 import { readableTextOn } from "@/lib/brand/resolveBrand";
 import {
   Dialog,
@@ -200,15 +202,27 @@ export function OwnerPortalDashboard({
   const id = useId();
   const brand = useBrandKit(tenantId);
   const invitations = usePortalInvitations(tenantId);
-  const playbook = usePlaybook();
+  // E09 Slice M: the menu a customer of this business sees — the same catalog input the menu editor reads and
+  // the same assemblePortalNav() the live menu runs, so the summary, the list and the preview here can never
+  // name or count a different menu from the editor beside them (§18/§57).
+  const catalogInput = usePortalCatalogInput(tenantId);
   const modules = useMemo(
     () =>
-      applyPortalOverlay(
-        catalogRoutableItems(playbook.portal.modules),
-        data.portalConfig.modules,
+      flattenPortalNav(
+        assemblePortalNav({
+          catalog: resolvePortalCatalog(catalogInput.data),
+          overlay: data.portalConfig.modules,
+          viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER,
+        }),
       ),
-    [playbook, data.portalConfig],
+    [catalogInput.data, data.portalConfig],
   );
+  const menuLoading = data.portalLoading || catalogInput.isLoading;
+  const menuError = data.portalError || catalogInput.isError;
+  const retryMenu = () => {
+    void data.retryPortal();
+    void catalogInput.refetch();
+  };
   const now = Date.now();
   const invitationRows =
     !invitations.isError && !invitations.isLoading
@@ -643,11 +657,13 @@ export function OwnerPortalDashboard({
                         <dd>{brandName}</dd>
                       </div>
                       <div>
-                        <dt>Customer modules</dt>
+                        <dt>Customer menu</dt>
                         <dd>
-                          {data.portalLoading
+                          {menuLoading
                             ? "Loading…"
-                            : `${modules.length} configured`}
+                            : menuError
+                              ? "Couldn’t load"
+                              : `${modules.length} ${modules.length === 1 ? "item" : "items"}`}
                         </dd>
                       </div>
                       <div>
@@ -828,15 +844,15 @@ export function OwnerPortalDashboard({
                 </section>
               </section>
               <aside className="opd-experience-card">
-                <h2>Customer modules</h2>
+                <h2>Customer portal menu</h2>
                 <p className="opd-footnote">
-                  Configured navigation follows the existing portal catalogue.
+                  What a customer of this business sees in their menu.
                   Visibility does not grant access to records.
                 </p>
-                {data.portalError ? (
+                {menuError ? (
                   <Status
-                    title="Modules couldn’t be loaded"
-                    retry={() => void data.retryPortal()}
+                    title="The menu couldn’t be loaded"
+                    retry={retryMenu}
                   />
                 ) : (
                   <ul className="opd-module-list">
@@ -853,7 +869,7 @@ export function OwnerPortalDashboard({
                   type="button"
                   onClick={customize}
                 >
-                  Edit modules <ArrowRight />
+                  Edit menu <ArrowRight />
                 </button>
               </aside>
             </div>
@@ -947,7 +963,7 @@ export function OwnerPortalDashboard({
         <DialogContent data-pg={dialogTheme} className="opd-preview-dialog" onCloseAutoFocus={(event) => restoreDialogFocus(event, previewTriggerRef.current, null)}>
           <DialogTitle>Portal presentation preview</DialogTitle>
           <DialogDescription>
-            Saved branding and configured modules. Customer records and actions
+            Saved branding and the customer menu. Customer records and actions
             require the customer’s own authorized sign-in.
           </DialogDescription>
           {brandPreview}

@@ -15,7 +15,8 @@ const fixture = vi.hoisted(() => ({
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: fixture.resolvedTheme }) }));
 vi.mock("@/hooks/useBrandKit", () => ({ useBrandKit: () => fixture.brand }));
 vi.mock("@/hooks/useRailEvents", () => ({ useRailEvents: () => fixture.rail }));
-vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ portal: { modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }] } }) }));
+// The owner-side menu catalog (E09 Slice M): the same input the menu editor reads.
+vi.mock("@/hooks/usePortalConfig", () => ({ usePortalCatalogInput: () => ({ data: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "sessions", label: "Coaching calls" }] }, isLoading: false, isError: false, refetch: vi.fn() }) }));
 vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => fixture.invitations }));
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => fixture.allowed ? <>{children}</> : <p>Configuration access required</p> }));
 vi.mock("./PortalInvitationManager", () => ({ PortalInvitationManager: ({ person }: { person: RelationshipPerson }) => <div data-invite-for={person.id}>{person.email}</div> }));
@@ -123,6 +124,9 @@ describe("approved owner dashboard is a real scoped product surface", () => {
     await show(); await click("Preview portal");
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(dialog.textContent).toContain("Saved greeting"); expect(dialog.textContent).not.toContain("Agreements"); expect(dialog.querySelector('a[href^="/app"]')).toBeNull();
+    // The same menu the editor and the live portal assemble (E09 Slice M): fixed Home and Messages, the business's
+    // own names, and never Agreements to a customer before Slice A.
+    expect(Array.from(dialog.querySelectorAll(".opd-module-list li")).map((li) => li.textContent)).toEqual(["Home", "Messages", "Progress", "Action items", "Coaching calls", "Documents"]);
     await act(async () => (dialog.querySelector('button') as HTMLButtonElement).click());
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });

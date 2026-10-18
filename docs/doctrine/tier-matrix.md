@@ -4768,7 +4768,9 @@ Every business chooses which entries its customers see in the portal menu, in wh
 group, and what each is called. Owner rulings (2026-10-18): Home and Messages are fixed at the top; Get
 help, Account, Settings and Sign out are fixed at the bottom; Progress, Action items and Sessions ("Your
 work"), Documents, Agreements and Payments ("Paperwork") and Resources ("Learn") are configurable within
-their group; the group order is fixed. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
+their group; the group order is fixed. Agreements is held back from customers until Slice A (its route is
+still the platform-terms page): staff keep it exactly as before, no customer is offered it, and the editor
+shows no row for it. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
 `assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
 with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
 the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
@@ -4776,7 +4778,8 @@ catalog-only entries (funding keys, Approvals, Agreements, Resources) render onl
 catalog lists them (§2). An entry whose route is not live (Payments until Slice 5) never renders and is
 never offered. The customer's catalog now comes from the server's `_catalog` in
 `get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
-exception.
+exception. The owner dashboard's "Customer portal menu" summary and the customer's Messages "Browse
+resources first" hint read the same assembly, so neither can tell a different story from the menu.
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|---|
@@ -4785,7 +4788,12 @@ exception.
 | Paige reads / changes the menu from chat (`client.portal_menu_read`, `client.portal_menu_configure`, risk high, owner confirms) | Current workspace only | Current workspace only | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
 | "Customize Paige" → Portal catalog list (PortalSection) | unchanged | unchanged | ✓ renaming keeps the key; points to Clients → Portal | ✓ (plain-text pointer) | ✓ (plain-text pointer) | — | — | PROOF OWED |
 
-Vitest pins today's menu destinations per Playbook preset and viewer kind against a capture of the real
-AppNav at `571ab923e` (§58: the set is unchanged; the grouping is presentation only). Harness frames
+Vitest pins the menu destinations per Playbook preset and viewer kind against a capture of the real
+AppNav at `571ab923e`. §58: that pin holds for a viewer whose catalog is the one the capture used, but
+production customers did not have that catalog before — they could not read their business's Playbook,
+so every customer got the generic default. Now each customer gets their own business's catalog (the §57
+fix), and that is a visible change: customers of a business whose own catalog omits Resources no longer
+see Resources, and customers of a business that opted into the funding Playbook now see that business's
+own funding entries. Agreements is the one entry held back from customers (above). Harness frames
 (`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
 in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.

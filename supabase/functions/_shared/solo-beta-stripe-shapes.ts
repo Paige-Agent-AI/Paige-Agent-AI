@@ -46,3 +46,23 @@ export function safeStageCode(stage: string, cause: unknown): string {
       : "";
   return /^[a-z0-9_]{1,120}$/i.test(raw) ? raw : stage;
 }
+
+/**
+ * Stage error whose `.message` is the stable code (what last_error_code persists)
+ * while `.cause` carries the RAW underlying message for restricted operator-side
+ * diagnostics — constraint text, PGRST bodies and provider noise that the stable
+ * code would otherwise collapse away.
+ */
+export function stageError(stage: string, cause: unknown): Error {
+  const raw = cause instanceof Error ? cause.message
+    : typeof (cause as { message?: unknown } | null | undefined)?.message === "string"
+      ? (cause as { message: string }).message
+      : "";
+  return new Error(safeStageCode(stage, cause), raw ? { cause: raw } : undefined);
+}
+
+/** The raw diagnostic message carried by a stageError, if any. */
+export function rawErrorDetail(error: unknown): string | null {
+  const cause = (error as { cause?: unknown } | null | undefined)?.cause;
+  return typeof cause === "string" && cause.length > 0 ? cause : null;
+}

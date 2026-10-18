@@ -35,6 +35,7 @@ import {
 } from "@/components/chat/approvalOutcome";
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
 import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
+import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -578,7 +579,8 @@ const PaigeAIChatInner = ({
   const undispatchedDraftRef = useRef<{ intentId: string; handle: ComposerDraftHandle; submission: ComposerDraftSubmission } | null>(null);
   const documentRequestActiveRef = useRef(false);
   const [interactiveAuthorityPending, setInteractiveAuthorityPending] = useState(false);
-  const authorityPollRef = useRef<{ generation: number; timer?: number }>({ generation: 0 });
+  const authorityPollRef = useRef<{ generation: number; timer?: number; notBefore: number }>({ generation: 0, notBefore: 0 });
+  const stopRetryUntilRef = useRef(0);
   // === THE TURN'S SCOPE, AS ONE VALUE (§9, purpose clause 2) ===
   // Draft storage, writability, request delivery, busy ownership, dictation and retry all use this
   // complete identity: workspace, effective user, focused client and focused Business Mission.
@@ -797,23 +799,40 @@ const PaigeAIChatInner = ({
     const current = () => generation === authorityPollRef.current.generation
       && interactiveRequestRef.current?.intentId === target.intentId
       && composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle);
+    let failures = 0;
     const poll = async () => {
       if (!current()) return;
+      const remaining = authorityPollRef.current.notBefore - Date.now();
+      if (remaining > 0) {
+        authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, remaining);
+        return;
+      }
       let settled = false;
+      let delay = CHAT_CONTROL_POLL_MS;
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!current() || !session) return;
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "status" },
           body: JSON.stringify({ threadId: target.threadId, requestIntentId: target.intentId,
             messages: [{ role: "user", content: "Status" }], interactive: { kind: "status" } }),
         });
-        if (response.ok) settled = (await response.json()).settled === true;
-      } catch { /* Unknown settlement keeps Live guarded; text remains available. */ }
+        if (!current()) return;
+        if (response.status === 429) {
+          delay = chatControlRetryDelay(response.headers?.get("Retry-After"));
+          authorityPollRef.current.notBefore = Date.now() + delay;
+        } else if (response.ok) {
+          settled = (await response.json()).settled === true;
+          failures = 0;
+        } else delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      } catch {
+        // Unknown settlement keeps Live guarded; a failing transport must not flood ingress.
+        delay = Math.min(60_000, CHAT_CONTROL_POLL_MS * 2 ** Math.min(++failures, 5));
+      }
       if (!current()) return;
       if (settled) setInteractiveAuthorityPending(false);
-      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, 1000);
+      else authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, delay);
     };
     void poll();
   }, [enableHistory, liveConversation]);
@@ -858,15 +877,18 @@ const PaigeAIChatInner = ({
     const interactive = !opts?.fromVoice ? interactiveRequestRef.current : null;
     if (interactive?.threadId) {
       void (async () => {
+        if (Date.now() < stopRetryUntilRef.current) throw new Error("stop_unconfirmed");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session || interactiveRequestRef.current?.intentId !== interactive.intentId
+          || !composerDraftHandlesMatch(interactive.handle, requestScopeRef.current.handle)) throw new Error("stop_unconfirmed");
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "stop" },
           body: JSON.stringify({ threadId: interactive.threadId, requestIntentId: interactive.intentId,
             messages: [{ role: "user", content: "Stop" }],
             interactive: { kind: "stop", supersedesIntentId: interactive.intentId } }),
         });
+        if (response.status === 429) stopRetryUntilRef.current = Date.now() + chatControlRetryDelay(response.headers?.get("Retry-After"));
         if (!response.ok) throw new Error("stop_unconfirmed");
         if (interactiveRequestRef.current?.intentId === interactive.intentId) refreshInteractiveAuthority();
       })().catch(() => toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }));

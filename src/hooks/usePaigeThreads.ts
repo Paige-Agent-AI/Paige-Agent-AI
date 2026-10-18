@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ConfirmItem } from "@/components/chat/confirmPreview";
+import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../supabase/functions/_shared/paige-turn/control-transport";
 
 /**
  * Multi-chat history for "Your Paige" (#94).
@@ -98,6 +99,9 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   // platform-mode create/rename/archive/delete would invalidate the tenant slot
   // (tenantId is NULL in platform mode) and never refresh the platform rail (#130).
   const keySuffix = platform ? "platform" : tenantId;
+  const approvalScopeKey = JSON.stringify([callerUserId, tenantId, platform]);
+  const approvalScopeRef = useRef({ key: approvalScopeKey, retryAt: 0 });
+  if (approvalScopeRef.current.key !== approvalScopeKey) approvalScopeRef.current = { key: approvalScopeKey, retryAt: 0 };
 
   const threadsQuery = useQuery({
     // platform threads (tenant_id NULL) and tenant threads never share a cache slot.
@@ -140,14 +144,19 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
 
   const loadApprovalRecovery = useCallback(async (threadId: string, turnId: string, intentId: string) => {
     if (platform || !callerUserId || !tenantId) return null;
+    const scope = approvalScopeRef.current;
+    if (scope.key !== approvalScopeKey || Date.now() < scope.retryAt) return null;
     try {
-      const {data, error} = await supabase.functions.invoke("paige-ai-chat", {body: {
+      const {data, error} = await supabase.functions.invoke("paige-ai-chat", {headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
         messages: [{role: "user", content: "Read pending approval status."}], threadId, requestIntentId: intentId,
         interactive: {kind: "status", approvalTurnId: turnId},
       }});
+      if (approvalScopeRef.current !== scope) return null;
+      const context = (error as { context?: Response } | null)?.context;
+      if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
       return error ? null : readRecoveredPaigeApproval(data?.approval_recovery, {threadId, turnId, intentId, tenantId});
     } catch { return null; }
-  }, [callerUserId, tenantId, platform]);
+  }, [callerUserId, tenantId, platform, approvalScopeKey]);
 
   /** Create a thread lazily on first send. Title is a placeholder the server
    *  refines from the first message. */

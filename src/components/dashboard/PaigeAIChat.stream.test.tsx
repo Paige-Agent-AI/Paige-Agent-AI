@@ -19,6 +19,7 @@ import type { LiveVoiceSink } from "@/components/paige/live/PaigeLiveConversatio
 const harness = vi.hoisted(() => ({
   liveVoiceTurn: null as ((text: string, sink: LiveVoiceSink) => Promise<void>) | null,
   liveCard: null as null | { id: string; title: string },
+  liveDisabled: false,
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
@@ -47,9 +48,10 @@ vi.mock("@/hooks/usePaigeThreads", () => ({
   }),
 }));
 vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
-  PaigeLiveConversation: (props: { activeCard: null | { id: string; title: string }; onVoiceTurn: (text: string, sink: LiveVoiceSink) => Promise<void> }) => {
+  PaigeLiveConversation: (props: { disabled: boolean; activeCard: null | { id: string; title: string }; onVoiceTurn: (text: string, sink: LiveVoiceSink) => Promise<void> }) => {
     harness.liveVoiceTurn = props.onVoiceTurn;
     harness.liveCard = props.activeCard;
+    harness.liveDisabled = props.disabled;
     return null;
   },
 }));
@@ -133,6 +135,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   harness.liveVoiceTurn = null;
   harness.liveCard = null;
+  vi.useRealTimers();
 });
 
 /** Each call to fetch takes the next scripted reply. */
@@ -745,6 +748,79 @@ describe("PaigeAIChat stream — a refused client", () => {
     expect(released).toEqual([]);
     expect(host.textContent).toContain("Fine.");
     expect(host.textContent).not.toContain("couldn't");
+  });
+});
+
+describe("PaigeAIChat existing control transport", () => {
+  async function controlTurn(pending = false, firstStatus = 429) {
+    const hold = deferred();
+    const calls: Array<{ body: { interactive?: { kind?: string } }; headers: Headers }> = [];
+    let statuses = 0;
+    vi.stubGlobal("fetch", vi.fn(async (_url: unknown, init?: RequestInit) => {
+      const request = JSON.parse(String(init?.body ?? "{}"));
+      calls.push({ body: request, headers: new Headers(init?.headers) });
+      if (request.interactive?.kind === "status") {
+        statuses++;
+        return statuses === 1 ? new Response(JSON.stringify({ settled: firstStatus === 429 }), { status: firstStatus, headers: { "Retry-After": "10" } })
+          : new Response(JSON.stringify({ settled: true }), { status: 200 });
+      }
+      if (request.interactive?.kind === "stop") return new Response("{}", { status: 429, headers: { "Retry-After": "10" } });
+      return pending ? body([say("Working."), hold.promise, DONE]) : body([say("Finished."), DONE]);
+    }));
+    const mounted = await mount({ liveConversation: true });
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    const field = mounted.host.querySelector("textarea")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")!.set!.call(field, "Read my current business state.");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      mounted.host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click();
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    return { ...mounted, calls, hold };
+  }
+
+  it("marks only status control requests and leaves ordinary message transport unchanged", async () => {
+    const { calls } = await controlTurn();
+    expect(calls.filter(c => c.body.interactive?.kind === "message")).toHaveLength(1);
+    expect(calls.find(c => c.body.interactive?.kind === "message")!.headers.has("x-paige-chat-control")).toBe(false);
+    expect(calls.find(c => c.body.interactive?.kind === "status")!.headers.get("x-paige-chat-control")).toBe("status");
+  });
+
+  it("honors429 Retry-After without trusting its settlement or repeating a message", async () => {
+    const { calls } = await controlTurn();
+    expect(harness.liveDisabled).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(9_000); });
+    expect(calls.filter(c => c.body.interactive?.kind === "status")).toHaveLength(1);
+    expect(harness.liveDisabled).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_100); });
+    expect(calls.filter(c => c.body.interactive?.kind === "status")).toHaveLength(2);
+    expect(calls.filter(c => c.body.interactive?.kind === "message")).toHaveLength(1);
+    expect(harness.liveDisabled).toBe(false);
+  });
+
+  it("bounds ordinary successful status cadence and cancels polling on unmount", async () => {
+    const { calls } = await controlTurn(false, 200);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_900); });
+    expect(calls.filter(c => c.body.interactive?.kind === "status")).toHaveLength(1);
+    await mounted.pop()!();
+    await act(async () => { await vi.advanceTimersByTimeAsync(61_000); });
+    expect(calls.filter(c => c.body.interactive?.kind === "status")).toHaveLength(1);
+  });
+
+  it("marks an explicit Stop and never automatically retries its429", async () => {
+    const { host, calls, hold } = await controlTurn(true);
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click();
+      await vi.advanceTimersByTimeAsync(1);
+      hold.resolve();
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(calls.find(c => c.body.interactive?.kind === "stop")!.headers.get("x-paige-chat-control")).toBe("stop");
+    await act(async () => { await vi.advanceTimersByTimeAsync(61_000); });
+    expect(calls.filter(c => c.body.interactive?.kind === "stop")).toHaveLength(1);
+    expect(calls.filter(c => c.body.interactive?.kind === "message")).toHaveLength(1);
   });
 });
 

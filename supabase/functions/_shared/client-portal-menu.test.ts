@@ -154,10 +154,11 @@ Deno.test("Home and Messages are never hidden or renamed; Planning is not a cust
   }
 });
 
-Deno.test("Payments is registered but refused until its page exists", async () => {
+Deno.test("Payments is configurable now that its page exists (E09 Slice 5)", async () => {
   const f = fakeCaller({ modules: [] });
   const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "billing", label: "Pay" }] } });
-  assert(!r.success && r.reason === "not_available_yet");
+  assert(r.success, JSON.stringify(r));
+  assertEquals(f.stored(), [{ key: "billing", label: "Pay" }]);
 });
 
 Deno.test("Agreements is every customer's since Slice A: shown by default, and the owner can hide or rename it", async () => {
@@ -367,8 +368,8 @@ Deno.test("the read projects each customer entry with the owner's name and why i
   assert(!("learn" in by), "the learn alias shares Resources' route: one row, not two");
   assertEquals([by.agreements.shown, by.agreements.hidden_because], [true, null]);
   assertEquals([by.messages.label, by.messages.fixed, by.messages.shown], ["Messages", true, true]);
-  // A core entry whose page does not exist yet is reported as such, never as shown.
-  assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", false, "not_available_yet"]);
+  // Payments is live (E09 Slice 5) but catalog-placed: a catalog that does not list `billing` does not show it.
+  assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", false, "playbook_does_not_list_it"]);
   assert(!("planning" in by), "a staff-only entry is not a customer entry");
   assertEquals(f.calls, [{ name: "read_tenant_portal_menu", args: { p_expected_tenant_id: TENANT } }]);
 });
@@ -412,8 +413,7 @@ Deno.test("the update tool names every live core key, and no key that is not liv
   for (const e of PORTAL_MENU_KEYS) {
     if (!e.live || !e.clientsLive) assert(!keysText!.split(", ").includes(e.key), `not-live ${e.key} is offered`);
   }
-  for (const k of ["progress", "actions", "sessions", "documents"]) assert(PORTAL_MENU_OFFERED_CORE_KEYS.includes(k), k);
-  assert(!PORTAL_MENU_OFFERED_CORE_KEYS.includes("billing"), "billing is not live");
+  for (const k of ["progress", "actions", "sessions", "documents", "billing"]) assert(PORTAL_MENU_OFFERED_CORE_KEYS.includes(k), k);
   assert(PORTAL_MENU_OFFERED_CORE_KEYS.includes("agreements"), "agreements is live for clients since Slice A");
   for (const k of PORTAL_MENU_FIXED_KEYS) assert(!PORTAL_MENU_CONFIGURABLE_KEYS.includes(k), k);
 });

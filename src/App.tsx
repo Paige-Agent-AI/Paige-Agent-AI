@@ -146,6 +146,8 @@ const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments
 const ClientMessages = lazyWithReload(() => import("./pages/app/Messages"));
 const ClientSessions = lazyWithReload(() => import("./pages/app/Sessions"));
 const ClientProgress = lazyWithReload(() => import("./pages/app/Progress"));
+const ClientPayments = lazyWithReload(() => import("./pages/app/Billing"));
+const ClientPaymentsInvoice = lazyWithReload(() => import("./pages/app/BillingInvoice"));
 const Planning = lazyWithReload(() => import("./pages/app/Planning"));
 // #244 — the canonical "About Your Paige Team" directory. ONE component, scope prop
 // per route (tenant here; operator in Admin.tsx; agency in AgencyLayout.tsx).
@@ -310,6 +312,10 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
               <Route path="sessions" element={<PageSuspense><ClientSessions /></PageSuspense>} />
               {/* E09 Slice 3 — the work the business shared with the customer; read-only. */}
               <Route path="progress" element={<PageSuspense><ClientProgress /></PageSuspense>} />
+              {/* E09 Slice 5 — "Payments": invoices the business issued to the customer, and each one's own page with
+                  the document and, when the business sent one, its payment link. Read-only; no charge starts here. */}
+              <Route path="billing" element={<PageSuspense><ClientPayments /></PageSuspense>} />
+              <Route path="billing/:invoiceId" element={<PageSuspense><ClientPaymentsInvoice /></PageSuspense>} />
               <Route path="planning" element={<PageSuspense><Planning /></PageSuspense>} />
               {/* #244 — learn about your Paige team (tenant scope). Read-only; inherits
                   /app's RequireCompleteSignup, no extra gate. NOT /team — that would break

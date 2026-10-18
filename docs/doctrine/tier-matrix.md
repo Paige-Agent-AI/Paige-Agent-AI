@@ -4776,8 +4776,8 @@ the overlay can never reveal Messages, Sessions or Progress to anyone but a cust
 catalog-only entries (funding keys, Approvals) render only when the Playbook catalog lists them
 (§2). Resources is core for customers: a customer of one business always has it, whatever the catalog
 lists, and only the owner's overlay hides it (staff and other viewers keep the catalog rule, as on main).
-When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live (Payments until Slice 5) never renders and is
-never offered. The customer's catalog now comes from the server's `_catalog` in
+When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live never renders and is
+never offered (Payments was the one such entry; Slice 5 made it live). The customer's catalog now comes from the server's `_catalog` in
 `get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
 exception. The owner dashboard's "Customer portal menu" summary and the customer's Messages "Browse
 resources first" hint read the same assembly, so neither can tell a different story from the menu.
@@ -4987,3 +4987,38 @@ platform-terms page and the frozen signing page reached from the portal versus t
 and by the download scope, including two completed sealed copies; a control proves the same copy is
 downloadable once its signer is the customer), a witness ordered first (W1) and a signed co-signer at the
 customer's address (W3). Authenticated customer sign and download on production are owed.
+
+### Customer Portal — Payments, `/app/billing` + one invoice at `/app/billing/:invoiceId` (E09 Slice 5, 2026-10-18)
+
+A customer sees the invoices their business **issued** to them (managed `issued` and `void` invoices with a
+frozen issued document; never a draft, a CSV `recorded` import, another client's or another business's
+invoice) at `/app/billing`, named **Payments** everywhere the customer reads it (owner ruling 2026-10-18; the
+route and the Playbook catalog key stay `billing`). Each invoice opens its own page with the frozen document
+and a payment panel. Owner decisions: invoices are visible once issued; the customer pays **only** through a
+payment link the business already sent (the existing validated `provider_url` projection), on the business's
+own processor — no customer-side charge producer, no Stripe call, no bearer grant, Paige never merchant of
+record (§38). With no link, the customer is offered "Ask {business} for a payment link", which pre-fills a
+Messages draft they edit and send through the Slice 1 send. The reads are `client_portal_invoices`,
+`client_portal_invoice_payment_request` and `client_portal_invoice_ledger` (SECURITY DEFINER, VOLATILE, the
+caller's own relationship via `client_portal_relationship_id`, no tier filter — the §60 fix to #2170/#2184's
+standalone-only rule), plus the `portal=1` branch of `sales-invoice-document` for the document and PDF.
+They are the one client invoice read home, derived from E04 #2170 (`aeb0db5f1`) and carrying its stricter caller
+guards (same-business staff, platform owner, deleted or banned account refused); they add no financial writer.
+This is a §61 **default** for the customer surface: relationship-scoped, no new feature key.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Issue, send and request payment for an invoice (existing, unchanged) | None: no tenant book (`_sales_invoice_actor` refuses) | No client book by §61; customer invites are UI-excluded | ✓ `/solo/:account/sales/payments` | Allowed by the server (no tier gate in `_sales_invoice_actor`); UI follows the shared Solo/Business shell | Allowed by the server; not separately mounted | — | Denied | unchanged |
+| Publish review says the invoice appears under Payments in the client's portal | — | — | Not in this slice: E04's `InvoiceCommandReview` is unchanged (restored to main 2026-10-18); the wording is proposed to E04 in the evidence record | same | same | — | — | NOT SHIPPED |
+| Owner portal panel card "Payments · PARTIAL" | — | — | — (Solo uses the owner dashboard) | ✓ non-Solo Portal panel | ✓ non-Solo Portal panel | — | — | PROOF OWED |
+| Customer Payments list `/app/billing` and Home balance line (`client_portal_invoices`) | — | — | — | — | — | ✓ own relationship, issued and void managed invoices only; balances, open and past-due counts across all pages; more than one relationship is refused and explained (Slice 8); a person who is also active staff of that business, a platform owner, and a deleted or banned account read nothing (guards from E04 #2170) | Denied (no grant) | PROOF OWED |
+| Customer invoice page `/app/billing/:invoiceId`: document, PDF, payment state (`client_portal_invoice_payment_request`, `portal=1` document branch) | — | — | — | — | — | ✓ own issued invoice; "Pay" opens only the business's validated link in a new tab (`noopener noreferrer`); never writes | Denied | PROOF OWED |
+| Payments in the customer menu (Slice M registry key `billing`, default name "Payments", `live` flipped by Slice 5 in `portalMenu.ts` and its edge mirror `client-portal-menu.ts`) | — | — | — | — | — | ✓ "Paperwork" group, only where the business's Playbook catalog lists `billing` (every generic preset; never force-injected); the owner can hide or rename it in the menu editor; floor `customer`: shown only to a customer of one business | — | PROOF OWED |
+| Bearer `/invoice?token=` page | unchanged | unchanged | unchanged | unchanged | unchanged | unchanged (works for clients without a portal login) | ✓ unchanged | unchanged |
+
+Customer-side proof: Vitest for the exact-key parsers, both pages, the menu entry and its floor, the Home line and the Messages
+draft; harness frames (`scripts/live-drive/harness/portal-payments-customer-mount`) in
+both themes at 390 and 1440. The database proof is `supabase/tests/customer_portal_payments.sql` (the backend
+lane's pgTAP; counts in the evidence record). Authenticated customer read, a test-mode payment link opened from
+the portal and the return to `/payment-return` on production are owed. The Agreements tab is not touched by
+this slice (owner reversal 2026-10-18; Slice A owns it).

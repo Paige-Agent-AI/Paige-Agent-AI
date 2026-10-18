@@ -149,6 +149,9 @@ on:
       - "supabase/functions/comms-email-command/**"
       - "supabase/functions/send-message/**"
       - "supabase/functions/handle-sendgrid-webhook/**"
+      - "supabase/functions/sales-invoice-document/**"
+      - "supabase/functions/_shared/portal-invoice-client.ts"
+      - "supabase/functions/_shared/sales-invoice-ledger.ts"
 
 permissions:
   contents: read
@@ -575,6 +578,12 @@ jobs:
         if: ${{ !cancelled() }}
       # The SQL half of the consent parity proof, generated from supabase/tests/fixtures/consent-parity.json.
       - run: supabase test db supabase/tests/customer_portal_consent_parity.sql
+        if: ${{ !cancelled() }}
+      # E09 Payments: the customer's own issued invoices, ledger and the business's existing payment
+      # link (read-only; no charge, request or bearer grant), then the edge portal door that serves them.
+      - run: supabase test db supabase/tests/customer_portal_payments.sql
+        if: ${{ !cancelled() }}
+      - run: node --test supabase/functions/sales-invoice-document/portal.test.mjs
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

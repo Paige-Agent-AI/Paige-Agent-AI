@@ -90,6 +90,9 @@ function PortalLogo({
 // funding Playbook lists those keys (§2). Home and Messages are fixed at the top; the rest is grouped —
 // "Your work", "Paperwork", "Learn" — and the business may hide, rename and reorder within a group.
 
+/** Nav sections whose sub-pages keep the tab active (E09 Slice 5: an invoice under Payments). */
+const SECTION_HREFS = new Set(["/app/billing"]);
+
 // Resting entries on the brand bar. Selection is a quiet fill, never gold: gold is spent on acts (§11).
 const BAR_ITEM = "flex min-h-[44px] items-center gap-2 rounded-md px-3 text-sm whitespace-nowrap transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/80";
 const BAR_REST = "text-primary-foreground/85 hover:text-primary-foreground hover:bg-sidebar-accent/50";
@@ -204,7 +207,10 @@ export function AppNav({ user }: AppNavProps) {
   // read that decides THIS viewer's menu returns, the menu is a skeleton — never the generic catalog that then
   // changes under them (Resources appearing and vanishing). FAIL-OPEN once resolved: an absent overlay or
   // catalog gives the default menu, never fewer entries.
-  const isActive = (href: string) => location.pathname === href;
+  // A tab stays active on its own sub-pages (an invoice under Payments), like Messages across its modes.
+  // Only sections with sub-pages are listed, so no other tab's highlight changes.
+  const isActive = (href: string) =>
+    location.pathname === href || (SECTION_HREFS.has(href) && location.pathname.startsWith(`${href}/`));
 
   const userRoleLabel = isAdmin ? "Admin" : "Client";
   const isViewingAsClient = isAdmin && mode === "client";

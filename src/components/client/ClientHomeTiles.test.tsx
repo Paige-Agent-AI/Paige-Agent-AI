@@ -33,7 +33,8 @@ vi.mock("@/integrations/supabase/client", () => {
   const rpc = (name: string, ...a: unknown[]) => (name === "client_portal_progress" ? f.progressRpc(name, ...a) : f.rpc(name, ...a));
   return { supabase: { from: (t: string) => counted(t), rpc } };
 });
-vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" }, quickActions: [] }) }));
+vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" }, quickActions: [], portal: { modules: [] } }) }));
+vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: {}, loading: false }) }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
   useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: false, multipleBusinesses: f.multiple }),
 }));

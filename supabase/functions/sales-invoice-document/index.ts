@@ -1,4 +1,5 @@
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
+import {portalInvoiceTarget,readPortalInvoiceLedger,readPortalInvoicePaymentRequest} from '../_shared/portal-invoice-client.ts';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 import {overRateLimit,trustedClientIp} from '../_shared/rateLimit.ts';
 import {sha256Hex} from '../_shared/agreements/token.ts';
@@ -20,6 +21,19 @@ Deno.serve(async req=>{
       return new Response(JSON.stringify(data),{headers:{...headers,'Content-Type':'application/json'}});
     }
     projection=await collectInvoiceLedger(db,'read_public_sales_invoice_payment_ledger',{_token_hash:await sha256Hex(token)});
+    if(!projection)return refuse();
+  }else if(url.searchParams.get('portal')==='1'){
+    // E09 Payments: the customer's own portal session. The server derives the client and the business
+    // from this JWT; no client id is read, and there is no bearer grant or owner fallback on this path.
+    const target=portalInvoiceTarget(url.searchParams);const authorization=req.headers.get('authorization');
+    if(!target||!authorization?.startsWith('Bearer '))return refuse();
+    const caller=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false},global:{headers:{Authorization:authorization}}});
+    if(url.searchParams.get('format')==='payment-request'){
+      const data=await readPortalInvoicePaymentRequest(caller,target);
+      if(!data)return refuse();
+      return new Response(JSON.stringify(data),{headers:{...headers,'Content-Type':'application/json'}});
+    }
+    projection=await readPortalInvoiceLedger(caller,target);
     if(!projection)return refuse();
   }else{
     const invoiceId=url.searchParams.get('invoice_id');const tenantId=url.searchParams.get('tenant_id');

@@ -21,6 +21,9 @@ import {
 import { useMyActions } from "@/hooks/useMyActions";
 import { usePortalDocumentsGlance, type PortalDocumentsGlance } from "@/hooks/usePortalDocumentsGlance";
 import { AgreementsWaitingLine } from "@/components/client/AgreementsWaitingLine";
+import { owedPhrase, usePortalInvoicesGlance } from "@/hooks/useClientPortalInvoices";
+import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
+import { flattenPortalNav } from "@/lib/portal/portalMenu";
 import {
   Target,
   TrendingUp,
@@ -35,6 +38,7 @@ import {
   Lock,
   AlertCircle,
   ArrowRight,
+  CreditCard,
 } from "lucide-react";
 
 // Some of these tables are not in the generated types; count them through an untyped view of the same client.
@@ -82,6 +86,13 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   const next = useNextPortalSession(isCustomer);
   const progress = usePortalProgressGlance(isCustomer);
   const documents = usePortalDocumentsGlance(isCustomer);
+  // The balance line points into Payments, so it shows only where Payments is a menu entry for this
+  // customer: the very menu AppNav renders (the Slice M assembly over the business's own catalog and
+  // overlay), never a hidden page's door.
+  const portalNav = useCustomerPortalNav();
+  const paymentsInMenu = isCustomer && portalNav.ready
+    && flattenPortalNav(portalNav.sections).some((item) => item.key === "billing");
+  const payments = usePortalInvoicesGlance(paymentsInMenu);
   const [counts, setCounts] = useState<Counts>(EMPTY);
   const [loading, setLoading] = useState(true);
 
@@ -137,6 +148,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   }
 
   return (
+    <>
+    {/* E09 Slice 5: a quiet line above the tiles, only while something is owed. Never a seventh tile. */}
+    {paymentsInMenu && <PaymentsBalanceLine glance={payments} businessName={businessName} />}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* E09 Slice A — one quiet line, only while an agreement waits for this customer's signature (D-A5). */}
       <AgreementsWaitingLine enabled={isCustomer} />
@@ -260,6 +274,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -565,5 +580,48 @@ function FilledTile({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+type PaymentsGlance = ReturnType<typeof usePortalInvoicesGlance>;
+
+/**
+ * "$1,250.00 due · 2 open invoices from Northwind Studio · 1 past due · View payments", only while something
+ * is owed. The amount leads; on a phone "View payments" sits under the words instead of squeezing them. It reads the same projection as /app/billing; nothing owed, a failed read or no relationship
+ * renders nothing, so the Home never carries an empty or a wrong money line.
+ */
+function PaymentsBalanceLine({ glance, businessName }: { glance: PaymentsGlance; businessName: string }) {
+  if (glance.state !== "ready" || glance.openCount === 0) return null;
+  const owed = owedPhrase(glance.balances);
+  if (!owed) return null;
+  const n = glance.openCount;
+  return (
+    <Link
+      to="/app/billing"
+      data-testid="payments-balance-line"
+      className={`group flex min-h-[44px] flex-col gap-1.5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-3 ${TILE_QUIET_HOVER} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+    >
+      <span className="flex min-w-0 flex-1 items-start gap-3">
+        {/* The same icon as the Payments menu entry (portalMenu.ts `billing`): one destination, one mark. */}
+        <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="min-w-0 [text-wrap:pretty]">
+          <span data-testid="payments-balance-owed" className="font-semibold tabular-nums">{owed} due</span>
+          <span className="text-muted-foreground"> · {n} open invoice{n === 1 ? "" : "s"} from {businessName}</span>
+          {glance.pastDue ? (
+            <>
+              <span className="text-muted-foreground">{" · "}</span>
+              <span data-testid="payments-balance-past-due" className="whitespace-nowrap font-medium">
+                <AlertCircle className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-destructive" aria-hidden="true" />
+                <span className="tabular-nums">{glance.pastDue}</span> past due
+              </span>
+            </>
+          ) : null}
+        </span>
+      </span>
+      <span className="inline-flex items-center gap-1 pl-7 font-medium underline-offset-4 group-hover:underline sm:pl-0">
+        View payments
+        <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+      </span>
+    </Link>
   );
 }

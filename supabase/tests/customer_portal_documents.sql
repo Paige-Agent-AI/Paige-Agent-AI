@@ -3,15 +3,20 @@
 -- forged); the owner's upload pair (reserve -> PUT -> finish) is bound to the current-workspace
 -- business admin, never a top-level agency, with an exact server path, an object check, idempotent
 -- replay and one audit row; the one share writer is version-guarded, state-idempotent and audited
--- once per real change; the owner's list pins tenant and contact; the customer reads, through an
--- exact allowlist, only files the business shared (ready) plus their own uploads, and storage
--- authorizes exactly those objects for a signed URL; the deployed customer upload pipeline still
--- works; a customer can no longer delete their own upload metadata; a staff PUT needs a
--- reservation; released work is unavailable once the client or the business is inactive; and, by a
--- matrix of every signed-in role against every write that could change what a customer reads or
--- opens, the only ways a customer gains a file are the audited share writer and their own upload.
+-- once per real change; the owner's list pins tenant and contact; the customer's portal list (an
+-- exact allowlist) and their direct read (RLS) both return only files the business shared (ready)
+-- plus the uploads made by their own login; storage serves a client-files object to anyone who can
+-- see a ready row naming it whose uploader owns the object, so a customer can open only those
+-- files' objects; an upload by a different login on the same contact, or by the former person after
+-- their link is cleared and a new person accepts an invitation, is neither readable nor openable;
+-- the deployed customer upload pipeline still works; a customer can no longer delete their own
+-- upload metadata; a staff PUT needs a reservation; released work is unavailable once the client or
+-- the business is inactive; and, by a matrix of every signed-in role against every write that could
+-- change what a customer reads or opens, the only ways a customer gains a file are the audited share
+-- writer and their own upload, and before and after every write no customer can read or open an
+-- upload made by another login.
 BEGIN;
-SELECT plan(229);
+SELECT plan(244);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -86,8 +91,12 @@ INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,stor
  ('e0944000-0000-4000-8000-000000000026','e0942000-0000-4000-8000-000000000002','e0943000-0000-4000-8000-000000000005','e0941000-0000-4000-8000-000000000002','e0942000-0000-4000-8000-000000000002/e0943000-0000-4000-8000-000000000005/internal/e0944000-0000-4000-8000-000000000026','Tenant B file.pdf','application/pdf',26,'internal','ready','2027-01-01T00:00:00Z'),
  ('e0944000-0000-4000-8000-000000000027','e0942000-0000-4000-8000-000000000004','e0943000-0000-4000-8000-000000000006','e0941000-0000-4000-8000-000000000007','e0942000-0000-4000-8000-000000000004/e0943000-0000-4000-8000-000000000006/internal/e0944000-0000-4000-8000-000000000027','Sub-account file.pdf','application/pdf',27,'internal','ready','2027-01-01T00:00:00Z'),
  ('e0944000-0000-4000-8000-000000000028','e0942000-0000-4000-8000-000000000003','e0943000-0000-4000-8000-000000000007','e0941000-0000-4000-8000-000000000006','e0942000-0000-4000-8000-000000000003/e0943000-0000-4000-8000-000000000007/internal/e0944000-0000-4000-8000-000000000028','Agency file.pdf','application/pdf',28,'internal','ready','2027-01-01T00:00:00Z');
--- Objects behind Jordan's internal file, his shared file and his own upload (fixture role).
+-- Objects behind Jordan's internal file, his shared file and his own upload (fixture role); behind
+-- the upload another login made on his contact (09) and Sam's own upload (07), each owned by its
+-- uploader, so storage would serve them to anyone who can see the row (round 6, MAJOR-K).
 INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES
+ ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000004/e0944000-0000-4000-8000-000000000009','e0941000-0000-4000-8000-000000000004','{"size":18,"mimetype":"application/pdf"}'),
+ ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/client_upload/e0941000-0000-4000-8000-000000000004/e0944000-0000-4000-8000-000000000007','e0941000-0000-4000-8000-000000000004','{"size":16,"mimetype":"application/pdf"}'),
  ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000001','{"size":10,"mimetype":"application/pdf"}'),
  ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002','e0941000-0000-4000-8000-000000000001','{"size":11,"mimetype":"application/pdf"}'),
  ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000003/e0944000-0000-4000-8000-000000000004','e0941000-0000-4000-8000-000000000003','{"size":13,"mimetype":"image/png"}');
@@ -403,6 +412,14 @@ SELECT ok((SELECT pg_temp.file(r,'e0944000-0000-4000-8000-000000000006') IS NULL
 SELECT ok((SELECT pg_temp.file(r,'e0944000-0000-4000-8000-000000000008') IS NULL AND strpos(r::text,'FOREIGN TENANT FILE')=0 FROM jr),'a shared file in another business that points at his client id is not visible');
 SELECT ok((SELECT pg_temp.file(r,'e0944000-0000-4000-8000-000000000007') IS NULL FROM jr),'another customer''s upload is not visible');
 SELECT ok((SELECT pg_temp.file(r,'e0944000-0000-4000-8000-000000000009') IS NULL AND strpos(r::text,'ANOTHER LOGINS UPLOAD')=0 FROM jr),'an upload by a different login on his contact is not visible');
+-- His DIRECT read (RLS, what storage re-checks for a signed URL) is held to the same set (round 6,
+-- MAJOR-K P1): the incumbent policy returned every client_upload row on his contact, whoever uploaded it.
+SELECT is(pg_temp.jordan($q$SELECT to_jsonb(count(*)) FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000009'$q$),'0'::jsonb,
+ 'his direct read does not return the upload a different login made on his contact (P1)');
+SELECT is(pg_temp.jordan($q$SELECT coalesce(jsonb_agg(right(id::text,2) ORDER BY id),'[]') FROM public.client_files$q$),'["02","04","05","10"]'::jsonb,
+ 'his direct read returns exactly the shared, ready files and his own uploads');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT coalesce(jsonb_agg(right(id::text,2) ORDER BY id),'[]') FROM public.client_files$q$),'["06","07","22"]'::jsonb,
+ 'Sam''s direct read is held to the same rule: his shared file and his own uploads on his own contact');
 SELECT ok((SELECT strpos(r::text,'PRIVATE DESCRIPTION NOTE')=0 FROM jr),'the description is never projected');
 SELECT ok((SELECT strpos(r::text,'e0941000-0000-4000-8000-000000000001')=0 FROM jr),'the staff uploader and sharer are never projected');
 SELECT is(pg_temp.ids(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$)),'22,07,06','the other customer sees only their own shared files and uploads, newest first');
@@ -424,6 +441,13 @@ SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001'),0::bigint,'but not the object of an internal file');
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000003/e0944000-0000-4000-8000-000000000004'),1::bigint,'and can read his own upload');
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000004','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002'),0::bigint,'another customer cannot read his shared file''s object');
+-- Round 6, MAJOR-K P1: the object behind the upload another login made on his contact is real (the
+-- business opens it: its uploader owns it, so storage serves it to whoever sees the row) ...
+SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000004/e0944000-0000-4000-8000-000000000009'),1::bigint,
+ 'the object behind another login''s upload on Jordan''s contact is real: the business opens it');
+-- ... and Jordan cannot open it.
+SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000004/e0944000-0000-4000-8000-000000000009'),0::bigint,
+ 'but Jordan cannot open the object of an upload a different login made on his contact (P1)');
 -- A file's object is fixed once it exists (round 4, verifier MAJOR-E). Storage authorizes a customer's
 -- download by matching the object name to a storage_path they may see, so a signed-in writer who could
 -- rewrite storage_path (or the uploader it is bound to) could point a SHARED row at another file's
@@ -498,6 +522,25 @@ BEGIN
  END LOOP;
  RETURN _acc;
 END $$;
+-- The absolute check (round 6, MAJOR-K): the access() fingerprint is compared with a starting state,
+-- so a leak already present in that state is invisible to it (the starting state held row:03:09). This
+-- one compares with nothing: for every login linked to a client, the client_upload rows it can read
+-- and the objects of client_upload rows it can open that another login uploaded. It must be empty.
+CREATE FUNCTION pg_temp.foreign_uploads() RETURNS text[] LANGUAGE plpgsql AS $$
+DECLARE _c uuid; _acc text[] := '{}'; _r jsonb; _paths text[];
+BEGIN
+ FOR _c IN SELECT DISTINCT linked_user_id FROM public.clients WHERE linked_user_id IS NOT NULL ORDER BY 1 LOOP
+  _paths := ARRAY(SELECT storage_path FROM public.client_files WHERE visibility='client_upload' AND uploaded_by_user_id IS DISTINCT FROM _c);
+  _r := pg_temp.as_user(_c, format($q$SELECT jsonb_build_object(
+    'rows',(SELECT coalesce(jsonb_agg(id::text),'[]') FROM public.client_files WHERE visibility='client_upload' AND uploaded_by_user_id IS DISTINCT FROM auth.uid()),
+    'objects',(SELECT coalesce(jsonb_agg(name),'[]') FROM storage.objects WHERE bucket_id='client-files' AND name = ANY(%L::text[])))$q$, _paths));
+  IF _r ? 'error' THEN _acc := _acc || ('error:'||right(_c::text,2)||':'||(_r->>'error')); CONTINUE; END IF;
+  _acc := _acc || ARRAY(SELECT 'row:'||right(_c::text,2)||':'||right(x,2) FROM jsonb_array_elements_text(_r->'rows') x)
+               || ARRAY(SELECT 'object:'||right(_c::text,2)||':'||x FROM jsonb_array_elements_text(_r->'objects') x);
+ END LOOP;
+ RETURN _acc;
+END $$;
+SELECT is(pg_temp.foreign_uploads(),'{}'::text[],'at the matrix''s starting state no customer can read or open an upload made by another login');
 CREATE TEMP TABLE vm_base AS SELECT pg_temp.access() AS acc;
 -- One attempt: the writes as _actor, then the fingerprint, then everything rolled back.
 CREATE FUNCTION pg_temp.probe(_actor uuid, _sqls text[], _storage_api boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql AS $$
@@ -508,7 +551,7 @@ BEGIN
   FOREACH _s IN ARRAY _sqls LOOP _r := pg_temp.as_user(_actor, _s); END LOOP;
   PERFORM set_config('storage.allow_delete_query','false',true);
   _after := pg_temp.access();
-  RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = jsonb_build_object('result', _r,
+  RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = jsonb_build_object('result', _r, 'foreign', to_jsonb(pg_temp.foreign_uploads()),
     'gained', to_jsonb(ARRAY(SELECT unnest(_after) EXCEPT SELECT unnest(acc) FROM vm_base ORDER BY 1)),
     'lost', to_jsonb(ARRAY(SELECT unnest(acc) FROM vm_base EXCEPT SELECT unnest(_after) ORDER BY 1)))::text;
  EXCEPTION WHEN raise_exception THEN RETURN SQLERRM::jsonb;
@@ -603,6 +646,8 @@ CREATE TEMP TABLE vm AS
  SELECT a.label AS actor, w.label AS write, pg_temp.probe(a.id, w.sqls, w.storage_api) AS r
  FROM vm_actor a CROSS JOIN vm_write w;
 SELECT is((SELECT count(*) FROM vm), (SELECT count(*) FROM vm_actor) * (SELECT count(*) FROM vm_write), 'every role attempted every write in the matrix');
+SELECT is((SELECT string_agg(actor||' / '||write||' => '||(r->'foreign')::text, '; ' ORDER BY actor, write) FROM vm WHERE r->'foreign' <> '[]'::jsonb), NULL,
+  'after every write in the matrix, no customer can read or open an upload made by another login');
 SELECT is((SELECT string_agg(write||' => '||(r->'gained')::text, '; ' ORDER BY write) FROM vm WHERE actor=a.label AND jsonb_array_length(r->'gained') > 0),
   NULL, format('no write by the %s gives any customer something new to read or open', a.label))
  FROM vm_actor a;
@@ -757,6 +802,44 @@ SELECT is(pg_temp.jreviews() - 'actor_id' - 'tenant_id','{"releases":[],"unavail
 UPDATE public.tenants SET status='active' WHERE id='e0942000-0000-4000-8000-000000000001';
 SELECT is(pg_temp.jdecide()->>'state','accepted','once both are active again Jordan accepts it');
 SELECT is((SELECT state FROM public.operations_delivery_client_releases WHERE id=(SELECT id FROM rel)),'accepted','and the decision is recorded');
+
+-- 17. The next person on a contact never reaches the former person's uploads (round 6, MAJOR-K P5).
+-- Sam's link is cleared by a trusted path (no JWT, as a service or migration write would), and a new
+-- person accepts a consumer invitation for Sam's contact through the real accept_tenant_invite, which
+-- writes the link exactly as production acceptance does. Sam's uploads (07, 22) stay on the contact.
+-- Shared files staying with the contact (06) is the recorded product decision (evidence, P2).
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0941000-0000-4000-8000-000000000014','authenticated','authenticated','documents-next-person@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0943000-0000-4000-8000-000000000002';
+SELECT public._attach_client_address('e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000002','email','documents-next-person@tests.invalid');
+INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,expires_at,max_uses,uses,contact_id,email) VALUES
+ ('e0946000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001','test-documents-next-person','consumer','member','e0941000-0000-4000-8000-000000000001',now()+interval '1 day',NULL,0,'e0943000-0000-4000-8000-000000000002','documents-next-person@tests.invalid');
+CREATE FUNCTION pg_temp.accept_as(_actor uuid, _email text, _token text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',_actor,'role','authenticated','email',_email,'email_verified',true)::text,true);
+ SET LOCAL ROLE authenticated;
+ BEGIN _r := to_jsonb(public.accept_tenant_invite(_token));
+ EXCEPTION WHEN OTHERS THEN _r := jsonb_build_object('sqlstate',SQLSTATE,'error',SQLERRM); END;
+ RESET ROLE; PERFORM set_config('request.jwt.claims','{}',true);
+ RETURN _r;
+END $$;
+SELECT is(pg_temp.accept_as('e0941000-0000-4000-8000-000000000014','documents-next-person@tests.invalid','test-documents-next-person'),
+ '"e0942000-0000-4000-8000-000000000001"'::jsonb,'a new person accepts an invitation to Sam''s contact after Sam''s link is cleared');
+SELECT is((SELECT linked_user_id FROM public.clients WHERE id='e0943000-0000-4000-8000-000000000002'),'e0941000-0000-4000-8000-000000000014'::uuid,
+ 'acceptance linked the new person to the same contact');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000014',$q$SELECT to_jsonb(count(*)) FROM public.client_files WHERE id IN ('e0944000-0000-4000-8000-000000000007','e0944000-0000-4000-8000-000000000022')$q$),'0'::jsonb,
+ 'the new person''s direct read returns none of the former person''s uploads (P5)');
+SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000014','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/client_upload/e0941000-0000-4000-8000-000000000004/e0944000-0000-4000-8000-000000000007'),0::bigint,
+ 'and cannot open the object of the former person''s upload');
+SELECT ok((SELECT pg_temp.file(r,'e0944000-0000-4000-8000-000000000007') IS NULL AND pg_temp.file(r,'e0944000-0000-4000-8000-000000000022') IS NULL
+   FROM (SELECT pg_temp.as_user('e0941000-0000-4000-8000-000000000014',$q$SELECT public.client_portal_documents()$q$) AS r) x),
+ 'nor does their portal list show them');
+SELECT ok((pg_temp.as_user('e0941000-0000-4000-8000-000000000014',$q$SELECT to_jsonb(count(*)) FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000006'$q$))::text::int = 1,
+ 'the file the business shared to the contact stays with the contact (P2, a recorded product decision)');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT to_jsonb(count(*)) FROM public.client_files$q$),'0'::jsonb,
+ 'the former person, unlinked, reads nothing');
+SELECT is(pg_temp.foreign_uploads(),'{}'::text[],'and no customer can read or open an upload made by another login');
 
 SELECT * FROM finish();
 ROLLBACK;

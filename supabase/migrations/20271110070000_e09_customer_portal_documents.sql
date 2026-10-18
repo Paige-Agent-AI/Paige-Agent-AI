@@ -16,11 +16,16 @@
 --     (migrations, pg_cron) may move a shared file; it arrives private, its stamp cleared, and the
 --     trigger writes no audit row for it (no such writer exists today). §58: before this release a
 --     move kept the file shared and silently re-shared it with the new client.
---     The other incumbent route to a client is their own upload: the customer read policy shows any
---     'client_upload' row on the customer's contact, and storage serves its object to whoever the row
---     names as uploader. So a signed-in, non-service write may only make a row 'client_upload' (insert,
---     or relabel from another visibility) when its uploader IS that contact's linked login in that
---     business (FILE_CLIENT_UPLOAD_PROVENANCE): the customer's own reservation; never a staff relabel.
+--     The other route to a client is their own upload. Storage (client_files_get, 20271108150000)
+--     serves a client-files object to ANYONE who can see a ready row naming it, provided the object's
+--     owner equals the row's uploader; it never checks that the uploader is the caller. So what a
+--     customer may open is exactly what the read policy lets them see, and the incumbent policy showed
+--     every 'client_upload' row on the contact, whoever uploaded it (another login on the same contact,
+--     or a former one after their link was cleared). The policy is restated (1g.3) to show a
+--     'client_upload' row only to the login that uploaded it, and a 'shared' row only once ready. And a
+--     signed-in, non-service write may only make a row 'client_upload' (insert, or relabel from another
+--     visibility) when its uploader IS that contact's linked login in that business
+--     (FILE_CLIENT_UPLOAD_PROVENANCE): the customer's own reservation; never a staff relabel.
 --     A file's id, object, uploader and business are fixed for signed-in writers
 --     (FILE_IDENTITY_IMMUTABLE); only the tenants foreign key's own ON DELETE SET NULL still passes.
 --   * client_file_owner_begin_upload / client_file_owner_finish_upload — the owner's reservation
@@ -608,6 +613,20 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.client_portal_can_upload_file_object(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_can_upload_file_object(text) TO authenticated,service_role;
+
+-- ── 1g.3 The customer read policy: their own uploads only ───────────────────────────────────────
+-- Restated from 20271108120000:93-95. Storage serves an object to whoever can see its ready row (the
+-- uploader-owns-object check is about the object, not the caller), so this policy is the whole of
+-- what a customer can read AND open. A 'client_upload' row is shown only to the login that uploaded
+-- it: never to another login on the same contact, and never to the next person linked to the contact
+-- after a former person's link is cleared. A 'shared' row is shown only once ready, as the portal list
+-- already shows it. §37 direct customer readers: useClientDocuments.ts confirm() reads the customer's
+-- own upload by id (uploaded_by_user_id = auth.uid(), unaffected) and its signed URLs ride this policy
+-- through client_files_get; every other customer read goes through SECURITY DEFINER RPCs.
+ALTER POLICY "Clients read own shared/uploads" ON public.client_files
+USING (contact_id = public.client_portal_relationship_id(tenant_id)
+  AND ((visibility = 'shared' AND upload_state = 'ready')
+    OR (visibility = 'client_upload' AND uploaded_by_user_id = auth.uid())));
 
 COMMENT ON COLUMN public.client_files.shared_at IS 'When this file was shared with its client. Derived by trg_client_files_share_stamp on every write; set exactly when visibility = shared (client_files_share_stamp_consistent).';
 COMMENT ON COLUMN public.client_files.shared_by IS 'Who shared this file with its client (auth.uid() at the share). Derived by trg_client_files_share_stamp; NULL unless visibility = shared, and NULL for a row shared before this column existed.';

@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
-import { useClientAccount } from "./useClientAccount";
+import { CLIENT_ACCOUNT_MAX, useClientAccount } from "./useClientAccount";
+import { ClientPreferences } from "./ClientPreferences";
 import { useClientAccountExit } from "./useClientAccountExit";
 
 export function ClientAccount() {
@@ -46,8 +47,23 @@ export function ClientAccount() {
               <Input id="client-email" type="email" value={account.profile?.email ?? ""} readOnly aria-describedby="client-email-help" className="min-h-[44px] text-[16px] md:text-[16px]" />
               <p id="client-email-help" className="text-sm text-muted-foreground">Contact your business if this needs to change.</p></div>
             <div className="space-y-2"><Label htmlFor="client-phone">Phone number</Label>
-              <Input id="client-phone" type="tel" autoComplete="tel" value={account.draft.phone} maxLength={200}
-                className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("phone", event.target.value)} /></div>
+              <Input id="client-phone" type="tel" autoComplete="tel" value={account.draft.phone} maxLength={200} aria-describedby="client-phone-help"
+                className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("phone", event.target.value)} />
+              <p id="client-phone-help" className="text-sm text-muted-foreground">To stop texts, use Texts below.</p></div>
+            <div className="space-y-2"><Label htmlFor="client-street">Street address</Label>
+              <Input id="client-street" autoComplete="street-address" value={account.draft.street_address} maxLength={CLIENT_ACCOUNT_MAX.street_address}
+                className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("street_address", event.target.value)} /></div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="space-y-2"><Label htmlFor="client-city">City</Label>
+                <Input id="client-city" autoComplete="address-level2" value={account.draft.city} maxLength={CLIENT_ACCOUNT_MAX.city}
+                  className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("city", event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="client-state">State</Label>
+                <Input id="client-state" autoComplete="address-level1" value={account.draft.state} maxLength={CLIENT_ACCOUNT_MAX.state}
+                  className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("state", event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="client-zip">ZIP code</Label>
+                <Input id="client-zip" autoComplete="postal-code" value={account.draft.zip_code} maxLength={CLIENT_ACCOUNT_MAX.zip_code}
+                  className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("zip_code", event.target.value)} /></div>
+            </div>
           </fieldset>
           <div role={account.outcome === "invalid" ? "alert" : "status"} aria-live="polite" className="min-h-6 text-sm">{account.notice}</div>
           <div className="flex flex-wrap items-center gap-3">
@@ -58,6 +74,9 @@ export function ClientAccount() {
           {account.dirty && <p className="text-sm text-muted-foreground">Save before leaving this page.</p>}
         </form>
       )}
+      {/* E09 Slice 6: messaging preferences and data sharing, read and written through their own seam.
+          Shown once this account's relationship has resolved, and gone with it on sign-out. */}
+      {account.profile && <ClientPreferences key={account.profile.linked_user_id} actorId={account.profile.linked_user_id} onCommitted={() => account.revalidate()} />}
     </section>
   );
 }

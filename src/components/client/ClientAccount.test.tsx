@@ -264,3 +264,79 @@ describe("approved Account personal information", () => {
     expect(host.textContent).toContain("Sign-in destination"); expect(confirm).not.toHaveBeenCalled(); expect(writes()).toHaveLength(0);
   });
 });
+
+// E09 Slice 6 — address editing (reviewer Minor 2) and the preferences section on the same page.
+describe("Account address and preferences (E09 Slice 6)", () => {
+  const prefs = {
+    schema_version: 1, tenant_id: tenant, business_name: "Northwind Studio",
+    email: { state: "on", set_by: null, set_at: null, can_turn_on: false, can_turn_off: true },
+    sms: { state: "not_set", set_by: null, set_at: null, can_turn_on: false, can_turn_off: true },
+    updates: { state: "not_subscribed", set_by: null, set_at: null, can_subscribe: true, can_unsubscribe: false },
+    data_sharing: { allowed: false, updated_at: null },
+    quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false }, read_at: "2026-10-18T12:00:00.000Z",
+  };
+  let shared = false;
+  const reads = () => rpc.mock.calls.filter(x => x[0] === "client_portal_self_profile").length;
+  beforeEach(() => {
+    shared = false;
+    rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => {
+      if (name === "client_portal_self_profile") return { data: row, error: null };
+      if (name === "client_portal_communication_preferences") return { data: { ...prefs, data_sharing: { allowed: shared, updated_at: shared ? "2026-10-18T12:01:00.000Z" : null } }, error: null };
+      if (name === "client_portal_set_shared_context_consent") {
+        // The writer bumps clients.updated_at (update_clients_updated_at) — the open form's version is now stale.
+        shared = args!.p_allow as boolean; row = { ...row!, updated_at: "2026-10-15T18:05:00.000Z" };
+        return { data: { ok: true, replayed: false }, error: null };
+      }
+      if (name !== "client_portal_update_self_profile") throw new Error("Unexpected contract");
+      if (args!.p_expected_updated_at !== row!.updated_at) return { data: null, error: { code: "40001" } };
+      const patch = Object.fromEntries(Object.entries(args!.p_profile as Record<string, string>).map(([k, v]) => [k, v === "" ? null : v]));
+      row = { ...row!, ...patch, updated_at: "2026-10-15T18:01:00.000Z" };
+      return { data: row, error: null };
+    });
+  });
+  const sharing = () => host.querySelector<HTMLButtonElement>('[data-testid="pref-sharing"] [role="switch"]')!;
+
+  it("edits the street address and city through the same versioned writer, and reads them back", async () => {
+    await mount(); await change("Street address", "12 Harbour Lane"); await change("City", "Portland"); await submit();
+    expect(writes()).toEqual([["client_portal_update_self_profile", {
+      p_expected_updated_at: "2026-10-15T18:00:00.000Z", p_tenant_id: tenant, p_profile: { street_address: "12 Harbour Lane", city: "Portland" },
+    }]]);
+    expect(host.textContent).toContain("Information saved"); expect(input("Street address").value).toBe("12 Harbour Lane");
+  });
+  it("a cleared ZIP code sends '' and is confirmed against the writer's NULL", async () => {
+    row = { ...profile(), zip_code: "97201", state: "OR" }; await mount();
+    await change("ZIP code", ""); await submit();
+    expect(writes()[0][1]).toMatchObject({ p_profile: { zip_code: "" } });
+    expect(host.textContent).toContain("Information saved"); expect(input("ZIP code").value).toBe("");
+  });
+  it("the phone still can't be cleared, and points to Texts for stopping texts", async () => {
+    await mount(); await change("Phone number", ""); await submit();
+    expect(writes()).toHaveLength(0); expect(host.textContent).toContain("Enter a phone number");
+    expect(host.querySelector("#client-phone-help")?.textContent).toBe("To stop texts, use Texts below.");
+  });
+  it("caps the street at the writer's 500 characters and the rest at 200", async () => {
+    await mount();
+    expect(input("Street address").maxLength).toBe(500); expect(input("City").maxLength).toBe(200); expect(input("ZIP code").maxLength).toBe(200);
+  });
+  it("mounts the preferences only once the account resolved", async () => {
+    await mount();
+    expect(host.textContent).toContain("How Northwind Studio can reach you");
+    act(() => listener?.("SIGNED_OUT", null)); await flush();
+    expect(host.textContent).not.toContain("How Northwind Studio can reach you");
+  });
+  it("a sharing change re-reads a clean form so its next save carries the new version", async () => {
+    await mount(); const before = reads();
+    act(() => sharing().click()); await flush();
+    expect(reads()).toBe(before + 1);
+    await change("First name", "Updated"); await submit();
+    expect(writes()[0][1]).toMatchObject({ p_expected_updated_at: "2026-10-15T18:05:00.000Z" });
+    expect(host.textContent).toContain("Information saved");
+  });
+  it("a sharing change leaves a dirty form alone; its next save meets the writer's 40001 and keeps the edits", async () => {
+    await mount(); await change("First name", "Draft"); const before = reads();
+    act(() => sharing().click()); await flush();
+    expect(reads()).toBe(before);
+    await submit();
+    expect(host.textContent).toContain("Your information changed in another session"); expect(input("First name").value).toBe("Draft");
+  });
+});

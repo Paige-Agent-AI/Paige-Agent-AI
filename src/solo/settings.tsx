@@ -219,10 +219,12 @@ export const READINESS_COPY: Record<string, { headline: string; next: string }> 
   registration_absent:        { headline: "Texting is not ready yet", next: "Carriers require your business to be registered before any text can send, and nothing has been registered for your business yet." },
   registration_not_approved:  { headline: "Texting is not ready yet", next: "Your registration is prepared but has not been filed with carriers. Texting stays off until it is approved." },
   // Was: "Collect consent through your intake forms first…" — also unbacked. The
-  // ONLY writer of paige_consent_events is the inbound-SMS handler, which records
-  // a grant when a person replies with a START-class keyword. No intake form
-  // records SMS consent, so that sentence sent tenants to do something that
-  // stores nothing (§13).
+  // ONLY writer of an SMS GRANT in paige_consent_events is the inbound-SMS handler,
+  // which records it when a person replies with a START-class keyword. (Other
+  // writers record opt-OUTS — the business's pause, a customer's own portal choice
+  // since E09 Slice 6 — and the portal never records an SMS opt-in, owner D1.) No
+  // intake form records SMS consent, so that sentence sent tenants to do something
+  // that stores nothing (§13).
   no_consent_recorded:        { headline: "Texting is not ready yet", next: "Nobody has agreed to be texted yet. Consent is recorded when a person replies to confirm, and until then every message is held." },
 };
 

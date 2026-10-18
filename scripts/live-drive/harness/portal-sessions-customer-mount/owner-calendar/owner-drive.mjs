@@ -167,8 +167,13 @@ try {
         want(notes.enterChose === "Jordan Riverajordan.rivera@example.test", `Enter after "jor" chose ${notes.enterChose}`);
       }
       if (step === "client-list-current") {
-        // Reopened with nothing typed: the guest row leads and is highlighted; Jordan is marked as the current value.
-        want(/^Not a client.*\(highlighted\)$/.test(m.listRows?.[0] ?? ""), `reopened highlight ${JSON.stringify(m.listRows)}`);
+        // Reopened with nothing typed: the guest row leads, but the highlight starts on the current client
+        // (Jordan), so Enter keeps them instead of quietly swapping in a guest.
+        want(!/\(highlighted\)/.test(m.listRows?.[0] ?? "") && (m.listRows ?? []).some((r) => /^Jordan Rivera.*\(chosen\).*\(highlighted\)$/.test(r)), `reopened highlight ${JSON.stringify(m.listRows)}`);
+        want(m.currentRow?.highlighted === true && m.currentRow.checkGold === false && Number(m.currentRow.nameWeight) >= 600, `current row starts highlighted ${JSON.stringify(m.currentRow)}`);
+      }
+      if (step === "client-list-current-moved") {
+        // The keyboard moved off the current client: its own mark (ink check, weight 600) must still read, distinct from the highlight.
         want(m.currentRow && !m.currentRow.highlighted && m.currentRow.checkGold === false && m.currentRow.checkColor === m.currentRow.nameColor && Number(m.currentRow.nameWeight) >= 600 && m.currentRow.fill !== m.highlightFill, `current vs highlight ${JSON.stringify({ cur: m.currentRow, hl: m.highlightFill })}`);
       }
       if (step === "client-chosen-unassigned") {
@@ -219,6 +224,8 @@ try {
       await combo.click();
       await page.locator(".sc-combo-pop [cmdk-input]").waitFor({ timeout: 10_000 });
       await frame("client-list-current");
+      await page.keyboard.press("ArrowUp");
+      await frame("client-list-current-moved");
       await page.keyboard.press("Escape");
       await page.locator(".sc-combo-pop").waitFor({ state: "hidden", timeout: 5_000 }).catch(() => { notes.listStayedOpenAfterEscape = true; });
       // Closing returns focus to the trigger; let that land before focusing anything else, or it lands late and steals it.

@@ -19,6 +19,16 @@ const httpError = (status: number, body: unknown) =>
   });
 
 describe("structured errors reach their copy", () => {
+  it.each([403, 503])("keeps an unconfirmed sending-domain attempt out of generic retry advice (%s)", async (status) => {
+    const { code, message } = await resolveFunctionError({
+      error: httpError(status, { error: "domain_operation_unconfirmed", operation_outcome: "unconfirmed", message: "untrusted server sentence" }),
+      data: null, action: "remove your sending domain",
+    });
+    expect(code).toBe("domain_operation_unconfirmed");
+    expect(message).toContain("Don’t repeat"); expect(message).toContain("workspace where you started");
+    expect(message).toContain("current sending-domain state");
+    expect(message).not.toContain("try again in a moment"); expect(message).not.toContain("untrusted server sentence");
+  });
   it("reads a plain string code", async () => {
     const { code, message } = await resolveFunctionError({
       error: invokeError(409), data: { error: "number_unavailable" }, action: "buy that number",

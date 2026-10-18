@@ -8,12 +8,12 @@ const TENANT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const OTHER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const CONNECTOR = "44444444-4444-4444-8444-444444444444";
 const VERSION = "2026-10-16T00:00:00.123456Z";
-const state = vi.hoisted(() => ({ tenant: "", actor: "", loading: false, invoke: vi.fn(), connectors: [] as Record<string, unknown>[] }));
+const state = vi.hoisted(() => ({ tenant: "", actor: "", loading: false, canManage: true, invoke: vi.fn(), connectors: [] as Record<string, unknown>[] }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({
   activeTenantId: state.tenant || null, activeUserId: state.actor || null, activeTenant: null, loading: state.loading,
 }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  rpc: vi.fn(async (name: string) => ({ data: name === "is_current_user_tenant_admin" ? true : null, error: null })),
+  rpc: vi.fn(async (name: string) => ({ data: name === "is_current_user_tenant_admin" ? state.canManage : null, error: null })),
   from: (table: string) => {
     const answer = { data: table === "tenants" ? { brand: {} } : table === "channel_connectors" ? state.connectors.slice(0,1) : [], error: null };
     const b = { select: () => b, eq: () => b, order: () => b, limit: () => b,
@@ -36,6 +36,7 @@ async function ready(result: ReturnType<typeof mount>["result"]) {
 }
 beforeEach(() => {
   state.tenant = TENANT; state.actor = "actor-a"; state.loading = false;
+  state.canManage = true;
   state.connectors = [{id:CONNECTOR,updated_at:VERSION,provider:"gmail",from_address:"visible@example.invalid",display_name:"Visible",active:true,status:"active"}];
   state.invoke.mockReset().mockImplementation(async (name: string) => ({
     data: name === "gmail-oauth-start" ? { authorization_url: "https://accounts.google.com/fixture" }
@@ -43,6 +44,34 @@ beforeEach(() => {
   }));
 });
 afterEach(() => { mounted.splice(0).forEach(root => act(() => root.unmount())); });
+
+describe("SOLO sending-domain read and uncertain-result compatibility", () => {
+  it("finishes a current member's legitimate read-only Communications load", async () => {
+    state.canManage = false;
+    state.invoke.mockResolvedValue({data:{domains:[{id:CONNECTOR,domain:"visible.example.invalid",from_email_local:"hello",from_name:"Visible",status:"pending",is_default:false}]},error:null});
+    const {result}=mount(); await ready(result);
+    expect(result.current.error).toBeNull(); expect(result.current.canManage).toBe(false);
+    expect(result.current.domains).toMatchObject([{id:CONNECTOR,domain:"visible.example.invalid"}]);
+    expect(state.invoke.mock.calls.every(([name,options])=>name==="manage-tenant-domain"&&options.body.verb==="list")).toBe(true);
+  });
+  for(const wire of ["body","http-error"]) for(const status of [403,503]) {
+    it(`preserves a domain attempt's closed uncertainty through the real caller (${wire}/${status})`,async()=>{
+      const {result}=mount(); await ready(result); state.invoke.mockClear();
+      const body={error:"domain_operation_unconfirmed",operation_outcome:"unconfirmed",message:"untrusted raw server text"};
+      state.invoke.mockResolvedValue(wire==="body"?{data:body,error:null}:{data:null,error:{context:new Response(JSON.stringify(body),{status})}});
+      let answer: Awaited<ReturnType<typeof result.current.removeDomain>>;
+      await act(async()=>{answer=await result.current.removeDomain(CONNECTOR);});
+      expect(answer!.ok).toBe(false); expect(answer!.error).toContain("Don’t repeat"); expect(answer!.error).toContain("workspace where you started");
+      expect(answer!.error).toContain("current sending-domain state"); expect(answer!.error).not.toContain("try again in a moment"); expect(answer!.error).not.toContain("untrusted raw server text");
+      expect(state.invoke).toHaveBeenCalledTimes(1); expect(state.invoke).toHaveBeenCalledWith("manage-tenant-domain",{body:{verb:"remove",id:CONNECTOR}});
+    });
+  }
+  it("keeps a pre-effect permission refusal distinct from an uncertain attempt",async()=>{
+    const {result}=mount();await ready(result);state.invoke.mockClear();state.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({error:"forbidden"}),{status:403})}});
+    await act(async()=>{const answer=await result.current.removeDomain(CONNECTOR);expect(answer.ok).toBe(false);expect(answer.error).toContain("permission");expect(answer.error).not.toContain("may have started");});
+    expect(state.invoke).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("SOLO Gmail mutations bind the selected workspace without granting authority", () => {
   it("sends the exact visible connector and raw version when another connector exists", async () => {

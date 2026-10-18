@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Globe, RefreshCw, Trash2, Plus, Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
+import { resolveFunctionError } from "@/lib/integrations/connectError";
 
+type DomainDnsRecord = { type?: string; record?: string; name?: string; value?: string };
 type Domain = {
   id: string;
   tenant_id: string;
@@ -17,9 +19,14 @@ type Domain = {
   from_name: string;
   status: string;
   is_default: boolean;
-  dns_records: any[];
+  dns_records: DomainDnsRecord[];
   verified_at: string | null;
 };
+
+function errorMessage(error: unknown): string | undefined {
+  return error && typeof error === "object" && "message" in error && typeof error.message === "string"
+    ? error.message : undefined;
+}
 
 const statusColor = (s: string) =>
   s === "verified" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
@@ -34,10 +41,12 @@ export function EmailDomainsPanel() {
   const [form, setForm] = useState({ domain: "", from_email_local: "no-reply", from_name: "" });
   const { confirm, dialog: confirmDialog } = useConfirm();
 
-  const call = async (verb: string, payload: any = {}) => {
-    const { data, error } = await supabase.functions.invoke("manage-tenant-domain", { body: { verb, ...payload } });
-    if (error) throw error;
-    if ((data as any)?.error) throw new Error((data as any).error);
+  const call = async (verb: string, payload: Record<string, unknown> = {}) => {
+    const { data, error } = await supabase.functions.invoke<{ domains?: Domain[]; error?: unknown }>("manage-tenant-domain", { body: { verb, ...payload } });
+    if (error || data?.error) {
+      const { message } = await resolveFunctionError({ error, data, action: "manage sending domains" });
+      throw new Error(message);
+    }
     return data;
   };
 
@@ -45,9 +54,9 @@ export function EmailDomainsPanel() {
     setLoading(true);
     try {
       const d = await call("list");
-      setDomains((d as any).domains ?? []);
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to load domains");
+      setDomains(d?.domains ?? []);
+    } catch (e: unknown) {
+      toast.error(errorMessage(e) || "Failed to load domains");
     } finally { setLoading(false); }
   };
 
@@ -57,12 +66,12 @@ export function EmailDomainsPanel() {
     if (!form.domain || !form.from_name) { toast.error("Domain and From name are required"); return; }
     setBusy("add");
     try { await call("add", form); toast.success("Domain registered — verify DNS to activate"); setShowAdd(false); setForm({ domain: "", from_email_local: "no-reply", from_name: "" }); await load(); }
-    catch (e: any) { toast.error(e?.message); }
+    catch (e: unknown) { toast.error(errorMessage(e)); }
     finally { setBusy(null); }
   };
 
-  const refresh = async (id: string) => { setBusy(id); try { await call("refresh", { id }); await load(); toast.success("Status refreshed"); } catch (e: any) { toast.error(e?.message); } finally { setBusy(null); } };
-  const setDefault = async (id: string) => { setBusy(id); try { await call("set_default", { id }); await load(); } catch (e: any) { toast.error(e?.message); } finally { setBusy(null); } };
+  const refresh = async (id: string) => { setBusy(id); try { await call("refresh", { id }); await load(); toast.success("Status refreshed"); } catch (e: unknown) { toast.error(errorMessage(e)); } finally { setBusy(null); } };
+  const setDefault = async (id: string) => { setBusy(id); try { await call("set_default", { id }); await load(); } catch (e: unknown) { toast.error(errorMessage(e)); } finally { setBusy(null); } };
   const remove = async (id: string) => {
     const ok = await confirm({
       title: "Remove this sender domain?",
@@ -71,7 +80,7 @@ export function EmailDomainsPanel() {
       destructive: true,
     });
     if (!ok) return;
-    setBusy(id); try { await call("remove", { id }); await load(); } catch (e: any) { toast.error(e?.message); } finally { setBusy(null); }
+    setBusy(id); try { await call("remove", { id }); await load(); } catch (e: unknown) { toast.error(errorMessage(e)); } finally { setBusy(null); }
   };
   const copy = (v: string) => { navigator.clipboard.writeText(v); toast.success("Copied"); };
 
@@ -132,7 +141,7 @@ export function EmailDomainsPanel() {
                   <table className="w-full text-xs">
                     <thead className="text-muted-foreground"><tr><th className="text-left py-1">Type</th><th className="text-left py-1">Name</th><th className="text-left py-1">Value</th><th></th></tr></thead>
                     <tbody>
-                      {d.dns_records.map((r: any, i: number) => (
+                      {d.dns_records.map((r, i) => (
                         <tr key={i} className="border-t border-border/60">
                           <td className="py-1 pr-2 font-mono">{r.type || r.record}</td>
                           <td className="py-1 pr-2 font-mono break-all">{r.name}</td>

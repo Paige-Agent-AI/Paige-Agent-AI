@@ -147,8 +147,8 @@ describe("execute-approval: a send_via_approval approval is never sent and never
     await load(db);
     const r = await approve();
     expect(r.status).toBe(409);
-    expect(r.body).toMatchObject({ ok: false, executed: false, error: "send_requires_review", reason_code: "decline_only", approval_id: A });
-    expect(r.body.reason).toBe("This can be declined for now; sending it from here isn't available yet.");
+    expect(r.body).toMatchObject({ ok: false, executed: false, error: "send_requires_review", reason_code: "review_and_send", approval_id: A });
+    expect(r.body.reason).toBe("This reply goes out only from the business's verified email. Review and send it from the reply screen.");
     expect(db.writes).toEqual([]);          // no claim, no reviewer stamp, no acknowledge
     expect(fetchCalls).toEqual([]);         // send-message never called
     expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
@@ -173,7 +173,7 @@ describe("execute-approval: a send_via_approval approval is never sent and never
     await load(db);
     const r = await approve();
     expect(r.status).toBe(409);
-    expect(r.body.reason_code).toBe("decline_only");
+    expect(r.body.reason_code).toBe("review_and_send");
     expect(db.writes).toEqual([]);
     expect(fetchCalls).toEqual([]);
   });
@@ -376,17 +376,20 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     const db = fakeDb({ paige_pending_approvals: [pending(), other], clients: [contact] }, [], undefined, { cancel_scheduled_message: { data: false, error: null } });
     await load(db);
     const r = await approve();
-    expect(r.status).toBe(202);
+    expect(r.status).toBe(200);
     expect(db.tables.paige_pending_approvals[1].metadata).toEqual({ untouched: true });
-    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, outcome: "queued", link_recorded: true, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
+    expect(r.body).toMatchObject({ ok: false, executed: false, already: "in_progress", link_recorded: true, message_id: "m1" });
+    expect(r.body.queued).toBeUndefined();
+    expect(r.body.scheduled_for).toBeUndefined();
     const row = db.tables.paige_pending_approvals[0];
     expect(row.claimed_at).not.toBeNull();
     expect((row.metadata as Row).send_queued).toMatchObject({ outcome: "queued_quiet_hours", message_id: "m1", cancel_failed: true });
     fetchCalls = [];
-    // A second press is not a success (#2150): it says the copy is scheduled and cannot be approved again,
-    // so no caller flashes "approved" and drops the row while nothing was approved.
+    // A failed cancellation does not prove a queue: the next press is equally uncertain and inert.
     const again = await approve();
-    expect(again.body).toMatchObject({ ok: false, already: "in_progress", queued: true, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z" });
+    expect(again.body).toMatchObject({ ok: false, already: "in_progress", message_id: "m1" });
+    expect(again.body.queued).toBeUndefined();
+    expect(again.body.scheduled_for).toBeUndefined();
     expect(String(again.body.error)).toContain("can't be approved again");
     expect(fetchCalls).toEqual([]);
   });
@@ -405,7 +408,9 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     // #2150 P2a: the write matched ZERO rows (PostgREST reports no error for that). The answer must not
     // claim the link was recorded: it says the copy could not be called back and names it.
     expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ ok: false, executed: false, queued: true, link_recorded: false, message_id: "m1", scheduled_for: "2026-10-14T12:00:00Z", approval_id: A });
+    expect(r.body).toMatchObject({ ok: false, executed: false, already: "in_progress", link_recorded: false, message_id: "m1", approval_id: A });
+    expect(r.body.queued).toBeUndefined();
+    expect(r.body.scheduled_for).toBeUndefined();
     expect(String(r.body.error)).toContain("decided while it was being sent");
     expect(String(r.body.error)).toContain("couldn't be called back");
   });
@@ -609,12 +614,13 @@ describe("execute-approval: a held SMS copy returned to a draft stays ONE messag
     expect(db.tables.paige_pending_approvals[0].status).toBe("approved");
   });
 
-  it("a held draft that no longer exists is not this message any more: one fresh send, no message id", async () => {
+  it("a held draft that no longer exists stays bound and never becomes a replacement send", async () => {
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact], messages: [] });
     await load(db);
-    expect((await approve()).body).toMatchObject({ ok: true, executed: true });
-    expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0].body.message_id).toBeUndefined();
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false });
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null, metadata: { held_draft_message_id: "m1" } });
   });
 
   it("a held draft that cannot be read fails closed: nothing sent, claim released", async () => {
@@ -632,7 +638,7 @@ describe("execute-approval: a held SMS copy returned to a draft stays ONE messag
     expect(fetchCalls).toEqual([]);                                           // nothing sent, the original text included
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: false, executed: false, outcome: "changed_in_conversations", changed, message_id: "m1", approval_id: A });
-    expect(r.body.error).toBe("This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). Nothing was sent: review it in Conversations, or decline it here.");
+    expect(r.body.error).toBe("This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). This approval wasn't completed: review it in Conversations, or decline it here.");
     const row = db.tables.paige_pending_approvals[0];
     expect(row).toMatchObject({ status: "pending", claimed_at: null });      // released, never approved
     expect(row.reviewed_at).toBeUndefined();
@@ -700,28 +706,29 @@ describe("execute-approval: a held SMS copy returned to a draft stays ONE messag
     expect(fetchCalls[0].body).toMatchObject({ message_id: "m1", to: "+15555550100", subject: "S", body: "B" });
   });
 
-  it("a held draft that belongs to ANOTHER business is not this message: it is neither settled on nor sent — one fresh send", async () => {
+  it("a held draft that belongs to ANOTHER business is neither borrowed nor replaced", async () => {
     const OTHER = "10000000-0000-4000-8000-000000000002";
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
       messages: [msg({ tenant_id: OTHER })] });
     await load(db);
     const r = await approve();
-    expect(r.body).toMatchObject({ ok: true, executed: true });
-    expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0].body.message_id).toBeUndefined();                   // the other business's row is never sent
+    expect(r.body).toMatchObject({ ok: false, executed: false });
+    expect(fetchCalls).toEqual([]);
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null, metadata: { held_draft_message_id: "m1" } });
     expect(db.tables.messages[0]).toMatchObject({ tenant_id: OTHER, status: "draft" });
   });
 
-  it("a held draft of ANOTHER business that was already sent does not settle this approval: it is sent fresh, not marked sent-from-Conversations", async () => {
+  it("a sent held draft of ANOTHER business never settles this approval or starts a fresh send", async () => {
     const OTHER = "10000000-0000-4000-8000-000000000002";
     const db = fakeDb({ paige_pending_approvals: [pending({ metadata: { held_draft_message_id: "m1" } })], clients: [contact],
       messages: [msg({ tenant_id: OTHER, status: "sent", sent_at: "2026-10-14T13:00:00Z" })] });
     await load(db);
     const r = await approve();
-    expect(r.body).toMatchObject({ ok: true, executed: true });
+    expect(r.body).toMatchObject({ ok: false, executed: false });
     expect(r.body.already).toBeUndefined();
-    expect(fetchCalls).toHaveLength(1);
-    expect(fetchCalls[0].body.message_id).toBeUndefined();
+    expect(fetchCalls).toEqual([]);
   });
 
   it("declined while the held draft was being read (it had gone out from Conversations): the settle write lands on no row, the approval stays DECLINED", async () => {
@@ -739,5 +746,134 @@ describe("execute-approval: a held SMS copy returned to a draft stays ONE messag
     expect((row.metadata as Row).held_draft_outcome).toBeUndefined();
     const settle = db.writes.find((w) => w.table === "paige_pending_approvals" && w.values.status === "approved");
     expect(settle?.filters).toContainEqual(["eq", "status", "pending"]);
+  });
+});
+
+describe("execute-approval: original held-SMS identity and uncertain cancellation regressions", () => {
+  const metadata = { held_draft_message_id: "m1" };
+  const pending = (meta: Row = metadata) => approval({ category: "followup", type: "cs_draft", metadata: meta,
+    draft_content: { channel: "sms", to: "+15555550100", subject: "S", body: "Approved original body" } });
+  const message = (extra: Row = {}): Row => ({ id: "m1", tenant_id: T, status: "draft", scheduled_for: null, sent_at: null,
+    channel_type: "sms", recipients: [{ address: "+15555550100" }], subject: "S", body_text: "Approved original body", body_html: null, ...extra });
+  beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-10-14T16:00:00Z")); });
+
+  it.each(["sent", "delivered", "read"])("%s is not proof the ORIGINAL approval was sent when content or destination changed", async status => {
+    for (const change of [
+      { body_text: "Edited different price" }, { recipients: [{ address: "+15555550199" }] },
+      { channel_type: "email" }, { body_text: null, body_html: null },
+    ]) {
+      const original = message({ status, sent_at: "2026-10-14T15:00:00Z", ...change });
+      const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [original] });
+      await load(db);
+      const r = await approve();
+      expect(r.body).toMatchObject({ ok: false, executed: false });
+      expect(r.body.already).toBeUndefined();
+      expect(fetchCalls).toEqual([]);
+      expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null, metadata });
+      expect(db.tables.paige_pending_approvals[0].reviewed_at).toBeUndefined();
+      expect(db.writes.some(w => w.values.status === "approved")).toBe(false);
+      expect(db.tables.messages[0]).toEqual(original);
+    }
+  });
+
+  it.each([null, "", 42, {}, [], "  "])("a present but malformed held binding %j never falls through, including a repeat", async id => {
+    const meta = { held_draft_message_id: id };
+    const db = fakeDb({ paige_pending_approvals: [pending(meta)], clients: [contact], messages: [] });
+    await load(db);
+    for (let repeat = 0; repeat < 2; repeat++) {
+      expect((await approve()).body).toMatchObject({ ok: false, executed: false });
+      expect(fetchCalls).toEqual([]);
+      expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null, metadata: meta });
+    }
+  });
+
+  it.each([null, "unknown", "failed"])("unconfirmed held row status %j cannot authorize a fresh dispatch", async status => {
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [message({ status })] });
+    await load(db);
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null, metadata });
+  });
+
+  it.each([
+    ["edited", { status: "sent", body_text: "Different message" }],
+    ["foreign", { status: "sent", tenant_id: "10000000-0000-4000-8000-000000000002" }],
+    ["changed recipient", { status: "delivered", recipients: [{ address: "+15555550199" }] }],
+    ["unconfirmed", { status: "draft" }],
+  ] as [string, Row][])("post-dedupe %s readback cannot settle the original or release ambiguous replay", async (_label, change) => {
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [message()] });
+    sendAnswer = { status: 200, body: { status: "sent", message_id: "m1", deduped: true } };
+    onSend = () => { Object.assign(db.tables.messages[0], change); };
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, executed: false });
+    expect(db.tables.paige_pending_approvals[0].status).toBe("pending");
+    expect(db.tables.paige_pending_approvals[0].claimed_at).not.toBeNull();
+    expect(db.tables.paige_pending_approvals[0].reviewed_at).toBeUndefined();
+    expect(db.writes.some(w => w.values.status === "approved")).toBe(false);
+    expect(fetchCalls).toHaveLength(1);
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false, already: "in_progress" });
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it.each(["missing", "changed", "sent"])("a retired request cannot clear or settle a replacement claim on %s readback", async state => {
+    const replacement = "2026-10-14T16:01:00Z", otherActor = "70000000-0000-4000-8000-000000000002";
+    const messages = state === "missing" ? [] : [message({ status: state === "sent" ? "sent" : "draft", ...(state === "changed" ? { body_text: "Edited" } : {}) })];
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages });
+    onRead = table => { if (table === "messages") Object.assign(db.tables.paige_pending_approvals[0], { claimed_at: replacement, reviewed_by_user_id: otherActor }); };
+    await load(db);
+    const r = await approve();
+    expect(r.body).toMatchObject({ ok: false, executed: false });
+    expect(fetchCalls).toEqual([]);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: replacement, reviewed_by_user_id: otherActor });
+  });
+
+  it.each([false, "rpc-error"])("cancellation %s never claims future delivery for sent/queued/draft/missing rows or a repeated press", async cancel => {
+    for (const status of ["sent", "queued", "draft", "missing"]) {
+      fetchCalls = []; // each loop creates a separate world; count only that world's handoff
+      const messages = status === "missing" ? [] : [message({ status })];
+      const db = fakeDb({ paige_pending_approvals: [pending({})], clients: [contact], messages }, [], undefined,
+        { cancel_scheduled_message: cancel === false ? { data: false, error: null } : { data: null, error: { message: "fixture cancellation unavailable" } } });
+      sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T16:00:00Z", message_id: "m1" } };
+      await load(db);
+      const r = await approve();
+      expect(r.body).toMatchObject({ ok: false, executed: false, already: "in_progress", message_id: "m1", link_recorded: true });
+      expect(r.body.queued).toBeUndefined();
+      expect(r.body.scheduled_for).toBeUndefined();
+      expect(String(r.body.error)).not.toMatch(/goes out|already scheduled|not sent/i);
+      expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending" });
+      expect(db.tables.paige_pending_approvals[0].claimed_at).not.toBeNull();
+      expect(fetchCalls).toHaveLength(1);
+      const again = await approve();
+      expect(again.body).toMatchObject({ ok: false, executed: false, already: "in_progress", message_id: "m1" });
+      expect(again.body.queued).toBeUndefined();
+      expect(again.body.scheduled_for).toBeUndefined();
+      expect(String(again.body.error)).not.toMatch(/goes out|already scheduled|not sent/i);
+      expect(fetchCalls).toHaveLength(1);
+    }
+  });
+
+  it("a pre-send hold cannot clear a replacement held-SMS claim", async () => {
+    const replacement = "2026-10-14T16:01:00Z", otherActor = "70000000-0000-4000-8000-000000000002";
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact], messages: [message()],
+      paige_consent_events: [{ tenant_id: T, channel: "sms", action: "granted", created_at: "2026-10-14T01:00:00Z" }],
+      tenant_comms_preferences: [{ tenant_id: T, autosend_dnd_enabled: true, autosend_dnd_start: "00:00:00", autosend_dnd_end: "23:59:59", autosend_dnd_timezone: "UTC", autosend_dnd_channels: ["sms"] }] });
+    onRead = table => { if (table === "tenant_comms_preferences") Object.assign(db.tables.paige_pending_approvals[0], { claimed_at: replacement, reviewed_by_user_id: otherActor }); };
+    await load(db);
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false, held: true });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: replacement, reviewed_by_user_id: otherActor });
+    expect(fetchCalls).toEqual([]);
+  });
+
+  it.each([true, false])("a cancellation result %s cannot rewrite a replacement claim's linkage", async cancelled => {
+    const replacement = "2026-10-14T16:01:00Z", otherActor = "70000000-0000-4000-8000-000000000002";
+    const db = fakeDb({ paige_pending_approvals: [pending({})], clients: [contact], messages: [message()] }, [], undefined,
+      { cancel_scheduled_message: { data: cancelled, error: null } });
+    onSend = () => { Object.assign(db.tables.paige_pending_approvals[0], { claimed_at: replacement, reviewed_by_user_id: otherActor }); };
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "queued_tenant_dnd", scheduled_for: "2026-10-14T16:00:00Z", message_id: "m1" } };
+    await load(db);
+    expect((await approve()).body).toMatchObject({ ok: false, executed: false, link_recorded: false });
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: replacement, reviewed_by_user_id: otherActor, metadata: {} });
+    expect(fetchCalls).toHaveLength(1);
   });
 });

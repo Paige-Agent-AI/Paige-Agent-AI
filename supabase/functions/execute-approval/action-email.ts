@@ -103,16 +103,16 @@ export const ALREADY_SENT_STATUSES: ReadonlySet<string> = new Set(["sent", "deli
  * the generic "Edge Function returned a non-2xx status code" — the explanation would never reach the person.
  */
 export const DECIDED_MID_SEND_HELD =
-  "Not sent: this was decided while it was being sent. Nothing went out; the copy is an unsent draft in Conversations.";
+  "This approval changed or was decided while it was being sent. The copy was returned to an unsent draft in Conversations.";
 export const DECIDED_MID_SEND_QUEUED =
-  "Heads up: this was decided while it was being sent, but a copy had already been scheduled and couldn't be called back. It goes out when the hold ends; you'll find it in Conversations.";
+  "Heads up: this approval changed or was decided while it was being sent, and the original copy couldn't be called back. Its send status can't be confirmed; check it in Conversations.";
 export const QUEUED_UNCANCELLABLE =
-  "Already scheduled: this message goes out when the hold ends. It can't be approved again, so a second copy can't be sent.";
+  "This message's send status can't be confirmed. It can't be approved again, so a second copy can't be sent. Check the original in Conversations.";
 export const SCHEDULED_FROM_CONVERSATIONS =
   "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
 export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
 export const HELD_DRAFT_CHANGED =
-  "This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). Nothing was sent: review it in Conversations, or decline it here.";
+  "This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). This approval wasn't completed: review it in Conversations, or decline it here.";
 
 /** The held draft's stored content, as the messages row carries it (comms C-1 columns). */
 export interface HeldDraftContent {
@@ -155,7 +155,7 @@ export function heldDraftChange(draft: HeldDraftContent, intended: IntendedSend)
   return null;
 }
 export const HELD_DRAFT_UNCONFIRMED =
-  "Not sent: this message's draft changed while it was being sent and its state couldn't be confirmed. Nothing was sent again. Check Conversations before approving it again.";
+  "This message's original draft or send status can't be confirmed. Check it in Conversations before approving it again.";
 
 /* ───────────────────────── the outbound-message refusal ───────────────────────── */
 
@@ -180,9 +180,10 @@ export interface ApprovalRowForRefusal {
 export interface RefusalResult { status: number; payload: Obj }
 
 const SEND_KIND_EXECUTOR = "send_via_approval";
-const LEAD_REPLY_KIND = "owner.lead_followup";
+const isReviewableEmailKind = (kind: unknown): boolean => kind === "owner.lead_followup"
+  || kind === "client.followup" || kind === "owner.followup_email";
 
-/** What the person can do instead, per kind. Only a reply to a new lead has a review-and-send screen. */
+/** What the person can do instead, per kind. Governed email follow-ups use the existing reply screen. */
 export const SEND_REFUSAL = {
   review_and_send: "This reply goes out only from the business's verified email. Review and send it from the reply screen.",
   decline_only: "This can be declined for now; sending it from here isn't available yet.",
@@ -205,8 +206,8 @@ export function approvalActionId(metadata: unknown): string | null {
  *   null → no send action stands behind this approval: the caller continues exactly as before (§58).
  *   409  → a send_via_approval action does, in any draft shape: refused. No claim, no acknowledge, no
  *          send-message call, no write of any kind. reason_code says what the person can do instead:
- *          review_and_send (a reply to a new lead of this same business) or decline_only (every other
- *          send kind — client.followup, owner.sms_nudge, social.post_publish, ...).
+ *          review_and_send (a supported email follow-up of this same business) or decline_only
+ *          (every other send kind — owner.sms_nudge, social.post_publish, ...).
  *   503  → an action or its kind could not be read: unavailable, never a guess either way.
  * The payload carries nothing read from the action row; a crafted approval naming another business's
  * reply is told decline_only, exactly like any other send it cannot complete here.
@@ -244,7 +245,7 @@ export async function refuseSendKindApproval(admin: SendKindAdmin, approval: App
   if (sends.length === 0) return null;
 
   const tenant = lower(approval.tenant_id);
-  const reviewable = tenant !== "" && sends.every((a) => a.action_kind === LEAD_REPLY_KIND && lower(a.tenant_id) === tenant);
+  const reviewable = tenant !== "" && sends.every((a) => isReviewableEmailKind(a.action_kind) && lower(a.tenant_id) === tenant);
   const code: SendRefusalCode = reviewable ? "review_and_send" : "decline_only";
   return {
     status: 409,

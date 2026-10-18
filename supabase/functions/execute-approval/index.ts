@@ -217,13 +217,16 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (canonicalLayerC && claimError) return json(503, { ok: false, executed: false, error: "approval_claim_unconfirmed" });
   if (!claimed) {
-    // #2150: held by a copy that is already scheduled and could not be called back. Answering "in progress"
-    // with ok:true would let a second press show a success and drop the row while nothing was approved, so
-    // the answer repeats what is true: it goes out when the hold ends, and it cannot be approved again.
+    // An unsuccessful cancellation proves neither a future queue nor an unsent message. Keep the
+    // original correlation and claim sticky, without turning a repeated press into a success receipt.
     const sq = (typeof approval.metadata === "object" && approval.metadata) ? (approval.metadata as Record<string, unknown>).send_queued : null;
     if (sq && typeof sq === "object" && (sq as Record<string, unknown>).cancel_failed === true) {
       const q = sq as Record<string, unknown>;
-      return json(200, { ok: false, executed: false, already: "in_progress", queued: true, outcome: "queued", message_id: q.message_id ?? null, scheduled_for: q.scheduled_for ?? null, error: QUEUED_UNCANCELLABLE, approval_id: approvalId });
+      return json(200, { ok: false, executed: false, already: "in_progress", message_id: q.message_id ?? null, error: QUEUED_UNCANCELLABLE, approval_id: approvalId });
+    }
+    if (metaLc && Object.prototype.hasOwnProperty.call(metaLc, HELD_DRAFT_KEY)) {
+      return json(200, { ok: false, executed: false, already: "in_progress", error: HELD_DRAFT_UNCONFIRMED,
+        message_id: typeof metaLc[HELD_DRAFT_KEY] === "string" ? metaLc[HELD_DRAFT_KEY] : null, approval_id: approvalId });
     }
     return json(200, { ok: true, executed: false, already: "in_progress", approval_id: approvalId });
   }
@@ -366,7 +369,8 @@ Deno.serve(async (req) => {
 
     // HELD (#2132): release the claim — checked, so a hold is never reported while the row stays held.
     const answerHeld = async (reason: HoldReason, retryAfter: string | null, extra: Record<string, unknown> = {}) => {
-      const { error: releaseErr } = await releaseClaim();
+      const { error: releaseErr } = await (channel === "sms" && Object.prototype.hasOwnProperty.call(objectRecord(approval.metadata) ?? {}, HELD_DRAFT_KEY)
+        ? releaseHeldClaim() : releaseClaim());
       if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
       return json(200, heldPayload(reason, retryAfter, channel, approvalId, extra));
     };
@@ -377,6 +381,17 @@ Deno.serve(async (req) => {
     // #2150: the draft an earlier hold returned to Conversations IS this message. Read it first: if it
     // already went out (or is scheduled) from Conversations, nothing is sent again — whatever the hours.
     const apprMeta: Record<string, unknown> = (typeof approval.metadata === "object" && approval.metadata) ? approval.metadata as Record<string, unknown> : {};
+    // Held-SMS observations never release or settle a later request's claim. The canonical Task
+    // path and unrelated generic release behavior above remain unchanged.
+    const releaseHeldClaim = () => admin.from("paige_pending_approvals").update({ claimed_at: null })
+      .eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id);
+    const unconfirmedHeldDraft = async (messageId: string | null, release = true) => {
+      if (release) {
+        const { error: releaseErr } = await releaseHeldClaim();
+        if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      }
+      return json(200, { ok: false, executed: false, error: HELD_DRAFT_UNCONFIRMED, message_id: messageId, approval_id: approvalId });
+    };
     // A legacy held-email approval records only the draft id, not the originally approved sending
     // identity or attachment state. Reading those from the mutable draft now would bless an edit as
     // original authority. Neither a matching body nor a sent status proves the same authorized email.
@@ -387,13 +402,26 @@ Deno.serve(async (req) => {
       if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
       return json(200, { ok: false, executed: false, outcome: "held_email_requires_review", error: HELD_EMAIL_REQUIRES_REVIEW, channel, approval_id: approvalId });
     }
-    const heldDraftId = typeof apprMeta[HELD_DRAFT_KEY] === "string" && apprMeta[HELD_DRAFT_KEY] ? String(apprMeta[HELD_DRAFT_KEY]) : null;
+    const hasHeldDraft = Object.prototype.hasOwnProperty.call(apprMeta, HELD_DRAFT_KEY);
+    const heldDraftId = typeof apprMeta[HELD_DRAFT_KEY] === "string" && String(apprMeta[HELD_DRAFT_KEY]).trim() ? String(apprMeta[HELD_DRAFT_KEY]) : null;
     type HeldMsg = HeldDraftContent & { id: string; tenant_id: string | null; status: string | null; scheduled_for: string | null; sent_at: string | null };
     // The content columns are read too: an edited draft must never be sent with this approval's text (#2150).
     const readHeldDraft = (id: string) => admin.from("messages")
-      .select("id, tenant_id, status, scheduled_for, sent_at, channel_type, recipients, subject, body_html, body_text").eq("id", id).maybeSingle();
+      .select("id, tenant_id, status, scheduled_for, sent_at, channel_type, recipients, subject, body_html, body_text")
+      .eq("id", id).eq("tenant_id", approval.tenant_id).maybeSingle();
     /** Answers for a held draft that already left Conversations; null when the draft can still be sent. */
-    const settleOnHeldDraft = async (msg: HeldMsg): Promise<Response | null> => {
+    const settleOnHeldDraft = async (msg: HeldMsg | null, expectedId: string, afterSend = false): Promise<Response | null> => {
+      if (!msg || msg.id !== expectedId || typeof approval.tenant_id !== "string" || !approval.tenant_id
+        || msg.tenant_id !== approval.tenant_id) return await unconfirmedHeldDraft(expectedId, !afterSend);
+      // A terminal status is not proof that THIS approved content was sent. The same exact-content
+      // predicate applies before both initial and post-dedupe settlement, not just before dispatch.
+      const changed = heldDraftChange(msg, { channel, to, subject: dc.subject ? String(dc.subject) : null, body });
+      if (changed) {
+        if (afterSend) return await unconfirmedHeldDraft(expectedId, false);
+        const { error: releaseErr } = await releaseHeldClaim();
+        if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+        return json(200, { ok: false, executed: false, outcome: "changed_in_conversations", changed, error: HELD_DRAFT_CHANGED, message_id: msg.id, channel, approval_id: approvalId });
+      }
       if (msg.status && ALREADY_SENT_STATUSES.has(msg.status)) {
         // It went out from Conversations: this approval was that message. Close the approval on it (only
         // a row still pending, checked) and send nothing.
@@ -401,9 +429,9 @@ Deno.serve(async (req) => {
         const { data: settled, error: settleErr } = await admin.from("paige_pending_approvals").update({
           status: "approved", reviewed_by_user_id: user.id, reviewed_at: now, sent_at: msg.sent_at ?? null,
           metadata: { ...apprMeta, held_draft_outcome: { state: "sent_from_conversations", message_id: msg.id, at: now } },
-        }).eq("id", approvalId).eq("status", "pending").select("id");
+        }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
         if (settleErr) {
-          await releaseClaim();
+          await releaseHeldClaim();
           return json(500, { ok: false, executed: false, error: "held_draft_settle_failed", detail: settleErr.message, message_id: msg.id, approval_id: approvalId });
         }
         if (!settled || settled.length !== 1) {
@@ -414,34 +442,24 @@ Deno.serve(async (req) => {
       if (msg.status === "queued") {
         // Scheduled from Conversations: it goes out then. Nothing is sent from here; the claim is released
         // so the person can decline this, and every later Approve gets this same answer.
-        const { error: releaseErr } = await releaseClaim();
+        const { error: releaseErr } = await releaseHeldClaim();
         if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
         return json(200, { ok: false, executed: false, queued: true, outcome: "scheduled_elsewhere", error: SCHEDULED_FROM_CONVERSATIONS, message_id: msg.id, scheduled_for: msg.scheduled_for ?? null, channel, approval_id: approvalId });
       }
+      if (msg.status !== "draft") return await unconfirmedHeldDraft(expectedId, !afterSend);
       return null;
     };
     let reuseMessageId: string | null = null;
-    if (heldDraftId) {
+    if (hasHeldDraft) {
+      if (!heldDraftId) return await unconfirmedHeldDraft(null);
       const { data: heldMsg, error: heldErr } = await readHeldDraft(heldDraftId);
       if (heldErr) {
-        await releaseClaim();
+        await releaseHeldClaim();
         return json(503, { ok: false, executed: false, error: "held_draft_read_failed", detail: heldErr.message, message_id: heldDraftId, approval_id: approvalId });
       }
-      // A draft that is gone (or is not this business's) is not this message any more: send fresh.
-      if (heldMsg && (heldMsg.tenant_id ?? null) === (approval.tenant_id ?? null)) {
-        const settled = await settleOnHeldDraft(heldMsg as HeldMsg);
-        if (settled) return settled;
-        // Still unsent — but edited in Conversations? send-message would send THIS approval's text on that row
-        // and mark it sent without rewriting it, so the client would get one message and the thread show
-        // another. Nothing is sent and nothing is approved: the claim is released and the person is told where.
-        const changed = heldDraftChange(heldMsg as HeldMsg, { channel, to, subject: dc.subject ? String(dc.subject) : null, body });
-        if (changed) {
-          const { error: releaseErr } = await releaseClaim();
-          if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
-          return json(200, { ok: false, executed: false, outcome: "changed_in_conversations", changed, error: HELD_DRAFT_CHANGED, message_id: (heldMsg as HeldMsg).id, channel, approval_id: approvalId });
-        }
-        reuseMessageId = (heldMsg as HeldMsg).id;
-      }
+      const settled = await settleOnHeldDraft(heldMsg as HeldMsg | null, heldDraftId);
+      if (settled) return settled;
+      reuseMessageId = heldDraftId;
     }
 
     const preSend = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
@@ -472,10 +490,9 @@ Deno.serve(async (req) => {
       // send-message found the draft already sent or scheduled (from Conversations, in between) and sent
       // nothing. Its dedupe answer says status:'sent' for a scheduled row too, so the row is read back.
       const { data: nowMsg, error: nowErr } = await readHeldDraft(reuseMessageId);
-      const settled = !nowErr && nowMsg ? await settleOnHeldDraft(nowMsg as HeldMsg) : null;
+      const settled = !nowErr ? await settleOnHeldDraft(nowMsg as HeldMsg | null, reuseMessageId, true) : null;
       if (settled) return settled;
-      await releaseClaim();
-      return json(200, { ok: false, executed: false, error: HELD_DRAFT_UNCONFIRMED, message_id: reuseMessageId, approval_id: approvalId });
+      return await unconfirmedHeldDraft(reuseMessageId, false);
     }
     const sendOutcome = classifySendResult(resp.ok, sendResult);
     if (sendOutcome.kind === "queued") {
@@ -492,7 +509,7 @@ Deno.serve(async (req) => {
         // sends that same draft, so the draft and the approval stay one message.
         const { data: linked, error: linkErr } = await admin.from("paige_pending_approvals").update({
           claimed_at: null, metadata: { ...apprMeta, [HELD_DRAFT_KEY]: sendOutcome.messageId },
-        }).eq("id", approvalId).eq("status", "pending").select("id");
+        }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
         if (linkErr) {
           console.error(`[execute-approval] approval ${approvalId}: held draft ${sendOutcome.messageId} could not be recorded: ${linkErr.message}`);
           return json(500, { ok: false, executed: false, error: "held_draft_link_not_recorded", detail: linkErr.message, returned_to_draft_message_id: sendOutcome.messageId, approval_id: approvalId });
@@ -506,29 +523,28 @@ Deno.serve(async (req) => {
           ...(channel === "email" ? { error: HELD_EMAIL_REQUIRES_REVIEW } : {}),
         }));
       }
-      // It could not be cancelled, so it WILL go out when the hold ends. The claim is KEPT: releasing it
+      // Cancellation false/error does not prove whether it is queued, claimed, sent or gone. The claim is KEPT: releasing it
       // would let a second Approve queue a second copy to the same person. The link is recorded and its
       // write is checked; if it fails, the answer is a 500 carrying the message id, never a success.
       // The write must land on exactly ONE row still pending (#2150 P2a): PostgREST reports no error when the
       // filter matches nothing, so the match is read back rather than assumed.
       const { data: linked, error: linkErr } = await admin.from("paige_pending_approvals").update({
         metadata: { ...apprMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, cancel_failed: true, at: new Date().toISOString() } },
-      }).eq("id", approvalId).eq("status", "pending").select("id");
+      }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
       if (linkErr) {
         console.error(`[execute-approval] approval ${approvalId}: queued message ${sendOutcome.messageId} could not be cancelled and the link could not be recorded: ${linkErr.message}`);
-        return json(500, { ok: false, executed: false, error: "queued_link_not_recorded", detail: linkErr.message, message_id: sendOutcome.messageId, scheduled_for: sendOutcome.scheduledFor, approval_id: approvalId });
+        return json(500, { ok: false, executed: false, error: "queued_link_not_recorded", detail: linkErr.message, message_id: sendOutcome.messageId, approval_id: approvalId });
       }
       if (!linked || linked.length !== 1) {
-        // Decided while send-message ran, and the copy it queued could not be cancelled: it WILL go out.
-        // Say exactly that — never "recorded" — with the message id so it can be found.
+        // Decided while send-message ran; cancellation did not confirm the original copy's state.
         console.error(`[execute-approval] approval ${approvalId}: decided mid-send; queued message ${sendOutcome.messageId} could not be cancelled and is not linked`);
         return json(200, {
-          ok: false, executed: false, queued: true, outcome: "queued", link_recorded: false, message_id: sendOutcome.messageId,
-          scheduled_for: sendOutcome.scheduledFor, channel, error: DECIDED_MID_SEND_QUEUED, approval_id: approvalId,
+          ok: false, executed: false, already: "in_progress", link_recorded: false, message_id: sendOutcome.messageId,
+          channel, error: DECIDED_MID_SEND_QUEUED, approval_id: approvalId,
         });
       }
-      return json(202, {
-        ok: false, executed: false, queued: true, outcome: "queued", link_recorded: true, message_id: sendOutcome.messageId, scheduled_for: sendOutcome.scheduledFor, channel,
+      return json(200, {
+        ok: false, executed: false, already: "in_progress", link_recorded: true, message_id: sendOutcome.messageId, channel,
         error: QUEUED_UNCANCELLABLE,
         approval_id: approvalId,
       });

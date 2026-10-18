@@ -1186,7 +1186,9 @@ jobs:
 
       - name: Smoke — OpenAI Responses adapter (governed function tools only, chat-shaped SSE, truthful trace)
         if: ${{ !cancelled() }}
-        run: npm run test:openai-responses
+        run: |
+          npm run test:openai-responses
+          node --import ./scripts/client-memory-authz/register.mjs scripts/proof/chat-openai-stream-batching.mjs
 
       - name: Smoke — active-account Knowledge scope (§9 tenant KB fail-closed)
         if: ${{ !cancelled() }}

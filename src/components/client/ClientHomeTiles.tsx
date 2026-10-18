@@ -19,6 +19,7 @@ import {
   type PortalProgressSummary,
 } from "@/hooks/useClientPortalProgress";
 import { useMyActions } from "@/hooks/useMyActions";
+import { usePortalDocumentsGlance, type PortalDocumentsGlance } from "@/hooks/usePortalDocumentsGlance";
 import {
   Target,
   TrendingUp,
@@ -53,7 +54,6 @@ type Counts = {
   goals: number | null;
   creditPulls: number | null;
   applications: number | null;
-  documents: number | null;
   messages: number | null;
 };
 
@@ -61,7 +61,6 @@ const EMPTY: Counts = {
   goals: null,
   creditPulls: null,
   applications: null,
-  documents: null,
   messages: null,
 };
 
@@ -81,6 +80,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   const businessName = brand?.tenant_name?.trim() || "your team";
   const next = useNextPortalSession(isCustomer);
   const progress = usePortalProgressGlance(isCustomer);
+  const documents = usePortalDocumentsGlance(isCustomer);
   const [counts, setCounts] = useState<Counts>(EMPTY);
   const [loading, setLoading] = useState(true);
 
@@ -90,11 +90,11 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
     (async () => {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
-      const [goals, credit, apps, docs, msgs] = await Promise.all([
+      // Documents are counted from the customer's own Documents read (usePortalDocumentsGlance), not here.
+      const [goals, credit, apps, msgs] = await Promise.all([
         untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId),
-        untypedDb.from("documents").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
       ]);
       if (cancelled) return;
@@ -102,7 +102,6 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         goals: goals.count ?? 0,
         creditPulls: credit.count ?? 0,
         applications: apps.count ?? 0,
-        documents: docs.count ?? 0,
         messages: msgs.count ?? 0,
       });
       setLoading(false);
@@ -208,22 +207,16 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         />
       )}
 
-      {/* 4. Documents */}
-      {counts.documents && counts.documents > 0 ? (
-        <FilledTile
-          icon={<FileText className="w-4 h-4" />}
-          title="Documents"
-          count={counts.documents}
-          label="uploaded"
-          onClick={() => navigate("/app/business")}
-        />
+      {/* 4. Documents — the same reads as /app/documents (E09 Slice 4) */}
+      {isCustomer && documents.state !== "unavailable" ? (
+        <DocumentsTile glance={documents} businessName={businessName} />
       ) : (
         <EmptyTile
           icon={<FileText className="w-6 h-6" />}
           title="No documents yet"
-          description={`Keep your important files in one place so ${coachName} can reference them when you need them.`}
-          actionLabel="Upload your first document"
-          onAction={() => navigate("/app/business")}
+          description={`Files ${businessName} shares with you, and documents you send them, live in Documents.`}
+          actionLabel="Open documents"
+          onAction={() => navigate("/app/documents")}
         />
       )}
 
@@ -372,6 +365,41 @@ function ProgressTile({ glance, businessName }: { glance: ProgressGlance; busine
               </span>
             )
             : summary.open > 0 ? `${summary.open} still open` : "Everything shared is done"}
+    />
+  );
+}
+
+type DocumentsGlance = Exclude<PortalDocumentsGlance, { state: "unavailable" }>;
+
+/**
+ * What is in the customer's Documents: work waiting for their review leads, then files shared with them
+ * and their own uploads. Opens /app/documents. A failed read never shows as zero.
+ */
+function DocumentsTile({ glance, businessName }: { glance: DocumentsGlance; businessName: string }) {
+  if (glance.state === "loading") return <TileSkeleton testId="documents-tile-loading" />;
+  const ready = glance.state === "ready" ? glance : null;
+  const none = ready ? ready.shared + ready.fromYou + ready.awaitingReview === 0 : false;
+  const files = ready ? ready.shared + ready.fromYou : 0;
+  return (
+    <LinkTile
+      to="/app/documents"
+      testId="documents-tile"
+      icon={<FileText className="w-4 h-4" aria-hidden="true" />}
+      title="Documents"
+      dashed={none}
+      failed={!ready}
+      quiet={none}
+      openLabel="Open documents"
+      headline={!ready ? "Couldn't check right now"
+        : none ? "Nothing here yet"
+          : ready.awaitingReview > 0 ? `${ready.awaitingReview} awaiting your review`
+            : `${files} ${files === 1 ? "file" : "files"}`}
+      detail={!ready
+        ? "Open Documents to try again."
+        : none
+          ? `Files ${businessName} shares with you will appear here. You can upload documents for them too.`
+          : [ready.shared > 0 ? `${ready.shared} shared by ${businessName}` : null, ready.fromYou > 0 ? `${ready.fromYou} from you` : null]
+            .filter(Boolean).join(" · ") || "No files yet"}
     />
   );
 }

@@ -68,6 +68,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   from: editorHarness.from,
   auth: {
     getUser: async () => ({ data: { user: { id: "actor-test" } }, error: null }),
+    getSession: async () => ({ data: { session: { user: { id: "actor-test" } } }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
   },
 } }));
@@ -1320,9 +1321,13 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(reads).toEqual([["read_client_engagement_status", { _expected_tenant_id: "tenant-solo", _contact_id: "p-1" }]]);
       // E09 Slice 3: what the client sees, chosen item by item, sits directly under it — on the SAME one read.
       expect(body?.children[1]?.id).toBe("client-shared-work");
+      // E09 Slice 4: this client's files come next.
+      expect(body?.children[2]?.id).toBe("client-files");
       // The other record sections are all still there, after it (§58).
       expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
-        ["Where Supplied Person stands", "Shared with Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+      // The static "upload is not exposed here" card now says where the live library is.
+      expect(host.textContent).toContain("Client files · LIVE");
     } finally {
       act(() => root.unmount());
       host.remove();
@@ -1351,6 +1356,13 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(mounts).toHaveLength(1);
     expect(mounts[0].trim().startsWith("{standing && <ClientSharedWork")).toBe(true);
     expect(source).toContain('const standing = routeTier === "solo" && hasTierFeature("client_standing")');
+  });
+
+  it("E09 Slice 4 (D1): the file library mounts only behind the same standing gate (Solo + client_standing)", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientFiles[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientFiles")).toBe(true);
   });
 
   it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {

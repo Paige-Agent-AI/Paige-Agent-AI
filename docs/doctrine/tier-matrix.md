@@ -4801,3 +4801,31 @@ consultant, agency, funding) gain it. Agreements is the one entry held back from
 was never theirs: its route is still the platform-terms page. Harness frames
 (`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
 in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.
+
+### Customer Portal — Documents, `/app/documents` + "Files for {client}" on the Solo client record + client release in the Operations work item (E09 Slice 4, 2026-10-18)
+
+Owner decision (2026-10-17): the customer sees only what the business explicitly shares. Files stay in
+the one canonical store (`client_files` + the private `client-files` bucket); released work stays in
+`operations_delivery_client_releases`. A file the business adds starts private (D1) and is shared one
+file at a time (`client_file_set_client_share`, SECURITY DEFINER, owner/admin of the current workspace via
+`is_tenant_admin`, version-checked, audited, no notification — D4). The customer read is
+`client_portal_documents` (shared and finished files, plus the customer's own uploads; no description,
+uploader or private file); files open through 60-second signed links. Released work is reviewed and
+accepted on `/app/documents` through the existing client review; releasing needs a second team member
+as reviewer (D2) and exists only for standalone, top-level businesses (D3). Paige's `crm_file_document`
+routes a same-client visibility change to the same share writer.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Owner file library / share (`client_file_owner_list`, `_begin_upload`, `_finish_upload`, `client_file_set_client_share`) | None: no membership, refused at the caller step | None: `CLIENT_FILES_UNAVAILABLE`, nothing mounted | ✓ owner/admin, on the client record ("Files for {client}", `client_standing` gate); a plain member is refused | Allowed by the server (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | Allowed by the server; not mounted | — | no grant | PROOF OWED |
+| Owner release work (prepare, internal review, release to the client) | None | None: release RPCs require a standalone business | ✓ in the Operations work item for client work inside a project, only with 2 or more active members; one-member teams see "Releasing work needs a second person on your team to review it." | None: release RPCs refuse child tenants | None: release RPCs refuse it | — | — | PROOF OWED |
+| Customer documents `/app/documents` and the Home Documents tile (`client_portal_documents`) | — | — | — | — | — | ✓ own relationship: shared and finished files plus their own uploads; uploads back (unchanged); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer released work on `/app/documents` (`operations_delivery_client_reviews_scoped` / `_read_scoped` / `_decide_scoped`) | — | — | — | — | — | ✓ reads and decides only their own releases, from a standalone business; the section is hidden where releases are not offered; client and business must be active | denied | PROOF OWED |
+| Paige files / shares a document from chat (`crm_file_document` → the share writer for a visibility-only change) | — | — | ✓ business accounts (risk high, owner confirms) | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_documents.sql`) covers the share stamp, owner and customer reads,
+other-client and other-business refusals, the version check, state replay, the customer upload pipeline,
+the customer-delete fold-in and the reservation-required staff PUT. §58: the unreachable admin
+`ContactFilesPanel` upload (PUT then direct insert) no longer works because a staff PUT now needs a
+reservation; the panel is not deleted. Authenticated owner upload/share and customer read/decide on
+production are owed.

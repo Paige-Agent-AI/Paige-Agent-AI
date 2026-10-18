@@ -37,6 +37,7 @@ import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsE
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
 import { ClientSharedWork } from "./ClientSharedWork";
+import { ClientFiles } from "./ClientFiles";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import "./tenant-relationships-clients-workspace.css";
@@ -670,6 +671,8 @@ function ClientRecord({
         {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
         {/* E09 Slice 3: what this client sees in their portal, chosen item by item. Same gate as standing (Solo only, §60/D1). */}
         {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
+        {/* E09 Slice 4: this client's files — private until shared, file by file. Same gate (Solo only, §60/D1). */}
+        {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">
@@ -716,7 +719,9 @@ function ClientRecord({
             <article><div><strong>Conversations · PARTIAL</strong><span>The canonical Conversations owner remains the only inbox. Selected-client context handoff is not yet proven.</span></div></article>
             <article><div><strong>Sales owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
             <article><div><strong>Portal access · PARTIAL</strong><span>Configuration and invitations remain in existing Portal owners; this record does not prove their role gates.</span></div></article>
-            <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>
+            {standing
+              ? <article><div><strong>Client files · LIVE</strong><span>On this record, under Files for {person.name}. Files stay separate from the business Vault and private until you share them.</span></div></article>
+              : <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>}
           </div>
         </section>
 
@@ -822,7 +827,7 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
         <article><UserRound aria-hidden /><div><strong>Requests and action items</strong><span>UNAVAILABLE · no aggregate workflow contract is connected.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Portal access</strong><span>PARTIAL · invite and access state remains on the selected client record.</span></div></article>
         <article><UserRound aria-hidden /><div><strong>Engagement progress</strong><span>UNAVAILABLE here · sharing work with a client is on the Solo client record; this account's client record does not offer it yet.</span></div></article>
-        <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · existing seams vary by authorized account.</span></div></article>
+        <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · files you share on each Solo client record appear in their portal; agreements unchanged.</span></div></article>
       </div>
       <div className="trc-integrity"><ShieldCheck aria-hidden /><p><strong>Preview is not impersonation.</strong> Client-facing projection never grants staff a client session.</p></div>
       <div className="trc-portal-links">

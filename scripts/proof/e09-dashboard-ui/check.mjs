@@ -141,7 +141,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     await page.getByRole("tab", { name: "Overview", exact: true }).click();
     await page.getByRole("tab", { name: /Experience/, exact: true }).click();
     assert.equal(await page.getByRole("textbox", { name: "Headline", exact: true }).inputValue(), "Unsaved source-proof greeting");
-    const save = page.getByRole("button", { name: "Save portal", exact: true });
+    const save = page.getByRole("button", { name: "Save brand, greeting & agent", exact: true });
     assert.equal(await save.evaluate((node) => getComputedStyle(node).boxShadow), "none");
     await save.hover();
     assert.equal(await save.evaluate((node) => getComputedStyle(node).boxShadow), "none");
@@ -150,7 +150,7 @@ async function renderCase({ width, height, open, theme, tenant, state = "content
     await page.locator(".trc-panel--portal").evaluate((node) => { node.scrollTop = 0; });
     await page.mouse.move(8, 8);
     const saveBounds = await save.boundingBox();
-    assert.ok(saveBounds && saveBounds.y >= 0 && saveBounds.y + saveBounds.height <= height, "editor verdict capture must include Save portal");
+    assert.ok(saveBounds && saveBounds.y >= 0 && saveBounds.y + saveBounds.height <= height, "editor verdict capture must include the header save");
     await page.screenshot({ path: path.join(output, "experience-editor-draft.png") });
   }
   await page.close();

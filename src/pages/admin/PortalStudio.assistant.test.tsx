@@ -35,7 +35,7 @@ const change = (name: string, value: string) => act(() => {
   Object.getOwnPropertyDescriptor(el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, "value")!.set!.call(el, value);
   el.dispatchEvent(new Event("input", { bubbles: true }));
 });
-const save = () => [...container.querySelectorAll("button")].find(el => el.textContent?.includes("Save portal"))!;
+const save = () => [...container.querySelectorAll("button")].find(el => el.textContent?.includes("Save brand, greeting & agent"))!;
 const render = () => act(() => { root.render(<QueryClientProvider client={qc}><PortalStudio embedded /></QueryClientProvider>); });
 beforeEach(async () => {
   db.tenant = "test-business-a"; db.config = { assistant: { enabled: true, display_name: "Saved guide", tone: "Clear", service_scope: "Client services", human_handoff: "Contact the team" } };

@@ -22,9 +22,7 @@ import {
   type PortalMessage,
 } from "@/hooks/useClientPortalMessages";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
-import { useClientPortalConfigState } from "@/hooks/useClientPortalConfig";
-import { usePlaybook } from "@/lib/playbook";
-import { applyPortalOverlay, catalogRoutableItems } from "@/lib/portal/moduleNav";
+import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useClientAccountExit } from "@/components/client/useClientAccountExit";
@@ -203,14 +201,15 @@ export default function Messages() {
   const help = params.get("topic") === "help";
   const thread = useClientPortalMessages();
   const brand = useClientPortalBrand();
-  const pb = usePlaybook();
-  const { config: portalConfig } = useClientPortalConfigState();
+  // "Browse resources first" offers Resources only when it is in THIS customer's menu: the same sections
+  // AppNav renders, from the business's own catalog and overlay (E09 Slice M, §57) — never a second computation.
+  const { sections: menu, ready: menuReady } = useCustomerPortalNav();
   const businessName = brand?.tenant_name?.trim() || "your team";
   const accent = brand?.tenant_id && brand.tenant_id === thread.tenantId ? brand.primary_color : null;
   const accentStyle = accent ? { backgroundColor: accent, color: readableTextOn(accent) } : undefined;
   const hasLearn = useMemo(
-    () => applyPortalOverlay(catalogRoutableItems(pb.portal.modules), portalConfig.modules).some((i) => i.href === "/app/learn"),
-    [pb.portal.modules, portalConfig.modules],
+    () => menuReady && menu.some((section) => section.items.some((i) => i.href === "/app/learn")),
+    [menu, menuReady],
   );
 
   // Drafts belong to the signed-in identity: a scope change retires them. A draft carries whether it

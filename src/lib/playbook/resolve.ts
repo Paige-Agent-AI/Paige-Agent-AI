@@ -18,7 +18,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { generalDefault, RESOLVABLE_PLAYBOOKS } from "./presets";
-import type { IntakeField, JourneyStage, Playbook, ProbingQuestion, QuickAction } from "./types";
+import type { IntakeField, JourneyStage, Playbook, PortalConfig, ProbingQuestion, QuickAction } from "./types";
+import { boundCatalogModules, type PortalCatalogInput } from "@/hooks/useClientPortalConfig";
 
 /** Resolve a playbook by slug, falling back to the coaching default. */
 export function getPlaybookBySlug(slug?: string | null): Playbook {
@@ -36,12 +37,13 @@ export function getPlaybookBySlug(slug?: string | null): Playbook {
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
+/** coercePlaybook's acceptance test, on its own: an object whose persona has a string name and greeting. */
+const isUsableAuthored = (raw: unknown): raw is Record<string, unknown> & { persona: Record<string, unknown> & { name: string; greeting: string } } =>
+  isRecord(raw) && isRecord(raw.persona) && typeof raw.persona.greeting === "string" && typeof raw.persona.name === "string";
+
 function coercePlaybook(raw: unknown): Playbook | null {
-  if (!isRecord(raw)) return null;
+  if (!isUsableAuthored(raw)) return null;
   const persona = raw.persona;
-  if (!isRecord(persona) || typeof persona.greeting !== "string" || typeof persona.name !== "string") {
-    return null;
-  }
   const arr = <T,>(v: unknown, min = 0): T[] => (Array.isArray(v) && v.length >= min ? (v as T[]) : []);
   // Merge over the coaching default so a partial authored playbook still yields
   // a complete, renderable Playbook (missing sections inherit sane neutral copy).
@@ -66,9 +68,40 @@ function coercePlaybook(raw: unknown): Playbook | null {
     // An authored [] means no questions; only absent/non-array intake inherits the starter.
     intake: Array.isArray(raw.intake) ? arr<IntakeField>(raw.intake) : generalDefault.intake,
     portal: isRecord(raw.portal) && Array.isArray((raw.portal as { modules?: unknown }).modules)
-      ? (raw.portal as Playbook["portal"])
+      ? (raw.portal as unknown as Playbook["portal"])
       : generalDefault.portal,
   };
+}
+
+/** The Playbook a tenant's `features` resolve to: authored and usable, else its slug, else the default. */
+export function resolveActivePlaybookFromFeatures(features: Record<string, unknown>): Playbook {
+  const authored = coercePlaybook(features.playbook_config);
+  if (authored) return authored;
+  return getPlaybookBySlug(typeof features.playbook === "string" ? features.playbook : null);
+}
+
+// --- The portal menu catalog (E09 Slice M) ------------------------------------
+// A customer cannot read `tenants` (RLS), so the server hands them only the menu inputs — `_catalog` from
+// get_client_portal_config — and the client resolves them with coercePlaybook's precedence. The owner side
+// derives the SAME input from its own `tenants.features`, so both ends resolve one catalog (§57).
+
+/** The `_catalog` the server computes, derived from `tenants.features` on the owner side. */
+export function catalogInputFromFeatures(features: Record<string, unknown> | null | undefined): PortalCatalogInput {
+  const f = isRecord(features) ? features : {};
+  const config = f.playbook_config;
+  const portal = isRecord(config) ? config.portal : undefined;
+  return {
+    slug: typeof f.playbook === "string" ? f.playbook : null,
+    authoredUsable: isUsableAuthored(config),
+    modules: boundCatalogModules(isRecord(portal) ? portal.modules : undefined),
+  };
+}
+
+/** The portal module catalog for a catalog input: authored modules, else the slug's, else the default's. */
+export function resolvePortalCatalog(input: PortalCatalogInput | null | undefined): PortalConfig["modules"] {
+  if (!input) return generalDefault.portal.modules;
+  if (input.authoredUsable) return input.modules ?? generalDefault.portal.modules;
+  return getPlaybookBySlug(input.slug).portal.modules;
 }
 
 /**
@@ -97,12 +130,7 @@ export async function resolveActivePlaybook(): Promise<Playbook> {
       .eq("id", tenantId)
       .maybeSingle();
     const features = (tenant?.features ?? {}) as Record<string, unknown>;
-
-    const authored = coercePlaybook(features.playbook_config);
-    if (authored) return authored;
-
-    const slug = typeof features.playbook === "string" ? features.playbook : null;
-    return getPlaybookBySlug(slug);
+    return resolveActivePlaybookFromFeatures(features);
   } catch {
     return generalDefault;
   }

@@ -11,7 +11,10 @@ export const DialPadTrigger = () => null;
 export const PaigeAIChat = () => <p>Synthetic PAIGE content. No conversation or execution.</p>;
 export const useTierFeatures = () => ({ has: () => true, loading: false });
 export const useTenantContext = () => ({ activeTenantId: options.tenant, activeUserId: "test-actor-a", activeTenant: { id: options.tenant, name: "Test Service Studio", account_type: "standalone", parent_tenant_id: null }, accountContextStatus: "ready", accountContextLoading: false, refresh: async () => {} });
-export const usePlaybook = () => ({ portal: { modules: [{ key: "home", label: "Home" }, { key: "learn", label: "Learning" }, { key: "agreements", label: "Agreements" }, { key: "actions", label: "Action items" }] } });
+const proofModules = [{ key: "home", label: "Home" }, { key: "learn", label: "Learning" }, { key: "agreements", label: "Agreements" }, { key: "actions", label: "Action items" }];
+export const usePlaybook = () => ({ portal: { modules: proofModules } });
+// E09 Slice M: the owner-side catalog read the menu editor and dashboard preview use (same synthetic catalog).
+export const usePortalCatalogInput = () => ({ data: { slug: null, authoredUsable: true, modules: proofModules }, isLoading: false, isError: false, refetch: async () => {} });
 const rejectWrite = async () => { throw new Error("Source proof never executes a business action."); };
 const brand = { product_name: "Test Service Studio", primary_color: "#2f463b", accent_color: "#ddb578", font: null, tagline: "Space to move your work forward.", logo_url: null };
 export const useBrandKit = () => ({ state: { own: {}, effective: brand, tenantName: "Test Service Studio" }, isLoading: false, isError: false, saving: false, refetch: async () => {}, save: rejectWrite, setLogo: rejectWrite, clearLogo: rejectWrite });

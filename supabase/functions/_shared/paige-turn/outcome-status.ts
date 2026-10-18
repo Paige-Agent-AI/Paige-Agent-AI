@@ -1,10 +1,10 @@
-export interface ExecutorStatus { executor?: string | null; terminal?: boolean; stopped?: boolean }
+export interface ExecutorStatus { executor?: string | null; terminal?: boolean; stopped?: boolean; recovery_read_only?: boolean }
 export interface OutcomeObservation { outcome: string; verified_readback: boolean }
 export async function readInteractiveOutcomeStatus(input: {
   state(): Promise<ExecutorStatus>;
   readOutcome?: () => Promise<OutcomeObservation | undefined>;
   readWork?: () => Promise<Readonly<Record<string, unknown>> | null>;
-}): Promise<{ executor_active: boolean; settled: boolean; original_operation?: OutcomeObservation; durable_work?: Readonly<Record<string, unknown>> | null }> {
+}): Promise<{ executor_active: boolean; settled: boolean; recovery_read_only?: boolean; original_operation?: OutcomeObservation; durable_work?: Readonly<Record<string, unknown>> | null }> {
   let state = await input.state();
   let original_operation: OutcomeObservation | undefined;
   let durable_work: Readonly<Record<string, unknown>> | null = null;
@@ -21,6 +21,7 @@ export async function readInteractiveOutcomeStatus(input: {
   if (input.readOutcome || input.readWork) state = await input.state();
   return { executor_active: state.executor !== null,
     settled: state.executor === null && (state.terminal === true || state.stopped === true),
+    ...(typeof state.recovery_read_only === 'boolean' ? { recovery_read_only: state.recovery_read_only } : {}),
     ...(original_operation ? { original_operation } : {}),
     ...(input.readWork ? { durable_work } : {}) };
 }

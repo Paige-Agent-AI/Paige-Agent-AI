@@ -916,6 +916,8 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/chat-control-rate.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-acquire-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-conversational-handler-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-check.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
@@ -987,6 +989,7 @@ jobs:
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation" node scripts/int346-isolation-db-check.mjs
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_isolation_race
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_isolation_race" node scripts/int346-isolation-db-check.mjs --real-window-race
+          OPERATOR_PROOF_PSQL="$PGBIN/psql" node scripts/int346-runtime-recovery-db-check.mjs "$PORT"
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_answer_admission
           PSQL_BIN="$PGBIN/psql" INT336_DATABASE_URL="postgresql://postgres@127.0.0.1:$PORT/int336_test_answer_admission" node --import ./scripts/knowledge-scope/register.mjs scripts/int336-answer-admission-check.mjs --native-db
           "$PGBIN/createdb" -h 127.0.0.1 -p "$PORT" -U postgres int336_test_publication

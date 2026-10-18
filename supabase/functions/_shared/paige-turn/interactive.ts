@@ -10,6 +10,14 @@ export interface InteractiveAcceptance {
   turn_id?: string | null;
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Server environment only. Missing hosted identity preserves the old unbound
+ * lane; it never becomes positive recovery evidence. Mint the nonce per HTTP
+ * request, not per isolate (which can serve concurrent requests). */
+export function interactiveRuntimeIdentity(executionId: unknown, deploymentId: unknown, requestNonce: string) {
+  return typeof executionId === "string" && UUID.test(executionId) && UUID.test(requestNonce)
+    && typeof deploymentId === "string" && /^[a-z0-9]{10,32}_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_[0-9]{1,12}$/.test(deploymentId)
+    ? { executionId: executionId.toLowerCase(), deploymentId, requestNonce: requestNonce.toLowerCase() } : null;
+}
 export interface InteractiveEffect {
   tool: string;
   outcome: "outcome_unknown" | "reported_success" | "reported_failure" | "approval_required" | "durable_accepted";
@@ -41,6 +49,11 @@ function declaresClosedRead(tool: string, spine: readonly ReadDeclaration[]) {
   const kinds = outcome?.kinds;
   return action?.classification === "read" && action.riskPolicyKey === "read_only" && action.approvalAuthority === "none"
     && Array.isArray(kinds) && kinds.length === 4 && ["available", "needs_input", "refused", "unavailable"].every(status => kinds.includes(status));
+}
+/** Intersect the incumbent admitted-read lane with authoritative Spine metadata.
+ * This grants neither seat access nor native record visibility. */
+export function interactiveRecoveryReadAllowed(tool: string, admitted: ReadonlySet<string>, spine: readonly ReadDeclaration[]) {
+  return admitted.has(tool) && declaresClosedRead(tool, spine);
 }
 function readHasEffectContradiction(r: Record<string, unknown>) {
   return ["success", "ok", "outcome", "code", "error", "outcome_unknown", "accepted", "needs_confirm", "queued",

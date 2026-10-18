@@ -27,6 +27,9 @@ const mutations=[
  ['server persona substituted',s=>s.replace('await supabaseClient.rpc("get_paige_persona_context")','({data:{tenant_id:payload.tenant_id},error:null})')],
  ['focused subject isolation removed',s=>s.replace('rowTenant !== callerTenantId','false')],
  ['authentication implementation replaced before verification',s=>s.replace('const { data: { user }, error: authError } = await supabaseClient.auth.getUser();','supabaseClient.auth.getUser = async () => ({data:{user:{id:"forged"}},error:null});\n    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();')],
+ ['native recovery hold observation removed',s=>s.replace('interactiveRecoveryReadOnly ||= row.interactive_recovery_hold !== null;','interactiveRecoveryReadOnly ||= false;')],
+ ['held recovery tool restriction removed',s=>s.replace('if (!name || !interactiveRecoveryReadAllowed(name, CONVERSATIONAL_ADMITTED_READ_TOOLS, PAIGE_SPINE_CAPABILITIES)) toolDefs.splice(i, 1);','if (false) toolDefs.splice(i, 1);')],
+ ['recovery recheck before dispatch removed',s=>s.replace(/try \{ await requireRecoveryPermission\(\); \}\r?\n        catch \(error\) \{ return \{ toolResults/,'try { /* reviewed boundary removed */ }\n        catch (error) { return { toolResults')],
 ];
 for(const [label,mutate]of mutations)test(`rejects ${label}`,()=>{const changed=mutate(chat);assert.ok(changed!==chat,'fixture must mutate actual source');assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);});
 for(const [label,mutate]of [

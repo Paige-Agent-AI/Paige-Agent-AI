@@ -473,6 +473,14 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     tables: {
       tenant_members: () => memberships.map((t) => ({ tenant_id: t })),
       profiles: () => [{ active_tenant_id: declaredActiveTenant }],
+      // Positive legacy persistence fixtures name the caller's existing native
+      // thread. A deliberately scripted missing/foreign/held row stays controlling.
+      ...(!Object.hasOwn(tableExtras, "paige_chat_threads") && typeof bodyExtras.threadId === "string"
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyExtras.threadId) ? {
+        paige_chat_threads: [{ id: bodyExtras.threadId, caller_user_id: USER,
+          tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null,
+          audience: "workspace", interactive_recovery_hold: null }],
+      } : {}),
       ...tableExtras,
       // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
       // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
@@ -483,6 +491,8 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
         paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
           row && typeof row === "object"
             ? { id: bodyExtras.threadId, caller_user_id: USER,
+              ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+              ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}),
               ...(!("tenant_id" in row) ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null } : {}), ...row } : row),
       } : {}),
     },
@@ -2295,7 +2305,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     artifactFrames(artifactClean.responseText).length === 0,
     artifactClean.responseText.slice(0, 400),
   );
-  const artifactTotal = personaCallsOf(artifactClean);
+  const artifactTotal = personaCallsBeforeAssistantWrite(artifactClean);
   const artifactAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(artifactTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -4390,6 +4400,27 @@ group("31 Ordinary customer relationship at the protected Chat boundary");
     bodyExtras:{clientContext:"Current page: Home"},rpcExtras:{client_portal_self_profile:{data:profile,error:null}}});
   assert("31.7 an owner cannot borrow a customer binding when their declared workspace is unset",
     owner.status===409 && owner.providerCalls.length===0,owner.status);
+}
+
+group("native thread fixture authority remains explicit");
+{
+  const THREAD="99999999-9999-4999-8999-999999999998";
+  const input={personaTenant:CHILD,memberships:[CHILD],bodyExtras:{threadId:THREAD}};
+  for(const [label,tableExtras]of[["positive own stored thread",{}],["positive scripted stored row",{paige_chat_threads:()=>[{summary:null}]}]]){
+    const r=await drive({...input,tableExtras});
+    assert(`32.1 ${label}: actual provider path remains reachable`,r.status===200&&r.providerCalls.length>0,r.status);
+    assert(`32.2 ${label}: native hold is actually read`,r.rec.from.some(c=>c.table==="paige_chat_threads"&&c.filters.some(f=>f[0]==="select"&&f[1].includes("interactive_recovery_hold"))));
+  }
+  for(const [label,table]of[
+    ["explicit missing row",()=>[]],["explicit undefined table",undefined],
+    ["foreign owner",()=>[{caller_user_id:AGENCY}]],["private audience",()=>[{audience:"customer_private"}]],
+    ["explicit undefined audience",()=>[{audience:undefined}]],["explicit undefined hold",()=>[{interactive_recovery_hold:undefined}]],
+    ["malformed hold",()=>[{interactive_recovery_hold:[]}]],["held thread",()=>[{interactive_recovery_hold:SOLO}]],
+  ]){
+    const r=await drive({...input,tableExtras:{paige_chat_threads:table}});
+    assert(`32.3 ${label}: no authority is fabricated`,r.status===409&&r.providerCalls.length===0,r.status);
+    assert(`32.4 ${label}: no document or memory writer`,!r.rec.rpc.some(c=>/record_paige_memory|submit_paige_document_work/.test(c.name))&&r.rec.functions.length===0);
+  }
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

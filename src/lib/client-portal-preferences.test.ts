@@ -72,7 +72,7 @@ describe("owner read", () => {
 });
 
 describe("disclosures are the server's sentences, byte for byte (reviewer Minor 7)", () => {
-  const sql = fs.readFileSync(path.resolve(__dirname, "../../supabase/migrations/20271110100000_e09_customer_portal_profile_consent.sql"), "utf8");
+  const sql = fs.readFileSync(path.resolve(__dirname, "../../supabase/migrations/20271110215000_e09_customer_portal_profile_consent.sql"), "utf8");
   const body = sql.slice(sql.indexOf("FUNCTION public.client_portal_consent_disclosure"));
   it.each(Object.keys(PORTAL_PREFERENCE_DISCLOSURES))("%s matches client_portal_consent_disclosure", id => {
     const m = new RegExp(`WHEN '${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}' THEN '((?:[^']|'')*)'`).exec(body);

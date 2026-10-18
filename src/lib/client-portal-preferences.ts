@@ -1,6 +1,6 @@
 /**
  * E09 Slice 6 — the customer's messaging preferences and data-sharing choice for ONE business, as the
- * server derives them (client_portal_communication_preferences, migration 20271110100000).
+ * server derives them (client_portal_communication_preferences, migration 20271110215000).
  *
  * There is no preference store here. The server reads the one consent ledger (paige_consent_events +
  * paige_suppressions, CLAUDE.md §18) through _client_communication_state, the same derivation the owner
@@ -177,7 +177,7 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
 /**
  * The sentences a customer reads at the moment of a choice, keyed by the disclosure id the server stores
  * with the evidence (`portal:<uid>:<id>:<md5 prefix of the sentence>`). The server holds the same text
- * (client_portal_consent_disclosure, 20271110100000); the Vitest suite pins each sentence here to that
+ * (client_portal_consent_disclosure, 20271110215000); the Vitest suite pins each sentence here to that
  * SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
  * Changing a sentence means a new id (v2) on both sides, never an edit of v1. A superseded id stays here and on
  * the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.

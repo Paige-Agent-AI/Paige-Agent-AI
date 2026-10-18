@@ -2,7 +2,7 @@
 // HARNESS RENDER · SYNTHETIC DATA · NOT LIVE. Same synthetic Northwind Studio / Jordan Rivera record as the Slice 3
 // owner harness, whose stubs this re-uses for everything above the new section (standing, shared work, the
 // People read, the tenant context). Only read_client_communication_state is answered here, in exactly the shape
-// 20271110100000 §10 returns:
+// 20271110215000 §10 returns:
 //   { schema_version:1, tenant_id, contact_id, email, sms, updates, data_sharing, quiet_hours, portal_joined,
 //     do_not_contact, dnd_active, read_at }   — owner/admin of the current workspace only; else 42501.
 //   ?consent=mixed|paused|reported|business|defaults|refused|error|loading   (the Slice 3 ?state= stays "populated")

@@ -1,5 +1,5 @@
 // E09 Slice 6 — synthetic customer-preference payloads shaped exactly like
-// client_portal_communication_preferences / read_client_communication_state (20271110100000).
+// client_portal_communication_preferences / read_client_communication_state (20271110215000).
 // Synthetic tenant and client only (§63); never a real account.
 export const PREF_TENANT = "e0960000-0000-4000-8000-00000000b001";
 export const PREF_OTHER_TENANT = "e0960000-0000-4000-8000-00000000b002";

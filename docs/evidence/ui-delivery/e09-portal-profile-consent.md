@@ -33,15 +33,15 @@ MUST_NOT_HAPPEN: No control records a customer click as stronger consent than it
 MUST_PRESERVE: Your account's personal-information save, version check and exit guards; the email stays read-only; the phone stays required; ClientStanding and Shared with {client} on the Solo record; the record footer's flags wherever the new section is not shown; the Conversations DND pause; the funding-preset credit control for staff who chose it; Settings and security.
 ACCEPTANCE_CRITERIA: A signed-in customer opens Your account, adds a street address and saves it; turns email off and sees "Off · you turned email off on <date>"; sees texts can only be turned on by replying START; allows data sharing; the owner opens the client record and reads the same states with who set them, and cannot change them there.
 MOTION_PURPOSE: NONE: no motion change.
-PROTECTED_SEAMS: client_portal_update_self_profile and the exact-key self-profile reader are unchanged (byte-identical, §58); the new reads and writers are SECURITY DEFINER with in-body relationship scope (§59, migration 20271110100000, backend lane); set_contact_channel_suppression keeps its signature and return keys; the profile projection is not widened.
+PROTECTED_SEAMS: client_portal_update_self_profile and the exact-key self-profile reader are unchanged (byte-identical, §58); the new reads and writers are SECURITY DEFINER with in-body relationship scope (§59, migration 20271110215000, backend lane); set_contact_channel_suppression keeps its signature and return keys; the profile projection is not widened.
 
-INTERNAL_BUILD_IDENTITY: fe98e9f4fe2e4a59cf0d1d864872342a78a92933; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110100000 persisted apply on production after merge); edge=PROOF_OWED(pre-send-pipeline, send-portal-invite, skill-runner, dispatch-stage-automation and booking functions readback after merge); evidence=docs/evidence/ui-delivery/e09-portal-profile-consent.md
+INTERNAL_BUILD_IDENTITY: fe98e9f4fe2e4a59cf0d1d864872342a78a92933; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110215000 persisted apply on production after merge); edge=PROOF_OWED(pre-send-pipeline, send-portal-invite, skill-runner, dispatch-stage-automation and booking functions readback after merge); evidence=docs/evidence/ui-delivery/e09-portal-profile-consent.md
 RELEASE_CHANNEL: development: draft PR; production deployment, migration persisted-apply and edge readback are verified after merge.
 RELEASE_CLASSIFICATION: internal-only: sixth slice of the Customer Portal; no customer release until all seven pillars and authenticated proof exist.
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customer release is named until the seven pillars and authenticated proof exist.
 RELEASE_NOTE_REQUIRED: NO: pre-launch internal increment.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local automated, component and harness-rendered proof; authenticated runtime proof owed.
-RELEASE_RECOVERY: position=forward-fix — the frontend is additive except the Account menu gate, the Data & Privacy copy and the record footer, each reversible in one commit; reference=supabase/migrations/20271110100000_e09_customer_portal_profile_consent.sql
+RELEASE_RECOVERY: position=forward-fix — the frontend is additive except the Account menu gate, the Data & Privacy copy and the record footer, each reversible in one commit; reference=supabase/migrations/20271110215000_e09_customer_portal_profile_consent.sql
 
 ## §58 call-outs
 

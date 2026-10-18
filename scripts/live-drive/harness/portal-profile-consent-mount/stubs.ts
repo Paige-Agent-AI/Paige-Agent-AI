@@ -4,7 +4,7 @@
 //
 // Only the transport is stubbed. The REAL useClientAccount, useClientPortalPreferences (exact-key reader,
 // business pin, fresh-read-before-success), the REAL brand/config readers and the REAL playbook resolver run
-// against this client. The payloads follow 20271110100000 as it stands in the worktree:
+// against this client. The payloads follow 20271110215000 as it stands in the worktree:
 //
 //   client_portal_communication_preferences(p_tenant_id)  -> { schema_version:1, tenant_id, business_name,
 //     email:{state,set_by,set_at,can_turn_on,can_turn_off}, sms:{…}, updates:{state,set_by,set_at,can_subscribe,

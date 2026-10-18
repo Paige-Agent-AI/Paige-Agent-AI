@@ -927,12 +927,27 @@ describe("tenant Relationships / Clients workspace", () => {
   it("makes only the covered narrow list inert and restores the exact originating row", async () => {
     const originalResizeObserver = globalThis.ResizeObserver;
     const originalInnerWidth = window.innerWidth;
-    let resizeCallback: ResizeObserverCallback | null = null;
+    let observedCallback: ResizeObserverCallback | null = null;
     let observerDisconnected = false;
+    // jsdom lays nothing out, so getBoundingClientRect() reports width 0 — and the workspace re-measures 260 ms
+    // after mount (and on window resize). Unstubbed, that late measure flips the record to overlay whenever the
+    // mount's async work crosses the deadline, which made this test fail most runs under load. The record's
+    // measured width is therefore the width this test last reported through the ResizeObserver, exactly as the
+    // test above stubs it.
+    let recordWidth = 1000;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function mockRect(this: HTMLElement) {
+      const width = this.matches("[data-solo-client-record]") ? recordWidth : 0;
+      return { x: 0, y: 0, top: 0, left: 0, right: width, bottom: width ? 600 : 0, width, height: width ? 600 : 0, toJSON: () => ({}) } as DOMRect;
+    });
+    const report = (target: Element, width: number) => {
+      recordWidth = width;
+      observedCallback?.([{ target, contentRect: { width } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+    };
     class NarrowResizeObserver {
       private callback: ResizeObserverCallback;
-      constructor(callback: ResizeObserverCallback) { this.callback = callback; resizeCallback = callback; }
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; observedCallback = callback; }
       observe(target: Element) {
+        recordWidth = 1000;
         this.callback([{ target, contentRect: { width: 1000 } as DOMRectReadOnly } as ResizeObserverEntry], this as unknown as ResizeObserver);
       }
       unobserve() {}
@@ -967,18 +982,18 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
 
       rows[1]?.focus();
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 700 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 700));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("overlay");
         expect(list?.inert).toBe(true);
         expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 762 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 762));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
@@ -997,14 +1012,15 @@ describe("tenant Relationships / Clients workspace", () => {
       });
 
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 900 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("overlay"));
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 1536 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("docked"));
     } finally {
       act(() => root.unmount());
       host.remove();
+      rectSpy.mockRestore();
       globalThis.ResizeObserver = originalResizeObserver;
       Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
     }

@@ -13,7 +13,7 @@ import { OperationsWorkEditor } from "./OperationsWorkEditor";
 import { OperationsWorkCreator } from "./OperationsWorkCreator";
 import { OperationsWorkActivity } from "./OperationsWorkActivity";
 import { OperationsItemRelease } from "./OperationsItemRelease";
-import { canReleaseItem } from "./operations-item-release";
+import { canReleaseItem, releasesAvailable } from "./operations-item-release";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { OperationsProjectCreator } from "./OperationsProjectCreator";
 import { OperationsProjectEditor } from "./OperationsProjectEditor";
@@ -292,7 +292,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   </>;
   const member = people.members.find((person) => person.user_id === selectedItem?.assigned_to_user_id);
   // Releases exist only for a standalone, top-level business and only for client work inside a project.
-  const releasable = soloStandalone && canReleaseItem(selectedItem);
+  const releasable = releasesAvailable(soloStandalone) && canReleaseItem(selectedItem);
   const portalTheme = contentRef.current?.closest<HTMLElement>("[data-pg]")?.getAttribute("data-pg") ?? "dark";
   const reviewWithPaige = () => {
     if (!openPaige) return;
@@ -431,8 +431,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
             refresh={refreshSelectedWork} />
           <OperationsWorkActivity key={`${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
             itemId={selectedItem.id} members={people.members} version={selectedItem.updated_at} />
-          {/* E09 Slice 4 (4B): the existing release flow, for client work in a project (standalone businesses, D3). */}
-          {releasable && canReleaseItem(selectedItem) && <OperationsItemRelease key={`${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
+          {/* E09 Slice 4 (4B): the existing release flow, for client work in a project (standalone businesses, D3).
+              Its key is its own: the Activity sibling above already uses `${tenantId}:${id}`. */}
+          {releasesAvailable(soloStandalone) && canReleaseItem(selectedItem) && <OperationsItemRelease key={`release:${tenantId}:${selectedItem.id}`} actorId={userId} tenantId={tenantId}
             item={selectedItem} members={people.members} peopleReady={!people.loading && !people.error} theme={portalTheme} />}
         </div>}
         {selectedPlan && <div className="ops-detail-content"><p>Status: {selectedPlan.status}</p>

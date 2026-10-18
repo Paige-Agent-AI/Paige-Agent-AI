@@ -75,3 +75,14 @@ describe("closed customer document list (client_portal_documents, E09 Slice 4)",
     expect(portalDocumentFromUpload(readClientDocument(row(),scope))).toMatchObject({source:"you",state:"ready",filename:"Preparation.pdf",shared_at:null});
   });
 });
+describe("files shared before the share stamp existed", () => {
+  const listed = (over: Record<string, unknown> = {}) => ({tenant_id:scope.tenant,client_id:scope.contact,summary:{shared:1,from_you:0},has_more:false,
+    files:[{id,filename:"Brand guidelines.pdf",mime_type:"application/pdf",size_bytes:240,source:"business",state:"ready",
+      shared_at:"2026-01-02T00:00:00Z",created_at:"2026-01-01T00:00:00Z",storage_path:`${scope.tenant}/${scope.contact}/internal/${id}`,...over}]});
+  it("reads a backfilled share (shared_at set, no sharer recorded) — the customer read never needs the sharer", () => {
+    expect(readPortalDocumentList(listed(),scope).files[0].shared_at).toBe("2026-01-02T00:00:00Z");
+  });
+  it("never accepts the sharer in the customer's projection", () => {
+    expect(() => readPortalDocumentList(listed({shared_by:null}),scope)).toThrow();
+  });
+});

@@ -4829,3 +4829,9 @@ the customer-delete fold-in and the reservation-required staff PUT. §58: the un
 `ContactFilesPanel` upload (PUT then direct insert) no longer works because a staff PUT now needs a
 reservation; the panel is not deleted. Authenticated owner upload/share and customer read/decide on
 production are owed.
+
+The Operations Delivery "Client outcome" line uses the same release gate as the work item
+(`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
+project" only for a standalone business with a linked project and a second active member, "Releasing needs a
+second reviewer on your team" for a one-member standalone business, and "Acceptance unavailable" everywhere
+else — a sub-account, agency or enterprise never sees an outcome it cannot produce (round 2, 2026-10-18).

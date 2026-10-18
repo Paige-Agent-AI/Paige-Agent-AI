@@ -301,7 +301,11 @@ it.each([
   ["a business that is not standalone", false, { contact_id: "test-contact", plan_id: "test-plan", updated_at: "2099-01-01T00:00:00Z" }, false],
 ])("mounts the client release flow in the work item only for %s", async (_label, standalone, overrides, mounted) => {
   release.standalone = standalone; harness.planningOverrides = overrides;
+  const errors = vi.spyOn(console, "error");
   await act(async () => root.render(<OperationsWorkspace view="work" />));
   await act(async () => container.querySelector<HTMLButtonElement>(".ops-work-card")!.click());
   expect(Boolean(document.querySelector('[data-testid="release-flow"]'))).toBe(mounted);
+  // The release flow sits beside the Activity read in the same sheet: it must not reuse its React key.
+  expect(errors.mock.calls.some(call => String(call[0]).includes("same key"))).toBe(false);
+  errors.mockRestore();
 });

@@ -19,7 +19,7 @@
 //   The share writes no notification (D4): the stub counts any functions.invoke so the drive can assert none.
 //
 //   ?state=populated|connected|empty|loading|refused|unavailable|error|pending|confirm|confirm-joined|unshare|
-//          changed|uploading|uncertain|saved|open
+//          changed|uploading|uncertain|saved|share-added|open|open-blocked|workspace-changed
 import source from "../../../../src/__tests__/fixtures/exp04-client-status-source.json";
 
 const params = new URLSearchParams(window.location.search);
@@ -255,7 +255,8 @@ export const supabase = {
   },
   auth: {
     getUser: async () => ({ data: { user: { id: ACTOR } }, error: null }),
-    getSession: async () => ({ data: { session: { user: { id: ACTOR }, access_token: "harness" } }, error: null }),
+    // "workspace-changed": the signed-in session is no longer the account this record was opened in.
+    getSession: async () => ({ data: { session: { user: { id: state === "workspace-changed" ? "e0900000-0000-4000-8000-00000000f0ff" : ACTOR }, access_token: "harness" } }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
   storage: {

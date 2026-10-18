@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { ExternalLink, FileText, RefreshCw, Upload } from "lucide-react";
+import { ExternalLink, Inbox, Lock, RefreshCw, Share2, Upload } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useClientFilesOwner, type OwnerFile } from "@/hooks/useClientFilesOwner";
+import { SCOPE_CHANGED_MESSAGE, useClientFilesOwner, type OwnerFile } from "@/hooks/useClientFilesOwner";
 import { CLIENT_DOCUMENT_ACCEPT } from "@/lib/client-portal-documents";
 import "./client-files.css";
 
@@ -16,7 +16,7 @@ import "./client-files.css";
  * there is no gold here: the switch is the record's indigo.
  */
 type Props = { contactId: string; clientName: string; portalConnected: boolean };
-type Note = { tone: "ok" | "warn" | "bad"; text: string };
+type Note = { tone: "ok" | "warn" | "bad"; text: string; /** A link to click when the browser kept the new tab from opening. */ href?: string };
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
 const size = (bytes: number | null) => bytes === null ? null : bytes < 1024 * 1024
@@ -89,14 +89,27 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
     }
   };
 
+  /**
+   * The tab is opened synchronously, inside the click, because a browser (Safari above all) blocks a window
+   * opened after an await. It is pointed at the signed link once that arrives. If the browser blocked even
+   * the immediate tab, nothing claims it opened: the link itself is shown to click.
+   */
   const open = async (file: OwnerFile) => {
     note(file.id, null);
+    let tab: Window | null = null;
+    try { tab = window.open("", "_blank"); } catch { tab = null; }
+    if (tab) { try { tab.opener = null; } catch { /* a cross-origin tab already has no opener */ } }
     try {
       const url = await files.link(file);
-      window.open(url, "_blank", "noopener,noreferrer");
-      note(file.id, { tone: "ok", text: "Opened in a new tab. The link works for one minute." });
+      if (tab && !tab.closed) {
+        tab.location.replace(url);
+        note(file.id, { tone: "ok", text: "Opened in a new tab. The link works for one minute." });
+      } else {
+        note(file.id, { tone: "warn", text: "Your browser didn’t open a new tab. Use this link within one minute:", href: url });
+      }
     } catch (error) {
-      note(file.id, { tone: "bad", text: error instanceof Error ? error.message : "This file couldn’t be opened. Try again." });
+      if (tab && !tab.closed) tab.close();
+      note(file.id, { tone: "bad", text: error instanceof Error && error.message ? error.message : "This file couldn’t be opened. Try again." });
     }
   };
 
@@ -104,6 +117,13 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
     if (uploading) return;
     setResume(row ?? null);
     if (input.current) { input.current.value = ""; input.current.click(); }
+  };
+
+  /** The file just added, still private and saved: offered for sharing right where the upload was reported. */
+  const added = files.upload.kind === "saved" ? list.find(f => f.id === files.upload.id && f.visibility === "internal" && f.upload_state === "ready") : undefined;
+  const shareAdded = async (file: OwnerFile) => {
+    await share(file, true);
+    files.dismiss();
   };
 
   const addButton = (where: "head" | "empty") => (
@@ -114,6 +134,9 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
 
   const row = (file: OwnerFile) => {
     const kind = KIND[file.mime_type ?? ""] ?? "File";
+    // Each row says where it stands at a glance, even when its section heading has scrolled away.
+    const state = file.source === "client" ? "client" : file.visibility === "shared" ? "shared" : "private";
+    const Icon = state === "client" ? Inbox : state === "shared" ? Share2 : Lock;
     const facts = [kind, size(file.size_bytes), file.source === "client" ? `Sent ${day(file.created_at)}` : `Added ${day(file.created_at)}`].filter(Boolean) as string[];
     if (file.visibility === "shared" && file.shared_at) facts.push(`Shared ${day(file.shared_at)}`);
     const switchable = file.source === "business" && file.upload_state === "ready";
@@ -122,7 +145,7 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
     const switchId = `trc-file-share-${file.id}`;
     return (
       <li key={file.id} className="trc-files-row" aria-busy={asked !== undefined || undefined}>
-        <FileText aria-hidden className="trc-files-icon" />
+        <Icon aria-hidden className="trc-files-icon" data-kind={state} />
         <div className="trc-files-item">
           <strong title={file.filename}>{file.filename}</strong>
           <span>{facts.map((fact, i) => <span key={`${fact}-${i}`}>{i > 0 && " · "}<span className="trc-files-nowrap">{fact}</span></span>)}</span>
@@ -140,7 +163,10 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
             </label>
           )}
         </div>
-        {notes[file.id] && <p className="trc-files-note" data-tone={notes[file.id].tone} role={notes[file.id].tone === "ok" ? "status" : "alert"}>{notes[file.id].text}</p>}
+        {notes[file.id] && <p className="trc-files-note" data-tone={notes[file.id].tone} role={notes[file.id].tone === "ok" ? "status" : "alert"}>
+          {notes[file.id].text}
+          {notes[file.id].href && <a href={notes[file.id].href} target="_blank" rel="noopener noreferrer">Open {file.filename}</a>}
+        </p>}
       </li>
     );
   };
@@ -154,11 +180,10 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
 
   return (
     <section id="client-files" className="trc-record-section trc-files" aria-labelledby="trc-files-title" aria-busy={busy || files.reading || undefined}>
+      {/* One header in every state: the title with its actions beside it, the rule beneath (Refresh never jumps). */}
       <div className="trc-files-head">
-        <div className="trc-files-heading">
-          <h3 id="trc-files-title">Files for {clientName}</h3>
-          <p>{clientName} sees only files you share. New files stay private.</p>
-        </div>
+        <h3 id="trc-files-title" className="trc-files-title">Files for {clientName}</h3>
+        <p className="trc-files-lede">{clientName} sees only files you share. New files stay private.</p>
         <div className="trc-files-meta">
           <span className="sr-only" role="status">{files.reading && files.list ? "Checking again…" : ""}</span>
           {files.phase === "ready" && (
@@ -192,6 +217,8 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
               const held = list.find(f => f.id === files.upload.id);
               pick(held);
             }}>Choose the file</button>}
+            {added && <button type="button" className="trc-files-quiet-btn" disabled={pending[added.id] !== undefined}
+              onClick={() => void shareAdded(added)}><Share2 aria-hidden />{pending[added.id] !== undefined ? "Sharing…" : `Share with ${first}`}</button>}
             {["saved", "error", "uncertain", "continue"].includes(files.upload.kind) && <button type="button" className="trc-files-quiet-btn" onClick={files.dismiss}>Dismiss</button>}
           </div>
         </div>
@@ -205,6 +232,12 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
           </>
         )}
         {files.phase === "refused" && <p className="trc-files-state" role="status">Only the business owner or an admin can see and share {clientName}’s files.</p>}
+        {files.phase === "changed" && (
+          <div className="trc-files-state" role="status">
+            <p>{SCOPE_CHANGED_MESSAGE}</p>
+            <button type="button" className="trc-files-quiet-btn" onClick={files.retry}><RefreshCw aria-hidden />Refresh</button>
+          </div>
+        )}
         {files.phase === "unavailable" && <p className="trc-files-state" role="status">Client files aren’t available for this account.</p>}
         {files.phase === "inactive" && <p className="trc-files-state" role="status">{clientName}’s record isn’t active in this workspace, so their files can’t be shown.</p>}
         {files.phase === "no_workspace" && <p className="trc-files-state" role="status">Open a business workspace to see this client’s files.</p>}
@@ -226,7 +259,9 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
             {section(`Shared with ${first}`, shared, `Nothing shared with ${first} yet. Switch a file on below to share it.`, "trc-files-shared")}
             {section(`From ${first}`, fromClient, `${first} hasn’t sent you any files.`, "trc-files-client")}
             {section("Private to your team", internal, "No private files.", "trc-files-internal")}
-            {files.list?.has_more && <p className="trc-files-foot">Showing the newest 100 files.</p>}
+            {/* No "Load more" yet: client_file_owner_list has no page cursor (it returns the newest 100 only), so a
+                button here would be a dead control. Owed: a keyset cursor on that read, then the customer page's pattern. */}
+            {files.list?.has_more && <p className="trc-files-foot">Showing the newest 100 files. Older files for {first} can’t be listed here yet.</p>}
           </>
         )}
       </div>

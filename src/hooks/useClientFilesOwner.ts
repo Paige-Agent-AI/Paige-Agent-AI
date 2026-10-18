@@ -25,7 +25,8 @@ export type OwnerFile = {
   shared_at: string | null; created_at: string; updated_at: string; storage_path: string;
 };
 export type OwnerFileList = { contact_id: string; portal_connected: boolean; files: OwnerFile[]; has_more: boolean };
-export type OwnerFilesPhase = "idle" | "loading" | "ready" | "refused" | "unavailable" | "inactive" | "no_workspace" | "error";
+/** "changed": the signed-in account or workspace moved under this record — not a permission refusal. */
+export type OwnerFilesPhase = "idle" | "loading" | "ready" | "refused" | "changed" | "unavailable" | "inactive" | "no_workspace" | "error";
 export type OwnerUpload = {
   kind: "idle" | "working" | "uncertain" | "continue" | "saved" | "error";
   notice: string; id: string | null; name: string | null;
@@ -40,10 +41,19 @@ export const OWNER_FILE_LIMIT = 100;
 export const OWNER_LINK_SECONDS = 60;
 const LIST_KEYS = ["ok", "contact_id", "portal_connected", "files", "has_more"];
 const FILE_KEYS = ["id", "filename", "mime_type", "size_bytes", "visibility", "upload_state", "source", "shared_at", "created_at", "updated_at", "storage_path"];
+/**
+ * Who shared a file is the business's own record and may be projected to its owner. It is OPTIONAL and nullable:
+ * files shared before the share stamp existed are backfilled with `shared_at` only, so their sharer is unknown
+ * (null). Nothing here requires it, and its absence or null never refuses the list.
+ */
+const OPTIONAL_FILE_KEYS = ["shared_by"];
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const exact = (o: Record<string, unknown>, keys: string[]) =>
   Object.keys(o).length === keys.length && keys.every(k => Object.prototype.hasOwnProperty.call(o, k));
+/** Exactly the promised keys, plus only the named optional ones. */
+const exactAllowing = (o: Record<string, unknown>, keys: string[], optional: string[]) =>
+  keys.every(k => Object.prototype.hasOwnProperty.call(o, k)) && Object.keys(o).every(k => keys.includes(k) || optional.includes(k));
 const isDate = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
 const badName = (v: string) => /[/\\]/.test(v) || Array.from(v).some(c => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
 
@@ -57,7 +67,8 @@ export function parseOwnerFileList(value: unknown, tenantId: string, contactId: 
     || typeof value.portal_connected !== "boolean" || typeof value.has_more !== "boolean"
     || !Array.isArray(value.files) || value.files.length > OWNER_FILE_LIMIT) throw new Error("Unexpected file list");
   const files = value.files.map((raw): OwnerFile => {
-    if (!isObject(raw) || !exact(raw, FILE_KEYS)) throw new Error("Unexpected file");
+    if (!isObject(raw) || !exactAllowing(raw, FILE_KEYS, OPTIONAL_FILE_KEYS)) throw new Error("Unexpected file");
+    if (raw.shared_by !== undefined && raw.shared_by !== null && (typeof raw.shared_by !== "string" || !uuid.test(raw.shared_by))) throw new Error("Unexpected file");
     const f = raw;
     if (typeof f.id !== "string" || !uuid.test(f.id) || typeof f.filename !== "string" || !f.filename || f.filename.length > 255 || badName(f.filename)
       || (f.mime_type !== null && typeof f.mime_type !== "string")
@@ -87,7 +98,9 @@ function refusalCode(reply: RpcReply): string | null {
 const unavailableCode = (code: string | null) => code === "CLIENT_FILES_UNAVAILABLE";
 
 class Refused extends Error { constructor(readonly code: string | null) { super(code ?? "refused"); } }
-class ScopeChanged extends Error {}
+/** The session's account or workspace is no longer the one this record was opened in. Its message is shown. */
+export const SCOPE_CHANGED_MESSAGE = "Your workspace changed. Refresh to see this client’s files.";
+class ScopeChanged extends Error { constructor() { super(SCOPE_CHANGED_MESSAGE); } }
 
 type Candidate = { id: string; name: string; mime: string; size: number; file: File | null };
 const idle = (): OwnerUpload => ({ kind: "idle", notice: "", id: null, name: null });
@@ -124,7 +137,8 @@ export function useClientFilesOwner(contactId: string | null) {
   const settle = useCallback((generation: number, error: unknown) => {
     if (life.current.generation !== generation) return;
     if (error instanceof Refused) setPhase(unavailableCode(error.code) ? "unavailable" : error.code === "CONTACT_NOT_FOUND" ? "inactive" : "refused");
-    else if (error instanceof ScopeChanged) setPhase("refused");
+    // An account or workspace change is not a refusal: the person may well be an admin of the new one.
+    else if (error instanceof ScopeChanged) setPhase("changed");
     else {
       console.error("[client-files-owner]", error);
       setPhase("error");
@@ -250,7 +264,7 @@ export function useClientFilesOwner(contactId: string | null) {
         l.candidate = null;
         setUpload({ kind: "error", id: candidate.id, name: candidate.name, notice: uploadRefusal(error.code) });
       } else if (error instanceof ScopeChanged) {
-        setUpload({ kind: "error", id: candidate.id, name: candidate.name, notice: "Your account changed. Reopen this client in your current workspace." });
+        setUpload({ kind: "error", id: candidate.id, name: candidate.name, notice: SCOPE_CHANGED_MESSAGE });
       } else {
         setUpload(dispatched
           ? { kind: "uncertain", id: candidate.id, name: candidate.name, notice: `We couldn’t confirm ${candidate.name} was saved. Check before trying again.` }

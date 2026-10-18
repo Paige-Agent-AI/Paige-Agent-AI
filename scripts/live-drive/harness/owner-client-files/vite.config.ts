@@ -9,7 +9,7 @@ import react from "@vitejs/plugin-react-swc";
 // People read, the role read and the Supabase transport (the standing read, the work share writer, and the four
 // owner file RPCs + Storage). Its own root: never in the app build.
 //   /solo/42/clients/people?person=<id>&state=populated|connected|empty|loading|refused|unavailable|error|pending|
-//     confirm|confirm-joined|unshare|changed|uploading|uncertain|saved|open&theme=light|dark
+//     confirm|confirm-joined|unshare|changed|uploading|uncertain|saved|share-added|open|open-blocked|workspace-changed&theme=light|dark
 // HARNESS_FILES_MUTANT=<name> (drive self-test only) injects harness-only defects through a transform; no
 // product file is edited. See files-drive.mjs --selftest.
 const repo = path.resolve(import.meta.dirname, "../../../..");

@@ -47,8 +47,8 @@ const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 function allShots() {
   const shots = [];
   for (const theme of ["light", "dark"]) {
-    for (const state of ["populated", "connected", "empty", "loading", "refused", "unavailable", "error", "pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "open"]) shots.push({ state, theme, kind: "desktop" });
-    for (const state of ["populated", "empty", "refused", "pending", "confirm", "changed", "uploading", "uncertain", "saved"]) shots.push({ state, theme, kind: "phone" });
+    for (const state of ["populated", "connected", "empty", "loading", "refused", "unavailable", "error", "pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked", "workspace-changed"]) shots.push({ state, theme, kind: "desktop" });
+    for (const state of ["populated", "empty", "refused", "pending", "confirm", "changed", "uploading", "uncertain", "saved", "share-added", "open-blocked", "workspace-changed"]) shots.push({ state, theme, kind: "phone" });
   }
   return shots.map((s) => ({ ...s, w: SIZES[s.kind][0], h: SIZES[s.kind][1], phone: s.kind === "phone" }));
 }
@@ -93,6 +93,10 @@ async function drive(page, s, n) {
     case "refused": await section.getByText(`Only the business owner or an admin can see and share ${NAME}’s files.`).waitFor({ timeout: 30_000 }); break;
     case "unavailable": await section.getByText("Client files aren’t available for this account.").waitFor({ timeout: 30_000 }); break;
     case "error": await section.locator('[role="alert"]').waitFor({ timeout: 30_000 }); n.alert = clean(await section.locator('[role="alert"]').innerText()); break;
+    case "workspace-changed":
+      await section.getByText("Your workspace changed. Refresh to see this client’s files.").waitFor({ timeout: 30_000 });
+      n.changedButtons = await section.locator(".trc-files-state button").allInnerTexts().then((t) => t.map(clean));
+      break;
     case "pending": case "confirm": case "confirm-joined": case "unshare": case "changed": {
       await listReady();
       const name = s.state === "unshare" ? SHARED : DRAFT;
@@ -119,11 +123,11 @@ async function drive(page, s, n) {
       await settled.first().evaluate((el) => el.scrollIntoView({ block: "center" }));
       break;
     }
-    case "uploading": case "uncertain": case "saved": {
+    case "uploading": case "uncertain": case "saved": case "share-added": {
       await listReady();
       const b = await log();
       await section.locator('input[type="file"]').setInputFiles({ name: NEW_FILE, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 harness proposal") });
-      const wait = { uploading: `Uploading ${NEW_FILE}…`, uncertain: `We couldn’t confirm ${NEW_FILE} was saved. Check before trying again.`, saved: `${NEW_FILE} is saved. It’s private to your team until you share it.` }[s.state];
+      const wait = { uploading: `Uploading ${NEW_FILE}…`, uncertain: `We couldn’t confirm ${NEW_FILE} was saved. Check before trying again.`, saved: `${NEW_FILE} is saved. It’s private to your team until you share it.`, "share-added": `${NEW_FILE} is saved. It’s private to your team until you share it.` }[s.state];
       await section.locator(".trc-files-upload").getByText(wait).waitFor({ timeout: 15_000 });
       n.upload = clean(await section.locator(".trc-files-upload").innerText());
       n.uploadRole = await section.locator(".trc-files-upload").getAttribute("role");
@@ -131,25 +135,47 @@ async function drive(page, s, n) {
       n.begin = a.fileWrites.find((w) => w.begin) ?? null;
       n.uploads = a.uploads;
       n.readsAfterWrite = a.listReads - b.listReads;
-      if (s.state === "saved") n.privateRow = await rows().then((r) => r.find((x) => x.includes(NEW_FILE)) ?? null);
+      if (s.state === "saved") {
+        n.privateRow = await rows().then((r) => r.find((x) => x.includes(NEW_FILE)) ?? null);
+        n.offer = await section.locator(".trc-files-upload button").allInnerTexts().then((t) => t.map(clean));
+      }
+      if (s.state === "share-added") {
+        // Nice-to-have 2: the file just added is offered for sharing right where its upload was reported.
+        const before = await log();
+        await section.locator(".trc-files-upload").getByRole("button", { name: `Share with ${FIRST}` }).click();
+        await row(NEW_FILE).locator(".trc-files-note").waitFor({ timeout: 10_000 });
+        const after = await log();
+        n.note = clean(await row(NEW_FILE).locator(".trc-files-note").innerText());
+        n.groupAfter = await row(NEW_FILE).evaluate((li) => li.closest("section")?.querySelector("h4")?.firstChild?.textContent?.trim());
+        n.uploadGone = (await section.locator(".trc-files-upload").count()) === 0;
+        n.write = after.fileWrites[after.fileWrites.length - 1] ?? null;
+        n.readsAfterWrite = after.listReads - before.listReads;
+        await row(NEW_FILE).evaluate((el) => el.scrollIntoView({ block: "center" }));
+        break;
+      }
       await section.locator(".trc-files-upload").evaluate((el) => el.scrollIntoView({ block: "center" }));
       break;
     }
-    case "open": {
+    case "open-blocked": case "open": {
       await listReady();
+      // A popup blocker that refuses even the immediate tab: nothing may claim it opened.
+      if (s.state === "open-blocked") await page.evaluate(() => { window.open = () => null; });
       await row(SHARED).getByRole("button", { name: `Open ${SHARED}` }).click();
       await row(SHARED).locator(".trc-files-note").waitFor({ timeout: 10_000 });
       n.note = clean(await row(SHARED).locator(".trc-files-note").innerText());
       n.signed = (await log()).signed;
+      n.link = await row(SHARED).locator(".trc-files-note a").evaluateAll((as) => as.map((a) => ({ href: a.getAttribute("href"), text: a.textContent, rel: a.rel, target: a.target })));
       await page.waitForTimeout(300);
       await row(SHARED).evaluate((el) => el.scrollIntoView({ block: "center" }));
       break;
     }
   }
+  n.headActions = await section.locator(".trc-files-head button").evaluateAll((bs) => bs.map((b) => ({ text: b.textContent.trim(), slot: b.parentElement?.classList.contains("trc-files-meta") ? "meta" : "other" })));
+  n.icons = await section.locator(".trc-files-row .trc-files-icon").evaluateAll((is) => is.map((i) => i.getAttribute("data-kind")));
   n.order = await page.evaluate(() => [...(document.querySelector(".trc-record-body")?.children ?? [])].slice(0, 3).map((c) => c.id || c.className));
   n.connectNote = await textOf(section.locator(".trc-files-connect"));
   n.text = clean(await section.innerText());
-  if (!["pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "open"].includes(s.state)) {
+  if (!["pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked"].includes(s.state)) {
     await section.evaluate((el) => {
       const scroller = el.closest(".trc-record-scroll") ?? document.scrollingElement;
       const head = document.querySelector(".trc-record-head, .trc-record-header");
@@ -166,6 +192,8 @@ function unmet(s, n) {
   const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   want(eq(n.order, ["client-standing", "client-shared-work", "client-files"]), `section not third in the record: ${JSON.stringify(n.order)}`);
   if (!["refused", "loading", "unavailable"].includes(s.state)) want((n.text ?? "").includes(`${NAME} sees only files you share. New files stay private.`), "the share boundary is not stated");
+  // One header layout in every state (nice-to-have 4): Refresh lives in the header's action slot, never elsewhere.
+  if (n.headActions) want(n.headActions.every((a) => a.slot === "meta"), `header actions out of the header slot: ${JSON.stringify(n.headActions)}`);
   for (const hidden of NEVER) want(!(n.text ?? "").includes(hidden), `a row the owner list never returns is on screen: ${hidden}`);
   if (s.state === "populated" || s.state === "connected") {
     want(eq(n.headings, [`Shared with ${FIRST} 2`, `From ${FIRST} 2`, "Private to your team 2"]), `sections ${JSON.stringify(n.headings)}`);
@@ -177,6 +205,7 @@ function unmet(s, n) {
       `Private to your team | ${DRAFT} | PDF · 242 KB · Added Oct 13, 2026 | Open | switch:false`,
       `Private to your team | ${LONG} | PDF · 242 KB · Added Oct 10, 2026 | Open | switch:false`,
     ]), `rows ${JSON.stringify(n.rows)}`);
+    want(eq(n.icons, ["shared", "shared", "client", "client", "private", "private"]), `row icons ${JSON.stringify(n.icons)} (shared / from the client / private must differ)`);
     want((n.switchLabels ?? []).length === 4 && (n.switchLabels ?? []).every((l) => /^Share .+ with Jordan Rivera$/.test(l ?? "")), `switch labels ${JSON.stringify(n.switchLabels)}`);
   }
   if (s.state === "populated") want(n.connectNote === `${NAME} hasn’t joined your portal yet; shared files appear when they do.`, `not-connected note "${n.connectNote}"`);
@@ -202,7 +231,7 @@ function unmet(s, n) {
     want(n.note === "This file changed. Check it and share again." && n.switchAfter === "false", `changed note "${n.note}" switch=${n.switchAfter}`);
     want(n.rowAfter === "Discovery report draft (revised).pdf" && n.readsAfterWrite >= 1, `row not re-read after FILE_CHANGED: "${n.rowAfter}"`);
   }
-  if (["uploading", "uncertain", "saved"].includes(s.state)) {
+  if (["uploading", "uncertain", "saved", "share-added"].includes(s.state)) {
     // D1: the reservation carries no visibility; the server always starts a file private.
     want(n.begin && !Object.keys(n.begin).some((k) => /visib|share/i.test(k)) && n.begin.p_filename === NEW_FILE && n.begin.p_contact_id === CLIENT, `begin args ${JSON.stringify(n.begin)}`);
   }
@@ -213,9 +242,22 @@ function unmet(s, n) {
     want(n.readsAfterWrite >= 1, "upload reported saved with no re-read (§70.1)");
     want(/^Private to your team \| Proposal for Jordan\.pdf \| PDF · 1 KB · Added Oct 14, 2026 \| Open \| switch:false$/.test(n.privateRow ?? ""), `saved row "${n.privateRow}"`);
   }
+  if (s.state === "saved") want(eq(n.offer, [`Share with ${FIRST}`, "Dismiss"]), `saved notice offers ${JSON.stringify(n.offer)}`);
+  if (s.state === "share-added") {
+    want(n.note === `Shared. ${FIRST} will see it once they join your portal.` && n.groupAfter === `Shared with ${FIRST}` && n.uploadGone, `share-added note "${n.note}" group=${n.groupAfter} uploadGone=${n.uploadGone}`);
+    want(n.write?.p_shared === true && n.readsAfterWrite >= 1, `share-added write ${JSON.stringify(n.write)} reads=${n.readsAfterWrite}`);
+  }
   if (s.state === "open") {
     want(eq(n.signed?.map((x) => x.expires), [60]), `signed links ${JSON.stringify(n.signed)}`);
-    want(n.note === "Opened in a new tab. The link works for one minute.", `open note "${n.note}"`);
+    want(n.note === "Opened in a new tab. The link works for one minute." && (n.popups ?? []).length === 1, `open note "${n.note}" popups=${JSON.stringify(n.popups)}`);
+  }
+  if (s.state === "open-blocked") {
+    want(!/Opened in a new tab/.test(n.note ?? "") && /didn’t open a new tab/.test(n.note ?? ""), `blocked open note "${n.note}"`);
+    want((n.link ?? []).length === 1 && /signed-file\?e=60$/.test(n.link[0].href ?? "") && n.link[0].rel === "noopener noreferrer" && n.link[0].target === "_blank", `blocked open link ${JSON.stringify(n.link)}`);
+  }
+  if (s.state === "workspace-changed") {
+    want(!(n.text ?? "").includes("Only the business owner or an admin"), "an account change is reported as a permission refusal");
+    want(eq(n.changedButtons, ["Refresh"]), `workspace-changed actions ${JSON.stringify(n.changedButtons)}`);
   }
   return miss;
 }

@@ -65,3 +65,18 @@ it("keeps a keyboard-operable recorded-state action next to blocked-departure fe
  await click("Inspect recorded state");expect(readStaffDelivery).toHaveBeenCalledTimes(2);
  expect(writeStaffDelivery).not.toHaveBeenCalled();expect(host.querySelector<HTMLTextAreaElement>("textarea")?.value).toBe("Keep this unsaved review");
 });
+// E09 Slice 4 — the review as mounted in the work item.
+const approvedSubmission={...submission,state:"approved" as const,reviewed_by:id(8),reviewed_at:"2026-10-13T18:00:00Z",updated_at:"2026-10-13T18:00:00Z"};
+const acceptedRelease={release_id:id(9),submission_id:id(6),state:"accepted" as const,released_by:id(8),released_at:"2026-10-13T19:00:00Z",decision_by:id(10),decision_at:"2026-10-14T10:30:00Z",client_note:null,updated_at:"2026-10-14T10:30:00Z"};
+it("states the client's acceptance as a date a person reads, never a raw timestamp",async()=>{vi.mocked(readStaffDelivery).mockResolvedValue({kind:"ready",submissions:[approvedSubmission],releases:[acceptedRelease]});await mount();
+ const expected=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",year:"numeric"}).format(new Date("2026-10-14T10:30:00Z"));
+ expect(host.textContent).toContain(`Version 1 was accepted by the client on ${expected}.`);expect(host.textContent).not.toMatch(/\d{4}-\d\d-\d\dT/);});
+it("shows a skeleton, not a bare line, while the submitted version is read",async()=>{vi.mocked(readStaffDelivery).mockReturnValue(new Promise(()=>undefined));await mount();
+ expect(host.querySelector(".ops-staff-skeleton")).not.toBeNull();expect(host.querySelector('[role="status"]')?.textContent).toBe("Loading the submitted version…");});
+it("recordedOnly renders nothing when nothing is recorded, and the record when it is",async()=>{vi.mocked(readStaffDelivery).mockResolvedValue({kind:"ready",submissions:[],releases:[]});
+ await act(async()=>{root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} recordedOnly />);});
+ expect(host.textContent).toBe("");
+ vi.mocked(readStaffDelivery).mockResolvedValue({kind:"ready",submissions:[approvedSubmission],releases:[acceptedRelease]});
+ await act(async()=>root.unmount());root=createRoot(host);
+ await act(async()=>{root.render(<OperationsStaffDeliveryReview scope={scope} members={[]} recordedOnly />);});
+ expect(host.textContent).toContain("Client acceptance recorded");});

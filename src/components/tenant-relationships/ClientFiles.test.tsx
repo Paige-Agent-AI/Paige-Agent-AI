@@ -5,10 +5,10 @@ import { ClientFiles } from "./ClientFiles";
 
 const actor = "e0914000-0000-4000-8000-0000000000a1", tenant = "e0924000-0000-4000-8000-0000000000a1", contact = "e0934000-0000-4000-8000-0000000000a1";
 type Row = Record<string, unknown> & { id: string; visibility: string; upload_state: string; updated_at: string };
-const f = vi.hoisted(() => ({ rpc: vi.fn(), upload: vi.fn(), sign: vi.fn(), rows: [] as Row[], connected: true, reads: 0 }));
+const f = vi.hoisted(() => ({ rpc: vi.fn(), upload: vi.fn(), sign: vi.fn(), rows: [] as Row[], connected: true, reads: 0, sessionUser: "" }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: tenant, activeUserId: actor, accountContextLoading: false }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  auth: { getSession: async () => ({ data: { session: { user: { id: actor } } }, error: null }) },
+  auth: { getSession: async () => ({ data: { session: { user: { id: f.sessionUser || actor } } }, error: null }) },
   rpc: (...a: unknown[]) => f.rpc(...a),
   storage: { from: () => ({ upload: (...a: unknown[]) => f.upload(...a), createSignedUrl: (...a: unknown[]) => f.sign(...a) }) },
 } }));
@@ -24,7 +24,7 @@ const list = () => ({ ok: true, contact_id: contact, portal_connected: f.connect
 
 let host: HTMLDivElement, root: Root;
 beforeEach(() => {
-  vi.clearAllMocks(); f.connected = true; f.reads = 0;
+  vi.clearAllMocks(); f.connected = true; f.reads = 0; f.sessionUser = "";
   f.rows = [file(1, "shared"), file(2, "internal"), file(3, "client_upload", { filename: "Signed intake.pdf" })];
   f.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
     if (name === "client_file_owner_list") { f.reads++; return { data: list(), error: null }; }
@@ -150,12 +150,91 @@ it("holds an unconfirmed upload, then checks it without a second file or reserva
   const ids = f.rpc.mock.calls.filter(([n]) => n === "client_file_owner_begin_upload").map(([, a]) => (a as Record<string, unknown>).p_file_id);
   expect(new Set(ids).size).toBe(1);
 });
-it("opens a file through a one-minute signed link in a new tab", async () => {
-  const open = vi.spyOn(window, "open").mockReturnValue(null);
+const fakeTab = () => {
+  const tab = { closed: false, opener: {} as unknown, location: { replace: vi.fn() }, close: vi.fn(() => { tab.closed = true; }) };
+  return tab;
+};
+const openFile = async (name = "File 1.pdf") => { await act(async () => host.querySelector<HTMLButtonElement>(`[aria-label="Open ${name}"]`)!.click()); await flush(); };
+it("opens the tab inside the click, then points it at a one-minute signed link", async () => {
+  const tab = fakeTab();
+  const open = vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
   await render();
-  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Open File 1.pdf"]')!.click()); await flush();
+  await openFile();
+  // Opened synchronously, before any await, so a popup blocker treats it as the click's own window.
+  expect(open).toHaveBeenCalledWith("", "_blank");
+  expect(tab.opener).toBeNull();
   expect(f.sign).toHaveBeenCalledWith(f.rows[0].storage_path, 60);
-  expect(open).toHaveBeenCalledWith("https://storage.invalid/signed", "_blank", "noopener,noreferrer");
+  expect(tab.location.replace).toHaveBeenCalledWith("https://storage.invalid/signed");
+  expect(host.textContent).toContain("Opened in a new tab. The link works for one minute.");
+});
+it("never claims a tab opened when the browser blocked it: it shows the link to click instead", async () => {
+  vi.spyOn(window, "open").mockReturnValue(null);
+  await render();
+  await openFile();
+  expect(host.textContent).not.toContain("Opened in a new tab");
+  expect(host.textContent).toContain("Your browser didn’t open a new tab. Use this link within one minute:");
+  const link = host.querySelector<HTMLAnchorElement>('.trc-files-note a')!;
+  expect(link.getAttribute("href")).toBe("https://storage.invalid/signed");
+  expect(link.target).toBe("_blank");
+  expect(link.rel).toBe("noopener noreferrer");
+  expect(link.textContent).toBe("Open File 1.pdf");
+});
+it("closes the waiting tab and says why when the link can't be made", async () => {
+  const tab = fakeTab();
+  vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
+  f.sign.mockResolvedValue({ data: null, error: { message: "denied" } });
+  await render();
+  await openFile();
+  expect(tab.close).toHaveBeenCalled();
+  expect(host.textContent).not.toContain("Opened in a new tab");
+  expect(host.textContent).toContain("This file couldn’t be opened. Try again.");
+});
+it("says the workspace changed — never an empty note — when the account moves before a file opens", async () => {
+  const tab = fakeTab();
+  vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
+  await render();
+  f.sessionUser = "e0914000-0000-4000-8000-0000000000ff";
+  await openFile();
+  expect(tab.close).toHaveBeenCalled();
+  expect(f.sign).not.toHaveBeenCalled();
+  expect(host.querySelector(".trc-files-note")?.textContent).toBe("Your workspace changed. Refresh to see this client’s files.");
+});
+it("reports an account change as a change, not as a permission refusal", async () => {
+  f.sessionUser = "e0914000-0000-4000-8000-0000000000ff";
+  await render();
+  expect(host.textContent).toContain("Your workspace changed. Refresh to see this client’s files.");
+  expect(host.textContent).not.toContain("Only the business owner or an admin");
+  expect(f.rpc.mock.calls.some(([n]) => n === "client_file_owner_list")).toBe(false);
+  f.sessionUser = "";
+  await act(async () => button("Refresh").click()); await flush();
+  expect(host.textContent).toContain("File 1.pdf");
+});
+it("offers to share the file just added, right where the upload was reported", async () => {
+  await render();
+  await choose("Proposal.pdf");
+  const begin = f.rpc.mock.calls.find(([n]) => n === "client_file_owner_begin_upload")![1] as Record<string, unknown>;
+  await act(async () => button("Share with Jordan").click()); await flush();
+  expect(f.rpc).toHaveBeenCalledWith("client_file_set_client_share", expect.objectContaining({ p_file_id: begin.p_file_id, p_shared: true }));
+  expect(host.textContent).toContain("Shared. Jordan Rivera can open it in their portal.");
+  expect(host.textContent).not.toContain("Proposal.pdf is saved.");
+  expect(Array.from(host.querySelectorAll("h4")).map(h => h.textContent)[0]).toBe("Shared with Jordan 2");
+});
+it("marks shared, from-the-client and private rows with different icons", async () => {
+  await render();
+  const kinds = Array.from(host.querySelectorAll(".trc-files-icon")).map(icon => icon.getAttribute("data-kind"));
+  expect(kinds).toEqual(["shared", "client", "private"]);
+  const drawn = Array.from(host.querySelectorAll(".trc-files-icon")).map(icon => icon.getAttribute("class"));
+  expect(new Set(drawn).size).toBe(3);
+});
+it("keeps one header layout: Refresh sits in the header whether the list is empty or not", async () => {
+  f.rows = []; await render();
+  const emptyHead = Array.from(host.querySelectorAll(".trc-files-head > *")).map(el => el.className);
+  expect(host.querySelector(".trc-files-head .trc-files-refresh")).not.toBeNull();
+  await act(async () => root.unmount()); root = createRoot(host);
+  f.rows = [file(1, "shared")]; await render();
+  const populatedHead = Array.from(host.querySelectorAll(".trc-files-head > *")).map(el => el.className);
+  expect(populatedHead).toEqual(emptyHead);
+  expect(host.querySelector(".trc-files-head .trc-files-refresh")).not.toBeNull();
 });
 it("says when the client hasn't joined the portal yet", async () => {
   f.connected = false; await render(false);

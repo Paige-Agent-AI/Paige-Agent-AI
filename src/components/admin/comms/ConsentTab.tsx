@@ -130,11 +130,13 @@ export function ConsentTab() {
                   Require explicit consent before emailing clients
                 </Label>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Off by default — Paige emails your clients under standard opt-out rules, which is
-                  right for most practices. Turn this on for the higher bar (recommended if you have
-                  clients in the EU, UK, Canada, or Australia, where explicit opt-in is required).
-                  When it's on, Paige will only email a client who has clearly opted in — so seed
-                  consent through your intake forms first, or you may block your own emails.
+                  Off by default — Paige emails your clients under standard opt-out rules. This
+                  setting records that you want the higher bar (explicit opt-in, expected for
+                  clients in the EU, UK, Canada or Australia).
+                </p>
+                {/* §13 (E09 Slice 6, D8): the pre-send gate does not read this flag yet. Say so. */}
+                <p className="mt-2 text-xs leading-relaxed text-foreground" data-testid="consent-enforcement-truth">
+                  It doesn't change sends yet: Paige still emails under opt-out rules whether it's on or off.
                 </p>
               </div>
             </div>

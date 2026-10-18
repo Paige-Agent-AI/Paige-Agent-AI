@@ -38,6 +38,7 @@ import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
 import { ClientSharedWork } from "./ClientSharedWork";
 import { ClientFiles } from "./ClientFiles";
+import { ClientCommunicationState } from "./ClientCommunicationState";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import "./tenant-relationships-clients-workspace.css";
@@ -673,6 +674,8 @@ function ClientRecord({
         {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
         {/* E09 Slice 4: this client's files — private until shared, file by file. Same gate (Solo only, §60/D1). */}
         {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
+        {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. */}
+        {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">
@@ -735,7 +738,10 @@ function ClientRecord({
           </div>
         </section>
 
-        <footer className="trc-record-footer"><FileText aria-hidden /><span>Created {formatDate(person.createdAt)} · Contact preference {person.doNotContact ? "do-not-contact flag recorded" : "no do-not-contact flag recorded"} · Shared PAIGE context {person.sharedContextConsent ? "consent flag recorded" : "no consent flag recorded"}</span></footer>
+        {/* Where "How {client} can be reached" is shown it carries both flags, so the footer drops them there (§58: moved, not lost). */}
+        <footer className="trc-record-footer"><FileText aria-hidden /><span>{standing
+          ? `Created ${formatDate(person.createdAt)}`
+          : <>Created {formatDate(person.createdAt)} · Contact preference {person.doNotContact ? "do-not-contact flag recorded" : "no do-not-contact flag recorded"} · Shared PAIGE context {person.sharedContextConsent ? "consent flag recorded" : "no consent flag recorded"}</>}</span></footer>
       </div>
     </div>
   );

@@ -4873,3 +4873,52 @@ The Operations Delivery "Client outcome" line uses the same release gate as the 
 project" only for a standalone business with a linked project and a second active member, "Releasing needs a
 second reviewer on your team" for a one-member standalone business, and "Acceptance unavailable" everywhere
 else — a sub-account, agency or enterprise never sees an outcome it cannot produce (round 2, 2026-10-18).
+### Customer Portal — Profile & Consent, Your account + "How {client} can be reached" on the Solo client record (E09 Slice 6, 2026-10-18)
+
+A customer opens **Your account** (`/app/settings?view=client-account`, the existing `ClientAccount`, one
+home) and finds: Personal information (now with street, city, state and ZIP through the existing versioned
+writer `client_portal_update_self_profile`); **How {Business} can reach you** — Email, Texts, Updates and
+offers, each showing the state the business's sends through Paige actually respect, who set it and when,
+and the honest way to change it; and **What {Business} can use** — the existing data-sharing flag
+(`clients.paige_shared_context_consent`), which the customer can now allow or withdraw. One home for
+messaging preference: the existing ledger (`paige_consent_events` + `paige_suppressions`), derived once by
+`_client_communication_state` for the customer read, the owner read and Paige (§18). Owner decisions
+(2026-10-18): texts can be turned OFF from the portal but only turned on by replying START (D1); staff
+lifting their own pause no longer writes `granted` (D3); email consent stays unenforced and the ConsentTab
+toggle says so (D8); anything the business recorded itself is labelled "set by {Business}" on the customer's
+cards and "Set by your business" on the owner's (D7). Round 2 (integrator defaults, owner may overrule, 2026-10-18): a spam report is
+the customer's own act ("reported"), lifted only by that customer turning email back on in their portal; after a
+customer leaves Updates, staff cannot subscribe them again; booking confirmations and agreements the customer is
+asked to sign still send, and the email disclosure (`email-pref:v2`) says so, together with "email off also
+unsubscribes you from updates and offers". Round 3 (2026-10-18): the server records exactly the sentence the
+customer reads (`email-pref:v2`, `updates-optin:v2`, `sms-pref:v2`; v1 kept for old evidence), hash-pinned in pgTAP
+and checked against the page text in Vitest; with no usable zone of their own the texts line names the zone the
+pre-send check actually uses (`quiet_hours.fallback_time_zone`: the business's texting zone or Eastern); a customer
+of several businesses is told why their account can't be shown here yet, with no dead retry; and the legacy portal
+invite's held answer (409 `INVITATION_POLICY_HELD`) reads "{name} has email turned off or on hold, so Paige didn't
+send the invitation." on every staff surface that sends it, with no link copied or offered. The owner sees the same truth read-only on the Solo client record; there is no owner
+control that creates a customer's consent, and ledger writes by staff can't forge customer-sourced rows
+or delete customer-held ones (restrictive guards, reviewer B1).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Read own preferences and sharing (`client_portal_communication_preferences`) | n/a, no relationship | n/a, no linked customers by construction | n/a | n/a | ✓ own relationship only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Set own email / texts-off / updates (`client_portal_set_communication_preference`) | — | — | — | — | ✓ off always; email back on lifts only the customer's own rows; texts on refused (`SMS_OPT_IN_UNAVAILABLE`, D1) | 42501 | PROOF OWED |
+| Allow / withdraw data sharing (`client_portal_set_shared_context_consent`, the flag's only granting writer) | refused by the guard (service role included) | refused (can withdraw) | refused (can withdraw) | refused (can withdraw) | ✓ own relationship | 42501 | PROOF OWED |
+| Address editing on Your account (existing `client_portal_update_self_profile`) | — | — | — | — | ✓ blank address fields clear to NULL; phone and names stay required | 42501 | PROOF OWED |
+| Owner consent view "How {client} can be reached" (`read_client_communication_state`, read-only) | refused (no tenant admin of that workspace) | server allows for its own contacts; no screen mounted | ✓ mounted under `client_standing`, below "Shared with {client}" | server allows (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | — | 42501 | PROOF OWED |
+| Conversations DND pause/lift (`set_contact_channel_suppression`, restated) | refused (global-role path removed, §59) | own contacts only | ✓ owner/admin; lift refused while the contact holds the channel (`SUPPRESSION_HELD_BY_CONTACT`); rail shows the held reason | ✓ same | — | — | PROOF OWED |
+| Turn email back on after the customer's own spam report (`set_by` `reported`) | refused | refused (rail locked: "They reported email as spam. Only they can turn it back on.") | refused (same) | refused (same) | ✓ through `client_portal_set_communication_preference` email on | 42501 | PROOF OWED |
+| Subscribe a customer to Updates after they unsubscribed | refused | refused | refused (`NEWSLETTER_LEFT_BY_CONTACT`: any business-sourced newsletter grant, service context included, while the customer's own leaving stands) | refused | ✓ only the customer re-subscribes | 42501 | PROOF OWED |
+| Legacy portal invite to a client who can't be emailed (`send-portal-invite` 409 `INVITATION_POLICY_HELD`, consumer invites only) | n/a (no consumer book) | n/a (`customer_portal_invite` not on this tier; its sub-account owner invite is not a client send, never held) | ✓ Contact portal panel and Conversations card say "{name} has email turned off or on hold, so Paige didn't send the invitation."; no link copied or offered | ✓ same | — | — | PROOF OWED |
+| Account entry in the customer menu | — | — | — | — | ✓ customer of one business only (was: any resolved brand); a customer of several businesses reaches the page by URL only until Slice 8 | — | PROOF OWED |
+| Data & Privacy panel | — | credit control only with `funding_readiness` | credit control only with `funding_readiness`; no dead Manage link | same as Solo | no credit control or finance wording (fail-safe), no security pill; Manage → Your account preferences (customer of one business only — §58 call-out in the evidence record); deletion copy routes the business's records to the business (D6) | — | PROOF OWED |
+
+The customer surface is a §61 default (relationship-scoped, no tier filter, no new feature key); the owner
+view reuses `client_standing`. pgTAP (`supabase/tests/customer_portal_profile_consent.sql`) covers the
+grants, the widened CHECKs, the state table, every writer path and refusal, the staff-lift and ledger write
+guards, the sharing guard on INSERT and UPDATE, the owner read refusals and the sub-account parity case;
+the Vitest suites cover every card state, every refusal, readback-before-success, the exact-key readers
+and the disclosure sentences pinned byte for byte to `client_portal_consent_disclosure`. Customer
+assistant (Paige in the portal): the preference tools are UNAVAILABLE to it in this slice. Authenticated
+customer change and owner read on production are owed.

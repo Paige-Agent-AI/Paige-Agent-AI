@@ -136,6 +136,15 @@ export function inspectIncumbentSource(chatText,tool) {
 // helper equal; the one changed identity input is the whole-handler try (identity[15]);
 // crm_file_document's own dispatch branch changes as described. action-risk.ts is byte-identical
 // (pin unchanged; crm_file_document stays `high`). Renew those 29 dispatch scalars only.
+// E09 Slice 6 (Profile & Consent) bounded renewal on current main (2026-10-18), integrating-crew source
+// review (NOT non-author): slice6-consent rebased onto main e660dca7 (Documents #2358 and every earlier
+// main hunk intact). The branch diff vs main for paige-ai-chat/index.ts is ONE replaced string literal: the
+// `do_not_contact` property description inside the update_client tool definition, which claimed
+// "suppresses outbound email and SMS" although runPreSend never reads do_not_contact (§13); it now says
+// what the flag does (marketing email only) and where a 1:1 pause lives. Proof: with that one literal
+// reverted, all 29 fingerprints equal main's pins exactly; with it, all 29 change (the whole-handler try,
+// identity[15]). No dispatch branch, control, helper, authority or verifier logic changed. action-risk.ts
+// is byte-identical (pin unchanged). Renew those 29 dispatch scalars only.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -516,7 +525,11 @@ const SOURCES = {
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
   "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
-  "supabase/functions/_shared/pre-send-pipeline.ts": "f44dff1b639511729fff60f48b90041d1ece27e7cccbdca3b5d455b045685f12",
+  // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
+  // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
+  // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
+  // list and the normalizers are byte-identical. Renew this one scalar only.
+  "supabase/functions/_shared/pre-send-pipeline.ts": "dd7193c8f9663462f045de0eb937c6cf728a1c0ce0dce6451f4fa4cc9fd545b6",
   "supabase/functions/_shared/contact-methods.ts": "cea64c7f9ac201150bfd28834eaac88a6ebe0333c2c0a42dc9b9a8476840eef6",
   "supabase/functions/_shared/internal-vocabulary.ts": "9074425cc61d1a678e3a4ca03595fe8c4d1eac4572a4bd2daf31aff77f39d37a",
   "supabase/functions/_shared/paige-capability-status/resolver.ts": "ec8a5dad7df3426f30203aa1c8014372a60f51ed0decc829fc8541fba62a4142",

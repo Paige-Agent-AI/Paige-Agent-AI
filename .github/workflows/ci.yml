@@ -65,6 +65,10 @@ jobs:
           node --test
           supabase/functions/_shared/comms-provider-boundary.test.ts
           supabase/functions/_shared/tenant-consent.test.ts
+          supabase/functions/_shared/pre-send-pipeline.test.ts
+          supabase/functions/_shared/consent-parity.test.ts
+          supabase/functions/_shared/paige-skill/email-approval.test.ts
+          supabase/functions/dispatch-stage-automation/gate.test.ts
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/booking-provider-boundary.test.mjs

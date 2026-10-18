@@ -8,7 +8,7 @@ const source=n=>fs.readFileSync(new URL('../../supabase/migrations/'+n,import.me
 const native=(file,name)=>{const text=source(file);const m=new RegExp('CREATE OR REPLACE FUNCTION public\\.'+name+'\\([\\s\\S]*?\\bAS\\s+(\\$[A-Za-z_0-9]*\\$)[\\s\\S]*?\\1\\s*;','i').exec(text);assert(m,name);return m[0];};
 const acl=(file,name)=>[...source(file).matchAll(new RegExp('(?:REVOKE|GRANT)\\s+[^;]*?\\bFUNCTION\\s+public\\.'+name+'\\s*\\([^;]*;','gi'))].map(m=>m[0]).join('\n');
 const personal='20271110013000_personal_email_sender_authority.sql',lead='20271031000000_exp03_lead_reply_once_per_submission.sql',action='20260711140000_action_bus.sql',sendgrid='20271031000100_paige_email_sendgrid_governed_door.sql';
-const forward='20271110210000_followup_email_origin_admission.sql';
+const forward='20271110220000_followup_email_origin_admission.sql';
 const six=['prepare_comms_email_send','read_comms_email_send_binding','claim_comms_email_send','paige_guard_send_approval_requires_governed_send','_lead_reply_record_send','advance_action'];
 export function installOriginAdmissionProof({sql,baseline}) {
  sql(fs.readFileSync(new URL('comms-email-origin-admission-schema.sql',import.meta.url),'utf8'));

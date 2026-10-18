@@ -32,6 +32,7 @@ import {
 } from "../approval-outcome.ts";
 
 import { readTurnRecord, RESUME_KINDS, TURN_CONTRACT_VERSION, type ResumeKind, type TurnRecord } from "./contract.ts";
+import { parseCommsEmailCommand } from "../comms-email/contract.ts";
 export { RESUME_KINDS, type ResumeKind };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -331,7 +332,7 @@ export function selectDoorRow<R extends StoredDoorRow>(rows: ReadonlyArray<R>, f
 }
 
 /** The door families the resume can carry a proposal forward through. */
-export type DoorFamily = "crm" | "sales" | "publish";
+export type DoorFamily = "crm" | "sales" | "publish" | "comms";
 
 const UUID_ANY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -348,6 +349,8 @@ export interface DoorCatalogs {
   salesTools: ReadonlySet<string>;
   /** growth-publish-command chat tools → the kind and id argument each names. */
   publishTools: Readonly<Record<string, { kind: string; idArg: string }>>;
+  /** Only generic one-to-one email. Portal invitation doors retain their own continuation. */
+  commsEmailTool?: "comms_send_email";
 }
 
 /**
@@ -389,6 +392,18 @@ export function doorResumeShape(
         ...(action === "invoice.sms_send" ? { channel: "sms" } : {}),
       },
     };
+  }
+  if (tool === "comms_send_email" && catalogs.commsEmailTool === tool) {
+    if (args.expected_tenant_id !== tenantId || typeof args.operation_id !== "string" || !UUID_ANY.test(args.operation_id)) return null;
+    if (Object.prototype.hasOwnProperty.call(args, "approval_id")
+      && (typeof args.approval_id !== "string" || !UUID_ANY.test(args.approval_id))) return null;
+    try {
+      const email = parseCommsEmailCommand(command);
+      return { family: "comms", callArgs: {
+        contact_id: email.contact_id, subject: email.subject, body: email.body,
+        ...(email.connector_id ? { connector_id: email.connector_id } : {}),
+      } };
+    } catch { return null; }
   }
   const publish = catalogs.publishTools[tool];
   if (publish) {

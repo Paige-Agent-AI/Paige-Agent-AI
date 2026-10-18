@@ -20,7 +20,7 @@ import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type Metr
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
 import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
-import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery } from '../_shared/comms-email/chat.ts';
+import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery, type CommsEmailFollowupOrigin } from '../_shared/comms-email/chat.ts';
 import { INBOX_INTELLIGENCE_TOOLS, INBOX_INTELLIGENCE_TOOL_NAMES, dispatchInboxIntelligenceChat, dispatchOrganizeChat } from '../_shared/inbox-intelligence/chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
@@ -8757,6 +8757,44 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     };
 
+    // Same native scope/Stop fences as every governed call. Once withdrawn, an A -> B -> A
+    // observation cannot revive this request. This is liveness, never email authority.
+    const emailScope = { actor: user.id, tenant: personaCtx?.tenant_id ?? null, thread: payloadThreadId ?? null, client: scopedClientId ?? null };
+    let emailScopeWithdrawn = false;
+    const emailScopeCurrent = (): boolean => {
+      if (req.signal.aborted || proposalScopeInvalidated || tenantKnowledgeScopeRevoked || interactive?.superseded
+        || interactiveRecoveryReadOnly || user.id !== emailScope.actor || (personaCtx?.tenant_id ?? null) !== emailScope.tenant
+        || (payloadThreadId ?? null) !== emailScope.thread || (scopedClientId ?? null) !== emailScope.client) emailScopeWithdrawn = true;
+      return !emailScopeWithdrawn;
+    };
+    // Only exact canonical work continuations may associate a fresh email with a pending
+    // follow-up. Contact/subject matching, model PPA IDs and latest-by-contact never select it.
+    const emailOrigins = new Map<string, CommsEmailFollowupOrigin>();
+    const unresolvedEmailOrigins = new Set<object>();
+    let emailOriginUnavailable = false;
+    const rememberEmailOrigin = (rows: unknown, actionId: unknown, approvalId?: unknown): boolean => {
+      if (!Array.isArray(rows) || rows.length !== 1 || !rows[0] || typeof rows[0] !== "object") {
+        emailOriginUnavailable = true; return false;
+      }
+      const row = rows[0] as Record<string, unknown>;
+      const id = (value: unknown): value is string => typeof value === "string" && z.string().uuid().safeParse(value).success;
+      if (!emailScopeCurrent() || !id(actionId) || !id(row.id) || row.id.toLowerCase() !== actionId.toLowerCase()
+        || row.tenant_id !== emailScope.tenant) { emailOriginUnavailable = true; return false; }
+      if (!["owner.lead_followup", "client.followup", "owner.followup_email"].includes(String(row.action_kind))) return true;
+      if (!id(row.approval_id) || (approvalId !== undefined && row.approval_id !== approvalId)
+        || !id(row.contact_id) || !id(emailScope.tenant) || !id(emailScope.thread)
+        || recoveryThreadScope?.tenant !== emailScope.tenant || recoveryThreadScope.audience !== "workspace"
+        || !["drafted", "pending_approval"].includes(String(row.status))) {
+        emailOriginUnavailable = true; return false;
+      }
+      const origin: CommsEmailFollowupOrigin = Object.freeze({ actionId: row.id.toLowerCase(), approvalId: row.approval_id.toLowerCase(),
+        contactId: row.contact_id.toLowerCase(), tenantId: emailScope.tenant, actorId: user.id, threadId: emailScope.thread });
+      const previous = emailOrigins.get(origin.actionId);
+      if (previous && (previous.approvalId !== origin.approvalId || previous.contactId !== origin.contactId)) emailOriginUnavailable = true;
+      emailOrigins.set(origin.actionId, origin);
+      return true;
+    };
+
 
     const confirmationWasConsumed = async (fp: string, tool: string): Promise<boolean> => {
       let previous = supabase.from("paige_pending_confirmations").select("id")
@@ -10267,7 +10305,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           selected = scopedClientId ? selected.eq("scoped_client_id", scopedClientId) : selected.is("scoped_client_id", null);
           const { data: rows, error: selectError } = await selected.limit(33);
           if (selectError) throw new Error(selectError.message ?? "resume selection failed");
-          const doorTools = [CRM_COMMAND_TOOL_NAMES as ReadonlySet<string>, SALES_INVOICE_TOOL_NAMES as ReadonlySet<string>, SALES_COLLECTIONS_TOOL_NAMES as ReadonlySet<string>, GROWTH_PUBLISH_DOOR_TOOL_NAMES];
+          const doorTools = [CRM_COMMAND_TOOL_NAMES as ReadonlySet<string>, SALES_INVOICE_TOOL_NAMES as ReadonlySet<string>, SALES_COLLECTIONS_TOOL_NAMES as ReadonlySet<string>, GROWTH_PUBLISH_DOOR_TOOL_NAMES, new Set(["comms_send_email"])];
           const nowMs = Date.now();
           for (const { token, parsed } of scoped) {
             const row = (rows ?? []).find((r: any) => r?.fingerprint === parsed.fingerprint && r?.issued_in_request === parsed.nonce) as
@@ -10344,7 +10382,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // allowance cannot reach a row this request did not see: a live row with the approved
           // fingerprint at this moment is the row the selection pins and hands to the door.
           const doorSelectedAt = new Date(Date.now() - 2_000).toISOString();
-          const doorToolNames = [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES] as string[];
+          const doorToolNames = [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES, "comms_send_email"] as string[];
           const { data: doorRows, error: doorSelectError } = await supabase.from("paige_pending_confirmations")
             .select("fingerprint,args,tool_name,consumed_at,expires_at,server_issued_at,issued_in_request")
             // The door's own claim scope, predicate for predicate (crm-command ~L452, sales-invoice-command
@@ -10362,6 +10400,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             crmPreviewActions: CRM_PREVIEW_REQUIRED_ACTIONS as ReadonlySet<string>,
             salesTools: new Set<string>([...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES]),
             publishTools: PUBLISH_DOOR_CHAT_TOOLS,
+            commsEmailTool: "comms_send_email" as const,
           };
           const doorNowMs = Date.now();
           for (const fp of new Set(doorTokens)) {
@@ -11029,6 +11068,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         try { await interactive?.check(); }
         catch (error) { return { toolResults, executed, scopeInvalidated: false, interactiveError: error }; }
         if (!tc || !tc.function?.name) continue;
+        // Register the exact continuation before ANY policy/approval refusal can skip its
+        // branch. A withheld or declined advance is not permission for an unbound email.
+        if (tc.function.name === "action_get" || tc.function.name === "action_advance") unresolvedEmailOrigins.add(tc);
         if (interactiveRecoveryReadOnly && !interactiveRecoveryReadAllowed(tc.function.name, CONVERSATIONAL_ADMITTED_READ_TOOLS, PAIGE_SPINE_CAPABILITIES)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
             refused_before_run: true, not_applied: true, code: "INTERACTIVE_RECOVERY_READ_ONLY",
@@ -11209,20 +11251,46 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           let emailArgs: Record<string, unknown> = {};
           try { emailArgs = JSON.parse(tc.function.arguments || '{}'); } catch { emailArgs = {}; }
+          const genericEmail = tc.function.name === "comms_send_email";
+          if (genericEmail && !doorPin && (emailOriginUnavailable || unresolvedEmailOrigins.size > 0 || emailOrigins.size > 1)) {
+            toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify({ success: false, not_applied: true,
+              error: 'email_origin_unconfirmed', message: 'The exact follow-up could not be verified. Nothing was sent. Reopen the intended work item before proposing its email; do not use a different sender or tool.' }) });
+            continue;
+          }
+          const followupOrigin = genericEmail && !doorPin && emailOrigins.size === 1 ? [...emailOrigins.values()][0] : undefined;
           const userTurns = messages.filter((message: any) => message?.role === 'user');
           const result = await dispatchCommsEmailChat({
             tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
-            args: emailArgs, approved: approvedConfirmations,
-            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            args: emailArgs, approved: doorPin ? new Set([doorPin.fingerprint]) : approvedConfirmations,
+            sameToolCalls: doorPin ? 1 : toolCalls.filter(call => call?.function?.name === tc.function.name).length,
             turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
-          }, { caller: supabaseClient, admin: { from: (name: string) => ({
+            ...(genericEmail ? { current: emailScopeCurrent } : {}),
+            ...(followupOrigin ? { followupOrigin } : {}),
+            ...(doorPin ? { pinned: { fingerprint: doorPin.fingerprint, args: doorPin.args } } : {}),
+          }, { caller: { functions: { invoke: async (name, options) => {
+            if (genericEmail) {
+              await interactive?.check();
+              if (!(await revalidateProposalScope()) || !emailScopeCurrent()) throw new Error("Email request withdrawn");
+            }
+            const reply = await supabaseClient.functions.invoke(name, options);
+            if (genericEmail) {
+              try {
+                await interactive?.check();
+                if (!(await revalidateProposalScope())) emailScopeWithdrawn = true;
+              } catch { emailScopeWithdrawn = true; }
+            }
+            return reply;
+          } } }, admin: { from: (name: string) => ({
             select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as CommsEmailApprovalQuery,
           }) } });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           // comms-email-command claims the stored proposal atomically; what it returns is this approval's outcome.
-          if (result.spent) approvalSpend.set(result.spent, tc.id);
-          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          const emailContent = doorPin
+            ? await settlePinnedDoorResult(tc, doorPin, result.spent, result.content, result.refusal === undefined)
+            : result.content;
+          if (!doorPin && result.spent) approvalSpend.set(result.spent, tc.id);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(emailContent) });
           continue;
         }
 
@@ -15617,6 +15685,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // One RPC: a refusal the database answered rolled it back whole (approval-outcome.ts).
               if (error) throw refusedByDatabase(error);
               result = { success: true, ...(data as any) };
+              const advanced = data as Record<string, unknown> | null;
+              if (advanced?.ok === true && typeof advanced.action_id === "string" && typeof args.action_id === "string"
+                && z.string().uuid().safeParse(advanced.action_id).success && z.string().uuid().safeParse(args.action_id).success
+                && advanced.action_id.toLowerCase() === args.action_id.toLowerCase()
+                && Object.prototype.hasOwnProperty.call(advanced, "approval_id")
+                && (advanced.approval_id === null || typeof advanced.approval_id === "string")) {
+                try {
+                  const origin = await supabaseClient.rpc("list_actions", { p_action_id: advanced.action_id, p_tenant_id: personaCtx?.tenant_id ?? null, p_limit: 2 });
+                  if (origin.error || !(await revalidateProposalScope())) emailOriginUnavailable = true;
+                  else if (rememberEmailOrigin(origin.data, advanced.action_id, advanced.approval_id)) unresolvedEmailOrigins.delete(tc);
+                } catch { emailOriginUnavailable = true; }
+              }
             } else if (UNAVAILABLE_SOCIAL_TOOLS.has(tc.function.name)) {
               // Phase 0 containment. These legacy names are deliberately absent from the model's
               // tool definitions. If a stale/forged tool call nevertheless reaches dispatch,
@@ -15755,6 +15835,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               });
               if (error) throw error;
               result = { success: true, count: (data as any[])?.length ?? 0, actions: data ?? [] };
+              if (tc.function.name === "action_get" && rememberEmailOrigin(data, args.action_id)) unresolvedEmailOrigins.delete(tc);
             } else if (tc.function.name === "crm_list_team") {
               const { data, error } = await supabaseClient.rpc("list_team_members", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,

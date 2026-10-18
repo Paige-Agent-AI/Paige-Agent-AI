@@ -1898,8 +1898,10 @@ export default function ClientsConversations() {
               key={`${activeUserId}:${activeTenantId}:${selected.contactId}`}
               actorId={activeUserId} tenantId={activeTenantId} contactId={selected.contactId}
               approvalId={followupLocator.kind==="bound"?followupLocator.approvalId:undefined}
+              threadKey={isSolo?selected.key:null}
               current={()=>accountEpochRef.current.accept(followupEpoch)}
               disabled={sending||leadReplyReview.blocksSending||(isSolo&&handlingMode==="governed")}
+              recordDisabled={sending||leadReplyReview.blocksSending||followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"}
               onEdit={(approval,draft)=>{
                 if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){
                   toast.error("Finish or cancel the current draft before opening another reply.");return;
@@ -2014,6 +2016,7 @@ export default function ClientsConversations() {
       {/* §43 — compose a NEW outbound thread (reuses the send-message seam + canonical
           thread key so it merges cleanly with any later inbound reply). */}
       <ComposeThreadDialog
+        isSolo={isSolo}
         open={composeOpen}
         onOpenChange={(v) => { setComposeOpen(v); if (!v) { setComposeContact(null); setComposeApprovalId(undefined); if(followupLocator.kind!=="none")setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true}); } }}
         activeConnectors={composerConnectors}

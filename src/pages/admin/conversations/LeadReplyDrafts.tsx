@@ -8,7 +8,7 @@ import { isFollowupEmailKind, useLeadReplyReview, parseOriginalReplyRecord, read
 
 type EntryProps = {
   tenantId: string; contactId: string; approval: ApprovalQueueRow; canEdit: boolean;
-  disabled: boolean; onEdit: (approval: ApprovalQueueRow, draft: { subject: string; body: string }) => void;
+  disabled: boolean; recordDisabled: boolean; onEdit: (approval: ApprovalQueueRow, draft: { subject: string; body: string }) => void;
   current: () => boolean;
   actorId:string|null; threadKey:string|null;
 };
@@ -22,7 +22,7 @@ function OriginalReplyReport({actorId,tenantId,contactId,threadKey,approvalId,or
   const review=useLeadReplyReview({actorId,tenantId,contactId,threadKey,approvalId,connectorId:proof?.connectorId??"",channel:"email",subject:proof?.call.command.subject??"",body:proof?.call.command.body??"",attachmentCount:0,uploading:false,scheduledFor:null,signatureEnabled:false,disabled,current,originalRecord:original},()=>{});
   return review.panel;
 }
-function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdit,current:isCurrent,actorId,threadKey}: EntryProps) {
+function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recordDisabled,onEdit,current:isCurrent,actorId,threadKey}: EntryProps) {
   const key=JSON.stringify([actorId,tenantId,contactId,threadKey,approval.id]);
   const scopeRef=useRef({key});
   if(scopeRef.current.key!==key)scopeRef.current={key};
@@ -82,13 +82,13 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,onEdi
     {!canEdit?<p className="text-xs text-muted-foreground">An owner or admin can review and approve this reply.</p>
       : !current||current.loading?<p role="status" className="text-sm text-muted-foreground">Checking this reply's recorded status…</p>
       : current.editable?(ready?<Button variant="outline" size="sm" className="hover:text-secondary-foreground" disabled={disabled} onClick={()=>{if(isCurrent())onEdit(approval,{subject:draft!.subject as string,body:draft!.body as string});}}>Edit and review reply</Button>:null)
-      : current.original?<OriginalReplyReport actorId={actorId} tenantId={tenantId} contactId={contactId} threadKey={threadKey} approvalId={approval.id} original={current.original} disabled={disabled} current={isCurrent}/>
-      : <><p role="status" className="text-sm text-muted-foreground">{current.note}</p><Button variant="outline" size="sm" className="hover:text-secondary-foreground" disabled={disabled} onClick={()=>{void refresh();}}>Check sending status</Button></>}
+      : current.original?<OriginalReplyReport actorId={actorId} tenantId={tenantId} contactId={contactId} threadKey={threadKey} approvalId={approval.id} original={current.original} disabled={recordDisabled} current={isCurrent}/>
+      : <><p role="status" className="text-sm text-muted-foreground">{current.note}</p><Button variant="outline" size="sm" className="hover:text-secondary-foreground" disabled={recordDisabled} onClick={()=>{void refresh();}}>Check sending status</Button></>}
   </div>;
 }
 
 /** A contextual entry to the existing composer; the approval queue remains the draft's home. */
-export function LeadReplyDrafts({ tenantId, contactId, actorId, approvalId, threadKey=null, onEdit, disabled, current:parentCurrent }: {
+export function LeadReplyDrafts({ tenantId, contactId, actorId, approvalId, threadKey=null, onEdit, disabled, recordDisabled=disabled, current:parentCurrent }: {
   tenantId: string;
   contactId: string;
   actorId: string | null;
@@ -98,6 +98,8 @@ export function LeadReplyDrafts({ tenantId, contactId, actorId, approvalId, thre
   current?: () => boolean;
   onEdit: (approval: ApprovalQueueRow, draft: { subject: string; body: string }) => void;
   disabled: boolean;
+  /** Historical status/recording eligibility only; never enables edit, approval or sending. */
+  recordDisabled?: boolean;
 }) {
   const approvals = usePendingApprovals({ contactId });
   const [authEpoch,setAuthEpoch]=useState(0);
@@ -151,6 +153,6 @@ export function LeadReplyDrafts({ tenantId, contactId, actorId, approvalId, thre
   if (approvals.error) return <p role="status" className="text-sm text-muted-foreground">Reply drafts couldn't load. <button type="button" className="underline" onClick={() => { void approvals.refresh(); }}>Try again</button></p>;
   if (!drafts.length) return null;
   return <section aria-label="PAIGE lead replies" className="space-y-3 border-t border-border pt-3">
-    {drafts.map(approval=><LeadReplyDraftEntry key={`${key}:${approval.id}`} actorId={actorId} threadKey={threadKey} tenantId={tenantId} contactId={contactId} approval={approval} canEdit={canEdit} disabled={disabled} onEdit={onEdit} current={isCurrent}/>)}
+    {drafts.map(approval=><LeadReplyDraftEntry key={`${key}:${approval.id}`} actorId={actorId} threadKey={threadKey} tenantId={tenantId} contactId={contactId} approval={approval} canEdit={canEdit} disabled={disabled} recordDisabled={recordDisabled} onEdit={onEdit} current={isCurrent}/>)}
   </section>;
 }

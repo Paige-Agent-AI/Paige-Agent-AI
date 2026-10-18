@@ -66,6 +66,7 @@ interface PickedClient {
 type DraftTone = "professional" | "friendly" | "warm" | "direct";
 
 export function ComposeThreadDialog({
+  isSolo=false,
   open,
   onOpenChange,
   activeConnectors,
@@ -79,6 +80,7 @@ export function ComposeThreadDialog({
   emailTemplates = [],
   onSent,
 }: {
+  isSolo?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   activeConnectors: ComposeConnector[];
@@ -511,7 +513,9 @@ export function ComposeThreadDialog({
           <div className="space-y-3 py-1">
             {locatorConflicted?<p role="status" className="text-sm text-muted-foreground">The original reply is still open. {onRestoreOrigin?<button type="button" className="underline" onClick={onRestoreOrigin}>Return to original reply</button>:null}</p>:null}
             {open&&bound&&tenantId&&initialContact?<LeadReplyDrafts actorId={actorId} tenantId={tenantId} contactId={initialContact.id} approvalId={approvalId}
+              threadKey={isSolo?`contact:${tenantId}:${initialContact.id}`:null}
               current={()=>scopeRef.current===scope} disabled={leadReplyReview.blocksSending||client?.id!==initialContact.id}
+              recordDisabled={sending||leadReplyReview.blocksSending||locatorConflicted||client?.id!==initialContact.id}
               onEdit={(approval,draft)=>{
                 if(approval.id!==approvalId||approval.contact_id!==initialContact.id||approval.tenant_id!==tenantId)return;
                 if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId:null,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){

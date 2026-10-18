@@ -359,9 +359,9 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   };
 
   const checkStatus = async () => {
-    if (!current?.canCheck || lock.current?.scope === scope || !currentScope(scope)) return;
+    if (!current?.canCheck || (historyOnly&&input.disabled) || lock.current?.scope === scope || !currentScope(scope)) return;
     const owner={scope};lock.current = owner; setBusyScope(owner);
-    const wait=waitFor(scope);
+    const wait=waitFor(scope,historyOnly?actionEligibility():undefined);
     try {
       await authority(scope,wait);
       // Receipt-only read. Re-entering the command door can reconcile some legacy providers by
@@ -403,7 +403,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
       <div ref={panelRef} className="space-y-2 border-t border-border px-3 py-3">
         {current.phase === "decide" ? <PaigeConfirmCard actions={[{ summary: current.summary, fingerprint: current.fingerprint, preview: current.preview }]} disabled={busy || input.disabled} focusOnMount onApprove={(fps) => { void approve(fps); }} onDeny={dismiss} />
           : <PaigeConfirmCard mode="report" actions={[{ summary: current.summary, preview: current.preview, state: current.state, note: current.note }]} note={current.note} focusOnMount />}
-        {current.canCheck ? <Button variant="outline" size="sm" disabled={busy} onClick={() => { void checkStatus(); }}>{busy ? "Checking…" : "Check sending status"}</Button> : null}
+        {current.canCheck ? <Button variant="outline" size="sm" disabled={busy||(historyOnly&&input.disabled)} onClick={() => { void checkStatus(); }}>{busy ? "Checking…" : "Check sending status"}</Button> : null}
         {current.recordPending&&current.acceptedMessageId?<Button variant="outline" size="sm" disabled={busy||input.disabled} onClick={()=>{void finishRecording();}}>Finish recording reply</Button>:null}
       </div>
     ) : null}

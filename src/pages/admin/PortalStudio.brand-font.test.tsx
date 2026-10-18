@@ -80,7 +80,7 @@ async function choose(label: string) {
   await flush();
 }
 
-const saveButton = () => [...container.querySelectorAll("button")].find((b) => b.textContent?.includes("Save portal")) as HTMLButtonElement;
+const saveButton = () => [...container.querySelectorAll("button")].find((b) => b.textContent?.includes("Save brand, greeting & agent")) as HTMLButtonElement;
 const brandWrites = () => db.rpcCalls.filter((c) => c.fn === "set_tenant_brand");
 
 describe("Client Portal typeface picker", () => {

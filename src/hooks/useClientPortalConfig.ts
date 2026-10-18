@@ -6,10 +6,14 @@ import { useClientPortalRead } from "./useClientPortalRead";
  * Resolves via get_client_portal_config() (SECURITY DEFINER, keyed on
  * the canonical active relationship), mirroring get_client_portal_brand().
  *
- * This is a purely subtractive/reordering overlay over the Playbook's module
- * catalog — it NEVER introduces new module keys. It hides keys (visible:false),
- * reorders keys (order), and carries an optional welcome greeting. Shape:
- *   { modules?: [{ key, visible, order }], welcome?: { headline?, subhead? } }
+ * This is a purely presentational overlay over the portal menu — it NEVER
+ * introduces new module keys. It hides keys (visible:false), reorders keys
+ * (order), renames keys (label, E09 Slice M), and carries an optional welcome
+ * greeting. Shape:
+ *   { modules?: [{ key, visible, order, label }], welcome?: { headline?, subhead? } }
+ * The customer read also carries the server-owned `_catalog` (the tenant's
+ * Playbook menu inputs, never the rest of the Playbook), parsed into `catalog`
+ * so the customer's menu is built from THEIR business's catalog (§57).
  *
  * FAIL-OPEN: any error / empty / non-client caller resolves to {} so the nav
  * renders byte-for-byte the current (catalog-only) behavior. This hook never
@@ -19,8 +23,17 @@ export interface PortalModuleOverlay {
   key: string;
   /** When explicitly false, the module is hidden from the client nav. */
   visible?: boolean;
-  /** When a number, the module sorts by it; absent keeps catalog order. */
+  /** When a number, the module sorts by it within its group; absent keeps the default order. */
   order?: number;
+  /** The business's own name for the entry (E09 Slice M), trimmed, at most 40 characters. */
+  label?: string;
+}
+
+/** The server's `_catalog` (get_client_portal_config, E09 Slice M), mirrored by catalogInputFromFeatures. */
+export interface PortalCatalogInput {
+  slug: string | null;
+  authoredUsable: boolean;
+  modules: { key: string; label: string }[] | null;
 }
 
 export interface PortalWelcome {
@@ -39,6 +52,8 @@ export interface ClientPortalConfig {
   modules?: PortalModuleOverlay[];
   welcome?: PortalWelcome;
   assistant?: PortalAssistant;
+  /** Customer read only: the business's menu catalog inputs. Absent until the server sends `_catalog`. */
+  catalog?: PortalCatalogInput;
 }
 
 export interface ClientPortalConfigState {
@@ -105,6 +120,10 @@ export function normalizePortalConfig(raw: unknown): ClientPortalConfig {
         const overlay: PortalModuleOverlay = { key };
         if (typeof m.visible === "boolean") overlay.visible = m.visible;
         if (typeof m.order === "number" && Number.isFinite(m.order)) overlay.order = m.order;
+        if (typeof m.label === "string") {
+          const label = m.label.trim().slice(0, PORTAL_MENU_LABEL_MAX);
+          if (label) overlay.label = label;
+        }
         return overlay;
       })
       .filter((m): m is PortalModuleOverlay => m !== null);
@@ -119,7 +138,34 @@ export function normalizePortalConfig(raw: unknown): ClientPortalConfig {
     if (welcome.headline !== undefined || welcome.subhead !== undefined) out.welcome = welcome;
   }
 
+  const catalog = parsePortalCatalog(candidate._catalog);
+  if (catalog) out.catalog = catalog;
+
   return out;
+}
+
+export const PORTAL_MENU_LABEL_MAX = 40;
+const CATALOG_MAX_ENTRIES = 40;
+const CATALOG_MAX_CHARS = 80;
+
+/** Bound a Playbook module list the way the server's `_catalog` does: string key and label, 40 x 80. */
+export function boundCatalogModules(raw: unknown): { key: string; label: string }[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw
+    .filter((m): m is { key: string; label: string } =>
+      !!m && typeof m === "object" && typeof (m as { key?: unknown }).key === "string" && typeof (m as { label?: unknown }).label === "string")
+    .slice(0, CATALOG_MAX_ENTRIES)
+    .map((m) => ({ key: m.key.slice(0, CATALOG_MAX_CHARS), label: m.label.slice(0, CATALOG_MAX_CHARS) }));
+}
+
+function parsePortalCatalog(raw: unknown): PortalCatalogInput | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const c = raw as Record<string, unknown>;
+  return {
+    slug: typeof c.slug === "string" ? c.slug : null,
+    authoredUsable: c.authored_usable === true,
+    modules: boundCatalogModules(c.modules),
+  };
 }
 
 /**

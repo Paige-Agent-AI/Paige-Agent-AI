@@ -125,6 +125,7 @@ on:
       - "scripts/proof/mcp-gateway-tools-action.mjs"
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
       - "supabase/tests/exp04_client_engagement_status.sql"
+      - "supabase/tests/pgcrypto_search_path_signing.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
       # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
@@ -368,6 +369,12 @@ jobs:
       - name: Sales commercial and signing agreement row contracts (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sales_agreement_trigger_contracts.sql
+      # pgcrypto lives in `extensions`. The signer side of agreements (issue, open, decline) and the
+      # invitation redeemer run for real with no stand-in digest(), and no public function with a
+      # pinned search_path lacking `extensions` calls pgcrypto unqualified (20271110040000).
+      - name: Agreement signing and pgcrypto search_path (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/pgcrypto_search_path_signing.sql
       - name: Operations accepted engagement handoff authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_handoff.sql
@@ -545,6 +552,9 @@ jobs:
         if: ${{ !cancelled() }}
       # E09 Progress: only explicitly shared plan_items reach the customer; one audited share writer.
       - run: supabase test db supabase/tests/customer_portal_progress.sql
+        if: ${{ !cancelled() }}
+      # E09 Menu: the customer reads its own tenant's catalog; the one portal-config writer validates shape.
+      - run: supabase test db supabase/tests/customer_portal_menu.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

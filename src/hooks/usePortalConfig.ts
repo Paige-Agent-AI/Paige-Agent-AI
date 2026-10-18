@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   normalizePortalConfig,
   type ClientPortalConfig,
+  type PortalCatalogInput,
 } from "@/hooks/useClientPortalConfig";
+import { catalogInputFromFeatures } from "@/lib/playbook/resolve";
 
 /**
  * Editor-side seam for the existing tenant portal configuration writer.
@@ -82,4 +84,26 @@ export function usePortalConfig(tenantId: string | null) {
     save: (patch: Partial<ClientPortalConfig>) => save.mutateAsync(patch),
     saving: save.isPending,
   };
+}
+
+/**
+ * E09 Slice M — the owner side of the customer menu catalog. The customer receives these inputs as the
+ * server's `_catalog`; the owner derives the SAME inputs from its own `tenants.features` for the workspace
+ * being edited (not the profile's active tenant), so the editor offers exactly the rows its customers'
+ * menu is built from (§57).
+ */
+export function usePortalCatalogInput(tenantId: string | null) {
+  return useQuery({
+    queryKey: ["portal-catalog", tenantId],
+    enabled: !!tenantId,
+    queryFn: async (): Promise<PortalCatalogInput> => {
+      const { data, error } = await db
+        .from("tenants")
+        .select("features")
+        .eq("id", tenantId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return catalogInputFromFeatures((data?.features ?? {}) as Record<string, unknown>);
+    },
+  });
 }

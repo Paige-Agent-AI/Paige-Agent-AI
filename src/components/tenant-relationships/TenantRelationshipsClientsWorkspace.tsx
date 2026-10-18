@@ -817,7 +817,7 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
         <section><small>Restricted system evidence</small><strong>PAIGE reasoning, source evidence, and Trust configuration</strong></section>
       </div>
       <div className="trc-portal-actions">
-        <article><ShieldCheck aria-hidden /><div><strong>Client-visible home</strong><span>{Object.keys(data.portalConfig).length ? "PARTIAL · scoped configuration loaded" : "PARTIAL · authorized default configuration"}</span></div></article>
+        <article><ShieldCheck aria-hidden /><div><strong>Client-visible home</strong><span>{Object.keys(data.portalConfig).length ? "PARTIAL · scoped configuration loaded" : "PARTIAL · authorized default configuration"}</span><span>Your customers’ menu follows the order and names you set in Portal configuration.</span></div></article>
         <article><MessageSquare aria-hidden /><div><strong>Portal conversation</strong><span>PARTIAL · canonical thread convergence is not complete.</span></div></article>
         <article><UserRound aria-hidden /><div><strong>Requests and action items</strong><span>UNAVAILABLE · no aggregate workflow contract is connected.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Portal access</strong><span>PARTIAL · invite and access state remains on the selected client record.</span></div></article>

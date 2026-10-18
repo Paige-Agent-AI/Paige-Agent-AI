@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { AppNav } from "./AppNav";
+import { closeMenus, desktopNavHrefs, openGroup } from "./appNavTestUtils";
 
 // Synthetic test tenant (Northwind Studio); never a real account.
 const f = vi.hoisted(() => ({
@@ -35,8 +36,16 @@ let root: Root, host: HTMLDivElement;
 const render = async () => {
   await act(async () => root.render(<MemoryRouter initialEntries={["/app"]}><AppNav user={user} /></MemoryRouter>));
 };
-const progressLinks = () => host.querySelectorAll('a[href="/app/progress"]');
-const navOrder = () => Array.from(host.querySelectorAll("a")).map(a => a.getAttribute("href")).filter(h => h?.startsWith("/app"));
+// Slice M: the desktop bar groups entries; a group of two or more is a menu whose links mount only while open,
+// so these read every destination by opening each group (appNavTestUtils), as a keyboard user would.
+const navOrder = () => desktopNavHrefs(host);
+const progressCount = async () => (await navOrder()).filter(h => h === "/app/progress").length;
+const progressLabel = async () => {
+  const items = await openGroup("Your work");
+  const text = items.find(i => i.getAttribute("href") === "/app/progress")?.textContent?.trim();
+  await closeMenus();
+  return text;
+};
 
 beforeEach(() => {
   f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.brandError = false; f.multiple = false;
@@ -45,22 +54,24 @@ beforeEach(() => {
   f.brand = { tenant_id: "e0923000-0000-0000-0000-000000000002", tenant_name: "Northwind Studio", logo_url: null, primary_color: null };
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+afterEach(async () => { await closeMenus(); act(() => root.unmount()); host.remove(); });
 
-it("gives a customer of one business a Progress entry, after Sessions, even when the Playbook predates the key", async () => {
+// Slice M (owner ruling 2026-10-18): Progress leads "Your work", right after the fixed Home and Messages.
+// Before Slice M it was injected after Sessions; the destination set is unchanged (§58, presentation only).
+it("gives a customer of one business a Progress entry leading Your work, even when the Playbook predates the key", async () => {
   await render();
-  expect(progressLinks()).toHaveLength(1);
-  expect(progressLinks()[0].textContent).toContain("Progress");
-  const order = navOrder();
-  expect(order.indexOf("/app/progress")).toBe(order.indexOf("/app/sessions") + 1);
+  expect(await progressCount()).toBe(1);
+  expect(await progressLabel()).toContain("Progress");
+  const order = await navOrder();
+  expect(order.indexOf("/app/progress")).toBe(order.indexOf("/app/messages") + 1);
 });
 
 it("places Progress where the Playbook lists it, exactly once, with the Playbook's label", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "progress", label: "Your progress" }, { key: "learn", label: "Resources" }];
   await render();
-  expect(progressLinks()).toHaveLength(1);
-  expect(progressLinks()[0].textContent).toContain("Your progress");
-  const order = navOrder();
+  expect(await progressCount()).toBe(1);
+  expect(await progressLabel()).toContain("Your progress");
+  const order = await navOrder();
   expect(order.indexOf("/app/progress")).toBeLessThan(order.indexOf("/app/learn"));
 });
 
@@ -68,19 +79,19 @@ it("respects the business's portal overlay hiding Progress", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "progress", label: "Progress" }];
   f.overlay = [{ key: "progress", visible: false }];
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
 });
 
 it("respects the overlay even when the Playbook predates the key", async () => {
   f.overlay = [{ key: "progress", visible: false }];
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
 });
 
 it("still lands Progress after Messages when the overlay hides Sessions", async () => {
   f.overlay = [{ key: "sessions", visible: false }];
   await render();
-  const order = navOrder();
+  const order = await navOrder();
   expect(order.indexOf("/app/sessions")).toBe(-1);
   expect(order.indexOf("/app/progress")).toBe(order.indexOf("/app/messages") + 1);
 });
@@ -89,24 +100,24 @@ it("never shows Progress to staff, even when the Playbook lists it", async () =>
   f.modules = [{ key: "home", label: "Home" }, { key: "progress", label: "Progress" }];
   f.brand = null; f.isAdmin = true;
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
 });
 
 it("never shows Progress to a customer of more than one business", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "progress", label: "Progress" }];
   f.brand = null; f.multiple = true;
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
 });
 
 it("shows no Progress while the relationship resolves or after it failed to", async () => {
   f.modules = [{ key: "home", label: "Home" }, { key: "progress", label: "Progress" }];
   f.brandLoading = true;
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
   f.brandLoading = false; f.brandError = true;
   await render();
-  expect(progressLinks()).toHaveLength(0);
+  expect(await progressCount()).toBe(0);
 });
 
 it("lists Progress in the customer's mobile menu", async () => {

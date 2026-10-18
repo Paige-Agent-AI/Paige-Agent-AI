@@ -1,0 +1,74 @@
+# Durable work: honor the existing thread-delete FK
+
+2026-10-18 local implementation checkpoint. AUTHOR-REVIEW / LOWER ASSURANCE;
+independent review, exact-head hosted CI, persisted migration apply and customer proof are owed.
+This is a prerequisite inside the original ANT-21/52/147 restoration scope, not a reminder
+recovery implementation or a capability acceptance. Strict totals remain 1/18 and 2/50.
+
+The actual PostgreSQL predecessor rejected deletion of a referenced Chat thread: the existing
+`ON DELETE SET NULL` FK issued its child UPDATE, and `_paige_durable_work_protect_identity()`
+raised `22023 DURABLE_WORK_IDENTITY_IMMUTABLE`. The native server log contains the parent DELETE,
+the FK's `UPDATE ONLY public.paige_durable_work SET thread_id = NULL`, and that trigger error.
+
+The forward migration `20271110022000_durable_work_thread_detach.sql` replaces only that existing
+trigger function. A changed thread reference is permitted only from non-NULL to NULL when the
+original parent is actually absent. Live-parent detach, reparenting and NULL-to-parent remain
+refused. Every other original identity check and the one-time bounded request-payload rule remain.
+No historical migration, table, FK action, caller RPC, writer or grant is changed.
+
+**Material execution-context change:** the internal function changes from SECURITY INVOKER to
+SECURITY DEFINER for its fully qualified parent-presence read. This avoids treating an RLS-hidden
+live parent as deleted. The function refuses noncanonical relation/operation/timing/level bindings
+before accessing row fields, retains its empty search path, and fails closed if RLS would apply to
+the definer's parent read. CREATE OR REPLACE preserves the existing owner, ABI, ACL and trigger.
+The local catalog snapshots prove those equalities, with only `prosecdef` changed. No caller
+authorization derives from parent absence. No EXECUTE or table grants are added.
+
+The rule uses the existing immediate FK's schema semantics; it does not trust trigger depth,
+timestamps, diagnostic flags or a user-supplied deletion assertion. Parent DELETE and FK detachment
+share one PostgreSQL transaction; rollback restores both. See the PostgreSQL
+[trigger contract](https://www.postgresql.org/docs/16/trigger-definition.html) and
+[foreign-key contract](https://www.postgresql.org/docs/16/ddl-constraints.html).
+
+## Local native evidence
+
+`scripts/proof/paige-durable-thread-detach.mjs` reuses `OperatorPostgresFixture` against an explicitly
+selected disposable loopback port (never 5432). It applies the actual envelope and Document migrations
+and extracts the current E09 `create_paige_durable_work` definition unchanged. Minimal synthetic
+Auth/domain infrastructure is disclosed; current audience/membership gates and native FK/trigger
+behavior execute in PostgreSQL. The fixture models the existing Chat-turn parent CASCADE edge.
+
+- Red-first: `--baseline` fails on the real parent DELETE with 22023 after the incumbent envelope
+  rollback proof passed. Private `work/durable-thread-detach/red-native.log`, `red-result.json` and
+  the retained red cluster server log preserve the failure. Test exit 1; cluster stop exit 0.
+- Final green: **73 native assertions**, plus the unchanged incumbent envelope rollback proof,
+  passed. Existing work is byte-for-byte unchanged by migration and repeat application. Test and
+  cluster stop exits are both 0; `green-native.log` and `green-result.json` retain actual output.
+- Controls cover actual FK DELETE and rollback, multi-parent deletion, every immutable identity
+  field, payload immutability/first attachment, unrelated updates, RLS-hidden parent, RLS-active
+  definer owner, nested-trigger attempts, bad trigger bindings, real denied role calls, no raw
+  grants, both neutral cohort creates, foreign actor/tenant/thread and customer-private refusal,
+  existing terminal-result preservation, and unchanged actor/tenant RESTRICT behavior.
+- Document artifact and Research work correlations survive as modeled. Existing Chat-turn
+  CASCADE still deletes the removed thread's turn. This does **not** assert deleted transcript
+  retention, full Document completion replay, Research execution, or any provider operation.
+- `node --check`, both incumbent definer/ACL lints, changed-migration Python lint and version
+  collision guard pass. Final frozen-tree guard results are retained in the private static receipt.
+- Local Supabase security advisors exit 0: two WARNs concern only fixture stubs
+  `is_platform_owner` and `knowledge_actor_authorized`; none concerns the changed trigger.
+  `supabase db lint` is **UNVERIFIED / unavailable**: stock local PostgreSQL 16 lacks
+  `plpgsql_check.control`; its actual CREATE EXTENSION failure and exit 1 are retained.
+
+Runner: start a fresh owned PostgreSQL cluster, set `OPERATOR_PROOF_PSQL` and
+`DURABLE_THREAD_PROOF_PORT`, then run `node scripts/proof/paige-durable-thread-detach.mjs`.
+The private `work/durable-thread-detach/run-local.ps1` captures exact start/test/advisor/stop legs.
+Initial Windows launcher failures were pre-assertion tooling failures, preserved separately;
+the Supabase scaffold was created successfully before a telemetry shutdown timeout. Neither is
+reported as the native red regression or a passing assertion.
+
+No production operation or new retention/deletion policy occurred. Initiating-user and tenant
+FK RESTRICT remain unchanged; the separately identified user-delete cleanup dependency remains
+unresolved. No reminder adopter, authenticated grant, approval, Chat/Spine/source binding, role,
+provider activation, scheduler or business-data change is included. Base main715200d remains
+preserved; subsequently observed main797d8d0 adds only the reviewed Task consumer paths and leaves
+all native inputs/frontier21000 unchanged. Root owns composition, release and acceptance.

@@ -4,6 +4,12 @@
 > audit retention. The dated correction at the end supersedes that raw-copy design and adds
 > one opaque original-JWT lookup. Neither checkpoint is a release or activation claim.
 
+> Release ordering correction, 2026-10-18: the current unreleased filename is
+> `20271110070000_reminder_approved_intent.sql`, after production's verified60000
+> frontier. Its SQL bytes remain SHA256 `63d3bb4ff9d0cd68c0df9ff4bf82fe2589454fa4c833ac2e31db1ffa27150515`.
+> Earlier23000/32000 names below identify historical checkpoints, not runnable paths.
+> No applied migration or historical release record was rewritten.
+
 2026-10-18 local implementation checkpoint. AUTHOR-REVIEW / LOWER ASSURANCE.
 Independent review, Chat integration, hosted exact-head CI, persisted migration apply,
 ordinary authenticated recovery and owner acceptance remain owed. This belongs to the

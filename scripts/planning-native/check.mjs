@@ -307,7 +307,12 @@ const answered=outcomeAst.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name
 const note=outcomeAst.statements.find(n=>ts.isVariableStatement(n)&&n.declarationList.declarations.some(d=>d.name.getText(outcomeAst)==='OUTCOME_UNKNOWN_NOTE'));
 assert.ok(answered&&note);
 const dispatchCode=`${answered.getText(outcomeAst).replace('export ','')}\n${note.getText(outcomeAst).replace('export ','')}
- async function dispatch(tc,personaCtx,supabaseClient,toolResults,user,requestExecutionState) ${planningBranch.getText(chatAst)}`;
+ async function dispatch(tc,personaCtx,supabaseClient,toolResults,user,requestExecutionState) {
+  // Keep the production tool-loop context while exercising the incumbent writer's
+  // committed-but-unacknowledged result. This fixture has no native approval seal.
+  const approvedReminderClaims=new Map(),approvalSpend=new Map();
+  for(let toolIteration=0;toolIteration<1;toolIteration++) ${planningBranch.getText(chatAst)}
+ }`;
 const compiled=ts.transpileModule(dispatchCode,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText;
 const dispatch=new Function(`${compiled};return dispatch;`)();
 let nativeAttempts=0;const outputs=[],executionState={needsReview:false};

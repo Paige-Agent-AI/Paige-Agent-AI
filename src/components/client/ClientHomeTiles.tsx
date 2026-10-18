@@ -10,16 +10,29 @@ import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { sessionTiming, useNextPortalSession, type PortalSession } from "@/hooks/useClientPortalSessions";
 import {
+  isProgressPastDue,
+  progressDayKey,
+  progressDayLabel,
+  usePortalProgressGlance,
+  viewerTimeZone,
+  type PortalProgressItem,
+  type PortalProgressSummary,
+} from "@/hooks/useClientPortalProgress";
+import { useMyActions } from "@/hooks/useMyActions";
+import {
   Target,
   TrendingUp,
   DollarSign,
   FileText,
   MessageSquare,
   ListChecks,
+  ClipboardList,
   CalendarCheck,
   CalendarClock,
   ChevronRight,
   Lock,
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 
 // Some of these tables are not in the generated types; count them through an untyped view of the same client.
@@ -34,7 +47,7 @@ const TILE_QUIET_HOVER = "hover:bg-muted hover:text-foreground";
  * The neighbouring tiles' buttons are 36px (size sm). These match that height and keep a 44px touch
  * target with an invisible extension above and below.
  */
-const TILE_BUTTON = `relative h-9 after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] ${TILE_QUIET_HOVER}`;
+const TILE_BUTTON = `relative h-9 after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-[''] ${TILE_QUIET_HOVER}`;
 
 type Counts = {
   goals: number | null;
@@ -42,7 +55,6 @@ type Counts = {
   applications: number | null;
   documents: number | null;
   messages: number | null;
-  nextSteps: number | null;
 };
 
 const EMPTY: Counts = {
@@ -51,14 +63,13 @@ const EMPTY: Counts = {
   applications: null,
   documents: null,
   messages: null,
-  nextSteps: null,
 };
 
 /**
  * Client-view home tiles. Zero seeded content — each tile renders real counts
  * or a single-action EmptyTile CTA that routes to the flow that produces
- * the missing data. Six tiles: Goals, Credit, Funding, Documents, Messages,
- * Next Steps.
+ * the missing data. Six tiles: Goals, Progress (or Credit), Sessions (or Funding),
+ * Documents, Messages, Next Steps.
  */
 export function ClientHomeTiles({ userId }: { userId: string }) {
   const navigate = useNavigate();
@@ -69,6 +80,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   const isCustomer = !brandLoading && !brandError && !!brand?.tenant_id && !multipleBusinesses;
   const businessName = brand?.tenant_name?.trim() || "your team";
   const next = useNextPortalSession(isCustomer);
+  const progress = usePortalProgressGlance(isCustomer);
   const [counts, setCounts] = useState<Counts>(EMPTY);
   const [loading, setLoading] = useState(true);
 
@@ -78,17 +90,12 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
     (async () => {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
-      const [goals, credit, apps, docs, msgs, tasks] = await Promise.all([
+      const [goals, credit, apps, docs, msgs] = await Promise.all([
         untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("documents").select("id", headOnly).eq("user_id", userId),
         untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
-        untypedDb
-          .from("tasks")
-          .select("id", headOnly)
-          .eq("assigned_to", userId)
-          .neq("status", "completed"),
       ]);
       if (cancelled) return;
       setCounts({
@@ -97,7 +104,6 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         applications: apps.count ?? 0,
         documents: docs.count ?? 0,
         messages: msgs.count ?? 0,
-        nextSteps: tasks.count ?? 0,
       });
       setLoading(false);
     })();
@@ -151,7 +157,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         />
       )}
 
-      {/* 2. Progress (coaching) — credit tile only when the client has credit data */}
+      {/* 2. Progress — the work the business shared; the credit tile only when the client has credit data */}
       {hasCredit ? (
         <FilledTile
           icon={<TrendingUp className="w-4 h-4" />}
@@ -160,6 +166,8 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
           label="reports on file"
           onClick={() => navigate("/app/credit")}
         />
+      ) : isCustomer && progress.state !== "unavailable" ? (
+        <ProgressTile glance={progress} businessName={businessName} />
       ) : (
         <EmptyTile
           icon={<TrendingUp className="w-6 h-6" />}
@@ -239,25 +247,167 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         />
       )}
 
-      {/* 6. Next Steps — already dynamic via tasks table */}
-      {counts.nextSteps && counts.nextSteps > 0 ? (
-        <FilledTile
-          icon={<ListChecks className="w-4 h-4" />}
-          title="Your next steps"
-          count={counts.nextSteps}
-          label="open"
-          onClick={() => askPaige(nextStepsPrompt)}
+      {/* 6. Next Steps — the customer's open action items from their business */}
+      {isCustomer ? (
+        <NextStepsTile
+          businessName={businessName}
+          onAsk={() => askPaige(nextStepsPrompt)}
+          askLabel={`Ask ${coachName} what's next`}
         />
       ) : (
         <EmptyTile
-          icon={<ListChecks className="w-6 h-6" />}
+          icon={<ClipboardList className="w-6 h-6" />}
           title="Your next steps"
-          description={`Your action list fills in as ${coachName} assigns coached tasks.`}
+          description={`Your action list fills in as ${businessName} sends you action items.`}
           actionLabel={`Ask ${coachName} what's next`}
           onAction={() => askPaige(nextStepsPrompt)}
         />
       )}
     </div>
+  );
+}
+
+/**
+ * A tile that is one link: the whole card opens `to`, so it is reachable and operable by keyboard.
+ * Data reads top-down — the headline is the reading, the detail line says what it means, an optional
+ * line names what comes next — and the "Open …" row is anchored to the bottom edge, so it lines up
+ * with its neighbour's in the same row whatever each tile holds.
+ */
+function LinkTile({ to, testId, icon, title, headline, detail, next, openLabel, failed = false, quiet = false, dashed = false }: {
+  to: string; testId: string; icon: React.ReactNode; title: string; headline: React.ReactNode; detail: React.ReactNode;
+  next?: React.ReactNode; openLabel: string;
+  /** A failed read: the headline says so at a smaller step, so it never reads as a figure. */
+  failed?: boolean;
+  /** Nothing to count yet: a sentence, not a figure, so it never outweighs real data. */
+  quiet?: boolean; dashed?: boolean;
+}) {
+  return (
+    <Card className={`flex h-full flex-col transition-colors hover:border-foreground/30 motion-reduce:transition-none ${dashed ? "border-dashed" : ""}`}>
+      <Link
+        to={to}
+        data-testid={testId}
+        className="group flex min-h-[44px] flex-1 flex-col rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
+            {icon}
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col pb-4">
+          <div
+            data-testid={`${testId}-headline`}
+            className={failed || quiet ? "text-lg font-semibold tracking-tight" : "text-2xl font-bold tracking-tight tabular-nums"}
+          >
+            {headline}
+          </div>
+          <div data-testid={`${testId}-detail`} className="mt-1 text-sm text-muted-foreground">{detail}</div>
+          {next && <div data-testid={`${testId}-next`} className="mt-3 text-sm text-muted-foreground">{next}</div>}
+          <span
+            data-testid={`${testId}-open`}
+            className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-medium text-foreground underline-offset-4 group-hover:underline"
+          >
+            {openLabel}
+            <ArrowRight
+              className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+              aria-hidden="true"
+            />
+          </span>
+        </CardContent>
+      </Link>
+    </Card>
+  );
+}
+
+/** "Next: Review the moodboard · due today", in the viewer's own zone. */
+function NextLine({ item }: { item: PortalProgressItem }) {
+  const nowMs = Date.now();
+  const tz = viewerTimeZone();
+  const due = item.due_at as string;
+  const when = isProgressPastDue(item, nowMs)
+    ? "past due"
+    : progressDayKey(Date.parse(due), tz) === progressDayKey(nowMs, tz) ? "due today" : `due ${progressDayLabel(due, tz, nowMs)}`;
+  return (
+    <span className="line-clamp-2 break-words">
+      Next: <span className="font-medium text-foreground">{item.title}</span> · {when}
+    </span>
+  );
+}
+
+function TileSkeleton({ testId }: { testId: string }) {
+  return <div data-testid={testId} className="h-32 rounded-lg bg-muted/30 animate-pulse motion-reduce:animate-none" aria-hidden="true" />;
+}
+
+type ProgressGlance = Exclude<ReturnType<typeof usePortalProgressGlance>, { state: "unavailable" }>;
+
+/**
+ * How much of the work the business shared is done, from the same read as /app/progress; opens it.
+ * Nothing shared yet says so plainly. A failed read never shows as zero.
+ */
+function ProgressTile({ glance, businessName }: { glance: ProgressGlance; businessName: string }) {
+  if (glance.state === "loading") return <TileSkeleton testId="progress-tile-loading" />;
+  const summary: PortalProgressSummary | null = glance.state === "ready" ? glance.summary : null;
+  const next = glance.state === "ready" ? glance.next : null;
+  const none = summary?.shared === 0;
+  return (
+    <LinkTile
+      to="/app/progress"
+      testId="progress-tile"
+      icon={<ListChecks className="w-4 h-4" aria-hidden="true" />}
+      title="Your progress"
+      dashed={none}
+      failed={!summary}
+      quiet={none}
+      openLabel="Open progress"
+      headline={!summary ? "Couldn't check right now" : none ? "Nothing shared yet" : `${summary.done} of ${summary.shared} done`}
+      next={next ? <NextLine item={next} /> : undefined}
+      detail={!summary
+        ? "Open Progress to try again."
+        : none
+          ? `When ${businessName} shares work with you, you'll see where it stands here.`
+          : summary.overdue > 0
+            ? (
+              <span className="inline-flex items-center gap-1 text-foreground">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden="true" />{summary.overdue} past due
+              </span>
+            )
+            : summary.open > 0 ? `${summary.open} still open` : "Everything shared is done"}
+    />
+  );
+}
+
+/**
+ * The customer's open action items from their business, from the same read as /app/actions (unchanged).
+ * Asking Paige what's next stays, as the old tile offered it (§58). A failed read never shows as zero.
+ */
+function NextStepsTile({ businessName, onAsk, askLabel }: { businessName: string; onAsk: () => void; askLabel: string }) {
+  const { open, loading, error } = useMyActions();
+  if (loading && open.length === 0) return <TileSkeleton testId="next-steps-loading" />;
+  if (open.length > 0 || error) {
+    const n = open.length;
+    return (
+      <LinkTile
+        to="/app/actions"
+        testId="next-steps-tile"
+        icon={<ClipboardList className="w-4 h-4" aria-hidden="true" />}
+        title="Your next steps"
+        failed={error !== null && n === 0}
+        openLabel="Open action items"
+        headline={error && n === 0 ? "Couldn't check right now" : `${n} waiting`}
+        detail={error && n === 0
+          ? "Open your action items to try again."
+          : `${n === 1 ? "An action item" : "Action items"} from ${businessName}`}
+      />
+    );
+  }
+  return (
+    <EmptyTile
+      icon={<ClipboardList className="w-6 h-6" />}
+      title="Your next steps"
+      description={`When ${businessName} sends you an action item, it shows up here.`}
+      actionLabel={askLabel}
+      onAction={onAsk}
+    />
   );
 }
 

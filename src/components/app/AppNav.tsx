@@ -10,9 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, ClipboardList, CalendarClock, FileText, MessagesSquare, CircleHelp } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { catalogRoutableItems, applyPortalOverlay } from "@/lib/portal/moduleNav";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, CircleHelp, ChevronDown } from "lucide-react";
+import type { PortalNavItem, PortalNavSection } from "@/lib/portal/portalMenu";
+import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
@@ -22,10 +23,10 @@ import { performSignOut, customerSignOutTarget, cachePortalSlug } from "@/lib/au
 import { useUnreadSupportCount } from "@/hooks/useUnreadSupportCount";
 import { isAvatarBucketUrl } from "@/components/ui/avatar-uploader";
 import { usePlaybook } from "@/lib/playbook";
-import { useClientPortalBrandState, type ClientPortalBrand } from "@/hooks/useClientPortalBrand";
-import { useClientPortalConfigState } from "@/hooks/useClientPortalConfig";
+import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
+import "./app-nav.css";
 
 // Renders the brand mark in the /app chrome. Prefers the TENANT's brand (logo, or
 // a monogram + name driven by the tenant's primary color) so a client sees THEIR
@@ -83,17 +84,63 @@ function PortalLogo({
   return <PaigeCommandMark className={imgClassName} label="PaigeAgent.ai" />;
 }
 
-// The client portal nav is driven by the active Playbook's portal.modules,
-// resolved through the shared MODULE_ROUTES + overlay merge in
-// @/lib/portal/moduleNav — the ONE source of truth Portal Studio's "View as
-// Client" preview computes from too, so the preview can never drift from the
-// live chrome (§13). The merge stays Playbook-gated (§2/§9): funding surfaces are
-// routable only for a tenant whose opt-in funding Playbook lists those keys.
+// The customer portal menu (E09 Slice M) is assembled by assemblePortalNav() in @/lib/portal/portalMenu —
+// the ONE registry the owner's menu editor and its preview compute from too, so neither can drift from the
+// live chrome (§13). Floors are hard (§9); funding surfaces stay routable only for a tenant whose opt-in
+// funding Playbook lists those keys (§2). Home and Messages are fixed at the top; the rest is grouped —
+// "Your work", "Paperwork", "Learn" — and the business may hide, rename and reorder within a group.
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
+// Resting entries on the brand bar. Selection is a quiet fill, never gold: gold is spent on acts (§11).
+const BAR_ITEM = "flex min-h-[44px] items-center gap-2 rounded-md px-3 text-sm whitespace-nowrap transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/80";
+const BAR_REST = "text-primary-foreground/85 hover:text-primary-foreground hover:bg-sidebar-accent/50";
+const BAR_ACTIVE = "bg-sidebar-accent text-primary-foreground font-medium";
+const DRAWER_ITEM = "w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-left transition-colors motion-reduce:transition-none";
+// Full-strength foreground on the brand fill: the dimmer sidebar grey measured 4.15:1 on the dark-theme violet.
+const DRAWER_REST = "text-primary-foreground hover:bg-sidebar-accent/50";
+const DRAWER_ACTIVE = "bg-sidebar-accent text-primary-foreground font-medium";
+
+/** A desktop group with two or more entries: a menu button, keyboard and screen-reader correct (Radix). */
+function PortalGroupMenu({ section, isActive }: { section: PortalNavSection; isActive: (href: string) => boolean }) {
+  const active = section.items.some((i) => isActive(i.href));
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          data-portal-group={section.label ?? ""}
+          data-active={active ? "true" : undefined}
+          className={cn(BAR_ITEM, active ? BAR_ACTIVE : BAR_REST, "data-[state=open]:bg-sidebar-accent data-[state=open]:text-primary-foreground")}
+        >
+          {section.label}
+          <ChevronDown aria-hidden className="h-3.5 w-3.5 opacity-80" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={6} className="w-64 rounded-lg p-1.5">
+        {section.items.map((item) => (
+          <DropdownMenuItem key={item.href} asChild className="min-h-[44px] items-start gap-3 rounded-md px-2.5 py-2 focus:bg-muted focus:text-popover-foreground data-[highlighted]:bg-muted">
+            <Link to={item.href} aria-current={isActive(item.href) ? "page" : undefined} className={cn(isActive(item.href) && "bg-muted")}>
+              <item.icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0">
+                <span data-portal-label className={cn("block text-sm leading-5 text-popover-foreground", isActive(item.href) && "font-medium")}>{item.label}</span>
+                {item.description && <span className="block text-xs leading-4 text-muted-foreground">{item.description}</span>}
+              </span>
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** The menu's place while the read that decides it is in flight: quiet bars, never a menu that then changes. */
+function PortalNavSkeleton({ drawer }: { drawer: boolean }) {
+  return (
+    <div data-portal-nav-skeleton aria-hidden="true" className={drawer ? "space-y-2 px-3 py-2" : "flex items-center gap-2"}>
+      {[0, 1, 2, 3].map((i) => (
+        <span key={i} className={cn("block rounded bg-primary-foreground/10 animate-pulse motion-reduce:animate-none", drawer ? "h-[28px] w-full" : "h-[20px] w-[72px]")} />
+      ))}
+    </div>
+  );
 }
 
 interface AppNavProps {
@@ -111,7 +158,10 @@ export function AppNav({ user }: AppNavProps) {
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
-  const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = useClientPortalBrandState();
+  // The menu (E09 Slice M) and the relationship it is built for come from ONE hook, so a customer page that
+  // asks "is Resources in my menu?" reads the same answer (§18/§57).
+  const { sections, ready: menuReady, brandState } = useCustomerPortalNav();
+  const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = brandState;
   // A customer of ONE business (an actual relationship resolved server-side) gets
   // help from THAT business ("Get help" → their own inbox), never Paige's platform
   // support desk. Everyone else whose relationship has resolved keeps platform
@@ -130,11 +180,6 @@ export function AppNav({ user }: AppNavProps) {
     location.pathname === "/app/messages" && (href === "/app/messages" || href.startsWith("/app/messages?"));
   const go = (href: string) => navigate(href, staysInThread(href) ? { replace: true } : undefined);
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
-  // The tenant's PRESENTATION OVERLAY over the Playbook module catalog (§9/§10).
-  // Purely subtractive/reordering — never introduces module keys. Resolves to {}
-  // while loading / for staff / on error, so the nav is fail-open: an
-  // absent/empty overlay leaves the tab list byte-for-byte unchanged.
-  const { config: portalConfig } = useClientPortalConfigState();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   useEffect(() => {
     let cancelled = false;
@@ -155,72 +200,11 @@ export function AppNav({ user }: AppNavProps) {
     cachePortalSlug(brand?.tenant_slug ?? null);
   }, [isAdmin, brandLoading, brand]);
 
-  // Base nav = the active Playbook's module CATALOG (filtered to routable keys,
-  // default order) with the tenant PRESENTATION OVERLAY applied — both computed
-  // by the shared @/lib/portal/moduleNav helpers. FAIL-OPEN: an absent/empty/
-  // malformed overlay yields byte-for-byte the catalog order. The force-injected
-  // "Action items" and staff "Planning" items below are added AFTER this merge,
-  // so the overlay can never touch or hide them.
-  const navItems: NavItem[] = applyPortalOverlay(
-    catalogRoutableItems(pb.portal.modules),
-    portalConfig.modules,
-  ).map(({ label, href, icon }): NavItem => ({ label, href, icon }));
-
-  // "Action items" is the customer's side of the two-way action bus (§8) — a core
-  // portal surface every client gets, regardless of what their Playbook's module
-  // list happens to include. Slot it right after Home.
-  if (!isAdmin && !navItems.some((i) => i.href === "/app/actions")) {
-    const homeIdx = navItems.findIndex((i) => i.href === "/app");
-    navItems.splice(homeIdx >= 0 ? homeIdx + 1 : 0, 0, {
-      label: "Action items", href: "/app/actions", icon: ClipboardList,
-    });
-  }
-
-  // Documents is available to an actual native customer relationship even when
-  // an older Playbook predates the module key. Overlay stays presentation-only;
-  // the mounted page and Storage independently re-resolve actual permission.
-  if (brand && portalConfig.modules?.find(item => item.key === "documents")?.visible !== false
-    && !navItems.some(item => item.href === "/app/documents")) {
-    const after = navItems.findIndex(item => item.href === "/app/actions");
-    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {label: "Documents", href: "/app/documents", icon: FileText});
-  }
-
-  // Messages is the customer's conversation with their business (E09) — a core
-  // portal surface every customer gets, independent of the Playbook's module list.
-  // Shown only once a customer relationship has resolved (like Documents / Get
-  // help), so nobody without one is handed a dead-end link. The page still
-  // re-resolves the relationship server-side.
-  if (isCustomer && !navItems.some((i) => i.href === "/app/messages")) {
-    const after = Math.max(
-      navItems.findIndex((i) => i.href === "/app/documents"),
-      navItems.findIndex((i) => i.href === "/app/actions"),
-    );
-    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
-      label: "Messages", href: "/app/messages", icon: MessagesSquare,
-    });
-  }
-
-  // Sessions is the customer's own bookings with their business (E09 Slice 2). The Playbook catalog
-  // places it, and the presentation overlay may hide it; it is shown ONLY to a customer of one
-  // business — staff and a customer of several businesses have no sessions this page can show.
-  // A Playbook that predates the key still gets it, after Messages, unless the overlay hides it.
-  const sessionsHidden = portalConfig.modules?.find((m) => m.key === "sessions")?.visible === false;
-  if (!isCustomer) {
-    for (let i = navItems.length - 1; i >= 0; i--) if (navItems[i].href === "/app/sessions") navItems.splice(i, 1);
-  } else if (!sessionsHidden && !navItems.some((i) => i.href === "/app/sessions")) {
-    const after = navItems.findIndex((i) => i.href === "/app/messages");
-    navItems.splice(after >= 0 ? after + 1 : navItems.length, 0, {
-      label: "Sessions", href: "/app/sessions", icon: CalendarClock,
-    });
-  }
-
-  // Planning is the Task Manager — where every reminder/task/milestone Paige
-  // sets actually lives, and the landing spot for a fired reminder's
-  // notification. Staff always get it (plan_list is tenant-member scoped, so a
-  // pure client can't use it yet — the client view ships separately).
-  if (isAdmin && !navItems.some((i) => i.href === "/app/planning")) {
-    navItems.push({ label: "Planning", href: "/app/planning", icon: CalendarClock });
-  }
+  // A customer's catalog is their business's `_catalog` (§57); staff keep their own Playbook read. Until the
+  // read that decides THIS viewer's menu returns, the menu is a skeleton — never the generic catalog that then
+  // changes under them (Resources appearing and vanishing). FAIL-OPEN once resolved: an absent overlay or
+  // catalog gives the default menu, never fewer entries.
+  const isActive = (href: string) => location.pathname === href;
 
   const userRoleLabel = isAdmin ? "Admin" : "Client";
   const isViewingAsClient = isAdmin && mode === "client";
@@ -254,25 +238,37 @@ export function AppNav({ user }: AppNavProps) {
                 nameClassName="font-bold text-lg truncate min-w-0"
               />
             </div>
-            <nav aria-label="Customer navigation" className="p-2 pb-[max(8px,env(safe-area-inset-bottom))] space-y-1 flex-1 min-h-0 overflow-y-auto">
-              {navItems.map((item) => (
-                <button
-                  key={item.href}
-                  onClick={() => { go(item.href); setMobileMenuOpen(false); }}
-                  className={`w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] transition-colors ${
-                    location.pathname === item.href
-                      ? "bg-sidebar-accent text-accent"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              ))}
+            <nav aria-label="Customer navigation" aria-busy={!menuReady || undefined} className="p-2 pb-[max(8px,env(safe-area-inset-bottom))] space-y-1 flex-1 min-h-0 overflow-y-auto">
+              {!menuReady && <PortalNavSkeleton drawer />}
+              {menuReady && sections.map((section) => {
+                const drawerItem = (item: PortalNavItem) => (
+                  <button
+                    key={item.href}
+                    type="button"
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                    onClick={() => { go(item.href); setMobileMenuOpen(false); }}
+                    className={cn(DRAWER_ITEM, isActive(item.href) ? DRAWER_ACTIVE : DRAWER_REST)}
+                  >
+                    <item.icon aria-hidden className="w-4 h-4 shrink-0" />
+                    {item.label}
+                  </button>
+                );
+                if (section.label === null) return section.items.map(drawerItem);
+                const headingId = `portal-drawer-${section.id}`;
+                return (
+                  <div key={section.id} role="group" aria-labelledby={headingId} className="space-y-1 pt-3">
+                    <p id={headingId} data-portal-heading className="px-3 pb-1 text-[11px] font-semibold uppercase leading-4 tracking-[0.08em] text-primary-foreground">
+                      {section.label}
+                    </p>
+                    {section.items.map(drawerItem)}
+                  </div>
+                );
+              })}
+              <div className="border-t border-sidebar-border !my-3" />
               {showGetHelp && (
                 <button
                   onClick={() => { go("/app/messages?topic=help"); setMobileMenuOpen(false); }}
-                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  className={cn(DRAWER_ITEM, DRAWER_REST)}
                 >
                   <CircleHelp className="w-4 h-4" />
                   Get help
@@ -281,7 +277,7 @@ export function AppNav({ user }: AppNavProps) {
               {showPlatformSupport && (
                 <button
                   onClick={() => { navigate("/app/support"); setMobileMenuOpen(false); }}
-                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  className={cn(DRAWER_ITEM, DRAWER_REST)}
                 >
                   <LifeBuoy className="w-4 h-4" />
                   <span className="flex-1 text-left">Support</span>
@@ -295,7 +291,7 @@ export function AppNav({ user }: AppNavProps) {
               {!brandLoading && brand?.tenant_id && (
                 <button
                   onClick={() => { navigate("/app/settings?view=client-account"); setMobileMenuOpen(false); }}
-                  className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  className={cn(DRAWER_ITEM, DRAWER_REST)}
                 >
                   <UserIcon className="w-4 h-4" />
                   Account
@@ -303,7 +299,7 @@ export function AppNav({ user }: AppNavProps) {
               )}
               <button
                 onClick={() => { navigate("/app/settings"); setMobileMenuOpen(false); }}
-                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className={cn(DRAWER_ITEM, DRAWER_REST)}
               >
                 <Settings className="w-4 h-4" />
                 Settings
@@ -312,7 +308,7 @@ export function AppNav({ user }: AppNavProps) {
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-red-400 hover:bg-red-500/10 disabled:opacity-60"
+                className="w-full min-h-[44px] flex items-center gap-3 px-3 py-2.5 rounded-md text-[16px] text-[hsl(var(--destructive-on-ink))] hover:bg-sidebar-accent/50 disabled:opacity-60"
               >
                 <LogOut className="w-4 h-4" />
                 {isSigningOut ? "Signing Out..." : "Sign Out"}
@@ -350,22 +346,25 @@ export function AppNav({ user }: AppNavProps) {
             skeletonClassName="h-7 w-24"
           />
         </Link>
-        <nav className="flex flex-wrap min-w-0 items-center gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              replace={staysInThread(item.href)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
-                location.pathname === item.href
-                  ? "bg-sidebar-accent text-accent font-medium"
-                  : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50"
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>
-          ))}
+        <nav aria-label="Customer navigation" aria-busy={!menuReady || undefined} className="flex flex-wrap min-w-0 items-center gap-1">
+          {!menuReady && <PortalNavSkeleton drawer={false} />}
+          {menuReady && sections.flatMap((section) => {
+            const link = (item: PortalNavItem) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                replace={staysInThread(item.href)}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(BAR_ITEM, isActive(item.href) ? BAR_ACTIVE : BAR_REST)}
+              >
+                <item.icon aria-hidden className="w-4 h-4" />
+                {item.label}
+              </Link>
+            );
+            // A group with exactly one entry is a plain link; with more, a menu.
+            if (section.label === null || section.items.length === 1) return section.items.map(link);
+            return [<PortalGroupMenu key={section.id} section={section} isActive={isActive} />];
+          })}
         </nav>
       </div>
 

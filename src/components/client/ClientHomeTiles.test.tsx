@@ -10,6 +10,9 @@ import { ClientHomeTiles } from "./ClientHomeTiles";
 const T = "e0923000-0000-0000-0000-000000000002";
 const f = vi.hoisted(() => ({
   rpc: vi.fn(),
+  progressRpc: vi.fn(),
+  tables: [] as string[],
+  actions: { open: [] as unknown[], loading: false, error: null as string | null },
   applications: 0,
   brand: null as null | { tenant_id: string; tenant_name: string },
   brandLoading: false,
@@ -17,18 +20,22 @@ const f = vi.hoisted(() => ({
 }));
 vi.mock("@/integrations/supabase/client", () => {
   const counted = (table: string) => {
+    f.tables.push(table);
     const result = { count: table === "funding_journey_applications" ? f.applications : 0, error: null };
     const chain: Record<string, unknown> = {};
     chain.select = () => chain; chain.eq = () => chain; chain.neq = () => chain;
     chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
     return chain;
   };
-  return { supabase: { from: (t: string) => counted(t), rpc: (...a: unknown[]) => f.rpc(...a) } };
+  // The progress read has its own mock so each test's sessions answer stays the sessions answer.
+  const rpc = (name: string, ...a: unknown[]) => (name === "client_portal_progress" ? f.progressRpc(name, ...a) : f.rpc(name, ...a));
+  return { supabase: { from: (t: string) => counted(t), rpc } };
 });
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" }, quickActions: [] }) }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
   useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: false, multipleBusinesses: f.multiple }),
 }));
+vi.mock("@/hooks/useMyActions", () => ({ useMyActions: () => f.actions }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const START = "2026-11-03T15:00:00.000Z";
@@ -38,6 +45,14 @@ const session = {
   change: { can_cancel: false, can_reschedule: false, deadline: null, reason: "NO_CALENDAR" },
 };
 
+const progressPage = (summary: Record<string, number>, items: unknown[] = []) => ({
+  tenant_id: T, server_now: "2026-10-17T12:00:00Z", summary, items, has_more: summary.shared > items.length,
+});
+const progressItem = (extra: Record<string, unknown>) => ({
+  id: "p1", kind: "task", title: "Review the moodboard", state: "in_progress", due_at: new Date(Date.now() + 60_000).toISOString(),
+  completed_at: null, shared_at: "2026-10-10T12:00:00Z", parent_id: null, ...extra,
+});
+
 let root: Root, host: HTMLDivElement;
 const render = async () => {
   await act(async () => root.render(
@@ -45,6 +60,8 @@ const render = async () => {
       <Routes>
         <Route path="/app" element={<ClientHomeTiles userId="u1" />} />
         <Route path="/app/messages" element={<p>Messages page</p>} />
+        <Route path="/app/actions" element={<p>Action items page</p>} />
+        <Route path="/app/progress" element={<p>Progress page</p>} />
       </Routes>
     </MemoryRouter>,
   ));
@@ -54,7 +71,9 @@ const sessionReads = () => f.rpc.mock.calls.filter(c => c[0] === "client_portal_
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.applications = 0; f.brandLoading = false; f.multiple = false;
+  f.applications = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
+  f.actions = { open: [], loading: false, error: null };
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 0, done: 0, open: 0, overdue: 0 }), error: null });
   f.brand = { tenant_id: T, tenant_name: "Northwind Studio" };
   f.rpc.mockResolvedValue({ data: { tenant_id: T, server_now: "2026-10-17T12:00:00Z", sessions: [session], next_before: null }, error: null });
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
@@ -234,7 +253,7 @@ it("matches the neighbouring tiles' 36px buttons, with a 44px touch target", asy
     expect(b.className, label).toMatch(/(^| )h-9( |$)/);
     expect(b.className, label).not.toContain("min-h-[44px]");
     // 36px + 4px above and below: a 44px target.
-    expect(b.className, label).toContain("after:-inset-y-1");
+    expect(b.className, label).toContain("after:-inset-y-[5px]");
     expect(b.className, label).toContain("relative");
   }
 });
@@ -246,4 +265,150 @@ it("puts the Next session footer's button icon on the card's content edge", asyn
   expect(footer.className).toContain("px-3");
   expect(footer.className).not.toContain("px-4");
   expect(footer.querySelector("button")!.className).toContain("px-3");
+});
+
+// ── E09 Slice 3: the Progress tile and Next steps ───────────────────────────────────────────────
+const progressReads = () => f.progressRpc.mock.calls;
+const tile = (id: string) => host.querySelector(`[data-testid="${id}"]`);
+
+it("shows how much of the shared work is done, read with a one-item page, and opens Progress", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }), error: null });
+  await render();
+  expect(progressReads()[0][1]).toEqual({ p_tenant_id: null, p_limit: 1 });
+  const link = tile("progress-tile")!;
+  expect(link.getAttribute("href")).toBe("/app/progress");
+  expect(tile("progress-tile-headline")!.textContent).toBe("3 of 7 done");
+  expect(tile("progress-tile-detail")!.textContent).toBe("4 still open");
+  // It opens the page; it no longer hands Paige a prompt.
+  const spy = bookAsked();
+  await act(async () => (link as HTMLElement).click());
+  spy.stop();
+  expect(spy.asked).toEqual([]);
+  expect(host.textContent).toContain("Progress page");
+});
+
+it("says how much is past due on the Progress tile", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 4, done: 1, open: 3, overdue: 2 }), error: null });
+  await render();
+  expect(tile("progress-tile-detail")!.textContent).toBe("2 past due");
+});
+
+it("says nothing is shared yet, by the business's name", async () => {
+  await render();
+  expect(tile("progress-tile-headline")!.textContent).toBe("Nothing shared yet");
+  // A sentence, not a figure: it never outweighs a real count beside it.
+  expect(tile("progress-tile-headline")!.className).toContain("text-lg");
+  expect(tile("progress-tile-headline")!.className).not.toContain("text-2xl");
+  expect(tile("progress-tile-detail")!.textContent).toContain("When Northwind Studio shares work with you");
+});
+
+it("never shows a failed progress read as zero, and does not name itself twice", async () => {
+  f.progressRpc.mockResolvedValue({ data: null, error: { code: "PGRST000", message: "network" } });
+  await render();
+  const headline = tile("progress-tile-headline")!;
+  expect(headline.textContent).toBe("Couldn't check right now");
+  expect(headline.className).toContain("text-lg");
+  expect(headline.className).not.toContain("text-2xl");
+  expect(tile("progress-tile-detail")!.textContent).toBe("Open Progress to try again.");
+  expect(tile("progress-tile-next")).toBeNull();
+});
+
+it("names the next dated item on the Progress tile, from the same one-item read", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }, [progressItem({})]), error: null });
+  await render();
+  expect(progressReads()).toHaveLength(1);
+  expect(tile("progress-tile-next")!.textContent).toBe("Next: Review the moodboard · due today");
+});
+
+it("says the next item is past due, and names none when the first item is finished or undated", async () => {
+  f.progressRpc.mockResolvedValue({
+    data: progressPage({ shared: 3, done: 0, open: 3, overdue: 1 }, [progressItem({ title: "Send the signed brief", due_at: "2026-01-02T12:00:00Z" })]),
+    error: null,
+  });
+  await render();
+  expect(tile("progress-tile-next")!.textContent).toBe("Next: Send the signed brief · past due");
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 3, done: 0, open: 3, overdue: 0 }, [progressItem({ due_at: null })]), error: null });
+  // The glance reads once per mount; mount again for the second answer.
+  act(() => root.unmount()); root = createRoot(host);
+  await render();
+  expect(tile("progress-tile-headline")!.textContent).toBe("0 of 3 done");
+  expect(tile("progress-tile-next")).toBeNull();
+});
+
+it("keeps the data tiles top-aligned with an Open row anchored to the bottom edge", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }), error: null });
+  f.actions = { open: [{ id: "a1" }], loading: false, error: null };
+  await render();
+  for (const [id, label] of [["progress-tile", "Open progress"], ["next-steps-tile", "Open action items"]] as const) {
+    const link = tile(id)!;
+    expect(link.className.split(" ")).toEqual(expect.arrayContaining(["flex", "flex-1", "flex-col"]));
+    const open = tile(`${id}-open`)!;
+    expect(open.textContent).toBe(label);
+    expect(open.className).toContain("mt-auto");
+    expect(open.parentElement!.className.split(" ")).toEqual(expect.arrayContaining(["flex", "flex-1", "flex-col"]));
+    expect(open.querySelector("svg")!.getAttribute("class")).toContain("motion-reduce:transition-none");
+  }
+});
+
+it("uses the nav's icons: Progress is the checklist, Next steps the clipboard", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }), error: null });
+  f.actions = { open: [{ id: "a1" }], loading: false, error: null };
+  await render();
+  expect(tile("progress-tile")!.querySelector("svg")!.getAttribute("class")).toContain("lucide-list-checks");
+  expect(tile("next-steps-tile")!.querySelector("svg")!.getAttribute("class")).toContain("lucide-clipboard-list");
+  f.actions = { open: [], loading: false, error: null };
+  await render();
+  const empty = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Paige what's next")!.closest("div")!.parentElement!;
+  expect(empty.querySelector("svg")!.getAttribute("class")).toContain("lucide-clipboard-list");
+});
+
+it("does not read progress for someone who is not a single-business customer, and keeps the old tile", async () => {
+  f.brand = null;
+  await render();
+  expect(progressReads()).toHaveLength(0);
+  expect(tile("progress-tile")).toBeNull();
+  expect(host.textContent).toContain("Show my progress");
+});
+
+it("no longer counts a tasks column that does not exist", async () => {
+  await render();
+  expect(f.tables).not.toContain("tasks");
+});
+
+it("counts the customer's open action items as next steps and opens them", async () => {
+  f.actions = { open: [{ id: "a1" }, { id: "a2" }], loading: false, error: null };
+  await render();
+  const link = tile("next-steps-tile")!;
+  expect(link.getAttribute("href")).toBe("/app/actions");
+  expect(tile("next-steps-tile-headline")!.textContent).toBe("2 waiting");
+  expect(tile("next-steps-tile-detail")!.textContent).toBe("Action items from Northwind Studio");
+  await act(async () => (link as HTMLElement).click());
+  expect(host.textContent).toContain("Action items page");
+});
+
+it("with no open action items, says where they come from and keeps asking Paige what's next (§58)", async () => {
+  await render();
+  expect(tile("next-steps-tile")).toBeNull();
+  expect(host.textContent).toContain("When Northwind Studio sends you an action item, it shows up here.");
+  const spy = bookAsked();
+  await act(async () => Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Paige what's next")!.click());
+  spy.stop();
+  expect(spy.asked).toEqual(["What should I focus on next?"]);
+});
+
+it("never shows a failed action-items read as zero", async () => {
+  f.actions = { open: [], loading: false, error: "Your action items could not be verified." };
+  await render();
+  expect(tile("next-steps-tile-headline")!.textContent).toBe("Couldn't check right now");
+  expect(tile("next-steps-tile-headline")!.className).toContain("text-lg");
+  expect(tile("next-steps-tile-detail")!.textContent).toBe("Open your action items to try again.");
+});
+
+it("never says coach, coached or coaching in any tile", async () => {
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 2, done: 1, open: 1, overdue: 0 }), error: null });
+  await render();
+  expect(host.textContent).not.toMatch(/coach/i);
+  f.brand = null;
+  await render();
+  expect(host.textContent).not.toMatch(/coach/i);
 });

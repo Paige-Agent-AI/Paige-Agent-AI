@@ -36,6 +36,7 @@ import { PeopleContactEditor } from "./PeopleContactEditor";
 import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { ClientStanding } from "./ClientStanding";
+import { ClientSharedWork } from "./ClientSharedWork";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import "./tenant-relationships-clients-workspace.css";
@@ -667,6 +668,8 @@ function ClientRecord({
 
       <div className="trc-record-body">
         {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
+        {/* E09 Slice 3: what this client sees in their portal, chosen item by item. Same gate as standing (Solo only, §60/D1). */}
+        {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">
@@ -814,11 +817,11 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
         <section><small>Restricted system evidence</small><strong>PAIGE reasoning, source evidence, and Trust configuration</strong></section>
       </div>
       <div className="trc-portal-actions">
-        <article><ShieldCheck aria-hidden /><div><strong>Client-visible home</strong><span>{Object.keys(data.portalConfig).length ? "PARTIAL · scoped configuration loaded" : "PARTIAL · authorized default configuration"}</span></div></article>
+        <article><ShieldCheck aria-hidden /><div><strong>Client-visible home</strong><span>{Object.keys(data.portalConfig).length ? "PARTIAL · scoped configuration loaded" : "PARTIAL · authorized default configuration"}</span><span>Your customers’ menu follows the order and names you set in Portal configuration.</span></div></article>
         <article><MessageSquare aria-hidden /><div><strong>Portal conversation</strong><span>PARTIAL · canonical thread convergence is not complete.</span></div></article>
         <article><UserRound aria-hidden /><div><strong>Requests and action items</strong><span>UNAVAILABLE · no aggregate workflow contract is connected.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Portal access</strong><span>PARTIAL · invite and access state remains on the selected client record.</span></div></article>
-        <article><UserRound aria-hidden /><div><strong>Engagement progress</strong><span>UNAVAILABLE · the relationship progress contract is incomplete.</span></div></article>
+        <article><UserRound aria-hidden /><div><strong>Engagement progress</strong><span>UNAVAILABLE here · sharing work with a client is on the Solo client record; this account's client record does not offer it yet.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · existing seams vary by authorized account.</span></div></article>
       </div>
       <div className="trc-integrity"><ShieldCheck aria-hidden /><p><strong>Preview is not impersonation.</strong> Client-facing projection never grants staff a client session.</p></div>

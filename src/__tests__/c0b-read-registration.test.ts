@@ -36,6 +36,19 @@ describe("C0b canonical read declaration convergence", () => {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;
       }
+      // E09 Slice 3: the newly registered owner/admin-only client-share tool, likewise absent from
+      // the frozen roster. Its SQL admits only is_tenant_admin, so the Chat gate must say admin too.
+      if (tool === "plan_item_set_client_share") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
+      // E09 Slice M: the newly registered owner/admin-only customer-menu read and writer, likewise absent
+      // from the frozen roster. Their SQL admits only can_manage_tenant_brand (owner/admin of the tenant or an
+      // ancestor agency), so the Chat gate must say admin too.
+      if (tool === "read_tenant_portal_menu" || tool === "portal_menu_update") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
       expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
     }
   });

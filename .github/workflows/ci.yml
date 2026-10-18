@@ -90,6 +90,14 @@ jobs:
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
       - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: Canonical durable thread deletion and immutable identity in disposable PostgreSQL
+        env:
+          DURABLE_THREAD_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-durable-thread-detach.mjs
+      - name: Canonical exact reminder approval, native receipts and recovery controls in disposable PostgreSQL
+        env:
+          REMINDER_APPROVAL_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-reminder-approved-intent.mjs
       - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-projection.mjs --postgres
       - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof
@@ -743,6 +751,8 @@ jobs:
       # uploaded as evidence so a reviewer can read what each actually produced.
       - name: Webhook signature suites (Svix + SendGrid ES256)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: Solo Beta Stripe shape + failure-code contract
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
@@ -851,6 +861,10 @@ jobs:
           # Owner addendum 6088460092: source-level boundary tests read the door's real
           # source, so this one line grants read (repo tree only); every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys             supabase/functions/_shared/inbox-intelligence/door-boundary.test.ts
+          # E09 Slice M: the customer portal menu executor (merge by key, server tenant, readback) and its
+          # drift against the frontend registry it mirrors. Read grants the repo tree only; every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-menu.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \
@@ -920,6 +934,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/int346-runtime-recovery-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.

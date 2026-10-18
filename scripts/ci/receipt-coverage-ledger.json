@@ -1180,6 +1180,18 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "comms-mailbox-command/index.ts records the executed organize act through canonical recordCapabilityRun after the provider round answers and the canonical mirror lands (governance payload carries actor/tenant/tool/approval channel), so every approved mailbox change has a Rail receipt; the door refuses before dispatch when the receipt cannot be written."
+    },
+    {
+      "tool": "plan_item_set_client_share",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the plan_item_set_client_share branch) records the run via recordCapabilityRun after _shared/planning/scoped-write.ts setPlanItemClientShare returns: capability_succeeded only when a fresh caller-JWT read of plan_items shows client_shared_at in the asked state (a state replay included), capability_refused for a named refusal the database answered (not owner/admin, not linked to a client, reminder or cancelled, client not active, item changed, account type), capability_outcome_unknown when the write may have landed but was not confirmed (including a dispatch that throws). A malformed request is refused before any write and still records a capability_refused run, as does a workspace that no longer matches current_user_tenant_id(); the switch over ClientShareFailure is exhaustive, so no outcome goes unrecorded."
+    },
+    {
+      "tool": "portal_menu_update",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the read_tenant_portal_menu / portal_menu_update branch) records the run via recordCapabilityRun after _shared/client-portal-menu.ts configurePortalMenu returns: capability_succeeded only when a fresh caller-JWT public.read_tenant_portal_menu read of the stored overlay equals the merged array that was sent (a no-change replay included), capability_refused for a request refused before any write (bad shape, Home or Messages, an unknown or not-yet-live entry, an entry the Playbook does not list, no current workspace) or a refusal the database answered with a SQLSTATE (not owner/admin, shape), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalMenuFailure is exhaustive, so no outcome goes unrecorded."
     }
   ]
 }

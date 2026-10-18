@@ -1211,6 +1211,12 @@ describe("tenant Relationships / Clients workspace", () => {
     act(() => root.unmount());
   });
 
+  it("says on the Client-visible home card where the customer menu is configured (E09 Slice M)", () => {
+    useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
+    const html = render("/business/2/clients/portal", "sub_account");
+    expect(html).toContain("Your customers’ menu follows the order and names you set in Portal configuration.");
+  });
+
   it("retains the incumbent non-Solo Portal audience boundaries", () => {
     useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
     const html = render("/business/2/clients/portal", "sub_account");
@@ -1222,6 +1228,8 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Portal conversation");
     expect(html).toContain("Requests and action items");
     expect(html).toContain("Engagement progress");
+    // E09 Slice 3: sharing lives on the Solo client record only, so this non-Solo card must not claim it.
+    expect(html).toContain("UNAVAILABLE here · sharing work with a client is on the Solo client record");
     expect(html).toContain("Files and agreements");
     expect(html).toContain("Configuration remains owner/admin gated");
     expect(html).toContain("Choose a client to manage access");
@@ -1310,9 +1318,11 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(body?.firstElementChild?.querySelector("h3")?.textContent).toBe("Where Supplied Person stands");
       const reads = editorHarness.rpc.mock.calls.filter(([name]) => name === "read_client_engagement_status");
       expect(reads).toEqual([["read_client_engagement_status", { _expected_tenant_id: "tenant-solo", _contact_id: "p-1" }]]);
+      // E09 Slice 3: what the client sees, chosen item by item, sits directly under it — on the SAME one read.
+      expect(body?.children[1]?.id).toBe("client-shared-work");
       // The other record sections are all still there, after it (§58).
       expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
-        ["Where Supplied Person stands", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
     } finally {
       act(() => root.unmount());
       host.remove();
@@ -1331,6 +1341,16 @@ describe("tenant Relationships / Clients workspace", () => {
       act(() => root.unmount());
       host.remove();
     }
+  });
+
+  it("E09 Slice 3 (D1): the share section mounts only behind the same standing gate (Solo + client_standing)", () => {
+    // The record itself mounts only in the Solo People view, so no non-Solo render can reach this line;
+    // the gate is pinned at source, the way the Portal mounts are pinned above.
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientSharedWork[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientSharedWork")).toBe(true);
+    expect(source).toContain('const standing = routeTier === "solo" && hasTierFeature("client_standing")');
   });
 
   it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {

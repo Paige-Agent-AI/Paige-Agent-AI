@@ -21,7 +21,12 @@ function visit(node: ts.Node) {
 visit(ast);
 if (!branch) throw new Error('Canonical Planning dispatch missing');
 const compiled = ts.transpileModule(`async function dispatch(tc, personaCtx, supabaseClient, toolResults,
-  databaseAnswered, OUTCOME_UNKNOWN_NOTE, user, recordCapabilityRun, supabase, requestExecutionState) ${branch.getText(ast)}`,
+  databaseAnswered, OUTCOME_UNKNOWN_NOTE, user, recordCapabilityRun, supabase, requestExecutionState) {
+    // This suite exercises the incumbent compatibility writer. Native exact-approval
+    // bindings are covered by the owning helper and complete-handler suites.
+    const approvedReminderClaims = new Map(), approvalSpend = new Map();
+    for (let toolIteration = 0; toolIteration < 1; toolIteration++) ${branch.getText(ast)}
+  }`,
 { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
 const dispatch = new Function(`${compiled}; return dispatch;`)();
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;

@@ -143,6 +143,7 @@ const ActionItems = lazyWithReload(() => import("./pages/app/ActionItems"));
 const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments"));
 const ClientMessages = lazyWithReload(() => import("./pages/app/Messages"));
 const ClientSessions = lazyWithReload(() => import("./pages/app/Sessions"));
+const ClientProgress = lazyWithReload(() => import("./pages/app/Progress"));
 const Planning = lazyWithReload(() => import("./pages/app/Planning"));
 // #244 — the canonical "About Your Paige Team" directory. ONE component, scope prop
 // per route (tenant here; operator in Admin.tsx; agency in AgencyLayout.tsx).
@@ -301,6 +302,8 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
               <Route path="messages" element={<PageSuspense><ClientMessages /></PageSuspense>} />
               {/* E09 Slice 2 — the customer's own sessions; in-window reschedule/cancel through booking-manage. */}
               <Route path="sessions" element={<PageSuspense><ClientSessions /></PageSuspense>} />
+              {/* E09 Slice 3 — the work the business shared with the customer; read-only. */}
+              <Route path="progress" element={<PageSuspense><ClientProgress /></PageSuspense>} />
               <Route path="planning" element={<PageSuspense><Planning /></PageSuspense>} />
               {/* #244 — learn about your Paige team (tenant scope). Read-only; inherits
                   /app's RequireCompleteSignup, no extra gate. NOT /team — that would break

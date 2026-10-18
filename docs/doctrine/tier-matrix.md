@@ -4733,3 +4733,71 @@ pgTAP (`supabase/tests/customer_portal_sessions.sql`, 93 cases) covers other-cus
 other-business, merged-contact, multi-relationship and anonymous refusals, the notice window and
 admission replay; the edge boundary suite drives customer mode, concurrent duplicates and guest
 equivalence. Authenticated customer change and owner client-linked booking on production are owed.
+Deployed 2026-10-18: PR #2335 merged as `d2bad7f07` (migration `20271110020000` persisted, `db-live` at
+`d2bad7f07`), and the `booking-manage` readback certified after #2337 (`edge-live` at `52c4dc471`); the
+authenticated drive is still owed, so the rows stay PROOF OWED.
+
+### Customer Portal — Progress, `/app/progress` + "Shared with {client}" on the Solo client record (E09 Slice 3, 2026-10-18)
+
+A business shares individual work items (milestones and tasks in the canonical `plan_items` store)
+with the client they belong to; the client sees only what was shared, at `/app/progress` and on the
+Home "Your progress" tile. Owner decision (2026-10-17): show only items the business shares. Sharing
+is an explicit per-item act (`plan_item_set_client_share`, SECURITY DEFINER, workspace owner/admin of
+the current workspace via `is_tenant_admin`, never a global role); new work is private; cancelling a
+shared item unshares it; the client sees title, state (Not started / In progress / Done — blocked
+reads as In progress) and due date only. The client read is `client_portal_progress` (SECURITY
+DEFINER, the caller's own relationship). Paige can propose a share from chat (`plan_item_set_client_share`,
+risk high, owner confirms on the card; catalogued in `list_tool_autonomy` so the owner can switch it off).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Share / unshare a work item with its client (`plan_item_set_client_share`) | Only inside the company (system) workspace it administers; refused for any other business | Refused (`CLIENT_SHARE_UNAVAILABLE` for a top-level agency) | ✓ owner/admin; a plain member is refused | Allowed by the server (pgTAP); no screen mounted (same gap as `client_standing`, D1) | — | 42501 | PROOF OWED |
+| "Shared with {client}" section + "Add work for {client}" on the client record | — | — | ✓ (mounted under ClientStanding, `client_standing` gate) | Not mounted | — | — | PROOF OWED |
+| Customer progress `/app/progress` and Home tile (`client_portal_progress`) | — | — | — | — | ✓ own relationship, shared and not cancelled only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Paige proposes a share from chat (risk high, owner confirms) | — | — | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+| Customer action items `/app/actions` | unchanged | unchanged | unchanged | unchanged | ✓ unchanged; the table read narrows to the 10 columns the page uses (staff id and payload no longer readable) | anon SELECT revoked | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_progress.sql`, 110 cases) covers other-customer, other-business,
+unshared, cancelled, reminder and merged-contact refusals, the version check, state replay, the
+unshare-on-cancel and unshare-on-client-change trigger, the catalogue row and the column grants.
+Authenticated owner share and customer read on production are owed.
+
+### Customer Portal — per-tenant customer menu (E09 Slice M, 2026-10-18)
+
+Every business chooses which entries its customers see in the portal menu, in what order within each
+group, and what each is called. Owner rulings (2026-10-18): Home and Messages are fixed at the top; Get
+help, Account, Settings and Sign out are fixed at the bottom; Progress, Action items and Sessions ("Your
+work"), Documents, Agreements and Payments ("Paperwork") and Resources ("Learn") are configurable within
+their group; the group order is fixed. Agreements is held back from customers until Slice A (its route is
+still the platform-terms page): staff keep it exactly as before, no customer is offered it, and the editor
+shows no row for it. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
+`assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
+with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
+the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
+catalog-only entries (funding keys, Approvals, Agreements) render only when the Playbook catalog lists them
+(§2). Resources is core for customers: a customer of one business always has it, whatever the catalog
+lists, and only the owner's overlay hides it (staff and other viewers keep the catalog rule, as on main).
+When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live (Payments until Slice 5) never renders and is
+never offered. The customer's catalog now comes from the server's `_catalog` in
+`get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
+exception. The owner dashboard's "Customer portal menu" summary and the customer's Messages "Browse
+resources first" hint read the same assembly, so neither can tell a different story from the menu.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Configure the customer menu (`set_tenant_portal_config`, Clients → Portal → Customize experience → "Customer portal menu") | Can write any tenant's config (`is_platform_owner` inside `can_manage_tenant_brand`); Paige's tool uses only the caller's current tenant | Its own and its sub-accounts' config (the ancestor chain); its own customers: none, by §61 | ✓ owns it (Solo Clients → Portal) | ✓ owns it (same gate); same PortalStudio in the non-Solo workspace | Same as Sub-account | Reads the menu only (`get_client_portal_config`) | Denied | PROOF OWED |
+| Customer menu rendered from the business's catalog + overlay (`assemblePortalNav`) | — | — | — | — | — | ✓ own relationship; fixed Home/Messages, grouped entries, floors enforced | — | PROOF OWED |
+| Paige reads / changes the menu from chat (`client.portal_menu_read`, `client.portal_menu_configure`, risk high, owner confirms) | Current workspace only | Current workspace only | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
+| "Customize Paige" → Portal catalog list (PortalSection) | unchanged | unchanged | ✓ renaming keeps the key; points to Clients → Portal | ✓ (plain-text pointer) | ✓ (plain-text pointer) | — | — | PROOF OWED |
+
+Vitest pins the menu destinations per Playbook preset and viewer kind against a capture of the real
+AppNav at `571ab923e`, and asserts nothing main rendered is missing. §58: before Slice M production
+customers could not read their business's Playbook, so every customer got the generic default (which
+lists Resources). Now each customer gets their own business's catalog (the §57 fix). Nothing a customer
+had is removed: Resources is core for customers, so a customer whose business's catalog omits it keeps it.
+The visible changes are additions — customers of a business that opted into the funding Playbook gain that
+business's own funding entries, and customers on Playbooks whose catalog never listed Resources (fitness,
+consultant, agency, funding) gain it. Agreements is the one entry held back from customers (above), and it
+was never theirs: its route is still the platform-terms page. Harness frames
+(`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
+in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.

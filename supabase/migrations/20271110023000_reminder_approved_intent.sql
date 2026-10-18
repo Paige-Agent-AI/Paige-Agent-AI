@@ -221,12 +221,49 @@ end $$;
 revoke all on function public.adopt_paige_reminder_approval(uuid,uuid,uuid,uuid,uuid,text,uuid,uuid,uuid,uuid) from public,anon,authenticated,service_role;
 grant execute on function public.adopt_paige_reminder_approval(uuid,uuid,uuid,uuid,uuid,text,uuid,uuid,uuid,uuid) to service_role;
 
+-- Opaque lookup only. A proposal UUID is not permission, and finding an envelope
+-- never adopts, normalizes expiry, dispatches or establishes a verified terminal.
+create or replace function public.resolve_paige_reminder_approval(
+ p_proposal_id uuid,p_expected_tenant uuid,p_expected_thread uuid,p_expected_client uuid)
+returns jsonb language plpgsql security definer set search_path='' set lock_timeout='1s' as $$
+declare actor uuid:=auth.uid(); p public.paige_pending_confirmations%rowtype; w public.paige_durable_work%rowtype; a jsonb;
+begin
+ if actor is null then raise exception 'REMINDER_AUTH_REQUIRED' using errcode='42501'; end if;
+ perform private.paige_reminder_scope(actor,p_expected_tenant,p_expected_thread,p_expected_client);
+ if public.current_user_tenant_id() is distinct from p_expected_tenant or not public.is_tenant_member(p_expected_tenant) then
+  raise exception 'REMINDER_SCOPE_CHANGED' using errcode='42501'; end if;
+ select * into p from public.paige_pending_confirmations where id=p_proposal_id for share;
+ if not found or p.user_id is distinct from actor or p.tenant_id is distinct from p_expected_tenant
+  or p.thread_id is distinct from p_expected_thread or p.scoped_client_id is distinct from p_expected_client
+  or p.tool_name is distinct from 'plan_set_reminder' or p.consumed_at is null or not isfinite(p.consumed_at)
+  or p.server_issued_at is null or not isfinite(p.server_issued_at) or p.server_issued_at>p.consumed_at
+  or p.issued_in_request is null or p.fingerprint is null or p.fingerprint !~ '^[0-9a-f]{16}$' then
+  raise exception 'REMINDER_APPROVAL_UNAVAILABLE' using errcode='42501'; end if;
+ a:=private.paige_reminder_args(p.args,p_expected_tenant);
+ select * into w from public.paige_durable_work where tenant_id=p_expected_tenant and initiating_user_id=actor and intent_id=p.id for share;
+ if not found or (select count(*) from public.paige_durable_work
+  where tenant_id=p_expected_tenant and initiating_user_id=actor and intent_id=p.id)<>1
+  or w.capability_key is distinct from 'planning.set_reminder' or w.work_kind is distinct from 'approved_reminder'
+  or w.thread_id is distinct from p_expected_thread or w.scope_epoch is distinct from p.id::text
+  or w.request_payload->>'v' is distinct from '1' or w.request_payload->>'proposal_id' is distinct from p.id::text
+  or w.request_payload->>'fingerprint' is distinct from p.fingerprint
+  or w.request_payload->>'issued_nonce' is distinct from p.issued_in_request::text
+  or w.request_payload->'client_id' is distinct from coalesce(to_jsonb(p_expected_client),'null'::jsonb)
+  or w.request_payload->>'original_thread_id' is distinct from p_expected_thread::text
+  or w.request_payload->'stored_args' is distinct from p.args or w.request_payload->'native_args' is distinct from a
+  or w.request_payload->'consumed_at_epoch' is distinct from to_jsonb(extract(epoch from p.consumed_at)) then
+  raise exception 'REMINDER_WORK_UNAVAILABLE' using errcode='42501'; end if;
+ return jsonb_build_object('v',1,'proposal_id',p.id,'work_id',w.id,'work_status',w.status);
+end $$;
+revoke all on function public.resolve_paige_reminder_approval(uuid,uuid,uuid,uuid) from public,anon,authenticated,service_role;
+grant execute on function public.resolve_paige_reminder_approval(uuid,uuid,uuid,uuid) to authenticated;
+
 create or replace function public.execute_paige_approved_reminder(
  p_work_id uuid,p_expected_tenant uuid,p_expected_thread uuid,p_expected_client uuid,p_intent uuid,p_runtime_request_nonce uuid)
 returns jsonb language plpgsql security definer set search_path='' set lock_timeout='1s' as $$
 declare actor uuid:=auth.uid(); w public.paige_durable_work%rowtype; p public.paige_pending_confirmations%rowtype;
  a jsonb; r jsonb; snap jsonb; terminal jsonb; row_after public.plan_items%rowtype;
- audit_id uuid; item_id uuid; assignee uuid; b jsonb;
+ audit_id uuid; item_id uuid; assignee uuid; b jsonb; args_sha256 text;
 begin
  if actor is null then raise exception 'REMINDER_AUTH_REQUIRED' using errcode='42501'; end if;
  perform private.paige_reminder_scope(actor,p_expected_tenant,p_expected_thread,p_expected_client);
@@ -252,6 +289,9 @@ begin
   raise exception 'REMINDER_WORK_UNAVAILABLE' using errcode='42501'; end if;
  a:=private.paige_reminder_args(p.args,w.tenant_id);
  if w.request_payload->'native_args' is distinct from a then raise exception 'REMINDER_WORK_UNAVAILABLE' using errcode='42501'; end if;
+ -- Canonical jsonb text from the protected immutable seal, not a retained raw
+ -- argument copy. All three functions are built into pg_catalog (no extension).
+ args_sha256:=pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to((w.request_payload->'native_args')::text,'UTF8')),'hex');
  if w.status='succeeded' then
   terminal:=w.terminal_outcome;
   if terminal->>'verified_readback' is distinct from 'true' or terminal->>'receipt_version' is distinct from '1'
@@ -294,8 +334,9 @@ begin
    'tenant_id',w.tenant_id,'created_by',actor,'remind_at',row_after.remind_at,'remind_target',row_after.remind_target,
    'remind_channel',row_after.remind_channel,'assigned_to_user_id',assignee,'plan_id',row_after.plan_id,
    'contact_id',row_after.contact_id,'source_version',row_after.updated_at);
-  -- Correlate the original native audit, not a second audit or second Rail.
-  update public.audit_logs set data=data||jsonb_build_object('approved_reminder_work_id',w.id,'approved_reminder_args',a)
+  -- Correlate the original native audit without replicating private args into
+  -- its different retention home. No second audit or second Rail is inserted.
+  update public.audit_logs set data=data||jsonb_build_object('approved_reminder_work_id',w.id,'approved_reminder_args_sha256',args_sha256)
    where id=audit_id and entity='plan_item' and action='plan_set_reminder' and entity_id=item_id and user_id=actor
     and data->>'tenant_id'=w.tenant_id::text;
   if not found then raise exception 'REMINDER_RECEIPT_UNAVAILABLE' using errcode='55000'; end if;
@@ -306,7 +347,7 @@ begin
   or audit_id is null or item_id is null or snap->>'item_id' is distinct from item_id::text
   or not exists(select 1 from public.audit_logs where id=audit_id and entity='plan_item' and action='plan_set_reminder'
    and entity_id=item_id and user_id=actor and data->>'tenant_id'=w.tenant_id::text
-   and data->>'approved_reminder_work_id'=w.id::text and data->'approved_reminder_args'=a)
+   and data->>'approved_reminder_work_id'=w.id::text and data->>'approved_reminder_args_sha256'=args_sha256)
   or not exists(select 1 from public.paige_workspace_events where tenant_id=w.tenant_id and actor_id=actor
    and source_kind='capability_run' and source_id=audit_id and source_revision=0 and capability_key='plan_set_reminder'
    and outcome='capability_succeeded' and detail->>'audit_id'=audit_id::text and detail->>'record_id'=item_id::text

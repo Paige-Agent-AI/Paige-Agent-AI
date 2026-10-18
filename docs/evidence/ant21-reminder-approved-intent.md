@@ -1,5 +1,9 @@
 # One approved manual reminder: native lost-acknowledgement prerequisite
 
+> Current successor: the unreleased 8ff checkpoint below was held for additive raw-argument
+> audit retention. The dated correction at the end supersedes that raw-copy design and adds
+> one opaque original-JWT lookup. Neither checkpoint is a release or activation claim.
+
 2026-10-18 local implementation checkpoint. AUTHOR-REVIEW / LOWER ASSURANCE.
 Independent review, Chat integration, hosted exact-head CI, persisted migration apply,
 ordinary authenticated recovery and owner acceptance remain owed. This belongs to the
@@ -126,3 +130,59 @@ answers, raw red/green/intermediate failures, process receipts and final hash ma
 No source pins, Chat/Spine files, existing migrations/writers, role grants/settings,
 production data, provider credentials, spend, activation, frontend or release changes
 are included. Root owns distinct review, integration, hosted CI and any later release.
+
+## 2026-10-18 successor: audit digest and opaque proposal lookup
+
+Distinct NON-AUTHOR review of `8ff01a0256b0cbb645b5cc463b05bdb46065c4db` sealed HOLD for
+`REMINDER-AUDIT-RAW-ARGS-RETENTION`. That checkpoint copied normalized title/summary and
+target-user inputs into a retained audit home. The independently sealed review receipt
+SHA256 is `b55ec7c865d814b2836aa2a38c6e32b6b4047bb46881b90cd9c2d8c3ebb51ab9`.
+Its original 156-assertion/nine-race evidence and author receipt remain unchanged.
+
+An author reproduction extended only the owning fixture with a distinctive neutral
+title/summary and another member as explicit target. Against byte-exact 8ff SQL, the old
+156 controls, nine races and canonical purge pass, then the new retention assertion fails.
+The actual retained audit still has all three new raw values although tenant/work rows
+are absent; inherited native audit identity/data is unchanged. Exit1/stop0 and the filtered
+booleans are retained in `successor-digest-resolver/retention-red*`.
+
+The correction changes only the newly appended provenance to work UUID plus lowercase
+SHA256 of canonical normalized args from the protected immutable seal. Fully qualified
+`pg_catalog.sha256`/`convert_to`/`encode` are builtins; no extension is added. Replay compares
+that digest and original work UUID while retaining all original native audit/Rail IDs and
+baseline fields. No existing audit payload is deleted, backfilled or given a new retention
+rule. The digest is correlation, not an anonymity or complete audit-erasure claim.
+
+`resolve_paige_reminder_approval(proposal,expected_tenant,expected_thread,expected_client)`
+adds one narrow authenticated-original-JWT EXECUTE grant; anon/service have none. It reuses
+fresh native scope and verifies the exact consumed server-issued reminder proposal plus
+unique immutable v1 args seal. Its only result is `{v,proposal_id,work_id,work_status}`.
+It returns no arguments/key/authority/terminal/receipt. Lookup does not adopt, consume,
+normalize expiry, change policy/runtime, dispatch or transition. Expired/consumed work may
+be located only; original outcome still requires separate native receipt verification.
+Existing generic readers, table privileges, creator/transition and nine-argument writer
+remain unchanged. Document/Research-only observation is not widened into a generic reader.
+
+Fresh corrected proof: **241 SQL assertions PASS**, all original nine actual two-connection
+controls and eight stage injections preserved, incumbent catalog/envelope/reapply and actual
+canonical archive/purge pass. Current post-purge audit preserves original native fields/IDs
+and contains only new work UUID/digest provenance: no new raw argument object, title, summary
+or explicit target-person copy. The proof verifies actual builtin SHA256, no extension
+change, wrong/missing digest/work/audit/Rail refusals, timezone/key-order stability,
+authenticated resolver/no anon-service grants/no raw SELECT, exact scope/seal/status and
+no-write controls. NULL/NULL history refuses all six non-success canonical states without
+work/reminder/audit/Rail changes; mixed NULL pairs refuse dispatch. The original deleted-row
+terminal replay remains historical and preserves its native IDs.
+
+The first successor fixture incorrectly combined a hold with a normal executor and failed
+the existing `paige_chat_runtime_held_claim` CHECK. Its raw failure remains; only the fixture
+was corrected to clear that executor. No native constraint was weakened. Current local
+security advisors still FAIL on the synthetic tenant RLS/inherited fixture findings, with
+no new reminder-function finding; database lint remains UNVERIFIED because `plpgsql_check`
+is unavailable. All proof/advisor clusters stopped0 with PID absent. Current static checks
+and exact four-path/source hashes are retained in the private successor receipt.
+
+No source pins, workflow, Chat/helper adapter, Auth/retention policy or production operation
+is included. The separate adapter remains paused; root owns its later integration, exact
+CI binding, distinct review and release. The actor-only erasure limitation, compatibility
+classes and original strict 1/18 plus 2/50 closure totals remain unchanged.

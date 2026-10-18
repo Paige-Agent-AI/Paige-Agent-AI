@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { authSchema, signupSchema } from "@/pages/Auth";
+import { passwordMeetsServerClasses, hasServerSymbol } from "@/lib/auth/passwordPolicy";
 
 // EXP00 live-incident pin (2026-10-17): the server password policy requires one
-// lowercase, one uppercase, one digit and one symbol; the form previously only
-// enforced min-6 and surfaced a dead-end "contact support" toast. The rule is
-// SIGNUP-only — sign-in keeps accepting legacy weaker passwords.
+// lowercase, one uppercase, one digit and one symbol FROM THE SERVER'S SYMBOL SET;
+// the form previously only enforced min-6 and surfaced a dead-end "contact support"
+// toast. The rule is SIGNUP-only — sign-in keeps accepting legacy weaker passwords.
 const POLICY_MESSAGE = "Password needs a lowercase letter, an uppercase letter, a number, and a symbol (like !@#$%).";
 
 const base = { email: "someone@example.com", fullName: "Some One" };
@@ -34,6 +35,17 @@ describe("authSchema password policy matches the Supabase server policy", () => 
         expect(result.error.issues[0].message).toBe(POLICY_MESSAGE);
       }
     }
+  });
+
+  it("does not count whitespace or emoji as the server symbol class", () => {
+    expect(hasServerSymbol(" ")).toBe(false);
+    expect(hasServerSymbol("😊")).toBe(false);
+    expect(hasServerSymbol("!")).toBe(true);
+    expect(passwordMeetsServerClasses("Abcdef1😊")).toBe(false);
+    expect(passwordMeetsServerClasses("Abcdef 1G")).toBe(false);
+    expect(passwordMeetsServerClasses("Abcdef1G!")).toBe(true);
+    const result = signupSchema.safeParse({ ...base, password: "Abcdef1😊" });
+    expect(result.success).toBe(false);
   });
 
   it("still enforces the minimum length first", () => {

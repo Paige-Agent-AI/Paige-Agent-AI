@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Shield, TrendingUp, Zap, ChevronRight, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { z } from "zod";
+import { passwordMeetsServerClasses } from "@/lib/auth/passwordPolicy";
 import type { User, Session } from "@supabase/supabase-js";
 import { signInWithOAuth } from "@/integrations/auth/oauth";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
@@ -41,10 +42,9 @@ export const authSchema = z.object({
 // The four-class rule matches the Supabase server policy and applies ONLY where the
 // password is being SET (signup). Sign-in must keep accepting legacy weaker passwords.
 export const signupSchema = authSchema.extend({
-  password: authSchema.shape.password.refine(
-    (v) => /[a-z]/.test(v) && /[A-Z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v),
-    { message: "Password needs a lowercase letter, an uppercase letter, a number, and a symbol (like !@#$%)." },
-  ),
+  password: authSchema.shape.password.refine(passwordMeetsServerClasses, {
+    message: "Password needs a lowercase letter, an uppercase letter, a number, and a symbol (like !@#$%).",
+  }),
 });
 
 const Auth = () => {

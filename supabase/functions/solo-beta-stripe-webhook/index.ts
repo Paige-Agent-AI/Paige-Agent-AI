@@ -44,9 +44,16 @@ const deliverVerifiedWelcome = async (supabaseUrl: string, serviceKey: string, f
 // Success exits reset the operator-only diagnostic field so a later retry that
 // succeeds never leaves a stale "last error" behind (mirrors last_error_code's
 // NULL-on-completion semantics). Only this function writes the field.
-type SupabaseAdmin = ReturnType<typeof createClient>;
+// (Structural type: the runtime client is schema-untyped in this function.)
+// deno-lint-ignore no-explicit-any
+type SupabaseAdmin = { from: (table: string) => any };
 const clearErrorDetail = async (admin: SupabaseAdmin, eventId: string) => {
   await admin.from("stripe_event_log").update({ metadata: {} }).eq("event_id", eventId);
+};
+const persistErrorDetail = async (admin: SupabaseAdmin, eventId: string, detail: string) => {
+  await admin.from("stripe_event_log").update({
+    metadata: { last_error_detail: detail.slice(0, 300) },
+  }).eq("event_id", eventId);
 };
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -280,9 +287,7 @@ Deno.serve(async (req) => {
       // (constraint text, PGRST bodies) would otherwise be lost. Persist the raw
       // detail on the operator-only event row so the real SQL failure is always
       // identifiable without exposing it in any customer-facing surface.
-      await admin.from("stripe_event_log").update({
-        metadata: { last_error_detail: rawDetail.slice(0, 300) },
-      }).eq("event_id", event.id);
+      await persistErrorDetail(admin, event.id, rawDetail);
     }
     return json(500, { error: "solo_beta_webhook_retry_required" });
   }

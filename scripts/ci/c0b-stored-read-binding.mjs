@@ -5,7 +5,7 @@ const specs = [
   ["automation_triggers_list", "automations.triggers_list", "paige_automation_triggers", "key,label,category,description,is_live,dark_reason", false, false],
   ["document_pending_reviews", "research_knowledge.document_pending_reviews", "credit_report_uploads", "id,file_name,created_at,last_analyzed_at", false, false],
   ["document_resume_review", "research_knowledge.document_resume_review", "credit_report_uploads", "id,user_id,client_id,file_name,analysis_result,extraction_review_state", false, false],
-  ["crm_list_documents", "crm_clients.list_documents", "client_files", "id,contact_id,original_filename,mime_type,size_bytes,visibility,description,created_at", true, true],
+  ["crm_list_documents", "crm_clients.list_documents", "client_files", "id,contact_id,original_filename,mime_type,size_bytes,visibility,description,created_at,updated_at,shared_at", true, true],
   ["improvement_list", "platform_meta.improvement_list", "paige_improvement_proposals", "id,kind,target_ref,title,proposed_change,evidence,proposed_by,status,created_at,decided_at,decision_rationale", true, false],
 ];
 const printer = ts.createPrinter({ removeComments: true });

@@ -67,6 +67,14 @@ ALTER TABLE public.client_files ADD CONSTRAINT client_files_share_stamp_consiste
 -- file; it arrives private (the new client was never shown it). Requesting the move AND 'shared' in
 -- one write is refused like any other direct share.
 --
+-- A file's object and uploader are fixed once the row exists: no signed-in caller may change
+-- storage_path or uploaded_by_user_id (FILE_IDENTITY_IMMUTABLE). Storage authorizes a customer's
+-- download by matching the object name to a storage_path they may see, so rewriting the path of a
+-- SHARED row would show that client whatever object it now names, another client's private file
+-- included, with no share writer and no audit row. No product writer changes either column (the
+-- finish functions change upload_state only). tenant_id is deliberately NOT in this guard: the
+-- tenants foreign key is ON DELETE SET NULL, and guarding it would block deleting a business.
+--
 -- shared_by follows auth.users ON DELETE SET NULL: that referential action is an UPDATE of this
 -- table nested inside the delete (pg_trigger_depth() > 1) that sets shared_by NULL, and the stamp
 -- keeps it NULL instead of restoring the deleted user (which would fail the foreign key and roll the
@@ -81,6 +89,10 @@ BEGIN
   v_platform := v_role = 'service_role' OR current_user = 'service_role'
     OR (v_role IS NULL AND current_user NOT IN ('authenticated', 'anon'));
   v_writer := v_platform OR current_setting('paige.client_file_share', true) IS NOT DISTINCT FROM 'on';
+  IF TG_OP = 'UPDATE' AND NOT v_platform AND (NEW.storage_path IS DISTINCT FROM OLD.storage_path
+     OR NEW.uploaded_by_user_id IS DISTINCT FROM OLD.uploaded_by_user_id) THEN
+    RAISE EXCEPTION 'FILE_IDENTITY_IMMUTABLE' USING ERRCODE = '42501';
+  END IF;
   IF TG_OP = 'UPDATE' AND NEW.contact_id IS DISTINCT FROM OLD.contact_id AND OLD.visibility = 'shared'
      AND NOT v_platform THEN
     RAISE EXCEPTION 'FILE_SHARED_MOVE_REFUSED' USING ERRCODE = '42501',

@@ -9,7 +9,7 @@
 -- works; a customer can no longer delete their own upload metadata; a staff PUT needs a
 -- reservation; and released work is unavailable once the client or the business is inactive.
 BEGIN;
-SELECT plan(188);
+SELECT plan(197);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -422,6 +422,27 @@ SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001'),0::bigint,'but not the object of an internal file');
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000003/e0944000-0000-4000-8000-000000000004'),1::bigint,'and can read his own upload');
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000004','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002'),0::bigint,'another customer cannot read his shared file''s object');
+-- A file's object is fixed once it exists (round 4, verifier MAJOR-E). Storage authorizes a customer's
+-- download by matching the object name to a storage_path they may see, so a signed-in writer who could
+-- rewrite storage_path (or the uploader it is bound to) could point a SHARED row at another file's
+-- object and show that object to the client without the share writer or an audit row: in two steps
+-- for Jordan (A9), and across clients for Sam (A10). Every signed-in rewrite is refused by the trigger.
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET storage_path='e0942000-0000-4000-8000-000000000001/parked/001' WHERE id='e0944000-0000-4000-8000-000000000001' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','a member cannot move a private file''s path out of the way (A9a)');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001' WHERE id='e0944000-0000-4000-8000-000000000002' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','nor point a shared file at the private file''s object (A9b)');
+SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001'),0::bigint,'so Jordan still cannot read the private file''s object (A9c)');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET storage_path='e0942000-0000-4000-8000-000000000001/parked/002' WHERE id='e0944000-0000-4000-8000-000000000002' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','a member cannot park a shared file''s path either (A10a)');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001' WHERE id='e0944000-0000-4000-8000-000000000006' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','nor point another client''s shared file at it (A10b)');
+SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000004','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001'),0::bigint,'so Sam cannot read Jordan''s private file''s object (A10c)');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001' WHERE id='e0944000-0000-4000-8000-000000000006' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','the business admin cannot rewrite a path either');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET uploaded_by_user_id='e0941000-0000-4000-8000-000000000005' WHERE id='e0944000-0000-4000-8000-000000000002' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_IDENTITY_IMMUTABLE','or who uploaded a file');
+SELECT ok((SELECT count(*)=3 FROM public.client_files WHERE uploaded_by_user_id='e0941000-0000-4000-8000-000000000001' AND storage_path=pg_temp.fpath('01',CASE WHEN id='e0944000-0000-4000-8000-000000000006' THEN '02' ELSE '01' END,id::text)
+  AND id IN ('e0944000-0000-4000-8000-000000000001','e0944000-0000-4000-8000-000000000002','e0944000-0000-4000-8000-000000000006')),'every refused rewrite left its row as it was');
 
 -- 13. The deployed customer upload pipeline still works (§58).
 CREATE TEMP TABLE cu AS SELECT pg_temp.jordan($q$SELECT public.client_portal_begin_file_upload('e0944000-0000-4000-8000-000000000051','e0943000-0000-4000-8000-000000000001','Receipt.pdf','application/pdf',4,NULL)$q$) AS r;

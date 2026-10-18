@@ -338,7 +338,7 @@ Deno.test("a refused withdrawal moves nothing and says the client can still see 
 });
 
 Deno.test("a move refused after the withdrawal says the file stayed but the client lost access", async () => {
-  const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK],
+  const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK], row: WITHDRAWN,
     moved: { data: null, error: { code: "42501", message: "FILE_SHARED_MOVE_REFUSED" } } });
   const out = await refile(r.caller);
   assert.equal(r.calls.length, 1);
@@ -350,6 +350,44 @@ Deno.test("a move refused after the withdrawal says the file stayed but the clie
   const lost = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK], moved: () => { throw new Error("network"); } });
   const unknown = await refile(lost.caller);
   if (!unknown.success) { assert.equal(unknown.moved, null); assert.equal(unknown.shared, false); assert.equal(unknown.outcomeUnknown, true); }
+});
+
+// Round 4 (verifier MINOR-G): the database refuses the move because the file is shared again — someone
+// re-shared it between the withdrawal and the move. Paige re-reads the row and says what is true now.
+const REFUSED_MOVE = { data: null, error: { code: "42501", message: "FILE_SHARED_MOVE_REFUSED" } };
+Deno.test("a move refused because the file was shared again says the client can still see it", async () => {
+  const reshared = { ...SHARED_NOW, shared_at: NEW_VERSION, updated_at: "2027-01-03T00:00:00+00:00" };
+  const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK], row: reshared, moved: REFUSED_MOVE });
+  const out = await refile(r.caller);
+  assert.equal(r.calls.length, 1, "only the withdrawal; nothing shares it back");
+  assert.equal(r.moves.length, 1);
+  assert.deepEqual(r.reads.at(-1), [FILE, TENANT], "the row is re-read after the refusal");
+  assert.equal(out.success, false);
+  if (!out.success) {
+    assert.equal(out.moved, false); assert.equal(out.shared, true); assert.equal(out.reason, "not_moved"); assert.equal(out.outcomeUnknown, false);
+    assert.match(out.message, /shared again while I was moving it, so I left it where it was\. Its client can still see it\./);
+    assert.doesNotMatch(out.message, /no longer/);
+  }
+});
+
+Deno.test("a move refused after the withdrawal, with the row unreadable, claims nothing about who can see it", async () => {
+  for (const row of [null, { ...WITHDRAWN, tenant_id: FORGED_TENANT }]) {
+    const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK], row, moved: REFUSED_MOVE });
+    const out = await refile(r.caller);
+    assert.equal(out.success, false);
+    if (!out.success) {
+      assert.equal(out.moved, false); assert.equal(out.shared, null); assert.equal(out.reason, "not_moved");
+      assert.match(out.message, /couldn't confirm whether they can see it now/);
+      assert.doesNotMatch(out.message, /no longer|can still see it/);
+    }
+  }
+});
+
+Deno.test("a refused move of a private file needs no re-read", async () => {
+  const r = refiler({ before: [INTERNAL_NOW], moved: REFUSED_MOVE });
+  const out = await refile(r.caller);
+  assert.equal(r.reads.length, 1);
+  if (!out.success) { assert.equal(out.shared, null); assert.match(out.message, /still where it was/); }
 });
 
 Deno.test("a stored row that cannot be read moves nothing and changes no sharing", async () => {

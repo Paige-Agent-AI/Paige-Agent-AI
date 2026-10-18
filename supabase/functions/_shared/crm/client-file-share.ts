@@ -205,10 +205,25 @@ export async function refileClientDocument(input: {
       withdrawn = true;
     }
   }
-  const stillThere = withdrawn
-    ? "The document did not move, but its client can no longer see it: I withdrew their access first and the move was then refused. Tell the operator exactly that."
-    : "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.";
-  const notMoved = () => nothing("not_moved", stillThere, false, withdrawn ? false : null);
+  // A refused move wrote nothing, so the file is still on its client. After a withdrawal, who can see
+  // it is NOT known from our own write: someone may have shared it again between the withdrawal and
+  // the move (which is exactly why the database refused the move). Re-read it and say what is true.
+  const notMoved = async (): Promise<ClientFileRefileResult> => {
+    if (!withdrawn) {
+      return nothing("not_moved", "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.");
+    }
+    let after: { data: unknown; error: unknown } | null = null;
+    try { after = await input.caller.readFile(fileId, tenant); } catch { after = null; }
+    const now = after && !after.error ? object(after.data) : null;
+    const readable = !!now && sameId(now.id, fileId) && now.tenant_id === tenant;
+    if (readable && now!.visibility === "shared") {
+      return nothing("not_moved", "The file was shared again while I was moving it, so I left it where it was. Its client can still see it. Tell the operator exactly that.", false, true);
+    }
+    if (readable && now!.visibility === "internal") {
+      return nothing("not_moved", "The document did not move, but its client can no longer see it: I withdrew their access first and the move was then refused. Tell the operator exactly that.", false, false);
+    }
+    return nothing("not_moved", "The document did not move. I withdrew the client's access first, but I couldn't confirm whether they can see it now. Check the client's file before trying again.");
+  };
   const unknownMove = () => nothing("outcome_unknown", withdrawn
     ? "I withdrew the client's access, but I couldn't confirm whether the document then moved. Check the client's file before trying again."
     : "I couldn't confirm whether the document moved. Check the client's file before trying again.", true, withdrawn ? false : null);
@@ -219,10 +234,10 @@ export async function refileClientDocument(input: {
   }
   if (moved.error) {
     // Only an answered SQL refusal proves nothing was written (same rule as the share writer).
-    return /^[0-9A-Z]{5}$/.test(String(object(moved.error)?.code ?? "")) ? notMoved() : unknownMove();
+    return /^[0-9A-Z]{5}$/.test(String(object(moved.error)?.code ?? "")) ? await notMoved() : unknownMove();
   }
   const row = object(moved.data);
-  if (!row) return notMoved();
+  if (!row) return await notMoved();
   if (!sameId(row.id, fileId) || !sameId(row.contact_id, toContact) || !instant(row.updated_at)
     || (row.visibility !== "internal" && row.visibility !== "shared")) {
     return nothing("outcome_unknown", "I couldn't confirm where the document is now. Check the client's file before trying again.", true);

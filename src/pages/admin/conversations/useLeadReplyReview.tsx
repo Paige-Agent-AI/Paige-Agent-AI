@@ -39,6 +39,7 @@ type Input = {
 };
 type Call = { expected_tenant_id: string; operation_id: string; approval_id: string; command: CommsEmailCommand };
 type Wait = <T>(start: () => PromiseLike<T>) => Promise<T>;
+type OwnedAction = { scope: object; sending?: true };
 type Review = {
   scope: object;
   identity: string;
@@ -97,8 +98,13 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   }, []);
   const [review, setReview] = useState<Review | null>(null);
   const [error, setError] = useState<{ scope: object; text: string } | null>(null);
-  const [busyScope, setBusyScope] = useState<object | null>(null);
-  const lock = useRef<object | null>(null);
+  const [busyScope, setBusyScope] = useState<OwnedAction | null>(null);
+  const lock = useRef<OwnedAction | null>(null);
+  // Local cleanup owns this action token, not permission to publish or dispatch.
+  const releaseOwned = (owner: OwnedAction) => {
+    if (lock.current === owner) lock.current = null;
+    setBusyScope(active => active === owner ? null : active);
+  };
   const attempt = useRef<{ scope: object; revision: object; call: Call } | null>(null);
   const accepted = useRef<Set<string>>(new Set());
   const dispatchedOperations=useRef<Set<string>>(new Set());
@@ -106,13 +112,15 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const triggerRef = useRef<HTMLElement | null>(null);
   const originalAfterRefresh=review?.identity===identity&&review.call.approval_id===input.approvalId
     &&review.phase==="report"&&(review.state==="working"||review.state==="unconfirmed")&&dispatchedOperations.current.has(review.call.operation_id);
-  // Refresh retires the old card, but cannot turn an initiated original send into a new operation.
+  const releasedWorking=review?.scope===scope&&review.phase==="report"&&review.state==="working"
+    &&dispatchedOperations.current.has(review.call.operation_id)&&!(busyScope?.scope===scope&&busyScope.sending);
+  // Refresh or a released interrupted send cannot turn the original into a new operation.
   // Only a neutral original-attempt reader remains; its reads/recording revalidate current auth.
   const authWithdrawn=withdrawn.current;
-  const current=useMemo<Review|null>(()=>review?.scope===scope?review:!authWithdrawn&&originalAfterRefresh
+  const current=useMemo<Review|null>(()=>review?.scope===scope&&!releasedWorking?review:!authWithdrawn&&originalAfterRefresh
     ?{...review,scope,phase:"report",state:"unconfirmed",fingerprint:undefined,preview:undefined,summary:"Original reply",canCheck:true,
-      note:"Your session changed while an original reply outcome was retained. Don't resend. Check its recorded status."}:null,[review,scope,authWithdrawn,originalAfterRefresh]);
-  const busy = busyScope === scope;
+      note:releasedWorking?"Couldn't confirm whether this reply went out. Don't resend. Check its recorded status.":"Your session changed while an original reply outcome was retained. Don't resend. Check its recorded status."}:null,[review,scope,authWithdrawn,originalAfterRefresh,releasedWorking]);
+  const busy = busyScope?.scope === scope;
   const currentScope = (requestScope: object) => {
     try{return live.current&&!withdrawn.current&&scopeRef.current===requestScope&&(input.current===undefined||input.current()===true)
       &&(latestInput.current.current===undefined||latestInput.current.current()===true);}catch{return false;}
@@ -150,7 +158,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const dismiss = () => { setReview(null); if (triggerRef.current?.isConnected) triggerRef.current.focus(); };
 
   const prepare = async () => {
-    if (input.disabled || hasUnsettledSend || current?.state === "done" || lock.current === scope || !currentScope(scope)) return;
+    if (input.disabled || hasUnsettledSend || current?.state === "done" || lock.current?.scope === scope || !currentScope(scope)) return;
     triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setError(null);
     const refuse = (text: string) => setError({ scope, text });
@@ -167,7 +175,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     const call: Call = attempt.current?.scope === scope && attempt.current.revision === revision ? attempt.current.call
       : { expected_tenant_id: input.tenantId!, operation_id: crypto.randomUUID(), approval_id: input.approvalId!, command };
     attempt.current = { scope, revision, call };
-    lock.current = scope; setBusyScope(scope); setReview(null);
+    const owner={scope};lock.current = owner; setBusyScope(owner); setReview(null);
     const wait=waitFor(scope,actionEligibility());
     try {
       await authority(scope,wait);
@@ -189,17 +197,16 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     } catch {
       if (currentScope(scope) && revisionRef.current === revision) refuse("Couldn't prepare the review. Nothing was approved here; your draft is kept.");
     } finally {
-      if (lock.current === scope) lock.current = null;
-      if (currentScope(scope)) setBusyScope(null);
+      releaseOwned(owner);
     }
   };
 
   const approve = async (fingerprints: string[]) => {
-    if (!current || current.phase !== "decide" || input.disabled || lock.current === scope || !currentScope(scope)) return;
+    if (!current || current.phase !== "decide" || input.disabled || lock.current?.scope === scope || !currentScope(scope)) return;
     if (current.revision !== revision || current.expiresAt! <= Date.now() || fingerprints.length !== 1 || fingerprints[0] !== current.fingerprint) {
       dismiss(); setError({ scope, text: "The draft or sending identity changed, or this review expired. Review the current reply again." }); return;
     }
-    lock.current = scope; setBusyScope(scope);
+    const owner:OwnedAction={scope,sending:true};lock.current = owner; setBusyScope(owner);
     const original = { ...current, approvedFingerprint: current.fingerprint };
     setReview({ ...original, phase: "report", state: "working", fingerprint: undefined, note: "Sending the exact reply you approved…" });
     const wait=waitFor(scope,actionEligibility());
@@ -229,14 +236,13 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
       if(!dispatched&&scopeRef.current===scope&&!withdrawn.current)setReview(current);
       else if(currentScope(scope))setReview({ ...original, phase: "report", state: "unconfirmed", fingerprint: undefined, canCheck: true, note: "Couldn't confirm whether this reply went out. Don't resend. Check its recorded status." });
     } finally {
-      if (lock.current === scope) lock.current = null;
-      if (currentScope(scope)) setBusyScope(null);
+      releaseOwned(owner);
     }
   };
 
   const finishRecording = async () => {
-    if(!current?.recordPending||!current.acceptedMessageId||!current.approvedFingerprint||!FINGERPRINT.test(current.approvedFingerprint)||busy||input.disabled||lock.current===scope||!currentScope(scope))return;
-    lock.current=scope;setBusyScope(scope);
+    if(!current?.recordPending||!current.acceptedMessageId||!current.approvedFingerprint||!FINGERPRINT.test(current.approvedFingerprint)||busy||input.disabled||lock.current?.scope===scope||!currentScope(scope))return;
+    const owner={scope};lock.current=owner;setBusyScope(owner);
     const wait=waitFor(scope,actionEligibility());
     try{
       await authority(scope,wait);
@@ -267,12 +273,12 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
       setReview({...current,state:recorded?"done":"unconfirmed",recordPending:!recorded,canCheck:!recorded,
         note:recorded?"The original accepted reply is recorded. Delivery is not confirmed.":"The original email was accepted, but approval recording is still unconfirmed. Don't resend."});
     }catch{if(currentScope(scope))setReview({...current,note:"The original email was accepted, but approval recording is still unconfirmed. Don't resend."});}
-    finally{if(lock.current===scope)lock.current=null;if(currentScope(scope))setBusyScope(null);}
+    finally{releaseOwned(owner);}
   };
 
   const checkStatus = async () => {
-    if (!current?.canCheck || lock.current === scope || !currentScope(scope)) return;
-    lock.current = scope; setBusyScope(scope);
+    if (!current?.canCheck || lock.current?.scope === scope || !currentScope(scope)) return;
+    const owner={scope};lock.current = owner; setBusyScope(owner);
     const wait=waitFor(scope);
     try {
       await authority(scope,wait);
@@ -302,8 +308,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     } catch {
       if (currentScope(scope)) setReview({ ...current, note: "Status is unavailable. Don't resend; check this recorded attempt again later." });
     } finally {
-      if (lock.current === scope) lock.current = null;
-      if (currentScope(scope)) setBusyScope(null);
+      releaseOwned(owner);
     }
   };
 

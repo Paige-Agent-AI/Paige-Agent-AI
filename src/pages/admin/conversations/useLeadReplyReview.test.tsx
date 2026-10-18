@@ -48,6 +48,43 @@ beforeEach(async () => {
 afterEach(async () => { await act(async () => { root.unmount(); }); host.remove(); vi.useRealTimers(); });
 
 describe("lead reply through the existing approval door", () => {
+  it.each(["prepare","approve","record","status"].flatMap(stage=>["actor-read","tenant-read"].map(read=>({stage,read}))))("owned cleanup recovers $stage after a parent hold during $read",async({stage,read})=>{
+    let original:Record<string,unknown>|null=null;
+    if(stage!=="prepare"){await prepare();original=db.invoke.mock.calls[0][1].body;}
+    if(stage==="record"||stage==="status"){
+      db.invoke.mockResolvedValueOnce({data:stage==="record"?{ok:true,outcome:"provider_accepted",operation_id:original!.operation_id,approval_id:approval,message_id:"99999999-9999-4999-8999-999999999999",provider_receipt_available:true,delivery_confirmed:false,record_status:"pending_record"}:null,error:null});await click("Approve");
+      if(stage==="record")db.row={id:"99999999-9999-4999-8999-999999999999",tenant_id:tenant,contact_id:contact,send_actor_id:actor,lead_reply_approval_id:approval,comms_email_operation:original!.operation_id,comms_email_state:"provider_accepted",channel_type:"email",direction:"outbound",status:"sent",provider_message_id:"receipt",connector_id:connector,subject:base.subject,body_text:base.body};
+    }
+    const callsBefore=db.invoke.mock.calls.length;let finish!:(v:unknown)=>void,pending:Promise<void>|undefined;
+    if(read==="actor-read")db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));else db.rpc.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>{
+      if(stage==="prepare")pending=api.prepare();else [...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===(stage==="approve"?"Approve":stage==="record"?"Finish recording reply":"Check sending status"))!.click();
+      for(let i=0;i<8;i++)await Promise.resolve();
+    });
+    await render({current:()=>false});await act(async()=>{finish(read==="actor-read"?{data:{user:{id:actor}},error:null}:{data:tenant,error:null});if(pending)await pending;for(let i=0;i<16;i++)await Promise.resolve();});
+    expect(db.invoke).toHaveBeenCalledTimes(callsBefore);expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);
+    await render({current:()=>true});expect(api.busy).toBe(false);
+    if(stage==="prepare"){await prepare();expect(db.invoke).toHaveBeenCalledTimes(1);}
+    else if(stage==="approve"){expect([...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent?.trim()==="Approve")?.disabled).toBe(false);db.invoke.mockResolvedValueOnce({data:null,error:null});await click("Approve");expect(db.invoke.mock.calls.at(-1)![1].body).toEqual({...original,approved_fingerprint:fingerprint});}
+    else if(stage==="record"){db.rpc.mockImplementation(async name=>({data:name==="current_user_tenant_id"?tenant:{ok:true,state:"provider_accepted",approval_id:approval,operation_id:original!.operation_id,message_id:db.row!.id,delivery_confirmed:false},error:null}));await click("Finish recording reply");expect(db.rpc).toHaveBeenCalledWith("lead_reply_record_send",{_approval_id:approval,_operation_id:original!.operation_id});expect(db.invoke).toHaveBeenCalledTimes(callsBefore);}
+    else{await click("Check sending status");expect(db.invoke).toHaveBeenCalledTimes(callsBefore);}
+  });
+  it("owned cleanup never clears a newer request after observed scope A-B-A",async()=>{
+    let first!:(v:unknown)=>void,second!:(v:unknown)=>void,pending!:Promise<void>;
+    db.getUser.mockReturnValueOnce(new Promise(done=>{first=done;})).mockReturnValueOnce(new Promise(done=>{second=done;}));
+    await act(async()=>{pending=api.prepare();});await render({threadKey:"other-thread"});await render({threadKey:base.threadKey});
+    let newer!:Promise<void>;await act(async()=>{newer=api.prepare();});expect(api.busy).toBe(true);
+    await act(async()=>{first({data:{user:{id:actor}},error:null});await pending;});expect(api.busy).toBe(true);
+    await prepare();expect(db.getUser).toHaveBeenCalledTimes(2);expect(db.invoke).not.toHaveBeenCalled();
+    await act(async()=>{second({data:{user:{id:actor}},error:null});await newer;});expect(api.busy).toBe(false);expect(db.invoke).toHaveBeenCalledTimes(1);
+  });
+  it("owned cleanup after a spent effect retains only original status recovery",async()=>{
+    await prepare();const original=db.invoke.mock.calls[0][1].body;let finish!:(v:unknown)=>void;db.invoke.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Approve")!.click();for(let i=0;i<16;i++)await Promise.resolve();});expect(db.invoke).toHaveBeenCalledTimes(2);
+    await render({current:()=>false});await act(async()=>{finish({data:null,error:null});for(let i=0;i<16;i++)await Promise.resolve();});await render({current:()=>true});
+    expect(api.busy).toBe(false);expect(api.blocksSending).toBe(true);expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();expect(host.textContent).toContain("Don't resend");
+    await prepare();expect(db.invoke).toHaveBeenCalledTimes(2);await click("Check sending status");expect(db.filters).toContainEqual(["eq","meta->comms_email_binding->>operation_id",original.operation_id]);expect(db.invoke).toHaveBeenCalledTimes(2);
+  });
   it("allows fresh explicit same-actor review after token refresh and reopening",async()=>{
     await prepare();await act(async()=>db.auth!("TOKEN_REFRESHED"));
     expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();

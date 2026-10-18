@@ -1555,9 +1555,11 @@ serve(async (req) => {
         interactive = started.execution;
         interactiveLifetime = started.lifetime;
       }
+      // Client and Play identifiers remain read scope; their existing caller-JWT
+      // authorization below still applies. Only effect-bearing inputs are refused.
       if (interactiveRecoveryReadOnly && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length
-        || validatedData.resume || validatedData.document || validatedData.attachments?.length || validatedData.businessMissionId
-        || validatedData.sessionDocumentContext?.length || validatedData.clientId || validatedData.canvasArtifact)) {
+        || validatedData.resume || validatedData.document || validatedData.attachments?.length
+        || validatedData.sessionDocumentContext?.length || validatedData.canvasArtifact)) {
         return new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true,
           reason: "An earlier answer was interrupted and its business outcomes still need checking. This conversation can answer and read existing records; it cannot submit approvals, documents or actions." }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });

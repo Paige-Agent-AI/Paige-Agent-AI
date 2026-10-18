@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 let hosted=true,held=true,protocolActive=true,lateHold=null,holdProjection='native',hasThread=true,threadReads=0,modelCalls=0,emittedTool=null,stopResult='stopped';
+let clientFocus='own',missionFocus='own',focusWorkspaceFlip=null,selectedWorkspace=null;
 const bodies=[],receipts=[];
 globalThis.Deno={env:{get:key=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key',ANTHROPIC_API_KEY:'test-key',
  SB_EXECUTION_ID:hosted?id(80):'',DENO_DEPLOYMENT_ID:hosted?`abcdefghijklmnopqrst_${id(82)}_441`:''})[key]??''}};
@@ -23,7 +24,9 @@ const fake=await import('./knowledge-scope/fake-supabase.mjs');
 await import('../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const actor=id(1),tenant=id(2),thread='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let executor=null,latest=null,passed=0,failed=0;
-function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profiles:()=>{if(lateHold==='profile'||lateHold==='summary-authority'&&threadReads>=2)held=true;return[{active_tenant_id:tenant}];},tenant_members:[{tenant_id:tenant}],
+function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profiles:()=>{if(lateHold==='profile'||lateHold==='summary-authority'&&threadReads>=2)held=true;return[{active_tenant_id:selectedWorkspace}];},tenant_members:[{tenant_id:tenant}],
+ clients:filters=>{if(focusWorkspaceFlip==='client'&&filters.some(f=>f[0]==='select'&&f[1]==='first_name, last_name'))selectedWorkspace=id(91);
+  return[{id:id(3),tenant_id:clientFocus==='foreign'?id(91):tenant,account_number:'CLIENT-TEST',first_name:'Protected own client fixture'}];},
  tenants:[{id:tenant,account_type:'standalone',parent_tenant_id:null}],paige_chat_threads:filters=>{
   if(!hasThread)return[];
   const holdRead=filters.some(f=>f[0]==='select'&&f[1].includes('interactive_recovery_hold'));
@@ -39,8 +42,12 @@ function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profile
  paige_chat_interactive_protocol:()=>({data:{version:2,active:protocolActive},error:null}),check_rate_limit:{data:true,error:null},
  resolve_tool_autonomy:{data:'auto',error:null},resolve_tool_autonomy_detail:{data:{ceiling_allows_auto:true},error:null},resolve_tool_autonomy_many:{data:[],error:null},
  get_actor_access:{data:{tier:'tenant'},error:null},get_team_authority_readiness:{data:[{fact_key:'viewer_permission',value:'admin',status:'available',tenant_id:tenant}],error:null},
- get_paige_persona_context:{data:[{tenant_id:tenant,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null},
- current_user_tenant_id:{data:tenant,error:null},
+ get_paige_persona_context:()=>({data:[{tenant_id:selectedWorkspace,tenant_name:null,playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null}],error:null}),
+ current_user_tenant_id:()=>({data:selectedWorkspace,error:null}),
+ is_platform_owner:()=>clientFocus==='unknown'?{data:null,error:{code:'fixture'}}:{data:false,error:null},
+ get_business_mission:()=>{if(focusWorkspaceFlip==='Play')selectedWorkspace=id(91);return missionFocus==='own'?{data:{mission:{id:id(4),revision:2,state:'active',updated_at:'2026-10-17T12:00:00Z',title:'Protected own Play fixture'},
+  brief:{desired_outcome:'Protected own outcome fixture',success_definition:'Protected own success fixture'}},error:null}
+  :{data:null,error:{message:missionFocus==='foreign'?'MISSION_NOT_FOUND':'MISSION_READ_FAILED'}};},
  is_tenant_admin_as:{data:true,error:null},agency_can_manage_child:{data:false,error:null},
  read_business_time_zone:{data:{state:'missing',zone:null,set_at:null,local_date:null,can_set:true},error:null},
  paige_chat_interactive_begin_v2:a=>{if(a.p_stop)return stopResult==='error'?{data:null,error:{code:'fixture'}}
@@ -55,7 +62,7 @@ function scenario(){return fake.setScenario({authUser:{id:actor},tables:{profile
  }});}
 const reads=new Set(['read_business_metric','get_business_snapshot','read_client_engagement_status','read_business_time_zone','read_calendar_booking','crm_get_task']);
 async function execute(tool=null,extras={},content='Explain the current business status'){
- emittedTool=tool;modelCalls=0;bodies.length=0;receipts.length=0;executor=null;latest=null;threadReads=0;
+ emittedTool=tool;modelCalls=0;bodies.length=0;receipts.length=0;executor=null;latest=null;threadReads=0;selectedWorkspace=tenant;
  const rec=scenario();
  const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{method:'POST',headers:{Authorization:'Bearer test','Content-Type':'application/json'},
  body:JSON.stringify({messages:[{role:'user',content}],threadId:thread,requestIntentId:id(100+passed),interactive:{kind:'message'},...extras})}));
@@ -73,6 +80,59 @@ await check('held continuation actually executes the existing original-JWT read 
  assert.equal(r.rec.rpc.filter(c=>c.name==='read_business_time_zone').length,1);
  assert.ok(!r.rec.rpc.some(c=>c.name==='paige_chat_interactive_recover_bound'));
  assert.equal(held,true);assert.ok(receipts.at(-1).bundle_ref.interactive.effects.some(e=>e.tool==='read_business_time_zone'));
+});
+const focusInputs=[['client',{clientId:id(3)}],['Play',{businessMissionId:id(4)}]];
+for(const [name,extra]of focusInputs)await check('held '+name+' focus remains authorized read scope, not a write-bearing input',async()=>{
+ const r=await execute(null,extra);assert.equal(r.response.status,200);assert.ok(bodies.length);
+ for(const body of bodies)for(const tool of body.tools??[])assert.ok(reads.has(tool.name));
+ assert.equal(held,true);assert.ok(!r.rec.rpc.some(c=>c.name==='record_paige_memory'||/recover_bound|execute_crm|prepare_comms|approve/.test(c.name)));
+ assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.inserts.some(x=>/memory|pending_confirmation|knowledge_doc/.test(x.table)));
+ if(name==='client'){assert.ok(r.rec.from.some(c=>c.table==='clients'));assert.ok(JSON.stringify(bodies).includes('Protected own client fixture'));}
+ else {const read=r.rec.rpc.find(c=>c.name==='get_business_mission');assert.ok(read);assert.equal(read.client,'jwt');assert.equal(read.args.p_mission_id,id(4));
+  assert.ok(JSON.stringify(bodies).includes('Protected own Play fixture'));}
+});
+for(const [name,extra]of focusInputs)for(const tool of ['crm_create_task','mission_revise'])await check('held '+name+' focus never restores mutation '+tool,async()=>{
+ const r=await execute(tool,extra);assert.equal(r.response.status,200);assert.ok(JSON.stringify(bodies).includes('INTERACTIVE_RECOVERY_READ_ONLY'));
+ assert.ok(!r.rec.rpc.some(c=>/execute_crm|revise_business_mission|record_paige_memory|recover_bound/.test(c.name)));assert.equal(r.rec.functions.length,0);
+});
+for(const mode of ['foreign','unknown'])await check('held client focus '+mode+' refuses before model or private context',async()=>{
+ clientFocus=mode;try{const r=await execute(null,{clientId:id(3),clientContext:'FOREIGN-PRIVATE-MARKER'},'Please be brief.');
+  assert.equal(bodies.length,0);assert.ok(r.wire.includes('client_scope'));assert.ok(r.wire.includes('refused'));assert.ok(!r.wire.includes('FOREIGN-PRIVATE-MARKER'));
+  assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.inserts.some(x=>/memory|pending_confirmation/.test(x.table)));
+  assert.ok(!r.rec.from.some(c=>c.table==='client_memory'));assert.ok(!r.rec.rpc.some(c=>c.name==='record_paige_memory'));
+ }finally{clientFocus='own';}
+});
+for(const mode of ['foreign','unknown'])await check('held Play focus '+mode+' retains native refusal and no protected record in prompt',async()=>{
+ missionFocus=mode;try{const r=await execute(null,{businessMissionId:id(4)});assert.equal(r.response.status,200);assert.ok(bodies.length);
+  assert.ok(r.rec.rpc.some(c=>c.client==='jwt'&&c.name==='get_business_mission'));
+  assert.ok(JSON.stringify(bodies).includes('SELECTED STRATEGIC PLAY UNAVAILABLE'));assert.ok(!JSON.stringify(bodies).includes('Protected own Play fixture'));
+  assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.rpc.some(c=>/revise_business_mission|record_paige_memory/.test(c.name)));
+ }finally{missionFocus='own';}
+});
+for(const [name,extra]of focusInputs)await check('held '+name+' focus cannot admit an attached document',async()=>{
+ const r=await execute(null,{...extra,document:{kind:'pdf',mimeType:'application/pdf',fileName:'protected.pdf',base64:'JVBERi0='}});
+ assert.equal(r.response.status,409);assert.equal(bodies.length,0);assert.equal(r.rec.functions.length,0);
+});
+for(const [name,extra]of focusInputs)await check('held '+name+' focus preserves the read lane without recording a preference',async()=>{
+ const r=await execute(null,extra,'Please be brief.');assert.equal(r.response.status,200);assert.ok(bodies.length);
+ assert.ok(!r.rec.rpc.some(c=>c.name==='record_paige_memory'));assert.ok(!r.rec.inserts.some(x=>/memory|pending_confirmation/.test(x.table)));
+ assert.equal(r.rec.functions.length,0);assert.equal(held,true);
+});
+for(const [name,extra]of focusInputs)await check('held '+name+' focus does not admit an unbound legacy request',async()=>{
+ const r=await execute(null,{...extra,interactive:undefined});assert.equal(r.response.status,409);assert.equal(bodies.length,0);
+ assert.equal(r.rec.functions.length,0);assert.equal(executor,null);assert.equal(held,true);
+});
+for(const [name,extra]of focusInputs)for(const [input,payload]of[
+ ['approval',{approvedConfirmations:['0123456789abcdef']}],['decline',{declinedConfirmations:['0123456789abcdef']}],
+ ['answer resume',{resume:{kind:'answer',ask_id:id(6)}}],['canvas',{canvasArtifact:{id:id(7),kind:'document'}}],
+])await check('held '+name+' focus keeps '+input+' input closed',async()=>{
+ const r=await execute(null,{...extra,...payload});assert.equal(r.response.status,409);assert.ok(r.wire.includes('INTERACTIVE_RECOVERY_READ_ONLY'));assert.equal(bodies.length,0);
+ assert.equal(r.rec.functions.length,0);assert.ok(!r.rec.rpc.some(c=>/approve|decline|record_paige_memory/.test(c.name)));
+});
+for(const [name,extra]of focusInputs)await check('workspace changed during held '+name+' focus read never reaches provider',async()=>{
+ focusWorkspaceFlip=name;try{const r=await execute(null,extra);assert.equal(selectedWorkspace,id(91));assert.equal(bodies.length,0);
+  assert.ok(!r.wire.includes('Protected own'));assert.equal(r.rec.functions.length,0);assert.equal(held,true);
+ }finally{focusWorkspaceFlip=null;}
 });
 for(const tool of ['propose_action','pipeline_archive_preview','crm_create_task','send_email','knowledge_delete','document_generate','schedule_reminder','unclassified_tool'])
  await check('actual provider tool cannot escape read-only recovery: '+tool,async()=>{

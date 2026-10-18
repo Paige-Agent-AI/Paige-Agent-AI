@@ -75,7 +75,14 @@ class QueryBuilder {
   _rows() {
     const fn = this._scenario.tables?.[this._table];
     if (typeof fn === "function") return fn(this._filters) ?? [];
-    if (Array.isArray(fn)) return fn;
+    if (Array.isArray(fn)) return this._table === "paige_chat_threads" ? fn.map(row => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+      // Stored-row fixtures inherit these actual native SQL defaults only when
+      // omitted. Function fixtures model response projections verbatim, allowing
+      // missing fields; explicit undefined/malformed values are never repaired.
+      return { ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+        ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}), ...row };
+    }) : fn;
     return [];
   }
 

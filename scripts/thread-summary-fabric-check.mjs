@@ -47,7 +47,7 @@ export async function drive(options={}){
  const stamp='2026-10-15T12:00:00Z';
  const count=options.noFold?1:options.postOnly?14:15;
  state={options,current:tenant,folds:[],mainStreams:0,mainBodies:[],summaryReads:0,budgetReads:0,answerProviders:[],transcriptReads:0,summaryWrites:0,executor:null,
-  row:{id:thread,caller_user_id:options.foreignActor?id(99):actor,tenant_id:options.foreignTenant?other:tenant,
+  row:{audience:'workspace',interactive_recovery_hold:null,id:thread,caller_user_id:options.foreignActor?id(99):actor,tenant_id:options.foreignTenant?other:tenant,
    message_count:count,summary:options.prior??null,summary_through_seq:0,last_compacted_at:null,title:'Fixture thread',studio_session_id:null},
   turns:Array.from({length:count},(_,i)=>({role:i%2?'assistant':'user',content:`old scoped turn ${i+1}`,seq:i+1,created_at:stamp}))};
  const append=(role,content,bundle_ref)=>{state.turns.push({role,content,bundle_ref,seq:state.turns.length+1,created_at:new Date().toISOString()});state.row.message_count++;};

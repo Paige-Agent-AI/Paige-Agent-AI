@@ -100,7 +100,7 @@ async function run(options = {}) {
       tasks: filters => selected(config.noDeals ? nativeRows.map(row => ({ ...row, deals: null })) : nativeRows, filters, config.injectNative),
       plan_items: filters => { planningRead = true; return selected(planningRows, filters, config.injectPlanning); },
       deal_activities: [], communication_log: [],
-      paige_chat_threads: [{ id: thread, tenant_id: tenant, caller_user_id: actor }],
+      paige_chat_threads: [{ id: thread, tenant_id: tenant, caller_user_id: actor, audience: 'workspace', interactive_recovery_hold: null }],
       paige_chat_turns: filters => filters.some(([op]) => op === "contains") ? [] : turns,
     },
     rpcs: {

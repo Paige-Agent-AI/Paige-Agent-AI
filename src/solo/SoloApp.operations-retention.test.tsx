@@ -46,6 +46,7 @@ vi.mock("./settings", () => ({ SoloSettings: () => <input aria-label="Other depa
 vi.mock("./vault/useBusinessVault", () => ({ useVaultAccess: () => ({}), canShowVaultNavigation: () => false }));
 vi.mock("./vibe", () => ({ VibeStudio: () => null }));
 import SoloApp from "./SoloApp";
+import { buildCrmWorkStageOperation } from "./operations/operations-crm-work-command";
 
 const id = "33333333-3333-4333-8333-333333333333";
 const work = `/solo/123/operations/work?task=${id}`;
@@ -128,6 +129,68 @@ it.each(["review", "pending", "unknown"])("retains %s command/inspection state a
     await act(async () => release({ kind: "uncertain", message: "Synthetic unknown result" }));
     expect(dialog()?.textContent).toContain("Recover original action"); expect(port.submit).toHaveBeenCalledTimes(1);
   }
+});
+
+async function openDifferentRetainedRecovery() {
+  const otherId = "44444444-4444-4444-8444-444444444444";
+  const operation = buildCrmWorkStageOperation({ ...task(), id: otherId }, "done", port.actor, port.tenant,
+    "77777777-7777-4777-8777-777777777777")!;
+  const storageKey = `paige:operations-crm-stage:${port.actor}:${port.tenant}`;
+  sessionStorage.setItem(storageKey, JSON.stringify(operation));
+  await mount();
+  expect(address()).toBe(work); expect(dialog()?.querySelector("h2")?.textContent).toBe(task().title);
+  const stage = dialog()!.querySelector<HTMLSelectElement>('[aria-label="Review CRM task stage"]')!;
+  await act(async () => { stage.value = "done"; stage.dispatchEvent(new Event("change", { bubbles: true })); });
+  expect(dialog()?.textContent).toContain("Recover original action");
+  expect(port.submit).not.toHaveBeenCalled();
+  return { operation, storageKey, otherId };
+}
+
+it("clears Task A from the actual shell address on closing retained B, and reload keeps unresolved B without reopening A", async () => {
+  const { operation, storageKey } = await openDifferentRetainedRecovery();
+  await click("Close");
+  const closedAddress = "/solo/123/operations/work";
+  expect(address()).toBe(closedAddress); expect(dialog()).toBeNull();
+  expect(JSON.parse(sessionStorage.getItem(storageKey)!)).toEqual(operation);
+  expect(port.submit).not.toHaveBeenCalled();
+  // A full shell remount from the actual resulting address must not restore a
+  // removed reference. Only the original unresolved operation metadata remains.
+  await act(async () => root.unmount()); root = createRoot(host);
+  await mount([closedAddress]);
+  expect(address()).toBe(closedAddress); expect(dialog()).toBeNull();
+  expect(port.readTask).toHaveBeenCalledExactlyOnceWith(id, expect.any(AbortSignal));
+  expect(JSON.parse(sessionStorage.getItem(storageKey)!)).toEqual(operation);
+  expect(host.textContent).toContain("Recover pending task change");
+  expect(port.submit).not.toHaveBeenCalled();
+});
+
+it("verifies retained B once then freshly reads A before restoring A details beneath the accepted Task A address", async () => {
+  const { operation, storageKey, otherId } = await openDifferentRetainedRecovery();
+  let releaseOrigin!: (value: unknown) => void;
+  const recovered = { ...task(), id: otherId, title: "Earlier Task B recovered", status: "completed" };
+  const freshOrigin = { ...task(), title: "Fresh exact Task A after B recovery", description: "New canonical A details" };
+  port.submit.mockResolvedValue({ kind: "acknowledged" });
+  port.readTask.mockImplementation(async taskId => taskId === otherId
+    ? { status: "available", found: true, task: recovered }
+    : new Promise(resolve => { releaseOrigin = resolve; }));
+  await click("Recover original action");
+  expect(port.submit).toHaveBeenCalledExactlyOnceWith(operation, undefined);
+  expect(port.readTask.mock.calls.map(call => call[0])).toEqual([id, otherId, id]);
+  expect(address()).toBe(work);
+  expect(dialog()?.querySelector("h2")?.textContent).toBe("Reading current task");
+  expect(dialog()?.textContent).not.toContain(recovered.title);
+  expect(dialog()?.textContent).not.toContain(freshOrigin.title);
+  expect(dialog()?.textContent).toContain("The earlier task’s change is saved and confirmed");
+  expect(sessionStorage.getItem(storageKey)).toBeNull();
+  await act(async () => releaseOrigin({ status: "available", found: true, task: freshOrigin }));
+  expect(address()).toBe(work);
+  expect(dialog()?.querySelector("h2")?.textContent).toBe(freshOrigin.title);
+  expect(dialog()?.textContent).toContain(freshOrigin.description);
+  expect(dialog()?.textContent).not.toContain(recovered.title);
+  expect(checkbox()?.checked).toBe(false);
+  expect(port.submit).toHaveBeenCalledExactlyOnceWith(operation, undefined);
+  expect(port.submit.mock.calls[0][0].key).toBe(operation.key);
+  expect(sessionStorage.getItem(storageKey)).toBeNull();
 });
 
 it.each(["actor", "tenant"] as const)("retires the mounted draft on %s A→B→A rather than borrowing the old hold", async field => {

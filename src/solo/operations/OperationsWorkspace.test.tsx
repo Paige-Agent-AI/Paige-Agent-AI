@@ -199,7 +199,7 @@ it("shows the original pending task before confirmation instead of the newly sel
  const select=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]');
  await act(async()=>{if(select){select.value="done";select.dispatchEvent(new Event("change",{bubbles:true}));}});
  const dialog=document.querySelector('[role="dialog"]');
- expect(dialog?.querySelector("h2")?.textContent).toBe("Original pending task A");
+ expect(dialog?.querySelector("h2")?.textContent).toBe("Recover the earlier task change: Original pending task A");
  expect(dialog?.textContent).toContain("Recovery test seam: task-a");
  expect(dialog?.textContent).not.toContain(task.title);
 });

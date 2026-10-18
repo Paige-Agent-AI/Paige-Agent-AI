@@ -94,3 +94,64 @@ it("reload/remount re-reads a reference instead of reusing a task snapshot",asyn
  await render();await act(async()=>root.unmount());root=createRoot(host);port.readTask.mockResolvedValueOnce({status:"available",found:false,task:null});await render();
  expect(port.readTask).toHaveBeenCalledTimes(2);expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.textContent).toContain("isn’t available");
 });
+
+async function openEarlierTaskRecovery(){
+ const pending=buildCrmWorkStageOperation({...task(),id:other},"done",port.actor,port.tenant,"77777777-7777-4777-8777-777777777777")!;
+ sessionStorage.setItem(`paige:operations-crm-stage:${port.actor}:${port.tenant}`,JSON.stringify(pending));await render();
+ const stage=dialog()!.querySelector<HTMLSelectElement>('[aria-label="Review CRM task stage"]')!;
+ await act(async()=>{stage.value="done";stage.dispatchEvent(new Event("change",{bubbles:true}));});
+ expect(dialog()?.textContent).toContain("Recover original action");expect(port.submit).not.toHaveBeenCalled();return pending;
+}
+it("clears the original Task address when closing a different retained recovery inspection",async()=>{
+ const pending=await openEarlierTaskRecovery();await click("Close");
+ expect(dismiss).toHaveBeenCalledOnce();expect(dialog()).toBeNull();
+ expect(JSON.parse(sessionStorage.getItem(`paige:operations-crm-stage:${port.actor}:${port.tenant}`)!).key).toBe(pending.key);
+ expect(port.submit).not.toHaveBeenCalled();
+});
+it("returns to the original exact Task after a different retained action is verified",async()=>{
+ const pending=await openEarlierTaskRecovery();port.submit.mockResolvedValue({kind:"acknowledged"});
+ port.readTask.mockImplementation(async taskId=>available(taskId===other?{...task(),id:other,title:"Earlier recovered Task",status:"completed"}:task()));
+ await click("Recover original action");
+ expect(port.submit).toHaveBeenCalledExactlyOnceWith(pending,undefined);
+ expect(port.readTask.mock.calls.map(call=>call[0])).toEqual([id,other,id]);
+ expect(dialog()?.querySelector('h2')?.textContent).toBe(task().title);expect(dialog()?.textContent).not.toContain("Earlier recovered Task");
+ expect(dismiss).not.toHaveBeenCalled();expect(sessionStorage.length).toBe(0);
+});
+it.each(["empty","unavailable","refused"])("keeps the earlier-action confirmation when the original Task reread is %s",async status=>{
+ await openEarlierTaskRecovery();port.submit.mockResolvedValue({kind:"acknowledged"});
+ port.readTask.mockImplementation(async taskId=>taskId===other?available({...task(),id:other,title:"Earlier recovered Task",status:"completed"})
+  :status==="empty"?{status:"available",found:false,task:null}:{status});
+ await click("Recover original action");
+ expect(dialog()?.textContent).toContain("earlier task’s change is saved and confirmed");
+ expect(dialog()?.textContent).not.toContain("Earlier recovered Task");expect(dialog()?.textContent).not.toContain(task().title);
+ expect(dialog()?.querySelector('[aria-label="Edit task responsibility and due date"]')).toBeNull();
+ expect(port.submit).toHaveBeenCalledTimes(1);expect(sessionStorage.length).toBe(0);
+});
+it.each(["close","new-query","scope-ABA"])("retires the original Task restoration after %s and never paints its late reply",async departure=>{
+ await openEarlierTaskRecovery();port.submit.mockResolvedValue({kind:"acknowledged"});
+ let release!:(value:unknown)=>void;
+ port.readTask.mockImplementation(taskId=>taskId===other?Promise.resolve(available({...task(),id:other,title:"Earlier recovered Task",status:"completed"}))
+  :new Promise(resolve=>{release=resolve;}));
+ await click("Recover original action");const signal=port.readTask.mock.calls.at(-1)![1] as AbortSignal;
+ expect(dialog()?.textContent).toContain("Reading current task");expect(dialog()?.textContent).toContain("earlier task’s change is saved and confirmed");
+ expect(dialog()?.textContent).not.toContain("Earlier recovered Task");
+ if(departure==="close"){await click("Close");expect(dismiss).toHaveBeenCalledOnce();}
+ else if(departure==="new-query"){await render(`?task=${other}`,"next-entry");expect(dialog()?.textContent).toContain("Earlier recovered Task");}
+ else{
+  port.readTask.mockResolvedValue(available({...task(),title:"New scope generation"}));
+  const original=port.tenant;port.tenant="55555555-5555-4555-8555-555555555555";await render();port.tenant=original;await render();
+  expect(dialog()?.textContent).toContain("New scope generation");
+ }
+ expect(signal.aborted).toBe(true);await act(async()=>release(available({...task(),title:"Retired original Task reply"})));
+ expect(document.body.textContent).not.toContain("Retired original Task reply");if(departure==="close")expect(dialog()).toBeNull();
+ expect(port.submit).toHaveBeenCalledTimes(1);
+});
+it("never carries one Task's saved confirmation into another accepted Task link",async()=>{
+ port.submit.mockResolvedValue({kind:"acknowledged"});await render();await act(async()=>checkbox().click());await click("Review due date");
+ port.readTask.mockResolvedValueOnce(available({...task(),due_date:null,updated_at:"2026-10-18T00:01:00.123456Z"}));await click("Confirm task change");
+ expect(dialog()?.textContent).toContain("This task’s change is saved and confirmed");await click("Close");
+ let release!:(value:unknown)=>void;port.readTask.mockImplementation(()=>new Promise(resolve=>{release=resolve;}));
+ await render(`?task=${other}`,"new-accepted-task");expect(dialog()?.textContent).not.toContain("saved and confirmed");
+ await act(async()=>release(available({...task(),id:other,title:"Different Task"})));
+ expect(dialog()?.textContent).toContain("Different Task");expect(dialog()?.textContent).not.toContain("saved and confirmed");expect(port.submit).toHaveBeenCalledTimes(1);
+});

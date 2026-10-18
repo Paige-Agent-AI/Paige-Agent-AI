@@ -197,6 +197,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     // Changes to selection/editor state must not re-apply a consumed URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination, weeklySourceSearch, weeklySourceKey, readLinkedItem, checkNavigation]);
+  // The accepted URL still owns its original Task even while a different
+  // retained action is being recovered. Inspection kind is not URL provenance.
+  const taskFocusOrigin = parseOperationsTaskFocus(weeklySourceSearch);
   const linkedTask = inspection?.kind === "crm_focus";
   const readFocusedTask = useCallback(async(id:string,keepDraft=false) => {
     const epoch=++selectionEpoch.current;
@@ -221,11 +224,12 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     if(checkNavigation())return;
     if(inspection&&!initialRead||creatingWork||creatingProject){setNavigationNotice("Close the current inspection before opening another task.");return;}
     if(target.kind==="invalid"){
+      setCrmFeedback("");
       setTaskFocus({id:null,phase:"unavailable",task:null});
       setNavigationNotice("This task reference is unavailable. Return to Work or open the original task link.");return;
     }
     inspectionInvoker.current=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:null;
-    setNavigationNotice("");setInspection({kind:"crm_focus",id:target.id,view:"Work"});void readFocusedTask(target.id);
+    setNavigationNotice("");setCrmFeedback("");setInspection({kind:"crm_focus",id:target.id,view:"Work"});void readFocusedTask(target.id);
     return()=>{taskAbort.current?.abort();};
     // A consumed reference never reopens because list/editor state changed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,9 +341,9 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
       // Explicit Close releases the same guard before its accepted-URL update.
       // Waiting for the editor's passive cleanup would reject that update as dirty.
       onNavigationGuardChange?.(navigationReason,checkNavigation);
-      selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setNavigationNotice("");
+      selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setCrmFeedback(""); setNavigationNotice("");
       if (linkedInspection) onWeeklySourceDismiss?.();
-      if (linkedTask) onTaskFocusDismiss?.();
+      if (taskFocusOrigin) onTaskFocusDismiss?.();
     } }}>
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme}
         onEscapeKeyDown={event=>{if(checkNavigation())event.preventDefault();}}
@@ -354,11 +358,11 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           if(fallback){event.preventDefault();fallback.focus();}
         }
       }}>
-        <SheetHeader><SheetTitle className={linkedInspection || linkedTask ? "pr-8 break-words" : undefined}>{selectedItem?.title ?? selectedPlan?.title ?? (taskDetailsCurrent?selectedCrm?.title:undefined) ?? (linkedTask
+        <SheetHeader><SheetTitle className={linkedInspection || linkedTask || inspection?.kind === "crm_recovery" ? "pr-8 break-words" : undefined}>{inspection?.kind === "crm_recovery" ? `Recover the earlier task change${selectedCrm ? `: ${selectedCrm.title}` : ""}` : selectedItem?.title ?? selectedPlan?.title ?? (taskDetailsCurrent?selectedCrm?.title:undefined) ?? (linkedTask
           ? taskFocus.phase==="reading"?"Reading current task":taskFocus.phase==="empty"?"This task isn’t available in this workspace":"Current task details are unavailable"
           : linkedInspection
           ? weeklySource.phase === "reading" ? "Reading current work" : "This work is unavailable"
-          : inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
+          : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
           <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? (taskDetailsCurrent?selectedCrm?.description:undefined) ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
         {linkedTask && taskFocus.phase==="reading" && <p role="status">Reading the current task…</p>}
         {linkedTask && taskFocus.phase==="reading" && !crmReview && <button type="button" onClick={()=>{
@@ -375,6 +379,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           if (inspection?.kind === "item") void refreshSelectedWork();
         }}>Refresh source work</button>}
         {navigationNotice && inspection && <p role="status">{navigationNotice}</p>}
+        {crmFeedback && <p role="status">{crmFeedback}</p>}
         {!linkedTask && !linkedInspection && !selectedItem && !selectedPlan && !selectedCrm && inspection && <p>{inspection.kind === "crm_recovery" ? "The earlier task’s current details are unavailable. This recovery applies only to its original proposed change." : "This task has not been verified here. Refresh current work before creating it again."}</p>}
         {(inspection?.kind === "crm" || inspection?.kind === "crm_recovery" || linkedTask) && <button type="button" disabled={(linkedTask?taskFocus.phase==="reading":crm.loading) || Boolean(crmReview)} onClick={()=>void refreshCrmInspection()}>Refresh task details</button>}
         {selectedCrm && <div className="ops-detail-content" hidden={!taskDetailsCurrent}>
@@ -386,7 +391,6 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
             <div><dt>Estimated effort</dt><dd>{selectedCrm.estimated_minutes===null?"Not recorded":`${selectedCrm.estimated_minutes} minutes`}</dd></div>
             <div><dt>Source</dt><dd>CRM task{selectedCrm.deal_id?" · linked opportunity":""}{selectedCrm.biz_id?" · linked business":""}</dd></div></dl>
           {selectedCrm.status==="completed"&&<p>Recorded as completed internal work. Client acceptance is a separate outcome.</p>}
-          {crmFeedback&&<p role="status">{crmFeedback}</p>}
           {!crmReview&&<label>Review a stage change<select aria-label="Review CRM task stage" value={nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm})}
             disabled={linkedTask?!taskDetailsCurrent:crm.loading||Boolean(crm.error)} onChange={event=>proposeCrm(selectedCrm,event.target.value as PlanItemStatus,null)}>
             <option value={nativeWorkStage({source:"crm",key:`crm:${selectedCrm.id}`,record:selectedCrm})}>{selectedCrm.status.replace(/_/g," ")}</option>
@@ -400,7 +404,11 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         </div>}
         {crmReview && <OperationsCrmStageReview key={`${tenantId}:${crmReview.key}`} operation={crmReview} refresh={refreshCrmInspection} members={people.members}
           onClose={closeCrmReview} onVerified={taskId=>{setCrmReview(null);setPendingCrmRecovery(null);
-            setInspection({kind:"crm_focus",id:taskId,view:destination});setCrmFeedback("This task’s change is saved and confirmed in current CRM work.");}} />}
+            const originId=taskFocusOrigin?.kind==="task"?taskFocusOrigin.id:null;
+            const restoreOrigin=originId!==null&&originId!==taskId;
+            setInspection({kind:"crm_focus",id:restoreOrigin?originId:taskId,view:destination});
+            setCrmFeedback(restoreOrigin?"The earlier task’s change is saved and confirmed. Reading the task from your original link again.":"This task’s change is saved and confirmed in current CRM work.");
+            if(restoreOrigin)void readFocusedTask(originId,false);}} />}
         {selectedItem && <div className="ops-detail-content">
           <dl><div><dt>Responsible person</dt><dd>{selectedItem.assigned_to_user_id && !member ? "Member unavailable" : <OperationsAssignee member={member} />}</dd></div>
             <div><dt>Status</dt><dd>{selectedItem.status.replace(/_/g, " ")}</dd></div>

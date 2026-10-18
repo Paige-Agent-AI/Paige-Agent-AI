@@ -26,7 +26,7 @@ MUST_PRESERVE: canonical native actor/current-workspace/member authority; source
 ACCEPTANCE_CRITERIA: controlled actual-source/transport tests prove fresh authority after budget waits and before primary/fallback, bounded cancellation/deadline refusal without late model dispatch, strategist recall fences, accurate trace/cache outcomes and unchanged false-gate routing; provider-backed quality/spend/activation and ordinary customer acceptance remain separate unverified requirements
 PROTECTED_SEAMS: PASS: existing Research registration, native authorization and persistence, shared Fabric/router policy, all provider/credential/flag/cohort settings and C0b validator/pins remain unchanged; no unrelated Chat/Spine/domain writer is edited
 
-INTERNAL_BUILD_IDENTITY: 7789d1ca48b2d17f1d863e196286c3e5ac3ec5a3 source/test freeze; metadata predecessor=2eec6f6f67c672fcc40d47cd49802cc55e5b9947; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/ant21-research-fabric-attempt-scope.md
+INTERNAL_BUILD_IDENTITY: 7789d1ca48b2d17f1d863e196286c3e5ac3ec5a3 source/test freeze; metadata predecessor=2eec6f6f67c672fcc40d47cd49802cc55e5b9947; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed source release and native readback have not occurred); evidence=docs/evidence/ui-delivery/ant21-research-fabric-attempt-scope.md
 RELEASE_CHANNEL: development: bounded source preparation only, with original Research gate false
 RELEASE_CLASSIFICATION: internal-only: existing Research attempt-scope and shared-strategist integration
 CUSTOMER_RELEASE_IDENTITY: none: no capability activation or customer announcement

@@ -5,8 +5,12 @@
 // session user and the expected tenant is the server-resolved persona tenant. No model argument can
 // name either; a forged `tenant_id` is never read.
 //
-// Re-filing a document onto ANOTHER client (or rewriting its description) stays on crm_file_document's
-// existing direct path; the share-stamp trigger keeps shared_at truthful on that path too.
+// Re-filing a document onto ANOTHER client (or rewriting its description) moves it with a direct
+// write through the caller's client that NEVER touches visibility (refileClientDocument). The
+// database refuses any non-service write into or out of 'shared' that is not the share writer
+// (trg_client_files_share_stamp, FILE_SHARE_WRITER_REQUIRED) and makes a file moved to another
+// client arrive private, so whether the client sees it afterwards is decided by the share writer
+// alone, at the version the move produced: business admin, live client, finished upload, audited.
 
 export type FileDocumentSource = {
   id: string;
@@ -130,4 +134,79 @@ export async function shareClientFile(input: {
     || !(sharedAt === null || instant(sharedAt)) || (sharedAt !== null) !== shared) return fail("outcome_unknown");
   return { success: true, fileId, shared, replayed: ack.replayed, sharedAt: sharedAt as string | null,
     updatedAt: row.updated_at as string, portalConnected: typeof ack.portal_connected === "boolean" ? ack.portal_connected : null };
+}
+
+export type ClientFileRefileCaller = ClientFileShareCaller & {
+  /** The direct move: contact_id (and description) only, scoped to the server tenant, returning
+   * `id, contact_id, visibility, updated_at`. It must never carry visibility. */
+  moveFile: (fileId: string, tenantId: string, patch: { contact_id: string; description?: string }) =>
+    PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+export type ClientFileRefileResult =
+  | { success: true; fileId: string; contactId: string; movedFromContactId: string | null; shared: boolean;
+      share: { replayed: boolean; sharedAt: string | null; portalConnected: boolean | null } | null }
+  | { success: false; moved: boolean | null; fileId: string; contactId: string | null; shared: boolean | null;
+      reason: ClientFileShareFailure | "not_moved"; message: string; outcomeUnknown: boolean };
+
+const sameId = (a: unknown, b: unknown) => typeof a === "string" && typeof b === "string" && a.toLowerCase() === b.toLowerCase();
+
+export async function refileClientDocument(input: {
+  caller: ClientFileRefileCaller;
+  expectedActorId: string | null | undefined;
+  expectedTenantId: string | null | undefined;
+  fileId: unknown;
+  fromContactId: unknown;
+  toContactId: unknown;
+  description: unknown;
+  visibility: unknown;
+}): Promise<ClientFileRefileResult> {
+  const fileId = typeof input.fileId === "string" ? input.fileId.toLowerCase() : "";
+  const nothing = (reason: ClientFileShareFailure | "not_moved", message: string, unknown = false): ClientFileRefileResult =>
+    ({ success: false, moved: unknown ? null : false, fileId, contactId: null, shared: null, reason, message, outcomeUnknown: unknown });
+  const tenant = input.expectedTenantId;
+  if (!uuid(input.expectedActorId) || !uuid(tenant)) return nothing("no_workspace", CLIENT_FILE_SHARE_MESSAGES.no_workspace);
+  if (!uuid(input.fileId) || !uuid(input.fromContactId) || !uuid(input.toContactId)
+    || (input.visibility !== "internal" && input.visibility !== "shared")) {
+    return nothing("bad_request", "That request wasn't complete, so I haven't moved the document.");
+  }
+  const toContact = input.toContactId.toLowerCase();
+  const wantShared = input.visibility === "shared";
+  const patch: { contact_id: string; description?: string } = { contact_id: toContact };
+  if (typeof input.description === "string" && input.description.trim()) patch.description = input.description.trim().slice(0, 500);
+  // 1. The move. Visibility is never in the patch: the share writer is the only way to change it.
+  let moved: { data: unknown; error: unknown };
+  try { moved = await input.caller.moveFile(fileId, tenant, patch); } catch {
+    return nothing("outcome_unknown", "I couldn't confirm whether the document moved. Check the client's file before trying again.", true);
+  }
+  if (moved.error) {
+    // Only an answered SQL refusal proves nothing was written (same rule as the share writer).
+    return /^[0-9A-Z]{5}$/.test(String(object(moved.error)?.code ?? ""))
+      ? nothing("not_moved", "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.")
+      : nothing("outcome_unknown", "I couldn't confirm whether the document moved. Check the client's file before trying again.", true);
+  }
+  const row = object(moved.data);
+  if (!row) return nothing("not_moved", "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.");
+  if (!sameId(row.id, fileId) || !sameId(row.contact_id, toContact) || !instant(row.updated_at)
+    || (row.visibility !== "internal" && row.visibility !== "shared")) {
+    return nothing("outcome_unknown", "I couldn't confirm where the document is now. Check the client's file before trying again.", true);
+  }
+  const movedFrom = sameId(input.fromContactId, toContact) ? null : (input.fromContactId as string).toLowerCase();
+  const nowShared = row.visibility === "shared";
+  if (nowShared === wantShared) {
+    return { success: true, fileId, contactId: toContact, movedFromContactId: movedFrom, shared: nowShared, share: null };
+  }
+  // 2. Who can see it: the share writer, at the version the move just produced.
+  const shared = await shareClientFile({ caller: input.caller, expectedActorId: input.expectedActorId, expectedTenantId: tenant,
+    fileId, shared: wantShared, expectedUpdatedAt: row.updated_at });
+  if (shared.success) {
+    return { success: true, fileId, contactId: toContact, movedFromContactId: movedFrom, shared: shared.shared,
+      share: { replayed: shared.replayed, sharedAt: shared.sharedAt, portalConnected: shared.portalConnected } };
+  }
+  const where = nowShared ? "the client can still see it" : "only the team can see it";
+  return { success: false, moved: true, fileId, contactId: toContact, shared: shared.writeAttempted ? null : nowShared,
+    reason: shared.reason, outcomeUnknown: shared.writeAttempted,
+    message: shared.writeAttempted
+      ? `It's filed on their record, but ${shared.message.charAt(0).toLowerCase()}${shared.message.slice(1)}`
+      : `It's filed on their record, but ${where}: ${shared.message}` };
 }

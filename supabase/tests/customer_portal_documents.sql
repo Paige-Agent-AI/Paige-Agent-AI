@@ -9,7 +9,7 @@
 -- works; a customer can no longer delete their own upload metadata; a staff PUT needs a
 -- reservation; and released work is unavailable once the client or the business is inactive.
 BEGIN;
-SELECT plan(148);
+SELECT plan(167);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -141,14 +141,44 @@ SELECT ok((SELECT shared_at IS NULL AND shared_by IS NULL FROM public.client_fil
 INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state,shared_at,shared_by) VALUES
  ('e0944000-0000-4000-8000-000000000031','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000003/internal/e0944000-0000-4000-8000-000000000031','Trigger probe.pdf','application/pdf',31,'internal','ready','1999-01-01T00:00:00Z','e0941000-0000-4000-8000-000000000005');
 SELECT ok((SELECT shared_at IS NULL AND shared_by IS NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'),'an internal INSERT cannot carry a forged share stamp');
-SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(shared_by)$q$),
- '"e0941000-0000-4000-8000-000000000001"'::jsonb,'a direct staff update to shared stamps who shared it');
+-- The share writer is the ONLY non-service writer that moves a file into or out of 'shared'
+-- (round 2, verifier MAJOR-1). A direct REST write is refused by the trigger itself (its own error,
+-- not an RLS miss) for the owner, for a member of this business who holds the global admin role,
+-- and for an insert; the service role is the one exempt writer and is stamped like any other.
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','the owner cannot share a file by a direct REST update');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000021' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','a member holding the global admin role cannot share one over REST either');
+SELECT is(pg_temp.owner($q$INSERT INTO public.client_files(tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state) VALUES ('e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000002','e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000032','Direct.pdf','application/pdf',1,'shared','ready') RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','or insert a file that is already shared');
+SELECT ok((SELECT bool_and(visibility='internal') FROM public.client_files WHERE id IN ('e0944000-0000-4000-8000-000000000021','e0944000-0000-4000-8000-000000000031'))
+  AND NOT EXISTS (SELECT 1 FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000032'),'no refused REST write shared anything');
+SELECT ok(pg_temp.file(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$),'e0944000-0000-4000-8000-000000000021') IS NULL,'so Sam never sees the file the member tried to share');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(shared_by)$q$,'service_role'),
+ '"e0941000-0000-4000-8000-000000000001"'::jsonb,'the service role may share directly, and the stamp records who');
 SELECT ok((SELECT shared_at IS NOT NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'),'and when');
 SELECT is(pg_temp.owner($q$UPDATE public.client_files SET shared_at='1999-01-01T00:00:00Z', shared_by='e0941000-0000-4000-8000-000000000005' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(shared_by)$q$),
  '"e0941000-0000-4000-8000-000000000001"'::jsonb,'the share stamp cannot be rewritten while the file stays shared');
 SELECT ok((SELECT shared_at > '2000-01-01' FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'),'shared_at is not backdated');
-SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='internal' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(shared_at IS NULL AND shared_by IS NULL)$q$),
- 'true'::jsonb,'setting it back to internal clears both stamps');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='internal' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','the owner cannot unshare by a direct REST update either');
+-- Moving a file to another client (compliance S1): it arrives private on every writer, its stamp
+-- cleared, because the new client was never shown it. Moving and sharing in one write is refused.
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||(shared_at IS NULL AND shared_by IS NULL)::text)$q$),
+ '"internal|true"'::jsonb,'a shared file the owner moves to another client arrives private, its stamp cleared');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000003', visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','moving a file and sharing it in one direct write is refused');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text)$q$,'service_role'),
+ '"shared"'::jsonb,'the service role shares it on its new client');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000003' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||(shared_at IS NULL AND shared_by IS NULL)::text)$q$,'service_role'),
+ '"internal|true"'::jsonb,'a move by the service role also arrives private');
+-- The stamp is held by a constraint too, so a write that skips the trigger cannot leave a shared
+-- row without shared_at (the list parsers require it) or a stamp on an unshared row.
+SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.client_files'::regclass AND conname='client_files_share_stamp_consistent'),'the share stamp is a table constraint');
+SET LOCAL session_replication_role = replica;
+SELECT throws_ok($q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000025'$q$,'23514',NULL,'a shared row without shared_at is refused even when triggers are skipped');
+SELECT throws_ok($q$UPDATE public.client_files SET shared_at=now() WHERE id='e0944000-0000-4000-8000-000000000025'$q$,'23514',NULL,'and so is a stamp on an unshared row');
+SET LOCAL session_replication_role = origin;
 
 -- 2. Grants.
 SELECT ok(NOT has_function_privilege('anon','public.client_file_set_client_share(uuid,uuid,uuid,boolean,timestamptz)','EXECUTE')
@@ -255,10 +285,15 @@ SELECT is(pg_temp.audits('e0944000-0000-4000-8000-000000000021'),1::bigint,'one 
 SELECT is((SELECT action||'|'||user_id::text||'|'||data::text FROM public.audit_logs WHERE entity='client_files' AND entity_id='e0944000-0000-4000-8000-000000000021'),
  'client_share|e0941000-0000-4000-8000-000000000001|'||jsonb_build_object('file_id','e0944000-0000-4000-8000-000000000021','tenant_id','e0942000-0000-4000-8000-000000000001','contact_id','e0943000-0000-4000-8000-000000000002')::text,
  'the share audit names the actor, the business, the client and the file');
+SELECT ok(pg_temp.file(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$),'e0944000-0000-4000-8000-000000000021') IS NOT NULL,'Sam sees the file once it is shared');
+SELECT ok(current_setting('paige.client_file_share', true) IS DISTINCT FROM 'on','the share writer leaves no open permission behind in the transaction');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000001' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARE_WRITER_REQUIRED','so a direct REST share right after it is still refused');
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000025',true)->>'portal_connected','false','sharing with a client who has not joined the portal says so');
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000021',false,(SELECT updated_at FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021')) - 'updated_at',
  '{"ok":true,"replayed":false,"file_id":"e0944000-0000-4000-8000-000000000021","shared":false,"shared_at":null,"portal_connected":true}'::jsonb,'the owner unshares it');
 SELECT ok((SELECT visibility='internal' AND shared_at IS NULL AND shared_by IS NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021'),'unsharing clears the share stamp');
+SELECT ok(pg_temp.file(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$),'e0944000-0000-4000-8000-000000000021') IS NULL,'and Sam no longer sees it once it is unshared');
 SELECT is((SELECT string_agg(action, ',' ORDER BY created_at, action) FROM public.audit_logs WHERE entity='client_files' AND entity_id='e0944000-0000-4000-8000-000000000021'),'client_share,client_unshare','each real change writes exactly one audit row');
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000024',false)->>'replayed','true','withdrawing a share never needs a live client');
 
@@ -345,6 +380,22 @@ SELECT is(pg_temp.begin_as('e0941000-0000-4000-8000-000000000001','e0942000-0000
 SELECT is(pg_temp.put_as('e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','02','e0944000-0000-4000-8000-000000000053')),'1'::jsonb,'the same staff PUT is allowed');
 SELECT is(pg_temp.begin_as('e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000002','e0944000-0000-4000-8000-000000000054')->>'ok','true','the owner reserves another upload');
 SELECT is(pg_temp.put_as('e0941000-0000-4000-8000-000000000005',pg_temp.fpath('01','02','e0944000-0000-4000-8000-000000000054'))->>'sqlstate','42501','a member cannot PUT onto the owner''s reservation');
+-- A reservation only for a caller who can then PUT (verifier minor): the staff storage branch also
+-- needs the global admin role or the platform owner, so a platform admin in the company workspace
+-- (a business admin there through is_platform_operator) is refused at reserve instead of leaving a
+-- stuck pending row. (A tenant owner/admin membership is synced the global admin role, so for them
+-- the two checks agree.)
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0941000-0000-4000-8000-000000000011','authenticated','authenticated','documents-platform-admin@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features) VALUES
+ ('e0942000-0000-4000-8000-000000000005','test-tenant-e09-documents-company','Test company workspace','active','standalone',NULL,'E09DC',9491005,'{"system_workspace":true}');
+INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status) VALUES
+ ('e0943000-0000-4000-8000-000000000008','e0942000-0000-4000-8000-000000000005','e0941000-0000-4000-8000-000000000011','Company','Client','active');
+INSERT INTO public.user_roles(user_id,role) VALUES ('e0941000-0000-4000-8000-000000000011','platform_admin') ON CONFLICT DO NOTHING;
+UPDATE public.profiles SET active_tenant_id='e0942000-0000-4000-8000-000000000005' WHERE user_id='e0941000-0000-4000-8000-000000000011';
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000011',$q$SELECT to_jsonb(public.is_tenant_admin('e0942000-0000-4000-8000-000000000005'))$q$),'true'::jsonb,'the platform admin passes the business-admin check in the company workspace');
+SELECT is(pg_temp.begin_as('e0941000-0000-4000-8000-000000000011','e0942000-0000-4000-8000-000000000005','e0943000-0000-4000-8000-000000000008','e0944000-0000-4000-8000-000000000055')->>'sqlstate','42501','a platform admin in the company workspace cannot reserve an upload it could not store');
+SELECT is((SELECT count(*) FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000055'),0::bigint,'and the refusal left no pending row');
 
 -- 16. Released work: unavailable once the client or the business is inactive.
 INSERT INTO public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,created_by,owner_user_id) VALUES

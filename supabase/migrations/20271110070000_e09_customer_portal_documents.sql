@@ -1,13 +1,20 @@
 -- E09 Documents: the customer sees ONLY the files the business explicitly shares, plus their own
 -- uploads. public.client_files + the private client-files bucket stay the one canonical file store
 -- (§18); no new table, bucket, event kind, executor or RLS policy. Additive, every new owner file
--- private by default (no backfill: production holds 0 client_files rows):
---   * client_files.shared_at / shared_by — derived by a trigger on EVERY writer (this migration's
---     RPC, Paige's crm_file_document re-file, a direct staff update); they cannot be forged.
+-- private by default (production held 0 client_files rows at grounding; any shared row is backfilled):
+--   * client_files.shared_at / shared_by — derived by a trigger on EVERY writer; they cannot be
+--     forged, and a CHECK holds them even where the trigger is skipped. The same trigger makes
+--     client_file_set_client_share the ONLY non-service writer that moves a file into or out of
+--     'shared' (a direct REST write, Paige's direct re-file or another DEFINER body is refused with
+--     FILE_SHARE_WRITER_REQUIRED), and a file moved to another client arrives private (§58: a
+--     tightening; before, a move kept the file shared and silently re-shared it with the new client).
 --   * client_file_owner_begin_upload / client_file_owner_finish_upload — the owner's reservation
---     and object-verified finish, mirroring the customer pair (20271108150000:66-106, 240-271).
+--     and object-verified finish, mirroring the customer pair (20271108150000:66-106, 240-271). A
+--     reservation needs the same roles as the staff storage PUT, so no caller is left with a
+--     pending row it can never fill.
 --   * client_file_set_client_share — the ONE share writer: current-workspace business admin,
---     version-guarded, state-idempotent, audited (public.audit_logs, entity 'client_files').
+--     version-guarded, state-idempotent, audited (public.audit_logs, entity 'client_files'). It
+--     opens the trigger's gate with a transaction-local flag around its one UPDATE only.
 --   * client_file_owner_list — the owner's read, pinned to tenant AND contact (the "Staff read
 --     files" policy has a coach arm with no tenant predicate; this read does not use it).
 --   * client_portal_documents — the customer's read: shared+ready files and their own uploads of
@@ -25,12 +32,46 @@ ALTER TABLE public.client_files
   ADD COLUMN shared_at timestamptz,
   ADD COLUMN shared_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
+-- Backfill before the trigger exists: a row already shared (by Paige's chat, before this release)
+-- was shared no later than its last write. Who shared it is not recorded, so shared_by stays NULL;
+-- every reader requires shared_at on a shared row and never reads shared_by. updated_at moves to
+-- now() under trg_client_files_updated, which is harmless: no client holds a version of it yet.
+UPDATE public.client_files SET shared_at = updated_at WHERE visibility = 'shared' AND shared_at IS NULL;
+ALTER TABLE public.client_files ADD CONSTRAINT client_files_share_stamp_consistent CHECK (
+  CASE WHEN visibility = 'shared' THEN shared_at IS NOT NULL ELSE shared_at IS NULL AND shared_by IS NULL END);
+
 -- Derived, never written: a shared row carries when (and by whom) it was shared to THIS client;
--- anything else carries nothing. Re-filing a shared file onto another client is a new share. A
--- direct write to either column is overwritten, so the stamp stays truthful on every write path.
+-- anything else carries nothing. A direct write to either column is overwritten, so the stamp stays
+-- truthful on every write path.
+--
+-- The gate. Moving a file into or out of 'shared' is the client-visible act, so only
+-- client_file_set_client_share (business admin, live client, finished upload, version, audit) may
+-- do it for a signed-in caller: it sets paige.client_file_share='on' (transaction-local) around its
+-- one UPDATE. Exempt: the service role (Edge functions acting as the platform), and a direct
+-- database session with no API request (migrations, pg_cron, a psql fixture). Everything else —
+-- a REST UPDATE/INSERT under any RLS arm, Paige's re-file through the caller's client, a future
+-- DEFINER body called by a signed-in user — is refused, so no share skips the audit.
+--
+-- Moving a file to another client makes it private on every writer: the new client was never
+-- shown it. Requesting the move AND 'shared' in one write is refused like any other direct share.
 CREATE OR REPLACE FUNCTION public._client_files_share_stamp()
 RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  v_role text := nullif(auth.role(), '');
+  v_writer boolean;
 BEGIN
+  v_writer := current_setting('paige.client_file_share', true) IS NOT DISTINCT FROM 'on'
+    OR v_role = 'service_role' OR current_user = 'service_role'
+    OR (v_role IS NULL AND current_user NOT IN ('authenticated', 'anon'));
+  IF NOT v_writer AND (
+       (TG_OP = 'INSERT' AND NEW.visibility = 'shared')
+    OR (TG_OP = 'UPDATE' AND (OLD.visibility = 'shared') IS DISTINCT FROM (NEW.visibility = 'shared'))) THEN
+    RAISE EXCEPTION 'FILE_SHARE_WRITER_REQUIRED' USING ERRCODE = '42501',
+      HINT = 'Share or unshare a client file through public.client_file_set_client_share.';
+  END IF;
+  IF TG_OP = 'UPDATE' AND NEW.contact_id IS DISTINCT FROM OLD.contact_id AND NEW.visibility = 'shared' THEN
+    NEW.visibility := 'internal';
+  END IF;
   IF NEW.visibility = 'shared' THEN
     IF TG_OP = 'UPDATE' AND OLD.visibility = 'shared' AND NEW.contact_id IS NOT DISTINCT FROM OLD.contact_id THEN
       NEW.shared_at := coalesce(OLD.shared_at, now());
@@ -88,9 +129,14 @@ BEGIN
   -- A workspace switch updates this same profile row; holding its lock serializes against it.
   PERFORM 1 FROM public.profiles WHERE user_id = v_actor FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501'; END IF;
-  -- 2. Workspace and role: the current workspace, business owner/admin of it. Never a global role (§59).
+  -- 2. Workspace and role: the current workspace, business owner/admin of it. Never a global role
+  -- alone (§59). The staff storage PUT (client_portal_can_upload_file_object, below) ALSO needs the
+  -- platform owner or the global admin role, so the reservation asks for the same: a business admin
+  -- without it, or a platform admin in the company workspace, could reserve but never store, and
+  -- would be left with a pending row. The global role is an extra requirement here, never authority.
   v_tenant := public.current_user_tenant_id();
-  IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant) THEN
+  IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant)
+     OR NOT (public.is_platform_owner() OR public.has_role(v_actor, 'admin'::public.app_role)) THEN
     RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
   END IF;
   IF p_contact_id IS NULL OR p_file_id IS NULL THEN
@@ -274,10 +320,13 @@ BEGIN
   IF p_expected_updated_at IS NULL OR v_row.updated_at IS DISTINCT FROM p_expected_updated_at THEN
     RETURN jsonb_build_object('ok', false, 'error', 'FILE_CHANGED', 'updated_at', v_row.updated_at);
   END IF;
-  -- 8. Write. The share-stamp trigger records shared_at / shared_by.
+  -- 8. Write. The share-stamp trigger records shared_at / shared_by; the flag opens its gate for
+  -- this one UPDATE and is closed again before anything else runs in the transaction.
+  PERFORM set_config('paige.client_file_share', 'on', true);
   UPDATE public.client_files SET visibility = CASE WHEN p_shared THEN 'shared' ELSE 'internal' END::public.client_file_visibility
   WHERE id = v_row.id
   RETURNING * INTO v_row;
+  PERFORM set_config('paige.client_file_share', 'off', true);
   -- 9. Audit. Fixed references only, never a filename.
   INSERT INTO public.audit_logs(user_id, entity, action, entity_id, data)
   VALUES (v_actor, 'client_files', CASE WHEN p_shared THEN 'client_share' ELSE 'client_unshare' END, v_row.id,
@@ -481,7 +530,8 @@ END $$;
 REVOKE ALL ON FUNCTION public.client_portal_can_upload_file_object(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_can_upload_file_object(text) TO authenticated,service_role;
 
-COMMENT ON COLUMN public.client_files.shared_at IS 'When this file was shared with its client. Derived by trg_client_files_share_stamp on every write; NULL unless visibility = shared.';
-COMMENT ON COLUMN public.client_files.shared_by IS 'Who shared this file with its client (auth.uid() at the share). Derived by trg_client_files_share_stamp; NULL unless visibility = shared.';
+COMMENT ON COLUMN public.client_files.shared_at IS 'When this file was shared with its client. Derived by trg_client_files_share_stamp on every write; set exactly when visibility = shared (client_files_share_stamp_consistent).';
+COMMENT ON COLUMN public.client_files.shared_by IS 'Who shared this file with its client (auth.uid() at the share). Derived by trg_client_files_share_stamp; NULL unless visibility = shared, and NULL for a row shared before this column existed.';
+COMMENT ON FUNCTION public._client_files_share_stamp() IS 'E09 Documents: derives shared_at/shared_by; refuses (42501 FILE_SHARE_WRITER_REQUIRED) any signed-in, non-service write that moves a file into or out of shared unless client_file_set_client_share opened the gate; a file moved to another client becomes internal.';
 
 COMMIT;

@@ -1,7 +1,7 @@
 // E09 Documents: crm_file_document's routing and the share executor it calls.
-// deno test --allow-read supabase/functions/_shared/crm/client-file-share.test.ts
+// deno test --allow-read=supabase/functions --node-modules-dir=none supabase/functions/_shared/crm/client-file-share.test.ts (CI: ci.yml)
 import assert from "node:assert/strict";
-import { routeFileDocument, shareClientFile, type ClientFileShareCaller } from "./client-file-share.ts";
+import { refileClientDocument, routeFileDocument, shareClientFile, type ClientFileRefileCaller, type ClientFileShareCaller } from "./client-file-share.ts";
 
 const ACTOR = "e0941000-0000-4000-8000-000000000001";
 const TENANT = "e0942000-0000-4000-8000-000000000001";
@@ -141,4 +141,147 @@ Deno.test("unsharing is verified against an unshared row", async () => {
   }).caller, { shared: false });
   assert.equal(r.success, true);
   if (r.success) { assert.equal(r.replayed, true); assert.equal(r.sharedAt, null); assert.equal(r.portalConnected, false); }
+});
+
+// ── Re-filing (round 2): the direct write never touches visibility; any change that ends shared or
+// unshared goes through the share writer at the version the move produced. A file moved to another
+// client arrives private (the database trigger), so "move and share" is move, then share.
+type Move = { fileId: string; tenantId: string; patch: Record<string, unknown> };
+function refiler(opts: {
+  moved?: { data: unknown; error: unknown } | (() => never);
+  share?: { data: unknown; error: unknown };
+  row?: Record<string, unknown> | null;
+} = {}) {
+  const base = caller({ reply: opts.share, row: opts.row });
+  const moves: Move[] = [];
+  const c: ClientFileRefileCaller = {
+    ...base.caller,
+    moveFile: (fileId, tenantId, patch) => {
+      moves.push({ fileId, tenantId, patch: { ...patch } });
+      if (typeof opts.moved === "function") return opts.moved();
+      return Promise.resolve(opts.moved ?? { data: { id: FILE, contact_id: OTHER_CONTACT, visibility: "internal", updated_at: NEW_VERSION }, error: null });
+    },
+  };
+  return { caller: c, moves, calls: base.calls, reads: base.reads };
+}
+const refile = (c: ClientFileRefileCaller, over: Record<string, unknown> = {}) => refileClientDocument({
+  caller: c, expectedActorId: ACTOR, expectedTenantId: TENANT, fileId: FILE, fromContactId: CONTACT,
+  toContactId: OTHER_CONTACT, description: undefined, visibility: "shared", ...over,
+} as Parameters<typeof refileClientDocument>[0]);
+
+Deno.test("a move never writes visibility; sharing on the new client goes through the share writer at the moved version", async () => {
+  const r = refiler();
+  const out = await refile(r.caller);
+  assert.deepEqual(r.moves, [{ fileId: FILE, tenantId: TENANT, patch: { contact_id: OTHER_CONTACT } }]);
+  assert.deepEqual(r.calls, [{ name: "client_file_set_client_share", args: {
+    p_expected_actor_id: ACTOR, p_expected_tenant_id: TENANT, p_file_id: FILE, p_shared: true, p_expected_updated_at: NEW_VERSION } }]);
+  assert.equal(out.success, true);
+  if (out.success) {
+    assert.equal(out.contactId, OTHER_CONTACT);
+    assert.equal(out.movedFromContactId, CONTACT);
+    assert.equal(out.shared, true);
+    assert.equal(out.share?.portalConnected, true);
+  }
+});
+
+Deno.test("a move that should stay private sends no share call", async () => {
+  const r = refiler();
+  const out = await refile(r.caller, { visibility: "internal" });
+  assert.equal(r.calls.length, 0);
+  assert.equal(out.success, true);
+  if (out.success) { assert.equal(out.shared, false); assert.equal(out.share, null); }
+});
+
+Deno.test("a description change on the same client that also unshares goes through the share writer", async () => {
+  const r = refiler({
+    moved: { data: { id: FILE, contact_id: CONTACT, visibility: "shared", updated_at: NEW_VERSION }, error: null },
+    share: { data: { ok: true, replayed: false, file_id: FILE, shared: false, shared_at: null, updated_at: NEW_VERSION, portal_connected: true }, error: null },
+    row: { id: FILE, tenant_id: TENANT, visibility: "internal", shared_at: null, updated_at: NEW_VERSION },
+  });
+  const out = await refile(r.caller, { toContactId: CONTACT, description: "  Signed scope  ", visibility: "internal" });
+  assert.deepEqual(r.moves[0].patch, { contact_id: CONTACT, description: "Signed scope" });
+  assert.equal(r.calls.length, 1);
+  assert.equal(r.calls[0].args.p_shared, false);
+  assert.equal(out.success, true);
+  if (out.success) { assert.equal(out.shared, false); assert.equal(out.movedFromContactId, null); }
+});
+
+Deno.test("a description change that keeps an already-shared file shared sends no share call", async () => {
+  const r = refiler({ moved: { data: { id: FILE, contact_id: CONTACT, visibility: "shared", updated_at: NEW_VERSION }, error: null } });
+  const out = await refile(r.caller, { toContactId: CONTACT, description: "x".repeat(600) });
+  assert.equal((r.moves[0].patch.description as string).length, 500);
+  assert.equal(r.calls.length, 0);
+  assert.equal(out.success, true);
+});
+
+Deno.test("a refused move changes nothing and shares nothing; a lost reply is unknown", async () => {
+  const refused = refiler({ moved: { data: null, error: { code: "42501", message: "denied" } } });
+  const a = await refile(refused.caller);
+  assert.equal(a.success, false);
+  if (!a.success) { assert.equal(a.moved, false); assert.equal(a.outcomeUnknown, false); }
+  assert.equal(refused.calls.length, 0);
+  const lost = refiler({ moved: () => { throw new Error("network"); } });
+  const b = await refile(lost.caller);
+  if (!b.success) { assert.equal(b.moved, null); assert.equal(b.outcomeUnknown, true); }
+  assert.equal(lost.calls.length, 0);
+  const gateway = refiler({ moved: { data: null, error: { message: "upstream timeout" } } });
+  const g = await refile(gateway.caller);
+  if (!g.success) { assert.equal(g.moved, null); assert.equal(g.outcomeUnknown, true); }
+  assert.equal(gateway.calls.length, 0);
+  const missing = refiler({ moved: { data: null, error: null } });
+  const c = await refile(missing.caller);
+  if (!c.success) { assert.equal(c.moved, false); }
+  assert.equal(missing.calls.length, 0);
+});
+
+Deno.test("a moved row that does not read back as the requested move is unknown, and nothing is shared", async () => {
+  for (const data of [{ id: FILE, contact_id: CONTACT, visibility: "internal", updated_at: NEW_VERSION },
+    { id: FILE, contact_id: OTHER_CONTACT, visibility: "client_upload", updated_at: NEW_VERSION },
+    { id: FILE, contact_id: OTHER_CONTACT, visibility: "internal", updated_at: "yesterday" }]) {
+    const r = refiler({ moved: { data, error: null } });
+    const out = await refile(r.caller);
+    assert.equal(out.success, false, JSON.stringify(data));
+    if (!out.success) assert.equal(out.outcomeUnknown, true);
+    assert.equal(r.calls.length, 0);
+  }
+});
+
+Deno.test("a share refused after the move says the file moved and is still private", async () => {
+  const r = refiler({ share: { data: null, error: { code: "42501", message: "FILE_SCOPE_CHANGED" } } });
+  const out = await refile(r.caller);
+  assert.equal(out.success, false);
+  if (!out.success) {
+    assert.equal(out.moved, true);
+    assert.equal(out.shared, false);
+    assert.equal(out.outcomeUnknown, false);
+    assert.equal(out.reason, "scope_changed");
+    assert.match(out.message, /team can see it/);
+  }
+  const lost = refiler({ share: { data: null, error: { message: "upstream timeout" } } });
+  const unknown = await refile(lost.caller);
+  if (!unknown.success) { assert.equal(unknown.moved, true); assert.equal(unknown.shared, null); assert.equal(unknown.outcomeUnknown, true); }
+});
+
+Deno.test("a malformed request moves nothing", async () => {
+  for (const over of [{ expectedTenantId: null }, { fileId: "x" }, { toContactId: "x" }, { visibility: "client_upload" }]) {
+    const r = refiler();
+    const out = await refile(r.caller, over);
+    assert.equal(out.success, false);
+    assert.equal(r.moves.length, 0);
+  }
+});
+
+Deno.test("the chat re-file branch moves through the caller's client without visibility, then the helper", async () => {
+  const chat = await Deno.readTextFile(new URL("../../paige-ai-chat/index.ts", import.meta.url));
+  const start = chat.indexOf("const refiled = await refileClientDocument({");
+  assert.ok(start > 0, "the re-file branch calls refileClientDocument");
+  const call = chat.slice(start, chat.indexOf("});", start) + 3);
+  assert.match(call, /expectedActorId: user\.id,/);
+  assert.match(call, /expectedTenantId: crmTenantId,/);
+  assert.match(call, /supabaseClient\.from\("client_files"\)/);
+  assert.doesNotMatch(call, /visibility:\s*docVisibility\s*,\s*\.\.\./);
+  assert.doesNotMatch(call, /args\.tenant_id|supabase\.from|update\(\{[^}]*visibility/);
+  // The direct update that used to write visibility is gone from the tool.
+  const tool = chat.slice(chat.indexOf('tc.function.name === "crm_file_document"'), chat.indexOf('tc.function.name === "team_set_work_profile"'));
+  assert.doesNotMatch(tool, /\.update\(\{\s*contact_id: docContactId,\s*tenant_id: crmTenantId,\s*visibility/);
 });

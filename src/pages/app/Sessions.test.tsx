@@ -55,6 +55,7 @@ const card = (scope: ParentNode, title: string) =>
 const click = (el: Element) => act(async () => { (el as HTMLElement).click(); for (let i = 0; i < 6; i++) await Promise.resolve(); });
 
 beforeEach(() => {
+  atNoon();
   vi.clearAllMocks();
   f.color = "#26483e";
   f.slots.mockResolvedValue({ slots: [iso(Date.now() + 50 * HOUR), iso(Date.now() + 51 * HOUR)], timezone: "UTC" });

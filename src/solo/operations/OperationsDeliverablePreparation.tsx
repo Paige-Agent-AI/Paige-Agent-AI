@@ -1,4 +1,4 @@
-import { useEffect,useRef,useState } from "react";
+import { useEffect,useId,useRef,useState } from "react";
 import { FileCheck2 } from "lucide-react";
 import { readStaffDelivery,writeStaffDelivery,staffDeliveryCaller,type StaffDeliveryScope,type StaffDeliveryRead,type StaffDeliveryAction } from "./operations-delivery-staff";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
@@ -6,12 +6,25 @@ import { readDeliverySourceSessions,readDeliverySourceVersions,deliverySourceCal
 import { OperationsAssignee } from "./OperationsAssignee";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
 import { AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction } from "@/components/ui/alert-dialog";
 import {browserDeliveryRecoveryStorage,readDeliveryRecovery,saveDeliveryRecovery,clearDeliveryRecovery,type RecoveryStorage} from "./operations-delivery-local-recovery";
 import "./operations-staff-delivery-review.css";
 export type PreparationProps={scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;onSubmitted?:()=>void|Promise<void>;registerCloseGuard?:(guard:()=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage};
 type Sources={key:string;loading:boolean;sessions:DeliverySourceSession[]|null;work:StaffDeliveryRead|null};
 type Versions={key:string;loading:boolean;versions:DeliverySourceVersion[]|null;unsupported:number};
+type PickOption={value:string;label:string};
+/** One source choice, through the shared Select primitive: a visible <label> that names the trigger (WCAG 2.5.3),
+ * keyboard and screen-reader behaviour from Radix, a 44px trigger, and a menu that carries the Solo theme into its portal. */
+function SourcePick({label,value,placeholder,options,disabled,theme,onChange}:{label:string;value:string;placeholder:string;options:PickOption[];disabled:boolean;theme:string;onChange:(next:string)=>void}){
+ const id=useId();
+ return <div className="ops-staff-field"><label htmlFor={id}>{label}</label>
+  <Select value={value} disabled={disabled} onValueChange={onChange}>
+   <SelectTrigger id={id} className="ops-staff-select"><SelectValue placeholder={placeholder}/></SelectTrigger>
+   <SelectContent className="paige-solo ops-staff-select-menu" data-pg={theme} data-theme={theme}>{options.map(row=><SelectItem key={row.value} value={row.value} data-value={row.value}>{row.label}</SelectItem>)}</SelectContent>
+  </Select>
+ </div>;
+}
 /** Source preparation only: existing Studio versions and the canonical Delivery writer. */
 export function OperationsDeliverablePreparation({scope,members,theme="dark",onSubmitted,registerCloseGuard,recoveryStorage}:PreparationProps){
  const key=JSON.stringify(scope),live=useRef(key);live.current=key;
@@ -72,6 +85,11 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  const membersAvailable=members.filter(row=>row.status==="active"&&row.user_id!==scope.actorId),reviewer=membersAvailable.find(row=>row.user_id===reviewerId);
  const latest=data?.submissions[0],release=latest?data?.releases.find(row=>row.submission_id===latest.id):undefined;
  const eligible=Boolean(data)&&(!latest||latest.state==="revision_requested"||release?.state==="client_revision_requested");
+ // Why nothing can be prepared right now, from the recorded state itself — never "awaiting a decision" for accepted work.
+ const waitingOn=!latest?"":release?.state==="accepted"?`The client accepted version ${latest.revision_no}. There is nothing more to prepare for this work.`
+  :release?`Version ${latest.revision_no} is with the client for their decision. Prepare another version if they ask for changes.`
+  :latest.state==="approved"?`Version ${latest.revision_no} is approved and ready to release below.`
+  :`Version ${latest.revision_no} is waiting for its internal review below. Prepare another version if the reviewer asks for changes.`;
  const result=outcome?.key===key?outcome:null,unknown=Boolean(intent.current?.unconfirmed),dirty=Boolean(sessionId||artifactId||versionId||reviewerId)&&result?.kind!=="verified";
  const sourceFailed=sources.key===key&&!sources.loading&&(!data||!sessions||Boolean(artifact&&versions.key===selection&&!versions.loading&&listed===null));
  const locked=recoveryChecked!==key||recoveryUnavailable||busy||unknown||result?.kind==="verified"||result?.kind==="refused"||result?.kind==="unverified"||Boolean(sources.loading)||!eligible;
@@ -106,16 +124,16 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
  const restoreFocus=(event:Event)=>{if(invoker.current?.isConnected&&!invoker.current.disabled){event.preventDefault();invoker.current.focus();}else if(feedback.current?.isConnected){event.preventDefault();feedback.current.focus({preventScroll:true});}};
  return <section className="paige-solo ops-staff-review ops-delivery-preparation" data-pg={theme} data-theme={theme} aria-label="Prepare a deliverable">
   <header><FileCheck2 size={24} aria-hidden="true"/><h2>Prepare the next version</h2>{!sourceFailed&&!result&&!unknown&&!hint&&<button type="button" disabled={busy} onClick={inspect}>Inspect recorded submission</button>}</header>
-  {sources.key!==key||sources.loading?<p role="status">Reading saved work and source versions...</p>:!data||!sessions?<div><h3>Source access unavailable</h3></div>:!eligible?<p>A submitted version is already awaiting its next decision. Review the recorded work before preparing another version.</p>:<>
-   {sessions.length===0?<p>No readable Studio sources returned. Prepare an immutable text version in Studio, then inspect sources here.</p>:<div className="ops-staff-source-grid">
-    <label>Studio source<select aria-label="Studio session" value={sessionId} disabled={locked} onChange={e=>{setSessionId(e.target.value);setArtifactId("");setVersionId("");}}><option value="">Choose a saved source</option>{sessions.map(row=><option key={row.id} value={row.id}>{row.title}</option>)}</select></label>
-    <label>Saved work<select aria-label="Saved artifact" value={artifactId} disabled={locked||!session} onChange={e=>{setArtifactId(e.target.value);setVersionId("");}}><option value="">Choose saved work</option>{session?.artifacts.map(row=><option key={row.id} value={row.id}>{row.title}</option>)}</select></label>
-    <label>Immutable version<select aria-label="Artifact version" value={versionId} disabled={locked||!listed} onChange={e=>setVersionId(e.target.value)}><option value="">Choose the exact version</option>{listed?.map(row=><option key={row.id} value={row.id}>Version {row.versionNo} · {row.title}</option>)}</select></label>
-    <label>Independent reviewer<select aria-label="Independent reviewer" value={reviewerId} disabled={locked} onChange={e=>setReviewerId(e.target.value)}><option value="">Choose a responsible person</option>{membersAvailable.map(row=><option key={row.user_id} value={row.user_id}>{row.full_name||"Team member"}</option>)}</select></label>
+  {sources.key!==key||sources.loading?<><span className="sr-only" role="status">Reading saved work and source versions…</span><div className="ops-staff-skeleton" aria-hidden="true"><i/><i/><i/></div></>:!data||!sessions?<div><h3>Source access unavailable</h3></div>:!eligible?<p>{waitingOn}</p>:<>
+   {sessions.length===0?<p>No Studio work is saved yet. Save a text version in Studio, then come back here to choose it.</p>:<div className="ops-staff-source-grid">
+    <SourcePick label="Studio session" value={sessionId} placeholder="Choose a saved source" disabled={locked} theme={theme} options={sessions.map(row=>({value:row.id,label:row.title}))} onChange={next=>{setSessionId(next);setArtifactId("");setVersionId("");}}/>
+    <SourcePick label="Saved work" value={artifactId} placeholder="Choose saved work" disabled={locked||!session} theme={theme} options={(session?.artifacts??[]).map(row=>({value:row.id,label:row.title}))} onChange={next=>{setArtifactId(next);setVersionId("");}}/>
+    <SourcePick label="Version" value={versionId} placeholder="Choose the version" disabled={locked||!listed} theme={theme} options={(listed??[]).map(row=>({value:row.id,label:`Version ${row.versionNo} · ${row.title}`}))} onChange={setVersionId}/>
+    <SourcePick label="Reviewer" value={reviewerId} placeholder="Choose a teammate" disabled={locked} theme={theme} options={membersAvailable.map(row=>({value:row.user_id,label:row.full_name||"Team member"}))} onChange={setReviewerId}/>
    </div>}
-   {versions.key===selection&&versions.loading&&<p role="status">Reading immutable versions...</p>}
+   {versions.key===selection&&versions.loading&&<p role="status">Reading saved versions…</p>}
    {versions.key===selection&&versions.unsupported>0&&<p>{versions.unsupported} saved versions cannot be submitted as text deliverables.</p>}
-   {reviewer&&<div className="ops-staff-people"><div><span>Proposed reviewer</span><OperationsAssignee member={reviewer}/></div><p>Independent review<br/><span>Studio eligibility is checked on submission.</span></p></div>}
+   {reviewer&&<div className="ops-staff-people"><div><span>Proposed reviewer</span><OperationsAssignee member={reviewer}/></div><p>Reviews before release<br/><span>Studio access is checked on submission.</span></p></div>}
    {version&&<article aria-label="Exact preparation source"><h3>{version.title}</h3><p>Saved version {version.versionNo}</p><div className="ops-staff-document" tabIndex={0}>{version.body}</div></article>}
    <button type="button" className="ops-staff-primary" disabled={!canSubmit} onClick={e=>{invoker.current=e.currentTarget;setHint("");setConfirming(true);}}>Review submission</button>
   </>}
@@ -123,6 +141,6 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
   <div ref={feedback} role="status" tabIndex={-1} aria-live="polite">{busy?<p>Submitting and verifying the recorded version...</p>:result?<p>{result.message}</p>:unknown?<p>An earlier submission remains unconfirmed. Return to its original inspection before another write.</p>:sourceFailed?<p>{!data||!sessions?"Current work or saved sources could not be inspected. Refresh before submitting.":"The saved versions could not be inspected. Retry the source read before submitting."}</p>:hint?<p>{hint}</p>:null}
    {!busy&&(sourceFailed||result||unknown||hint)&&<button type="button" onClick={inspect}>{sourceFailed&&!unknown&&!result?"Refresh saved work":"Inspect recorded submission"}</button>}
   </div>
-  <AlertDialog open={confirming&&canSubmit} onOpenChange={setConfirming}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>Submit this version for internal review?</AlertDialogTitle><AlertDialogDescription>{version?.title} · saved version {version?.versionNo} · {reviewer?.full_name||"Team member"}. This records the exact immutable source for independent review. It does not record client acceptance.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep preparing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>Confirm submission</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  <AlertDialog open={confirming&&canSubmit} onOpenChange={setConfirming}><AlertDialogContent className="paige-solo ops-staff-confirm" data-pg={theme} data-theme={theme} onCloseAutoFocus={restoreFocus}><AlertDialogHeader><AlertDialogTitle>Submit this version for internal review?</AlertDialogTitle><AlertDialogDescription>{version?.title} · saved version {version?.versionNo} · {reviewer?.full_name||"Team member"}. This records this exact saved version for your teammate to review. It does not record client acceptance.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep preparing</AlertDialogCancel><AlertDialogAction className="ops-staff-primary" onClick={()=>void save()}>Confirm submission</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
  </section>;
 }

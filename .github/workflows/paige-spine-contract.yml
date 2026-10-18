@@ -556,6 +556,11 @@ jobs:
       # E09 Menu: the customer reads its own tenant's catalog; the one portal-config writer validates shape.
       - run: supabase test db supabase/tests/customer_portal_menu.sql
         if: ${{ !cancelled() }}
+      # E09 Documents: only explicitly shared client_files (plus the customer's own uploads) reach the
+      # customer; the owner's reserve/finish/share writers; the delete and staff-PUT fold-ins; and
+      # released work refused once the client or business is inactive.
+      - run: supabase test db supabase/tests/customer_portal_documents.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

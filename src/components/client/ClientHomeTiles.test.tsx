@@ -17,6 +17,8 @@ const f = vi.hoisted(() => ({
   brand: null as null | { tenant_id: string; tenant_name: string },
   brandLoading: false,
   multiple: false,
+  docs: { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false } as Record<string, unknown>,
+  docsEnabled: [] as boolean[],
 }));
 vi.mock("@/integrations/supabase/client", () => {
   const counted = (table: string) => {
@@ -36,6 +38,7 @@ vi.mock("@/hooks/useClientPortalBrand", () => ({
   useClientPortalBrandState: () => ({ brand: f.brand, loading: f.brandLoading, error: false, multipleBusinesses: f.multiple }),
 }));
 vi.mock("@/hooks/useMyActions", () => ({ useMyActions: () => f.actions }));
+vi.mock("@/hooks/usePortalDocumentsGlance", () => ({ usePortalDocumentsGlance: (enabled: boolean) => { f.docsEnabled.push(enabled); return enabled ? f.docs : { state: "unavailable" }; } }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const START = "2026-11-03T15:00:00.000Z";
@@ -62,6 +65,7 @@ const render = async () => {
         <Route path="/app/messages" element={<p>Messages page</p>} />
         <Route path="/app/actions" element={<p>Action items page</p>} />
         <Route path="/app/progress" element={<p>Progress page</p>} />
+        <Route path="/app/documents" element={<p>Documents page</p>} />
       </Routes>
     </MemoryRouter>,
   ));
@@ -72,6 +76,7 @@ const sessionReads = () => f.rpc.mock.calls.filter(c => c[0] === "client_portal_
 beforeEach(() => {
   vi.clearAllMocks();
   f.applications = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
+  f.docs = { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false }; f.docsEnabled = [];
   f.actions = { open: [], loading: false, error: null };
   f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 0, done: 0, open: 0, overdue: 0 }), error: null });
   f.brand = { tenant_id: T, tenant_name: "Northwind Studio" };
@@ -246,7 +251,8 @@ it("matches the neighbouring tiles' 36px buttons, with a 44px touch target", asy
   f.rpc.mockResolvedValue({ data: { tenant_id: T, server_now: "2026-10-17T12:00:00Z", sessions: [], next_before: null }, error: null });
   await render();
   const all = Array.from(host.querySelectorAll("button"));
-  const neighbour = all.find(b => b.textContent === "Upload your first document")!;
+  // The Documents tile is a link tile now (E09 Slice 4); the Messages empty tile is the 36px neighbour.
+  const neighbour = all.find(b => b.textContent === "Send your first message")!;
   expect(neighbour.className).toMatch(/(^| )h-9( |$)/);
   for (const label of ["Book a session", "Message Northwind Studio"]) {
     const b = all.find(x => x.textContent?.trim() === label)!;
@@ -411,4 +417,44 @@ it("never says coach, coached or coaching in any tile", async () => {
   f.brand = null;
   await render();
   expect(host.textContent).not.toMatch(/coach/i);
+});
+
+// E09 Slice 4 — the Documents tile reads the customer's own Documents, not the legacy table.
+it("never counts the legacy documents table, and opens Documents", async () => {
+  f.docs = { state: "ready", shared: 2, fromYou: 1, awaitingReview: 0, awaitingReviewMore: false };
+  await render();
+  expect(f.tables).not.toContain("documents");
+  const tile = host.querySelector<HTMLAnchorElement>('a[href="/app/documents"]')!;
+  expect(tile.textContent).toContain("3 files");
+  expect(tile.textContent).toContain("2 shared by Northwind Studio · 1 from you");
+  expect(host.querySelector('a[href="/app/business"]')).toBeNull();
+  await act(async () => tile.click());
+  expect(host.textContent).toContain("Documents page");
+});
+it("leads with work waiting for the customer's review", async () => {
+  f.docs = { state: "ready", shared: 1, fromYou: 0, awaitingReview: 2, awaitingReviewMore: false };
+  await render();
+  expect(host.querySelector('a[href="/app/documents"]')!.textContent).toContain("2 awaiting your review");
+});
+it("shows the review count as a floor when only the newest page of released work was read", async () => {
+  f.docs = { state: "ready", shared: 1, fromYou: 0, awaitingReview: 40, awaitingReviewMore: true };
+  await render();
+  expect(host.querySelector('a[href="/app/documents"]')!.textContent).toContain("40+ awaiting your review");
+});
+it("says nothing is here yet instead of a zero, and never reports a failed read as zero", async () => {
+  await render();
+  expect(host.querySelector('a[href="/app/documents"]')!.textContent).toContain("Nothing here yet");
+  act(() => root.unmount()); root = createRoot(host);
+  f.docs = { state: "error" };
+  await render();
+  const tile = host.querySelector('a[href="/app/documents"]')!;
+  expect(tile.textContent).toContain("Couldn't check right now");
+  expect(tile.textContent).not.toMatch(/\b0\b/);
+});
+it("does not read Documents for someone who is not a single-business customer, and still points to Documents", async () => {
+  f.multiple = true;
+  await render();
+  expect(f.docsEnabled.every(enabled => enabled === false)).toBe(true);
+  expect(host.textContent).toContain("No documents yet");
+  expect(host.textContent).toContain("Open documents");
 });

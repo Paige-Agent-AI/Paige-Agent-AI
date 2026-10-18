@@ -44,6 +44,7 @@ import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/plan
 // E09 Slice M: read and change the customer portal menu (update is high; owner/admin only).
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
 import { configurePortalMenu, readPortalMenu, type PortalMenuFailure } from '../_shared/client-portal-menu.ts';
+import { refileClientDocument, routeFileDocument, shareClientFile } from '../_shared/crm/client-file-share.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { agreementSendPrecheck, draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
@@ -14551,7 +14552,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
                 let q = supabaseClient
                   .from("client_files")
-                  .select("id, contact_id, original_filename, mime_type, size_bytes, visibility, description, created_at")
+                  .select("id, contact_id, original_filename, mime_type, size_bytes, visibility, description, created_at, updated_at, shared_at")
                   .eq("tenant_id", crmTenantId)
                   .order("created_at", { ascending: false })
                   .limit(25);
@@ -14568,6 +14569,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         file_id: f.id, contact_id: f.contact_id, filename: f.original_filename,
                         mime_type: f.mime_type, size_bytes: f.size_bytes, visibility: f.visibility,
                         description: f.description, uploaded_at: f.created_at,
+                        updated_at: f.updated_at, shared_at: f.shared_at,
                       })),
                       note: "You cannot open these — you know their names and where they are filed, nothing more.",
                     };
@@ -14600,7 +14602,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // tenant predicate, so "visible to me" is not "mine" here either.
                 const { data: docRow, error: docErr } = await supabaseClient
                   .from("client_files")
-                  .select("id, contact_id, tenant_id, visibility, original_filename")
+                  .select("id, contact_id, tenant_id, visibility, original_filename, updated_at")
                   .eq("id", docFileId).eq("tenant_id", crmTenantId).maybeSingle();
                 const { data: docClient, error: docClientErr } = await supabaseClient
                   .from("clients").select("id, first_name, last_name")
@@ -14618,31 +14620,104 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   // the client uploaded is their record of what they sent; re-filing it onto
                   // someone else — or relabelling it as ours — destroys the one fact it carries.
                   result = { success: false, error: "That document was uploaded by the client themselves. I won't re-file it — it's their record of what they sent, and moving it would misrepresent where it came from. Someone can do it by hand on the client's file if it's genuinely wrong." };
-                } else {
-                  const { data: movedDoc, error: moveErr } = await supabaseClient
-                    .from("client_files")
-                    .update({
-                      contact_id: docContactId,
-                      tenant_id: crmTenantId,
-                      visibility: docVisibility,
-                      ...(typeof args.description === "string" && args.description.trim()
-                        ? { description: args.description.trim().slice(0, 500) }
-                        : {}),
-                    })
-                    .eq("id", docFileId)
-                    .select("id, contact_id, visibility").maybeSingle();
-                  result = (moveErr || !movedDoc)
-                    ? { success: false, error: "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise." }
-                    : {
+                } else if (routeFileDocument(docRow, docContactId, args.description) === "share") {
+                  // E09 Documents: the file stays on the same client and only who can see it changes,
+                  // so it goes through the ONE share writer (public.client_file_set_client_share via
+                  // _shared/crm/client-file-share.ts) at the version just read: business admin of the
+                  // current workspace, version-checked, replay-safe, audited. The CALLER's client; the
+                  // expected actor is the verified user and the expected tenant is the server-resolved
+                  // persona tenant — a tenant_id in the model's arguments is never read.
+                  const shared = await shareClientFile({
+                    caller: {
+                      rpc: (name, rpcArgs) => supabaseClient.rpc(name, rpcArgs),
+                      readFile: (fileId, tenantId) => supabaseClient.from("client_files")
+                        .select("id,tenant_id,visibility,shared_at,updated_at").eq("tenant_id", tenantId).eq("id", fileId).maybeSingle(),
+                    },
+                    expectedActorId: user.id,
+                    expectedTenantId: crmTenantId,
+                    fileId: docFileId,
+                    shared: docVisibility === "shared",
+                    expectedUpdatedAt: docRow.updated_at,
+                  });
+                  result = shared.success === true
+                    ? {
                         success: true,
-                        file_id: movedDoc.id,
-                        contact_id: movedDoc.contact_id,
-                        visibility: movedDoc.visibility,
-                        moved_from_contact_id: docRow.contact_id !== docContactId ? docRow.contact_id : undefined,
-                        note: movedDoc.visibility === "shared"
-                          ? "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now."
-                          : "Filed on their record where the team can see it. The client cannot — say so if it matters.",
+                        file_id: shared.fileId,
+                        contact_id: docRow.contact_id,
+                        visibility: shared.shared ? "shared" : "internal",
+                        replayed: shared.replayed,
+                        portal_connected: shared.portalConnected,
+                        readback: { id: shared.fileId, shared: shared.shared, shared_at: shared.sharedAt, updated_at: shared.updatedAt },
+                        verified_readback: true,
+                        note: (shared.shared
+                          ? "Verified: it stays on their record and they can now open it in their portal. They were not sent a message."
+                          : "Verified: it stays on their record and only the team can see it now.")
+                          + (shared.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
+                          + (shared.replayed ? " It was already set that way; nothing changed." : ""),
+                      }
+                    : {
+                        success: false,
+                        error: shared.message,
+                        reason: shared.reason,
+                        ...(shared.writeAttempted ? { outcome_unknown: true } : { not_applied: true }),
                       };
+                } else {
+                  // Re-filing onto another client, or rewriting the description. The direct write
+                  // moves it and NEVER touches visibility: the database refuses any signed-in write
+                  // into or out of 'shared' that is not the share writer, and refuses to move a
+                  // SHARED file to another client at all. So the helper first withdraws a share
+                  // through the share writer (audited), then moves the private file, and if it should
+                  // end up shared that is the share writer's call again, at the version the move
+                  // produced (_shared/crm/client-file-share.ts). The CALLER's client throughout.
+                  const refiled = await refileClientDocument({
+                    caller: {
+                      rpc: (name, rpcArgs) => supabaseClient.rpc(name, rpcArgs),
+                      readFile: (fileId, tenantId) => supabaseClient.from("client_files")
+                        .select("id,tenant_id,visibility,shared_at,updated_at").eq("tenant_id", tenantId).eq("id", fileId).maybeSingle(),
+                      moveFile: (fileId, tenantId, patch) => supabaseClient.from("client_files")
+                        .update(patch).eq("tenant_id", tenantId).eq("id", fileId)
+                        .select("id, contact_id, visibility, updated_at").maybeSingle(),
+                    },
+                    expectedActorId: user.id,
+                    expectedTenantId: crmTenantId,
+                    fileId: docFileId,
+                    fromContactId: docRow.contact_id,
+                    toContactId: docContactId,
+                    description: args.description,
+                    visibility: docVisibility,
+                  });
+                  result = refiled.success === true
+                    ? {
+                        success: true,
+                        file_id: refiled.fileId,
+                        contact_id: refiled.contactId,
+                        visibility: refiled.shared ? "shared" : "internal",
+                        moved_from_contact_id: refiled.movedFromContactId ?? undefined,
+                        portal_connected: refiled.share?.portalConnected ?? undefined,
+                        verified_readback: true,
+                        note: refiled.shared
+                          ? "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message."
+                            + (refiled.share?.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
+                          : "Filed on their record where the team can see it. The client cannot — say so if it matters."
+                            + (refiled.movedFromContactId ? " A file moved to another client always arrives private." : ""),
+                      }
+                    : refiled.moved === true
+                      ? {
+                          success: false,
+                          moved: true,
+                          file_id: refiled.fileId,
+                          contact_id: refiled.contactId,
+                          ...(refiled.shared === null ? {} : { visibility: refiled.shared ? "shared" : "internal" }),
+                          error: refiled.message,
+                          reason: refiled.reason,
+                          ...(refiled.outcomeUnknown ? { outcome_unknown: true } : {}),
+                        }
+                      : {
+                          success: false,
+                          error: refiled.message,
+                          reason: refiled.reason,
+                          ...(refiled.outcomeUnknown ? { outcome_unknown: true } : { not_applied: true }),
+                        };
                 }
               }
             } else if (tc.function.name === "team_set_work_profile") {

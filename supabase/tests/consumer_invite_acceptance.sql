@@ -502,14 +502,17 @@ BEGIN
    SET LOCAL ROLE authenticated;
    RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),1::bigint,_label||': owner reloads the same canonical file');
    RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),1::bigint,_label||': actual owner can retrieve its customer file');
-   _shared_path:=_tenant::text||'/'||_contact::text||'/shared/'||_staff_file::text||'.pdf';
-   _internal_path:=_tenant::text||'/'||_contact::text||'/internal/'||_internal_file::text||'.pdf';
+   -- The owner's files go through the governed owner writers (20271110200000): a staff PUT now
+   -- needs a pending reservation, so the earlier PUT-then-insert fixture shape is refused by design.
+   _shared_path:=public.client_file_owner_begin_upload(_owner,_tenant,_contact,_staff_file,'Shared preparation.pdf','application/pdf',4)#>>'{file,storage_path}';
+   _internal_path:=public.client_file_owner_begin_upload(_owner,_tenant,_contact,_internal_file,'Internal preparation.pdf','application/pdf',4)#>>'{file,storage_path}';
    INSERT INTO storage.objects(bucket_id,name,owner_id,metadata)
     VALUES('client-files',_shared_path,_owner::text,jsonb_build_object('size',4,'mimetype','application/pdf')),
     ('client-files',_internal_path,_owner::text,jsonb_build_object('size',4,'mimetype','application/pdf'));
-   INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility)
-    VALUES(_staff_file,_tenant,_contact,_owner,_shared_path,'Shared preparation.pdf','application/pdf',4,'shared'),
-    (_internal_file,_tenant,_contact,_owner,_internal_path,'Internal preparation.pdf','application/pdf',4,'internal');
+   RETURN NEXT is(public.client_file_owner_finish_upload(_owner,_tenant,_staff_file)#>>'{file,upload_state}','ready',_label||': owner finishes the file to share');
+   RETURN NEXT is(public.client_file_owner_finish_upload(_owner,_tenant,_internal_file)#>>'{file,upload_state}','ready',_label||': owner finishes the private file');
+   RETURN NEXT is(public.client_file_set_client_share(_owner,_tenant,_staff_file,true,
+    (SELECT updated_at FROM public.client_files WHERE id=_staff_file))->>'ok','true',_label||': owner shares one file with the customer');
    PERFORM public.record_rail_event(p_contact_id=>_contact,p_event_kind=>'client.document_uploaded',p_surface=>'client_portal',
     p_actor_type=>'client',p_title=>'Existing staff producer',p_ref_table=>'client_files',p_ref_id=>_staff_file,p_tenant_id=>_tenant);
    -- Actual writer above ran with the owner JWT/role. Raw Rail SELECT remains

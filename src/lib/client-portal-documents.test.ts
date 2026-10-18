@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {CLIENT_DOCUMENT_LIMIT, clientDocumentMime, readClientDocument} from "./client-portal-documents";
+import {CLIENT_DOCUMENT_LIMIT, clientDocumentMime, portalDocumentFromUpload, readClientDocument, readPortalDocumentList} from "./client-portal-documents";
 
 const scope = {actor:"e0914000-0000-0000-0000-000000000001",contact:"e0934000-0000-0000-0000-000000000001",tenant:"e0924000-0000-0000-0000-000000000001"};
 const id = "e0944000-0000-0000-0000-000000000001";
@@ -41,5 +41,48 @@ describe("closed current-customer document projection", () => {
   });
   it("requires exact reserved actor/id/path for an unfinished upload", () => {
     expect(() => readClientDocument({...row(),upload_state:"pending",storage_path:`${scope.tenant}/elsewhere/file.pdf`},scope)).toThrow();
+  });
+});
+
+describe("closed customer document list (client_portal_documents, E09 Slice 4)", () => {
+  const shared = () => ({id,filename:"Brand guide.pdf",mime_type:"application/pdf",size_bytes:240,source:"business",state:"ready",
+    shared_at:"2026-01-02T00:00:00Z",created_at:"2026-01-01T00:00:00Z",storage_path:`${scope.tenant}/${scope.contact}/internal/${id}`});
+  const page = (files:Record<string,unknown>[]) => ({tenant_id:scope.tenant,client_id:scope.contact,summary:{shared:1,from_you:0},files,has_more:false});
+  it("reads exactly the promised keys, in the customer's own scope", () => {
+    expect(readPortalDocumentList(page([shared()]),scope)).toEqual({...page([shared()])});
+  });
+  it("keeps the customer's own unfinished upload at its reserved path", () => {
+    const own = {...shared(),source:"you",state:"pending",shared_at:null,storage_path:`${scope.tenant}/${scope.contact}/client_upload/${scope.actor}/${id}`};
+    expect(readPortalDocumentList(page([own]),scope).files[0].state).toBe("pending");
+  });
+  it.each(["extra row key","missing row key","extra page key","foreign tenant","foreign client","unshared business file","pending business file",
+    "own pending elsewhere","negative summary","duplicate id","parent path"])("refuses %s", kind => {
+    const file:Record<string,unknown> = shared(); const value:Record<string,unknown> = page([file]);
+    if(kind==="extra row key")file.uploaded_by_user_id=scope.actor;
+    if(kind==="missing row key")delete file.shared_at;
+    if(kind==="extra page key")value.next=null;
+    if(kind==="foreign tenant")value.tenant_id="e0924000-0000-0000-0000-000000000002";
+    if(kind==="foreign client")value.client_id="e0934000-0000-0000-0000-000000000002";
+    if(kind==="unshared business file")file.shared_at=null;
+    if(kind==="pending business file")file.state="pending";
+    if(kind==="own pending elsewhere")Object.assign(file,{source:"you",state:"pending",shared_at:null});
+    if(kind==="negative summary")value.summary={shared:-1,from_you:0};
+    if(kind==="duplicate id")value.files=[file,{...file}];
+    if(kind==="parent path")file.storage_path=`${scope.tenant}/../${id}`;
+    expect(() => readPortalDocumentList(value,scope)).toThrow();
+  });
+  it("names the customer's confirmed upload as theirs", () => {
+    expect(portalDocumentFromUpload(readClientDocument(row(),scope))).toMatchObject({source:"you",state:"ready",filename:"Preparation.pdf",shared_at:null});
+  });
+});
+describe("files shared before the share stamp existed", () => {
+  const listed = (over: Record<string, unknown> = {}) => ({tenant_id:scope.tenant,client_id:scope.contact,summary:{shared:1,from_you:0},has_more:false,
+    files:[{id,filename:"Brand guidelines.pdf",mime_type:"application/pdf",size_bytes:240,source:"business",state:"ready",
+      shared_at:"2026-01-02T00:00:00Z",created_at:"2026-01-01T00:00:00Z",storage_path:`${scope.tenant}/${scope.contact}/internal/${id}`,...over}]});
+  it("reads a backfilled share (shared_at set, no sharer recorded) — the customer read never needs the sharer", () => {
+    expect(readPortalDocumentList(listed(),scope).files[0].shared_at).toBe("2026-01-02T00:00:00Z");
+  });
+  it("never accepts the sharer in the customer's projection", () => {
+    expect(() => readPortalDocumentList(listed({shared_by:null}),scope)).toThrow();
   });
 });

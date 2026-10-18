@@ -68,6 +68,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   from: editorHarness.from,
   auth: {
     getUser: async () => ({ data: { user: { id: "actor-test" } }, error: null }),
+    getSession: async () => ({ data: { session: { user: { id: "actor-test" } } }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
   },
 } }));
@@ -926,12 +927,27 @@ describe("tenant Relationships / Clients workspace", () => {
   it("makes only the covered narrow list inert and restores the exact originating row", async () => {
     const originalResizeObserver = globalThis.ResizeObserver;
     const originalInnerWidth = window.innerWidth;
-    let resizeCallback: ResizeObserverCallback | null = null;
+    let observedCallback: ResizeObserverCallback | null = null;
     let observerDisconnected = false;
+    // jsdom lays nothing out, so getBoundingClientRect() reports width 0 — and the workspace re-measures 260 ms
+    // after mount (and on window resize). Unstubbed, that late measure flips the record to overlay whenever the
+    // mount's async work crosses the deadline, which made this test fail most runs under load. The record's
+    // measured width is therefore the width this test last reported through the ResizeObserver, exactly as the
+    // test above stubs it.
+    let recordWidth = 1000;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function mockRect(this: HTMLElement) {
+      const width = this.matches("[data-solo-client-record]") ? recordWidth : 0;
+      return { x: 0, y: 0, top: 0, left: 0, right: width, bottom: width ? 600 : 0, width, height: width ? 600 : 0, toJSON: () => ({}) } as DOMRect;
+    });
+    const report = (target: Element, width: number) => {
+      recordWidth = width;
+      observedCallback?.([{ target, contentRect: { width } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+    };
     class NarrowResizeObserver {
       private callback: ResizeObserverCallback;
-      constructor(callback: ResizeObserverCallback) { this.callback = callback; resizeCallback = callback; }
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; observedCallback = callback; }
       observe(target: Element) {
+        recordWidth = 1000;
         this.callback([{ target, contentRect: { width: 1000 } as DOMRectReadOnly } as ResizeObserverEntry], this as unknown as ResizeObserver);
       }
       unobserve() {}
@@ -966,18 +982,18 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
 
       rows[1]?.focus();
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 700 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 700));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("overlay");
         expect(list?.inert).toBe(true);
         expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 762 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 762));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
@@ -996,14 +1012,15 @@ describe("tenant Relationships / Clients workspace", () => {
       });
 
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 900 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("overlay"));
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 1536 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("docked"));
     } finally {
       act(() => root.unmount());
       host.remove();
+      rectSpy.mockRestore();
       globalThis.ResizeObserver = originalResizeObserver;
       Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
     }
@@ -1320,9 +1337,13 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(reads).toEqual([["read_client_engagement_status", { _expected_tenant_id: "tenant-solo", _contact_id: "p-1" }]]);
       // E09 Slice 3: what the client sees, chosen item by item, sits directly under it — on the SAME one read.
       expect(body?.children[1]?.id).toBe("client-shared-work");
+      // E09 Slice 4: this client's files come next.
+      expect(body?.children[2]?.id).toBe("client-files");
       // The other record sections are all still there, after it (§58).
       expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
-        ["Where Supplied Person stands", "Shared with Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+      // The static "upload is not exposed here" card now says where the live library is.
+      expect(host.textContent).toContain("Client files · LIVE");
     } finally {
       act(() => root.unmount());
       host.remove();
@@ -1351,6 +1372,13 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(mounts).toHaveLength(1);
     expect(mounts[0].trim().startsWith("{standing && <ClientSharedWork")).toBe(true);
     expect(source).toContain('const standing = routeTier === "solo" && hasTierFeature("client_standing")');
+  });
+
+  it("E09 Slice 4 (D1): the file library mounts only behind the same standing gate (Solo + client_standing)", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientFiles[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientFiles")).toBe(true);
   });
 
   it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {

@@ -1,8 +1,8 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {supabase} from "@/integrations/supabase/client";
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
-import {CLIENT_DOCUMENT_COLUMNS, clientDocumentMime, readClientDocument, sameDocumentScope,
-  type ClientDocument, type DocumentScope} from "@/lib/client-portal-documents";
+import {CLIENT_DOCUMENT_COLUMNS, PORTAL_DOCUMENT_PAGE_SIZE, clientDocumentMime, portalDocumentFromUpload, readClientDocument,
+  readPortalDocumentList, sameDocumentScope, type DocumentScope, type PortalDocument} from "@/lib/client-portal-documents";
 
 type RpcResult = {data: unknown; error: {code?: string; message?: string} | null};
 // These native functions are introduced by the paired forward migration. Keep
@@ -13,7 +13,11 @@ type Phase = "loading" | "ready" | "error" | "unavailable" | "signed_out";
 type Upload = {kind: "idle" | "working" | "uncertain" | "finish" | "retry" | "saved" | "error"; notice: string; id: string | null};
 type Candidate = {id: string; name: string; mime: string; size: number; scope: DocumentScope; file: File | null};
 const idle = (): Upload => ({kind: "idle", notice: "", id: null});
-const pageSize = 50;
+const pageSize = PORTAL_DOCUMENT_PAGE_SIZE;
+/** A signed link lives this long (seconds). It is minted per open and never stored. */
+export const DOCUMENT_LINK_SECONDS = 60;
+export type DocumentLinks = {view: string; download: string; expiresAt: number};
+export type DocumentSummary = {shared: number; from_you: number};
 async function wait<T>(value: PromiseLike<T>, deadline: number): Promise<T> {
   const remaining = deadline - Date.now();
   if (remaining <= 0) throw new Error("Request timed out");
@@ -26,17 +30,18 @@ class AccessFailure extends Error {}
 
 /** Local document UI lifetime. Auth, native relationship, file and Storage policies own permission. */
 export function useClientDocuments() {
-  const [phase, setPhase] = useState<Phase>("loading"), [files, setFiles] = useState<ClientDocument[]>([]);
+  const [phase, setPhase] = useState<Phase>("loading"), [files, setFiles] = useState<PortalDocument[]>([]);
+  const [summary, setSummary] = useState<DocumentSummary | null>(null);
   const [scope, setScope] = useState<DocumentScope | null>(null), [more, setMore] = useState(false);
   const [reading, setReading] = useState(false), [notice, setNotice] = useState("");
   const [upload, setUpload] = useState<Upload>(idle), [epoch, setEpoch] = useState(0);
-  const life = useRef({alive: true, epoch: 0, read: 0, page: 0, writing: false, recoveryAllowed: false,
+  const life = useRef({alive: true, epoch: 0, read: 0, writing: false, recoveryAllowed: false,
     scope: null as DocumentScope | null, last: null as DocumentScope | null,
-    files: [] as ClientDocument[], candidate: null as Candidate | null});
+    files: [] as PortalDocument[], candidate: null as Candidate | null});
   const retire = useCallback((next: Phase, message: string) => {
     const l = life.current; ++l.epoch; ++l.read; l.scope = null; l.last = null; l.files = [];
-    l.page = 0; l.writing = false; l.recoveryAllowed = false; l.candidate = null;
-    setEpoch(l.epoch); setScope(null); setFiles([]); setMore(false); setReading(false);
+    l.writing = false; l.recoveryAllowed = false; l.candidate = null;
+    setEpoch(l.epoch); setScope(null); setFiles([]); setSummary(null); setMore(false); setReading(false);
     setPhase(next); setNotice(message); setUpload(idle());
   }, []);
   const verifiedScope = useCallback(async (deadline: number, expected?: DocumentScope): Promise<DocumentScope> => {
@@ -66,24 +71,27 @@ export function useClientDocuments() {
       if (l.last && !sameDocumentScope(l.last, next)) {
         retire("unavailable", "Your customer context changed. Reload Documents to continue."); return;
       }
-      const page = append ? l.page + 1 : 0;
-      const result = await wait(supabase.from("client_files").select(CLIENT_DOCUMENT_COLUMNS)
-        .eq("tenant_id", next.tenant).eq("contact_id", next.contact).in("visibility", ["shared", "client_upload"])
-        .order("created_at", {ascending: false}).order("id", {ascending: false})
-        .range(page * pageSize, (page + 1) * pageSize - 1), deadline);
+      // One closed server read decides what is listed (E09 Slice 4): shared files that are saved, and the
+      // customer's own uploads. The browser never queries the file table for the list.
+      // The next page starts strictly after the (created_at, id) of the last file shown, so a file saved in
+      // the same instant as that one is never skipped.
+      const last = append ? l.files.at(-1) ?? null : null;
+      const result = await wait(fileRpc("client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize,
+        p_before: last?.created_at ?? null, p_before_id: last?.id ?? null}), deadline);
       if (!current()) return;
       if (result.error?.code === "42501") throw new AccessFailure("Your document access could not be verified.");
-      if (result.error || !Array.isArray(result.data) || result.data.length > pageSize) throw new Error("Document read failed");
-      const rows = result.data.map(f => readClientDocument(f, next));
+      if (result.error) throw new Error("Document read failed");
+      if (result.data === null) throw new AccessFailure("Your customer access could not be verified. Contact the business for help.");
+      const page = readPortalDocumentList(result.data, next);
       await verifiedScope(deadline, next); if (!current()) return;
       const merged = append ? [...l.files] : [];
-      for (const row of rows) {const index = merged.findIndex(f => f.id === row.id); if (index < 0) merged.push(row); else merged[index] = row;}
-      l.scope = next; l.last = next; l.files = merged; l.page = page;
-      setScope(next); setFiles(merged); setMore(rows.length === pageSize); setPhase("ready");
+      for (const row of page.files) {const index = merged.findIndex(f => f.id === row.id); if (index < 0) merged.push(row); else merged[index] = row;}
+      l.scope = next; l.last = next; l.files = merged;
+      setScope(next); setFiles(merged); setSummary(page.summary); setMore(page.has_more); setPhase("ready");
     } catch (error) {
       if (!current()) return;
       if (error instanceof AccessFailure) retire("unavailable", error.message);
-      else {l.scope = null; setScope(null); setFiles([]); setPhase("error"); setNotice("Your documents could not be loaded. Check your connection and try again.");}
+      else {l.scope = null; setScope(null); setFiles([]); setSummary(null); setPhase("error"); setNotice("Your documents could not be loaded. Check your connection and try again.");}
     } finally {if (current()) setReading(false);}
   }, [retire, verifiedScope]);
   useEffect(() => {
@@ -131,7 +139,7 @@ export function useClientDocuments() {
       || file.mime_type !== candidate.mime || file.size_bytes !== candidate.size) throw new Error("Saved document changed");
     await verifiedScope(deadline, candidate.scope);
     if (!current()) return false;
-    l.files = [file, ...l.files.filter(f => f.id !== file.id)];
+    l.files = [portalDocumentFromUpload(file), ...l.files.filter(f => f.id !== file.id)];
     setFiles(l.files); l.candidate = null;
     setUpload({kind: "saved", id: file.id, notice: "Document uploaded. It is saved for your team."});
     return true;
@@ -184,11 +192,11 @@ export function useClientDocuments() {
         notice: dispatched ? "We couldn’t confirm your upload. Check its saved status before trying again." : "Your document could not be started. Check your connection and try again."});
     } finally {if (l.alive && l.epoch === generation) l.writing = false;}
   }, [confirm, inspect, retire, verifiedScope]);
-  const checkUpload = useCallback(async (row?: ClientDocument) => {
+  const checkUpload = useCallback(async (row?: PortalDocument) => {
     const l = life.current, currentScope = l.scope;
     if (!currentScope || l.writing) return;
-    const candidate = row ? l.candidate?.id === row.id ? l.candidate : {id: row.id, name: row.original_filename, mime: row.mime_type ?? "", size: row.size_bytes ?? 0, scope: currentScope, file: null} : l.candidate;
-    if (!candidate || !sameDocumentScope(candidate.scope, currentScope) || (row && row.uploaded_by_user_id !== currentScope.actor)) return;
+    const candidate = row ? l.candidate?.id === row.id ? l.candidate : {id: row.id, name: row.filename, mime: row.mime_type ?? "", size: row.size_bytes ?? 0, scope: currentScope, file: null} : l.candidate;
+    if (!candidate || !sameDocumentScope(candidate.scope, currentScope) || (row && row.source !== "you")) return;
     const generation = l.epoch, current = () => l.alive && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
     l.writing = true; l.candidate = candidate; l.recoveryAllowed = false;
     setUpload({kind: "working", id: candidate.id, notice: "Checking your saved upload…"});
@@ -214,17 +222,31 @@ export function useClientDocuments() {
     setUpload({kind: "uncertain", id: l.candidate.id,
       notice: "Stopped waiting here. The upload may have reached your business; check its saved status before trying again."});
   }, []);
-  const retrieve = useCallback(async (row: ClientDocument): Promise<Blob | null> => {
+  /**
+   * Two short-lived signed links for one listed, saved file: one to view, one that downloads under its
+   * own name. The path comes only from the closed list read; Storage re-checks the file's permission
+   * when each link is minted, and neither link is kept after the preview closes.
+   */
+  const retrieve = useCallback(async (row: PortalDocument): Promise<DocumentLinks | null> => {
     const l = life.current, expected = l.scope, generation = l.epoch;
-    if (!expected || row.upload_state !== "ready" || !l.files.some(f => f.id === row.id)) return null;
+    const listed = l.files.find(f => f.id === row.id);
+    if (!expected || row.state !== "ready" || !listed || listed.storage_path !== row.storage_path) return null;
     try {
-      const deadline = Date.now() + 120_000;
+      const deadline = Date.now() + 20_000;
       await verifiedScope(deadline, expected);
       if (!l.alive || l.epoch !== generation) return null;
-      const result = await wait(supabase.storage.from("client-files").download(row.storage_path), deadline);
-      if (result.error || !result.data) throw new Error("This document could not be retrieved. Try again or contact the business.");
+      const bucket = supabase.storage.from("client-files");
+      const [view, download] = await wait(Promise.all([
+        bucket.createSignedUrl(row.storage_path, DOCUMENT_LINK_SECONDS),
+        bucket.createSignedUrl(row.storage_path, DOCUMENT_LINK_SECONDS, {download: row.filename}),
+      ]), deadline);
+      const minted = Date.now();
+      if (view.error || download.error || !view.data?.signedUrl || !download.data?.signedUrl) {
+        throw new Error("This document could not be opened. Try again or contact the business.");
+      }
       await verifiedScope(deadline, expected);
-      return l.alive && l.epoch === generation && sameDocumentScope(l.scope, expected) ? result.data : null;
+      return l.alive && l.epoch === generation && sameDocumentScope(l.scope, expected)
+        ? {view: view.data.signedUrl, download: download.data.signedUrl, expiresAt: minted + DOCUMENT_LINK_SECONDS * 1000} : null;
     } catch (error) {
       if (!l.alive || l.epoch !== generation) return null;
       if (error instanceof AccessFailure) {retire("unavailable", error.message); return null;}
@@ -232,5 +254,5 @@ export function useClientDocuments() {
     }
   }, [retire, verifiedScope]);
   const isCurrent = useCallback((generation: number) => life.current.alive && life.current.epoch === generation, []);
-  return {phase, files, scope, more, reading, notice, upload, epoch, refresh, transfer, checkUpload, stopWaiting, retrieve, isCurrent};
+  return {phase, files, summary, scope, more, reading, notice, upload, epoch, refresh, transfer, checkUpload, stopWaiting, retrieve, isCurrent};
 }

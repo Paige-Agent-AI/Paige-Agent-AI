@@ -22,6 +22,12 @@ function harness(name, allowed, {providerOk=true,remindChannel='email',calendarT
  const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerOk?200:503});}});
  const helper=readFileSync(new URL('_shared/comms-provider-boundary.ts',base),'utf8').replace(/\bexport /g,'');
  vm.runInContext(stripTypeScriptTypes(helper),ctx);
+ // The real shared send gates the handlers import (E09 Slice 6): runPreSend and the contact opt-out
+ // reader, each evaluated in its own scope so their module-level names cannot collide with a handler's.
+ for(const [file,names] of [['_shared/pre-send-pipeline.ts',['normalizeAddress','runPreSend']],['_shared/contact-opt-outs.ts',['contactOptOuts','emailOptOut','isCustomerHeld']]]){
+  const shared=stripTypeScriptTypes(readFileSync(new URL(file,base),'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,'').replace(/\bexport /g,''));
+  Object.assign(ctx,vm.runInContext(`(()=>{${shared}\nreturn {${names.join(',')}};})()`,ctx));
+ }
  vm.runInContext(stripTypeScriptTypes(source(name)),ctx);
  if(name==='process-booking-notifications')vm.runInContext('manageUrl=async()=>"https://unit.test/manage";',ctx);
  if(name==='public-booking')vm.runInContext('loadCalendar=async()=>({tenant_id:"tenant",user_id:"host",appointmentTypes:[],horizonDays:60});',ctx);
@@ -52,6 +58,26 @@ for(const name of ['send-portal-invite','plan-reminder-cron','process-booking-no
  const body=name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{};
  await current.run(body);await baseline.run(body);
  assert.equal(JSON.stringify(current.effects),JSON.stringify(baseline.effects));
+});
+
+// E09 Slice 6 (§37, D5): a guest whose email is suppressed (here: they turned it off in their portal)
+// gets no reminder or follow-up; the host's notification still goes; nothing is claimed for the guest.
+const optedOut=({data})=>{data.paige_suppressions=[{tenant_id:'tenant',contact_id:'contact',channel:'email',reason:'customer_request',source:'customer_portal'}];};
+test('process-booking-notifications: an opted-out guest gets no follow-up, and nothing is claimed for them',async()=>{
+ const h=harness('process-booking-notifications',true,{fixtures:optedOut});
+ const out=await (await h.run({})).json();
+ assert.equal(out.followups,0);assert.equal(out.guest_email_opted_out,1);assert.equal(h.effects.length,0);
+ assert.equal(h.writes.some(w=>w.table==='booking_notifications_sent'),false);
+});
+test('process-booking-notifications: a reminder to both still reaches the host when the guest opted out',async()=>{
+ const h=harness('process-booking-notifications',true,{fixtures:(f)=>{optedOut(f);f.booking.start_at=new Date(Date.now()+30*60000).toISOString();f.booking.end_at=new Date(Date.now()+60*60000).toISOString();f.calendar.notify_config={reminders:[{channel:'email',offset_min:60,to:'both'}]};}});
+ const out=await (await h.run({})).json();
+ assert.equal(out.reminders,1);assert.equal(h.effects.length,1);assert.deepEqual(Array.from(h.effects[0].payload.to),['host@example.test']);
+});
+test('send-portal-invite: the legacy token path holds an invitation to a client who turned email off',async()=>{
+ const h=harness('send-portal-invite',true,{fixtures:optedOut});
+ const res=await h.run({token:'valid',email:'guest@example.test'});const out=await res.json();
+ assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');assert.equal(h.effects.length,0);
 });
 
 for(const mode of [false,'error','throw'])test(`plan-reminder: restricted in_app remains internal-only (${mode})`,async()=>{

@@ -28,6 +28,7 @@ import {
 // fingerprint-bound approval — reusing the canonical paige_pending_confirmations table + the
 // confirm-fingerprint pattern (§18), never a parallel approval system.
 import {
+  emailPreSend,
   governedDraftAndEmail,
   type EmailProposalArgs,
 } from "../_shared/paige-skill/email-approval.ts";
@@ -483,6 +484,8 @@ async function runDraftAndEmailDocument(
           return null;
         }
       },
+      // The same runPreSend every client send passes (E09 Slice 6): an opted-out recipient never reaches send.
+      preSend: emailPreSend(admin as unknown as Parameters<typeof emailPreSend>[0], callerTenantId),
       send: async ({ fromHeader, to, subject, html }) => {
         const resendKey = Deno.env.get("RESEND_API_KEY");
         if (!resendKey) return { ok: false, id: null };
@@ -587,6 +590,17 @@ async function runDraftAndEmailDocument(
       confirm_fingerprint: outcome.confirm_fingerprint,
       confirm_summary: outcome.summary,
       message: "Drafted. Re-run this skill with this confirm_token to send it once; the approval is single-use.",
+    });
+  }
+
+  if (outcome.kind === "send_failed" && outcome.held_reason) {
+    // Held by the pre-send gate: nothing reached the provider; the failed run receipt is recorded.
+    return json(409, {
+      run_id: sentRunId,
+      status: "failed",
+      code: receiptPersisted ? "send_held" : "send_held_unrecorded",
+      error: `Not sent: ${outcome.held_reason} The one-time approval has been used — re-draft once that changes.`,
+      outputs: { resend_id: null, recipient: outcome.recipient },
     });
   }
 

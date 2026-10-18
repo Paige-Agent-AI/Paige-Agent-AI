@@ -121,3 +121,30 @@ export const PORTAL_MENU_TOOLS=[
  {type:'function',function:{name:'portal_menu_update',description:`Show, hide, rename or reorder entries in this business's customer portal menu, for every client of this business. Entries you do not name keep exactly what was set before. Keys: ${PORTAL_MENU_KNOWN_KEYS_TEXT}, plus any other entry read_tenant_portal_menu lists for this business (an entry it does not list cannot be changed). Home and Messages are always on and cannot be renamed or hidden; Get help, Account, Settings and Sign out are fixed. An entry moves only within its own group. A renamed entry changes its menu name only, not the page's heading. Owner or admin only, and the owner approves it on the card first. Call read_tenant_portal_menu first. Never say clients see a change until this reports success.`,parameters:writable(PORTAL_MENU_CONFIGURE_CAPABILITY.input)}},
 ] as const;
 export const PORTAL_MENU_TOOL_NAMES:ReadonlySet<string>=new Set(PORTAL_MENU_TOOLS.map((t)=>t.function.name));
+// E09 Slice 6 — Profile & Consent. Two governed READS over the one consent ledger
+// (paige_suppressions + paige_consent_events, derived by public._client_communication_state).
+// Declared so the callable seams are on the registry (§10); NEITHER is bound to Chat yet, and the
+// manifest says so (chatBinding UNAVAILABLE):
+//   - the owner read is not yet an owner Chat tool ("can I text Jane?" is a filed follow-up: adding a
+//     tool changes the frozen Chat tool rosters the src registration tests pin);
+//   - customer-portal assistant turns carry no tools at all today (paige-ai-chat gates every tool
+//     family on !customerPortal), so the customer read has no Chat lane to join.
+// The customer's WRITERS (client_portal_set_communication_preference,
+// client_portal_set_shared_context_consent) are deliberately not declared: this registry admits a
+// mutating capability only with a LIVE Chat binding and chat-canonical approval, and a customer's
+// own consent choice must never be an owner-approvable Chat action.
+export const CLIENT_COMMUNICATION_STATE_READ={
+ key:'client.communication_state_read',domain:'client',owner:'clients',humanSurface:'/solo/:account/clients',readiness:'none',
+ action:{classification:'read',executor:'public.read_client_communication_state',seatAuthority:'workspace-admin',riskPolicyKey:'read_only',approvalAuthority:'none',
+  idempotency:'Read-only on the caller\'s own session. The function re-proves that the named workspace is the caller\'s current one and that the caller is its owner/admin (is_tenant_admin, never a global role), and answers a foreign or missing client with the same refusal. It writes nothing and returns no address, evidence, IP or staff id.'},
+ outcome:{kinds:['available','refused'],projector:'public.read_client_communication_state',railVisibility:'None. A display read on the client record; it is not a business action and writes no receipt.'},
+ chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+
+export const CLIENT_PORTAL_PREFERENCES_READ={
+ key:'client.portal_preferences_read',domain:'client',owner:'clients',humanSurface:'/app/settings?view=client-account',readiness:'none',
+ action:{classification:'read',executor:'public.client_portal_communication_preferences',riskPolicyKey:'read_only',approvalAuthority:'none',
+  idempotency:'Read-only, bound to the signed-in customer\'s own relationship (client_portal_relationship_id); a business argument only narrows it. Exact keys; never an address, evidence pointer, IP or id.'},
+ outcome:{kinds:['available','no_relationship','refused'],projector:'public.client_portal_communication_preferences',railVisibility:'None. The customer\'s own settings read.'},
+ chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;

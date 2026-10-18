@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // live in one place, reused by public-booking and booking-manage too.
 import { renderTemplate, sendSms } from "../_shared/bookingNotify.ts";
 import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
+import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 
 // The pg_cron trigger token lives ONLY in Supabase Vault (task #145) — never in
 // source or env. The request handler authorizes each trigger by calling the
@@ -145,7 +146,7 @@ Deno.serve(async (req) => {
   // Candidate window: reminders up to a week ahead, follow-ups up to 2 days back.
   const { data: rows } = await admin
     .from("internal_bookings")
-    .select("id, guest_email, guest_phone, guest_name, title, start_at, end_at, timezone, location_type, location_value, status, calendar_id, collective_group_id, manage_token_version, appointment_type, host_user_id")
+    .select("id, tenant_id, contact_id, guest_email, guest_phone, guest_name, title, start_at, end_at, timezone, location_type, location_value, status, calendar_id, collective_group_id, manage_token_version, appointment_type, host_user_id")
     .not("calendar_id", "is", null)
     .or("reminder_state->>provider_execution.is.null,reminder_state->>provider_execution.neq.blocked")
     .neq("status", "cancelled")
@@ -226,7 +227,7 @@ Deno.serve(async (req) => {
 
   // Truthful, per-channel counters — an SMS send is reported separately from an
   // email send, and each counts only on an actual provider acceptance (§13).
-  let reminders = 0, smsReminders = 0, followups = 0, blocked = 0;
+  let reminders = 0, smsReminders = 0, followups = 0, blocked = 0, guestEmailOptedOut = 0;
   const blockedPersistenceFailures: string[] = [];
   for (const b of bookings) {
     const cal = calById.get(b.calendar_id as string);
@@ -259,6 +260,26 @@ Deno.serve(async (req) => {
       timeZone: tz, weekday: "long", month: "long", day: "numeric",
       hour: "numeric", minute: "2-digit", timeZoneName: "short",
     }).format(new Date(startMs));
+    // The guest's email opt-out (E09 Slice 6, D5): reminders and follow-ups are messages the business
+    // sends through Paige, so a guest who turned email off (portal, unsubscribe link), bounced, or whom
+    // the business paused is not emailed. Read once per booking and only when a guest email is due; an
+    // unreadable ledger skips the guest email this run WITHOUT claiming it, so the next run retries.
+    // The host's own notifications are untouched.
+    let guestEmailGate: Promise<"clear" | "suppressed" | "unknown"> | null = null;
+    const guestEmailAllowed = async (): Promise<boolean> => {
+      guestEmailGate ??= emailOptOut(admin, {
+        tenantId: typeof cal.tenant_id === "string" ? cal.tenant_id : ((b.tenant_id as string | null) ?? null),
+        contactId: (b.contact_id as string | null) ?? null,
+        email,
+      });
+      const gate = await guestEmailGate;
+      if (gate !== "clear") {
+        if (gate === "unknown") console.error("[process-booking-notifications] guest_opt_out_unreadable", b.id);
+        guestEmailOptedOut++;
+        return false;
+      }
+      return true;
+    };
     // Merge vars for config-as-data reminder copy (§10).
     const vars: Record<string, string> = {
       guest_name: guestName || "there", when: whenLabel, where: loc, title, service,
@@ -280,6 +301,7 @@ Deno.serve(async (req) => {
         for (const ch of channels) {
           if (ch === "email" && !contact.email) continue;
           if (ch === "sms" && !contact.phone) continue;
+          if (ch === "email" && target === "guest" && !(await guestEmailAllowed())) continue;
           // start time is part of the key so a RESCHEDULED booking (new startMs)
           // gets a fresh claim and re-reminds for its moved time, instead of the
           // surviving 'sent' row from the old time silently suppressing it. The
@@ -322,7 +344,7 @@ Deno.serve(async (req) => {
     // the built-in copy so existing configs are unchanged.
     if (email && notify.followup_guest && endMs <= now && endMs + notify.followup_offset_min * MIN <= now) {
       const key = `followup:${startMs}`;
-      if (await claim(b.id as string, key, email)) {
+      if (await guestEmailAllowed() && await claim(b.id as string, key, email)) {
         const mUrl = await manageUrl(b.id as string, ver);
         const subject = notify.followup_subject ? renderTemplate(notify.followup_subject, vars) : `Following up on ${title}`;
         const lead = notify.followup_body
@@ -338,7 +360,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups, blocked, blocked_persistence_failures: blockedPersistenceFailures }), {
+  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups, blocked, guest_email_opted_out: guestEmailOptedOut, blocked_persistence_failures: blockedPersistenceFailures }), {
     headers: { "Content-Type": "application/json" },
   });
 });

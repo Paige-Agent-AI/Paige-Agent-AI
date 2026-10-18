@@ -17,6 +17,7 @@ import {
 import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
+import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 // Per-host Zoom (§9): when a calendar meets over Zoom and the assigned host has
 // connected their own Zoom, mint the meeting on THEIR account and drop the real
 // join link into the confirmation. Best-effort (§13) — any failure falls back to
@@ -1290,11 +1291,22 @@ Deno.serve(async (req) => {
             if (ok) await admin.from("booking_notifications_sent").update({ status: "sent" }).eq("booking_id", bookingRow.id).eq("notif_key", key);
             else await admin.from("booking_notifications_sent").delete().eq("booking_id", bookingRow.id).eq("notif_key", key);
           };
+          // E09 Slice 6 (D5): the built-in confirmation above is the receipt of the booking the guest just
+          // made and always sends. An owner-authored lifecycle email is a message the business sends through
+          // Paige, so a guest who turned email off (or whom the business paused, or who bounced) is not
+          // sent one. An unreadable ledger holds it too.
+          const guestLcEmailOk = email
+            ? (await emailOptOut(admin, {
+                tenantId: host.tenant_id ?? null,
+                contactId: (bookingRow as { contact_id?: string | null }).contact_id ?? null,
+                email,
+              })) === "clear"
+            : false;
           for (const lc of createdLc) {
             for (const who of targetsOf(lc.to)) {
               for (const ch of channelsOf(lc.channel)) {
                 const recipients = ch === "email"
-                  ? (who === "guest" ? (email ? [email] : []) : hostEmails)
+                  ? (who === "guest" ? (email && guestLcEmailOk ? [email] : []) : hostEmails)
                   : (who === "guest" ? (phone ? [phone] : []) : hostPhones);
                 for (const rec of recipients) {
                   const key = `lc:created:${who}:${ch}:${rec}`;

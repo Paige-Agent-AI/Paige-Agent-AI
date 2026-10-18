@@ -67,6 +67,8 @@ on:
       # matters most; these two cover a change to the proof or to how it is derived.)
       - "supabase/tests/crm_patch_fields_match_database.sql"
       - "scripts/ci/crm-patch-field-gen.mjs"
+      - "supabase/tests/fixtures/consent-parity.json"
+      - "scripts/ci/consent-parity-gen.mjs"
       - "supabase/tests/media_credit_ledger.sql"
       - "supabase/tests/business_context_readiness.sql"
       - "supabase/tests/team_authority_readiness.sql"
@@ -164,6 +166,8 @@ jobs:
       - run: npm ci
       - run: node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test
       - run: node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs
+      # E09 Slice 6 (M8): the generated consent-parity pgTAP must match its fixture.
+      - run: node scripts/ci/consent-parity-gen.mjs --check
       # The two per-capability Chat-evidence proofs are listed explicitly. The path filter above
       # already matches src/__tests__/paige-spine-*.test.ts, so omitting them here meant this
       # workflow ran on their changes without running them — they were only covered by the
@@ -560,6 +564,13 @@ jobs:
       # customer; the owner's reserve/finish/share writers; the delete and staff-PUT fold-ins; and
       # released work refused once the client or business is inactive.
       - run: supabase test db supabase/tests/customer_portal_documents.sql
+        if: ${{ !cancelled() }}
+      # E09 Profile & Consent: the customer's own preferences through the one ledger; staff can never
+      # forge, override or delete a customer's choice (B1); an opt-out survives a business pause (B2).
+      - run: supabase test db supabase/tests/customer_portal_profile_consent.sql
+        if: ${{ !cancelled() }}
+      # The SQL half of the consent parity proof, generated from supabase/tests/fixtures/consent-parity.json.
+      - run: supabase test db supabase/tests/customer_portal_consent_parity.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

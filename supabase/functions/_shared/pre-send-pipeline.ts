@@ -205,6 +205,8 @@ function suppressionReason(code: string | null | undefined): string {
     case "complaint": return "This contact reported a previous message, so we won't message them.";
     case "bounce_hard": return "This address is undeliverable, so we won't retry it.";
     case "manual": return "This contact is on the do-not-message list.";
+    // E09 Slice 6: the contact turned this channel off themselves, from their client portal.
+    case "customer_request": return "This contact turned off messages on this channel.";
     default: return "This contact is on the do-not-message list.";
   }
 }

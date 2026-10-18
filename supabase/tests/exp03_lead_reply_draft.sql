@@ -477,7 +477,7 @@ SELECT pg_temp.check_true((SELECT status<>'done' FROM public.paige_actions WHERE
 SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved', metadata='{}'::jsonb WHERE id='e3000000-0000-4000-8000-0000000a0102'$$,
   '42501','SEND_REQUIRES_GOVERNED_SEND%','signal 2 alone — the STORED (OLD) metadata.action_id, dropped in the approving write — is refused');
 SELECT pg_temp.refused($$UPDATE public.paige_pending_approvals SET status='approved' WHERE id='e3000000-0000-4000-8000-0000000a0103'$$,
-  '42501','SEND_REQUIRES_GOVERNED_SEND%','signal 3 alone — paige_actions.approval_id pointing at the approval, no action_id anywhere — is refused');
+  '42501','COMMS_EMAIL_ORIGIN_BINDING_CHANGED','signal 3 alone — paige_actions.approval_id pointing at the approval, no action_id anywhere — is refused');
 SELECT pg_temp.check_true((SELECT bool_and(status='pending') FROM public.paige_pending_approvals
    WHERE id IN ('e3000000-0000-4000-8000-0000000a0101','e3000000-0000-4000-8000-0000000a0102','e3000000-0000-4000-8000-0000000a0103')),
   'all three signal approvals are still pending');

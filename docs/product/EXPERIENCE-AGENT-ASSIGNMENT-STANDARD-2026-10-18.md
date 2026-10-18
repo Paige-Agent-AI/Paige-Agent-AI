@@ -1,0 +1,44 @@
+# Mandatory PAIGE Experience Agent Assignment and Acceptance Standard — Owner 2026-10-18
+
+**Applies to EVERY current and future PAIGE Engineering Coordinator, Journey/Experience Coordinator, product agent, BUG/shared systems agent and newly bootstrapped Codex, zCod, Claude or other coding agent.** Owner direction; not a separate account experience or authorization to start new agents. **The accountable Experience assignment is an end-to-end customer or PAIGE-company job** with one responsible delivery lead and source-reuse map; never merely a PR, isolated tool, UI view, database table or green CI test.
+
+## 1. Non-negotiable scope and staging
+
+Exactly four account experiences may receive coordinator-issued SaaS build orders: **SOLO, Platform Operator, Agency and Agency Sub-Accounts**. **ACTIVE NOW: SOLO and Platform Operator.** Agency and its Sub-Accounts remain **OWNER-HOLD** until explicit subsequent owner instruction. Maintain any pre-existing safe Agency source and necessary shared-platform security/tenancy. Do not infer an Enterprise rollout, a fifth account shell, or permission to launch held experiences from a roadmap. Customer-facing Tenant Portal is a feature of its owning SOLO business, not a fifth PAIGE SaaS account type.
+
+All eligible existing/future SOLO tenants use ONE canonical build. No customer-name/number/ID branches, named QA cohort product gates or shadow databases/CRMs. Platform Operator represents **PAIGE Agent AI Inc's own company L1 customers, subscriptions, cash, support, operations and agent intelligence**. Tenant merchant/client business economics are L2 and remain private and distinct.
+
+## 2. Required assignment packet (complete *before* work allocation)
+
+Every coordinator must provide an exact **Experience assignment order** with:
+
+1. **EXP-ID, name, authorized account shell and owner:** verify source/owner-approved catalog; do not invent EXP06–08/10–25 labels. One accountable lead, domain source owners, release integrator and approved parallel boundaries.
+2. **Full customer/company story:** persona, starting condition, natural-language request, context, necessary questions, approval, actual execution, visible result, return/recovery, and true completed outcome. No feature-only definition of done.
+3. **Two-sided SaaS effect where applicable:** customer-level business value PLUS appropriate, least-privilege Platform Operator customer lifecycle/commercial trace. Never imply Operator can read private SOLO content without separate authorized grounds.
+4. **Flow-by-Flow → Impeccable UI standard:** all mounted paths including existing components, loading/degraded/empty/error states, mobile/keyboard/zoom and role visibility. Retain correct old experience rather than opening a duplicate engine.
+5. **Source contract and ownership:** enumerate existing authoritative files/APIs, Spine registry capability, Harness/Trust approval, domain owner/reader/writer, Rail durable receipts, Memory/Knowledge, provider and data context. Tag each seam **REUSE / EXTEND / REPAIR / NEW** and prohibit a second store/router/scheduler/approval workflow.
+6. **Foundational controls:** mark applicable `SAAS-01…24` (architecture/tenant/RLS, API/state, async work, UI, auth/consent, billing, DevOps, analytics), and `ALG-01…13` (algorithms for reliability, first value, voluntary retention, financial health, conversion, prioritization, model quality). Identify true source/proof gaps rather than declaring an entire foundation built.
+7. **Acceptance matrix:** numbered cases for natural user requests, real original canonical source/event, exact expected committed work/actual provider result, immutable receipt, later reload/continuation, denial/uncertain/interruption/duplicate/cross-tenant cases, failure recovery, provenance, usable UI and full Operator readback where applicable.
+8. **Privacy/security/provider scope:** JWT/tenant/role/RLS, least privilege, actual connection and sender, opt-in, budget/cost, time zones, taxes, consumer/tenant data minimization, no secret/PII in shared artifacts, no unauthorized external contacts, card charge, cancellation, destruction or privilege escalation.
+9. **Engineering/release policy:** autonomous BUILD → proportionate changed-path/regression/negative tests + documented Independent Review (distinct preferred, sequential review disclosed if unavailable) → exact-head required CI and migration/security/permission checks → normal safe merge/deploy and actual web/Edge/database/provenance readback → truthful PROOF OWED for untested customer effects.
+10. **Owner acceptance:** the founder conducts ONE end-to-end evaluation once the ENTIRE approved integrated Experience is production-ready; builder agents may run protected representative authenticated journeys along the way. Do **not** repeatedly ask founder to approve a prototype, refresh each intermediate fix, click Stripe Resend, try a separate microfeature or inspect every PR unless an indispensable owner-only authority/financial/security action is required. Follow with defects and one coherent re-evaluation.
+
+## 3. Algorithm outcome standard
+
+A decision algorithm is a **reusable, source-bound computation** over actual tenant/Operator data, not a new PAIGE agent or second reasoning engine. Each applicable ALG-ID must specify data definition and freshness, how uncertainty and insufficient data are handled, versioned rule/model/calibration, customer goal and measurable useful outcome, consent/role/tenant isolation and required negative/eval tests. Use deterministic reliable rules until sufficient production observations support predictions. Scores/recommendations never authorize money, messaging or other effects. `ALG-01` event reconciliation and `ALG-12` incident/anomaly detection are current EXP00/BUG first priorities; `ALG-02/04/13` first-value, meaningful engagement and SaaS retention next. OpenAI is primary, Anthropic fallback only; autonomous local-model-weight improvement is future gated scope, not permitted current closed-model training.
+
+## 4. Mandatory one-status truth ladder
+
+`DISCOVERED → CONTRACTED → SOURCE IMPLEMENTED → REVIEWED → EXACT-HEAD CI GREEN → MERGED → DEPLOYED & SOURCE READBACK → AUTHORIZED ACTIVATED → AUTHENTICATED JOURNEY VERIFIED → OWNER ACCEPTED → CUSTOMER RELEASED`.
+
+Report customer and PAIGE company outcomes separately; do not call an accepted API or an invoice created cash collected, a trial paid, an event-row completed a delivered email, or a merged PR a fully working experience. Track protected source verification distinct from real end-to-end owner acceptance. Severe security/tenant privacy/material money defects, failed required checks, knowingly broken core and irreversible external effects without consent remain genuine release holds. Do not invent calendar dates or completion percentages.
+
+## 5. Every Coordinator's startup self-check
+
+Before issuing orders, the coordinator must read: current [Owner North Star](https://docs.google.com/document/d/1_SiMeU2ZJT4IDamfDZ2REmC5UoVJSgij0P1x4HDpcTw/edit); [Coordinator Bootstrap](https://docs.google.com/document/d/1lwc1RX5MgEF0JgAHlIQH8jLFh0laff1ptsSUN0OXtSE/edit); this file; [24-point SaaS BRD](https://docs.google.com/document/d/1HMMKGNAWGD3UfJyApXwc3-vv28reqfw97-KP_PLivk8/edit); [EXP00–25 strategy](https://docs.google.com/document/d/1FxuTVXU1NcrNkVR9G4CvfAm1Ja4iSo_Cs_SVdA3LuR8/edit); current AGENTS.md and CLAUDE.md; current `main`/PRs/Linear owner records and official Delivery Evidence Register. Explicitly declare the **authorized shell, approved EXP-ID, full customer/company job, existing canonical source owners, SAAS/ALG obligations, state, proof and next owner-only approval**.
+
+No new coordinator may treat older historical BRD Agency rollout or an unratified EXP slot as authority to start a project. Current approved engineering work may continue; changes to who owns EXP deliverables remain explicit owner orders only. Do not demand extra coordination conversations between coding agents; they self-ground actual repo/Linear/Second Brain, rebase and self-recover routine issues.
+
+## 6. Initial application — EXP00
+
+Full bounded EXP00-specific live recovery and Platform Operator customer/company operating experience continuation belongs to [GitHub #2329](https://github.com/Paige-Agent-AI/Paige-Agent-AI/issues/2329) / [ANT-158](https://linear.app/paigeagentai/issue/ANT-158) / [ANT-159](https://linear.app/paigeagentai/issue/ANT-159), not this generic charter. EXP01 Meet PAIGE retains sole original implementation ownership [ANT-50](https://linear.app/paigeagentai/issue/ANT-50); EXP00 integrates and references its approved first-value milestones. Apply this exact assignment packet pattern to every other existing/new agent **one at a time** when the owner requests it, without opening other Experience assignments automatically.

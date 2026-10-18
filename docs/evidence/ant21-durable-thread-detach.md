@@ -194,3 +194,21 @@ The existing hosted107 proof and source review5561645457 remain prior evidence. 
 review of this exact repair, fresh exact-head hosted CI and eventual production release/readback
 remain owed. No push, PR merge, production operation, grant, native writer, provider, workflow or
 pin change is performed by this repair. Strict restoration totals remain 1/18 and 2/50.
+
+### Current-main composition and unapplied migration ordering — 2026-10-18
+
+E09 #2343 merged as `dbb8a8842666763d202ab94aa38734343db6d55e` while #2344 was
+being verified. Its legitimate Portal, shared Chat, Spine and policy changes are preserved by
+normal composition. Production migration history now records `20271110030000`; neither
+`20271110022000` nor `20271110023000` was applied. The prepared old deployment was not dispatched.
+
+Advance only this unapplied migration filename to `20271110031000_durable_work_thread_detach.sql`.
+Its SQL bytes remain exactly SHA256
+`ca4245ae2e40849ffecff7a259f866f4a3590a79d55dcc3e3f8e74b6a3a6d73c`;
+the owning proof changes only its one migration-path reference. No applied migration or history
+is edited. The separate reminder candidate remains unreleased and outside this PR.
+
+Earlier #2341 failed CI and #2344's original `21dab019` checks remain historical evidence,
+not release authority for this composed candidate. Renew only specifically reviewed source
+fingerprint cells, run the owning controls against the composition, and require fresh exact-head
+CI before native-first production application, guarded merge, deployment and customer QA.

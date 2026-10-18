@@ -9,11 +9,23 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { OperationsAssignee } from "./OperationsAssignee";
 import { createOperationsWork, type WorkCreationResult } from "./operations-work-create";
 
-export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme, onClose, onCreated, onRecover, invoker }: {
+/**
+ * `contact` (E09 Slice 3): opened from a client's record, the task is created FOR that client — the
+ * client is fixed, shown as a chip, and passed to the scoped writer as `contactId`, whose readback
+ * already proves `contact_id`. The new task is private to the team; sharing it with the client is a
+ * separate, explicit act on the record (owner decision D2), and the sheet says so before anything is
+ * typed. `firstName` is how the sentence names them ("…share it with Jordan."); the chip keeps the
+ * full name. Without `contact`, nothing changes.
+ *
+ * The submit button is named for what the flow does — it creates the task, after one confirming
+ * review — rather than "Review task", which read as if nothing would be saved.
+ */
+export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme, onClose, onCreated, onRecover, invoker, contact }: {
   actorId: string; tenantId: string; members: TeamMemberRecord[]; plans: Plan[];
   theme: string; onClose: () => void; onCreated: () => Promise<void>;
   onRecover: (itemId?: string) => Promise<void>;
   invoker?: HTMLElement | null;
+  contact?: { id: string; name: string; firstName?: string };
 }) {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -64,7 +76,7 @@ export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme
     setReviewing(false); setBusy(true); setNotice("");
     const saved = await createOperationsWork({ actorId, tenantId }, { title, summary, assigneeId, priority,
       planId: planId || undefined, milestoneId: milestoneId || undefined,
-      dueAt: due ? new Date(due).toISOString() : undefined });
+      dueAt: due ? new Date(due).toISOString() : undefined, ...(contact ? { contactId: contact.id } : {}) });
     if (!mounted.current) return;
     setResult(saved); setBusy(false);
     if (saved.kind === "refused") submitted.current = false;
@@ -85,9 +97,10 @@ export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme
       <SheetContent className="ops-detail-sheet ops-work-create-sheet paige-solo" {...alertTheme} onCloseAutoFocus={event => {
         if (invoker?.isConnected) { event.preventDefault(); invoker.focus(); }
       }}>
-        <SheetHeader><SheetTitle>Give the next step an owner</SheetTitle><SheetDescription>Create a task with a clear responsibility and deadline.</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>Give the next step an owner</SheetTitle><SheetDescription>Create a task with a clear responsibility and deadline.{contact && ` It stays private until you share it with ${contact.firstName || contact.name}.`}</SheetDescription></SheetHeader>
         <form className="ops-work-editor" onSubmit={event => { event.preventDefault(); if (!locked && person) setReviewing(true); }}>
           <fieldset disabled={locked || staff === null} className="ops-create-fields">
+            {contact && <p className="ops-create-client"><span>For client</span><strong>{contact.name}</strong></p>}
             <label>Task<input autoFocus required maxLength={500} value={title} onChange={event => { setTitle(event.target.value); setResult(null); }} placeholder="What needs to happen?" /></label>
             <label>Context<textarea maxLength={10000} rows={3} value={summary} onChange={event => { setSummary(event.target.value); setResult(null); }} placeholder="What does good work look like?" /></label>
             <label>Responsible person<select aria-label="Responsible person" required value={person ? assigneeId : ""} onChange={event => { setAssigneeId(event.target.value); setResult(null); }}>
@@ -101,18 +114,18 @@ export function OperationsWorkCreator({ actorId, tenantId, members, plans, theme
               <label>Due date<input type="datetime-local" value={due} onChange={event => { setDue(event.target.value); setResult(null); }} /></label></div>
           </fieldset>
           <div ref={feedback} role={result?.kind === "refused" ? "alert" : "status"} aria-live="polite">
-            {result?.kind === "verified" ? <p>Task saved and verified. {person?.full_name || "Its owner"} can find it in their work.</p> : result && <p>{result.message}</p>}
+            {result?.kind === "verified" ? <p>Task saved and verified. {person?.full_name || "Its owner"} can find it in their work.{contact && ` It stays private to your team until you share it with ${contact.name}.`}</p> : result && <p>{result.message}</p>}
             {notice && <p>{notice}</p>}
             {result?.kind === "uncertain" && <button type="button" disabled={busy} onClick={() => void recover()}>{busy ? "Checking current work…" : result.itemId ? "Inspect saved task" : "Refresh current work"}</button>}
             {!person && staff !== null && <p>Your active team identity is unavailable. Refresh team profiles before creating a task.</p>}
           </div>
-          <button type="submit" disabled={locked || !person || staff === null || !title.trim()}>{busy ? "Saving and checking…" : "Review task"}</button>
+          <button type="submit" disabled={locked || !person || staff === null || !title.trim()}>{busy ? "Saving and checking…" : "Create task"}</button>
           <button type="button" onClick={requestClose} disabled={busy}>{result?.kind === "verified" ? "Done" : "Close"}</button>
         </form>
       </SheetContent>
     </Sheet>
     <AlertDialog open={reviewing} onOpenChange={setReviewing}><AlertDialogContent className="paige-solo ops-detail-sheet" {...alertTheme}>
-      <AlertDialogHeader><AlertDialogTitle>Create this task?</AlertDialogTitle><AlertDialogDescription>{title.trim()} · Assigned to {person?.full_name || "your selected team member"}{project ? ` · ${project.title}` : ""}{due ? ` · Due ${new Date(due).toLocaleString()}` : " · No due date"}.</AlertDialogDescription></AlertDialogHeader>
+      <AlertDialogHeader><AlertDialogTitle>Create this task?</AlertDialogTitle><AlertDialogDescription>{title.trim()}{contact ? ` · For ${contact.name}` : ""} · Assigned to {person?.full_name || "your selected team member"}{project ? ` · ${project.title}` : ""}{due ? ` · Due ${new Date(due).toLocaleString()}` : " · No due date"}.</AlertDialogDescription></AlertDialogHeader>
       <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={() => void save()}>Create task</AlertDialogAction></AlertDialogFooter>
     </AlertDialogContent></AlertDialog>
     <AlertDialog open={discarding} onOpenChange={setDiscarding}><AlertDialogContent className="paige-solo ops-detail-sheet" {...alertTheme}>

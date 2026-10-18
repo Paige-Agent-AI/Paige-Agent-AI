@@ -1,5 +1,13 @@
 # PAIGE Spine & Rail — verified current state
 
+## 2026-10-18 — Later Task guidance and reminder foundation release supplement
+
+Master§4.0 now records2344/main8347652e252cf5fe9e467ee678deac193ff44f4a and2347/maindf7ff703699a13c8a096ef8a838c9d8e05f5432f with exact review, native, Edge and web identities. The earlier2340 narrative contradiction is narrowly corrected and paired ordinary Task read/open/reload/foreign-refusal/Close proof passed with unchanged protected records. The source-only2341 prerequisite's old failed/unapplied22000 history remains retained; its reviewed compatible native SQL was delivered at31000 in2344. No production deletion or new Task mutation was used as proof.
+
+The reminder native70000/7-function contract and official selected Edge readback passed, after a retained failed source-verification attempt and bounded reviewed correction. Ordinary Academy Chat prepared the exact protected reminder card; it expired unconsumed with zero matching records while specific creation approval remained pending. No completed reminder, recurring delivery or original-result recovery is inferred. The2351 history and2352 Research presentation candidates remain unmerged at this checkpoint. No paid manual preview resource, external send, provider/credential activation, replacement execution system or old held-executor adoption occurred.
+
+These are later evidence supplements to the dated entries below, not historical rewrites or complete customer acceptance. Universal eligible existing/future SOLO coverage remains the implementation contract; strict closure1/18 capabilities and2/50 parity requirements, separate Live UNVERIFIED and final owner acceptance PENDING. Full18/50 outcomes, role/isolation/provisioning cohorts, governed follow-up send/cancellation and the remaining original register stay open.
+
 ## 2026-10-18 — Bounded SOLO recovery and native Task consumer released
 
 Master§4.0 records exact #2338/main715200d8d20b2436db2c3e4008c656d0977e3ce7 and #2339/main797d8d051aa98f47cd361b23dbf1b233a67b511e source, review, CI, native/Edge/web identities and recovery limits. Both ordinary SOLO cohorts completed normal typed own/foreign Task reads, FINAL settlement and reload against Chat446; four canonical read Rails correlate by actor/tenant/capability/time only. The native Task consumer separately passed paired own-open/reload, reciprocal foreign refusal and explicit query-clearing Close. Neither observation is consequential Task execution, shutdown recovery, Live or full capability acceptance. Historical unbound claims and protected Task rows remain untouched.

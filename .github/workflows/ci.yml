@@ -743,6 +743,8 @@ jobs:
       # uploaded as evidence so a reviewer can read what each actually produced.
       - name: Webhook signature suites (Svix + SendGrid ES256)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/webhookSig.test.ts
+      - name: Solo Beta Stripe shape + failure-code contract
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/solo-beta-stripe-shapes.test.ts
       - name: SendGrid webhook-admin broker (mocked provider IO)
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)

@@ -46,6 +46,28 @@ Deno.test("safeStageCode passes a Postgres raise name through verbatim", () => {
   );
 });
 
+Deno.test("safeStageCode reads the production Postgrest error shape (plain object)", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", {
+      code: "P0001",
+      message: "solo_beta_provider_contract_mismatch",
+      details: null,
+      hint: null,
+    }),
+    "solo_beta_provider_contract_mismatch",
+  );
+  assertEquals(
+    safeStageCode("lifecycle_sync_failed", { message: "TypeError: fetch failed" }),
+    "lifecycle_sync_failed",
+  );
+  assertEquals(safeStageCode("event_claim_failed", { code: "23505" }), "event_claim_failed");
+  assertEquals(safeStageCode("event_claim_failed", {}), "event_claim_failed");
+  assertEquals(
+    safeStageCode("event_claim_failed", { message: "solo_beta_" + "x".repeat(120) }),
+    "event_claim_failed",
+  );
+});
+
 Deno.test("safeStageCode falls back to the stage code for uninformative causes", () => {
   assertEquals(
     safeStageCode("atomic_fulfillment_failed", new Error("Failed to fetch")),

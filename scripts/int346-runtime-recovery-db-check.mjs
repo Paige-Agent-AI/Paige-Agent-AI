@@ -69,7 +69,7 @@ try{
   unnest(ARRAY['capability_succeeded','capability_failed','capability_refused','capability_outcome_unknown','capability_completed_unrecorded'])o,
   unnest(ARRAY['crm_create_contact','n8n_run_workflow','plan_create','unclassified_synthetic'])c`);
  const displayBefore=displayed();
- const migration=fs.readFileSync(m('20271110015000_chat_runtime_recovery.sql'),'utf8');
+ const migration=fs.readFileSync(m('20271110021000_chat_runtime_recovery.sql'),'utf8');
  if(!baseline){sql(migration);sql(migration);}
  const th=thread(10),intent=id(11);admit(th,intent);
  check('future bound acquire reaches actual incumbent native authority',()=>assert.equal(acquire(th,intent).acquired,true));

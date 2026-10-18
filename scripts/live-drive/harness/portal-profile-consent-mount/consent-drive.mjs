@@ -443,6 +443,8 @@ async function runShots(browser, shots, label = "") {
     await page.goto(`http://127.0.0.1:${PORT}${url}`, { timeout: 240_000, waitUntil: "domcontentloaded" });
     let driveError = null;
     try { await drive(page, s, notes); } catch (e) { driveError = String(e).slice(0, 400); }
+    // Measure and frame only once every face the page asked for has loaded (a fallback face reflows text).
+    await page.evaluate(() => document.fonts.ready);
     const m = await page.evaluate(measureInPage, { phone: !!s.phone, home: false, section: s.privacy ? "[data-harness-privacy]" : "section[aria-labelledby='client-account-title']" });
     const small = s.phone ? m.targets.filter((t) => t.h < 44 || t.w < 44) : [];
     const smallTargets = small.filter((t) => !t.inline);

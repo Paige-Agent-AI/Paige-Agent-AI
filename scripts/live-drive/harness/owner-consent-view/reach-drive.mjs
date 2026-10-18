@@ -1,5 +1,5 @@
-// E09 Slice 6 — render "How {client} can be reached" on the REAL Solo client record (under "Shared with
-// {client}"), in each state, both themes, desktop (1440x900) and phone (390x844), and MEASURE the section: text
+// E09 Slice 6 — render "How {client} can be reached" on the REAL Solo client record (under "Files for
+// {client}", which Documents placed under "Shared with {client}"), in each state, both themes, desktop (1440x900) and phone (390x844), and MEASURE the section: text
 // contrast (AA), gold (none: this is a read-only view), touch targets >= 44px on the phone, overflow, clipped
 // text, page errors and any request that tried to leave the machine. It also reads what the owner is told off the
 // rendered page — every row, who set it, that the section is read-only by design (no switch, no checkbox), and
@@ -77,7 +77,8 @@ function unmet(s, n) {
   const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   want(n.controls === 0, `the section is read-only by design, but it has ${n.controls} control(s)`);
   want(!/\bcoach|credit|funding\b/i.test(n.text ?? ""), "§2 wording in the section");
-  want(n.order?.[2] === "How Jordan Rivera can be reached", `section not directly under Shared with: ${JSON.stringify(n.order)}`);
+  // Documents (main, Slice 4) put "Files for {client}" directly under "Shared with"; this section follows it.
+  want(n.order?.[2] === "Files for Jordan Rivera" && n.order?.[3] === "How Jordan Rivera can be reached", `section not directly under Files for: ${JSON.stringify(n.order)}`);
   want(!/do-not-contact flag|consent flag/.test(n.footer ?? ""), `footer still repeats the flags: ${n.footer}`);
   if (s.state === "mixed") {
     want(eq(n.rows, [
@@ -261,6 +262,8 @@ async function runShots(browser, shots, label = "") {
     await page.goto(`http://127.0.0.1:${PORT}/solo/42/clients/people?${new URLSearchParams({ person: CLIENT, consent: s.state, theme: s.theme })}`, { timeout: 240_000, waitUntil: "domcontentloaded" });
     let driveError = null;
     try { await drive(page, s, notes); } catch (e) { driveError = String(e).slice(0, 400); }
+    // Measure and frame only once every face the page asked for has loaded (a fallback face reflows text).
+    await page.evaluate(() => document.fonts.ready);
     const m = await page.evaluate(measureInPage, { phone: !!s.phone });
     const smallTargets = s.phone ? m.targets.filter((t) => t.h < 44 || t.w < 44) : [];
     const expectations = driveError ? [] : unmet(s, notes);

@@ -101,3 +101,56 @@ false/uppercase CI 5432, URL supplied as a port) refuse before fixture construct
 diff hygiene and final migration-version checks pass. Unchanged broader campaigns are retained,
 not represented as newly rerun. Original local advisor warnings and unavailable `plpgsql_check`
 remain recorded above. Independent successor review and hosted exact-head execution are owed.
+
+## 2026-10-18 corrective checkpoint: retain required thread lifetimes
+
+Hosted P1 `PRRT_kwDOSAAXqM6tntUw` is valid. This supersedes the earlier unqualified detachment
+claims; f026/47482/d07 receipts remain historical local proof, not release approval. The proposed
+DELETE could detach claimed Document work after its start gate but before completion. Actual
+`complete_paige_document_work` then inserted a NULL `thread_id` into the NOT NULL completion-turn
+column, rolling back the artifact/terminal transaction. No paid provider was used to reproduce it.
+
+Fail-first actual PostgreSQL controls are retained under
+`work/durable-thread-detach/inflight-terminal/`:
+
+- Against d07's trigger, native start -> DELETE -> actual native completion reproduced `23502`;
+  diagnostic `P1_INFLIGHT_DELETE_ALLOWED` verifies artifact/terminal rollback. Cluster stop 0.
+- A terminal-only intermediate gate fixed that interval but reproduced the second compatibility
+  defect: successful Document DELETE cascaded its turn, and actual completion replay raised
+  `DURABLE_DOCUMENT_SUCCESS_READBACK_MISSING` (`55000`). Cluster stop 0.
+
+The final migration retains the incumbent deletion hold for **every unfinished state** (claimed
+before/after dispatch, blocked, expired and outcome_unknown), and also for succeeded
+`document_authoring`: its unchanged native replay contract still requires the original completion
+turn. Other well-formed succeeded/failed/cancelled work may detach only with unchanged terminal
+status/evidence/settlement; success requires the native verified-readback value. All identity,
+payload, parent-visibility, binding and ACL protections remain. This narrows the proposed exception
+to the incumbent deletion refusal; it introduces no new retention ban or caller authority.
+
+Final corrected local proof: **107 SQL assertions PASS**, plus the existing envelope rollback suite,
+catalog/ACL/reapply/existing-row checks, and a separate **two actual PostgreSQL connection** control.
+Native and cluster-stop exits 0. The two-connection control observes actual completion still
+uncommitted, attempts parent deletion, then proves the rejected deletion and native replay retain
+one exact artifact, completion turn, terminal result, transactional receipt-port row and audit.
+
+The expanded fixture executes the actual unchanged Document start, completion, replay and failed
+settlement SQL. It applies the existing role-retirement helper to the installed fixture functions.
+Minimal Auth/domain infrastructure and local transactional role/receipt ports are explicit doubles
+reused from the owning Document proof: this is not model execution, paid output, full production
+Rail validation, JWT integration or authenticated customer acceptance. Failed Document settlement
+replay remains valid after permitted deletion; cancelled Document completion stays refused and its
+terminal replay unchanged. Eligible ordinary transcript rows retain the existing DELETE CASCADE;
+successful Document completion turns are preserved through the existing parent hold.
+
+Document and Research envelope negatives cover each unfinished state plus unverified success.
+The current native Research producer does not populate its optional work_id; prepared Research
+envelopes remain blocked with execution unavailable. Those controls do not claim a newly activated
+Research continuation. Two harness errors are preserved separately: an intentionally forbidden
+service-role raw read was corrected to use the creator-returned key, and the unchanged-row sentinel
+was narrowed to exclude a new concurrency fixture. No production grant was relaxed.
+
+All six focused static checks pass. Historical migrations, Document writer/worker/ABI, generic
+transition, fixture adapter, caller grants and the unconditional hosted CI invocation remain
+byte-identical to d07. Earlier lint limitations remain explicit; fresh exact-head hosted CI,
+non-author review and release are owed. No source binding, provider, actor/tenant deletion policy,
+reminder adoption or production operation changed. Strict totals remain 1/18 and 2/50.

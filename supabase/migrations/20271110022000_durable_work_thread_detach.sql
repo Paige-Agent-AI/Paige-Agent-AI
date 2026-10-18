@@ -35,8 +35,19 @@ begin
     if exists (select 1 from public.paige_chat_threads t where t.id = old.thread_id) then
       raise exception 'DURABLE_WORK_IDENTITY_IMMUTABLE' using errcode = '22023';
     end if;
+    -- Retain the incumbent deletion hold while work can still dispatch, settle or reconcile.
+    if old.status not in ('succeeded','failed','cancelled')
+       or old.settled_at is null or old.terminal_outcome is null
+       or (old.status = 'succeeded' and old.terminal_outcome->>'verified_readback' is distinct from 'true')
+       -- Successful Document replay still requires its existing completion turn.
+       or (old.work_kind = 'document_authoring' and old.status = 'succeeded')
+       or new.status is distinct from old.status
+       or new.settled_at is distinct from old.settled_at
+       or new.terminal_outcome is distinct from old.terminal_outcome then
+      raise exception 'DURABLE_WORK_IDENTITY_IMMUTABLE' using errcode = '22023';
+    end if;
     -- Under the existing immediate FK, a referenced parent becomes absent during its DELETE.
-    -- This permits only that NULL detachment; it is never caller or execution authority.
+    -- Only compatible settled work may detach; this is never caller or execution authority.
   end if;
   return new;
 end

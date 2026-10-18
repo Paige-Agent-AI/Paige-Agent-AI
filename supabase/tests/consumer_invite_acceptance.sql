@@ -502,7 +502,7 @@ BEGIN
    SET LOCAL ROLE authenticated;
    RETURN NEXT is((SELECT count(*) FROM public.client_files WHERE id=_file),1::bigint,_label||': owner reloads the same canonical file');
    RETURN NEXT is((SELECT count(*) FROM storage.objects WHERE bucket_id='client-files' AND name=_path),1::bigint,_label||': actual owner can retrieve its customer file');
-   -- The owner's files go through the governed owner writers (20271110070000): a staff PUT now
+   -- The owner's files go through the governed owner writers (20271110200000): a staff PUT now
    -- needs a pending reservation, so the earlier PUT-then-insert fixture shape is refused by design.
    _shared_path:=public.client_file_owner_begin_upload(_owner,_tenant,_contact,_staff_file,'Shared preparation.pdf','application/pdf',4)#>>'{file,storage_path}';
    _internal_path:=public.client_file_owner_begin_upload(_owner,_tenant,_contact,_internal_file,'Internal preparation.pdf','application/pdf',4)#>>'{file,storage_path}';

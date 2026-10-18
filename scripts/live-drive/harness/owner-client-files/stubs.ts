@@ -4,7 +4,7 @@
 // (§32/§70.1).
 //
 // The record around the section is the owner-shared-work harness's (the REAL exp04 standing fixture through the
-// REAL parser/composer). The file RPCs answer in exactly the shapes 20271110070000 returns, from a client_files-
+// REAL parser/composer). The file RPCs answer in exactly the shapes 20271110200000 returns, from a client_files-
 // shaped store that also holds rows the owner list must never return (another client's file, another
 // business's file, someone else's unfinished upload):
 //

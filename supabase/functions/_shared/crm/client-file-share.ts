@@ -1,5 +1,5 @@
 // E09 Documents — the ONE way Paige changes whether a client can see a file that stays on the same
-// client: public.client_file_set_client_share (migration 20271110070000), through the CALLER's
+// client: public.client_file_set_client_share (migration 20271110200000), through the CALLER's
 // client. That function is SECURITY DEFINER and re-proves actor, current workspace and business
 // admin from auth.uid() (§59), so nothing here grants authority: the expected actor is the verified
 // session user and the expected tenant is the server-resolved persona tenant. No model argument can
@@ -120,7 +120,7 @@ export async function shareClientFile(input: {
   }
   const ack = object(reply.data);
   if (ack?.ok === false) {
-    // A named refusal: the function wrote nothing (20271110070000, client_file_set_client_share steps 2-7).
+    // A named refusal: the function wrote nothing (20271110200000, client_file_set_client_share steps 2-7).
     attempted = false;
     const reason = SHARE_REFUSALS[String(ack.error)] ?? "refused";
     return fail(reason, reason === "changed" && instant(ack.updated_at) ? { currentUpdatedAt: ack.updated_at } : {});

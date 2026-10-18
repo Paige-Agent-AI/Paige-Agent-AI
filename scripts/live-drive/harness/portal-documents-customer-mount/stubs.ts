@@ -5,7 +5,7 @@
 // Only the transport is stubbed. The REAL useClientDocuments / useClientPortalReleasedWork / usePortalDocumentsGlance
 // hooks (exact-key validators included), the REAL Operations review component, the REAL brand/config readers, the
 // REAL playbook resolver and the REAL NotificationBell all run against this client. The documents read is computed
-// the way 20271110070000 §1e computes it, from a client_files-shaped store that deliberately holds rows the customer
+// the way 20271110200000 §1e computes it, from a client_files-shaped store that deliberately holds rows the customer
 // must NOT see:
 //
 //   client_portal_documents(p_tenant_id, p_limit, p_before, p_before_id)

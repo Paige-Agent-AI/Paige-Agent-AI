@@ -7,7 +7,7 @@ import { clientDocumentMime } from "@/lib/client-portal-documents";
  * E09 Slice 4 (4A) — one client's files, for the business owner, on the Solo client record.
  *
  * public.client_files and the private client-files bucket stay the only file store (§18). Every read and
- * write goes through the owner RPCs of 20271110070000, each sent with the signed-in actor and the workspace
+ * write goes through the owner RPCs of 20271110200000, each sent with the signed-in actor and the workspace
  * the record was opened in, so a switched account or workspace is refused by the server, not trusted here:
  *   client_file_owner_list          — this client's files, pinned to tenant AND contact, admins only; 100 a page,
  *                                     the next page after the (created_at, id) of the last file shown

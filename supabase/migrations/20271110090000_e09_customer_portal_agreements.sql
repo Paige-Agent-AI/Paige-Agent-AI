@@ -11,8 +11,9 @@
 -- THE ONE WRITER, client_portal_open_agreement_signing, is the customer-side twin of
 -- issue_agreement_signing_link (20270532110000:45-176) with three deliberate differences:
 --   1. It NEVER writes paige_agreements. It never freezes a document, never moves a status and,
---      unlike the owner path, never rewrites expires_at. Only the customer's own signer row's three
---      token columns change.
+--      unlike the owner path, never rewrites expires_at. Only the customer's own signer row's
+--      token_hash and token_expires_at change. It never clears token_revoked_at: a link someone
+--      revoked stays revoked, and the portal refuses rather than undo it.
 --   2. The new link expires at the EARLIER of the agreement's deadline and the emailed link's own
 --      expiry, so it is never later than the link the business sent; with neither, or with that
 --      moment already past, no link is issued here (NOT_SIGNABLE_HERE). There is one token per
@@ -89,6 +90,12 @@ BEGIN
       IF (public.contact_method_match_key('email', _me.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS NOT TRUE THEN
         _note := 'use_email_link';
       END IF;
+      -- A revoked link on an agreement that is still open. Every revocation the engine writes today
+      -- rides a terminal status, so this is defensive; but the portal never undoes a revocation it did
+      -- not make, so a revoked signer is not signable here (the writer refuses NOT_SIGNABLE_HERE).
+      IF _me.token_revoked_at IS NOT NULL THEN
+        _note := 'use_email_link';
+      END IF;
       _deadline := least(_a.expires_at, _me.token_expires_at);
       IF _deadline IS NULL OR _deadline <= now() THEN
         _note := 'use_email_link';
@@ -155,6 +162,8 @@ BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
   IF _client_id IS NULL THEN RETURN NULL; END IF;
+  -- LOCK SCOPE (the same in both reads): the customer's own client row only, like Progress — never
+  -- the business's tenants row on every page load. The one writer also share-locks the tenant.
   SELECT c.tenant_id, t.name INTO _tenant, _business
     FROM public.clients c JOIN public.tenants t ON t.id = c.tenant_id
    WHERE c.id = _client_id AND c.linked_user_id = _uid AND c.status = 'active'
@@ -218,7 +227,8 @@ GRANT EXECUTE ON FUNCTION public.client_portal_agreements(uuid, integer) TO auth
 -- a stranger learns nothing about which agreements exist), NOT_SIGNABLE (with the derived state:
 -- signed, declined, withdrawn, expired, waiting on the business or on others), NOT_SIGNABLE_HERE
 -- (use the emailed link: no single counterparty, a signer row that is not this login's own email,
--- no deadline to give the link or one already past, or a document this path will not hand a link to),
+-- a signer link that was revoked while the agreement is still open, no deadline to give the link or
+-- one already past, or a document this path will not hand a link to),
 -- TRY_AGAIN_LATER (more than 10 opens of this agreement by this customer in an hour).
 --
 -- LOCK ORDER is signer rows FOR UPDATE, then the agreement FOR KEY SHARE — the same order
@@ -243,10 +253,13 @@ DECLARE
   _token text;
   _expires timestamptz;
   _emailed_expiry timestamptz;
+  _revoked_at timestamptz;
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
   IF _client_id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_AGREEMENT_UNAVAILABLE'); END IF;
+  -- The writer, like the Messages writer, share-locks the client AND the business, so neither the
+  -- relationship nor the business can be switched off between this check and the token write.
   SELECT c.tenant_id INTO _tenant
     FROM public.clients c JOIN public.tenants t ON t.id = c.tenant_id
    WHERE c.id = _client_id AND c.linked_user_id = _uid AND c.status = 'active'
@@ -290,12 +303,14 @@ BEGIN
   END IF;
 
   -- The deadline: the EARLIER of the agreement's and the emailed link's (read from the signer row
-  -- this transaction holds locked), never later than either, never invented. The state above
+  -- this transaction holds locked), never later than either, never invented. And a revoked link is
+  -- refused here too, on the locked row: the portal never mints over a revocation. The state above
   -- already refused this case; it is re-checked on the locked row so no link outlives the one the
   -- business sent even if the two ever drift.
-  SELECT s.token_expires_at INTO _emailed_expiry FROM public.paige_agreement_signers s WHERE s.id = _signer;
+  SELECT s.token_expires_at, s.token_revoked_at INTO _emailed_expiry, _revoked_at
+    FROM public.paige_agreement_signers s WHERE s.id = _signer;
   _expires := least(_a.expires_at, _emailed_expiry);
-  IF _expires IS NULL OR _expires <= now() THEN
+  IF _revoked_at IS NOT NULL OR _expires IS NULL OR _expires <= now() THEN
     RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE');
   END IF;
 
@@ -306,9 +321,9 @@ BEGIN
   UPDATE public.paige_agreement_signers
      SET token_hash = encode(extensions.digest(_token, 'sha256'), 'hex'),
          token_expires_at = _expires,
-         token_revoked_at = NULL,
          updated_at = now()
-   WHERE id = _signer AND agreement_id = _a.id AND status IN ('pending','viewed');
+   WHERE id = _signer AND agreement_id = _a.id AND status IN ('pending','viewed')
+     AND token_revoked_at IS NULL;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE'); END IF;
 
   INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, target_type, target_id, tenant_id, payload)
@@ -342,7 +357,7 @@ BEGIN
       FROM public.clients c JOIN public.tenants t ON t.id = c.tenant_id
      WHERE c.id = _client_id AND c.linked_user_id = _uid AND c.status = 'active'
        AND c.merged_into_contact_id IS NULL AND t.status = 'active'
-     FOR SHARE OF c, t;
+     FOR SHARE OF c;
   END IF;
   IF _tenant IS NOT NULL THEN
     SELECT jsonb_build_object('agreement_id', a.id, 'tenant_id', a.tenant_id, 'title', left(a.title, 200))

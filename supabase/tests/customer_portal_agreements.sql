@@ -8,7 +8,7 @@
 -- link or the agreement; every refusal; the signer-status backstop on the token write; the download
 -- scope; sub-account parity; and no RLS policy changed.
 BEGIN;
-SELECT plan(131);
+SELECT plan(138);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
@@ -215,6 +215,12 @@ SELECT is((SELECT count(*) FROM pg_proc WHERE proname IN ('client_portal_agreeme
 -- customer's own client row, like Progress, never the business's tenants row on every page load.
 SELECT ok(pg_get_functiondef('public.client_portal_agreements(uuid,integer)'::regprocedure) ~ 'FOR SHARE OF c;'
   AND pg_get_functiondef('public.client_portal_agreements(uuid,integer)'::regprocedure) !~ 'FOR SHARE OF c, t','the list read share-locks only the client row');
+-- The download scope is a read too and locks the same way; only the one writer also share-locks the
+-- tenants row, like the Messages writer, so the business cannot be deactivated mid-mint.
+SELECT ok(pg_get_functiondef('public.client_portal_agreement_document_scope(uuid,uuid)'::regprocedure) ~ 'FOR SHARE OF c;'
+  AND pg_get_functiondef('public.client_portal_agreement_document_scope(uuid,uuid)'::regprocedure) !~ 'FOR SHARE OF c, t'
+  AND pg_get_functiondef('public.client_portal_open_agreement_signing(uuid,uuid)'::regprocedure) ~ 'FOR SHARE OF c, t;',
+  'the download scope share-locks only the client row; the writer alone also locks the business');
 SELECT ok((SELECT bool_and(proconfig @> ARRAY['search_path=public, pg_temp']) FROM pg_proc WHERE proname IN ('client_portal_agreements','client_portal_open_agreement_signing','client_portal_agreement_document_scope','_client_portal_agreement_state','_client_portal_my_email_keys')),'all five pin search_path');
 
 -- ── 2. Customer A's list: exactly theirs, exact keys, nothing private ───────────────────────────
@@ -314,9 +320,9 @@ SELECT is((SELECT count(*) FROM public.paige_agreement_signers s JOIN public.pai
     AND s.token_revoked_at IS NULL AND s.token_expires_at > now() AND s.status IN ('pending','viewed')
     AND a.status IN ('sent','viewed','partially_signed') AND (a.expires_at IS NULL OR a.expires_at > now())
     AND a.id = pg_temp.ag(2)),1::bigint,'the portal token passes the token doors'' own lookup, for that agreement only');
--- The frozen signing page's own reader, unmodified. It resolves pgcrypto only once migration
--- 20271110040000 has schema-qualified its digest call (pgcrypto lives in `extensions`, outside its
--- pinned search_path); before that it cannot hash ANY token, so these assertions fail by design.
+-- The frozen signing page's own reader, unmodified and unwidened. It resolves pgcrypto because
+-- migration 20271110040000 (on main) schema-qualified its digest call; pgcrypto lives in
+-- `extensions`, outside its pinned search_path, and this test does not add it.
 SELECT is((SELECT is_valid FROM public.peek_agreement_signing((SELECT r->>'token' FROM opened))),true,'the frozen signing flow accepts the portal link');
 SELECT is((SELECT document_title FROM public.peek_agreement_signing((SELECT r->>'token' FROM opened))),'Synthetic agreement 2','for that agreement');
 
@@ -401,6 +407,26 @@ SELECT is((SELECT array_agg(r->>'id') FROM jsonb_array_elements(pg_temp.as_user(
  ARRAY[pg_temp.ag(18)::text],'a sub-account''s customer lists their own agreement');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000007',18)->>'ok','true','and opens it to sign');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000007',2)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','and nothing outside their business');
+
+-- ── 9b. A revoked link with the agreement still open ────────────────────────────────────────────
+-- Every revocation the engine writes today rides a terminal status (void, decline, expiry), so this
+-- row is staged: the counterparty's link is revoked while the agreement still reads as sent. The
+-- portal must not undo a revocation it did not make: it lists the agreement for the email, refuses
+-- to mint, and leaves token_revoked_at exactly as it was. Added last so no earlier count moves; the
+-- client now has a primary email, so the engine itself seeds the one counterparty, at that address.
+SELECT pg_temp.mk(23,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','sent',interval '25 days');
+UPDATE public.paige_agreement_signers SET token_hash = encode(digest(repeat('c3',32),'sha256'),'hex'),
+  token_expires_at = now() + interval '25 days', token_revoked_at = now() - interval '1 hour'
+ WHERE agreement_id = pg_temp.ag(23) AND signer_role = 'counterparty';
+CREATE TEMP TABLE before_revoked AS SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) AS signers
+ FROM public.paige_agreement_signers s WHERE s.agreement_id = pg_temp.ag(23);
+SELECT is((SELECT count(*) FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(23) AND signer_role = 'counterparty'
+  AND public.contact_method_match_key('email', email) = 'customer-a-primary@tests.invalid'),1::bigint,'staged: one counterparty, at the customer''s own primary address');
+SELECT is(pg_temp.row_a(23)->>'state'||'|'||(pg_temp.row_a(23)->>'can_sign')||'|'||(pg_temp.row_a(23)->>'sign_note'),'awaiting_you|false|use_email_link','a revoked link on an open agreement: listed, not signable here');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',23),'{"ok":false,"error":"NOT_SIGNABLE_HERE"}'::jsonb,'and the writer refuses to mint over the revocation');
+SELECT ok((SELECT bool_and(token_revoked_at IS NOT NULL) FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(23) AND signer_role = 'counterparty'),'token_revoked_at is never cleared by the portal');
+SELECT is((SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) FROM public.paige_agreement_signers s WHERE s.agreement_id = pg_temp.ag(23)),(SELECT signers FROM before_revoked),'the signer row is byte-identical');
+SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action = 'agreement.portal_link_issued' AND target_id = pg_temp.ag(23)),0::bigint,'and no audit row claims a link');
 
 -- ── 10. No policy changed ───────────────────────────────────────────────────────────────────────
 SELECT is((SELECT string_agg(tablename||':'||policyname||':'||cmd||':'||permissive, ',' ORDER BY tablename, policyname) FROM pg_policies

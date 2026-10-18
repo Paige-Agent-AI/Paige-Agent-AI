@@ -114,7 +114,7 @@ try{
  const before=run(writer),beforeContract=existingContract();
  const beforeExtensions=run('SELECT jsonb_agg(jsonb_build_object(\'name\',extname,\'version\',extversion,\'owner\',extowner) ORDER BY extname) FROM pg_extension');
  if(!baseline){
-  let migration=read('20271110023000_reminder_approved_intent.sql');
+  let migration=read('20271110032000_reminder_approved_intent.sql');
   if(policyNegativeControl){
    const calls=migration.match(/perform private\.paige_reminder_policy\([^;]+\);/g);assert.equal(calls?.length,3);
    migration=migration.replace(/perform private\.paige_reminder_policy\([^;]+\);/g,'/* Deliberate missing-policy negative control. */');

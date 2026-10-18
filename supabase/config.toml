@@ -730,3 +730,10 @@ verify_jwt = true
 # The handler fails closed through verify_cron_token before reading or dispatching.
 [functions.plan-reminder-cron]
 verify_jwt = false
+
+# Preserve the deployed booking-notification worker: pg_cron (job booking-notifications, */5) sends
+# only the Vault-held x-cron-token, never a Supabase JWT. The handler fails closed through
+# verify_cron_token before reading or sending. CLI2.116 preserves the remote setting when this is
+# omitted, so the deployed-source readback needs it declared to match production.
+[functions.process-booking-notifications]
+verify_jwt = false

@@ -8,6 +8,7 @@ import { INTERVIEW_FIELDS, INTERVIEW_NEXT_PROMPTS, cleanInterviewCheckpoint, isO
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import "./solo-business-interview.css";
 import { interviewConnectionPath, interviewSetupPath } from "./solo-interview-navigation";
+import { SoloFirstValue } from "./SoloFirstValue";
 import type { OnboardingProfileStatus } from "./SoloOnboardingStage";
 
 async function checkpointRpc(name: string, args: Record<string, unknown>) {
@@ -191,6 +192,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
       </form>}
       {(!onboarding || profileOpen || !!draft || !!threadId) && <div className="sbi-actions"><button type="button" disabled={locked || !!draft} onClick={() => void context.refresh()}>Reload Setup</button>{threadId && <><button type="button" disabled={locked || !!draft || !pending} onClick={() => void move("active", pending ? nextInterviewField(context.brief, pending) : null)}>Skip this topic</button><button type="button" disabled={locked || !!draft} onClick={() => void move(paused ? "active" : "paused", pending)}>{paused ? "Resume interview" : "Pause interview"}</button></>}</div>}
       {!threadId && (!onboarding || profileOpen) && <p className="sbi-note">Send your first message to keep interview progress with this conversation.</p>}
+      {(!onboarding || profileOpen) && !draft && !context.saveOutcomeUnknown && <SoloFirstValue context={context} disabled={locked} />}
       {(!onboarding || profileOpen) && !draft && !context.saveOutcomeUnknown && <section className="sbi-next-steps" aria-label="Secure setup handoffs">
         {hasConfirmedPriority && <div className="sbi-actions">{INTERVIEW_NEXT_PROMPTS.map(question => <button key={question.label} type="button" disabled={locked} onClick={() => {
           if (!ready || locked || context.saveOutcomeUnknown) return;

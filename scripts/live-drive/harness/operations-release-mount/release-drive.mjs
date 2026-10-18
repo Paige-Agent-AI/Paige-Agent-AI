@@ -91,7 +91,10 @@ async function drive(page, s, n) {
   let focus = release;
   switch (s.state) {
     case "single":
-      await release.getByText("Releasing work needs a second person on your team to review it.").waitFor({ timeout: 30_000 });
+      // Wait for whatever the flow decided to show — the one-reviewer note OR a picker — so a picker offered with
+      // nobody in it (D2 broken) is judged by the expectations below rather than timing out.
+      await release.locator(".ops-item-release-single, .ops-staff-source-grid").first().waitFor({ timeout: 30_000 });
+      await page.waitForTimeout(500);
       n.reviewerSelects = await field("Reviewer").count();
       n.reviewShown = await release.locator('section[aria-label="Deliverable review"]').count();
       break;

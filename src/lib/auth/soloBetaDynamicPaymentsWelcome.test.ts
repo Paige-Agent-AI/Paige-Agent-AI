@@ -131,9 +131,20 @@ describe("Solo Beta dynamic payment methods and verified welcome", () => {
   });
 
   it("uses a stable provider idempotency key and fails ambiguous outcomes closed", () => {
-    expect(sender).toContain("'Idempotency-Key': messageId");
-    expect(sender).toContain(".upsert({");
-    expect(sender).toContain("{ onConflict: 'message_id' }");
+    // SendGrid mail send (owner transactional cutover, 2026-10-18): stable
+    // idempotency key, X-Message-Id acceptance, and the send-log prepare as
+    // clear-then-insert — email_send_log has no full unique on message_id, so
+    // an onConflict:'message_id' arbiter is a guaranteed 42P10 (the incident
+    // that stranded the first live welcome email).
+    expect(sender).toContain("'X-Idempotency-Key': messageId");
+    expect(sender).toContain("api.sendgrid.com/v3/mail/send");
+    expect(sender).toContain("SENDGRID_MAIL_SEND_API_KEY");
+    expect(sender).toContain("response.headers.get('X-Message-Id')");
+    expect(sender).toContain(
+      ".delete().eq('message_id', messageId).neq('status', 'sent')",
+    );
+    expect(sender).toContain(".insert({");
+    expect(sender).not.toContain("onConflict: 'message_id'");
     expect(sender).toContain(
       "await failClaim('provider_outcome_ambiguous', true)",
     );

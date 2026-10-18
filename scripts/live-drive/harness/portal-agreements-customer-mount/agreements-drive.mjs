@@ -36,18 +36,22 @@ const PORTAL_TOKEN = "f0".repeat(32);
 const NEVER = ["Sam's onboarding agreement", "Northwind internal NDA", "Unsent draft retainer", "PRIVATE BODY", "$4,800", "4,800",
   "owner@northwind", "deadbeef", "offer-private", "tenant-agreements/", "Alex Moreno", "token", "sha256"];
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
+const STAFF = ["staff", "staff-error"];
+/** Any wording that sends the customer to the emailed link as if it certainly still works (the round-3 finding). */
+const EMAIL_PROMISE = /use the link|from the link|Sign each agreement from the link/i;
 
 function allShots() {
   const shots = [];
   for (const theme of ["light", "dark"]) {
     for (const kind of ["desktop", "phone"]) {
-      for (const state of ["mixed", "waiting", "signed", "empty", "loading", "multiple", "error", "staff"]) shots.push({ page: "agreements", state, theme, kind });
+      for (const state of ["mixed", "waiting", "signed", "empty", "loading", "multiple", "error", "staff", "staff-error"]) shots.push({ page: "agreements", state, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "opening", query: { open: "pending" }, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "refused-here", query: { open: "here" }, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "refused-later", query: { open: "later" }, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "open-failed", query: { open: "fail" }, theme, kind });
       shots.push({ page: "agreements", state: "signed", variant: "download-busy", query: { copy: "pending" }, theme, kind });
       shots.push({ page: "agreements", state: "signed", variant: "download", theme, kind });
+      shots.push({ page: "agreements", state: "signed", variant: "open", theme, kind });
       shots.push({ page: "agreements", state: "signed", variant: "download-failed", query: { copy: "fail" }, theme, kind });
       shots.push({ page: "home", state: "home", theme, kind });
       shots.push({ page: "home", state: "home-none", theme, kind });
@@ -113,14 +117,19 @@ async function drive(page, s, notes) {
       await page.locator('[data-testid="agreements-waiting-line"]').waitFor({ timeout: 15_000 });
       await page.mouse.move(0, 0);
     }
-  } else if (s.page === "platform" || s.state === "staff") {
+  } else if (s.page === "platform" || STAFF.includes(s.state)) {
     await page.getByText("Your agreements", { exact: false }).first().waitFor({ timeout: 30_000 });
     await page.getByText("PaigeAgent Terms of Service").first().waitFor({ timeout: 30_000 });
     notes.platformText = clean(await page.locator('[data-harness-region="page"]').innerText());
     notes.customerTitle = await page.locator("#agreements-title").count();
+    notes.customerError = await page.getByText("couldn't load your agreements", { exact: false }).count();
   } else if (s.state === "loading") {
     await page.locator('[data-testid="agreements-skeleton"]').waitFor({ state: "attached", timeout: 30_000 });
-    notes.busy = await page.locator(section).getAttribute("aria-busy");
+    // Before the first list comes back nothing says this login is a customer: the shape of a list, no customer
+    // header, no customer footer (a staff login briefly saw both before round 4).
+    notes.skeleton = await page.locator('[data-testid="agreements-skeleton"]').count();
+    notes.customerTitle = await page.locator("#agreements-title").count();
+    notes.footer = await page.locator('[data-testid="platform-terms-link"]').count();
   } else if (s.state === "multiple") {
     await page.getByText("Agreements for more than one business aren't available here yet").waitFor({ timeout: 30_000 });
     await readList();
@@ -138,6 +147,8 @@ async function drive(page, s, notes) {
       await page.locator('[data-testid="review-and-sign"]').first().click();
       if (s.variant === "opening") await page.getByRole("button", { name: "Opening…" }).waitFor({ timeout: 10_000 });
       else await page.locator('[data-testid="agreement-problem"]').waitFor({ timeout: 10_000 });
+      notes.problemLinks = await page.locator('[data-testid="agreement-problem"] a').evaluateAll((as) => as.map((a) => `${a.textContent.trim()} -> ${a.getAttribute("href")}`));
+      await page.mouse.move(0, 0);
     }
     if (s.variant === "download-busy") {
       await page.locator('[data-testid="download-signed"]').click();
@@ -154,16 +165,30 @@ async function drive(page, s, notes) {
       fs.rmSync(file);
       await page.getByRole("button", { name: "Download signed copy" }).waitFor({ timeout: 10_000 });
     }
+    if (s.variant === "open") {
+      // "Open": the signed copy in a NEW tab, opened by the click itself (so no pop-up blocker), with no opener.
+      const popup = page.context().waitForEvent("page", { timeout: 15_000 });
+      await page.locator('[data-testid="open-signed"]').click();
+      const tab = await popup;
+      await tab.waitForURL(/^blob:/, { timeout: 15_000 });
+      notes.openUrl = tab.url().slice(0, 5);
+      notes.openOpener = await tab.evaluate(() => window.opener === null);
+      notes.openHead = await tab.evaluate(async () => (await (await fetch(location.href)).text()).slice(0, 8)).catch((e) => `fetch failed: ${String(e).slice(0, 80)}`);
+      notes.openType = await tab.evaluate(async () => (await (await fetch(location.href)).blob()).type).catch(() => null);
+      await tab.close();
+      await page.bringToFront();
+      await page.locator('[data-testid="open-signed"]').filter({ hasText: /^Open$/ }).waitFor({ timeout: 10_000 });
+    }
     if (s.variant === "download-failed") {
       await page.locator('[data-testid="download-signed"]').click();
       await page.locator('[data-testid="agreement-problem"]').waitFor({ timeout: 10_000 });
     }
     await readList();
     if (s.state === "mixed" && !s.variant) {
-      // The expired row's ask: the words are written for the customer (Messages' ?draft= contract, Slice 5).
-      const ask = page.locator('[data-testid="ask-new-link"]');
-      notes.askHref = await ask.getAttribute("href");
-      await ask.click();
+      // Every "Ask {Business} for a new link" goes to Messages; no suggested words until Messages reads them (Slice 5).
+      const ask = page.locator('[data-testid="ask-new-link"], [data-testid="ask-new-link-inline"]');
+      notes.askHrefs = await ask.evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+      await ask.first().click();
       notes.askLanded = await textOf(page.locator("[data-harness-elsewhere]"));
       await page.goBack();
       await page.locator('[data-testid="agreement-row"]').first().waitFor({ timeout: 15_000 });
@@ -182,42 +207,52 @@ function unmet(s, n) {
   const miss = [];
   const want = (ok, what) => { if (!ok) miss.push(what); };
   const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const customerList = s.page === "agreements" && !["loading", "staff"].includes(s.state);
+  const customerList = s.page === "agreements" && !["loading", ...STAFF].includes(s.state);
   if (customerList) {
     want((n.leaks ?? []).length === 0, `private text on the customer page: ${JSON.stringify(n.leaks)}`);
     want((n.links ?? []).some((l) => l === "PaigeAgent terms you've accepted -> /app/agreements/platform"), `platform-terms link ${JSON.stringify(n.links)}`);
+    want(!EMAIL_PROMISE.test(n.pageText ?? ""), `the page sends the customer to the emailed link: "${(n.pageText ?? "").match(EMAIL_PROMISE)?.[0]}"`);
+    want(!(n.links ?? []).some((l) => /draft=/.test(l)), `a ?draft= link nothing reads yet ${JSON.stringify(n.links)}`);
   }
-  if (s.page === "agreements" && !s.phone && !["staff", "multiple"].includes(s.state)) {
+  if (s.page === "agreements" && !s.phone && ![...STAFF, "multiple"].includes(s.state)) {
     // D-A1: Agreements sits in Paperwork beside Documents for every customer of one business.
     want(eq(n.nav, ["Home", "Messages", "[Your work]", "[Paperwork]", "Resources"]), `customer nav ${JSON.stringify(n.nav)}`);
   }
+  // Waiting on THIS customer, by the date that binds: the dead emailed link first (it needs the business), then
+  // the two they can sign here. The co-signed agreement is not theirs to count.
   const mixedRows = [
-    "Website build agreement | awaiting_you", "Photo usage release | awaiting_you", "Joint services agreement with your business partner | awaiting_you",
+    "Consulting retainer renewal | awaiting_you", "Website build agreement | awaiting_you", "Photo usage release | awaiting_you",
   ];
   if (s.state === "mixed" && s.page === "agreements") {
     want(n.title === `Agreements with ${BUSINESS}`, `title "${n.title}"`);
     want(n.summary === "3 waiting for your signature", `summary "${n.summary}"`);
     want(eq(n.groups?.map((g) => g.heading), ["Waiting for you", "Everything else"]), `groups ${JSON.stringify(n.groups)}`);
     want(eq(n.groups?.[0]?.rows, mixedRows), `waiting rows ${JSON.stringify(n.groups?.[0]?.rows)}`);
-    want(eq(n.groups?.[1]?.rows?.map((r) => r.split(" | ")[1]), ["signed", "awaiting_business", "awaiting_others", "withdrawn", "signed", "declined", "expired"]), `everything-else rows ${JSON.stringify(n.groups?.[1]?.rows)}`);
+    want(eq(n.groups?.[1]?.rows?.map((r) => r.split(" | ")[1]), ["signed", "awaiting_signature", "awaiting_business", "awaiting_countersign", "withdrawn", "signed", "declined", "expired"]), `everything-else rows ${JSON.stringify(n.groups?.[1]?.rows)}`);
     // Everything else in the SQL's order: newest of signed-or-sent first.
     // Rows under "Waiting for you" carry no pill: the heading says it once.
-    const labels = ["Signed", `Waiting for ${BUSINESS}`, "Waiting for others", "Withdrawn", "Signed", "Declined", "Expired"];
+    const labels = ["Signed", "Waiting for a signature", `Waiting for ${BUSINESS}`, `Waiting for ${BUSINESS}`, "Withdrawn", "Signed", "Declined", "Expired"];
     want(eq(s.phone ? n.inlineStates.map((t) => t.replace(/\s*·$/, "")) : n.pills, s.phone ? labels.filter((l) => l !== "Signed" && l !== "Expired") : labels), `${s.phone ? "inline states" : "pills"} ${JSON.stringify(s.phone ? n.inlineStates : n.pills)}`);
     want(eq(n.buttons.filter((b) => /Review and sign|Opening…/.test(b)).length, 2), `Review and sign buttons ${JSON.stringify(n.buttons)}`);
-    want(n.notes.includes(`Sign this one from the link ${BUSINESS} emailed you.`), `co-signer note ${JSON.stringify(n.notes)}`);
+    want(n.notes.includes(`${BUSINESS} sent this one's signing link by email. If you can't use it, ask ${BUSINESS} for a new link.`), `co-signer note ${JSON.stringify(n.notes)}`);
+    want(n.notes.includes(`The signing link ${BUSINESS} emailed you has expired.`), `dead-link note ${JSON.stringify(n.notes)}`);
+    want(n.notes.includes(`You've signed. It's complete once ${BUSINESS} signs.`), `countersign note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes(`${BUSINESS} withdrew this agreement. There's nothing to sign.`), `withdrawn note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes("The signed copy isn't ready to download yet."), `unsealed note ${JSON.stringify(n.notes)}`);
     want(n.replaces === `Opening an agreement here replaces the signing link ${BUSINESS} emailed you.`, `D-A4 note "${n.replaces}"`);
     want(eq(n.engagements, ["For Website build", "For Brand strategy"]), `engagement names ${JSON.stringify(n.engagements)}`);
     if (!s.variant) {
-      want(n.askHref === `/app/messages?${new URLSearchParams({ draft: 'Could you send me a new link to sign "Spring launch pilot"?' })}`, `ask href ${n.askHref}`);
-      want(n.askLanded?.startsWith("/app/messages?draft="), `ask landed "${n.askLanded}"`);
+      // Dead emailed link (button), co-signer (inline), expired agreement (button): all to Messages, no ?draft=.
+      want(eq(n.askHrefs, ["/app/messages", "/app/messages", "/app/messages"]), `ask hrefs ${JSON.stringify(n.askHrefs)}`);
+      want(n.askLanded === "/app/messages", `ask landed "${n.askLanded}"`);
     }
   }
   if (s.variant === "opening") want(n.buttons.includes("Opening…"), `opening ${JSON.stringify(n.buttons)}`);
-  if (s.variant === "refused-here") want(n.problem === `Use the link ${BUSINESS} emailed you to sign this one.`, `refusal "${n.problem}"`);
-  if (s.variant === "refused-later") want(/opened several times in the last hour\. Try again later, or use the link Northwind Studio emailed you\./.test(n.problem), `refusal "${n.problem}"`);
+  if (s.variant === "refused-here") want(n.problem === `The signing link ${BUSINESS} emailed you has expired.`, `refusal "${n.problem}"`);
+  if (s.variant === "refused-later") {
+    want(n.problem === `This agreement has been opened several times in the last hour. Try again in an hour, or ask ${BUSINESS} for a new link.`, `refusal "${n.problem}"`);
+    want(eq(n.problemLinks, [`ask ${BUSINESS} for a new link -> /app/messages`]), `refusal link ${JSON.stringify(n.problemLinks)}`);
+  }
   if (s.variant === "open-failed") want(n.problem === "We couldn't open this agreement. Check your connection and try again.", `refusal "${n.problem}"`);
   if (s.state === "waiting") {
     want(eq(n.groups?.map((g) => g.heading), ["Waiting for you"]) && n.summary === "1 waiting for your signature", `waiting ${JSON.stringify(n.groups)} "${n.summary}"`);
@@ -227,14 +262,16 @@ function unmet(s, n) {
     want(n.summary === "Nothing is waiting for your signature.", `signed summary "${n.summary}"`);
     if (!s.variant) want(n.buttons.includes("Download signed copy") && n.buttons.includes("Open"), `signed buttons ${JSON.stringify(n.buttons)}`);
     if (s.variant === "download-busy") want(n.buttons.includes("Downloading…"), `download busy ${JSON.stringify(n.buttons)}`);
+    if (s.variant === "open") want(n.openUrl === "blob:" && n.openOpener === true && n.openHead === "%PDF-1.4" && n.openType === "application/pdf", `open ${n.openUrl} opener-null=${n.openOpener} ${n.openHead} ${n.openType}`);
     if (s.variant === "download") want(n.downloadName === "Brand strategy retainer (signed).pdf" && n.downloadHead === "%PDF-1.4", `download ${n.downloadName} ${n.downloadHead}`);
     if (s.variant === "download-failed") want(/couldn't get the signed copy/.test(n.problem), `download failure "${n.problem}"`);
   }
   if (s.state === "empty") want(n.title === `Agreements with ${BUSINESS}` && (n.groups ?? []).length === 0, `empty ${n.title} ${JSON.stringify(n.groups)}`);
   if (s.state === "error") want(/couldn't refresh this list, so it may be out of date/.test(n.alert ?? "") && (n.groups ?? []).length > 0, `error "${n.alert}"`);
-  if (s.state === "loading") want(n.busy === "true", "loading section not aria-busy");
-  if (s.page === "platform" || s.state === "staff") {
+  if (s.state === "loading") want(n.skeleton === 1 && n.customerTitle === 0 && n.footer === 0, `loading: skeleton ${n.skeleton}, customer title ${n.customerTitle}, footer ${n.footer}`);
+  if (s.page === "platform" || STAFF.includes(s.state)) {
     want(/PaigeAgent Terms of Service/.test(n.platformText ?? "") && n.customerTitle === 0, `platform terms page ${n.platformText?.slice(0, 80)}`);
+    want(n.customerError === 0, "a staff login was shown the customer error card");
   }
   if (s.state === "home") want(n.line === "2 agreements waiting for your signature Review" && n.lineHref === "/app/agreements" && n.lineOpens === "/app/agreements", `home line "${n.line}" -> ${n.lineHref} / ${n.lineOpens}`);
   if (s.state === "home-none") want(n.line === "", `home line shown with nothing waiting: "${n.line}"`);
@@ -378,21 +415,47 @@ async function runShots(browser, shots, label = "") {
     await page.goto(urlFor(s), { timeout: 180_000 });
     let driveError = null;
     try { await drive(page, s, notes); } catch (e) { driveError = String(e).slice(0, 400); }
-    const m = await page.evaluate(measureInPage, { page: s.page, platform: s.page === "platform" || s.state === "staff" });
+    await page.evaluate(() => document.fonts.ready);
+    const m = await page.evaluate(measureInPage, { page: s.page, platform: s.page === "platform" || STAFF.includes(s.state) });
     const smallTargets = s.phone ? m.targets.filter((t) => t.h < 44 || t.w < 44) : [];
     const expectations = driveError ? [] : unmet(s, notes);
     // The one act: the first "Review and sign", gold, on a page that offers signing; nothing gold anywhere else.
     const signing = s.page === "agreements" && ["mixed", "waiting", "error"].includes(s.state);
-    const wantActs = signing ? [s.variant === "opening" ? "Opening…" : "Review and sign"] : [];
+    // After "opened too many times" the row's act goes quiet until the list is re-read: no gold at all.
+    const wantActs = signing && s.variant !== "refused-later" ? [s.variant === "opening" ? "Opening…" : "Review and sign"] : [];
     if (JSON.stringify(m.goldActs) !== JSON.stringify(wantActs)) expectations.push(`gold acts ${JSON.stringify(m.goldActs)} (want ${JSON.stringify(wantActs)})`);
     const ok = !driveError && expectations.length === 0 && errors.length === 0 && blocked.length === 0 && m.low.length === 0 && !m.overflowX
       && m.stray.length === 0 && m.clipped.length === 0 && m.spill.length === 0 && smallTargets.length === 0 && m.tag;
     if (!ok) failed = true;
     await page.screenshot({ path: path.join(out, `${name}.png`) });
-    if (s.page === "agreements" && !driveError && !["loading", "staff"].includes(s.state)) {
+    if (s.page === "agreements" && !driveError && !["loading", ...STAFF].includes(s.state)) {
       await page.locator(section).screenshot({ path: path.join(out, `${name}-page.png`) }).catch(() => undefined);
     }
-    results[name] = { ok, driveError, expectations, errors, blocked, notes, smallTargets, ...m, targets: undefined };
+    // The rows below the fold and the footer, as the customer sees them: the page's own scroll container, scrolled.
+    if (s.page === "agreements" && s.state === "mixed" && !s.variant && !driveError) {
+      const steps = await page.evaluate(() => {
+        const root = document.querySelector("section[aria-labelledby='agreements-title']");
+        let el = root?.parentElement ?? null;
+        while (el && !(el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowY))) el = el.parentElement;
+        const sc = el ?? document.scrollingElement;
+        return { max: sc.scrollHeight - sc.clientHeight, view: sc.clientHeight, isDoc: !el };
+      });
+      notes.scroll = steps;
+      for (const [i, frac] of [[1, 0.5], [2, 1]]) {
+        await page.evaluate((top) => {
+          const root = document.querySelector("section[aria-labelledby='agreements-title']");
+          let el = root?.parentElement ?? null;
+          while (el && !(el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowY))) el = el.parentElement;
+          (el ?? document.scrollingElement).scrollTo({ top, behavior: "instant" });
+        }, Math.round(steps.max * frac));
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(250);
+        await page.screenshot({ path: path.join(out, `${name}-scroll${i}.png`) });
+      }
+      notes.footerInView = await page.locator('[data-testid="platform-terms-link"]').evaluate((a) => { const r = a.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight; });
+      if (!notes.footerInView) { expectations.push("footer not in view after scrolling to the bottom"); failed = true; }
+    }
+    results[name] = { ok: ok && expectations.length === 0, driveError, expectations, errors, blocked, notes, smallTargets, ...m, targets: undefined };
     await ctx.close();
     console.log(`${name} ${ok ? "OK" : "FAIL"}`, JSON.stringify({
       driveError, expectations, contrastMin: m.contrastMin, low: m.low.slice(0, 3), reportedLow: m.reportedLow.slice(0, 2), navLow: m.navLow.slice(0, 2),

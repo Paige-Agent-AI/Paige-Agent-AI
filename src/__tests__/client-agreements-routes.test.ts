@@ -22,6 +22,10 @@ describe("customer agreements routes", () => {
   it("falls back to MyAgreements, unchanged, for anyone who is not a customer of a business", () => {
     const page = readFileSync(resolve("src/pages/app/Agreements.tsx"), "utf8");
     expect(page).toContain('const MyAgreements = lazy(() => import("@/pages/MyAgreements"));');
-    expect(page).toMatch(/if \(view\.unavailable\) \{[\s\S]{0,200}<MyAgreements \/>/);
+    expect(page).toMatch(/function PlatformTermsPage\(\) \{[\s\S]{0,200}<MyAgreements \/>/);
+    expect(page).toContain("if (view.unavailable) return <PlatformTermsPage />;");
+    // A read that failed before the login was known to be a customer keeps the platform page too (§58); the
+    // behaviour itself is driven in Agreements.test.tsx.
+    expect(page).toContain("if (!knownCustomer) return <PlatformTermsPage />;");
   });
 });

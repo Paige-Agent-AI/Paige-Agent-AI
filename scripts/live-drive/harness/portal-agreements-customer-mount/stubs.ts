@@ -12,17 +12,20 @@
 //   client_portal_agreements(p_tenant_id, p_limit)
 //     -> { tenant_id, business_name, server_now, summary:{awaiting_you,signed}, agreements:[...], has_more } | null
 //     visible = tenant AND this contact AND status <> 'draft'
-//     order   = awaiting_you first (expires_at ASC NULLS LAST), then coalesce(completed_at, sent_at) DESC, id
+//     order   = awaiting_you first (the binding deadline ASC NULLS LAST), then coalesce(completed_at, sent_at) DESC, id
+//     expires_at on an awaiting_you row = least(agreement deadline, emailed link expiry); otherwise the agreement's
 //     each row has EXACTLY: id, title, engagement_title, state, sent_at, completed_at, expires_at, can_sign,
 //       can_download, sign_note — never the body, a storage key, a hash, a token, a signer, an amount or an offer.
 //   client_portal_open_agreement_signing(p_agreement_id, p_tenant_id)
-//     -> { ok:true, token, expires_at } | { ok:false, error }  (?open=ok|here|later|fail|pending)
+//     -> { ok:true, token, expires_at } | { ok:false, error, note? }  (?open=ok|here|later|fail|pending)
 //   agreement-document?portal=1&agreementId=…[&download=1]       (?copy=ok|fail|pending)
 //   peek_agreement_signing(_token): the FROZEN signing page's read. The emailed token is valid until the portal
 //     issues a link; the portal's token is valid after. One token per signer (D-A4), persisted in sessionStorage so
 //     the full-page navigation to /sign/:token is a real reload.
 //
-//   ?state=mixed|waiting|signed|empty|loading|staff|multiple|error|home|home-none
+//   ?state=mixed|waiting|signed|empty|loading|staff|staff-error|multiple|error|home|home-none
+//     staff-error: the agreements read FAILS (function missing) for a login the brand resolver does not know as a
+//     customer — the page must keep the platform terms (§58), never the customer error card.
 const params = new URLSearchParams(window.location.search);
 const state = params.get("state") ?? "mixed";
 const openMode = params.get("open") ?? "ok";
@@ -46,7 +49,11 @@ function at(days: number, h = 17, m = 0) {
   return d.toISOString();
 }
 
-type Signer = { role: "counterparty" | "issuer"; order: number; status: "pending" | "viewed" | "signed" | "declined"; email: string; name: string };
+type Signer = {
+  role: "counterparty" | "tenant_signatory" | "witness"; order: number; status: "pending" | "viewed" | "signed" | "declined"; email: string; name: string;
+  /** The emailed link's own expiry, and whether it was revoked (null / false = as the agreement). */
+  token_expires_at?: string | null; revoked?: boolean;
+};
 type AgreementRow = {
   id: string; tenant_id: string; contact_id: string; title: string; status: string; sent_at: string | null;
   completed_at: string | null; expires_at: string | null; commercial_title: string | null; commercial_contact: string;
@@ -58,7 +65,7 @@ type AgreementRow = {
 let seq = 0;
 const nid = () => `e0900000-0000-4000-9000-${String(++seq).padStart(12, "0")}`;
 const me = (status: Signer["status"] = "pending", email = USER.email): Signer => ({ role: "counterparty", order: 2, status, email, name: "Jordan Rivera" });
-const owner = (status: Signer["status"] = "signed"): Signer => ({ role: "issuer", order: 1, status, email: "owner@northwind.example.test", name: "Alex Moreno" });
+const owner = (status: Signer["status"] = "signed"): Signer => ({ role: "tenant_signatory", order: 1, status, email: "owner@northwind.example.test", name: "Alex Moreno" });
 const row = (o: Partial<AgreementRow> & Pick<AgreementRow, "title">): AgreementRow => ({
   id: nid(), tenant_id: TENANT, contact_id: CONTACT, status: "sent", sent_at: at(-6, 10), completed_at: null, expires_at: at(14),
   commercial_title: null, commercial_contact: CONTACT, sealed_storage_key: null, signers: [owner(), me()],
@@ -89,11 +96,14 @@ function store(): AgreementRow[] {
     ...hidden,
     waiting,
     row({ title: "Photo usage release", expires_at: at(9) }),
-    // A co-signer: two counterparty rows, so the portal cannot tell which is this login (D-A3).
+    // The emailed link's own expiry has passed while the agreement is still open: that link is dead.
+    row({ title: "Consulting retainer renewal", sent_at: at(-16, 9), expires_at: at(20), signers: [owner(), { ...me(), token_expires_at: at(-1, 9) }] }),
+    // A co-signer: two counterparty rows, so the portal cannot tell which is this login (D-A3): waiting on a
+    // signature, not counted as theirs.
     row({ title: "Joint services agreement with your business partner", expires_at: at(12), signers: [owner(), me(), { ...me(), email: "partner@example.test", name: "Partner" }] }),
     // The business signs first (signing order): waiting on them.
     row({ title: "Event photography terms", signers: [{ ...owner("pending") }, me()] }),
-    // The customer signed; another party still has to.
+    // The customer signed; only the business's own signatory still has to.
     row({ title: "Mutual NDA", status: "partially_signed", signers: [owner("pending"), { ...me("signed"), order: 1 }] }),
     signedRow,
     // Completed, but the sealed copy is not there yet.
@@ -106,33 +116,48 @@ function store(): AgreementRow[] {
 
 const rows = store();
 
+/** The SQL's least(): NULLs ignored, NULL only when both are. */
+const least = (a: string | null, b: string | null | undefined) => (a === null ? b ?? null : !b ? a : Date.parse(a) <= Date.parse(b) ? a : b);
+
 function stateOf(r: AgreementRow) {
   const counter = r.signers.filter((s) => s.role === "counterparty");
   const mine = counter.length === 1 ? counter[0] : null;
-  let s: string; let note: string | null = null;
+  let s: string; let note: string | null = null; let deadline: string | null = null;
   const nowMs = Date.now();
   if (r.status === "completed") s = "signed";
   else if (r.status === "declined" || mine?.status === "declined") s = "declined";
   else if (r.status === "voided") s = "withdrawn";
   else if (r.status === "expired" || (r.expires_at && Date.parse(r.expires_at) <= nowMs)) s = "expired";
   else if (!["sent", "viewed", "partially_signed"].includes(r.status)) s = "unavailable";
-  else if (counter.length !== 1) { s = "awaiting_you"; note = "use_email_link"; }
-  else if (mine!.status === "signed") s = "awaiting_others";
-  else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) s = "awaiting_business";
-  else { s = "awaiting_you"; if (mine!.email !== USER.email) note = "use_email_link"; }
-  return { state: s, can_sign: s === "awaiting_you" && note === null, sign_note: note };
+  else if (counter.length !== 1) { s = "awaiting_signature"; note = "use_email_link"; }
+  else if (mine!.status === "signed") {
+    const left = r.signers.filter((x) => x.status !== "signed");
+    s = left.length > 0 && left.every((x) => x.role === "tenant_signatory") ? "awaiting_countersign" : "awaiting_others";
+  } else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) s = "awaiting_business";
+  else if (mine!.email !== USER.email) { s = "awaiting_signature"; note = "use_email_link"; }
+  else {
+    s = "awaiting_you";
+    deadline = least(r.expires_at, mine!.token_expires_at);
+    if (deadline === null) note = "use_email_link";
+    else if (Date.parse(deadline) <= nowMs) note = "link_expired";
+    if (mine!.revoked) note = "link_revoked";
+  }
+  return { state: s, can_sign: s === "awaiting_you" && note === null, sign_note: note, deadline };
 }
 
 /** client_portal_agreements, computed the way the SQL computes it (see the header). */
 function project(pLimit: unknown) {
   const limit = Math.min(Math.max(typeof pLimit === "number" ? pLimit : 50, 1), 50);
-  const visible = rows.filter((r) => r.tenant_id === TENANT && r.contact_id === CONTACT && r.status !== "draft").map((r) => ({ r, st: stateOf(r) }));
+  const visible = rows.filter((r) => r.tenant_id === TENANT && r.contact_id === CONTACT && r.status !== "draft").map((r) => {
+    const st = stateOf(r);
+    return { r, st, expires: st.state === "awaiting_you" ? st.deadline ?? r.expires_at : r.expires_at };
+  });
   const t = (v: string | null) => (v === null ? null : Date.parse(v));
   const ranked = [...visible].sort((a, b) => {
     const aw = a.st.state === "awaiting_you" ? 0 : 1, bw = b.st.state === "awaiting_you" ? 0 : 1;
     if (aw !== bw) return aw - bw;
     if (!aw) {
-      const x = t(a.r.expires_at), y = t(b.r.expires_at);
+      const x = t(a.expires), y = t(b.expires);
       if (x !== y) return x === null ? 1 : y === null ? -1 : x - y;
     }
     const x = t(a.r.completed_at ?? a.r.sent_at), y = t(b.r.completed_at ?? b.r.sent_at);
@@ -144,10 +169,10 @@ function project(pLimit: unknown) {
     business_name: "Northwind Studio",
     server_now: new Date().toISOString(),
     summary: { awaiting_you: visible.filter((v) => v.st.state === "awaiting_you").length, signed: visible.filter((v) => v.r.status === "completed").length },
-    agreements: ranked.slice(0, limit).map(({ r, st }) => ({
+    agreements: ranked.slice(0, limit).map(({ r, st, expires }) => ({
       id: r.id, title: r.title.slice(0, 200),
       engagement_title: r.commercial_title && r.commercial_contact === CONTACT ? r.commercial_title : null,
-      state: st.state, sent_at: r.sent_at, completed_at: r.completed_at, expires_at: r.expires_at,
+      state: st.state, sent_at: r.sent_at, completed_at: r.completed_at, expires_at: expires,
       can_sign: st.can_sign, can_download: r.status === "completed" && r.sealed_storage_key !== null, sign_note: st.sign_note,
     })),
     has_more: visible.length > limit,
@@ -161,6 +186,7 @@ function agreements(args: Record<string, unknown>) {
   if (state === "loading") return new Promise(() => {});
   if (state === "staff") return Promise.resolve({ data: null, error: null });
   if (state === "multiple") return Promise.resolve({ data: null, error: MULTI });
+  if (state === "staff-error") return Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.client_portal_agreements" } });
   if (state === "error" && reads > 1) return Promise.resolve({ data: null, error: { code: "PGRST000", message: "harness: network" } });
   return Promise.resolve({ data: project(args.p_limit), error: null });
 }
@@ -168,11 +194,11 @@ function agreements(args: Record<string, unknown>) {
 function open(args: Record<string, unknown>) {
   harnessCalls.opens.push(args);
   if (openMode === "pending") return new Promise(() => {});
-  if (openMode === "here") return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE" }, error: null });
+  if (openMode === "here") return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: "link_expired" }, error: null });
   if (openMode === "later") return Promise.resolve({ data: { ok: false, error: "TRY_AGAIN_LATER" }, error: null });
   if (openMode === "fail") return Promise.resolve({ data: null, error: { code: "PGRST000", message: "harness: network" } });
   const target = rows.find((r) => r.id === args.p_agreement_id);
-  if (!target || !stateOf(target).can_sign) return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE" }, error: null });
+  if (!target || !stateOf(target).can_sign) return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: stateOf(target ?? rows[0]).sign_note ?? "use_email_link" }, error: null });
   try { window.sessionStorage.setItem(ISSUED, "1"); } catch { /* the drive reads the result off the page */ }
   return Promise.resolve({ data: { ok: true, token: PORTAL_TOKEN, expires_at: target.expires_at }, error: null });
 }
@@ -217,7 +243,7 @@ const PROFILE = {
 };
 
 function brand() {
-  if (state === "staff") return Promise.resolve({ data: [], error: null });
+  if (state === "staff" || state === "staff-error") return Promise.resolve({ data: [], error: null });
   if (state === "multiple") return Promise.resolve({ data: null, error: MULTI });
   return Promise.resolve({ data: [BRAND], error: null });
 }
@@ -244,7 +270,7 @@ export const supabase = {
     if (name === "client_portal_open_agreement_signing") return open(args);
     if (name === "peek_agreement_signing") return peek(args);
     if (name === "client_portal_self_profile") {
-      if (state === "staff") return Promise.resolve({ data: null, error: null });
+      if (state === "staff" || state === "staff-error") return Promise.resolve({ data: null, error: null });
       if (state === "multiple") return Promise.resolve({ data: null, error: MULTI });
       return Promise.resolve({ data: PROFILE, error: null });
     }
@@ -276,6 +302,7 @@ export const supabase = {
 
 export const harnessUser = USER;
 
-// DashboardModeContext: staff only in the `staff` state (the platform-terms fallback); a customer otherwise.
-export const useDashboardMode = () => ({ isAdmin: state === "staff", mode: state === "staff" ? "admin" : "client", setMode: () => undefined, loading: false });
+// DashboardModeContext: staff only in the `staff` and `staff-error` states (the platform-terms fallback); a customer otherwise.
+const staffish = state === "staff" || state === "staff-error";
+export const useDashboardMode = () => ({ isAdmin: staffish, mode: staffish ? "admin" : "client", setMode: () => undefined, loading: false });
 export function DashboardModeProvider({ children }: { children: unknown }) { return children; }

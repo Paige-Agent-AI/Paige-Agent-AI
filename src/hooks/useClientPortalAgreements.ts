@@ -22,10 +22,22 @@ import { supabase } from "@/integrations/supabase/client";
  * key is refused, so a widened projection fails closed instead of being shown.
  */
 
+/**
+ * Where an agreement stands for this customer. `awaiting_you` means the one signature it waits for IS this
+ * customer's (the signer is at one of their own addresses); `awaiting_signature` means it waits for a signature
+ * the portal cannot prove is theirs (a co-signer, or a signer at another address), so it is neither counted nor
+ * headed as theirs. `awaiting_countersign`: they have signed and only the business's own signatories are left.
+ */
 export type PortalAgreementState =
-  | "awaiting_you" | "awaiting_business" | "awaiting_others" | "signed" | "declined" | "withdrawn" | "expired" | "unavailable";
-/** Why an agreement that waits for this customer is not signable from the portal: the emailed link is the way. */
-export type PortalAgreementSignNote = "use_email_link";
+  | "awaiting_you" | "awaiting_signature" | "awaiting_business" | "awaiting_countersign" | "awaiting_others"
+  | "signed" | "declined" | "withdrawn" | "expired" | "unavailable";
+/**
+ * Why an agreement is not signable from the portal. `link_expired` and `link_revoked`: the signing link the
+ * business emailed is dead, so the customer needs a new one. `use_email_link`: every other case, where the
+ * emailed link may still work.
+ */
+export type PortalAgreementSignNote = "use_email_link" | "link_expired" | "link_revoked";
+const SIGN_NOTES = new Set<PortalAgreementSignNote>(["use_email_link", "link_expired", "link_revoked"]);
 
 export interface PortalAgreement {
   id: string;
@@ -35,6 +47,10 @@ export interface PortalAgreement {
   state: PortalAgreementState;
   sent_at: string | null;
   completed_at: string | null;
+  /**
+   * For a row waiting on this customer, the date that actually binds: the earlier of the agreement's deadline and
+   * the emailed link's own expiry. Every other row carries the agreement's deadline.
+   */
   expires_at: string | null;
   /** Only ever true while the state is awaiting_you. */
   can_sign: boolean;
@@ -63,7 +79,8 @@ const PAGE_KEYS = ["tenant_id", "business_name", "server_now", "summary", "agree
 const SUMMARY_KEYS = ["awaiting_you", "signed"];
 const ROW_KEYS = ["id", "title", "engagement_title", "state", "sent_at", "completed_at", "expires_at", "can_sign", "can_download", "sign_note"];
 const STATES = new Set<PortalAgreementState>([
-  "awaiting_you", "awaiting_business", "awaiting_others", "signed", "declined", "withdrawn", "expired", "unavailable",
+  "awaiting_you", "awaiting_signature", "awaiting_business", "awaiting_countersign", "awaiting_others",
+  "signed", "declined", "withdrawn", "expired", "unavailable",
 ]);
 const TOKEN = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -76,15 +93,15 @@ function portalRpc(name: PortalAgreementRpc, args: Record<string, unknown>) {
 }
 
 /**
- * The relationship resolver raises 42501 when the account is linked to more than one business.
- * 42501 is also "not signed in"; that case is handled by the auth scope, so only the relationship
- * refusal is classified here.
+ * The relationship resolver raises 42501 "select an authorized customer relationship" when the account is
+ * linked to more than one business. 42501 is also "not signed in" and "permission denied" (a function not yet
+ * granted), neither of which says anything about the caller's businesses, so only the resolver's own message
+ * counts — the same match the brand resolver uses.
  */
 export function isMultipleRelationships(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { code?: unknown; message?: unknown };
-  if (e.code !== "42501") return false;
-  return !(typeof e.message === "string" && /authentication required/i.test(e.message));
+  return e.code === "42501" && typeof e.message === "string" && /select an authorized customer relationship/i.test(e.message);
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -103,9 +120,11 @@ function parseRow(raw: unknown): PortalAgreement {
     || typeof state !== "string" || !STATES.has(state as PortalAgreementState)
     || !isDateOrNull(sent_at) || !isDateOrNull(completed_at) || !isDateOrNull(expires_at)
     || typeof can_sign !== "boolean" || typeof can_download !== "boolean"
-    || (sign_note !== null && sign_note !== "use_email_link")) {
+    || (sign_note !== null && (typeof sign_note !== "string" || !SIGN_NOTES.has(sign_note as PortalAgreementSignNote)))) {
     throw new Error("Unexpected agreement");
   }
+  // A note explains why a row waiting on a signature is not signable here; on any other row it means nothing.
+  if (sign_note !== null && state !== "awaiting_you" && state !== "awaiting_signature") throw new Error("Unexpected agreement");
   // The server only offers what it will honour: a button the writer would refuse is never drawn.
   if ((can_sign && (state !== "awaiting_you" || sign_note !== null)) || (can_download && state !== "signed")) {
     throw new Error("Unexpected agreement");
@@ -155,7 +174,8 @@ export type OpenAgreementFailure =
   | "MULTIPLE_BUSINESSES" | "FAILED";
 export type OpenAgreementResult =
   | { ok: true; token: string; expiresAt: string }
-  | { ok: false; code: OpenAgreementFailure };
+  /** `note` is set only on NOT_SIGNABLE_HERE: why, so the page never points at a dead link. */
+  | { ok: false; code: OpenAgreementFailure; note?: PortalAgreementSignNote };
 const OPEN_CODES = new Set<OpenAgreementFailure>(["CLIENT_AGREEMENT_UNAVAILABLE", "NOT_SIGNABLE", "NOT_SIGNABLE_HERE", "TRY_AGAIN_LATER"]);
 
 /**
@@ -178,6 +198,11 @@ export async function openAgreementForSigning(agreementId: string, tenantId: str
       return { ok: true, token: data.token, expiresAt: data.expires_at };
     }
     const code = data.error;
+    if (code === "NOT_SIGNABLE_HERE") {
+      const note = data.note;
+      // Without a recognised reason, the answer that is true in every case: the emailed link, or a new one.
+      return { ok: false, code, note: typeof note === "string" && SIGN_NOTES.has(note as PortalAgreementSignNote) ? note as PortalAgreementSignNote : "use_email_link" };
+    }
     return { ok: false, code: typeof code === "string" && OPEN_CODES.has(code as OpenAgreementFailure) ? code as OpenAgreementFailure : "FAILED" };
   } catch {
     return { ok: false, code: "FAILED" };
@@ -231,6 +256,11 @@ export interface ClientPortalAgreementsState {
   error: string | null;
   /** Resolved: the caller has no customer relationship (the read returned null). */
   unavailable: boolean;
+  /**
+   * A read for this identity has returned a list: the caller IS a customer. Until then a failed read says nothing
+   * about who they are, so the page must not assume they are a customer (§58: staff keep their page).
+   */
+  customerConfirmed: boolean;
   /** Resolved: the account is linked to more than one business, which agreements don't support yet. */
   multipleBusinesses: boolean;
   /** Business of the loaded list (server-resolved), or null before the first read. */
@@ -253,6 +283,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
+  const [customerConfirmed, setCustomerConfirmed] = useState(false);
   const [multipleBusinesses, setMultipleBusinesses] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [scopeEpoch, setScopeEpoch] = useState(0);
@@ -285,6 +316,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
     clearData();
     setError(null);
     setUnavailable(false);
+    setCustomerConfirmed(false);
     setMultipleBusinesses(false);
     setLoading(true);
     setTenantId(null);
@@ -302,6 +334,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
       if (!current()) return;
       if (!page) {
         clearData();
+        setCustomerConfirmed(false);
         setUnavailable(true);
       } else {
         // The first read pins the business; a later answer for another one is never shown.
@@ -314,6 +347,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
         setBusinessName(page.business_name);
         setHasMore(page.has_more);
         setServerNow(page.server_now);
+        setCustomerConfirmed(true);
         shown.current = true;
       }
       setError(null);
@@ -378,7 +412,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
   }, [refresh]);
 
   return {
-    agreements, summary, businessName, hasMore, serverNow, loading, error, unavailable, multipleBusinesses, tenantId, scopeEpoch, refresh,
+    agreements, summary, businessName, hasMore, serverNow, loading, error, unavailable, customerConfirmed, multipleBusinesses, tenantId, scopeEpoch, refresh,
   };
 }
 

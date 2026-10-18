@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react-swc";
 // REAL MyAgreements (the platform-terms fallback and /app/agreements/platform) and the REAL, FROZEN signing page
 // (/sign/:token, §28). Only the data boundary is stubbed (stubs.ts): the Supabase transport and the DashboardMode
 // context. Its own root: never part of the app build (§9).
-//   /app/agreements?state=mixed|waiting|signed|empty|loading|staff|multiple|error&open=ok|here|later|fail|pending&copy=ok|fail|pending&theme=light|dark
+//   /app/agreements?state=mixed|waiting|signed|empty|loading|staff|staff-error|multiple|error&open=ok|here|later|fail|pending&copy=ok|fail|pending&theme=light|dark
 //   /app?state=home|home-none&theme=…    /app/agreements/platform?theme=…    /sign/<token>?theme=…
 // HARNESS_AGREEMENTS_MUTANT=<name> (drive self-test only) swaps in harness-only defects through a transform on
 // Agreements.tsx; no product file is edited. See agreements-drive.mjs --selftest.
@@ -30,7 +30,7 @@ export default defineConfig({
           return code.replace(from, to);
         };
         // Every signable row gold, not only the first (§11's one act).
-        if (mutant === "gold") return swap(`variant={primary ? "gold" : "outline"}`, `variant="gold"`);
+        if (mutant === "gold") return swap(`variant={gold ? "gold" : "outline"}`, `variant="gold"`);
         if (mutant === "contrast") return swap(`<p className="mt-0.5 text-sm text-muted-foreground">`, `<p className="mt-0.5 text-sm text-muted-foreground opacity-40">`);
         if (mutant === "overflow") return swap(`<header className="space-y-1 pb-4">`, `<header className="space-y-1 pb-4"><div aria-hidden="true" style={{ width: 1600, height: 1 }} />`);
         // An inline style, not a class: Tailwind only generates classes it finds on disk, never one a transform adds.

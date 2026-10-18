@@ -4935,9 +4935,15 @@ signer token, files one `paige_audit_log` row and NO agreement event, never writ
 function gains a third, session-scoped door (`portal=1`); doors one and two are unchanged. Paige reads the
 list through `client.portal_agreements_read` (read only; she never signs or mints a link). Integrator defaults
 in force: the portal signs only when the single counterparty signer's email is the customer's confirmed login
-email or the client's primary email (otherwise "Use the link {Business} emailed you"); a portal-issued link
-never expires later than the emailed one (the earlier of the agreement's and the emailed link's deadline); a
-portal open REPLACES the emailed link (D-A4, stated on the page beside the act). Agreements is core for
+email or the client's primary email; otherwise the agreement is listed as `awaiting_signature` ("Waiting for
+a signature") and is neither headed nor counted as the customer's; a portal-issued link never expires later
+than the emailed one (the earlier of the agreement's and the emailed link's deadline, which is also the "Sign
+by" date the list shows); a dead emailed link (expired: `link_expired`, revoked: `link_revoked`) is never
+offered as the way to sign — the row offers "Ask {Business} for a new link" (Messages, plain: no `?draft=`
+until Slice 5); once the customer has signed and only the business's signatories remain the row reads
+"Waiting for {Business}" (`awaiting_countersign`); a portal open REPLACES the emailed link (D-A4, stated on
+the page beside the act). A read that fails before the login is known to be a customer keeps MyAgreements for
+staff (§58). Agreements is core for
 customers in the menu (D-A1: every customer of one business, hideable and renameable by the owner); staff
 and every other viewer keep the catalog rule. Home shows one quiet line only while something waits for the
 customer's signature AND Agreements is in their menu (D-A5). §61 default for the customer side
@@ -4953,10 +4959,11 @@ customer's signature AND Agreements is in their menu (D-A5). §61 default for th
 | Menu entry "Agreements" (Paperwork) | — | — | — | — | — | ✓ by default (D-A1); owner can hide/rename | — | PROOF OWED |
 | Paige reads the customer's agreements (`client.portal_agreements_read`) | — | — | — | — | — | customer assistant only | — | PROOF OWED |
 
-pgTAP (`supabase/tests/customer_portal_agreements.sql`, 138 cases) covers other-customer, other-business,
+pgTAP (`supabase/tests/customer_portal_agreements.sql`, 147 cases) covers other-customer, other-business,
 draft and merged-contact exclusion, every state, the open's refusals (including a revoked link, a co-signer, a
 signer at another address and the 11th open in an hour), the byte-identical agreement row, no agreement event,
-the old emailed token stopping, document scope, the Sub-account tier and the unchanged policy set. Vitest
+the old emailed token stopping, the notes for a dead emailed link, the "Sign by" date, `awaiting_signature`
+and `awaiting_countersign`, document scope, the Sub-account tier and the unchanged policy set. Vitest
 covers the hook's exact keys, tenant pin, identity reset and focus/visibility refresh, the page's states and
 copy, the one gold act, StrictMode, the Home line and the routes. Harness frames
 (`scripts/live-drive/harness/portal-agreements-customer-mount`) show the page in every state, the Home line, the

@@ -5,6 +5,7 @@ import {
   PORTAL_AGREEMENTS_LOAD_ERROR,
   PORTAL_AGREEMENTS_REFRESH_ERROR,
   fetchSignedCopy,
+  isMultipleRelationships,
   openAgreementForSigning,
   parseAgreementsPage,
   signedCopyFilename,
@@ -91,6 +92,19 @@ describe("parseAgreementsPage — exact keys, fail closed", () => {
     expect(() => parseAgreementsPage(payload([row(A1), row(A1)]))).toThrow();
     expect(() => parseAgreementsPage(payload([row("not-a-uuid")]))).toThrow();
   });
+
+  it("accepts the states and notes that keep the page honest, and a note only where it means something", () => {
+    const page = parseAgreementsPage(payload([
+      row(A1, { state: "awaiting_signature", can_sign: false, sign_note: "use_email_link" }),
+      row(A2, { state: "awaiting_countersign", can_sign: false }),
+    ]))!;
+    expect(page.agreements.map((a) => a.state)).toEqual(["awaiting_signature", "awaiting_countersign"]);
+    for (const note of ["link_expired", "link_revoked", "use_email_link"]) {
+      expect(parseAgreementsPage(payload([row(A1, { can_sign: false, sign_note: note })]))!.agreements[0].sign_note).toBe(note);
+    }
+    // A note on a row that waits on nobody's signature has no meaning; it is refused, not shown.
+    expect(() => parseAgreementsPage(payload([row(A1, { state: "signed", can_sign: false, sign_note: "link_expired" })]))).toThrow();
+  });
 });
 
 describe("useClientPortalAgreements", () => {
@@ -127,6 +141,33 @@ describe("useClientPortalAgreements", () => {
     await act(async () => { window.dispatchEvent(new Event("focus")); });
     await flush();
     expect(reads()).toHaveLength(1);
+  });
+
+  it("confirms the caller is a customer only once a list came back", async () => {
+    f.rpc.mockResolvedValueOnce({ data: null, error: { code: "PGRST202", message: "Could not find the function public.client_portal_agreements" } });
+    await mount();
+    // A failed read says nothing about who this is: not unavailable, not a customer either.
+    expect(state.customerConfirmed).toBe(false);
+    expect(state.unavailable).toBe(false);
+    expect(state.multipleBusinesses).toBe(false);
+    await act(async () => { await state.refresh(); });
+    expect(state.customerConfirmed).toBe(true);
+    f.rpc.mockResolvedValueOnce(ok(null));
+    await act(async () => { await state.refresh(); });
+    expect(state.customerConfirmed).toBe(false);
+    expect(state.unavailable).toBe(true);
+  });
+
+  it("does not read a permission refusal as 'more than one business'", async () => {
+    const denied = { code: "42501", message: "permission denied for function client_portal_agreements" };
+    expect(isMultipleRelationships(denied)).toBe(false);
+    expect(isMultipleRelationships({ code: "42501", message: "customer authentication required" })).toBe(false);
+    expect(isMultipleRelationships({ code: "42501", message: "select an authorized customer relationship" })).toBe(true);
+    f.rpc.mockResolvedValueOnce({ data: null, error: denied });
+    await mount();
+    expect(state.multipleBusinesses).toBe(false);
+    expect(state.customerConfirmed).toBe(false);
+    expect(state.error).toBe(PORTAL_AGREEMENTS_LOAD_ERROR);
   });
 
   it("says load on a first failure, and refresh — keeping the list — on a later one", async () => {
@@ -183,9 +224,15 @@ describe("openAgreementForSigning", () => {
   });
 
   it("passes the server's refusal codes through, and classifies the rest", async () => {
-    for (const code of ["CLIENT_AGREEMENT_UNAVAILABLE", "NOT_SIGNABLE", "NOT_SIGNABLE_HERE", "TRY_AGAIN_LATER"]) {
+    for (const code of ["CLIENT_AGREEMENT_UNAVAILABLE", "NOT_SIGNABLE", "TRY_AGAIN_LATER"]) {
       f.rpc.mockResolvedValueOnce(ok({ ok: false, error: code }));
       expect(await openAgreementForSigning(A1, T)).toEqual({ ok: false, code });
+    }
+    // "Not here" carries why, so the page never points at a dead link; an unknown or missing reason reads as the
+    // one that is true in every case.
+    for (const [note, expected] of [["link_expired", "link_expired"], ["link_revoked", "link_revoked"], ["use_email_link", "use_email_link"], ["call_us", "use_email_link"], [undefined, "use_email_link"]]) {
+      f.rpc.mockResolvedValueOnce(ok({ ok: false, error: "NOT_SIGNABLE_HERE", ...(note ? { note } : {}) }));
+      expect(await openAgreementForSigning(A1, T), String(note)).toEqual({ ok: false, code: "NOT_SIGNABLE_HERE", note: expected });
     }
     f.rpc.mockResolvedValueOnce(ok({ ok: false, error: "SOMETHING_NEW" }));
     expect(await openAgreementForSigning(A1, T)).toEqual({ ok: false, code: "FAILED" });

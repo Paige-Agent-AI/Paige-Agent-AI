@@ -33,7 +33,8 @@ BEGIN;
 --
 -- "Your signer" is the agreement's counterparty signer, and there must be EXACTLY ONE. With none or
 -- several (a co-signer), the portal cannot tell which row is this login, so it lists the agreement
--- but sends the customer to the link they were emailed (D-A3).
+-- as 'awaiting_signature' — waiting on a signature, not provably this customer's — and points them
+-- to the signing link the business emailed, or to asking for a new one (D-A3).
 --
 -- AND THAT ONE SIGNER MUST BE THIS LOGIN (conservative default, pending an owner ruling). The sealed
 -- certificate credits the signature to the person and address named on the signer row, and the
@@ -41,13 +42,22 @@ BEGIN;
 -- through a portal session rather than at that address. So the portal hands out the signer's link
 -- only when the signer row's email IS one of the caller's own addresses: the login's confirmed
 -- email, or the client record's primary email (client_primary_address). Compared by the one email
--- match key (contact_method_match_key: trimmed, lowercase). Otherwise the agreement is listed and
--- the customer is sent to the emailed link. p_my_email_keys is that set, derived by the two
--- DEFINER callers from auth.uid() and the re-proved relationship — never from a caller argument.
+-- match key (contact_method_match_key: trimmed, lowercase). Otherwise the agreement is listed as
+-- 'awaiting_signature', NOT 'awaiting_you': the portal cannot say the signature it waits for is this
+-- customer's, so it is neither counted nor headed as theirs. p_my_email_keys is that set, derived by
+-- the two DEFINER callers from auth.uid() and the re-proved relationship — never from a caller
+-- argument.
 --
 -- And the link it would hand out must have a deadline: the EARLIER of the agreement's deadline and
--- the signer's current (emailed) token expiry. With neither, or with that moment past, it is listed
--- as signable only from the email, so the list never offers a button the writer refuses.
+-- the signer's current (emailed) token expiry, returned as 'deadline' so the list can show the date
+-- that actually binds ("Sign by"). With neither, or with that moment past, it is not signable here,
+-- so the list never offers a button the writer refuses.
+--
+-- sign_note says WHY an 'awaiting_you' row is not signable here, so the page never points at a link
+-- that is dead: 'link_revoked' (the emailed link was revoked), 'link_expired' (the emailed link's own
+-- expiry has passed while the agreement is still open) — both mean "ask the business for a new
+-- link" — and 'use_email_link' for every other case, where the emailed link may still work.
+-- 'awaiting_countersign': the customer has signed and only the business's own signatories remain.
 CREATE OR REPLACE FUNCTION public._client_portal_agreement_state(p_agreement_id uuid, p_my_email_keys text[])
 RETURNS jsonb
 LANGUAGE plpgsql STABLE
@@ -78,26 +88,30 @@ BEGIN
   ELSIF _a.status = 'expired' OR (_a.expires_at IS NOT NULL AND _a.expires_at <= now()) THEN _state := 'expired';
   ELSIF _a.status NOT IN ('sent','viewed','partially_signed') THEN _state := 'unavailable';
   ELSIF _n <> 1 THEN
-    _state := 'awaiting_you'; _note := 'use_email_link';
-  ELSIF _me.status = 'signed' THEN _state := 'awaiting_others';
+    _state := 'awaiting_signature'; _note := 'use_email_link';
+  ELSIF _me.status = 'signed' THEN
+    -- Only the business left: every signer still to sign is the business's own signatory.
+    IF EXISTS (SELECT 1 FROM public.paige_agreement_signers
+                WHERE agreement_id = _a.id AND status <> 'signed' AND signer_role = 'tenant_signatory')
+       AND NOT EXISTS (SELECT 1 FROM public.paige_agreement_signers
+                WHERE agreement_id = _a.id AND status <> 'signed' AND signer_role <> 'tenant_signatory') THEN
+      _state := 'awaiting_countersign';
+    ELSE
+      _state := 'awaiting_others';
+    END IF;
   ELSE
     -- Same rule as sign-agreement's out-of-turn check: an earlier-order signer still to sign.
     SELECT count(*) INTO _earlier FROM public.paige_agreement_signers
      WHERE agreement_id = _a.id AND signing_order < _me.signing_order AND status <> 'signed';
     IF _earlier > 0 THEN _state := 'awaiting_business';
+    ELSIF (public.contact_method_match_key('email', _me.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS NOT TRUE THEN
+      -- The one signer is at an address that is not this customer's: waiting on a signature, but not
+      -- provably theirs.
+      _state := 'awaiting_signature'; _note := 'use_email_link';
     ELSE
       _state := 'awaiting_you';
-      IF (public.contact_method_match_key('email', _me.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS NOT TRUE THEN
-        _note := 'use_email_link';
-      END IF;
-      -- A revoked link on an agreement that is still open. Every revocation the engine writes today
-      -- rides a terminal status, so this is defensive; but the portal never undoes a revocation it did
-      -- not make, so a revoked signer is not signable here (the writer refuses NOT_SIGNABLE_HERE).
-      IF _me.token_revoked_at IS NOT NULL THEN
-        _note := 'use_email_link';
-      END IF;
       _deadline := least(_a.expires_at, _me.token_expires_at);
-      IF _deadline IS NULL OR _deadline <= now() THEN
+      IF _deadline IS NULL THEN
         _note := 'use_email_link';
       END IF;
       -- Parity with issue_agreement_signing_link's PA001 refusal: an uploaded document whose frozen
@@ -110,6 +124,17 @@ BEGIN
              AND position('/presented-source-' IN coalesce(_a.content_storage_key, '')) = 0) THEN
         _note := 'use_email_link';
       END IF;
+      -- The emailed link's own expiry has passed while the agreement is still open: that link is dead,
+      -- and no later one is issued here. Ask the business for a new link.
+      IF _deadline <= now() THEN
+        _note := 'link_expired';
+      END IF;
+      -- A revoked link on an agreement that is still open. Every revocation the engine writes today
+      -- rides a terminal status, so this is defensive; but the portal never undoes a revocation it did
+      -- not make, so a revoked signer is not signable here (the writer refuses NOT_SIGNABLE_HERE).
+      IF _me.token_revoked_at IS NOT NULL THEN
+        _note := 'link_revoked';
+      END IF;
     END IF;
   END IF;
 
@@ -117,7 +142,8 @@ BEGIN
     'state', _state,
     'signer_id', CASE WHEN _n = 1 THEN _me.id END,
     'can_sign', (_state = 'awaiting_you' AND _note IS NULL),
-    'sign_note', _note);
+    'sign_note', _note,
+    'deadline', _deadline);
 END;
 $$;
 REVOKE ALL ON FUNCTION public._client_portal_agreement_state(uuid, text[]) FROM PUBLIC, anon, authenticated;
@@ -172,10 +198,17 @@ BEGIN
   IF NOT FOUND THEN RETURN NULL; END IF;
   _keys := public._client_portal_my_email_keys(_uid, _client_id);
 
+  -- "Sign by" is the date that actually binds: for a row waiting on THIS customer, the earlier of the
+  -- agreement's deadline and the emailed link's own expiry (the state's 'deadline'). Every other row
+  -- carries the agreement's own expires_at.
   WITH mine AS (
-    SELECT a.id, a.title, a.commercial_terms_id, a.status, a.sent_at, a.completed_at, a.expires_at,
-           a.sealed_storage_key, public._client_portal_agreement_state(a.id, _keys) AS st
+    SELECT a.id, a.title, a.commercial_terms_id, a.status, a.sent_at, a.completed_at,
+           a.sealed_storage_key, st.st,
+           CASE WHEN st.st->>'state' = 'awaiting_you'
+                THEN coalesce((st.st->>'deadline')::timestamptz, a.expires_at)
+                ELSE a.expires_at END AS expires_at
       FROM public.paige_agreements a
+      CROSS JOIN LATERAL (SELECT public._client_portal_agreement_state(a.id, _keys) AS st) st
      WHERE a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft'
   ), shaped AS (
     SELECT m.*,
@@ -226,9 +259,10 @@ GRANT EXECUTE ON FUNCTION public.client_portal_agreements(uuid, integer) TO auth
 -- Codes: CLIENT_AGREEMENT_UNAVAILABLE (not yours, not found, draft, or no relationship — one code so
 -- a stranger learns nothing about which agreements exist), NOT_SIGNABLE (with the derived state:
 -- signed, declined, withdrawn, expired, waiting on the business or on others), NOT_SIGNABLE_HERE
--- (use the emailed link: no single counterparty, a signer row that is not this login's own email,
--- a signer link that was revoked while the agreement is still open, no deadline to give the link or
--- one already past, or a document this path will not hand a link to),
+-- with a 'note' saying why: 'link_revoked' (the signer link was revoked while the agreement is still
+-- open) or 'link_expired' (the emailed link's own expiry has passed) — ask the business for a new
+-- link — or 'use_email_link' (no single counterparty, a signer row that is not this login's own
+-- email, no deadline to give the link, or a document this path will not hand a link to),
 -- TRY_AGAIN_LATER (more than 10 opens of this agreement by this customer in an hour).
 --
 -- LOCK ORDER is signer rows FOR UPDATE, then the agreement FOR KEY SHARE — the same order
@@ -286,11 +320,16 @@ BEGIN
   END IF;
 
   _st := public._client_portal_agreement_state(_a.id, public._client_portal_my_email_keys(_uid, _client_id));
+  -- Waiting on a signature the portal cannot prove is this customer's: the same "not here" answer the
+  -- list gives, with the same note.
+  IF _st->>'state' = 'awaiting_signature' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', coalesce(_st->>'sign_note', 'use_email_link'));
+  END IF;
   IF _st->>'state' <> 'awaiting_you' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE', 'state', _st->>'state');
   END IF;
   IF (_st->>'can_sign')::boolean IS NOT TRUE OR _locked <> 1 THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE');
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', coalesce(_st->>'sign_note', 'use_email_link'));
   END IF;
   _signer := (_st->>'signer_id')::uuid;
 
@@ -310,8 +349,14 @@ BEGIN
   SELECT s.token_expires_at, s.token_revoked_at INTO _emailed_expiry, _revoked_at
     FROM public.paige_agreement_signers s WHERE s.id = _signer;
   _expires := least(_a.expires_at, _emailed_expiry);
-  IF _revoked_at IS NOT NULL OR _expires IS NULL OR _expires <= now() THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE');
+  IF _revoked_at IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', 'link_revoked');
+  END IF;
+  IF _expires IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', 'use_email_link');
+  END IF;
+  IF _expires <= now() THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', 'link_expired');
   END IF;
 
   -- 256 bits from pgcrypto's CSPRNG; only the digest is stored. pgcrypto is schema-qualified: it
@@ -324,7 +369,7 @@ BEGIN
          updated_at = now()
    WHERE id = _signer AND agreement_id = _a.id AND status IN ('pending','viewed')
      AND token_revoked_at IS NULL;
-  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE'); END IF;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE', 'note', 'use_email_link'); END IF;
 
   INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, target_type, target_id, tenant_id, payload)
   VALUES (_uid, 'client', 'agreement.portal_link_issued', 'paige_agreement', _a.id, _tenant,

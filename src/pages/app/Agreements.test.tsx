@@ -3,7 +3,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Agreements from "./Agreements";
-import { newLinkDraft, openFailureCopy } from "@/lib/portal/agreementsCopy";
+import { openFailureCopy, signNoteCopy, type AgreementCopy } from "@/lib/portal/agreementsCopy";
+import type { ClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import type { ClientPortalAgreementsState, OpenAgreementFailure, PortalAgreement } from "@/hooks/useClientPortalAgreements";
 
 // Synthetic test tenant (Northwind Studio); never a real account.
@@ -13,6 +14,7 @@ const f = vi.hoisted(() => ({
   open: vi.fn(),
   fetchCopy: vi.fn(),
   goTo: vi.fn(),
+  brand: null as unknown as ClientPortalBrandState,
 }));
 vi.mock("@/hooks/useClientPortalAgreements", async (orig) => ({
   ...(await orig<typeof import("@/hooks/useClientPortalAgreements")>()),
@@ -22,10 +24,18 @@ vi.mock("@/hooks/useClientPortalAgreements", async (orig) => ({
   goToSigningPage: (...a: unknown[]) => f.goTo(...a),
 }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
-  useClientPortalBrand: () => ({ tenant_id: T, tenant_name: "Northwind Studio", primary_color: null, logo_url: null }),
+  useClientPortalBrandState: () => f.brand,
 }));
+const CUSTOMER_BRAND: ClientPortalBrandState = {
+  brand: { tenant_id: T, tenant_name: "Northwind Studio", primary_color: null, logo_url: null }, loading: false, error: false, multipleBusinesses: false,
+};
 vi.mock("@/pages/MyAgreements", () => ({ default: () => <p data-testid="platform-terms-page">Your PaigeAgent agreements</p> }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+/** Any wording that tells the customer to go and use the emailed link, as if it certainly still works. */
+const EMAIL_PROMISE = /use the link|from the link|link .* emailed you to sign|Sign each agreement from the link/i;
+/** What the copy reads as on screen: the words, then the inline Messages link when it finishes the sentence. */
+const spoken = (c: AgreementCopy) => (c.ask === "inline" ? `${c.text} ask Northwind Studio for a new link.` : c.text);
 
 let n = 0;
 const ag = (extra: Partial<PortalAgreement> = {}): PortalAgreement => ({
@@ -64,9 +74,10 @@ beforeEach(() => {
   n = 0;
   f.state = {
     agreements: [], summary: null, businessName: "Northwind Studio", hasMore: false, serverNow: "2026-10-18T12:00:00Z",
-    loading: false, error: null, unavailable: false, multipleBusinesses: false, tenantId: T, scopeEpoch: 0,
+    loading: false, error: null, unavailable: false, customerConfirmed: true, multipleBusinesses: false, tenantId: T, scopeEpoch: 0,
     refresh: vi.fn().mockResolvedValue(undefined),
   };
+  f.brand = CUSTOMER_BRAND;
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
@@ -78,6 +89,46 @@ describe("who sees what", () => {
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
     expect(host.querySelector("[data-testid=platform-terms-page]")).not.toBeNull();
     expect(host.querySelector("#agreements-title")).toBeNull();
+  });
+
+  it("keeps the platform terms page for staff when the customer read fails or the function is missing (§58)", async () => {
+    // Nothing says this login is a customer: the read failed before any list came back, and the brand resolver
+    // does not know them as one (staff, or a login with no relationship).
+    for (const brand of [
+      { brand: null, loading: false, error: false, multipleBusinesses: false },
+      { brand: null, loading: false, error: true, multipleBusinesses: false },
+    ]) {
+      act(() => root.unmount()); root = createRoot(host);
+      f.state = { ...f.state, customerConfirmed: false, summary: null, tenantId: null, error: "We couldn't load your agreements. Check your connection and try again." };
+      f.brand = brand;
+      await render();
+      await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+      expect(host.querySelector("[data-testid=platform-terms-page]"), JSON.stringify(brand)).not.toBeNull();
+      expect(host.textContent).not.toContain("couldn't load your agreements");
+      expect(host.querySelector("#agreements-title")).toBeNull();
+    }
+  });
+
+  it("shows the customer 'couldn't load' card only to a login the brand resolver knows as a customer", async () => {
+    f.state = { ...f.state, customerConfirmed: false, summary: null, error: "We couldn't load your agreements. Check your connection and try again." };
+    await render();
+    expect(host.querySelector("[data-testid=platform-terms-page]")).toBeNull();
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("couldn't load your agreements");
+    // While the brand is still resolving, neither page: just the shape of a list.
+    act(() => root.unmount()); root = createRoot(host);
+    f.brand = { brand: null, loading: true, error: false, multipleBusinesses: false };
+    await render();
+    expect(host.querySelector("[data-testid=agreements-skeleton]")).not.toBeNull();
+    expect(host.querySelector("[role=alert]")).toBeNull();
+    expect(host.querySelector("[data-testid=platform-terms-page]")).toBeNull();
+  });
+
+  it("shows no customer header or footer before the login is known to be a customer", async () => {
+    f.state = { ...f.state, customerConfirmed: false, summary: null, loading: true };
+    await render();
+    expect(host.querySelector("[data-testid=agreements-skeleton]")).not.toBeNull();
+    expect(host.querySelector("#agreements-title")).toBeNull();
+    expect(host.querySelector("[data-testid=platform-terms-link]")).toBeNull();
   });
 
   it("titles a customer's page by their business and links their platform terms, always", async () => {
@@ -148,6 +199,8 @@ describe("the list", () => {
     await render();
     expect(host.querySelector("[data-testid=agreements-skeleton]")).not.toBeNull();
     expect(host.querySelector("section")?.getAttribute("aria-busy")).toBe("true");
+    // Several businesses: no business is named, and no link is promised to work.
+    expect(EMAIL_PROMISE.test(host.textContent ?? "")).toBe(false);
   });
 
   it("keeps the list and offers Try again when a refresh fails", async () => {
@@ -172,7 +225,9 @@ describe("Review and sign", () => {
     expect(buttons(rowOf("Second"), /Review and sign/)).toHaveLength(1);
     expect(buttons(rowOf("By email only"), /Review and sign/)).toHaveLength(0);
     expect(buttons(rowOf("Done"), /Review and sign/)).toHaveLength(0);
-    expect(rowOf("By email only").querySelector("[data-testid=agreement-note]")?.textContent).toBe("Sign this one from the link Northwind Studio emailed you.");
+    expect(rowOf("By email only").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Northwind Studio sent this one's signing link by email. If you can't use it, ask Northwind Studio for a new link.");
+    expect(rowOf("By email only").querySelector("[data-testid=ask-new-link-inline]")?.getAttribute("href")).toBe("/app/messages");
     const gold = Array.from(host.querySelectorAll("button, a")).filter((el) => /bg-gradient-gold/.test(el.className));
     expect(gold.map((g) => g.closest("[data-testid=agreement-row]")?.querySelector("h3")?.textContent)).toEqual(["First"]);
     // The customer is told, beside the act, that opening here retires the emailed link (D-A4).
@@ -197,20 +252,63 @@ describe("Review and sign", () => {
       f.open.mockResolvedValue({ ok: false, code });
       await render();
       await click(buttons(host, /Review and sign/)[0]);
-      expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim(), code).toBe(openFailureCopy(code, "Northwind Studio"));
+      expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim(), code).toBe(spoken(openFailureCopy(code, "Northwind Studio")));
       expect(f.goTo).not.toHaveBeenCalled();
-      expect(f.state.refresh).toHaveBeenCalledTimes(code === "NOT_SIGNABLE" || code === "CLIENT_AGREEMENT_UNAVAILABLE" ? 1 : 0);
+      expect(f.state.refresh).toHaveBeenCalledTimes(["NOT_SIGNABLE", "CLIENT_AGREEMENT_UNAVAILABLE", "NOT_SIGNABLE_HERE"].includes(code) ? 1 : 0);
       (f.state.refresh as ReturnType<typeof vi.fn>).mockClear();
     }
-    expect(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio")).toBe("Use the link Northwind Studio emailed you to sign this one.");
-    expect(openFailureCopy("TRY_AGAIN_LATER", "Northwind Studio")).toMatch(/Try again later/);
+  });
+
+  it("never sends the customer to a link that is dead: every refusal is true in every case it is returned", () => {
+    for (const code of ["NOT_SIGNABLE_HERE", "TRY_AGAIN_LATER", "NOT_SIGNABLE", "CLIENT_AGREEMENT_UNAVAILABLE", "MULTIPLE_BUSINESSES", "FAILED"] as OpenAgreementFailure[]) {
+      for (const note of ["use_email_link", "link_expired", "link_revoked", undefined] as const) {
+        expect(EMAIL_PROMISE.test(spoken(openFailureCopy(code, "Northwind Studio", note))), `${code}/${note}`).toBe(false);
+      }
+    }
+    // "Opened too many times": the first of those opens already replaced the emailed link (D-A4).
+    expect(spoken(openFailureCopy("TRY_AGAIN_LATER", "Northwind Studio"))).toBe(
+      "This agreement has been opened several times in the last hour. Try again in an hour, or ask Northwind Studio for a new link.");
+    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_expired"))).toBe("The signing link Northwind Studio emailed you has expired.");
+    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_revoked"))).toBe("The signing link Northwind Studio emailed you is no longer active.");
+  });
+
+  it("on 'opened too many times', links Messages and turns the gold button quiet until the list is re-read", async () => {
+    const first = ag({ title: "Website build agreement" });
+    withList([first, ag({ title: "Second" })]);
+    f.open.mockResolvedValue({ ok: false, code: "TRY_AGAIN_LATER" });
+    await render();
+    const isGold = () => /bg-gradient-gold/.test(buttons(rowOf("Website build agreement"), /Review and sign/)[0].className);
+    expect(isGold()).toBe(true);
+    await click(buttons(rowOf("Website build agreement"), /Review and sign/)[0]);
+    const problem = rowOf("Website build agreement").querySelector("[data-testid=agreement-problem]")!;
+    expect(problem.querySelector("[data-testid=ask-new-link-inline]")?.getAttribute("href")).toBe("/app/messages");
+    expect(isGold()).toBe(false);
+    expect(host.querySelectorAll("[class*=bg-gradient-gold]")).toHaveLength(0);
+    // The list is read again (focus, or a later press elsewhere): the row is a new object, and the act is gold again.
+    withList([{ ...first }, ag({ title: "Second" })]);
+    await render();
+    expect(isGold()).toBe(true);
+  });
+
+  it("on a dead emailed link, offers the business a request for a new one instead", async () => {
+    for (const note of ["link_expired", "link_revoked"] as const) {
+      act(() => root.unmount()); root = createRoot(host);
+      withList([ag({ title: "Website build agreement" })]);
+      f.open.mockResolvedValue({ ok: false, code: "NOT_SIGNABLE_HERE", note });
+      await render();
+      await click(buttons(host, /Review and sign/)[0]);
+      const r = rowOf("Website build agreement");
+      expect(r.querySelector("[data-testid=agreement-problem]")?.textContent?.trim()).toBe(spoken(signNoteCopy(note, "Northwind Studio")));
+      expect(f.state.refresh).toHaveBeenCalledTimes(1);
+      (f.state.refresh as ReturnType<typeof vi.fn>).mockClear();
+    }
   });
 });
 
 describe("under StrictMode (the app's dev mount)", () => {
   it("still shows the answer to a press after React's mount, unmount, mount", async () => {
     withList([ag({ title: "Website build agreement" })]);
-    f.open.mockResolvedValue({ ok: false, code: "NOT_SIGNABLE_HERE" });
+    f.open.mockResolvedValue({ ok: false, code: "NOT_SIGNABLE_HERE", note: "link_expired" });
     await act(async () => root.render(
       <StrictMode>
         <MemoryRouter initialEntries={["/app/agreements"]}>
@@ -219,7 +317,7 @@ describe("under StrictMode (the app's dev mount)", () => {
       </StrictMode>,
     ));
     await click(buttons(host, /Review and sign/)[0]);
-    expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim()).toBe("Use the link Northwind Studio emailed you to sign this one.");
+    expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim()).toBe("The signing link Northwind Studio emailed you has expired.");
     expect(buttons(host, /Review and sign/)[0].disabled).toBe(false);
   });
 });
@@ -268,14 +366,55 @@ describe("the signed copy", () => {
 });
 
 describe("other states", () => {
-  it("asks the business for a new link on an expired agreement, with the words already written", async () => {
+  it("asks the business for a new link on an expired agreement, in Messages (no suggested words until Messages reads them)", async () => {
     withList([ag({ title: "Pilot terms", state: "expired", can_sign: false })]);
     await render();
     const ask = host.querySelector<HTMLAnchorElement>("[data-testid=ask-new-link]")!;
     expect(ask.textContent?.trim()).toBe("Ask Northwind Studio for a new link");
-    expect(ask.getAttribute("href")).toBe(`/app/messages?${new URLSearchParams({ draft: newLinkDraft("Pilot terms") })}`);
+    expect(ask.getAttribute("href")).toBe("/app/messages");
     await click(ask);
-    expect(host.querySelector("[data-testid=where]")?.textContent).toBe(`/app/messages?draft=${encodeURIComponent('Could you send me a new link to sign "Pilot terms"?').replace(/%20/g, "+")}`);
+    expect(host.querySelector("[data-testid=where]")?.textContent).toBe("/app/messages");
+  });
+
+  it("a waiting row whose emailed link is dead says so, dates it, and offers a new link — never 'use the link'", async () => {
+    withList([
+      ag({ title: "Expired link", can_sign: false, sign_note: "link_expired", expires_at: "2026-10-16T12:00:00Z" }),
+      ag({ title: "Revoked link", can_sign: false, sign_note: "link_revoked" }),
+    ]);
+    await render();
+    expect(rowOf("Expired link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio emailed you has expired.");
+    expect(rowOf("Expired link").textContent).toMatch(/Link expired/);
+    expect(rowOf("Expired link").textContent).not.toMatch(/Sign by/);
+    expect(rowOf("Revoked link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio emailed you is no longer active.");
+    expect(rowOf("Revoked link").textContent).not.toMatch(/Sign by/);
+    for (const t of ["Expired link", "Revoked link"]) {
+      const ask = rowOf(t).querySelector<HTMLAnchorElement>("[data-testid=ask-new-link]")!;
+      expect(ask.getAttribute("href")).toBe("/app/messages");
+      expect(/bg-gradient-gold/.test(ask.className)).toBe(false);
+    }
+    expect(EMAIL_PROMISE.test(host.textContent ?? "")).toBe(false);
+  });
+
+  it("a signature the portal cannot prove is theirs is neither headed nor counted as theirs", async () => {
+    withList([ag({ title: "Co-signed", state: "awaiting_signature", can_sign: false, sign_note: "use_email_link" })]);
+    await render();
+    expect(host.querySelector("section[aria-labelledby=agreements-waiting]")).toBeNull();
+    expect(host.querySelector("section[aria-labelledby=agreements-rest] h2")?.textContent).toBe("Your agreements");
+    expect(rowOf("Co-signed").querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for a signature");
+    expect(host.querySelector("[data-testid=agreements-summary]")?.textContent).toBe("Nothing is waiting for your signature.");
+    expect(rowOf("Co-signed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Northwind Studio sent this one's signing link by email. If you can't use it, ask Northwind Studio for a new link.");
+  });
+
+  it("says who is left once the customer has signed: the business by name, or everyone else", async () => {
+    withList([
+      ag({ title: "Countersign", state: "awaiting_countersign", can_sign: false }),
+      ag({ title: "Witnessed", state: "awaiting_others", can_sign: false }),
+    ]);
+    await render();
+    expect(rowOf("Countersign").querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for Northwind Studio");
+    expect(rowOf("Countersign").querySelector("[data-testid=agreement-note]")?.textContent).toBe("You've signed. It's complete once Northwind Studio signs.");
+    expect(rowOf("Witnessed").querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for others");
   });
 
   it("says a withdrawn agreement has nothing to sign, and who signs first", async () => {

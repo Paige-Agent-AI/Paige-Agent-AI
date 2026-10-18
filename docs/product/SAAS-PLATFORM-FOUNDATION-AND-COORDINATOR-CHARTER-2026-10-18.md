@@ -78,3 +78,30 @@ No claim of legal compliance, SOC2/GDPR/CCPA certification, AES/TLS configuratio
 **NOW:** Protect universal SOLO and PAIGE Platform Operator end-to-end. EXP00 P1 Stripe fulfillment, Operator money/customer/COO lifecycle; BUG shared SOLO parity; existing EXP01 first value; E09 SOLO customer-facing Portal as subfeature. Audit the 24 foundation IDs against current code and current live provider evidence and open only necessary bounded issues in existing projects. Agency and subaccounts **WAIT**. Owner decides future start conditions and dates.
 
 **This is the owner’s permanent SaaS coordinator instruction until explicitly superseded.**
+
+
+## 7. Governed algorithms and Decision Intelligence — cross-Experience standard (owner 2026-10-18)
+
+The owner previously directed PAIGE to incorporate explainable, measurable algorithms improving **outcome reliability, first value, engagement, voluntary retention, business decisions and resource/AI costs**. These are **cross-cutting engineering requirements consumed by the relevant EXP00–25 journeys**, not a fifth account experience, a new agent/engine, or standalone authority. Source status must not be inferred from this specification.
+
+**One shared algorithmic seam:** Verified business/provider/event inputs → Metric/Evidence Fabric (source, time, units, provenance, freshness, quality, privacy) → reusable domain-specific computation / decision intelligence → Mind / Operating-Cognitive Fabric explains and proposes → existing Spine/Harness/Trust governs any execution → existing domain writer + Rail receipt verifies effects → existing Agent Intelligence/eval processes assess outcome. Never make a score into an execution receipt, skip approval, use a second CRM/ledger or mix PAIGE's L1 subscription money with a tenant's L2 merchant cash.
+
+| Algorithm contract | Related Experience(s) | Required result |
+|---|---|---|
+| ALG-01 Verified effect/state reconciliation and duplicate-replay safety | EXP00, EXP04, EXP05, EXP09; BUG | Recover an original uncertain operation without duplicate tenant, subscription, payment, email or task |
+| ALG-02 First-value / activation detection | EXP00, EXP01, EXP09 | Grounded source of first actual business value, friction and incomplete enrollment, never fabricated engagement |
+| ALG-03 Business health / priority scoring | EXP02, EXP05; Platform Operator COO | Explainable source-backed opportunity/risk with missing-vs-zero and comparable currency/period |
+| ALG-04 Subscriber/customer retention signals | EXP00 (PAIGE's SaaS L1), EXP09 (tenant's customer L2), EXP02 | Actual customer success, support/renewal risk with no invented churn probabilities or unauthorized outreach |
+| ALG-05 Lead scoring/conversion prioritization | EXP03, EXP04 | Tenant-consented CRM and true observed conversion, sensible threshold/false-positive review |
+| ALG-06 Cash-flow forecasting | EXP02, EXP04; Platform Operator | Invoices/obligations/payments into source-verified forecasts with uncertainty, L1/L2 separated |
+| ALG-07 Collections / dunning prioritization | EXP04; EXP00 Operator subscriptions | Authorized, consent/legal-policy-compliant recovery with real terms, no duplicate sends/charges |
+| ALG-08 Operations/resource/schedule optimization | EXP05, EXP04, EXP02 | Correct due dates, dependency/capacity and business time zones, no second scheduler |
+| ALG-09 Marketing attribution / budget optimization | EXP03; EXP00 Operator acquisition | Verified real source/spend/conversion, no fake ROAS or autonomous ad-spend authorization |
+| ALG-10 Communications timing, cadence and channel quality | EXP03, EXP04, EXP09; Operator success | Consent, sender identity, frequency/quiet-hours and actual accepted/delivered distinctions |
+| ALG-11 Model cost/quality evaluation/routing | All active SOLO / Operator Experiences | OpenAI PRIMARY, Anthropic FALLBACK ONLY; measured cost/latency/quality, no unauthorized provider A/B and no closed-model weight modification |
+| ALG-12 Anomaly detection / platform reliability | All active SOLO / Operator Experiences | Detect stuck events, latency, provider failures, drift and tenant/privacy risks; privilege-limited alert/remediation |
+| ALG-13 Contextual next-best-action and useful engagement | EXP01, EXP02, EXP05, EXP09 | Explainable recommendations linked to owner-declared goals/actual work; opt-out/snooze, no compulsive engagement optimization |
+
+**Acceptance contract for every applicable algorithm:** input sources and owner, versioned logic, data freshness/quality, actor + tenant scope, numerical thresholds and fallback, uncertainty/coverage, precision/false-positive and bias tests where predictive, bounded execution authority and spend, negative/consent cases, actual customer outcome metric and rollback; no account-specific calibration or hidden owner-tenant feature branch. Deterministic rule engines may ship without invented machine-learning models. Score and recommendation claims require real-source QA; actual effects need canonical receipts. No algorithm self-modifies closed model weights. Local self-hosted model autonomous improvement is FUTURE owner-authorized direction only, independently gated under AI-3/evaluation and training/spend policy.
+
+**Current ownership:** Existing EXP00, EXP01, BUG, EXP09 agents own Experience integration only; existing Operating/Metric Fabrics and domain owners maintain source logic; ANT-54 covers engagement/first-value/Value Ledger, ANT-139 COO company health, PAIGE Intelligence AI-2/AI-3 owns quality evaluation, Model Fabric owns routing. No new coding-agent assignment or Agency/Sub-Account implementation is authorized by these entries. Canonical owner Experience-specific details: [EXP00–25 strategy](https://docs.google.com/document/d/1FxuTVXU1NcrNkVR9G4CvfAm1Ja4iSo_Cs_SVdA3LuR8/edit) and [24-point SaaS BRD](https://docs.google.com/document/d/1HMMKGNAWGD3UfJyApXwc3-vv28reqfw97-KP_PLivk8/edit).

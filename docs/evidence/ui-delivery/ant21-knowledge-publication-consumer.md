@@ -1,5 +1,19 @@
 # Recover the same saved Knowledge publication after reopening
 
+2026-10-18 authenticated evidence supplement: the development/UNVERIFIED fields
+below remain the author's dated source checkpoint. Original #2331 publication
+recovery was subsequently proved through an ordinary owner session at
+2026-10-17T23:41:23Z: same succeeded publication and generation after full reload,
+explicit next correction left unsubmitted, legitimate legacy input in the second
+ordinary SOLO workspace, and refusal of a foreign document. Original document,
+work-attempt and chunk digests remained unchanged. Private receipt SHA256
+003c1b926a7848ff136528be2317865a6852cb5199b9d570ca68e874744617ee binds13
+retained inputs whose hashes were independently rechecked; current read-only
+native preservation at2026-10-18T05:33:43Z and byte-exact consumer/native source
+through main797d supplement that dated proof. No new publication/deletion,
+provider effect, authenticated campaign, whole-capability closure, Live or owner
+acceptance is claimed. Master§4.0 retains exact release identities and boundaries.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original customer job is saving, publishing and later reopening the SAME Knowledge document, with durable native work and truthful outcome. Existing extraction, review, publication and recovery contracts are reused.
 PAIGE_UI_DESIGN: PASS: repository router, pinned upstream/accessibility references, five applicable modules, quality/testing references and incumbent SOLO modal conventions read. No new visual world or shell.

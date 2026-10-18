@@ -34,7 +34,11 @@ const EMAIL_TOKEN = "e".repeat(64);
 const PORTAL_TOKEN = "f0".repeat(32);
 // Rows and columns the stub holds that the customer must never see (stubs.ts NEVER_SHOWN).
 const NEVER = ["Sam's onboarding agreement", "Northwind internal NDA", "Unsent draft retainer", "PRIVATE BODY", "$4,800", "4,800",
-  "owner@northwind", "deadbeef", "offer-private", "tenant-agreements/", "Alex Moreno", "token", "sha256"];
+  "owner@northwind", "deadbeef", "offer-private", "tenant-agreements/", "Alex Moreno", "token", "sha256",
+  // VISIBILITY (integrator default): on the customer's contact, but they are not a counterparty signer on either.
+  "Venue hire agreement", "Internal scope sign-off"];
+/** "Emailed" is never said: a link the engine records as sent may have been copied and shared another way. */
+const HOW_IT_TRAVELLED = /emailed|by email/i;
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 const STAFF = ["staff", "staff-error"];
 /** Any wording that sends the customer to the emailed link as if it certainly still works (the round-3 finding). */
@@ -108,6 +112,9 @@ async function drive(page, s, notes) {
     await page.locator("[data-harness-home] .grid").waitFor({ timeout: 30_000 });
     await page.waitForTimeout(800);
     notes.line = await textOf(page.locator('[data-testid="agreements-waiting-line"]'));
+    // The Documents tile (Slice 4, on main) renders from its own glance read, as it ships.
+    await page.locator('[data-testid="documents-tile"]').waitFor({ timeout: 15_000 }).catch(() => undefined);
+    notes.documentsTile = await textOf(page.locator('[data-testid="documents-tile"]'));
     notes.lineHref = await page.locator('[data-testid="agreements-waiting-line"]').getAttribute("href").catch(() => null);
     if (notes.line) {
       await page.locator('[data-testid="agreements-waiting-line"]').click();
@@ -216,6 +223,7 @@ function unmet(s, n) {
     want((n.leaks ?? []).length === 0, `private text on the customer page: ${JSON.stringify(n.leaks)}`);
     want((n.links ?? []).some((l) => l === "PaigeAgent terms you've accepted -> /app/agreements/platform"), `platform-terms link ${JSON.stringify(n.links)}`);
     want(!EMAIL_PROMISE.test(n.pageText ?? ""), `the page sends the customer to the emailed link: "${(n.pageText ?? "").match(EMAIL_PROMISE)?.[0]}"`);
+    want(!HOW_IT_TRAVELLED.test(n.pageText ?? ""), `the page says how a link travelled: "${(n.pageText ?? "").match(HOW_IT_TRAVELLED)?.[0]}"`);
     want(!(n.links ?? []).some((l) => /draft=/.test(l)), `a ?draft= link nothing reads yet ${JSON.stringify(n.links)}`);
   }
   if (s.page === "agreements" && !s.phone && ![...STAFF, "multiple"].includes(s.state)) {
@@ -240,12 +248,12 @@ function unmet(s, n) {
     want(eq(s.phone ? n.inlineStates.map((t) => t.replace(/\s*·$/, "")) : n.pills, s.phone ? labels.filter((l) => l !== "Signed" && l !== "Expired") : labels), `${s.phone ? "inline states" : "pills"} ${JSON.stringify(s.phone ? n.inlineStates : n.pills)}`);
     // After refused-here the pressed row's emailed link is dead too: one act left.
     want(eq(n.buttons.filter((b) => /Review and sign|Opening…/.test(b)).length, s.variant === "refused-here" ? 1 : 2), `Review and sign buttons ${JSON.stringify(n.buttons)}`);
-    want(n.notes.includes(`${BUSINESS} sent this one's signing link by email. If you can't use it, ask ${BUSINESS} for a new link.`), `co-signer note ${JSON.stringify(n.notes)}`);
-    want(n.notes.includes(`The signing link ${BUSINESS} emailed you has expired.`), `dead-link note ${JSON.stringify(n.notes)}`);
+    want(n.notes.includes(`${BUSINESS} has sent a signing link for this one. If you can't use it, ask ${BUSINESS} for a new link.`), `co-signer note ${JSON.stringify(n.notes)}`);
+    want(n.notes.includes(`The signing link ${BUSINESS} sent you has expired.`), `dead-link note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes(`You've signed. It's complete once ${BUSINESS} signs.`), `countersign note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes(`${BUSINESS} withdrew this agreement. There's nothing to sign.`), `withdrawn note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes("The signed copy isn't ready to download yet."), `unsealed note ${JSON.stringify(n.notes)}`);
-    want(n.replaces === `Opening an agreement here replaces the signing link ${BUSINESS} emailed you.`, `D-A4 note "${n.replaces}"`);
+    want(n.replaces === `Opening an agreement here replaces the signing link ${BUSINESS} sent you.`, `D-A4 note "${n.replaces}"`);
     want(eq(n.engagements, ["For Website build", "For Brand strategy"]), `engagement names ${JSON.stringify(n.engagements)}`);
     if (!s.variant) {
       // Dead emailed link (button), co-signer (inline), expired agreement (button): all to Messages, no ?draft=.
@@ -257,7 +265,7 @@ function unmet(s, n) {
   if (s.variant === "refused-here") {
     // Said once, by the re-read row — never again as an alert under it (round-4 compliance gap 2).
     want(n.problem === "", `refusal repeated as an alert "${n.problem}"`);
-    const dead = `The signing link ${BUSINESS} emailed you has expired.`;
+    const dead = `The signing link ${BUSINESS} sent you has expired.`;
     want(n.notes.filter((t) => t === dead).length === 2, `dead-link notes (Consulting + Website) ${JSON.stringify(n.notes)}`);
     want((n.pageText ?? "").split(dead).length - 1 === 2, `the dead-link sentence appears ${(n.pageText ?? "").split(dead).length - 1} times`);
   }
@@ -265,16 +273,20 @@ function unmet(s, n) {
     want(eq(n.groups?.map((g) => g.heading), ["Waiting for you", "Everything else"]), `others groups ${JSON.stringify(n.groups)}`);
     want(eq(n.groups?.[0]?.rows, ["Coaching package terms | awaiting_you"]), `others waiting ${JSON.stringify(n.groups?.[0]?.rows)}`);
     want(n.summary === "1 waiting for your signature", `others summary "${n.summary}"`);
-    want(n.replaces === "", `a "replaces the link emailed you" hint with no emailed link: "${n.replaces}"`);
+    want(n.replaces === "", `a "replaces the link sent you" hint with no sent link: "${n.replaces}"`);
+    // VISIBILITY: the agreement signed only at another address and the one with no counterparty are not listed.
+    want(eq(n.groups?.[1]?.rows, ["Speaker appearance terms | awaiting_earlier_signer", "Joint venture outline | awaiting_others", "Partnership side letter | awaiting_signature"]), `others everything-else ${JSON.stringify(n.groups?.[1]?.rows)}`);
     const wantNotes = [
       "Opening it here gives you a private signing link that works for up to a day.",
-      `It's been signed. It's complete once ${BUSINESS} signs.`,
-      `It's complete once ${BUSINESS} signs.`,
-      `${BUSINESS} signs first.`,
-      `${BUSINESS} hasn't emailed you a signing link for this one. If you need one, ask ${BUSINESS} for it.`,
+      "Someone else signs first. You'll be able to sign once they have.",
+      "You've signed. It's complete once everyone else has.",
+      `${BUSINESS} hasn't sent you a signing link for this one. If you need one, ask ${BUSINESS} for it.`,
     ];
     want(eq([...n.notes].sort(), [...wantNotes].sort()), `others notes ${JSON.stringify(n.notes)}`);
-    want(!/You've signed|You'll be able to sign|emailed you\.|sent this one's signing link by email/.test(n.pageText ?? ""), `others credits the customer or an emailed link: ${n.pageText}`);
+    // W1: a witness first is never the business; W3: a signed co-signer is never asked to act.
+    want(!new RegExp(`${BUSINESS} signs first|has sent a signing link`).test(n.pageText ?? ""), `others credits the business or asks a signed co-signer to act: ${n.pageText}`);
+    const othersLabels = ["Waiting for another signer", "Waiting for others", "Waiting for a signature"];
+    want(eq(s.phone ? n.inlineStates.map((t) => t.replace(/\s*·$/, "")) : n.pills, othersLabels), `others ${s.phone ? "inline states" : "pills"} ${JSON.stringify(s.phone ? n.inlineStates : n.pills)}`);
     want(eq(n.buttons.filter((b) => /Review and sign/.test(b)).length, 1), `others buttons ${JSON.stringify(n.buttons)}`);
   }
   if (s.variant === "refused-later") {
@@ -302,6 +314,11 @@ function unmet(s, n) {
     want(n.customerError === 0, "a staff login was shown the customer error card");
   }
   if (s.state === "home") want(n.line === "2 agreements waiting for your signature Review" && n.lineHref === "/app/agreements" && n.lineOpens === "/app/agreements", `home line "${n.line}" -> ${n.lineHref} / ${n.lineOpens}`);
+  if (s.page === "home") {
+    // Home as it ships: the Agreements line AND the Documents tile, from its own read (never "Couldn't check").
+    want(/Documents/.test(n.documentsTile ?? "") && /3 files/.test(n.documentsTile ?? "") && new RegExp(`2 shared by ${BUSINESS} · 1 from you`).test(n.documentsTile ?? "")
+      && !/Couldn't check/.test(n.documentsTile ?? ""), `documents tile "${n.documentsTile}"`);
+  }
   if (s.state === "home-none") want(n.line === "", `home line shown with nothing waiting: "${n.line}"`);
   return miss;
 }
@@ -459,27 +476,43 @@ async function runShots(browser, shots, label = "") {
     if (s.page === "agreements" && !driveError && !["loading", ...STAFF].includes(s.state)) {
       await page.locator(section).screenshot({ path: path.join(out, `${name}-page.png`) }).catch(() => undefined);
     }
-    // The rows below the fold and the footer, as the customer sees them: the page's own scroll container, scrolled.
-    if (s.page === "agreements" && s.state === "mixed" && !s.variant && !driveError) {
-      const steps = await page.evaluate(() => {
+    // The rows below the fold and the footer, as the customer sees them: the page's own scroll container, scrolled
+    // a screen at a time (80% steps, so each frame overlaps the last), until every row has been fully in view in at
+    // least one frame and the footer shows. A `-page.png` element frame is clipped by the scroller on a phone.
+    if (s.page === "agreements" && ["mixed", "others"].includes(s.state) && !s.variant && !driveError) {
+      const scroller = () => {
         const root = document.querySelector("section[aria-labelledby='agreements-title']");
         let el = root?.parentElement ?? null;
         while (el && !(el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowY))) el = el.parentElement;
-        const sc = el ?? document.scrollingElement;
-        return { max: sc.scrollHeight - sc.clientHeight, view: sc.clientHeight, isDoc: !el };
-      });
+        return el ?? document.scrollingElement;
+      };
+      // The finder runs in the page; it is passed as source because a function cannot cross into page.evaluate.
+      const steps = await page.evaluate((src) => {
+        const sc = (0, eval)(src)();
+        return { max: sc.scrollHeight - sc.clientHeight, view: sc.clientHeight };
+      }, `(${scroller})`);
       notes.scroll = steps;
-      for (const [i, frac] of [[1, 0.5], [2, 1]]) {
-        await page.evaluate((top) => {
-          const root = document.querySelector("section[aria-labelledby='agreements-title']");
-          let el = root?.parentElement ?? null;
-          while (el && !(el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowY))) el = el.parentElement;
-          (el ?? document.scrollingElement).scrollTo({ top, behavior: "instant" });
-        }, Math.round(steps.max * frac));
+      const seen = new Set();
+      const tops = [];
+      for (let top = 0; ; top += Math.round(steps.view * 0.8)) { tops.push(Math.min(top, steps.max)); if (top >= steps.max) break; }
+      for (const [i, top] of tops.entries()) {
+        const inView = await page.evaluate(([src, y]) => {
+          const sc = (0, eval)(src)();
+          sc.scrollTo({ top: y, behavior: "instant" });
+          const box = sc === document.scrollingElement ? { top: 0, bottom: window.innerHeight } : sc.getBoundingClientRect();
+          return [...document.querySelectorAll("[data-testid='agreement-row']")].filter((r) => {
+            const b = r.getBoundingClientRect(); return b.top >= box.top - 1 && b.bottom <= Math.min(box.bottom, window.innerHeight) + 1;
+          }).map((r) => r.querySelector("h3").textContent.trim());
+        }, [`(${scroller})`, top]);
+        inView.forEach((t) => seen.add(t));
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(250);
-        await page.screenshot({ path: path.join(out, `${name}-scroll${i}.png`) });
+        await page.screenshot({ path: path.join(out, `${name}-scroll${i + 1}.png`) });
       }
+      const all = await page.locator("[data-testid='agreement-row'] h3").allInnerTexts();
+      notes.scrollFrames = tops.length;
+      notes.rowsNeverFullyInView = all.map(clean).filter((t) => !seen.has(t));
+      if (notes.rowsNeverFullyInView.length) { expectations.push(`rows never fully in a scroll frame ${JSON.stringify(notes.rowsNeverFullyInView)}`); failed = true; }
       notes.footerInView = await page.locator('[data-testid="platform-terms-link"]').evaluate((a) => { const r = a.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight; });
       if (!notes.footerInView) { expectations.push("footer not in view after scrolling to the bottom"); failed = true; }
     }

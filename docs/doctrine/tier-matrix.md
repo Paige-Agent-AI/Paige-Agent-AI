@@ -4947,7 +4947,13 @@ or waiting state); a portal open REPLACES the emailed link (D-A4, stated on the 
 integrator default, owner may overrule: a single signer at the login's own CONFIRMED email who was never
 emailed a link may sign here, on a link ending at the earlier of the agreement's deadline and 24 hours, and
 the page never mentions an emailed link for it (`link_emailed` false; `no_link_sent` where it is not
-signable here). A read that fails before the login is known to be a customer keeps MyAgreements for
+signable here). Round 6 integrator default, owner may overrule — VISIBILITY: the list, the open and the
+download scope reach only agreements on which the customer is a counterparty signer (a counterparty row at the
+login's confirmed email or the client's primary email); one with no counterparty, or signed for only at other
+addresses, is not listed, not opened and not downloaded (its sealed certificate names other people). A witness
+ordered before the customer reads "Someone else signs first." (`awaiting_earlier_signer`); a co-signer row at
+the customer's address that has signed reads "You've signed" and is never asked to act; the page says a link
+was "sent", never "emailed". A read that fails before the login is known to be a customer keeps MyAgreements for
 staff (§58). Agreements is core for
 customers in the menu (D-A1: every customer of one business, hideable and renameable by the owner); staff
 and every other viewer keep the catalog rule. Home shows one quiet line only while something waits for the
@@ -4957,9 +4963,9 @@ customer's signature AND Agreements is in their menu (D-A5). §61 default for th
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|---|
 | Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); 0 in production | Allowed | — | — | unchanged |
-| Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only, only where they are a counterparty signer (integrator default); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
 | Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; never emailed: confirmed login email only, link ≤ 24 hours; ≤10 opens/hour | 42501 | PROOF OWED |
-| Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy | refused | PROOF OWED |
+| Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy on which they are a counterparty signer (integrator default) | refused | PROOF OWED |
 | Platform terms `/app/agreements` fallback and `/app/agreements/platform` (MyAgreements, unchanged) | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ via the link on their Agreements page | — | PROOF OWED |
 | Menu entry "Agreements" (Paperwork) | — | — | — | — | — | ✓ by default (D-A1); owner can hide/rename | — | PROOF OWED |
 | Paige reads the customer's agreements (`client.portal_agreements_read`) | — | — | — | — | — | customer assistant only | — | PROOF OWED |
@@ -4974,5 +4980,8 @@ document scope, the Sub-account tier and the unchanged policy set. Vitest
 covers the hook's exact keys, tenant pin, identity reset and focus/visibility refresh, the page's states and
 copy, the one gold act, StrictMode, the Home line and the routes. Harness frames
 (`scripts/live-drive/harness/portal-agreements-customer-mount`) show the page in every state, the Home line, the
-platform-terms page and the frozen signing page reached from the portal versus the email. Authenticated
-customer sign and download on production are owed.
+platform-terms page and the frozen signing page reached from the portal versus the email. Round 6: pgTAP
+184 cases, adding visibility (no counterparty and other-address rows absent from the list, refused by the open
+and by the download scope, including two completed sealed copies; a control proves the same copy is
+downloadable once its signer is the customer), a witness ordered first (W1) and a signed co-signer at the
+customer's address (W3). Authenticated customer sign and download on production are owed.

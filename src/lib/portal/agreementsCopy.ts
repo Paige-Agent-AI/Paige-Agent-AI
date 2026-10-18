@@ -24,14 +24,16 @@ export interface AgreementCopy {
 
 /**
  * Why a row waiting on a signature is not signable here, in words that are true in every case the server
- * returns them. A dead link (expired or revoked) is never offered as the way to sign.
+ * returns them. A dead link (expired or revoked) is never offered as the way to sign. "Sent", never "emailed":
+ * the engine's record of a link covers the owner copying it and sharing it their own way as well as the email
+ * (`issue_agreement_signing_link` writes the same `sent` event), so the page never says how it travelled.
  */
 export function signNoteCopy(note: PortalAgreementSignNote, business: string): AgreementCopy {
   switch (note) {
-    case "link_expired": return { text: `The signing link ${business} emailed you has expired.`, ask: "button" };
-    case "link_revoked": return { text: `The signing link ${business} emailed you is no longer active.`, ask: "button" };
-    case "no_link_sent": return { text: `${business} hasn't emailed you a signing link for this one. If you need one,`, ask: "inline", askLabel: `ask ${business} for it` };
-    default: return { text: `${business} sent this one's signing link by email. If you can't use it,`, ask: "inline" };
+    case "link_expired": return { text: `The signing link ${business} sent you has expired.`, ask: "button" };
+    case "link_revoked": return { text: `The signing link ${business} sent you is no longer active.`, ask: "button" };
+    case "no_link_sent": return { text: `${business} hasn't sent you a signing link for this one. If you need one,`, ask: "inline", askLabel: `ask ${business} for it` };
+    default: return { text: `${business} has sent a signing link for this one. If you can't use it,`, ask: "inline" };
   }
 }
 
@@ -58,6 +60,9 @@ export function waitingNote(state: PortalAgreementState, counterparty: PortalAgr
   switch (state) {
     case "awaiting_business":
       return counterparty === "you" ? `${business} signs first. You'll be able to sign once they have.` : `${business} signs first.`;
+    // Someone who is not the business (a witness, say) signs before this customer: never credited to the business.
+    case "awaiting_earlier_signer":
+      return counterparty === "you" ? "Someone else signs first. You'll be able to sign once they have." : "Someone else signs first.";
     case "awaiting_countersign":
       return counterparty === "you" ? `You've signed. It's complete once ${business} signs.`
         : counterparty === "other" ? `It's been signed. It's complete once ${business} signs.`
@@ -70,9 +75,9 @@ export function waitingNote(state: PortalAgreementState, counterparty: PortalAgr
   }
 }
 
-/** Above the signable rows, when every one of them had a link emailed: opening here replaces it (D-A4). */
+/** Above the signable rows, when every one of them had a link sent: opening here replaces it (D-A4). */
 export function replacesEmailedLinkHint(business: string): string {
-  return `Opening an agreement here replaces the signing link ${business} emailed you.`;
+  return `Opening an agreement here replaces the signing link ${business} sent you.`;
 }
 
 /**
@@ -81,6 +86,6 @@ export function replacesEmailedLinkHint(business: string): string {
  */
 export function signHereNote(linkEmailed: boolean, business: string): string {
   return linkEmailed
-    ? `Opening it here replaces the signing link ${business} emailed you.`
+    ? `Opening it here replaces the signing link ${business} sent you.`
     : "Opening it here gives you a private signing link that works for up to a day.";
 }

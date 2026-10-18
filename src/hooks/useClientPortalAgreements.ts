@@ -25,11 +25,14 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Where an agreement stands for this customer. `awaiting_you` means the one signature it waits for IS this
  * customer's (the signer is at one of their own addresses); `awaiting_signature` means it waits for a signature
- * the portal cannot prove is theirs (a co-signer, or a signer at another address), so it is neither counted nor
- * headed as theirs. `awaiting_countersign`: they have signed and only the business's own signatories are left.
+ * the portal cannot prove is theirs (a co-signer still to sign), so it is neither counted nor headed as theirs.
+ * `awaiting_business`: only the business's own signatories sign before them; `awaiting_earlier_signer`: someone
+ * else (a witness, say) signs before them. `awaiting_countersign`: they have signed and only the business's own
+ * signatories are left. The server lists only agreements on which this customer is a counterparty signer
+ * (integrator default): one with no counterparty, or signed for only at other addresses, never reaches the page.
  */
 export type PortalAgreementState =
-  | "awaiting_you" | "awaiting_signature" | "awaiting_business" | "awaiting_countersign" | "awaiting_others"
+  | "awaiting_you" | "awaiting_signature" | "awaiting_business" | "awaiting_earlier_signer" | "awaiting_countersign" | "awaiting_others"
   | "signed" | "declined" | "withdrawn" | "expired" | "unavailable";
 /**
  * Why an agreement is not signable from the portal. `link_expired` and `link_revoked`: the signing link the
@@ -40,9 +43,10 @@ export type PortalAgreementSignNote = "use_email_link" | "link_expired" | "link_
 const SIGN_NOTES = new Set<PortalAgreementSignNote>(["use_email_link", "link_expired", "link_revoked", "no_link_sent"]);
 /**
  * Whose signature the agreement's counterparty line is, decided by the server before any "signed" or "waiting"
- * state: `you` (exactly one counterparty, at one of this login's own addresses), `other` (a co-signer, or one
- * signer at another address — not provably this customer), `none` (no counterparty signer at all). The page
- * says "You've signed" or "You'll be able to sign" only for `you`.
+ * state: `you` (exactly one counterparty, at one of this login's own addresses; or co-signers whose rows at those
+ * addresses have all signed), `other` (a co-signer still to sign — not provably this customer), `none` (no
+ * counterparty signer at all; the server does not list these today). The page says "You've signed" or "You'll be
+ * able to sign" only for `you`.
  */
 export type PortalAgreementCounterparty = "you" | "other" | "none";
 const COUNTERPARTIES = new Set<PortalAgreementCounterparty>(["you", "other", "none"]);
@@ -67,8 +71,9 @@ export interface PortalAgreement {
   sign_note: PortalAgreementSignNote | null;
   counterparty: PortalAgreementCounterparty;
   /**
-   * Whether the business ever emailed a signing link for this agreement's counterparty. A link the portal itself
-   * issued never counts. "Opening here replaces the link {Business} emailed you" is only said when this is true.
+   * Whether the business ever sent a signing link for this agreement's counterparty — by email, or by copying it
+   * and sharing it another way (both write the engine's `sent` event). A link the portal itself issued never counts.
+   * "Opening here replaces the link {Business} sent you" is only said when this is true.
    */
   link_emailed: boolean;
 }
@@ -96,7 +101,7 @@ const ROW_KEYS = [
   "counterparty", "link_emailed",
 ];
 const STATES = new Set<PortalAgreementState>([
-  "awaiting_you", "awaiting_signature", "awaiting_business", "awaiting_countersign", "awaiting_others",
+  "awaiting_you", "awaiting_signature", "awaiting_business", "awaiting_earlier_signer", "awaiting_countersign", "awaiting_others",
   "signed", "declined", "withdrawn", "expired", "unavailable",
 ]);
 const TOKEN = /^[0-9a-f]{64}$/;

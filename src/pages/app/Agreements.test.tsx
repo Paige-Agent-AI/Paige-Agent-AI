@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Agreements from "./Agreements";
-import { openFailureCopy, signNoteCopy, type AgreementCopy } from "@/lib/portal/agreementsCopy";
+import { openFailureCopy, replacesEmailedLinkHint, signHereNote, signNoteCopy, type AgreementCopy } from "@/lib/portal/agreementsCopy";
 import type { ClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import type { ClientPortalAgreementsState, OpenAgreementFailure, PortalAgreement } from "@/hooks/useClientPortalAgreements";
 
@@ -226,12 +226,12 @@ describe("Review and sign", () => {
     expect(buttons(rowOf("By email only"), /Review and sign/)).toHaveLength(0);
     expect(buttons(rowOf("Done"), /Review and sign/)).toHaveLength(0);
     expect(rowOf("By email only").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
-      "Northwind Studio sent this one's signing link by email. If you can't use it, ask Northwind Studio for a new link.");
+      "Northwind Studio has sent a signing link for this one. If you can't use it, ask Northwind Studio for a new link.");
     expect(rowOf("By email only").querySelector("[data-testid=ask-new-link-inline]")?.getAttribute("href")).toBe("/app/messages");
     const gold = Array.from(host.querySelectorAll("button, a")).filter((el) => /bg-gradient-gold/.test(el.className));
     expect(gold.map((g) => g.closest("[data-testid=agreement-row]")?.querySelector("h3")?.textContent)).toEqual(["First"]);
     // The customer is told, beside the act, that opening here retires the emailed link (D-A4).
-    expect(host.querySelector("[data-testid=replaces-email-link]")?.textContent).toBe("Opening an agreement here replaces the signing link Northwind Studio emailed you.");
+    expect(host.querySelector("[data-testid=replaces-email-link]")?.textContent).toBe("Opening an agreement here replaces the signing link Northwind Studio sent you.");
   });
 
   it("opens the existing signing page with the link the server issued", async () => {
@@ -268,8 +268,8 @@ describe("Review and sign", () => {
     // "Opened too many times": the first of those opens already replaced the emailed link (D-A4).
     expect(spoken(openFailureCopy("TRY_AGAIN_LATER", "Northwind Studio"))).toBe(
       "This agreement has been opened several times in the last hour. Try again in an hour, or ask Northwind Studio for a new link.");
-    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_expired"))).toBe("The signing link Northwind Studio emailed you has expired.");
-    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_revoked"))).toBe("The signing link Northwind Studio emailed you is no longer active.");
+    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_expired"))).toBe("The signing link Northwind Studio sent you has expired.");
+    expect(spoken(openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", "link_revoked"))).toBe("The signing link Northwind Studio sent you is no longer active.");
   });
 
   it("on 'opened too many times', links Messages and turns the gold button quiet until the list is re-read", async () => {
@@ -317,7 +317,7 @@ describe("a refusal the re-read list already explains", () => {
     await render();
     await click(buttons(host, /Review and sign/)[0]);
     await render();
-    const sentence = "The signing link Northwind Studio emailed you has expired.";
+    const sentence = "The signing link Northwind Studio sent you has expired.";
     const r = rowOf("Website build agreement");
     expect((r.textContent ?? "").split(sentence).length - 1).toBe(1);
     expect(r.querySelector("[data-testid=agreement-problem]")).toBeNull();
@@ -334,7 +334,7 @@ describe("a link that was never emailed (integrator default, owner may overrule)
     expect(host.querySelector("[data-testid=replaces-email-link]")).toBeNull();
     expect(rowOf("Website build agreement").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
       "Opening it here gives you a private signing link that works for up to a day.");
-    expect(host.textContent).not.toMatch(/emailed you/);
+    expect(host.textContent).not.toMatch(/emailed you|sent you/);
     expect(buttons(host, /Review and sign/)).toHaveLength(1);
   });
 
@@ -343,7 +343,7 @@ describe("a link that was never emailed (integrator default, owner may overrule)
     await render();
     expect(host.querySelector("[data-testid=replaces-email-link]")).toBeNull();
     expect(rowOf("Emailed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
-      "Opening it here replaces the signing link Northwind Studio emailed you.");
+      "Opening it here replaces the signing link Northwind Studio sent you.");
     expect(rowOf("Never emailed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
       "Opening it here gives you a private signing link that works for up to a day.");
   });
@@ -352,7 +352,7 @@ describe("a link that was never emailed (integrator default, owner may overrule)
     withList([ag({ title: "Emailed" }), ag({ title: "Also emailed" })]);
     await render();
     expect(host.querySelector("[data-testid=replaces-email-link]")?.textContent).toBe(
-      "Opening an agreement here replaces the signing link Northwind Studio emailed you.");
+      "Opening an agreement here replaces the signing link Northwind Studio sent you.");
     expect(rowOf("Emailed").querySelector("[data-testid=agreement-note]")).toBeNull();
   });
 
@@ -361,9 +361,9 @@ describe("a link that was never emailed (integrator default, owner may overrule)
     await render();
     const r = rowOf("Co-signed");
     expect(r.querySelector("[data-testid=agreement-note]")?.textContent).toBe(
-      "Northwind Studio hasn't emailed you a signing link for this one. If you need one, ask Northwind Studio for it.");
+      "Northwind Studio hasn't sent you a signing link for this one. If you need one, ask Northwind Studio for it.");
     expect(r.querySelector("[data-testid=ask-new-link-inline]")?.getAttribute("href")).toBe("/app/messages");
-    expect(r.textContent).not.toMatch(/sent this one's signing link by email|new link/);
+    expect(r.textContent).not.toMatch(/has sent a signing link|new link/);
   });
 });
 
@@ -383,7 +383,40 @@ describe("whose signature it is", () => {
     expect(note("P1 others")).toBe("It's been signed. It's complete once everyone else has.");
     expect(note("None others")).toBe("It's complete once everyone has signed.");
     expect(note("Business first")).toBe("Northwind Studio signs first.");
-    expect(host.textContent).not.toMatch(/You've signed|You'll be able to sign|sent this one's signing link by email/);
+    expect(host.textContent).not.toMatch(/You've signed|You'll be able to sign|has sent a signing link/);
+  });
+
+  it("W1: someone other than the business signing first is never said to be the business", async () => {
+    withList([ag({ title: "Witness first", state: "awaiting_earlier_signer", can_sign: false, counterparty: "you" })]);
+    await render();
+    const r = rowOf("Witness first");
+    expect(r.querySelector("[data-testid=agreement-note]")?.textContent).toBe("Someone else signs first. You'll be able to sign once they have.");
+    expect(r.querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for another signer");
+    expect(r.textContent).not.toMatch(/Northwind Studio signs first|Waiting for Northwind Studio/);
+    expect(r.querySelector("[data-testid=review-and-sign]")).toBeNull();
+  });
+
+  it("W3: a co-signer at the customer's address who has signed is shown as signed, never asked to act", async () => {
+    withList([ag({ title: "Co-signed, mine done", state: "awaiting_others", can_sign: false, counterparty: "you", sign_note: null })]);
+    await render();
+    const r = rowOf("Co-signed, mine done");
+    expect(r.querySelector("[data-testid=agreement-note]")?.textContent).toBe("You've signed. It's complete once everyone else has.");
+    expect(r.querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for others");
+    expect(r.textContent).not.toMatch(/signing link|new link/);
+    expect(r.querySelector("[data-testid=review-and-sign]")).toBeNull();
+  });
+});
+
+describe("how a link travelled is never claimed", () => {
+  it("no customer sentence says a link was emailed: the owner may have copied it and shared it another way", () => {
+    const notes = ["use_email_link", "link_expired", "link_revoked", "no_link_sent"] as const;
+    const said = [
+      ...notes.map((n) => signNoteCopy(n, "Northwind Studio").text),
+      ...notes.map((n) => openFailureCopy("NOT_SIGNABLE_HERE", "Northwind Studio", n).text),
+      replacesEmailedLinkHint("Northwind Studio"), signHereNote(true, "Northwind Studio"), signHereNote(false, "Northwind Studio"),
+      openFailureCopy("TRY_AGAIN_LATER", "Northwind Studio").text,
+    ];
+    for (const text of said) expect(text).not.toMatch(/e-?mail/i);
   });
 });
 
@@ -399,7 +432,7 @@ describe("under StrictMode (the app's dev mount)", () => {
       </StrictMode>,
     ));
     await click(buttons(host, /Review and sign/)[0]);
-    expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim()).toBe("The signing link Northwind Studio emailed you has expired.");
+    expect(host.querySelector("[data-testid=agreement-problem]")?.textContent?.trim()).toBe("The signing link Northwind Studio sent you has expired.");
     expect(buttons(host, /Review and sign/)[0].disabled).toBe(false);
   });
 });
@@ -464,10 +497,10 @@ describe("other states", () => {
       ag({ title: "Revoked link", can_sign: false, sign_note: "link_revoked" }),
     ]);
     await render();
-    expect(rowOf("Expired link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio emailed you has expired.");
+    expect(rowOf("Expired link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio sent you has expired.");
     expect(rowOf("Expired link").textContent).toMatch(/Link expired/);
     expect(rowOf("Expired link").textContent).not.toMatch(/Sign by/);
-    expect(rowOf("Revoked link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio emailed you is no longer active.");
+    expect(rowOf("Revoked link").querySelector("[data-testid=agreement-note]")?.textContent).toBe("The signing link Northwind Studio sent you is no longer active.");
     expect(rowOf("Revoked link").textContent).not.toMatch(/Sign by/);
     for (const t of ["Expired link", "Revoked link"]) {
       const ask = rowOf(t).querySelector<HTMLAnchorElement>("[data-testid=ask-new-link]")!;
@@ -485,7 +518,7 @@ describe("other states", () => {
     expect(rowOf("Co-signed").querySelector("[data-testid=agreement-state]")?.textContent).toBe("Waiting for a signature");
     expect(host.querySelector("[data-testid=agreements-summary]")?.textContent).toBe("Nothing is waiting for your signature.");
     expect(rowOf("Co-signed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
-      "Northwind Studio sent this one's signing link by email. If you can't use it, ask Northwind Studio for a new link.");
+      "Northwind Studio has sent a signing link for this one. If you can't use it, ask Northwind Studio for a new link.");
   });
 
   it("says who is left once the customer has signed: the business by name, or everyone else", async () => {

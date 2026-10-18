@@ -6,7 +6,9 @@
 -- RESTRICTIVE gate that gives a portal client NOTHING, and its comment asks that any widening be a
 -- deliberate, reviewed act. These three functions are that act, kept narrow: each re-proves the
 -- caller's ONE relationship (client_portal_relationship_id + the Slice 1 lock) and returns or
--- touches only agreements whose contact_id IS that relationship. The RLS gate is not relaxed.
+-- touches only agreements whose contact_id IS that relationship and on which the customer is a
+-- counterparty signer (VISIBILITY, integrator default 2026-10-18, see the state helper). The RLS
+-- gate is not relaxed.
 --
 -- THE ONE WRITER, client_portal_open_agreement_signing, is the customer-side twin of
 -- issue_agreement_signing_link (20270532110000:45-176) with three deliberate differences:
@@ -39,10 +41,18 @@ BEGIN;
 -- not theirs. 'counterparty' says it:
 --   'you'   exactly one counterparty signer, and that row's email IS one of this login's own
 --           addresses (the login's confirmed email or the client record's primary email), compared by
---           the one email match key (contact_method_match_key: trimmed, lowercase);
---   'other' a counterparty signer exists but is not provably this customer — a co-signer (several
---           counterparty rows, D-A3) or one signer at another address;
+--           the one email match key (contact_method_match_key: trimmed, lowercase); or, with several
+--           counterparties (D-A3), every row at one of those addresses has already signed — the
+--           signature at this customer's address is done, so "You've signed" is true (round 6, W3);
+--   'other' a counterparty signer exists but is not provably this customer — a co-signer still to
+--           sign (several counterparty rows, D-A3) or one signer at another address;
 --   'none'  no counterparty signer at all: only the business's own signatories (or witnesses).
+-- VISIBILITY (integrator default, 2026-10-18, which the owner may overrule): the list, the open and
+-- the download scope only ever reach an agreement on which this customer IS a counterparty signer —
+-- a counterparty row at one of the addresses above (_client_portal_agreement_is_mine). An agreement
+-- with no counterparty, or whose counterparties are all at other addresses, is not this customer's
+-- to see: it is not listed, not opened and not downloaded, because its sealed copy names someone
+-- else. So 'none', and 'other' for a single signer, are never shown; the helper still derives them.
 -- The sealed certificate credits the signature to the person and address named on the signer row,
 -- and the portal files no agreement event, so the portal hands out a link only when 'counterparty'
 -- is 'you'. Anything else waiting on a counterparty is 'awaiting_signature': neither counted nor
@@ -88,6 +98,9 @@ DECLARE
   _all_signed boolean;
   _emailed boolean;
   _earlier integer;
+  _earlier_not_business integer;
+  _mine integer;
+  _mine_open integer;
   _state text;
   _note text := NULL;
   _deadline timestamptz;
@@ -95,7 +108,11 @@ BEGIN
   SELECT * INTO _a FROM public.paige_agreements WHERE id = p_agreement_id;
   IF NOT FOUND THEN RETURN NULL; END IF;
 
-  SELECT count(*), coalesce(bool_and(status = 'signed'), true) INTO _n, _all_signed
+  SELECT count(*), coalesce(bool_and(status = 'signed'), true),
+         count(*) FILTER (WHERE (public.contact_method_match_key('email', email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS TRUE),
+         count(*) FILTER (WHERE status <> 'signed'
+                            AND (public.contact_method_match_key('email', email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS TRUE)
+    INTO _n, _all_signed, _mine, _mine_open
     FROM public.paige_agreement_signers
    WHERE agreement_id = _a.id AND signer_role = 'counterparty';
   IF _n = 1 THEN
@@ -107,6 +124,7 @@ BEGIN
   _counterparty := CASE
     WHEN _n = 0 THEN 'none'
     WHEN _n = 1 AND (public.contact_method_match_key('email', _me.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS TRUE THEN 'you'
+    WHEN _n > 1 AND _mine > 0 AND _mine_open = 0 THEN 'you'
     ELSE 'other' END;
 
   -- Any counterparty's link emailed (for one signer, that signer's).
@@ -136,15 +154,24 @@ BEGIN
     ELSE
       _state := 'awaiting_others';
     END IF;
+  ELSIF _n <> 1 AND _counterparty = 'you' THEN
+    -- Co-signers, and every one at this customer's address has signed: nothing is asked of them, only
+    -- the other signers are left (round 6, W3) — never "use the link" to someone who has signed.
+    _state := 'awaiting_others';
   ELSIF _n <> 1 THEN
     -- Co-signers, not all signed: the portal cannot tell which row is this login (D-A3).
     _state := 'awaiting_signature';
     _note := CASE WHEN _emailed THEN 'use_email_link' ELSE 'no_link_sent' END;
   ELSE
-    -- Same rule as sign-agreement's out-of-turn check: an earlier-order signer still to sign.
-    SELECT count(*) INTO _earlier FROM public.paige_agreement_signers
+    -- Same rule as sign-agreement's out-of-turn check: an earlier-order signer still to sign. Only
+    -- when every one of them is the business's own signatory is it "{Business} signs first"; a
+    -- witness (or anyone else) ordered first is 'awaiting_earlier_signer' ("Someone else signs
+    -- first"), never credited to the business (round 6, W1).
+    SELECT count(*), count(*) FILTER (WHERE signer_role <> 'tenant_signatory') INTO _earlier, _earlier_not_business
+      FROM public.paige_agreement_signers
      WHERE agreement_id = _a.id AND signing_order < _me.signing_order AND status <> 'signed';
-    IF _earlier > 0 THEN _state := 'awaiting_business';
+    IF _earlier > 0 AND _earlier_not_business = 0 THEN _state := 'awaiting_business';
+    ELSIF _earlier > 0 THEN _state := 'awaiting_earlier_signer';
     ELSIF _counterparty <> 'you' THEN
       -- The one signer is at an address that is not this customer's: waiting on a signature, but not
       -- provably theirs.
@@ -227,6 +254,22 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION public._client_portal_my_email_keys(uuid, uuid) FROM PUBLIC, anon, authenticated;
 
+-- Is this customer a counterparty signer on this agreement? (VISIBILITY, integrator default above.)
+-- True only when a counterparty row's email is one of the caller's own match keys. Every reader and
+-- the one writer gate on it, so an agreement whose sealed copy names only other people is never
+-- listed, opened or downloaded from the portal. Internal, like the state.
+CREATE OR REPLACE FUNCTION public._client_portal_agreement_is_mine(p_agreement_id uuid, p_my_email_keys text[])
+RETURNS boolean
+LANGUAGE sql STABLE
+SET search_path = public, pg_temp
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.paige_agreement_signers s
+     WHERE s.agreement_id = p_agreement_id AND s.signer_role = 'counterparty'
+       AND (public.contact_method_match_key('email', s.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS TRUE)
+$$;
+REVOKE ALL ON FUNCTION public._client_portal_agreement_is_mine(uuid, text[]) FROM PUBLIC, anon, authenticated;
+
 -- ── A1a: the customer's agreements ──────────────────────────────────────────────────────────────
 -- Returns NULL for anyone who is not a customer of exactly one business (staff, an unlinked login,
 -- a foreign p_tenant_id). Never returned: body, document path, storage keys, hashes, token data,
@@ -274,6 +317,7 @@ BEGIN
       FROM public.paige_agreements a
       CROSS JOIN LATERAL (SELECT public._client_portal_agreement_state(a.id, _keys, _login_key) AS st) st
      WHERE a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft'
+       AND public._client_portal_agreement_is_mine(a.id, _keys)
   ), shaped AS (
     SELECT m.*,
            (m.st->>'state' = 'awaiting_you') AS waiting,
@@ -312,7 +356,8 @@ BEGIN
            'signed', count(*) FILTER (WHERE a.status = 'completed'))
     INTO _summary
     FROM public.paige_agreements a
-   WHERE a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft';
+   WHERE a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft'
+     AND public._client_portal_agreement_is_mine(a.id, _keys);
 
   RETURN jsonb_build_object('tenant_id', _tenant, 'business_name', _business, 'server_now', now(),
     'summary', _summary, 'agreements', _rows, 'has_more', _total > _limit);
@@ -322,9 +367,10 @@ REVOKE ALL ON FUNCTION public.client_portal_agreements(uuid, integer) FROM PUBLI
 GRANT EXECUTE ON FUNCTION public.client_portal_agreements(uuid, integer) TO authenticated, service_role;
 
 -- ── A1b: open one of your agreements to sign (mints the /sign/:token link) ──────────────────────
--- Codes: CLIENT_AGREEMENT_UNAVAILABLE (not yours, not found, draft, or no relationship — one code so
--- a stranger learns nothing about which agreements exist), NOT_SIGNABLE (with the derived state:
--- signed, declined, withdrawn, expired, waiting on the business or on others), NOT_SIGNABLE_HERE
+-- Codes: CLIENT_AGREEMENT_UNAVAILABLE (not yours, not one you are a counterparty signer on, not found,
+-- draft, or no relationship — one code so a stranger learns nothing about which agreements exist),
+-- NOT_SIGNABLE (with the derived state: signed, declined, withdrawn, expired, waiting on the business,
+-- on an earlier signer or on others), NOT_SIGNABLE_HERE
 -- with a 'note' saying why: 'link_revoked' (the signer link was revoked while the agreement is still
 -- open) or 'link_expired' (the emailed link's own expiry has passed) — ask the business for a new
 -- link — 'use_email_link' (a link was emailed, and: several counterparties, a signer row that is
@@ -356,6 +402,7 @@ DECLARE
   _expires timestamptz;
   _emailed_expiry timestamptz;
   _revoked_at timestamptz;
+  _keys text[];
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
@@ -369,9 +416,13 @@ BEGIN
    FOR SHARE OF c, t;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_AGREEMENT_UNAVAILABLE'); END IF;
 
-  -- Scope first, unlocked: this customer's own, sent agreement in this business, or the one refusal.
+  -- Scope first, unlocked: this customer's own, sent agreement in this business, on which they are a
+  -- counterparty signer (VISIBILITY), or the one refusal — an agreement the list does not show is
+  -- not opened either.
+  _keys := public._client_portal_my_email_keys(_uid, _client_id);
   PERFORM 1 FROM public.paige_agreements a
-   WHERE a.id = p_agreement_id AND a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft';
+   WHERE a.id = p_agreement_id AND a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft'
+     AND public._client_portal_agreement_is_mine(a.id, _keys);
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_AGREEMENT_UNAVAILABLE'); END IF;
 
   -- Every counterparty row of this agreement, locked, so the "exactly one" read below cannot race.
@@ -387,8 +438,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_AGREEMENT_UNAVAILABLE');
   END IF;
 
-  _st := public._client_portal_agreement_state(_a.id, public._client_portal_my_email_keys(_uid, _client_id),
-                                               public._client_portal_login_email_key(_uid));
+  _st := public._client_portal_agreement_state(_a.id, _keys, public._client_portal_login_email_key(_uid));
   -- Waiting on a signature the portal cannot prove is this customer's: the same "not here" answer the
   -- list gives, with the same note.
   IF _st->>'state' = 'awaiting_signature' THEN
@@ -485,7 +535,10 @@ BEGIN
       INTO _out
       FROM public.paige_agreements a
      WHERE a.id = p_agreement_id AND a.tenant_id = _tenant AND a.contact_id = _client_id
-       AND a.status = 'completed' AND a.sealed_storage_key IS NOT NULL;
+       AND a.status = 'completed' AND a.sealed_storage_key IS NOT NULL
+       -- VISIBILITY: only a copy on which this customer is a counterparty signer (the sealed
+       -- certificate names its signers; one that names only other people is not theirs).
+       AND public._client_portal_agreement_is_mine(a.id, public._client_portal_my_email_keys(_uid, _client_id));
   END IF;
   IF _out IS NULL THEN
     RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE = '42501';

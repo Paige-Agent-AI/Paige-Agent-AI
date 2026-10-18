@@ -1,6 +1,7 @@
 -- E09 Slice A: customer portal Agreements on the ONE Sales Agreements engine. Full replayed schema,
 -- actual caller roles, synthetic data only (§63); no network, no email; all rolled back.
--- Proves: a customer lists only their own sent agreements in their one business; the state each
+-- Proves: a customer lists only their own sent agreements in their one business, and only those on
+-- which they are a counterparty signer (VISIBILITY, integrator default); the state each
 -- one reads as; opening to sign mints a link the frozen /sign/:token flow accepts while writing
 -- NOTHING to paige_agreements and NO agreement event; the emailed link stops working (D-A4, stated
 -- honestly); the portal hands out a link only to a signer whose email is this login's own (the
@@ -8,7 +9,7 @@
 -- link or the agreement; every refusal; the signer-status backstop on the token write; the download
 -- scope; sub-account parity; and no RLS policy changed.
 BEGIN;
-SELECT plan(168);
+SELECT plan(184);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
@@ -142,11 +143,17 @@ SELECT pg_temp.sgn(22,22,'counterparty',1,'pending','a0900000-0000-4000-8000-000
 -- the portal refuses them all by default. These are made the customer's own, each a different way:
 --   2  the login's confirmed email, in another case and with stray spaces (the match key folds both)
 --   3  the client record's PRIMARY email (added below), not the login's
---   13, 14, 21, 22  the login's email exactly; 18 the sub-account customer's login email
--- and 20 keeps a stranger's address: listed as waiting on a signature that is not provably theirs.
+--   4, 5, 6, 7, 8, 10, 13, 14, 21, 22  the login's email exactly; 11 one of two co-signers is;
+--   18 the sub-account customer's login email; 19 customer B's login email
+-- VISIBILITY (integrator default, owner may overrule): an agreement is the customer's to see only if
+-- they are a counterparty signer on it. 9 and 20 keep a stranger's address (their one counterparty is
+-- someone else) and 12 has no counterparty at all: none of the three is listed, opened or downloaded.
 UPDATE public.paige_agreement_signers SET email = '  AGR-Customer-A@Tests.Invalid ' WHERE id = pg_temp.sg(2);
 UPDATE public.paige_agreement_signers SET email = 'customer-a-primary@tests.invalid' WHERE id = pg_temp.sg(3);
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id IN (pg_temp.sg(13), pg_temp.sg(14), pg_temp.sg(21), pg_temp.sg(22));
+UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid'
+ WHERE id IN (pg_temp.sg(4), pg_temp.sg(5), pg_temp.sg(6), pg_temp.sg(7), pg_temp.sg(8), pg_temp.sg(10), pg_temp.sg(11));
+UPDATE public.paige_agreement_signers SET email = 'agr-customer-b@tests.invalid' WHERE id = pg_temp.sg(19);
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-sub@tests.invalid' WHERE id = pg_temp.sg(18);
 -- Added only now that every agreement exists, so seed_agreement_counterparty seeds no extra signer.
 INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
@@ -219,8 +226,10 @@ SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_agre
   AND NOT has_function_privilege('authenticated','public._client_portal_my_email_keys(uuid,uuid)','EXECUTE')
   AND NOT has_function_privilege('anon','public._client_portal_my_email_keys(uuid,uuid)','EXECUTE')
   AND NOT has_function_privilege('authenticated','public._client_portal_login_email_key(uuid)','EXECUTE')
-  AND NOT has_function_privilege('anon','public._client_portal_login_email_key(uuid)','EXECUTE'),'the three internal helpers are callable by no client role');
-SELECT is((SELECT count(*) FROM pg_proc WHERE proname IN ('_client_portal_agreement_state','_client_portal_my_email_keys','_client_portal_login_email_key') AND NOT prosecdef),3::bigint,'the three internal helpers are not SECURITY DEFINER, and the state helper has no stray overload');
+  AND NOT has_function_privilege('anon','public._client_portal_login_email_key(uuid)','EXECUTE')
+  AND NOT has_function_privilege('authenticated','public._client_portal_agreement_is_mine(uuid,text[])','EXECUTE')
+  AND NOT has_function_privilege('anon','public._client_portal_agreement_is_mine(uuid,text[])','EXECUTE'),'the four internal helpers are callable by no client role');
+SELECT is((SELECT count(*) FROM pg_proc WHERE proname IN ('_client_portal_agreement_state','_client_portal_my_email_keys','_client_portal_login_email_key','_client_portal_agreement_is_mine') AND NOT prosecdef),4::bigint,'the four internal helpers are not SECURITY DEFINER, and the state helper has no stray overload');
 SELECT is((SELECT count(*) FROM pg_proc WHERE proname IN ('client_portal_agreements','client_portal_open_agreement_signing','client_portal_agreement_document_scope') AND prosecdef AND provolatile='v'),3::bigint,'all three are SECURITY DEFINER and VOLATILE');
 -- Static (a lock taken by this one session cannot be observed from it): the read locks only the
 -- customer's own client row, like Progress, never the business's tenants row on every page load.
@@ -232,12 +241,14 @@ SELECT ok(pg_get_functiondef('public.client_portal_agreement_document_scope(uuid
   AND pg_get_functiondef('public.client_portal_agreement_document_scope(uuid,uuid)'::regprocedure) !~ 'FOR SHARE OF c, t'
   AND pg_get_functiondef('public.client_portal_open_agreement_signing(uuid,uuid)'::regprocedure) ~ 'FOR SHARE OF c, t;',
   'the download scope share-locks only the client row; the writer alone also locks the business');
-SELECT ok((SELECT bool_and(proconfig @> ARRAY['search_path=public, pg_temp']) FROM pg_proc WHERE proname IN ('client_portal_agreements','client_portal_open_agreement_signing','client_portal_agreement_document_scope','_client_portal_agreement_state','_client_portal_my_email_keys','_client_portal_login_email_key')),'all six pin search_path');
+SELECT ok((SELECT bool_and(proconfig @> ARRAY['search_path=public, pg_temp']) FROM pg_proc WHERE proname IN ('client_portal_agreements','client_portal_open_agreement_signing','client_portal_agreement_document_scope','_client_portal_agreement_state','_client_portal_my_email_keys','_client_portal_login_email_key','_client_portal_agreement_is_mine')),'all seven pin search_path');
 
 -- ── 2. Customer A's list: exactly theirs, exact keys, nothing private ───────────────────────────
 SELECT is((SELECT array_agg(right(r->>'id',2) ORDER BY o) FROM jsonb_array_elements(pg_temp.list_a()->'agreements') WITH ORDINALITY x(r,o)),
- ARRAY['21','03','02','14','13','22','04','05','06','07','08','09','10','11','12','20'],
- 'customer A sees exactly their 16 sent agreements: waiting on them first by the date that binds, then newest');
+ ARRAY['21','03','02','14','13','22','04','05','06','07','08','10','11'],
+ 'customer A sees exactly the 13 sent agreements they are a counterparty signer on: waiting on them first by the date that binds, then newest');
+SELECT ok(pg_temp.row_a(12) IS NULL,'VISIBILITY: an agreement with no counterparty signer (only the business''s signatory) is not listed');
+SELECT ok(pg_temp.row_a(9) IS NULL AND pg_temp.row_a(20) IS NULL,'VISIBILITY: an agreement whose one counterparty is at another address is not listed');
 SELECT ok(pg_temp.row_a(1) IS NULL,'their draft is not listed');
 SELECT ok(pg_temp.row_a(15) IS NULL,'an agreement on a merged duplicate contact is not listed');
 SELECT ok(pg_temp.row_a(16) IS NULL AND pg_temp.row_a(19) IS NULL,'another customer of the same business is not listed');
@@ -256,7 +267,7 @@ SELECT is(pg_temp.list_a()->>'has_more','false','all rows fit the default page')
 SELECT is((SELECT jsonb_array_length(pg_temp.list_a(2)->'agreements')),2,'p_limit pages');
 SELECT is(pg_temp.list_a(2)->>'has_more','true','has_more is true when rows remain');
 SELECT is((SELECT jsonb_array_length(pg_temp.list_a(0)->'agreements')),1,'p_limit clamps up to 1');
-SELECT is((SELECT jsonb_array_length(pg_temp.list_a(500)->'agreements')),16,'p_limit clamps down to 50');
+SELECT is((SELECT jsonb_array_length(pg_temp.list_a(500)->'agreements')),13,'p_limit clamps down to 50');
 
 -- ── 3. State mapping ────────────────────────────────────────────────────────────────────────────
 SELECT is(pg_temp.row_a(2)->>'state','awaiting_you','sent, my signer pending: waiting for you');
@@ -266,19 +277,16 @@ SELECT is(pg_temp.row_a(5)->>'state','declined','declined: declined');
 SELECT is(pg_temp.row_a(6)->>'state','withdrawn','voided: withdrawn');
 SELECT is(pg_temp.row_a(7)->>'state','expired','expired status: expired');
 SELECT is(pg_temp.row_a(8)->>'state','expired','sent but past its deadline: expired');
-SELECT is(pg_temp.row_a(9)->>'state'||'|'||(pg_temp.row_a(9)->>'counterparty'),'awaiting_business|other','an earlier-order business signer has not signed, and the one counterparty is at another address: waiting for the business, and NOT the customer''s turn next');
--- P1: the one counterparty of 10 is signer-10@, not the customer: signed, but not by them.
-SELECT is(pg_temp.row_a(10)->>'state'||'|'||(pg_temp.row_a(10)->>'counterparty')||'|'||coalesce(pg_temp.row_a(10)->>'sign_note','null'),'awaiting_others|other|null','a counterparty at another address signed: waiting for others, and the signature is not credited to this customer');
-SELECT is(pg_temp.row_a(11)->>'state'||'|'||(pg_temp.row_a(11)->>'can_sign')||'|'||(pg_temp.row_a(11)->>'sign_note')||'|'||(pg_temp.row_a(11)->>'counterparty'),'awaiting_signature|false|no_link_sent|other','two counterparties, no link ever emailed: waiting on a signature, not counted as theirs, and never told a link was emailed');
-SELECT is(pg_temp.row_a(12)->>'state'||'|'||(pg_temp.row_a(12)->>'can_sign')||'|'||coalesce(pg_temp.row_a(12)->>'sign_note','null')||'|'||(pg_temp.row_a(12)->>'counterparty'),'awaiting_countersign|false|null|none','no counterparty, only the business''s signatory: waiting for the business, with no sign note (nothing was ever sent to this customer)');
+-- The customer signed agreement 10 and a witness is still to sign.
+SELECT is(pg_temp.row_a(10)->>'state'||'|'||(pg_temp.row_a(10)->>'counterparty')||'|'||coalesce(pg_temp.row_a(10)->>'sign_note','null'),'awaiting_others|you|null','they signed, a witness is left: waiting for others, with no sign note');
+SELECT is(pg_temp.row_a(11)->>'state'||'|'||(pg_temp.row_a(11)->>'can_sign')||'|'||(pg_temp.row_a(11)->>'sign_note')||'|'||(pg_temp.row_a(11)->>'counterparty'),'awaiting_signature|false|no_link_sent|other','two counterparties (one at their address, still to sign), no link ever emailed: waiting on a signature, not counted as theirs, and never told a link was sent');
 SELECT is(pg_temp.row_a(13)->>'state'||'|'||(pg_temp.row_a(13)->>'can_sign')||'|'||(pg_temp.row_a(13)->>'sign_note'),'awaiting_you|false|use_email_link','an upload whose frozen copy is not provably the upload: email only');
 SELECT is(pg_temp.row_a(2)->>'can_sign'||'|'||coalesce(pg_temp.row_a(2)->>'sign_note','null'),'true|null','the one signable row can be signed here');
 SELECT is((SELECT array_agg(right(r->>'id',2) ORDER BY r->>'id') FROM jsonb_array_elements(pg_temp.list_a()->'agreements') r WHERE (r->>'can_sign')::boolean),ARRAY['02','03','14','22'],'can_sign is true only for 2, 3, 14 and the never-emailed 22');
-SELECT is((SELECT array_agg(right(r->>'id',2) ORDER BY r->>'id') FROM jsonb_array_elements(pg_temp.list_a()->'agreements') r WHERE (r->>'link_emailed')::boolean),ARRAY['02','03','13','14','20','21'],'link_emailed: the five with a sent event, and 20 whose token the portal did not issue');
+SELECT is((SELECT array_agg(right(r->>'id',2) ORDER BY r->>'id') FROM jsonb_array_elements(pg_temp.list_a()->'agreements') r WHERE (r->>'link_emailed')::boolean),ARRAY['02','03','13','14','21'],'link_emailed: the five with a sent event');
 SELECT is((SELECT array_agg(DISTINCT r->>'counterparty' ORDER BY r->>'counterparty') FROM jsonb_array_elements(pg_temp.list_a()->'agreements') r WHERE r->>'state' = 'awaiting_you'),ARRAY['you'],'every row waiting for you is provably the customer''s own signer');
 SELECT is((SELECT array_agg(right(r->>'id',2) ORDER BY r->>'id') FROM jsonb_array_elements(pg_temp.list_a()->'agreements') r WHERE (r->>'can_download')::boolean),ARRAY['04'],'only the completed, sealed agreement can be downloaded');
 -- Who the signer is, and how long a link could last.
-SELECT is(pg_temp.row_a(20)->>'state'||'|'||(pg_temp.row_a(20)->>'can_sign')||'|'||(pg_temp.row_a(20)->>'sign_note')||'|'||(pg_temp.row_a(20)->>'counterparty'),'awaiting_signature|false|use_email_link|other','the one signer is someone else''s address, emailed: waiting on a signature, not theirs to count');
 SELECT is(pg_temp.row_a(3)->>'can_sign','true','the signer is the client''s primary email (in another case): signable here');
 SELECT is(pg_temp.row_a(21)->>'state'||'|'||(pg_temp.row_a(21)->>'can_sign')||'|'||(pg_temp.row_a(21)->>'sign_note'),'awaiting_you|false|link_expired','the emailed link has already expired: no later link is offered here, and the note says it is dead');
 -- NEVER EMAILED (integrator default, owner may overrule): the one signer is the login's confirmed
@@ -286,10 +294,10 @@ SELECT is(pg_temp.row_a(21)->>'state'||'|'||(pg_temp.row_a(21)->>'can_sign')||'|
 SELECT is(pg_temp.row_a(22)->>'state'||'|'||(pg_temp.row_a(22)->>'can_sign')||'|'||coalesce(pg_temp.row_a(22)->>'sign_note','null')||'|'||(pg_temp.row_a(22)->>'link_emailed'),'awaiting_you|true|null|false','never emailed, the login''s confirmed email: signable here, and not described as emailed');
 SELECT ok(pg_temp.row_a(22)->'expires_at' = 'null'::jsonb,'no deadline on the agreement: no "Sign by" is invented for it');
 UPDATE auth.users SET email_confirmed_at = NULL WHERE id = '0a090000-0000-4000-8000-000000000002';
-SELECT is(pg_temp.row_a(2)->>'state'||'|'||(pg_temp.row_a(2)->>'can_sign'),'awaiting_signature|false','an unconfirmed login email proves nothing: not theirs, not signable here');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',2),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"use_email_link"}'::jsonb,'and the writer refuses it the same way');
-SELECT is(pg_temp.row_a(22)->>'state'||'|'||(pg_temp.row_a(22)->>'sign_note'),'awaiting_signature|no_link_sent','never emailed, login email unconfirmed: not theirs, and not told a link was emailed');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',22),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"no_link_sent"}'::jsonb,'and the writer issues no link');
+SELECT ok(pg_temp.row_a(2) IS NULL AND pg_temp.row_a(22) IS NULL,'an unconfirmed login email proves nothing: agreements signed for at that address are not theirs to see');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',2),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'and the writer refuses it as unavailable');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',22),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'and issues no never-emailed link either');
+SELECT is(pg_temp.row_a(3)->>'state'||'|'||(pg_temp.row_a(3)->>'can_sign'),'awaiting_you|true','the client record''s primary email still makes 3 theirs, emailed: still signable');
 UPDATE auth.users SET email_confirmed_at = now() WHERE id = '0a090000-0000-4000-8000-000000000002';
 SELECT is(pg_temp.row_a(2)->>'engagement_title','Website build engagement','the linked Sales agreement''s name is shown');
 SELECT ok(pg_temp.row_a(14)->'engagement_title' = 'null'::jsonb,'an engagement now belonging to another customer is not named');
@@ -301,8 +309,7 @@ SELECT is((pg_temp.row_a(2)->>'expires_at')::timestamptz,(SELECT token_expires_a
 SELECT is((pg_temp.row_a(3)->>'expires_at')::timestamptz,(SELECT token_expires_at FROM emailed WHERE id = pg_temp.sg(3)),'no agreement deadline: Sign by is the emailed link''s expiry');
 SELECT is((pg_temp.row_a(14)->>'expires_at')::timestamptz,(SELECT expires_at FROM public.paige_agreements WHERE id = pg_temp.ag(14)),'the agreement ends first: Sign by is the agreement''s deadline');
 SELECT is((pg_temp.row_a(21)->>'expires_at')::timestamptz,(SELECT token_expires_at FROM emailed WHERE id = pg_temp.sg(21)),'an expired emailed link: the date carried is the one that passed');
-SELECT is((pg_temp.row_a(20)->>'expires_at')::timestamptz,(SELECT expires_at FROM public.paige_agreements WHERE id = pg_temp.ag(20)),'not waiting on them: the agreement''s own deadline');
-SELECT is((pg_temp.row_a(9)->>'expires_at')::timestamptz,(SELECT expires_at FROM public.paige_agreements WHERE id = pg_temp.ag(9)),'waiting on the business: the agreement''s own deadline');
+SELECT is((pg_temp.row_a(10)->>'expires_at')::timestamptz,(SELECT expires_at FROM public.paige_agreements WHERE id = pg_temp.ag(10)),'not waiting on them: the agreement''s own deadline');
 
 -- ── 4. Who gets nothing ─────────────────────────────────────────────────────────────────────────
 SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_agreements()$q$)->>'sqlstate','42501','signed out (no subject) is refused');
@@ -313,7 +320,8 @@ SELECT ok(pg_temp.as_user('0a090000-0000-4000-8000-000000000002',$q$SELECT publi
 SELECT is(pg_temp.as_user('0a090000-0000-4000-8000-000000000006',$q$SELECT public.client_portal_agreements()$q$),
  '{"sqlstate":"42501","error":"select an authorized customer relationship"}'::jsonb,'two relationships: refused with the exact message');
 SELECT is(pg_temp.as_user('0a090000-0000-4000-8000-000000000006',$q$SELECT public.client_portal_agreements('a0900000-0000-4000-8000-000000000001')$q$)->'agreements','[]'::jsonb,'naming one of their two businesses narrows to it');
-SELECT is(pg_temp.as_user('0a090000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_agreements()$q$)->'summary','{"awaiting_you":0,"signed":1}'::jsonb,'customer B sees only their own (their one open agreement is signed for at another address, so not counted as theirs)');
+SELECT is(pg_temp.as_user('0a090000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_agreements()$q$)->'summary','{"awaiting_you":0,"signed":1}'::jsonb,'customer B''s summary counts only their own signed agreement');
+SELECT is((SELECT array_agg(right(r->>'id',2)) FROM jsonb_array_elements(pg_temp.as_user('0a090000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_agreements()$q$)->'agreements') r),ARRAY['19'],'customer B lists only 19: their open agreement 16 is signed for at another address, so it is not theirs to see');
 SELECT is(pg_temp.as_user('0a090000-0000-4000-8000-000000000002',$q$SELECT count(*)::text::jsonb FROM public.paige_agreements$q$)::text,'0','the raw table still shows a customer nothing');
 
 -- ── 5. Open, happy path ─────────────────────────────────────────────────────────────────────────
@@ -367,12 +375,12 @@ SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',5),'{"ok":false,"e
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',6),'{"ok":false,"error":"NOT_SIGNABLE","state":"withdrawn"}'::jsonb,'voided: not signable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',7),'{"ok":false,"error":"NOT_SIGNABLE","state":"expired"}'::jsonb,'expired: not signable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',8),'{"ok":false,"error":"NOT_SIGNABLE","state":"expired"}'::jsonb,'past its deadline: not signable');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',9),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_business"}'::jsonb,'not their turn: not signable');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',9),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'VISIBILITY: their one counterparty is someone else: unavailable, as if it did not exist');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',10),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_others"}'::jsonb,'their signer already signed: not signable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',11),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"no_link_sent"}'::jsonb,'two counterparties, nothing emailed: not here, and no emailed link is claimed');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',12),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_countersign"}'::jsonb,'no counterparty: nothing for this customer to sign');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',12),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'VISIBILITY: no counterparty: unavailable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',13),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"use_email_link"}'::jsonb,'unprovable uploaded document: use the emailed link');
-SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',20),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"use_email_link"}'::jsonb,'a signer whose email is not this login''s: use the emailed link');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',20),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'VISIBILITY: a signer whose email is not this login''s: unavailable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',21),'{"ok":false,"error":"NOT_SIGNABLE_HERE","note":"link_expired"}'::jsonb,'the emailed link has expired though the agreement has not: no fresher link is issued here');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',15),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'a merged duplicate''s agreement: unavailable');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',16),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'another customer''s agreement: the same unavailable');
@@ -425,6 +433,26 @@ SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000003',4)->>'sqlstate','
 SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000004',4)->>'sqlstate','42501','another business''s customer: refused');
 SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000005',4)->>'sqlstate','42501','staff: refused at the customer door');
 SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',99)->>'sqlstate','42501','a random id: refused');
+SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',12)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','row 12 (no counterparty): refused');
+SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',20)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','row 20 (another address): refused');
+-- VISIBILITY on the download, with copies that ARE completed and sealed: 33 has no counterparty (the
+-- business signed alone), 34's one counterparty signed at another address. Both are this customer's
+-- contact's and neither is theirs to see.
+SELECT pg_temp.mk(33,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','completed',NULL);
+SELECT pg_temp.mk(34,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','completed',NULL);
+DELETE FROM public.paige_agreement_signers WHERE agreement_id IN (pg_temp.ag(33), pg_temp.ag(34));
+SELECT pg_temp.sgn(50,33,'tenant_signatory',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(51,34,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',33)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','VISIBILITY: a sealed copy with no counterparty signer is not downloaded');
+SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',34)->>'error','CLIENT_AGREEMENT_UNAVAILABLE','VISIBILITY: a sealed copy signed only at another address is not downloaded');
+SELECT ok(pg_temp.row_a(33) IS NULL AND pg_temp.row_a(34) IS NULL,'and neither is listed');
+SELECT is(pg_temp.list_a()->'summary'->>'signed','1','nor counted as signed');
+-- The control: the same sealed copy, its signer now at the customer's own address, IS theirs.
+UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(51);
+SELECT is(pg_temp.scope('0a090000-0000-4000-8000-000000000002',34)->>'agreement_id',pg_temp.ag(34)::text,'signed at their own address: downloadable');
+SELECT is(pg_temp.row_a(34)->>'state'||'|'||(pg_temp.row_a(34)->>'can_download'),'signed|true','and listed as signed');
+DELETE FROM public.paige_agreement_signers WHERE agreement_id IN (pg_temp.ag(33), pg_temp.ag(34));
+DELETE FROM public.paige_agreements WHERE id IN (pg_temp.ag(33), pg_temp.ag(34));
 SELECT is(pg_temp.as_user(NULL,format('SELECT public.client_portal_agreement_document_scope(%L)',pg_temp.ag(4)),'anon')->>'sqlstate','42501','anonymous: refused');
 SELECT throws_ok($q$UPDATE public.paige_agreements SET sealed_storage_key = NULL WHERE id = 'a6090000-0000-4000-8000-000000000004'$q$,'23514',NULL,'a completed agreement without its sealed key cannot exist, so the scope''s key check is defensive');
 
@@ -479,7 +507,8 @@ SELECT is(pg_temp.row_a(25)->>'state'||'|'||(pg_temp.row_a(25)->>'counterparty')
 -- P2: a signer at ANOTHER address signed and the business is left: waiting for the business, and the
 -- signature is not credited to this customer.
 UPDATE public.paige_agreement_signers SET email = 'stranger-24@tests.invalid' WHERE id = pg_temp.sg(24);
-SELECT is(pg_temp.row_a(24)->>'state'||'|'||(pg_temp.row_a(24)->>'counterparty')||'|'||coalesce(pg_temp.row_a(24)->>'sign_note','null'),'awaiting_countersign|other|null','someone at another address signed, only the business left: waiting for the business, credited to no one in particular');
+SELECT ok(pg_temp.row_a(24) IS NULL,'VISIBILITY: someone at another address signed it: not this customer''s to see');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',24),'{"ok":false,"error":"CLIENT_AGREEMENT_UNAVAILABLE"}'::jsonb,'nor to open');
 -- P3: co-signed, both counterparties signed, only the business left: not 'awaiting_signature', and
 -- no "use the emailed link" to a customer who may already have signed.
 SELECT pg_temp.mk(26,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
@@ -488,7 +517,7 @@ SELECT pg_temp.sgn(39,26,'counterparty',1,'signed','a0900000-0000-4000-8000-0000
 SELECT pg_temp.sgn(40,26,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
 SELECT pg_temp.sgn(41,26,'tenant_signatory',2,'pending','a0900000-0000-4000-8000-000000000001');
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(39);
-SELECT is(pg_temp.row_a(26)->>'state'||'|'||(pg_temp.row_a(26)->>'counterparty')||'|'||coalesce(pg_temp.row_a(26)->>'sign_note','null'),'awaiting_countersign|other|null','co-signers both signed, the business left: waiting for the business, no sign note');
+SELECT is(pg_temp.row_a(26)->>'state'||'|'||(pg_temp.row_a(26)->>'counterparty')||'|'||coalesce(pg_temp.row_a(26)->>'sign_note','null'),'awaiting_countersign|you|null','co-signers both signed (one at their address), the business left: "You''ve signed", waiting for the business, no sign note');
 SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',26),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_countersign"}'::jsonb,'and the writer says it is not signable, not "use the emailed link"');
 -- The business signs first and the one signer IS the customer: their turn comes next.
 SELECT pg_temp.mk(27,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','sent',interval '25 days');
@@ -497,6 +526,34 @@ SELECT pg_temp.sgn(42,27,'tenant_signatory',1,'pending','a0900000-0000-4000-8000
 SELECT pg_temp.sgn(43,27,'counterparty',2,'pending','a0900000-0000-4000-8000-000000000001');
 UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(43);
 SELECT is(pg_temp.row_a(27)->>'state'||'|'||(pg_temp.row_a(27)->>'counterparty'),'awaiting_business|you','the business signs first and the signer is the customer: "You''ll be able to sign once they have" is true');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',27),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_business"}'::jsonb,'not their turn: not signable');
+SELECT is((pg_temp.row_a(27)->>'expires_at')::timestamptz,(SELECT expires_at FROM public.paige_agreements WHERE id = pg_temp.ag(27)),'waiting on the business: the agreement''s own deadline');
+-- W1: a WITNESS signs first (the engine allows any role at an earlier order). It is not the business,
+-- so the row never reads "{Business} signs first": 'awaiting_earlier_signer' ("Someone else signs first").
+SELECT pg_temp.mk(31,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','sent',interval '25 days');
+DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(31);
+SELECT pg_temp.sgn(46,31,'witness',1,'pending','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(47,31,'counterparty',2,'pending','a0900000-0000-4000-8000-000000000001');
+UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(47);
+SELECT is(pg_temp.row_a(31)->>'state'||'|'||(pg_temp.row_a(31)->>'counterparty')||'|'||(pg_temp.row_a(31)->>'can_sign')||'|'||coalesce(pg_temp.row_a(31)->>'sign_note','null'),'awaiting_earlier_signer|you|false|null','W1: a witness signs first: waiting on an earlier signer, never "{Business} signs first"');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',31),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_earlier_signer"}'::jsonb,'and not signable yet');
+-- The business AND a witness both ahead: still not only the business.
+UPDATE public.paige_agreement_signers SET signer_role = 'tenant_signatory' WHERE id = pg_temp.sg(46);
+SELECT is(pg_temp.row_a(31)->>'state','awaiting_business','the business alone ahead: "{Business} signs first"');
+SELECT pg_temp.sgn(52,31,'witness',1,'pending','a0900000-0000-4000-8000-000000000001');
+SELECT is(pg_temp.row_a(31)->>'state','awaiting_earlier_signer','the business and a witness ahead: still "Someone else signs first"');
+-- W3: co-signers; the one at the customer's address has signed, the other (emailed) has not. Nothing
+-- is asked of this customer: waiting for others, "You've signed", never "use the link".
+SELECT pg_temp.mk(32,'a0900000-0000-4000-8000-000000000001','c0900000-0000-4000-8000-000000000001','partially_signed',interval '25 days');
+DELETE FROM public.paige_agreement_signers WHERE agreement_id = pg_temp.ag(32);
+SELECT pg_temp.sgn(48,32,'counterparty',1,'signed','a0900000-0000-4000-8000-000000000001');
+SELECT pg_temp.sgn(49,32,'counterparty',1,'pending','a0900000-0000-4000-8000-000000000001');
+UPDATE public.paige_agreement_signers SET email = 'agr-customer-a@tests.invalid' WHERE id = pg_temp.sg(48);
+UPDATE public.paige_agreement_signers SET token_hash = encode(digest(repeat('c5',32),'sha256'),'hex'), token_expires_at = now() + interval '25 days' WHERE id = pg_temp.sg(49);
+INSERT INTO public.paige_agreement_events(agreement_id,tenant_id,signer_id,event_type,actor_kind,actor_user_id)
+VALUES (pg_temp.ag(32),'a0900000-0000-4000-8000-000000000001',pg_temp.sg(49),'sent','owner','0a090000-0000-4000-8000-000000000001');
+SELECT is(pg_temp.row_a(32)->>'state'||'|'||(pg_temp.row_a(32)->>'counterparty')||'|'||(pg_temp.row_a(32)->>'can_sign')||'|'||coalesce(pg_temp.row_a(32)->>'sign_note','null'),'awaiting_others|you|false|null','W3: their co-signer row has signed, another has not: waiting for others, never asked to act');
+SELECT is(pg_temp.open('0a090000-0000-4000-8000-000000000002',32),'{"ok":false,"error":"NOT_SIGNABLE","state":"awaiting_others"}'::jsonb,'and the writer says not signable, not "use the link"');
 
 -- ── 9d. Never emailed: the portal's short link (integrator default, owner may overrule) ──────────
 -- A single signer at the login's own CONFIRMED email, with no link ever emailed, may sign here. The

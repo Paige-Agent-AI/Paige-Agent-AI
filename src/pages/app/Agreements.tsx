@@ -14,10 +14,11 @@
  * The only gold on the page is the first "Review and sign" (§11): the one act. Every other signable row
  * carries the same action as a quiet button, so a long list never turns into a wall of gold.
  *
- * Opening an agreement here REPLACES the signing link the business emailed (owner decision D-A4); the page
- * says so beside the action, because a customer who later opens that email deserves to know why it stopped.
- * Where no link was ever emailed it says what opening does instead (a private link for up to a day), and
- * never mentions an emailed link that does not exist.
+ * Opening an agreement here REPLACES the signing link the business sent — by email, or copied and shared
+ * another way (owner decision D-A4); the page says so beside the action, because a customer who later opens
+ * that link deserves to know why it stopped. It says "sent", never "emailed": the engine records both ways
+ * alike. Where no link was ever sent it says what opening does instead (a private link for up to a day), and
+ * never mentions a sent link that does not exist.
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -63,6 +64,7 @@ function stateLabel(state: PortalAgreementState, business: string): string {
     case "awaiting_you": return "Waiting for you";
     case "awaiting_signature": return "Waiting for a signature";
     case "awaiting_business": return `Waiting for ${business}`;
+    case "awaiting_earlier_signer": return "Waiting for another signer";
     case "awaiting_countersign": return `Waiting for ${business}`;
     case "awaiting_others": return "Waiting for others";
     case "signed": return "Signed";
@@ -383,7 +385,7 @@ function CustomerAgreements({ view, brand }: { view: ReturnType<typeof useClient
         <AgreementsEmpty
           icon={FileSignature}
           title="Agreements for more than one business aren't available here yet"
-          description="Your account is connected to more than one business. Each business emails its own signing links; if you can't use one, ask that business for a new link."
+          description="Your account is connected to more than one business. Each business sends its own signing links; if you can't use one, ask that business for a new link."
           action={<Link to="/app" className={LINK_BUTTON}><Home aria-hidden="true" className="h-4 w-4" /> Back to Home</Link>}
         />
       ) : firstLoad ? (

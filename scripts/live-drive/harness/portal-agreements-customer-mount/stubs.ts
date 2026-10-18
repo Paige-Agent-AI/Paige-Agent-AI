@@ -11,7 +11,8 @@
 //
 //   client_portal_agreements(p_tenant_id, p_limit)
 //     -> { tenant_id, business_name, server_now, summary:{awaiting_you,signed}, agreements:[...], has_more } | null
-//     visible = tenant AND this contact AND status <> 'draft'
+//     visible = tenant AND this contact AND status <> 'draft' AND a counterparty signer is at this login's address
+//       (VISIBILITY, integrator default: an agreement with no counterparty, or signed for only elsewhere, is not theirs)
 //     order   = awaiting_you first (the binding deadline ASC NULLS LAST), then coalesce(completed_at, sent_at) DESC, id
 //     expires_at on an awaiting_you row with an emailed link = least(agreement deadline, emailed link expiry);
 //       otherwise the agreement's
@@ -28,8 +29,11 @@
 //     the full-page navigation to /sign/:token is a real reload.
 //
 //   ?state=mixed|waiting|signed|empty|loading|staff|staff-error|multiple|error|home|home-none|others
-//     others: whose signature it is — a link never emailed (signable here for up to a day), a signature at another
-//     address, no counterparty at all, the business first for a signer elsewhere, co-signers never emailed.
+//     others: whose signature it is — a link never emailed (signable here for up to a day), a witness who signs
+//     first (W1), co-signers where this customer's row has signed (W3), co-signers never sent a link; and, NOT shown
+//     (VISIBILITY), one signed only at another address and one with no counterparty at all.
+//   client_portal_documents / operations_delivery_client_reviews_scoped: the Home Documents tile's glance read
+//     (Slice 4, on main), so Home renders as it ships — two files shared, one from the customer, nothing to review.
 //     staff-error: the agreements read FAILS (function missing) for a login the brand resolver does not know as a
 //     customer — the page must keep the platform terms (§58), never the customer error card.
 const params = new URLSearchParams(window.location.search);
@@ -84,6 +88,8 @@ const row = (o: Partial<AgreementRow> & Pick<AgreementRow, "title">): AgreementR
 export const NEVER_SHOWN = [
   "Sam's onboarding agreement", "Northwind internal NDA", "Unsent draft retainer", "PRIVATE BODY", "$4,800", "4,800",
   "owner@northwind", "deadbeef", "offer-private", "tenant-agreements/", "Alex Moreno",
+  // VISIBILITY: on this customer's contact, but they are not a counterparty signer on either.
+  "Venue hire agreement", "Internal scope sign-off",
 ];
 
 function store(): AgreementRow[] {
@@ -106,14 +112,16 @@ function store(): AgreementRow[] {
       ...hidden,
       // Never emailed: the one signer is the login's own confirmed email. Signable here, on a link for up to a day.
       row({ title: "Coaching package terms", expires_at: at(8), signers: [owner(), { ...me(), emailed: false }] }),
-      // Someone at another address signed; only the business is left. Not credited to this customer.
+      // W1: a witness signs before the customer. Not the business, so never "Northwind Studio signs first".
+      row({ title: "Speaker appearance terms", signers: [owner(), { role: "witness", order: 1, status: "pending", email: "witness@example.test", name: "Riley Chen" }, me()] }),
+      // W3: co-signers; this customer's row has signed, the other has not. Nothing is asked of them.
+      row({ title: "Joint venture outline", status: "partially_signed", signers: [owner(), me("signed"), { ...stranger }] }),
+      // Co-signers, still to sign, and no link was ever sent to either.
+      row({ title: "Partnership side letter", signers: [owner(), { ...me(), emailed: false }, { ...stranger, emailed: false }] }),
+      // NOT SHOWN (VISIBILITY): someone at another address signed it; only the business is left.
       row({ title: "Venue hire agreement", status: "partially_signed", signers: [owner("pending"), { ...stranger, status: "signed", order: 1 }] }),
-      // No counterparty at all, only the business's signatory: nothing was ever sent to this customer.
+      // NOT SHOWN (VISIBILITY): no counterparty at all, only the business's signatory.
       row({ title: "Internal scope sign-off", signers: [owner("pending")] }),
-      // The business signs first, and the one signer is at another address: not this customer's turn next.
-      row({ title: "Speaker appearance terms", signers: [owner("pending"), { ...stranger }] }),
-      // Co-signers, and no link was ever emailed to either.
-      row({ title: "Joint venture outline", signers: [owner(), { ...me(), emailed: false }, { ...stranger, emailed: false }] }),
     ];
   }
   return [
@@ -143,11 +151,17 @@ const rows = store();
 /** The SQL's least(): NULLs ignored, NULL only when both are. */
 const least = (a: string | null, b: string | null | undefined) => (a === null ? b ?? null : !b ? a : Date.parse(a) <= Date.parse(b) ? a : b);
 
+/** VISIBILITY (the SQL's _client_portal_agreement_is_mine): a counterparty signer at this login's address. */
+const isMine = (r: AgreementRow) => r.signers.some((x) => x.role === "counterparty" && x.email === USER.email);
+
 function stateOf(r: AgreementRow) {
   const counter = r.signers.filter((s) => s.role === "counterparty");
   const mine = counter.length === 1 ? counter[0] : null;
+  const myRows = counter.filter((x) => x.email === USER.email);
   // Whose signature, before anything else (the SQL's 'counterparty'). The harness login's email is confirmed.
-  const counterparty = counter.length === 0 ? "none" : mine && mine.email === USER.email ? "you" : "other";
+  const counterparty = counter.length === 0 ? "none"
+    : mine ? (mine.email === USER.email ? "you" : "other")
+      : myRows.length > 0 && myRows.every((x) => x.status === "signed") ? "you" : "other";
   const emailed = counter.some((x) => x.emailed !== false);
   const noLink = emailed ? "use_email_link" : "no_link_sent";
   let s: string; let note: string | null = null; let deadline: string | null = null;
@@ -160,8 +174,12 @@ function stateOf(r: AgreementRow) {
   else if (counter.every((x) => x.status === "signed")) {
     const left = r.signers.filter((x) => x.status !== "signed");
     s = left.length > 0 && left.every((x) => x.role === "tenant_signatory") ? "awaiting_countersign" : "awaiting_others";
-  } else if (counter.length !== 1) { s = "awaiting_signature"; note = noLink; }
-  else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) s = "awaiting_business";
+  } else if (counter.length !== 1 && counterparty === "you") s = "awaiting_others";
+  else if (counter.length !== 1) { s = "awaiting_signature"; note = noLink; }
+  else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) {
+    const ahead = r.signers.filter((x) => x.order < mine!.order && x.status !== "signed");
+    s = ahead.every((x) => x.role === "tenant_signatory") ? "awaiting_business" : "awaiting_earlier_signer";
+  }
   else if (counterparty !== "you") { s = "awaiting_signature"; note = noLink; }
   else {
     s = "awaiting_you";
@@ -178,7 +196,7 @@ function stateOf(r: AgreementRow) {
 /** client_portal_agreements, computed the way the SQL computes it (see the header). */
 function project(pLimit: unknown) {
   const limit = Math.min(Math.max(typeof pLimit === "number" ? pLimit : 50, 1), 50);
-  const visible = rows.filter((r) => r.tenant_id === TENANT && r.contact_id === CONTACT && r.status !== "draft").map((r) => {
+  const visible = rows.filter((r) => r.tenant_id === TENANT && r.contact_id === CONTACT && r.status !== "draft" && isMine(r)).map((r) => {
     const st = stateOf(r);
     return { r, st, expires: st.state === "awaiting_you" ? st.deadline ?? r.expires_at : r.expires_at };
   });
@@ -235,7 +253,8 @@ function open(args: Record<string, unknown>) {
   if (openMode === "later") return Promise.resolve({ data: { ok: false, error: "TRY_AGAIN_LATER" }, error: null });
   if (openMode === "fail") return Promise.resolve({ data: null, error: { code: "PGRST000", message: "harness: network" } });
   const target = rows.find((r) => r.id === args.p_agreement_id);
-  if (!target || !stateOf(target).can_sign) return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: stateOf(target ?? rows[0]).sign_note ?? "use_email_link" }, error: null });
+  if (!target || target.contact_id !== CONTACT || target.status === "draft" || !isMine(target)) return Promise.resolve({ data: { ok: false, error: "CLIENT_AGREEMENT_UNAVAILABLE" }, error: null });
+  if (!stateOf(target).can_sign) return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: stateOf(target ?? rows[0]).sign_note ?? "use_email_link" }, error: null });
   try { window.sessionStorage.setItem(ISSUED, "1"); } catch { /* the drive reads the result off the page */ }
   // Emailed: never later than the emailed link or the agreement. Never emailed: the agreement's deadline or a day.
   const st = stateOf(target);
@@ -269,7 +288,7 @@ function invoke(name: string) {
   const q = new URLSearchParams(name.split("?")[1]);
   const target = rows.find((r) => r.id === q.get("agreementId"));
   if (copyMode === "pending") return new Promise(() => {});
-  if (copyMode === "fail" || q.get("portal") !== "1" || !target || target.contact_id !== CONTACT || target.status !== "completed" || !target.sealed_storage_key) {
+  if (copyMode === "fail" || q.get("portal") !== "1" || !target || target.contact_id !== CONTACT || target.status !== "completed" || !target.sealed_storage_key || !isMine(target)) {
     return Promise.resolve({ data: { error: "Not available" }, error: null });
   }
   return Promise.resolve({ data: new Blob([PDF], { type: "application/pdf" }), error: null });
@@ -319,6 +338,14 @@ export const supabase = {
     }
     if (name === "client_portal_progress") {
       return Promise.resolve({ data: { tenant_id: TENANT, server_now: new Date().toISOString(), summary: { shared: 0, done: 0, open: 0, overdue: 0 }, items: [], has_more: false }, error: null });
+    }
+    // The Home Documents tile (Slice 4, on main): the same two reads as /app/documents, shaped as their readers
+    // require, so Home renders the tile as it ships instead of "Couldn't check right now".
+    if (name === "client_portal_documents") {
+      return Promise.resolve({ data: { tenant_id: TENANT, client_id: CONTACT, summary: { shared: 2, from_you: 1 }, files: [], has_more: true }, error: null });
+    }
+    if (name === "operations_delivery_client_reviews_scoped") {
+      return Promise.resolve({ data: { actor_id: USER.id, tenant_id: TENANT, releases: [], unavailable_count: 0, has_more: false }, error: null });
     }
     if (name === "get_client_portal_brand") return brand();
     if (name === "get_client_portal_config") return Promise.resolve({ data: null, error: null });

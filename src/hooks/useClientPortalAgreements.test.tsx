@@ -107,6 +107,8 @@ describe("parseAgreementsPage — exact keys, fail closed", () => {
       expect(parseAgreementsPage(payload([row(A1, { state: "awaiting_countersign", can_sign: false, counterparty })]))!.agreements[0].counterparty).toBe(counterparty);
     }
     expect(parseAgreementsPage(payload([row(A1, { link_emailed: false })]))!.agreements[0].link_emailed).toBe(false);
+    // W1: someone other than the business signs first — a state of its own, never folded into "awaiting_business".
+    expect(parseAgreementsPage(payload([row(A1, { state: "awaiting_earlier_signer", can_sign: false })]))!.agreements[0].state).toBe("awaiting_earlier_signer");
     // "Waiting for you" is only ever the customer's own signature; anything else is refused, not shown.
     expect(() => parseAgreementsPage(payload([row(A1, { counterparty: "other" })]))).toThrow();
     expect(() => parseAgreementsPage(payload([row(A1, { counterparty: "someone" })]))).toThrow();

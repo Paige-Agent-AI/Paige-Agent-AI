@@ -4935,8 +4935,10 @@ signer token, files one `paige_audit_log` row and NO agreement event, never writ
 function gains a third, session-scoped door (`portal=1`); doors one and two are unchanged. Paige reads the
 list through `client.portal_agreements_read` (read only; she never signs or mints a link). Integrator defaults
 in force: the portal signs only when the single counterparty signer's email is the customer's confirmed login
-email or the client's primary email; otherwise the agreement is listed as `awaiting_signature` ("Waiting for
-a signature") and is neither headed nor counted as the customer's; a portal-issued link never expires later
+email or the client's primary email. Where there are several co-signers and the customer's own co-signer row has
+not signed, the agreement is listed as `awaiting_signature` ("Waiting for a signature") and is neither headed nor
+counted as the customer's. (Superseded for a single signer by round 6: one signer at another address used to be
+listed as `awaiting_signature` too; under the VISIBILITY default below it is not listed at all.) A portal-issued link never expires later
 than the emailed one (the earlier of the agreement's and the emailed link's deadline, which is also the "Sign
 by" date the list shows); a dead emailed link (expired: `link_expired`, revoked: `link_revoked`) is never
 offered as the way to sign — the row offers "Ask {Business} for a new link" (Messages, plain: no `?draft=`
@@ -4962,7 +4964,7 @@ customer's signature AND Agreements is in their menu (D-A5). §61 default for th
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|---|
-| Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); 0 in production | Allowed | — | — | unchanged |
+| Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); no Sales surface in the Agency shell, so the path is Paige's `agreement_draft` / `agreement_send` (owner confirms each on its card); 0 in production. Its Clients → Portal card says so and says file sharing is not offered on its client record (round 7) | Allowed | — | — | unchanged |
 | Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only, only where they are a counterparty signer (integrator default); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
 | Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; never emailed: confirmed login email only, link ≤ 24 hours; ≤10 opens/hour | 42501 | PROOF OWED |
 | Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy on which they are a counterparty signer (integrator default) | refused | PROOF OWED |

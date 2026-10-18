@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PaigeConfirmCard, type ConfirmActionState } from "@/components/chat/PaigeConfirmCard";
 import { parseConfirmPreview, type ConfirmEmailPreview } from "@/components/chat/confirmPreview";
@@ -41,6 +41,7 @@ type Call = { expected_tenant_id: string; operation_id: string; approval_id: str
 type Wait = <T>(start: () => PromiseLike<T>) => Promise<T>;
 type Review = {
   scope: object;
+  identity: string;
   revision: object;
   call: Call;
   phase: "decide" | "report";
@@ -65,7 +66,9 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const input={...sourceInput};
   const [authEpoch, setAuthEpoch] = useState(0);
   const withdrawn = useRef(false);
-  const scopeKey = JSON.stringify([input.actorId, input.tenantId, input.contactId, input.threadKey, authEpoch]);
+  const identity=JSON.stringify([input.actorId,input.tenantId,input.contactId,input.threadKey]);
+  const latestInput=useRef(input);latestInput.current=input;
+  const scopeKey = JSON.stringify([identity, authEpoch]);
   const scopeRef = useRef({ key: scopeKey });
   if (scopeRef.current.key !== scopeKey) scopeRef.current = { key: scopeKey };
   const scope = scopeRef.current;
@@ -75,12 +78,20 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const revisionRef = useRef({ key: revisionKey });
   if (revisionRef.current.key !== revisionKey) revisionRef.current = { key: revisionKey };
   const revision = revisionRef.current;
+  let currentEligible=false;
+  try{currentEligible=!input.disabled&&(input.current===undefined||input.current()===true);}catch{ /* a failed parent fence withdraws eligibility */ }
+  const eligibilityRef=useRef({scope,revision,eligible:currentEligible});
+  if(eligibilityRef.current.scope!==scope||eligibilityRef.current.revision!==revision||eligibilityRef.current.eligible!==currentEligible)
+    eligibilityRef.current={scope,revision,eligible:currentEligible};
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
       if (event === "INITIAL_SESSION") return;
-      withdrawn.current = true; setAuthEpoch(value => value + 1);
+      // Retire old closures synchronously, including before React commits the epoch update.
+      // Routine refresh/sign-in still requires fresh getUser + tenant checks on the next action.
+      withdrawn.current = event!=="TOKEN_REFRESHED"&&event!=="SIGNED_IN";
+      scopeRef.current={key:"retired-auth-generation"};setAuthEpoch(value => value + 1);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -90,16 +101,29 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const lock = useRef<object | null>(null);
   const attempt = useRef<{ scope: object; revision: object; call: Call } | null>(null);
   const accepted = useRef<Set<string>>(new Set());
+  const dispatchedOperations=useRef<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const current = review?.scope === scope ? review : null;
+  const originalAfterRefresh=review?.identity===identity&&review.call.approval_id===input.approvalId
+    &&review.phase==="report"&&(review.state==="working"||review.state==="unconfirmed")&&dispatchedOperations.current.has(review.call.operation_id);
+  // Refresh retires the old card, but cannot turn an initiated original send into a new operation.
+  // Only a neutral original-attempt reader remains; its reads/recording revalidate current auth.
+  const authWithdrawn=withdrawn.current;
+  const current=useMemo<Review|null>(()=>review?.scope===scope?review:!authWithdrawn&&originalAfterRefresh
+    ?{...review,scope,phase:"report",state:"unconfirmed",fingerprint:undefined,preview:undefined,summary:"Original reply",canCheck:true,
+      note:"Your session changed while an original reply outcome was retained. Don't resend. Check its recorded status."}:null,[review,scope,authWithdrawn,originalAfterRefresh]);
   const busy = busyScope === scope;
   const currentScope = (requestScope: object) => {
-    try{return live.current&&!withdrawn.current&&scopeRef.current===requestScope&&(input.current===undefined||input.current()===true);}catch{return false;}
+    try{return live.current&&!withdrawn.current&&scopeRef.current===requestScope&&(input.current===undefined||input.current()===true)
+      &&(latestInput.current.current===undefined||latestInput.current.current()===true);}catch{return false;}
   };
-  const waitFor = (requestScope:object):Wait => {
+  const actionEligibility=()=>{
+    const gate=eligibilityRef.current;
+    return()=>{if(!gate.eligible||gate!==eligibilityRef.current||input.disabled||latestInput.current.disabled||!currentScope(scope))throw new Error("eligibility_changed");};
+  };
+  const waitFor = (requestScope:object,eligible?:()=>void):Wait => {
     const deadline=performance.now()+8_000;
-    const check=()=>{if(!currentScope(requestScope)||performance.now()>=deadline)throw new Error("request_expired");};
+    const check=()=>{if(!currentScope(requestScope)||performance.now()>=deadline)throw new Error("request_expired");eligible?.();};
     return start=>new Promise((resolve,reject)=>{
       try{check();}catch(error){reject(error);return;}
       const timer=setTimeout(()=>reject(new Error("request_expired")),Math.max(0,deadline-performance.now()));
@@ -144,7 +168,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
       : { expected_tenant_id: input.tenantId!, operation_id: crypto.randomUUID(), approval_id: input.approvalId!, command };
     attempt.current = { scope, revision, call };
     lock.current = scope; setBusyScope(scope); setReview(null);
-    const wait=waitFor(scope);
+    const wait=waitFor(scope,actionEligibility());
     try {
       await authority(scope,wait);
       const response = await wait(()=>supabase.functions.invoke("comms-email-command", { body: call }));
@@ -161,7 +185,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
         refuse("This reply isn't ready for approval. Your draft is kept. Check the contact and business email setup, then review again.");
         return;
       }
-      setReview({ scope, revision, call, phase: "decide", state: "pending", summary: result.summary, preview, fingerprint: result.fingerprint, expiresAt });
+      setReview({ scope, identity, revision, call, phase: "decide", state: "pending", summary: result.summary, preview, fingerprint: result.fingerprint, expiresAt });
     } catch {
       if (currentScope(scope) && revisionRef.current === revision) refuse("Couldn't prepare the review. Nothing was approved here; your draft is kept.");
     } finally {
@@ -178,10 +202,14 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
     lock.current = scope; setBusyScope(scope);
     const original = { ...current, approvedFingerprint: current.fingerprint };
     setReview({ ...original, phase: "report", state: "working", fingerprint: undefined, note: "Sending the exact reply you approved…" });
-    const wait=waitFor(scope);
+    const wait=waitFor(scope,actionEligibility());
+    let dispatched=false;
     try {
       await authority(scope,wait);
-      const response = await wait(()=>supabase.functions.invoke("comms-email-command", { body: { ...current.call, approved_fingerprint: current.fingerprint } }));
+      const response = await wait(()=>{
+        dispatched=true;dispatchedOperations.current.add(current.call.operation_id);
+        return supabase.functions.invoke("comms-email-command", { body: { ...current.call, approved_fingerprint: current.fingerprint } });
+      });
       await authority(scope,wait);
       if (!currentScope(scope)) return;
       const result = response.error ? null : object(response.data);
@@ -198,7 +226,8 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
         setReview({ ...original, phase: "report", state: "unconfirmed", fingerprint: undefined, canCheck: true, note: "Couldn't confirm whether this reply went out. Don't resend. Check its recorded status." });
       }
     } catch {
-      if (currentScope(scope)) setReview({ ...original, phase: "report", state: "unconfirmed", fingerprint: undefined, canCheck: true, note: "Couldn't confirm whether this reply went out. Don't resend. Check its recorded status." });
+      if(!dispatched&&scopeRef.current===scope&&!withdrawn.current)setReview(current);
+      else if(currentScope(scope))setReview({ ...original, phase: "report", state: "unconfirmed", fingerprint: undefined, canCheck: true, note: "Couldn't confirm whether this reply went out. Don't resend. Check its recorded status." });
     } finally {
       if (lock.current === scope) lock.current = null;
       if (currentScope(scope)) setBusyScope(null);
@@ -208,7 +237,7 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   const finishRecording = async () => {
     if(!current?.recordPending||!current.acceptedMessageId||!current.approvedFingerprint||!FINGERPRINT.test(current.approvedFingerprint)||busy||input.disabled||lock.current===scope||!currentScope(scope))return;
     lock.current=scope;setBusyScope(scope);
-    const wait=waitFor(scope);
+    const wait=waitFor(scope,actionEligibility());
     try{
       await authority(scope,wait);
       // Recheck the exact accepted original before the existing record-only native door.
@@ -279,7 +308,8 @@ export function useLeadReplyReview(sourceInput: Input, onAccepted: () => void) {
   };
 
   const stale = current?.phase === "decide" && current.revision !== revision;
-  const panel = withdrawn.current ? <p role="status" className="px-3 py-2 text-sm">Your account changed. Reopen the original reply to inspect its outcome before another decision.</p> : <>
+  const panel = withdrawn.current ? <p role="status" className="px-3 py-2 text-sm">Your account changed. Reopen the original reply to inspect its outcome before another decision.</p>
+    :!currentScope(scope)?<p role="status" className="px-3 py-2 text-sm">The original reply is held while this workspace is unavailable. Return to its current authorized scope before another decision.</p>:<>
     {error?.scope === scope ? <p role="alert" className="px-3 py-2 text-sm text-destructive">{error.text}</p> : null}
     {stale ? <p role="status" className="px-3 py-2 text-sm text-muted-foreground">The draft changed. Review the current reply again before approving.</p> : current ? (
       <div ref={panelRef} className="space-y-2 border-t border-border px-3 py-3">

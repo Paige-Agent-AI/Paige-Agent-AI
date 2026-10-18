@@ -6,9 +6,9 @@ import {parseFollowupLocator,canReplaceFollowupDraft} from "./useLeadReplyReview
 import { ComposeThreadDialog } from "./ComposeThreadDialog";
 vi.mock("@/components/paige/CustomerSelector",()=>({CustomerSelector:()=>null}));
 
-const db=vi.hoisted(()=>({items:[] as Record<string,unknown>[],filters:[] as unknown[][],read:vi.fn(),role:vi.fn(),invoke:vi.fn(),getUser:vi.fn()}));
+const db=vi.hoisted(()=>({items:[] as Record<string,unknown>[],filters:[] as unknown[][],read:vi.fn(),role:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),auth:new Set<(event:string)=>void>()}));
 vi.mock("@/hooks/usePendingApprovals",()=>({usePendingApprovals:()=>({items:db.items,error:null,refresh:vi.fn()})}));
-vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:db.getUser,onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})},rpc:db.role,functions:{invoke:db.invoke},from:(table:string)=>{
+vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:db.getUser,onAuthStateChange:(cb:(event:string)=>void)=>{db.auth.add(cb);return{data:{subscription:{unsubscribe:()=>db.auth.delete(cb)}}};}},rpc:db.role,functions:{invoke:db.invoke},from:(table:string)=>{
   db.filters.push(["table",table]);const q:Record<string,unknown>={};
   for(const method of ["select","eq","order","limit"])q[method]=(...args:unknown[])=>{db.filters.push([method,...args]);return q;};
   q.then=(done:(value:unknown)=>unknown,fail:(reason:unknown)=>unknown)=>db.read(table).then(done,fail);
@@ -29,6 +29,20 @@ beforeEach(async()=>{db.items=[pending()];db.filters=[];db.read.mockReset().mock
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 
 describe("returning to the same lead reply",()=>{
+  it("revalidates the same actor after token refresh without permanently hiding the original draft",async()=>{
+    await render();expect(editButton()).toBeTruthy();
+    await act(async()=>{for(const listener of db.auth)listener("TOKEN_REFRESHED");await flush();});
+    expect(editButton()).toBeTruthy();expect(host.textContent).not.toContain("Your account changed");expect(db.getUser.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+  it("a refreshed foreign auth result cannot enable the old actor draft",async()=>{
+    await render();db.getUser.mockResolvedValue({data:{user:{id:"foreign"}},error:null});
+    await act(async()=>{for(const listener of db.auth)listener("TOKEN_REFRESHED");await flush();});expect(editButton()).toBeUndefined();expect(edit).not.toHaveBeenCalled();
+  });
+  it("signout synchronously retires an old edit frame until fresh sign-in validation",async()=>{
+    await render();const old=editButton()!;expect(old).toBeTruthy();
+    await act(async()=>{for(const listener of db.auth)listener("SIGNED_OUT");old.click();await flush();});expect(edit).not.toHaveBeenCalled();expect(host.textContent).toContain("Your account changed");
+    await act(async()=>{for(const listener of db.auth)listener("SIGNED_IN");await flush();});expect(editButton()).toBeTruthy();
+  });
   it.each(["client.followup","owner.followup_email"])("offers the existing exact review for native-supported %s",async category=>{db.items=[{...pending(),category}];await render();expect(editButton()).toBeTruthy();await act(async()=>editButton()!.click());expect(edit.mock.calls[0][0].id).toBe(approval);expect(db.invoke).not.toHaveBeenCalled();});
   it("never substitutes a different approval on the same contact for an exact locator",async()=>{await render({approvalId:"77777777-7777-4777-8777-777777777777"} as Partial<typeof props>);expect(editButton()).toBeUndefined();expect(host.textContent).toMatch(/unavailable|checking/i);expect(edit).not.toHaveBeenCalled();});
   it("does not offer fresh editing for a reopened unconfirmed canonical send",async()=>{

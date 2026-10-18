@@ -82,14 +82,19 @@ export function LeadReplyDrafts({ tenantId, contactId, actorId, approvalId, onEd
   const approvals = usePendingApprovals({ contactId });
   const [authEpoch,setAuthEpoch]=useState(0);
   const withdrawn=useRef(false);
-  useEffect(()=>{const {data:{subscription}}=supabase.auth.onAuthStateChange(event=>{if(event!=="INITIAL_SESSION"){withdrawn.current=true;setAuthEpoch(n=>n+1);}});return()=>subscription.unsubscribe();},[]);
+  const latestParent=useRef(parentCurrent);latestParent.current=parentCurrent;
+  useEffect(()=>{const {data:{subscription}}=supabase.auth.onAuthStateChange(event=>{if(event!=="INITIAL_SESSION"){
+    withdrawn.current=event!=="TOKEN_REFRESHED"&&event!=="SIGNED_IN";
+    authorityScopeRef.current={key:"retired-auth-generation"};setAuthEpoch(n=>n+1);
+  }});return()=>subscription.unsubscribe();},[]);
   const key=JSON.stringify([actorId,tenantId,contactId,approvalId,authEpoch]);
   const authorityScopeRef = useRef({ key });
   if (authorityScopeRef.current.key !== key) authorityScopeRef.current = { key };
   const authorityScope = authorityScopeRef.current;
   const [authority, setAuthority] = useState<{ scope: object; canEdit: boolean } | null>(null);
   const canEdit = authority?.scope === authorityScope && authority.canEdit;
-  const isCurrent=useCallback(()=>{try{return authorityScopeRef.current===authorityScope&&!withdrawn.current&&(parentCurrent===undefined||parentCurrent()===true);}catch{return false;}},[authorityScope,parentCurrent]);
+  const isCurrent=useCallback(()=>{try{return authorityScopeRef.current===authorityScope&&!withdrawn.current&&(parentCurrent===undefined||parentCurrent()===true)
+    &&(latestParent.current===undefined||latestParent.current()===true);}catch{return false;}},[authorityScope,parentCurrent]);
   const [selection,setSelection]=useState<{scope:object;row:ApprovalQueueRow|null}|null>(null);
   useEffect(() => {
     let current = true;

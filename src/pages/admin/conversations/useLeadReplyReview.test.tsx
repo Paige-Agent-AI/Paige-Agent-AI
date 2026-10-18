@@ -48,6 +48,64 @@ beforeEach(async () => {
 afterEach(async () => { await act(async () => { root.unmount(); }); host.remove(); vi.useRealTimers(); });
 
 describe("lead reply through the existing approval door", () => {
+  it("allows fresh explicit same-actor review after token refresh and reopening",async()=>{
+    await prepare();await act(async()=>db.auth!("TOKEN_REFRESHED"));
+    expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();
+    await render({approvalId:null,disabled:true});await render({approvalId:approval,disabled:false});await prepare();
+    expect(db.invoke).toHaveBeenCalledTimes(2);expect(host.querySelector('[aria-label="Needs your OK"]')).not.toBeNull();
+  });
+  it.each(["actor-read","tenant-read","hold-aba","parent-fence","parent-aba"])("a live eligibility hold during %s cannot dispatch the approved call",async kind=>{
+    await prepare();let finish!:(v:unknown)=>void;
+    if(kind==="tenant-read")db.rpc.mockReturnValueOnce(new Promise(done=>{finish=done;}));else db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Approve")!.click();for(let i=0;i<8;i++)await Promise.resolve();});
+    if(kind.startsWith("parent")){await render({current:()=>false});if(kind==="parent-aba")await render({current:()=>true});}
+    else{await render({disabled:true});if(kind==="hold-aba")await render({disabled:false});}
+    await act(async()=>{finish(kind==="tenant-read"?{data:tenant,error:null}:{data:{user:{id:actor}},error:null});for(let i=0;i<16;i++)await Promise.resolve();});
+    expect(db.invoke).toHaveBeenCalledTimes(1);
+    await render({disabled:false,current:()=>true});expect(host.querySelector('[aria-label="Needs your OK"]')).not.toBeNull();
+  });
+  it.each(["actor","tenant"])("a refreshed session cannot borrow a different current %s",async kind=>{
+    await prepare();await act(async()=>db.auth!("TOKEN_REFRESHED"));
+    if(kind==="actor")db.getUser.mockResolvedValue({data:{user:{id:"foreign"}},error:null});else db.rpc.mockResolvedValue({data:"foreign",error:null});
+    await prepare();expect(db.invoke).toHaveBeenCalledTimes(1);expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();
+  });
+  it("token refresh retires an awaiting approval before dispatch but permits a fresh authorized review",async()=>{
+    await prepare();let finish!:(v:unknown)=>void;db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Approve")!.click());
+    await act(async()=>db.auth!("TOKEN_REFRESHED"));await act(async()=>{finish({data:{user:{id:actor}},error:null});for(let i=0;i<16;i++)await Promise.resolve();});
+    expect(db.invoke).toHaveBeenCalledTimes(1);expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();
+    await prepare();expect(db.invoke).toHaveBeenCalledTimes(2);expect(host.querySelector('[aria-label="Needs your OK"]')).not.toBeNull();
+  });
+  it("a refreshed in-flight original remains read-only with the same operation",async()=>{
+    await prepare();const original=db.invoke.mock.calls[0][1].body;let finish!:(v:unknown)=>void;
+    db.invoke.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Approve")!.click();for(let i=0;i<16;i++)await Promise.resolve();});
+    expect(db.invoke).toHaveBeenCalledTimes(2);await act(async()=>db.auth!("TOKEN_REFRESHED"));
+    expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();expect(host.textContent).not.toContain("lead@example.test");expect(api.blocksSending).toBe(true);
+    await prepare();expect(db.invoke).toHaveBeenCalledTimes(2);
+    await click("Check sending status");expect(db.filters).toContainEqual(["eq","meta->comms_email_binding->>operation_id",original.operation_id]);expect(db.invoke).toHaveBeenCalledTimes(2);
+    await act(async()=>{finish({data:null,error:null});for(let i=0;i<16;i++)await Promise.resolve();});expect(api.blocksSending).toBe(true);
+  });
+  it("a preparation hold during auth cannot invoke even the proposal door",async()=>{
+    let finish!:(v:unknown)=>void;db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));let pending!:Promise<void>;
+    await act(async()=>{pending=api.prepare();});await render({disabled:true});
+    await act(async()=>{finish({data:{user:{id:actor}},error:null});await pending;});expect(db.invoke).not.toHaveBeenCalled();
+    await render({disabled:false});await prepare();expect(db.invoke).toHaveBeenCalledTimes(1);
+  });
+  it.each([{subject:"Changed words"},{connectorId:"77777777-7777-4777-8777-777777777777"}])("changed exact draft inputs during auth cannot spend the old card %j",async changed=>{
+    await prepare();let finish!:(v:unknown)=>void;db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Approve")!.click());await render(changed);
+    await act(async()=>{finish({data:{user:{id:actor}},error:null});for(let i=0;i<16;i++)await Promise.resolve();});expect(db.invoke).toHaveBeenCalledTimes(1);expect(host.querySelector('[aria-label="Needs your OK"]')).toBeNull();
+  });
+  it.each(["actor-read","tenant-read"])("original recording is held if eligibility changes during %s",async kind=>{
+    await prepare();const call=db.invoke.mock.calls[0][1].body,message="99999999-9999-4999-8999-999999999999";
+    db.invoke.mockResolvedValueOnce({data:{ok:true,outcome:"provider_accepted",operation_id:call.operation_id,approval_id:approval,message_id:message,provider_receipt_available:true,delivery_confirmed:false,record_status:"pending_record"},error:null});await click("Approve");
+    db.row={id:message,tenant_id:tenant,contact_id:contact,send_actor_id:actor,lead_reply_approval_id:approval,comms_email_operation:call.operation_id,comms_email_state:"provider_accepted",channel_type:"email",direction:"outbound",status:"sent",provider_message_id:"receipt",connector_id:connector,subject:base.subject,body_text:base.body};
+    let finish!:(v:unknown)=>void;if(kind==="actor-read")db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));else db.rpc.mockReturnValueOnce(new Promise(done=>{finish=done;}));
+    await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()==="Finish recording reply")!.click();for(let i=0;i<8;i++)await Promise.resolve();});
+    await render({disabled:true});await act(async()=>{finish(kind==="actor-read"?{data:{user:{id:actor}},error:null}:{data:tenant,error:null});for(let i=0;i<16;i++)await Promise.resolve();});
+    expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).toHaveBeenCalledTimes(2);expect(api.blocksSending).toBe(true);
+  });
   it("retains the exact prepared card across a temporary locator dispatch hold",async()=>{
     await prepare();const original=db.invoke.mock.calls[0][1].body;
     await render({disabled:true});expect(host.querySelector<HTMLButtonElement>('[aria-label="Needs your OK"] button')?.disabled).toBe(true);

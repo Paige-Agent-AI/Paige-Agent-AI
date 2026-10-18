@@ -33,13 +33,13 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: consumer local geometry proof is separate;
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: consumer local geometry proof is separate; integrated production evidence owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: consumer local geometry proof is separate; integrated production evidence owed.
 UNVERIFIED: exact final source review, required exact-head CI, prerequisite consumer deployment, integrated production readback, paired authenticated customer proof, Live and owner acceptance.
-INTERNAL_BUILD_IDENTITY: local working candidate based on released main715200d8d20b2436db2c3e4008c656d0977e3ce7, identical source tree to reviewed4ddcc7d3; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=not_deployed; evidence=work/task-reference-proof.
+INTERNAL_BUILD_IDENTITY: local working candidate based on 715200d8d20b2436db2c3e4008c656d0977e3ce7, identical source tree to reviewed4ddcc7d3; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat and crm-command deployment after consumer release and exact-head gates); evidence=work/task-reference-proof.
 RELEASE_CHANNEL: development: unpublished bounded integration, no activation or external publication.
 RELEASE_CLASSIFICATION: internal-only: coherent Task follow-through repair candidate; no customer release identity assigned.
 CUSTOMER_RELEASE_IDENTITY: none: final owner publication decision remains separate.
 RELEASE_NOTE_REQUIRED: no: internal repair until usable released outcome is verified under existing release policy.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source and fixture proof do not establish production execution, every SOLO account manually tested, Live, whole Operations completion or product acceptance. Strict restoration closure remains 1/18 and 2/50.
-RELEASE_RECOVERY: position=withhold before prerequisite consumer release; forward-fix an observed defect without replaying an uncertain command; reference=existing governed CRM/Task consumer recovery contract.
+RELEASE_RECOVERY: position=withhold until prerequisite consumer release and forward-fix an observed defect without replaying an uncertain command; reference=docs/evidence/ui-delivery/ant21-task-native-focus.md and existing governed CRM/Task recovery contract.
 
 ## Source routing and scope
 

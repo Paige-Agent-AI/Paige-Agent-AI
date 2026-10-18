@@ -1,5 +1,12 @@
 # Paige agent delivery rules
 
+## 00. OWNER 2026-10-18 — FOUR-ACCOUNT SAAS COORDINATOR AUTHORITY (READ FIRST)
+
+**For every present/future PAIGE coordinator, Codex/zCod/Claude implementation agent and new chat bootstrap:** All coordinator engineering orders must serve one of exactly **four account experiences**: **SOLO**, **Platform Operator**, **Agency**, or **Agency Sub-Accounts**. **ACTIVE BUILD NOW: SOLO and Platform Operator only.** **OWNER-HOLD: Agency and Agency Sub-Accounts** (preserve incumbent work; no new engineering allocations, agency-first rollouts, agency account capability builds or release until the owner explicitly directs that phase). Personas such as coach/consultant are SOLO customer types, not another shell; E09 customer-facing Portal is a SOLO-tenant-owned feature, not another PAIGE subscription account class. Enterprise is not newly authorized for implementation/rollout by this instruction. Cross-cutting infrastructure work is permitted when directly needed for the ACTIVE shells, never to expand account-tier scope.
+
+**SaaS product rule:** Build one canonical product for every eligible existing/future SOLO tenant; Platform Operator operates PAIGE Agent AI Inc and sees ONLY authorized company scope. No named test-account special cases or duplicate provider ledgers. Every coordinator must read and follow `docs/product/SAAS-PLATFORM-FOUNDATION-AND-COORDINATOR-CHARTER-2026-10-18.md` (24 requirements, stage ownership, end-to-end acceptance), the amended BRD, Owner North Star and current live delivery evidence. The owner authorizes Agency/Sub-Accounts explicitly later; no agent infers that date or builds them by default. Preserve October 15 autonomous safe engineering release policy and owner-only consequential financial/security approvals.
+
+
 These instructions apply to Codex, Claude, and every other implementation agent working in this repository.
 
 ## Owner standing delegation, complete outcomes, and release policy (2026-10-14)

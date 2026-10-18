@@ -14,6 +14,7 @@ import { CALENDAR_BOOKING_READ_TOOLS } from "../_shared/paige-spine/domains/cale
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
+import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
@@ -1421,8 +1422,18 @@ serve(async (req) => {
             intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
             caller: supabaseClient as unknown as ApprovalRecoveryDb, service: supabase as unknown as ApprovalRecoveryDb,
           }) : { v: 1, status: "unavailable" };
-          return new Response(JSON.stringify({ approval_recovery }), { headers: { ...corsHeaders,
-            "Content-Type": "application/json", "Cache-Control": "no-store" } });
+          // Historical evidence is a separate read projection. It neither restores
+          // a live approval nor acquires/releases an executor or clears a hold.
+          const approval_history = protocolActive && thread.audience === "workspace"
+            && approval_recovery.status !== "available" ? await readOriginalReminderApprovalHistory({
+              actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+              intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+              caller: supabaseClient as unknown as Parameters<typeof readOriginalReminderApprovalHistory>[0]["caller"],
+              service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
+            }) : null;
+          return new Response(JSON.stringify({ approval_recovery,
+            ...(approval_history?.status === "verified_original" ? { approval_history } : {}),
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
         const originalScope = { threadId: validatedData.threadId!,
           intentId: validatedData.requestIntentId!, tenantId: thread.tenant_id, actorId: user.id };

@@ -35,8 +35,8 @@ export default defineConfig({
           if (mutant === "gold") return swap(`.ops-staff-progression li[data-complete=true] svg{color:var(--pg-violet)}`, `.ops-staff-progression li[data-complete=true] svg{color:var(--pg-gold-fill)}`);
           if (mutant === "contrast") return swap(`.ops-staff-people span{color:var(--pg-muted);`, `.ops-staff-people span{color:color-mix(in srgb,var(--pg-muted) 25%,transparent);`);
           if (mutant === "target") return swap(`.ops-staff-review button{min-height:44px;background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line);border-radius:8px;padding:10px 14px}`, `.ops-staff-review button{min-height:20px;background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line);border-radius:8px;padding:1px 6px;line-height:1.1}`);
-          // The source choices fall back to the primitive's 40px trigger, under the 44px touch floor.
-          if (mutant === "select-target") return swap(`height:auto;min-height:44px;padding:10px 12px;`, `height:auto;min-height:0;padding:10px 12px;`);
+          // The source choices shrink to a 32px trigger, under the 44px touch floor.
+          if (mutant === "select-target") return swap(`height:auto;min-height:44px;padding:10px 12px;`, `height:32px;min-height:0;padding:4px 12px;`);
           if (mutant === "overflow") return swap(`.ops-staff-document{`, `.ops-staff-document{min-width:900px;white-space:pre;`);
           return code;
         }

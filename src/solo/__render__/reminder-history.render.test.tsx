@@ -40,7 +40,7 @@ type State = 'checking' | 'unverified' | 'verified' | 'long-title';
 type Fixture = { theme: 'light' | 'dark'; width: number; height: number; state: State;
   position: 'last' | 'nonlast'; mode: 'normal' | 'css-zoom-200' | 'reduced-motion' };
 const scenes: State[] = ['checking', 'unverified', 'verified', 'long-title'];
-const widths = [[390, 844], [900, 1000], [1366, 768], [1920, 1080], [3840, 2160]];
+const widths = [[390, 844], [900, 1000], [1024, 768], [1366, 768], [1536, 770], [1920, 1080], [3840, 2160]];
 const full: Fixture[] = (['light', 'dark'] as const).flatMap(theme => scenes.flatMap(state =>
   (['last', 'nonlast'] as const).flatMap(position => [
     ...widths.map(([width, height]): Fixture => ({ theme, width, height, state, position, mode: 'normal' })),
@@ -49,7 +49,7 @@ const full: Fixture[] = (['light', 'dark'] as const).flatMap(theme => scenes.fla
   ])));
 const cases = process.env.ORIGINAL_REMINDER_RENDER_FULL === '1' ? full
   : full.filter(c => c.position === 'nonlast' && c.width === 900 && c.mode === 'normal');
-const out = process.env.ORIGINAL_REMINDER_RENDER_DIR || 'work/original-reminder-render';
+const out = process.env.ORIGINAL_REMINDER_RENDER_DIR || 'work/original-reminder-render-successor';
 mkdirSync(out, { recursive: true });
 const digest = (v: string | Buffer) => createHash('sha256').update(v).digest('hex');
 const sourcePaths = ['src/components/dashboard/PaigeAIChat.tsx', 'src/components/chat/reminderHistory.ts',
@@ -110,13 +110,13 @@ describe('actual original Reminder history DOM render harness', () => {
       const transcript = host.querySelector('#solo-paige-transcript'); expect(transcript).not.toBeNull();
       const card = transcript!.querySelector('[data-paige-original-reminder-result], [data-paige-original-reminder-status]');
       expect(card).not.toBeNull(); expect(card!.getAttribute('role')).toBe('status');
+      expect(card!.classList.contains('break-words')).toBe(true);
       expect(card!.closest('[data-paige-message-id]')?.getAttribute('data-paige-message-id')).toBe(ids.turn);
       if (fixture.state === 'checking') expect(card!.textContent).toContain('Checking the earlier reminder');
       else if (fixture.state === 'unverified') expect(card!.textContent).toContain("earlier reminder outcome couldn't be verified");
       else {
         expect(card!.textContent).toContain(`Recorded earlier: ${fixture.state === 'long-title' ? longTitle : title}`);
         expect(card!.textContent).toContain('Originally scheduled for');
-        expect(card!.classList.contains('break-words')).toBe(true);
         expect(card!.getAttribute('data-paige-original-reminder-item')).toBe(ids.item);
         expect(card!.getAttribute('data-paige-original-reminder-receipt')).toBe(ids.receipt);
       }

@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: An owner adds work for a client, shares two items and sees 
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: plan_item_set_client_share and client_portal_progress are SECURITY DEFINER with in-body scope (§59); plan_items keeps no direct write grant (plan_items_no_write); the client_share CHECK and trigger guard every writer; list_tool_autonomy is wrapped, never forked.
 
-INTERNAL_BUILD_IDENTITY: 16f77e04734a52ee2de05e84bbb585dea782128f; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110030000 persisted apply on production after merge); edge=PROOF_OWED(paige-ai-chat deploy readback after merge); evidence=supabase/tests/customer_portal_progress.sql
+INTERNAL_BUILD_IDENTITY: 8501155cd52c3f997763df8c9bfcb5c2117a643c; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271110030000 persisted apply on production after merge); edge=PROOF_OWED(paige-ai-chat deploy readback after merge); evidence=supabase/tests/customer_portal_progress.sql
 RELEASE_CHANNEL: development: draft PR; production deployment, migration persisted-apply and edge readback are verified after merge.
 RELEASE_CLASSIFICATION: internal-only: third slice of the Customer Portal; no customer release until all seven pillars and authenticated proof exist.
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch; no customer release named until the seven pillars and authenticated proof exist.

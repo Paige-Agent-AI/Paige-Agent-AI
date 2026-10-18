@@ -159,6 +159,4 @@ END $$;
 REVOKE ALL ON FUNCTION public.solo_beta_fulfill_checkout(text,uuid,integer,uuid,text,text,text,text,text,boolean,integer,text,text,integer,text,timestamptz,timestamptz,timestamptz,timestamptz,boolean)
   FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.solo_beta_fulfill_checkout(text,uuid,integer,uuid,text,text,text,text,text,boolean,integer,text,text,integer,text,timestamptz,timestamptz,timestamptz,timestamptz,boolean)
-
-REVOKE ALL ON FUNCTION public.solo_beta_fulfill_checkout(text,uuid,integer,uuid,text,text,text,text,text,boolean,integer,text,text,integer,text,timestamptz,timestamptz,timestamptz,timestamptz,boolean) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.solo_beta_fulfill_checkout(text,uuid,integer,uuid,text,text,text,text,text,boolean,integer,text,text,integer,text,timestamptz,timestamptz,timestamptz,timestamptz,boolean) TO service_role;
+  TO service_role;

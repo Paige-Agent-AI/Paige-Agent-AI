@@ -14,6 +14,7 @@
  */
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { PAIGE_APP_ORIGIN } from "../../supabase/functions/_shared/canonical-app-url";
 
 export const MARKETING_HOST = "paigeagent.ai";
 export const APP_HOST = "app.paigeagent.ai";
@@ -144,6 +145,39 @@ export function appUrl(path: string): string {
 }
 export function marketingUrl(path: string): string {
   return HOST_SPLIT_ENABLED ? `https://${MARKETING_HOST}${path}` : path;
+}
+
+/**
+ * The configured app origin: where sign-in, the Supabase session (localStorage is per origin) and the
+ * signed-in client portal live. It comes from the canonical constant, never from the request's host.
+ */
+export function configuredAppOrigin(): string {
+  return HOST_SPLIT_ENABLED ? `https://${APP_HOST}` : PAIGE_APP_ORIGIN;
+}
+
+const TRUSTED_APP_HOSTS = new Set([MARKETING_HOST, `www.${MARKETING_HOST}`, APP_HOST]);
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * The origin for an absolute address that SENDS a person somewhere (a password-reset email, a
+ * tenant-host sign-in link). A trusted production app host over https, or local development, keeps
+ * its own origin — unchanged. Every other hostname — a tenant wildcard host, a preview, an unknown or
+ * hostile Host — resolves to the configured app origin, so the hostname can never pick the target.
+ */
+export function trustedAppOrigin(location: { hostname: string; origin: string; protocol: string }): string {
+  const hostname = location.hostname.trim().toLowerCase();
+  if (TRUSTED_APP_HOSTS.has(hostname) && location.protocol === "https:") return location.origin;
+  if (LOOPBACK_HOSTS.has(hostname)) return location.origin;
+  return configuredAppOrigin();
+}
+
+/**
+ * On `<slug>.paigeagent.ai`, the one sign-in link: that tenant's gateway on the app origin, pinned to
+ * the hostname tenant. Null on any non-tenant host. The tenant host itself never signs anyone in.
+ */
+export function tenantHostPortalEntryUrl(hostname: string): string | null {
+  const slug = tenantSlugFromHostname(hostname);
+  return slug ? `${configuredAppOrigin()}/portal/${encodeURIComponent(slug)}` : null;
 }
 
 /** Watches the location and cross-navigates to the canonical host when needed. */

@@ -935,6 +935,7 @@ jobs:
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/calendar-booking-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/operations-task-chat.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-chat.mjs
+          node --import ./scripts/knowledge-scope/register.mjs scripts/proof/planning-reminder-history-status.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int1807-observation-handler-check.mjs
           node --import ./scripts/knowledge-scope/register.mjs scripts/int336-two-tool-check.mjs
           # Actual handler/native-door pause, abrupt termination, and receipt failure controls.

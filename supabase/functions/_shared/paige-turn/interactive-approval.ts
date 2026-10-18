@@ -138,7 +138,7 @@ export async function readPendingApprovalRecovery(input: {
     for (const card of cards) {
       if (!object(card) || typeof card.tool !== "string" || typeof card.fingerprint !== "string"
         || !/^[0-9a-f]{16}$/.test(card.fingerprint) || seen.has(card.fingerprint) || !object(card.command)
-        || typeof card.command.action !== "string" || !Object.hasOwn(CRM_ACTION_CAPABILITY, card.command.action)
+        || typeof card.command.action !== "string" || !Object.prototype.hasOwnProperty.call(CRM_ACTION_CAPABILITY, card.command.action)
         || !/^(contact|company|task)\./.test(card.command.action)
         || CRM_PREVIEW_REQUIRED_ACTIONS.has(card.command.action as CrmAction)
         || CRM_ACTION_CAPABILITY[card.command.action as CrmAction] !== card.tool

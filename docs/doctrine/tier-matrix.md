@@ -4851,6 +4851,15 @@ Same rule on every tier that can write a `client_files` row; `tenant_id` is not 
 `ON DELETE SET NULL`). Still open (client_files policy follow-up): a member holding the global admin role,
 or the uploader, can delete a shared file over REST, which takes it away from the client with no audit row.
 
+Round 5 (2026-10-18, pgTAP 229 cases): the only ways a customer gains a file are the audited share writer
+and their own upload, proven by a matrix of every signed-in role (owner, business admin, member holding the
+global admin role, plain member, customer, another business's owner, platform owner) against every write on
+`client_files` and the client-files bucket. A signed-in write may make a row `client_upload` only when its
+uploader is the contact's linked login (`FILE_CLIENT_UPLOAD_PROVENANCE`); a file's `id` and `tenant_id` are
+now fixed for signed-in writers too (`FILE_IDENTITY_IMMUTABLE`), with only the tenants foreign key's
+`ON DELETE SET NULL` passing. Same rule on every tier. Still open with the policy follow-up: a member can
+rename a shared file (MINOR-J) as well as delete one.
+
 The Operations Delivery "Client outcome" line uses the same release gate as the work item
 (`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
 project" only for a standalone business with a linked project and a second active member, "Releasing needs a

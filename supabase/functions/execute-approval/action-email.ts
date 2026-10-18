@@ -48,6 +48,115 @@ export function classifySendResult(httpOk: boolean, body: unknown): SendOutcome 
   return { kind: "failed", error: typeof b.error === "string" && b.error ? b.error : (typeof b.outcome === "string" && b.outcome ? b.outcome : "send_failed") };
 }
 
+/* ───────────────────────── a quiet-hours / do-not-disturb hold (#2132) ───────────────────────── */
+
+/**
+ * An approval is never left claimed behind a queued message. A queued copy and the approval have two
+ * lifecycles nothing joins: the drain released the message without ever closing the approval (it stayed
+ * "in progress" forever), and a decline would not have stopped the message. So an approval-driven send
+ * that the pre-send seam would HOLD (the business's do-not-disturb hours, or SMS quiet hours in the
+ * contact's time zone) is answered HELD: nothing is queued, nothing is sent, the approval stays pending
+ * and unclaimed, and the person approves it again when the hours end. The hold itself is decided by the
+ * ONE pre-send seam (runPreSend) — the same function send-message runs — never re-derived here.
+ */
+export type HoldReason = "quiet_hours" | "tenant_dnd" | "other";
+
+export const HOLD_MESSAGE: Record<HoldReason, string> = {
+  quiet_hours: "Not sent: it's quiet hours where this contact is. Nothing went out, and it's still waiting for you. Approve it again after quiet hours end.",
+  tenant_dnd: "Not sent: your business's do-not-disturb hours are on. Nothing went out, and it's still waiting for you. Approve it again when they end.",
+  other: "Not sent: messages to this contact are on hold right now. Nothing went out, and it's still waiting for you. Approve it again later.",
+};
+
+/** The hold a pre-send (or send-message) outcome stands for; null when the outcome is not a hold. */
+export function holdReasonOf(outcome: unknown): HoldReason | null {
+  if (outcome === "queued_quiet_hours") return "quiet_hours";
+  if (outcome === "queued_tenant_dnd") return "tenant_dnd";
+  return typeof outcome === "string" && outcome.startsWith("queued_") ? "other" : null;
+}
+
+/** The HELD answer. ok:false so every caller keeps the row on screen; `error` is what the person reads. */
+export function heldPayload(reason: HoldReason, retryAfter: string | null, channel: string, approvalId: string, extra: Obj = {}): Obj {
+  return { ok: false, executed: false, held: true, outcome: "held", hold_reason: reason, retry_after: retryAfter, channel, error: HOLD_MESSAGE[reason], approval_id: approvalId, ...extra };
+}
+
+/* ───────────────────────── the held draft: ONE message, ONE approval path (#2150) ───────────────────────── */
+
+/**
+ * When the hours begin between the pre-send check and send-message, send-message queues a row and the
+ * door cancels it through cancel_scheduled_message, which returns it to an unsent draft that Conversations
+ * shows with its own "Approve & send". That draft and this approval are the SAME message. So the door
+ * names the draft on the approval (metadata.held_draft_message_id). SMS retries use THAT row and
+ * settle if it already left. Email retries refuse: this legacy approval never froze the original sending
+ * identity or attachment state, so it cannot authorize a send or attest that an edited message was approved.
+ */
+export const HELD_DRAFT_KEY = "held_draft_message_id";
+/** Legacy held email has no immutable sender/attachment approval binding; it must be reviewed again. */
+export const HELD_EMAIL_REQUIRES_REVIEW =
+  "This held reply's original sending account and attachments can't be confirmed. Nothing was sent again. Review it in Conversations, or decline it here.";
+
+/** Message statuses that mean the draft has already gone out (messages_status_check, production 2026-10-14). */
+export const ALREADY_SENT_STATUSES: ReadonlySet<string> = new Set(["sent", "delivered", "read"]);
+
+/*
+ * Person-readable outcomes are answered 200 + ok:false (like the HELD answer): every caller reads the body
+ * of a 2xx through supabase.functions.invoke, but a non-2xx arrives as FunctionsHttpError whose message is
+ * the generic "Edge Function returned a non-2xx status code" — the explanation would never reach the person.
+ */
+export const DECIDED_MID_SEND_HELD =
+  "Not sent: this was decided while it was being sent. Nothing went out; the copy is an unsent draft in Conversations.";
+export const DECIDED_MID_SEND_QUEUED =
+  "Heads up: this was decided while it was being sent, but a copy had already been scheduled and couldn't be called back. It goes out when the hold ends; you'll find it in Conversations.";
+export const QUEUED_UNCANCELLABLE =
+  "Already scheduled: this message goes out when the hold ends. It can't be approved again, so a second copy can't be sent.";
+export const SCHEDULED_FROM_CONVERSATIONS =
+  "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
+export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
+export const HELD_DRAFT_CHANGED =
+  "This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). Nothing was sent: review it in Conversations, or decline it here.";
+
+/** The held draft's stored content, as the messages row carries it (comms C-1 columns). */
+export interface HeldDraftContent {
+  channel_type?: string | null;
+  recipients?: unknown;
+  subject?: string | null;
+  body_html?: string | null;
+  body_text?: string | null;
+}
+/** What this approval would send. */
+export interface IntendedSend { channel: string; to: string; subject: string | null | undefined; body: string }
+
+/** Line endings unified, trailing spaces per line and outer whitespace dropped: cosmetic only, never words. */
+const normText = (v: unknown): string =>
+  typeof v === "string" ? v.replace(/\r\n?/g, "\n").split("\n").map((l) => l.replace(/[ \t\u00a0]+$/, "")).join("\n").trim() : "";
+const normAddress = (v: unknown, channel: string): string => {
+  const s = typeof v === "string" ? v.trim().toLowerCase() : "";
+  return channel === "sms" ? s.replace(/[\s().-]/g, "") : s;
+};
+
+/**
+ * #2150: the held draft IS this message, but Conversations can edit it (edit → send → undo leaves the edited
+ * text as a draft). send-message's message_id path sends the text it is GIVEN and flips that row to sent
+ * without rewriting it, so sending this approval's text onto an edited draft would deliver one message and
+ * record another. Returns which part differs — or which part cannot be read — and null only when the draft
+ * carries exactly what this approval would send. Unsure is a difference: it is never sent.
+ */
+export function heldDraftChange(draft: HeldDraftContent, intended: IntendedSend): "channel" | "recipient" | "subject" | "body" | null {
+  const channel = intended.channel;
+  if ((draft.channel_type ?? null) !== channel) return "channel";
+  const recipients = Array.isArray(draft.recipients) ? draft.recipients : null;
+  const only = recipients && recipients.length === 1 ? recipients[0] as Record<string, unknown> | null : null;
+  const draftTo = only && typeof only === "object" ? normAddress(only.address, channel) : "";
+  if (!draftTo || draftTo !== normAddress(intended.to, channel)) return "recipient";
+  if (channel === "email" && normText(draft.subject) !== normText(intended.subject)) return "subject";
+  // The drain's own reading of a stored row: email prefers the HTML body, SMS the text body.
+  const draftBody = channel === "email" ? (draft.body_html ?? draft.body_text) : (draft.body_text ?? draft.body_html);
+  const stored = normText(draftBody);
+  if (!stored || stored !== normText(intended.body)) return "body";
+  return null;
+}
+export const HELD_DRAFT_UNCONFIRMED =
+  "Not sent: this message's draft changed while it was being sent and its state couldn't be confirmed. Nothing was sent again. Check Conversations before approving it again.";
+
 /* ───────────────────────── the outbound-message refusal ───────────────────────── */
 
 interface Res { data: unknown; error: unknown }

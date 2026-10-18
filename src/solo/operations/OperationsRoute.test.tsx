@@ -84,7 +84,7 @@ it.each([NavigationType.Pop,NavigationType.Push])("makes an unindexed %s address
  const mount=async(pathname:string,key:string)=>{await act(async()=>root.render(<Router navigator={navigator} navigationType={navigationType} location={{pathname,search:"",hash:"",state:null,key}}><HistoryControls/><OperationsRoute openPaige={vi.fn()}/></Router>));};
  try{
   await mount("/solo/123/operations/work","accepted");harness.reason="Unsaved Task";await mount("/solo/123/operations/capacity","unaccepted");
-  expect(container.querySelector("[data-view]")?.getAttribute("data-view")).toBe("work");expect(container.textContent).toContain("address changed");expect(container.textContent).toContain("Explicitly close");expect(navigator.go).not.toHaveBeenCalled();expect(navigator.replace).not.toHaveBeenCalled();
+  expect(container.querySelector("[data-view]")?.getAttribute("data-view")).toBe("work");expect(container.textContent).toContain("address changed");expect(container.textContent).toContain("Close it, then open the page again");expect(navigator.go).not.toHaveBeenCalled();expect(navigator.replace).not.toHaveBeenCalled();
   harness.reason=null;await mount("/solo/123/operations/capacity","clean");expect(container.querySelector("[data-view]")?.getAttribute("data-view")).toBe("capacity");expect(container.textContent).not.toContain("address changed");
  }finally{window.history.replaceState(originalState,"");}
 });

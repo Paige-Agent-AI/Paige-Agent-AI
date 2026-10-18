@@ -39,7 +39,7 @@ export function OperationsRoute({ openPaige }: { openPaige: () => void }) {
       } else {
         // An unindexed POP has no safe direction to infer. Keep the draft and
         // make the unaccepted address explicit rather than destroy history.
-        setHistoryNotice("The address changed, but this open inspection was retained because its history position could not be verified. Explicitly close it, then open the intended destination again.");
+        setHistoryNotice("Your address changed, but this task stayed open to protect your work. Close it, then open the page again.");
       }
       return;
     }

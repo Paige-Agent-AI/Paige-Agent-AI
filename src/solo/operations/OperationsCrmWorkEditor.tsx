@@ -21,7 +21,7 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
   const [notice,setNotice]=useState("");
   const dirty=assignee!==original.current.user_id||Boolean(due)||clearDate;
   useEffect(()=>{
-    onNavigationGuardChange?.(()=>dirty?"This task has unsaved input. Review it or explicitly close the inspection before leaving.":null);
+    onNavigationGuardChange?.(()=>dirty?"Review unsaved changes or close this task before leaving it.":null);
     return()=>onNavigationGuardChange?.(null);
   },[dirty,onNavigationGuardChange]);
   useEffect(()=>{

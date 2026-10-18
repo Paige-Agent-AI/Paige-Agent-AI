@@ -32,7 +32,8 @@ it("mounts the incumbent real editor for an exact current task even when both bo
 it.each(["empty","refused","unavailable"]) ("does not paint a task or editor for %s current authority",async status=>{
  port.readTask.mockResolvedValue(status==="empty"?{status:"available",found:false,task:null}:{status});await render();
  expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.querySelector('[aria-label="Edit task responsibility and due date"]')).toBeNull();
- expect(dialog()?.textContent).toContain(status==="empty"?"does not establish global absence":"could not be verified");
+ expect(dialog()?.textContent).toContain(status==="empty"?"isn’t available in your current workspace":"couldn’t be confirmed");
+ expect(dialog()?.textContent).not.toContain("no task was created or changed");expect(port.submit).not.toHaveBeenCalled();
 });
 it.each([`?task=${id}&task=${id}`,"?task=bad",`?task=${id}&weeklySource=planning_item&item=${other}`])("refuses invalid focus %s without an exact read",async query=>{
  await render(query);expect(port.readTask).not.toHaveBeenCalled();expect(dialog()).toBeNull();expect(host.textContent).toContain("task reference is unavailable");
@@ -55,11 +56,13 @@ it("invalidates old detail replies across actual actor/tenant A→B→A remounts
  await act(async()=>release(available(old)));expect(signal.aborted).toBe(true);expect(dialog()?.textContent).toContain("New generation");expect(dialog()?.textContent).not.toContain(old.title);
 });
 it("retains checked native input on Escape/new-target/Back guard and explicitly closes with Work fallback focus",async()=>{
- await render();await act(async()=>checkbox().click());expect(checkbox().checked).toBe(true);expect(port.guard?.()).toContain("explicitly close");
+ await render();await act(async()=>checkbox().click());expect(checkbox().checked).toBe(true);expect(port.guard?.()).toContain("Review unsaved changes");
  await act(async()=>document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true,cancelable:true})));
  expect(dialog()).toBeTruthy();expect(checkbox().checked).toBe(true);
  await render(`?task=${other}`,"new-target");expect(port.readTask).toHaveBeenCalledTimes(1);expect(checkbox().checked).toBe(true);
- await click("Close");expect(dialog()).toBeNull();expect(dismiss).toHaveBeenCalledOnce();expect(document.activeElement?.textContent).toBe("Work");
+ await click("Close");expect(dialog()).toBeNull();expect(dismiss).toHaveBeenCalledOnce();
+ // Radix emits onCloseAutoFocus from its zero-delay unmount callback.
+ await vi.waitFor(()=>expect(document.activeElement?.textContent).toBe("Work"));
 });
 it("retains draft input without painting unconfirmed details after failed refresh, then recovers only by a fresh exact read",async()=>{
  await render();await act(async()=>checkbox().click());port.readTask.mockResolvedValueOnce({status:"unavailable"});await click("Refresh task details");
@@ -89,5 +92,5 @@ it("uses exact readback for a reviewed change beyond the list and preserves the 
 });
 it("reload/remount re-reads a reference instead of reusing a task snapshot",async()=>{
  await render();await act(async()=>root.unmount());root=createRoot(host);port.readTask.mockResolvedValueOnce({status:"available",found:false,task:null});await render();
- expect(port.readTask).toHaveBeenCalledTimes(2);expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.textContent).toContain("not visible");
+ expect(port.readTask).toHaveBeenCalledTimes(2);expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.textContent).toContain("isn’t available");
 });

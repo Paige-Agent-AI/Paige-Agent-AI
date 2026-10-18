@@ -75,7 +75,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   const [navigationNotice, setNavigationNotice] = useState("");
   const checkNavigation = useCallback(() => {
     const reason = editorGuard.current?.() ?? (crmInspectionHeld.current
-      ? "Finish or explicitly close this task inspection before leaving it. Unsaved input and the original task change are retained." : null);
+      ? "Review unsaved changes or close this task before leaving it." : null);
     if (reason) setNavigationNotice(reason);
     return reason;
   }, []);
@@ -210,10 +210,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
       return;
     }
     if(checkNavigation())return;
-    if(inspection&&!initialRead||creatingWork||creatingProject){setNavigationNotice("Finish or close the current work inspection before opening this task reference.");return;}
+    if(inspection&&!initialRead||creatingWork||creatingProject){setNavigationNotice("Close the current inspection before opening another task.");return;}
     if(target.kind==="invalid"){
       setTaskFocus({id:null,phase:"unavailable",task:null});
-      setNavigationNotice("This task reference is unavailable. Open one verified Task reference without a Planning source.");return;
+      setNavigationNotice("This task reference is unavailable. Return to Work or open the original task link.");return;
     }
     inspectionInvoker.current=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:null;
     setNavigationNotice("");setInspection({kind:"crm_focus",id:target.id,view:"Work"});void readFocusedTask(target.id);
@@ -343,19 +343,19 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         }
       }}>
         <SheetHeader><SheetTitle className={linkedInspection || linkedTask ? "pr-8 break-words" : undefined}>{selectedItem?.title ?? selectedPlan?.title ?? (taskDetailsCurrent?selectedCrm?.title:undefined) ?? (linkedTask
-          ? taskFocus.phase==="reading"?"Reading current task":taskFocus.phase==="empty"?"This task is not visible in this workspace":"Current task details are unavailable"
+          ? taskFocus.phase==="reading"?"Reading current task":taskFocus.phase==="empty"?"This task isn’t available in this workspace":"Current task details are unavailable"
           : linkedInspection
           ? weeklySource.phase === "reading" ? "Reading current work" : "This work is unavailable"
           : inspection?.kind === "crm_recovery" ? "Recover the task change" : source.error || !matches ? "Work couldn’t be loaded" : "Work is not available in this view")}</SheetTitle>
           <SheetDescription>{selectedItem?.summary ?? selectedPlan?.summary ?? (taskDetailsCurrent?selectedCrm?.description:undefined) ?? "Details from your current workspace."}</SheetDescription></SheetHeader>
-        {linkedTask && taskFocus.phase==="reading" && <p role="status">Reading this task with your current account and workspace permissions…</p>}
+        {linkedTask && taskFocus.phase==="reading" && <p role="status">Reading the current task…</p>}
         {linkedTask && taskFocus.phase==="reading" && !crmReview && <button type="button" onClick={()=>{
           taskAbort.current?.abort();selectionEpoch.current+=1;setTaskFocus(previous=>({...previous,phase:"cancelled"}));
         }}>Cancel task lookup</button>}
         {linkedTask && !["reading","verified"].includes(taskFocus.phase) && <p role="status">{taskFocus.phase==="empty"
-          ? "No Task with this reference is visible to your current account in this workspace. This does not establish global absence, deletion or completion."
-          : taskFocus.phase==="cancelled"?"Task lookup cancelled. No current details were released."
-          : "Current Task details could not be verified. Refresh to check access again; no task was created or changed."}</p>}
+          ? "This task isn’t available in your current workspace. Check the link or your access."
+          : taskFocus.phase==="cancelled"?"Task lookup cancelled. Refresh when you’re ready to check again."
+          : "Current task details couldn’t be confirmed. Refresh to check again."}</p>}
         {linkedInspection && <p>Planning work referenced by the weekly check. Completing a check does not complete this work.</p>}
         {linkedInspection && weeklySource.phase === "reading" && <p role="status">Reading this record with your current work permissions…</p>}
         {linkedInspection && weeklySource.phase === "unavailable" && <p role="status">This record could not be verified for your current account and workspace. It may have changed or become unavailable.</p>}

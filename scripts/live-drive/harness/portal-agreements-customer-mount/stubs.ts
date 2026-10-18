@@ -13,17 +13,23 @@
 //     -> { tenant_id, business_name, server_now, summary:{awaiting_you,signed}, agreements:[...], has_more } | null
 //     visible = tenant AND this contact AND status <> 'draft'
 //     order   = awaiting_you first (the binding deadline ASC NULLS LAST), then coalesce(completed_at, sent_at) DESC, id
-//     expires_at on an awaiting_you row = least(agreement deadline, emailed link expiry); otherwise the agreement's
+//     expires_at on an awaiting_you row with an emailed link = least(agreement deadline, emailed link expiry);
+//       otherwise the agreement's
 //     each row has EXACTLY: id, title, engagement_title, state, sent_at, completed_at, expires_at, can_sign,
-//       can_download, sign_note — never the body, a storage key, a hash, a token, a signer, an amount or an offer.
+//       can_download, sign_note, counterparty, link_emailed — never the body, a storage key, a hash, a token, a
+//       signer, an amount or an offer.
 //   client_portal_open_agreement_signing(p_agreement_id, p_tenant_id)
 //     -> { ok:true, token, expires_at } | { ok:false, error, note? }  (?open=ok|here|later|fail|pending)
+//     open=here: the emailed link died between the list loading and the press. The refusal says link_expired AND
+//       the store changes with it, so the re-read the page makes shows the row the way production would.
 //   agreement-document?portal=1&agreementId=…[&download=1]       (?copy=ok|fail|pending)
 //   peek_agreement_signing(_token): the FROZEN signing page's read. The emailed token is valid until the portal
 //     issues a link; the portal's token is valid after. One token per signer (D-A4), persisted in sessionStorage so
 //     the full-page navigation to /sign/:token is a real reload.
 //
-//   ?state=mixed|waiting|signed|empty|loading|staff|staff-error|multiple|error|home|home-none
+//   ?state=mixed|waiting|signed|empty|loading|staff|staff-error|multiple|error|home|home-none|others
+//     others: whose signature it is — a link never emailed (signable here for up to a day), a signature at another
+//     address, no counterparty at all, the business first for a signer elsewhere, co-signers never emailed.
 //     staff-error: the agreements read FAILS (function missing) for a login the brand resolver does not know as a
 //     customer — the page must keep the platform terms (§58), never the customer error card.
 const params = new URLSearchParams(window.location.search);
@@ -53,6 +59,8 @@ type Signer = {
   role: "counterparty" | "tenant_signatory" | "witness"; order: number; status: "pending" | "viewed" | "signed" | "declined"; email: string; name: string;
   /** The emailed link's own expiry, and whether it was revoked (null / false = as the agreement). */
   token_expires_at?: string | null; revoked?: boolean;
+  /** Whether the business ever emailed this signer a link (default true). */
+  emailed?: boolean;
 };
 type AgreementRow = {
   id: string; tenant_id: string; contact_id: string; title: string; status: string; sent_at: string | null;
@@ -92,6 +100,22 @@ function store(): AgreementRow[] {
   if (state === "signed") return [...hidden, signedRow];
   const waiting = row({ title: "Website build agreement", commercial_title: "Website build", expires_at: at(5) });
   if (state === "waiting" || state === "home") return [...hidden, waiting, ...(state === "home" ? [row({ title: "Photo usage release", expires_at: at(9) })] : [])];
+  if (state === "others") {
+    const stranger = { ...me(), email: "taylor.brooks@example.test", name: "Taylor Brooks" };
+    return [
+      ...hidden,
+      // Never emailed: the one signer is the login's own confirmed email. Signable here, on a link for up to a day.
+      row({ title: "Coaching package terms", expires_at: at(8), signers: [owner(), { ...me(), emailed: false }] }),
+      // Someone at another address signed; only the business is left. Not credited to this customer.
+      row({ title: "Venue hire agreement", status: "partially_signed", signers: [owner("pending"), { ...stranger, status: "signed", order: 1 }] }),
+      // No counterparty at all, only the business's signatory: nothing was ever sent to this customer.
+      row({ title: "Internal scope sign-off", signers: [owner("pending")] }),
+      // The business signs first, and the one signer is at another address: not this customer's turn next.
+      row({ title: "Speaker appearance terms", signers: [owner("pending"), { ...stranger }] }),
+      // Co-signers, and no link was ever emailed to either.
+      row({ title: "Joint venture outline", signers: [owner(), { ...me(), emailed: false }, { ...stranger, emailed: false }] }),
+    ];
+  }
   return [
     ...hidden,
     waiting,
@@ -122,6 +146,10 @@ const least = (a: string | null, b: string | null | undefined) => (a === null ? 
 function stateOf(r: AgreementRow) {
   const counter = r.signers.filter((s) => s.role === "counterparty");
   const mine = counter.length === 1 ? counter[0] : null;
+  // Whose signature, before anything else (the SQL's 'counterparty'). The harness login's email is confirmed.
+  const counterparty = counter.length === 0 ? "none" : mine && mine.email === USER.email ? "you" : "other";
+  const emailed = counter.some((x) => x.emailed !== false);
+  const noLink = emailed ? "use_email_link" : "no_link_sent";
   let s: string; let note: string | null = null; let deadline: string | null = null;
   const nowMs = Date.now();
   if (r.status === "completed") s = "signed";
@@ -129,20 +157,22 @@ function stateOf(r: AgreementRow) {
   else if (r.status === "voided") s = "withdrawn";
   else if (r.status === "expired" || (r.expires_at && Date.parse(r.expires_at) <= nowMs)) s = "expired";
   else if (!["sent", "viewed", "partially_signed"].includes(r.status)) s = "unavailable";
-  else if (counter.length !== 1) { s = "awaiting_signature"; note = "use_email_link"; }
-  else if (mine!.status === "signed") {
+  else if (counter.every((x) => x.status === "signed")) {
     const left = r.signers.filter((x) => x.status !== "signed");
     s = left.length > 0 && left.every((x) => x.role === "tenant_signatory") ? "awaiting_countersign" : "awaiting_others";
-  } else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) s = "awaiting_business";
-  else if (mine!.email !== USER.email) { s = "awaiting_signature"; note = "use_email_link"; }
+  } else if (counter.length !== 1) { s = "awaiting_signature"; note = noLink; }
+  else if (r.signers.some((x) => x.order < mine!.order && x.status !== "signed")) s = "awaiting_business";
+  else if (counterparty !== "you") { s = "awaiting_signature"; note = noLink; }
   else {
     s = "awaiting_you";
-    deadline = least(r.expires_at, mine!.token_expires_at);
-    if (deadline === null) note = "use_email_link";
-    else if (Date.parse(deadline) <= nowMs) note = "link_expired";
+    if (emailed) {
+      deadline = least(r.expires_at, mine!.token_expires_at);
+      if (deadline === null) note = "use_email_link";
+      else if (Date.parse(deadline) <= nowMs) note = "link_expired";
+    } else deadline = r.expires_at;
     if (mine!.revoked) note = "link_revoked";
   }
-  return { state: s, can_sign: s === "awaiting_you" && note === null, sign_note: note, deadline };
+  return { state: s, can_sign: s === "awaiting_you" && note === null, sign_note: note, deadline, counterparty, link_emailed: emailed };
 }
 
 /** client_portal_agreements, computed the way the SQL computes it (see the header). */
@@ -174,6 +204,7 @@ function project(pLimit: unknown) {
       engagement_title: r.commercial_title && r.commercial_contact === CONTACT ? r.commercial_title : null,
       state: st.state, sent_at: r.sent_at, completed_at: r.completed_at, expires_at: expires,
       can_sign: st.can_sign, can_download: r.status === "completed" && r.sealed_storage_key !== null, sign_note: st.sign_note,
+      counterparty: st.counterparty, link_emailed: st.link_emailed,
     })),
     has_more: visible.length > limit,
   };
@@ -194,13 +225,22 @@ function agreements(args: Record<string, unknown>) {
 function open(args: Record<string, unknown>) {
   harnessCalls.opens.push(args);
   if (openMode === "pending") return new Promise(() => {});
-  if (openMode === "here") return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: "link_expired" }, error: null });
+  if (openMode === "here") {
+    // The emailed link expired a moment ago, after the list was read: the store moves with the refusal.
+    const pressed = rows.find((r) => r.id === args.p_agreement_id);
+    const signer = pressed?.signers.find((x) => x.role === "counterparty" && x.email === USER.email);
+    if (signer) signer.token_expires_at = new Date(Date.now() - 60_000).toISOString();
+    return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: "link_expired" }, error: null });
+  }
   if (openMode === "later") return Promise.resolve({ data: { ok: false, error: "TRY_AGAIN_LATER" }, error: null });
   if (openMode === "fail") return Promise.resolve({ data: null, error: { code: "PGRST000", message: "harness: network" } });
   const target = rows.find((r) => r.id === args.p_agreement_id);
   if (!target || !stateOf(target).can_sign) return Promise.resolve({ data: { ok: false, error: "NOT_SIGNABLE_HERE", note: stateOf(target ?? rows[0]).sign_note ?? "use_email_link" }, error: null });
   try { window.sessionStorage.setItem(ISSUED, "1"); } catch { /* the drive reads the result off the page */ }
-  return Promise.resolve({ data: { ok: true, token: PORTAL_TOKEN, expires_at: target.expires_at }, error: null });
+  // Emailed: never later than the emailed link or the agreement. Never emailed: the agreement's deadline or a day.
+  const st = stateOf(target);
+  const expires = st.link_emailed ? (st.deadline ?? target.expires_at) : least(target.expires_at, new Date(Date.now() + DAY).toISOString());
+  return Promise.resolve({ data: { ok: true, token: PORTAL_TOKEN, expires_at: expires }, error: null });
 }
 
 /** The frozen signing page's read: one live token per signer (D-A4). */

@@ -41,7 +41,8 @@ const A1 = "e0923000-0000-4000-9000-000000000001";
 const A2 = "e0923000-0000-4000-9000-000000000002";
 const row = (id: string, extra: Record<string, unknown> = {}) => ({
   id, title: "Website build agreement", engagement_title: "Website build", state: "awaiting_you", sent_at: "2026-10-10T12:00:00Z",
-  completed_at: null, expires_at: "2026-11-01T12:00:00Z", can_sign: true, can_download: false, sign_note: null, ...extra,
+  completed_at: null, expires_at: "2026-11-01T12:00:00Z", can_sign: true, can_download: false, sign_note: null,
+  counterparty: "you", link_emailed: true, ...extra,
 });
 const payload = (agreements: unknown[], extra: Record<string, unknown> = {}) => ({
   tenant_id: T, business_name: "Northwind Studio", server_now: "2026-10-18T12:00:00Z",
@@ -99,9 +100,17 @@ describe("parseAgreementsPage — exact keys, fail closed", () => {
       row(A2, { state: "awaiting_countersign", can_sign: false }),
     ]))!;
     expect(page.agreements.map((a) => a.state)).toEqual(["awaiting_signature", "awaiting_countersign"]);
-    for (const note of ["link_expired", "link_revoked", "use_email_link"]) {
+    for (const note of ["link_expired", "link_revoked", "use_email_link", "no_link_sent"]) {
       expect(parseAgreementsPage(payload([row(A1, { can_sign: false, sign_note: note })]))!.agreements[0].sign_note).toBe(note);
     }
+    for (const counterparty of ["you", "other", "none"]) {
+      expect(parseAgreementsPage(payload([row(A1, { state: "awaiting_countersign", can_sign: false, counterparty })]))!.agreements[0].counterparty).toBe(counterparty);
+    }
+    expect(parseAgreementsPage(payload([row(A1, { link_emailed: false })]))!.agreements[0].link_emailed).toBe(false);
+    // "Waiting for you" is only ever the customer's own signature; anything else is refused, not shown.
+    expect(() => parseAgreementsPage(payload([row(A1, { counterparty: "other" })]))).toThrow();
+    expect(() => parseAgreementsPage(payload([row(A1, { counterparty: "someone" })]))).toThrow();
+    expect(() => parseAgreementsPage(payload([row(A1, { link_emailed: "yes" })]))).toThrow();
     // A note on a row that waits on nobody's signature has no meaning; it is refused, not shown.
     expect(() => parseAgreementsPage(payload([row(A1, { state: "signed", can_sign: false, sign_note: "link_expired" })]))).toThrow();
   });

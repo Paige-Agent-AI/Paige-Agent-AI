@@ -44,7 +44,7 @@ function allShots() {
   const shots = [];
   for (const theme of ["light", "dark"]) {
     for (const kind of ["desktop", "phone"]) {
-      for (const state of ["mixed", "waiting", "signed", "empty", "loading", "multiple", "error", "staff", "staff-error"]) shots.push({ page: "agreements", state, theme, kind });
+      for (const state of ["mixed", "waiting", "signed", "empty", "loading", "multiple", "error", "staff", "staff-error", "others"]) shots.push({ page: "agreements", state, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "opening", query: { open: "pending" }, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "refused-here", query: { open: "here" }, theme, kind });
       shots.push({ page: "agreements", state: "mixed", variant: "refused-later", query: { open: "later" }, theme, kind });
@@ -146,7 +146,11 @@ async function drive(page, s, notes) {
     if (["opening", "refused-here", "refused-later", "open-failed"].includes(s.variant)) {
       await page.locator('[data-testid="review-and-sign"]').first().click();
       if (s.variant === "opening") await page.getByRole("button", { name: "Opening…" }).waitFor({ timeout: 10_000 });
-      else await page.locator('[data-testid="agreement-problem"]').waitFor({ timeout: 10_000 });
+      // The emailed link died after the list loaded: the refusal re-reads the list, and the row itself now says so.
+      else if (s.variant === "refused-here") {
+        await page.locator('[data-testid="agreement-row"]').filter({ hasText: "Website build agreement" })
+          .locator('[data-testid="agreement-note"]').filter({ hasText: "has expired" }).waitFor({ timeout: 10_000 });
+      } else await page.locator('[data-testid="agreement-problem"]').waitFor({ timeout: 10_000 });
       notes.problemLinks = await page.locator('[data-testid="agreement-problem"] a').evaluateAll((as) => as.map((a) => `${a.textContent.trim()} -> ${a.getAttribute("href")}`));
       await page.mouse.move(0, 0);
     }
@@ -228,12 +232,14 @@ function unmet(s, n) {
     want(n.summary === "3 waiting for your signature", `summary "${n.summary}"`);
     want(eq(n.groups?.map((g) => g.heading), ["Waiting for you", "Everything else"]), `groups ${JSON.stringify(n.groups)}`);
     want(eq(n.groups?.[0]?.rows, mixedRows), `waiting rows ${JSON.stringify(n.groups?.[0]?.rows)}`);
+    // Whose signature it is: in this list the counterparty is always the customer, so their own words are true.
     want(eq(n.groups?.[1]?.rows?.map((r) => r.split(" | ")[1]), ["signed", "awaiting_signature", "awaiting_business", "awaiting_countersign", "withdrawn", "signed", "declined", "expired"]), `everything-else rows ${JSON.stringify(n.groups?.[1]?.rows)}`);
     // Everything else in the SQL's order: newest of signed-or-sent first.
     // Rows under "Waiting for you" carry no pill: the heading says it once.
     const labels = ["Signed", "Waiting for a signature", `Waiting for ${BUSINESS}`, `Waiting for ${BUSINESS}`, "Withdrawn", "Signed", "Declined", "Expired"];
     want(eq(s.phone ? n.inlineStates.map((t) => t.replace(/\s*·$/, "")) : n.pills, s.phone ? labels.filter((l) => l !== "Signed" && l !== "Expired") : labels), `${s.phone ? "inline states" : "pills"} ${JSON.stringify(s.phone ? n.inlineStates : n.pills)}`);
-    want(eq(n.buttons.filter((b) => /Review and sign|Opening…/.test(b)).length, 2), `Review and sign buttons ${JSON.stringify(n.buttons)}`);
+    // After refused-here the pressed row's emailed link is dead too: one act left.
+    want(eq(n.buttons.filter((b) => /Review and sign|Opening…/.test(b)).length, s.variant === "refused-here" ? 1 : 2), `Review and sign buttons ${JSON.stringify(n.buttons)}`);
     want(n.notes.includes(`${BUSINESS} sent this one's signing link by email. If you can't use it, ask ${BUSINESS} for a new link.`), `co-signer note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes(`The signing link ${BUSINESS} emailed you has expired.`), `dead-link note ${JSON.stringify(n.notes)}`);
     want(n.notes.includes(`You've signed. It's complete once ${BUSINESS} signs.`), `countersign note ${JSON.stringify(n.notes)}`);
@@ -248,7 +254,29 @@ function unmet(s, n) {
     }
   }
   if (s.variant === "opening") want(n.buttons.includes("Opening…"), `opening ${JSON.stringify(n.buttons)}`);
-  if (s.variant === "refused-here") want(n.problem === `The signing link ${BUSINESS} emailed you has expired.`, `refusal "${n.problem}"`);
+  if (s.variant === "refused-here") {
+    // Said once, by the re-read row — never again as an alert under it (round-4 compliance gap 2).
+    want(n.problem === "", `refusal repeated as an alert "${n.problem}"`);
+    const dead = `The signing link ${BUSINESS} emailed you has expired.`;
+    want(n.notes.filter((t) => t === dead).length === 2, `dead-link notes (Consulting + Website) ${JSON.stringify(n.notes)}`);
+    want((n.pageText ?? "").split(dead).length - 1 === 2, `the dead-link sentence appears ${(n.pageText ?? "").split(dead).length - 1} times`);
+  }
+  if (s.state === "others" && s.page === "agreements") {
+    want(eq(n.groups?.map((g) => g.heading), ["Waiting for you", "Everything else"]), `others groups ${JSON.stringify(n.groups)}`);
+    want(eq(n.groups?.[0]?.rows, ["Coaching package terms | awaiting_you"]), `others waiting ${JSON.stringify(n.groups?.[0]?.rows)}`);
+    want(n.summary === "1 waiting for your signature", `others summary "${n.summary}"`);
+    want(n.replaces === "", `a "replaces the link emailed you" hint with no emailed link: "${n.replaces}"`);
+    const wantNotes = [
+      "Opening it here gives you a private signing link that works for up to a day.",
+      `It's been signed. It's complete once ${BUSINESS} signs.`,
+      `It's complete once ${BUSINESS} signs.`,
+      `${BUSINESS} signs first.`,
+      `${BUSINESS} hasn't emailed you a signing link for this one. If you need one, ask ${BUSINESS} for it.`,
+    ];
+    want(eq([...n.notes].sort(), [...wantNotes].sort()), `others notes ${JSON.stringify(n.notes)}`);
+    want(!/You've signed|You'll be able to sign|emailed you\.|sent this one's signing link by email/.test(n.pageText ?? ""), `others credits the customer or an emailed link: ${n.pageText}`);
+    want(eq(n.buttons.filter((b) => /Review and sign/.test(b)).length, 1), `others buttons ${JSON.stringify(n.buttons)}`);
+  }
   if (s.variant === "refused-later") {
     want(n.problem === `This agreement has been opened several times in the last hour. Try again in an hour, or ask ${BUSINESS} for a new link.`, `refusal "${n.problem}"`);
     want(eq(n.problemLinks, [`ask ${BUSINESS} for a new link -> /app/messages`]), `refusal link ${JSON.stringify(n.problemLinks)}`);
@@ -420,7 +448,7 @@ async function runShots(browser, shots, label = "") {
     const smallTargets = s.phone ? m.targets.filter((t) => t.h < 44 || t.w < 44) : [];
     const expectations = driveError ? [] : unmet(s, notes);
     // The one act: the first "Review and sign", gold, on a page that offers signing; nothing gold anywhere else.
-    const signing = s.page === "agreements" && ["mixed", "waiting", "error"].includes(s.state);
+    const signing = s.page === "agreements" && ["mixed", "waiting", "error", "others"].includes(s.state);
     // After "opened too many times" the row's act goes quiet until the list is re-read: no gold at all.
     const wantActs = signing && s.variant !== "refused-later" ? [s.variant === "opening" ? "Opening…" : "Review and sign"] : [];
     if (JSON.stringify(m.goldActs) !== JSON.stringify(wantActs)) expectations.push(`gold acts ${JSON.stringify(m.goldActs)} (want ${JSON.stringify(wantActs)})`);
@@ -569,6 +597,7 @@ try {
       { mutant: "target", shot: base("mixed", "phone"), caught: (r) => r.smallTargets.length > 0 },
       { mutant: "clip", shot: base("mixed", "phone"), caught: (r) => r.clipped.length > 0 },
       { mutant: "cansign", shot: base("mixed", "desktop"), caught: (r) => r.expectations.some((e) => /Review and sign buttons|gold acts/.test(e)) },
+      { mutant: "dedupe", shot: base("mixed", "desktop", "light", { variant: "refused-here", query: { open: "here" } }), caught: (r) => r.expectations.some((e) => /refusal repeated|sentence appears/.test(e)) },
     ];
     const verdicts = [];
     for (const c of controls) {

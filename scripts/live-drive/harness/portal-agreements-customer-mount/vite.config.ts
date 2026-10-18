@@ -38,6 +38,8 @@ export default defineConfig({
         if (mutant === "clip") return swap(`<h3 className="break-words text-sm font-medium [text-wrap:pretty]">`, `<h3 className="truncate text-sm font-medium">`);
         // "Review and sign" drawn without the server's can_sign (plan mutation g, in the rendered page).
         if (mutant === "cansign") return swap(`if (a.can_sign) {`, `if (a.can_sign || a.state === "awaiting_you") {`);
+        // A refusal the re-read row already says, said again as an alert under it (round-4 compliance gap 2).
+        if (mutant === "dedupe") return swap(`const showProblem = problem !== null && !(noteCopy !== null && noteCopy.text === problem.text);`, `const showProblem = problem !== null;`);
         throw new Error(`unknown harness mutant ${mutant}`);
       },
     },

@@ -35,13 +35,13 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 /** Any wording that tells the customer to go and use the emailed link, as if it certainly still works. */
 const EMAIL_PROMISE = /use the link|from the link|link .* emailed you to sign|Sign each agreement from the link/i;
 /** What the copy reads as on screen: the words, then the inline Messages link when it finishes the sentence. */
-const spoken = (c: AgreementCopy) => (c.ask === "inline" ? `${c.text} ask Northwind Studio for a new link.` : c.text);
+const spoken = (c: AgreementCopy) => (c.ask === "inline" ? `${c.text} ${c.askLabel ?? "ask Northwind Studio for a new link"}.` : c.text);
 
 let n = 0;
 const ag = (extra: Partial<PortalAgreement> = {}): PortalAgreement => ({
   id: `e0923000-0000-4000-9000-${String(++n).padStart(12, "0")}`, title: `Agreement ${n}`, engagement_title: null,
   state: "awaiting_you", sent_at: "2026-10-10T12:00:00Z", completed_at: null, expires_at: "2026-11-02T12:00:00Z",
-  can_sign: true, can_download: false, sign_note: null, ...extra,
+  can_sign: true, can_download: false, sign_note: null, counterparty: "you", link_emailed: true, ...extra,
 });
 const withList = (agreements: PortalAgreement[], extra: Partial<ClientPortalAgreementsState> = {}) => {
   f.state = {
@@ -261,7 +261,7 @@ describe("Review and sign", () => {
 
   it("never sends the customer to a link that is dead: every refusal is true in every case it is returned", () => {
     for (const code of ["NOT_SIGNABLE_HERE", "TRY_AGAIN_LATER", "NOT_SIGNABLE", "CLIENT_AGREEMENT_UNAVAILABLE", "MULTIPLE_BUSINESSES", "FAILED"] as OpenAgreementFailure[]) {
-      for (const note of ["use_email_link", "link_expired", "link_revoked", undefined] as const) {
+      for (const note of ["use_email_link", "link_expired", "link_revoked", "no_link_sent", undefined] as const) {
         expect(EMAIL_PROMISE.test(spoken(openFailureCopy(code, "Northwind Studio", note))), `${code}/${note}`).toBe(false);
       }
     }
@@ -302,6 +302,88 @@ describe("Review and sign", () => {
       expect(f.state.refresh).toHaveBeenCalledTimes(1);
       (f.state.refresh as ReturnType<typeof vi.fn>).mockClear();
     }
+  });
+});
+
+describe("a refusal the re-read list already explains", () => {
+  it("is said once: pressing on a link that died since the list loaded, then re-reading to link_expired", async () => {
+    const before = ag({ title: "Website build agreement" });
+    withList([before]);
+    f.open.mockResolvedValue({ ok: false, code: "NOT_SIGNABLE_HERE", note: "link_expired" });
+    // The refusal re-reads the list; the server now says the emailed link has expired.
+    (f.state.refresh as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      withList([{ ...before, can_sign: false, sign_note: "link_expired", expires_at: "2026-10-17T12:00:00Z" }]);
+    });
+    await render();
+    await click(buttons(host, /Review and sign/)[0]);
+    await render();
+    const sentence = "The signing link Northwind Studio emailed you has expired.";
+    const r = rowOf("Website build agreement");
+    expect((r.textContent ?? "").split(sentence).length - 1).toBe(1);
+    expect(r.querySelector("[data-testid=agreement-problem]")).toBeNull();
+    expect(r.querySelector("[data-testid=agreement-note]")?.textContent).toBe(sentence);
+    expect(buttons(r, /Review and sign/)).toHaveLength(0);
+    expect(r.querySelector("[data-testid=ask-new-link]")?.getAttribute("href")).toBe("/app/messages");
+  });
+});
+
+describe("a link that was never emailed (integrator default, owner may overrule)", () => {
+  it("never mentions an emailed link: the row says what opening here does instead", async () => {
+    withList([ag({ title: "Website build agreement", link_emailed: false, expires_at: null })]);
+    await render();
+    expect(host.querySelector("[data-testid=replaces-email-link]")).toBeNull();
+    expect(rowOf("Website build agreement").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Opening it here gives you a private signing link that works for up to a day.");
+    expect(host.textContent).not.toMatch(/emailed you/);
+    expect(buttons(host, /Review and sign/)).toHaveLength(1);
+  });
+
+  it("with emailed and never-emailed rows together, each row says its own, and no group hint over both", async () => {
+    withList([ag({ title: "Emailed" }), ag({ title: "Never emailed", link_emailed: false })]);
+    await render();
+    expect(host.querySelector("[data-testid=replaces-email-link]")).toBeNull();
+    expect(rowOf("Emailed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Opening it here replaces the signing link Northwind Studio emailed you.");
+    expect(rowOf("Never emailed").querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Opening it here gives you a private signing link that works for up to a day.");
+  });
+
+  it("shows the group hint only when every signable row had an emailed link", async () => {
+    withList([ag({ title: "Emailed" }), ag({ title: "Also emailed" })]);
+    await render();
+    expect(host.querySelector("[data-testid=replaces-email-link]")?.textContent).toBe(
+      "Opening an agreement here replaces the signing link Northwind Studio emailed you.");
+    expect(rowOf("Emailed").querySelector("[data-testid=agreement-note]")).toBeNull();
+  });
+
+  it("a row nothing was ever emailed for, and not signable here, asks for a link instead of pointing at one", async () => {
+    withList([ag({ title: "Co-signed", state: "awaiting_signature", can_sign: false, sign_note: "no_link_sent", counterparty: "other", link_emailed: false })]);
+    await render();
+    const r = rowOf("Co-signed");
+    expect(r.querySelector("[data-testid=agreement-note]")?.textContent).toBe(
+      "Northwind Studio hasn't emailed you a signing link for this one. If you need one, ask Northwind Studio for it.");
+    expect(r.querySelector("[data-testid=ask-new-link-inline]")?.getAttribute("href")).toBe("/app/messages");
+    expect(r.textContent).not.toMatch(/sent this one's signing link by email|new link/);
+  });
+});
+
+describe("whose signature it is", () => {
+  it("never credits the customer with a signature the server did not prove is theirs", async () => {
+    withList([
+      ag({ title: "P2 countersign", state: "awaiting_countersign", can_sign: false, counterparty: "other" }),
+      ag({ title: "Row 12 countersign", state: "awaiting_countersign", can_sign: false, counterparty: "none", link_emailed: false }),
+      ag({ title: "P1 others", state: "awaiting_others", can_sign: false, counterparty: "other" }),
+      ag({ title: "None others", state: "awaiting_others", can_sign: false, counterparty: "none", link_emailed: false }),
+      ag({ title: "Business first", state: "awaiting_business", can_sign: false, counterparty: "other" }),
+    ]);
+    await render();
+    const note = (t: string) => rowOf(t).querySelector("[data-testid=agreement-note]")?.textContent;
+    expect(note("P2 countersign")).toBe("It's been signed. It's complete once Northwind Studio signs.");
+    expect(note("Row 12 countersign")).toBe("It's complete once Northwind Studio signs.");
+    expect(note("P1 others")).toBe("It's been signed. It's complete once everyone else has.");
+    expect(note("None others")).toBe("It's complete once everyone has signed.");
+    expect(note("Business first")).toBe("Northwind Studio signs first.");
+    expect(host.textContent).not.toMatch(/You've signed|You'll be able to sign|sent this one's signing link by email/);
   });
 });
 

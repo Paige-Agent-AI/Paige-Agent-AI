@@ -16,6 +16,8 @@
  *
  * Opening an agreement here REPLACES the signing link the business emailed (owner decision D-A4); the page
  * says so beside the action, because a customer who later opens that email deserves to know why it stopped.
+ * Where no link was ever emailed it says what opening does instead (a private link for up to a day), and
+ * never mentions an emailed link that does not exist.
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -34,7 +36,10 @@ import {
   type PortalAgreementState,
 } from "@/hooks/useClientPortalAgreements";
 import { useClientPortalBrandState, type ClientPortalBrand } from "@/hooks/useClientPortalBrand";
-import { ASK_FOR_NEW_LINK_HREF, PLATFORM_TERMS_HREF, openFailureCopy, signNoteCopy, type AgreementCopy } from "@/lib/portal/agreementsCopy";
+import {
+  ASK_FOR_NEW_LINK_HREF, PLATFORM_TERMS_HREF, openFailureCopy, replacesEmailedLinkHint, signHereNote, signNoteCopy, waitingNote,
+  type AgreementCopy,
+} from "@/lib/portal/agreementsCopy";
 
 const MyAgreements = lazy(() => import("@/pages/MyAgreements"));
 
@@ -125,15 +130,17 @@ function CopyWithAsk({ copy, business }: { copy: AgreementCopy; business: string
   return (
     <>
       {copy.text}{" "}
-      <Link to={ASK_FOR_NEW_LINK_HREF} className={SENTENCE_LINK} data-testid="ask-new-link-inline">ask {business} for a new link</Link>.
+      <Link to={ASK_FOR_NEW_LINK_HREF} className={SENTENCE_LINK} data-testid="ask-new-link-inline">{copy.askLabel ?? `ask ${business} for a new link`}</Link>.
     </>
   );
 }
 
-function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId }: {
+function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, signHint }: {
   a: PortalAgreement; business: string; tz: string; nowMs: number;
   /** The first signable row carries the page's one gold act. */
   primary: boolean;
+  /** What opening this signable row does, when the group's one hint would not be true of every row. */
+  signHint?: string;
   onRefresh: () => void;
   tenantId: string | null;
 }) {
@@ -200,7 +207,10 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId }: 
   const gold = primary && !throttled;
   let note: ReactNode = null;
   let actions: ReactNode = null;
+  /** The row's own words about why it is not signable here, when it has them. */
+  let noteCopy: AgreementCopy | null = null;
   if (a.can_sign) {
+    if (signHint) note = <>{signHint}</>;
     actions = (
       <Button
         size="sm"
@@ -216,9 +226,9 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId }: 
       </Button>
     );
   } else if (a.state === "awaiting_you" || a.state === "awaiting_signature") {
-    const copy = signNoteCopy(a.sign_note ?? "use_email_link", business);
-    note = <CopyWithAsk copy={copy} business={business} />;
-    if (copy.ask === "button") actions = <AskNewLinkButton business={business} />;
+    noteCopy = signNoteCopy(a.sign_note ?? "use_email_link", business);
+    note = <CopyWithAsk copy={noteCopy} business={business} />;
+    if (noteCopy.ask === "button") actions = <AskNewLinkButton business={business} />;
   } else if (a.state === "signed" && a.can_download) {
     actions = (
       <>
@@ -238,13 +248,14 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId }: 
     actions = <AskNewLinkButton business={business} />;
   } else if (a.state === "withdrawn") {
     note = <>{business} withdrew this agreement. There&apos;s nothing to sign.</>;
-  } else if (a.state === "awaiting_business") {
-    note = <>{business} signs first. You&apos;ll be able to sign once they have.</>;
-  } else if (a.state === "awaiting_countersign") {
-    note = <>You&apos;ve signed. It&apos;s complete once {business} signs.</>;
-  } else if (a.state === "awaiting_others") {
-    note = <>You&apos;ve signed. It&apos;s complete once everyone else has.</>;
+  } else {
+    // Waiting on the business or on others: words that never credit this customer with someone else's signature.
+    const waiting = waitingNote(a.state, a.counterparty, business);
+    if (waiting) note = <>{waiting}</>;
   }
+  // A refusal the re-read list already explains (an emailed link that died between the list loading and the press)
+  // is said once, by the row, not again as an alert.
+  const showProblem = problem !== null && !(noteCopy !== null && noteCopy.text === problem.text);
 
   return (
     <li data-testid="agreement-row" data-agreement-id={a.id} data-state={a.state} className="py-4">
@@ -265,7 +276,7 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId }: 
         </div>
         {showState && <StatePill state={a.state} business={business} />}
       </div>
-      {problem && (
+      {showProblem && problem && (
         <p role="alert" data-testid="agreement-problem" className="mt-2 flex items-start gap-2 text-sm text-foreground">
           <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <span><CopyWithAsk copy={problem} business={business} /></span>
@@ -329,12 +340,18 @@ function CustomerAgreements({ view, brand }: { view: ReturnType<typeof useClient
 
   const waiting = view.agreements.filter((a) => a.state === "awaiting_you");
   const rest = view.agreements.filter((a) => a.state !== "awaiting_you");
-  const firstSignable = waiting.find((a) => a.can_sign)?.id ?? null;
+  const signable = waiting.filter((a) => a.can_sign);
+  const firstSignable = signable[0]?.id ?? null;
+  // One hint above the group only when it is true of every signable row; otherwise each row says its own.
+  const allEmailed = signable.length > 0 && signable.every((a) => a.link_emailed);
   const summary = view.summary;
   const firstLoad = view.loading && !summary;
   const refresh = () => { void view.refresh(); };
   const row = (a: PortalAgreement) => (
-    <AgreementRow key={a.id} a={a} business={business} tz={tz} nowMs={nowMs} primary={a.id === firstSignable} onRefresh={refresh} tenantId={view.tenantId} />
+    <AgreementRow
+      key={a.id} a={a} business={business} tz={tz} nowMs={nowMs} primary={a.id === firstSignable} onRefresh={refresh} tenantId={view.tenantId}
+      signHint={a.can_sign && !allEmailed ? signHereNote(a.link_emailed, business) : undefined}
+    />
   );
 
   return (
@@ -383,7 +400,7 @@ function CustomerAgreements({ view, brand }: { view: ReturnType<typeof useClient
             <Group
               id="agreements-waiting"
               title="Waiting for you"
-              hint={firstSignable ? `Opening an agreement here replaces the signing link ${business} emailed you.` : undefined}
+              hint={allEmailed ? replacesEmailedLinkHint(business) : undefined}
             >
               {waiting.map(row)}
             </Group>

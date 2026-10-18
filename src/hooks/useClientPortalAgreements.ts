@@ -33,11 +33,19 @@ export type PortalAgreementState =
   | "signed" | "declined" | "withdrawn" | "expired" | "unavailable";
 /**
  * Why an agreement is not signable from the portal. `link_expired` and `link_revoked`: the signing link the
- * business emailed is dead, so the customer needs a new one. `use_email_link`: every other case, where the
- * emailed link may still work.
+ * business emailed is dead, so the customer needs a new one. `use_email_link`: a link was emailed and may still
+ * work. `no_link_sent`: no signing link was ever emailed for it, so the customer has nothing to use but asking.
  */
-export type PortalAgreementSignNote = "use_email_link" | "link_expired" | "link_revoked";
-const SIGN_NOTES = new Set<PortalAgreementSignNote>(["use_email_link", "link_expired", "link_revoked"]);
+export type PortalAgreementSignNote = "use_email_link" | "link_expired" | "link_revoked" | "no_link_sent";
+const SIGN_NOTES = new Set<PortalAgreementSignNote>(["use_email_link", "link_expired", "link_revoked", "no_link_sent"]);
+/**
+ * Whose signature the agreement's counterparty line is, decided by the server before any "signed" or "waiting"
+ * state: `you` (exactly one counterparty, at one of this login's own addresses), `other` (a co-signer, or one
+ * signer at another address — not provably this customer), `none` (no counterparty signer at all). The page
+ * says "You've signed" or "You'll be able to sign" only for `you`.
+ */
+export type PortalAgreementCounterparty = "you" | "other" | "none";
+const COUNTERPARTIES = new Set<PortalAgreementCounterparty>(["you", "other", "none"]);
 
 export interface PortalAgreement {
   id: string;
@@ -48,8 +56,8 @@ export interface PortalAgreement {
   sent_at: string | null;
   completed_at: string | null;
   /**
-   * For a row waiting on this customer, the date that actually binds: the earlier of the agreement's deadline and
-   * the emailed link's own expiry. Every other row carries the agreement's deadline.
+   * For a row waiting on this customer with an emailed link, the date that actually binds: the earlier of the
+   * agreement's deadline and the emailed link's own expiry. Every other row carries the agreement's deadline.
    */
   expires_at: string | null;
   /** Only ever true while the state is awaiting_you. */
@@ -57,6 +65,12 @@ export interface PortalAgreement {
   /** Only ever true for a signed agreement whose sealed copy exists. */
   can_download: boolean;
   sign_note: PortalAgreementSignNote | null;
+  counterparty: PortalAgreementCounterparty;
+  /**
+   * Whether the business ever emailed a signing link for this agreement's counterparty. A link the portal itself
+   * issued never counts. "Opening here replaces the link {Business} emailed you" is only said when this is true.
+   */
+  link_emailed: boolean;
 }
 
 export interface PortalAgreementsSummary {
@@ -77,7 +91,10 @@ export const PORTAL_AGREEMENTS_LIMIT = 50;
 
 const PAGE_KEYS = ["tenant_id", "business_name", "server_now", "summary", "agreements", "has_more"];
 const SUMMARY_KEYS = ["awaiting_you", "signed"];
-const ROW_KEYS = ["id", "title", "engagement_title", "state", "sent_at", "completed_at", "expires_at", "can_sign", "can_download", "sign_note"];
+const ROW_KEYS = [
+  "id", "title", "engagement_title", "state", "sent_at", "completed_at", "expires_at", "can_sign", "can_download", "sign_note",
+  "counterparty", "link_emailed",
+];
 const STATES = new Set<PortalAgreementState>([
   "awaiting_you", "awaiting_signature", "awaiting_business", "awaiting_countersign", "awaiting_others",
   "signed", "declined", "withdrawn", "expired", "unavailable",
@@ -114,15 +131,19 @@ const isCount = (v: unknown): v is number => typeof v === "number" && Number.isI
 
 function parseRow(raw: unknown): PortalAgreement {
   if (!isObject(raw) || !exactKeys(raw, ROW_KEYS)) throw new Error("Unexpected agreement");
-  const { id, title, engagement_title, state, sent_at, completed_at, expires_at, can_sign, can_download, sign_note } = raw;
+  const { id, title, engagement_title, state, sent_at, completed_at, expires_at, can_sign, can_download, sign_note, counterparty, link_emailed } = raw;
   if (typeof id !== "string" || !UUID.test(id) || typeof title !== "string"
     || (engagement_title !== null && typeof engagement_title !== "string")
     || typeof state !== "string" || !STATES.has(state as PortalAgreementState)
     || !isDateOrNull(sent_at) || !isDateOrNull(completed_at) || !isDateOrNull(expires_at)
     || typeof can_sign !== "boolean" || typeof can_download !== "boolean"
-    || (sign_note !== null && (typeof sign_note !== "string" || !SIGN_NOTES.has(sign_note as PortalAgreementSignNote)))) {
+    || (sign_note !== null && (typeof sign_note !== "string" || !SIGN_NOTES.has(sign_note as PortalAgreementSignNote)))
+    || typeof counterparty !== "string" || !COUNTERPARTIES.has(counterparty as PortalAgreementCounterparty)
+    || typeof link_emailed !== "boolean") {
     throw new Error("Unexpected agreement");
   }
+  // "Waiting for you" is only ever the customer's own signature.
+  if (state === "awaiting_you" && counterparty !== "you") throw new Error("Unexpected agreement");
   // A note explains why a row waiting on a signature is not signable here; on any other row it means nothing.
   if (sign_note !== null && state !== "awaiting_you" && state !== "awaiting_signature") throw new Error("Unexpected agreement");
   // The server only offers what it will honour: a button the writer would refuse is never drawn.
@@ -134,6 +155,7 @@ function parseRow(raw: unknown): PortalAgreement {
     engagement_title: typeof engagement_title === "string" && engagement_title.trim() ? engagement_title.trim() : null,
     state: state as PortalAgreementState, sent_at, completed_at, expires_at, can_sign, can_download,
     sign_note: sign_note as PortalAgreementSignNote | null,
+    counterparty: counterparty as PortalAgreementCounterparty, link_emailed,
   };
 }
 

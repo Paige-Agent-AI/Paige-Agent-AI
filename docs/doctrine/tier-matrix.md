@@ -4940,9 +4940,14 @@ a signature") and is neither headed nor counted as the customer's; a portal-issu
 than the emailed one (the earlier of the agreement's and the emailed link's deadline, which is also the "Sign
 by" date the list shows); a dead emailed link (expired: `link_expired`, revoked: `link_revoked`) is never
 offered as the way to sign — the row offers "Ask {Business} for a new link" (Messages, plain: no `?draft=`
-until Slice 5); once the customer has signed and only the business's signatories remain the row reads
-"Waiting for {Business}" (`awaiting_countersign`); a portal open REPLACES the emailed link (D-A4, stated on
-the page beside the act). A read that fails before the login is known to be a customer keeps MyAgreements for
+until Slice 5); once every counterparty has signed (or there is none) and only the business's signatories
+remain the row reads "Waiting for {Business}" (`awaiting_countersign`), with "You've signed" only when the
+server proved the signature is the customer's (`counterparty`: you / other / none, decided before any signed
+or waiting state); a portal open REPLACES the emailed link (D-A4, stated on the page beside the act). Round 5
+integrator default, owner may overrule: a single signer at the login's own CONFIRMED email who was never
+emailed a link may sign here, on a link ending at the earlier of the agreement's deadline and 24 hours, and
+the page never mentions an emailed link for it (`link_emailed` false; `no_link_sent` where it is not
+signable here). A read that fails before the login is known to be a customer keeps MyAgreements for
 staff (§58). Agreements is core for
 customers in the menu (D-A1: every customer of one business, hideable and renameable by the owner); staff
 and every other viewer keep the catalog rule. Home shows one quiet line only while something waits for the
@@ -4953,17 +4958,19 @@ customer's signature AND Agreements is in their menu (D-A5). §61 default for th
 |---|---|---|---|---|---|---|---|---|
 | Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); 0 in production | Allowed | — | — | unchanged |
 | Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
-| Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; ≤10 opens/hour | 42501 | PROOF OWED |
+| Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; never emailed: confirmed login email only, link ≤ 24 hours; ≤10 opens/hour | 42501 | PROOF OWED |
 | Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy | refused | PROOF OWED |
 | Platform terms `/app/agreements` fallback and `/app/agreements/platform` (MyAgreements, unchanged) | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ via the link on their Agreements page | — | PROOF OWED |
 | Menu entry "Agreements" (Paperwork) | — | — | — | — | — | ✓ by default (D-A1); owner can hide/rename | — | PROOF OWED |
 | Paige reads the customer's agreements (`client.portal_agreements_read`) | — | — | — | — | — | customer assistant only | — | PROOF OWED |
 
-pgTAP (`supabase/tests/customer_portal_agreements.sql`, 147 cases) covers other-customer, other-business,
+pgTAP (`supabase/tests/customer_portal_agreements.sql`, 168 cases) covers other-customer, other-business,
 draft and merged-contact exclusion, every state, the open's refusals (including a revoked link, a co-signer, a
 signer at another address and the 11th open in an hour), the byte-identical agreement row, no agreement event,
 the old emailed token stopping, the notes for a dead emailed link, the "Sign by" date, `awaiting_signature`
-and `awaiting_countersign`, document scope, the Sub-account tier and the unchanged policy set. Vitest
+and `awaiting_countersign`, whose signature it is (a signer at another address, no counterparty, co-signers
+both signed, a witness and the business both left), the never-emailed one-day link and its expiry arithmetic,
+document scope, the Sub-account tier and the unchanged policy set. Vitest
 covers the hook's exact keys, tenant pin, identity reset and focus/visibility refresh, the page's states and
 copy, the one gold act, StrictMode, the Home line and the routes. Harness frames
 (`scripts/live-drive/harness/portal-agreements-customer-mount`) show the page in every state, the Home line, the

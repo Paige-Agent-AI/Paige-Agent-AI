@@ -20,6 +20,13 @@ project_id = "xygzykjyynhzqytbqnzu"
   [functions.public-booking]
     verify_jwt = false
 
+  # Explicit false matches the live gateway setting (CLI preserves the remote value when
+  # omitted, and the deployed-source readback expects the declared one). The guest manage
+  # link authenticates by its signed token; customer mode authenticates the caller's own
+  # JWT in-body (auth.getUser) before admission. Both checks live in the handler.
+  [functions.booking-manage]
+    verify_jwt = false
+
   # Public form intake: anonymous visitors submit any active growth form. The function itself checks
   # origin, a bot trap, per-IP and per-form rate limits, and accepts only the form's own fields.
   [functions.growth-public-submit]

@@ -1,5 +1,20 @@
 # Exact Task follow-through from Chat
 
+2026-10-18 CI successor: exact360 CI39098893871 failed one of15910 unit assertions
+(15906 passed,3 pending). The retained diagnostic artifact SHA256
+2b16e8a2c17fd955da3174807c53feb69212eba61c6100c5f0bab4afb4ca31df and
+local failing reproduction identify the older invoice-navigation test's expectation
+that operations_work always discards a UUID. The successor updates that obsolete
+expectation and adds explicit supported Task/current-account, legacy surface and
+unsupported-tier controls. Invoice negatives and all runtime/source bindings remain
+unchanged. Fresh successor review and exact-head CI remain required; the earlier
+failed run is not relabeled green.
+
+The corrected owning invoice/Task/reference campaign passed131/131 across four
+actual suites with zero failures/skips; the same isolated unit backend guard
+remained enabled. The original local4PASS/1FAIL and hosted failure artifacts stay
+retained. This successor changes no production runtime or source-binding cell.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: bounded restoration flow uses the existing CRM/read result, reduced turn history and native Operations Task consumer; pre-edit routing answers recorded in the originating BUG conversation.
 PAIGE_UI_DESIGN: PASS: installed project design modules and routed references already read for this restoration; incumbent result card, shared links and Operations inspector retained.

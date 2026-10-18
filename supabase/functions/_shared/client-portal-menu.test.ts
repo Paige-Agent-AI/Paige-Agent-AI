@@ -13,7 +13,7 @@ import {
   PORTAL_MENU_TOOLS, PORTAL_MENU_CONFIGURE_CAPABILITY, PORTAL_MENU_READ_CAPABILITY, PORTAL_MENU_CONFIGURE, PORTAL_MENU_READ,
   PORTAL_MENU_KNOWN_KEYS_TEXT,
 } from "./paige-spine/domains/client_portal.ts";
-import { classifyAction } from "./action-risk.ts";
+import { classifyAction, mutatingTools } from "./action-risk.ts";
 
 const TENANT = "c0a1e000-0000-4000-8000-00000000000a";
 const FORGED = "c0a1e000-0000-4000-8000-0000000000ff";
@@ -379,16 +379,25 @@ Deno.test("portal_menu_update is high risk everywhere it is declared", () => {
   assertEquals(PORTAL_MENU_READ_CAPABILITY.governance.risk, "read_only");
 });
 
-Deno.test("each tool hands Chat a WRITABLE copy of its frozen declared schema", () => {
+Deno.test("the gated writer hands Chat a WRITABLE copy; the read carries its frozen declared schema", () => {
+  assertEquals(PORTAL_MENU_TOOLS.map((t) => t.function.name), ["read_tenant_portal_menu", "portal_menu_update"]);
+  const [read, update] = PORTAL_MENU_TOOLS;
+  // The writer is gated (a RISK row), so the chat adds `confirm` to it: that must not throw (the Slice 3 crash).
   assert(Object.isFrozen(PORTAL_MENU_CONFIGURE_CAPABILITY.input));
-  for (const t of PORTAL_MENU_TOOLS) {
-    const p = t.function.parameters as Record<string, unknown> & { properties: Record<string, unknown> };
-    assert(!Object.isFrozen(p) && !Object.isFrozen(p.properties), t.function.name);
-    // What the chat does to every gated tool: it must not throw.
-    p.properties.confirm = { type: "boolean" };
-    delete p.properties.confirm;
-  }
-  assertEquals(PORTAL_MENU_TOOLS.map((t) => t.function.name), ["portal_menu_read", "portal_menu_update"]);
+  assertEquals(classifyAction(update.function.name), "high");
+  const p = update.function.parameters as Record<string, unknown> & { properties: Record<string, unknown> };
+  assert(!Object.isFrozen(p) && !Object.isFrozen(p.properties), update.function.name);
+  p.properties.confirm = { type: "boolean" };
+  delete p.properties.confirm;
+  // The read is the declaration's own input (the capability kit admits a read only that way) and is named
+  // after its public.read_* executor. It is in no RISK row, so neither confirm loop in paige-ai-chat
+  // (both gate on mutatingTools()) ever writes to this frozen object.
+  assertEquals(read.function.name, PORTAL_MENU_READ.action.executor.replace(/^public\./, ""));
+  assertEquals(read.function.name, PORTAL_MENU_READ.action.chatTool);
+  assert(read.function.parameters === PORTAL_MENU_READ_CAPABILITY.input);
+  assert(Object.isFrozen(read.function.parameters));
+  assertEquals(classifyAction(read.function.name), "unclassified");
+  assert(!mutatingTools().has(read.function.name) && mutatingTools().has(update.function.name));
 });
 
 Deno.test("the update tool names every live core key, and no key that is not live", () => {

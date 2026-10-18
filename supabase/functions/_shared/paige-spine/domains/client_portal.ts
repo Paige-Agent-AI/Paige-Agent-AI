@@ -40,7 +40,7 @@ export const PORTAL_INVITATION={
 // and an unknown key is inert in the menu.
 //
 // §2: the model-facing key list names ONLY the core entries every business can have. An opt-in entry (the
-// funding preset's keys, Approvals, Business, Affiliate) is named to Paige only by portal_menu_read, and
+// funding preset's keys, Approvals, Business, Affiliate) is named to Paige only by read_tenant_portal_menu, and
 // only for a business whose own Playbook catalog lists it — never in a description every tenant's Paige sees.
 import { PORTAL_MENU_OFFERED_CORE_KEYS } from '../../client-portal-menu.ts';
 
@@ -55,9 +55,9 @@ export const PORTAL_MENU_CONFIGURE_CAPABILITY=defineCapability({
  input:objectInputSchema({
   description:'The menu entries to change. Entries you do not name keep exactly what the owner set before.',
   properties:{
-   entries:{type:'array',minItems:1,maxItems:40,description:`One object per entry to change. key is one of: ${PORTAL_MENU_KNOWN_KEYS_TEXT}, or another key portal_menu_read lists for this business.`,
+   entries:{type:'array',minItems:1,maxItems:40,description:`One object per entry to change. key is one of: ${PORTAL_MENU_KNOWN_KEYS_TEXT}, or another key read_tenant_portal_menu lists for this business.`,
     items:{type:'object',additionalProperties:false,required:['key'],properties:{
-     key:{type:'string',maxLength:40,description:'The entry\'s key, from portal_menu_read.'},
+     key:{type:'string',maxLength:40,description:'The entry\'s key, from read_tenant_portal_menu.'},
      visible:{type:'boolean',description:'false hides it from every client of this business; true shows it again.'},
      order:{type:'number',minimum:0,maximum:1000,description:'Its position within its group; lower comes first.'},
      label:{type:'string',maxLength:40,description:'The name clients see, 1 to 40 characters, in the owner\'s own words. An empty string puts back the default name.'},
@@ -100,7 +100,7 @@ export const PORTAL_MENU_CONFIGURE={
 
 export const PORTAL_MENU_READ={
  key:'client.portal_menu_read',domain:'client',owner:'clients',humanSurface:MENU_SURFACE,readiness:'none',
- action:{classification:'read',executor:'public.read_tenant_portal_menu',chatTool:'portal_menu_read',seatAuthority:'workspace-admin',riskPolicyKey:'read_only',approvalAuthority:'none',
+ action:{classification:'read',executor:'public.read_tenant_portal_menu',chatTool:'read_tenant_portal_menu',seatAuthority:'workspace-admin',riskPolicyKey:'read_only',approvalAuthority:'none',
   idempotency:'Read-only on the caller\'s own session: public.read_tenant_portal_menu (invoker rights, tenants RLS) re-proves the current workspace and can_manage_tenant_brand. Writes nothing; the chat executor records one capability receipt per answered call.'},
  outcome:{kinds:['available','refused','unavailable'],projector:'public.read_tenant_portal_menu',railVisibility:'One capability receipt per answered chat question. A read is not a business action.'},
  chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
@@ -110,10 +110,14 @@ export const PORTAL_MENU_CAPABILITIES=[PORTAL_MENU_READ,PORTAL_MENU_CONFIGURE] a
 
 // Model-facing tool JSON, COMPACT (never `name:"…"` alone on a line) so chat-tool-registry-lint counts it
 // as entering Chat through the adapter spread. A declaration's input is deep-frozen and the chat adds a
-// `confirm` property to every gated tool, so each tool gets a fresh writable copy (the Slice 3 crash).
+// `confirm` property to every GATED tool (one in action-risk.ts), so the gated writer gets a fresh writable
+// copy (the Slice 3 crash). The read is not gated — it is in no RISK row, so neither confirm loop in
+// paige-ai-chat touches it — and it carries its declaration's own input by reference, named after its
+// public.read_* executor, exactly as read_calendar_booking and read_tenant_knowledge do: that is the only
+// shape the capability kit (INT-003) admits as a declared read rather than a hand-written tool.
 const writable=(schema:unknown):Record<string,unknown>=>JSON.parse(JSON.stringify(schema));
 export const PORTAL_MENU_TOOLS=[
- {type:'function',function:{name:'portal_menu_read',description:'What clients of this business see in their customer portal menu: each entry\'s key, the name clients see, its group (top, work = "Your work", paperwork = "Paperwork", learn = "Learn"), whether it shows and why not (the owner hid it, or the Playbook does not list it), and what the owner set. Home and Messages are always shown; Get help, Account, Settings and Sign out are always at the bottom. Use it before portal_menu_update, and to answer "what do my clients see in their portal?". Read-only; changes nothing.',parameters:writable(PORTAL_MENU_READ_CAPABILITY.input)}},
- {type:'function',function:{name:'portal_menu_update',description:`Show, hide, rename or reorder entries in this business's customer portal menu, for every client of this business. Entries you do not name keep exactly what was set before. Keys: ${PORTAL_MENU_KNOWN_KEYS_TEXT}, plus any other entry portal_menu_read lists for this business (an entry it does not list cannot be changed). Home and Messages are always on and cannot be renamed or hidden; Get help, Account, Settings and Sign out are fixed. An entry moves only within its own group. A renamed entry changes its menu name only, not the page's heading. Owner or admin only, and the owner approves it on the card first. Call portal_menu_read first. Never say clients see a change until this reports success.`,parameters:writable(PORTAL_MENU_CONFIGURE_CAPABILITY.input)}},
+ {type:'function',function:{name:'read_tenant_portal_menu',description:'What clients of this business see in their customer portal menu: each entry\'s key, the name clients see, its group (top, work = "Your work", paperwork = "Paperwork", learn = "Learn"), whether it shows and why not (the owner hid it, or the Playbook does not list it), and what the owner set. Home and Messages are always shown; Get help, Account, Settings and Sign out are always at the bottom. Use it before portal_menu_update, and to answer "what do my clients see in their portal?". Read-only; changes nothing.',parameters:PORTAL_MENU_READ_CAPABILITY.input}},
+ {type:'function',function:{name:'portal_menu_update',description:`Show, hide, rename or reorder entries in this business's customer portal menu, for every client of this business. Entries you do not name keep exactly what was set before. Keys: ${PORTAL_MENU_KNOWN_KEYS_TEXT}, plus any other entry read_tenant_portal_menu lists for this business (an entry it does not list cannot be changed). Home and Messages are always on and cannot be renamed or hidden; Get help, Account, Settings and Sign out are fixed. An entry moves only within its own group. A renamed entry changes its menu name only, not the page's heading. Owner or admin only, and the owner approves it on the card first. Call read_tenant_portal_menu first. Never say clients see a change until this reports success.`,parameters:writable(PORTAL_MENU_CONFIGURE_CAPABILITY.input)}},
 ] as const;
 export const PORTAL_MENU_TOOL_NAMES:ReadonlySet<string>=new Set(PORTAL_MENU_TOOLS.map((t)=>t.function.name));

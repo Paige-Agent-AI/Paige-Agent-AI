@@ -9107,7 +9107,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       plan_assign_task: "assigning a task",
       plan_update_item: "updating a plan item",
       plan_item_set_client_share: "changing what a client can see",
-      portal_menu_read: "checking your clients' portal menu",
+      read_tenant_portal_menu: "checking your clients' portal menu",
       portal_menu_update: "changing your clients' portal menu",
       plan_remove_item: "removing a plan item",
       author_event_kind: "adding a new activity kind to track",
@@ -17327,7 +17327,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               error: "The sharing change did not report back. Check the item with plan_list before anything else, and do not retry automatically.",
               note: OUTCOME_UNKNOWN_NOTE }) });
           }
-        } else if (tc.function.name === "portal_menu_read" || tc.function.name === "portal_menu_update") {
+        } else if (tc.function.name === "read_tenant_portal_menu" || tc.function.name === "portal_menu_update") {
           // LAST IN THE CHAIN, after every reviewed incumbent branch, so no incumbent dispatch gains a
           // dominating condition (c0b-incumbent-resource-binding pins those).
           // E09 Slice M — the customer portal menu, through the ONE executor (_shared/client-portal-menu.ts)
@@ -17347,7 +17347,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             try { menuArgs = JSON.parse(tc.function.arguments || "{}"); } catch { menuArgs = null; }
             const scope = await supabaseClient.rpc("current_user_tenant_id");
             const tenantNow = !menuTenant || scope.error || scope.data !== menuTenant ? null : menuTenant;
-            if (tc.function.name === "portal_menu_read") {
+            if (tc.function.name === "read_tenant_portal_menu") {
               const r = await readPortalMenu({ caller: menuCaller, expectedTenantId: tenantNow });
               await recordCapabilityRun(supabase, { tenantId: menuTenant, actorId: user.id, capabilityKey: tc.function.name,
                 outcome: r.success === true ? "capability_succeeded" : "capability_refused" });
@@ -17390,7 +17390,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               outcome: isWrite ? "capability_outcome_unknown" : "capability_refused" });
             if (isWrite) requestExecutionState.needsReview = true;
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(isWrite
-              ? { success: false, outcome_unknown: true, error: "The menu change did not report back. Read the menu with portal_menu_read before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
+              ? { success: false, outcome_unknown: true, error: "The menu change did not report back. Read the menu with read_tenant_portal_menu before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
               : { success: false, error: "The portal menu could not be read just now.", not_applied: true }) });
           }
         } else {

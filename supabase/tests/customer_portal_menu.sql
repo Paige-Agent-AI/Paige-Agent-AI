@@ -213,7 +213,7 @@ SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000003',$q$SELECT publi
  '[{"key":"sessions","label":"Meetings","order":1},{"key":"progress","visible":false}]'::jsonb,'the customer reads exactly what the owner saved');
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000004',$q$SELECT public.get_client_portal_config()$q$)->'modules',NULL,'another business''s customer does not see it');
 
--- ── 7. The owner's read (Paige's portal_menu_read and her readback after a write) ────────────
+-- ── 7. The owner's read (Paige's read_tenant_portal_menu and her readback after a write) ────────────
 SELECT ok((SELECT NOT prosecdef FROM pg_proc WHERE oid='public.read_tenant_portal_menu(uuid)'::regprocedure),'owner read runs with invoker rights (tenants RLS applies)');
 SELECT ok(NOT has_function_privilege('anon','public.read_tenant_portal_menu(uuid)','EXECUTE'),'owner read: anon may not execute');
 SELECT ok((SELECT NOT prosecdef AND provolatile='i' FROM pg_proc WHERE oid='public.portal_menu_catalog(jsonb)'::regprocedure),'catalog projection is a pure invoker function');

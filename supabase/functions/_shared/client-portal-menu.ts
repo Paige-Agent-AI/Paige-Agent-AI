@@ -80,7 +80,7 @@ export const PORTAL_MENU_CONFIGURABLE_KEYS: readonly string[] = Object.freeze(
  * items, Sessions, Documents, Agreements, Payments, Resources). These are the only keys Paige is told about
  * up front. Every OTHER configurable key — Approvals, the funding preset's entries, Business, Affiliate — is
  * OPT-IN: it is catalog-only, it exists for a business only when that business's own Playbook catalog lists
- * it, and Paige learns of it only from that business's portal_menu_read (§2: funding/credit wording is a
+ * it, and Paige learns of it only from that business's read_tenant_portal_menu (§2: funding/credit wording is a
  * chosen option, never a default every tenant's Paige recites).
  */
 export const PORTAL_MENU_CORE_KEYS: readonly string[] = Object.freeze(

@@ -608,7 +608,7 @@ if (chatSrc.includes('...PLANNING_CLIENT_SHARE_TOOLS')) {
 if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
   if (!/import\s*\{[^}]*PORTAL_MENU_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal menu catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts', 'utf8');
-  const menuTools = [...source.matchAll(/\bname:\s*'(portal_menu_(?:read|update))'/g)].map(m => m[1]);
+  const menuTools = [...source.matchAll(/\bname:\s*'(read_tenant_portal_menu|portal_menu_update)'/g)].map(m => m[1]);
   if (menuTools.length !== 2) throw new Error('Portal menu catalog could not be parsed');
   importedTools.push(...menuTools);
 }

@@ -489,42 +489,177 @@ async function notifyChange(
   }
 }
 
+// --- Signed-in customer mode (the Customer Portal's Sessions tab) ------------
+// A customer changes their own booking through this same engine. Who they are
+// comes from their own session, never the body: a client built from the anon key
+// with the caller's Authorization forwarded (the anon key alone resolves no user
+// and reads no rows). Whether they may change THIS booking, right now, is decided
+// by client_portal_session_change_admit — their own booking in the business they
+// belong to, still scheduled, inside the calendar's notice window — which writes
+// nothing. The write itself is the shared path below, run with the service role.
+type CustomerAdmission = { uid: string; bookingId: string; tenantId: string; clientId: string; requestId: string };
+
+const CUSTOMER_AUTH_REQUIRED = { ok: false, error: "Sign in to change this session.", code: "AUTH_REQUIRED" };
+// A customer never sees database text: a server-side failure is one coded, generic answer
+// and the detail goes to the edge log (§13: loud, never swallowed, never shown).
+const CUSTOMER_FAILED_COPY = "This change could not be completed.";
+function customerFailure(code: "ADMISSION_FAILED" | "CHANGE_FAILED", where: string, detail?: unknown): Response {
+  const d = detail as { code?: string; message?: string } | undefined;
+  console.error(`[booking-manage] customer ${where} failed:`, d?.code ?? "", d?.message ?? (detail === undefined ? "" : String(detail)));
+  return json({ ok: false, code, error: CUSTOMER_FAILED_COPY }, 500);
+}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function admitCustomer(req: Request, body: Record<string, unknown>): Promise<CustomerAdmission | Response> {
+  // The two proofs are never combined: a customer request carrying a link token
+  // is malformed, and must not be able to fall back to the token path.
+  if (Object.prototype.hasOwnProperty.call(body, "token")) {
+    return json({ ok: false, error: "A signed-in request cannot carry a link token.", code: "BAD_REQUEST" }, 400);
+  }
+  const action = body.action;
+  if (action !== "cancel" && action !== "reschedule") {
+    return json({ ok: false, error: "Unknown action", code: "BAD_ACTION" }, 400);
+  }
+  const authorization = req.headers.get("Authorization") ?? "";
+  const jwt = authorization.replace(/^Bearer\s+/i, "").trim();
+  if (!jwt) return json(CUSTOMER_AUTH_REQUIRED, 401);
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!anonKey) return customerFailure("ADMISSION_FAILED", "admission", "SUPABASE_ANON_KEY is not configured");
+  const caller = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: authorization } },
+  });
+  const { data: userData, error: userError } = await caller.auth.getUser(jwt);
+  const uid = userData?.user?.id;
+  if (userError || !uid) return json(CUSTOMER_AUTH_REQUIRED, 401);
+  // Only a real booking id reaches the database; anything else is the caller's mistake.
+  if (typeof body.booking_id !== "string" || !UUID_RE.test(body.booking_id)) {
+    return json({ ok: false, error: "That request is malformed.", code: "BAD_REQUEST" }, 400);
+  }
+
+  // Normalise the new time once so admission and the write compare the same instant.
+  const newStartMs = action === "reschedule" ? Date.parse(String(body.start ?? "")) : NaN;
+  const { data, error } = await caller.rpc("client_portal_session_change_admit", {
+    p_booking_id: body.booking_id ?? null,
+    p_action: action,
+    p_request_id: body.request_id ?? null,
+    p_new_start: Number.isFinite(newStartMs) ? new Date(newStartMs).toISOString() : null,
+    p_tenant_id: body.tenant_id ?? null,
+  });
+  if (error) {
+    const e = error as { code?: string; message?: string };
+    if (e.code === "42501" && /authentication required/i.test(e.message ?? "")) return json(CUSTOMER_AUTH_REQUIRED, 401);
+    if (e.code === "42501") {
+      return json({ ok: false, error: "Choose which business this session is with.", code: "MULTIPLE_RELATIONSHIPS" }, 409);
+    }
+    // Malformed ids/timestamps are the caller's fault, not a server failure.
+    if (e.code === "22P02" || e.code === "22007" || e.code === "22008") {
+      return json({ ok: false, error: "That request is malformed.", code: "BAD_REQUEST" }, 400);
+    }
+    return customerFailure("ADMISSION_FAILED", "admission", e);
+  }
+  const verdict = (data && typeof data === "object" ? data : null) as Record<string, unknown> | null;
+  if (!verdict) return customerFailure("ADMISSION_FAILED", "admission", "no verdict returned");
+  if (verdict.ok !== true) {
+    const code = typeof verdict.error === "string" && verdict.error ? verdict.error : "SESSION_CHANGE_REFUSED";
+    const notFound = code === "SESSION_NOT_FOUND";
+    return json({
+      ok: false, code,
+      error: notFound ? "Session not found." : "This session can't be changed.",
+      ...(verdict.deadline ? { deadline: verdict.deadline } : {}),
+    }, notFound ? 403 : 409);
+  }
+  // Already done — by this request earlier, or the booking is already in the
+  // asked-for state. Nothing is written and nothing is sent a second time.
+  if (verdict.replay === true) return json({ ok: true, replay: true });
+  const requestedId = String(body.booking_id ?? "").toLowerCase();
+  const admittedId = typeof verdict.booking_id === "string" ? verdict.booking_id : "";
+  if (!admittedId || admittedId.toLowerCase() !== requestedId
+    || typeof verdict.tenant_id !== "string" || typeof verdict.client_id !== "string") {
+    return customerFailure("ADMISSION_FAILED", "admission", "verdict did not match the request");
+  }
+  return {
+    uid, bookingId: admittedId, tenantId: verdict.tenant_id, clientId: verdict.client_id,
+    requestId: String(body.request_id),
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  let customerMode = false;
   try {
-    if (!SECRET) return json({ error: "server not configured" }, 500);
+    if (!SECRET) {
+      // The guest link's answer is unchanged. A signed-in customer gets the same coded,
+      // generic failure as every other server-side fault; reading the body here is safe
+      // because this branch always returns.
+      const early = await req.json().catch(() => ({}));
+      if (early?.mode === "customer") return customerFailure("CHANGE_FAILED", "configuration", "service-role secret is not configured");
+      return json({ error: "server not configured" }, 500);
+    }
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     // Per-IP throttle first — bounds invalid-token brute-forcing (checked before
     // the token is even verified) and any per-IP replay flood.
     const ip = clientIp(req);
     if (await overRateLimit(admin, `bm:ip:${ip}`, RL_MANAGE_PER_IP)) {
-      return json({ error: TOO_MANY }, 429);
+      // The body is read only to tell a signed-in customer the machine code; the
+      // guest-link response stays exactly what it always was.
+      const early = await req.json().catch(() => ({}));
+      return json(early?.mode === "customer" ? { ok: false, error: TOO_MANY, code: "RATE_LIMITED" } : { error: TOO_MANY }, 429);
     }
     const body = await req.json().catch(() => ({}));
     const action = body?.action;
-    const tok = await verifyToken(String(body?.token ?? ""));
-    if (!tok.ok) {
-      // Distinct 401 for an expired link so the client can offer "get a fresh one".
-      if (tok.reason === "expired") return json({ error: "This link has expired. Ask the sender for a fresh one.", code: "expired" }, 401);
-      return json({ error: "This link is invalid or has expired." }, 401);
+    customerMode = body?.mode === "customer";
+
+    // Two ways in, one engine. The guest link proves itself with the HMAC token;
+    // a signed-in customer proves themselves with their own session and the
+    // admission RPC (their own booking, inside the calendar's notice window).
+    // Everything after this point — rules, comms boundary, status gate, the
+    // cancel/reschedule writes, Zoom and notifications — is shared.
+    let portal: CustomerAdmission | null = null;
+    let bookingId: string;
+    let tokenVer: number | null;
+    if (body?.mode === "customer") {
+      const admitted = await admitCustomer(req, body);
+      if (admitted instanceof Response) return admitted;
+      portal = admitted;
+      bookingId = admitted.bookingId;
+      tokenVer = null; // no link, so no link version to check
+    } else {
+      const tok = await verifyToken(String(body?.token ?? ""));
+      if (!tok.ok) {
+        // Distinct 401 for an expired link so the client can offer "get a fresh one".
+        if (tok.reason === "expired") return json({ error: "This link has expired. Ask the sender for a fresh one.", code: "expired" }, 401);
+        return json({ error: "This link is invalid or has expired." }, 401);
+      }
+      bookingId = tok.bookingId;
+      tokenVer = tok.ver;
     }
-    const bookingId = tok.bookingId;
+    // Guest responses keep their original `{ error }` bodies; a customer also
+    // gets a machine code the portal maps to its own copy.
+    const fail = (error: string, status: number, code: string) =>
+      json(portal ? { ok: false, error, code } : { error }, status);
     // Per-token throttle — bounds replay of one valid (possibly leaked) link
     // across view/reschedule/cancel, independent of source IP.
     if (await overRateLimit(admin, `bm:tok:${bookingId}`, RL_MANAGE_PER_TOKEN)) {
-      return json({ error: TOO_MANY }, 429);
+      return fail(TOO_MANY, 429, "RATE_LIMITED");
     }
 
     const { data: b } = await admin.from("internal_bookings")
-      .select("id, tenant_id, calendar_id, host_user_id, guest_name, guest_email, guest_phone, title, start_at, end_at, timezone, status, location_type, location_value, booking_kind, collective_group_id, appointment_type, manage_token_version, zoom_meeting_id")
+      .select("id, tenant_id, calendar_id, host_user_id, guest_name, guest_email, guest_phone, title, start_at, end_at, timezone, status, location_type, location_value, booking_kind, collective_group_id, appointment_type, manage_token_version, zoom_meeting_id" + (portal ? ", contact_id" : ""))
       .eq("id", bookingId).maybeSingle();
+    // A customer is told "not found" for anything that is not their own booking
+    // in the admitted business — never "forbidden" — so nothing about other
+    // bookings leaks. This re-checks what admission saw, in case it changed since.
+    if (portal && (!b || b.tenant_id !== portal.tenantId || b.contact_id !== portal.clientId)) {
+      return json({ ok: false, error: "Session not found.", code: "SESSION_NOT_FOUND" }, 403);
+    }
     if (!b) return json({ error: "Booking not found." }, 404);
 
     // Revocation check: a version-stamped token must match the booking's current
     // manage_token_version. Cancelling bumps it, killing the old link. Legacy
     // tokens (no ver) predate revocation and skip this — the status gate governs.
     const currentVer = (b.manage_token_version as number | null) ?? 0;
-    if (tok.ver !== null && tok.ver !== currentVer) {
+    if (tokenVer !== null && tokenVer !== currentVer) {
       return json({ error: "This link is no longer valid. Ask the sender for a fresh one.", code: "revoked" }, 401);
     }
 
@@ -615,7 +750,81 @@ Deno.serve(async (req) => {
     if (!(await commsProviderExecutionAllowed(admin, { tenantId: b.tenant_id }))) {
       return json({ ok: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
     }
-    if (b.status !== "scheduled") return json({ error: "This booking can no longer be changed." }, 409);
+    if (b.status !== "scheduled") return fail("This booking can no longer be changed.", 409, "SESSION_NOT_CHANGEABLE");
+    // Admission already refused these; re-checked here so the writer never acts
+    // on a booking the customer path does not support.
+    if (portal && (!cal || b.booking_kind === "class_session")) {
+      return fail("This session can't be changed here.", 409, "SESSION_CHANGE_UNAVAILABLE");
+    }
+    // The customer's notice window, measured on the booking's CURRENT start
+    // (calendars.min_notice_min before it). Admission checked it too; this runs
+    // again immediately before each write so a slow request cannot slip past
+    // the deadline between the two. The guest link has no window (unchanged).
+    const customerWindowClosed = (): Response | null => {
+      if (!portal) return null;
+      const deadlineMs = Date.parse(b.start_at as string) - minNotice * 60000;
+      if (Date.now() <= deadlineMs) return null;
+      return json({
+        ok: false, error: "Changes to this session have closed.", code: "SESSION_CHANGE_WINDOW_CLOSED",
+        deadline: Number.isFinite(deadlineMs) ? new Date(deadlineMs).toISOString() : null,
+      }, 409);
+    };
+    // A customer may move a session only while its calendar still takes bookings. Admission
+    // checked this; it is read again right before the move so a calendar paused in between
+    // is honoured. (Cancelling stays open on a paused calendar, as admission allows.)
+    const customerCalendarClosed = async (): Promise<Response | null> => {
+      if (!portal) return null;
+      const { data: live, error } = await admin.from("calendars").select("enabled").eq("id", b.calendar_id).maybeSingle();
+      if (error) return customerFailure("CHANGE_FAILED", "calendar re-check", error);
+      if (live?.enabled === true) return null;
+      return fail("This session can't be moved right now.", 409, "SESSION_CHANGE_UNAVAILABLE");
+    };
+    // Two identical customer requests can both pass admission before either has written.
+    // Every customer write is therefore conditional on the state this request loaded; when
+    // the other request already changed it, nothing more is written, audited or sent.
+    const customerReplay = () => json({ ok: true, replay: true });
+    // A conditional write that changed nothing is a replay ONLY if the booking is now in the
+    // state this request asked for (cancelled; or scheduled at the requested new start). If
+    // someone else made a different change in between — staff cancelled it, another tab moved
+    // it — the customer is told it did not happen, never "done" (§13).
+    const customerUnchanged = async (want: { cancelled: true } | { startMs: number }): Promise<Response> => {
+      const { data: now, error } = await admin.from("internal_bookings")
+        .select("status, start_at, tenant_id, contact_id").eq("id", b.id).maybeSingle();
+      if (error) return customerFailure("CHANGE_FAILED", "re-read", error);
+      if (!now || now.tenant_id !== portal?.tenantId || now.contact_id !== portal?.clientId) {
+        return json({ ok: false, error: "Session not found.", code: "SESSION_NOT_FOUND" }, 403);
+      }
+      if ("cancelled" in want && now.status === "cancelled") return customerReplay();
+      if ("startMs" in want && now.status === "scheduled" && Date.parse(now.start_at as string) === want.startMs) return customerReplay();
+      if (now.status !== "scheduled") return fail("This booking can no longer be changed.", 409, "SESSION_NOT_CHANGEABLE");
+      // Still scheduled, but at a time this request did not load or ask for.
+      const moved = { current_start: new Date(Date.parse(now.start_at as string)).toISOString() };
+      if ("startMs" in want) return json({ ok: false, error: "That time isn't open. Please pick another.", code: "SLOT_UNAVAILABLE", ...moved }, 409);
+      return json({ ok: false, error: "This booking changed before it could be cancelled.", code: "SESSION_NOT_CHANGEABLE", ...moved }, 409);
+    };
+    const customerWriteFailed = (error: unknown) => customerFailure("CHANGE_FAILED", "write", error);
+    // One audit row per committed customer change — the record admission replays
+    // a retried request_id from. Written with the service role after the write;
+    // a failure here is logged and never un-does the committed change (a retry
+    // is still safe: admission replays from the booking's own state).
+    const recordCustomerChange = async (kind: "cancel" | "reschedule", toStart: string | null) => {
+      if (!portal) return;
+      try {
+        const { error } = await admin.from("audit_logs").insert({
+          user_id: portal.uid,
+          action: kind === "cancel" ? "client_portal_cancel" : "client_portal_reschedule",
+          entity: "internal_booking",
+          entity_id: b.id,
+          data: {
+            tenant_id: portal.tenantId, client_id: portal.clientId, portal_request_id: portal.requestId,
+            from_start: b.start_at, to_start: toStart,
+          },
+        });
+        if (error) console.error("[booking-manage] customer change committed but audit row failed:", error.message);
+      } catch (e) {
+        console.error("[booking-manage] customer change committed but audit row threw:", (e as Error).message);
+      }
+    };
 
     const bookingCtx: BookingCtx = {
       id: b.id as string, tenant_id: (b.tenant_id as string | null) ?? null, host_user_id: b.host_user_id as string,
@@ -644,11 +853,29 @@ Deno.serve(async (req) => {
       // symmetric leg — cancelling one row would leave the rest holding hosts'
       // time for a meeting that isn't happening.
       const nextVer = currentVer + 1;
-      const patch = { status: "cancelled", manage_token_version: nextVer };
-      const { error } = b.collective_group_id
-        ? await admin.from("internal_bookings").update(patch).eq("collective_group_id", b.collective_group_id).neq("status", "cancelled")
-        : await admin.from("internal_bookings").update(patch).eq("id", b.id);
-      if (error) return json({ error: error.message }, 500);
+      const patch: Record<string, unknown> = { status: "cancelled", manage_token_version: nextVer };
+      // A customer cancel also records who cancelled and from where. The guest
+      // link's patch is unchanged.
+      if (portal) {
+        Object.assign(patch, { cancelled_at: new Date().toISOString(), cancelled_by: portal.uid, cancellation_reason: "customer_portal" });
+      }
+      const closed = customerWindowClosed();
+      if (closed) return closed;
+      if (portal) {
+        const { data: changed, error } = b.collective_group_id
+          ? await admin.from("internal_bookings").update(patch).eq("collective_group_id", b.collective_group_id).neq("status", "cancelled").select("id")
+          // Matched on the start it loaded too, so a cancel racing a move never cancels the
+          // moved session while notifying the old time.
+          : await admin.from("internal_bookings").update(patch).eq("id", b.id).eq("status", "scheduled").eq("start_at", b.start_at).select("id");
+        if (error) return customerWriteFailed(error);
+        if (!Array.isArray(changed) || changed.length === 0) return customerUnchanged({ cancelled: true });
+      } else {
+        const { error } = b.collective_group_id
+          ? await admin.from("internal_bookings").update(patch).eq("collective_group_id", b.collective_group_id).neq("status", "cancelled")
+          : await admin.from("internal_bookings").update(patch).eq("id", b.id);
+        if (error) return json({ error: error.message }, 500);
+      }
+      await recordCustomerChange("cancel", null);
       // Tear down the host's Zoom meeting (best-effort). For collective the
       // snapshot roster covers the primary that owns the meeting.
       await syncZoom(admin, "delete", cancelHostIds ?? [b.host_user_id as string], (b.zoom_meeting_id as string | null) ?? null);
@@ -658,7 +885,7 @@ Deno.serve(async (req) => {
 
     if (action === "reschedule") {
       const newStart = Date.parse(body?.start);
-      if (!Number.isFinite(newStart)) return json({ error: "Pick a new time." }, 400);
+      if (!Number.isFinite(newStart)) return fail("Pick a new time.", 400, "NEW_TIME_REQUIRED");
       const now = Date.now();
       const tz = calTimezone || (b.timezone as string) || "America/New_York";
       // Shared slot rules — the exact validity gate the public engine enforces
@@ -687,7 +914,7 @@ Deno.serve(async (req) => {
         if (ids.length) gateHostIds = ids;
       }
       if (!gateHostIds.every((uid) => isValidSlotStart(rulesFor(uid), newStart, now))) {
-        return json({ error: "That time isn't open. Please pick another." }, 409);
+        return fail("That time isn't open. Please pick another.", 409, "SLOT_UNAVAILABLE");
       }
       const newEnd = newStart + durationMin * 60000;
 
@@ -696,20 +923,34 @@ Deno.serve(async (req) => {
       // wrong tool entirely — this needs the same lock/find-or-create/count
       // shape create_class_booking uses, ending in a move instead of an insert.
       if (b.booking_kind === "class_seat") {
-        const { data: seat, error } = await admin.rpc("reschedule_class_booking", {
-          _seat_id: b.id,
-          _new_start_at: new Date(newStart).toISOString(),
-          _new_end_at: new Date(newEnd).toISOString(),
-        });
+        const closed = customerWindowClosed() ?? await customerCalendarClosed();
+        if (closed) return closed;
+        // A customer's move is claimed on the start this request loaded (the class engine
+        // treats "already there" as a silent no-op, so the claim lives in the helper).
+        const { data: seat, error } = portal
+          ? await admin.rpc("_portal_session_move_class_seat", {
+              p_seat_id: b.id,
+              p_expected_start: b.start_at,
+              p_new_start_at: new Date(newStart).toISOString(),
+              p_new_end_at: new Date(newEnd).toISOString(),
+            })
+          : await admin.rpc("reschedule_class_booking", {
+              _seat_id: b.id,
+              _new_start_at: new Date(newStart).toISOString(),
+              _new_end_at: new Date(newEnd).toISOString(),
+            });
         if (error) {
           if ((error as { message?: string }).message === "sold_out")
-            return json({ error: "That class is full. Please pick another time." }, 409);
+            return fail("That class is full. Please pick another time.", 409, "SLOT_UNAVAILABLE");
           const code = (error as { code?: string }).code;
           if (code === "23P01" || code === "23505")
-            return json({ error: "That time was just taken. Please pick another." }, 409);
+            return fail("That time was just taken. Please pick another.", 409, "SLOT_UNAVAILABLE");
+          if (portal) return customerWriteFailed(error);
           return json({ error: error.message }, 500);
         }
+        if (portal && (seat as { moved?: boolean } | null)?.moved !== true) return customerUnchanged({ startMs: newStart });
         const startAt = (seat as { start_at: string }).start_at;
+        await recordCustomerChange("reschedule", startAt);
         await syncZoom(admin, "update", [b.host_user_id as string], (b.zoom_meeting_id as string | null) ?? null, {
           topic: apptName || (cal?.title as string) || (b.title as string) || "Meeting", startISO: startAt, durationMin, timezone: tz,
         });
@@ -733,16 +974,25 @@ Deno.serve(async (req) => {
           const busy: Busy[] = (clash ?? [])
             .filter((x) => !groupIds.has(x.id as string))
             .map((x) => ({ start: Date.parse(x.start_at as string), end: Date.parse(x.end_at as string) }));
-          if (!isFree(rules, busy, newStart)) return json({ error: "That time was just taken. Please pick another." }, 409);
+          if (!isFree(rules, busy, newStart)) return fail("That time was just taken. Please pick another.", 409, "SLOT_UNAVAILABLE");
         }
-        const { error } = await admin.from("internal_bookings")
-          .update({ start_at: new Date(newStart).toISOString(), end_at: new Date(newEnd).toISOString() })
-          .eq("collective_group_id", b.collective_group_id).neq("status", "cancelled");
+        const closed = customerWindowClosed() ?? await customerCalendarClosed();
+        if (closed) return closed;
+        const move = { start_at: new Date(newStart).toISOString(), end_at: new Date(newEnd).toISOString() };
+        const { data: changed, error } = portal
+          ? await admin.from("internal_bookings").update(move)
+            .eq("collective_group_id", b.collective_group_id).neq("status", "cancelled")
+            .eq("status", "scheduled").eq("start_at", b.start_at).select("id")
+          : await admin.from("internal_bookings").update(move)
+            .eq("collective_group_id", b.collective_group_id).neq("status", "cancelled");
         if (error) {
           const code = (error as { code?: string }).code;
-          if (code === "23505" || code === "23P01") return json({ error: "That time was just taken. Please pick another." }, 409);
+          if (code === "23505" || code === "23P01") return fail("That time was just taken. Please pick another.", 409, "SLOT_UNAVAILABLE");
+          if (portal) return customerWriteFailed(error);
           return json({ error: error.message }, 500);
         }
+        if (portal && (!Array.isArray(changed) || changed.length === 0)) return customerUnchanged({ startMs: newStart });
+        await recordCustomerChange("reschedule", new Date(newStart).toISOString());
         // Move the ONE Zoom meeting on the primary host (gateHostIds spans the
         // collective roster; only the owner's token matches, others 404 no-op).
         await syncZoom(admin, "update", gateHostIds, (b.zoom_meeting_id as string | null) ?? null, {
@@ -759,16 +1009,23 @@ Deno.serve(async (req) => {
         .select("id, start_at, end_at").eq("host_user_id", b.host_user_id).neq("status", "cancelled").neq("id", b.id)
         .gte("start_at", new Date(newStart - 86_400_000).toISOString()).lte("start_at", new Date(newStart + 86_400_000).toISOString());
       const busy: Busy[] = (clash ?? []).map((x) => ({ start: Date.parse(x.start_at as string), end: Date.parse(x.end_at as string) }));
-      if (!isFree(rules, busy, newStart)) return json({ error: "That time was just taken. Please pick another." }, 409);
+      if (!isFree(rules, busy, newStart)) return fail("That time was just taken. Please pick another.", 409, "SLOT_UNAVAILABLE");
 
-      const { error } = await admin.from("internal_bookings")
-        .update({ start_at: new Date(newStart).toISOString(), end_at: new Date(newEnd).toISOString() })
-        .eq("id", b.id);
+      const closed = customerWindowClosed() ?? await customerCalendarClosed();
+      if (closed) return closed;
+      const move = { start_at: new Date(newStart).toISOString(), end_at: new Date(newEnd).toISOString() };
+      const { data: changed, error } = portal
+        ? await admin.from("internal_bookings").update(move)
+          .eq("id", b.id).eq("status", "scheduled").eq("start_at", b.start_at).select("id")
+        : await admin.from("internal_bookings").update(move).eq("id", b.id);
       if (error) {
         const code = (error as { code?: string }).code;
-        if (code === "23505" || code === "23P01") return json({ error: "That time was just taken. Please pick another." }, 409);
+        if (code === "23505" || code === "23P01") return fail("That time was just taken. Please pick another.", 409, "SLOT_UNAVAILABLE");
+        if (portal) return customerWriteFailed(error);
         return json({ error: error.message }, 500);
       }
+      if (portal && (!Array.isArray(changed) || changed.length === 0)) return customerUnchanged({ startMs: newStart });
+      await recordCustomerChange("reschedule", new Date(newStart).toISOString());
       await syncZoom(admin, "update", [b.host_user_id as string], (b.zoom_meeting_id as string | null) ?? null, {
         topic: apptName || (cal?.title as string) || (b.title as string) || "Meeting", startISO: new Date(newStart).toISOString(), durationMin, timezone: tz,
       });
@@ -776,8 +1033,9 @@ Deno.serve(async (req) => {
       return json({ ok: true, status: "scheduled", start_at: new Date(newStart).toISOString() });
     }
 
-    return json({ error: "Unknown action" }, 400);
+    return fail("Unknown action", 400, "BAD_ACTION");
   } catch (e) {
+    if (customerMode) return customerFailure("CHANGE_FAILED", "request", e);
     return json({ error: (e as Error).message }, 500);
   }
 });

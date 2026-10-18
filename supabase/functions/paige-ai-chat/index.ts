@@ -49,7 +49,7 @@ import { exposureFor, notOfferedThisRound } from "../_shared/paige-turn/exposure
 import { createInteractiveExecution, createInteractiveLifetime, createInteractiveSettlement, startInteractiveTurn, keepInteractiveStreamAlive, interactiveAcceptanceBoundary, interactiveEffect, interactiveReceiptContext, readEnvelopeStatus, InteractiveSuperseded } from "../_shared/paige-turn/interactive.ts";
 import { selectPinnedPreviewRequest, readPendingApprovalRecovery, type ApprovalRecoveryDb } from "../_shared/paige-turn/interactive-approval.ts";
 import { readInteractiveOutcomeStatus } from "../_shared/paige-turn/outcome-status.ts";
-import { CHAT_CONTROL_HEADER, chatIngressPolicy, matchesChatControlHint } from "../_shared/paige-turn/control-transport.ts";
+import { CHAT_CONTROL_HEADER, chatIngressPolicy, matchesChatControlHint, readChatControlBody } from "../_shared/paige-turn/control-transport.ts";
 import { createPipelineCanonicalReaders } from "../_shared/pipeline-metadata-canonical-reader.ts";
 import { findPipelineOriginalEffect } from "../_shared/pipeline-original-discovery.ts";
 import { readPipelineMetadataOutcome } from "../_shared/pipeline-metadata-readback.ts";
@@ -1247,7 +1247,15 @@ serve(async (req) => {
     }
 
     let rawData;
-    try { rawData = await req.json(); }
+    try {
+      if (controlHint === "status" || controlHint === "stop") {
+        const body = await readChatControlBody(req);
+        if ("status" in body) return new Response(JSON.stringify({
+          code: body.status === 413 ? 'CHAT_CONTROL_BODY_TOO_LARGE' : 'CHAT_CONTROL_BODY_INVALID', message_accepted: false,
+        }), { status: body.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        rawData = JSON.parse(body.text);
+      } else rawData = await req.json();
+    }
     catch {
       return new Response(JSON.stringify({ error: 'Invalid input format', message_accepted: false }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

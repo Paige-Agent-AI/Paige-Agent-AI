@@ -1,7 +1,41 @@
 /** Transport classification only. A hint never supplies actor, thread or execution authority. */
 export const CHAT_CONTROL_HEADER = "x-paige-chat-control";
 export const CHAT_CONTROL_POLL_MS = 2_000;
+export const CHAT_CONTROL_MAX_BODY_BYTES = 4_096;
 export type ChatControlKind = "status" | "stop";
+
+/** Recognized hinted controls only: bound actual transport bytes before JSON/schema.
+ * Content-Length is not authority. Ordinary history/documents keep their existing reader. */
+export async function readChatControlBody(request: Request): Promise<{ text: string } | { status: 400 | 413 }> {
+  const reader = request.body?.getReader();
+  if (!reader) return { text: "" };
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  request.signal.addEventListener("abort", cancel, { once: true });
+  try {
+    if (request.signal.aborted) { cancel(); return { status: 400 }; }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (request.signal.aborted) return { status: 400 };
+      if (done) break;
+      if (!(value instanceof Uint8Array)) { cancel(); return { status: 400 }; }
+      if (length + value.byteLength > CHAT_CONTROL_MAX_BODY_BYTES) { cancel(); return { status: 413 }; }
+      chunks.push(value);
+      length += value.byteLength;
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return { text: new TextDecoder().decode(bytes) };
+  } catch {
+    cancel();
+    return { status: 400 };
+  } finally {
+    request.signal.removeEventListener("abort", cancel);
+    reader.releaseLock();
+  }
+}
 
 /** All callers use the existing per-user native limiter; unknown/legacy input keeps20/min. */
 export function chatIngressPolicy(hint: string | null) {

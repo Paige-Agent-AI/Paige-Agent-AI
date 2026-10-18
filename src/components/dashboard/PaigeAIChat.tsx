@@ -579,8 +579,7 @@ const PaigeAIChatInner = ({
   const undispatchedDraftRef = useRef<{ intentId: string; handle: ComposerDraftHandle; submission: ComposerDraftSubmission } | null>(null);
   const documentRequestActiveRef = useRef(false);
   const [interactiveAuthorityPending, setInteractiveAuthorityPending] = useState(false);
-  const authorityPollRef = useRef<{ generation: number; timer?: number; notBefore: number }>({ generation: 0, notBefore: 0 });
-  const stopRetryUntilRef = useRef(0);
+  const authorityPollRef = useRef<{ generation: number; timer?: number }>({ generation: 0 });
   // === THE TURN'S SCOPE, AS ONE VALUE (§9, purpose clause 2) ===
   // Draft storage, writability, request delivery, busy ownership, dictation and retry all use this
   // complete identity: workspace, effective user, focused client and focused Business Mission.
@@ -610,6 +609,11 @@ const PaigeAIChatInner = ({
     : "identity-unresolved";
   const requestScopeRef = useRef({ handle: requestScopeHandle, epoch: requestScopeEpoch });
   requestScopeRef.current = { handle: requestScopeHandle, epoch: requestScopeEpoch };
+  // A new scope gets new control state. Object identity also fences A→B→A replies;
+  // a former actor/workspace must not install its retry delay in the current view.
+  const controlScopeRef = useRef({ epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 });
+  if (controlScopeRef.current.epoch !== scopeEpoch)
+    controlScopeRef.current = { epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 };
   const researchHydrationRef = useRef<{
     scope: typeof requestScopeRef.current;
     cancel: () => void;
@@ -794,15 +798,16 @@ const PaigeAIChatInner = ({
     if (!enableHistory || !liveConversation) return;
     const target = interactiveRequestRef.current;
     if (!target?.threadId) return;
+    const controlScope = controlScopeRef.current;
     const generation = ++authorityPollRef.current.generation;
     window.clearTimeout(authorityPollRef.current.timer);
-    const current = () => generation === authorityPollRef.current.generation
+    const current = () => controlScope === controlScopeRef.current && generation === authorityPollRef.current.generation
       && interactiveRequestRef.current?.intentId === target.intentId
       && composerDraftHandlesMatch(target.handle, requestScopeRef.current.handle);
     let failures = 0;
     const poll = async () => {
       if (!current()) return;
-      const remaining = authorityPollRef.current.notBefore - Date.now();
+      const remaining = controlScope.statusNotBefore - Date.now();
       if (remaining > 0) {
         authorityPollRef.current.timer = window.setTimeout(() => { void poll(); }, remaining);
         return;
@@ -821,7 +826,7 @@ const PaigeAIChatInner = ({
         if (!current()) return;
         if (response.status === 429) {
           delay = chatControlRetryDelay(response.headers?.get("Retry-After"));
-          authorityPollRef.current.notBefore = Date.now() + delay;
+          controlScope.statusNotBefore = Date.now() + delay;
         } else if (response.ok) {
           settled = (await response.json()).settled === true;
           failures = 0;
@@ -876,11 +881,16 @@ const PaigeAIChatInner = ({
     const cancelledTurn = retryTurnRef.current;
     const interactive = !opts?.fromVoice ? interactiveRequestRef.current : null;
     if (interactive?.threadId) {
+      const controlScope = controlScopeRef.current;
+      const current = () => controlScope === controlScopeRef.current
+        && interactiveRequestRef.current?.intentId === interactive.intentId
+        && composerDraftHandlesMatch(interactive.handle, requestScopeRef.current.handle);
       void (async () => {
-        if (Date.now() < stopRetryUntilRef.current) throw new Error("stop_unconfirmed");
+        if (!current()) return;
+        if (Date.now() < controlScope.stopRetryAt) throw new Error("stop_unconfirmed");
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session || interactiveRequestRef.current?.intentId !== interactive.intentId
-          || !composerDraftHandlesMatch(interactive.handle, requestScopeRef.current.handle)) throw new Error("stop_unconfirmed");
+        if (!current()) return;
+        if (!session) throw new Error("stop_unconfirmed");
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}`, [CHAT_CONTROL_HEADER]: "stop" },
@@ -888,10 +898,11 @@ const PaigeAIChatInner = ({
             messages: [{ role: "user", content: "Stop" }],
             interactive: { kind: "stop", supersedesIntentId: interactive.intentId } }),
         });
-        if (response.status === 429) stopRetryUntilRef.current = Date.now() + chatControlRetryDelay(response.headers?.get("Retry-After"));
+        if (!current()) return;
+        if (response.status === 429) controlScope.stopRetryAt = Date.now() + chatControlRetryDelay(response.headers?.get("Retry-After"));
         if (!response.ok) throw new Error("stop_unconfirmed");
-        if (interactiveRequestRef.current?.intentId === interactive.intentId) refreshInteractiveAuthority();
-      })().catch(() => toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }));
+        refreshInteractiveAuthority();
+      })().catch(() => { if (current()) toast({ title: "Response stopped here", description: "I couldn't confirm the server stopped. Check completed work before repeating an action." }); });
     }
     // C3a — the answer's line says "Stopped by you" and keeps the step that had started, marked as
     // possibly still finishing. Settled BEFORE the abort, which would otherwise drop that step.
